@@ -17,13 +17,16 @@ pnpm install
 
 루트에서 다음 스크립트들을 실행할 수 있습니다 (Turborepo가 각 워크스페이스의 동명의 스크립트를 실행합니다).
 
-| Script       | 설명                               |
-| ------------ | ---------------------------------- |
-| `pnpm dev`   | 필요한 모든 앱을 watch 모드로 기동 |
-| `pnpm build` | 모든 앱 빌드                       |
-| `pnpm lint`  | ESlint 검사                        |
-| `pnpm test`  | 테스트 파이프라인 (추가 예정)      |
-| `pnpm clean` | Turborepo 캐시 정리                |
+| Script            | 설명                                        |
+| ----------------- | ------------------------------------------- |
+| `pnpm dev`        | 필요한 모든 앱을 watch 모드로 기동          |
+| `pnpm build`      | 모든 앱 빌드                                |
+| `pnpm lint`       | ESLint 검사                                 |
+| `pnpm lint:fix`   | ESLint 자동 수정                            |
+| `pnpm format`     | Prettier 포맷팅 적용                        |
+| `pnpm format:check` | Prettier 포맷팅 여부 검사                 |
+| `pnpm test`       | 테스트 파이프라인 (추가 예정)               |
+| `pnpm clean`      | Turborepo 캐시 정리                         |
 
 ## 워크스페이스별 dev 명령
 
@@ -57,3 +60,8 @@ packages/
 - 라이브러리에는 `workspace:*` 버전을 이용해 앱에 의존성을 추가합니다.
 - 새로운 패키지를 추가하고 싶다면 `packages/<name>`에 `package.json`, `tsconfig*.json`, `src/`를 만들고 `pnpm install` 후 `pnpm build`로 확인하세요.
 - 예시로 `@jakorea/ui`는 `Button` 컴포넌트를, `@jakorea/utils`는 날짜 포맷터(`formatDate`, `timeSince`)를 내보내며, 세 애플리케이션 모두 동일한 코드를 사용합니다.
+
+## ESLint & Prettier
+
+- 루트 `eslint.config.js`는 모든 워크스페이스에서 공유됩니다. `pnpm lint` 혹은 개별 `pnpm --filter <workspace> lint` 실행 시 동일한 규칙이 적용됩니다.
+- 포맷팅은 `prettier.config.js`에서 정의하며 `pnpm format` 또는 `pnpm format:check`로 실행합니다.
