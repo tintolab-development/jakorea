@@ -1,29 +1,21 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Button } from '@jakorea/ui'
+import { formatDate } from '@jakorea/utils'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [waitlist, setWaitlist] = useState(38)
+  const [launchDate] = useState(() => new Date('2025-02-14T09:00:00+09:00'))
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
       <h1>JaKorea Platform</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Foundation for the public-facing JaKorea experience.
-        </p>
+        <p>기다리는 사용자: {waitlist}명</p>
+        <p>다음 메이저 배포: {formatDate(launchDate, { dateStyle: 'long' })}</p>
+        <Button onClick={() => setWaitlist((value) => value + 5)}>
+          사전 등록 홍보하기
+        </Button>
       </div>
       <p className="read-the-docs">
         Boot the site with <code>pnpm --filter platform dev</code>

@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@jakorea/ui": "workspace:*",
+    "@jakorea/utils": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
