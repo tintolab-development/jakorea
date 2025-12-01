@@ -23,6 +23,7 @@ pnpm install
 | `pnpm build`      | 모든 앱 빌드                                |
 | `pnpm lint`       | ESLint 검사                                 |
 | `pnpm lint:fix`   | ESLint 자동 수정                            |
+| `pnpm typecheck`  | TypeScript 타입 검사 (`tsc --noEmit`)        |
 | `pnpm format`     | Prettier 포맷팅 적용                        |
 | `pnpm format:check` | Prettier 포맷팅 여부 검사                 |
 | `pnpm test`       | 테스트 파이프라인 (추가 예정)               |
@@ -65,3 +66,8 @@ packages/
 
 - 루트 `eslint.config.js`는 모든 워크스페이스에서 공유됩니다. `pnpm lint` 혹은 개별 `pnpm --filter <workspace> lint` 실행 시 동일한 규칙이 적용됩니다.
 - 포맷팅은 `prettier.config.js`에서 정의하며 `pnpm format` 또는 `pnpm format:check`로 실행합니다.
+
+## Git Hooks
+
+- `pnpm prepare`를 실행하면 Husky 훅이 설치되며, 이후 커밋 전에 `pnpm typecheck`와 `pnpm lint`가 자동으로 실행됩니다.
+- 훅 설정은 `.husky/pre-commit`에서 수정할 수 있습니다.
