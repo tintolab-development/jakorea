@@ -1,4 +1,4 @@
-# JaKorea LMS MVP 개발 제약사항
+# JAKorea CMS MVP 개발 제약사항
 
 이 문서는 MVP 개발 시 반드시 준수해야 할 제약사항을 명시합니다.
 

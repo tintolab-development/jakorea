@@ -1,4 +1,4 @@
-# JaKorea LMS MVP 개발 로드맵
+# JAKorea CMS MVP 개발 로드맵
 
 ## 📋 MVP 범위 (Mock 데이터 기반)
 

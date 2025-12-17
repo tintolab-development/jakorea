@@ -21,7 +21,7 @@ pnpm install
 | ----------------- | ------------------------------------------- |
 | `pnpm dev`        | 필요한 모든 앱을 watch 모드로 기동          |
 | `pnpm admin`      | 관리 콘솔(Admin)만 단독으로 기동            |
-| `pnpm lms`        | 플랫폼 어드민(LMS)만 단독으로 기동           |
+| `pnpm lms`        | 플랫폼 어드민(CMS)만 단독으로 기동           |
 | `pnpm platform`   | 사용자용 플랫폼만 단독으로 기동             |
 | `pnpm build`      | 모든 앱 빌드                                |
 | `pnpm lint`       | ESLint 검사                                 |
@@ -39,7 +39,7 @@ pnpm install
 | Workspace       | Dev command                     | 설명                               |
 | --------------- | --------------------------------| ---------------------------------- |
 | `admin`         | `pnpm --filter admin dev`       | 관리 콘솔 React 앱                 |
-| `lms`           | `pnpm --filter lms dev`         | 학습 관리자(LMS) React 앱          |
+| `lms`           | `pnpm --filter lms dev`         | 학습 관리자(CMS) React 앱          |
 | `platform`      | `pnpm --filter platform dev`    | 사용자용 플랫폼 React 앱           |
 | `@jakorea/ui`   | `pnpm --filter @jakorea/ui dev` | UI 컴포넌트 패키지 TypeScript 감시 |
 | `@jakorea/utils`| `pnpm --filter @jakorea/utils dev` | 공통 유틸 패키지 TypeScript 감시 |
@@ -65,7 +65,7 @@ pnpm install
 - **빌드/미리보기**: `pnpm --filter admin build`, `pnpm --filter admin preview`.
 - **품질 검사**: `pnpm --filter admin lint`, `pnpm --filter admin typecheck`.
 
-### LMS (플랫폼 어드민)
+### CMS (플랫폼 어드민)
 
 - **위치**: `apps/lms`
 - **환경 변수 예시**:
@@ -100,7 +100,7 @@ pnpm install
 ```
 apps/
   admin/      # 관리 콘솔 애플리케이션
-  lms/        # 학습 관리자(LMS) 애플리케이션
+  lms/        # 학습 관리자(CMS) 애플리케이션
   platform/   # 사용자용 플랫폼 애플리케이션
 packages/
   ui/         # React UI 컴포넌트 (예: Button)

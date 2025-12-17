@@ -1,4 +1,4 @@
-# JaKorea LMS 디자인 가이드라인
+# JAKorea CMS 디자인 가이드라인
 
 ## 🎨 디자인 언어 통일 원칙
 
