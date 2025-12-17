@@ -1,0 +1,71 @@
+/**
+ * Detail Page Skeleton Styles
+ */
+
+.detail-page-skeleton {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.skeleton-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.skeleton-title-section {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.skeleton-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.skeleton-section-card {
+  margin-bottom: 24px;
+  padding: 24px;
+}
+
+.skeleton-section-header {
+  margin-bottom: 24px;
+}
+
+.skeleton-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.skeleton-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .detail-page-skeleton {
+    padding: 16px;
+  }
+
+  .skeleton-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .skeleton-fields {
+    grid-template-columns: 1fr;
+  }
+}
+

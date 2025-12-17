@@ -1,0 +1,150 @@
+/**
+ * 매칭 등록/수정 폼 스타일
+ */
+
+.matching-form-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+}
+
+.matching-form-page h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.matching-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-item.full-width {
+  grid-column: 1 / -1;
+}
+
+/* 강사 후보 제안 UI */
+.candidates-section {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 12px;
+}
+
+.candidates-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.candidates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.candidate-card {
+  padding: 16px;
+}
+
+.candidate-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.candidate-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.candidate-rank {
+  font-weight: 600;
+  color: var(--md-sys-color-primary, #6750a4);
+  font-size: 14px;
+  min-width: 32px;
+}
+
+.candidate-name {
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  font-size: 16px;
+  flex: 1;
+}
+
+.candidate-score {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-weight: 500;
+}
+
+.candidate-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reason-badge {
+  padding: 4px 8px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.reason-badge:has-text('⚠️') {
+  background-color: var(--md-sys-color-error-container, #f9dedc);
+  color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+

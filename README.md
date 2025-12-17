@@ -20,6 +20,9 @@ pnpm install
 | Script            | 설명                                        |
 | ----------------- | ------------------------------------------- |
 | `pnpm dev`        | 필요한 모든 앱을 watch 모드로 기동          |
+| `pnpm admin`      | 관리 콘솔(Admin)만 단독으로 기동            |
+| `pnpm lms`        | 플랫폼 어드민(LMS)만 단독으로 기동           |
+| `pnpm platform`   | 사용자용 플랫폼만 단독으로 기동             |
 | `pnpm build`      | 모든 앱 빌드                                |
 | `pnpm lint`       | ESLint 검사                                 |
 | `pnpm lint:fix`   | ESLint 자동 수정                            |
@@ -42,6 +45,55 @@ pnpm install
 | `@jakorea/utils`| `pnpm --filter @jakorea/utils dev` | 공통 유틸 패키지 TypeScript 감시 |
 
 앱 번들은 `apps/<name>/dist`에, 패키지 빌드 결과는 `packages/<name>/dist`에 생성됩니다.
+
+## 앱별 환경 & 실행 방법
+
+세 애플리케이션은 모두 Vite + React + TypeScript 스택을 공유합니다. 공통으로 Node.js 18 이상, pnpm 9.12.3, 최신 Chrome/Edge 브라우저가 필요합니다. 환경 변수는 각 앱의 디렉터리에 위치한 `.env`, `.env.local`, `.env.development` 등에서 `VITE_` prefix로 선언해야 브라우저 번들에 노출됩니다.
+
+### Admin (관리 콘솔)
+
+- **위치**: `apps/admin`
+- **환경 변수 예시**:
+
+  ```bash
+  # apps/admin/.env.local
+  VITE_ADMIN_API_BASE_URL=https://api.dev.jakorea.local
+  VITE_ADMIN_SSO_CLIENT_ID=jakorea-admin-dev
+  ```
+
+- **로컬 실행**: `pnpm admin` (또는 `pnpm --filter admin dev`) → 기본 포트 `5173`.
+- **빌드/미리보기**: `pnpm --filter admin build`, `pnpm --filter admin preview`.
+- **품질 검사**: `pnpm --filter admin lint`, `pnpm --filter admin typecheck`.
+
+### LMS (플랫폼 어드민)
+
+- **위치**: `apps/lms`
+- **환경 변수 예시**:
+
+  ```bash
+  # apps/lms/.env.local
+  VITE_API_BASE_URL=https://api.dev.jakorea.local
+  VITE_SSO_CLIENT_ID=jakorea-platform-admin-dev
+  ```
+
+- **로컬 실행**: `pnpm lms` (또는 `pnpm --filter lms dev`) → 기본 포트 `5173`.
+- **빌드/미리보기**: `pnpm --filter lms build`, `pnpm --filter lms preview`.
+- **품질 검사**: `pnpm --filter lms lint`, `pnpm --filter lms typecheck`.
+
+### Platform (사용자용 플랫폼)
+
+- **위치**: `apps/platform`
+- **환경 변수 예시**:
+
+  ```bash
+  # apps/platform/.env.local
+  VITE_PLATFORM_API_BASE_URL=https://api.dev.jakorea.local
+  VITE_PUBLIC_CLIENT_ID=jakorea-platform-web
+  ```
+
+- **로컬 실행**: `pnpm platform` (또는 `pnpm --filter platform dev`) → 기본 포트 `5173`.
+- **빌드/미리보기**: `pnpm --filter platform build`, `pnpm --filter platform preview`.
+- **품질 검사**: `pnpm --filter platform lint`, `pnpm --filter platform typecheck`.
 
 ## 구조
 

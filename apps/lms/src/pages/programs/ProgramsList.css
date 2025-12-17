@@ -1,0 +1,308 @@
+/**
+ * 프로그램 목록 페이지 스타일
+ * 디자인 가이드라인 준수, UI shifting 방지
+ */
+
+.programs-list-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 48px;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.filters {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0 !important;
+    padding: 12px 16px !important;
+    background-color: var(--md-sys-color-surface-container, #f7f2fa) !important;
+    border-radius: 12px !important;
+    min-height: 80px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    position: relative !important;
+    /* stacking context 생성하여 드롭다운 메뉴 겹침 방지 */
+    isolation: isolate !important;
+    z-index: 1 !important;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 56px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    box-sizing: border-box;
+    position: relative;
+    /* 겹침 방지: 각 필터 그룹을 독립적인 stacking context로 생성 */
+    isolation: isolate;
+    z-index: 1;
+    /* 드롭다운 메뉴가 다른 요소 위에 표시되도록 */
+    overflow: visible;
+    /* 모든 필터 그룹의 상단 정렬을 보장 */
+    align-self: flex-start;
+    margin-right: 30px;
+}
+
+/* Select가 있는 필터 그룹은 더 높은 z-index */
+.filter-group:has(md-outlined-select[open]) {
+    z-index: 1001;
+    /* 열린 필터 그룹의 드롭다운이 다른 필터 위에 표시되도록 */
+}
+
+.filters .filter-group:last-child {
+    margin-right: 0;
+}
+
+/* 검색 필드: 더 넓게 */
+.filter-group:first-child {
+    width: 280px;
+    min-width: 280px;
+    max-width: 360px;
+    flex: 0 0 280px;
+}
+
+/* Select 필드: 고정 너비로 겹침 방지 */
+.filter-group:not(:first-child) {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    flex: 0 0 180px;
+}
+
+/* 인풋 필드 일관된 크기 및 정렬 */
+.filter-group md-outlined-text-field,
+.filter-group md-filled-text-field,
+.filter-group md-outlined-select {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    /* 모든 필터 요소의 높이를 일관되게 */
+    min-height: 56px !important;
+}
+
+/* 필터 영역 내에서 레이블이 없는 Select 요소 숨기기 */
+.filters md-outlined-select:not([label]):not([data-label]),
+.filters md-outlined-select[label=''],
+.filters md-outlined-select[data-label=''] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* 빈 필터 그룹 숨기기 */
+.filters .filter-group:empty,
+.filters .filter-group:not(:has(md-outlined-select)):not(:has(md-outlined-text-field)):not( :has(md-filled-text-field)) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* 필터 그룹 개수 제한 (최대 5개만 표시: 검색 + 스폰서 + 유형 + 형태 + 상태) */
+.filters .filter-group:nth-child(n + 6) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+.error-message {
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-error-container, #f9dedc);
+    color: var(--md-sys-color-on-error-container, #410e0b);
+    border-radius: 4px;
+    min-height: 44px;
+}
+
+.table-container {
+    min-height: 600px;
+    /* UI shifting 방지 */
+    overflow-x: auto;
+    position: relative;
+    z-index: 0;
+    /* Select 메뉴가 테이블 위에 표시되도록 */
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--md-sys-color-surface, #fffbfe);
+    table-layout: fixed;
+    /* 컬럼 너비 고정 */
+}
+
+.data-table thead {
+    background-color: var(--md-sys-color-surface-container-highest, #e6e1e5);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.data-table th {
+    padding: 16px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    min-height: 48px;
+    /* 헤더 최소 높이 */
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    cursor: default;
+}
+
+.data-table th.sortable {
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.data-table th.sortable:hover {
+    background-color: var(--md-sys-color-surface-container, #f7f2fa);
+}
+
+.sort-indicator {
+    margin-left: 8px;
+    color: var(--md-sys-color-primary, #6750a4);
+    font-weight: 600;
+}
+
+.data-table td {
+    padding: 16px;
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    min-height: 52px;
+    /* 행 최소 높이 */
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* 컬럼 너비 조정 */
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+    width: 20%;
+    /* 제목 */
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+    width: 12%;
+    /* 스폰서 */
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+    width: 8%;
+    /* 유형 */
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+    width: 8%;
+    /* 형태 */
+}
+
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
+    width: 8%;
+    /* 상태 */
+}
+
+.data-table th:nth-child(6),
+.data-table td:nth-child(6) {
+    width: 12%;
+    /* 시작일 */
+}
+
+.data-table th:nth-child(7),
+.data-table td:nth-child(7) {
+    width: 8%;
+    /* 회차 */
+}
+
+.data-table th:nth-child(8),
+.data-table td:nth-child(8) {
+    width: 14%;
+    /* 작업 */
+}
+
+.table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 테이블 내부 버튼 크기 통일 */
+.table-actions md-filled-button,
+.table-actions md-outlined-button,
+.table-actions md-text-button {
+    height: 40px;
+    min-height: 40px;
+    white-space: nowrap;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 24px;
+    text-align: center;
+    min-height: 400px;
+}
+
+.empty-state p {
+    font-size: 16px;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    margin-bottom: 24px;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 0;
+    min-height: 72px;
+    /* UI shifting 방지 */
+}

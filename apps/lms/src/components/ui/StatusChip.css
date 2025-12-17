@@ -1,0 +1,66 @@
+/**
+ * 상태 표시용 Chip 스타일
+ * M3 디자인 시스템 기반 상태별 백그라운드 색상
+ */
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem; /* M3 label-small */
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  min-height: 24px;
+}
+
+/* 활성 상태 */
+.status-chip.status-active {
+  background-color: var(--status-active-bg);
+  color: var(--status-active-text);
+}
+
+/* 대기중/검토중 상태 */
+.status-chip.status-pending {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
+}
+
+/* 승인/확정 상태 */
+.status-chip.status-approved {
+  background-color: var(--status-approved-bg);
+  color: var(--status-approved-text);
+}
+
+/* 지급완료 상태 */
+.status-chip.status-paid {
+  background-color: var(--status-paid-bg);
+  color: var(--status-paid-text);
+}
+
+/* 비활성 상태 */
+.status-chip.status-inactive {
+  background-color: var(--status-inactive-bg);
+  color: var(--status-inactive-text);
+}
+
+/* 거절 상태 */
+.status-chip.status-rejected {
+  background-color: var(--status-rejected-bg);
+  color: var(--status-rejected-text);
+}
+
+/* 취소 상태 */
+.status-chip.status-cancelled {
+  background-color: var(--status-cancelled-bg);
+  color: var(--status-cancelled-text);
+}
+
+/* 산출완료 상태 */
+.status-chip.status-calculated {
+  background-color: var(--status-calculated-bg);
+  color: var(--status-calculated-text);
+}
+

@@ -1,0 +1,198 @@
+/**
+ * 정산 제출 폼 페이지 스타일
+ * Phase 6: 구글폼 스타일 UI
+ */
+
+.settlement-submission-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--md-sys-color-on-surface);
+}
+
+.form-description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.settlement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-section {
+  padding: 24px;
+}
+
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.form-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.program-info {
+  padding: 16px;
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.program-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.info-item div {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.total-amount-section {
+  padding: 24px;
+  background-color: var(--md-sys-color-primary-container);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.total-amount-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-primary-container);
+  margin-bottom: 8px;
+}
+
+.total-amount-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.form-success {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.success-card {
+  padding: 48px;
+  text-align: center;
+  max-width: 500px;
+}
+
+.success-content h2 {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+}
+
+.success-content p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.redirect-message {
+  margin-top: 24px !important;
+  font-size: 12px;
+  color: var(--md-sys-color-primary);
+}
+
+.accommodation-fee-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.accommodation-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  user-select: none;
+}
+
+.accommodation-fee-display {
+  margin-top: 8px;
+}
+

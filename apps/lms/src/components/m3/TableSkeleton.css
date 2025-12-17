@@ -1,0 +1,49 @@
+/**
+ * Table Skeleton 스타일
+ * 실제 테이블과 동일한 높이/패딩을 유지하여 UI shifting 방지
+ */
+
+.table-skeleton-container {
+  width: 100%;
+  overflow-x: auto;
+  min-height: 600px; /* 실제 테이블과 동일한 최소 높이 */
+  display: flex;
+  flex-direction: column;
+}
+
+.table-skeleton {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--md-sys-color-surface, #fffbfe);
+  table-layout: fixed; /* 레이아웃 안정성 향상 */
+}
+
+.table-skeleton thead {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container, #f7f2fa);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table-skeleton th {
+  padding: 12px 16px; /* 실제 테이블과 동일한 패딩 */
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  height: 48px; /* 실제 테이블 헤더와 동일한 높이 */
+  box-sizing: border-box;
+}
+
+.table-skeleton td {
+  padding: 12px 16px; /* 실제 테이블과 동일한 패딩 */
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  height: 56px; /* 실제 테이블 행과 동일한 높이 */
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.table-skeleton tbody tr:last-child td {
+  border-bottom: none;
+}

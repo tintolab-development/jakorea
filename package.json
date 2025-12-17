@@ -1,31 +1,34 @@
 {
-  "name": "jakorea",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@9.12.3",
-  "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "lint:fix": "pnpm lint -- --fix",
-    "typecheck": "turbo typecheck",
-    "test": "turbo test",
-    "clean": "turbo clean",
-    "format": "prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --write",
-    "format:check": "prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --check",
-    "prepare": "husky"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "husky": "^9.1.7",
-    "prettier": "^3.7.3",
-    "turbo": "^2.6.1",
-    "typescript-eslint": "^8.46.4"
-  }
+    "name": "jakorea",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "packageManager": "pnpm@9.12.3",
+    "scripts": {
+        "dev": "turbo dev",
+        "build": "turbo build",
+        "lint": "turbo lint",
+        "lint:fix": "pnpm lint -- --fix",
+        "typecheck": "turbo typecheck",
+        "test": "turbo test",
+        "clean": "turbo clean",
+        "format": "prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --write",
+        "format:check": "prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --check",
+        "prepare": "husky",
+        "admin": "pnpm --filter admin dev",
+        "lms": "pnpm --filter lms dev",
+        "platform": "pnpm --filter platform dev"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.1",
+        "eslint": "^9.39.1",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-react-hooks": "^7.0.1",
+        "eslint-plugin-react-refresh": "^0.4.24",
+        "globals": "^16.5.0",
+        "husky": "^9.1.7",
+        "prettier": "^3.7.3",
+        "turbo": "^2.6.1",
+        "typescript-eslint": "^8.46.4"
+    }
 }

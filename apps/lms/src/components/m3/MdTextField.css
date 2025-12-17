@@ -1,0 +1,29 @@
+/**
+ * Material Design 3 TextField 스타일 개선
+ * 인풋 필드 높이 최적화
+ */
+
+/* M3 TextField 기본 높이 조정 */
+md-outlined-text-field,
+md-filled-text-field {
+    /* 컨테이너 높이 축소 (기본: 56px → 44px) */
+    --md-outlined-text-field-container-height: 44px;
+    --md-filled-text-field-container-height: 44px;
+
+    /* 폰트 크기 조정 */
+    --md-outlined-text-field-input-text-size: 14px;
+    --md-filled-text-field-input-text-size: 14px;
+
+    /* 레이블 크기 */
+    --md-outlined-text-field-label-text-size: 14px;
+    --md-filled-text-field-label-text-size: 14px;
+
+    /* 지지 텍스트 크기 */
+    --md-outlined-text-field-supporting-text-size: 12px;
+    --md-filled-text-field-supporting-text-size: 12px;
+
+    /* 기본 레이아웃 보장 */
+    display: inline-flex;
+    width: 100%;
+    box-sizing: border-box;
+}

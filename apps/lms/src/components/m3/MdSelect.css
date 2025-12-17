@@ -1,0 +1,77 @@
+/**
+ * Material Design 3 Select 스타일
+ * TextField와 동일한 높이로 통일, 겹침 문제 방지
+ * 여러 Select가 있을 때 겹침 방지
+ */
+
+/* M3 Select 기본 높이 조정 */
+md-outlined-select {
+  /* 컨테이너 높이 TextField와 동일하게 (44px) */
+  --md-outlined-select-container-height: 44px;
+  
+  /* 폰트 크기 */
+  --md-outlined-select-label-text-size: 14px;
+  --md-outlined-select-input-text-size: 14px;
+  
+  /* 기본 레이아웃 보장 */
+  display: inline-flex;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  /* 겹침 방지: isolation으로 stacking context 생성 */
+  isolation: isolate;
+  z-index: 1;
+  /* 드롭다운 메뉴가 다른 요소 위에 표시되도록 */
+  overflow: visible;
+}
+
+/* Select가 열릴 때 다른 요소 위에 표시되도록 */
+md-outlined-select[open] {
+  z-index: 1002;
+  /* 열릴 때 isolation 유지 */
+  isolation: isolate;
+  /* 드롭다운 메뉴가 다른 모든 요소 위에 표시되도록 */
+}
+
+/* M3 Select의 드롭다운 메뉴 (포털로 렌더링될 수 있음) */
+md-menu,
+md-select-menu {
+  z-index: 1003 !important;
+  /* 드롭다운 메뉴가 모든 필터 위에 표시되도록 */
+}
+
+/* 레이블이 없는 Select 요소 숨기기 (렌더링 오류 방지) */
+md-outlined-select:not([label]):not([data-label]):not([label=""]):not([data-label=""]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* 필터 영역 내에서 레이블이 없거나 빈 레이블인 Select 숨기기 */
+.filters md-outlined-select:not([label]):not([data-label]),
+.filters md-outlined-select[label=""],
+.filters md-outlined-select[data-label=""] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* 필터 영역 밖에 있는 숨겨진 Select 메뉴는 표시하지 않음 */
+.filters ~ md-menu,
+.filters ~ md-select-menu {
+  display: none !important;
+}

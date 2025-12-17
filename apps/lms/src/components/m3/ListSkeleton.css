@@ -1,0 +1,58 @@
+/**
+ * List Skeleton Styles
+ */
+
+.list-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 0;
+}
+
+.skeleton-list-item {
+  padding: 16px 20px;
+}
+
+.skeleton-list-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.skeleton-list-icon {
+  flex-shrink: 0;
+}
+
+.skeleton-list-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.skeleton-list-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .list-skeleton {
+    gap: 12px;
+    padding: 16px 0;
+  }
+
+  .skeleton-list-content {
+    flex-wrap: wrap;
+  }
+
+  .skeleton-list-meta {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+

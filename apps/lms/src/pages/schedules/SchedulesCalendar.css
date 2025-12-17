@@ -1,0 +1,90 @@
+/**
+ * 일정 캘린더 페이지 스타일
+ */
+
+.schedules-calendar-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.filters {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--md-sys-color-surface-container, #f7f2fa);
+  border-radius: 12px;
+  min-height: 80px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  position: relative;
+  /* stacking context 생성하여 드롭다운 메뉴 겹침 방지 */
+  isolation: isolate;
+  z-index: 1;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 56px;
+  flex-shrink: 0;
+  flex-grow: 0;
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  flex: 0 0 200px;
+  /* 드롭다운 메뉴가 다른 요소 위에 표시되도록 */
+  overflow: visible;
+  /* 모든 필터 그룹의 상단 정렬을 보장 */
+  align-self: flex-start;
+  margin-right: 30px;
+}
+
+.filter-group:has(md-outlined-select[open]) {
+  z-index: 1001;
+  /* 열린 필터 그룹의 드롭다운이 다른 필터 위에 표시되도록 */
+}
+
+.filter-group md-outlined-select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 16px;
+}
+
+.error-message {
+  padding: 12px 16px;
+  background-color: var(--md-sys-color-error-container, #f9dedc);
+  color: var(--md-sys-color-on-error-container, #410e0b);
+  border-radius: 4px;
+  min-height: 44px;
+}

@@ -1,0 +1,36 @@
+/**
+ * 주체 유형 표시용 Chip 스타일
+ * M3 디자인 시스템 기반 주체 유형별 색상
+ */
+
+.subject-type-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem; /* M3 label-small */
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  min-height: 24px;
+}
+
+/* 학교 */
+.subject-type-chip.subject-type-school {
+  background-color: var(--md-sys-color-school-container, #b2ebec);
+  color: var(--md-sys-color-school-on-container, #001f20);
+}
+
+/* 학생 */
+.subject-type-chip.subject-type-student {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+/* 강사 */
+.subject-type-chip.subject-type-instructor {
+  background-color: var(--md-sys-color-instructor-container, #f7e648);
+  color: var(--md-sys-color-instructor-on-container, #211c00);
+}
+

@@ -1,0 +1,132 @@
+.sponsor-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-button {
+  color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.delete-button:hover {
+  background-color: var(--md-sys-color-error-container, #f9dedc);
+}
+
+.detail-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.detail-header h1 {
+  margin: 0 0 12px 0;
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.security-badge {
+  display: inline-block;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-card {
+  padding: 0;
+}
+
+.detail-card.security-card {
+  border-color: var(--md-sys-color-error-container, #f9dedc);
+}
+
+.detail-card.meta-card {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.card-content {
+  padding: 24px;
+}
+
+.card-content h2 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.detail-value.contact-info {
+  font-family: monospace;
+  padding: 8px 12px;
+  background-color: var(--md-sys-color-surface-container, #f7f2fa);
+  border-radius: 4px;
+}
+
+.detail-value.security-memo {
+  padding: 12px;
+  background-color: var(--md-sys-color-error-container, #f9dedc);
+  color: var(--md-sys-color-on-error-container, #410e0b);
+  border-radius: 4px;
+  border-left: 4px solid var(--md-sys-color-error, #ba1a1a);
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.error-message {
+  padding: 12px 16px;
+  background-color: var(--md-sys-color-error-container, #f9dedc);
+  color: var(--md-sys-color-on-error-container, #410e0b);
+  border-radius: 4px;
+}

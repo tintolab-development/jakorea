@@ -1,0 +1,244 @@
+/**
+ * Custom Button Styles
+ * 다양한 변형과 크기를 지원하는 버튼 스타일
+ */
+
+.custom-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 24px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+/* 크기 변형 */
+.custom-button--small {
+    height: 32px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: 16px;
+}
+
+.custom-button--medium {
+    height: 40px;
+    padding: 0 24px;
+    font-size: 14px;
+    min-width: 64px;
+}
+
+.custom-button--large {
+    height: 48px;
+    padding: 0 32px;
+    font-size: 16px;
+    min-width: 80px;
+}
+
+/* 너비 */
+.custom-button--full-width {
+    width: 100%;
+}
+
+/* Primary (Filled) */
+.custom-button--primary {
+    background-color: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-primary, #ffffff);
+}
+
+.custom-button--primary:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 85%, black);
+    box-shadow:
+        0 1px 2px 0 rgba(0, 0, 0, 0.3),
+        0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+.custom-button--primary:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 70%, black);
+}
+
+/* Secondary (Outlined) */
+.custom-button--secondary {
+    background-color: transparent;
+    color: var(--md-sys-color-primary, #6750a4);
+    border: 1px solid var(--md-sys-color-outline, #79747e);
+}
+
+.custom-button--secondary:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, transparent);
+}
+
+.custom-button--secondary:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, transparent);
+}
+
+/* Tertiary (Text) */
+.custom-button--tertiary {
+    background-color: transparent;
+    color: var(--md-sys-color-primary, #6750a4);
+}
+
+.custom-button--tertiary:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, transparent);
+}
+
+.custom-button--tertiary:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, transparent);
+}
+
+/* Danger */
+.custom-button--danger {
+    background-color: var(--md-sys-color-error, #ba1a1a);
+    color: var(--md-sys-color-on-error, #ffffff);
+}
+
+.custom-button--danger:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 85%, black);
+    box-shadow:
+        0 1px 2px 0 rgba(0, 0, 0, 0.3),
+        0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+.custom-button--danger:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 70%, black);
+}
+
+/* Success */
+.custom-button--success {
+    background-color: #4caf50;
+    color: #ffffff;
+}
+
+.custom-button--success:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, #4caf50 85%, black);
+    box-shadow:
+        0 1px 2px 0 rgba(0, 0, 0, 0.3),
+        0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+.custom-button--success:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, #4caf50 70%, black);
+}
+
+/* Warning */
+.custom-button--warning {
+    background-color: #ff9800;
+    color: #ffffff;
+}
+
+.custom-button--warning:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, #ff9800 85%, black);
+    box-shadow:
+        0 1px 2px 0 rgba(0, 0, 0, 0.3),
+        0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+.custom-button--warning:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, #ff9800 70%, black);
+}
+
+/* Ghost */
+.custom-button--ghost {
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.custom-button--ghost:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
+}
+
+.custom-button--ghost:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 12%, transparent);
+}
+
+/* Icon */
+.custom-button--icon {
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    padding: 8px;
+    min-width: auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.custom-button--icon:hover:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
+}
+
+.custom-button--icon:active:not(.custom-button--disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 12%, transparent);
+}
+
+.custom-button--icon.custom-button--small {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+}
+
+.custom-button--icon.custom-button--large {
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+}
+
+/* 비활성화 상태 */
+.custom-button--disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 로딩 상태 */
+.custom-button--loading {
+    cursor: wait;
+}
+
+.custom-button__spinner {
+    display: inline-flex;
+    align-items: center;
+    margin-right: -4px;
+    /* 아이콘과 텍스트 사이 간격 조정 */
+}
+
+.custom-button__label {
+    display: inline-flex;
+    align-items: center;
+}
+
+.custom-button__start-icon,
+.custom-button__end-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.custom-button--small .custom-button__start-icon,
+.custom-button--small .custom-button__end-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.custom-button--large .custom-button__start-icon,
+.custom-button--large .custom-button__end-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* 포커스 스타일 */
+.custom-button:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary, #6750a4);
+    outline-offset: 2px;
+}

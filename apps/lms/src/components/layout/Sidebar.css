@@ -1,0 +1,57 @@
+/**
+ * 사이드바 스타일
+ */
+
+.sidebar {
+    width: 256px;
+    background-color: var(--md-sys-color-surface-container, #f5f5f5);
+    border-right: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.sidebar-nav {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sidebar-nav-item {
+    padding: 12px 16px;
+    text-decoration: none;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    border-radius: 28px;
+    font-size: 14px;
+    font-weight: 500;
+    transition:
+        background-color 0.2s,
+        color 0.2s;
+}
+
+.sidebar-nav-item:hover {
+    background-color: var(--md-sys-color-surface-container-highest, #e6e1e5);
+}
+
+.sidebar-nav-item.active {
+    background-color: var(--md-sys-color-secondary-container, #e8def8);
+    color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* 반응형: 모바일에서는 사이드바를 숨기고 햄버거 메뉴로 전환 (향후 구현) */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 0;
+        overflow: hidden;
+        transition: width 0.3s;
+    }
+
+    .sidebar.open {
+        width: 256px;
+        position: fixed;
+        left: 0;
+        top: 56px;
+        height: calc(100vh - 56px);
+        z-index: 99;
+        background-color: var(--md-sys-color-surface, #fff);
+    }

@@ -1,0 +1,217 @@
+/**
+ * Material Design 3 Button 스타일 개선
+ * 컨텐츠에 맞게 유연하게 사이즈 조정되도록 토큰 최대화
+ * 패딩값 충분히 확보 (콘텐츠 길이에 관계없이 여유있는 여백)
+ */
+
+/* M3 버튼 기본 스타일 - 컨텐츠 대응 최적화 */
+md-filled-button,
+md-outlined-button,
+md-text-button,
+md-filled-tonal-button,
+md-elevated-button {
+    /* 높이: 최소 높이 설정하여 일관성 유지 */
+    --md-filled-button-container-height: 40px;
+    --md-outlined-button-container-height: 40px;
+    --md-text-button-container-height: 40px;
+    --md-filled-tonal-button-container-height: 40px;
+    --md-elevated-button-container-height: 40px;
+
+    /* 패딩: 좌우 패딩을 충분히 확보 (긴 텍스트에도 여유있게, 버튼이 더 넓게 보이도록) */
+    --md-filled-button-horizontal-padding: 64px;
+    --md-outlined-button-horizontal-padding: 64px;
+    --md-text-button-horizontal-padding: 24px;
+    --md-filled-tonal-button-horizontal-padding: 64px;
+    --md-elevated-button-horizontal-padding: 64px;
+
+    /* 상하 패딩 (내부 컨텐츠 여백 보장) */
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+    /* 모서리 반경 (M3 기본: 20px) */
+    --md-filled-button-container-shape: 20px;
+    --md-outlined-button-container-shape: 20px;
+    --md-text-button-container-shape: 20px;
+    --md-filled-tonal-button-container-shape: 20px;
+    --md-elevated-button-container-shape: 20px;
+
+    /* 폰트 크기 및 굵기 */
+    --md-filled-button-label-text-size: 14px;
+    --md-outlined-button-label-text-size: 14px;
+    --md-text-button-label-text-size: 14px;
+    --md-filled-tonal-button-label-text-size: 14px;
+    --md-elevated-button-label-text-size: 14px;
+
+    --md-filled-button-label-text-weight: 500;
+    --md-outlined-button-label-text-weight: 500;
+    --md-text-button-label-text-weight: 500;
+    --md-filled-tonal-button-label-text-weight: 500;
+    --md-elevated-button-label-text-weight: 500;
+
+    /* 너비: 컨텐츠에 맞게 자동 조정 */
+    width: auto !important;
+    min-width: 64px;
+    /* 최소 너비 (너무 작은 버튼 방지) */
+    max-width: none !important;
+    /* 최대 너비 제한 없음 (긴 텍스트도 표시) */
+
+    /* Flex 레이아웃: 축소 방지 및 자동 크기 조정 */
+    flex: 0 0 auto !important;
+    /* flex-grow: 0, flex-shrink: 0, flex-basis: auto */
+    flex-shrink: 0 !important;
+    /* 축소 방지 (명시적) */
+
+    /* 레이아웃: 컨텐츠 중앙 정렬 보장 */
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    /* 텍스트 처리: 컨텐츠에 맞게 확장 */
+    white-space: nowrap !important;
+    /* 기본적으로 한 줄 (긴 텍스트는 버튼이 자동 확장) */
+
+    /* 박스 사이징: 패딩 포함 크기 계산 */
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+/* Text 버튼은 패딩을 조금 줄임 */
+md-text-button {
+    --md-text-button-horizontal-padding: 24px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* 버튼 내부 컨테이너에 직접 패딩 적용 시도 (Shadow DOM 내부 구조 대응) */
+md-filled-button::part(button),
+md-outlined-button::part(button),
+md-text-button::part(button),
+md-filled-tonal-button::part(button),
+md-elevated-button::part(button) {
+    padding-left: 64px !important;
+    padding-right: 64px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+md-text-button::part(button) {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+}
+
+/* 버튼 내부 레이블 영역 */
+md-filled-button .label,
+md-outlined-button .label,
+md-text-button .label,
+md-filled-tonal-button .label,
+md-elevated-button .label,
+md-filled-button slot:not([name]),
+md-outlined-button slot:not([name]),
+md-text-button slot:not([name]),
+md-filled-tonal-button slot:not([name]),
+md-elevated-button slot:not([name]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: ellipsis;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* 아이콘 슬롯이 있는 경우 간격 조정 */
+md-filled-button slot[name='icon']+slot:not([name]),
+md-outlined-button slot[name='icon']+slot:not([name]),
+md-text-button slot[name='icon']+slot:not([name]),
+md-filled-tonal-button slot[name='icon']+slot:not([name]),
+md-elevated-button slot[name='icon']+slot:not([name]) {
+    margin-inline-start: 8px;
+}
+
+/* 버튼 간격 개선 */
+md-filled-button+md-filled-button,
+md-outlined-button+md-outlined-button,
+md-text-button+md-text-button,
+md-filled-tonal-button+md-filled-tonal-button,
+md-elevated-button+md-elevated-button {
+    margin-left: 8px;
+}
+
+/* Disabled 상태 스타일 */
+md-filled-button[disabled],
+md-outlined-button[disabled],
+md-text-button[disabled],
+md-filled-tonal-button[disabled],
+md-elevated-button[disabled] {
+    cursor: not-allowed;
+    opacity: 0.38;
+    pointer-events: none;
+}
+
+/* Disabled 상태 토큰 */
+md-filled-button[disabled] {
+    --md-filled-button-disabled-container-opacity: 0.12;
+    --md-filled-button-disabled-label-text-opacity: 0.38;
+}
+
+md-outlined-button[disabled] {
+    --md-outlined-button-disabled-outline-opacity: 0.12;
+    --md-outlined-button-disabled-label-text-opacity: 0.38;
+}
+
+md-text-button[disabled] {
+    --md-text-button-disabled-label-text-opacity: 0.38;
+}
+
+md-filled-tonal-button[disabled] {
+    --md-filled-tonal-button-disabled-container-opacity: 0.12;
+    --md-filled-tonal-button-disabled-label-text-opacity: 0.38;
+}
+
+md-elevated-button[disabled] {
+    --md-elevated-button-disabled-container-opacity: 0.12;
+    --md-elevated-button-disabled-label-text-opacity: 0.38;
+}
+
+/* Focus 상태 개선 (접근성) */
+md-filled-button:focus-visible,
+md-outlined-button:focus-visible,
+md-text-button:focus-visible,
+md-filled-tonal-button:focus-visible,
+md-elevated-button:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary, #6750a4);
+    outline-offset: 2px;
+}
+
+/* 호버 상태: 시각적 피드백 개선 */
+md-filled-button:hover:not([disabled]),
+md-outlined-button:hover:not([disabled]),
+md-text-button:hover:not([disabled]),
+md-filled-tonal-button:hover:not([disabled]),
+md-elevated-button:hover:not([disabled]) {
+    cursor: pointer;
+}
+
+md-filled-button,
+md-outlined-button,
+md-text-button,
+md-filled-tonal-button,
+md-elevated-button {
+    text-decoration: none !important;
+}
+
+md-filled-button::part(button),
+md-outlined-button::part(button),
+md-text-button::part(button),
+md-filled-tonal-button::part(button),
+md-elevated-button::part(button),
+md-filled-button::part(label),
+md-outlined-button::part(label),
+md-text-button::part(label),
+md-filled-tonal-button::part(label),
+md-elevated-button::part(label) {
+    text-decoration: none !important;
+}

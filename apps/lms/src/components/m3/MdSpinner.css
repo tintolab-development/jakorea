@@ -1,0 +1,48 @@
+/**
+ * Material Design 3 Spinner Styles
+ */
+
+.md-spinner {
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.md-spinner__circle {
+  width: 100%;
+  height: 100%;
+  animation: md-spinner-rotate 1.4s linear infinite;
+}
+
+.md-spinner__path {
+  stroke: var(--md-sys-color-primary, #6750a4);
+  stroke-linecap: round;
+  stroke-dasharray: 80px, 200px;
+  stroke-dashoffset: 0;
+  animation: md-spinner-dash 1.4s ease-in-out infinite;
+}
+
+@keyframes md-spinner-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes md-spinner-dash {
+  0% {
+    stroke-dasharray: 1px, 200px;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 100px, 200px;
+    stroke-dashoffset: -15px;
+  }
+  100% {
+    stroke-dasharray: 100px, 200px;
+    stroke-dashoffset: -125px;
+  }
+}
+

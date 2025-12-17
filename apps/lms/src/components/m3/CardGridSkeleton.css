@@ -1,0 +1,47 @@
+/**
+ * Card Grid Skeleton Styles
+ */
+
+.card-grid-skeleton {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    padding: 24px 0;
+}
+
+.skeleton-card {
+    padding: 20px;
+    min-height: 200px;
+}
+
+.skeleton-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skeleton-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.skeleton-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+@media (max-width: 768px) {
+    .card-grid-skeleton {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px 0;
+    }
+}

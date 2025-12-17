@@ -1,0 +1,130 @@
+/**
+ * Material Design 3 File Upload 스타일
+ * Phase 6: 구글폼 스타일 파일 업로드 UI
+ */
+
+.md-file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.md-file-upload-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 4px;
+}
+
+.required-mark {
+  color: var(--md-sys-color-error);
+  margin-left: 4px;
+}
+
+.md-file-upload-area {
+  border: 2px dashed var(--md-sys-color-outline-variant);
+  border-radius: 8px;
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  background-color: var(--md-sys-color-surface);
+  transition: all 0.2s ease;
+}
+
+.md-file-upload-area:hover {
+  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface-container);
+}
+
+.md-file-upload-area.drag-active {
+  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-primary-container);
+  border-style: solid;
+}
+
+.md-file-upload-area.error {
+  border-color: var(--md-sys-color-error);
+  background-color: var(--md-sys-color-error-container);
+}
+
+.md-file-upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.md-file-upload-content svg {
+  color: var(--md-sys-color-primary);
+  opacity: 0.7;
+}
+
+.md-file-upload-text {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.link-text {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+}
+
+.md-file-upload-hint {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.md-file-upload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.md-file-upload-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-file-upload-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.md-file-upload-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-file-upload-item-size {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md-file-upload-error {
+  font-size: 12px;
+  color: var(--md-sys-color-error);
+  margin-top: 4px;
+}
+
+.md-file-upload-helper {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 4px;
+}
+

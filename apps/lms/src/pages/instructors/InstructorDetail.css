@@ -1,0 +1,98 @@
+/**
+ * 강사 상세 페이지 스타일 (M3 디자인 시스템)
+ */
+
+.instructor-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-button {
+  --md-outlined-button-outline-color: var(--md-sys-color-error, #ba1a1a);
+  --md-outlined-button-label-text-color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.instructor-detail-page h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.detail-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-card {
+  padding: 0;
+}
+
+.card-content {
+  padding: 24px;
+}
+
+.card-content h2 {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-item label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  padding: 8px 0;
+}
+
+.specialty-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.loading,
+.error-message {
+  padding: 48px;
+  text-align: center;
+}
+
+.error-message {
+  background-color: var(--md-sys-color-error-container, #f9dedc);
+  color: var(--md-sys-color-on-error-container, #410e0b);
+  border-radius: 4px;
+}

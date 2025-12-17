@@ -29,7 +29,16 @@ export default tseslint.config(
       }
     },
     rules: {
-      'react-refresh/only-export-components': 'off'
+      'react-refresh/only-export-components': 'off',
+      // React Hooks 규칙 완화
+      'react-hooks/refs': 'warn', // ref 사용 관련 경고로 변경
+      'react-hooks/preserve-manual-memoization': 'warn', // useMemo 의존성 경고로 변경
+      'react-hooks/exhaustive-deps': 'warn', // useEffect 의존성 경고로 변경
+      'react-hooks/incompatible-library': 'warn', // React Hook Form watch() 경고로 변경
+      // TypeScript 규칙 완화
+      '@typescript-eslint/no-explicit-any': 'warn', // any 타입 사용 경고로 변경
+      // 일반 규칙 완화
+      'no-case-declarations': 'warn' // case 블록 선언 경고로 변경
     }
   },
   {

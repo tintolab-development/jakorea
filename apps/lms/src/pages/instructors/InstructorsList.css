@@ -1,0 +1,344 @@
+/**
+ * 강사 목록 페이지 스타일
+ * UI shifting 방지를 위한 최소 높이 설정 포함
+ */
+
+.instructors-list-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 48px;
+    /* 헤더 영역 최소 높이 */
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+.create-button {
+    padding: 12px 24px;
+    background-color: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-primary, #ffffff);
+    border: none;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.create-button:hover {
+    background-color: var(--md-sys-color-primary-container, #eaddff);
+    color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.filters {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-surface-container, #f7f2fa);
+    border-radius: 12px;
+    min-height: 80px;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    position: relative;
+    /* stacking context 생성하여 드롭다운 메뉴 겹침 방지 */
+    isolation: isolate;
+    z-index: 1;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 56px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    box-sizing: border-box;
+    position: relative;
+    /* 겹침 방지: 각 필터 그룹을 독립적인 stacking context로 생성 */
+    isolation: isolate;
+    z-index: 1;
+    /* 드롭다운 메뉴가 다른 요소 위에 표시되도록 */
+    overflow: visible;
+    /* 모든 필터 그룹의 상단 정렬을 보장 */
+    align-self: flex-start;
+    margin-right: 30px;
+}
+
+/* Select가 있는 필터 그룹은 더 높은 z-index */
+.filter-group:has(md-outlined-select[open]) {
+    z-index: 1001;
+    /* 열린 필터 그룹의 드롭다운이 다른 필터 위에 표시되도록 */
+}
+
+/* 검색 필드: 더 넓게 */
+.filter-group:first-child {
+    width: 280px;
+    min-width: 280px;
+    max-width: 360px;
+    flex: 0 0 280px;
+}
+
+/* Select 필드: 고정 너비로 겹침 방지 */
+.filter-group:not(:first-child) {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    flex: 0 0 180px;
+}
+
+/* 인풋 필드 일관된 크기 및 정렬 */
+.filter-group md-outlined-text-field,
+.filter-group md-filled-text-field,
+.filter-group md-outlined-select {
+    width: 100%;
+    box-sizing: border-box;
+    /* 모든 필터 요소의 높이를 일관되게 */
+    min-height: 56px;
+}
+
+.filter-input,
+.filter-select {
+    padding: 8px 12px;
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: var(--md-sys-color-surface, #fffbfe);
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.error-message {
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-error-container, #f9dedc);
+    color: var(--md-sys-color-on-error-container, #410e0b);
+    border-radius: 4px;
+    min-height: 44px;
+    /* 에러 메시지 최소 높이 */
+    display: flex;
+    align-items: center;
+}
+
+/* 테이블 컨테이너 - UI shifting 방지를 위한 최소 높이 설정 */
+.table-container {
+    overflow-x: auto;
+    min-height: 600px;
+    /* 8개 행 기준 최소 높이 (헤더 48px + 행 8개 * 68px + 여유) */
+    display: flex;
+    flex-direction: column;
+}
+
+.loading {
+    padding: 48px;
+    text-align: center;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    min-height: 600px;
+    /* 테이블과 동일한 최소 높이 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--md-sys-color-surface, #fffbfe);
+    table-layout: fixed;
+    /* 레이아웃 안정성 향상 */
+}
+
+.data-table thead {
+    background-color: var(--md-sys-color-surface-container, #f7f2fa);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.data-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    height: 48px;
+    /* 헤더 고정 높이 */
+    box-sizing: border-box;
+}
+
+.data-table th.sortable {
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.data-table th.sortable:hover {
+    background-color: var(--md-sys-color-surface-container-highest, #e6e1e5);
+}
+
+.sort-indicator {
+    margin-left: 8px;
+    font-size: 14px;
+    display: inline-block;
+}
+
+.data-table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    height: 56px;
+    /* 행 고정 높이 (내용이 적어도 일정한 높이 유지) */
+    box-sizing: border-box;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.data-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--md-sys-color-surface-container, #f7f2fa);
+}
+
+.data-table tbody tr .empty-state {
+    padding: 0;
+    height: auto;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    min-height: 500px;
+    /* 빈 상태 최소 높이 (테이블 영역 고려) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.action-button {
+    padding: 6px 12px;
+    background-color: transparent;
+    color: var(--md-sys-color-primary, #6750a4);
+    border: 1px solid var(--md-sys-color-primary, #6750a4);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-button:hover {
+    background-color: var(--md-sys-color-primary-container, #eaddff);
+}
+
+/* 페이지네이션 영역 - UI shifting 방지 및 중앙 정렬 */
+.pagination-wrapper {
+    min-height: 64px;
+    /* 페이지네이션 영역 최소 높이 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.pagination {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    width: 100%;
+    min-height: 64px;
+    gap: 16px;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    white-space: nowrap;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-button {
+    padding: 8px 16px;
+    background-color: transparent;
+    color: var(--md-sys-color-primary, #6750a4);
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: var(--md-sys-color-surface-container, #f7f2fa);
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-page {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.pagination-size {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-size label {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.pagination-size-select {
+    padding: 6px 12px;
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: var(--md-sys-color-surface, #fffbfe);
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
