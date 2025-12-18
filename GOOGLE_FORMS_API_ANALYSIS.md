@@ -55,3 +55,4 @@
 - **경로**: `/settlements/submit` 또는 `/instructors/settlements/submit`
 - **접근**: 강사가 자신의 정산 정보를 제출하는 페이지
 
+

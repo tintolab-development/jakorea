@@ -20,3 +20,4 @@ export const schoolSchema = z.object({
 
 export type SchoolFormData = z.infer<typeof schoolSchema>
 
+

@@ -96,19 +96,28 @@ export default function SettlementDetail() {
   const handleDownloadExcel = async () => {
     if (!id) return
 
+    let url: string | null = null
+    let link: HTMLAnchorElement | null = null
+
     try {
       const blob = await generateSettlementExcel(id)
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
+      url = window.URL.createObjectURL(blob)
+      link = document.createElement('a')
       link.href = url
       link.download = `정산서_${settlement?.id || id}_${new Date().toISOString().split('T')[0]}.xlsx`
       document.body.appendChild(link)
       link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
     } catch (err) {
       alert('정산 문서 다운로드에 실패했습니다.')
       console.error(err)
+    } finally {
+      // 리소스 정리
+      if (link && document.body.contains(link)) {
+        document.body.removeChild(link)
+      }
+      if (url) {
+        window.URL.revokeObjectURL(url)
+      }
     }
   }
 

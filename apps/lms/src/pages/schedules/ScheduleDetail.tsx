@@ -62,9 +62,14 @@ export default function ScheduleDetail() {
             return null
           }
         })
-      ).then(results => {
-        setRelatedConflicts(results.filter((item): item is { schedule: Schedule; message: string } => item !== null))
-      })
+      )
+        .then(results => {
+          setRelatedConflicts(results.filter((item): item is { schedule: Schedule; message: string } => item !== null))
+        })
+        .catch(error => {
+          console.error('충돌 일정 조회 중 오류 발생:', error)
+          setRelatedConflicts([])
+        })
     }
   }, [schedule, id, detectConflicts])
 

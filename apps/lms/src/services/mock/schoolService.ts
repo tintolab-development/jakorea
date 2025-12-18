@@ -173,3 +173,4 @@ export async function getRegions(): Promise<string[]> {
   return Array.from(new Set(mockSchools.map(s => s.region))).sort()
 }
 
+

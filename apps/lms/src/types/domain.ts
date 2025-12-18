@@ -177,3 +177,4 @@ export interface Settlement {
   createdAt: DateValue
   updatedAt: DateValue
 }
+
