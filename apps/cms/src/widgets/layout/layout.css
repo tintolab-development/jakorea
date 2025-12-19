@@ -1,0 +1,11 @@
+.app-layout {
+  min-height: 100vh;
+  min-width: 1920px;
+}
+
+.layout-content {
+  margin: 24px;
+  padding: 24px;
+  background: #fff;
+  min-height: calc(100vh - 48px);
+}

@@ -1,0 +1,47 @@
+/**
+ * 도메인별 색상 Variation CSS 변수
+ * 디자이너가 색상을 다양하게 조정할 수 있도록 CSS 변수로 관리
+ */
+
+:root {
+  /* 스폰서 관련 색상 variation */
+  --color-sponsor: #ff7a45;
+  --color-sponsor-light: #fff1e8;
+  --color-sponsor-dark: #d4380d;
+
+  /* 학교 관련 색상 variation */
+  --color-school: #13c2c2;
+  --color-school-light: #e6fffb;
+  --color-school-dark: #08979c;
+
+  /* 강사 관련 색상 variation */
+  --color-instructor: #722ed1;
+  --color-instructor-light: #f9f0ff;
+  --color-instructor-dark: #531dab;
+
+  /* 프로그램 관련 색상 variation */
+  --color-program: #2f54eb;
+  --color-program-light: #f0f5ff;
+  --color-program-dark: #1d39c4;
+
+  /* 신청 관련 색상 variation */
+  --color-application: #eb2f96;
+  --color-application-light: #fff0f6;
+  --color-application-dark: #c41d7f;
+
+  /* 일정 관련 색상 variation */
+  --color-schedule: #fa8c16;
+  --color-schedule-light: #fff7e6;
+  --color-schedule-dark: #d46b08;
+
+  /* 매칭 관련 색상 variation */
+  --color-matching: #52c41a;
+  --color-matching-light: #f6ffed;
+  --color-matching-dark: #389e0d;
+
+  /* 정산 관련 색상 variation */
+  --color-settlement: #fa541c;
+  --color-settlement-light: #fff2e8;
+  --color-settlement-dark: #d4380d;
+}
+
