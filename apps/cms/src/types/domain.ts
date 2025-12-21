@@ -178,6 +178,158 @@ export interface Settlement {
   updatedAt: DateValue
 }
 
+// To-do 타입
+export type TodoType = 'REPORT' | 'COMPLETE' | 'REVIEW' | 'SUBMIT' | 'OTHER'
+
+// To-do
+export interface Todo {
+  id: UUID
+  userId?: UUID // 사용자 ID (향후 인증 시스템 연동)
+  type: TodoType
+  label: string // To-do 제목
+  description?: string // 작업 설명
+  expectedResult?: string // 완료 후 결과 안내
+  targetUrl: string // 실행할 URL
+  priority: number // 우선순위 (낮을수록 높음)
+  completed: boolean
+  completedAt?: DateValue
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 보고서 타입
+export type ReportType = 'lecture' | 'volunteer' | 'program'
+
+// 보고서 필드 타입
+export type ReportFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select'
+
+// 보고서 필드
+export interface ReportField {
+  id: string
+  label: string
+  type: ReportFieldType
+  required: boolean
+  placeholder?: string
+  options?: Array<{ value: string; label: string }> // select 타입일 경우
+  validation?: {
+    min?: number
+    max?: number
+    pattern?: string
+  }
+}
+
+// 보고서
+export interface Report {
+  id: UUID
+  type: ReportType
+  activityId?: UUID // 강의/봉사 활동 ID
+  programId?: UUID // 프로그램 ID (프로그램 보고서일 경우)
+  fields: Record<string, string | number | DateValue> // 필드 ID를 키로 하는 값
+  submittedAt: DateValue
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 강의 상태
+export type LectureStatus = 'LECT_01' | 'LECT_02' | 'LECT_03' // 예정, 진행, 완료
+
+// 봉사 상태
+export type VolunteerStatus = 'VOL_01' | 'VOL_02' | 'VOL_03' // 예정, 진행, 완료
+
+// 다음 필수 행동 타입
+export type NextRequiredActionType = 'NONE' | 'COMPLETE' | 'REPORT'
+
+// 다음 필수 행동
+export interface NextRequiredAction {
+  type: NextRequiredActionType
+  targetUrl?: string
+}
+
+// 강의 활동
+export interface LectureActivity {
+  id: UUID
+  scheduleId: UUID
+  programId: UUID
+  instructorId: UUID
+  status: LectureStatus
+  roleDescription: string // 역할 및 수행 안내
+  nextRequiredAction: NextRequiredAction
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 봉사 활동
+export interface VolunteerActivity {
+  id: UUID
+  scheduleId: UUID
+  programId: UUID
+  volunteerId: UUID
+  status: VolunteerStatus
+  roleDescription: string // 봉사 역할 및 수행 안내
+  volunteerHoursInfo?: {
+    hours: number // 인정 봉사시간
+  }
+  nextRequiredAction: NextRequiredAction
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 사용자 주요 상태
+export type PrimaryStatus =
+  | 'APPLY_01' // 승인 대기
+  | 'APPLY_02' // 반려
+  | 'APPLY_03' // 승인 완료
+  | 'SCH_01' // 일정 예정
+  | 'SCH_02' // 일정 진행
+  | 'SCH_03' // 일정 종료
+  | 'LECT_03' // 강의 완료
+  | 'VOL_03' // 봉사 완료
+  | 'NONE' // 상태 없음
+
+// 이력 최종 상태
+export type FinalStatus = 'COMPLETED' | 'CONFIRMED' | 'CANCELLED'
+
+// 참여 역할
+export type ParticipationRole = 'INSTRUCTOR' | 'VOLUNTEER' | 'PARTICIPANT'
+
+// 정산 상태
+export type PaymentStatus = 'PAY_01' | 'PAY_02' | 'PAY_03' | 'PAY_04' // 대기, 산출, 승인, 지급 완료
+
+// 증빙 문서
+export interface Certificate {
+  id: UUID
+  title: string
+  downloadUrl: string
+  issuedAt: DateValue
+}
+
+// 사용자 이력
+export interface UserHistory {
+  id: UUID
+  programId: UUID
+  role: ParticipationRole
+  completedAt: DateValue
+  finalStatus: FinalStatus
+  // 강사인 경우
+  paymentStatus?: PaymentStatus
+  paymentAmount?: number
+  // 봉사자인 경우
+  volunteerHours?: number
+  // 공통
+  certificates?: Certificate[]
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 마이페이지 데이터
+export interface MyPageData {
+  primaryStatus: PrimaryStatus
+  reasonPublic?: string // 반려 사유 등
+  todos: Todo[] // 최대 2개
+  upcomingSchedules?: Schedule[] // 승인 완료된 일정
+  historySummary?: UserHistory[] // 최대 3개
+}
+
 
 
 

@@ -3,8 +3,8 @@
  * Phase 3.2: 프로그램별 매칭 현황
  */
 
-import { Table, Tag, Space, Button, Select, Card, Tooltip } from 'antd'
-import { EyeOutlined, CheckOutlined, CloseOutlined, UserAddOutlined } from '@ant-design/icons'
+import { Table, Tag, Space, Button, Select, Tooltip } from 'antd'
+import { EyeOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap, mockSchedulesMap } from '@/data/mock'
 import dayjs from 'dayjs'
@@ -19,7 +19,6 @@ interface MatchingListProps {
   onView: (matching: Matching) => void
   onConfirm: (matching: Matching) => void
   onCancel: (matching: Matching) => void
-  onCreate?: () => void
 }
 
 const statusLabels: Record<string, string> = {
@@ -46,7 +45,6 @@ export function MatchingList({
   onView,
   onConfirm,
   onCancel,
-  onCreate,
 }: MatchingListProps) {
   const programs = Array.from(mockProgramsMap.values())
 
@@ -168,31 +166,22 @@ export function MatchingList({
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <Space>
-            <span>프로그램 필터:</span>
-            <Select
-              value={selectedProgramId || undefined}
-              onChange={onProgramChange}
-              allowClear
-              placeholder="전체 프로그램"
-              style={{ width: 300 }}
-            >
-              {programs.map(program => (
-                <Option key={program.id} value={program.id}>
-                  {program.title}
-                </Option>
-              ))}
-            </Select>
-          </Space>
-          {onCreate && (
-            <Button type="primary" icon={<UserAddOutlined />} onClick={onCreate}>
-              매칭 등록
-            </Button>
-          )}
-        </Space>
-      </Card>
+      <Space style={{ marginBottom: 16 }}>
+        <span>프로그램 필터:</span>
+        <Select
+          value={selectedProgramId || undefined}
+          onChange={onProgramChange}
+          allowClear
+          placeholder="전체 프로그램"
+          style={{ width: 300 }}
+        >
+          {programs.map(program => (
+            <Option key={program.id} value={program.id}>
+              {program.title}
+            </Option>
+          ))}
+        </Select>
+      </Space>
 
       <Table
         dataSource={filteredMatchings}

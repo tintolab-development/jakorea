@@ -1,0 +1,244 @@
+/**
+ * 정산 목록 컴포넌트
+ * Phase 4: 테이블 + 필터
+ */
+
+import { Table, Select, Button, Space, Tag, Dropdown, Badge } from 'antd'
+import type { MenuProps } from 'antd'
+import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+import { useSettlementTable } from '../model/use-settlement-table'
+import type { Settlement } from '@/types/domain'
+import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
+
+const { Option } = Select
+
+interface SettlementListProps {
+  data: Settlement[]
+  loading?: boolean
+  onView: (settlement: Settlement) => void
+  onEdit: (settlement: Settlement) => void
+  onDelete: (settlement: Settlement) => void
+  onStatusChange: (settlement: Settlement, status: Settlement['status']) => void
+}
+
+const statusLabels: Record<string, string> = {
+  pending: '대기',
+  calculated: '산출 완료',
+  approved: '승인',
+  paid: '지급 완료',
+  cancelled: '취소',
+}
+
+const statusColors: Record<string, string> = {
+  pending: 'default',
+  calculated: 'processing',
+  approved: 'success',
+  paid: 'success',
+  cancelled: 'error',
+}
+
+export function SettlementList({
+  data,
+  loading,
+  onView,
+  onEdit,
+  onDelete,
+  onStatusChange,
+}: SettlementListProps) {
+  const { table } = useSettlementTable(data)
+
+  const programs = Array.from(mockProgramsMap.values())
+  const statuses: Settlement['status'][] = ['pending', 'calculated', 'approved', 'paid', 'cancelled']
+  const periods = Array.from(new Set(data.map(s => s.period))).sort().reverse()
+
+  const getMenuItems = (settlement: Settlement): MenuProps['items'] => [
+    {
+      key: 'view',
+      label: '상세 보기',
+      icon: <EyeOutlined />,
+      onClick: () => onView(settlement),
+    },
+    {
+      key: 'edit',
+      label: '수정',
+      icon: <EditOutlined />,
+      onClick: () => onEdit(settlement),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'status-pending',
+      label: '대기로 변경',
+      disabled: settlement.status === 'pending',
+      onClick: () => onStatusChange(settlement, 'pending'),
+    },
+    {
+      key: 'status-calculated',
+      label: '산출 완료로 변경',
+      disabled: settlement.status === 'calculated',
+      onClick: () => onStatusChange(settlement, 'calculated'),
+    },
+    {
+      key: 'status-approved',
+      label: '승인으로 변경',
+      disabled: settlement.status === 'approved',
+      onClick: () => onStatusChange(settlement, 'approved'),
+    },
+    {
+      key: 'status-paid',
+      label: '지급 완료로 변경',
+      disabled: settlement.status === 'paid',
+      onClick: () => onStatusChange(settlement, 'paid'),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'delete',
+      label: '삭제',
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => onDelete(settlement),
+    },
+  ]
+
+  return (
+    <div>
+      <Space style={{ marginBottom: 16 }} size="middle" wrap>
+        <Select
+          placeholder="상태 선택"
+          value={(table.getColumn('status')?.getFilterValue() as string) || undefined}
+          onChange={value => table.getColumn('status')?.setFilterValue(value || null)}
+          allowClear
+          style={{ width: 150 }}
+        >
+          {statuses.map(status => (
+            <Option key={status} value={status}>
+              {statusLabels[status]}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="프로그램 선택"
+          value={(table.getColumn('programId')?.getFilterValue() as string) || undefined}
+          onChange={value => table.getColumn('programId')?.setFilterValue(value || null)}
+          allowClear
+          style={{ width: 200 }}
+          showSearch
+          filterOption={(input, option) => {
+            const children = option?.children as string | string[] | undefined
+            if (typeof children === 'string') {
+              return children.toLowerCase().includes(input.toLowerCase())
+            }
+            if (Array.isArray(children)) {
+              return children.some((child: unknown) => 
+                typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
+              )
+            }
+            return false
+          }}
+        >
+          {programs.map(program => (
+            <Option key={program.id} value={program.id}>
+              {program.title}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="기간 선택"
+          value={(table.getColumn('period')?.getFilterValue() as string) || undefined}
+          onChange={value => table.getColumn('period')?.setFilterValue(value || null)}
+          allowClear
+          style={{ width: 150 }}
+        >
+          {periods.map(period => (
+            <Option key={period} value={period}>
+              {period}
+            </Option>
+          ))}
+        </Select>
+        <Button onClick={() => table.resetColumnFilters()}>필터 초기화</Button>
+      </Space>
+
+      <Table
+        dataSource={table.getRowModel().rows.map(row => row.original)}
+        columns={[
+          {
+            title: '기간',
+            dataIndex: 'period',
+            key: 'period',
+            render: (text: string) => <Tag color="blue">{text}</Tag>,
+          },
+          {
+            title: '프로그램',
+            dataIndex: 'programId',
+            key: 'programId',
+            render: (programId: string) => {
+              const program = mockProgramsMap.get(programId)
+              return program ? <Tag color="cyan">{program.title}</Tag> : '-'
+            },
+          },
+          {
+            title: '강사',
+            dataIndex: 'instructorId',
+            key: 'instructorId',
+            render: (instructorId: string) => {
+              const instructor = mockInstructorsMap.get(instructorId)
+              return instructor ? instructor.name : '-'
+            },
+          },
+          {
+            title: '상태',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status: Settlement['status']) => (
+              <Badge status={statusColors[status] as any} text={statusLabels[status]} />
+            ),
+          },
+          {
+            title: '총액',
+            dataIndex: 'totalAmount',
+            key: 'totalAmount',
+            render: (amount: number) => `${amount.toLocaleString('ko-KR')}원`,
+            sorter: (a: Settlement, b: Settlement) => a.totalAmount - b.totalAmount,
+          },
+          {
+            title: '작업',
+            key: 'action',
+            width: 100,
+            render: (_: unknown, record: Settlement) => (
+              <div onClick={(e) => e.stopPropagation()}>
+                <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
+                  <Button
+                    type="text"
+                    icon={<MoreOutlined />}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </Dropdown>
+              </div>
+            ),
+          },
+        ]}
+        rowKey="id"
+        loading={loading}
+        pagination={{
+          current: table.getState().pagination.pageIndex + 1,
+          pageSize: table.getState().pagination.pageSize,
+          total: table.getFilteredRowModel().rows.length,
+          showSizeChanger: true,
+          showTotal: (total) => `총 ${total}개`,
+          onChange: (page, pageSize) => {
+            table.setPageIndex(page - 1)
+            table.setPageSize(pageSize)
+          },
+        }}
+        onRow={(record) => ({
+          onClick: () => onView(record),
+          style: { cursor: 'pointer' },
+        })}
+      />
+    </div>
+  )
+}
+

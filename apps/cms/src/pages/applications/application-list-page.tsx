@@ -4,22 +4,25 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Button, Space, message } from 'antd'
+import { Button, Space, message, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { ApplicationList } from '@/features/application/ui/application-list'
 import { ApplicationDetailDrawer } from '@/features/application/ui/application-detail-drawer'
+import { ApplicationForm } from '@/features/application/ui/application-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import type { Application } from '@/types/domain'
+import type { ApplicationFormData } from '@/entities/application/model/schema'
 
 export function ApplicationListPage() {
-  const navigate = useNavigate()
-  const { applications, loading, fetchApplications, deleteApplication, updateStatus } = useApplicationStore()
+  const { applications, loading, fetchApplications, createApplication, updateApplication, deleteApplication, updateStatus } = useApplicationStore()
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [formModalOpen, setFormModalOpen] = useState(false)
+  const [editingApplication, setEditingApplication] = useState<Application | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null)
+  const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
     fetchApplications()
@@ -31,7 +34,39 @@ export function ApplicationListPage() {
   }
 
   const handleEdit = (application: Application) => {
-    navigate(`/applications/${application.id}/edit`)
+    setEditingApplication(application)
+    setDrawerOpen(false)
+    setFormModalOpen(true)
+  }
+
+  const handleFormSubmit = async (data: ApplicationFormData) => {
+    setFormLoading(true)
+    try {
+      if (editingApplication) {
+        await updateApplication(editingApplication.id, data)
+        message.success('신청이 수정되었습니다')
+      } else {
+        await createApplication(data)
+        message.success('신청이 등록되었습니다')
+      }
+      setFormModalOpen(false)
+      setEditingApplication(null)
+      fetchApplications()
+    } catch {
+      message.error(editingApplication ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleFormCancel = () => {
+    setFormModalOpen(false)
+    setEditingApplication(null)
+  }
+
+  const handleNewClick = () => {
+    setEditingApplication(null)
+    setFormModalOpen(true)
   }
 
   const handleDeleteClick = (application: Application) => {
@@ -78,7 +113,7 @@ export function ApplicationListPage() {
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>신청 관리</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/applications/new')}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
           신청 등록
         </Button>
       </Space>
@@ -101,7 +136,6 @@ export function ApplicationListPage() {
         }}
         onEdit={() => {
           if (selectedApplication) {
-            setDrawerOpen(false)
             handleEdit(selectedApplication)
           }
         }}
@@ -114,6 +148,22 @@ export function ApplicationListPage() {
         onStatusChange={handleStatusChangeInDrawer}
         loading={loading}
       />
+
+      <Modal
+        open={formModalOpen}
+        title={editingApplication ? '신청 수정' : '신청 등록'}
+        onCancel={handleFormCancel}
+        footer={null}
+        width={800}
+        destroyOnClose
+      >
+        <ApplicationForm
+          application={editingApplication || undefined}
+          onSubmit={handleFormSubmit}
+          onCancel={handleFormCancel}
+          loading={formLoading}
+        />
+      </Modal>
 
       <ConfirmModal
         open={deleteModalOpen}

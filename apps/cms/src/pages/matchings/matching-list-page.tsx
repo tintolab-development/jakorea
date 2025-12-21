@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Modal, message } from 'antd'
+import { Modal, message, Button, Space } from 'antd'
+import { UserAddOutlined } from '@ant-design/icons'
 import { MatchingList } from '@/features/matching/ui/matching-list'
 import { MatchingDetailDrawer } from '@/features/matching/ui/matching-detail-drawer'
 import { MatchingForm } from '@/features/matching/ui/matching-form'
@@ -130,7 +131,15 @@ export function MatchingListPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 16 }}>매칭 관리</h1>
+      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+        <h1 style={{ margin: 0 }}>매칭 관리</h1>
+        <Button type="primary" icon={<UserAddOutlined />} onClick={() => {
+          setEditingMatching(null)
+          setFormModalOpen(true)
+        }}>
+          매칭 등록
+        </Button>
+      </Space>
 
       <MatchingList
         matchings={matchings}
@@ -161,10 +170,6 @@ export function MatchingListPage() {
         }
             },
           })
-        }}
-        onCreate={() => {
-          setEditingMatching(null)
-          setFormModalOpen(true)
         }}
       />
 
