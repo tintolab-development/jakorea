@@ -104,3 +104,6 @@ export function SchoolList({ data, loading }: SchoolListProps) {
   )
 }
 
+
+
+

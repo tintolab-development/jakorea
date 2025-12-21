@@ -106,3 +106,6 @@ export function useApplicationTable(data: Application[]) {
   return { table, columnFilters, pagination }
 }
 
+
+
+

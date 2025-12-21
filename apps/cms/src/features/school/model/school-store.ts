@@ -96,3 +96,6 @@ export const useSchoolStore = create<SchoolState>(set => ({
   clearError: () => set({ error: null }),
 }))
 
+
+
+

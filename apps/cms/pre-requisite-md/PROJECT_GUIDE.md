@@ -2,6 +2,9 @@
 
 JAKorea CMS (Automation) 프로젝트 개발 가이드입니다.
 
+> **📁 문서 관리**: README.md를 제외한 모든 마크다운 문서는 `apps/cms/pre-requisite-md/` 디렉토리에서 관리됩니다.  
+> 새로운 마크다운 문서도 이 디렉토리에 추가해주세요.
+
 ## 📋 목차
 
 1. [코드 스타일](#1-코드-스타일)
@@ -1407,16 +1410,23 @@ pnpm --filter cms lint
 - [ ] Radio.Group, Checkbox.Group에 `stopPropagation()` 적용
 - [ ] 캘린더의 패널 변경 이벤트에 `stopPropagation()` 적용
 
-자세한 내용은 `EVENT_HANDLING_GUIDE.md` 참고.
+자세한 내용은 [이벤트 처리 가이드](./EVENT_HANDLING_GUIDE.md) 참고.
 
 ---
 
 ## 🔗 관련 문서
 
-- [MVP 로드맵](../../MVP_ROADMAP.md)
+모든 문서는 `apps/cms/pre-requisite-md/` 디렉토리에서 관리됩니다:
+
 - [진행 상황](./PROGRESS.md)
-- [디자인 가이드라인](../../DESIGN_GUIDELINES.md)
+- [필수 라이브러리](./REQUIRED_LIBRARIES.md)
+- [디자인 요청사항](./DESIGN_REQUESTS.md)
+- [기획 요청사항](./PLANNING_REQUESTS.md)
 - [이벤트 처리 가이드](./EVENT_HANDLING_GUIDE.md)
+- [Phase 1 브리핑](./PHASE_1_BRIEFING.md)
+- [JA코리아 사용자화면 프롬프트](./JA코리아%20사용자화면%20프롬프트_1219.md)
+
+> **참고**: README.md는 `apps/cms/` 루트에 위치합니다.
 
 ---
 

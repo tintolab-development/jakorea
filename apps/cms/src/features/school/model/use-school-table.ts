@@ -116,3 +116,6 @@ export function useSchoolTable(data: School[]) {
   return { table, columnFilters, pagination }
 }
 
+
+
+

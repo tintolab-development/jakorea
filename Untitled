@@ -1,0 +1,1 @@
+cd /Users/tintolab/Desktop/arbeiten/jakorea/apps/cms && pnpm typecheck 2>&1 | grep -E "(error|Error)" | grep -v "Header\|Sidebar" | head -10

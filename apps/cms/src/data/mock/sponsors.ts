@@ -70,3 +70,6 @@ export const mockSponsors: Sponsor[] = sponsorNames.slice(0, 30).map(name => {
 
 export const mockSponsorsMap = new Map(mockSponsors.map(sponsor => [sponsor.id, sponsor]))
 
+
+
+

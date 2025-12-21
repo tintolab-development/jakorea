@@ -60,3 +60,6 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
   )
 }
 
+
+
+

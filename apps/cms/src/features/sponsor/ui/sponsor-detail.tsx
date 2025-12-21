@@ -53,3 +53,6 @@ export function SponsorDetail({ sponsor, onEdit, onDelete, loading }: SponsorDet
   )
 }
 
+
+
+

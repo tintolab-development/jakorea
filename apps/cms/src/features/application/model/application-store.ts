@@ -112,3 +112,6 @@ export const useApplicationStore = create<ApplicationState>(set => ({
   clearError: () => set({ error: null }),
 }))
 
+
+
+

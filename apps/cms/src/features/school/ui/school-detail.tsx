@@ -49,3 +49,6 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
   )
 }
 
+
+
+

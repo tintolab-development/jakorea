@@ -71,3 +71,6 @@ export function SponsorList({ data, loading }: SponsorListProps) {
   )
 }
 
+
+
+
