@@ -3,12 +3,13 @@
  * Phase 4: 테이블 + 필터
  */
 
-import { Table, Select, Button, Space, Tag, Dropdown, Badge } from 'antd'
+import { Table, Select, Button, Space, Tag, Dropdown, Badge, message } from 'antd'
 import type { MenuProps } from 'antd'
-import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useSettlementTable } from '../model/use-settlement-table'
 import type { Settlement } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
+import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 
 const { Option } = Select
 
@@ -51,57 +52,92 @@ export function SettlementList({
   const statuses: Settlement['status'][] = ['pending', 'calculated', 'approved', 'paid', 'cancelled']
   const periods = Array.from(new Set(data.map(s => s.period))).sort().reverse()
 
-  const getMenuItems = (settlement: Settlement): MenuProps['items'] => [
-    {
-      key: 'view',
-      label: '상세 보기',
-      icon: <EyeOutlined />,
-      onClick: () => onView(settlement),
-    },
-    {
-      key: 'edit',
-      label: '수정',
-      icon: <EditOutlined />,
-      onClick: () => onEdit(settlement),
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'status-pending',
-      label: '대기로 변경',
-      disabled: settlement.status === 'pending',
-      onClick: () => onStatusChange(settlement, 'pending'),
-    },
-    {
-      key: 'status-calculated',
-      label: '산출 완료로 변경',
-      disabled: settlement.status === 'calculated',
-      onClick: () => onStatusChange(settlement, 'calculated'),
-    },
-    {
-      key: 'status-approved',
-      label: '승인으로 변경',
-      disabled: settlement.status === 'approved',
-      onClick: () => onStatusChange(settlement, 'approved'),
-    },
-    {
-      key: 'status-paid',
-      label: '지급 완료로 변경',
-      disabled: settlement.status === 'paid',
-      onClick: () => onStatusChange(settlement, 'paid'),
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'delete',
-      label: '삭제',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => onDelete(settlement),
-    },
-  ]
+  const handleDownloadPaymentStatement = async (settlement: Settlement) => {
+    const program = mockProgramsMap.get(settlement.programId)
+    const instructor = mockInstructorsMap.get(settlement.instructorId)
+
+    if (!program || !instructor) {
+      message.error('프로그램 또는 강사 정보를 찾을 수 없습니다')
+      return
+    }
+
+    try {
+      await generatePaymentStatement(settlement, instructor, program.title)
+      message.success('지급조서가 다운로드되었습니다')
+    } catch (error) {
+      console.error('Failed to generate payment statement:', error)
+      message.error('지급조서 생성 중 오류가 발생했습니다')
+    }
+  }
+
+  const getMenuItems = (settlement: Settlement): MenuProps['items'] => {
+    const canDownload = settlement.status === 'approved' || settlement.status === 'paid'
+
+    return [
+      {
+        key: 'view',
+        label: '상세 보기',
+        icon: <EyeOutlined />,
+        onClick: () => onView(settlement),
+      },
+      {
+        key: 'edit',
+        label: '수정',
+        icon: <EditOutlined />,
+        onClick: () => onEdit(settlement),
+      },
+      ...(canDownload
+        ? [
+            {
+              type: 'divider' as const,
+            },
+            {
+              key: 'download',
+              label: '지급조서 다운로드',
+              icon: <DownloadOutlined />,
+              onClick: () => handleDownloadPaymentStatement(settlement),
+            },
+          ]
+        : []),
+      {
+        type: 'divider' as const,
+      },
+      {
+        key: 'status-pending',
+        label: '대기로 변경',
+        disabled: settlement.status === 'pending',
+        onClick: () => onStatusChange(settlement, 'pending'),
+      },
+      {
+        key: 'status-calculated',
+        label: '산출 완료로 변경',
+        disabled: settlement.status === 'calculated',
+        onClick: () => onStatusChange(settlement, 'calculated'),
+      },
+      {
+        key: 'status-approved',
+        label: '승인으로 변경',
+        disabled: settlement.status === 'approved',
+        onClick: () => onStatusChange(settlement, 'approved'),
+      },
+      {
+        key: 'status-paid',
+        label: '지급 완료로 변경',
+        disabled: settlement.status === 'paid',
+        onClick: () => onStatusChange(settlement, 'paid'),
+      },
+      {
+        type: 'divider' as const,
+      },
+      {
+        key: 'delete',
+        label: '삭제',
+        icon: <DeleteOutlined />,
+        danger: true,
+        onClick: () => onDelete(settlement),
+      },
+    ]
+  }
 
   return (
     <div>

@@ -147,14 +147,22 @@ export function MatchingListPage() {
         selectedProgramId={selectedProgramId}
         onProgramChange={setSelectedProgramId}
         onView={handleView}
+        onEdit={matching => {
+          setEditingMatching(matching)
+          setFormModalOpen(true)
+        }}
+        onDelete={matching => {
+          setMatchingToDelete(matching)
+          setDeleteModalOpen(true)
+        }}
         onConfirm={async matching => {
           try {
             await confirmMatching(matching.id)
             message.success('매칭이 확정되었습니다')
-          fetchMatchings()
-        } catch {
-          message.error('확정 중 오류가 발생했습니다')
-        }
+            fetchMatchings()
+          } catch {
+            message.error('확정 중 오류가 발생했습니다')
+          }
         }}
         onCancel={async matching => {
           Modal.confirm({
@@ -164,10 +172,10 @@ export function MatchingListPage() {
               try {
                 await cancelMatching(matching.id, '사용자 요청')
                 message.success('매칭이 취소되었습니다')
-          fetchMatchings()
-        } catch {
-          message.error('취소 중 오류가 발생했습니다')
-        }
+                fetchMatchings()
+              } catch {
+                message.error('취소 중 오류가 발생했습니다')
+              }
             },
           })
         }}

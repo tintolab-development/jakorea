@@ -25,6 +25,8 @@ import { MyScheduleListPage } from '@/pages/schedules/my-schedule-list-page'
 import { MyScheduleDetailPage } from '@/pages/schedules/my-schedule-detail-page'
 import { MatchingListPage } from '@/pages/matchings/matching-list-page'
 import { SettlementListPage } from '@/pages/settlements/settlement-list-page'
+import { MonthlySettlementPage } from '@/pages/settlements/monthly-settlement-page'
+import { SettlementCalculationSettingsPage } from '@/pages/settlements/settlement-calculation-settings-page'
 import { TodoDetailPage } from '@/pages/todos/todo-detail-page'
 import { ReportFormPage } from '@/pages/reports/report-form-page'
 import { LectureDetailPage } from '@/pages/lectures/lecture-detail-page'
@@ -101,7 +103,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'settlements',
-        children: [{ index: true, element: <SettlementListPage /> }],
+        children: [
+          { index: true, element: <SettlementListPage /> },
+          { path: 'monthly', element: <MonthlySettlementPage /> },
+          { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
+        ],
       },
       {
         path: 'todos',

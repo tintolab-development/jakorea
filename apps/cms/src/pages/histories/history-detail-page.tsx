@@ -6,10 +6,11 @@
 
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Button, Result, Spin, Alert, List } from 'antd'
+import { Card, Space, Typography, Descriptions, Tag, Button, Result, Spin, Alert, List, message } from 'antd'
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons'
 import { StatusDisplay } from '@/shared/ui'
 import { mockUserHistoriesMap, mockProgramsMap } from '@/data/mock/mypage'
+import { downloadCertificate } from '@/shared/utils/certificate-download'
 import dayjs from 'dayjs'
 import type { UserHistory, FinalStatus } from '@/types/domain'
 
@@ -103,9 +104,14 @@ export function HistoryDetailPage() {
 
   const program = mockProgramsMap.get(history.programId)
 
-  const handleDownload = (_certificateId: string, downloadUrl: string) => {
-    // TODO: 실제 다운로드 로직
-    window.open(downloadUrl, '_blank')
+  const handleDownload = async (certificate: { id: string; title: string; downloadUrl: string; issuedAt: Date | string }) => {
+    try {
+      await downloadCertificate(certificate)
+      message.success('증빙 문서가 다운로드되었습니다')
+    } catch (error) {
+      console.error('Failed to download certificate:', error)
+      message.error('증빙 문서 다운로드 중 오류가 발생했습니다')
+    }
   }
 
   return (
@@ -196,7 +202,7 @@ export function HistoryDetailPage() {
                     <Button
                       type="primary"
                       icon={<DownloadOutlined />}
-                      onClick={() => handleDownload(certificate.id, certificate.downloadUrl)}
+                      onClick={() => handleDownload(certificate)}
                     >
                       다운로드
                     </Button>,

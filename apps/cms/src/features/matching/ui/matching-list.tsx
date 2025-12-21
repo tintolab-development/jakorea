@@ -3,8 +3,9 @@
  * Phase 3.2: 프로그램별 매칭 현황
  */
 
-import { Table, Tag, Space, Button, Select, Tooltip } from 'antd'
-import { EyeOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { Table, Tag, Space, Button, Select, Tooltip, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
+import { EyeOutlined, CheckOutlined, CloseOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap, mockSchedulesMap } from '@/data/mock'
 import dayjs from 'dayjs'
@@ -17,6 +18,8 @@ interface MatchingListProps {
   selectedProgramId?: string
   onProgramChange?: (programId: string) => void
   onView: (matching: Matching) => void
+  onEdit?: (matching: Matching) => void
+  onDelete?: (matching: Matching) => void
   onConfirm: (matching: Matching) => void
   onCancel: (matching: Matching) => void
 }
@@ -43,10 +46,70 @@ export function MatchingList({
   selectedProgramId,
   onProgramChange,
   onView,
+  onEdit,
+  onDelete,
   onConfirm,
   onCancel,
 }: MatchingListProps) {
   const programs = Array.from(mockProgramsMap.values())
+
+  const getMenuItems = (matching: Matching): MenuProps['items'] => {
+    const items: MenuProps['items'] = [
+      {
+        key: 'view',
+        label: '상세 보기',
+        icon: <EyeOutlined />,
+        onClick: () => onView(matching),
+      },
+    ]
+
+    if (onEdit) {
+      items.push({
+        key: 'edit',
+        label: '수정',
+        icon: <EditOutlined />,
+        onClick: () => onEdit(matching),
+      })
+    }
+
+    if (matching.status === 'pending') {
+      items.push(
+        {
+          type: 'divider' as const,
+        },
+        {
+          key: 'confirm',
+          label: '확정',
+          icon: <CheckOutlined />,
+          onClick: () => onConfirm(matching),
+        },
+        {
+          key: 'cancel',
+          label: '취소',
+          icon: <CloseOutlined />,
+          danger: true,
+          onClick: () => onCancel(matching),
+        }
+      )
+    }
+
+    if (onDelete) {
+      items.push(
+        {
+          type: 'divider' as const,
+        },
+        {
+          key: 'delete',
+          label: '삭제',
+          icon: <DeleteOutlined />,
+          danger: true,
+          onClick: () => onDelete(matching),
+        }
+      )
+    }
+
+    return items
+  }
 
   const columns = [
     {
@@ -118,44 +181,17 @@ export function MatchingList({
     {
       title: '작업',
       key: 'action',
+      width: 100,
       render: (_: unknown, record: Matching) => (
-        <Space>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={e => {
-              e.stopPropagation()
-              onView(record)
-            }}
-          >
-            상세
-          </Button>
-          {record.status === 'pending' && (
-            <>
-              <Button
-                type="link"
-                icon={<CheckOutlined />}
-                onClick={e => {
-                  e.stopPropagation()
-                  onConfirm(record)
-                }}
-              >
-                확정
-              </Button>
-              <Button
-                type="link"
-                danger
-                icon={<CloseOutlined />}
-                onClick={e => {
-                  e.stopPropagation()
-                  onCancel(record)
-                }}
-              >
-                취소
-              </Button>
-            </>
-          )}
-        </Space>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
+            <Button
+              type="text"
+              icon={<MoreOutlined />}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ]

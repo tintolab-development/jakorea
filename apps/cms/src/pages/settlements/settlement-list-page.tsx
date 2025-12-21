@@ -5,7 +5,8 @@
 
 import { useState, useEffect } from 'react'
 import { Button, Space, message, Modal } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, CalendarOutlined, SettingOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { SettlementList } from '@/features/settlement/ui/settlement-list'
 import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
 import { SettlementForm } from '@/features/settlement/ui/settlement-form'
@@ -15,6 +16,7 @@ import type { Settlement } from '@/types/domain'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 
 export function SettlementListPage() {
+  const navigate = useNavigate()
   const { settlements, loading, fetchSettlements, createSettlement, updateSettlement, deleteSettlement, updateStatus } = useSettlementStore()
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -113,9 +115,17 @@ export function SettlementListPage() {
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>정산 관리</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
-          정산 등록
-        </Button>
+        <Space>
+          <Button icon={<CalendarOutlined />} onClick={() => navigate('/settlements/monthly')}>
+            월별 정산 관리
+          </Button>
+          <Button icon={<SettingOutlined />} onClick={() => navigate('/settlements/calculation-settings')}>
+            산출 로직 설정
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
+            정산 등록
+          </Button>
+        </Space>
       </Space>
 
       <SettlementList

@@ -15,6 +15,7 @@ import {
   reportSubmissionGuides,
 } from '@/data/mock/reports'
 import type { ReportType, ReportField } from '@/types/domain'
+import { reportService } from '@/entities/report/api/report-service'
 
 const { Title, Paragraph } = Typography
 const { TextArea } = Input
@@ -135,18 +136,29 @@ export function ReportFormPage() {
   }
 
   const handleSubmit = async () => {
-    setLoading(true)
     try {
-      // TODO: 실제 API 호출
-      // const endpoint = reportType === 'lecture' ? '/reports/lecture' : '/reports/volunteer'
-      // await fetch(endpoint, { method: 'POST', body: JSON.stringify({ ...values, activityId, programId }) })
+      const values = await form.validateFields()
+      setLoading(true)
 
-      // Mock: 제출 성공 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // activityId와 programId는 URL 파라미터에서 가져올 수 있음 (현재는 Mock)
+      const activityId = searchParams.get('activityId') || undefined
+      const programId = searchParams.get('programId') || undefined
+
+      await reportService.submit({
+        type: reportType,
+        activityId,
+        programId,
+        fields: values,
+      })
 
       message.success('보고서가 제출되었습니다.')
       navigate('/')
-    } catch {
+    } catch (error) {
+      if (error && typeof error === 'object' && 'errorFields' in error) {
+        // Form validation error
+        return
+      }
+      console.error('Failed to submit report:', error)
       message.error('보고서 제출 중 오류가 발생했습니다.')
     } finally {
       setLoading(false)

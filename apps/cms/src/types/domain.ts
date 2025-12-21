@@ -174,6 +174,15 @@ export interface Settlement {
   status: SettlementStatus
   documentGeneratedAt?: DateValue
   notes?: string
+  approvalHistories?: Array<{
+    id: string
+    step: 'pending' | 'review' | 'approval' | 'payment'
+    action: 'submitted' | 'reviewed' | 'approved' | 'rejected' | 'paid' | 'cancelled'
+    actionLabel: string
+    reviewerName?: string
+    comment?: string
+    createdAt: DateValue
+  }> // 승인 이력 (V3 Phase 4)
   createdAt: DateValue
   updatedAt: DateValue
 }

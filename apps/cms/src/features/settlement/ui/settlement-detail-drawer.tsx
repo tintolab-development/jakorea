@@ -3,10 +3,12 @@
  * Phase 4: 사이드 패널로 상세 정보 표시
  */
 
-import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table } from 'antd'
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, message } from 'antd'
+import { EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap, mockMatchingsMap } from '@/data/mock'
+import { generatePaymentStatement } from '@/shared/utils/settlement-document'
+import { SettlementApprovalWorkflow } from './settlement-approval-workflow'
 
 const { Text, Title } = Typography
 
@@ -58,6 +60,23 @@ export function SettlementDetailDrawer({
   const instructor = mockInstructorsMap.get(settlement.instructorId)
   const matching = mockMatchingsMap.get(settlement.matchingId)
 
+  const handleDownloadPaymentStatement = async () => {
+    if (!program || !instructor) {
+      message.error('프로그램 또는 강사 정보를 찾을 수 없습니다')
+      return
+    }
+
+    try {
+      await generatePaymentStatement(settlement, instructor, program.title)
+      message.success('지급조서가 다운로드되었습니다')
+    } catch (error) {
+      console.error('Failed to generate payment statement:', error)
+      message.error('지급조서 생성 중 오류가 발생했습니다')
+    }
+  }
+
+  const canDownload = settlement.status === 'approved' || settlement.status === 'paid'
+
   const itemColumns = [
     {
       title: '항목',
@@ -94,6 +113,11 @@ export function SettlementDetailDrawer({
       open={open}
       extra={
         <Space>
+          {canDownload && (
+            <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownloadPaymentStatement}>
+              지급조서 다운로드
+            </Button>
+          )}
           <Button icon={<EditOutlined />} onClick={onEdit}>
             수정
           </Button>
@@ -130,6 +154,26 @@ export function SettlementDetailDrawer({
           {new Date(settlement.updatedAt).toLocaleString('ko-KR')}
         </Descriptions.Item>
       </Descriptions>
+
+      <Divider />
+
+      {/* 승인 워크플로우 */}
+      <SettlementApprovalWorkflow
+        settlement={settlement}
+        onApprove={() => {
+          // TODO: 승인 처리 로직
+          message.info('승인 기능은 구현 중입니다')
+        }}
+        onReject={() => {
+          // TODO: 반려 처리 로직
+          message.info('반려 기능은 구현 중입니다')
+        }}
+        onReview={() => {
+          // TODO: 검토 처리 로직
+          message.info('검토 기능은 구현 중입니다')
+        }}
+        loading={loading}
+      />
 
       <Divider />
 

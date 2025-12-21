@@ -8,5 +8,6 @@ export { GuideMessage, GuideParagraph } from './guide-message'
 export { ResultScreen } from './result-screen'
 export { EmptyState } from './empty-state'
 export { StatusTimeline } from './status-timeline'
+export { DownloadButton } from './download-button'
 export { ConfirmModal } from './confirm-modal'
 
