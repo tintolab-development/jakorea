@@ -35,12 +35,18 @@ const matchingStatusLabels: Record<string, string> = {
   pending: '대기',
   confirmed: '확정',
   cancelled: '취소',
+  completed: '완료',
+  active: '활성',
+  inactive: '비활성',
 }
 
 const matchingStatusColors: Record<string, string> = {
   pending: 'default',
   confirmed: 'success',
   cancelled: 'error',
+  completed: 'success',
+  active: 'processing',
+  inactive: 'default',
 }
 
 export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {

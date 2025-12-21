@@ -20,7 +20,7 @@ export function Dashboard() {
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={6}>
           <Card>
-            <Statistic title="프로그램" value={programCount} />
+            <Statistic title="교육 프로그램" value={programCount} />
           </Card>
         </Col>
         <Col span={6}>
@@ -30,12 +30,12 @@ export function Dashboard() {
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="매칭" value={matchingCount} />
+            <Statistic title="매칭된 프로그램" value={matchingCount} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="강사" value={instructorCount} />
+            <Statistic title="등록된 강사" value={instructorCount} />
           </Card>
         </Col>
       </Row>
