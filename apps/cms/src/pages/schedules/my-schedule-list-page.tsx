@@ -171,7 +171,7 @@ export function MyScheduleListPage() {
                 >
                   <Card
                     style={{ width: '100%' }}
-                    bodyStyle={{ padding: '16px' }}
+                    styles={{ body: { padding: '16px' } }}
                   >
                     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                       {/* 프로그램명 및 상태 */}

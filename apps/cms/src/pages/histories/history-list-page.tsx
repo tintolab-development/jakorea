@@ -105,7 +105,7 @@ export function HistoryListPage() {
                 >
                   <Card
                     style={{ width: '100%' }}
-                    bodyStyle={{ padding: '16px' }}
+                    styles={{ body: { padding: '16px' } }}
                   >
                     <Space
                       direction="vertical"
