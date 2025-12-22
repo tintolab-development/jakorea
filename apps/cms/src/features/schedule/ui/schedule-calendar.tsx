@@ -204,8 +204,12 @@ export function ScheduleCalendar({
         <Calendar
           mode={mode}
           value={currentDate}
-          dateCellRender={dateCellRender}
-          monthCellRender={monthCellRender}
+          cellRender={(value, info) => {
+            if (info.type === 'month') {
+              return monthCellRender(value)
+            }
+            return dateCellRender(value)
+          }}
           onSelect={date => {
             // 헤더 변경 중이면 날짜 선택 무시
             if (isHeaderChanging) {

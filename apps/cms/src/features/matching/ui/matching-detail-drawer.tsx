@@ -144,9 +144,11 @@ export function MatchingDetailDrawer({
       {matching.history && matching.history.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <h3>변경 이력</h3>
-          <Timeline>
-            {matching.history.map(history => (
-              <Timeline.Item key={history.id} color={history.action === 'cancelled' ? 'red' : 'blue'}>
+          <Timeline
+            items={matching.history.map(history => ({
+              key: history.id,
+              color: history.action === 'cancelled' ? 'red' : 'blue',
+              children: (
                 <Space direction="vertical" size="small">
                   <Space>
                     <Badge status={history.action === 'cancelled' ? 'error' : 'processing'} />
@@ -164,9 +166,9 @@ export function MatchingDetailDrawer({
                     <span style={{ fontSize: 12, color: '#8c8c8c' }}>변경자: {history.changedBy}</span>
                   )}
                 </Space>
-              </Timeline.Item>
-            ))}
-          </Timeline>
+              ),
+            }))}
+          />
         </div>
       )}
     </Drawer>

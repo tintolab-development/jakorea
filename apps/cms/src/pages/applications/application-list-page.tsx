@@ -165,7 +165,7 @@ export function ApplicationListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={800}
-        destroyOnClose
+        destroyOnHidden
       >
         <ApplicationForm
           application={editingApplication || undefined}

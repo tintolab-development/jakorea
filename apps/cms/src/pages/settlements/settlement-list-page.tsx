@@ -175,7 +175,7 @@ export function SettlementListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={800}
-        destroyOnClose
+        destroyOnHidden
       >
         <SettlementForm
           settlement={editingSettlement || undefined}

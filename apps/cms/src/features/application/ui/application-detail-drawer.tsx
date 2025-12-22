@@ -16,7 +16,6 @@ import {
 } from '@/shared/constants/status'
 import { canTransitionApplicationStatus } from '@/shared/lib/status-transition'
 
-const { TabPane } = Tabs
 const { Text, Title } = Typography
 
 interface ApplicationDetailDrawerProps {
@@ -129,55 +128,70 @@ export function ApplicationDetailDrawer({
         </Space>
       }
     >
-      <Tabs defaultActiveKey="basic">
-        <TabPane tab="기본 정보" key="basic">
-          <Alert
-            message={`현재 상태: ${getApplicationStatusLabel(application.status)}`}
-            type={application.status === 'approved' ? 'success' : application.status === 'rejected' ? 'error' : 'info'}
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
-          <Descriptions column={1} bordered>
-            <Descriptions.Item label="프로그램">
-              <Tag color="blue">{program?.title || '-'}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="신청 주체 유형">
-              <Tag color={applicationSubjectTypeConfig.colors[application.subjectType]}>
-                {applicationSubjectTypeConfig.labels[application.subjectType]}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="신청 주체">
-              <Text strong>{subjectName || '-'}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="상태">
-              <Badge status={getApplicationStatusColor(application.status) as any} text={getApplicationStatusLabel(application.status)} />
-            </Descriptions.Item>
-            {application.notes && (
-              <Descriptions.Item label="비고">
-                <Text>{application.notes}</Text>
-              </Descriptions.Item>
-            )}
-            <Descriptions.Item label="접수일">
-              {new Date(application.submittedAt).toLocaleString('ko-KR')}
-            </Descriptions.Item>
-            {application.reviewedAt && (
-              <Descriptions.Item label="검토일">
-                {new Date(application.reviewedAt).toLocaleString('ko-KR')}
-              </Descriptions.Item>
-            )}
-            <Descriptions.Item label="등록일">
-              {new Date(application.createdAt).toLocaleDateString('ko-KR')}
-            </Descriptions.Item>
-            <Descriptions.Item label="수정일">
-              {new Date(application.updatedAt).toLocaleDateString('ko-KR')}
-            </Descriptions.Item>
-          </Descriptions>
-        </TabPane>
-        <TabPane tab="상태 이력" key="timeline">
-          <Divider orientation="left">처리 이력</Divider>
-          <Timeline items={timelineItems} />
-        </TabPane>
-      </Tabs>
+      <Tabs
+        defaultActiveKey="basic"
+        items={[
+          {
+            key: 'basic',
+            label: '기본 정보',
+            children: (
+              <>
+                <Alert
+                  message={`현재 상태: ${getApplicationStatusLabel(application.status)}`}
+                  type={application.status === 'approved' ? 'success' : application.status === 'rejected' ? 'error' : 'info'}
+                  showIcon
+                  style={{ marginBottom: 16 }}
+                />
+                <Descriptions column={1} bordered>
+                  <Descriptions.Item label="프로그램">
+                    <Tag color="blue">{program?.title || '-'}</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="신청 주체 유형">
+                    <Tag color={applicationSubjectTypeConfig.colors[application.subjectType]}>
+                      {applicationSubjectTypeConfig.labels[application.subjectType]}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="신청 주체">
+                    <Text strong>{subjectName || '-'}</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="상태">
+                    <Badge status={getApplicationStatusColor(application.status) as any} text={getApplicationStatusLabel(application.status)} />
+                  </Descriptions.Item>
+                  {application.notes && (
+                    <Descriptions.Item label="비고">
+                      <Text>{application.notes}</Text>
+                    </Descriptions.Item>
+                  )}
+                  <Descriptions.Item label="접수일">
+                    {new Date(application.submittedAt).toLocaleString('ko-KR')}
+                  </Descriptions.Item>
+                  {application.reviewedAt && (
+                    <Descriptions.Item label="검토일">
+                      {new Date(application.reviewedAt).toLocaleString('ko-KR')}
+                    </Descriptions.Item>
+                  )}
+                  <Descriptions.Item label="등록일">
+                    {new Date(application.createdAt).toLocaleDateString('ko-KR')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="수정일">
+                    {new Date(application.updatedAt).toLocaleDateString('ko-KR')}
+                  </Descriptions.Item>
+                </Descriptions>
+              </>
+            ),
+          },
+          {
+            key: 'timeline',
+            label: '상태 이력',
+            children: (
+              <>
+                <Divider orientation="left">처리 이력</Divider>
+                <Timeline items={timelineItems} />
+              </>
+            ),
+          },
+        ]}
+      />
     </Drawer>
   )
 }
