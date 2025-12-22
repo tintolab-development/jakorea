@@ -454,9 +454,73 @@ export function getApplicationStatusIcon(status: ApplicationStatus): React.Compo
 
 ---
 
+### Phase 3: 상태 전환 로직 중앙화
+
+**작업 일시**: 2025-01-XX
+
+**목적**: 
+- 상태 전환 규칙 중앙화
+- 상태 전환 가능 여부 체크 로직 통합
+- 다음 상태 계산 로직 통합
+- 일관된 상태 전환 관리
+
+**생성 파일**:
+- `shared/lib/status-transition.ts`
+
+**주요 기능**:
+1. **Application 상태 전환 규칙**: `submitted -> reviewing -> approved/rejected`
+2. **Settlement 상태 전환 규칙**: `pending -> calculated -> approved -> paid`
+3. **상태 전환 가능 여부 체크**: `canTransitionApplicationStatus`, `canTransitionSettlementStatus`
+4. **다음 상태 계산**: `getNextApplicationStatus`, `getNextSettlementStatus`
+5. **최종 상태 확인**: `isApplicationFinalStatus`, `isSettlementFinalStatus`
+
+**리팩토링된 파일** (4개):
+
+#### Application 관련
+- `features/application/ui/application-list.tsx`
+  - 제거: 하드코딩된 상태 전환 로직 (`if (record.status === 'submitted')`)
+  - 추가: `getNextApplicationStatus`, `isApplicationFinalStatus` 사용
+  - 변경: 상태 전환 가능 여부 체크를 중앙화된 함수로 대체
+
+- `features/application/ui/application-detail-drawer.tsx`
+  - 제거: 하드코딩된 상태 조건 (`application.status === 'submitted'`)
+  - 추가: `canTransitionApplicationStatus` 사용
+  - 변경: 상태별 버튼 표시 로직을 전환 가능 여부 기반으로 변경
+
+- `features/application/lib/application-helpers.tsx`
+  - 제거: 하드코딩된 상태 비교 (`application.status === 'submitted'`)
+  - 추가: `canTransitionApplicationStatus` 사용
+  - 변경: 메뉴 아이템 disabled 로직을 전환 가능 여부 기반으로 변경
+
+#### Settlement 관련
+- `features/settlement/ui/settlement-list.tsx`
+  - 제거: 하드코딩된 상태 비교 (`settlement.status === 'pending'`)
+  - 추가: `canTransitionSettlementStatus` 사용
+  - 변경: 메뉴 아이템 disabled 로직을 전환 가능 여부 기반으로 변경
+
+**변경 통계**:
+- 생성된 파일: 1개 (`status-transition.ts`, 약 150줄)
+- 수정된 파일: 4개
+- 제거된 하드코딩 로직: 약 30줄
+- 코드 일관성: 향상
+
+**개선 효과**:
+1. **규칙 중앙화**: 상태 전환 규칙을 한 곳에서 관리
+2. **일관성 보장**: 모든 컴포넌트에서 동일한 전환 규칙 적용
+3. **유지보수성 향상**: 규칙 변경 시 한 곳만 수정
+4. **타입 안정성**: TypeScript로 상태 전환 규칙 보장
+5. **가독성 향상**: 명확한 함수명으로 의도 표현
+
+**참고**:
+- 모든 상태 전환 로직은 기존 동작과 동일하게 유지 (런타임 오류 없음)
+- 상태 전환 규칙은 도메인별로 분리되어 있어 확장 용이
+- 최종 상태에서는 전환 불가능하도록 규칙 정의
+
+---
+
 ## 다음 단계
 
-### Phase 3: 상태 전환 로직 중앙화 (예정)
+### Phase 4: 추가 개선 사항 (예정)
 - `shared/utils/error-handler.ts` 생성
 - 일관된 에러 처리 패턴 적용
 

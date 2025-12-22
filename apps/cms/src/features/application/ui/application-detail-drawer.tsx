@@ -14,6 +14,7 @@ import {
   getApplicationStatusLabel,
   getApplicationStatusColor,
 } from '@/shared/constants/status'
+import { canTransitionApplicationStatus } from '@/shared/lib/status-transition'
 
 const { TabPane } = Tabs
 const { Text, Title } = Typography
@@ -89,7 +90,7 @@ export function ApplicationDetailDrawer({
       onClose={onClose}
       extra={
         <Space>
-          {application.status === 'submitted' && (
+          {canTransitionApplicationStatus(application.status, 'reviewing') && (
             <Button
               type="primary"
               icon={<CheckCircleOutlined />}
@@ -99,25 +100,25 @@ export function ApplicationDetailDrawer({
               검토 시작
             </Button>
           )}
-          {application.status === 'reviewing' && (
-            <>
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={() => onStatusChange('approved')}
-                loading={loading}
-              >
-                확정
-              </Button>
-              <Button
-                danger
-                icon={<CloseCircleOutlined />}
-                onClick={() => onStatusChange('rejected')}
-                loading={loading}
-              >
-                거절
-              </Button>
-            </>
+          {canTransitionApplicationStatus(application.status, 'approved') && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={() => onStatusChange('approved')}
+              loading={loading}
+            >
+              확정
+            </Button>
+          )}
+          {canTransitionApplicationStatus(application.status, 'rejected') && (
+            <Button
+              danger
+              icon={<CloseCircleOutlined />}
+              onClick={() => onStatusChange('rejected')}
+              loading={loading}
+            >
+              거절
+            </Button>
           )}
           <Button icon={<EditOutlined />} onClick={onEdit}>
             수정

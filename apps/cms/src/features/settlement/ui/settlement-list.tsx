@@ -15,6 +15,7 @@ import {
   getSettlementStatusLabel,
   getSettlementStatusColor,
 } from '@/shared/constants/status'
+import { canTransitionSettlementStatus } from '@/shared/lib/status-transition'
 
 const { Option } = Select
 
@@ -94,25 +95,25 @@ export function SettlementList({
       {
         key: 'status-pending',
         label: '대기로 변경',
-        disabled: settlement.status === 'pending',
+        disabled: !canTransitionSettlementStatus(settlement.status, 'pending'),
         onClick: () => onStatusChange(settlement, 'pending'),
       },
       {
         key: 'status-calculated',
         label: '산출 완료로 변경',
-        disabled: settlement.status === 'calculated',
+        disabled: !canTransitionSettlementStatus(settlement.status, 'calculated'),
         onClick: () => onStatusChange(settlement, 'calculated'),
       },
       {
         key: 'status-approved',
         label: '승인으로 변경',
-        disabled: settlement.status === 'approved',
+        disabled: !canTransitionSettlementStatus(settlement.status, 'approved'),
         onClick: () => onStatusChange(settlement, 'approved'),
       },
       {
         key: 'status-paid',
         label: '지급 완료로 변경',
-        disabled: settlement.status === 'paid',
+        disabled: !canTransitionSettlementStatus(settlement.status, 'paid'),
         onClick: () => onStatusChange(settlement, 'paid'),
       },
       {

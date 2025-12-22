@@ -65,7 +65,7 @@ export function SettlementDetailDrawer({
     }
   }
 
-  const canDownload = settlement.status === 'approved' || settlement.status === 'paid'
+  const canDownload = settlement.status === 'approved' || settlement.status === 'paid' // isSettlementFinalStatus로 체크 가능하지만, 다운로드는 paid도 포함해야 함
 
   const itemColumns = [
     {

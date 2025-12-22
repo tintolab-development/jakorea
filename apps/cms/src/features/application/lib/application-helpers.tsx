@@ -8,6 +8,7 @@ import type { MenuProps } from 'antd'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { schoolService } from '@/entities/school/api/school-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { canTransitionApplicationStatus } from '@/shared/lib/status-transition'
 
 /**
  * 신청 주체 이름 조회
@@ -57,25 +58,25 @@ export function createApplicationMenuItems(
     {
       key: 'status-submitted',
       label: '접수로 변경',
-      disabled: application.status === 'submitted',
+      disabled: !canTransitionApplicationStatus(application.status, 'submitted'),
       onClick: () => handlers.onStatusChange(application, 'submitted'),
     },
     {
       key: 'status-reviewing',
       label: '검토로 변경',
-      disabled: application.status === 'reviewing',
+      disabled: !canTransitionApplicationStatus(application.status, 'reviewing'),
       onClick: () => handlers.onStatusChange(application, 'reviewing'),
     },
     {
       key: 'status-approved',
       label: '확정으로 변경',
-      disabled: application.status === 'approved',
+      disabled: !canTransitionApplicationStatus(application.status, 'approved'),
       onClick: () => handlers.onStatusChange(application, 'approved'),
     },
     {
       key: 'status-rejected',
       label: '거절로 변경',
-      disabled: application.status === 'rejected',
+      disabled: !canTransitionApplicationStatus(application.status, 'rejected'),
       onClick: () => handlers.onStatusChange(application, 'rejected'),
     },
     {

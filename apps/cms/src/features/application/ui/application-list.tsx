@@ -16,6 +16,10 @@ import {
   getApplicationStatusColor,
   getApplicationStatusIcon,
 } from '@/shared/constants/status'
+import {
+  getNextApplicationStatus,
+  isApplicationFinalStatus,
+} from '@/shared/lib/status-transition'
 
 const { Option } = Select
 
@@ -159,22 +163,21 @@ export function ApplicationList({
                 <Space>
                 <Popconfirm
                   title="상태 변경"
-                  description={`이 신청을 "${getApplicationStatusLabel(record.status === 'submitted' ? 'reviewing' : 'approved')}" 상태로 변경하시겠습니까?`}
+                  description={`이 신청을 "${getApplicationStatusLabel(getNextApplicationStatus(record.status) || 'approved')}" 상태로 변경하시겠습니까?`}
                   onConfirm={() => {
-                    if (record.status === 'submitted') {
-                      onStatusChange(record, 'reviewing')
-                    } else if (record.status === 'reviewing') {
-                      onStatusChange(record, 'approved')
+                    const nextStatus = getNextApplicationStatus(record.status)
+                    if (nextStatus) {
+                      onStatusChange(record, nextStatus)
                     }
                   }}
                   okText="확인"
                   cancelText="취소"
-                  disabled={record.status === 'approved' || record.status === 'rejected' || record.status === 'cancelled'}
+                  disabled={isApplicationFinalStatus(record.status)}
                 >
                   <Button
                     type="link"
                     size="small"
-                    disabled={record.status === 'approved' || record.status === 'rejected' || record.status === 'cancelled'}
+                    disabled={isApplicationFinalStatus(record.status)}
                     onClick={(e) => e.stopPropagation()}
                   >
                     다음 단계
