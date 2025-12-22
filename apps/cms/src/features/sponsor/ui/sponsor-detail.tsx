@@ -5,6 +5,7 @@
 
 import { Card, Descriptions, Tag, Space, Button } from 'antd'
 import type { Sponsor } from '@/types/domain'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 interface SponsorDetailProps {
   sponsor: Sponsor
@@ -18,7 +19,7 @@ export function SponsorDetail({ sponsor, onEdit, onDelete, loading }: SponsorDet
     <Card
       title={
         <Space>
-          <Tag color="orange" style={{ fontSize: 16, padding: '4px 12px' }}>
+          <Tag color={domainColorsHex.sponsor.primary} style={{ fontSize: 16, padding: '4px 12px' }}>
             {sponsor.name}
           </Tag>
         </Space>

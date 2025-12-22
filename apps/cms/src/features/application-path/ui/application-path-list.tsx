@@ -8,6 +8,7 @@ import type { MenuProps, TableColumnsType } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ApplicationPath, ApplicationPathType } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 interface ApplicationPathListProps {
   data: ApplicationPath[]
@@ -38,7 +39,7 @@ export function ApplicationPathList({
       key: 'programId',
       render: (programId: string) => {
         const program = programService.getByIdSync(programId)
-        return program ? <Tag color="blue">{program.title}</Tag> : programId
+        return program ? <Tag color={domainColorsHex.program.primary}>{program.title}</Tag> : programId
       },
       filters: programs.map(program => ({
         text: program.title,

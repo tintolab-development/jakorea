@@ -8,6 +8,7 @@ import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Schedule } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 interface ScheduleDetailDrawerProps {
   open: boolean
@@ -67,7 +68,7 @@ export function ScheduleDetailDrawer({
 
       <Descriptions column={1} bordered>
         <Descriptions.Item label="프로그램">
-          <Tag color="blue">{program?.title || '-'}</Tag>
+          <Tag color={domainColorsHex.program.primary}>{program?.title || '-'}</Tag>
         </Descriptions.Item>
         <Descriptions.Item label="일정 제목">{schedule.title}</Descriptions.Item>
         <Descriptions.Item label="날짜">
@@ -88,7 +89,7 @@ export function ScheduleDetailDrawer({
         )}
         {instructor && (
           <Descriptions.Item label="강사">
-            <Tag color="purple">{instructor.name}</Tag> ({instructor.region})
+            <Tag color={domainColorsHex.instructor.primary}>{instructor.name}</Tag> ({instructor.region})
           </Descriptions.Item>
         )}
         <Descriptions.Item label="등록일">

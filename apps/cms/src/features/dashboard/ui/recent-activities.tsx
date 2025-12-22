@@ -16,6 +16,7 @@ import {
   getCommonStatusLabel,
   getCommonStatusColor,
 } from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Text } = Typography
 
@@ -181,7 +182,7 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
                       title={
                         <Space>
                           <Text strong>{schedule.title || '일정 제목 없음'}</Text>
-                          <Tag color="blue">{scheduleDate.format('YYYY-MM-DD')}</Tag>
+                          <Tag color={domainColorsHex.schedule.primary}>{scheduleDate.format('YYYY-MM-DD')}</Tag>
                         </Space>
                       }
                       description={

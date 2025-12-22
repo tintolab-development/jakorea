@@ -15,6 +15,7 @@ import {
   getApplicationStatusColor,
 } from '@/shared/constants/status'
 import { canTransitionApplicationStatus } from '@/shared/lib/status-transition'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Text, Title } = Typography
 
@@ -144,7 +145,7 @@ export function ApplicationDetailDrawer({
                 />
                 <Descriptions column={1} bordered>
                   <Descriptions.Item label="프로그램">
-                    <Tag color="blue">{program?.title || '-'}</Tag>
+                    <Tag color={domainColorsHex.program.primary}>{program?.title || '-'}</Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label="신청 주체 유형">
                     <Tag color={applicationSubjectTypeConfig.colors[application.subjectType]}>

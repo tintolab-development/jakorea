@@ -14,6 +14,7 @@ import type { Schedule } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { domainColorsHex } from '@/shared/constants/colors'
 import './schedule-calendar.css'
 
 const { Option } = Select
@@ -176,9 +177,9 @@ export function ScheduleCalendar({
 
     return monthSchedules.length > 0 ? (
       <div className="schedule-month-summary">
-        <Tag color="blue">{monthSchedules.length}개</Tag>
+        <Tag color={domainColorsHex.schedule.primary}>{monthSchedules.length}개</Tag>
         {monthConflicts.length > 0 && (
-          <Tag color="red" style={{ marginLeft: 4 }}>
+          <Tag color={domainColorsHex.settlement.primary} style={{ marginLeft: 4 }}>
             중복 {monthConflicts.length}
           </Tag>
         )}

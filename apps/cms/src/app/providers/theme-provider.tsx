@@ -16,12 +16,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     <ConfigProvider
       theme={{
         token: {
-          // Primary 색상 - 메인 브랜드 컬러
-          colorPrimary: '#1890ff',
-          colorSuccess: '#52c41a',
-          colorWarning: '#faad14',
-          colorError: '#ff4d4f',
-          colorInfo: '#1890ff',
+          // Primary 색상 - 메인 브랜드 컬러 (#01A1AF)
+          colorPrimary: '#01a1af',
+          colorSuccess: '#52c41a', // 매칭 색상 활용
+          colorWarning: '#fadb14', // 일정 색상 활용
+          colorError: '#ff4d4f', // 정산 색상 활용
+          colorInfo: '#01a1af', // 메인 컬러
 
           // Border radius
           borderRadius: 6,

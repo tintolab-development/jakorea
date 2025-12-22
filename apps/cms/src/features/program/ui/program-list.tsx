@@ -13,6 +13,7 @@ import {
   getCommonStatusLabel,
   getCommonStatusColor,
 } from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Option } = Select
 
@@ -141,7 +142,7 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
             dataIndex: 'title',
             key: 'title',
             render: (text: string) => (
-              <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>
+              <Tag color={domainColorsHex.program.primary} style={{ fontSize: 14, padding: '4px 12px' }}>
                 {text}
               </Tag>
             ),

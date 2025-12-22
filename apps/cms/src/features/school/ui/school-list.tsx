@@ -6,6 +6,7 @@
 import { Table, Input, Select, Button, Space, Tag } from 'antd'
 import { useSchoolTable } from '../model/use-school-table'
 import type { School } from '@/types/domain'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Option } = Select
 
@@ -52,7 +53,7 @@ export function SchoolList({ data, loading }: SchoolListProps) {
             dataIndex: 'name',
             key: 'name',
             render: (text: string) => (
-              <Tag color="cyan" style={{ fontSize: 14, padding: '4px 12px' }}>
+              <Tag color={domainColorsHex.school.primary} style={{ fontSize: 14, padding: '4px 12px' }}>
                 {text}
               </Tag>
             ),

@@ -13,6 +13,7 @@ import {
   getCommonStatusLabel,
   getCommonStatusColor,
 } from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
 import dayjs from 'dayjs'
 
 interface MatchingDetailDrawerProps {
@@ -98,9 +99,9 @@ export function MatchingDetailDrawer({
             <Space direction="vertical" size="small">
               <span style={{ fontWeight: 500 }}>{instructor.name}</span>
               <Space>
-                <Tag color="blue">{instructor.region}</Tag>
+                <Tag color={domainColorsHex.instructor.primary}>{instructor.region}</Tag>
                 {instructor.specialty.map(s => (
-                  <Tag key={s} color="purple">
+                  <Tag key={s} color={domainColorsHex.instructor.primary}>
                     {s}
                   </Tag>
                 ))}

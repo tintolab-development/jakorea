@@ -21,6 +21,7 @@ import {
   getCommonStatusLabel,
   getCommonStatusColor,
 } from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
 import dayjs from 'dayjs'
 
 const { Paragraph, Text } = Typography
@@ -121,7 +122,7 @@ export function ProgramDetailDrawer({
     <Drawer
       title={
         <Space>
-          <Tag color="blue" style={{ fontSize: 16, padding: '4px 12px' }}>
+          <Tag color={domainColorsHex.program.primary} style={{ fontSize: 16, padding: '4px 12px' }}>
             {program.title}
           </Tag>
           <Badge status={program.status === 'active' ? 'success' : 'default'} />
@@ -157,7 +158,7 @@ export function ProgramDetailDrawer({
                     </Descriptions.Item>
                     <Descriptions.Item label="카테고리">
                       <Space>
-                        <Tag color="blue">{programTypeLabels[program.type] || program.type}</Tag>
+                        <Tag color={domainColorsHex.program.primary}>{programTypeLabels[program.type] || program.type}</Tag>
                         <Tag>{programFormatLabels[program.format] || program.format}</Tag>
                       </Space>
                     </Descriptions.Item>
@@ -167,7 +168,7 @@ export function ProgramDetailDrawer({
                       </Descriptions.Item>
                     )}
                     <Descriptions.Item label="스폰서">
-                      <Tag color="orange">{sponsor?.name || '-'}</Tag>
+                      <Tag color={domainColorsHex.sponsor.primary}>{sponsor?.name || '-'}</Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="상태">
                       <StatusDisplay

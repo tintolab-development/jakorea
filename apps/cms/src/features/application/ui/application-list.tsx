@@ -16,6 +16,7 @@ import {
   getApplicationStatusColor,
   getApplicationStatusIcon,
 } from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
 import {
   getNextApplicationStatus,
   isApplicationFinalStatus,
@@ -103,7 +104,7 @@ export function ApplicationList({
               const program = programService.getByIdSync(programId)
               return program ? (
                 <Tooltip title={program.description || ''}>
-                  <Tag color="blue">{program.title}</Tag>
+                  <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
                 </Tooltip>
               ) : (
                 '-'

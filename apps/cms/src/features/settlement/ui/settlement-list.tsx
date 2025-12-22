@@ -16,6 +16,7 @@ import {
   getSettlementStatusColor,
 } from '@/shared/constants/status'
 import { canTransitionSettlementStatus } from '@/shared/lib/status-transition'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Option } = Select
 
@@ -194,7 +195,7 @@ export function SettlementList({
             title: '기간',
             dataIndex: 'period',
             key: 'period',
-            render: (text: string) => <Tag color="blue">{text}</Tag>,
+            render: (text: string) => <Tag color={domainColorsHex.settlement.primary}>{text}</Tag>,
           },
           {
             title: '프로그램',
@@ -202,7 +203,7 @@ export function SettlementList({
             key: 'programId',
             render: (programId: string) => {
               const program = programService.getByIdSync(programId)
-              return program ? <Tag color="cyan">{program.title}</Tag> : '-'
+              return program ? <Tag color={domainColorsHex.program.primary}>{program.title}</Tag> : '-'
             },
           },
           {

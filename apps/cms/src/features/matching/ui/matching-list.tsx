@@ -15,6 +15,7 @@ import {
   getCommonStatusLabel,
   getCommonStatusColor,
 } from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Option } = Select
 
@@ -126,7 +127,7 @@ export function MatchingList({
         return instructor ? (
           <Space>
             <span>{instructor.name}</span>
-            <Tag color="blue">{instructor.region}</Tag>
+            <Tag color={domainColorsHex.instructor.primary}>{instructor.region}</Tag>
           </Space>
         ) : (
           '-'

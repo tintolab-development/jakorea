@@ -6,6 +6,7 @@
 import { Table, Input, Button, Space, Tag } from 'antd'
 import { useSponsorTable } from '../model/use-sponsor-table'
 import type { Sponsor } from '@/types/domain'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 interface SponsorListProps {
   data: Sponsor[]
@@ -35,7 +36,7 @@ export function SponsorList({ data, loading }: SponsorListProps) {
             dataIndex: 'name',
             key: 'name',
             render: (text: string) => (
-              <Tag color="orange" style={{ fontSize: 14, padding: '4px 12px' }}>
+              <Tag color={domainColorsHex.sponsor.primary} style={{ fontSize: 14, padding: '4px 12px' }}>
                 {text}
               </Tag>
             ),

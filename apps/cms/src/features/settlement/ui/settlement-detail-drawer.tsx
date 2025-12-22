@@ -15,6 +15,7 @@ import {
   getSettlementStatusLabel,
   getSettlementStatusColor,
 } from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Text, Title } = Typography
 
@@ -119,10 +120,10 @@ export function SettlementDetailDrawer({
     >
       <Descriptions column={1} bordered>
         <Descriptions.Item label="기간">
-          <Tag color="blue">{settlement.period}</Tag>
+          <Tag color={domainColorsHex.settlement.primary}>{settlement.period}</Tag>
         </Descriptions.Item>
         <Descriptions.Item label="프로그램">
-          {program ? <Tag color="cyan">{program.title}</Tag> : '-'}
+          {program ? <Tag color={domainColorsHex.program.primary}>{program.title}</Tag> : '-'}
         </Descriptions.Item>
         <Descriptions.Item label="강사">{instructor ? instructor.name : '-'}</Descriptions.Item>
         <Descriptions.Item label="매칭">

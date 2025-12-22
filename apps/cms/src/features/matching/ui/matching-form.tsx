@@ -12,6 +12,7 @@ import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import { suggestInstructorCandidates } from '../lib/instructor-candidate'
+import { domainColorsHex } from '@/shared/constants/colors'
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 
@@ -151,11 +152,11 @@ export function MatchingForm({ matching, onSubmit, onCancel, loading }: Matching
                 <Space style={{ width: '100%', justifyContent: 'space-between' }}>
                   <Space>
                     <span style={{ fontWeight: 500 }}>{candidate.name}</span>
-                    <Tag color="blue">{candidate.region}</Tag>
-                    {candidate.rating && <Tag color="green">평점: {candidate.rating.toFixed(1)}</Tag>}
-                    <Tag color="orange">매칭점수: {candidate.matchScore}</Tag>
+                    <Tag color={domainColorsHex.instructor.primary}>{candidate.region}</Tag>
+                    {candidate.rating && <Tag color={domainColorsHex.matching.primary}>평점: {candidate.rating.toFixed(1)}</Tag>}
+                    <Tag color={domainColorsHex.sponsor.primary}>매칭점수: {candidate.matchScore}</Tag>
                   </Space>
-                  {watch('instructorId') === candidate.id && <Tag color="green">선택됨</Tag>}
+                  {watch('instructorId') === candidate.id && <Tag color={domainColorsHex.matching.primary}>선택됨</Tag>}
                 </Space>
                 {candidate.matchReasons.length > 0 && (
                   <div style={{ marginTop: 4, fontSize: 12, color: '#8c8c8c' }}>

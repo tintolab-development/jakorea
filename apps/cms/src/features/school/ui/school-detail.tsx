@@ -5,6 +5,7 @@
 
 import { Card, Descriptions, Tag, Space, Button } from 'antd'
 import type { School } from '@/types/domain'
+import { domainColorsHex } from '@/shared/constants/colors'
 
 interface SchoolDetailProps {
   school: School
@@ -18,7 +19,7 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
     <Card
       title={
         <Space>
-          <Tag color="cyan" style={{ fontSize: 16, padding: '4px 12px' }}>
+          <Tag color={domainColorsHex.school.primary} style={{ fontSize: 16, padding: '4px 12px' }}>
             {school.name}
           </Tag>
         </Space>
