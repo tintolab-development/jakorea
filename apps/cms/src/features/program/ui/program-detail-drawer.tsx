@@ -8,7 +8,12 @@ import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Ale
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
-import { mockApplications } from '@/data/mock'
+import {
+  getApplicationCountByProgram,
+  getConfirmedRounds,
+  isApplicationAvailable,
+  getApplicationUrl,
+} from '../lib/program-helpers'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
 import {
   commonStatusConfig,
@@ -56,16 +61,15 @@ export function ProgramDetailDrawer({
 
   const sponsor = sponsorService.getByIdSync(program.sponsorId)
   
-  // 프로그램별 신청 수 계산 (Mock 데이터 기반)
-  const applicationCount = mockApplications.filter(app => app.programId === program.id).length
+  // 프로그램별 신청 수 계산
+  const applicationCount = getApplicationCountByProgram(program.id)
   
-  // 확정된 일정만 필터링 (status가 'active' 또는 'completed'인 회차)
-  const confirmedRounds = program.rounds.filter(round => round.status === 'active' || round.status === 'completed')
+  // 확정된 일정만 필터링
+  const confirmedRounds = getConfirmedRounds(program.rounds)
   
-  // 신청 가능 여부는 서버 응답 기반이어야 하지만, Mock 데이터에서는 프로그램 상태로 시뮬레이션
-  // 실제로는 Program 타입에 applicationAvailable, applicationUrl 필드가 필요
-  const applicationAvailable = program.status === 'active' // 시뮬레이션
-  const applicationUrl = applicationAvailable ? `/applications/new?programId=${program.id}` : undefined
+  // 신청 가능 여부 및 URL
+  const applicationAvailable = isApplicationAvailable(program)
+  const applicationUrl = applicationAvailable ? getApplicationUrl(program.id) : undefined
 
   const roundColumns = [
     {

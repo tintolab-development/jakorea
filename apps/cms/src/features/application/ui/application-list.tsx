@@ -4,18 +4,11 @@
  */
 
 import { Table, Select, Button, Space, Tag, Dropdown, Badge, Tooltip, Popconfirm } from 'antd'
-import type { MenuProps } from 'antd'
-import {
-  MoreOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-} from '@ant-design/icons'
+import { MoreOutlined } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import type { Application } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
-import { schoolService } from '@/entities/school/api/school-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { getApplicationSubjectName, createApplicationMenuItems } from '../lib/application-helpers'
 import {
   applicationStatusConfig,
   applicationSubjectTypeConfig,
@@ -46,67 +39,6 @@ export function ApplicationList({
   const { table } = useApplicationTable(data)
 
   const programs = programService.getAllSync()
-
-  const getSubjectName = (application: Application) => {
-    if (application.subjectType === 'school') {
-      return schoolService.getNameById(application.subjectId)
-    } else if (application.subjectType === 'instructor') {
-      return instructorService.getNameById(application.subjectId)
-    }
-    return '-'
-  }
-
-  const getMenuItems = (application: Application): MenuProps['items'] => [
-    {
-      key: 'view',
-      label: '상세 보기',
-      icon: <EyeOutlined />,
-      onClick: () => onView(application),
-    },
-    {
-      key: 'edit',
-      label: '수정',
-      icon: <EditOutlined />,
-      onClick: () => onEdit(application),
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'status-submitted',
-      label: '접수로 변경',
-      disabled: application.status === 'submitted',
-      onClick: () => onStatusChange(application, 'submitted'),
-    },
-    {
-      key: 'status-reviewing',
-      label: '검토로 변경',
-      disabled: application.status === 'reviewing',
-      onClick: () => onStatusChange(application, 'reviewing'),
-    },
-    {
-      key: 'status-approved',
-      label: '확정으로 변경',
-      disabled: application.status === 'approved',
-      onClick: () => onStatusChange(application, 'approved'),
-    },
-    {
-      key: 'status-rejected',
-      label: '거절로 변경',
-      disabled: application.status === 'rejected',
-      onClick: () => onStatusChange(application, 'rejected'),
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'delete',
-      label: '삭제',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => onDelete(application),
-    },
-  ]
 
   return (
     <div>
@@ -182,7 +114,7 @@ export function ApplicationList({
                 <Tag color={applicationSubjectTypeConfig.colors[record.subjectType]}>
                   {applicationSubjectTypeConfig.labels[record.subjectType]}
                 </Tag>
-                <span>{getSubjectName(record)}</span>
+                <span>{getApplicationSubjectName(record)}</span>
               </Space>
             ),
           },
@@ -249,7 +181,17 @@ export function ApplicationList({
                   </Button>
                 </Popconfirm>
                 <div onClick={(e) => e.stopPropagation()}>
-                  <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
+                  <Dropdown
+            menu={{
+              items: createApplicationMenuItems(record, {
+                onView,
+                onEdit,
+                onDelete,
+                onStatusChange,
+              }),
+            }}
+            trigger={['click']}
+          >
                     <Button
                       type="text"
                       icon={<MoreOutlined />}

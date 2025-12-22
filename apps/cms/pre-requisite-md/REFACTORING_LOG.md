@@ -397,9 +397,66 @@ export function getApplicationStatusIcon(status: ApplicationStatus): React.Compo
 
 ---
 
+### Phase 2: 비즈니스 로직 분리
+
+**작업 일시**: 2025-01-XX
+
+**목적**: 
+- UI 컴포넌트에서 비즈니스 로직 분리
+- 재사용 가능한 헬퍼 함수 생성
+- 관심사 분리로 유지보수성 향상
+
+**생성 파일**:
+- `features/application/lib/application-helpers.tsx`
+- `features/program/lib/program-helpers.ts`
+- `features/settlement/lib/settlement-helpers.ts`
+
+**리팩토링된 파일** (3개):
+
+#### Application 관련
+- `features/application/ui/application-list.tsx`
+  - 제거: `getSubjectName` 함수 (UI 컴포넌트 내부)
+  - 제거: `getMenuItems` 함수 (UI 컴포넌트 내부)
+  - 추가: `getApplicationSubjectName`, `createApplicationMenuItems` import
+  - 변경: 헬퍼 함수를 `lib/application-helpers.tsx`로 분리
+
+#### Program 관련
+- `features/program/ui/program-detail-drawer.tsx`
+  - 제거: `applicationCount` 계산 로직 (UI 컴포넌트 내부)
+  - 제거: `confirmedRounds` 필터링 로직 (UI 컴포넌트 내부)
+  - 제거: `applicationAvailable`, `applicationUrl` 계산 로직
+  - 추가: `getApplicationCountByProgram`, `getConfirmedRounds`, `isApplicationAvailable`, `getApplicationUrl` import
+  - 변경: 헬퍼 함수를 `lib/program-helpers.ts`로 분리
+
+#### Settlement 관련
+- `features/settlement/ui/settlement-form.tsx`
+  - 제거: `totalAmount` 계산 로직 (UI 컴포넌트 내부)
+  - 추가: `calculateSettlementTotal` import
+  - 변경: 헬퍼 함수를 `lib/settlement-helpers.ts`로 분리
+
+**변경 통계**:
+- 생성된 파일: 3개 (헬퍼 함수 파일)
+- 수정된 UI 컴포넌트: 3개
+- 제거된 인라인 로직: 약 50줄
+- 코드 재사용성: 향상
+
+**개선 효과**:
+1. **관심사 분리**: UI 렌더링과 비즈니스 로직 분리
+2. **재사용성 향상**: 헬퍼 함수를 다른 컴포넌트에서도 사용 가능
+3. **테스트 용이성**: 비즈니스 로직을 독립적으로 테스트 가능
+4. **유지보수성 향상**: 로직 변경 시 헬퍼 함수만 수정
+5. **가독성 향상**: UI 컴포넌트가 더 간결해짐
+
+**참고**:
+- `application-helpers.tsx`는 JSX를 사용하므로 `.tsx` 확장자 사용
+- 모든 헬퍼 함수는 기존 로직과 동일하게 동작 (런타임 오류 없음)
+- 타입 안정성 유지 (모든 타입 체크 통과)
+
+---
+
 ## 다음 단계
 
-### Phase 2: 비즈니스 로직 분리 (예정)
+### Phase 3: 상태 전환 로직 중앙화 (예정)
 - `shared/utils/error-handler.ts` 생성
 - 일관된 에러 처리 패턴 적용
 

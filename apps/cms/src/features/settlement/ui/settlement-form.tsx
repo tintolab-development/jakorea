@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { settlementSchema, type SettlementFormData } from '@/entities/settlement/model/schema'
 import type { Settlement } from '@/types/domain'
 import { mockPrograms, mockInstructors, mockMatchings } from '@/data/mock'
+import { calculateSettlementTotal } from '../lib/settlement-helpers'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -84,7 +85,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
     await onSubmit(data)
   }
 
-  const totalAmount = watch('items')?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
+  const totalAmount = calculateSettlementTotal(watch('items') || [])
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
