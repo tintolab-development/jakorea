@@ -122,11 +122,133 @@ export function getApplicationStatusIcon(status: ApplicationStatus): React.Compo
 
 ---
 
-## 다음 단계
+---
 
-### Phase 1.3: Mock 데이터 참조 추상화 (예정)
-- `features` 레이어에서 직접 `mockProgramsMap`, `mockInstructorsMap` 등 참조하는 문제 해결
-- `entities/*/api/*-service.ts`에서 조회 함수 제공
+### Phase 1.3: Mock 데이터 참조 추상화
+
+**작업 일시**: 2025-01-XX
+
+**목적**: 
+- `features` 레이어에서 직접 `mockProgramsMap`, `mockInstructorsMap` 등을 참조하는 문제 해결
+- FSD 계층 구조 준수 (Features → Entities → Data)
+- 실제 API 연동 시 대량 수정 필요 문제 해결
+
+**생성/수정된 파일**:
+
+#### Entities 레이어 - Service 헬퍼 함수 추가
+- `entities/program/api/program-service.ts`
+  - `getNameById(id: string): string` 추가
+  - `getByIdSync(id: string): Program | undefined` 추가
+  - `getAllSync(): Program[]` 추가
+
+- `entities/instructor/api/instructor-service.ts`
+  - `getNameById(id: string): string` 추가
+  - `getByIdSync(id: string): Instructor | undefined` 추가
+  - `getAllSync(): Instructor[]` 추가
+
+- `entities/school/api/school-service.ts`
+  - `getNameById(id: string): string` 추가
+  - `getByIdSync(id: string): School | undefined` 추가
+
+- `entities/sponsor/api/sponsor-service.ts`
+  - `getNameById(id: string): string` 추가
+  - `getByIdSync(id: string): Sponsor | undefined` 추가
+  - `getAllSync(): Sponsor[]` 추가
+
+- `entities/schedule/api/schedule-service.ts`
+  - `getNameById(id: string): string` 추가
+  - `getByIdSync(id: string): Schedule | undefined` 추가
+  - `getAllSync(): Schedule[]` 추가
+
+- `entities/matching/api/matching-service.ts`
+  - `getByIdSync(id: UUID): Matching | undefined` 추가
+
+**리팩토링된 파일** (17개):
+
+#### Application 관련
+- `features/application/ui/application-list.tsx`
+  - 제거: `mockProgramsMap`, `mockSchoolsMap`, `mockInstructorsMap` 직접 import
+  - 추가: `programService`, `schoolService`, `instructorService` import
+  - 변경: `mockProgramsMap.get()` → `programService.getByIdSync()`
+  - 변경: `mockSchoolsMap.get()` → `schoolService.getNameById()`
+  - 변경: `mockInstructorsMap.get()` → `instructorService.getNameById()`
+  - 변경: `Array.from(mockProgramsMap.values())` → `programService.getAllSync()`
+
+- `features/application/ui/application-detail-drawer.tsx`
+  - 제거: `mockProgramsMap`, `mockSchoolsMap`, `mockInstructorsMap` 직접 import
+  - 추가: Service import 및 사용
+
+#### Program 관련
+- `features/program/ui/program-list.tsx`
+  - 제거: `mockSponsorsMap` 직접 import
+  - 추가: `sponsorService` import
+  - 변경: `mockSponsorsMap.get()` → `sponsorService.getNameById()`
+  - 변경: `Array.from(mockSponsorsMap.values())` → `sponsorService.getAllSync()`
+
+- `features/program/ui/program-detail-drawer.tsx`
+  - 제거: `mockSponsorsMap` 직접 import
+  - 추가: `sponsorService` import 및 사용
+
+#### Settlement 관련
+- `features/settlement/ui/settlement-list.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap` 직접 import
+  - 추가: `programService`, `instructorService` import
+  - 변경: `Array.from(mockProgramsMap.values())` → `programService.getAllSync()`
+
+- `features/settlement/ui/settlement-detail-drawer.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap`, `mockMatchingsMap` 직접 import
+  - 추가: `programService`, `instructorService`, `matchingService` import
+
+#### Matching 관련
+- `features/matching/ui/matching-list.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap`, `mockSchedulesMap` 직접 import
+  - 추가: `programService`, `instructorService`, `scheduleService` import
+  - 변경: `Array.from(mockProgramsMap.values())` → `programService.getAllSync()`
+
+- `features/matching/ui/matching-detail-drawer.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap`, `mockSchedulesMap` 직접 import
+  - 추가: Service import 및 사용
+
+- `features/matching/ui/matching-form.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap`, `mockSchedulesMap` 직접 import
+  - 추가: `programService`, `instructorService`, `scheduleService` import
+  - 변경: `Array.from(mockProgramsMap.values())` → `programService.getAllSync()`
+  - 변경: `Array.from(mockInstructorsMap.values())` → `instructorService.getAllSync()`
+
+#### Schedule 관련
+- `features/schedule/ui/schedule-calendar.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap` 직접 import
+  - 추가: `programService`, `instructorService` import
+
+- `features/schedule/ui/schedule-detail-drawer.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap` 직접 import
+  - 추가: `programService`, `instructorService` import
+
+#### Dashboard 관련
+- `features/dashboard/ui/recent-activities.tsx`
+  - 제거: `mockProgramsMap`, `mockInstructorsMap` 직접 import
+  - 추가: `programService`, `instructorService` import
+
+**변경 통계**:
+- 수정된 Service 파일: 6개
+- 수정된 Features 컴포넌트: 12개
+- 제거된 직접 Mock 참조: 17개 파일
+- 타입 안정성: 개선 (모든 타입 체크 통과)
+
+**개선 효과**:
+1. **FSD 계층 구조 준수**: Features → Entities → Data 의존성 유지
+2. **실제 API 연동 용이**: Service 함수만 수정하면 됨 (17개 파일 수정 불필요)
+3. **테스트 용이**: Service를 Mock으로 교체 가능
+4. **코드 중복 감소**: 조회 로직을 Service에 중앙화
+5. **타입 안정성**: Service에서 타입 보장
+
+**참고**:
+- `features/matching/lib/instructor-candidate.ts`는 lib 파일이므로 Mock 데이터 직접 참조 유지 (비즈니스 로직 파일)
+- 필터 옵션용 `getAllSync()` 함수 추가로 동기 조회 가능
+
+---
+
+## 다음 단계
 
 ### Phase 1.4: 에러 처리 일관화 (예정)
 - `shared/utils/error-handler.ts` 생성

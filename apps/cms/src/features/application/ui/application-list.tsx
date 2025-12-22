@@ -13,7 +13,9 @@ import {
 } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import type { Application } from '@/types/domain'
-import { mockProgramsMap, mockSchoolsMap, mockInstructorsMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { schoolService } from '@/entities/school/api/school-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 import {
   applicationStatusConfig,
   applicationSubjectTypeConfig,
@@ -43,13 +45,13 @@ export function ApplicationList({
 }: ApplicationListProps) {
   const { table } = useApplicationTable(data)
 
-  const programs = Array.from(mockProgramsMap.values())
+  const programs = programService.getAllSync()
 
   const getSubjectName = (application: Application) => {
     if (application.subjectType === 'school') {
-      return mockSchoolsMap.get(application.subjectId)?.name || '-'
+      return schoolService.getNameById(application.subjectId)
     } else if (application.subjectType === 'instructor') {
-      return mockInstructorsMap.get(application.subjectId)?.name || '-'
+      return instructorService.getNameById(application.subjectId)
     }
     return '-'
   }
@@ -162,7 +164,7 @@ export function ApplicationList({
             dataIndex: 'programId',
             key: 'programId',
             render: (programId: string) => {
-              const program = mockProgramsMap.get(programId)
+              const program = programService.getByIdSync(programId)
               return program ? (
                 <Tooltip title={program.description || ''}>
                   <Tag color="blue">{program.title}</Tag>

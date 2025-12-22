@@ -8,7 +8,8 @@ import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useSettlementTable } from '../model/use-settlement-table'
 import type { Settlement } from '@/types/domain'
-import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 import {
   getSettlementStatusLabel,
@@ -36,13 +37,13 @@ export function SettlementList({
 }: SettlementListProps) {
   const { table } = useSettlementTable(data)
 
-  const programs = Array.from(mockProgramsMap.values())
+  const programs = programService.getAllSync()
   const statuses: Settlement['status'][] = ['pending', 'calculated', 'approved', 'paid', 'cancelled']
   const periods = Array.from(new Set(data.map(s => s.period))).sort().reverse()
 
   const handleDownloadPaymentStatement = async (settlement: Settlement) => {
-    const program = mockProgramsMap.get(settlement.programId)
-    const instructor = mockInstructorsMap.get(settlement.instructorId)
+    const program = programService.getByIdSync(settlement.programId)
+    const instructor = instructorService.getByIdSync(settlement.instructorId)
 
     if (!program || !instructor) {
       message.error('프로그램 또는 강사 정보를 찾을 수 없습니다')
@@ -199,7 +200,7 @@ export function SettlementList({
             dataIndex: 'programId',
             key: 'programId',
             render: (programId: string) => {
-              const program = mockProgramsMap.get(programId)
+              const program = programService.getByIdSync(programId)
               return program ? <Tag color="cyan">{program.title}</Tag> : '-'
             },
           },
@@ -208,8 +209,7 @@ export function SettlementList({
             dataIndex: 'instructorId',
             key: 'instructorId',
             render: (instructorId: string) => {
-              const instructor = mockInstructorsMap.get(instructorId)
-              return instructor ? instructor.name : '-'
+              return instructorService.getNameById(instructorId)
             },
           },
           {

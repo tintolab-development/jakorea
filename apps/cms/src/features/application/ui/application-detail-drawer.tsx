@@ -6,7 +6,9 @@
 import { Drawer, Descriptions, Tag, Tabs, Space, Button, Badge, Timeline, Alert, Typography, Divider } from 'antd'
 import { EditOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
-import { mockProgramsMap, mockSchoolsMap, mockInstructorsMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { schoolService } from '@/entities/school/api/school-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 import {
   applicationSubjectTypeConfig,
   getApplicationStatusLabel,
@@ -37,12 +39,12 @@ export function ApplicationDetailDrawer({
 }: ApplicationDetailDrawerProps) {
   if (!application) return null
 
-  const program = mockProgramsMap.get(application.programId)
+  const program = programService.getByIdSync(application.programId)
   const subjectName =
     application.subjectType === 'school'
-      ? mockSchoolsMap.get(application.subjectId)?.name
+      ? schoolService.getNameById(application.subjectId)
       : application.subjectType === 'instructor'
-      ? mockInstructorsMap.get(application.subjectId)?.name
+      ? instructorService.getNameById(application.subjectId)
       : '-'
 
   const timelineItems = [

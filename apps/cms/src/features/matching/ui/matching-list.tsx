@@ -7,7 +7,9 @@ import { Table, Tag, Space, Button, Select, Tooltip, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { EyeOutlined, CheckOutlined, CloseOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
-import { mockProgramsMap, mockInstructorsMap, mockSchedulesMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import dayjs from 'dayjs'
 import {
   getCommonStatusLabel,
@@ -39,7 +41,7 @@ export function MatchingList({
   onConfirm,
   onCancel,
 }: MatchingListProps) {
-  const programs = Array.from(mockProgramsMap.values())
+  const programs = programService.getAllSync()
 
   const getMenuItems = (matching: Matching): MenuProps['items'] => {
     const items: MenuProps['items'] = [
@@ -105,7 +107,7 @@ export function MatchingList({
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = mockProgramsMap.get(programId)
+        const program = programService.getByIdSync(programId)
         return program ? (
           <Tooltip title={program.description}>
             <span style={{ fontWeight: 500 }}>{program.title}</span>
@@ -120,7 +122,7 @@ export function MatchingList({
       dataIndex: 'instructorId',
       key: 'instructorId',
       render: (instructorId: string) => {
-        const instructor = mockInstructorsMap.get(instructorId)
+        const instructor = instructorService.getByIdSync(instructorId)
         return instructor ? (
           <Space>
             <span>{instructor.name}</span>
@@ -137,7 +139,7 @@ export function MatchingList({
       key: 'scheduleId',
       render: (scheduleId: string | undefined) => {
         if (!scheduleId) return '-'
-        const schedule = mockSchedulesMap.get(scheduleId)
+        const schedule = scheduleService.getByIdSync(scheduleId)
         return schedule ? (
           <Space direction="vertical" size="small">
             <span>{schedule.title}</span>

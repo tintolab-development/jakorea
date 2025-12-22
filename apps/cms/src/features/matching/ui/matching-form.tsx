@@ -8,7 +8,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { matchingFormSchema, type MatchingFormData } from '@/entities/matching/model/schema'
 import type { Matching } from '@/types/domain'
-import { mockProgramsMap, mockInstructorsMap, mockSchedulesMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import { suggestInstructorCandidates } from '../lib/instructor-candidate'
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
@@ -49,7 +51,7 @@ export function MatchingForm({ matching, onSubmit, onCancel, loading }: Matching
 
   useEffect(() => {
     if (selectedProgramId) {
-      const program = mockProgramsMap.get(selectedProgramId)
+      const program = programService.getByIdSync(selectedProgramId)
       if (program) {
         const suggested = suggestInstructorCandidates(program)
         setCandidates(suggested.slice(0, 5)) // 상위 5명만 표시
@@ -57,10 +59,10 @@ export function MatchingForm({ matching, onSubmit, onCancel, loading }: Matching
     }
   }, [selectedProgramId])
 
-  const program = selectedProgramId ? mockProgramsMap.get(selectedProgramId) : null
+  const program = selectedProgramId ? programService.getByIdSync(selectedProgramId) : null
   const round = program && selectedRoundId ? program.rounds.find(r => r.id === selectedRoundId) : null
   const availableSchedules = selectedRoundId
-    ? Array.from(mockSchedulesMap.values()).filter(s => s.roundId === selectedRoundId)
+    ? scheduleService.getAllSync().filter(s => s.roundId === selectedRoundId)
     : []
 
   const onFormSubmit = async (data: MatchingFormData) => {
@@ -80,7 +82,7 @@ export function MatchingForm({ matching, onSubmit, onCancel, loading }: Matching
           placeholder="프로그램 선택"
           disabled={!!matching}
         >
-          {Array.from(mockProgramsMap.values()).map(p => (
+          {programService.getAllSync().map(p => (
             <Option key={p.id} value={p.id}>
               {p.title}
             </Option>
@@ -183,7 +185,7 @@ export function MatchingForm({ matching, onSubmit, onCancel, loading }: Matching
             return text.toLowerCase().includes(input.toLowerCase())
           }}
         >
-          {Array.from(mockInstructorsMap.values()).map(instructor => (
+          {instructorService.getAllSync().map(instructor => (
             <Option key={instructor.id} value={instructor.id}>
               {instructor.name} ({instructor.region}) - {instructor.specialty.join(', ')}
             </Option>

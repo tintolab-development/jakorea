@@ -58,6 +58,34 @@ export const instructorService = {
     mockInstructorsMap.delete(id)
     return Promise.resolve()
   },
+
+  // Phase 1.3: Mock 데이터 참조 추상화 - 조회 헬퍼 함수
+  /**
+   * ID로 강사 이름 조회 (동기)
+   * @param id 강사 ID
+   * @returns 강사 이름 또는 ID
+   */
+  getNameById: (id: string): string => {
+    const instructor = mockInstructorsMap.get(id)
+    return instructor?.name || id
+  },
+
+  /**
+   * ID로 강사 전체 조회 (동기)
+   * @param id 강사 ID
+   * @returns 강사 또는 undefined
+   */
+  getByIdSync: (id: string): Instructor | undefined => {
+    return mockInstructorsMap.get(id)
+  },
+
+  /**
+   * 모든 강사 조회 (동기)
+   * @returns 강사 배열
+   */
+  getAllSync: (): Instructor[] => {
+    return [...mockInstructors]
+  },
 }
 
 

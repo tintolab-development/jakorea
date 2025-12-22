@@ -173,5 +173,15 @@ export const matchingService = {
       return cancelled
     })
   },
+
+  // Phase 1.3: Mock 데이터 참조 추상화 - 조회 헬퍼 함수
+  /**
+   * ID로 매칭 전체 조회 (동기)
+   * @param id 매칭 ID
+   * @returns 매칭 또는 undefined
+   */
+  getByIdSync: (id: UUID): Matching | undefined => {
+    return mockMatchingsMap.get(id)
+  },
 }
 

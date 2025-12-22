@@ -85,5 +85,33 @@ export const programService = {
     program.rounds[roundIndex] = updatedRound
     return Promise.resolve(updatedRound)
   },
+
+  // Phase 1.3: Mock 데이터 참조 추상화 - 조회 헬퍼 함수
+  /**
+   * ID로 프로그램 이름 조회 (동기)
+   * @param id 프로그램 ID
+   * @returns 프로그램 제목 또는 ID
+   */
+  getNameById: (id: string): string => {
+    const program = mockProgramsMap.get(id)
+    return program?.title || id
+  },
+
+  /**
+   * ID로 프로그램 전체 조회 (동기)
+   * @param id 프로그램 ID
+   * @returns 프로그램 또는 undefined
+   */
+  getByIdSync: (id: string): Program | undefined => {
+    return mockProgramsMap.get(id)
+  },
+
+  /**
+   * 모든 프로그램 조회 (동기)
+   * @returns 프로그램 배열
+   */
+  getAllSync: (): Program[] => {
+    return [...mockPrograms]
+  },
 }
 

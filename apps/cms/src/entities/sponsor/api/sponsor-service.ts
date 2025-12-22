@@ -58,6 +58,34 @@ export const sponsorService = {
     mockSponsorsMap.delete(id)
     return Promise.resolve()
   },
+
+  // Phase 1.3: Mock 데이터 참조 추상화 - 조회 헬퍼 함수
+  /**
+   * ID로 스폰서 이름 조회 (동기)
+   * @param id 스폰서 ID
+   * @returns 스폰서 이름 또는 ID
+   */
+  getNameById: (id: string): string => {
+    const sponsor = mockSponsorsMap.get(id)
+    return sponsor?.name || id
+  },
+
+  /**
+   * ID로 스폰서 전체 조회 (동기)
+   * @param id 스폰서 ID
+   * @returns 스폰서 또는 undefined
+   */
+  getByIdSync: (id: string): Sponsor | undefined => {
+    return mockSponsorsMap.get(id)
+  },
+
+  /**
+   * 모든 스폰서 조회 (동기)
+   * @returns 스폰서 배열
+   */
+  getAllSync: (): Sponsor[] => {
+    return [...mockSponsors]
+  },
 }
 
 

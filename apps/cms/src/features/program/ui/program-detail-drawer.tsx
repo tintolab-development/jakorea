@@ -7,7 +7,8 @@
 import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Alert, Typography, Divider } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import { mockSponsorsMap, mockApplications } from '@/data/mock'
+import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { mockApplications } from '@/data/mock'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
 import {
   commonStatusConfig,
@@ -53,7 +54,7 @@ export function ProgramDetailDrawer({
 }: ProgramDetailDrawerProps) {
   if (!program) return null
 
-  const sponsor = mockSponsorsMap.get(program.sponsorId)
+  const sponsor = sponsorService.getByIdSync(program.sponsorId)
   
   // 프로그램별 신청 수 계산 (Mock 데이터 기반)
   const applicationCount = mockApplications.filter(app => app.programId === program.id).length

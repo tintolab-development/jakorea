@@ -6,7 +6,9 @@
 import { Drawer, Descriptions, Tag, Timeline, Space, Button, Alert, Badge } from 'antd'
 import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
-import { mockProgramsMap, mockInstructorsMap, mockSchedulesMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import {
   getCommonStatusLabel,
   getCommonStatusColor,
@@ -42,9 +44,9 @@ export function MatchingDetailDrawer({
 }: MatchingDetailDrawerProps) {
   if (!matching) return null
 
-  const program = mockProgramsMap.get(matching.programId)
-  const instructor = mockInstructorsMap.get(matching.instructorId)
-  const schedule = matching.scheduleId ? mockSchedulesMap.get(matching.scheduleId) : null
+  const program = programService.getByIdSync(matching.programId)
+  const instructor = instructorService.getByIdSync(matching.instructorId)
+  const schedule = matching.scheduleId ? scheduleService.getByIdSync(matching.scheduleId) : null
 
   return (
     <Drawer

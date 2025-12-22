@@ -11,7 +11,8 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { CalendarMode } from 'antd/es/calendar/generateCalendar'
 import type { Schedule } from '@/types/domain'
-import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import './schedule-calendar.css'
 
@@ -84,9 +85,9 @@ export function ScheduleCalendar({
         <div className="schedule-list">
           {listData.map(schedule => {
             const isConflict = conflicts.some(c => c.id === schedule.id)
-            const program = mockProgramsMap.get(schedule.programId)
+            const program = programService.getByIdSync(schedule.programId)
             const instructor = schedule.instructorId
-              ? mockInstructorsMap.get(schedule.instructorId)
+              ? instructorService.getByIdSync(schedule.instructorId)
               : null
 
             const popoverContent = (

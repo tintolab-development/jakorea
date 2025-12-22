@@ -58,6 +58,26 @@ export const schoolService = {
     mockSchoolsMap.delete(id)
     return Promise.resolve()
   },
+
+  // Phase 1.3: Mock 데이터 참조 추상화 - 조회 헬퍼 함수
+  /**
+   * ID로 학교 이름 조회 (동기)
+   * @param id 학교 ID
+   * @returns 학교 이름 또는 ID
+   */
+  getNameById: (id: string): string => {
+    const school = mockSchoolsMap.get(id)
+    return school?.name || id
+  },
+
+  /**
+   * ID로 학교 전체 조회 (동기)
+   * @param id 학교 ID
+   * @returns 학교 또는 undefined
+   */
+  getByIdSync: (id: string): School | undefined => {
+    return mockSchoolsMap.get(id)
+  },
 }
 
 

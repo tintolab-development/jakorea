@@ -6,7 +6,9 @@
 import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, message } from 'antd'
 import { EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
-import { mockProgramsMap, mockInstructorsMap, mockMatchingsMap } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { matchingService } from '@/entities/matching/api/matching-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 import { SettlementApprovalWorkflow } from './settlement-approval-workflow'
 import {
@@ -44,9 +46,9 @@ export function SettlementDetailDrawer({
 }: SettlementDetailDrawerProps) {
   if (!settlement) return null
 
-  const program = mockProgramsMap.get(settlement.programId)
-  const instructor = mockInstructorsMap.get(settlement.instructorId)
-  const matching = mockMatchingsMap.get(settlement.matchingId)
+  const program = programService.getByIdSync(settlement.programId)
+  const instructor = instructorService.getByIdSync(settlement.instructorId)
+  const matching = matchingService.getByIdSync(settlement.matchingId)
 
   const handleDownloadPaymentStatement = async () => {
     if (!program || !instructor) {

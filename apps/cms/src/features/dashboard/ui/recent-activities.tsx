@@ -6,7 +6,9 @@
 import { Card, List, Tag, Space, Typography, Empty, Row, Col } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { FileTextOutlined, TeamOutlined, CalendarOutlined } from '@ant-design/icons'
-import { mockApplications, mockMatchings, mockSchedules, mockProgramsMap, mockInstructorsMap } from '@/data/mock'
+import { mockApplications, mockMatchings, mockSchedules } from '@/data/mock'
+import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 import dayjs from 'dayjs'
 import {
   getApplicationStatusLabel,
@@ -72,7 +74,7 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
             <List
               dataSource={recentApplications}
               renderItem={(application) => {
-                const program = mockProgramsMap.get(application.programId)
+                const program = programService.getByIdSync(application.programId)
                 return (
                   <List.Item
                     style={{ cursor: 'pointer', padding: '8px 0' }}
@@ -116,8 +118,8 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
             <List
               dataSource={recentMatchings}
               renderItem={(matching) => {
-                const program = mockProgramsMap.get(matching.programId)
-                const instructor = mockInstructorsMap.get(matching.instructorId)
+                const program = programService.getByIdSync(matching.programId)
+                const instructor = instructorService.getByIdSync(matching.instructorId)
                 return (
                   <List.Item
                     style={{ cursor: 'pointer', padding: '8px 0' }}
@@ -168,7 +170,7 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
             <List
               dataSource={recentSchedules}
               renderItem={(schedule) => {
-                const program = mockProgramsMap.get(schedule.programId)
+                const program = programService.getByIdSync(schedule.programId)
                 const scheduleDate = typeof schedule.date === 'string' ? dayjs(schedule.date) : dayjs(schedule.date)
                 return (
                   <List.Item
@@ -187,7 +189,7 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
                           <Text type="secondary" style={{ fontSize: 12 }}>
                             프로그램: {program?.title || '-'}
                             {schedule.instructorId && (
-                              <> | 강사: {mockInstructorsMap.get(schedule.instructorId)?.name || '-'}</>
+                              <> | 강사: {instructorService.getNameById(schedule.instructorId)}</>
                             )}
                           </Text>
                           <Text type="secondary" style={{ fontSize: 12 }}>

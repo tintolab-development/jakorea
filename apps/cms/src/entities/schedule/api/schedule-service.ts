@@ -106,6 +106,34 @@ export const scheduleService = {
       )
     })
   },
+
+  // Phase 1.3: Mock 데이터 참조 추상화 - 조회 헬퍼 함수
+  /**
+   * ID로 일정 제목 조회 (동기)
+   * @param id 일정 ID
+   * @returns 일정 제목 또는 ID
+   */
+  getNameById: (id: string): string => {
+    const schedule = mockSchedulesMap.get(id)
+    return schedule?.title || id
+  },
+
+  /**
+   * ID로 일정 전체 조회 (동기)
+   * @param id 일정 ID
+   * @returns 일정 또는 undefined
+   */
+  getByIdSync: (id: string): Schedule | undefined => {
+    return mockSchedulesMap.get(id)
+  },
+
+  /**
+   * 모든 일정 조회 (동기)
+   * @returns 일정 배열
+   */
+  getAllSync: (): Schedule[] => {
+    return [...mockSchedules]
+  },
 }
 
 

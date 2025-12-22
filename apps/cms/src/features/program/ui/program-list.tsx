@@ -8,7 +8,7 @@ import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { useProgramTable } from '../model/use-program-table'
 import type { Program } from '@/types/domain'
-import { mockSponsorsMap } from '@/data/mock'
+import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
   getCommonStatusLabel,
   getCommonStatusColor,
@@ -49,7 +49,7 @@ const statusOptions = [
 export function ProgramList({ data, loading, onView, onEdit, onDelete }: ProgramListProps) {
   const { table } = useProgramTable(data)
 
-  const sponsors = Array.from(mockSponsorsMap.values())
+  const sponsors = sponsorService.getAllSync()
 
   const getMenuItems = (program: Program): MenuProps['items'] => [
     {
@@ -151,8 +151,7 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
             dataIndex: 'sponsorId',
             key: 'sponsorId',
             render: (sponsorId: string) => {
-              const sponsor = mockSponsorsMap.get(sponsorId)
-              return sponsor?.name || '-'
+              return sponsorService.getNameById(sponsorId)
             },
           },
           {
