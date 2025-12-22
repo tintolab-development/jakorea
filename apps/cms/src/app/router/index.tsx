@@ -34,6 +34,7 @@ import { VolunteerDetailPage } from '@/pages/volunteers/volunteer-detail-page'
 import { MyPageMainPage } from '@/pages/mypage/mypage-main-page'
 import { HistoryListPage } from '@/pages/histories/history-list-page'
 import { HistoryDetailPage } from '@/pages/histories/history-detail-page'
+import { ApplicationPathListPage } from '@/pages/application-paths/application-path-list-page'
 import { ErrorPage } from '@/pages/error/error-page'
 
 export const router = createBrowserRouter([
@@ -88,6 +89,10 @@ export const router = createBrowserRouter([
           { path: ':id/edit', element: <ApplicationFormPage /> },
           { path: ':id/result', element: <ApplicationResultPage /> },
         ],
+      },
+      {
+        path: 'application-paths',
+        children: [{ index: true, element: <ApplicationPathListPage /> }],
       },
       {
         path: 'schedules',

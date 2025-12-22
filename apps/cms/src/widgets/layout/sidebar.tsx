@@ -30,6 +30,7 @@ const menuItems: MenuProps['items'] = [
   { key: '/', label: '대시보드', icon: <DashboardOutlined /> },
   { key: '/programs', label: '프로그램', icon: <BookOutlined /> },
   { key: '/applications', label: '신청 관리', icon: <FileTextOutlined /> },
+  { key: '/application-paths', label: '신청 경로 관리', icon: <FileTextOutlined /> },
   { key: '/schedules', label: '일정 관리', icon: <CalendarOutlined /> },
   { key: '/matchings', label: '매칭 관리', icon: <TeamOutlined /> },
   { key: '/instructors', label: '강사 관리', icon: <UserOutlined /> },

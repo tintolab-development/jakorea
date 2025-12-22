@@ -8,6 +8,7 @@ import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Ale
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import {
   getApplicationCountByProgram,
   getConfirmedRounds,
@@ -58,17 +59,29 @@ export function ProgramDetailDrawer({
 }: ProgramDetailDrawerProps) {
   if (!program) return null
 
-  const sponsor = sponsorService.getByIdSync(program.sponsorId)
-  
-  // 프로그램별 신청 수 계산
-  const applicationCount = getApplicationCountByProgram(program.id)
-  
-  // 확정된 일정만 필터링
-  const confirmedRounds = getConfirmedRounds(program.rounds)
-  
-  // 신청 가능 여부 및 URL
-  const applicationAvailable = isApplicationAvailable(program)
-  const applicationUrl = applicationAvailable ? getApplicationUrl(program.id) : undefined
+        const sponsor = sponsorService.getByIdSync(program.sponsorId)
+
+        // 프로그램별 신청 수 계산
+        const applicationCount = getApplicationCountByProgram(program.id)
+
+        // 확정된 일정만 필터링
+        const confirmedRounds = getConfirmedRounds(program.rounds)
+
+        // 신청 경로 정보 조회 (V3 Phase 7)
+        const applicationPath = program.applicationPathId
+          ? applicationPathService.getByIdSync(program.applicationPathId)
+          : applicationPathService.getByProgramIdSync(program.id)
+
+        // 신청 가능 여부 및 URL
+        const applicationAvailable = isApplicationAvailable(program)
+        let applicationUrl: string | undefined
+        if (applicationAvailable && applicationPath && applicationPath.isActive) {
+          if (applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl) {
+            applicationUrl = applicationPath.googleFormUrl
+          } else if (applicationPath.pathType === 'internal') {
+            applicationUrl = getApplicationUrl(program.id)
+          }
+        }
 
   const roundColumns = [
     {
@@ -228,9 +241,14 @@ export function ProgramDetailDrawer({
                         <Paragraph style={{ margin: 0, marginBottom: 8 }}>
                           <Text strong>신청 가능합니다.</Text>
                         </Paragraph>
+                        {applicationPath && applicationPath.guideMessage && (
+                          <Paragraph style={{ margin: 0, marginBottom: 8, fontSize: 12, color: '#8c8c8c' }}>
+                            {applicationPath.guideMessage}
+                          </Paragraph>
+                        )}
                         {applicationUrl && (
                           <SingleCTA
-                            label="신청하기"
+                            label={applicationPath?.pathType === 'google_form' ? '구글폼으로 신청하기' : '신청하기'}
                             targetUrl={applicationUrl}
                             type="primary"
                           />

@@ -22,6 +22,24 @@ export type ProgramType = 'online' | 'offline' | 'hybrid'
 // 프로그램 진행 형태
 export type ProgramFormat = 'workshop' | 'seminar' | 'course' | 'lecture' | 'other'
 
+// 프로그램 카테고리 (학교 프로그램 vs 개인 프로그램)
+export type ProgramCategory = 'school' | 'individual'
+
+// 신청 경로 타입
+export type ApplicationPathType = 'google_form' | 'internal' // 구글폼 / 자동화 프로그램 내 신청
+
+// 신청 경로
+export interface ApplicationPath {
+  id: UUID
+  programId: UUID
+  pathType: ApplicationPathType
+  googleFormUrl?: string // 구글폼 링크 (pathType이 'google_form'일 때)
+  guideMessage?: string // 신청 경로별 안내 문구
+  isActive: boolean // 활성화 여부
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
 // 프로그램
 export interface Program {
   id: UUID
@@ -29,12 +47,14 @@ export interface Program {
   title: string
   type: ProgramType
   format: ProgramFormat
+  category: ProgramCategory // 학교 프로그램 vs 개인 프로그램
   description?: string
   rounds: ProgramRound[] // 회차 정보
   startDate: DateValue
   endDate: DateValue
   status: Status
   settlementRuleId?: UUID // 정산 규칙 참조
+  applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   createdAt: DateValue
   updatedAt: DateValue
 }

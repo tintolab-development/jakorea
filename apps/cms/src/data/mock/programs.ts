@@ -3,7 +3,7 @@
  * Phase 2.1: 40개 이상의 다양한 상태/유형/스폰서를 포함한 샘플 데이터
  */
 
-import type { Program, ProgramRound } from '../../types/domain'
+import type { Program, ProgramRound, ProgramCategory } from '../../types/domain'
 import { mockSponsors } from './sponsors'
 
 const getDate = (daysAgo: number): string => {
@@ -68,18 +68,23 @@ export const mockPrograms: Program[] = Array.from({ length: 40 }, (_, index) => 
   const startDateOffset = Math.floor(Math.random() * 60) + 5 // 5-65일 후
   const programStatus = statuses[Math.floor(Math.random() * statuses.length)]
 
+  // 학교 프로그램 vs 개인 프로그램 구분 (50:50 비율)
+  const category: ProgramCategory = index % 2 === 0 ? 'school' : 'individual'
+
   return {
     id: `prog-${String(index + 1).padStart(3, '0')}`,
     sponsorId: sponsor.id,
     title: `${template.title} ${index >= programTemplates.length ? `(${Math.floor(index / programTemplates.length) + 1}기)` : ''}`,
     type: template.type,
     format: template.format,
+    category,
     description: template.desc,
     rounds: createRounds(`prog-${String(index + 1).padStart(3, '0')}`, roundCount, startDateOffset),
     startDate: getFutureDate(startDateOffset),
     endDate: getFutureDate(startDateOffset + roundCount * 7),
     status: programStatus,
     settlementRuleId: Math.random() > 0.5 ? `rule-${String(Math.floor(Math.random() * 5) + 1).padStart(3, '0')}` : undefined,
+    applicationPathId: Math.random() > 0.3 ? `path-${String(index + 1).padStart(3, '0')}` : undefined, // 70% 확률로 신청 경로 설정
     createdAt: getDate(Math.floor(Math.random() * 60) + 5),
     updatedAt: getDate(Math.floor(Math.random() * 5)),
   }
