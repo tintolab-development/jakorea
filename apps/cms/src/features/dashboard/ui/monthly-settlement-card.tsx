@@ -2,58 +2,25 @@
  * 월별 정산 현황 카드
  * Phase 1: 대시보드 고도화
  * Phase 2: 전월 대비 증감률 추가
+ * Phase 3: 성능 최적화 (데이터 중앙화)
  */
 
 import { Card, Statistic, Space, Tag, Typography } from 'antd'
 import { DollarOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { mockSettlements } from '@/data/mock'
-import dayjs from 'dayjs'
 import { getSettlementStatusColor } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { useDashboardData } from '../model/use-dashboard-data'
 
 const { Text } = Typography
 
 export function MonthlySettlementCard() {
   const navigate = useNavigate()
+  const { monthlySettlement } = useDashboardData()
 
-  // 이번 달 정산 데이터
-  const currentMonth = dayjs().format('YYYY-MM')
-  const monthlySettlements = mockSettlements.filter(s => {
-    const settlementMonth = typeof s.period === 'string' && s.period.match(/^\d{4}-\d{2}$/)
-      ? s.period
-      : dayjs(s.createdAt).format('YYYY-MM')
-    return settlementMonth === currentMonth
-  })
-
-  // 전월 정산 데이터
-  const previousMonth = dayjs().subtract(1, 'month').format('YYYY-MM')
-  const previousMonthlySettlements = mockSettlements.filter(s => {
-    const settlementMonth = typeof s.period === 'string' && s.period.match(/^\d{4}-\d{2}$/)
-      ? s.period
-      : dayjs(s.createdAt).format('YYYY-MM')
-    return settlementMonth === previousMonth
-  })
-
-  // 총 정산액
-  const totalAmount = monthlySettlements.reduce((sum, s) => sum + s.totalAmount, 0)
-  const previousTotalAmount = previousMonthlySettlements.reduce((sum, s) => sum + s.totalAmount, 0)
-
-  // 전월 대비 증감률 계산
-  const changeRate = previousTotalAmount > 0
-    ? ((totalAmount - previousTotalAmount) / previousTotalAmount) * 100
-    : totalAmount > 0 ? 100 : 0
+  const { totalAmount, changeRate, statusCounts } = monthlySettlement
   const isIncrease = changeRate > 0
   const isDecrease = changeRate < 0
-
-  // 상태별 건수
-  const statusCounts = {
-    pending: monthlySettlements.filter(s => s.status === 'pending').length,
-    calculated: monthlySettlements.filter(s => s.status === 'calculated').length,
-    approved: monthlySettlements.filter(s => s.status === 'approved').length,
-    paid: monthlySettlements.filter(s => s.status === 'paid').length,
-    cancelled: monthlySettlements.filter(s => s.status === 'cancelled').length,
-  }
 
   const handleClick = () => {
     navigate('/settlements/monthly')

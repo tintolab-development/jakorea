@@ -53,9 +53,7 @@ export function SchoolList({ data, loading }: SchoolListProps) {
             dataIndex: 'name',
             key: 'name',
             render: (text: string) => (
-              <Tag color={domainColorsHex.school.primary} style={{ fontSize: 14, padding: '4px 12px' }}>
-                {text}
-              </Tag>
+              <Tag color={domainColorsHex.school.primary}>{text}</Tag>
             ),
           },
           {

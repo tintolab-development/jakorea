@@ -2,52 +2,25 @@
  * 이번 달 신청 현황 카드
  * Phase 1: 대시보드 고도화
  * Phase 2: 전월 대비 증감률 추가
+ * Phase 3: 성능 최적화 (데이터 중앙화)
  */
 
 import { Card, Statistic, Space, Tag, Typography } from 'antd'
 import { FileTextOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { mockApplications } from '@/data/mock'
-import dayjs from 'dayjs'
 import { getApplicationStatusColor } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { useDashboardData } from '../model/use-dashboard-data'
 
 const { Text } = Typography
 
 export function MonthlyApplicationCard() {
   const navigate = useNavigate()
+  const { monthlyApplications } = useDashboardData()
 
-  // 이번 달 신청 데이터
-  const currentMonth = dayjs().format('YYYY-MM')
-  const monthlyApplications = mockApplications.filter(a => {
-    const applicationMonth = dayjs(a.createdAt).format('YYYY-MM')
-    return applicationMonth === currentMonth
-  })
-
-  // 전월 신청 데이터
-  const previousMonth = dayjs().subtract(1, 'month').format('YYYY-MM')
-  const previousMonthlyApplications = mockApplications.filter(a => {
-    const applicationMonth = dayjs(a.createdAt).format('YYYY-MM')
-    return applicationMonth === previousMonth
-  })
-
-  // 총 신청 수
-  const totalCount = monthlyApplications.length
-  const previousTotalCount = previousMonthlyApplications.length
-
-  // 전월 대비 증감 계산
-  const changeCount = totalCount - previousTotalCount
+  const { total, changeCount, statusCounts } = monthlyApplications
   const isIncrease = changeCount > 0
   const isDecrease = changeCount < 0
-
-  // 상태별 건수
-  const statusCounts = {
-    submitted: monthlyApplications.filter(a => a.status === 'submitted').length,
-    reviewing: monthlyApplications.filter(a => a.status === 'reviewing').length,
-    approved: monthlyApplications.filter(a => a.status === 'approved').length,
-    rejected: monthlyApplications.filter(a => a.status === 'rejected').length,
-    cancelled: monthlyApplications.filter(a => a.status === 'cancelled').length,
-  }
 
   const handleClick = () => {
     navigate('/applications')
@@ -61,7 +34,7 @@ export function MonthlyApplicationCard() {
     >
       <Statistic
         title="이번 달 신청 현황"
-        value={totalCount}
+        value={total}
         prefix={<FileTextOutlined />}
         suffix="건"
         valueStyle={{ color: domainColorsHex.application.primary }}

@@ -1,37 +1,22 @@
 /**
  * 진행 중 프로그램 카드
  * Phase 1: 대시보드 고도화
+ * Phase 3: 성능 최적화 (데이터 중앙화)
  */
 
 import { Card, Statistic, Space, Tag, Typography } from 'antd'
 import { BookOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { mockPrograms, mockSchedules } from '@/data/mock'
-import dayjs from 'dayjs'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { useDashboardData } from '../model/use-dashboard-data'
 
 const { Text } = Typography
 
 export function ActiveProgramCard() {
   const navigate = useNavigate()
+  const { activePrograms } = useDashboardData()
 
-  // 활성 상태인 프로그램
-  const activePrograms = mockPrograms.filter(p => p.status === 'active')
-
-  // 이번 주 일정 (오늘부터 7일 후까지)
-  const today = dayjs()
-  const nextWeek = today.add(7, 'day')
-  const thisWeekSchedules = mockSchedules.filter(s => {
-    const scheduleDate = typeof s.date === 'string' ? dayjs(s.date) : dayjs(s.date)
-    return scheduleDate.isAfter(today.subtract(1, 'day')) && scheduleDate.isBefore(nextWeek.add(1, 'day'))
-  })
-
-  // 다음 주 일정 (7일 후부터 14일 후까지)
-  const twoWeeksLater = today.add(14, 'day')
-  const nextWeekSchedules = mockSchedules.filter(s => {
-    const scheduleDate = typeof s.date === 'string' ? dayjs(s.date) : dayjs(s.date)
-    return scheduleDate.isAfter(nextWeek.subtract(1, 'day')) && scheduleDate.isBefore(twoWeeksLater.add(1, 'day'))
-  })
+  const { count, thisWeekSchedules, nextWeekSchedules } = activePrograms
 
   const handleClick = () => {
     navigate('/programs')
@@ -45,20 +30,20 @@ export function ActiveProgramCard() {
     >
       <Statistic
         title="진행 중 프로그램"
-        value={activePrograms.length}
+        value={count}
         prefix={<BookOutlined />}
         suffix="개"
         valueStyle={{ color: domainColorsHex.program.primary }}
       />
       <Space direction="vertical" size="small" style={{ marginTop: 16, width: '100%' }}>
-        {thisWeekSchedules.length > 0 && (
+        {thisWeekSchedules > 0 && (
           <Tag color={domainColorsHex.schedule.primary}>
-            이번 주 일정: {thisWeekSchedules.length}개
+            이번 주 일정: {thisWeekSchedules}개
           </Tag>
         )}
-        {nextWeekSchedules.length > 0 && (
+        {nextWeekSchedules > 0 && (
           <Tag color={domainColorsHex.schedule.primary}>
-            다음 주 일정: {nextWeekSchedules.length}개
+            다음 주 일정: {nextWeekSchedules}개
           </Tag>
         )}
       </Space>

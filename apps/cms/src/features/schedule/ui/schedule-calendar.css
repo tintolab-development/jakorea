@@ -151,6 +151,24 @@
   padding: 2px;
 }
 
+/* Ant Design Calendar 기본 배경색 오버라이드 */
+/* d8f0ee는 Ant Design의 기본 primary 색상(#01A1AF)의 연한 버전입니다 */
+/* 적용 기준: 오늘 날짜(today), 선택된 날짜(selected), 호버된 날짜 */
+.ant-picker-calendar-date-today .ant-picker-calendar-date-content {
+  background-color: #d8f0ee;
+  border-radius: 4px;
+}
+
+.ant-picker-calendar-date-selected .ant-picker-calendar-date-content {
+  background-color: #d8f0ee;
+  border-radius: 4px;
+}
+
+.ant-picker-calendar-date:hover .ant-picker-calendar-date-content {
+  background-color: #d8f0ee;
+  border-radius: 4px;
+}
+
 /* 일정이 많은 경우 스크롤 */
 .schedule-list {
   max-height: 120px;
@@ -204,4 +222,3 @@
 .schedule-calendar-header .ant-radio-group {
   margin-left: auto;
 }
-

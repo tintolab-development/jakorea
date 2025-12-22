@@ -142,9 +142,7 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
             dataIndex: 'title',
             key: 'title',
             render: (text: string) => (
-              <Tag color={domainColorsHex.program.primary} style={{ fontSize: 14, padding: '4px 12px' }}>
-                {text}
-              </Tag>
+              <Tag color={domainColorsHex.program.primary}>{text}</Tag>
             ),
           },
           {

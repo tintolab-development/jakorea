@@ -36,9 +36,7 @@ export function SponsorList({ data, loading }: SponsorListProps) {
             dataIndex: 'name',
             key: 'name',
             render: (text: string) => (
-              <Tag color={domainColorsHex.sponsor.primary} style={{ fontSize: 14, padding: '4px 12px' }}>
-                {text}
-              </Tag>
+              <Tag color={domainColorsHex.sponsor.primary}>{text}</Tag>
             ),
           },
           {
