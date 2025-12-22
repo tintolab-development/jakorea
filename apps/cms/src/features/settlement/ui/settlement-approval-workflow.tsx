@@ -6,6 +6,10 @@
 import { Card, Space, Typography, Timeline, Tag, Button, Popconfirm } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
+import {
+  getSettlementStatusLabel,
+  getSettlementStatusColor,
+} from '@/shared/constants/status'
 import dayjs from 'dayjs'
 
 const { Text } = Typography
@@ -16,22 +20,6 @@ interface SettlementApprovalWorkflowProps {
   onReject?: () => void
   onReview?: () => void
   loading?: boolean
-}
-
-const statusLabels: Record<Settlement['status'], string> = {
-  pending: '대기',
-  calculated: '산출 완료',
-  approved: '승인',
-  paid: '지급 완료',
-  cancelled: '취소',
-}
-
-const statusColors: Record<Settlement['status'], string> = {
-  pending: 'default',
-  calculated: 'processing',
-  approved: 'success',
-  paid: 'success',
-  cancelled: 'error',
 }
 
 // 승인 단계 정의
@@ -80,7 +68,7 @@ export function SettlementApprovalWorkflow({
         {/* 현재 상태 표시 */}
         <div>
           <Text strong>현재 상태: </Text>
-          <Tag color={statusColors[settlement.status]}>{statusLabels[settlement.status]}</Tag>
+          <Tag color={getSettlementStatusColor(settlement.status)}>{getSettlementStatusLabel(settlement.status)}</Tag>
         </div>
 
         {/* 승인 단계 Timeline */}

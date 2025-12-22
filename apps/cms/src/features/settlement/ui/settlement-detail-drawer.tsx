@@ -9,6 +9,10 @@ import type { Settlement } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap, mockMatchingsMap } from '@/data/mock'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 import { SettlementApprovalWorkflow } from './settlement-approval-workflow'
+import {
+  getSettlementStatusLabel,
+  getSettlementStatusColor,
+} from '@/shared/constants/status'
 
 const { Text, Title } = Typography
 
@@ -20,22 +24,6 @@ interface SettlementDetailDrawerProps {
   onDelete: () => void
   onStatusChange: (status: Settlement['status']) => void
   loading?: boolean
-}
-
-const statusLabels: Record<string, string> = {
-  pending: '대기',
-  calculated: '산출 완료',
-  approved: '승인',
-  paid: '지급 완료',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  pending: 'default',
-  calculated: 'processing',
-  approved: 'success',
-  paid: 'success',
-  cancelled: 'error',
 }
 
 const itemTypeLabels: Record<string, string> = {
@@ -104,7 +92,7 @@ export function SettlementDetailDrawer({
           <Title level={4} style={{ margin: 0 }}>
             정산 상세
           </Title>
-          <Badge status={statusColors[settlement.status] as any} text={statusLabels[settlement.status]} />
+          <Badge status={getSettlementStatusColor(settlement.status) as any} text={getSettlementStatusLabel(settlement.status)} />
         </Space>
       }
       placement="right"
@@ -139,7 +127,7 @@ export function SettlementDetailDrawer({
           {matching ? `매칭 #${matching.id.slice(-6)}` : '-'}
         </Descriptions.Item>
         <Descriptions.Item label="상태">
-          <Badge status={statusColors[settlement.status] as any} text={statusLabels[settlement.status]} />
+          <Badge status={getSettlementStatusColor(settlement.status) as any} text={getSettlementStatusLabel(settlement.status)} />
         </Descriptions.Item>
         {settlement.documentGeneratedAt && (
           <Descriptions.Item label="문서 생성일">

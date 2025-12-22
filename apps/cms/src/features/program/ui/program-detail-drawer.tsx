@@ -9,6 +9,11 @@ import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { mockSponsorsMap, mockApplications } from '@/data/mock'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
+import {
+  commonStatusConfig,
+  getCommonStatusLabel,
+  getCommonStatusColor,
+} from '@/shared/constants/status'
 import dayjs from 'dayjs'
 
 const { Paragraph, Text } = Typography
@@ -36,22 +41,6 @@ const programFormatLabels: Record<string, string> = {
   course: '과정',
   lecture: '강의',
   other: '기타',
-}
-
-const statusLabels: Record<string, string> = {
-  active: '활성',
-  pending: '대기',
-  inactive: '비활성',
-  completed: '완료',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  active: 'green',
-  pending: 'orange',
-  inactive: 'default',
-  completed: 'blue',
-  cancelled: 'red',
 }
 
 export function ProgramDetailDrawer({
@@ -106,7 +95,7 @@ export function ProgramDetailDrawer({
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={statusColors[status]}>{statusLabels[status] || status}</Tag>
+        <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
       ),
     },
   ]
@@ -161,8 +150,8 @@ export function ProgramDetailDrawer({
                 <Descriptions.Item label="상태">
                   <StatusDisplay
                     status={program.status}
-                    statusLabels={statusLabels}
-                    statusColors={statusColors}
+                    statusLabels={commonStatusConfig.labels}
+                    statusColors={commonStatusConfig.colors}
                   />
                 </Descriptions.Item>
                 <Descriptions.Item label="기간">

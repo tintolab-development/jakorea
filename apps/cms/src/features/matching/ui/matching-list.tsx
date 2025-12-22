@@ -9,6 +9,10 @@ import { EyeOutlined, CheckOutlined, CloseOutlined, MoreOutlined, EditOutlined, 
 import type { Matching } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap, mockSchedulesMap } from '@/data/mock'
 import dayjs from 'dayjs'
+import {
+  getCommonStatusLabel,
+  getCommonStatusColor,
+} from '@/shared/constants/status'
 
 const { Option } = Select
 
@@ -22,22 +26,6 @@ interface MatchingListProps {
   onDelete?: (matching: Matching) => void
   onConfirm: (matching: Matching) => void
   onCancel: (matching: Matching) => void
-}
-
-const statusLabels: Record<string, string> = {
-  active: '확정',
-  pending: '대기',
-  inactive: '비활성',
-  completed: '완료',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  active: 'green',
-  pending: 'orange',
-  inactive: 'default',
-  completed: 'blue',
-  cancelled: 'red',
 }
 
 export function MatchingList({
@@ -167,7 +155,7 @@ export function MatchingList({
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={statusColors[status] || 'default'}>{statusLabels[status] || status}</Tag>
+        <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
       ),
     },
     {

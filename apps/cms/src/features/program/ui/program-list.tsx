@@ -9,6 +9,10 @@ import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-de
 import { useProgramTable } from '../model/use-program-table'
 import type { Program } from '@/types/domain'
 import { mockSponsorsMap } from '@/data/mock'
+import {
+  getCommonStatusLabel,
+  getCommonStatusColor,
+} from '@/shared/constants/status'
 
 const { Option } = Select
 
@@ -72,27 +76,6 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
     },
   ]
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      active: 'green',
-      pending: 'orange',
-      inactive: 'default',
-      completed: 'blue',
-      cancelled: 'red',
-    }
-    return colors[status] || 'default'
-  }
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      active: '활성',
-      pending: '대기',
-      inactive: '비활성',
-      completed: '완료',
-      cancelled: '취소',
-    }
-    return labels[status] || status
-  }
 
   return (
     <div>
@@ -201,7 +184,7 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
             dataIndex: 'status',
             key: 'status',
             render: (status: string) => (
-              <Tag color={getStatusColor(status)}>{getStatusLabel(status)}</Tag>
+              <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
             ),
           },
           {

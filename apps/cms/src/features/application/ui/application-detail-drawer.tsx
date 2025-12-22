@@ -7,6 +7,11 @@ import { Drawer, Descriptions, Tag, Tabs, Space, Button, Badge, Timeline, Alert,
 import { EditOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
 import { mockProgramsMap, mockSchoolsMap, mockInstructorsMap } from '@/data/mock'
+import {
+  applicationSubjectTypeConfig,
+  getApplicationStatusLabel,
+  getApplicationStatusColor,
+} from '@/shared/constants/status'
 
 const { TabPane } = Tabs
 const { Text, Title } = Typography
@@ -19,34 +24,6 @@ interface ApplicationDetailDrawerProps {
   onDelete: () => void
   onStatusChange: (status: Application['status']) => void
   loading?: boolean
-}
-
-const subjectTypeLabels: Record<string, string> = {
-  school: '학교',
-  student: '학생',
-  instructor: '강사',
-}
-
-const subjectTypeColors: Record<string, string> = {
-  school: 'cyan',
-  student: 'blue',
-  instructor: 'purple',
-}
-
-const statusLabels: Record<string, string> = {
-  submitted: '접수',
-  reviewing: '검토',
-  approved: '확정',
-  rejected: '거절',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  submitted: 'default',
-  reviewing: 'processing',
-  approved: 'success',
-  rejected: 'error',
-  cancelled: 'default',
 }
 
 export function ApplicationDetailDrawer({
@@ -85,7 +62,7 @@ export function ApplicationDetailDrawer({
             color: application.status === 'approved' ? 'green' : application.status === 'rejected' ? 'red' : 'orange',
             children: (
               <div>
-                <Text strong>{statusLabels[application.status]}</Text>
+                <Text strong>{getApplicationStatusLabel(application.status)}</Text>
                 <br />
                 <Text type="secondary">{new Date(application.reviewedAt).toLocaleString('ko-KR')}</Text>
               </div>
@@ -99,7 +76,7 @@ export function ApplicationDetailDrawer({
     <Drawer
       title={
         <Space>
-          <Badge status={statusColors[application.status] as any} />
+          <Badge status={getApplicationStatusColor(application.status) as any} />
           <Title level={4} style={{ margin: 0 }}>
             신청 상세
           </Title>
@@ -152,7 +129,7 @@ export function ApplicationDetailDrawer({
       <Tabs defaultActiveKey="basic">
         <TabPane tab="기본 정보" key="basic">
           <Alert
-            message={`현재 상태: ${statusLabels[application.status]}`}
+            message={`현재 상태: ${getApplicationStatusLabel(application.status)}`}
             type={application.status === 'approved' ? 'success' : application.status === 'rejected' ? 'error' : 'info'}
             showIcon
             style={{ marginBottom: 16 }}
@@ -162,15 +139,15 @@ export function ApplicationDetailDrawer({
               <Tag color="blue">{program?.title || '-'}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="신청 주체 유형">
-              <Tag color={subjectTypeColors[application.subjectType]}>
-                {subjectTypeLabels[application.subjectType]}
+              <Tag color={applicationSubjectTypeConfig.colors[application.subjectType]}>
+                {applicationSubjectTypeConfig.labels[application.subjectType]}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="신청 주체">
               <Text strong>{subjectName || '-'}</Text>
             </Descriptions.Item>
             <Descriptions.Item label="상태">
-              <Badge status={statusColors[application.status] as any} text={statusLabels[application.status]} />
+              <Badge status={getApplicationStatusColor(application.status) as any} text={getApplicationStatusLabel(application.status)} />
             </Descriptions.Item>
             {application.notes && (
               <Descriptions.Item label="비고">

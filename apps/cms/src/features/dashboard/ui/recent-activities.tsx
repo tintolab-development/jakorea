@@ -8,45 +8,17 @@ import { useNavigate } from 'react-router-dom'
 import { FileTextOutlined, TeamOutlined, CalendarOutlined } from '@ant-design/icons'
 import { mockApplications, mockMatchings, mockSchedules, mockProgramsMap, mockInstructorsMap } from '@/data/mock'
 import dayjs from 'dayjs'
+import {
+  getApplicationStatusLabel,
+  getApplicationStatusColor,
+  getCommonStatusLabel,
+  getCommonStatusColor,
+} from '@/shared/constants/status'
 
 const { Text } = Typography
 
 interface RecentActivitiesProps {
   limit?: number
-}
-
-const statusLabels: Record<string, string> = {
-  submitted: '접수',
-  reviewing: '검토',
-  approved: '확정',
-  rejected: '거절',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  submitted: 'default',
-  reviewing: 'processing',
-  approved: 'success',
-  rejected: 'error',
-  cancelled: 'default',
-}
-
-const matchingStatusLabels: Record<string, string> = {
-  pending: '대기',
-  confirmed: '확정',
-  cancelled: '취소',
-  completed: '완료',
-  active: '활성',
-  inactive: '비활성',
-}
-
-const matchingStatusColors: Record<string, string> = {
-  pending: 'default',
-  confirmed: 'success',
-  cancelled: 'error',
-  completed: 'success',
-  active: 'processing',
-  inactive: 'default',
 }
 
 export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
@@ -110,7 +82,7 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
                       title={
                         <Space>
                           <Text strong>{program?.title || '프로그램 없음'}</Text>
-                          <Tag color={statusColors[application.status]}>{statusLabels[application.status]}</Tag>
+                          <Tag color={getApplicationStatusColor(application.status)}>{getApplicationStatusLabel(application.status)}</Tag>
                         </Space>
                       }
                       description={
@@ -155,8 +127,8 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
                       title={
                         <Space>
                           <Text strong>{program?.title || '프로그램 없음'}</Text>
-                          <Tag color={matchingStatusColors[matching.status]}>
-                            {matchingStatusLabels[matching.status] || matching.status}
+                          <Tag color={getCommonStatusColor(matching.status)}>
+                            {getCommonStatusLabel(matching.status)}
                           </Tag>
                         </Space>
                       }

@@ -7,6 +7,10 @@ import { Drawer, Descriptions, Tag, Timeline, Space, Button, Alert, Badge } from
 import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap, mockSchedulesMap } from '@/data/mock'
+import {
+  getCommonStatusLabel,
+  getCommonStatusColor,
+} from '@/shared/constants/status'
 import dayjs from 'dayjs'
 
 interface MatchingDetailDrawerProps {
@@ -18,22 +22,6 @@ interface MatchingDetailDrawerProps {
   onConfirm: () => void
   onCancel: () => void
   loading?: boolean
-}
-
-const statusLabels: Record<string, string> = {
-  active: '확정',
-  pending: '대기',
-  inactive: '비활성',
-  completed: '완료',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  active: 'green',
-  pending: 'orange',
-  inactive: 'default',
-  completed: 'blue',
-  cancelled: 'red',
 }
 
 const actionLabels: Record<string, string> = {
@@ -88,8 +76,8 @@ export function MatchingDetailDrawer({
     >
       <Descriptions column={1} bordered>
         <Descriptions.Item label="상태">
-          <Tag color={statusColors[matching.status] || 'default'}>
-            {statusLabels[matching.status] || matching.status}
+          <Tag color={getCommonStatusColor(matching.status)}>
+            {getCommonStatusLabel(matching.status)}
           </Tag>
         </Descriptions.Item>
         <Descriptions.Item label="프로그램">

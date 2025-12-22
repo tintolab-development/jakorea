@@ -10,13 +10,17 @@ import {
   EditOutlined,
   DeleteOutlined,
   EyeOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import type { Application } from '@/types/domain'
 import { mockProgramsMap, mockSchoolsMap, mockInstructorsMap } from '@/data/mock'
+import {
+  applicationStatusConfig,
+  applicationSubjectTypeConfig,
+  getApplicationStatusLabel,
+  getApplicationStatusColor,
+  getApplicationStatusIcon,
+} from '@/shared/constants/status'
 
 const { Option } = Select
 
@@ -27,42 +31,6 @@ interface ApplicationListProps {
   onEdit: (application: Application) => void
   onDelete: (application: Application) => void
   onStatusChange: (application: Application, status: Application['status']) => void
-}
-
-const subjectTypeLabels: Record<string, string> = {
-  school: '학교',
-  student: '학생',
-  instructor: '강사',
-}
-
-const subjectTypeColors: Record<string, string> = {
-  school: 'cyan',
-  student: 'blue',
-  instructor: 'purple',
-}
-
-const statusLabels: Record<string, string> = {
-  submitted: '접수',
-  reviewing: '검토',
-  approved: '확정',
-  rejected: '거절',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  submitted: 'default',
-  reviewing: 'processing',
-  approved: 'success',
-  rejected: 'error',
-  cancelled: 'default',
-}
-
-const statusIcons: Record<string, React.ReactNode> = {
-  submitted: <ClockCircleOutlined />,
-  reviewing: <ClockCircleOutlined />,
-  approved: <CheckCircleOutlined />,
-  rejected: <CloseCircleOutlined />,
-  cancelled: <CloseCircleOutlined />,
 }
 
 export function ApplicationList({
@@ -177,7 +145,7 @@ export function ApplicationList({
           allowClear
           style={{ width: 150 }}
         >
-          {Object.entries(statusLabels).map(([value, label]) => (
+          {Object.entries(applicationStatusConfig.labels).map(([value, label]) => (
             <Option key={value} value={value}>
               {label}
             </Option>
@@ -209,8 +177,8 @@ export function ApplicationList({
             key: 'subject',
             render: (_: unknown, record: Application) => (
               <Space>
-                <Tag color={subjectTypeColors[record.subjectType]}>
-                  {subjectTypeLabels[record.subjectType]}
+                <Tag color={applicationSubjectTypeConfig.colors[record.subjectType]}>
+                  {applicationSubjectTypeConfig.labels[record.subjectType]}
                 </Tag>
                 <span>{getSubjectName(record)}</span>
               </Space>
@@ -220,17 +188,20 @@ export function ApplicationList({
             title: '상태',
             dataIndex: 'status',
             key: 'status',
-            render: (status: string) => (
-              <Badge
-                status={statusColors[status] as any}
-                text={
-                  <Space>
-                    {statusIcons[status]}
-                    {statusLabels[status]}
-                  </Space>
-                }
-              />
-            ),
+            render: (status: Application['status']) => {
+              const IconComponent = getApplicationStatusIcon(status)
+              return (
+                <Badge
+                  status={getApplicationStatusColor(status) as any}
+                  text={
+                    <Space>
+                      <IconComponent />
+                      {getApplicationStatusLabel(status)}
+                    </Space>
+                  }
+                />
+              )
+            },
           },
           {
             title: '접수일',
@@ -254,7 +225,7 @@ export function ApplicationList({
                 <Space>
                 <Popconfirm
                   title="상태 변경"
-                  description={`이 신청을 "${statusLabels[record.status === 'submitted' ? 'reviewing' : 'approved']}" 상태로 변경하시겠습니까?`}
+                  description={`이 신청을 "${getApplicationStatusLabel(record.status === 'submitted' ? 'reviewing' : 'approved')}" 상태로 변경하시겠습니까?`}
                   onConfirm={() => {
                     if (record.status === 'submitted') {
                       onStatusChange(record, 'reviewing')

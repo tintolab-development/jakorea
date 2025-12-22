@@ -10,6 +10,10 @@ import { useSettlementTable } from '../model/use-settlement-table'
 import type { Settlement } from '@/types/domain'
 import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
+import {
+  getSettlementStatusLabel,
+  getSettlementStatusColor,
+} from '@/shared/constants/status'
 
 const { Option } = Select
 
@@ -20,22 +24,6 @@ interface SettlementListProps {
   onEdit: (settlement: Settlement) => void
   onDelete: (settlement: Settlement) => void
   onStatusChange: (settlement: Settlement, status: Settlement['status']) => void
-}
-
-const statusLabels: Record<string, string> = {
-  pending: '대기',
-  calculated: '산출 완료',
-  approved: '승인',
-  paid: '지급 완료',
-  cancelled: '취소',
-}
-
-const statusColors: Record<string, string> = {
-  pending: 'default',
-  calculated: 'processing',
-  approved: 'success',
-  paid: 'success',
-  cancelled: 'error',
 }
 
 export function SettlementList({
@@ -151,7 +139,7 @@ export function SettlementList({
         >
           {statuses.map(status => (
             <Option key={status} value={status}>
-              {statusLabels[status]}
+              {getSettlementStatusLabel(status)}
             </Option>
           ))}
         </Select>
@@ -229,7 +217,7 @@ export function SettlementList({
             dataIndex: 'status',
             key: 'status',
             render: (status: Settlement['status']) => (
-              <Badge status={statusColors[status] as any} text={statusLabels[status]} />
+              <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
             ),
           },
           {
