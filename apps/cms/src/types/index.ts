@@ -29,6 +29,3 @@ export interface PaginatedResponse<T> {
 // 도메인 타입 re-export
 export * from './domain'
 
-
-
-

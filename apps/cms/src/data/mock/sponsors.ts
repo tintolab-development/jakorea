@@ -16,12 +16,46 @@ function randomPastDate(daysAgo: number = 730): Date {
 }
 
 const sponsorNames = [
-  '삼성전자', 'LG전자', 'SK텔레콤', 'KT', '네이버', '카카오', '토스', '라인',
-  '쿠팡', '배달의민족', '당근마켓', '우아한형제들', '마이크로소프트', '구글',
-  '아마존웹서비스', '오라클', 'IBM', '애플', '메타', 'IBM 코리아', '삼성SDS',
-  'LG CNS', 'SK C&C', '한국정보통신', 'NHN', '넥슨', '넷마블', 'NC소프트',
-  'LG유플러스', 'KT스카이라이프', '한화시스템', '두산', '현대자동차', '기아',
-  '포스코', '롯데', '신세계', '이마트', 'GS리테일', 'CJ그룹',
+  '삼성전자',
+  'LG전자',
+  'SK텔레콤',
+  'KT',
+  '네이버',
+  '카카오',
+  '토스',
+  '라인',
+  '쿠팡',
+  '배달의민족',
+  '당근마켓',
+  '우아한형제들',
+  '마이크로소프트',
+  '구글',
+  '아마존웹서비스',
+  '오라클',
+  'IBM',
+  '애플',
+  '메타',
+  'IBM 코리아',
+  '삼성SDS',
+  'LG CNS',
+  'SK C&C',
+  '한국정보통신',
+  'NHN',
+  '넥슨',
+  '넷마블',
+  'NC소프트',
+  'LG유플러스',
+  'KT스카이라이프',
+  '한화시스템',
+  '두산',
+  '현대자동차',
+  '기아',
+  '포스코',
+  '롯데',
+  '신세계',
+  '이마트',
+  'GS리테일',
+  'CJ그룹',
 ]
 
 const descriptionTemplates = [
@@ -55,7 +89,9 @@ const securityMemos = [
 
 export const mockSponsors: Sponsor[] = sponsorNames.slice(0, 30).map(name => {
   const createdAt = randomPastDate(730)
-  const updatedAt = new Date(createdAt.getTime() + Math.random() * (Date.now() - createdAt.getTime()))
+  const updatedAt = new Date(
+    createdAt.getTime() + Math.random() * (Date.now() - createdAt.getTime())
+  )
 
   return {
     id: generateUUID(),
@@ -69,7 +105,4 @@ export const mockSponsors: Sponsor[] = sponsorNames.slice(0, 30).map(name => {
 })
 
 export const mockSponsorsMap = new Map(mockSponsors.map(sponsor => [sponsor.id, sponsor]))
-
-
-
 

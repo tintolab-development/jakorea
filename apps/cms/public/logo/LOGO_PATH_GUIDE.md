@@ -44,3 +44,4 @@ import jakoreaLogo from '@/assets/images/jakorea-logo.png'
 - 최대 높이: 64px
 - 해상도: 2x (Retina 디스플레이 대응)
 
+

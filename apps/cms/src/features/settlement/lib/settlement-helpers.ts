@@ -14,3 +14,4 @@ export function calculateSettlementTotal(items: SettlementItem[]): number {
   return items.reduce((sum, item) => sum + (item.amount || 0), 0)
 }
 
+

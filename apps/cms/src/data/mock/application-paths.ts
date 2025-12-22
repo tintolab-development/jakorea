@@ -45,3 +45,4 @@ export const mockApplicationPathsMap = new Map(mockApplicationPaths.map(path => 
 export const getApplicationPathByProgramId = (programId: string): ApplicationPath | undefined => {
   return mockApplicationPaths.find(path => path.programId === programId && path.isActive)
 }
+

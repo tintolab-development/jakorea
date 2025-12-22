@@ -59,11 +59,7 @@ function createSettlement(
           ? Math.floor(Math.random() * 400000) + 300000
           : Math.floor(Math.random() * 250000) + 150000
 
-  const items = createSettlementItems(
-    baseInstructorFee,
-    Math.random() > 0.5,
-    Math.random() > 0.7
-  )
+  const items = createSettlementItems(baseInstructorFee, Math.random() > 0.5, Math.random() > 0.7)
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
 
@@ -126,7 +122,4 @@ export const mockSettlementsMap = new Map<UUID, Settlement>()
 mockSettlements.forEach(settlement => {
   mockSettlementsMap.set(settlement.id, settlement)
 })
-
-
-
 

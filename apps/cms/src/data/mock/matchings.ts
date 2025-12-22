@@ -20,9 +20,13 @@ function createMatching(
   cancellationReason?: string
 ): Matching {
   const program = mockPrograms[programIndex % mockPrograms.length]
-  const round = roundIndex !== null && program.rounds[roundIndex] ? program.rounds[roundIndex] : null
+  const round =
+    roundIndex !== null && program.rounds[roundIndex] ? program.rounds[roundIndex] : null
   const instructor = mockInstructors[instructorIndex % mockInstructors.length]
-  const schedule = scheduleIndex !== null && mockSchedules[scheduleIndex] ? mockSchedules[scheduleIndex] : undefined
+  const schedule =
+    scheduleIndex !== null && mockSchedules[scheduleIndex]
+      ? mockSchedules[scheduleIndex]
+      : undefined
 
   const matchedAt = new Date()
   matchedAt.setDate(matchedAt.getDate() - daysAgo)
@@ -102,7 +106,9 @@ export const mockMatchings: Matching[] = Array.from({ length: 35 }, (_, index) =
   const daysAgo = Math.floor(Math.random() * 30) + 1
   const isCancelled = status === 'cancelled'
   const cancelledDaysAgo = isCancelled ? Math.floor(Math.random() * daysAgo) : undefined
-  const cancellationReason = isCancelled ? cancellationReasons[Math.floor(Math.random() * cancellationReasons.length)] : undefined
+  const cancellationReason = isCancelled
+    ? cancellationReasons[Math.floor(Math.random() * cancellationReasons.length)]
+    : undefined
 
   return createMatching(
     `match-${String(index + 1).padStart(3, '0')}`,
@@ -121,7 +127,4 @@ export const mockMatchingsMap = new Map<UUID, Matching>()
 mockMatchings.forEach(matching => {
   mockMatchingsMap.set(matching.id, matching)
 })
-
-
-
 

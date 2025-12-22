@@ -4,11 +4,16 @@
  * Phase 5.1: 사용자 화면 기반 UI 개선 (공통 UI 원칙 적용)
  */
 
-import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Alert, Typography, Divider } from 'antd'
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import type { Program } from '@/types/domain'
+import { useState } from 'react'
+import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Alert, Typography, Divider, Modal } from 'antd'
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import type { Program, ApplicationPath } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
+import { useApplicationPathStore } from '@/features/application-path/model/application-path-store'
+import { useProgramStore } from '@/features/program/model/program-store'
+import { ApplicationPathForm } from '@/features/application-path/ui/application-path-form'
+import type { ApplicationPathFormData } from '@/entities/application-path/model/schema'
 import {
   getApplicationCountByProgram,
   getConfirmedRounds,
@@ -22,6 +27,7 @@ import {
   getCommonStatusColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import dayjs from 'dayjs'
 
 const { Paragraph, Text } = Typography
@@ -58,6 +64,12 @@ export function ProgramDetailDrawer({
   onDelete,
   loading,
 }: ProgramDetailDrawerProps) {
+  const [applicationPathModalOpen, setApplicationPathModalOpen] = useState(false)
+  const [editingApplicationPath, setEditingApplicationPath] = useState<ApplicationPath | null>(null)
+  const [formLoading, setFormLoading] = useState(false)
+  const { createPath, updatePath } = useApplicationPathStore()
+  const { updateProgram } = useProgramStore()
+
   if (!program) return null
 
         const sponsor = sponsorService.getByIdSync(program.sponsorId)
@@ -83,6 +95,56 @@ export function ProgramDetailDrawer({
             applicationUrl = getApplicationUrl(program.id)
           }
         }
+
+  const handleApplicationPathCreate = () => {
+    setEditingApplicationPath(null)
+    setApplicationPathModalOpen(true)
+  }
+
+  const handleApplicationPathEdit = () => {
+    if (applicationPath) {
+      setEditingApplicationPath(applicationPath)
+      setApplicationPathModalOpen(true)
+    }
+  }
+
+  const handleApplicationPathFormSubmit = async (formData: ApplicationPathFormData) => {
+    setFormLoading(true)
+    try {
+      if (editingApplicationPath) {
+        // 기존 신청 경로 수정
+        const updated = await updatePath(editingApplicationPath.id, formData)
+        // 프로그램의 applicationPathId 업데이트
+        await updateProgram(program.id, { applicationPathId: updated.id })
+        showSuccessMessage('신청 경로가 성공적으로 수정되었습니다.')
+      } else {
+        // 새 신청 경로 생성
+        const newPath = await createPath({
+          ...formData,
+          programId: program.id, // 현재 프로그램 ID로 고정
+        })
+        // 프로그램의 applicationPathId 업데이트
+        await updateProgram(program.id, { applicationPathId: newPath.id })
+        showSuccessMessage('신청 경로가 성공적으로 등록되었습니다.')
+      }
+      setApplicationPathModalOpen(false)
+      setEditingApplicationPath(null)
+    } catch (error) {
+      handleError(error, { context: 'ProgramDetailDrawer -> handleApplicationPathFormSubmit' })
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleApplicationPathFormCancel = () => {
+    setApplicationPathModalOpen(false)
+    setEditingApplicationPath(null)
+  }
+
+  const pathTypeLabels: Record<string, string> = {
+    google_form: '구글폼',
+    internal: '자동화 프로그램',
+  }
 
   const roundColumns = [
     {
@@ -310,8 +372,93 @@ export function ProgramDetailDrawer({
               />
             ),
           },
+          {
+            key: 'application-path',
+            label: '신청 경로',
+            children: (
+              <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                <Card
+                  title="신청 경로 설정"
+                  extra={
+                    <Space>
+                      {applicationPath ? (
+                        <Button icon={<EditOutlined />} onClick={handleApplicationPathEdit}>
+                          수정
+                        </Button>
+                      ) : (
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleApplicationPathCreate}>
+                          신청 경로 등록
+                        </Button>
+                      )}
+                    </Space>
+                  }
+                >
+                  {applicationPath ? (
+                    <Descriptions column={1} bordered>
+                      <Descriptions.Item label="신청 경로 유형">
+                        <Tag color={applicationPath.pathType === 'google_form' ? 'orange' : 'blue'}>
+                          {pathTypeLabels[applicationPath.pathType]}
+                        </Tag>
+                      </Descriptions.Item>
+                      {applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl && (
+                        <Descriptions.Item label="구글폼 링크">
+                          <a
+                            href={applicationPath.googleFormUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {applicationPath.googleFormUrl}
+                          </a>
+                        </Descriptions.Item>
+                      )}
+                      {applicationPath.guideMessage && (
+                        <Descriptions.Item label="안내 문구">
+                          <Paragraph style={{ margin: 0 }}>{applicationPath.guideMessage}</Paragraph>
+                        </Descriptions.Item>
+                      )}
+                      <Descriptions.Item label="상태">
+                        <Tag color={applicationPath.isActive ? 'green' : 'default'}>
+                          {applicationPath.isActive ? '활성' : '비활성'}
+                        </Tag>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="등록일">
+                        {dayjs(applicationPath.createdAt).format('YYYY-MM-DD HH:mm')}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="수정일">
+                        {dayjs(applicationPath.updatedAt).format('YYYY-MM-DD HH:mm')}
+                      </Descriptions.Item>
+                    </Descriptions>
+                  ) : (
+                    <Alert
+                      message="신청 경로가 설정되지 않았습니다"
+                      description="신청 경로를 등록하여 프로그램 신청 방식을 설정할 수 있습니다."
+                      type="info"
+                      showIcon
+                    />
+                  )}
+                </Card>
+              </Space>
+            ),
+          },
         ]}
       />
+
+      <Modal
+        open={applicationPathModalOpen}
+        title={editingApplicationPath ? '신청 경로 수정' : '신청 경로 등록'}
+        onCancel={handleApplicationPathFormCancel}
+        footer={null}
+        width={800}
+        destroyOnClose
+      >
+        <ApplicationPathForm
+          path={editingApplicationPath || undefined}
+          onSubmit={handleApplicationPathFormSubmit}
+          onCancel={handleApplicationPathFormCancel}
+          loading={formLoading}
+          fixedProgramId={program.id}
+        />
+      </Modal>
     </Drawer>
   )
 }

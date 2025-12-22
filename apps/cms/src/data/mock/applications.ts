@@ -19,7 +19,8 @@ function createApplication(
   reviewedDaysAgo?: number
 ): Application {
   const program = mockPrograms[programIndex % mockPrograms.length]
-  const round = roundIndex !== null && program.rounds[roundIndex] ? program.rounds[roundIndex] : null
+  const round =
+    roundIndex !== null && program.rounds[roundIndex] ? program.rounds[roundIndex] : null
 
   const submittedAt = new Date()
   submittedAt.setDate(submittedAt.getDate() - daysAgo)
@@ -69,7 +70,13 @@ function createApplication(
   }
 }
 
-const statuses: Application['status'][] = ['submitted', 'reviewing', 'approved', 'rejected', 'cancelled']
+const statuses: Application['status'][] = [
+  'submitted',
+  'reviewing',
+  'approved',
+  'rejected',
+  'cancelled',
+]
 const subjectTypes: Application['subjectType'][] = ['school', 'student', 'instructor']
 
 export const mockApplications: Application[] = Array.from({ length: 50 }, (_, index) => {
@@ -99,7 +106,4 @@ export const mockApplicationsMap = new Map<UUID, Application>()
 mockApplications.forEach(app => {
   mockApplicationsMap.set(app.id, app)
 })
-
-
-
 

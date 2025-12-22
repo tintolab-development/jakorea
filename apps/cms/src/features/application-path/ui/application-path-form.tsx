@@ -3,6 +3,7 @@
  * V3 Phase 7: 신청 경로 관리
  */
 
+import React from 'react'
 import { Form, Select, Input, Button, Space, Switch } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -18,6 +19,7 @@ interface ApplicationPathFormProps {
   onSubmit: (data: ApplicationPathFormData) => Promise<void>
   onCancel: () => void
   loading?: boolean
+  fixedProgramId?: string // 프로그램 상세에서 호출 시 고정된 프로그램 ID
 }
 
 const pathTypeLabels: Record<ApplicationPath['pathType'], string> = {
@@ -30,6 +32,7 @@ export function ApplicationPathForm({
   onSubmit,
   onCancel,
   loading,
+  fixedProgramId,
 }: ApplicationPathFormProps) {
   const {
     register,
@@ -48,9 +51,17 @@ export function ApplicationPathForm({
           isActive: path.isActive,
         }
       : {
+          programId: fixedProgramId || '',
           isActive: true,
         },
   })
+
+  // fixedProgramId가 있으면 초기값 설정
+  React.useEffect(() => {
+    if (fixedProgramId && !path) {
+      setValue('programId', fixedProgramId)
+    }
+  }, [fixedProgramId, path, setValue])
 
   const selectedPathType = watch('pathType')
   const programs = programService.getAllSync()
@@ -77,7 +88,7 @@ export function ApplicationPathForm({
             setValue('programId', value)
           }}
           placeholder="프로그램을 선택하세요"
-          disabled={!!path} // 수정 시에는 프로그램 변경 불가
+          disabled={!!path || !!fixedProgramId} // 수정 시 또는 고정된 프로그램 ID가 있을 때는 변경 불가
         >
           {programs.map(program => (
             <Option key={program.id} value={program.id}>
@@ -159,4 +170,5 @@ export function ApplicationPathForm({
     </Form>
   )
 }
+
 

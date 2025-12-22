@@ -36,3 +36,4 @@ export interface Reviewer {
   role: string // '담당자', '팀장', '관리자' 등
 }
 
+

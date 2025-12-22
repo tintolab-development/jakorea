@@ -10,6 +10,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { programSchema, type ProgramFormData } from '@/entities/program/model/schema'
 import type { Program } from '@/types/domain'
 import { mockSponsors } from '@/data/mock'
+import { applicationPathService } from '@/entities/application-path/api/application-path-service'
+import { programService } from '@/entities/program/api/program-service'
 import dayjs from 'dayjs'
 
 const { Option } = Select
@@ -67,6 +69,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           endDate: typeof program.endDate === 'string' ? program.endDate : program.endDate.toISOString(),
           status: program.status,
           settlementRuleId: program.settlementRuleId || '',
+          applicationPathId: program.applicationPathId || '',
           rounds: program.rounds.map(r => ({
             roundNumber: r.roundNumber,
             startDate: typeof r.startDate === 'string' ? r.startDate : r.startDate.toISOString(),
@@ -176,6 +179,32 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                   {status.label}
                 </Option>
               ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="신청 경로"
+            help="기존 신청 경로를 선택하거나, 프로그램 상세에서 나중에 설정할 수 있습니다."
+          >
+            <Select
+              value={watch('applicationPathId') || undefined}
+              onChange={value => setValue('applicationPathId', value || '')}
+              placeholder="신청 경로 선택 (선택사항)"
+              allowClear
+              showSearch
+              filterOption={(input, option) => {
+                const label = option?.label as string | undefined
+                return label ? label.toLowerCase().includes(input.toLowerCase()) : false
+              }}
+            >
+              {applicationPathService.getAllSync().map(path => {
+                const programTitle = programService.getNameById(path.programId)
+                return (
+                  <Option key={path.id} value={path.id}>
+                    {programTitle} - {path.pathType === 'google_form' ? '구글폼' : '자동화 프로그램'}
+                  </Option>
+                )
+              })}
             </Select>
           </Form.Item>
         </div>

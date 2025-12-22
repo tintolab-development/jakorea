@@ -290,3 +290,4 @@ export function SingleCTA({ label, targetUrl, onClick, type = 'primary' }: Singl
 
 **마지막 업데이트**: 2024-12-19
 
+

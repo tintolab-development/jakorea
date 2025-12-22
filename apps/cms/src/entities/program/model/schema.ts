@@ -23,11 +23,13 @@ export const programSchema = z.object({
   endDate: z.string().min(1, '종료일을 선택해주세요'),
   status: z.enum(['active', 'pending', 'inactive', 'completed', 'cancelled']),
   settlementRuleId: z.string().optional(),
+  applicationPathId: z.string().optional(), // V3 Phase 7: 신청 경로 참조
   rounds: z.array(programRoundSchema).min(1, '최소 1개 이상의 회차를 추가해주세요'),
 })
 
 export type ProgramFormData = z.infer<typeof programSchema>
 export type ProgramRoundFormData = z.infer<typeof programRoundSchema>
+
 
 
 

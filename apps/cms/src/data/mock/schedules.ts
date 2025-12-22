@@ -21,8 +21,10 @@ function createSchedule(
   onlineLink?: string
 ): Schedule {
   const program = mockPrograms[programIndex % mockPrograms.length]
-  const round = roundIndex !== null && program.rounds[roundIndex] ? program.rounds[roundIndex] : null
-  const instructor = instructorIndex !== null ? mockInstructors[instructorIndex % mockInstructors.length] : undefined
+  const round =
+    roundIndex !== null && program.rounds[roundIndex] ? program.rounds[roundIndex] : null
+  const instructor =
+    instructorIndex !== null ? mockInstructors[instructorIndex % mockInstructors.length] : undefined
 
   const date = new Date()
   date.setDate(date.getDate() + dateOffset)
@@ -57,16 +59,36 @@ function createSchedule(
 }
 
 const scheduleTitles = [
-  'AI 기초 교육', '데이터 분석 워크샵', '웹 개발 강의', '디자인 세미나',
-  '마케팅 워크샵', '비즈니스 강의', '언어학 특강', '과학 교육 프로그램',
-  '예술 워크샵', '체육 강의', '외국어 교육', '역사 특강',
-  '지리학 강의', '철학 세미나', '수학 특강', '문학 강의',
+  'AI 기초 교육',
+  '데이터 분석 워크샵',
+  '웹 개발 강의',
+  '디자인 세미나',
+  '마케팅 워크샵',
+  '비즈니스 강의',
+  '언어학 특강',
+  '과학 교육 프로그램',
+  '예술 워크샵',
+  '체육 강의',
+  '외국어 교육',
+  '역사 특강',
+  '지리학 강의',
+  '철학 세미나',
+  '수학 특강',
+  '문학 강의',
 ]
 
 const locations = [
-  '서울시 강남구', '부산시 해운대구', '대구시 중구', '인천시 연수구',
-  '광주시 북구', '대전시 유성구', '울산시 남구', '세종시 조치원읍',
-  '강원도 춘천시', '충청북도 청주시', '충청남도 천안시',
+  '서울시 강남구',
+  '부산시 해운대구',
+  '대구시 중구',
+  '인천시 연수구',
+  '광주시 북구',
+  '대전시 유성구',
+  '울산시 남구',
+  '세종시 조치원읍',
+  '강원도 춘천시',
+  '충청북도 청주시',
+  '충청남도 천안시',
 ]
 
 export const mockSchedules: Schedule[] = Array.from({ length: 40 }, (_, index) => {
@@ -83,7 +105,9 @@ export const mockSchedules: Schedule[] = Array.from({ length: 40 }, (_, index) =
   const title = `${scheduleTitles[index % scheduleTitles.length]} ${Math.floor(index / scheduleTitles.length) + 1}차시`
   const isOnline = program.type === 'online' || (program.type === 'hybrid' && Math.random() > 0.5)
   const location = !isOnline ? locations[Math.floor(Math.random() * locations.length)] : undefined
-  const onlineLink = isOnline ? `https://zoom.us/j/${Math.floor(Math.random() * 900000) + 100000}` : undefined
+  const onlineLink = isOnline
+    ? `https://zoom.us/j/${Math.floor(Math.random() * 900000) + 100000}`
+    : undefined
 
   return createSchedule(
     `sch-${String(index + 1).padStart(3, '0')}`,
@@ -104,7 +128,4 @@ export const mockSchedulesMap = new Map<UUID, Schedule>()
 mockSchedules.forEach(schedule => {
   mockSchedulesMap.set(schedule.id, schedule)
 })
-
-
-
 
