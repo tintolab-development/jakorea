@@ -74,7 +74,7 @@ export function Sidebar() {
         selectedKeys={[location.pathname]}
         openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : openKeys}
         onOpenChange={setControlledOpenKeys}
-        style={{ height: 'calc(100% - 64px)', borderRight: 0 }}
+        style={{ height: 'calc(100% - 100px)', borderRight: 0 }}
         items={menuItems}
         onClick={({ key }) => navigate(key)}
       />
