@@ -36,7 +36,7 @@ const menuItems: MenuProps['items'] = [
   { key: '/schools', label: '학교 관리', icon: <BankOutlined /> },
   { key: '/sponsors', label: '스폰서 관리', icon: <ShopOutlined /> },
   {
-    key: '/settlements',
+    key: 'settlements-group',
     label: '정산 관리',
     icon: <DollarOutlined />,
     children: [
@@ -58,7 +58,7 @@ export function Sidebar() {
     const path = location.pathname
     // 정산 관리 관련 경로인 경우 서브메뉴 열기
     if (path.startsWith('/settlements')) {
-      return ['/settlements']
+      return ['settlements-group']
     }
     return []
   }, [location.pathname])

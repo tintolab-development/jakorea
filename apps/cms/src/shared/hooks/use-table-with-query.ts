@@ -132,13 +132,44 @@ export function useTableWithQuery<TData>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialFilters)
   const [pagination, setPagination] = useState<PaginationState>(initialPagination)
 
+  // 이전 값 추적 (무한 루프 방지)
+  const prevParamsRef = useRef<string>('')
+  const isUpdatingFromParamsRef = useRef(false)
+  const isUpdatingFromStateRef = useRef(false)
+
+  // params의 관련 값만 추출하여 문자열로 변환
+  const paramsKey = useMemo(() => {
+    const relevant: Record<string, string | undefined> = {}
+    filterKeys.forEach(key => {
+      relevant[key] = params[key]
+    })
+    relevant.page = params.page
+    relevant.pageSize = params.pageSize
+    return JSON.stringify(relevant)
+  }, [filterKeys, params])
+
   // URL 파라미터 변경 시 필터/페이지네이션 동기화 (외부에서 URL 변경된 경우)
   useEffect(() => {
     // 초기 마운트 시에는 이미 initialFilters/initialPagination으로 설정되었으므로 스킵
     if (!isMounted.current) {
       isMounted.current = true
+      prevParamsRef.current = paramsKey
       return
     }
+
+    // 상태에서 URL로 업데이트 중이면 스킵 (우리가 방금 업데이트한 것이므로)
+    if (isUpdatingFromStateRef.current) {
+      isUpdatingFromStateRef.current = false
+      prevParamsRef.current = paramsKey
+      return
+    }
+
+    // params가 실제로 변경되었는지 확인
+    if (paramsKey === prevParamsRef.current) {
+      return
+    }
+
+    isUpdatingFromParamsRef.current = true
 
     const newFilters: ColumnFiltersState = []
     filterKeys.forEach(key => {
@@ -146,18 +177,27 @@ export function useTableWithQuery<TData>({
         newFilters.push({ id: key, value: params[key] })
       }
     })
-    setColumnFilters(newFilters)
-
+    
     const newPagination: PaginationState = {
       pageIndex: params.page ? parseInt(params.page) - 1 : 0,
       pageSize: params.pageSize ? parseInt(params.pageSize) : defaultPageSize,
     }
+
+    setColumnFilters(newFilters)
     setPagination(newPagination)
-  }, [filterKeys, params, defaultPageSize])
+    
+    prevParamsRef.current = paramsKey
+    isUpdatingFromParamsRef.current = false
+  }, [paramsKey, filterKeys, params, defaultPageSize])
 
   // 필터/페이지네이션 변경 시 URL 파라미터 동기화
   useEffect(() => {
     if (!isMounted.current) {
+      return
+    }
+
+    // URL에서 상태로 업데이트 중이면 스킵
+    if (isUpdatingFromParamsRef.current) {
       return
     }
 
@@ -183,7 +223,16 @@ export function useTableWithQuery<TData>({
       updates.pageSize = undefined
     }
 
-    setParams(updates)
+    // 업데이트할 값들을 문자열로 변환하여 비교
+    const updatesKey = JSON.stringify(updates)
+    
+    // 실제로 변경이 필요한 경우에만 업데이트
+    if (updatesKey !== prevParamsRef.current) {
+      isUpdatingFromStateRef.current = true
+      setParams(updates)
+      // setParams는 비동기적으로 URL을 업데이트하므로, 다음 렌더에서 paramsKey가 업데이트될 것
+      // prevParamsRef는 첫 번째 useEffect에서 업데이트됨
+    }
   }, [columnFilters, pagination, setParams, filterKeys, defaultPageSize])
 
   // 테이블 인스턴스 생성

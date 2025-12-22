@@ -47,7 +47,7 @@ const statusOptions = [
 ]
 
 export function ProgramList({ data, loading, onView, onEdit, onDelete }: ProgramListProps) {
-  const { table } = useProgramTable(data)
+  const { table, resetFilters } = useProgramTable(data)
 
   const sponsors = sponsorService.getAllSync()
 
@@ -130,7 +130,7 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
             </Option>
           ))}
         </Select>
-        <Button onClick={() => table.resetColumnFilters()}>필터 초기화</Button>
+        <Button onClick={() => resetFilters()}>필터 초기화</Button>
       </Space>
 
       <Table
