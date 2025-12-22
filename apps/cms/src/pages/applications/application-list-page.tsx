@@ -4,13 +4,14 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Button, Space, message, Modal } from 'antd'
+import { Button, Space, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { ApplicationList } from '@/features/application/ui/application-list'
 import { ApplicationDetailDrawer } from '@/features/application/ui/application-detail-drawer'
 import { ApplicationForm } from '@/features/application/ui/application-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useApplicationStore } from '@/features/application/model/application-store'
+import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import type { Application } from '@/types/domain'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
 
@@ -44,16 +45,19 @@ export function ApplicationListPage() {
     try {
       if (editingApplication) {
         await updateApplication(editingApplication.id, data)
-        message.success('신청이 수정되었습니다')
+        showSuccessMessage('신청이 수정되었습니다')
       } else {
         await createApplication(data)
-        message.success('신청이 등록되었습니다')
+        showSuccessMessage('신청이 등록되었습니다')
       }
       setFormModalOpen(false)
       setEditingApplication(null)
       fetchApplications()
-    } catch {
-      message.error(editingApplication ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: editingApplication ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다',
+        context: 'ApplicationFormSubmit',
+      })
     } finally {
       setFormLoading(false)
     }
@@ -79,28 +83,34 @@ export function ApplicationListPage() {
 
     try {
       await deleteApplication(applicationToDelete.id)
-      message.success('신청이 삭제되었습니다')
+      showSuccessMessage('신청이 삭제되었습니다')
       setDeleteModalOpen(false)
       setApplicationToDelete(null)
       if (selectedApplication?.id === applicationToDelete.id) {
         setDrawerOpen(false)
         setSelectedApplication(null)
       }
-    } catch {
-      message.error('삭제 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: '삭제 중 오류가 발생했습니다',
+        context: 'ApplicationDelete',
+      })
     }
   }
 
   const handleStatusChange = async (application: Application, status: Application['status']) => {
     try {
       await updateStatus(application.id, status)
-      message.success(`상태가 "${status}"로 변경되었습니다`)
+      showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
       if (selectedApplication?.id === application.id) {
         const updated = applications.find(a => a.id === application.id)
         if (updated) setSelectedApplication(updated)
       }
-    } catch {
-      message.error('상태 변경 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: '상태 변경 중 오류가 발생했습니다',
+        context: 'ApplicationStatusChange',
+      })
     }
   }
 

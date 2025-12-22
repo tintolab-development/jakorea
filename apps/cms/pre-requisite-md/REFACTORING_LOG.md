@@ -248,9 +248,81 @@ export function getApplicationStatusIcon(status: ApplicationStatus): React.Compo
 
 ---
 
+### Phase 1.4: 에러 처리 일관화
+
+**작업 일시**: 2025-01-XX
+
+**목적**: 
+- 각 컴포넌트마다 다른 에러 처리 패턴 통일
+- 에러 타입 분류 및 사용자 친화적 메시지 제공
+- 개발 환경에서 에러 로깅 지원
+- 일관된 에러 처리 패턴 적용
+
+**생성 파일**:
+- `src/shared/utils/error-handler.ts`
+
+**주요 기능**:
+1. **에러 타입 분류**:
+   - `NETWORK`: 네트워크 연결 문제
+   - `SERVER`: 서버 내부 오류
+   - `VALIDATION`: 입력 검증 오류
+   - `NOT_FOUND`: 리소스 없음 (404)
+   - `UNAUTHORIZED`: 인증 필요 (401)
+   - `FORBIDDEN`: 권한 없음 (403)
+   - `UNKNOWN`: 알 수 없는 오류
+
+2. **핵심 함수**:
+   - `classifyError(error: unknown): ErrorType`: 에러 타입 분류
+   - `getUserFriendlyMessage(errorType: ErrorType, defaultMessage?: string): string`: 사용자 친화적 메시지 생성
+   - `extractErrorInfo(error: unknown, defaultMessage?: string): ErrorInfo`: 에러 정보 추출
+   - `handleError(error: unknown, options?): ErrorInfo`: 에러 처리 및 사용자 알림
+   - `executeWithErrorHandling<T>(fn, options?): Promise<T | null>`: 비동기 함수 실행 및 에러 처리
+   - `showSuccessMessage(messageText: string)`: 성공 메시지 표시
+   - `showInfoMessage(messageText: string)`: 정보 메시지 표시
+   - `showWarningMessage(messageText: string)`: 경고 메시지 표시
+
+3. **개발 환경 로깅**: 개발 환경에서만 콘솔에 에러 상세 정보 출력
+
+**리팩토링된 파일** (2개):
+
+#### Application 관련
+- `pages/applications/application-list-page.tsx`
+  - 제거: `message` 직접 import 및 사용
+  - 추가: `handleError`, `showSuccessMessage` import
+  - 변경: `message.success()` → `showSuccessMessage()`
+  - 변경: `message.error()` → `handleError()` (컨텍스트 정보 포함)
+  - 변경: `catch {}` → `catch (error) {}` (에러 객체 활용)
+
+#### Settlement 관련
+- `pages/settlements/settlement-list-page.tsx`
+  - 제거: `message` 직접 import 및 사용
+  - 추가: `handleError`, `showSuccessMessage` import
+  - 변경: `message.success()` → `showSuccessMessage()`
+  - 변경: `message.error()` → `handleError()` (컨텍스트 정보 포함)
+  - 변경: `catch {}` → `catch (error) {}` (에러 객체 활용)
+
+**변경 통계**:
+- 생성된 파일: 1개 (`error-handler.ts`)
+- 수정된 페이지 파일: 2개
+- 제거된 직접 `message` 사용: 10개 이상
+- 에러 처리 일관성: 개선
+
+**개선 효과**:
+1. **일관된 에러 처리**: 모든 컴포넌트에서 동일한 패턴 사용
+2. **사용자 친화적 메시지**: 에러 타입에 따른 적절한 메시지 제공
+3. **개발 편의성**: 개발 환경에서 에러 상세 정보 로깅
+4. **유지보수성 향상**: 에러 처리 로직 중앙화
+5. **타입 안정성**: TypeScript로 에러 타입 보장
+
+**참고**:
+- 나머지 페이지 파일들도 단계적으로 리팩토링 예정
+- Store 레이어의 에러 처리도 향후 개선 예정
+
+---
+
 ## 다음 단계
 
-### Phase 1.4: 에러 처리 일관화 (예정)
+### Phase 1.5: 테이블 훅 공통화 (예정)
 - `shared/utils/error-handler.ts` 생성
 - 일관된 에러 처리 패턴 적용
 

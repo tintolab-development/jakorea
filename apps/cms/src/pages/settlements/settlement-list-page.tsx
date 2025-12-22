@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Button, Space, message, Modal } from 'antd'
+import { Button, Space, Modal } from 'antd'
 import { PlusOutlined, CalendarOutlined, SettingOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { SettlementList } from '@/features/settlement/ui/settlement-list'
@@ -12,6 +12,7 @@ import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-deta
 import { SettlementForm } from '@/features/settlement/ui/settlement-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
+import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import type { Settlement } from '@/types/domain'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 
@@ -51,28 +52,34 @@ export function SettlementListPage() {
 
     try {
       await deleteSettlement(settlementToDelete.id)
-      message.success('정산이 삭제되었습니다')
+      showSuccessMessage('정산이 삭제되었습니다')
       setDeleteModalOpen(false)
       setSettlementToDelete(null)
       if (selectedSettlement?.id === settlementToDelete.id) {
         setDrawerOpen(false)
         setSelectedSettlement(null)
       }
-    } catch {
-      message.error('삭제 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: '삭제 중 오류가 발생했습니다',
+        context: 'SettlementDelete',
+      })
     }
   }
 
   const handleStatusChange = async (settlement: Settlement, status: Settlement['status']) => {
     try {
       await updateStatus(settlement.id, status)
-      message.success(`상태가 "${status}"로 변경되었습니다`)
+      showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
       if (selectedSettlement?.id === settlement.id) {
         const updated = settlements.find(s => s.id === settlement.id)
         if (updated) setSelectedSettlement(updated)
       }
-    } catch {
-      message.error('상태 변경 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: '상태 변경 중 오류가 발생했습니다',
+        context: 'SettlementStatusChange',
+      })
     }
   }
 
@@ -86,16 +93,19 @@ export function SettlementListPage() {
     try {
       if (editingSettlement) {
         await updateSettlement(editingSettlement.id, data)
-        message.success('정산이 수정되었습니다')
+        showSuccessMessage('정산이 수정되었습니다')
       } else {
         await createSettlement(data)
-        message.success('정산이 등록되었습니다')
+        showSuccessMessage('정산이 등록되었습니다')
       }
       setFormModalOpen(false)
       setEditingSettlement(null)
       fetchSettlements()
-    } catch {
-      message.error(editingSettlement ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: editingSettlement ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다',
+        context: 'SettlementFormSubmit',
+      })
     } finally {
       setFormLoading(false)
     }
