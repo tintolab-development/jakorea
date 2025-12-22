@@ -82,7 +82,16 @@ export function ScheduleCalendar({
     }
 
     return (
-      <div className="schedule-cell" onClick={e => e.stopPropagation()}>
+      <div
+        className="schedule-cell"
+        onClick={e => {
+          // schedule-item이 아닌 빈 영역 클릭 시 첫 번째 일정의 상세 drawer 열기
+          const target = e.target as HTMLElement
+          if (!target.closest('.schedule-item') && listData.length > 0) {
+            onDateSelect(value, listData[0])
+          }
+        }}
+      >
         <div className="schedule-list">
           {listData.map(schedule => {
             const isConflict = conflicts.some(c => c.id === schedule.id)

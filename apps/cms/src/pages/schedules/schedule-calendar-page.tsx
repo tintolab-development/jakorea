@@ -25,20 +25,24 @@ export function ScheduleCalendarPage() {
   const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(null)
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null)
   const [conflicts, setConflicts] = useState<Schedule[]>([])
+  const [initialDate, setInitialDate] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     fetchSchedules()
   }, [fetchSchedules])
 
-  const handleDateSelect = (_date: Dayjs, schedule?: Schedule) => {
-    // schedule이 명시적으로 전달된 경우에만 처리
-    // 년도/월 선택 시에는 schedule이 undefined이고, 이 경우 모달을 열지 않음
+  const handleDateSelect = (date: Dayjs, schedule?: Schedule) => {
+    // schedule이 있는 경우: 일정 상세 drawer 열기
     if (schedule) {
       setSelectedSchedule(schedule)
       setDrawerOpen(true)
+    } else {
+      // schedule이 없는 경우 (빈 날짜 셀 클릭): 일정 등록 모달 열기
+      // 해당 날짜를 초기값으로 설정
+      setInitialDate(date.format('YYYY-MM-DD'))
+      setEditingSchedule(null)
+      setFormModalOpen(true)
     }
-    // schedule이 없는 경우 (빈 날짜 셀 클릭)는 일정 등록 모달을 열지 않음
-    // 사용자가 명시적으로 "일정 등록" 버튼을 클릭하거나 날짜 셀을 더블클릭할 때만 모달 열기
   }
 
   const handleFormSubmit = async (data: ScheduleFormData) => {
@@ -66,6 +70,7 @@ export function ScheduleCalendarPage() {
             }
             setFormModalOpen(false)
             setEditingSchedule(null)
+            setInitialDate(undefined)
             setConflicts([])
             fetchSchedules()
           },
@@ -137,7 +142,15 @@ export function ScheduleCalendarPage() {
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>일정 관리</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setFormModalOpen(true)}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            setInitialDate(undefined) // 버튼 클릭 시에는 오늘 날짜 사용
+            setEditingSchedule(null)
+            setFormModalOpen(true)
+          }}
+        >
           일정 등록
         </Button>
       </Space>
@@ -167,6 +180,7 @@ export function ScheduleCalendarPage() {
         onCancel={() => {
           setFormModalOpen(false)
           setEditingSchedule(null)
+          setInitialDate(undefined)
           setConflicts([])
         }}
         footer={null}
@@ -174,10 +188,12 @@ export function ScheduleCalendarPage() {
       >
         <ScheduleForm
           schedule={editingSchedule || undefined}
+          initialDate={initialDate}
           onSubmit={handleFormSubmit}
           onCancel={() => {
             setFormModalOpen(false)
             setEditingSchedule(null)
+            setInitialDate(undefined)
             setConflicts([])
           }}
           loading={loading}

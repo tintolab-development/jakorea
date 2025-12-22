@@ -6,6 +6,7 @@
 import { Form, Input, Select, Button, Card, Space, DatePicker, TimePicker, Alert } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
 import { scheduleSchema, type ScheduleFormData } from '@/entities/schedule/model/schema'
 import type { Schedule } from '@/types/domain'
 import { mockPrograms, mockInstructors } from '@/data/mock'
@@ -15,15 +16,15 @@ const { Option } = Select
 
 interface ScheduleFormProps {
   schedule?: Schedule
+  initialDate?: string // 초기 날짜 (YYYY-MM-DD 형식)
   onSubmit: (data: ScheduleFormData) => Promise<void>
   onCancel: () => void
   loading?: boolean
   conflicts?: Schedule[]
 }
 
-export function ScheduleForm({ schedule, onSubmit, onCancel, loading, conflicts = [] }: ScheduleFormProps) {
+export function ScheduleForm({ schedule, initialDate, onSubmit, onCancel, loading, conflicts = [] }: ScheduleFormProps) {
   const {
-    register,
     handleSubmit,
     formState: { errors },
     setValue,
@@ -43,11 +44,18 @@ export function ScheduleForm({ schedule, onSubmit, onCancel, loading, conflicts 
           instructorId: schedule.instructorId || '',
         }
       : {
-          date: dayjs().format('YYYY-MM-DD'),
+          date: initialDate || dayjs().format('YYYY-MM-DD'),
           startTime: '09:00',
           endTime: '18:00',
         },
   })
+
+  // initialDate가 변경될 때 날짜 필드 업데이트
+  useEffect(() => {
+    if (initialDate && !schedule) {
+      setValue('date', initialDate)
+    }
+  }, [initialDate, schedule, setValue])
 
   const selectedProgramId = watch('programId')
   const selectedProgram = mockPrograms.find(p => p.id === selectedProgramId)
@@ -118,7 +126,11 @@ export function ScheduleForm({ schedule, onSubmit, onCancel, loading, conflicts 
         )}
 
         <Form.Item label="일정 제목" validateStatus={errors.title ? 'error' : ''} help={errors.title?.message}>
-          <Input {...register('title')} />
+          <Input
+            value={watch('title') || ''}
+            onChange={e => setValue('title', e.target.value)}
+            placeholder="일정 제목을 입력하세요"
+          />
         </Form.Item>
 
         <Form.Item label="날짜" validateStatus={errors.date ? 'error' : ''} help={errors.date?.message}>
@@ -160,7 +172,11 @@ export function ScheduleForm({ schedule, onSubmit, onCancel, loading, conflicts 
         </Space>
 
         <Form.Item label="장소 (오프라인)">
-          <Input {...register('location')} placeholder="오프라인 장소를 입력하세요" />
+          <Input
+            value={watch('location') || ''}
+            onChange={e => setValue('location', e.target.value)}
+            placeholder="오프라인 장소를 입력하세요"
+          />
         </Form.Item>
 
         <Form.Item
@@ -168,7 +184,11 @@ export function ScheduleForm({ schedule, onSubmit, onCancel, loading, conflicts 
           validateStatus={errors.onlineLink ? 'error' : ''}
           help={errors.onlineLink?.message}
         >
-          <Input {...register('onlineLink')} placeholder="https://..." />
+          <Input
+            value={watch('onlineLink') || ''}
+            onChange={e => setValue('onlineLink', e.target.value)}
+            placeholder="https://..."
+          />
         </Form.Item>
 
         <Form.Item label="강사 (선택사항)">
