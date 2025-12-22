@@ -1,26 +1,12 @@
 /**
  * 정산 테이블 Hook
  * Phase 4: @tanstack/react-table + Query Parameter 동기화
+ * Phase 1.5: 공통 테이블 훅 사용으로 리팩토링
  */
 
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  type ColumnFiltersState,
-  type PaginationState,
-  type ColumnDef,
-} from '@tanstack/react-table'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import type { Settlement } from '@/types/domain'
-import { useQueryParams } from '@/shared/hooks/use-query-params'
-
-interface SettlementTableFilters {
-  status?: string
-  programId?: string
-  period?: string
-}
+import { useTableWithQuery } from '@/shared/hooks/use-table-with-query'
 
 const columns: ColumnDef<Settlement>[] = [
   {
@@ -46,66 +32,11 @@ const columns: ColumnDef<Settlement>[] = [
 ]
 
 export function useSettlementTable(data: Settlement[]) {
-  type QueryParams = SettlementTableFilters & { page?: string; pageSize?: string }
-  const { params, setParams } = useQueryParams<Record<string, string | undefined>>() as {
-    params: QueryParams
-    setParams: (updates: Partial<QueryParams>) => void
-  }
-
-  const isMounted = useRef(false)
-
-  const initialFilters = useMemo<ColumnFiltersState>(() => {
-    const filters: ColumnFiltersState = []
-    if (params.status) filters.push({ id: 'status', value: params.status })
-    if (params.programId) filters.push({ id: 'programId', value: params.programId })
-    if (params.period) filters.push({ id: 'period', value: params.period })
-    return filters
-  }, [params.status, params.programId, params.period])
-
-  const initialPagination = useMemo<PaginationState>(
-    () => ({
-      pageIndex: params.page ? parseInt(params.page) - 1 : 0,
-      pageSize: params.pageSize ? parseInt(params.pageSize) : 10,
-    }),
-    [params.page, params.pageSize]
-  )
-
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialFilters)
-  const [pagination, setPagination] = useState<PaginationState>(initialPagination)
-
-  useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true
-      return
-    }
-
-    const filterParams: Partial<SettlementTableFilters> = {}
-    columnFilters.forEach(filter => {
-      if (filter.value) {
-        filterParams[filter.id as keyof SettlementTableFilters] = filter.value as string
-      }
-    })
-    setParams({
-      ...filterParams,
-      page: pagination.pageIndex > 0 ? String(pagination.pageIndex + 1) : undefined,
-      pageSize: pagination.pageSize !== 10 ? String(pagination.pageSize) : undefined,
-    })
-  }, [columnFilters, pagination, setParams])
-
-  const table = useReactTable({
+  return useTableWithQuery({
     data,
     columns,
-    state: {
-      columnFilters,
-      pagination,
-    },
-    onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    filterKeys: ['status', 'programId', 'period'],
+    defaultPageSize: 10,
   })
-
-  return { table, columnFilters, pagination }
 }
 

@@ -320,9 +320,86 @@ export function getApplicationStatusIcon(status: ApplicationStatus): React.Compo
 
 ---
 
+### Phase 1.5: 테이블 훅 공통화
+
+**작업 일시**: 2025-01-XX
+
+**목적**: 
+- 각 도메인별 테이블 훅에서 중복되는 로직 통합
+- Query Parameter 동기화 로직 일원화
+- 테이블 훅 생성 및 유지보수 용이성 향상
+
+**생성 파일**:
+- `src/shared/hooks/use-table-with-query.ts`
+
+**주요 기능**:
+1. **제네릭 타입 지원**: 모든 도메인 타입에 적용 가능
+2. **필터 키 설정**: `filterKeys` 배열로 URL 파라미터와 동기화할 필터 지정
+3. **기본 페이지 사이즈 설정**: `defaultPageSize` 옵션 (기본: 10)
+4. **추가 테이블 옵션**: `tableOptions`로 TanStack Table 옵션 확장 가능
+5. **필터/페이지네이션 초기화 함수**: `resetFilters`, `resetPagination` 제공
+
+**리팩토링된 파일** (6개):
+
+#### Application 관련
+- `features/application/model/use-application-table.ts`
+  - 제거: 중복된 테이블 로직 (약 70줄)
+  - 추가: `useTableWithQuery` 사용 (약 20줄)
+  - 변경: 필터 키 `['programId', 'subjectType', 'status']` 지정
+
+#### Program 관련
+- `features/program/model/use-program-table.ts`
+  - 제거: 중복된 테이블 로직 (약 70줄)
+  - 추가: `useTableWithQuery` 사용 (약 20줄)
+  - 변경: 필터 키 `['title', 'sponsorId', 'type', 'status']` 지정
+
+#### Settlement 관련
+- `features/settlement/model/use-settlement-table.ts`
+  - 제거: 중복된 테이블 로직 (약 65줄)
+  - 추가: `useTableWithQuery` 사용 (약 20줄)
+  - 변경: 필터 키 `['status', 'programId', 'period']` 지정
+
+#### Instructor 관련
+- `features/instructor/model/use-instructor-table.ts`
+  - 제거: 중복된 테이블 로직 (약 70줄)
+  - 추가: `useTableWithQuery` 사용 (약 20줄)
+  - 변경: 필터 키 `['name', 'region', 'specialty']` 지정
+
+#### School 관련
+- `features/school/model/use-school-table.ts`
+  - 제거: 중복된 테이블 로직 (약 70줄)
+  - 추가: `useTableWithQuery` 사용 (약 20줄)
+  - 변경: 필터 키 `['name', 'region']` 지정
+
+#### Sponsor 관련
+- `features/sponsor/model/use-sponsor-table.ts`
+  - 제거: 중복된 테이블 로직 (약 70줄)
+  - 추가: `useTableWithQuery` 사용 (약 20줄)
+  - 변경: 필터 키 `['name']` 지정
+
+**변경 통계**:
+- 생성된 파일: 1개 (`use-table-with-query.ts`, 약 230줄)
+- 수정된 테이블 훅: 6개
+- 제거된 중복 코드: 약 420줄
+- 코드 감소율: 약 65% (420줄 → 120줄)
+- 타입 안정성: 개선 (모든 타입 체크 통과)
+
+**개선 효과**:
+1. **코드 중복 제거**: 6개 파일에서 약 420줄의 중복 코드 제거
+2. **유지보수성 향상**: 테이블 로직 변경 시 공통 훅만 수정
+3. **일관성 보장**: 모든 테이블에서 동일한 동작 보장
+4. **확장성 향상**: 새로운 테이블 추가 시 간단한 설정만으로 구현 가능
+5. **타입 안정성**: 제네릭 타입으로 타입 안정성 보장
+
+**참고**:
+- `resetFilters`, `resetPagination` 함수는 현재 사용되지 않지만 향후 확장을 위해 제공
+- URL 파라미터 동기화 로직은 `isMounted` ref로 초기 마운트 시 업데이트 방지
+
+---
+
 ## 다음 단계
 
-### Phase 1.5: 테이블 훅 공통화 (예정)
+### Phase 2: 비즈니스 로직 분리 (예정)
 - `shared/utils/error-handler.ts` 생성
 - 일관된 에러 처리 패턴 적용
 
