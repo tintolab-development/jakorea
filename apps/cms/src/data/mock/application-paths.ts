@@ -46,3 +46,4 @@ export const getApplicationPathByProgramId = (programId: string): ApplicationPat
   return mockApplicationPaths.find(path => path.programId === programId && path.isActive)
 }
 
+
