@@ -11,8 +11,13 @@ import { MatchingDetailDrawer } from '@/features/matching/ui/matching-detail-dra
 import { MatchingForm } from '@/features/matching/ui/matching-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useMatchingStore } from '@/features/matching/model/matching-store'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import type { Matching } from '@/types/domain'
 import type { MatchingFormData } from '@/entities/matching/model/schema'
+
+interface MatchingQueryParams extends Record<string, string | undefined> {
+  programId?: string
+}
 
 export function MatchingListPage() {
   const {
@@ -27,17 +32,25 @@ export function MatchingListPage() {
     setSelectedMatching,
   } = useMatchingStore()
 
+  const { params, setParams } = useQueryParams<MatchingQueryParams>()
   const [selectedMatching, setSelectedMatchingLocal] = useState<Matching | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [matchingToDelete, setMatchingToDelete] = useState<Matching | null>(null)
   const [editingMatching, setEditingMatching] = useState<Matching | null>(null)
-  const [selectedProgramId, setSelectedProgramId] = useState<string | undefined>()
+  
+  // 쿼리 파라미터에서 필터 상태 읽기
+  const selectedProgramId = params.programId
 
   useEffect(() => {
     fetchMatchings()
   }, [fetchMatchings])
+
+  // 필터 변경 핸들러 (쿼리 파라미터 동기화)
+  const handleProgramChange = (programId: string | undefined) => {
+    setParams({ programId: programId || undefined })
+  }
 
   const handleView = (matching: Matching) => {
     setSelectedMatchingLocal(matching)
@@ -145,7 +158,7 @@ export function MatchingListPage() {
         matchings={matchings}
         loading={loading}
         selectedProgramId={selectedProgramId}
-        onProgramChange={setSelectedProgramId}
+        onProgramChange={handleProgramChange}
         onView={handleView}
         onEdit={matching => {
           setEditingMatching(matching)

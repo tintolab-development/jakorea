@@ -766,3 +766,4 @@
 > 위 11번 섹션은 Base 버전에서는 **참고용**이며,  
 > 실제 구현/스펙 디테일은 Extended 버전(`API_SPEC_MOCK_BASED_EXTENDED.md`)에서 더 구체화된다.
 
+

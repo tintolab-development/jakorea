@@ -140,6 +140,26 @@
   text-decoration: underline;
 }
 
+/* 캘린더 날짜 셀에 보더 추가 - 구분 명확화 */
+.ant-picker-calendar-date {
+  border: 1px solid #f0f0f0;
+}
+
+/* 호버 시 보더 강조 */
+.ant-picker-calendar-date:hover {
+  border-color: #d9d9d9;
+}
+
+/* 선택된 날짜 보더 강조 */
+.ant-picker-calendar-date-selected {
+  border-color: #1890ff;
+}
+
+/* 오늘 날짜 보더 강조 */
+.ant-picker-calendar-date-today {
+  border-color: #01A1AF;
+}
+
 /* 캘린더 셀 호버 효과 개선 */
 .ant-picker-calendar-date-content {
   position: relative;
@@ -153,14 +173,27 @@
 
 /* Ant Design Calendar 기본 배경색 오버라이드 */
 /* d8f0ee는 Ant Design의 기본 primary 색상(#01A1AF)의 연한 버전입니다 */
-/* 적용 기준: 오늘 날짜(today), 선택된 날짜(selected), 호버된 날짜 */
+/* 적용 기준: 오늘 날짜(today), 호버된 날짜 */
 .ant-picker-calendar-date-today .ant-picker-calendar-date-content {
   background-color: #d8f0ee;
   border-radius: 4px;
 }
 
-.ant-picker-calendar-date-selected .ant-picker-calendar-date-content {
-  background-color: #d8f0ee;
+/* 선택된 날짜 배경색 완전히 제거 - ant-picker-cell-selected 클래스 포함 */
+.ant-picker-calendar-date-selected,
+.ant-picker-cell-selected {
+  background-color: transparent !important;
+}
+
+.ant-picker-calendar-date-selected .ant-picker-calendar-date-content,
+.ant-picker-cell-selected .ant-picker-calendar-date-content {
+  background-color: transparent !important;
+  border-radius: 4px;
+}
+
+.ant-picker-calendar-date-selected:hover .ant-picker-calendar-date-content,
+.ant-picker-cell-selected:hover .ant-picker-calendar-date-content {
+  background-color: #d8f0ee !important;
   border-radius: 4px;
 }
 

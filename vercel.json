@@ -1,0 +1,14 @@
+{
+  "buildCommand": "pnpm --filter cms build",
+  "outputDirectory": "apps/cms/dist",
+  "installCommand": "pnpm install",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+
+

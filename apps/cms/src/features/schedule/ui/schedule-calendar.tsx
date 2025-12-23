@@ -213,7 +213,8 @@ export function ScheduleCalendar({
       <div>
         <Calendar
           mode={mode}
-          value={currentDate}
+          defaultValue={currentDate}
+          value={undefined}
           cellRender={(value, info) => {
             if (info.type === 'month') {
               return monthCellRender(value)
