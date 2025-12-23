@@ -1,0 +1,69 @@
+/**
+ * 도메인별 색상 Variation CSS 변수
+ * 브랜드 컬러 기반 색상 시스템
+ * 메인 컬러: #01A1AF, 서브 컬러: #296075, #22404B
+ */
+
+:root {
+  /* 브랜드 컬러 */
+  --color-brand-primary: #01a1af;
+  --color-brand-secondary-1: #296075;
+  --color-brand-secondary-2: #22404b;
+
+  /* 프로그램 관련 색상 variation (메인 컬러 사용) */
+  --color-program: #01a1af;
+  --color-program-light: #e6f7f9;
+  --color-program-dark: #296075;
+
+  /* 학교 관련 색상 variation (밝은 청록) */
+  --color-school: #13c2c2;
+  --color-school-light: #e6fffb;
+  --color-school-dark: #08979c;
+
+  /* 강사 관련 색상 variation (보라) */
+  --color-instructor: #722ed1;
+  --color-instructor-light: #f9f0ff;
+  --color-instructor-dark: #531dab;
+
+  /* 스폰서 관련 색상 variation (주황) */
+  --color-sponsor: #fa8c16;
+  --color-sponsor-light: #fff7e6;
+  --color-sponsor-dark: #d46b08;
+
+  /* 신청 관련 색상 variation (분홍) */
+  --color-application: #eb2f96;
+  --color-application-light: #fff0f6;
+  --color-application-dark: #c41d7f;
+
+  /* 일정 관련 색상 variation (노랑) */
+  --color-schedule: #fadb14;
+  --color-schedule-light: #fffbe6;
+  --color-schedule-dark: #d4b106;
+
+  /* 매칭 관련 색상 variation (녹색) */
+  --color-matching: #52c41a;
+  --color-matching-light: #f6ffed;
+  --color-matching-dark: #389e0d;
+
+  /* 정산 관련 색상 variation (빨강) */
+  --color-settlement: #ff4d4f;
+  --color-settlement-light: #fff1f0;
+  --color-settlement-dark: #cf1322;
+
+  /* 텍스트 색상 */
+  --color-text-heading: #22404b;
+  --color-text-body: #595959;
+  --color-text-secondary: #8c8c8c;
+  --color-link: #01a1af;
+  --color-link-hover: #296075;
+
+  /* 배경 색상 */
+  --color-bg-base: #ffffff;
+  --color-bg-secondary: #fafafa;
+  --color-bg-accent: #e6f7f9;
+  --color-bg-hover: #f0f0f0;
+}
+
+
+
+

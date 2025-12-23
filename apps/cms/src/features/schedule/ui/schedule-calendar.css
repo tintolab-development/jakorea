@@ -1,0 +1,224 @@
+/* 일정 캘린더 스타일 */
+/* Phase 3.1: UI/UX 개선 - 닷을 각 일정 아이템에 붙이기 */
+
+.schedule-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 60px;
+  padding: 4px 0;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #52c41a;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  margin-right: 6px;
+}
+
+.schedule-dot-conflict {
+  background-color: #ff4d4f;
+}
+
+.schedule-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.schedule-item:hover .schedule-dot {
+  transform: scale(1.2);
+  box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
+}
+
+.schedule-item:hover .schedule-dot-conflict {
+  box-shadow: 0 0 4px rgba(255, 77, 79, 0.5);
+}
+
+.schedule-item:hover {
+  background-color: #d9f7be;
+  border-color: #95de64;
+  transform: translateX(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.schedule-item-conflict {
+  background-color: #fff1f0;
+  border-color: #ffccc7;
+}
+
+.schedule-item-conflict:hover {
+  background-color: #ffccc7;
+  border-color: #ff7875;
+}
+
+.schedule-item-time {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #595959;
+  min-width: 40px;
+}
+
+.schedule-item-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #262626;
+}
+
+/* Popover 스타일 */
+.schedule-popover-overlay .ant-popover-inner-content {
+  padding: 12px;
+}
+
+.schedule-popover {
+  min-width: 200px;
+}
+
+.schedule-popover-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+}
+
+.schedule-popover-item {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.schedule-popover-item:last-child {
+  margin-bottom: 0;
+}
+
+.schedule-popover-label {
+  font-weight: 500;
+  color: #8c8c8c;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.schedule-popover-item span:not(.schedule-popover-label) {
+  color: #262626;
+  flex: 1;
+}
+
+.schedule-popover-item a {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.schedule-popover-item a:hover {
+  text-decoration: underline;
+}
+
+/* 캘린더 셀 호버 효과 개선 */
+.ant-picker-calendar-date-content {
+  position: relative;
+}
+
+.ant-picker-calendar-date:hover .schedule-cell {
+  background-color: #fafafa;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+/* Ant Design Calendar 기본 배경색 오버라이드 */
+/* d8f0ee는 Ant Design의 기본 primary 색상(#01A1AF)의 연한 버전입니다 */
+/* 적용 기준: 오늘 날짜(today), 선택된 날짜(selected), 호버된 날짜 */
+.ant-picker-calendar-date-today .ant-picker-calendar-date-content {
+  background-color: #d8f0ee;
+  border-radius: 4px;
+}
+
+.ant-picker-calendar-date-selected .ant-picker-calendar-date-content {
+  background-color: #d8f0ee;
+  border-radius: 4px;
+}
+
+.ant-picker-calendar-date:hover .ant-picker-calendar-date-content {
+  background-color: #d8f0ee;
+  border-radius: 4px;
+}
+
+/* 일정이 많은 경우 스크롤 */
+.schedule-list {
+  max-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.schedule-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.schedule-list::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 2px;
+}
+
+.schedule-list::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 2px;
+}
+
+.schedule-list::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+/* 월별 요약 스타일 */
+.schedule-month-summary {
+  text-align: center;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* 캘린더 헤더 커스터마이징 */
+.schedule-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.schedule-calendar-header .ant-select {
+  margin-right: 8px;
+}
+
+.schedule-calendar-header .ant-radio-group {
+  margin-left: auto;
+}
