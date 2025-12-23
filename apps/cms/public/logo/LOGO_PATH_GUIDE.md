@@ -45,3 +45,4 @@ import jakoreaLogo from '@/assets/images/jakorea-logo.png'
 - 해상도: 2x (Retina 디스플레이 대응)
 
 
+
