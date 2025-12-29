@@ -1,3 +1,9 @@
+---
+priority: high
+always_include: true
+category: design
+---
+
 # 공통 UI 원칙
 
 **작성 일자**: 2024-12-19  

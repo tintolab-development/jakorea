@@ -98,14 +98,40 @@ pnpm install
 ## 구조
 
 ```
-apps/
-  admin/      # 관리 콘솔 애플리케이션
-  lms/        # 학습 관리자(CMS) 애플리케이션
-  platform/   # 사용자용 플랫폼 애플리케이션
-packages/
-  ui/         # React UI 컴포넌트 (예: Button)
-  utils/      # 날짜/텍스트 등 공통 유틸
+jakorea/
+├── .cursor/
+│   └── rules/              # 모노레포 공통 규칙
+│       ├── constraints.md
+│       ├── design-guidelines.md
+│       ├── coding-standards.md
+│       ├── monorepo-structure.md
+│       └── project-system-prompt.md
+│
+├── apps/
+│   ├── admin/              # 관리 콘솔 애플리케이션
+│   ├── cms/                # CMS (Automation) 애플리케이션
+│   │   ├── .cursor/rules/  # CMS 전용 규칙
+│   │   └── docs/           # CMS 문서 (로드맵, 브리핑 등)
+│   ├── lms/                # 학습 관리자(LMS) 애플리케이션
+│   │   ├── .cursor/rules/   # LMS 전용 규칙
+│   │   └── docs/           # LMS 문서 (진행 상황, 분석 등)
+│   └── platform/           # 사용자용 플랫폼 애플리케이션
+│
+└── packages/
+    ├── ui/                 # React UI 컴포넌트 (예: Button)
+    └── utils/              # 날짜/텍스트 등 공통 유틸
 ```
+
+## 📚 문서 구조
+
+### 규칙 (Rules)
+- **모노레포 공통**: `.cursor/rules/` - 모든 프로젝트에 적용되는 규칙
+- **프로젝트별**: `apps/{project}/.cursor/rules/` - 각 프로젝트 전용 규칙
+- Cursor IDE가 자동으로 인식하여 AI 컨텍스트에 포함합니다.
+
+### 문서 (Docs)
+- **프로젝트별**: `apps/{project}/docs/` - 각 프로젝트의 참고 문서
+- 로드맵, 진행 상황, 분석 문서 등이 포함됩니다.
 
 ## 공통 패키지 워크플로우
 

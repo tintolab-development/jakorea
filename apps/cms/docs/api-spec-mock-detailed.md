@@ -1,8 +1,10 @@
-## JAKorea CMS Mock 기반 API 명세 (Base Version)
+# JAKorea CMS Mock 기반 API 명세 (상세 버전)
 
 > 이 문서는 현재 CMS 프론트엔드 코드(`entities/*/api`, `entities/*/model`, `data/mock/*`, `types/domain.ts`)와  
 > `MVP_ROADMAP.md` / `MVP_ROADMAP_V2.md` / `MVP_ROADMAP_V3.md` 에 정의된 **Phase 1~4 기본 기능**을 기준으로 한  
-> **실제 Mock 서비스와 1:1로 매핑 가능한 API 스펙**입니다.
+> **실제 Mock 서비스와 1:1로 매핑 가능한 상세 API 스펙**입니다.
+
+**참고**: 개발 시 빠른 참조를 원하시면 [API 명세 요약](../.cursor/rules/data/api-spec-mock.md)을 참고하세요.
 
 ---
 
@@ -764,7 +766,6 @@
 - **GET** `/api/activities/{id}`
 
 > 위 11번 섹션은 Base 버전에서는 **참고용**이며,  
-> 실제 구현/스펙 디테일은 Extended 버전(`API_SPEC_MOCK_BASED_EXTENDED.md`)에서 더 구체화된다.
-
+> 실제 구현/스펙 디테일은 Extended 버전(`api-spec-mock-extended.md`)에서 더 구체화된다.
 
 
