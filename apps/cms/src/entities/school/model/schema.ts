@@ -22,3 +22,4 @@ export type SchoolFormData = z.infer<typeof schoolSchema>
 
 
 
+

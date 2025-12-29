@@ -164,3 +164,4 @@ export const mockSchools: School[] = Array.from({ length: 30 }, () => {
 export const mockSchoolsMap = new Map(mockSchools.map(school => [school.id, school]))
 
 
+

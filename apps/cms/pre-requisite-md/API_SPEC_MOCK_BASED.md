@@ -767,3 +767,4 @@
 > 실제 구현/스펙 디테일은 Extended 버전(`API_SPEC_MOCK_BASED_EXTENDED.md`)에서 더 구체화된다.
 
 
+
