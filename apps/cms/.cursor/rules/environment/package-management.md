@@ -28,3 +28,4 @@ pnpm --filter cms add <package-name>
 - [모노레포 구조](../../../.cursor/rules/monorepo-structure.md)
 
 
+

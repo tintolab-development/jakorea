@@ -219,3 +219,4 @@ export function InstructorList.tsx() { ... }
    - 자동 검증 규칙 추가
 
 
+
