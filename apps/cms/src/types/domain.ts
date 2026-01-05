@@ -9,6 +9,7 @@ import type { UUID, Status, DateValue } from './index'
 export interface Sponsor {
   id: UUID
   name: string
+  nameEn?: string // 후원사명(영문)
   description?: string
   contactInfo?: string
   securityMemo?: string // 보안/정책 메모
@@ -24,6 +25,15 @@ export type ProgramFormat = 'workshop' | 'seminar' | 'course' | 'lecture' | 'oth
 
 // 프로그램 카테고리 (학교 프로그램 vs 개인 프로그램)
 export type ProgramCategory = 'school' | 'individual'
+
+// IPS 분류
+export type IPSClassification = 'Prepare' | 'Succeed' | 'Inspire'
+
+// 대상 구분
+export type TargetLevel = 'elementary' | 'middle' | 'high'
+
+// 기관 구분
+export type InstitutionType = 'inside_school' | 'outside_school'
 
 // 신청 경로 타입
 export type ApplicationPathType = 'google_form' | 'internal' // 구글폼 / 자동화 프로그램 내 신청
@@ -55,6 +65,35 @@ export interface Program {
   status: Status
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
+  // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
+  businessArea?: string // 사업분야
+  titleEn?: string // 프로그램명(영문)
+  mainTitle?: string // 대표 프로그램명(국문)
+  textbookName?: string // 교재명(국문)
+  textbookNameEn?: string // 교재명(영문)
+  schoolId?: UUID // 학교명 (기관) - Application을 통해 연결
+  district?: string // 시군구 - School.region에서 추출
+  ips?: IPSClassification // IPS 분류 (Prepare/Succeed/Inspire)
+  targetLevel?: TargetLevel // 대상 구분 (초/중/고)
+  institutionType?: InstitutionType // 기관 구분 (학교 안/밖)
+  // 프로그램 설정 정보
+  ipOwned?: string // IP Owned (기본값: "JA")
+  courseDeliveredBy?: 'JA' | 'Jointly' | 'Partner' // Course Delivered By
+  partnerInvolvement?: boolean // Partner Involvement
+  programCategory?: string | null // 프로그램 종류 (IPS가 Succeed일 때)
+  programChannel?: string | null // 프로그램 채널 및 형식 (IPS가 Inspire일 때)
+  educationTime?: number // 교육시간 (시간)
+  // 엑셀 데이터 기반 추가 필드 - 참가자 통계 정보
+  maleParticipants?: number // 남성 참가자
+  femaleParticipants?: number // 여성 참가자
+  totalParticipants?: number // 총 참가자 (계산 가능)
+  generalVolunteers?: number // 일반 자원봉사자
+  staffVolunteers?: number // 임직원 자원봉사자
+  returningVolunteers?: number // 재참여 자원봉사자
+  generalTeachers?: number // 일반담당교사
+  educatedTeachers?: number // 교육받은교사
+  instructors?: number // 강사 수
+  managerName?: string // 담당자명
   createdAt: DateValue
   updatedAt: DateValue
 }
@@ -67,6 +106,7 @@ export interface ProgramRound {
   startDate: DateValue
   endDate: DateValue
   capacity?: number // 정원
+  classCount?: number // 학급수
   status: Status
 }
 
@@ -357,6 +397,31 @@ export interface MyPageData {
   todos: Todo[] // 최대 2개
   upcomingSchedules?: Schedule[] // 승인 완료된 일정
   historySummary?: UserHistory[] // 최대 3개
+}
+
+// 프로그램 통계 (참가자 통계) - DEPRECATED: Program 엔티티로 통합됨
+// @deprecated ProgramStatistics는 Program 엔티티에 통합되었습니다. Program 필드를 사용하세요.
+export interface ProgramStatistics {
+  id: UUID
+  programId: UUID
+  roundId?: UUID
+  scheduleId?: UUID
+  // 참가자 통계
+  maleParticipants: number // 남성 참가자
+  femaleParticipants: number // 여성 참가자
+  totalParticipants: number // 총 참가자 (계산 가능)
+  // 자원봉사자 통계
+  generalVolunteers: number // 일반 자원봉사자
+  staffVolunteers: number // 임직원 자원봉사자
+  returningVolunteers: number // 재참여 자원봉사자
+  // 교사/강사 통계
+  generalTeachers: number // 일반담당교사
+  educatedTeachers: number // 교육받은교사
+  instructors: number // 강사 수
+  // 담당자
+  managerName?: string // 담당자명
+  createdAt: DateValue
+  updatedAt: DateValue
 }
 
 

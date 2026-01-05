@@ -17,6 +17,7 @@ import {
   DollarOutlined,
   HistoryOutlined,
   UserSwitchOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 
 /**
@@ -47,6 +48,18 @@ const allMenuItems: MenuItemConfig[] = [
     label: '프로그램',
     icon: <BookOutlined />,
     // 모든 권한 접근 가능
+  },
+  {
+    key: '/education-records',
+    label: '교육실적 관리',
+    icon: <BarChartOutlined />,
+    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+  },
+  {
+    key: '/education-records-v2',
+    label: '교육실적 관리 (v2)',
+    icon: <BarChartOutlined />,
+    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
   },
   {
     key: '/applications',

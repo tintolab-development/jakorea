@@ -46,7 +46,7 @@ export function Dashboard() {
           </Card>
         )
       case 'unified-activity-feed':
-        return <UnifiedActivityFeed limit={20} />
+        return <UnifiedActivityFeed pageSize={10} />
       case 'my-activity-summary':
         return <MyActivitySummary />
       case 'my-application-summary':

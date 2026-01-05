@@ -4,11 +4,12 @@
  * Phase 5.1: 사용자 화면 기반 UI 개선 (공통 UI 원칙 적용)
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Alert, Typography, Divider, Modal } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import type { Program, ApplicationPath } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { schoolService } from '@/entities/school/api/school-service'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { useApplicationPathStore } from '@/features/application-path/model/application-path-store'
 import { useProgramStore } from '@/features/program/model/program-store'
@@ -28,6 +29,7 @@ import {
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 
 const { Paragraph, Text } = Typography
@@ -40,6 +42,7 @@ interface ProgramDetailDrawerProps {
   onEdit: () => void
   onDelete: () => void
   loading?: boolean
+  hideActions?: boolean // 수정/삭제 버튼 숨김 (교육실적관리 등 읽기 전용)
 }
 
 const programTypeLabels: Record<string, string> = {
@@ -63,38 +66,53 @@ export function ProgramDetailDrawer({
   onEdit,
   onDelete,
   loading,
+  hideActions = false,
 }: ProgramDetailDrawerProps) {
   const [applicationPathModalOpen, setApplicationPathModalOpen] = useState(false)
   const [editingApplicationPath, setEditingApplicationPath] = useState<ApplicationPath | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const { createPath, updatePath } = useApplicationPathStore()
   const { updateProgram } = useProgramStore()
+  
+  // 교육실적 관련: 학교 정보 조회 (Application을 통해)
+  // hooks는 항상 동일한 순서로 호출되어야 하므로 early return 전에 호출
+  const schoolInfo = useMemo(() => {
+    if (!program) return null
+    const schoolApp = mockApplications.find(
+      app => app.programId === program.id && app.subjectType === 'school'
+    )
+    if (schoolApp) {
+      const school = schoolService.getByIdSync(schoolApp.subjectId)
+      return school ? { name: school.name, region: school.region } : null
+    }
+    return null
+  }, [program?.id])
 
   if (!program) return null
 
-        const sponsor = sponsorService.getByIdSync(program.sponsorId)
+  const sponsor = sponsorService.getByIdSync(program.sponsorId)
+  
+  // 프로그램별 신청 수 계산
+  const applicationCount = getApplicationCountByProgram(program.id)
 
-        // 프로그램별 신청 수 계산
-        const applicationCount = getApplicationCountByProgram(program.id)
+  // 확정된 일정만 필터링
+  const confirmedRounds = getConfirmedRounds(program.rounds)
 
-        // 확정된 일정만 필터링
-        const confirmedRounds = getConfirmedRounds(program.rounds)
+  // 신청 경로 정보 조회 (V3 Phase 7)
+  const applicationPath = program.applicationPathId
+    ? applicationPathService.getByIdSync(program.applicationPathId)
+    : applicationPathService.getByProgramIdSync(program.id)
 
-        // 신청 경로 정보 조회 (V3 Phase 7)
-        const applicationPath = program.applicationPathId
-          ? applicationPathService.getByIdSync(program.applicationPathId)
-          : applicationPathService.getByProgramIdSync(program.id)
-
-        // 신청 가능 여부 및 URL
-        const applicationAvailable = isApplicationAvailable(program)
-        let applicationUrl: string | undefined
-        if (applicationAvailable && applicationPath && applicationPath.isActive) {
-          if (applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl) {
-            applicationUrl = applicationPath.googleFormUrl
-          } else if (applicationPath.pathType === 'internal') {
-            applicationUrl = getApplicationUrl(program.id)
-          }
-        }
+  // 신청 가능 여부 및 URL
+  const applicationAvailable = isApplicationAvailable(program)
+  let applicationUrl: string | undefined
+  if (applicationAvailable && applicationPath && applicationPath.isActive) {
+    if (applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl) {
+      applicationUrl = applicationPath.googleFormUrl
+    } else if (applicationPath.pathType === 'internal') {
+      applicationUrl = getApplicationUrl(program.id)
+    }
+  }
 
   const handleApplicationPathCreate = () => {
     setEditingApplicationPath(null)
@@ -183,9 +201,11 @@ export function ProgramDetailDrawer({
   return (
     <Drawer
       title={
-        <Space>
-          <Tag color={domainColorsHex.program.primary} style={{ fontSize: 16, padding: '4px 12px' }}>
-            {program.title}
+        <Space align="center">
+          <Tag color={domainColorsHex.program.primary} style={{ fontSize: 16, padding: '4px 12px', maxWidth: '400px', display: 'inline-flex', alignItems: 'center' }}>
+            <Text ellipsis={{ tooltip: program.title }} style={{ maxWidth: '350px', display: 'block' }}>
+              {program.title}
+            </Text>
           </Tag>
           <Badge status={program.status === 'active' ? 'success' : 'default'} />
         </Space>
@@ -194,14 +214,16 @@ export function ProgramDetailDrawer({
       open={open}
       onClose={onClose}
       extra={
-        <Space>
-          <Button icon={<EditOutlined />} onClick={onEdit}>
-            수정
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
-            삭제
-          </Button>
-        </Space>
+        !hideActions ? (
+          <Space>
+            <Button icon={<EditOutlined />} onClick={onEdit}>
+              수정
+            </Button>
+            <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
+              삭제
+            </Button>
+          </Space>
+        ) : null
       }
     >
       <Tabs
@@ -216,7 +238,9 @@ export function ProgramDetailDrawer({
                 <Card title="프로그램 정보">
                   <Descriptions column={1} bordered>
                     <Descriptions.Item label="프로그램명">
-                      <Text strong>{program.title}</Text>
+                      <Text strong ellipsis={{ tooltip: program.title }}>
+                        {program.title}
+                      </Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="카테고리">
                       <Space>
@@ -226,7 +250,12 @@ export function ProgramDetailDrawer({
                     </Descriptions.Item>
                     {program.description && (
                       <Descriptions.Item label="프로그램 목적/설명">
-                        <Paragraph style={{ margin: 0 }}>{program.description}</Paragraph>
+                        <Paragraph 
+                          style={{ margin: 0 }} 
+                          ellipsis={{ rows: 3, expandable: true, symbol: '더보기' }}
+                        >
+                          {program.description}
+                        </Paragraph>
                       </Descriptions.Item>
                     )}
                     <Descriptions.Item label="스폰서">
@@ -402,18 +431,25 @@ export function ProgramDetailDrawer({
                       </Descriptions.Item>
                       {applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl && (
                         <Descriptions.Item label="구글폼 링크">
-                          <a
-                            href={applicationPath.googleFormUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {applicationPath.googleFormUrl}
-                          </a>
+                          <Text ellipsis={{ tooltip: applicationPath.googleFormUrl }}>
+                            <a
+                              href={applicationPath.googleFormUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {applicationPath.googleFormUrl}
+                            </a>
+                          </Text>
                         </Descriptions.Item>
                       )}
                       {applicationPath.guideMessage && (
                         <Descriptions.Item label="안내 문구">
-                          <Paragraph style={{ margin: 0 }}>{applicationPath.guideMessage}</Paragraph>
+                          <Paragraph 
+                            style={{ margin: 0 }} 
+                            ellipsis={{ rows: 2, expandable: true, symbol: '더보기' }}
+                          >
+                            {applicationPath.guideMessage}
+                          </Paragraph>
                         </Descriptions.Item>
                       )}
                       <Descriptions.Item label="상태">
@@ -437,6 +473,207 @@ export function ProgramDetailDrawer({
                     />
                   )}
                 </Card>
+              </Space>
+            ),
+          },
+          // 교육실적 상세 정보 탭 (교육실적관리 v2)
+          {
+            key: 'education-record',
+            label: '교육실적 상세',
+            children: (
+              <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                {/* 기본 교육실적 정보 */}
+                <Card title="기본 교육실적 정보">
+                  <Descriptions column={1} bordered>
+                    {program.businessArea && (
+                      <Descriptions.Item label="사업분야">
+                        {program.businessArea}
+                      </Descriptions.Item>
+                    )}
+                    {sponsor?.nameEn && (
+                      <Descriptions.Item label="후원사명(영문)">
+                        <Text ellipsis={{ tooltip: sponsor.nameEn }}>
+                          {sponsor.nameEn}
+                        </Text>
+                      </Descriptions.Item>
+                    )}
+                    {program.titleEn && (
+                      <Descriptions.Item label="프로그램명(영문)">
+                        <Text ellipsis={{ tooltip: program.titleEn }}>
+                          {program.titleEn}
+                        </Text>
+                      </Descriptions.Item>
+                    )}
+                    {program.mainTitle && (
+                      <Descriptions.Item label="대표 프로그램명(국문)">
+                        <Text ellipsis={{ tooltip: program.mainTitle }}>
+                          {program.mainTitle}
+                        </Text>
+                      </Descriptions.Item>
+                    )}
+                    {program.textbookName && (
+                      <Descriptions.Item label="교재명(국문)">
+                        <Text ellipsis={{ tooltip: program.textbookName }}>
+                          {program.textbookName}
+                        </Text>
+                      </Descriptions.Item>
+                    )}
+                    {program.textbookNameEn && (
+                      <Descriptions.Item label="교재명(영문)">
+                        <Text ellipsis={{ tooltip: program.textbookNameEn }}>
+                          {program.textbookNameEn}
+                        </Text>
+                      </Descriptions.Item>
+                    )}
+                    {schoolInfo && (
+                      <>
+                        <Descriptions.Item label="학교명 (기관)">
+                          <Text ellipsis={{ tooltip: schoolInfo.name }}>
+                            {schoolInfo.name}
+                          </Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="시군구">
+                          <Text ellipsis={{ tooltip: schoolInfo.region || program.district || '-' }}>
+                            {schoolInfo.region || program.district || '-'}
+                          </Text>
+                        </Descriptions.Item>
+                      </>
+                    )}
+                    {program.ipOwned && (
+                      <Descriptions.Item label="IP Owned">
+                        {program.ipOwned}
+                      </Descriptions.Item>
+                    )}
+                    {program.courseDeliveredBy && (
+                      <Descriptions.Item label="Course Delivered By">
+                        {program.courseDeliveredBy === 'JA' ? 'JA' : program.courseDeliveredBy === 'Jointly' ? 'Jointly' : program.courseDeliveredBy}
+                      </Descriptions.Item>
+                    )}
+                    {program.partnerInvolvement !== undefined && (
+                      <Descriptions.Item label="Partner Involvement">
+                        {program.partnerInvolvement ? 'Yes' : 'No'}
+                      </Descriptions.Item>
+                    )}
+                    {program.ips && (
+                      <Descriptions.Item label="IPS 분류">
+                        <Tag>{program.ips}</Tag>
+                      </Descriptions.Item>
+                    )}
+                    {program.targetLevel && (
+                      <Descriptions.Item label="대상 구분">
+                        {program.targetLevel === 'elementary' ? '초' : program.targetLevel === 'middle' ? '중' : program.targetLevel === 'high' ? '고' : program.targetLevel}
+                      </Descriptions.Item>
+                    )}
+                    {program.institutionType && (
+                      <Descriptions.Item label="기관 구분">
+                        {program.institutionType === 'inside_school' ? '학교 안' : '학교 밖'}
+                      </Descriptions.Item>
+                    )}
+                    {program.ips === 'Succeed' && program.programCategory && (
+                      <Descriptions.Item label="프로그램 종류">
+                        <Text ellipsis={{ tooltip: program.programCategory }}>
+                          {program.programCategory}
+                        </Text>
+                      </Descriptions.Item>
+                    )}
+                    {program.ips === 'Inspire' && program.programChannel && (
+                      <Descriptions.Item label="프로그램 채널 및 형식">
+                        <Text ellipsis={{ tooltip: program.programChannel }}>
+                          {program.programChannel}
+                        </Text>
+                      </Descriptions.Item>
+                    )}
+                    <Descriptions.Item label="교육 형태">
+                      <Tag>{programTypeLabels[program.type] || program.type}</Tag>
+                    </Descriptions.Item>
+                    {program.educationTime && (
+                      <Descriptions.Item label="교육시간">
+                        {program.educationTime}시간
+                      </Descriptions.Item>
+                    )}
+                    {program.rounds[0]?.classCount && (
+                      <Descriptions.Item label="학급수">
+                        {program.rounds[0].classCount}
+                      </Descriptions.Item>
+                    )}
+                    {program.managerName && (
+                      <Descriptions.Item label="담당자명">
+                        {program.managerName}
+                      </Descriptions.Item>
+                    )}
+                  </Descriptions>
+                </Card>
+
+                {/* 참가자 통계 */}
+                {(program.maleParticipants !== undefined || program.femaleParticipants !== undefined || program.totalParticipants !== undefined) && (
+                  <Card title="참가자 통계">
+                    <Descriptions column={2} bordered>
+                      {program.maleParticipants !== undefined && (
+                        <Descriptions.Item label="남성 참가자">
+                          {program.maleParticipants}명
+                        </Descriptions.Item>
+                      )}
+                      {program.femaleParticipants !== undefined && (
+                        <Descriptions.Item label="여성 참가자">
+                          {program.femaleParticipants}명
+                        </Descriptions.Item>
+                      )}
+                      {program.totalParticipants !== undefined && (
+                        <Descriptions.Item label="총 참가자" span={2}>
+                          <Text strong style={{ fontSize: 16 }}>
+                            {program.totalParticipants}명
+                          </Text>
+                        </Descriptions.Item>
+                      )}
+                    </Descriptions>
+                  </Card>
+                )}
+
+                {/* 자원봉사자 통계 */}
+                {(program.generalVolunteers !== undefined || program.staffVolunteers !== undefined || program.returningVolunteers !== undefined) && (
+                  <Card title="자원봉사자 통계">
+                    <Descriptions column={2} bordered>
+                      {program.generalVolunteers !== undefined && (
+                        <Descriptions.Item label="일반 자원봉사자">
+                          {program.generalVolunteers}명
+                        </Descriptions.Item>
+                      )}
+                      {program.staffVolunteers !== undefined && (
+                        <Descriptions.Item label="임직원 자원봉사자">
+                          {program.staffVolunteers}명
+                        </Descriptions.Item>
+                      )}
+                      {program.returningVolunteers !== undefined && (
+                        <Descriptions.Item label="재참여 자원봉사자">
+                          {program.returningVolunteers}명
+                        </Descriptions.Item>
+                      )}
+                    </Descriptions>
+                  </Card>
+                )}
+
+                {/* 교사/강사 통계 */}
+                {(program.generalTeachers !== undefined || program.educatedTeachers !== undefined || program.instructors !== undefined) && (
+                  <Card title="교사/강사 통계">
+                    <Descriptions column={2} bordered>
+                      {program.generalTeachers !== undefined && (
+                        <Descriptions.Item label="일반담당교사">
+                          {program.generalTeachers}명
+                        </Descriptions.Item>
+                      )}
+                      {program.educatedTeachers !== undefined && (
+                        <Descriptions.Item label="교육받은교사">
+                          {program.educatedTeachers}명
+                        </Descriptions.Item>
+                      )}
+                      {program.instructors !== undefined && (
+                        <Descriptions.Item label="강사">
+                          {program.instructors}명
+                        </Descriptions.Item>
+                      )}
+                    </Descriptions>
+                  </Card>
+                )}
               </Space>
             ),
           },

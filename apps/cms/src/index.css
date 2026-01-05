@@ -66,3 +66,25 @@ button:focus-visible {
   }
 }
 
+/* Alert 컴포넌트 버튼 정렬 */
+.pending-actions-alert {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.pending-actions-alert .ant-alert-content {
+  flex: 1;
+}
+
+.pending-actions-alert .ant-alert-action {
+  display: flex !important;
+  align-items: center !important;
+  margin-right: 8px;
+}
+
+.pending-actions-alert .ant-alert-close-icon {
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+}
+
