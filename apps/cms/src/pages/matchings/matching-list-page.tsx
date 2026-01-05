@@ -86,7 +86,13 @@ export function MatchingListPage() {
   const handleDeleteClick = () => {
     if (selectedMatching) {
       setMatchingToDelete(selectedMatching)
-      setDeleteModalOpen(true)
+      // 상세 패널을 먼저 닫고 모달 열기 (z-index 겹침 방지)
+      setDrawerOpen(false)
+      setSelectedMatchingLocal(null)
+      // 다음 틱에서 모달 열기 (상세 패널이 완전히 닫힌 후)
+      setTimeout(() => {
+        setDeleteModalOpen(true)
+      }, 100)
     }
   }
 

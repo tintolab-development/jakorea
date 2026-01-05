@@ -51,6 +51,7 @@ export function EducationRecordListPageV2() {
           // 교육실적은 삭제 기능 없음 (읽기 전용)
         }}
         loading={loading}
+        hideActions={true}
       />
     </div>
   )

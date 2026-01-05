@@ -42,6 +42,7 @@ interface ProgramDetailDrawerProps {
   onEdit: () => void
   onDelete: () => void
   loading?: boolean
+  hideActions?: boolean // 수정/삭제 버튼 숨김 (교육실적관리 등 읽기 전용)
 }
 
 const programTypeLabels: Record<string, string> = {
@@ -65,6 +66,7 @@ export function ProgramDetailDrawer({
   onEdit,
   onDelete,
   loading,
+  hideActions = false,
 }: ProgramDetailDrawerProps) {
   const [applicationPathModalOpen, setApplicationPathModalOpen] = useState(false)
   const [editingApplicationPath, setEditingApplicationPath] = useState<ApplicationPath | null>(null)
@@ -212,14 +214,16 @@ export function ProgramDetailDrawer({
       open={open}
       onClose={onClose}
       extra={
-        <Space>
-          <Button icon={<EditOutlined />} onClick={onEdit}>
-            수정
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
-            삭제
-          </Button>
-        </Space>
+        !hideActions ? (
+          <Space>
+            <Button icon={<EditOutlined />} onClick={onEdit}>
+              수정
+            </Button>
+            <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
+              삭제
+            </Button>
+          </Space>
+        ) : null
       }
     >
       <Tabs
