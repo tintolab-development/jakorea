@@ -85,6 +85,7 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
           }
           showIcon
           closable
+          className="pending-actions-alert"
         />
       ))}
     </Space>

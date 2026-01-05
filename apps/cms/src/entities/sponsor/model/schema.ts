@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 export const sponsorSchema = z.object({
   name: z.string().min(1, '스폰서명을 입력해주세요'),
+  nameEn: z.string().optional(),
   description: z.string().optional(),
   contactInfo: z.string().optional(),
   securityMemo: z.string().optional(),

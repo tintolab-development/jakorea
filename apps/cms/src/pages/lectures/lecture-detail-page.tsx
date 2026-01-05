@@ -8,12 +8,8 @@ import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Card, Space, Typography, Descriptions, Tag, Result, Spin } from 'antd'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
-import {
-  mockLectureActivitiesMap,
-  mockSchedulesMap,
-  mockProgramsMap,
-  mockInstructorsMap,
-} from '@/data/mock'
+import { mockSchedulesMap, mockProgramsMap, mockInstructorsMap } from '@/data/mock'
+import { mockLectureActivitiesMap } from '@/data/mock/activities'
 import dayjs from 'dayjs'
 import type { LectureActivity } from '@/types/domain'
 

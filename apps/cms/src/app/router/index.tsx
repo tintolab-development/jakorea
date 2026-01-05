@@ -1,46 +1,95 @@
 /**
  * 라우팅 구조 정의
  * Phase 1.1: React Router 설정
+ * 코드 스플리팅 적용: React.lazy를 사용한 동적 import
  */
 
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/shared/components/protected-route'
+import { Spin } from 'antd'
+
+// 로딩 컴포넌트 - 화면 중앙 정렬
+const LoadingFallback = () => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      zIndex: 9999,
+    }}
+  >
+    <Spin size="large" />
+  </div>
+)
+
+// Lazy loading wrapper - named export를 default export로 변환
+const lazyLoad = <T extends React.ComponentType<any>>(
+  importFunc: () => Promise<{ [key: string]: T }>
+) => {
+  const LazyComponent = lazy(async () => {
+    const module = await importFunc()
+    // named export를 default export로 변환
+    const Component = Object.values(module)[0] as T
+    return { default: Component }
+  })
+  return (props: any) => (
+    <Suspense fallback={<LoadingFallback />}>
+      <LazyComponent {...props} />
+    </Suspense>
+  )
+}
+
+// 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
+
+// 대시보드 (즉시 로드 - 첫 화면)
 import { Dashboard } from '@/pages/dashboard'
-import { InstructorListPage } from '@/pages/instructors/instructor-list-page'
-import { InstructorDetailPage } from '@/pages/instructors/instructor-detail-page'
-import { InstructorFormPage } from '@/pages/instructors/instructor-form-page'
-import { SponsorListPage } from '@/pages/sponsors/sponsor-list-page'
-import { SponsorDetailPage } from '@/pages/sponsors/sponsor-detail-page'
-import { SponsorFormPage } from '@/pages/sponsors/sponsor-form-page'
-import { SchoolListPage } from '@/pages/schools/school-list-page'
-import { SchoolDetailPage } from '@/pages/schools/school-detail-page'
-import { SchoolFormPage } from '@/pages/schools/school-form-page'
-import { ProgramListPage } from '@/pages/programs/program-list-page'
-import { ProgramFormPage } from '@/pages/programs/program-form-page'
-import { ApplicationListPage } from '@/pages/applications/application-list-page'
-import { ApplicationFormPage } from '@/pages/applications/application-form-page'
-import { ApplicationResultPage } from '@/pages/applications/application-result-page'
-import { ScheduleCalendarPage } from '@/pages/schedules/schedule-calendar-page'
-import { MyScheduleListPage } from '@/pages/schedules/my-schedule-list-page'
-import { MyScheduleDetailPage } from '@/pages/schedules/my-schedule-detail-page'
-import { MatchingListPage } from '@/pages/matchings/matching-list-page'
-import { SettlementListPage } from '@/pages/settlements/settlement-list-page'
-import { MonthlySettlementPage } from '@/pages/settlements/monthly-settlement-page'
-import { SettlementCalculationSettingsPage } from '@/pages/settlements/settlement-calculation-settings-page'
-import { InterviewListPage } from '@/pages/interviews/interview-list-page'
-import { MyInterviewPage } from '@/pages/interviews/my-interview-page'
-import { TodoDetailPage } from '@/pages/todos/todo-detail-page'
-import { ReportFormPage } from '@/pages/reports/report-form-page'
-import { LectureDetailPage } from '@/pages/lectures/lecture-detail-page'
-import { VolunteerDetailPage } from '@/pages/volunteers/volunteer-detail-page'
-import { MyPageMainPage } from '@/pages/mypage/mypage-main-page'
-import { HistoryListPage } from '@/pages/histories/history-list-page'
-import { HistoryDetailPage } from '@/pages/histories/history-detail-page'
-import { ApplicationPathListPage } from '@/pages/application-paths/application-path-list-page'
-import { ErrorPage } from '@/pages/error/error-page'
+
+// 나머지 페이지들은 lazy loading
+const InstructorListPage = lazyLoad(() => import('@/pages/instructors/instructor-list-page'))
+const InstructorDetailPage = lazyLoad(() => import('@/pages/instructors/instructor-detail-page'))
+const InstructorFormPage = lazyLoad(() => import('@/pages/instructors/instructor-form-page'))
+const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
+const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
+const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-page'))
+const SchoolListPage = lazyLoad(() => import('@/pages/schools/school-list-page'))
+const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
+const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
+const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
+const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
+const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
+const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
+const ApplicationResultPage = lazyLoad(() => import('@/pages/applications/application-result-page'))
+const ScheduleCalendarPage = lazyLoad(() => import('@/pages/schedules/schedule-calendar-page'))
+const MyScheduleListPage = lazyLoad(() => import('@/pages/schedules/my-schedule-list-page'))
+const MyScheduleDetailPage = lazyLoad(() => import('@/pages/schedules/my-schedule-detail-page'))
+const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-page'))
+const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
+const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
+const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
+const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
+const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-page'))
+const TodoDetailPage = lazyLoad(() => import('@/pages/todos/todo-detail-page'))
+const ReportFormPage = lazyLoad(() => import('@/pages/reports/report-form-page'))
+const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
+const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-detail-page'))
+const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
+const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
+const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
+const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths/application-path-list-page'))
+const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
+const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 
 export const router = createBrowserRouter([
   {
@@ -110,6 +159,10 @@ export const router = createBrowserRouter([
       {
         path: 'application-paths',
         children: [{ index: true, element: <ApplicationPathListPage /> }],
+      },
+      {
+        path: 'education-records',
+        children: [{ index: true, element: <EducationRecordListPage /> }],
       },
       {
         path: 'schedules',

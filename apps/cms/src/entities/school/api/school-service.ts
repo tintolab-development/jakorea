@@ -78,6 +78,14 @@ export const schoolService = {
   getByIdSync: (id: string): School | undefined => {
     return mockSchoolsMap.get(id)
   },
+
+  /**
+   * 모든 학교 조회 (동기)
+   * @returns 학교 배열
+   */
+  getAllSync: (): School[] => {
+    return [...mockSchools]
+  },
 }
 
 
