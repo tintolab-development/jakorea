@@ -14,6 +14,7 @@ import {
   CloseOutlined,
 } from '@ant-design/icons'
 import type { Interview } from '@/types/interview'
+import type { User } from '@/types/user'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { mockUsers } from '@/data/mock'
 
@@ -91,7 +92,7 @@ export function InterviewList({
       key: 'userId',
       width: 120,
       render: (userId: string) => {
-        const user = mockUsers.find(u => u.id === userId)
+        const user = mockUsers.find((u: User) => u.id === userId)
         return user?.name || userId
       },
     },

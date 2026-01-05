@@ -6,4 +6,5 @@ export * from './file-download'
 export * from './settlement-document'
 export * from './certificate-download'
 export * from './error-handler'
+export * from './permissions'
 

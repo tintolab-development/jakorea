@@ -1,1 +1,19 @@
-/* 사이드바 헤더 스타일은 header.css로 이동 */
+/**
+ * 사이드바 스타일
+ */
+
+.sidebar-user-section {
+  padding: 12px 16px;
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;
+}
+
+.sidebar-user-info {
+  padding: 8px 0;
+}
+
+.sidebar-user-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}

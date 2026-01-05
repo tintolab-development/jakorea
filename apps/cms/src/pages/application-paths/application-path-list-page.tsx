@@ -11,6 +11,7 @@ import { ApplicationPathForm } from '@/features/application-path/ui/application-
 import { useApplicationPathStore } from '@/features/application-path/model/application-path-store'
 import { programService } from '@/entities/program/api/program-service'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { PermissionButton } from '@/shared/components'
 import type { ApplicationPath, ApplicationPathType } from '@/types/domain'
 import type { ApplicationPathFormData } from '@/entities/application-path/model/schema'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
@@ -147,9 +148,14 @@ export function ApplicationPathListPage() {
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>신청 경로 관리</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+        <PermissionButton
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreate}
+          allowedRoles={['ADMIN']}
+        >
           신청 경로 등록
-        </Button>
+        </PermissionButton>
       </Space>
 
       {/* 필터 영역 */}

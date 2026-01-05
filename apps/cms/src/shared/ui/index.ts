@@ -10,4 +10,10 @@ export { EmptyState } from './empty-state'
 export { StatusTimeline } from './status-timeline'
 export { DownloadButton } from './download-button'
 export { ConfirmModal } from './confirm-modal'
+export {
+  RoleBadge,
+  RoleIcon,
+  getRoleLabel,
+  getRoleColor,
+} from './role-badge'
 

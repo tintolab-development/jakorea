@@ -1,58 +1,29 @@
 /**
  * 사이드바 컴포넌트
  * Phase 1.1: Ant Design Menu를 활용한 네비게이션
+ * Phase 4.2.1: 권한별 메뉴 구성 적용
  * 타이틀을 사이드바 최상단에 배치
  */
 
 import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo } from 'react'
-import type { MenuProps } from 'antd'
-import {
-  DashboardOutlined,
-  BookOutlined,
-  FileTextOutlined,
-  CalendarOutlined,
-  TeamOutlined,
-  UserOutlined,
-  BankOutlined,
-  ShopOutlined,
-  DollarOutlined,
-  HistoryOutlined,
-  UserSwitchOutlined,
-} from '@ant-design/icons'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { getMenuItemsByRole } from '@/shared/config/menu-config'
 import './sidebar.css'
 import { Header } from './header'
 
 const { Sider } = Layout
 
-const menuItems: MenuProps['items'] = [
-  { key: '/', label: '대시보드', icon: <DashboardOutlined /> },
-  { key: '/programs', label: '프로그램', icon: <BookOutlined /> },
-  { key: '/applications', label: '신청 관리', icon: <FileTextOutlined /> },
-  { key: '/application-paths', label: '신청 경로 관리', icon: <FileTextOutlined /> },
-  { key: '/schedules', label: '일정 관리', icon: <CalendarOutlined /> },
-  { key: '/matchings', label: '매칭 관리', icon: <TeamOutlined /> },
-  { key: '/instructors', label: '강사 관리', icon: <UserOutlined /> },
-  { key: '/schools', label: '학교 관리', icon: <BankOutlined /> },
-  { key: '/sponsors', label: '스폰서 관리', icon: <ShopOutlined /> },
-  {
-    key: 'settlements-group',
-    label: '정산 관리',
-    icon: <DollarOutlined />,
-    children: [
-      { key: '/settlements', label: '정산 목록' },
-      { key: '/settlements/monthly', label: '월별 정산 관리' },
-      { key: '/settlements/calculation-settings', label: '산출 로직 설정' },
-    ],
-  },
-  { key: '/mypage', label: '마이페이지', icon: <UserSwitchOutlined /> },
-  { key: '/histories', label: '이력 목록', icon: <HistoryOutlined /> },
-]
-
 export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useAuthStore()
+
+  // 권한별 메뉴 필터링
+  const menuItems = useMemo(() => {
+    return getMenuItemsByRole(user?.role || null)
+  }, [user?.role])
 
   // 현재 경로에 따라 열린 서브메뉴 결정
   const openKeys = useMemo(() => {
@@ -67,17 +38,19 @@ export function Sidebar() {
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
 
   return (
-    <Sider width={200} style={{ background: '#fff' }}>
+    <Sider width={200} style={{ background: '#fff', display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <Header />
-      <Menu
-        mode="inline"
-        selectedKeys={[location.pathname]}
-        openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : openKeys}
-        onOpenChange={setControlledOpenKeys}
-        style={{ height: 'calc(100% - 100px)', borderRight: 0 }}
-        items={menuItems}
-        onClick={({ key }) => navigate(key)}
-      />
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <Menu
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : openKeys}
+          onOpenChange={setControlledOpenKeys}
+          style={{ flex: 1, borderRight: 0, overflowY: 'auto', overflowX: 'hidden' }}
+          items={menuItems}
+          onClick={({ key }) => navigate(key)}
+        />
+      </div>
     </Sider>
   )
 }
