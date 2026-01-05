@@ -68,7 +68,8 @@ export function useEducationRecordTable(data: Program[]) {
       'targetLevel',
       'institutionType',
       'educationMonth',
-      'region',
+      // 'region'은 Program에 직접 필드가 아니므로 filterKeys에서 제외
+      // 컴포넌트 레벨에서 별도로 필터링 처리
     ],
     defaultPageSize: 20,
   })

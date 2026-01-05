@@ -56,6 +56,12 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'], // 관리자만 접근 가능
   },
   {
+    key: '/education-records-v2',
+    label: '교육실적 관리 (v2)',
+    icon: <BarChartOutlined />,
+    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+  },
+  {
     key: '/applications',
     label: '신청 관리',
     icon: <FileTextOutlined />,

@@ -1,6 +1,6 @@
 /**
- * 교육실적 목록 컴포넌트
- * 엑셀 데이터 기반 통합 테이블 - 모든 컬럼 포함
+ * 교육실적 목록 컴포넌트 (v2)
+ * 핵심 컬럼만 표시, 상세 정보는 상세 패널에서 확인
  */
 
 import { Table, Input, Select, Button, Space, Tag, Tooltip } from 'antd'
@@ -15,7 +15,7 @@ import { useMemo } from 'react'
 
 const { Option } = Select
 
-interface EducationRecordListProps {
+interface EducationRecordListV2Props {
   data: Program[]
   loading?: boolean
   onView?: (record: Program) => void
@@ -60,7 +60,7 @@ const educationMonths = Array.from({ length: 12 }, (_, i) => ({
   label: `${i + 1}월`,
 }))
 
-export function EducationRecordList({ data, loading, onView }: EducationRecordListProps) {
+export function EducationRecordListV2({ data, loading, onView }: EducationRecordListV2Props) {
   const { params, setParams } = useQueryParams<EducationRecordQueryParams>()
   
   // region 필터를 적용한 데이터 (컴포넌트 레벨 필터링)
@@ -277,39 +277,12 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
             render: (value: string) => value || '-',
           },
           {
-            title: '후원사명(영문)',
-            dataIndex: 'sponsorId',
-            key: 'sponsorNameEn',
-            width: 160,
-            ellipsis: true,
-            render: (sponsorId: string) => {
-              const sponsor = sponsors.find(s => s.id === sponsorId)
-              return sponsor?.nameEn || '-'
-            },
-          },
-          {
-            title: '후원사명(국문)',
+            title: '후원사명',
             dataIndex: 'sponsorId',
             key: 'sponsorName',
             width: 160,
             ellipsis: true,
             render: (sponsorId: string) => sponsorService.getNameById(sponsorId),
-          },
-          {
-            title: '프로그램명(영문)',
-            dataIndex: 'titleEn',
-            key: 'titleEn',
-            width: 200,
-            ellipsis: true,
-            render: (value: string) => value || '-',
-          },
-          {
-            title: '대표 프로그램명(국문)',
-            dataIndex: 'mainTitle',
-            key: 'mainTitle',
-            width: 180,
-            ellipsis: true,
-            render: (value: string) => value || '-',
           },
           {
             title: '세부 프로그램명',
@@ -344,23 +317,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
             ),
           },
           {
-            title: '교재명(국문)',
-            dataIndex: 'textbookName',
-            key: 'textbookName',
-            width: 150,
-            ellipsis: true,
-            render: (value: string) => value || '-',
-          },
-          {
-            title: '교재명(영문)',
-            dataIndex: 'textbookNameEn',
-            key: 'textbookNameEn',
-            width: 150,
-            ellipsis: true,
-            render: (value: string) => value || '-',
-          },
-          {
-            title: '학교명 (기관)',
+            title: '학교명',
             dataIndex: 'id',
             key: 'schoolName',
             width: 150,
@@ -382,37 +339,6 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
             },
           },
           {
-            title: 'IP Owned',
-            dataIndex: 'ipOwned',
-            key: 'ipOwned',
-            width: 100,
-            align: 'center',
-            render: (value: string) => value || 'JA',
-          },
-          {
-            title: 'Course Delivered By',
-            dataIndex: 'courseDeliveredBy',
-            key: 'courseDeliveredBy',
-            width: 150,
-            align: 'center',
-            render: (value: string) => {
-              if (!value) return '-'
-              const map: Record<string, string> = {
-                JA: 'JA',
-                Jointly: 'Jointly',
-              }
-              return map[value] || value
-            },
-          },
-          {
-            title: 'Partner Involvement',
-            dataIndex: 'partnerInvolvement',
-            key: 'partnerInvolvement',
-            width: 150,
-            align: 'center',
-            render: (value: boolean) => (value ? 'Yes' : 'No'),
-          },
-          {
             title: 'IPS',
             dataIndex: 'ips',
             key: 'ips',
@@ -425,105 +351,6 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
             },
           },
           {
-            title: '대상 구분',
-            dataIndex: 'targetLevel',
-            key: 'targetLevel',
-            width: 90,
-            align: 'center',
-            render: (value: string) => {
-              if (!value) return '-'
-              const option = targetLevelOptions.find(opt => opt.value === value)
-              return option?.label || value
-            },
-          },
-          {
-            title: '기관 구분',
-            dataIndex: 'institutionType',
-            key: 'institutionType',
-            width: 110,
-            align: 'center',
-            render: (value: string) => {
-              if (!value) return '-'
-              const option = institutionTypeOptions.find(opt => opt.value === value)
-              return option?.label || value
-            },
-          },
-          {
-            title: '프로그램 종류',
-            dataIndex: 'programCategory',
-            key: 'programCategory',
-            width: 120,
-            ellipsis: true,
-            render: (value: string | null, record: Program) => {
-              // IPS가 Succeed일 때만 표시
-              if (record.ips === 'Succeed') {
-                return value || '-'
-              }
-              return '-'
-            },
-          },
-          {
-            title: '프로그램 채널 및 형식',
-            dataIndex: 'programChannel',
-            key: 'programChannel',
-            width: 150,
-            ellipsis: true,
-            render: (value: string | null, record: Program) => {
-              // IPS가 Inspire일 때만 표시
-              if (record.ips === 'Inspire') {
-                return value || '-'
-              }
-              return '-'
-            },
-          },
-          {
-            title: '교육 형태',
-            dataIndex: 'type',
-            key: 'type',
-            width: 100,
-            align: 'center',
-            render: (type: string) => {
-              const typeMap: Record<string, string> = {
-                online: '온라인',
-                offline: '오프라인',
-                hybrid: '하이브리드',
-              }
-              return typeMap[type] || type
-            },
-          },
-          {
-            title: '교육시간',
-            dataIndex: 'educationTime',
-            key: 'educationTime',
-            width: 90,
-            align: 'right',
-            render: (value: number) => (value ? `${value}시간` : '-'),
-          },
-          {
-            title: '학급수',
-            dataIndex: ['rounds', 0, 'classCount'],
-            key: 'classCount',
-            width: 80,
-            align: 'right',
-            render: (value: number) => value || '-',
-          },
-          {
-            title: '남',
-            dataIndex: 'maleParticipants',
-            key: 'maleParticipants',
-            width: 70,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
-            title: '여',
-            dataIndex: 'femaleParticipants',
-            key: 'femaleParticipants',
-            width: 70,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
             title: '총 참가자',
             dataIndex: 'totalParticipants',
             key: 'totalParticipants',
@@ -532,62 +359,6 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
             render: (value: number) => (
               <strong>{value ?? '-'}</strong>
             ),
-          },
-          {
-            title: '일반 자원봉사자',
-            dataIndex: 'generalVolunteers',
-            key: 'generalVolunteers',
-            width: 130,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
-            title: '임직원 자원봉사자',
-            dataIndex: 'staffVolunteers',
-            key: 'staffVolunteers',
-            width: 140,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
-            title: '재참여 자원봉사자',
-            dataIndex: 'returningVolunteers',
-            key: 'returningVolunteers',
-            width: 140,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
-            title: '일반담당교사',
-            dataIndex: 'generalTeachers',
-            key: 'generalTeachers',
-            width: 120,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
-            title: '교육받은교사',
-            dataIndex: 'educatedTeachers',
-            key: 'educatedTeachers',
-            width: 130,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
-            title: '강사',
-            dataIndex: 'instructors',
-            key: 'instructors',
-            width: 70,
-            align: 'right',
-            render: (value: number) => value ?? '-',
-          },
-          {
-            title: '담당자명',
-            dataIndex: 'managerName',
-            key: 'managerName',
-            width: 100,
-            ellipsis: true,
-            render: (value: string) => value || '-',
           },
           {
             title: '상태',
@@ -606,7 +377,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
           onClick: () => onView?.(record),
           style: { cursor: onView ? 'pointer' : 'default' },
         })}
-        scroll={{ x: 3500 }}
+        scroll={{ x: 1200 }}
         pagination={{
           current: table.getState().pagination.pageIndex + 1,
           pageSize: table.getState().pagination.pageSize,

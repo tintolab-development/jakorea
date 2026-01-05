@@ -89,6 +89,7 @@ const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-pa
 const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
 const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths/application-path-list-page'))
 const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
+const EducationRecordListPageV2 = lazyLoad(() => import('@/pages/education-records/education-record-list-page-v2'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 
 export const router = createBrowserRouter([
@@ -163,6 +164,10 @@ export const router = createBrowserRouter([
       {
         path: 'education-records',
         children: [{ index: true, element: <EducationRecordListPage /> }],
+      },
+      {
+        path: 'education-records-v2',
+        children: [{ index: true, element: <EducationRecordListPageV2 /> }],
       },
       {
         path: 'schedules',
