@@ -5,6 +5,9 @@
 
 import { createBrowserRouter } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
+import { ProtectedRoute } from '@/shared/components/protected-route'
+import { LoginPage } from '@/pages/auth/login-page'
+import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { Dashboard } from '@/pages/dashboard'
 import { InstructorListPage } from '@/pages/instructors/instructor-list-page'
 import { InstructorDetailPage } from '@/pages/instructors/instructor-detail-page'
@@ -27,6 +30,8 @@ import { MatchingListPage } from '@/pages/matchings/matching-list-page'
 import { SettlementListPage } from '@/pages/settlements/settlement-list-page'
 import { MonthlySettlementPage } from '@/pages/settlements/monthly-settlement-page'
 import { SettlementCalculationSettingsPage } from '@/pages/settlements/settlement-calculation-settings-page'
+import { InterviewListPage } from '@/pages/interviews/interview-list-page'
+import { MyInterviewPage } from '@/pages/interviews/my-interview-page'
 import { TodoDetailPage } from '@/pages/todos/todo-detail-page'
 import { ReportFormPage } from '@/pages/reports/report-form-page'
 import { LectureDetailPage } from '@/pages/lectures/lecture-detail-page'
@@ -39,8 +44,20 @@ import { ErrorPage } from '@/pages/error/error-page'
 
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    path: '/forbidden',
+    element: <ForbiddenPage />,
+  },
+  {
     path: '/',
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
@@ -112,6 +129,13 @@ export const router = createBrowserRouter([
           { index: true, element: <SettlementListPage /> },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
+        ],
+      },
+      {
+        path: 'interviews',
+        children: [
+          { index: true, element: <InterviewListPage /> },
+          { path: 'my', element: <MyInterviewPage /> },
         ],
       },
       {
