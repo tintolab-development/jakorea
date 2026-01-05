@@ -8,6 +8,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // React 중복 로드 방지
+      'react': path.resolve(__dirname, './node_modules/react'),
+      'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
     },
   },
   build: {
@@ -16,13 +19,14 @@ export default defineConfig({
         manualChunks: (id) => {
           // node_modules의 큰 라이브러리들을 별도 청크로 분리
           if (id.includes('node_modules')) {
-            // Ant Design
+            // React & React DOM을 가장 먼저 분리 (Ant Design이 의존)
+            // scheduler도 React의 일부이므로 포함
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'react-vendor'
+            }
+            // Ant Design (React 이후에 로드되어야 함)
             if (id.includes('antd') || id.includes('@ant-design')) {
               return 'antd'
-            }
-            // React & React DOM
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor'
             }
             // React Router
             if (id.includes('react-router')) {
