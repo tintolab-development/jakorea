@@ -113,3 +113,5 @@ export function hasEqualOrHigherRole(role1: UserRole, role2: UserRole): boolean 
   return roleHierarchy[role1] >= roleHierarchy[role2]
 }
 
+
+

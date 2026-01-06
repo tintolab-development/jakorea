@@ -92,6 +92,12 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'], // 관리자만 접근 가능
   },
   {
+    key: '/users',
+    label: '사용자 관리',
+    icon: <TeamOutlined />,
+    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+  },
+  {
     key: '/schools',
     label: '학교 관리',
     icon: <BankOutlined />,

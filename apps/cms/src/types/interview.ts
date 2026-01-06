@@ -80,3 +80,5 @@ export interface ApprovalData {
   reason?: string // 반려 사유
 }
 
+
+

@@ -1,146 +1,146 @@
 /**
- * 본인 활동 요약 카드
+ * 본인 활동 요약 카드 (내 강의 현황)
  * Phase 4.2.1: 권한별 대시보드 위젯 구성
+ * Phase 5.2.1: 내 강의 현황 상태별 세분화
  * 강사/봉사자용: 본인 활동 요약
  */
 
-import { Card, Row, Col, Statistic, Tag } from 'antd'
-import { CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
+import { Card, Row, Col, Statistic } from 'antd'
+import {
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  FileTextOutlined,
+  PlayCircleOutlined,
+} from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useMemo } from 'react'
-import { mockSchedules, mockMatchings, mockApplications } from '@/data/mock'
+import { useEffect, useState } from 'react'
+import { getInstructorActivitySummary, type InstructorActivitySummary } from '../api/instructor-activity-service'
+import { useNavigate } from 'react-router-dom'
 
 export function MyActivitySummary() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
+  const [summary, setSummary] = useState<InstructorActivitySummary | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // 본인 활동 데이터 필터링
-  const myData = useMemo(() => {
+  useEffect(() => {
     if (!user?.instructorId) {
-      return {
-        schedules: [],
-        matchings: [],
-        applications: [],
+      setSummary(null)
+      return
+    }
+
+    let cancelled = false
+    
+    const loadData = async () => {
+      if (!user.instructorId) return
+      
+      setLoading(true)
+      try {
+        const data = await getInstructorActivitySummary(user.instructorId)
+        if (!cancelled) {
+          setSummary(data)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('활동 요약 조회 실패:', error)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
-    // 본인 일정 (강사 ID 기준)
-    const mySchedules = mockSchedules.filter(
-      schedule => schedule.instructorId === user.instructorId
-    )
+    loadData()
 
-    // 본인 매칭 (강사 ID 기준)
-    const myMatchings = mockMatchings.filter(
-      matching => matching.instructorId === user.instructorId
-    )
-
-    // 본인 신청 (subjectId 기준 - 강사/봉사자의 경우 instructorId와 매칭)
-    const myApplications = mockApplications.filter(
-      application => application.subjectType === 'instructor' && application.subjectId === user.instructorId
-    )
-
-    return {
-      schedules: mySchedules,
-      matchings: myMatchings,
-      applications: myApplications,
+    return () => {
+      cancelled = true
     }
-  }, [user])
+  }, [user?.instructorId])
 
-  // 이번 달 일정 수
-  const thisMonthSchedules = useMemo(() => {
-    const now = new Date()
-    const thisMonth = now.getMonth()
-    const thisYear = now.getFullYear()
+  if (!user?.instructorId) {
+    return (
+      <Card title="내 강의 현황">
+        <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(0, 0, 0, 0.45)' }}>
+          강사 정보가 없습니다.
+        </div>
+      </Card>
+    )
+  }
 
-    return myData.schedules.filter(schedule => {
-      const scheduleDate = new Date(schedule.date)
-      return (
-        scheduleDate.getMonth() === thisMonth &&
-        scheduleDate.getFullYear() === thisYear
-      )
-    }).length
-  }, [myData.schedules])
-
-  // 진행 중인 매칭 수
-  const activeMatchings = myData.matchings.filter(
-    matching => matching.status === 'active'
-  ).length
-
-  // 대기 중인 신청 수
-  const pendingApplications = myData.applications.filter(
-    application => application.status === 'reviewing'
-  ).length
-
-  // 다음 일정 (가장 가까운 일정)
-  const nextSchedule = useMemo(() => {
-    const now = new Date()
-    const upcoming = myData.schedules
-      .filter(schedule => {
-        const scheduleDate = new Date(schedule.date)
-        const [hours, minutes] = schedule.startTime.split(':').map(Number)
-        scheduleDate.setHours(hours, minutes, 0, 0)
-        return scheduleDate > now
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.date)
-        const [hoursA, minutesA] = a.startTime.split(':').map(Number)
-        dateA.setHours(hoursA, minutesA, 0, 0)
-        const dateB = new Date(b.date)
-        const [hoursB, minutesB] = b.startTime.split(':').map(Number)
-        dateB.setHours(hoursB, minutesB, 0, 0)
-        return dateA.getTime() - dateB.getTime()
-      })[0]
-
-    return upcoming
-  }, [myData.schedules])
+  if (!summary) {
+    return (
+      <Card title="내 강의 현황" loading={loading}>
+        <div style={{ height: 150 }} />
+      </Card>
+    )
+  }
 
   return (
-    <Card title="내 활동 요약">
+    <Card
+      title="내 강의 현황"
+      loading={loading}
+      hoverable
+      onClick={() => navigate('/programs/my')}
+      style={{ cursor: 'pointer' }}
+    >
       <Row gutter={16}>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Statistic
-            title="이번 달 일정"
-            value={thisMonthSchedules}
+            title="전체 프로그램"
+            value={summary.programs.total}
+            prefix={<FileTextOutlined />}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title="신청 완료"
+            value={summary.programs.applicationCompleted}
+            prefix={<CheckCircleOutlined />}
+            valueStyle={{ color: '#1890ff' }}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title="진행 예정"
+            value={summary.programs.scheduled}
+            prefix={<ClockCircleOutlined />}
+            valueStyle={{ color: '#faad14' }}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title="진행중"
+            value={summary.programs.inProgress}
+            prefix={<PlayCircleOutlined />}
+            valueStyle={{ color: '#52c41a' }}
+          />
+        </Col>
+      </Row>
+      <Row gutter={16} style={{ marginTop: 16 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title="진행완료"
+            value={summary.programs.completed}
+            prefix={<CheckCircleOutlined />}
+            valueStyle={{ color: '#8c8c8c' }}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title="예정된 일정"
+            value={summary.schedules.total}
             prefix={<CalendarOutlined />}
           />
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Statistic
-            title="진행 중인 매칭"
-            value={activeMatchings}
-            prefix={<CheckCircleOutlined />}
+            title="정산 제출 대기"
+            value={summary.pendingTasks.settlementPending}
+            prefix={<FileTextOutlined />}
+            valueStyle={{ color: '#ff4d4f' }}
           />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="대기 중인 신청"
-            value={pendingApplications}
-            prefix={<ClockCircleOutlined />}
-          />
-        </Col>
-        <Col span={6}>
-          <div>
-            <div style={{ marginBottom: 8, color: 'rgba(0, 0, 0, 0.45)' }}>
-              다음 일정
-            </div>
-            {nextSchedule ? (
-              <div>
-                <Tag color="blue">
-                  {(() => {
-                    const scheduleDate = new Date(nextSchedule.date)
-                    return scheduleDate.toLocaleDateString('ko-KR', {
-                      month: 'short',
-                      day: 'numeric',
-                    })
-                  })()}
-                </Tag>
-                <div style={{ marginTop: 4, fontSize: '12px', color: 'rgba(0, 0, 0, 0.65)' }}>
-                  {nextSchedule.title}
-                </div>
-              </div>
-            ) : (
-              <div style={{ color: 'rgba(0, 0, 0, 0.25)' }}>예정된 일정이 없습니다</div>
-            )}
-          </div>
         </Col>
       </Row>
     </Card>
