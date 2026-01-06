@@ -30,7 +30,7 @@ export function MonthlyApplicationCard() {
     <Card
       hoverable
       onClick={handleClick}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', height: '100%' }}
     >
       <Statistic
         title="이번 달 신청 현황"

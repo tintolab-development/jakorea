@@ -26,7 +26,7 @@ export function ActiveProgramCard() {
     <Card
       hoverable
       onClick={handleClick}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', height: '100%' }}
     >
       <Statistic
         title="진행 중 프로그램"

@@ -10,6 +10,7 @@ import type { UserRole } from '@/types/user'
  */
 export type DashboardWidgetType =
   | 'pending-actions-alert' // 즉시 처리 필요 작업
+  | 'overall-statistics-cards' // 전체 통계 카드 (프로그램, 신청, 매칭, 정산)
   | 'monthly-settlement-card' // 월별 정산 현황
   | 'monthly-application-card' // 월별 신청 현황
   | 'active-program-card' // 활성 프로그램
@@ -17,6 +18,8 @@ export type DashboardWidgetType =
   | 'unified-activity-feed' // 통합 활동 피드
   | 'my-activity-summary' // 본인 활동 요약 (강사/봉사자)
   | 'my-application-summary' // 본인 신청 현황 (수강자)
+  | 'upcoming-schedules-list' // 예정된 일정 목록
+  | 'pending-tasks-list' // 대기 중인 작업 목록
 
 /**
  * 대시보드 위젯 설정
@@ -35,21 +38,26 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 관리자: 전체 통계 및 현황
   ADMIN: [
     { type: 'pending-actions-alert', colSpan: 24, order: 1 },
-    { type: 'monthly-settlement-card', colSpan: 6, order: 2 },
-    { type: 'monthly-application-card', colSpan: 6, order: 3 },
-    { type: 'active-program-card', colSpan: 6, order: 4 },
-    { type: 'instructor-count-card', colSpan: 6, order: 5 },
-    { type: 'unified-activity-feed', colSpan: 24, order: 6 },
+    { type: 'overall-statistics-cards', colSpan: 24, order: 2 },
+    { type: 'monthly-settlement-card', colSpan: 6, order: 3 },
+    { type: 'monthly-application-card', colSpan: 6, order: 4 },
+    { type: 'active-program-card', colSpan: 6, order: 5 },
+    { type: 'instructor-count-card', colSpan: 6, order: 6 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 7 },
   ],
   // 강사: 본인 활동 요약
   INSTRUCTOR: [
     { type: 'my-activity-summary', colSpan: 24, order: 1 },
-    { type: 'unified-activity-feed', colSpan: 24, order: 2 },
+    { type: 'upcoming-schedules-list', colSpan: 12, order: 2 },
+    { type: 'pending-tasks-list', colSpan: 12, order: 3 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 4 },
   ],
   // 봉사자: 본인 활동 요약
   VOLUNTEER: [
     { type: 'my-activity-summary', colSpan: 24, order: 1 },
-    { type: 'unified-activity-feed', colSpan: 24, order: 2 },
+    { type: 'upcoming-schedules-list', colSpan: 12, order: 2 },
+    { type: 'pending-tasks-list', colSpan: 12, order: 3 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 4 },
   ],
   // 수강자: 본인 신청 현황
   STUDENT: [
@@ -92,4 +100,6 @@ export function isWidgetAllowed(
   const widgets = getDashboardWidgetsByRole(userRole)
   return widgets.some(widget => widget.type === widgetType)
 }
+
+
 

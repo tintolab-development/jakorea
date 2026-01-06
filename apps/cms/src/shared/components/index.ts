@@ -9,4 +9,7 @@ export { PermissionField } from './permission-field'
 export type { PermissionFieldProps } from './permission-field'
 export { PermissionInfo } from './permission-info'
 export type { PermissionInfoProps } from './permission-info'
+export { RoleBadge } from './role-badge'
+export { withRole, withAnyRole } from './with-role'
+export { SessionExpiryModal } from './session-expiry-modal'
 

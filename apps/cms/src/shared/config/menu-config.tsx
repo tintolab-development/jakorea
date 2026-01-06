@@ -44,10 +44,22 @@ const allMenuItems: MenuItemConfig[] = [
     // 모든 권한 접근 가능
   },
   {
-    key: '/programs',
+    key: 'programs-group',
     label: '프로그램',
     icon: <BookOutlined />,
     // 모든 권한 접근 가능
+    children: [
+      {
+        key: '/programs',
+        label: '프로그램 목록',
+        // 모든 권한 접근 가능
+      },
+      {
+        key: '/programs/my',
+        label: '본인 프로그램',
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+      },
+    ],
   },
   {
     key: '/education-records',
@@ -74,10 +86,27 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'], // 관리자만 접근 가능
   },
   {
-    key: '/schedules',
+    key: 'schedules-group',
     label: '일정 관리',
     icon: <CalendarOutlined />,
     // 모든 권한 접근 가능
+    children: [
+      {
+        key: '/schedules',
+        label: '일정 캘린더',
+        // 모든 권한 접근 가능
+      },
+      {
+        key: '/schedules/my',
+        label: '본인 일정 목록',
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+      },
+      {
+        key: '/schedules/my/calendar',
+        label: '본인 일정 캘린더',
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+      },
+    ],
   },
   {
     key: '/matchings',
@@ -92,6 +121,12 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'], // 관리자만 접근 가능
   },
   {
+    key: '/users',
+    label: '사용자 관리',
+    icon: <TeamOutlined />,
+    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+  },
+  {
     key: '/schools',
     label: '학교 관리',
     icon: <BankOutlined />,
@@ -103,29 +138,39 @@ const allMenuItems: MenuItemConfig[] = [
     icon: <ShopOutlined />,
     allowedRoles: ['ADMIN'], // 관리자만 접근 가능
   },
-  {
-    key: 'settlements-group',
-    label: '정산 관리',
-    icon: <DollarOutlined />,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR'], // 관리자, 강사만 접근 가능
-    children: [
       {
-        key: '/settlements',
-        label: '정산 목록',
-        allowedRoles: ['ADMIN', 'INSTRUCTOR'],
+        key: 'settlements-group',
+        label: '정산 관리',
+        icon: <DollarOutlined />,
+        allowedRoles: ['ADMIN', 'INSTRUCTOR'], // 관리자, 강사만 접근 가능
+        children: [
+          {
+            key: '/settlements',
+            label: '정산 목록',
+            allowedRoles: ['ADMIN'], // 관리자만 접근 가능 (전체 정산 목록)
+          },
+          {
+            key: '/settlements/my',
+            label: '본인 정산',
+            allowedRoles: ['INSTRUCTOR'], // 강사만 접근 가능
+          },
+          {
+            key: '/settlements/my/monthly',
+            label: '월별 정산 관리',
+            allowedRoles: ['INSTRUCTOR'], // 강사만 접근 가능
+          },
+          {
+            key: '/settlements/monthly',
+            label: '월별 정산 관리',
+            allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+          },
+          {
+            key: '/settlements/calculation-settings',
+            label: '산출 로직 설정',
+            allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+          },
+        ],
       },
-      {
-        key: '/settlements/monthly',
-        label: '월별 정산 관리',
-        allowedRoles: ['ADMIN', 'INSTRUCTOR'],
-      },
-      {
-        key: '/settlements/calculation-settings',
-        label: '산출 로직 설정',
-        allowedRoles: ['ADMIN'], // 관리자만 접근 가능
-      },
-    ],
-  },
   {
     key: 'interviews-group',
     label: '면접 관리',
@@ -138,9 +183,27 @@ const allMenuItems: MenuItemConfig[] = [
         allowedRoles: ['ADMIN'], // 관리자만 접근 가능
       },
       {
+        key: '/interviews/apply',
+        label: '강사/봉사자 신청',
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+      },
+      {
         key: '/interviews/my',
         label: '내 면접 일정',
         allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+      },
+    ],
+  },
+  {
+    key: '/reports',
+    label: '보고서',
+    icon: <FileTextOutlined />,
+    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+    children: [
+      {
+        key: '/reports/new',
+        label: '보고서 작성',
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'],
       },
     ],
   },

@@ -125,36 +125,56 @@ function randomRating(): number {
   return Math.round((Math.random() * 2 + 3) * 10) / 10
 }
 
-export const mockInstructors: Instructor[] = Array.from({ length: 50 }, () => {
-  const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
-  const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
-  const fullName = `${firstName}${lastName}`
-  const region = regions[Math.floor(Math.random() * regions.length)]
-  const instructorSpecialties = randomSpecialties()
-  const createdAt = randomPastDate(730)
-  const updatedAt = new Date(
-    createdAt.getTime() + Math.random() * (Date.now() - createdAt.getTime())
-  )
+// instructor1@example.com용 고정 강사 데이터
+const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
+const instructor1Data: Instructor = {
+  id: INSTRUCTOR1_ID,
+  name: '최강사',
+  contactPhone: '010-1234-5678',
+  contactEmail: 'instructor1@example.com',
+  region: '서울',
+  specialty: ['AI/머신러닝', '데이터 분석', '웹 개발'],
+  availableTime: '평일 오전, 주말 가능',
+  experience: '10년 경력, 25개 프로젝트 완료',
+  rating: 4.8,
+  bankAccount: '110-123-456789',
+  createdAt: new Date('2024-01-15').toISOString(),
+  updatedAt: new Date().toISOString(),
+}
 
-  return {
-    id: generateUUID(),
-    name: fullName,
-    contactPhone: Math.random() > 0.1 ? generatePhone() : undefined,
-    contactEmail: Math.random() > 0.15 ? generateEmail(fullName) : undefined,
-    region,
-    specialty: instructorSpecialties,
-    availableTime: Math.random() > 0.3 ? '평일 오전, 주말 가능' : undefined,
-    experience:
-      Math.random() > 0.2
-        ? `${Math.floor(Math.random() * 15) + 2}년 경력, ${Math.floor(Math.random() * 20) + 5}개 프로젝트 완료`
-        : undefined,
-    rating: Math.random() > 0.25 ? randomRating() : undefined,
-    bankAccount:
-      Math.random() > 0.3 ? `110-***-${Math.floor(Math.random() * 900000) + 100000}` : undefined,
-    createdAt: createdAt.toISOString(),
-    updatedAt: updatedAt.toISOString(),
-  }
-})
+export const mockInstructors: Instructor[] = [
+  instructor1Data, // instructor1@example.com용 강사 데이터를 첫 번째로 추가
+  ...Array.from({ length: 50 }, () => {
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
+    const fullName = `${firstName}${lastName}`
+    const region = regions[Math.floor(Math.random() * regions.length)]
+    const instructorSpecialties = randomSpecialties()
+    const createdAt = randomPastDate(730)
+    const updatedAt = new Date(
+      createdAt.getTime() + Math.random() * (Date.now() - createdAt.getTime())
+    )
+
+    return {
+      id: generateUUID(),
+      name: fullName,
+      contactPhone: Math.random() > 0.1 ? generatePhone() : undefined,
+      contactEmail: Math.random() > 0.15 ? generateEmail(fullName) : undefined,
+      region,
+      specialty: instructorSpecialties,
+      availableTime: Math.random() > 0.3 ? '평일 오전, 주말 가능' : undefined,
+      experience:
+        Math.random() > 0.2
+          ? `${Math.floor(Math.random() * 15) + 2}년 경력, ${Math.floor(Math.random() * 20) + 5}개 프로젝트 완료`
+          : undefined,
+      rating: Math.random() > 0.25 ? randomRating() : undefined,
+      bankAccount:
+        Math.random() > 0.3 ? `110-***-${Math.floor(Math.random() * 900000) + 100000}` : undefined,
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString(),
+    }
+  }),
+]
 
 export const mockInstructorsMap = new Map(
   mockInstructors.map(instructor => [instructor.id, instructor])

@@ -33,3 +33,5 @@ export const useEducationRecordStore = create<EducationRecordState>(set => ({
   clearError: () => set({ error: null }),
 }))
 
+
+

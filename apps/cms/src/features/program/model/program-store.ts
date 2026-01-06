@@ -1,11 +1,14 @@
 /**
  * 프로그램 Zustand 스토어
  * Phase 2.1: 상태 관리
+ * Phase 4.2.2: 권한별 데이터 필터링
  */
 
 import { create } from 'zustand'
 import type { Program, ProgramRound } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import type { UserRole } from '@/types/user'
 
 interface ProgramState {
   programs: Program[]
@@ -31,7 +34,12 @@ export const useProgramStore = create<ProgramState>(set => ({
   fetchPrograms: async () => {
     set({ loading: true, error: null })
     try {
-      const programs = await programService.getAll()
+      // 권한별 필터링을 위해 현재 사용자 정보 가져오기
+      const { user } = useAuthStore.getState()
+      const userRole: UserRole | null = user?.role || null
+      const userId = user?.instructorId || user?.id
+      
+      const programs = await programService.getAll(userRole, userId)
       set({ programs, loading: false })
     } catch (error) {
       set({ error: error as Error, loading: false })

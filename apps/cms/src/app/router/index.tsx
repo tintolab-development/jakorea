@@ -68,18 +68,25 @@ const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-pa
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
+const MyProgramListPage = lazyLoad(() => import('@/pages/programs/my-program-list-page'))
+const MyProgramDetailPage = lazyLoad(() => import('@/pages/programs/my-program-detail-page'))
 const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
 const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
 const ApplicationResultPage = lazyLoad(() => import('@/pages/applications/application-result-page'))
 const ScheduleCalendarPage = lazyLoad(() => import('@/pages/schedules/schedule-calendar-page'))
 const MyScheduleListPage = lazyLoad(() => import('@/pages/schedules/my-schedule-list-page'))
+const MyScheduleCalendarPage = lazyLoad(() => import('@/pages/schedules/my-schedule-calendar-page'))
 const MyScheduleDetailPage = lazyLoad(() => import('@/pages/schedules/my-schedule-detail-page'))
 const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-page'))
 const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
+const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
+const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-settlement-detail-page'))
+const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
 const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
 const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
 const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-page'))
+const InstructorApplicationPage = lazyLoad(() => import('@/pages/interviews/instructor-application-page'))
 const TodoDetailPage = lazyLoad(() => import('@/pages/todos/todo-detail-page'))
 const ReportFormPage = lazyLoad(() => import('@/pages/reports/report-form-page'))
 const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
@@ -90,6 +97,7 @@ const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detai
 const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths/application-path-list-page'))
 const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
 const EducationRecordListPageV2 = lazyLoad(() => import('@/pages/education-records/education-record-list-page-v2'))
+const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 
 export const router = createBrowserRouter([
@@ -144,6 +152,8 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
+          { path: 'my', element: <MyProgramListPage /> },
+          { path: 'my/:id', element: <MyProgramDetailPage /> },
           { path: 'new', element: <ProgramFormPage /> },
           { path: ':id/edit', element: <ProgramFormPage /> },
         ],
@@ -174,6 +184,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <ScheduleCalendarPage /> },
           { path: 'my', element: <MyScheduleListPage /> },
+          { path: 'my/calendar', element: <MyScheduleCalendarPage /> },
           { path: ':id', element: <MyScheduleDetailPage /> },
         ],
       },
@@ -185,6 +196,14 @@ export const router = createBrowserRouter([
         path: 'settlements',
         children: [
           { index: true, element: <SettlementListPage /> },
+          {
+            path: 'my',
+            children: [
+              { index: true, element: <MySettlementListPage /> },
+              { path: 'monthly', element: <MyMonthlySettlementPage /> },
+              { path: ':id', element: <MySettlementDetailPage /> },
+            ],
+          },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
         ],
@@ -194,7 +213,12 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <InterviewListPage /> },
           { path: 'my', element: <MyInterviewPage /> },
+          { path: 'apply', element: <InstructorApplicationPage /> },
         ],
+      },
+      {
+        path: 'users',
+        children: [{ index: true, element: <UserListPage /> }],
       },
       {
         path: 'todos',

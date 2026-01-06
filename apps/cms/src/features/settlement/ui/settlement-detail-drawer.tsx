@@ -123,7 +123,11 @@ export function SettlementDetailDrawer({
           <Tag color={domainColorsHex.settlement.primary}>{settlement.period}</Tag>
         </Descriptions.Item>
         <Descriptions.Item label="프로그램">
-          {program ? <Tag color={domainColorsHex.program.primary}>{program.title}</Tag> : '-'}
+          {program ? (
+            <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
+          ) : (
+            <Tag color="error">프로그램 정보 오류 (ID: {settlement.programId.slice(-8)})</Tag>
+          )}
         </Descriptions.Item>
         <Descriptions.Item label="강사">{instructor ? instructor.name : '-'}</Descriptions.Item>
         <Descriptions.Item label="매칭">
