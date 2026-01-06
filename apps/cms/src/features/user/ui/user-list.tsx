@@ -9,7 +9,7 @@ import { EyeOutlined, EditOutlined } from '@ant-design/icons'
 import type { User, UserRole } from '@/types/user'
 import { RoleBadge } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
-import { formatDate } from '@jakorea/utils'
+import { formatDate } from '@/shared/utils'
 
 interface UserListProps {
   data: Omit<User, 'password'>[]

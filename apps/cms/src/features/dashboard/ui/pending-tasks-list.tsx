@@ -6,7 +6,7 @@
 import { Card, List, Tag, Typography, Button, Empty, Tabs } from 'antd'
 import { RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { formatDate } from '@jakorea/utils'
+import { formatDate } from '@/shared/utils'
 import dayjs from 'dayjs'
 
 const { Text } = Typography

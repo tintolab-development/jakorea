@@ -7,7 +7,7 @@ import { Drawer, Descriptions, Tag, Space, Button } from 'antd'
 import type { User } from '@/types/user'
 import { RoleBadge } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
-import { formatDate } from '@jakorea/utils'
+import { formatDate } from '@/shared/utils'
 
 interface UserDetailDrawerProps {
   open: boolean
