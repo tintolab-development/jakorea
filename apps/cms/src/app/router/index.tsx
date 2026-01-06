@@ -79,6 +79,7 @@ const MyScheduleCalendarPage = lazyLoad(() => import('@/pages/schedules/my-sched
 const MyScheduleDetailPage = lazyLoad(() => import('@/pages/schedules/my-schedule-detail-page'))
 const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-page'))
 const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
+const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
 const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
 const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
@@ -192,6 +193,7 @@ export const router = createBrowserRouter([
         path: 'settlements',
         children: [
           { index: true, element: <SettlementListPage /> },
+          { path: 'my', element: <MySettlementListPage /> },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
         ],
