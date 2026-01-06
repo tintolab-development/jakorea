@@ -41,7 +41,7 @@ export function ApplicationList({
   onDelete,
   onStatusChange,
 }: ApplicationListProps) {
-  const { table } = useApplicationTable(data)
+  const { table, resetFilters } = useApplicationTable(data)
 
   const programs = programService.getAllSync()
 
@@ -90,7 +90,7 @@ export function ApplicationList({
             </Option>
           ))}
         </Select>
-        <Button onClick={() => table.resetColumnFilters()}>필터 초기화</Button>
+        <Button onClick={() => resetFilters()}>필터 초기화</Button>
       </Space>
 
       <Table

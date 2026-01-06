@@ -123,6 +123,9 @@ importers:
       react-router-dom:
         specifier: ^7.1.3
         version: 7.10.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      recharts:
+        specifier: ^2.12.7
+        version: 2.15.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       zod:
         specifier: ^3.24.1
         version: 3.25.76
