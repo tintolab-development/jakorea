@@ -99,12 +99,12 @@ const allMenuItems: MenuItemConfig[] = [
       {
         key: '/schedules/my',
         label: '본인 일정 목록',
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 강사, 봉사자, 수강자 접근 가능
       },
       {
         key: '/schedules/my/calendar',
         label: '본인 일정 캘린더',
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 강사, 봉사자, 수강자 접근 가능
       },
     ],
   },
