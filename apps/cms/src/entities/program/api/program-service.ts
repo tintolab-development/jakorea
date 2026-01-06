@@ -1,14 +1,34 @@
 /**
  * 프로그램 Mock 서비스
  * Phase 2.1: Mock API 서비스
+ * Phase 4.2.2: 권한별 데이터 필터링
  */
 
 import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
+import type { UserRole } from '@/types/user'
 
 export const programService = {
-  getAll: async (): Promise<Program[]> => {
-    return Promise.resolve(mockPrograms)
+  /**
+   * 모든 프로그램 조회 (권한별 필터링)
+   * @param userRole 사용자 권한
+   * @param userId 사용자 ID (강사/봉사자일 경우 instructorId) - 향후 매칭 정보 기반 필터링에 사용 예정
+   */
+  getAll: async (userRole?: UserRole | null, userId?: string): Promise<Program[]> => {
+    // userId는 향후 매칭 정보 기반 필터링에 사용 예정
+    void userId
+    const allPrograms = [...mockPrograms]
+
+    // 권한별 필터링 적용
+    // 관리자는 전체 조회, 강사/봉사자는 본인이 담당한 프로그램만 조회
+    // Program에는 instructorId가 없으므로, 매칭 정보를 통해 필터링해야 함
+    // 현재는 모든 프로그램 반환 (향후 매칭 정보 기반 필터링 구현 필요)
+    if (userRole && userRole !== 'ADMIN') {
+      // TODO: 매칭 정보를 통해 본인이 담당한 프로그램만 필터링
+      return Promise.resolve(allPrograms)
+    }
+
+    return Promise.resolve(allPrograms)
   },
 
   getById: async (id: string): Promise<Program> => {
@@ -37,7 +57,10 @@ export const programService = {
     return Promise.resolve(newProgram)
   },
 
-  update: async (id: string, data: Partial<Omit<Program, 'id' | 'createdAt'>>): Promise<Program> => {
+  update: async (
+    id: string,
+    data: Partial<Omit<Program, 'id' | 'createdAt'>>
+  ): Promise<Program> => {
     const program = mockProgramsMap.get(id)
     if (!program) {
       throw new Error(`Program not found: ${id}`)
@@ -114,4 +137,3 @@ export const programService = {
     return [...mockPrograms]
   },
 }
-

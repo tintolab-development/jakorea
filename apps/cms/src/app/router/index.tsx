@@ -80,10 +80,13 @@ const MyScheduleDetailPage = lazyLoad(() => import('@/pages/schedules/my-schedul
 const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-page'))
 const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
 const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
+const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-settlement-detail-page'))
+const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
 const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
 const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
 const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-page'))
+const InstructorApplicationPage = lazyLoad(() => import('@/pages/interviews/instructor-application-page'))
 const TodoDetailPage = lazyLoad(() => import('@/pages/todos/todo-detail-page'))
 const ReportFormPage = lazyLoad(() => import('@/pages/reports/report-form-page'))
 const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
@@ -193,7 +196,14 @@ export const router = createBrowserRouter([
         path: 'settlements',
         children: [
           { index: true, element: <SettlementListPage /> },
-          { path: 'my', element: <MySettlementListPage /> },
+          {
+            path: 'my',
+            children: [
+              { index: true, element: <MySettlementListPage /> },
+              { path: 'monthly', element: <MyMonthlySettlementPage /> },
+              { path: ':id', element: <MySettlementDetailPage /> },
+            ],
+          },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
         ],
@@ -203,6 +213,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <InterviewListPage /> },
           { path: 'my', element: <MyInterviewPage /> },
+          { path: 'apply', element: <InstructorApplicationPage /> },
         ],
       },
       {

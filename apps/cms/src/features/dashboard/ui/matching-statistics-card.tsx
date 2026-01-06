@@ -31,10 +31,10 @@ export function MatchingStatisticsCard({
     <Card
       hoverable
       onClick={handleClick}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', height: '100%' }}
       loading={loading}
     >
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         <Col span={24}>
           <Statistic
             title="매칭"
@@ -44,7 +44,7 @@ export function MatchingStatisticsCard({
           />
         </Col>
         <Col span={24} style={{ marginTop: 16 }}>
-          <Row gutter={8}>
+          <Row gutter={[8, 8]}>
             <Col>
               <Tag color="green">확정: {confirmed}</Tag>
             </Col>

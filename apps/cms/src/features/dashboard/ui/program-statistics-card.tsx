@@ -31,10 +31,10 @@ export function ProgramStatisticsCard({
     <Card
       hoverable
       onClick={handleClick}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', height: '100%' }}
       loading={loading}
     >
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         <Col span={24}>
           <Statistic
             title="프로그램"
@@ -44,7 +44,7 @@ export function ProgramStatisticsCard({
           />
         </Col>
         <Col span={24} style={{ marginTop: 16 }}>
-          <Row gutter={8}>
+          <Row gutter={[8, 8]}>
             <Col>
               <Tag color="blue">진행중: {inProgress}</Tag>
             </Col>

@@ -33,10 +33,10 @@ export function ApplicationStatisticsCard({
     <Card
       hoverable
       onClick={handleClick}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', height: '100%' }}
       loading={loading}
     >
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         <Col span={24}>
           <Statistic
             title="신청"
@@ -46,7 +46,7 @@ export function ApplicationStatisticsCard({
           />
         </Col>
         <Col span={24} style={{ marginTop: 16 }}>
-          <Row gutter={8} wrap>
+          <Row gutter={[8, 8]} wrap>
             <Col>
               <Tag color="orange">대기: {pending}</Tag>
             </Col>

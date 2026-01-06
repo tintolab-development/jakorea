@@ -83,9 +83,9 @@ export function MyActivitySummary() {
       loading={loading}
       hoverable
       onClick={() => navigate('/programs/my')}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', height: '100%' }}
     >
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="전체 프로그램"
@@ -118,7 +118,7 @@ export function MyActivitySummary() {
           />
         </Col>
       </Row>
-      <Row gutter={16} style={{ marginTop: 16 }}>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="진행완료"

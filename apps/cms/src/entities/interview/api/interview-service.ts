@@ -23,20 +23,23 @@ export function determineInterviewStatus(participationHistory: number): Intervie
 /**
  * 강사/봉사자 신청 접수
  * @param formData 신청 폼 데이터
- * @param userId 신청한 사용자 ID
+ * @param userId 신청한 사용자 ID (선택사항 - 없으면 새로 생성)
  * @returns 생성된 면접 정보
  */
 export async function submitInstructorApplication(
   formData: InstructorApplicationFormData,
-  userId: UUID
+  userId?: UUID
 ): Promise<Interview> {
   // 면접 필요 여부 판단
   const status = determineInterviewStatus(formData.participationHistory)
 
+  // 사용자 ID가 없으면 생성 (신청 폼에서 직접 신청하는 경우)
+  const finalUserId = userId || generateUUID()
+
   // 면접 정보 생성
   const interview: Interview = {
     id: generateUUID(),
-    userId,
+    userId: finalUserId,
     userRole: formData.role,
     status,
     participationHistory: formData.participationHistory,

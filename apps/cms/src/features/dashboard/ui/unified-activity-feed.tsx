@@ -224,6 +224,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           <span>최근 활동</span>
         </Space>
       }
+      style={{ height: '100%' }}
     >
       {allActivities.length > 0 ? (
         <>

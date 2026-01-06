@@ -28,9 +28,7 @@ export function MyApplicationSummary() {
     }
     // 수강자의 경우 subjectType이 'student'이고 subjectId가 사용자 ID와 매칭되어야 함
     // 현재는 간단히 모든 신청을 표시 (실제로는 사용자 ID와 매칭 로직 필요)
-    return mockApplications.filter(
-      application => application.subjectType === 'student'
-    )
+    return mockApplications.filter(application => application.subjectType === 'student')
   }, [user])
 
   // 상태별 신청 수
@@ -46,10 +44,7 @@ export function MyApplicationSummary() {
   // 최근 신청 (최근 3개)
   const recentApplications = useMemo(() => {
     return [...myApplications]
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 3)
   }, [myApplications])
 
@@ -78,14 +73,11 @@ export function MyApplicationSummary() {
           전체 보기
         </Button>
       }
+      style={{ height: '100%' }}
     >
-      <Row gutter={16} style={{ marginBottom: 16 }}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col span={6}>
-          <Statistic
-            title="전체 신청"
-            value={statusCounts.total}
-            prefix={<FileTextOutlined />}
-          />
+          <Statistic title="전체 신청" value={statusCounts.total} prefix={<FileTextOutlined />} />
         </Col>
         <Col span={6}>
           <Statistic
@@ -143,4 +135,3 @@ export function MyApplicationSummary() {
     </Card>
   )
 }
-

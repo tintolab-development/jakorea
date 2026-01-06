@@ -136,7 +136,7 @@ export function Dashboard() {
         return <ActiveProgramCard />
       case 'instructor-count-card':
         return (
-          <Card>
+          <Card style={{ height: '100%' }}>
             <Statistic title="등록된 강사" value={instructorCount} />
           </Card>
         )
@@ -199,7 +199,7 @@ export function Dashboard() {
       </div>
 
       {/* 권한별 위젯 렌더링 */}
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         {widgets.map((widget, index) => {
           const widgetComponent = renderWidget(widget.type)
           if (!widgetComponent) return null

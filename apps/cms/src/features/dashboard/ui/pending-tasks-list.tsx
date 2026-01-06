@@ -92,6 +92,7 @@ export function PendingTasksList({
     <Card
       title="대기 중인 작업"
       loading={loading}
+      style={{ height: '100%' }}
     >
       <Tabs defaultActiveKey="all" size="small">
         <TabPane

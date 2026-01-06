@@ -69,7 +69,11 @@ export function MonthlySettlementPage() {
       key: 'programId',
       render: (programId: string) => {
         const program = mockProgramsMap.get(programId)
-        return program ? <Tag color="cyan">{program.title}</Tag> : programId.slice(-6)
+        return program ? (
+          <Tag color="cyan">{program.title}</Tag>
+        ) : (
+          <Tag color="error">프로그램 정보 오류</Tag>
+        )
       },
     },
     {

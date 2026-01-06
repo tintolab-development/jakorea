@@ -20,7 +20,7 @@ export function OverallStatisticsCards({
   loading = false,
 }: OverallStatisticsCardsProps) {
   return (
-    <Row gutter={16}>
+    <Row gutter={[16, 16]}>
       <Col xs={24} sm={12} lg={6}>
         <ProgramStatisticsCard
           total={statistics.programs.total}

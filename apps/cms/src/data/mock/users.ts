@@ -60,6 +60,9 @@ const mockAdmins: User[] = [
 // 강사 (Instructor) 계정 - 3개
 // ============================================
 
+// instructor1@example.com용 고정 instructorId
+const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
+
 const mockInstructors: User[] = [
   {
     id: generateUUID(),
@@ -67,7 +70,7 @@ const mockInstructors: User[] = [
     password: 'instructor123!',
     name: '최강사',
     role: 'INSTRUCTOR',
-    instructorId: generateUUID(),
+    instructorId: INSTRUCTOR1_ID, // 고정 ID로 변경
     interviewStatus: 'APPROVED', // 승인 완료
     participationHistory: 5, // 참여이력 5건
     isActive: true,

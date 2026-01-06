@@ -203,7 +203,11 @@ export function SettlementList({
             key: 'programId',
             render: (programId: string) => {
               const program = programService.getByIdSync(programId)
-              return program ? <Tag color={domainColorsHex.program.primary}>{program.title}</Tag> : '-'
+              return program ? (
+                <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
+              ) : (
+                <Tag color="error">프로그램 정보 오류</Tag>
+              )
             },
           },
           {

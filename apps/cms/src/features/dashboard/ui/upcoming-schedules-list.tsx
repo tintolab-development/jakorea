@@ -65,6 +65,7 @@ export function UpcomingSchedulesList({
           </Button>
         )
       }
+      style={{ height: '100%' }}
     >
       {displayedSchedules.length === 0 ? (
         <Empty
