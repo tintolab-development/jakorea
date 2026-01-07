@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useMemo } from 'react'
-import { Form, Select, Input, Button, Space, message } from 'antd'
+import { Form, Select, Input, Button, Space, message, Alert, Typography } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationSchema, type ApplicationFormData } from '@/entities/application/model/schema'
@@ -12,8 +12,10 @@ import type { Application } from '@/types/domain'
 import { mockPrograms, mockSchools, mockInstructors } from '@/data/mock'
 import type { ApplicationSubjectType } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 
 const { Option } = Select
+const { Text } = Typography
 const { TextArea } = Input
 
 interface ApplicationFormProps {
@@ -74,6 +76,11 @@ export function ApplicationForm({
   const selectedSubjectType = watch('subjectType')
   const selectedProgram = mockPrograms.find(p => p.id === selectedProgramId)
 
+  // 선택된 프로그램의 신청 경로 정보 (V3 Phase 7)
+  const applicationPath = selectedProgramId
+    ? applicationPathService.getByProgramIdSync(selectedProgramId)
+    : undefined
+
   // Ant Design + react-hook-form 연동을 위해 필드를 명시적으로 등록
   useEffect(() => {
     register('programId')
@@ -123,6 +130,31 @@ export function ApplicationForm({
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
+      {selectedProgram && applicationPath && (
+        <Form.Item>
+          <Alert
+            type={applicationPath.isActive ? 'info' : 'warning'}
+            showIcon
+            message={
+              <Space direction="vertical" size={4}>
+                <Text strong>
+                  이 프로그램의 신청 경로:{' '}
+                  {applicationPath.pathType === 'google_form' ? '구글폼' : '자동화 프로그램'}
+                  {!applicationPath.isActive ? ' (현재 비활성 상태)' : ''}
+                </Text>
+                {applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl && (
+                  <a href={applicationPath.googleFormUrl} target="_blank" rel="noopener noreferrer">
+                    구글폼 열기
+                  </a>
+                )}
+                {applicationPath.guideMessage && (
+                  <Text type="secondary">{applicationPath.guideMessage}</Text>
+                )}
+              </Space>
+            }
+          />
+        </Form.Item>
+      )}
       <Form.Item
         label="프로그램"
         validateStatus={errors.programId ? 'error' : ''}

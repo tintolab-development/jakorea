@@ -9,6 +9,7 @@ import type { Application } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import {
   applicationSubjectTypeConfig,
   getApplicationStatusLabel,
@@ -47,6 +48,17 @@ export function ApplicationDetailDrawer({
       : application.subjectType === 'instructor'
       ? instructorService.getNameById(application.subjectId)
       : '-'
+
+  // 신청 경로 정보 (V3 Phase 7)
+  const applicationPath =
+    application.applicationPathId
+      ? applicationPathService.getByIdSync(application.applicationPathId)
+      : applicationPathService.getByProgramIdSync(application.programId)
+
+  const pathTypeLabels: Record<string, string> = {
+    google_form: '구글폼',
+    internal: '자동화 프로그램',
+  }
 
   const timelineItems = [
     {
@@ -147,6 +159,29 @@ export function ApplicationDetailDrawer({
                   <Descriptions.Item label="프로그램">
                     <Tag color={domainColorsHex.program.primary}>{program?.title || '-'}</Tag>
                   </Descriptions.Item>
+                  {applicationPath && (
+                    <Descriptions.Item label="신청 경로">
+                      <Space direction="vertical" size={4}>
+                        <Tag color={applicationPath.pathType === 'google_form' ? 'orange' : 'blue'}>
+                          {pathTypeLabels[applicationPath.pathType] || applicationPath.pathType}
+                        </Tag>
+                        {applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl && (
+                          <Text>
+                            <a
+                              href={applicationPath.googleFormUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              구글폼 열기
+                            </a>
+                          </Text>
+                        )}
+                        {applicationPath.guideMessage && (
+                          <Text type="secondary">{applicationPath.guideMessage}</Text>
+                        )}
+                      </Space>
+                    </Descriptions.Item>
+                  )}
                   <Descriptions.Item label="신청 주체 유형">
                     <Tag color={applicationSubjectTypeConfig.colors[application.subjectType]}>
                       {applicationSubjectTypeConfig.labels[application.subjectType]}

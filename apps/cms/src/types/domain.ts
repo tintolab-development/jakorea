@@ -155,6 +155,7 @@ export interface Application {
   id: UUID
   programId: UUID
   roundId?: UUID // 회차별 신청 시
+  applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   subjectType: ApplicationSubjectType
   subjectId: UUID // 학교/학생/강사 ID
   status: ApplicationStatus
