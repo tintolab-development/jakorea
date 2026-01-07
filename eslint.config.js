@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import unusedImports from 'eslint-plugin-unused-imports'
 import tseslint from 'typescript-eslint'
 import prettier from 'eslint-config-prettier'
 
@@ -18,6 +19,9 @@ export default tseslint.config(
       reactRefresh.configs.vite,
       prettier
     ],
+    plugins: {
+      'unused-imports': unusedImports,
+    },
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -37,6 +41,17 @@ export default tseslint.config(
       'react-hooks/incompatible-library': 'warn', // React Hook Form watch() 경고로 변경
       // TypeScript 규칙 완화
       '@typescript-eslint/no-explicit-any': 'warn', // any 타입 사용 경고로 변경
+      // unused-imports: 사용되지 않은 import/변수 자동 제거
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
       // 일반 규칙 완화
       'no-case-declarations': 'warn' // case 블록 선언 경고로 변경
     }

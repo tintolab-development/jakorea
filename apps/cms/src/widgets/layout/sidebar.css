@@ -2,6 +2,24 @@
  * 사이드바 스타일
  */
 
+/* 스크롤바 스타일링 (선택사항) */
+.sidebar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
 .sidebar-user-section {
   padding: 12px 16px;
   background: #fafafa;

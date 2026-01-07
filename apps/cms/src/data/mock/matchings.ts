@@ -94,34 +94,79 @@ const cancellationReasons = [
   '기타 사유',
 ]
 
-export const mockMatchings: Matching[] = Array.from({ length: 35 }, (_, index) => {
-  const programIndex = Math.floor(Math.random() * mockPrograms.length)
-  const program = mockPrograms[programIndex]
-  const hasRound = program.rounds.length > 0 && Math.random() > 0.3
-  const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
-  const instructorIndex = Math.floor(Math.random() * mockInstructors.length)
-  const hasSchedule = Math.random() > 0.3
-  const scheduleIndex = hasSchedule ? Math.floor(Math.random() * mockSchedules.length) : null
-  const status = statuses[Math.floor(Math.random() * statuses.length)]
-  const daysAgo = Math.floor(Math.random() * 30) + 1
-  const isCancelled = status === 'cancelled'
-  const cancelledDaysAgo = isCancelled ? Math.floor(Math.random() * daysAgo) : undefined
-  const cancellationReason = isCancelled
-    ? cancellationReasons[Math.floor(Math.random() * cancellationReasons.length)]
-    : undefined
+// instructor-1-fixed-id-for-testing용 테스트 매칭 (정산 제출 테스트용)
+const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
 
-  return createMatching(
-    `match-${String(index + 1).padStart(3, '0')}`,
-    programIndex,
-    roundIndex,
-    instructorIndex,
-    scheduleIndex,
-    status,
-    daysAgo,
-    cancelledDaysAgo,
-    cancellationReason
-  )
-})
+// 테스트용 매칭 생성 함수
+function createTestMatchingForInstructor1(index: number): Matching {
+  const program = mockPrograms[index % mockPrograms.length] // 다양한 프로그램 사용
+  const round = program.rounds.length > 0 ? program.rounds[0] : null
+  const schedule = mockSchedules.length > 0 ? mockSchedules[index % mockSchedules.length] : undefined
+  
+  const matchedAt = new Date()
+  matchedAt.setDate(matchedAt.getDate() - (5 + index * 2)) // 각각 다른 날짜
+  matchedAt.setHours(10 + index, 30, 0, 0)
+
+  const createdAt = new Date(matchedAt)
+  createdAt.setDate(createdAt.getDate() - 1)
+
+  const matchingId = `match-test-instructor1-${String(index + 1).padStart(3, '0')}`
+
+  return {
+    id: matchingId,
+    programId: program.id,
+    roundId: round?.id || undefined,
+    instructorId: INSTRUCTOR1_ID,
+    scheduleId: schedule?.id || undefined,
+    status: 'active',
+    matchedAt: matchedAt.toISOString(),
+    history: [
+      {
+        id: `${matchingId}-history-1`,
+        matchingId: matchingId,
+        action: 'created',
+        changedAt: matchedAt.toISOString(),
+      },
+    ],
+    createdAt: createdAt.toISOString(),
+    updatedAt: matchedAt.toISOString(),
+  }
+}
+
+export const mockMatchings: Matching[] = [
+  // instructor-1-fixed-id-for-testing용 테스트 매칭 3개 추가 (정산 제출 테스트용)
+  createTestMatchingForInstructor1(0),
+  createTestMatchingForInstructor1(1),
+  createTestMatchingForInstructor1(2),
+  ...Array.from({ length: 35 }, (_, index) => {
+    const programIndex = Math.floor(Math.random() * mockPrograms.length)
+    const program = mockPrograms[programIndex]
+    const hasRound = program.rounds.length > 0 && Math.random() > 0.3
+    const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
+    const instructorIndex = Math.floor(Math.random() * mockInstructors.length)
+    const hasSchedule = Math.random() > 0.3
+    const scheduleIndex = hasSchedule ? Math.floor(Math.random() * mockSchedules.length) : null
+    const status = statuses[Math.floor(Math.random() * statuses.length)]
+    const daysAgo = Math.floor(Math.random() * 30) + 1
+    const isCancelled = status === 'cancelled'
+    const cancelledDaysAgo = isCancelled ? Math.floor(Math.random() * daysAgo) : undefined
+    const cancellationReason = isCancelled
+      ? cancellationReasons[Math.floor(Math.random() * cancellationReasons.length)]
+      : undefined
+
+    return createMatching(
+      `match-${String(index + 1).padStart(3, '0')}`,
+      programIndex,
+      roundIndex,
+      instructorIndex,
+      scheduleIndex,
+      status,
+      daysAgo,
+      cancelledDaysAgo,
+      cancellationReason
+    )
+  }),
+]
 
 export const mockMatchingsMap = new Map<UUID, Matching>()
 mockMatchings.forEach(matching => {

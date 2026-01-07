@@ -59,6 +59,11 @@ const allMenuItems: MenuItemConfig[] = [
         label: '본인 프로그램',
         allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
       },
+      {
+        key: '/programs/favorites',
+        label: '관심 프로그램',
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+      },
     ],
   },
   {
@@ -77,7 +82,7 @@ const allMenuItems: MenuItemConfig[] = [
     key: '/applications',
     label: '신청 관리',
     icon: <FileTextOutlined />,
-    // 모든 권한 접근 가능
+    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 관리자 + 교육 주체 공통 접근
   },
   {
     key: '/application-paths',
@@ -99,12 +104,12 @@ const allMenuItems: MenuItemConfig[] = [
       {
         key: '/schedules/my',
         label: '본인 일정 목록',
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 강사, 봉사자, 수강자 접근 가능
       },
       {
         key: '/schedules/my/calendar',
         label: '본인 일정 캘린더',
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 강사, 봉사자, 수강자 접근 가능
       },
     ],
   },

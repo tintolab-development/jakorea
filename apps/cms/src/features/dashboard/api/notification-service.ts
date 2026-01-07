@@ -32,7 +32,7 @@ export async function getNotifications(_userId?: UUID): Promise<Notification[]> 
       type: 'schedule',
       title: '다가오는 일정',
       message: '내일 오후 2시 "JA 경제 교육" 프로그램 일정이 있습니다.',
-      link: '/schedules/my', // 일정 목록 페이지로 이동 (상세 페이지는 추후 구현)
+      link: '/schedules/my', // 본인 일정 목록 페이지로 이동
       read: false,
       createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2시간 전
     },
@@ -41,7 +41,7 @@ export async function getNotifications(_userId?: UUID): Promise<Notification[]> 
       type: 'matching',
       title: '새 매칭 알림',
       message: '"JA 창업 캠프" 프로그램에 매칭되었습니다.',
-      link: '/programs', // 프로그램 목록 페이지로 이동 (상세 페이지는 추후 구현)
+      link: '/programs/my', // 본인 프로그램 목록 페이지로 이동
       read: false,
       createdAt: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5시간 전
     },
@@ -50,18 +50,27 @@ export async function getNotifications(_userId?: UUID): Promise<Notification[]> 
       type: 'settlement',
       title: '정산 완료',
       message: '2025년 1월 정산이 승인되었습니다.',
-      link: '/settlements', // 정산 목록 페이지로 이동 (상세 페이지는 추후 구현)
+      link: '/settlements/my', // 본인 정산 목록 페이지로 이동
       read: true,
       createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), // 1일 전
     },
     {
       id: 'notif-4',
+      type: 'settlement',
+      title: '정산 지급 완료',
+      message: '2024년 12월 정산이 지급 완료되었습니다.',
+      link: '/settlements/my', // 본인 정산 목록 페이지로 이동
+      read: false,
+      createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(), // 12시간 전
+    },
+    {
+      id: 'notif-5',
+      type: 'system',
       title: '시스템 공지',
       message: '새로운 기능이 추가되었습니다.',
       link: '/dashboard', // 공지사항 페이지가 없으므로 대시보드로 이동
       read: true,
       createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3일 전
-      type: 'system',
     },
   ]
 

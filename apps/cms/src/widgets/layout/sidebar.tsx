@@ -38,7 +38,16 @@ export function Sidebar() {
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
 
   return (
-    <Sider width={200} style={{ background: '#fff', display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+    <Sider
+      width={220}
+      style={{
+        background: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden',
+      }}
+    >
       <Header />
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <Menu

@@ -7,6 +7,7 @@ import type { Application, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockSchools } from './schools'
 import { mockInstructors } from './instructors'
+import { getApplicationPathByProgramId } from './application-paths'
 
 function createApplication(
   id: string,
@@ -56,6 +57,7 @@ function createApplication(
     id,
     programId: program.id,
     roundId: round?.id,
+    applicationPathId: getApplicationPathByProgramId(program.id)?.id,
     subjectType,
     subjectId,
     status,

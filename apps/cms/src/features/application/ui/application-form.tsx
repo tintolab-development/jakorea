@@ -3,15 +3,19 @@
  * Phase 2.2: react-hook-form + zod
  */
 
-import { Form, Select, Input, Button, Space, message } from 'antd'
+import { useEffect, useMemo } from 'react'
+import { Form, Select, Input, Button, Space, message, Alert, Typography } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationSchema, type ApplicationFormData } from '@/entities/application/model/schema'
 import type { Application } from '@/types/domain'
 import { mockPrograms, mockSchools, mockInstructors } from '@/data/mock'
 import type { ApplicationSubjectType } from '@/types/domain'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 
 const { Option } = Select
+const { Text } = Typography
 const { TextArea } = Input
 
 interface ApplicationFormProps {
@@ -27,7 +31,24 @@ const subjectTypeLabels: Record<ApplicationSubjectType, string> = {
   instructor: '강사',
 }
 
-export function ApplicationForm({ application, onSubmit, onCancel, loading }: ApplicationFormProps) {
+export function ApplicationForm({
+  application,
+  onSubmit,
+  onCancel,
+  loading,
+}: ApplicationFormProps) {
+  const { user } = useAuthStore()
+  const userRole = user?.role
+  const isAdmin = userRole === 'ADMIN'
+
+  // 로그인한 사용자의 역할에 따른 기본 신청 주체 타입 매핑
+  const fixedSubjectType: ApplicationSubjectType | undefined = useMemo(() => {
+    if (!userRole || isAdmin) return undefined
+    if (userRole === 'INSTRUCTOR' || userRole === 'VOLUNTEER') return 'instructor'
+    if (userRole === 'STUDENT') return 'student'
+    return undefined
+  }, [userRole, isAdmin])
+
   const {
     register,
     handleSubmit,
@@ -47,12 +68,33 @@ export function ApplicationForm({ application, onSubmit, onCancel, loading }: Ap
         }
       : {
           status: 'submitted',
+          // subjectType은 아래 useEffect에서 역할 기반으로 설정
         },
   })
 
   const selectedProgramId = watch('programId')
   const selectedSubjectType = watch('subjectType')
   const selectedProgram = mockPrograms.find(p => p.id === selectedProgramId)
+
+  // 선택된 프로그램의 신청 경로 정보 (V3 Phase 7)
+  const applicationPath = selectedProgramId
+    ? applicationPathService.getByProgramIdSync(selectedProgramId)
+    : undefined
+
+  // Ant Design + react-hook-form 연동을 위해 필드를 명시적으로 등록
+  useEffect(() => {
+    register('programId')
+    register('roundId')
+    register('subjectType')
+    register('subjectId')
+  }, [register])
+
+  // 관리자 이외 역할에서는 로그인한 권한에 따라 신청 주체 타입을 고정
+  useEffect(() => {
+    if (!application && fixedSubjectType) {
+      setValue('subjectType', fixedSubjectType, { shouldValidate: true })
+    }
+  }, [application, fixedSubjectType, setValue])
 
   const onFormSubmit = async (data: ApplicationFormData) => {
     try {
@@ -88,59 +130,86 @@ export function ApplicationForm({ application, onSubmit, onCancel, loading }: Ap
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
-        <Form.Item
-          label="프로그램"
-          validateStatus={errors.programId ? 'error' : ''}
-          help={errors.programId?.message}
-          required
-        >
-          <Select
-            value={watch('programId')}
-            onChange={value => {
-              setValue('programId', value)
-              setValue('roundId', undefined) // 프로그램 변경 시 회차 초기화
-            }}
-            placeholder="프로그램 선택"
-            showSearch
-            filterOption={(input, option) => {
-              const children = option?.children as string | string[] | undefined
-              if (typeof children === 'string') {
-                return children.toLowerCase().includes(input.toLowerCase())
-              }
-              if (Array.isArray(children)) {
-                return children.some((child: unknown) => 
+      {selectedProgram && applicationPath && (
+        <Form.Item>
+          <Alert
+            type={applicationPath.isActive ? 'info' : 'warning'}
+            showIcon
+            message={
+              <Space direction="vertical" size={4}>
+                <Text strong>
+                  이 프로그램의 신청 경로:{' '}
+                  {applicationPath.pathType === 'google_form' ? '구글폼' : '자동화 프로그램'}
+                  {!applicationPath.isActive ? ' (현재 비활성 상태)' : ''}
+                </Text>
+                {applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl && (
+                  <a href={applicationPath.googleFormUrl} target="_blank" rel="noopener noreferrer">
+                    구글폼 열기
+                  </a>
+                )}
+                {applicationPath.guideMessage && (
+                  <Text type="secondary">{applicationPath.guideMessage}</Text>
+                )}
+              </Space>
+            }
+          />
+        </Form.Item>
+      )}
+      <Form.Item
+        label="프로그램"
+        validateStatus={errors.programId ? 'error' : ''}
+        help={errors.programId?.message}
+        required
+      >
+        <Select
+          value={watch('programId')}
+          onChange={value => {
+            setValue('programId', value)
+            setValue('roundId', undefined) // 프로그램 변경 시 회차 초기화
+          }}
+          placeholder="프로그램 선택"
+          showSearch
+          filterOption={(input, option) => {
+            const children = option?.children as string | string[] | undefined
+            if (typeof children === 'string') {
+              return children.toLowerCase().includes(input.toLowerCase())
+            }
+            if (Array.isArray(children)) {
+              return children.some(
+                (child: unknown) =>
                   typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
-                )
-              }
-              return false
-            }}
+              )
+            }
+            return false
+          }}
+        >
+          {mockPrograms.map(program => (
+            <Option key={program.id} value={program.id}>
+              {program.title}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      {selectedProgram && selectedProgram.rounds.length > 0 && (
+        <Form.Item label="회차" help="회차를 선택하지 않으면 전체 프로그램에 신청됩니다">
+          <Select
+            value={watch('roundId')}
+            onChange={value => setValue('roundId', value || undefined)}
+            placeholder="회차 선택 (선택사항)"
+            allowClear
           >
-            {mockPrograms.map(program => (
-              <Option key={program.id} value={program.id}>
-                {program.title}
+            {selectedProgram.rounds.map(round => (
+              <Option key={round.id} value={round.id}>
+                {round.roundNumber}회차 ({new Date(round.startDate).toLocaleDateString('ko-KR')} ~{' '}
+                {new Date(round.endDate).toLocaleDateString('ko-KR')})
               </Option>
             ))}
           </Select>
         </Form.Item>
+      )}
 
-        {selectedProgram && selectedProgram.rounds.length > 0 && (
-          <Form.Item label="회차" help="회차를 선택하지 않으면 전체 프로그램에 신청됩니다">
-            <Select
-              value={watch('roundId')}
-              onChange={value => setValue('roundId', value || undefined)}
-              placeholder="회차 선택 (선택사항)"
-              allowClear
-            >
-              {selectedProgram.rounds.map(round => (
-                <Option key={round.id} value={round.id}>
-                  {round.roundNumber}회차 ({new Date(round.startDate).toLocaleDateString('ko-KR')} ~{' '}
-                  {new Date(round.endDate).toLocaleDateString('ko-KR')})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        )}
-
+      {isAdmin ? (
         <Form.Item
           label="신청 주체 타입"
           validateStatus={errors.subjectType ? 'error' : ''}
@@ -150,7 +219,7 @@ export function ApplicationForm({ application, onSubmit, onCancel, loading }: Ap
           <Select
             value={watch('subjectType')}
             onChange={value => {
-              setValue('subjectType', value)
+              setValue('subjectType', value, { shouldValidate: true })
               setValue('subjectId', '') // 주체 타입 변경 시 주체 초기화
             }}
             placeholder="신청 주체 타입 선택"
@@ -162,86 +231,96 @@ export function ApplicationForm({ application, onSubmit, onCancel, loading }: Ap
             ))}
           </Select>
         </Form.Item>
-
-        {selectedSubjectType && (
-          <Form.Item
-            label="신청 주체"
-            validateStatus={errors.subjectId ? 'error' : ''}
-            help={errors.subjectId?.message || (selectedSubjectType === 'student' ? '학생은 수동으로 입력해주세요' : '')}
-            required
-          >
-            {selectedSubjectType === 'student' ? (
-              <Input
-                {...register('subjectId')}
-                placeholder="학생 이름 또는 ID를 입력해주세요"
-              />
-            ) : (
-              <Select
-                value={watch('subjectId')}
-                onChange={value => setValue('subjectId', value)}
-                placeholder={`${subjectTypeLabels[selectedSubjectType]} 선택`}
-                showSearch
-                filterOption={(input, option) => {
-                  const children = option?.children as string | string[] | undefined
-                  if (typeof children === 'string') {
-                    return children.toLowerCase().includes(input.toLowerCase())
-                  }
-                  if (Array.isArray(children)) {
-                    return children.some((child: unknown) => 
-                      typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
-                    )
-                  }
-                  return false
-                }}
-              >
-                {getSubjectOptions().map(option => (
-                  <Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Option>
-                ))}
-              </Select>
-            )}
-          </Form.Item>
-        )}
-
-        {application && (
-          <Form.Item
-            label="상태"
-            validateStatus={errors.status ? 'error' : ''}
-            help={errors.status?.message}
-            required
-          >
-            <Select
-              value={watch('status')}
-              onChange={value => setValue('status', value)}
-              placeholder="상태 선택"
-            >
-              <Option value="submitted">접수</Option>
-              <Option value="reviewing">검토</Option>
-              <Option value="approved">확정</Option>
-              <Option value="rejected">거절</Option>
-              <Option value="cancelled">취소</Option>
+      ) : (
+        fixedSubjectType && (
+          <Form.Item label="신청 주체 타입" required>
+            <Select value={fixedSubjectType} disabled>
+              <Option value={fixedSubjectType}>{subjectTypeLabels[fixedSubjectType]}</Option>
             </Select>
           </Form.Item>
-        )}
+        )
+      )}
 
-        <Form.Item label="비고">
-          <TextArea
-            {...register('notes')}
-            rows={4}
-            placeholder="추가 정보나 메모를 입력해주세요"
-          />
+      {selectedSubjectType && (
+        <Form.Item
+          label="신청 주체"
+          validateStatus={errors.subjectId ? 'error' : ''}
+          help={
+            errors.subjectId?.message ||
+            (selectedSubjectType === 'student' ? '학생은 수동으로 입력해주세요' : '')
+          }
+          required
+          style={{ marginBottom: 30 }}
+        >
+          {selectedSubjectType === 'student' ? (
+            <Input
+              value={watch('subjectId')}
+              onChange={e => setValue('subjectId', e.target.value, { shouldValidate: true })}
+              placeholder="학생 이름 또는 ID를 입력해주세요"
+            />
+          ) : (
+            <Select
+              value={watch('subjectId')}
+              onChange={value => setValue('subjectId', value)}
+              placeholder={`${subjectTypeLabels[selectedSubjectType]} 선택`}
+              showSearch
+              filterOption={(input, option) => {
+                const children = option?.children as string | string[] | undefined
+                if (typeof children === 'string') {
+                  return children.toLowerCase().includes(input.toLowerCase())
+                }
+                if (Array.isArray(children)) {
+                  return children.some(
+                    (child: unknown) =>
+                      typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
+                  )
+                }
+                return false
+              }}
+            >
+              {getSubjectOptions().map(option => (
+                <Option key={option.value} value={option.value}>
+                  {option.label}
+                </Option>
+              ))}
+            </Select>
+          )}
         </Form.Item>
+      )}
 
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              {application ? '수정' : '등록'}
-            </Button>
-            <Button onClick={onCancel}>취소</Button>
-          </Space>
+      {application && (
+        <Form.Item
+          label="상태"
+          validateStatus={errors.status ? 'error' : ''}
+          help={errors.status?.message}
+          required
+        >
+          <Select
+            value={watch('status')}
+            onChange={value => setValue('status', value)}
+            placeholder="상태 선택"
+          >
+            <Option value="submitted">접수</Option>
+            <Option value="reviewing">검토</Option>
+            <Option value="approved">확정</Option>
+            <Option value="rejected">거절</Option>
+            <Option value="cancelled">취소</Option>
+          </Select>
         </Form.Item>
-      </Form>
+      )}
+
+      <Form.Item label="비고">
+        <TextArea {...register('notes')} rows={4} placeholder="추가 정보나 메모를 입력해주세요" />
+      </Form.Item>
+
+      <Form.Item>
+        <Space>
+          <Button type="primary" htmlType="submit" loading={loading}>
+            {application ? '수정' : '등록'}
+          </Button>
+          <Button onClick={onCancel}>취소</Button>
+        </Space>
+      </Form.Item>
+    </Form>
   )
 }
-

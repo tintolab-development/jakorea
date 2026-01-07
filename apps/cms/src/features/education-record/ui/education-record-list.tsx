@@ -120,9 +120,10 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
   ).sort()
 
   const handleFilterChange = (key: string, value: string | undefined) => {
-    setParams({ [key]: value || undefined })
-    // 테이블 필터도 동기화 (region은 제외 - 컴포넌트 레벨에서 처리)
-    if (key !== 'region') {
+    if (key === 'region') {
+      // region만 URL 쿼리와 연동
+      setParams({ region: value || undefined })
+    } else {
       const column = table.getColumn(key)
       if (column) {
         column.setFilterValue(value || null)
@@ -131,16 +132,19 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
   }
 
   const handleResetFilters = () => {
+    // 공통 훅에서 필터 + 페이지네이션 + 쿼리파라미터 전체 초기화
+    // (useTableWithQuery.resetFilters가 clearParams까지 처리)
     resetFilters()
-    setParams({})
   }
 
-  // 쿼리 파라미터에서 필터 값 읽기 (쿼리 파라미터 우선, 없으면 테이블 필터)
+  // 필터 값 읽기
+  // - region: URL 쿼리와 연동
+  // - 그 외: 테이블 필터 상태 사용 (다른 카테고리와 동일)
   const getFilterValue = (key: string) => {
-    const queryValue = params[key as keyof EducationRecordQueryParams]
-    if (queryValue) return queryValue
-    const tableValue = table.getColumn(key)?.getFilterValue() as string | undefined
-    return tableValue || undefined
+    if (key === 'region') {
+      return params.region
+    }
+    return (table.getColumn(key)?.getFilterValue() as string | undefined) || undefined
   }
 
   return (

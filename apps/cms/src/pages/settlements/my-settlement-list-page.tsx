@@ -6,9 +6,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Input, Space, Card, Tag, Button, Table, Tabs } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
 import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { SettlementSubmitModal } from '@/features/settlement/ui/settlement-submit-modal'
 import dayjs from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
 const { Search } = Input
@@ -30,6 +32,7 @@ export function MySettlementListPage() {
   const [settlements, setSettlements] = useState<Settlement[]>([])
   const [allSettlements, setAllSettlements] = useState<Settlement[]>([]) // 탭 카운트용
   const [loading, setLoading] = useState(false)
+  const [submitModalOpen, setSubmitModalOpen] = useState(false)
 
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo(() => {
@@ -160,7 +163,12 @@ export function MySettlementListPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>본인 정산</h1>
+      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
+        <h1 style={{ margin: 0 }}>본인 정산</h1>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setSubmitModalOpen(true)}>
+          정산 제출
+        </Button>
+      </Space>
 
       <Card style={{ marginBottom: 16 }}>
         <Space size="middle" wrap>
@@ -208,6 +216,15 @@ export function MySettlementListPage() {
           }))}
         />
       </Card>
+
+      <SettlementSubmitModal
+        open={submitModalOpen}
+        onCancel={() => setSubmitModalOpen(false)}
+        onSuccess={() => {
+          loadSettlements()
+          loadAllSettlements()
+        }}
+      />
     </div>
   )
 }

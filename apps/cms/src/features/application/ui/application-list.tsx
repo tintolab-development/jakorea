@@ -7,7 +7,9 @@ import { Table, Select, Button, Space, Tag, Dropdown, Badge, Tooltip, Popconfirm
 import { MoreOutlined } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import type { Application } from '@/types/domain'
+import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
+import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { getApplicationSubjectName, createApplicationMenuItems } from '../lib/application-helpers'
 import {
   applicationStatusConfig,
@@ -31,6 +33,8 @@ interface ApplicationListProps {
   onEdit: (application: Application) => void
   onDelete: (application: Application) => void
   onStatusChange: (application: Application, status: Application['status']) => void
+  isAdmin?: boolean
+  currentUser?: Pick<User, 'id' | 'role' | 'instructorId'> | null
 }
 
 export function ApplicationList({
@@ -40,10 +44,179 @@ export function ApplicationList({
   onEdit,
   onDelete,
   onStatusChange,
+  isAdmin = false,
+  currentUser,
 }: ApplicationListProps) {
-  const { table } = useApplicationTable(data)
+  let filteredData = data
+
+  if (!isAdmin && currentUser) {
+    switch (currentUser.role) {
+      case 'INSTRUCTOR':
+      case 'VOLUNTEER': {
+        const instructorId = currentUser.instructorId
+        filteredData = instructorId
+          ? data.filter(app => app.subjectType === 'instructor' && app.subjectId === instructorId)
+          : []
+        break
+      }
+      case 'STUDENT': {
+        // 학생은 아직 별도 ID 매핑이 없어, 일단 학생 타입 신청만 표시
+        filteredData = data.filter(app => app.subjectType === 'student')
+        break
+      }
+      default:
+        filteredData = data
+    }
+  }
+
+  const { table, resetFilters } = useApplicationTable(filteredData)
 
   const programs = programService.getAllSync()
+
+  const pathTypeLabels: Record<string, string> = {
+    google_form: '구글폼',
+    internal: '자동화 프로그램',
+  }
+
+  const columns = [
+    {
+      title: '프로그램',
+      dataIndex: 'programId',
+      key: 'programId',
+      render: (programId: string) => {
+        const program = programService.getByIdSync(programId)
+        return program ? (
+          <Tooltip title={program.description || ''}>
+            <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
+          </Tooltip>
+        ) : (
+          '-'
+        )
+      },
+    },
+    {
+      title: '신청 주체',
+      key: 'subject',
+      render: (_: unknown, record: Application) => (
+        <Space>
+          <Tag color={applicationSubjectTypeConfig.colors[record.subjectType]}>
+            {applicationSubjectTypeConfig.labels[record.subjectType]}
+          </Tag>
+          <span>{getApplicationSubjectName(record)}</span>
+        </Space>
+      ),
+    },
+    {
+      title: '신청 경로',
+      key: 'applicationPath',
+      render: (_: unknown, record: Application) => {
+        const applicationPath = record.applicationPathId
+          ? applicationPathService.getByIdSync(record.applicationPathId)
+          : applicationPathService.getByProgramIdSync(record.programId)
+
+        if (!applicationPath) {
+          return '-'
+        }
+
+        const label = pathTypeLabels[applicationPath.pathType] || applicationPath.pathType
+        return (
+          <Tag color={applicationPath.pathType === 'google_form' ? 'orange' : 'blue'}>
+            {label}
+          </Tag>
+        )
+      },
+    },
+    {
+      title: '상태',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: Application['status']) => {
+        const IconComponent = getApplicationStatusIcon(status)
+        return (
+          <Badge
+            status={getApplicationStatusColor(status) as any}
+            text={
+              <Space>
+                <IconComponent />
+                {getApplicationStatusLabel(status)}
+              </Space>
+            }
+          />
+        )
+      },
+    },
+    {
+      title: '접수일',
+      dataIndex: 'submittedAt',
+      key: 'submittedAt',
+      render: (date: string) => new Date(date).toLocaleDateString('ko-KR'),
+    },
+    {
+      title: '검토일',
+      dataIndex: 'reviewedAt',
+      key: 'reviewedAt',
+      render: (date?: string) => (date ? new Date(date).toLocaleDateString('ko-KR') : '-'),
+    },
+    ...(isAdmin
+      ? [
+          {
+            title: '작업',
+            key: 'action',
+            fixed: 'right' as const,
+            width: 100,
+            render: (_: unknown, record: Application) => (
+              <div onClick={e => e.stopPropagation()}>
+                <Space>
+                  <Popconfirm
+                    title="상태 변경"
+                    description={`이 신청을 "${getApplicationStatusLabel(
+                      getNextApplicationStatus(record.status) || 'approved'
+                    )}" 상태로 변경하시겠습니까?`}
+                    onConfirm={() => {
+                      const nextStatus = getNextApplicationStatus(record.status)
+                      if (nextStatus) {
+                        onStatusChange(record, nextStatus)
+                      }
+                    }}
+                    okText="확인"
+                    cancelText="취소"
+                    disabled={isApplicationFinalStatus(record.status)}
+                  >
+                    <Button
+                      type="link"
+                      size="small"
+                      disabled={isApplicationFinalStatus(record.status)}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      다음 단계
+                    </Button>
+                  </Popconfirm>
+                  <div onClick={e => e.stopPropagation()}>
+                    <Dropdown
+                      menu={{
+                        items: createApplicationMenuItems(record, {
+                          onView,
+                          onEdit,
+                          onDelete,
+                          onStatusChange,
+                        }),
+                      }}
+                      trigger={['click']}
+                    >
+                      <Button
+                        type="text"
+                        icon={<MoreOutlined />}
+                        onClick={e => e.stopPropagation()}
+                      />
+                    </Dropdown>
+                  </div>
+                </Space>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ]
 
   return (
     <div>
@@ -90,124 +263,12 @@ export function ApplicationList({
             </Option>
           ))}
         </Select>
-        <Button onClick={() => table.resetColumnFilters()}>필터 초기화</Button>
+        <Button onClick={() => resetFilters()}>필터 초기화</Button>
       </Space>
 
       <Table
         dataSource={table.getRowModel().rows.map(row => row.original)}
-        columns={[
-          {
-            title: '프로그램',
-            dataIndex: 'programId',
-            key: 'programId',
-            render: (programId: string) => {
-              const program = programService.getByIdSync(programId)
-              return program ? (
-                <Tooltip title={program.description || ''}>
-                  <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
-                </Tooltip>
-              ) : (
-                '-'
-              )
-            },
-          },
-          {
-            title: '신청 주체',
-            key: 'subject',
-            render: (_: unknown, record: Application) => (
-              <Space>
-                <Tag color={applicationSubjectTypeConfig.colors[record.subjectType]}>
-                  {applicationSubjectTypeConfig.labels[record.subjectType]}
-                </Tag>
-                <span>{getApplicationSubjectName(record)}</span>
-              </Space>
-            ),
-          },
-          {
-            title: '상태',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: Application['status']) => {
-              const IconComponent = getApplicationStatusIcon(status)
-              return (
-                <Badge
-                  status={getApplicationStatusColor(status) as any}
-                  text={
-                    <Space>
-                      <IconComponent />
-                      {getApplicationStatusLabel(status)}
-                    </Space>
-                  }
-                />
-              )
-            },
-          },
-          {
-            title: '접수일',
-            dataIndex: 'submittedAt',
-            key: 'submittedAt',
-            render: (date: string) => new Date(date).toLocaleDateString('ko-KR'),
-          },
-          {
-            title: '검토일',
-            dataIndex: 'reviewedAt',
-            key: 'reviewedAt',
-            render: (date?: string) => (date ? new Date(date).toLocaleDateString('ko-KR') : '-'),
-          },
-          {
-            title: '작업',
-            key: 'action',
-            fixed: 'right',
-            width: 100,
-            render: (_: unknown, record: Application) => (
-              <div onClick={(e) => e.stopPropagation()}>
-                <Space>
-                <Popconfirm
-                  title="상태 변경"
-                  description={`이 신청을 "${getApplicationStatusLabel(getNextApplicationStatus(record.status) || 'approved')}" 상태로 변경하시겠습니까?`}
-                  onConfirm={() => {
-                    const nextStatus = getNextApplicationStatus(record.status)
-                    if (nextStatus) {
-                      onStatusChange(record, nextStatus)
-                    }
-                  }}
-                  okText="확인"
-                  cancelText="취소"
-                  disabled={isApplicationFinalStatus(record.status)}
-                >
-                  <Button
-                    type="link"
-                    size="small"
-                    disabled={isApplicationFinalStatus(record.status)}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    다음 단계
-                  </Button>
-                </Popconfirm>
-                <div onClick={(e) => e.stopPropagation()}>
-                  <Dropdown
-            menu={{
-              items: createApplicationMenuItems(record, {
-                onView,
-                onEdit,
-                onDelete,
-                onStatusChange,
-              }),
-            }}
-            trigger={['click']}
-          >
-                    <Button
-                      type="text"
-                      icon={<MoreOutlined />}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </Dropdown>
-                </div>
-              </Space>
-              </div>
-            ),
-          },
-        ]}
+        columns={columns}
         rowKey="id"
         loading={loading}
         onRow={record => ({

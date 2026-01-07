@@ -331,10 +331,12 @@ export function ProgramDetailDrawer({
                     {applicationAvailable ? (
                       <div>
                         <Paragraph style={{ margin: 0, marginBottom: 8 }}>
-                          <Text strong>신청 가능합니다.</Text>
+                          <Text strong style={{ fontSize: 16, color: '#52c41a' }}>
+                            신청 가능합니다
+                          </Text>
                         </Paragraph>
                         {applicationPath && applicationPath.guideMessage && (
-                          <Paragraph style={{ margin: 0, marginBottom: 8, fontSize: 12, color: '#8c8c8c' }}>
+                          <Paragraph style={{ margin: 0, marginBottom: 8, fontSize: 14, color: '#595959' }}>
                             {applicationPath.guideMessage}
                           </Paragraph>
                         )}
@@ -347,9 +349,20 @@ export function ProgramDetailDrawer({
                         )}
                       </div>
                     ) : (
-                      <Paragraph style={{ margin: 0 }}>
-                        <Text type="secondary">현재 신청이 불가능한 상태입니다.</Text>
-                      </Paragraph>
+                      <div>
+                        <Paragraph style={{ margin: 0, marginBottom: 8 }}>
+                          <Text strong style={{ fontSize: 16, color: '#ff4d4f' }}>
+                            현재 신청이 불가능합니다
+                          </Text>
+                        </Paragraph>
+                        <Paragraph style={{ margin: 0, fontSize: 14, color: '#8c8c8c' }}>
+                          {program.status === 'inactive' 
+                            ? '프로그램이 비활성화되어 신청할 수 없습니다.'
+                            : program.status === 'completed'
+                            ? '프로그램이 종료되어 신청할 수 없습니다.'
+                            : '프로그램 상태로 인해 신청할 수 없습니다.'}
+                        </Paragraph>
+                      </div>
                     )}
                     {applicationCount > 0 && (
                       <Text type="secondary" style={{ fontSize: 12 }}>

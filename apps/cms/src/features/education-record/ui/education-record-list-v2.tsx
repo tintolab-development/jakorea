@@ -1,9 +1,10 @@
 /**
  * 교육실적 목록 컴포넌트 (v2)
  * 핵심 컬럼만 표시, 상세 정보는 상세 패널에서 확인
+ * 테이블 / 차트 탭 전환 지원
  */
 
-import { Table, Input, Select, Button, Space, Tag, Tooltip } from 'antd'
+import { Table, Input, Select, Button, Space, Tag, Tooltip, Tabs, Card } from 'antd'
 import { useEducationRecordTable } from '../model/use-education-record-table'
 import type { Program } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
@@ -12,6 +13,17 @@ import { mockApplications } from '@/data/mock'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { useMemo } from 'react'
+import dayjs from 'dayjs'
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+} from 'recharts'
 
 const { Option } = Select
 
@@ -120,9 +132,10 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
   ).sort()
 
   const handleFilterChange = (key: string, value: string | undefined) => {
-    setParams({ [key]: value || undefined })
-    // 테이블 필터도 동기화 (region은 제외 - 컴포넌트 레벨에서 처리)
-    if (key !== 'region') {
+    if (key === 'region') {
+      // region만 URL 쿼리와 연동
+      setParams({ region: value || undefined })
+    } else {
       const column = table.getColumn(key)
       if (column) {
         column.setFilterValue(value || null)
@@ -131,17 +144,55 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
   }
 
   const handleResetFilters = () => {
+    // 공통 훅에서 필터 + 페이지네이션 + 쿼리파라미터 전체 초기화
+    // (useTableWithQuery.resetFilters가 clearParams까지 처리)
     resetFilters()
-    setParams({})
   }
 
-  // 쿼리 파라미터에서 필터 값 읽기 (쿼리 파라미터 우선, 없으면 테이블 필터)
+  // 필터 값 읽기
+  // - region: URL 쿼리와 연동
+  // - 그 외: 테이블 필터 상태 사용 (다른 카테고리와 동일)
   const getFilterValue = (key: string) => {
-    const queryValue = params[key as keyof EducationRecordQueryParams]
-    if (queryValue) return queryValue
-    const tableValue = table.getColumn(key)?.getFilterValue() as string | undefined
-    return tableValue || undefined
+    if (key === 'region') {
+      return params.region
+    }
+    return (table.getColumn(key)?.getFilterValue() as string | undefined) || undefined
   }
+
+  // 테이블에 실제로 표시되는(필터 적용된) 행 기준으로 차트 데이터 생성
+  const filteredRows = table.getRowModel().rows.map(row => row.original)
+
+  const monthlyStats = useMemo(
+    () =>
+      filteredRows.reduce<
+        { monthKey: string; monthLabel: string; totalParticipants: number; programCount: number }[]
+      >((acc, program) => {
+        if (!program.startDate) return acc
+        const date = dayjs(program.startDate)
+        if (!date.isValid()) return acc
+
+        const monthKey = date.format('YYYY-MM')
+        const monthLabel = date.format('YYYY년 MM월')
+
+        const existing = acc.find(item => item.monthKey === monthKey)
+        const participants = typeof program.totalParticipants === 'number' ? program.totalParticipants : 0
+
+        if (existing) {
+          existing.totalParticipants += participants
+          existing.programCount += 1
+        } else {
+          acc.push({
+            monthKey,
+            monthLabel,
+            totalParticipants: participants,
+            programCount: 1,
+          })
+        }
+
+        return acc
+      }, []).sort((a, b) => a.monthKey.localeCompare(b.monthKey)),
+    [filteredRows]
+  )
 
   return (
     <div>
@@ -253,142 +304,193 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
         <Button onClick={handleResetFilters}>필터 초기화</Button>
       </Space>
 
-      <Table
-        dataSource={table.getRowModel().rows.map(row => row.original)}
-        columns={[
+      <Tabs
+        defaultActiveKey="table"
+        items={[
           {
-            title: '교육 월',
-            dataIndex: 'startDate',
-            key: 'educationMonth',
-            width: 90,
-            align: 'center',
-            render: (date: string) => {
-              if (!date) return '-'
-              const month = new Date(date).getMonth() + 1
-              return `${month}월`
-            },
-          },
-          {
-            title: '사업분야',
-            dataIndex: 'businessArea',
-            key: 'businessArea',
-            width: 110,
-            ellipsis: true,
-            render: (value: string) => value || '-',
-          },
-          {
-            title: '후원사명',
-            dataIndex: 'sponsorId',
-            key: 'sponsorName',
-            width: 160,
-            ellipsis: true,
-            render: (sponsorId: string) => sponsorService.getNameById(sponsorId),
-          },
-          {
-            title: '세부 프로그램명',
-            dataIndex: 'title',
-            key: 'title',
-            width: 220,
-            ellipsis: {
-              showTitle: false,
-            },
-            render: (text: string) => (
-              <Tooltip title={text.length > 25 ? text : undefined}>
-                <Tag 
-                  color="blue" 
-                  style={{ 
-                    maxWidth: '200px',
-                    display: 'inline-block',
-                    verticalAlign: 'middle'
-                  }}
-                >
-                  <span style={{ 
-                    display: 'block', 
-                    maxWidth: '180px', 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
-                    whiteSpace: 'nowrap',
-                    lineHeight: '1.5'
-                  }}>
-                    {text}
-                  </span>
-                </Tag>
-              </Tooltip>
+            key: 'table',
+            label: '테이블',
+            children: (
+              <Table
+                dataSource={table.getRowModel().rows.map(row => row.original)}
+                columns={[
+                  {
+                    title: '교육 월',
+                    dataIndex: 'startDate',
+                    key: 'educationMonth',
+                    width: 90,
+                    align: 'center',
+                    render: (date: string) => {
+                      if (!date) return '-'
+                      const month = new Date(date).getMonth() + 1
+                      return `${month}월`
+                    },
+                  },
+                  {
+                    title: '사업분야',
+                    dataIndex: 'businessArea',
+                    key: 'businessArea',
+                    width: 110,
+                    ellipsis: true,
+                    render: (value: string) => value || '-',
+                  },
+                  {
+                    title: '후원사명',
+                    dataIndex: 'sponsorId',
+                    key: 'sponsorName',
+                    width: 160,
+                    ellipsis: true,
+                    render: (sponsorId: string) => sponsorService.getNameById(sponsorId),
+                  },
+                  {
+                    title: '세부 프로그램명',
+                    dataIndex: 'title',
+                    key: 'title',
+                    width: 220,
+                    ellipsis: {
+                      showTitle: false,
+                    },
+                    render: (text: string) => (
+                      <Tooltip title={text.length > 25 ? text : undefined}>
+                        <Tag
+                          color="blue"
+                          style={{
+                            maxWidth: '200px',
+                            display: 'inline-block',
+                            verticalAlign: 'middle',
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: 'block',
+                              maxWidth: '180px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              lineHeight: '1.5',
+                            }}
+                          >
+                            {text}
+                          </span>
+                        </Tag>
+                      </Tooltip>
+                    ),
+                  },
+                  {
+                    title: '학교명',
+                    dataIndex: 'id',
+                    key: 'schoolName',
+                    width: 150,
+                    ellipsis: true,
+                    render: (_: unknown, record: Program) => {
+                      const schoolInfo = programSchoolMap.get(record.id)
+                      return schoolInfo?.schoolName || '-'
+                    },
+                  },
+                  {
+                    title: '시군구',
+                    dataIndex: 'id',
+                    key: 'district',
+                    width: 100,
+                    ellipsis: true,
+                    render: (_: unknown, record: Program) => {
+                      const schoolInfo = programSchoolMap.get(record.id)
+                      return schoolInfo?.region || record.district || '-'
+                    },
+                  },
+                  {
+                    title: 'IPS',
+                    dataIndex: 'ips',
+                    key: 'ips',
+                    width: 90,
+                    align: 'center',
+                    render: (value: string) => {
+                      if (!value) return '-'
+                      const option = ipsOptions.find(opt => opt.value === value)
+                      return <Tag>{option?.label || value}</Tag>
+                    },
+                  },
+                  {
+                    title: '총 참가자',
+                    dataIndex: 'totalParticipants',
+                    key: 'totalParticipants',
+                    width: 100,
+                    align: 'right',
+                    render: (value: number) => <strong>{value ?? '-'}</strong>,
+                  },
+                  {
+                    title: '상태',
+                    dataIndex: 'status',
+                    key: 'status',
+                    width: 80,
+                    align: 'center',
+                    render: (status: string) => (
+                      <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+                    ),
+                  },
+                ]}
+                rowKey="id"
+                loading={loading}
+                onRow={record => ({
+                  onClick: () => onView?.(record),
+                  style: { cursor: onView ? 'pointer' : 'default' },
+                })}
+                scroll={{ x: 1200 }}
+                pagination={{
+                  current: table.getState().pagination.pageIndex + 1,
+                  pageSize: table.getState().pagination.pageSize,
+                  total: table.getFilteredRowModel().rows.length,
+                  showSizeChanger: true,
+                  showTotal: total => `총 ${total}개`,
+                  onChange: (page, pageSize) => {
+                    table.setPageIndex(page - 1)
+                    table.setPageSize(pageSize)
+                  },
+                }}
+              />
             ),
           },
           {
-            title: '학교명',
-            dataIndex: 'id',
-            key: 'schoolName',
-            width: 150,
-            ellipsis: true,
-            render: (_: unknown, record: Program) => {
-              const schoolInfo = programSchoolMap.get(record.id)
-              return schoolInfo?.schoolName || '-'
-            },
-          },
-          {
-            title: '시군구',
-            dataIndex: 'id',
-            key: 'district',
-            width: 100,
-            ellipsis: true,
-            render: (_: unknown, record: Program) => {
-              const schoolInfo = programSchoolMap.get(record.id)
-              return schoolInfo?.region || record.district || '-'
-            },
-          },
-          {
-            title: 'IPS',
-            dataIndex: 'ips',
-            key: 'ips',
-            width: 90,
-            align: 'center',
-            render: (value: string) => {
-              if (!value) return '-'
-              const option = ipsOptions.find(opt => opt.value === value)
-              return <Tag>{option?.label || value}</Tag>
-            },
-          },
-          {
-            title: '총 참가자',
-            dataIndex: 'totalParticipants',
-            key: 'totalParticipants',
-            width: 100,
-            align: 'right',
-            render: (value: number) => (
-              <strong>{value ?? '-'}</strong>
-            ),
-          },
-          {
-            title: '상태',
-            dataIndex: 'status',
-            key: 'status',
-            width: 80,
-            align: 'center',
-            render: (status: string) => (
-              <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+            key: 'chart',
+            label: '차트',
+            children: (
+              <Card>
+                {monthlyStats.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '48px 0', color: '#8c8c8c' }}>
+                    표시할 교육실적 데이터가 없습니다.
+                  </div>
+                ) : (
+                  <div style={{ width: '100%', height: 360 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={monthlyStats}
+                        margin={{ top: 16, right: 16, left: 0, bottom: 16 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="monthLabel" />
+                        <YAxis />
+                        <RechartsTooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="totalParticipants"
+                          name="총 참가자 수"
+                          fill="#1890ff"
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="programCount"
+                          name="프로그램 수"
+                          fill="#52c41a"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </Card>
             ),
           },
         ]}
-        rowKey="id"
-        loading={loading}
-        onRow={record => ({
-          onClick: () => onView?.(record),
-          style: { cursor: onView ? 'pointer' : 'default' },
-        })}
-        scroll={{ x: 1200 }}
-        pagination={{
-          current: table.getState().pagination.pageIndex + 1,
-          pageSize: table.getState().pagination.pageSize,
-          total: table.getFilteredRowModel().rows.length,
-          showSizeChanger: true,
-          showTotal: (total) => `총 ${total}개`,
-          onChange: (page, pageSize) => {
-            table.setPageIndex(page - 1)
-            table.setPageSize(pageSize)
-          },
-        }}
       />
     </div>
   )

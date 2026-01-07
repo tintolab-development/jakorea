@@ -33,13 +33,17 @@ const LoadingFallback = () => (
 )
 
 // Lazy loading wrapper - named export를 default export로 변환
+// 타입 복잡도를 줄이기 위해 import 함수는 느슨하게 any로 처리
 const lazyLoad = <T extends React.ComponentType<any>>(
-  importFunc: () => Promise<{ [key: string]: T }>
+  importFunc: () => Promise<any>
 ) => {
   const LazyComponent = lazy(async () => {
     const module = await importFunc()
-    // named export를 default export로 변환
-    const Component = Object.values(module)[0] as T
+    // default export를 우선 사용, 없으면 첫 번째 named export 사용
+    const Component = (module.default || Object.values(module)[0]) as T
+    if (!Component) {
+      throw new Error('Failed to load component: No export found')
+    }
     return { default: Component }
   })
   return (props: any) => (
@@ -70,6 +74,7 @@ const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-pag
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const MyProgramListPage = lazyLoad(() => import('@/pages/programs/my-program-list-page'))
 const MyProgramDetailPage = lazyLoad(() => import('@/pages/programs/my-program-detail-page'))
+const MyFavoriteProgramsPage = lazyLoad(() => import('@/pages/programs/my-favorite-programs-page'))
 const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
 const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
 const ApplicationResultPage = lazyLoad(() => import('@/pages/applications/application-result-page'))
@@ -154,6 +159,7 @@ export const router = createBrowserRouter([
           { index: true, element: <ProgramListPage /> },
           { path: 'my', element: <MyProgramListPage /> },
           { path: 'my/:id', element: <MyProgramDetailPage /> },
+          { path: 'favorites', element: <MyFavoriteProgramsPage /> },
           { path: 'new', element: <ProgramFormPage /> },
           { path: ':id/edit', element: <ProgramFormPage /> },
         ],

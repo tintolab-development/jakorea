@@ -11,16 +11,21 @@ import { ProgramList } from '@/features/program/ui/program-list'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useProgramStore } from '@/features/program/model/program-store'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import { message } from 'antd'
 import type { Program } from '@/types/domain'
 
 export function ProgramListPage() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const { programs, loading, fetchPrograms, deleteProgram } = useProgramStore()
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null)
+
+  // 관리자만 프로그램 등록 가능
+  const isAdmin = user?.role === 'ADMIN'
 
   useEffect(() => {
     fetchPrograms()
@@ -61,9 +66,11 @@ export function ProgramListPage() {
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>프로그램 관리</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/programs/new')}>
-          프로그램 등록
-        </Button>
+        {isAdmin && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/programs/new')}>
+            프로그램 등록
+          </Button>
+        )}
       </Space>
 
       <ProgramList
@@ -111,4 +118,7 @@ export function ProgramListPage() {
     </div>
   )
 }
+
+// default export 추가 (lazy loading 호환성)
+export default ProgramListPage
 

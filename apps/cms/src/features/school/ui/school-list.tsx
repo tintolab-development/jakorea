@@ -16,7 +16,7 @@ interface SchoolListProps {
 }
 
 export function SchoolList({ data, loading }: SchoolListProps) {
-  const { table } = useSchoolTable(data)
+  const { table, resetFilters } = useSchoolTable(data)
 
   const regions = Array.from(new Set(data.map(s => s.region))).sort()
 
@@ -42,7 +42,7 @@ export function SchoolList({ data, loading }: SchoolListProps) {
             </Option>
           ))}
         </Select>
-        <Button onClick={() => table.resetColumnFilters()}>필터 초기화</Button>
+        <Button onClick={() => resetFilters()}>필터 초기화</Button>
       </Space>
 
       <Table

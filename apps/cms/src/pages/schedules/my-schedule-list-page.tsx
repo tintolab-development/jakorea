@@ -156,6 +156,12 @@ export function MyScheduleListPage() {
             dataSource={schedules}
             loading={loading}
             itemLayout="vertical"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showTotal: total => `총 ${total}개`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
             renderItem={item => {
               const { schedule, programName, role, status } = item
               const scheduleDate = dayjs(schedule.date)

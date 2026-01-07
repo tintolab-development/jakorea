@@ -189,7 +189,7 @@ export function Dashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ margin: 0 }}>대시보드</h1>
         {showSearchAndNotification && (
-          <Space size="middle">
+          <Space size="middle" align="center">
             <div style={{ width: 300 }}>
               <GlobalSearch />
             </div>

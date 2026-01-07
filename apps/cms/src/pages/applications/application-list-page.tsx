@@ -11,12 +11,16 @@ import { ApplicationDetailDrawer } from '@/features/application/ui/application-d
 import { ApplicationForm } from '@/features/application/ui/application-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useApplicationStore } from '@/features/application/model/application-store'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import type { Application } from '@/types/domain'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
 
 export function ApplicationListPage() {
   const { applications, loading, fetchApplications, createApplication, updateApplication, deleteApplication, updateStatus } = useApplicationStore()
+  const { user } = useAuthStore()
+
+  const isAdmin = user?.role === 'ADMIN'
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
@@ -135,6 +139,8 @@ export function ApplicationListPage() {
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         onStatusChange={handleStatusChange}
+        isAdmin={isAdmin}
+        currentUser={user || null}
       />
 
       <ApplicationDetailDrawer

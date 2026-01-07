@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Descriptions, Tag, Button, Space, Spin, message } from 'antd'
-import { ArrowLeftOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
 import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
@@ -87,11 +87,11 @@ export function MySettlementDetailPage() {
   return (
     <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Space>
+        <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ margin: 0 }}>정산 상세</h1>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/settlements/my')}>
             목록으로
           </Button>
-          <h1 style={{ margin: 0 }}>정산 상세</h1>
         </Space>
 
         <Card>
@@ -143,6 +143,51 @@ export function MySettlementDetailPage() {
               </Descriptions.Item>
             ))}
           </Descriptions>
+        </Card>
+
+        <Card title="증빙 파일">
+          {settlement.attachments && settlement.attachments.length > 0 ? (
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              {settlement.attachments.map(file => (
+                <Card key={file.id} size="small" style={{ background: '#fafafa' }}>
+                  <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                    <Space direction="vertical" size="small" style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 500 }}>{file.fileName}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(0, 0, 0, 0.45)' }}>
+                        {file.fileSize != null ? `${(file.fileSize / 1024).toFixed(1)} KB` : '크기 정보 없음'}
+                      </div>
+                    </Space>
+                    <Space>
+                      <Button
+                        icon={<EyeOutlined />}
+                        size="small"
+                        onClick={() => {
+                          // TODO: 파일 미리보기 API 연결
+                          message.info('파일 미리보기 기능은 준비 중입니다.')
+                        }}
+                      >
+                        미리보기
+                      </Button>
+                      <Button
+                        icon={<DownloadOutlined />}
+                        size="small"
+                        onClick={() => {
+                          // TODO: 파일 다운로드 API 연결
+                          message.info('파일 다운로드 기능은 준비 중입니다.')
+                        }}
+                      >
+                        다운로드
+                      </Button>
+                    </Space>
+                  </Space>
+                </Card>
+              ))}
+            </Space>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(0, 0, 0, 0.45)' }}>
+              첨부된 파일이 없습니다.
+            </div>
+          )}
         </Card>
 
         {settlement.approvalHistories && settlement.approvalHistories.length > 0 && (
