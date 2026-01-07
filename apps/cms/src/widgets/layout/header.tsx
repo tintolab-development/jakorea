@@ -6,7 +6,7 @@
 
 import { Layout, Typography, Button, Dropdown } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { UserOutlined, LogoutOutlined } from '@ant-design/icons'
+import { LogoutOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { RoleBadge } from '@/shared/ui'
 import type { MenuProps } from 'antd'
@@ -43,29 +43,26 @@ export function Header() {
       </div>
       {user && (
         <div className="header-user-section">
-          <div className="header-user-info">
-            <div className="header-user-name-row">
-              <div className="header-user-icon">
-                <UserOutlined />
+          <div className="header-user-card">
+            <div className="header-user-top">
+              <div className="header-user-avatar">
+                <RoleBadge role={user.role} size="small" variant="tag" />
               </div>
-              <div className="header-user-details">
-                <Text strong className="header-user-name">
-                  {user.name}
-                </Text>
-                <Text type="secondary" className="header-user-email">
-                  {user.email}
-                </Text>
-              </div>
+              <Dropdown menu={{ items: userMenuItems }} placement="bottomLeft" trigger={['click']}>
+                <Button type="link" className="header-account-button">
+                  계정 관리
+                </Button>
+              </Dropdown>
             </div>
-            <div className="header-user-role-badge">
-              <RoleBadge role={user.role} size="small" variant="tag" />
+            <div className="header-user-text">
+              <Text strong className="header-user-name">
+                {user.name}
+              </Text>
+              <Text type="secondary" className="header-user-email">
+                {user.email}
+              </Text>
             </div>
           </div>
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomLeft" trigger={['click']}>
-            <Button type="text" className="header-account-button">
-              계정 관리
-            </Button>
-          </Dropdown>
         </div>
       )}
     </AntHeader>

@@ -7,6 +7,7 @@ import { Table, Select, Button, Space, Tag, Dropdown, Badge, Tooltip, Popconfirm
 import { MoreOutlined } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import type { Application } from '@/types/domain'
+import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
 import { getApplicationSubjectName, createApplicationMenuItems } from '../lib/application-helpers'
 import {
@@ -31,6 +32,8 @@ interface ApplicationListProps {
   onEdit: (application: Application) => void
   onDelete: (application: Application) => void
   onStatusChange: (application: Application, status: Application['status']) => void
+  isAdmin?: boolean
+  currentUser?: Pick<User, 'id' | 'role' | 'instructorId'> | null
 }
 
 export function ApplicationList({
@@ -40,8 +43,32 @@ export function ApplicationList({
   onEdit,
   onDelete,
   onStatusChange,
+  isAdmin = false,
+  currentUser,
 }: ApplicationListProps) {
-  const { table, resetFilters } = useApplicationTable(data)
+  let filteredData = data
+
+  if (!isAdmin && currentUser) {
+    switch (currentUser.role) {
+      case 'INSTRUCTOR':
+      case 'VOLUNTEER': {
+        const instructorId = currentUser.instructorId
+        filteredData = instructorId
+          ? data.filter(app => app.subjectType === 'instructor' && app.subjectId === instructorId)
+          : []
+        break
+      }
+      case 'STUDENT': {
+        // 학생은 아직 별도 ID 매핑이 없어, 일단 학생 타입 신청만 표시
+        filteredData = data.filter(app => app.subjectType === 'student')
+        break
+      }
+      default:
+        filteredData = data
+    }
+  }
+
+  const { table, resetFilters } = useApplicationTable(filteredData)
 
   const programs = programService.getAllSync()
 

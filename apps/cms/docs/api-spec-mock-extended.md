@@ -26,8 +26,9 @@
 
 ## 1. 정산 관리 고도화 (Phase 4.2)
 
-> V3: Phase 4.2 “정산 관리 고도화”  
-> - 월별 정산, 강사별 정산 상세, 지급조서 생성/다운로드, 승인 워크플로우, 1419 룰 반영 등
+> V3: Phase 4.2 “정산 관리 고도화”
+>
+> - 월별 정산, 강사별 정산 상세, 지급조서 생성/다운로드, 승인 워크플로우, 일사일교 룰 반영 등
 
 Base의 `/api/settlements` 스펙을 확장합니다.
 
@@ -120,7 +121,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 }
 ```
 
-### 1.3 정산 산출 규칙 설정 (1419 룰 포함)
+### 1.3 정산 산출 규칙 설정 (일사일교 룰 포함)
 
 > 규칙 자체는 향후 별도 엔티티로 관리하는 것을 전제로, 1차 스펙만 정의.
 
@@ -161,7 +162,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 - **PATCH** `/api/settlement-rules/{id}`
 - **DELETE** `/api/settlement-rules/{id}`
 
-> 실제 구현 시, 1419 사업 특수 규칙은 `transportationRule`, `accommodationRule` 하위 필드로 상세 정의.
+> 실제 구현 시, 일사일교 사업 특수 규칙은 `transportationRule`, `accommodationRule` 하위 필드로 상세 정의.
 
 ### 1.4 지급조서 생성/미리보기/다운로드
 
@@ -214,7 +215,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 
 ```json
 {
-  "action": "approve",              // 'submit' | 'calculate' | 'approve' | 'reject' | 'pay' | 'cancel'
+  "action": "approve", // 'submit' | 'calculate' | 'approve' | 'reject' | 'pay' | 'cancel'
   "comment": "승인합니다.",
   "actorId": "user-001"
 }
@@ -314,7 +315,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 
 ```json
 {
-  "pathType": "google_form",      // 'google_form' | 'internal'
+  "pathType": "google_form", // 'google_form' | 'internal'
   "googleFormUrl": "https://forms.gle/xxxx",
   "guideMessage": "신청 안내 문구",
   "isActive": true
@@ -348,7 +349,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
     { "date": "2025-03-10", "startTime": "10:00", "endTime": "12:00" },
     { "date": "2025-03-17", "startTime": "10:00", "endTime": "12:00" }
   ],
-  "status": "pending",  // 'pending' | 'accepted' | 'rejected'
+  "status": "pending", // 'pending' | 'accepted' | 'rejected'
   "reasonPublic": null,
   "createdAt": "2025-02-01T10:00:00.000Z",
   "updatedAt": "2025-02-02T10:00:00.000Z"
@@ -364,9 +365,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 {
   "programId": "prog-001",
   "roundId": "prog-001-round-1",
-  "proposedDates": [
-    { "date": "2025-03-10", "startTime": "10:00", "endTime": "12:00" }
-  ]
+  "proposedDates": [{ "date": "2025-03-10", "startTime": "10:00", "endTime": "12:00" }]
 }
 ```
 
@@ -476,7 +475,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 ```json
 {
   "id": "cert-001",
-  "type": "volunteer_certificate",   // 'volunteer_certificate' | 'instructor_certificate' | 'completion'
+  "type": "volunteer_certificate", // 'volunteer_certificate' | 'instructor_certificate' | 'completion'
   "userId": "user-001",
   "programId": "prog-001",
   "activityId": "activity-001",
@@ -538,7 +537,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
   "id": "popup-001",
   "title": "신규 프로그램 안내",
   "content": "<p>내용</p>",
-  "size": "large",   // 'small' | 'medium' | 'large'
+  "size": "large", // 'small' | 'medium' | 'large'
   "order": 1,
   "isActive": true,
   "createdAt": "2025-01-01T10:00:00.000Z",
@@ -560,7 +559,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 ```json
 {
   "id": "content-001",
-  "type": "about",        // 'about' | 'impact_story'
+  "type": "about", // 'about' | 'impact_story'
   "title": "JAKOREA 소개",
   "body": "<p>소개 내용</p>",
   "imageUrl": "https://.../image.png",
@@ -581,17 +580,17 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 ```json
 {
   "id": "inq-001",
-  "category": "sponsorship",     // 예: 'sponsorship' | 'program' | 'etc'
+  "category": "sponsorship", // 예: 'sponsorship' | 'program' | 'etc'
   "subject": "후원 문의",
   "message": "문의 내용",
   "email": "company@example.com",
   "phone": "02-000-0000",
-  "status": "pending",           // 'pending' | 'in_progress' | 'done'
+  "status": "pending", // 'pending' | 'in_progress' | 'done'
   "assigneeId": "user-001",
   "logs": [
     {
       "id": "log-001",
-      "type": "call",            // 'call' | 'email' | 'note'
+      "type": "call", // 'call' | 'email' | 'note'
       "message": "통화 완료",
       "createdAt": "2025-01-10T10:00:00.000Z",
       "createdBy": "user-002"
@@ -655,7 +654,7 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 ```json
 {
   "id": "file-001",
-  "category": "newsletter",     // 'recruitment' | 'newsletter' | 'press' | 'notice'
+  "category": "newsletter", // 'recruitment' | 'newsletter' | 'press' | 'notice'
   "title": "2025년 1월 뉴스레터",
   "description": "설명",
   "fileUrl": "https://.../file.pdf",
@@ -721,17 +720,17 @@ Base의 `/api/settlements` 스펙을 확장합니다.
 Phase 5.x에서 정의된 사용자 UI 구조(마이페이지, To-do, 일정/강의/봉사 상세, 이력/증빙 등)에 맞춰,  
 앞서 정의한 엔드포인트들이 아래처럼 조합되어 사용됩니다.
 
-- **마이페이지 메인**:  
+- **마이페이지 메인**:
   - `GET /api/mypage/summary` (primaryStatus, todos, upcomingSchedules, historySummary)
-- **To-do 처리 화면**:  
+- **To-do 처리 화면**:
   - `GET /api/todos/{id}`, `PATCH /api/todos/{id}` + `targetUrl` 기반 내비게이션
-- **내 일정/상세**:  
+- **내 일정/상세**:
   - `GET /api/activities/lectures`, `GET /api/activities/volunteers`, `GET /api/activities/{id}`
-- **보고서 작성**:  
-  - `GET /api/reports/fields?type=lecture|volunteer|program` (필드 정의, `data/mock/reports.ts`)  
+- **보고서 작성**:
+  - `GET /api/reports/fields?type=lecture|volunteer|program` (필드 정의, `data/mock/reports.ts`)
   - `POST /api/reports` (실제 제출)
-- **이력/증빙**:  
-  - `GET /api/histories` (완료된 프로그램/강의/봉사 이력)  
+- **이력/증빙**:
+  - `GET /api/histories` (완료된 프로그램/강의/봉사 이력)
   - `GET /api/histories/{id}` + `GET /api/certificates` / `/api/certificates/{id}/download`
 
 구체적인 화면별 필드/Forbidden 규칙은 `MVP_ROADMAP_V2.md` / `V3.md`의 해당 섹션과  
@@ -746,8 +745,3 @@ Phase 5.x에서 정의된 사용자 UI 구조(마이페이지, To-do, 일정/강
 - 실제 백엔드 구현 시:
   - 1단계: Base 스펙을 우선 구현하여 CMS 기존 화면과 연동
   - 2단계: Extended 중 **정산 고도화 / 공문 / 문의 / 다운로드** 등 우선순위가 높은 모듈부터 단계적으로 도입
-
-
-
-
-

@@ -190,8 +190,14 @@ export function NotificationList() {
       <Badge count={unreadCount} offset={[-5, 5]}>
         <Button
           type="text"
-          icon={<BellOutlined style={{ fontSize: 18 }} />}
-          style={{ fontSize: 18 }}
+          size="large"
+          icon={<BellOutlined style={{ fontSize: 25 }} />}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+          }}
         />
       </Badge>
     </Popover>

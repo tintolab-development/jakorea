@@ -7,34 +7,28 @@
 Ant Design Theme Provider에 다음과 같은 색상 variation이 추가되었습니다:
 
 #### 도메인별 색상
+
 - **스폰서 (Sponsor)**: 주황 계열 (`#ff7a45`)
   - Light: `#fff1e8`
   - Dark: `#d4380d`
-  
 - **학교 (School)**: 청록 계열 (`#13c2c2`)
   - Light: `#e6fffb`
   - Dark: `#08979c`
-  
 - **강사 (Instructor)**: 보라 계열 (`#722ed1`)
   - Light: `#f9f0ff`
   - Dark: `#531dab`
-  
 - **프로그램 (Program)**: 파랑 계열 (`#2f54eb`)
   - Light: `#f0f5ff`
   - Dark: `#1d39c4`
-  
 - **신청 (Application)**: 분홍 계열 (`#eb2f96`)
   - Light: `#fff0f6`
   - Dark: `#c41d7f`
-  
 - **일정 (Schedule)**: 주황 계열 (`#fa8c16`)
   - Light: `#fff7e6`
   - Dark: `#d46b08`
-  
 - **매칭 (Matching)**: 녹색 계열 (`#52c41a`)
   - Light: `#f6ffed`
   - Dark: `#389e0d`
-  
 - **정산 (Settlement)**: 주황 계열 (`#fa541c`)
   - Light: `#fff2e8`
   - Dark: `#d4380d`
@@ -120,7 +114,7 @@ Ant Design Theme Provider에 다음과 같은 색상 variation이 추가되었�
      - 기본 강사료 설정
      - 교통비 계산 규칙 (거주지 기준 60km 초과 시)
      - 숙박비 계산 규칙 (타지역 이동 시 실비)
-     - 1419 사업 특수성 반영
+     - 일사일교 사업 특수성 반영
    - **지급조서 생성**
      - 강사 정보 자동 입력
      - 개인정보 동의 확인 UI

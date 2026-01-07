@@ -9,7 +9,10 @@ export const applicationSchema = z.object({
   programId: z.string().min(1, '프로그램을 선택해주세요'),
   roundId: z.string().optional(),
   subjectType: z.enum(['school', 'student', 'instructor']),
-  subjectId: z.string().min(1, '신청 주체를 선택해주세요'),
+  subjectId: z
+    .string()
+    .transform(value => value.trim())
+    .refine(value => value.length > 0, '신청 주체를 선택해주세요'),
   status: z.enum(['submitted', 'reviewing', 'approved', 'rejected', 'cancelled']),
   notes: z.string().optional(),
 })

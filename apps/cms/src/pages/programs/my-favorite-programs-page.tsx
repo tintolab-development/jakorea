@@ -1,18 +1,18 @@
 /**
- * 본인 프로그램 목록 페이지 (강사/봉사자용)
- * Phase 5.2.2: 본인 프로그램 조회
+ * 관심 프로그램 목록 페이지 (강사/봉사자용)
+ * Phase 5.2.6: 관심 프로그램 관리
  */
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
-import { HeartOutlined, HeartFilled } from '@ant-design/icons'
+import { Input, Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
+import { HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getMyPrograms, type MyProgram, type MyProgramFilters } from '@/entities/program/api/instructor-program-service'
 import {
-  addFavoriteProgram,
+  getFavoritePrograms,
   removeFavoriteProgram,
-  isFavoriteProgram,
+  type FavoriteProgram,
+  type FavoriteProgramFilters,
 } from '@/entities/program/api/favorite-program-service'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
@@ -20,66 +20,43 @@ import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/s
 const { Option } = Select
 const { Search } = Input
 
-export function MyProgramListPage() {
+export function MyFavoriteProgramsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [programs, setPrograms] = useState<MyProgram[]>([])
+  const [programs, setPrograms] = useState<FavoriteProgram[]>([])
   const [loading, setLoading] = useState(false)
-  const [favorites, setFavorites] = useState<Set<string>>(new Set()) // 찜하기 상태
 
   // 필터 값 (쿼리 파라미터에서 읽기)
-  const filters = useMemo<MyProgramFilters>(() => {
+  const filters = useMemo<FavoriteProgramFilters>(() => {
     return {
-      status: (searchParams.get('status') as MyProgramFilters['status']) || 'all',
-      category: (searchParams.get('category') as MyProgramFilters['category']) || 'all',
+      status: (searchParams.get('status') as FavoriteProgramFilters['status']) || 'all',
+      category: (searchParams.get('category') as FavoriteProgramFilters['category']) || 'all',
       search: searchParams.get('search') || undefined,
     }
   }, [searchParams])
 
   useEffect(() => {
-    if (user?.instructorId) {
+    if (user?.id) {
       loadPrograms()
     }
-  }, [user?.instructorId, filters])
+  }, [user?.id, filters])
 
   const loadPrograms = async () => {
-    if (!user?.instructorId) return
+    if (!user?.id) return
 
     setLoading(true)
     try {
-      const data = await getMyPrograms(user.instructorId, filters)
+      const data = await getFavoritePrograms(user.id, filters)
       setPrograms(data)
-      // 프로그램 로드 후 관심 상태도 로드
-      if (user?.id) {
-        await loadFavoritesForPrograms(data, user.id)
-      }
     } catch (error) {
-      console.error('프로그램 로드 실패:', error)
+      console.error('관심 프로그램 로드 실패:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  // 프로그램 목록에 대한 관심 상태 로드
-  const loadFavoritesForPrograms = async (programList: MyProgram[], userId: string) => {
-    try {
-      const favoriteStatuses = await Promise.all(
-        programList.map(p => isFavoriteProgram(userId, p.id))
-      )
-      const favoriteSet = new Set<string>()
-      programList.forEach((p, index) => {
-        if (favoriteStatuses[index]) {
-          favoriteSet.add(p.id)
-        }
-      })
-      setFavorites(favoriteSet)
-    } catch (error) {
-      console.error('관심 프로그램 상태 로드 실패:', error)
-    }
-  }
-
-  const handleStatusChange = (value: MyProgramFilters['status']) => {
+  const handleStatusChange = (value: FavoriteProgramFilters['status']) => {
     const newParams = new URLSearchParams(searchParams)
     if (!value || value === 'all') {
       newParams.delete('status')
@@ -89,7 +66,7 @@ export function MyProgramListPage() {
     setSearchParams(newParams, { replace: true })
   }
 
-  const handleCategoryChange = (value: MyProgramFilters['category']) => {
+  const handleCategoryChange = (value: FavoriteProgramFilters['category']) => {
     const newParams = new URLSearchParams(searchParams)
     if (!value || value === 'all') {
       newParams.delete('category')
@@ -109,41 +86,27 @@ export function MyProgramListPage() {
     setSearchParams(newParams, { replace: true })
   }
 
-  const handleToggleFavorite = async (programId: string) => {
+  const handleRemoveFavorite = async (programId: string) => {
     if (!user?.id) return
 
-    const isFavorite = favorites.has(programId)
-
     try {
-      if (isFavorite) {
-        await removeFavoriteProgram(user.id, programId)
-        message.success('관심 프로그램에서 제거되었습니다.')
-      } else {
-        await addFavoriteProgram(user.id, programId)
-        message.success('관심 프로그램에 추가되었습니다.')
-      }
-
-      // 상태 업데이트
-      setFavorites(prev => {
-        const newSet = new Set(prev)
-        if (isFavorite) {
-          newSet.delete(programId)
-        } else {
-          newSet.add(programId)
-        }
-        return newSet
-      })
+      await removeFavoriteProgram(user.id, programId)
+      await loadPrograms() // 목록 새로고침
     } catch (error) {
-      console.error('관심 프로그램 토글 실패:', error)
-      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+      console.error('관심 프로그램 해제 실패:', error)
     }
   }
 
-  const handleViewProgram = (program: MyProgram) => {
-    navigate(`/programs/my/${program.id}`)
+  const handleViewProgram = (program: FavoriteProgram) => {
+    // 본인 프로그램이면 본인 프로그램 상세로, 아니면 일반 프로그램 상세로
+    if (user?.instructorId) {
+      navigate(`/programs/my/${program.id}`)
+    } else {
+      navigate(`/programs/${program.id}`)
+    }
   }
 
-  const getProgramStatus = (program: MyProgram) => {
+  const getProgramStatus = (program: FavoriteProgram) => {
     const now = dayjs()
     const startDate = dayjs(program.startDate)
     const endDate = dayjs(program.endDate)
@@ -167,7 +130,7 @@ export function MyProgramListPage() {
       key: 'title',
       width: 250,
       fixed: 'left' as const,
-      render: (title: string, record: MyProgram) => (
+      render: (title: string, record: FavoriteProgram) => (
         <div>
           <Button
             type="link"
@@ -194,7 +157,7 @@ export function MyProgramListPage() {
       title: '상태',
       key: 'status',
       width: 120,
-      render: (_: any, record: MyProgram) => {
+      render: (_: any, record: FavoriteProgram) => {
         const status = getProgramStatus(record)
         return <Tag color={status.color}>{status.label}</Tag>
       },
@@ -203,52 +166,49 @@ export function MyProgramListPage() {
       title: '진행 기간',
       key: 'period',
       width: 200,
-      render: (_: any, record: MyProgram) => {
+      render: (_: any, record: FavoriteProgram) => {
         const start = typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
         const end = typeof record.endDate === 'string' ? dayjs(record.endDate) : dayjs(record.endDate)
         return `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
       },
     },
     {
-      title: '매칭일',
-      dataIndex: 'matchedAt',
-      key: 'matchedAt',
+      title: '관심 등록일',
+      dataIndex: 'favoritedAt',
+      key: 'favoritedAt',
       width: 150,
       render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
     },
     {
-      title: '일정 수',
-      key: 'scheduleCount',
-      width: 100,
-      render: (_: any, record: MyProgram) => record.schedules.length,
-    },
-    {
-      title: '찜하기',
-      key: 'favorite',
+      title: '관심 해제',
+      key: 'remove',
       width: 100,
       fixed: 'right' as const,
-      render: (_: any, record: MyProgram) => (
+      render: (_: any, record: FavoriteProgram) => (
         <Button
           type="text"
-          icon={favorites.has(record.id) ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-          onClick={() => handleToggleFavorite(record.id)}
-        />
+          danger
+          icon={<HeartFilled style={{ color: '#ff4d4f' }} />}
+          onClick={() => handleRemoveFavorite(record.id)}
+        >
+          해제
+        </Button>
       ),
     },
   ]
 
-  if (!user?.instructorId) {
+  if (!user?.id) {
     return (
       <div>
-        <h1>본인 프로그램</h1>
-        <Empty description="강사 정보가 없습니다." />
+        <h1>관심 프로그램</h1>
+        <Empty description="로그인이 필요합니다." />
       </div>
     )
   }
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>본인 프로그램</h1>
+      <h1 style={{ marginBottom: 24 }}>관심 프로그램</h1>
 
       <Card style={{ marginBottom: 16 }}>
         <Space size="middle" wrap>
@@ -275,7 +235,7 @@ export function MyProgramListPage() {
             placeholder="카테고리"
             style={{ width: 150 }}
             value={filters.category}
-            onChange={(value) => handleCategoryChange(value as MyProgramFilters['category'])}
+            onChange={(value) => handleCategoryChange(value as FavoriteProgramFilters['category'])}
           >
             <Option value="all">전체</Option>
             <Option value="school">학교 프로그램</Option>
@@ -296,6 +256,9 @@ export function MyProgramListPage() {
           showTotal: total => `총 ${total}개`,
         }}
         scroll={{ x: 1200 }}
+        locale={{
+          emptyText: <Empty description="관심 등록한 프로그램이 없습니다." />,
+        }}
       />
     </div>
   )

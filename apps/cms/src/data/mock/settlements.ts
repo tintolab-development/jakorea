@@ -181,11 +181,15 @@ function createInstructor1Settlements(): Settlement[] {
         })()
       : undefined
     
+    // 테스트용 매칭 ID는 사용하지 않고, 다른 매칭 ID 사용 (실제 매칭과 연결되지 않도록)
+    // 이렇게 하면 match-test-instructor1-001 매칭은 정산 제출 가능한 상태로 유지됨
+    const testMatchingId = `match-instructor1-${String(i + 1).padStart(3, '0')}`
+    
     instructor1Settlements.push({
       id: `settle-instructor1-${String(i + 1).padStart(3, '0')}`,
       programId: baseProgram.id,
       instructorId: INSTRUCTOR1_ID, // instructor1의 고정 ID
-      matchingId: `match-instructor1-${String(i + 1).padStart(3, '0')}`, // 임시 매칭 ID
+      matchingId: testMatchingId, // 테스트 매칭과 다른 ID 사용
       period,
       items,
       totalAmount,

@@ -9,6 +9,11 @@ import { Card, Descriptions, Tag, Button, Table, Space, Empty, Spin, message } f
 import { HeartOutlined, HeartFilled, ArrowLeftOutlined, CalendarOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMyProgramDetail, type MyProgram } from '@/entities/program/api/instructor-program-service'
+import {
+  addFavoriteProgram,
+  removeFavoriteProgram,
+  isFavoriteProgram,
+} from '@/entities/program/api/favorite-program-service'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import dayjs from 'dayjs'
 
@@ -25,6 +30,12 @@ export function MyProgramDetailPage() {
       loadProgram()
     }
   }, [id, user?.instructorId])
+
+  useEffect(() => {
+    if (id && user?.id) {
+      loadFavoriteStatus()
+    }
+  }, [id, user?.id])
 
   const loadProgram = async () => {
     if (!id || !user?.instructorId) return
@@ -46,10 +57,33 @@ export function MyProgramDetailPage() {
     }
   }
 
-  const handleToggleFavorite = () => {
-    setFavorite(!favorite)
-    message.success(favorite ? '관심 프로그램에서 제거되었습니다.' : '관심 프로그램에 추가되었습니다.')
-    // 실제로는 API 호출 필요
+  const loadFavoriteStatus = async () => {
+    if (!id || !user?.id) return
+
+    try {
+      const isFavorite = await isFavoriteProgram(user.id, id)
+      setFavorite(isFavorite)
+    } catch (error) {
+      console.error('관심 프로그램 상태 로드 실패:', error)
+    }
+  }
+
+  const handleToggleFavorite = async () => {
+    if (!id || !user?.id) return
+
+    try {
+      if (favorite) {
+        await removeFavoriteProgram(user.id, id)
+        message.success('관심 프로그램에서 제거되었습니다.')
+      } else {
+        await addFavoriteProgram(user.id, id)
+        message.success('관심 프로그램에 추가되었습니다.')
+      }
+      setFavorite(!favorite)
+    } catch (error) {
+      console.error('관심 프로그램 토글 실패:', error)
+      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+    }
   }
 
   const getProgramStatus = (program: MyProgram) => {

@@ -222,6 +222,13 @@ export interface SettlementItem {
 // 정산 상태
 export type SettlementStatus = 'pending' | 'calculated' | 'approved' | 'paid' | 'cancelled'
 
+// 정산 첨부 파일 (Mock용 메타데이터)
+export interface SettlementAttachment {
+  id: string
+  fileName: string
+  fileSize?: number
+}
+
 // 정산
 export interface Settlement {
   id: UUID
@@ -234,6 +241,7 @@ export interface Settlement {
   status: SettlementStatus
   documentGeneratedAt?: DateValue
   notes?: string
+  attachments?: SettlementAttachment[] // 증빙 파일 메타데이터 (Mock)
   approvalHistories?: Array<{
     id: string
     step: 'pending' | 'review' | 'approval' | 'payment'

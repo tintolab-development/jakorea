@@ -73,9 +73,8 @@ export function GlobalSearch({ placeholder = '프로그램, 일정 검색...', s
         allowClear
         enterButton={<SearchOutlined />}
         onPressEnter={handlePressEnter}
-        size="large"
+        size="middle"
       />
     </AutoComplete>
   )
 }
-
