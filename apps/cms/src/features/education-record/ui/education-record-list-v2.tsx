@@ -4,7 +4,7 @@
  * 테이블 / 차트 탭 전환 지원
  */
 
-import { Table, Input, Select, Button, Space, Tag, Tooltip, Tabs, Card } from 'antd'
+import { Table, Input, Select, Button, Space, Tag, Tooltip, Tabs, Card, Segmented } from 'antd'
 import { useEducationRecordTable } from '../model/use-education-record-table'
 import type { Program } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
@@ -12,12 +12,17 @@ import { schoolService } from '@/entities/school/api/school-service'
 import { mockApplications } from '@/data/mock'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { MOCK_SIDO_SIGUNGU } from '@/shared/constants/sido-sigungu'
 import dayjs from 'dayjs'
 import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -40,7 +45,9 @@ interface EducationRecordQueryParams extends Record<string, string | undefined> 
   ips?: string
   targetLevel?: string
   institutionType?: string
-  region?: string
+  sido?: string // 시/도
+  gun?: string // 군
+  gu?: string // 구
 }
 
 const businessAreas = [
@@ -74,34 +81,75 @@ const educationMonths = Array.from({ length: 12 }, (_, i) => ({
 
 export function EducationRecordListV2({ data, loading, onView }: EducationRecordListV2Props) {
   const { params, setParams } = useQueryParams<EducationRecordQueryParams>()
-  
-  // region 필터를 적용한 데이터 (컴포넌트 레벨 필터링)
+  const [chartView, setChartView] = useState<'trend' | 'ips' | 'level'>('trend')
+
+  // helper: region/address 문자열에서 시/군/구 단위 추출 (접미사 기준)
+  const parseRegion = (region?: string) => {
+    if (!region) return { si: '', gun: '', gu: '' }
+    const tokens = region.trim().split(/\s+/)
+    let si = ''
+    let gun = ''
+    let gu = ''
+    tokens.forEach(token => {
+      if (token.endsWith('시')) si = si || token
+      else if (token.endsWith('군')) gun = gun || token
+      else if (token.endsWith('구')) gu = gu || token
+    })
+    return { si, gun, gu }
+  }
+
+  // 시/도 + 군/구 필터를 적용한 데이터 (컴포넌트 레벨 필터링)
   const filteredDataByRegion = useMemo(() => {
-    const regionFilter = params.region
-    if (!regionFilter) return data
-    
+    const sidoFilter = params.sido
+    const gunFilter = params.gun
+    const guFilter = params.gu
+
     // Program별 학교 정보 매핑 (Application을 통해)
-    const map = new Map<string, { schoolId: string; schoolName: string; region: string }>()
+    const map = new Map<
+      string,
+      {
+        schoolId: string
+        schoolName: string
+        region: string
+        sido: string
+        si: string
+        gun: string
+        gu: string
+      }
+    >()
     mockApplications.forEach(app => {
       if (app.subjectType === 'school' && app.programId) {
         const school = schoolService.getAllSync().find(s => s.id === app.subjectId)
         if (school && !map.has(app.programId)) {
+          const baseRegionText = school.address ?? school.region
+          const { si, gun, gu } = parseRegion(baseRegionText)
+          const matchedSido =
+            MOCK_SIDO_SIGUNGU.find(sido =>
+              sido.sigungu.some(sg => sg.name === si || sg.name === gun || sg.name === gu)
+            )?.name || ''
           map.set(app.programId, {
             schoolId: school.id,
             schoolName: school.name,
             region: school.region,
+            sido: matchedSido,
+            si,
+            gun,
+            gu,
           })
         }
       }
     })
-    
+
     return data.filter(program => {
       const schoolInfo = map.get(program.id)
-      const programRegion = schoolInfo?.region || program.district
-      return programRegion === regionFilter
+      const parsed = schoolInfo || parseRegion(program.district)
+      if (sidoFilter && schoolInfo?.sido !== sidoFilter) return false
+      if (gunFilter && parsed.gun !== gunFilter) return false
+      if (guFilter && parsed.gu !== guFilter) return false
+      return true
     })
-  }, [data, params.region])
-  
+  }, [data, params.sido, params.gun, params.gu])
+
   const { table, resetFilters } = useEducationRecordTable(filteredDataByRegion)
 
   const sponsors = sponsorService.getAllSync()
@@ -110,15 +158,23 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
 
   // Program별 학교 정보 매핑 (Application을 통해)
   const programSchoolMap = useMemo(() => {
-    const map = new Map<string, { schoolId: string; schoolName: string; region: string }>()
+    const map = new Map<
+      string,
+      { schoolId: string; schoolName: string; region: string; si: string; gun: string; gu: string }
+    >()
     applications.forEach(app => {
       if (app.subjectType === 'school' && app.programId) {
         const school = schools.find(s => s.id === app.subjectId)
         if (school && !map.has(app.programId)) {
+          const baseRegionText = school.address ?? school.region
+          const { si, gun, gu } = parseRegion(baseRegionText)
           map.set(app.programId, {
             schoolId: school.id,
             schoolName: school.name,
             region: school.region,
+            si,
+            gun,
+            gu,
           })
         }
       }
@@ -126,15 +182,29 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
     return map
   }, [applications, schools])
 
-  // 지역 목록 추출 (중복 제거)
-  const regions = Array.from(
-    new Set(schools.map(school => school.region).filter(Boolean))
+  // 시/도, 군, 구 옵션 (Mock SIDO/SIGUNGU 기준)
+  const sidoList = MOCK_SIDO_SIGUNGU.map(s => s.name)
+  const currentSido = params.sido
+  const currentSidoConfig = MOCK_SIDO_SIGUNGU.find(s => s.name === currentSido)
+  const baseSigungu = currentSidoConfig
+    ? currentSidoConfig.sigungu
+    : MOCK_SIDO_SIGUNGU.flatMap(s => s.sigungu)
+
+  const gunList = Array.from(
+    new Set(baseSigungu.filter(sg => sg.type === '군').map(sg => sg.name))
+  ).sort()
+  const guList = Array.from(
+    new Set(baseSigungu.filter(sg => sg.type === '구').map(sg => sg.name))
   ).sort()
 
   const handleFilterChange = (key: string, value: string | undefined) => {
-    if (key === 'region') {
-      // region만 URL 쿼리와 연동
-      setParams({ region: value || undefined })
+    if (key === 'sido') {
+      // 시/도 변경 시 하위 군/구 필터 초기화
+      setParams({ sido: value || undefined, gun: undefined, gu: undefined })
+    } else if (key === 'gun') {
+      setParams({ gun: value || undefined })
+    } else if (key === 'gu') {
+      setParams({ gu: value || undefined })
     } else {
       const column = table.getColumn(key)
       if (column) {
@@ -150,12 +220,12 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
   }
 
   // 필터 값 읽기
-  // - region: URL 쿼리와 연동
+  // - sido: URL 쿼리와 연동
   // - 그 외: 테이블 필터 상태 사용 (다른 카테고리와 동일)
   const getFilterValue = (key: string) => {
-    if (key === 'region') {
-      return params.region
-    }
+    if (key === 'sido') return params.sido
+    if (key === 'gun') return params.gun
+    if (key === 'gu') return params.gu
     return (table.getColumn(key)?.getFilterValue() as string | undefined) || undefined
   }
 
@@ -164,35 +234,132 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
 
   const monthlyStats = useMemo(
     () =>
-      filteredRows.reduce<
-        { monthKey: string; monthLabel: string; totalParticipants: number; programCount: number }[]
-      >((acc, program) => {
-        if (!program.startDate) return acc
-        const date = dayjs(program.startDate)
-        if (!date.isValid()) return acc
+      filteredRows
+        .reduce<
+          {
+            monthKey: string
+            monthLabel: string
+            totalParticipants: number
+            programCount: number
+            elementaryParticipants: number
+            middleParticipants: number
+            highParticipants: number
+          }[]
+        >((acc, program) => {
+          if (!program.startDate) return acc
+          const date = dayjs(program.startDate)
+          if (!date.isValid()) return acc
 
-        const monthKey = date.format('YYYY-MM')
-        const monthLabel = date.format('YYYY년 MM월')
+          const monthKey = date.format('YYYY-MM')
+          const monthLabel = date.format('YYYY년 MM월')
 
-        const existing = acc.find(item => item.monthKey === monthKey)
-        const participants = typeof program.totalParticipants === 'number' ? program.totalParticipants : 0
+          const existing = acc.find(item => item.monthKey === monthKey)
+          const participants =
+            typeof program.totalParticipants === 'number' ? program.totalParticipants : 0
 
-        if (existing) {
-          existing.totalParticipants += participants
-          existing.programCount += 1
-        } else {
-          acc.push({
-            monthKey,
-            monthLabel,
-            totalParticipants: participants,
-            programCount: 1,
-          })
-        }
+          const levelKey =
+            program.targetLevel === 'elementary'
+              ? 'elementaryParticipants'
+              : program.targetLevel === 'middle'
+                ? 'middleParticipants'
+                : program.targetLevel === 'high'
+                  ? 'highParticipants'
+                  : null
 
-        return acc
-      }, []).sort((a, b) => a.monthKey.localeCompare(b.monthKey)),
+          if (existing) {
+            existing.totalParticipants += participants
+            existing.programCount += 1
+            if (levelKey) {
+              existing[levelKey] += participants
+            }
+          } else {
+            acc.push({
+              monthKey,
+              monthLabel,
+              totalParticipants: participants,
+              programCount: 1,
+              elementaryParticipants: levelKey === 'elementaryParticipants' ? participants : 0,
+              middleParticipants: levelKey === 'middleParticipants' ? participants : 0,
+              highParticipants: levelKey === 'highParticipants' ? participants : 0,
+            })
+          }
+
+          return acc
+        }, [])
+        .sort((a, b) => a.monthKey.localeCompare(b.monthKey)),
     [filteredRows]
   )
+
+  const ipsStats = useMemo(
+    () =>
+      filteredRows
+        .reduce<
+          {
+            ips: string
+            label: string
+            totalParticipants: number
+            programCount: number
+          }[]
+        >((acc, program) => {
+          const ips = program.ips || '기타'
+          const label =
+            ipsOptions.find(opt => opt.value === ips)?.label || (ips === '기타' ? '기타' : ips)
+          const existing = acc.find(item => item.ips === ips)
+          const participants =
+            typeof program.totalParticipants === 'number' ? program.totalParticipants : 0
+
+          if (existing) {
+            existing.totalParticipants += participants
+            existing.programCount += 1
+          } else {
+            acc.push({
+              ips,
+              label,
+              totalParticipants: participants,
+              programCount: 1,
+            })
+          }
+          return acc
+        }, [])
+        .sort((a, b) => b.totalParticipants - a.totalParticipants),
+    [filteredRows]
+  )
+
+  const levelStats = useMemo(
+    () =>
+      filteredRows
+        .reduce<
+          {
+            key: string
+            label: string
+            totalParticipants: number
+            programCount: number
+          }[]
+        >((acc, program) => {
+          const level = program.targetLevel || 'unknown'
+          const label = targetLevelOptions.find(opt => opt.value === level)?.label || '기타/미지정'
+          const existing = acc.find(item => item.key === level)
+          const participants =
+            typeof program.totalParticipants === 'number' ? program.totalParticipants : 0
+
+          if (existing) {
+            existing.totalParticipants += participants
+            existing.programCount += 1
+          } else {
+            acc.push({
+              key: level,
+              label,
+              totalParticipants: participants,
+              programCount: 1,
+            })
+          }
+          return acc
+        }, [])
+        .sort((a, b) => b.totalParticipants - a.totalParticipants),
+    [filteredRows]
+  )
+
+  const pieColors = ['#1890ff', '#13c2c2', '#52c41a', '#fa8c16', '#f5222d']
 
   return (
     <div>
@@ -288,16 +455,44 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
           ))}
         </Select>
         <Select
-          placeholder="시군구"
-          value={getFilterValue('region')}
-          onChange={value => handleFilterChange('region', value)}
+          placeholder="시/도"
+          value={getFilterValue('sido')}
+          onChange={value => handleFilterChange('sido', value)}
+          allowClear
+          style={{ width: 130 }}
+          showSearch
+        >
+          {sidoList.map(sido => (
+            <Option key={sido} value={sido}>
+              {sido}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="군"
+          value={getFilterValue('gun')}
+          onChange={value => handleFilterChange('gun', value)}
+          allowClear
+          style={{ width: 130 }}
+          showSearch
+        >
+          {gunList.map(gun => (
+            <Option key={gun} value={gun}>
+              {gun}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="구"
+          value={getFilterValue('gu')}
+          onChange={value => handleFilterChange('gu', value)}
           allowClear
           style={{ width: 150 }}
           showSearch
         >
-          {regions.map(region => (
-            <Option key={region} value={region}>
-              {region}
+          {guList.map(gu => (
+            <Option key={gu} value={gu}>
+              {gu}
             </Option>
           ))}
         </Select>
@@ -460,32 +655,119 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
                     표시할 교육실적 데이터가 없습니다.
                   </div>
                 ) : (
-                  <div style={{ width: '100%', height: 360 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={monthlyStats}
-                        margin={{ top: 16, right: 16, left: 0, bottom: 16 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="monthLabel" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Legend />
-                        <Bar
-                          dataKey="totalParticipants"
-                          name="총 참가자 수"
-                          fill="#1890ff"
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <Bar
-                          dataKey="programCount"
-                          name="프로그램 수"
-                          fill="#52c41a"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <>
+                    <Space style={{ marginBottom: 16 }}>
+                      <Segmented
+                        value={chartView}
+                        onChange={value => setChartView(value as typeof chartView)}
+                        options={[
+                          { label: '월별 추이', value: 'trend' },
+                          { label: 'IPS 분포', value: 'ips' },
+                          { label: '대상 구분 분포', value: 'level' },
+                        ]}
+                      />
+                    </Space>
+                    {chartView === 'trend' && (
+                      <div style={{ width: '100%', height: 360 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={monthlyStats}
+                            margin={{ top: 16, right: 16, left: 0, bottom: 16 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="monthLabel" />
+                            <YAxis yAxisId="left" />
+                            <YAxis
+                              yAxisId="right"
+                              orientation="right"
+                              tickFormatter={value => `${value}`}
+                            />
+                            <RechartsTooltip />
+                            <Legend />
+                            <Bar
+                              yAxisId="left"
+                              stackId="participants"
+                              dataKey="elementaryParticipants"
+                              name="초등 참가자 수"
+                              fill="#69c0ff"
+                              radius={[4, 4, 0, 0]}
+                            />
+                            <Bar
+                              yAxisId="left"
+                              stackId="participants"
+                              dataKey="middleParticipants"
+                              name="중등 참가자 수"
+                              fill="#ffc53d"
+                              radius={[4, 4, 0, 0]}
+                            />
+                            <Bar
+                              yAxisId="left"
+                              stackId="participants"
+                              dataKey="highParticipants"
+                              name="고등 참가자 수"
+                              fill="#ff9c6e"
+                              radius={[4, 4, 0, 0]}
+                            />
+                            <Line
+                              yAxisId="right"
+                              type="monotone"
+                              dataKey="programCount"
+                              name="프로그램 수"
+                              stroke="#52c41a"
+                              strokeWidth={2}
+                              dot={{ r: 3 }}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                    {chartView === 'ips' && (
+                      <div style={{ width: '100%', height: 360 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <RechartsTooltip />
+                            <Legend />
+                            <Pie
+                              data={ipsStats}
+                              dataKey="totalParticipants"
+                              nameKey="label"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={120}
+                              label
+                            >
+                              {ipsStats.map((entry, index) => (
+                                <Cell key={entry.ips} fill={pieColors[index % pieColors.length]} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                    {chartView === 'level' && (
+                      <div style={{ width: '100%', height: 360 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <RechartsTooltip />
+                            <Legend />
+                            <Pie
+                              data={levelStats}
+                              dataKey="totalParticipants"
+                              nameKey="label"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={120}
+                              label
+                            >
+                              {levelStats.map((entry, index) => (
+                                <Cell key={entry.key} fill={pieColors[index % pieColors.length]} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </>
                 )}
               </Card>
             ),
@@ -495,4 +777,3 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
     </div>
   )
 }
-

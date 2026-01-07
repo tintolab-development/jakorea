@@ -221,7 +221,8 @@ export interface SettlementItem {
 }
 
 // 정산 상태
-export type SettlementStatus = 'pending' | 'calculated' | 'approved' | 'paid' | 'cancelled'
+// pending -> calculated -> review -> approved -> paid (중간에 언제든 cancelled 가능)
+export type SettlementStatus = 'pending' | 'calculated' | 'review' | 'approved' | 'paid' | 'cancelled'
 
 // 정산 첨부 파일 (Mock용 메타데이터)
 export interface SettlementAttachment {
@@ -429,6 +430,28 @@ export interface ProgramStatistics {
   instructors: number // 강사 수
   // 담당자
   managerName?: string // 담당자명
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 일정 협의 (Phase 8)
+export type NegotiationStatus = 'proposed' | 'accepted' | 'rejected' | 'revised'
+
+export interface ScheduleNegotiationProposal {
+  id: UUID
+  date: DateValue
+  startTime?: string // HH:mm
+  endTime?: string // HH:mm
+  status: 'pending' | 'accepted' | 'rejected'
+  note?: string
+}
+
+export interface ScheduleNegotiation {
+  id: UUID
+  programId: UUID
+  schoolId: UUID
+  proposals: ScheduleNegotiationProposal[]
+  status: NegotiationStatus
   createdAt: DateValue
   updatedAt: DateValue
 }

@@ -103,6 +103,8 @@ const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths
 const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
 const EducationRecordListPageV2 = lazyLoad(() => import('@/pages/education-records/education-record-list-page-v2'))
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
+const PerformanceDashboardPage = lazyLoad(() => import('@/pages/performance/performance-dashboard-page'))
+const ScheduleNegotiationListPage = lazyLoad(() => import('@/pages/schedule-negotiations/schedule-negotiation-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 
 export const router = createBrowserRouter([
@@ -186,6 +188,10 @@ export const router = createBrowserRouter([
         children: [{ index: true, element: <EducationRecordListPageV2 /> }],
       },
       {
+        path: 'performance',
+        children: [{ index: true, element: <PerformanceDashboardPage /> }],
+      },
+      {
         path: 'schedules',
         children: [
           { index: true, element: <ScheduleCalendarPage /> },
@@ -193,6 +199,10 @@ export const router = createBrowserRouter([
           { path: 'my/calendar', element: <MyScheduleCalendarPage /> },
           { path: ':id', element: <MyScheduleDetailPage /> },
         ],
+      },
+      {
+        path: 'schedule-negotiations',
+        children: [{ index: true, element: <ScheduleNegotiationListPage /> }],
       },
       {
         path: 'matchings',
@@ -212,6 +222,8 @@ export const router = createBrowserRouter([
           },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
+          // Alias: 일정 협의 관리 (정착 경로는 /schedule-negotiations)
+          { path: 'schedule-negotiations', element: <ScheduleNegotiationListPage /> },
         ],
       },
       {

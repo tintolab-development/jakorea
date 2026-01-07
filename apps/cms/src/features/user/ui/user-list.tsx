@@ -3,9 +3,10 @@
  * Phase 5.1.2: 사용자 관리 페이지
  */
 
-import { Table, Tag, Space, Button, Tooltip } from 'antd'
+import { Table, Tag, Dropdown, Button } from 'antd'
+import type { MenuProps } from 'antd'
+import { MoreOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { EyeOutlined, EditOutlined } from '@ant-design/icons'
 import type { User, UserRole } from '@/types/user'
 import { RoleBadge } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
@@ -97,26 +98,29 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       key: 'actions',
       width: 120,
       fixed: 'right',
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="상세 보기">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              onClick={() => onView?.(record)}
-              size="small"
-            />
-          </Tooltip>
-          <Tooltip title="권한 변경">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => onEdit?.(record)}
-              size="small"
-            />
-          </Tooltip>
-        </Space>
-      ),
+      render: (_, record) => {
+        const menuItems: MenuProps['items'] = [
+          {
+            key: 'view',
+            label: '상세 보기',
+            icon: <EyeOutlined />,
+            onClick: () => onView?.(record),
+          },
+          {
+            key: 'edit',
+            label: '권한 변경',
+            icon: <EditOutlined />,
+            onClick: () => onEdit?.(record),
+          },
+        ]
+        return (
+          <div onClick={e => e.stopPropagation()}>
+            <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+              <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
+            </Dropdown>
+          </div>
+        )
+      },
     },
   ]
 

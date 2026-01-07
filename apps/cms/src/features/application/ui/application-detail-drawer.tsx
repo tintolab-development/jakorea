@@ -3,8 +3,25 @@
  * Phase 2.2: 사이드 패널로 상세 정보 표시 (Ant Design 컴포넌트 다양하게 활용)
  */
 
-import { Drawer, Descriptions, Tag, Tabs, Space, Button, Badge, Timeline, Alert, Typography, Divider } from 'antd'
-import { EditOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import {
+  Drawer,
+  Descriptions,
+  Tag,
+  Tabs,
+  Space,
+  Button,
+  Badge,
+  Timeline,
+  Alert,
+  Typography,
+  Divider,
+} from 'antd'
+import {
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+} from '@ant-design/icons'
 import type { Application } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { schoolService } from '@/entities/school/api/school-service'
@@ -46,14 +63,13 @@ export function ApplicationDetailDrawer({
     application.subjectType === 'school'
       ? schoolService.getNameById(application.subjectId)
       : application.subjectType === 'instructor'
-      ? instructorService.getNameById(application.subjectId)
-      : '-'
+        ? instructorService.getNameById(application.subjectId)
+        : '-'
 
   // 신청 경로 정보 (V3 Phase 7)
-  const applicationPath =
-    application.applicationPathId
-      ? applicationPathService.getByIdSync(application.applicationPathId)
-      : applicationPathService.getByProgramIdSync(application.programId)
+  const applicationPath = application.applicationPathId
+    ? applicationPathService.getByIdSync(application.applicationPathId)
+    : applicationPathService.getByProgramIdSync(application.programId)
 
   const pathTypeLabels: Record<string, string> = {
     google_form: '구글폼',
@@ -74,12 +90,19 @@ export function ApplicationDetailDrawer({
     ...(application.reviewedAt
       ? [
           {
-            color: application.status === 'approved' ? 'green' : application.status === 'rejected' ? 'red' : 'orange',
+            color:
+              application.status === 'approved'
+                ? 'green'
+                : application.status === 'rejected'
+                  ? 'red'
+                  : 'orange',
             children: (
               <div>
                 <Text strong>{getApplicationStatusLabel(application.status)}</Text>
                 <br />
-                <Text type="secondary">{new Date(application.reviewedAt).toLocaleString('ko-KR')}</Text>
+                <Text type="secondary">
+                  {new Date(application.reviewedAt).toLocaleString('ko-KR')}
+                </Text>
               </div>
             ),
           },
@@ -151,7 +174,13 @@ export function ApplicationDetailDrawer({
               <>
                 <Alert
                   message={`현재 상태: ${getApplicationStatusLabel(application.status)}`}
-                  type={application.status === 'approved' ? 'success' : application.status === 'rejected' ? 'error' : 'info'}
+                  type={
+                    application.status === 'approved'
+                      ? 'success'
+                      : application.status === 'rejected'
+                        ? 'error'
+                        : 'info'
+                  }
                   showIcon
                   style={{ marginBottom: 16 }}
                 />
@@ -165,17 +194,18 @@ export function ApplicationDetailDrawer({
                         <Tag color={applicationPath.pathType === 'google_form' ? 'orange' : 'blue'}>
                           {pathTypeLabels[applicationPath.pathType] || applicationPath.pathType}
                         </Tag>
-                        {applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl && (
-                          <Text>
-                            <a
-                              href={applicationPath.googleFormUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              구글폼 열기
-                            </a>
-                          </Text>
-                        )}
+                        {applicationPath.pathType === 'google_form' &&
+                          applicationPath.googleFormUrl && (
+                            <Text>
+                              <a
+                                href={applicationPath.googleFormUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                구글폼 열기
+                              </a>
+                            </Text>
+                          )}
                         {applicationPath.guideMessage && (
                           <Text type="secondary">{applicationPath.guideMessage}</Text>
                         )}
@@ -191,7 +221,10 @@ export function ApplicationDetailDrawer({
                     <Text strong>{subjectName || '-'}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="상태">
-                    <Badge status={getApplicationStatusColor(application.status) as any} text={getApplicationStatusLabel(application.status)} />
+                    <Badge
+                      status={getApplicationStatusColor(application.status) as any}
+                      text={getApplicationStatusLabel(application.status)}
+                    />
                   </Descriptions.Item>
                   {application.notes && (
                     <Descriptions.Item label="비고">
@@ -231,7 +264,3 @@ export function ApplicationDetailDrawer({
     </Drawer>
   )
 }
-
-
-
-

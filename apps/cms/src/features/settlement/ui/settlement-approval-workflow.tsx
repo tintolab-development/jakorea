@@ -6,19 +6,18 @@
 import { Card, Space, Typography, Timeline, Tag, Button, Popconfirm } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
-import {
-  getSettlementStatusLabel,
-  getSettlementStatusColor,
-} from '@/shared/constants/status'
+import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
 import dayjs from 'dayjs'
 
 const { Text } = Typography
 
 interface SettlementApprovalWorkflowProps {
   settlement: Settlement
+  onCalculate?: () => void
   onApprove?: () => void
   onReject?: () => void
   onReview?: () => void
+  onRollback?: () => void
   loading?: boolean
 }
 
@@ -33,9 +32,11 @@ const approvalSteps = [
 
 export function SettlementApprovalWorkflow({
   settlement,
+  onCalculate,
   onApprove,
   onReject,
   onReview,
+  onRollback,
   loading,
 }: SettlementApprovalWorkflowProps) {
   // 현재 상태에 따른 단계 인덱스
@@ -45,6 +46,8 @@ export function SettlementApprovalWorkflow({
         return 0
       case 'calculated':
         return 1
+      case 'review':
+        return 2
       case 'approved':
         return 3
       case 'paid':
@@ -68,7 +71,9 @@ export function SettlementApprovalWorkflow({
         {/* 현재 상태 표시 */}
         <div>
           <Text strong>현재 상태: </Text>
-          <Tag color={getSettlementStatusColor(settlement.status)}>{getSettlementStatusLabel(settlement.status)}</Tag>
+          <Tag color={getSettlementStatusColor(settlement.status)}>
+            {getSettlementStatusLabel(settlement.status)}
+          </Tag>
         </div>
 
         {/* 승인 단계 Timeline */}
@@ -105,13 +110,24 @@ export function SettlementApprovalWorkflow({
               : null
 
             return {
-              color: status === 'error' ? 'red' : status === 'finish' ? 'green' : status === 'process' ? 'blue' : 'gray',
+              color:
+                status === 'error'
+                  ? 'red'
+                  : status === 'finish'
+                    ? 'green'
+                    : status === 'process'
+                      ? 'blue'
+                      : 'gray',
               dot: icon,
               children: (
                 <Space direction="vertical" size="small" style={{ width: '100%' }}>
                   <div>
                     <Text strong={isCurrent || isCompleted}>{step.label}</Text>
-                    {isCurrent && <Tag color="processing" style={{ marginLeft: 8 }}>진행 중</Tag>}
+                    {isCurrent && (
+                      <Tag color="processing" style={{ marginLeft: 8 }}>
+                        진행 중
+                      </Tag>
+                    )}
                   </div>
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {step.description}
@@ -123,7 +139,14 @@ export function SettlementApprovalWorkflow({
                         {dayjs(historyItem.createdAt).format('YYYY-MM-DD HH:mm')}
                       </Text>
                       {historyItem.comment && (
-                        <div style={{ marginTop: 4, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
+                        <div
+                          style={{
+                            marginTop: 4,
+                            padding: 8,
+                            background: '#f5f5f5',
+                            borderRadius: 4,
+                          }}
+                        >
                           <Text style={{ fontSize: 12 }}>{historyItem.comment}</Text>
                         </div>
                       )}
@@ -135,62 +158,78 @@ export function SettlementApprovalWorkflow({
           })}
         />
 
-        {/* 액션 버튼 (조건부) */}
-        {!isCancelled && (
-          <Space>
-            {settlement.status === 'calculated' && (
-              <>
-                {onReview && (
-                  <Button type="default" onClick={onReview} loading={loading}>
-                    검토하기
-                  </Button>
-                )}
-                {onApprove && (
-                  <Popconfirm
-                    title="정산 승인"
-                    description="이 정산을 승인하시겠습니까?"
-                    onConfirm={onApprove}
-                    okText="승인"
-                    cancelText="취소"
-                  >
-                    <Button type="primary" loading={loading}>
+        {/* 액션 버튼 */}
+        <Space>
+          {/* 취소 상태가 아닐 때만 정방향 액션 노출 */}
+          {!isCancelled && (
+            <>
+              {settlement.status === 'pending' && onCalculate && (
+                <Button type="primary" onClick={onCalculate} loading={loading}>
+                  산출 완료 처리
+                </Button>
+              )}
+              {settlement.status === 'calculated' && (
+                <>
+                  {onReview && (
+                    <Button type="default" onClick={onReview} loading={loading}>
+                      검토하기
+                    </Button>
+                  )}
+                  {onReject && (
+                    <Popconfirm
+                      title="정산 반려"
+                      description="이 정산을 반려하시겠습니까?"
+                      onConfirm={onReject}
+                      okText="반려"
+                      cancelText="취소"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Button danger loading={loading}>
+                        반려하기
+                      </Button>
+                    </Popconfirm>
+                  )}
+                </>
+              )}
+              {settlement.status === 'review' && (
+                <>
+                  {onApprove && (
+                    <Button type="primary" onClick={onApprove} loading={loading}>
                       승인하기
                     </Button>
-                  </Popconfirm>
-                )}
-                {onReject && (
-                  <Popconfirm
-                    title="정산 반려"
-                    description="이 정산을 반려하시겠습니까?"
-                    onConfirm={onReject}
-                    okText="반려"
-                    cancelText="취소"
-                    okButtonProps={{ danger: true }}
-                  >
-                    <Button danger loading={loading}>
-                      반려하기
-                    </Button>
-                  </Popconfirm>
-                )}
-              </>
-            )}
-            {settlement.status === 'approved' && onApprove && (
-              <Popconfirm
-                title="지급 완료 처리"
-                description="이 정산의 지급이 완료되었습니까?"
-                onConfirm={onApprove}
-                okText="완료"
-                cancelText="취소"
-              >
-                <Button type="primary" loading={loading}>
+                  )}
+                  {onReject && (
+                    <Popconfirm
+                      title="정산 반려"
+                      description="이 정산을 반려하시겠습니까?"
+                      onConfirm={onReject}
+                      okText="반려"
+                      cancelText="취소"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Button danger loading={loading}>
+                        반려하기
+                      </Button>
+                    </Popconfirm>
+                  )}
+                </>
+              )}
+              {settlement.status === 'approved' && onApprove && (
+                <Button type="primary" onClick={onApprove} loading={loading}>
                   지급 완료 처리
                 </Button>
-              </Popconfirm>
-            )}
-          </Space>
-        )}
+              )}
+            </>
+          )}
+
+          {/* 이전 상태로 되돌리기: 대기(pending)를 제외한 모든 상태에서 사용 가능 (취소 포함) */}
+          {settlement.status !== 'pending' && onRollback && (
+            <Button onClick={onRollback} loading={loading}>
+              이전 상태로 되돌리기
+            </Button>
+          )}
+        </Space>
       </Space>
     </Card>
   )
 }
-

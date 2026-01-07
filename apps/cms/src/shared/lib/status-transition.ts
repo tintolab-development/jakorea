@@ -22,17 +22,19 @@ export const APPLICATION_STATUS_TRANSITIONS: Record<
 
 /**
  * Settlement 상태 전환 규칙
- * pending -> calculated -> approved -> paid
+ * pending -> calculated -> review -> approved -> paid
+ * (cancelled는 언제든 전환 가능, 일부 상태는 이전 단계로도 되돌릴 수 있도록 허용)
  */
 export const SETTLEMENT_STATUS_TRANSITIONS: Record<
   SettlementStatus,
   SettlementStatus[]
 > = {
   pending: ['calculated', 'cancelled'],
-  calculated: ['approved', 'cancelled'],
-  approved: ['paid', 'cancelled'],
-  paid: [], // 최종 상태
-  cancelled: [], // 최종 상태
+  calculated: ['pending', 'review', 'approved', 'cancelled'],
+  review: ['calculated', 'approved', 'cancelled'],
+  approved: ['review', 'calculated', 'paid', 'cancelled'],
+  paid: ['approved'], // 지급 완료 이후 되돌려야 하는 케이스를 위해 승인 단계로만 회귀 허용
+  cancelled: ['calculated'], // 취소에서 다시 산출 단계로 복구 가능
 }
 
 /**
@@ -135,7 +137,7 @@ export function getNextSettlementStatuses(
 
 /**
  * Settlement 자동 다음 상태 계산 (워크플로우 기반)
- * pending -> calculated -> approved -> paid
+ * pending -> calculated -> review -> approved -> paid
  * @param currentStatus 현재 상태
  * @returns 다음 상태 또는 null (자동 전환 불가)
  */
@@ -144,10 +146,32 @@ export function getNextSettlementStatus(
 ): SettlementStatus | null {
   const transitions: Record<SettlementStatus, SettlementStatus | null> = {
     pending: 'calculated',
-    calculated: 'approved',
+    calculated: 'review',
+    review: 'approved',
     approved: 'paid',
-    paid: null,
+    paid: 'approved',
     cancelled: null,
+  }
+  return transitions[currentStatus] || null
+}
+
+/**
+ * Settlement 이전 상태 계산 (워크플로우 기준)
+ * calculated -> pending
+ * review -> calculated
+ * approved -> review
+ * paid -> approved
+ */
+export function getPreviousSettlementStatus(
+  currentStatus: SettlementStatus
+): SettlementStatus | null {
+  const transitions: Record<SettlementStatus, SettlementStatus | null> = {
+    pending: null,
+    calculated: 'pending',
+    review: 'calculated',
+    approved: 'review',
+    paid: 'approved',
+    cancelled: 'calculated',
   }
   return transitions[currentStatus] || null
 }

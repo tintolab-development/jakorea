@@ -40,7 +40,7 @@ export function SettlementList({
   const { table } = useSettlementTable(data)
 
   const programs = programService.getAllSync()
-  const statuses: Settlement['status'][] = ['pending', 'calculated', 'approved', 'paid', 'cancelled']
+  const statuses: Settlement['status'][] = ['pending', 'calculated', 'review', 'approved', 'paid', 'cancelled']
   const periods = Array.from(new Set(data.map(s => s.period))).sort().reverse()
 
   const handleDownloadPaymentStatement = async (settlement: Settlement) => {
@@ -104,6 +104,12 @@ export function SettlementList({
         label: '산출 완료로 변경',
         disabled: !canTransitionSettlementStatus(settlement.status, 'calculated'),
         onClick: () => onStatusChange(settlement, 'calculated'),
+      },
+      {
+        key: 'status-review',
+        label: '검토로 변경',
+        disabled: !canTransitionSettlementStatus(settlement.status, 'review'),
+        onClick: () => onStatusChange(settlement, 'review'),
       },
       {
         key: 'status-approved',
@@ -195,7 +201,8 @@ export function SettlementList({
             title: '기간',
             dataIndex: 'period',
             key: 'period',
-            render: (text: string) => <Tag color={domainColorsHex.settlement.primary}>{text}</Tag>,
+            sorter: (a: Settlement, b: Settlement) => a.period.localeCompare(b.period),
+            render: (text: string) => <Tag color="geekblue">{text}</Tag>,
           },
           {
             title: '프로그램',
@@ -222,6 +229,10 @@ export function SettlementList({
             title: '상태',
             dataIndex: 'status',
             key: 'status',
+            sorter: (a: Settlement, b: Settlement) => {
+              const order: Settlement['status'][] = ['pending', 'calculated', 'review', 'approved', 'paid', 'cancelled']
+              return order.indexOf(a.status) - order.indexOf(b.status)
+            },
             render: (status: Settlement['status']) => (
               <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
             ),

@@ -16,6 +16,7 @@ import {
   getSettlementStatusColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { canTransitionSettlementStatus, getPreviousSettlementStatus } from '@/shared/lib/status-transition'
 
 const { Text, Title } = Typography
 
@@ -42,7 +43,7 @@ export function SettlementDetailDrawer({
   onClose,
   onEdit,
   onDelete,
-  onStatusChange: _onStatusChange, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onStatusChange,
   loading,
 }: SettlementDetailDrawerProps) {
   if (!settlement) return null
@@ -67,6 +68,27 @@ export function SettlementDetailDrawer({
   }
 
   const canDownload = settlement.status === 'approved' || settlement.status === 'paid' // isSettlementFinalStatus로 체크 가능하지만, 다운로드는 paid도 포함해야 함
+
+  const changeStatus = async (nextStatus: Settlement['status']) => {
+    if (!canTransitionSettlementStatus(settlement.status, nextStatus)) {
+      message.warning('현재 상태에서는 해당 단계로 전환할 수 없습니다.')
+      return
+    }
+    try {
+      await onStatusChange(nextStatus)
+    } catch {
+      // 상위에서 에러 처리
+    }
+  }
+
+  const rollbackStatus = async () => {
+    const previous = getPreviousSettlementStatus(settlement.status)
+    if (!previous) {
+      message.warning('이전 단계로 되돌릴 수 없는 상태입니다.')
+      return
+    }
+    await changeStatus(previous)
+  }
 
   const itemColumns = [
     {
@@ -120,7 +142,7 @@ export function SettlementDetailDrawer({
     >
       <Descriptions column={1} bordered>
         <Descriptions.Item label="기간">
-          <Tag color={domainColorsHex.settlement.primary}>{settlement.period}</Tag>
+          <Tag color="geekblue">{settlement.period}</Tag>
         </Descriptions.Item>
         <Descriptions.Item label="프로그램">
           {program ? (
@@ -155,17 +177,41 @@ export function SettlementDetailDrawer({
       {/* 승인 워크플로우 */}
       <SettlementApprovalWorkflow
         settlement={settlement}
+        onCalculate={() => {
+          if (settlement.status === 'pending') {
+            void changeStatus('calculated')
+          } else {
+            message.warning('현재 상태에서는 산출 완료 처리를 할 수 없습니다.')
+          }
+        }}
         onApprove={() => {
-          // TODO: 승인 처리 로직
-          message.info('승인 기능은 구현 중입니다')
+          // 상태에 따라 승인/지급 완료 처리 분기
+          if (settlement.status === 'review') {
+            // 검토 -> 승인
+            void changeStatus('approved')
+          } else if (settlement.status === 'approved') {
+            // 승인 -> 지급 완료
+            void changeStatus('paid')
+          }
         }}
         onReject={() => {
-          // TODO: 반려 처리 로직
-          message.info('반려 기능은 구현 중입니다')
+          // 산출 완료/검토 단계에서만 반려(취소) 허용
+          if (settlement.status === 'calculated' || settlement.status === 'review') {
+            void changeStatus('cancelled')
+          } else {
+            message.warning('현재 상태에서는 반려할 수 없습니다.')
+          }
         }}
         onReview={() => {
-          // TODO: 검토 처리 로직
-          message.info('검토 기능은 구현 중입니다')
+          // 산출 완료 -> 검토 (정방향 진행만 담당)
+          if (settlement.status === 'calculated') {
+            void changeStatus('review')
+          } else {
+            message.warning('검토 단계 진입은 산출 완료 상태에서만 가능합니다.')
+          }
+        }}
+        onRollback={() => {
+          void rollbackStatus()
         }}
         loading={loading}
       />

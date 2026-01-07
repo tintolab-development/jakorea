@@ -79,6 +79,12 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'], // 관리자만 접근 가능
   },
   {
+    key: '/performance',
+    label: '예산 및 실적 관리',
+    icon: <BarChartOutlined />,
+    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+  },
+  {
     key: '/applications',
     label: '신청 관리',
     icon: <FileTextOutlined />,
@@ -110,6 +116,11 @@ const allMenuItems: MenuItemConfig[] = [
         key: '/schedules/my/calendar',
         label: '본인 일정 캘린더',
         allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 강사, 봉사자, 수강자 접근 가능
+      },
+      {
+        key: '/schedule-negotiations',
+        label: '일정 협의 관리',
+        allowedRoles: ['ADMIN'], // 관리자만 접근 가능
       },
     ],
   },

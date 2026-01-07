@@ -12,6 +12,7 @@ import { mockApplications } from '@/data/mock'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { useMemo } from 'react'
+import { MOCK_SIDO_SIGUNGU } from '@/shared/constants/sido-sigungu'
 
 const { Option } = Select
 
@@ -28,7 +29,10 @@ interface EducationRecordQueryParams extends Record<string, string | undefined> 
   ips?: string
   targetLevel?: string
   institutionType?: string
-  region?: string
+  sido?: string // 시/도
+  si?: string // 시
+  gun?: string // 군
+  gu?: string // 구
 }
 
 const businessAreas = [
@@ -62,34 +66,76 @@ const educationMonths = Array.from({ length: 12 }, (_, i) => ({
 
 export function EducationRecordList({ data, loading, onView }: EducationRecordListProps) {
   const { params, setParams } = useQueryParams<EducationRecordQueryParams>()
-  
-  // region 필터를 적용한 데이터 (컴포넌트 레벨 필터링)
+
+  // helper: region/address 문자열에서 시/군/구 단위 추출 (접미사 기준)
+  const parseRegion = (region?: string) => {
+    if (!region) return { si: '', gun: '', gu: '' }
+    const tokens = region.trim().split(/\s+/)
+    let si = ''
+    let gun = ''
+    let gu = ''
+    tokens.forEach(token => {
+      if (token.endsWith('시')) si = si || token
+      else if (token.endsWith('군')) gun = gun || token
+      else if (token.endsWith('구')) gu = gu || token
+    })
+    return { si, gun, gu }
+  }
+
+  // 시/도 + 시/군/구 필터를 적용한 데이터 (컴포넌트 레벨 필터링)
   const filteredDataByRegion = useMemo(() => {
-    const regionFilter = params.region
-    if (!regionFilter) return data
-    
+    const sidoFilter = params.sido
+    const gunFilter = params.gun
+    const guFilter = params.gu
+
     // Program별 학교 정보 매핑 (Application을 통해)
-    const map = new Map<string, { schoolId: string; schoolName: string; region: string }>()
+    const map = new Map<
+      string,
+      {
+        schoolId: string
+        schoolName: string
+        region: string
+        sido: string
+        si: string
+        gun: string
+        gu: string
+      }
+    >()
     mockApplications.forEach(app => {
       if (app.subjectType === 'school' && app.programId) {
         const school = schoolService.getAllSync().find(s => s.id === app.subjectId)
         if (school && !map.has(app.programId)) {
+          const baseRegionText = school.address ?? school.region
+          const { si, gun, gu } = parseRegion(baseRegionText)
+          // 행정구역 Mock에서 시/군/구가 속한 시/도 찾기
+          const matchedSido =
+            MOCK_SIDO_SIGUNGU.find(sido =>
+              sido.sigungu.some(sg => sg.name === si || sg.name === gun || sg.name === gu)
+            )?.name || ''
           map.set(app.programId, {
             schoolId: school.id,
             schoolName: school.name,
             region: school.region,
+            sido: matchedSido,
+            si,
+            gun,
+            gu,
           })
         }
       }
     })
-    
+
     return data.filter(program => {
       const schoolInfo = map.get(program.id)
-      const programRegion = schoolInfo?.region || program.district
-      return programRegion === regionFilter
+      const parsed = schoolInfo || parseRegion(program.district)
+
+      if (sidoFilter && schoolInfo?.sido !== sidoFilter) return false
+      if (gunFilter && parsed.gun !== gunFilter) return false
+      if (guFilter && parsed.gu !== guFilter) return false
+      return true
     })
-  }, [data, params.region])
-  
+  }, [data, params.sido, params.si, params.gun, params.gu])
+
   const { table, resetFilters } = useEducationRecordTable(filteredDataByRegion)
 
   const sponsors = sponsorService.getAllSync()
@@ -98,15 +144,36 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
 
   // Program별 학교 정보 매핑 (Application을 통해)
   const programSchoolMap = useMemo(() => {
-    const map = new Map<string, { schoolId: string; schoolName: string; region: string }>()
+    const map = new Map<
+      string,
+      {
+        schoolId: string
+        schoolName: string
+        region: string
+        sido: string
+        si: string
+        gun: string
+        gu: string
+      }
+    >()
     applications.forEach(app => {
       if (app.subjectType === 'school' && app.programId) {
         const school = schools.find(s => s.id === app.subjectId)
         if (school && !map.has(app.programId)) {
+          const baseRegionText = school.address ?? school.region
+          const { si, gun, gu } = parseRegion(baseRegionText)
+          const matchedSido =
+            MOCK_SIDO_SIGUNGU.find(sido =>
+              sido.sigungu.some(sg => sg.name === si || sg.name === gun || sg.name === gu)
+            )?.name || ''
           map.set(app.programId, {
             schoolId: school.id,
             schoolName: school.name,
             region: school.region,
+            sido: matchedSido,
+            si,
+            gun,
+            gu,
           })
         }
       }
@@ -114,15 +181,28 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
     return map
   }, [applications, schools])
 
-  // 지역 목록 추출 (중복 제거)
-  const regions = Array.from(
-    new Set(schools.map(school => school.region).filter(Boolean))
+  // 시/도, 군, 구 옵션 (Mock SIDO/SIGUNGU 기준)
+  const sidoList = MOCK_SIDO_SIGUNGU.map(s => s.name)
+  const currentSido = params.sido
+  const currentSidoConfig = MOCK_SIDO_SIGUNGU.find(s => s.name === currentSido)
+  const baseSigungu = currentSidoConfig
+    ? currentSidoConfig.sigungu
+    : MOCK_SIDO_SIGUNGU.flatMap(s => s.sigungu)
+  const gunList = Array.from(
+    new Set(baseSigungu.filter(sg => sg.type === '군').map(sg => sg.name))
+  ).sort()
+  const guList = Array.from(
+    new Set(baseSigungu.filter(sg => sg.type === '구').map(sg => sg.name))
   ).sort()
 
   const handleFilterChange = (key: string, value: string | undefined) => {
-    if (key === 'region') {
-      // region만 URL 쿼리와 연동
-      setParams({ region: value || undefined })
+    if (key === 'sido') {
+      // 시/도 변경 시 하위 시/군/구 필터 초기화
+      setParams({ sido: value || undefined, si: undefined, gun: undefined, gu: undefined })
+    } else if (key === 'gun') {
+      setParams({ gun: value || undefined })
+    } else if (key === 'gu') {
+      setParams({ gu: value || undefined })
     } else {
       const column = table.getColumn(key)
       if (column) {
@@ -138,12 +218,12 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
   }
 
   // 필터 값 읽기
-  // - region: URL 쿼리와 연동
+  // - sido: URL 쿼리와 연동
   // - 그 외: 테이블 필터 상태 사용 (다른 카테고리와 동일)
   const getFilterValue = (key: string) => {
-    if (key === 'region') {
-      return params.region
-    }
+    if (key === 'sido') return params.sido
+    if (key === 'gun') return params.gun
+    if (key === 'gu') return params.gu
     return (table.getColumn(key)?.getFilterValue() as string | undefined) || undefined
   }
 
@@ -241,16 +321,44 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
           ))}
         </Select>
         <Select
-          placeholder="시군구"
-          value={getFilterValue('region')}
-          onChange={value => handleFilterChange('region', value)}
+          placeholder="시/도"
+          value={getFilterValue('sido')}
+          onChange={value => handleFilterChange('sido', value)}
+          allowClear
+          style={{ width: 130 }}
+          showSearch
+        >
+          {sidoList.map(sido => (
+            <Option key={sido} value={sido}>
+              {sido}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="군"
+          value={getFilterValue('gun')}
+          onChange={value => handleFilterChange('gun', value)}
+          allowClear
+          style={{ width: 130 }}
+          showSearch
+        >
+          {gunList.map(gun => (
+            <Option key={gun} value={gun}>
+              {gun}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="구"
+          value={getFilterValue('gu')}
+          onChange={value => handleFilterChange('gu', value)}
           allowClear
           style={{ width: 150 }}
           showSearch
         >
-          {regions.map(region => (
-            <Option key={region} value={region}>
-              {region}
+          {guList.map(gu => (
+            <Option key={gu} value={gu}>
+              {gu}
             </Option>
           ))}
         </Select>
@@ -325,22 +433,24 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
             },
             render: (text: string) => (
               <Tooltip title={text.length > 25 ? text : undefined}>
-                <Tag 
-                  color="blue" 
-                  style={{ 
+                <Tag
+                  color="blue"
+                  style={{
                     maxWidth: '200px',
                     display: 'inline-block',
-                    verticalAlign: 'middle'
+                    verticalAlign: 'middle',
                   }}
                 >
-                  <span style={{ 
-                    display: 'block', 
-                    maxWidth: '180px', 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
-                    whiteSpace: 'nowrap',
-                    lineHeight: '1.5'
-                  }}>
+                  <span
+                    style={{
+                      display: 'block',
+                      maxWidth: '180px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      lineHeight: '1.5',
+                    }}
+                  >
                     {text}
                   </span>
                 </Tag>
@@ -533,9 +643,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
             key: 'totalParticipants',
             width: 100,
             align: 'right',
-            render: (value: number) => (
-              <strong>{value ?? '-'}</strong>
-            ),
+            render: (value: number) => <strong>{value ?? '-'}</strong>,
           },
           {
             title: '일반 자원봉사자',
@@ -616,7 +724,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
           pageSize: table.getState().pagination.pageSize,
           total: table.getFilteredRowModel().rows.length,
           showSizeChanger: true,
-          showTotal: (total) => `총 ${total}개`,
+          showTotal: total => `총 ${total}개`,
           onChange: (page, pageSize) => {
             table.setPageIndex(page - 1)
             table.setPageSize(pageSize)
@@ -626,4 +734,3 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
     </div>
   )
 }
-

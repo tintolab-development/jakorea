@@ -5,7 +5,7 @@
 
 import { Form, Input, Select, Button, Space, Table, InputNumber } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { settlementSchema, type SettlementFormData } from '@/entities/settlement/model/schema'
 import type { Settlement } from '@/types/domain'
@@ -47,20 +47,26 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
     control,
   } = useForm<SettlementFormData>({
     resolver: zodResolver(settlementSchema),
-    defaultValues: settlement
-      ? {
+    defaultValues: (() => {
+      if (settlement) {
+        // 폼에서는 검토(review) 상태를 직접 편집하지 않고, 워크플로우에서만 제어
+        const status: SettlementFormData['status'] =
+          settlement.status === 'review' ? 'calculated' : settlement.status
+        return {
           programId: settlement.programId,
           instructorId: settlement.instructorId,
           matchingId: settlement.matchingId,
           period: settlement.period,
           items: settlement.items,
-          status: settlement.status,
+          status,
           notes: settlement.notes || '',
         }
-      : {
-          items: [{ type: 'instructor_fee', description: '강사비', amount: 0 }],
-          status: 'pending',
-        },
+      }
+      return {
+        items: [{ type: 'instructor_fee', description: '강사비', amount: 0 }],
+        status: 'pending' as const,
+      }
+    })(),
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -81,7 +87,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
     ? filteredMatchings.filter(m => m.instructorId === selectedInstructorId)
     : filteredMatchings
 
-  const onFormSubmit = async (data: SettlementFormData) => {
+  const onFormSubmit: SubmitHandler<SettlementFormData> = async (data) => {
     await onSubmit(data)
   }
 

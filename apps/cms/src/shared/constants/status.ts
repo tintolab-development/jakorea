@@ -62,6 +62,7 @@ export const settlementStatusConfig = {
   labels: {
     pending: '대기',
     calculated: '산출 완료',
+    review: '검토',
     approved: '승인',
     paid: '지급 완료',
     cancelled: '취소',
@@ -70,6 +71,7 @@ export const settlementStatusConfig = {
   colors: {
     pending: 'default',
     calculated: 'processing',
+    review: 'processing',
     approved: 'success',
     paid: 'success',
     cancelled: 'error',
