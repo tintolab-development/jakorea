@@ -15,7 +15,10 @@ import {
 } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useEffect, useState } from 'react'
-import { getInstructorActivitySummary, type InstructorActivitySummary } from '../api/instructor-activity-service'
+import {
+  getInstructorActivitySummary,
+  type InstructorActivitySummary,
+} from '../api/instructor-activity-service'
 import { useNavigate } from 'react-router-dom'
 
 export function MyActivitySummary() {
@@ -31,10 +34,10 @@ export function MyActivitySummary() {
     }
 
     let cancelled = false
-    
+
     const loadData = async () => {
       if (!user.instructorId) return
-      
+
       setLoading(true)
       try {
         const data = await getInstructorActivitySummary(user.instructorId)
@@ -90,31 +93,58 @@ export function MyActivitySummary() {
           <Statistic
             title="전체 프로그램"
             value={summary.programs.total}
-            prefix={<FileTextOutlined />}
+            prefix={
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  marginRight: 8,
+                }}
+              >
+                <FileTextOutlined style={{ color: '#000000' }} />
+              </span>
+            }
+            suffix="개"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="신청 완료"
             value={summary.programs.applicationCompleted}
-            prefix={<CheckCircleOutlined />}
-            valueStyle={{ color: '#1890ff' }}
+            prefix={
+              <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 8 }}>
+                <CheckCircleOutlined style={{ color: '#000000' }} />
+              </span>
+            }
+            suffix="개"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="진행 예정"
             value={summary.programs.scheduled}
-            prefix={<ClockCircleOutlined />}
-            valueStyle={{ color: '#faad14' }}
+            prefix={
+              <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 8 }}>
+                <ClockCircleOutlined style={{ color: '#000000' }} />
+              </span>
+            }
+            suffix="개"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="진행중"
             value={summary.programs.inProgress}
-            prefix={<PlayCircleOutlined />}
-            valueStyle={{ color: '#52c41a' }}
+            prefix={
+              <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 8 }}>
+                <PlayCircleOutlined style={{ color: '#000000' }} />
+              </span>
+            }
+            suffix="개"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
       </Row>
@@ -123,27 +153,42 @@ export function MyActivitySummary() {
           <Statistic
             title="진행완료"
             value={summary.programs.completed}
-            prefix={<CheckCircleOutlined />}
-            valueStyle={{ color: '#8c8c8c' }}
+            prefix={
+              <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 8 }}>
+                <CheckCircleOutlined style={{ color: '#000000' }} />
+              </span>
+            }
+            suffix="개"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="예정된 일정"
             value={summary.schedules.total}
-            prefix={<CalendarOutlined />}
+            prefix={
+              <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 8 }}>
+                <CalendarOutlined style={{ color: '#000000' }} />
+              </span>
+            }
+            suffix="건"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="정산 제출 대기"
             value={summary.pendingTasks.settlementPending}
-            prefix={<FileTextOutlined />}
-            valueStyle={{ color: '#ff4d4f' }}
+            prefix={
+              <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 8 }}>
+                <FileTextOutlined style={{ color: '#000000' }} />
+              </span>
+            }
+            suffix="건"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
       </Row>
     </Card>
   )
 }
-

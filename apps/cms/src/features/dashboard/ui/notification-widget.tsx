@@ -227,6 +227,7 @@ export function NotificationWidget() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         notifications={notifications}
+        unreadCount={unreadCount}
         onNotificationClick={handleNotificationClick}
         onConfirm={handleConfirm}
         onMarkAllAsRead={async () => {

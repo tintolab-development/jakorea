@@ -74,6 +74,9 @@ const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-pag
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const MyProgramListPage = lazyLoad(() => import('@/pages/programs/my-program-list-page'))
 const MyProgramDetailPage = lazyLoad(() => import('@/pages/programs/my-program-detail-page'))
+const MyProgramHistoryPage = lazyLoad(() => import('@/pages/programs/my-program-history-page'))
+const ProgramSatisfactionPage = lazyLoad(() => import('@/pages/programs/program-satisfaction-page'))
+const MyProgramApplicationsPage = lazyLoad(() => import('@/pages/programs/my-program-applications-page'))
 const MyFavoriteProgramsPage = lazyLoad(() => import('@/pages/programs/my-favorite-programs-page'))
 const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
 const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
@@ -86,7 +89,6 @@ const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-
 const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
 const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
 const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-settlement-detail-page'))
-const MySettlementSubmissionPage = lazyLoad(() => import('@/pages/settlements/my-settlement-submission-page'))
 const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
 const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
@@ -100,8 +102,13 @@ const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail
 const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-detail-page'))
 const VolunteerListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-list-page'))
 const VolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-program-list-page'))
+const MyVolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-program-list-page'))
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
+const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
+const NoticeListPage = lazyLoad(() => import('@/pages/notices/notice-list-page'))
+const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
+const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
 const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
 const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths/application-path-list-page'))
 const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
@@ -166,8 +173,12 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
-          { path: 'my', element: <MyProgramListPage /> },
+          { path: 'my', element: <MyProgramApplicationsPage /> },
+          { path: 'my/active', element: <MyProgramListPage /> },
+          { path: 'my/active/:id', element: <MyProgramDetailPage /> },
           { path: 'my/:id', element: <MyProgramDetailPage /> },
+          { path: 'my/:id/history', element: <MyProgramHistoryPage /> },
+          { path: 'satisfaction', element: <ProgramSatisfactionPage /> },
           { path: 'favorites', element: <MyFavoriteProgramsPage /> },
           { path: 'new', element: <ProgramFormPage /> },
           { path: ':id/edit', element: <ProgramFormPage /> },
@@ -228,7 +239,6 @@ export const router = createBrowserRouter([
             path: 'my',
             children: [
               { index: true, element: <MySettlementListPage /> },
-              { path: 'submit', element: <MySettlementSubmissionPage /> },
               { path: 'monthly', element: <MyMonthlySettlementPage /> },
               { path: ':id', element: <MySettlementDetailPage /> },
             ],
@@ -271,12 +281,21 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <VolunteerListPage /> },
           { path: 'programs', element: <VolunteerProgramListPage /> },
+          {
+            path: 'my',
+            children: [
+              { path: 'programs', element: <MyVolunteerProgramListPage /> },
+            ],
+          },
           { path: ':id', element: <VolunteerDetailPage /> },
         ],
       },
       {
         path: 'mypage',
-        children: [{ index: true, element: <MyPageMainPage /> }],
+        children: [
+          { index: true, element: <MyPageMainPage /> },
+          { path: 'profile', element: <ProfilePage /> },
+        ],
       },
       {
         path: 'histories',
@@ -295,12 +314,20 @@ export const router = createBrowserRouter([
         path: 'posts',
         children: [
           { index: true, element: <PostListPage /> },
+          { path: 'faq', element: <FAQPage /> },
+          { path: 'inquiries', element: <InquiryPage /> },
         ],
       },
       {
         path: 'logs',
         children: [
           { index: true, element: <LogListPage /> },
+        ],
+      },
+      {
+        path: 'notices',
+        children: [
+          { index: true, element: <NoticeListPage /> },
         ],
       },
       {

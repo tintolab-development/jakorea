@@ -6,7 +6,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Descriptions, Tag, Button, Table, Space, Empty, Spin, message } from 'antd'
-import { HeartOutlined, HeartFilled, ArrowLeftOutlined, CalendarOutlined } from '@ant-design/icons'
+import { HeartOutlined, HeartFilled, ArrowLeftOutlined, CalendarOutlined, FormOutlined } from '@ant-design/icons'
+import { SatisfactionSurveyModal } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMyProgramDetail, type MyProgram } from '@/entities/program/api/instructor-program-service'
 import {
@@ -24,6 +25,7 @@ export function MyProgramDetailPage() {
   const [program, setProgram] = useState<MyProgram | null>(null)
   const [loading, setLoading] = useState(false)
   const [favorite, setFavorite] = useState(false) // 찜하기 상태 (Mock)
+  const [satisfactionModalOpen, setSatisfactionModalOpen] = useState(false)
 
   useEffect(() => {
     if (id && user?.instructorId) {
@@ -45,7 +47,7 @@ export function MyProgramDetailPage() {
       const data = await getMyProgramDetail(user.instructorId, id)
       if (!data) {
         message.error('프로그램을 찾을 수 없습니다.')
-        navigate('/programs/my')
+        navigate('/programs/my/active')
         return
       }
       setProgram(data)
@@ -103,6 +105,12 @@ export function MyProgramDetailPage() {
     return { label: getCommonStatusLabel(program.status), color: getCommonStatusColor(program.status) }
   }
 
+  // 만족도 조사 가능 여부 (완료된 프로그램)
+  // status가 'completed'이거나 종료일이 지난 경우
+  const canSubmitSatisfaction = 
+    program?.status === 'completed' || 
+    (program?.endDate && dayjs(program.endDate).isBefore(dayjs()))
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -114,7 +122,7 @@ export function MyProgramDetailPage() {
   if (!program) {
     return (
       <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my')} style={{ marginBottom: 16 }}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')} style={{ marginBottom: 16 }}>
           목록으로
         </Button>
         <Empty description="프로그램 정보를 찾을 수 없습니다." />
@@ -154,15 +162,29 @@ export function MyProgramDetailPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my')}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')}>
           목록으로
         </Button>
-        <Button
-          icon={favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-          onClick={handleToggleFavorite}
-        >
-          {favorite ? '관심 해제' : '관심 등록'}
-        </Button>
+        <Space>
+          <Button onClick={() => navigate(`/programs/my/${program.id}/history`)}>
+            이력/현황 보기
+          </Button>
+          {canSubmitSatisfaction && (
+            <Button
+              type="primary"
+              icon={<FormOutlined />}
+              onClick={() => setSatisfactionModalOpen(true)}
+            >
+              만족도 조사
+            </Button>
+          )}
+          <Button
+            icon={favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+            onClick={handleToggleFavorite}
+          >
+            {favorite ? '관심 해제' : '관심 등록'}
+          </Button>
+        </Space>
       </Space>
 
       <Card title={program.title} style={{ marginBottom: 16 }}>
@@ -214,6 +236,20 @@ export function MyProgramDetailPage() {
           <Empty description="등록된 일정이 없습니다." />
         )}
       </Card>
+
+      {/* 만족도 조사 모달 */}
+      {program && (
+        <SatisfactionSurveyModal
+          open={satisfactionModalOpen}
+          program={program}
+          onCancel={() => setSatisfactionModalOpen(false)}
+          onSuccess={() => {
+            // 만족도 조사 제출 후 처리
+            message.success('만족도 조사가 제출되었습니다.')
+            setSatisfactionModalOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }

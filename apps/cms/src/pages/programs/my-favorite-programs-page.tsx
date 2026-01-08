@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Input, Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
 import { HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -14,6 +14,8 @@ import {
   type FavoriteProgram,
   type FavoriteProgramFilters,
 } from '@/entities/program/api/favorite-program-service'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 
@@ -23,9 +25,13 @@ const { Search } = Input
 export function MyFavoriteProgramsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [programs, setPrograms] = useState<FavoriteProgram[]>([])
   const [loading, setLoading] = useState(false)
+  
+  // 카테고리명 가져오기
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || '관심 프로그램 관리'
 
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo<FavoriteProgramFilters>(() => {
@@ -100,7 +106,7 @@ export function MyFavoriteProgramsPage() {
   const handleViewProgram = (program: FavoriteProgram) => {
     // 본인 프로그램이면 본인 프로그램 상세로, 아니면 일반 프로그램 상세로
     if (user?.instructorId) {
-      navigate(`/programs/my/${program.id}`)
+      navigate(`/programs/my/active/${program.id}`)
     } else {
       navigate(`/programs/${program.id}`)
     }
@@ -200,7 +206,7 @@ export function MyFavoriteProgramsPage() {
   if (!user?.id) {
     return (
       <div>
-        <h1>관심 프로그램</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         <Empty description="로그인이 필요합니다." />
       </div>
     )
@@ -208,7 +214,7 @@ export function MyFavoriteProgramsPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24 }}>관심 프로그램</h1>
+      <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 24 }}>{categoryName}</h1>
 
       <Card style={{ marginBottom: 16 }}>
         <Space size="middle" wrap>

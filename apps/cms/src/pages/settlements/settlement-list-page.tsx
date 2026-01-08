@@ -18,6 +18,7 @@ import type { Settlement } from '@/types/domain'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
 
 type TabKey = 'all' | 'pending' | 'review' | 'paid' | 'overview'
@@ -230,7 +231,7 @@ export function SettlementListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         <Space>
           <Segmented
             value={viewMode}

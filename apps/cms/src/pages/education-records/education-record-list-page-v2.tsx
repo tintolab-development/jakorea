@@ -11,6 +11,7 @@ import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer
 import { useState } from 'react'
 import type { Program } from '@/types/domain'
 import { useProgramStore } from '@/features/program/model/program-store'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 
 export function EducationRecordListPageV2() {
   const { records, loading, fetchRecords } = useEducationRecordStore()
@@ -31,7 +32,7 @@ export function EducationRecordListPageV2() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>실적 통계</h1>
+        <h1 style={PAGE_HEADER_STYLE}>실적 통계</h1>
       </Space>
 
       <EducationRecordListV2

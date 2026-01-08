@@ -13,13 +13,15 @@ import {
   TeamOutlined,
   UserOutlined,
   ShopOutlined,
-  HistoryOutlined,
   UserSwitchOutlined,
   BarChartOutlined,
   HeartOutlined,
   FileOutlined,
   EditOutlined,
   DatabaseOutlined,
+  InfoCircleOutlined,
+  QuestionCircleOutlined,
+  FileSearchOutlined,
 } from '@ant-design/icons'
 
 /**
@@ -27,9 +29,10 @@ import {
  */
 export interface MenuItemConfig {
   key: string
-  label: string
+  label?: string // divider인 경우 label 생략
   icon?: React.ReactNode
   children?: MenuItemConfig[]
+  type?: 'divider'
   // 권한별 접근 제어
   allowedRoles?: UserRole[] // 허용된 권한 목록 (없으면 모든 권한 허용)
   hidden?: boolean // 숨김 여부
@@ -41,302 +44,232 @@ export interface MenuItemConfig {
  * IA 순서에 맞게 정리됨
  */
 const allMenuItems: MenuItemConfig[] = [
-  // 1. 홈 (Home)
+  // 사용자 영역
+  { key: '/', label: '홈', icon: <DashboardOutlined />, enabled: true },
+  { key: '/programs', label: '진행 프로그램', icon: <BookOutlined />, enabled: true },
   {
-    key: '/',
-    label: '홈',
-    icon: <DashboardOutlined />,
+    key: 'volunteers-user-group',
+    label: '봉사단',
+    icon: <HeartOutlined />,
     enabled: true,
-    // 모든 권한 접근 가능
+    allowedRoles: ['VOLUNTEER'],
+    children: [
+      {
+        key: '/volunteers/my/programs',
+        label: '봉사 프로그램',
+        enabled: true,
+        allowedRoles: ['VOLUNTEER'],
+      },
+    ],
   },
-  // 2. 프로그램 관리 (Program Management)
   {
-    key: '/programs',
-    label: '프로그램 관리',
-    icon: <BookOutlined />,
+    key: 'mypage-group',
+    label: '마이페이지',
+    icon: <UserSwitchOutlined />,
     enabled: true,
-    // 모든 권한 접근 가능
+    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+    children: [
+      {
+        key: 'personal-info-group',
+        label: '개인정보 관리',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+        children: [
+          {
+            key: '/mypage/profile',
+            label: '개인정보 관리',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+          },
+          {
+            key: '/histories',
+            label: '강사 이력 관리',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+          {
+            key: '/histories',
+            label: '봉사 이력 관리',
+            enabled: true,
+            allowedRoles: ['VOLUNTEER'],
+          },
+        ],
+      },
+      {
+        key: 'program-management-group',
+        label: '프로그램 관리',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+        children: [
+          {
+            key: '/programs/my',
+            label: '내가 신청한 프로그램',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+          {
+            key: '/programs/my/active',
+            label: '강의 프로그램',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+          {
+            key: '/programs/favorites',
+            label: '관심 프로그램 관리',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+          },
+          {
+            key: '/programs/satisfaction',
+            label: '만족도 조사',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+        ],
+      },
+      {
+        key: 'settlement-history-group',
+        label: '정산 이력/현황 관리',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+        children: [
+          {
+            key: '/settlements/my',
+            label: '정산 이력/현황',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+        ],
+      },
+    ],
   },
-  // 3. 회원 관리 (Member Management)
+  { key: 'divider-user', type: 'divider', enabled: true },
+  {
+    key: '/notices',
+    label: '공지사항',
+    icon: <InfoCircleOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+  },
+  {
+    key: '/posts/faq',
+    label: 'FAQ',
+    icon: <QuestionCircleOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+  },
+  {
+    key: '/posts/inquiries',
+    label: '문의하기',
+    icon: <FileSearchOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+  },
+  { key: 'divider-admin', type: 'divider', enabled: true },
+
+  // 관리자 영역
   {
     key: 'members-group',
     label: '회원 관리',
     icon: <TeamOutlined />,
     enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+    allowedRoles: ['ADMIN'],
     children: [
-      {
-        key: '/users',
-        label: '전체 회원',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/schools',
-        label: '학교(교사)',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
+      { key: '/users', label: '전체 회원', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/schools', label: '학교(교사)', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
-  // 4. 강사단 관리 (Instructor Management)
   {
     key: 'instructors-group',
     label: '강사단 관리',
     icon: <UserOutlined />,
     enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+    allowedRoles: ['ADMIN'],
     children: [
-      {
-        key: '/instructors',
-        label: '강사진',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/settlements',
-        label: '정산',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
+      { key: '/instructors', label: '강사진', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/settlements', label: '정산', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
-  // 5. 봉사단 관리 (Volunteer Management)
   {
     key: 'volunteers-group',
     label: '봉사단 관리',
     icon: <HeartOutlined />,
     enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+    allowedRoles: ['ADMIN'],
     children: [
-      {
-        key: '/volunteers',
-        label: '봉사자',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/volunteers/programs',
-        label: '봉사 프로그램',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
+      { key: '/volunteers', label: '봉사자', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/volunteers/programs', label: '봉사 프로그램', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
-  // 6. 템플릿 관리 (Template Management)
   {
     key: 'templates-group',
     label: '템플릿 관리',
     icon: <FileOutlined />,
     enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+    allowedRoles: ['ADMIN'],
     children: [
-      {
-        key: '/templates/files',
-        label: '파일 양식',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/templates/sms',
-        label: '문자 양식',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/templates/email',
-        label: '메일 양식',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
+      { key: '/templates/files', label: '파일 양식', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/templates/sms', label: '문자 양식', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/templates/email', label: '메일 양식', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
-  // 7. 게시글 관리 (Post Management)
   {
     key: 'posts-group',
     label: '게시글 관리',
     icon: <EditOutlined />,
     enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+    allowedRoles: ['ADMIN'],
     children: [
-      {
-        key: '/posts/categories',
-        label: '카테고리',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/posts/notices',
-        label: '공지사항',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/posts/faq',
-        label: 'FAQ',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/posts/inquiries',
-        label: '문의하기',
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
+      { key: '/posts/categories', label: '카테고리', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/posts/notices', label: '공지사항', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/posts/faq', label: 'FAQ', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/posts/inquiries', label: '문의하기', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
-  // 8. 후원사 관리 (Sponsor Management)
-  {
-    key: '/sponsors',
-    label: '후원사 관리',
-    icon: <ShopOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
-  },
-  // 9. 실적 통계 (Performance Statistics)
-  {
-    key: '/education-records',
-    label: '실적 통계',
-    icon: <BarChartOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
-  },
-  {
-    key: '/education-records-v2',
-    label: '실적 통계 (v2)',
-    icon: <BarChartOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
-  },
-  {
-    key: '/performance',
-    label: '실적 통계',
-    icon: <BarChartOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
-  },
-  // 10. 로그 관리 (Log Management)
-  {
-    key: '/logs',
-    label: '로그 관리',
-    icon: <DatabaseOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'], // 관리자만 접근 가능
-  },
-  // 기타 메뉴 (IA에 없는 메뉴들 - 비활성화)
-  {
-    key: '/applications',
-    label: '신청 관리',
-    icon: <FileTextOutlined />,
-    enabled: false, // 비활성화
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
-  },
-  {
-    key: '/application-paths',
-    label: '신청 경로 관리',
-    icon: <FileTextOutlined />,
-    enabled: false, // 비활성화
-    allowedRoles: ['ADMIN'],
-  },
+  { key: '/sponsors', label: '후원사 관리', icon: <ShopOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  { key: '/education-records', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  { key: '/education-records-v2', label: '실적 통계 (v2)', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  { key: '/logs', label: '로그 관리', icon: <DatabaseOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+
+  // 기타 (비활성)
+  { key: '/applications', label: '신청 관리', icon: <FileTextOutlined />, enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT'] },
+  { key: '/application-paths', label: '신청 경로 관리', icon: <FileTextOutlined />, enabled: false, allowedRoles: ['ADMIN'] },
   {
     key: 'schedules-group',
     label: '일정 관리',
     icon: <CalendarOutlined />,
-    enabled: false, // 비활성화
+    enabled: false,
     children: [
-      {
-        key: '/schedules',
-        label: '일정 캘린더',
-        enabled: false,
-      },
-      {
-        key: '/schedules/my',
-        label: '본인 일정 목록',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
-      },
-      {
-        key: '/schedules/my/calendar',
-        label: '본인 일정 캘린더',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
-      },
-      {
-        key: '/schedule-negotiations',
-        label: '일정 협의 관리',
-        enabled: false,
-        allowedRoles: ['ADMIN'],
-      },
+      { key: '/schedules', label: '일정 캘린더', enabled: false },
+      { key: '/schedules/my', label: '본인 일정 목록', enabled: false, allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'] },
+      { key: '/schedules/my/calendar', label: '본인 일정 캘린더', enabled: false, allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'] },
+      { key: '/schedule-negotiations', label: '일정 협의 관리', enabled: false, allowedRoles: ['ADMIN'] },
     ],
   },
-  {
-    key: '/matchings',
-    label: '매칭 관리',
-    icon: <TeamOutlined />,
-    enabled: false, // 비활성화
-    allowedRoles: ['ADMIN', 'INSTRUCTOR'],
-  },
+  { key: '/matchings', label: '매칭 관리', icon: <TeamOutlined />, enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR'] },
   {
     key: 'interviews-group',
     label: '면접 관리',
     icon: <TeamOutlined />,
-    enabled: false, // 비활성화
+    enabled: false,
     allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER'],
     children: [
-      {
-        key: '/interviews',
-        label: '면접 관리',
-        enabled: false,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/interviews/apply',
-        label: '강사/봉사자 신청',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'],
-      },
-      {
-        key: '/interviews/my',
-        label: '내 면접 일정',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'],
-      },
+      { key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] },
+      { key: '/interviews/apply', label: '강사/봉사자 신청', enabled: false, allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'] },
+      { key: '/interviews/my', label: '내 면접 일정', enabled: false, allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'] },
     ],
   },
   {
     key: '/reports',
     label: '보고서',
     icon: <FileTextOutlined />,
-    enabled: false, // 비활성화
+    enabled: false,
     allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER'],
     children: [
-      {
-        key: '/reports',
-        label: '보고서 관리',
-        enabled: false,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/reports/new',
-        label: '보고서 작성',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'],
-      },
+      { key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] },
+      { key: '/reports/new', label: '보고서 작성', enabled: false, allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'] },
     ],
-  },
-  {
-    key: '/mypage',
-    label: '마이페이지',
-    icon: <UserSwitchOutlined />,
-    enabled: false, // 비활성화
-    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
-  },
-  {
-    key: '/histories',
-    label: '이력 목록',
-    icon: <HistoryOutlined />,
-    enabled: false, // 비활성화
-    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
   },
 ]
 
@@ -357,6 +290,9 @@ export function filterMenuByRole(
 
   return items
     .filter(item => {
+      if (item.type === 'divider') {
+        return true
+      }
       // 비활성화된 메뉴는 제외
       if (item.enabled === false) {
         return false
@@ -369,6 +305,10 @@ export function filterMenuByRole(
       return item.allowedRoles.includes(userRole)
     })
     .map(item => {
+      if (item.type === 'divider') {
+        return { type: 'divider' as const }
+      }
+
       const menuItem: any = {
         key: item.key,
         label: item.label,
@@ -477,24 +417,26 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
 
   // depth가 지정되지 않았으면 해당 뎁스의 카테고리명 반환
   if (depth === undefined) {
-    return result.item.label
+    return result.item.label || null
   }
 
   // depth에 따라 카테고리명 반환
   if (depth === 1) {
     // 1뎁스: 최상위 카테고리
     if (result.depth === 1) {
-      return result.item.label
+      return result.item.label || null
     } else if (result.depth === 2 && result.parent) {
       // 2뎁스 아이템의 경우, 1뎁스는 부모
-      return result.parent.label
+      return result.parent.label || null
     } else if (result.depth === 3 && result.parent) {
       // 3뎁스 아이템의 경우, 1뎁스는 부모의 부모를 찾아야 함
       for (const topLevel of allMenuItems) {
-        if (topLevel.children?.some(child => 
-          child.children?.some(grandchild => grandchild.key === result.item.key)
-        )) {
-          return topLevel.label
+        if (
+          topLevel.children?.some(child =>
+            child.children?.some(grandchild => grandchild.key === result.item.key)
+          )
+        ) {
+          return topLevel.label || null
         }
       }
     }
@@ -502,27 +444,26 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
     // 2뎁스: 중간 카테고리
     if (result.depth === 2) {
       // 2뎁스 아이템은 자기 자신이 2뎁스
-      return result.item.label
+      return result.item.label || null
     } else if (result.depth === 3 && result.parent) {
       // 3뎁스 아이템의 경우, 2뎁스는 부모
-      return result.parent.label
+      return result.parent.label || null
     } else if (result.depth === 1) {
       // 1뎁스 아이템은 2뎁스가 없으므로 자기 자신 반환
-      return result.item.label
+      return result.item.label || null
     }
   } else if (depth === 3) {
     // 3뎁스: 최하위 카테고리
     if (result.depth === 3) {
-      return result.item.label
+      return result.item.label || null
     } else if (result.depth === 2) {
       // 2뎁스 아이템은 3뎁스가 없으므로 자기 자신 반환
-      return result.item.label
+      return result.item.label || null
     } else if (result.depth === 1) {
       // 1뎁스 아이템은 3뎁스가 없으므로 자기 자신 반환
-      return result.item.label
+      return result.item.label || null
     }
   }
 
-  return result.item.label
+  return result.item.label || null
 }
-

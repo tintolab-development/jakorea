@@ -3,9 +3,10 @@
  * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
  */
 
-import { Table, Input, Select, Button, Space, Tag, Dropdown } from 'antd'
+import { Table, Input, Select, Button, Space, Tag, Dropdown, message } from 'antd'
 import type { MenuProps } from 'antd'
-import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
+import { useState, useEffect } from 'react'
 import { useProgramTable } from '../model/use-program-table'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
@@ -17,6 +18,12 @@ import {
   getProgramLifecycleColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  addFavoriteProgram,
+  removeFavoriteProgram,
+  isFavoriteProgram,
+} from '@/entities/program/api/favorite-program-service'
 
 const { Option } = Select
 
@@ -28,6 +35,7 @@ interface ProgramListProps {
   onDelete?: (program: Program) => void // 관리자만 사용
   showActions?: boolean // 작업 컬럼 표시 여부 (기본값: false, 관리자만 true)
   onChangeStatus?: (program: Program, status: ProgramLifecycleStatus) => void
+  showFavorite?: boolean // 찜하기 컬럼 표시 여부 (기본값: false, 강사/봉사자/학생용)
 }
 
 const programTypes = [
@@ -57,10 +65,68 @@ export function ProgramList({
   onDelete,
   showActions = false,
   onChangeStatus,
+  showFavorite = false,
 }: ProgramListProps) {
+  const { user } = useAuthStore()
   const { table, resetFilters } = useProgramTable(data)
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
   const sponsors = sponsorService.getAllSync()
+
+  // 찜하기 상태 로드
+  useEffect(() => {
+    if (showFavorite && user?.id && data.length > 0) {
+      loadFavorites()
+    }
+  }, [showFavorite, user?.id, data])
+
+  const loadFavorites = async () => {
+    if (!user?.id) return
+
+    try {
+      const favoriteStatuses = await Promise.all(
+        data.map(p => isFavoriteProgram(user.id!, p.id))
+      )
+      const favoriteSet = new Set<string>()
+      data.forEach((p, index) => {
+        if (favoriteStatuses[index]) {
+          favoriteSet.add(p.id)
+        }
+      })
+      setFavorites(favoriteSet)
+    } catch (error) {
+      console.error('관심 프로그램 상태 로드 실패:', error)
+    }
+  }
+
+  const handleToggleFavorite = async (programId: string) => {
+    if (!user?.id) return
+
+    const isFavorite = favorites.has(programId)
+
+    try {
+      if (isFavorite) {
+        await removeFavoriteProgram(user.id, programId)
+        message.success('관심 프로그램에서 제거되었습니다.')
+      } else {
+        await addFavoriteProgram(user.id, programId)
+        message.success('관심 프로그램에 추가되었습니다.')
+      }
+
+      setFavorites(prev => {
+        const newSet = new Set(prev)
+        if (isFavorite) {
+          newSet.delete(programId)
+        } else {
+          newSet.add(programId)
+        }
+        return newSet
+      })
+    } catch (error) {
+      console.error('관심 프로그램 토글 실패:', error)
+      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+    }
+  }
 
   const getMenuItems = (program: Program): MenuProps['items'] => {
     const items: MenuProps['items'] = [
@@ -267,6 +333,26 @@ export function ProgramList({
               )
             },
           },
+          // 찜하기 컬럼 (강사/봉사자/학생용)
+          ...(showFavorite
+            ? [
+                {
+                  title: '찜하기',
+                  key: 'favorite',
+                  width: 100,
+                  fixed: showActions ? undefined : ('right' as const),
+                  render: (_: unknown, record: Program) => (
+                    <div onClick={e => e.stopPropagation()}>
+                      <Button
+                        type="text"
+                        icon={favorites.has(record.id) ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+                        onClick={() => handleToggleFavorite(record.id)}
+                      />
+                    </div>
+                  ),
+                },
+              ]
+            : []),
           // 관리자만 작업 컬럼 표시
           ...(showActions
             ? [

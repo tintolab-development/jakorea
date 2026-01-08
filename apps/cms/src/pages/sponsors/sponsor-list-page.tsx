@@ -10,6 +10,7 @@ import { PlusOutlined } from '@ant-design/icons'
 import { SponsorList } from '@/features/sponsor/ui/sponsor-list'
 import { SponsorForm } from '@/features/sponsor/ui/sponsor-form'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { SponsorFormData } from '@/entities/sponsor/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 
@@ -59,7 +60,7 @@ export function SponsorListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>후원사 관리</h1>
+        <h1 style={PAGE_HEADER_STYLE}>후원사 관리</h1>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
           스폰서 등록
         </Button>

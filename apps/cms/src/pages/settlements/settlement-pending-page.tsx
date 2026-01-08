@@ -11,6 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
 import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
@@ -153,7 +154,7 @@ export function SettlementPendingPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
 
       <Card title={`정산 신청 대기 (${pendingSettlements.length}건)`}>

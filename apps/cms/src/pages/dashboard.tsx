@@ -10,6 +10,7 @@ import { Card, Row, Col, Statistic, Divider } from 'antd'
 import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
 import { mockInstructors } from '@/data/mock'
 import { PendingActionsAlert } from '@/features/dashboard/ui/pending-actions-alert'
@@ -206,7 +207,7 @@ export function Dashboard() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>홈</h1>
+        <h1 style={PAGE_HEADER_STYLE}>홈</h1>
         {showSearchAndNotification && (
           <div style={{ width: 300 }}>
             <GlobalSearch />
