@@ -8,7 +8,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons'
-import type { ApplicationStatus, SettlementStatus } from '@/types/domain'
+import type { ApplicationStatus, SettlementStatus, ProgramLifecycleStatus, ReportStatus } from '@/types/domain'
 import type { Status } from '@/types'
 
 // 공통 상태 (Program, Matching 등에서 사용)
@@ -38,6 +38,7 @@ export const applicationStatusConfig = {
     approved: '확정',
     rejected: '거절',
     cancelled: '취소',
+    waiting: '대기',
   } as Record<ApplicationStatus, string>,
 
   colors: {
@@ -46,6 +47,7 @@ export const applicationStatusConfig = {
     approved: 'success',
     rejected: 'error',
     cancelled: 'default',
+    waiting: 'warning',
   } as Record<ApplicationStatus, string>,
 
   icons: {
@@ -54,6 +56,7 @@ export const applicationStatusConfig = {
     approved: CheckCircleOutlined,
     rejected: CloseCircleOutlined,
     cancelled: CloseCircleOutlined,
+    waiting: ClockCircleOutlined,
   } as Record<ApplicationStatus, React.ComponentType>,
 }
 
@@ -122,5 +125,76 @@ export function getCommonStatusColor(status: Status | string): string {
 // 헬퍼 함수: 상태 아이콘 가져오기
 export function getApplicationStatusIcon(status: ApplicationStatus): React.ComponentType {
   return applicationStatusConfig.icons[status]
+}
+
+// 프로그램 진행 워크플로우 상태
+export const programLifecycleStatusConfig = {
+  order: [
+    'planned',
+    'recruiting_students',
+    'recruiting_instructors',
+    'recruitment_completed_waiting',
+    'matching_completed_waiting',
+    'in_progress',
+    'completed',
+  ] as ProgramLifecycleStatus[],
+  labels: {
+    planned: '모집 예정',
+    recruiting_students: '수강자 모집 중',
+    recruiting_instructors: '강사 모집 중',
+    recruitment_completed_waiting: '모집 완료 및 대기 중',
+    matching_completed_waiting: '매칭 완료 및 진행 대기 중',
+    in_progress: '진행 중',
+    completed: '진행 완료',
+  } as Record<ProgramLifecycleStatus, string>,
+  colors: {
+    planned: 'default',
+    recruiting_students: 'geekblue',
+    recruiting_instructors: 'purple',
+    recruitment_completed_waiting: 'gold',
+    matching_completed_waiting: 'cyan',
+    in_progress: 'green',
+    completed: 'blue',
+  } as Record<ProgramLifecycleStatus, string>,
+}
+
+export function getProgramLifecycleLabel(status: ProgramLifecycleStatus | string): string {
+  return programLifecycleStatusConfig.labels[status as ProgramLifecycleStatus] || status
+}
+
+export function getProgramLifecycleColor(status: ProgramLifecycleStatus | string): string {
+  return programLifecycleStatusConfig.colors[status as ProgramLifecycleStatus] || 'default'
+}
+
+// 보고서 상태
+export const reportStatusConfig = {
+  labels: {
+    submitted: '제출',
+    reviewing: '검토 중',
+    approved: '승인',
+    rejected: '반려',
+  } as Record<ReportStatus, string>,
+
+  colors: {
+    submitted: 'default',
+    reviewing: 'processing',
+    approved: 'success',
+    rejected: 'error',
+  } as Record<ReportStatus, string>,
+
+  icons: {
+    submitted: ClockCircleOutlined,
+    reviewing: ClockCircleOutlined,
+    approved: CheckCircleOutlined,
+    rejected: CloseCircleOutlined,
+  } as Record<ReportStatus, React.ComponentType>,
+}
+
+export function getReportStatusLabel(status: ReportStatus | string): string {
+  return reportStatusConfig.labels[status as ReportStatus] || status
+}
+
+export function getReportStatusColor(status: ReportStatus | string): string {
+  return reportStatusConfig.colors[status as ReportStatus] || 'default'
 }
 

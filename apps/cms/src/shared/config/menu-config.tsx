@@ -158,7 +158,7 @@ const allMenuItems: MenuItemConfig[] = [
         key: 'settlements-group',
         label: '정산 관리',
         icon: <DollarOutlined />,
-        allowedRoles: ['ADMIN', 'INSTRUCTOR'], // 관리자, 강사만 접근 가능
+        allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER'], // 관리자, 강사, 봉사자만 접근 가능 (수강자 제외)
         children: [
           {
             key: '/settlements',
@@ -214,12 +214,17 @@ const allMenuItems: MenuItemConfig[] = [
     key: '/reports',
     label: '보고서',
     icon: <FileTextOutlined />,
-    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
+    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER'], // 관리자, 강사, 봉사자 접근 가능
     children: [
+      {
+        key: '/reports',
+        label: '보고서 관리',
+        allowedRoles: ['ADMIN'], // 관리자만 접근 가능
+      },
       {
         key: '/reports/new',
         label: '보고서 작성',
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'],
+        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER'], // 강사, 봉사자만 접근 가능
       },
     ],
   },
@@ -227,13 +232,13 @@ const allMenuItems: MenuItemConfig[] = [
     key: '/mypage',
     label: '마이페이지',
     icon: <UserSwitchOutlined />,
-    // 모든 권한 접근 가능
+    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 강사, 봉사자, 수강자만 접근 가능 (관리자 제외)
   },
   {
     key: '/histories',
     label: '이력 목록',
     icon: <HistoryOutlined />,
-    // 모든 권한 접근 가능
+    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'], // 강사, 봉사자, 수강자만 접근 가능 (관리자 제외)
   },
 ]
 
@@ -301,6 +306,11 @@ export function getMenuItemsByRole(userRole: UserRole | null): MenuProps['items'
  */
 export function canAccessPath(path: string, userRole: UserRole | null): boolean {
   if (!userRole) {
+    return false
+  }
+
+  // 수강자는 정산 관련 경로 접근 불가 (Phase 6.1.3)
+  if (userRole === 'STUDENT' && path.startsWith('/settlements')) {
     return false
   }
 

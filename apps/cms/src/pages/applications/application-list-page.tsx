@@ -17,11 +17,10 @@ import type { Application } from '@/types/domain'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
 
 export function ApplicationListPage() {
-  const { applications, loading, fetchApplications, createApplication, updateApplication, deleteApplication, updateStatus } = useApplicationStore()
+  const { applications, loading, fetchApplications, createApplication, updateApplication, deleteApplication, updateStatus, setSelectedApplication } = useApplicationStore()
   const { user } = useAuthStore()
 
   const isAdmin = user?.role === 'ADMIN'
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [editingApplication, setEditingApplication] = useState<Application | null>(null)
@@ -90,6 +89,7 @@ export function ApplicationListPage() {
       showSuccessMessage('신청이 삭제되었습니다')
       setDeleteModalOpen(false)
       setApplicationToDelete(null)
+      const { selectedApplication } = useApplicationStore.getState()
       if (selectedApplication?.id === applicationToDelete.id) {
         setDrawerOpen(false)
         setSelectedApplication(null)
@@ -102,14 +102,12 @@ export function ApplicationListPage() {
     }
   }
 
-  const handleStatusChange = async (application: Application, status: Application['status']) => {
+  const handleStatusChange = async (application: Application, status: Application['status'], rejectionReason?: string) => {
     try {
-      await updateStatus(application.id, status)
+      await updateStatus(application.id, status, rejectionReason)
       showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
-      if (selectedApplication?.id === application.id) {
-        const updated = applications.find(a => a.id === application.id)
-        if (updated) setSelectedApplication(updated)
-      }
+      // updateStatus가 Zustand 스토어의 applications와 selectedApplication을 함께 갱신하므로
+      // 여기서는 별도의 selectedApplication 수동 업데이트가 필요 없음
     } catch (error) {
       handleError(error, {
         defaultMessage: '상태 변경 중 오류가 발생했습니다',
@@ -118,9 +116,11 @@ export function ApplicationListPage() {
     }
   }
 
-  const handleStatusChangeInDrawer = async (status: Application['status']) => {
+  const handleStatusChangeInDrawer = async (status: Application['status'], rejectionReason?: string) => {
+    // store의 selectedApplication 사용
+    const { selectedApplication } = useApplicationStore.getState()
     if (!selectedApplication) return
-    await handleStatusChange(selectedApplication, status)
+    await handleStatusChange(selectedApplication, status, rejectionReason)
   }
 
   return (
@@ -145,17 +145,19 @@ export function ApplicationListPage() {
 
       <ApplicationDetailDrawer
         open={drawerOpen}
-        application={selectedApplication}
+        application={null} // Drawer 내부에서 store의 selectedApplication 사용
         onClose={() => {
           setDrawerOpen(false)
           setSelectedApplication(null)
         }}
         onEdit={() => {
+          const { selectedApplication } = useApplicationStore.getState()
           if (selectedApplication) {
             handleEdit(selectedApplication)
           }
         }}
         onDelete={() => {
+          const { selectedApplication } = useApplicationStore.getState()
           if (selectedApplication) {
             setDrawerOpen(false)
             handleDeleteClick(selectedApplication)

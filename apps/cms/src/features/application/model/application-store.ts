@@ -16,7 +16,7 @@ interface ApplicationState {
   fetchApplicationById: (id: string) => Promise<void>
   createApplication: (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'submittedAt'>) => Promise<void>
   updateApplication: (id: string, data: Partial<Omit<Application, 'id' | 'createdAt'>>) => Promise<void>
-  updateStatus: (id: string, status: ApplicationStatus) => Promise<void>
+  updateStatus: (id: string, status: ApplicationStatus, rejectionReason?: string) => Promise<void>
   deleteApplication: (id: string) => Promise<void>
   setSelectedApplication: (application: Application | null) => void
   clearError: () => void
@@ -77,10 +77,10 @@ export const useApplicationStore = create<ApplicationState>(set => ({
     }
   },
 
-  updateStatus: async (id, status) => {
+  updateStatus: async (id, status, rejectionReason) => {
     set({ loading: true, error: null })
     try {
-      const updatedApplication = await applicationService.updateStatus(id, status)
+      const updatedApplication = await applicationService.updateStatus(id, status, rejectionReason)
       set(state => ({
         applications: state.applications.map(a => (a.id === id ? updatedApplication : a)),
         selectedApplication: state.selectedApplication?.id === id ? updatedApplication : state.selectedApplication,

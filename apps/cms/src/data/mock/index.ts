@@ -18,7 +18,7 @@ export {
   programReportFields,
   reportSubmissionGuides,
   mockReports,
-  mockReportsMap,
+  getMockReportsMap,
 } from './reports'
 export {
   mockLectureActivities,

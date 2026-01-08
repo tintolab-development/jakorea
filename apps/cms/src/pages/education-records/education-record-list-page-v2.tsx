@@ -10,9 +10,11 @@ import { useEducationRecordStore } from '@/features/education-record/model/educa
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { useState } from 'react'
 import type { Program } from '@/types/domain'
+import { useProgramStore } from '@/features/program/model/program-store'
 
 export function EducationRecordListPageV2() {
   const { records, loading, fetchRecords } = useEducationRecordStore()
+  const { setSelectedProgram } = useProgramStore()
   const [selectedRecord, setSelectedRecord] = useState<Program | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -22,6 +24,7 @@ export function EducationRecordListPageV2() {
 
   const handleView = (record: Program) => {
     setSelectedRecord(record)
+    setSelectedProgram(record) // store에 동기화
     setDrawerOpen(true)
   }
 

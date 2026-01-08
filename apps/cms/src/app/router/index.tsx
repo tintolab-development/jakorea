@@ -86,6 +86,7 @@ const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-
 const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
 const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
 const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-settlement-detail-page'))
+const MySettlementSubmissionPage = lazyLoad(() => import('@/pages/settlements/my-settlement-submission-page'))
 const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
 const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
@@ -94,6 +95,7 @@ const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-p
 const InstructorApplicationPage = lazyLoad(() => import('@/pages/interviews/instructor-application-page'))
 const TodoDetailPage = lazyLoad(() => import('@/pages/todos/todo-detail-page'))
 const ReportFormPage = lazyLoad(() => import('@/pages/reports/report-form-page'))
+const ReportListPage = lazyLoad(() => import('@/pages/reports/report-list-page'))
 const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
 const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-detail-page'))
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
@@ -216,6 +218,7 @@ export const router = createBrowserRouter([
             path: 'my',
             children: [
               { index: true, element: <MySettlementListPage /> },
+              { path: 'submit', element: <MySettlementSubmissionPage /> },
               { path: 'monthly', element: <MyMonthlySettlementPage /> },
               { path: ':id', element: <MySettlementDetailPage /> },
             ],
@@ -244,7 +247,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'reports',
-        children: [{ path: 'new', element: <ReportFormPage /> }],
+        children: [
+          { index: true, element: <ReportListPage /> },
+          { path: 'new', element: <ReportFormPage /> },
+        ],
       },
       {
         path: 'lectures',

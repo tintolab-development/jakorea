@@ -4,7 +4,12 @@
  * 컬럼별 유니크값 정리 문서 기반으로 업데이트
  */
 
-import type { Program, ProgramRound, ProgramCategory } from '../../types/domain'
+import type {
+  Program,
+  ProgramRound,
+  ProgramCategory,
+  ProgramLifecycleStatus,
+} from '../../types/domain'
 import { mockSponsors } from './sponsors'
 import { mockSchools } from './schools'
 
@@ -1179,6 +1184,26 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const programId = `prog-${String(index + 1).padStart(3, '0')}`
   const rounds = createRounds(programId, record.classCount, startDate)
 
+  // 프로그램 진행 워크플로우 상태를 다양하게 분포
+  const lifecycleStatuses: ProgramLifecycleStatus[] = [
+    'planned',
+    'recruiting_students',
+    'recruiting_instructors',
+    'recruitment_completed_waiting',
+    'matching_completed_waiting',
+    'in_progress',
+    'completed',
+  ]
+  const lifecycleStatus = lifecycleStatuses[index % lifecycleStatuses.length]
+
+  // 기존 공통 Status와 매핑 (기존 로직과의 호환을 위해 유지)
+  const baseStatus =
+    lifecycleStatus === 'completed'
+      ? ('completed' as const)
+      : lifecycleStatus === 'in_progress'
+        ? ('active' as const)
+        : ('pending' as const)
+
   return {
     id: programId,
     sponsorId,
@@ -1190,7 +1215,8 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     rounds,
     startDate,
     endDate: endDate.toISOString(),
-    status: 'completed' as const,
+    status: baseStatus,
+    lifecycleStatus,
     // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
     businessArea: record.businessArea,
     titleEn: record.titleEn === '해당없음' ? undefined : record.titleEn,

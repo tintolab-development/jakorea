@@ -16,12 +16,7 @@ import {
   Typography,
   Divider,
 } from 'antd'
-import {
-  EditOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-} from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { schoolService } from '@/entities/school/api/school-service'
@@ -32,8 +27,10 @@ import {
   getApplicationStatusLabel,
   getApplicationStatusColor,
 } from '@/shared/constants/status'
-import { canTransitionApplicationStatus } from '@/shared/lib/status-transition'
+import { isApplicationFinalStatus } from '@/shared/lib/status-transition'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { ApplicationWorkflow } from './application-workflow'
+import { useApplicationStore } from '@/features/application/model/application-store'
 
 const { Text, Title } = Typography
 
@@ -43,7 +40,7 @@ interface ApplicationDetailDrawerProps {
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
-  onStatusChange: (status: Application['status']) => void
+  onStatusChange: (status: Application['status'], rejectionReason?: string) => void
   loading?: boolean
 }
 
@@ -56,20 +53,27 @@ export function ApplicationDetailDrawer({
   onStatusChange,
   loading,
 }: ApplicationDetailDrawerProps) {
-  if (!application) return null
+  const { selectedApplication: storeSelectedApplication } = useApplicationStore()
 
-  const program = programService.getByIdSync(application.programId)
+  // store의 selectedApplication을 우선 사용, 없으면 prop의 application 사용
+  const displayApplication = storeSelectedApplication || application
+
+  if (!displayApplication) return null
+
+  const isFinalStatus = isApplicationFinalStatus(displayApplication.status)
+
+  const program = programService.getByIdSync(displayApplication.programId)
   const subjectName =
-    application.subjectType === 'school'
-      ? schoolService.getNameById(application.subjectId)
-      : application.subjectType === 'instructor'
-        ? instructorService.getNameById(application.subjectId)
+    displayApplication.subjectType === 'school'
+      ? schoolService.getNameById(displayApplication.subjectId)
+      : displayApplication.subjectType === 'instructor'
+        ? instructorService.getNameById(displayApplication.subjectId)
         : '-'
 
   // 신청 경로 정보 (V3 Phase 7)
-  const applicationPath = application.applicationPathId
-    ? applicationPathService.getByIdSync(application.applicationPathId)
-    : applicationPathService.getByProgramIdSync(application.programId)
+  const applicationPath = displayApplication.applicationPathId
+    ? applicationPathService.getByIdSync(displayApplication.applicationPathId)
+    : applicationPathService.getByProgramIdSync(displayApplication.programId)
 
   const pathTypeLabels: Record<string, string> = {
     google_form: '구글폼',
@@ -83,25 +87,27 @@ export function ApplicationDetailDrawer({
         <div>
           <Text strong>접수</Text>
           <br />
-          <Text type="secondary">{new Date(application.submittedAt).toLocaleString('ko-KR')}</Text>
+          <Text type="secondary">
+            {new Date(displayApplication.submittedAt).toLocaleString('ko-KR')}
+          </Text>
         </div>
       ),
     },
-    ...(application.reviewedAt
+    ...(displayApplication.reviewedAt
       ? [
           {
             color:
-              application.status === 'approved'
+              displayApplication.status === 'approved'
                 ? 'green'
-                : application.status === 'rejected'
+                : displayApplication.status === 'rejected'
                   ? 'red'
                   : 'orange',
             children: (
               <div>
-                <Text strong>{getApplicationStatusLabel(application.status)}</Text>
+                <Text strong>{getApplicationStatusLabel(displayApplication.status)}</Text>
                 <br />
                 <Text type="secondary">
-                  {new Date(application.reviewedAt).toLocaleString('ko-KR')}
+                  {new Date(displayApplication.reviewedAt).toLocaleString('ko-KR')}
                 </Text>
               </div>
             ),
@@ -114,7 +120,7 @@ export function ApplicationDetailDrawer({
     <Drawer
       title={
         <Space>
-          <Badge status={getApplicationStatusColor(application.status) as any} />
+          <Badge status={getApplicationStatusColor(displayApplication.status) as any} />
           <Title level={4} style={{ margin: 0 }}>
             신청 상세
           </Title>
@@ -125,39 +131,12 @@ export function ApplicationDetailDrawer({
       onClose={onClose}
       extra={
         <Space>
-          {canTransitionApplicationStatus(application.status, 'reviewing') && (
-            <Button
-              type="primary"
-              icon={<CheckCircleOutlined />}
-              onClick={() => onStatusChange('reviewing')}
-              loading={loading}
-            >
-              검토 시작
+          {/* 최종 상태에서는 수정/삭제만 가능 */}
+          {!isFinalStatus && (
+            <Button icon={<EditOutlined />} onClick={onEdit}>
+              수정
             </Button>
           )}
-          {canTransitionApplicationStatus(application.status, 'approved') && (
-            <Button
-              type="primary"
-              icon={<CheckCircleOutlined />}
-              onClick={() => onStatusChange('approved')}
-              loading={loading}
-            >
-              확정
-            </Button>
-          )}
-          {canTransitionApplicationStatus(application.status, 'rejected') && (
-            <Button
-              danger
-              icon={<CloseCircleOutlined />}
-              onClick={() => onStatusChange('rejected')}
-              loading={loading}
-            >
-              거절
-            </Button>
-          )}
-          <Button icon={<EditOutlined />} onClick={onEdit}>
-            수정
-          </Button>
           <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
             삭제
           </Button>
@@ -173,13 +152,26 @@ export function ApplicationDetailDrawer({
             children: (
               <>
                 <Alert
-                  message={`현재 상태: ${getApplicationStatusLabel(application.status)}`}
+                  message={`현재 상태: ${getApplicationStatusLabel(displayApplication.status)}`}
+                  description={
+                    displayApplication.status === 'waiting'
+                      ? '이 신청은 대기 목록에 있습니다. 프로그램 정원에 여유가 생기면 자동으로 확정됩니다.'
+                      : displayApplication.status === 'reviewing'
+                        ? '현재 검토 중인 신청입니다. 검토를 완료하고 확정 또는 거절 처리를 진행해주세요.'
+                        : displayApplication.status === 'submitted'
+                          ? '접수된 신청입니다. 검토를 시작해주세요.'
+                          : isFinalStatus
+                            ? '최종 처리된 신청입니다.'
+                            : undefined
+                  }
                   type={
-                    application.status === 'approved'
+                    displayApplication.status === 'approved'
                       ? 'success'
-                      : application.status === 'rejected'
+                      : displayApplication.status === 'rejected'
                         ? 'error'
-                        : 'info'
+                        : displayApplication.status === 'cancelled'
+                          ? 'warning'
+                          : 'info'
                   }
                   showIcon
                   style={{ marginBottom: 16 }}
@@ -213,8 +205,10 @@ export function ApplicationDetailDrawer({
                     </Descriptions.Item>
                   )}
                   <Descriptions.Item label="신청 주체 유형">
-                    <Tag color={applicationSubjectTypeConfig.colors[application.subjectType]}>
-                      {applicationSubjectTypeConfig.labels[application.subjectType]}
+                    <Tag
+                      color={applicationSubjectTypeConfig.colors[displayApplication.subjectType]}
+                    >
+                      {applicationSubjectTypeConfig.labels[displayApplication.subjectType]}
                     </Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label="신청 주체">
@@ -222,28 +216,38 @@ export function ApplicationDetailDrawer({
                   </Descriptions.Item>
                   <Descriptions.Item label="상태">
                     <Badge
-                      status={getApplicationStatusColor(application.status) as any}
-                      text={getApplicationStatusLabel(application.status)}
+                      status={getApplicationStatusColor(displayApplication.status) as any}
+                      text={getApplicationStatusLabel(displayApplication.status)}
                     />
                   </Descriptions.Item>
-                  {application.notes && (
+                  {displayApplication.notes && (
                     <Descriptions.Item label="비고">
-                      <Text>{application.notes}</Text>
+                      <Text>{displayApplication.notes}</Text>
+                    </Descriptions.Item>
+                  )}
+                  {displayApplication.rejectionReason && (
+                    <Descriptions.Item label="거절 사유">
+                      <Alert
+                        type="error"
+                        message={displayApplication.rejectionReason}
+                        showIcon
+                        style={{ margin: 0 }}
+                      />
                     </Descriptions.Item>
                   )}
                   <Descriptions.Item label="접수일">
-                    {new Date(application.submittedAt).toLocaleString('ko-KR')}
+                    {new Date(displayApplication.submittedAt).toLocaleString('ko-KR')}
                   </Descriptions.Item>
-                  {application.reviewedAt && (
+                  {displayApplication.reviewedAt && (
                     <Descriptions.Item label="검토일">
-                      {new Date(application.reviewedAt).toLocaleString('ko-KR')}
+                      {new Date(displayApplication.reviewedAt).toLocaleString('ko-KR')}
                     </Descriptions.Item>
                   )}
                   <Descriptions.Item label="등록일">
-                    {new Date(application.createdAt).toLocaleDateString('ko-KR')}
+                    {new Date(displayApplication.createdAt).toLocaleDateString('ko-KR')}
                   </Descriptions.Item>
                   <Descriptions.Item label="수정일">
-                    {new Date(application.updatedAt).toLocaleDateString('ko-KR')}
+                    {new Date(displayApplication.updatedAt).toLocaleDateString('ko-KR')}
                   </Descriptions.Item>
                 </Descriptions>
               </>
@@ -254,7 +258,14 @@ export function ApplicationDetailDrawer({
             label: '상태 이력',
             children: (
               <>
-                <Divider orientation="left">처리 이력</Divider>
+                <ApplicationWorkflow
+                  application={displayApplication}
+                  onStatusChange={onStatusChange}
+                  loading={loading}
+                />
+                <Divider orientation="left" style={{ marginTop: 24 }}>
+                  처리 이력
+                </Divider>
                 <Timeline items={timelineItems} />
               </>
             ),

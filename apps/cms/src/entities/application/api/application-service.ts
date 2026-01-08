@@ -5,6 +5,12 @@
 
 import type { Application, ApplicationStatus } from '@/types/domain'
 import { mockApplications, mockApplicationsMap } from '@/data/mock'
+import {
+  getWaitingList,
+  getNextWaitingListOrder,
+  isCapacityFull,
+} from '@/features/program/lib/program-helpers'
+import { mockPrograms } from '@/data/mock'
 
 export const applicationService = {
   getAll: async (): Promise<Application[]> => {
@@ -37,10 +43,19 @@ export const applicationService = {
     if (!application) {
       throw new Error(`Application not found: ${id}`)
     }
+    
+    // reviewedAt 설정: reviewing, approved, rejected 상태로 변경될 때만 설정
+    let reviewedAt = application.reviewedAt
+    if (data.status && data.status !== application.status) {
+      if (data.status === 'reviewing' || data.status === 'approved' || data.status === 'rejected') {
+        reviewedAt = new Date().toISOString()
+      }
+    }
+    
     const updatedApplication: Application = {
       ...application,
       ...data,
-      reviewedAt: data.status && data.status !== application.status ? new Date().toISOString() : application.reviewedAt,
+      reviewedAt: data.reviewedAt !== undefined ? data.reviewedAt : reviewedAt,
       updatedAt: new Date().toISOString(),
     }
     const index = mockApplications.findIndex(a => a.id === id)
@@ -51,8 +66,39 @@ export const applicationService = {
     return Promise.resolve(updatedApplication)
   },
 
-  updateStatus: async (id: string, status: ApplicationStatus): Promise<Application> => {
-    return applicationService.update(id, { status })
+  updateStatus: async (id: string, status: ApplicationStatus, rejectionReason?: string): Promise<Application> => {
+    const application = mockApplicationsMap.get(id)
+    if (!application) {
+      throw new Error(`Application not found: ${id}`)
+    }
+
+    // 신청 취소 시 대기 목록 자동 승인 (Phase 3)
+    if (status === 'cancelled' && (application.status === 'approved' || application.status === 'reviewing')) {
+      const program = mockPrograms.find(p => p.id === application.programId)
+      if (program) {
+        // 정원이 가득 찬 경우에만 대기 목록 자동 승인
+        if (isCapacityFull(program, application.roundId)) {
+          const waitingList = getWaitingList(application.programId, application.roundId)
+          if (waitingList.length > 0) {
+            // 첫 번째 대기 신청을 승인
+            const firstWaiting = waitingList[0]
+            await applicationService.update(firstWaiting.id, {
+              status: 'approved',
+              waitingListOrder: undefined, // 대기 순번 제거
+            })
+          }
+        }
+      }
+    }
+
+    return applicationService.update(id, { 
+      status,
+      rejectionReason: status === 'rejected' ? rejectionReason : undefined,
+      // waiting 상태로 변경 시 대기 순번 설정
+      waitingListOrder: status === 'waiting' ? getNextWaitingListOrder(application.programId, application.roundId) : undefined,
+      // waiting이 아닌 상태로 변경 시 대기 순번 제거
+      ...(status !== 'waiting' && application.waitingListOrder !== undefined ? { waitingListOrder: undefined } : {}),
+    })
   },
 
   delete: async (id: string): Promise<void> => {

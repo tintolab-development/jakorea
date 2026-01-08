@@ -12,6 +12,9 @@ import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
   getCommonStatusLabel,
   getCommonStatusColor,
+  programLifecycleStatusConfig,
+  getProgramLifecycleLabel,
+  getProgramLifecycleColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
 
@@ -21,8 +24,9 @@ interface ProgramListProps {
   data: Program[]
   loading?: boolean
   onView: (program: Program) => void
-  onEdit: (program: Program) => void
-  onDelete: (program: Program) => void
+  onEdit?: (program: Program) => void // 관리자만 사용
+  onDelete?: (program: Program) => void // 관리자만 사용
+  showActions?: boolean // 작업 컬럼 표시 여부 (기본값: false, 관리자만 true)
 }
 
 const programTypes = [
@@ -39,44 +43,57 @@ const programFormats = [
   { value: 'other', label: '기타' },
 ]
 
-const statusOptions = [
-  { value: 'active', label: '활성' },
-  { value: 'pending', label: '대기' },
-  { value: 'inactive', label: '비활성' },
-  { value: 'completed', label: '완료' },
-  { value: 'cancelled', label: '취소' },
-]
+const statusOptions = programLifecycleStatusConfig.order.map(status => ({
+  value: status,
+  label: getProgramLifecycleLabel(status),
+}))
 
-export function ProgramList({ data, loading, onView, onEdit, onDelete }: ProgramListProps) {
+export function ProgramList({
+  data,
+  loading,
+  onView,
+  onEdit,
+  onDelete,
+  showActions = false,
+}: ProgramListProps) {
   const { table, resetFilters } = useProgramTable(data)
 
   const sponsors = sponsorService.getAllSync()
 
-  const getMenuItems = (program: Program): MenuProps['items'] => [
-    {
-      key: 'view',
-      label: '상세 보기',
-      icon: <EyeOutlined />,
-      onClick: () => onView(program),
-    },
-    {
-      key: 'edit',
-      label: '수정',
-      icon: <EditOutlined />,
-      onClick: () => onEdit(program),
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'delete',
-      label: '삭제',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => onDelete(program),
-    },
-  ]
+  const getMenuItems = (program: Program): MenuProps['items'] => {
+    const items: MenuProps['items'] = [
+      {
+        key: 'view',
+        label: '상세 보기',
+        icon: <EyeOutlined />,
+        onClick: () => onView(program),
+      },
+    ]
 
+    // 관리자만 수정/삭제 메뉴 표시
+    if (showActions && onEdit && onDelete) {
+      items.push(
+        {
+          key: 'edit',
+          label: '수정',
+          icon: <EditOutlined />,
+          onClick: () => onEdit(program),
+        },
+        {
+          type: 'divider',
+        },
+        {
+          key: 'delete',
+          label: '삭제',
+          icon: <DeleteOutlined />,
+          danger: true,
+          onClick: () => onDelete(program),
+        }
+      )
+    }
+
+    return items
+  }
 
   return (
     <div>
@@ -120,10 +137,10 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
         </Select>
         <Select
           placeholder="상태 선택"
-          value={(table.getColumn('status')?.getFilterValue() as string) || undefined}
-          onChange={value => table.getColumn('status')?.setFilterValue(value || null)}
+          value={(table.getColumn('lifecycleStatus')?.getFilterValue() as string) || undefined}
+          onChange={value => table.getColumn('lifecycleStatus')?.setFilterValue(value || null)}
           allowClear
-          style={{ width: 120 }}
+          style={{ width: 200 }}
         >
           {statusOptions.map(status => (
             <Option key={status.value} value={status.value}>
@@ -141,8 +158,22 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
             title: '프로그램명',
             dataIndex: 'title',
             key: 'title',
+            width: 260,
+            ellipsis: true,
             render: (text: string) => (
-              <Tag color={domainColorsHex.program.primary}>{text}</Tag>
+              <Tag
+                color={domainColorsHex.program.primary}
+                style={{
+                  maxWidth: 230,
+                  display: 'inline-block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  verticalAlign: 'middle',
+                }}
+              >
+                {text}
+              </Tag>
             ),
           },
           {
@@ -181,30 +212,43 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
             title: '상태',
             dataIndex: 'status',
             key: 'status',
-            render: (status: string) => (
-              <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
-            ),
+            render: (_status: string, record: Program) => {
+              const lifecycle = record.lifecycleStatus
+              const label = lifecycle
+                ? getProgramLifecycleLabel(lifecycle)
+                : getCommonStatusLabel(_status)
+              const color = lifecycle
+                ? getProgramLifecycleColor(lifecycle)
+                : getCommonStatusColor(record.status)
+              return <Tag color={color}>{label}</Tag>
+            },
           },
-          {
-            title: '작업',
-            key: 'action',
-            fixed: 'right',
-            width: 80,
-            render: (_: unknown, record: Program) => (
-              <div onClick={(e) => e.stopPropagation()}>
-                <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
-                  <Button
-                    type="text"
-                    icon={<MoreOutlined />}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </Dropdown>
-              </div>
-            ),
-          },
+          // 관리자만 작업 컬럼 표시
+          ...(showActions
+            ? [
+                {
+                  title: '작업',
+                  key: 'action',
+                  fixed: 'right' as const,
+                  width: 80,
+                  render: (_: unknown, record: Program) => (
+                    <div onClick={e => e.stopPropagation()}>
+                      <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
+                        <Button
+                          type="text"
+                          icon={<MoreOutlined />}
+                          onClick={e => e.stopPropagation()}
+                        />
+                      </Dropdown>
+                    </div>
+                  ),
+                },
+              ]
+            : []),
         ]}
         rowKey="id"
         loading={loading}
+        tableLayout="fixed"
         onRow={record => ({
           onClick: () => onView(record),
           style: { cursor: 'pointer' },
@@ -214,7 +258,7 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
           pageSize: table.getState().pagination.pageSize,
           total: table.getFilteredRowModel().rows.length,
           showSizeChanger: true,
-          showTotal: (total) => `총 ${total}개`,
+          showTotal: total => `총 ${total}개`,
           onChange: (page, pageSize) => {
             table.setPageIndex(page - 1)
             table.setPageSize(pageSize)
@@ -224,4 +268,3 @@ export function ProgramList({ data, loading, onView, onEdit, onDelete }: Program
     </div>
   )
 }
-

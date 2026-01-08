@@ -20,16 +20,28 @@ import {
   getConfirmedRounds,
   isApplicationAvailable,
   getApplicationUrl,
+  getApplicationUnavailableReason,
+  getRemainingCapacity,
+  isCapacityAlmostFull,
+  isCapacityFull,
 } from '../lib/program-helpers'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
 import {
   commonStatusConfig,
   getCommonStatusLabel,
   getCommonStatusColor,
+  getProgramLifecycleLabel,
+  getProgramLifecycleColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { mockApplications } from '@/data/mock'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { ProgramLifecycleWorkflow } from './program-lifecycle-workflow'
+import {
+  getPreviousProgramLifecycleStatus,
+} from '@/shared/lib/status-transition'
+import type { ProgramLifecycleStatus } from '@/types/domain'
 import dayjs from 'dayjs'
 
 const { Paragraph, Text } = Typography
@@ -72,47 +84,76 @@ export function ProgramDetailDrawer({
   const [editingApplicationPath, setEditingApplicationPath] = useState<ApplicationPath | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const { createPath, updatePath } = useApplicationPathStore()
-  const { updateProgram } = useProgramStore()
+  const { updateProgram, selectedProgram: storeSelectedProgram, setSelectedProgram } = useProgramStore()
+  const { user } = useAuthStore()
+  const [statusChangeLoading, setStatusChangeLoading] = useState(false)
   
+  // prop으로 받은 program 또는 store의 selectedProgram 사용 (store가 최신 상태 유지)
+  const currentProgram = program || storeSelectedProgram
+  
+  // 현재 사용자의 역할에 따른 신청 주체 타입 결정
+  // hooks는 항상 동일한 순서로 호출되어야 하므로 early return 전에 호출
+  const userSubjectType = useMemo(() => {
+    if (!user || user.role === 'ADMIN') return undefined
+    if (user.role === 'INSTRUCTOR' || user.role === 'VOLUNTEER') return 'instructor' as const
+    if (user.role === 'STUDENT') return 'student' as const
+    return undefined
+  }, [user])
+
   // 교육실적 관련: 학교 정보 조회 (Application을 통해)
   // hooks는 항상 동일한 순서로 호출되어야 하므로 early return 전에 호출
   const schoolInfo = useMemo(() => {
-    if (!program) return null
+    if (!currentProgram) return null
     const schoolApp = mockApplications.find(
-      app => app.programId === program.id && app.subjectType === 'school'
+      app => app.programId === currentProgram.id && app.subjectType === 'school'
     )
     if (schoolApp) {
       const school = schoolService.getByIdSync(schoolApp.subjectId)
       return school ? { name: school.name, region: school.region } : null
     }
     return null
-  }, [program?.id])
+  }, [currentProgram?.id])
 
-  if (!program) return null
+  // prop으로 받은 program이 있으면 store에 동기화
+  // store의 selectedProgram이 최신 상태이므로 우선 사용
+  const displayProgram = storeSelectedProgram || program
+  
+  if (!displayProgram) return null
+  
+  // prop으로 program을 받았을 때 store에도 동기화
+  if (program && program.id !== storeSelectedProgram?.id) {
+    setSelectedProgram(program)
+  }
 
-  const sponsor = sponsorService.getByIdSync(program.sponsorId)
+  const sponsor = sponsorService.getByIdSync(displayProgram.sponsorId)
   
   // 프로그램별 신청 수 계산
-  const applicationCount = getApplicationCountByProgram(program.id)
+  const applicationCount = getApplicationCountByProgram(displayProgram.id)
 
   // 확정된 일정만 필터링
-  const confirmedRounds = getConfirmedRounds(program.rounds)
+  const confirmedRounds = getConfirmedRounds(displayProgram.rounds)
 
   // 신청 경로 정보 조회 (V3 Phase 7)
-  const applicationPath = program.applicationPathId
-    ? applicationPathService.getByIdSync(program.applicationPathId)
-    : applicationPathService.getByProgramIdSync(program.id)
+  const applicationPath = displayProgram.applicationPathId
+    ? applicationPathService.getByIdSync(displayProgram.applicationPathId)
+    : applicationPathService.getByProgramIdSync(displayProgram.id)
 
-  // 신청 가능 여부 및 URL
-  const applicationAvailable = isApplicationAvailable(program)
+  // 신청 가능 여부 및 URL (사용자 역할 고려)
+  const applicationAvailable = isApplicationAvailable(displayProgram, userSubjectType)
+  const unavailableReason = getApplicationUnavailableReason(displayProgram, userSubjectType)
   let applicationUrl: string | undefined
   if (applicationAvailable && applicationPath && applicationPath.isActive) {
     if (applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl) {
       applicationUrl = applicationPath.googleFormUrl
     } else if (applicationPath.pathType === 'internal') {
-      applicationUrl = getApplicationUrl(program.id)
+      applicationUrl = getApplicationUrl(displayProgram.id)
     }
   }
+
+  // 정원 정보 계산
+  const remainingCapacity = getRemainingCapacity(displayProgram)
+  const capacityAlmostFull = isCapacityAlmostFull(displayProgram)
+  const capacityFull = isCapacityFull(displayProgram)
 
   const handleApplicationPathCreate = () => {
     setEditingApplicationPath(null)
@@ -133,16 +174,16 @@ export function ProgramDetailDrawer({
         // 기존 신청 경로 수정
         const updated = await updatePath(editingApplicationPath.id, formData)
         // 프로그램의 applicationPathId 업데이트
-        await updateProgram(program.id, { applicationPathId: updated.id })
+        await updateProgram(displayProgram.id, { applicationPathId: updated.id })
         showSuccessMessage('신청 경로가 성공적으로 수정되었습니다.')
       } else {
         // 새 신청 경로 생성
         const newPath = await createPath({
           ...formData,
-          programId: program.id, // 현재 프로그램 ID로 고정
+          programId: displayProgram.id, // 현재 프로그램 ID로 고정
         })
         // 프로그램의 applicationPathId 업데이트
-        await updateProgram(program.id, { applicationPathId: newPath.id })
+        await updateProgram(displayProgram.id, { applicationPathId: newPath.id })
         showSuccessMessage('신청 경로가 성공적으로 등록되었습니다.')
       }
       setApplicationPathModalOpen(false)
@@ -203,11 +244,11 @@ export function ProgramDetailDrawer({
       title={
         <Space align="center">
           <Tag color={domainColorsHex.program.primary} style={{ fontSize: 16, padding: '4px 12px', maxWidth: '400px', display: 'inline-flex', alignItems: 'center' }}>
-            <Text ellipsis={{ tooltip: program.title }} style={{ maxWidth: '350px', display: 'block' }}>
-              {program.title}
+            <Text ellipsis={{ tooltip: displayProgram.title }} style={{ maxWidth: '350px', display: 'block' }}>
+              {displayProgram.title}
             </Text>
           </Tag>
-          <Badge status={program.status === 'active' ? 'success' : 'default'} />
+          <Badge status={displayProgram.status === 'active' ? 'success' : 'default'} />
         </Space>
       }
       width={720}
@@ -238,23 +279,23 @@ export function ProgramDetailDrawer({
                 <Card title="프로그램 정보">
                   <Descriptions column={1} bordered>
                     <Descriptions.Item label="프로그램명">
-                      <Text strong ellipsis={{ tooltip: program.title }}>
-                        {program.title}
+                      <Text strong ellipsis={{ tooltip: displayProgram.title }}>
+                        {displayProgram.title}
                       </Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="카테고리">
                       <Space>
-                        <Tag color={domainColorsHex.program.primary}>{programTypeLabels[program.type] || program.type}</Tag>
-                        <Tag>{programFormatLabels[program.format] || program.format}</Tag>
+                        <Tag color={domainColorsHex.program.primary}>{programTypeLabels[displayProgram.type] || displayProgram.type}</Tag>
+                        <Tag>{programFormatLabels[displayProgram.format] || displayProgram.format}</Tag>
                       </Space>
                     </Descriptions.Item>
-                    {program.description && (
+                    {displayProgram.description && (
                       <Descriptions.Item label="프로그램 목적/설명">
                         <Paragraph 
                           style={{ margin: 0 }} 
                           ellipsis={{ rows: 3, expandable: true, symbol: '더보기' }}
                         >
-                          {program.description}
+                          {displayProgram.description}
                         </Paragraph>
                       </Descriptions.Item>
                     )}
@@ -262,14 +303,20 @@ export function ProgramDetailDrawer({
                       <Tag color={domainColorsHex.sponsor.primary}>{sponsor?.name || '-'}</Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="상태">
-                      <StatusDisplay
-                        status={program.status}
-                        statusLabels={commonStatusConfig.labels}
-                        statusColors={commonStatusConfig.colors}
-                      />
+                      {displayProgram.lifecycleStatus ? (
+                        <Tag color={getProgramLifecycleColor(displayProgram.lifecycleStatus)}>
+                          {getProgramLifecycleLabel(displayProgram.lifecycleStatus)}
+                        </Tag>
+                      ) : (
+                        <StatusDisplay
+                          status={displayProgram.status}
+                          statusLabels={commonStatusConfig.labels}
+                          statusColors={commonStatusConfig.colors}
+                        />
+                      )}
                     </Descriptions.Item>
                     <Descriptions.Item label="기간">
-                      {dayjs(program.startDate).format('YYYY-MM-DD')} ~ {dayjs(program.endDate).format('YYYY-MM-DD')}
+                      {dayjs(displayProgram.startDate).format('YYYY-MM-DD')} ~ {dayjs(displayProgram.endDate).format('YYYY-MM-DD')}
                     </Descriptions.Item>
                   </Descriptions>
                 </Card>
@@ -283,7 +330,7 @@ export function ProgramDetailDrawer({
                     <Paragraph style={{ margin: 0 }}>
                       <Text strong>참여 방식:</Text> 프로그램 유형에 따라 온라인/오프라인/하이브리드로 진행됩니다.
                     </Paragraph>
-                    {program.format === 'workshop' || program.format === 'seminar' ? (
+                    {displayProgram.format === 'workshop' || displayProgram.format === 'seminar' ? (
                       <Paragraph style={{ margin: 0, color: '#8c8c8c' }}>
                         이 프로그램은 강사 및 봉사자 참여가 필요할 수 있습니다.
                       </Paragraph>
@@ -291,8 +338,14 @@ export function ProgramDetailDrawer({
                   </Space>
                 </Card>
 
-                {/* 일정 요약 영역 (조건부) */}
-                {confirmedRounds.length > 0 && (
+                {/* 일정 요약 영역 (조건부)
+                    - 진행 단계(lifecycleStatus)에 따라 노출 시점 제어
+                    - 매칭 완료 및 진행 대기 / 진행 중 / 진행 완료 단계에서만 노출 */}
+                {confirmedRounds.length > 0 &&
+                  (!displayProgram.lifecycleStatus ||
+                    ['matching_completed_waiting', 'in_progress', 'completed'].includes(
+                      displayProgram.lifecycleStatus,
+                    )) && (
                   <Card title="일정 요약">
                     <Space direction="vertical" size="small" style={{ width: '100%' }}>
                       {confirmedRounds.slice(0, 3).map((round) => (
@@ -340,11 +393,35 @@ export function ProgramDetailDrawer({
                             {applicationPath.guideMessage}
                           </Paragraph>
                         )}
+                        {remainingCapacity !== undefined && (
+                          <Paragraph style={{ margin: 0, marginBottom: 8 }}>
+                            {capacityFull ? (
+                              <Alert
+                                type="warning"
+                                message={`정원이 마감되었습니다. (잔여: ${remainingCapacity}명)`}
+                                showIcon
+                                style={{ margin: 0 }}
+                              />
+                            ) : capacityAlmostFull ? (
+                              <Alert
+                                type="warning"
+                                message={`정원이 거의 마감되었습니다. (잔여: ${remainingCapacity}명)`}
+                                showIcon
+                                style={{ margin: 0 }}
+                              />
+                            ) : (
+                              <Text type="secondary" style={{ fontSize: 14 }}>
+                                잔여 정원: <Text strong>{remainingCapacity}명</Text>
+                              </Text>
+                            )}
+                          </Paragraph>
+                        )}
                         {applicationUrl && (
                           <SingleCTA
                             label={applicationPath?.pathType === 'google_form' ? '구글폼으로 신청하기' : '신청하기'}
                             targetUrl={applicationUrl}
                             type="primary"
+                            disabled={capacityFull}
                           />
                         )}
                       </div>
@@ -356,11 +433,7 @@ export function ProgramDetailDrawer({
                           </Text>
                         </Paragraph>
                         <Paragraph style={{ margin: 0, fontSize: 14, color: '#8c8c8c' }}>
-                          {program.status === 'inactive' 
-                            ? '프로그램이 비활성화되어 신청할 수 없습니다.'
-                            : program.status === 'completed'
-                            ? '프로그램이 종료되어 신청할 수 없습니다.'
-                            : '프로그램 상태로 인해 신청할 수 없습니다.'}
+                          {unavailableReason || '프로그램 상태로 인해 신청할 수 없습니다.'}
                         </Paragraph>
                       </div>
                     )}
@@ -382,18 +455,67 @@ export function ProgramDetailDrawer({
 
                 <Divider />
 
+                {/* 관리자용: 프로그램 상태 워크플로우 */}
+                {user?.role === 'ADMIN' && (displayProgram.lifecycleStatus !== undefined || !displayProgram.lifecycleStatus) && (
+                  <>
+                    <ProgramLifecycleWorkflow
+                      program={displayProgram}
+                      onStatusChange={async (status: ProgramLifecycleStatus) => {
+                        setStatusChangeLoading(true)
+                        try {
+                          await updateProgram(displayProgram.id, { lifecycleStatus: status })
+                          // store 업데이트 후 최신 데이터를 가져오기
+                          await useProgramStore.getState().fetchProgramById(displayProgram.id)
+                          showSuccessMessage(
+                            `프로그램 상태가 "${getProgramLifecycleLabel(status)}"로 변경되었습니다`
+                          )
+                        } catch (error) {
+                          handleError(error, {
+                            defaultMessage: '상태 변경 중 오류가 발생했습니다',
+                            context: 'ProgramLifecycleStatusChange',
+                          })
+                        } finally {
+                          setStatusChangeLoading(false)
+                        }
+                      }}
+                      onRollback={async () => {
+                        const previousStatus = getPreviousProgramLifecycleStatus(displayProgram.lifecycleStatus)
+                        if (!previousStatus) return
+                        setStatusChangeLoading(true)
+                        try {
+                          await updateProgram(displayProgram.id, { lifecycleStatus: previousStatus })
+                          // store 업데이트 후 최신 데이터를 가져와서 로컬 상태도 업데이트
+                          await useProgramStore.getState().fetchProgramById(displayProgram.id)
+                          showSuccessMessage(
+                            `프로그램 상태가 "${getProgramLifecycleLabel(previousStatus)}"로 되돌아갔습니다`
+                          )
+                        } catch (error) {
+                          handleError(error, {
+                            defaultMessage: '상태 변경 중 오류가 발생했습니다',
+                            context: 'ProgramLifecycleStatusRollback',
+                          })
+                        } finally {
+                          setStatusChangeLoading(false)
+                        }
+                      }}
+                      loading={statusChangeLoading}
+                    />
+                    <Divider />
+                  </>
+                )}
+
                 {/* 관리자용 상세 정보 */}
                 <Card title="관리자 정보" size="small">
                   <Descriptions column={1} bordered size="small">
                     <Descriptions.Item label="등록일">
-                      {dayjs(program.createdAt).format('YYYY-MM-DD HH:mm')}
+                      {dayjs(displayProgram.createdAt).format('YYYY-MM-DD HH:mm')}
                     </Descriptions.Item>
                     <Descriptions.Item label="수정일">
-                      {dayjs(program.updatedAt).format('YYYY-MM-DD HH:mm')}
+                      {dayjs(displayProgram.updatedAt).format('YYYY-MM-DD HH:mm')}
                     </Descriptions.Item>
-                    {program.settlementRuleId && (
+                    {displayProgram.settlementRuleId && (
                       <Descriptions.Item label="정산 규칙 ID">
-                        {program.settlementRuleId}
+                        {displayProgram.settlementRuleId}
                       </Descriptions.Item>
                     )}
                   </Descriptions>
@@ -403,10 +525,10 @@ export function ProgramDetailDrawer({
           },
           {
             key: 'rounds',
-            label: `회차 정보 (${program.rounds.length})`,
+            label: `회차 정보 (${displayProgram.rounds.length})`,
             children: (
               <Table
-                dataSource={program.rounds}
+                dataSource={displayProgram.rounds}
                 columns={roundColumns}
                 rowKey="id"
                 pagination={false}
@@ -498,9 +620,9 @@ export function ProgramDetailDrawer({
                 {/* 기본 교육실적 정보 */}
                 <Card title="기본 교육실적 정보">
                   <Descriptions column={1} bordered>
-                    {program.businessArea && (
+                    {displayProgram.businessArea && (
                       <Descriptions.Item label="사업분야">
-                        {program.businessArea}
+                        {displayProgram.businessArea}
                       </Descriptions.Item>
                     )}
                     {sponsor?.nameEn && (
@@ -510,31 +632,31 @@ export function ProgramDetailDrawer({
                         </Text>
                       </Descriptions.Item>
                     )}
-                    {program.titleEn && (
+                    {displayProgram.titleEn && (
                       <Descriptions.Item label="프로그램명(영문)">
-                        <Text ellipsis={{ tooltip: program.titleEn }}>
-                          {program.titleEn}
+                        <Text ellipsis={{ tooltip: displayProgram.titleEn }}>
+                          {displayProgram.titleEn}
                         </Text>
                       </Descriptions.Item>
                     )}
-                    {program.mainTitle && (
+                    {displayProgram.mainTitle && (
                       <Descriptions.Item label="대표 프로그램명(국문)">
-                        <Text ellipsis={{ tooltip: program.mainTitle }}>
-                          {program.mainTitle}
+                        <Text ellipsis={{ tooltip: displayProgram.mainTitle }}>
+                          {displayProgram.mainTitle}
                         </Text>
                       </Descriptions.Item>
                     )}
-                    {program.textbookName && (
+                    {displayProgram.textbookName && (
                       <Descriptions.Item label="교재명(국문)">
-                        <Text ellipsis={{ tooltip: program.textbookName }}>
-                          {program.textbookName}
+                        <Text ellipsis={{ tooltip: displayProgram.textbookName }}>
+                          {displayProgram.textbookName}
                         </Text>
                       </Descriptions.Item>
                     )}
-                    {program.textbookNameEn && (
+                    {displayProgram.textbookNameEn && (
                       <Descriptions.Item label="교재명(영문)">
-                        <Text ellipsis={{ tooltip: program.textbookNameEn }}>
-                          {program.textbookNameEn}
+                        <Text ellipsis={{ tooltip: displayProgram.textbookNameEn }}>
+                          {displayProgram.textbookNameEn}
                         </Text>
                       </Descriptions.Item>
                     )}
@@ -546,95 +668,95 @@ export function ProgramDetailDrawer({
                           </Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="시군구">
-                          <Text ellipsis={{ tooltip: schoolInfo.region || program.district || '-' }}>
-                            {schoolInfo.region || program.district || '-'}
+                          <Text ellipsis={{ tooltip: schoolInfo.region || displayProgram.district || '-' }}>
+                            {schoolInfo.region || displayProgram.district || '-'}
                           </Text>
                         </Descriptions.Item>
                       </>
                     )}
-                    {program.ipOwned && (
+                    {displayProgram.ipOwned && (
                       <Descriptions.Item label="IP Owned">
-                        {program.ipOwned}
+                        {displayProgram.ipOwned}
                       </Descriptions.Item>
                     )}
-                    {program.courseDeliveredBy && (
+                    {displayProgram.courseDeliveredBy && (
                       <Descriptions.Item label="Course Delivered By">
-                        {program.courseDeliveredBy === 'JA' ? 'JA' : program.courseDeliveredBy === 'Jointly' ? 'Jointly' : program.courseDeliveredBy}
+                        {displayProgram.courseDeliveredBy === 'JA' ? 'JA' : displayProgram.courseDeliveredBy === 'Jointly' ? 'Jointly' : displayProgram.courseDeliveredBy}
                       </Descriptions.Item>
                     )}
-                    {program.partnerInvolvement !== undefined && (
+                    {displayProgram.partnerInvolvement !== undefined && (
                       <Descriptions.Item label="Partner Involvement">
-                        {program.partnerInvolvement ? 'Yes' : 'No'}
+                        {displayProgram.partnerInvolvement ? 'Yes' : 'No'}
                       </Descriptions.Item>
                     )}
-                    {program.ips && (
+                    {displayProgram.ips && (
                       <Descriptions.Item label="IPS 분류">
-                        <Tag>{program.ips}</Tag>
+                        <Tag>{displayProgram.ips}</Tag>
                       </Descriptions.Item>
                     )}
-                    {program.targetLevel && (
+                    {displayProgram.targetLevel && (
                       <Descriptions.Item label="대상 구분">
-                        {program.targetLevel === 'elementary' ? '초' : program.targetLevel === 'middle' ? '중' : program.targetLevel === 'high' ? '고' : program.targetLevel}
+                        {displayProgram.targetLevel === 'elementary' ? '초' : displayProgram.targetLevel === 'middle' ? '중' : displayProgram.targetLevel === 'high' ? '고' : displayProgram.targetLevel}
                       </Descriptions.Item>
                     )}
-                    {program.institutionType && (
+                    {displayProgram.institutionType && (
                       <Descriptions.Item label="기관 구분">
-                        {program.institutionType === 'inside_school' ? '학교 안' : '학교 밖'}
+                        {displayProgram.institutionType === 'inside_school' ? '학교 안' : '학교 밖'}
                       </Descriptions.Item>
                     )}
-                    {program.ips === 'Succeed' && program.programCategory && (
+                    {displayProgram.ips === 'Succeed' && displayProgram.programCategory && (
                       <Descriptions.Item label="프로그램 종류">
-                        <Text ellipsis={{ tooltip: program.programCategory }}>
-                          {program.programCategory}
+                        <Text ellipsis={{ tooltip: displayProgram.programCategory }}>
+                          {displayProgram.programCategory}
                         </Text>
                       </Descriptions.Item>
                     )}
-                    {program.ips === 'Inspire' && program.programChannel && (
+                    {displayProgram.ips === 'Inspire' && displayProgram.programChannel && (
                       <Descriptions.Item label="프로그램 채널 및 형식">
-                        <Text ellipsis={{ tooltip: program.programChannel }}>
-                          {program.programChannel}
+                        <Text ellipsis={{ tooltip: displayProgram.programChannel }}>
+                          {displayProgram.programChannel}
                         </Text>
                       </Descriptions.Item>
                     )}
                     <Descriptions.Item label="교육 형태">
-                      <Tag>{programTypeLabels[program.type] || program.type}</Tag>
+                      <Tag>{programTypeLabels[displayProgram.type] || displayProgram.type}</Tag>
                     </Descriptions.Item>
-                    {program.educationTime && (
+                    {displayProgram.educationTime && (
                       <Descriptions.Item label="교육시간">
-                        {program.educationTime}시간
+                        {displayProgram.educationTime}시간
                       </Descriptions.Item>
                     )}
-                    {program.rounds[0]?.classCount && (
+                    {displayProgram.rounds[0]?.classCount && (
                       <Descriptions.Item label="학급수">
-                        {program.rounds[0].classCount}
+                        {displayProgram.rounds[0].classCount}
                       </Descriptions.Item>
                     )}
-                    {program.managerName && (
+                    {displayProgram.managerName && (
                       <Descriptions.Item label="담당자명">
-                        {program.managerName}
+                        {displayProgram.managerName}
                       </Descriptions.Item>
                     )}
                   </Descriptions>
                 </Card>
 
                 {/* 참가자 통계 */}
-                {(program.maleParticipants !== undefined || program.femaleParticipants !== undefined || program.totalParticipants !== undefined) && (
+                {(displayProgram.maleParticipants !== undefined || displayProgram.femaleParticipants !== undefined || displayProgram.totalParticipants !== undefined) && (
                   <Card title="참가자 통계">
                     <Descriptions column={2} bordered>
-                      {program.maleParticipants !== undefined && (
+                      {displayProgram.maleParticipants !== undefined && (
                         <Descriptions.Item label="남성 참가자">
-                          {program.maleParticipants}명
+                          {displayProgram.maleParticipants}명
                         </Descriptions.Item>
                       )}
-                      {program.femaleParticipants !== undefined && (
+                      {displayProgram.femaleParticipants !== undefined && (
                         <Descriptions.Item label="여성 참가자">
-                          {program.femaleParticipants}명
+                          {displayProgram.femaleParticipants}명
                         </Descriptions.Item>
                       )}
-                      {program.totalParticipants !== undefined && (
+                      {displayProgram.totalParticipants !== undefined && (
                         <Descriptions.Item label="총 참가자" span={2}>
                           <Text strong style={{ fontSize: 16 }}>
-                            {program.totalParticipants}명
+                            {displayProgram.totalParticipants}명
                           </Text>
                         </Descriptions.Item>
                       )}
@@ -643,22 +765,22 @@ export function ProgramDetailDrawer({
                 )}
 
                 {/* 자원봉사자 통계 */}
-                {(program.generalVolunteers !== undefined || program.staffVolunteers !== undefined || program.returningVolunteers !== undefined) && (
+                {(displayProgram.generalVolunteers !== undefined || displayProgram.staffVolunteers !== undefined || displayProgram.returningVolunteers !== undefined) && (
                   <Card title="자원봉사자 통계">
                     <Descriptions column={2} bordered>
-                      {program.generalVolunteers !== undefined && (
+                      {displayProgram.generalVolunteers !== undefined && (
                         <Descriptions.Item label="일반 자원봉사자">
-                          {program.generalVolunteers}명
+                          {displayProgram.generalVolunteers}명
                         </Descriptions.Item>
                       )}
-                      {program.staffVolunteers !== undefined && (
+                      {displayProgram.staffVolunteers !== undefined && (
                         <Descriptions.Item label="임직원 자원봉사자">
-                          {program.staffVolunteers}명
+                          {displayProgram.staffVolunteers}명
                         </Descriptions.Item>
                       )}
-                      {program.returningVolunteers !== undefined && (
+                      {displayProgram.returningVolunteers !== undefined && (
                         <Descriptions.Item label="재참여 자원봉사자">
-                          {program.returningVolunteers}명
+                          {displayProgram.returningVolunteers}명
                         </Descriptions.Item>
                       )}
                     </Descriptions>
@@ -666,22 +788,22 @@ export function ProgramDetailDrawer({
                 )}
 
                 {/* 교사/강사 통계 */}
-                {(program.generalTeachers !== undefined || program.educatedTeachers !== undefined || program.instructors !== undefined) && (
+                {(displayProgram.generalTeachers !== undefined || displayProgram.educatedTeachers !== undefined || displayProgram.instructors !== undefined) && (
                   <Card title="교사/강사 통계">
                     <Descriptions column={2} bordered>
-                      {program.generalTeachers !== undefined && (
+                      {displayProgram.generalTeachers !== undefined && (
                         <Descriptions.Item label="일반담당교사">
-                          {program.generalTeachers}명
+                          {displayProgram.generalTeachers}명
                         </Descriptions.Item>
                       )}
-                      {program.educatedTeachers !== undefined && (
+                      {displayProgram.educatedTeachers !== undefined && (
                         <Descriptions.Item label="교육받은교사">
-                          {program.educatedTeachers}명
+                          {displayProgram.educatedTeachers}명
                         </Descriptions.Item>
                       )}
-                      {program.instructors !== undefined && (
+                      {displayProgram.instructors !== undefined && (
                         <Descriptions.Item label="강사">
-                          {program.instructors}명
+                          {displayProgram.instructors}명
                         </Descriptions.Item>
                       )}
                     </Descriptions>
@@ -706,7 +828,7 @@ export function ProgramDetailDrawer({
           onSubmit={handleApplicationPathFormSubmit}
           onCancel={handleApplicationPathFormCancel}
           loading={formLoading}
-          fixedProgramId={program.id}
+          fixedProgramId={displayProgram.id}
         />
       </Modal>
     </Drawer>

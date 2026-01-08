@@ -29,13 +29,17 @@ const columns: ColumnDef<Program>[] = [
     accessorKey: 'status',
     header: '상태',
   },
+  {
+    accessorKey: 'lifecycleStatus',
+    header: '진행 상태',
+  },
 ]
 
 export function useProgramTable(data: Program[]) {
   return useTableWithQuery({
     data,
     columns,
-    filterKeys: ['title', 'sponsorId', 'type', 'status'],
+    filterKeys: ['title', 'sponsorId', 'type', 'status', 'lifecycleStatus'],
     defaultPageSize: 10,
   })
 }
