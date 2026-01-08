@@ -64,6 +64,42 @@ export function Sidebar() {
     // 사용자 봉사단
     if (path.startsWith('/volunteers') && user?.role !== 'ADMIN') {
       keys.push('volunteers-user-group')
+
+      // 개인정보관리
+      if (path.startsWith('/mypage/profile')) {
+        keys.push('volunteer-personal-info-group')
+      }
+
+      // 프로그램관리
+      if (path.startsWith('/volunteers/my/programs') || path.startsWith('/programs/favorites')) {
+        keys.push('volunteer-program-management-group')
+      }
+
+      // 봉사단 활동 관리
+      if (path.startsWith('/volunteers/my/schedules') || path.startsWith('/volunteers/my/histories')) {
+        keys.push('volunteer-activity-management-group')
+      }
+    }
+
+    // 봉사자: 마이페이지 경로도 봉사단 메뉴로 처리
+    if (user?.role === 'VOLUNTEER') {
+      if (
+        path.startsWith('/mypage') ||
+        path.startsWith('/volunteers/my') ||
+        path.startsWith('/programs/favorites')
+      ) {
+        keys.push('volunteer-mypage-group')
+
+        // 프로그램관리
+        if (path.startsWith('/volunteers/my/programs') || path.startsWith('/programs/favorites')) {
+          keys.push('volunteer-program-mgmt')
+        }
+
+        // 봉사단 활동 관리
+        if (path.startsWith('/volunteers/my/schedules') || path.startsWith('/volunteers/my/histories')) {
+          keys.push('volunteer-activity-mgmt')
+        }
+      }
     }
 
     return keys

@@ -48,38 +48,89 @@ const allMenuItems: MenuItemConfig[] = [
   { key: '/', label: '홈', icon: <DashboardOutlined />, enabled: true },
   { key: '/programs', label: '진행 프로그램', icon: <BookOutlined />, enabled: true },
   {
-    key: 'volunteers-user-group',
+    key: '/volunteers/programs',
     label: '봉사단',
     icon: <HeartOutlined />,
     enabled: true,
     allowedRoles: ['VOLUNTEER'],
+  },
+
+  // 봉사자(VOLUNTEER) 마이페이지
+  {
+    key: 'volunteer-mypage-group',
+    label: '마이페이지',
+    icon: <UserSwitchOutlined />,
+    enabled: true,
+    allowedRoles: ['VOLUNTEER'],
     children: [
       {
-        key: '/volunteers/my/programs',
-        label: '봉사 프로그램',
+        key: '/mypage/profile',
+        label: '개인정보관리',
         enabled: true,
         allowedRoles: ['VOLUNTEER'],
       },
+      {
+        key: 'volunteer-program-mgmt',
+        label: '프로그램관리',
+        enabled: true,
+        allowedRoles: ['VOLUNTEER'],
+        children: [
+          {
+            key: '/volunteers/my/programs',
+            label: '수강 프로그램',
+            enabled: true,
+            allowedRoles: ['VOLUNTEER'],
+          },
+          {
+            key: '/programs/favorites',
+            label: '관심 프로그램 관리',
+            enabled: true,
+            allowedRoles: ['VOLUNTEER'],
+          },
+        ],
+      },
+      {
+        key: 'volunteer-activity-mgmt',
+        label: '봉사단 활동 관리',
+        enabled: true,
+        allowedRoles: ['VOLUNTEER'],
+        children: [
+          {
+            key: '/volunteers/my/schedules',
+            label: '내 봉사 일정',
+            enabled: true,
+            allowedRoles: ['VOLUNTEER'],
+          },
+          {
+            key: '/volunteers/my/histories',
+            label: '봉사단 참여 이력',
+            enabled: true,
+            allowedRoles: ['VOLUNTEER'],
+          },
+        ],
+      },
     ],
   },
+
+  // 강사(INSTRUCTOR) 및 수강자(STUDENT) 마이페이지
   {
     key: 'mypage-group',
     label: '마이페이지',
     icon: <UserSwitchOutlined />,
     enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+    allowedRoles: ['INSTRUCTOR', 'STUDENT'],
     children: [
       {
         key: 'personal-info-group',
         label: '개인정보 관리',
         enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+        allowedRoles: ['INSTRUCTOR', 'STUDENT'],
         children: [
           {
             key: '/mypage/profile',
             label: '개인정보 관리',
             enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+            allowedRoles: ['INSTRUCTOR', 'STUDENT'],
           },
           {
             key: '/histories',
@@ -87,19 +138,13 @@ const allMenuItems: MenuItemConfig[] = [
             enabled: true,
             allowedRoles: ['INSTRUCTOR'],
           },
-          {
-            key: '/histories',
-            label: '봉사 이력 관리',
-            enabled: true,
-            allowedRoles: ['VOLUNTEER'],
-          },
         ],
       },
       {
         key: 'program-management-group',
         label: '프로그램 관리',
         enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+        allowedRoles: ['INSTRUCTOR', 'STUDENT'],
         children: [
           {
             key: '/programs/my',
@@ -117,7 +162,7 @@ const allMenuItems: MenuItemConfig[] = [
             key: '/programs/favorites',
             label: '관심 프로그램 관리',
             enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
+            allowedRoles: ['INSTRUCTOR', 'STUDENT'],
           },
           {
             key: '/programs/satisfaction',
@@ -143,7 +188,9 @@ const allMenuItems: MenuItemConfig[] = [
       },
     ],
   },
+
   { key: 'divider-user', type: 'divider', enabled: true },
+
   {
     key: '/notices',
     label: '공지사항',
@@ -165,7 +212,7 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
   },
-  { key: 'divider-admin', type: 'divider', enabled: true },
+  { key: 'divider-admin', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
   // 관리자 영역
   {
@@ -231,6 +278,7 @@ const allMenuItems: MenuItemConfig[] = [
   { key: '/education-records-v2', label: '실적 통계 (v2)', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   { key: '/logs', label: '로그 관리', icon: <DatabaseOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  { key: 'divider-bottom', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
   // 기타 (비활성)
   { key: '/applications', label: '신청 관리', icon: <FileTextOutlined />, enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT'] },

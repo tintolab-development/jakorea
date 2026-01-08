@@ -22,6 +22,8 @@ export type DashboardWidgetType =
   | 'my-application-summary' // 본인 신청 현황 (수강자)
   | 'upcoming-schedules-list' // 예정된 일정 목록
   | 'pending-tasks-list' // 대기 중인 작업 목록
+  | 'my-volunteer-activity-summary' // 본인 활동 요약 (봉사자)
+  | 'volunteer-pending-tasks-list' // 대기 중인 작업 목록 (봉사자)
 
 /**
  * 대시보드 위젯 설정
@@ -59,9 +61,9 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 봉사자: 본인 활동 요약
   VOLUNTEER: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
-    { type: 'my-activity-summary', colSpan: 24, order: 2 },
+    { type: 'my-volunteer-activity-summary', colSpan: 24, order: 2 },
     { type: 'upcoming-schedules-list', colSpan: 12, order: 3 },
-    { type: 'pending-tasks-list', colSpan: 12, order: 4 },
+    { type: 'volunteer-pending-tasks-list', colSpan: 12, order: 4 },
     { type: 'unified-activity-feed', colSpan: 24, order: 5 },
   ],
   // 수강자: 본인 신청 현황

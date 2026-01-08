@@ -20,7 +20,8 @@ export function getApplicationCountByProgram(programId: string): number {
  * @param rounds 회차 배열
  * @returns 확정된 회차 배열 (status가 'active' 또는 'completed')
  */
-export function getConfirmedRounds(rounds: ProgramRound[]): ProgramRound[] {
+export function getConfirmedRounds(rounds: ProgramRound[] = []): ProgramRound[] {
+  if (!rounds) return []
   return rounds.filter(round => round.status === 'active' || round.status === 'completed')
 }
 
