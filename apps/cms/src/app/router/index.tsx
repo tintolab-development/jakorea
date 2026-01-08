@@ -98,6 +98,7 @@ const ReportFormPage = lazyLoad(() => import('@/pages/reports/report-form-page')
 const ReportListPage = lazyLoad(() => import('@/pages/reports/report-list-page'))
 const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
 const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-detail-page'))
+const VolunteerListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-list-page'))
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
 const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
@@ -108,6 +109,9 @@ const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const PerformanceDashboardPage = lazyLoad(() => import('@/pages/performance/performance-dashboard-page'))
 const ScheduleNegotiationListPage = lazyLoad(() => import('@/pages/schedule-negotiations/schedule-negotiation-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
+const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
+const PostListPage = lazyLoad(() => import('@/pages/posts/post-list-page'))
+const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
 
 export const router = createBrowserRouter([
   {
@@ -258,7 +262,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'volunteers',
-        children: [{ path: ':id', element: <VolunteerDetailPage /> }],
+        children: [
+          { index: true, element: <VolunteerListPage /> },
+          { path: ':id', element: <VolunteerDetailPage /> },
+        ],
       },
       {
         path: 'mypage',
@@ -269,6 +276,24 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <HistoryListPage /> },
           { path: ':id', element: <HistoryDetailPage /> },
+        ],
+      },
+      {
+        path: 'templates',
+        children: [
+          { index: true, element: <TemplateListPage /> },
+        ],
+      },
+      {
+        path: 'posts',
+        children: [
+          { index: true, element: <PostListPage /> },
+        ],
+      },
+      {
+        path: 'logs',
+        children: [
+          { index: true, element: <LogListPage /> },
         ],
       },
       {

@@ -117,7 +117,7 @@ export default function PerformanceDashboardPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 */}
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <h1 style={{ margin: 0 }}>예산 및 실적 관리 (요약)</h1>
+          <h1 style={{ margin: 0, fontSize: 20 }}>실적 통계</h1>
         </Space>
 
         {/* 기간/지역 선택 + 요약 카드 */}

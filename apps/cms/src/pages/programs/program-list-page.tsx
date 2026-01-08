@@ -64,7 +64,7 @@ export function ProgramListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>프로그램 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>프로그램 관리</h1>
         {isAdmin && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/programs/new')}>
             프로그램 등록

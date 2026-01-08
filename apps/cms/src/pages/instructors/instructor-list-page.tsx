@@ -23,7 +23,7 @@ export function InstructorListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>강사 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>강사단 관리</h1>
         <PermissionButton
           type="primary"
           icon={<PlusOutlined />}

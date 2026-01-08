@@ -6,8 +6,9 @@
  * Phase 1 (대시보드 고도화): 즉시 처리 필요 작업, 월별 정산 현황, 통합 활동 피드
  */
 
-import { Card, Row, Col, Statistic, Space } from 'antd'
+import { Card, Row, Col, Statistic, Divider } from 'antd'
 import { useMemo, useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
 import { mockInstructors } from '@/data/mock'
@@ -22,12 +23,14 @@ import { MyApplicationSummary } from '@/features/dashboard/ui/my-application-sum
 import { UpcomingSchedulesList } from '@/features/dashboard/ui/upcoming-schedules-list'
 import { PendingTasksList } from '@/features/dashboard/ui/pending-tasks-list'
 import { GlobalSearch } from '@/features/dashboard/ui/global-search'
-import { NotificationList } from '@/features/dashboard/ui/notification-list'
+import { OverallProgramProgressCard } from '@/features/dashboard/ui/overall-program-progress-card'
+import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
 import { getOverallStatistics, type OverallStatistics } from '@/features/dashboard/api/statistics-service'
 import { getInstructorActivitySummary, type InstructorActivitySummary } from '@/features/dashboard/api/instructor-activity-service'
 
 export function Dashboard() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const instructorCount = mockInstructors.length
   const [overallStatistics, setOverallStatistics] = useState<OverallStatistics | null>(null)
   const [statisticsLoading, setStatisticsLoading] = useState(false)
@@ -128,6 +131,8 @@ export function Dashboard() {
             loading={statisticsLoading}
           />
         )
+      case 'overall-program-progress-card':
+        return <OverallProgramProgressCard />
       case 'monthly-settlement-card':
         return <MonthlySettlementCard />
       case 'monthly-application-card':
@@ -136,8 +141,17 @@ export function Dashboard() {
         return <ActiveProgramCard />
       case 'instructor-count-card':
         return (
-          <Card style={{ height: '100%' }}>
-            <Statistic title="등록된 강사" value={instructorCount} />
+          <Card
+            hoverable
+            onClick={() => navigate('/instructors')}
+            style={{ height: '100%', cursor: 'pointer' }}
+          >
+            <Statistic 
+              title="등록된 강사" 
+              value={instructorCount}
+              suffix="명"
+              valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            />
           </Card>
         )
       case 'unified-activity-feed':
@@ -176,25 +190,27 @@ export function Dashboard() {
             loading={instructorActivityLoading}
           />
         )
+      case 'notification-widget':
+        return <NotificationWidget />
       default:
         return null
     }
   }
 
-  // 강사/봉사자일 경우 검색 및 알림 표시
-  const showSearchAndNotification = user?.role === 'INSTRUCTOR' || user?.role === 'VOLUNTEER'
+  // 검색 및 알림 표시 (관리자, 강사, 봉사자)
+  const showSearchAndNotification = 
+    user?.role === 'ADMIN' || 
+    user?.role === 'INSTRUCTOR' || 
+    user?.role === 'VOLUNTEER'
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0 }}>대시보드</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>홈</h1>
         {showSearchAndNotification && (
-          <Space size="middle" align="center">
-            <div style={{ width: 300 }}>
-              <GlobalSearch />
-            </div>
-            <NotificationList />
-          </Space>
+          <div style={{ width: 300 }}>
+            <GlobalSearch />
+          </div>
         )}
       </div>
 
@@ -203,6 +219,18 @@ export function Dashboard() {
         {widgets.map((widget, index) => {
           const widgetComponent = renderWidget(widget.type)
           if (!widgetComponent) return null
+
+          const isNotificationWidget = widget.type === 'notification-widget'
+          const isFirstWidget = index === 0
+
+          if (isNotificationWidget && isFirstWidget) {
+            return (
+              <Col key={`notification-wrapper-${index}`} span={24}>
+                {widgetComponent}
+                <Divider style={{ margin: '24px 0' }} />
+              </Col>
+            )
+          }
 
           return (
             <Col key={`${widget.type}-${index}`} span={widget.colSpan || 6}>

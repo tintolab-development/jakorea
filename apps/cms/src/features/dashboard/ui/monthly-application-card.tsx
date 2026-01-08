@@ -9,7 +9,6 @@ import { Card, Statistic, Space, Tag, Typography } from 'antd'
 import { FileTextOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { getApplicationStatusColor } from '@/shared/constants/status'
-import { domainColorsHex } from '@/shared/constants/colors'
 import { useDashboardData } from '../model/use-dashboard-data'
 
 const { Text } = Typography
@@ -37,14 +36,11 @@ export function MonthlyApplicationCard() {
         value={total}
         prefix={<FileTextOutlined />}
         suffix="건"
-        valueStyle={{ color: domainColorsHex.application.primary }}
+        valueStyle={{ color: '#000000', fontWeight: 'bold' }}
       />
       {(isIncrease || isDecrease) && (
         <div style={{ marginTop: 8 }}>
-          <Text
-            type={isIncrease ? 'success' : 'danger'}
-            style={{ fontSize: 12 }}
-          >
+          <Text style={{ fontSize: 12, color: '#000000' }}>
             {isIncrease ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             {' '}
             {Math.abs(changeCount)}건 (전월 대비)

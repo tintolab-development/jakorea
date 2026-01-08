@@ -54,7 +54,7 @@ interface ProgramDetailDrawerProps {
   onEdit: () => void
   onDelete: () => void
   loading?: boolean
-  hideActions?: boolean // 수정/삭제 버튼 숨김 (교육실적관리 등 읽기 전용)
+  hideActions?: boolean // 수정/삭제 버튼 숨김 (실적 통계 등 읽기 전용)
 }
 
 const programTypeLabels: Record<string, string> = {
@@ -100,7 +100,7 @@ export function ProgramDetailDrawer({
     return undefined
   }, [user])
 
-  // 교육실적 관련: 학교 정보 조회 (Application을 통해)
+  // 실적 통계 관련: 학교 정보 조회 (Application을 통해)
   // hooks는 항상 동일한 순서로 호출되어야 하므로 early return 전에 호출
   const schoolInfo = useMemo(() => {
     if (!currentProgram) return null
@@ -611,10 +611,10 @@ export function ProgramDetailDrawer({
               </Space>
             ),
           },
-          // 교육실적 상세 정보 탭 (교육실적관리 v2)
+          // 실적 통계 상세 정보 탭 (실적 통계 v2)
           {
             key: 'education-record',
-            label: '교육실적 상세',
+            label: '실적 통계 상세',
             children: (
               <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 {/* 기본 교육실적 정보 */}

@@ -1,5 +1,5 @@
 /**
- * 교육실적 목록 컴포넌트 (v2)
+ * 실적 통계 목록 컴포넌트 (v2)
  * 핵심 컬럼만 표시, 상세 정보는 상세 패널에서 확인
  * 테이블 / 차트 탭 전환 지원
  */
@@ -652,7 +652,7 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
               <Card>
                 {monthlyStats.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '48px 0', color: '#8c8c8c' }}>
-                    표시할 교육실적 데이터가 없습니다.
+                    표시할 실적 통계 데이터가 없습니다.
                   </div>
                 ) : (
                   <>

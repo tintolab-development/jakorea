@@ -248,7 +248,7 @@ export function ReportListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>보고서 관리</h1>
+        {/* <h1 style={{ margin: 0 }}>보고서 관리</h1> */}
       </Space>
 
       {/* 통계 카드 - 간결한 한 줄 배치 */}

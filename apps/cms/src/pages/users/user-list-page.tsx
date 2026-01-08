@@ -116,7 +116,7 @@ export function UserListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>사용자 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>회원 관리</h1>
       </Space>
 
       <Space style={{ marginBottom: 16 }} size="middle">

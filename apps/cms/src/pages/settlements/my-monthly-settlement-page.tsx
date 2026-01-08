@@ -175,8 +175,8 @@ export function MyMonthlySettlementPage() {
     <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 */}
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <h1 style={{ margin: 0 }}>월별 정산 관리</h1>
+        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+          {/* <h1 style={{ margin: 0 }}>월별 정산 관리</h1> */}
           <Space>
             <Radio.Group
               value={viewMode}

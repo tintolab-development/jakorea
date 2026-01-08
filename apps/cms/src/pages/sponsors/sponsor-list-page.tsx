@@ -21,7 +21,7 @@ export function SponsorListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>스폰서 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>후원사 관리</h1>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/sponsors/new')}>
           스폰서 등록
         </Button>

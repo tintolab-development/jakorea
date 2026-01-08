@@ -21,7 +21,7 @@ export function SchoolListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>학교 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>회원 관리</h1>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/schools/new')}>
           학교 등록
         </Button>

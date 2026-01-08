@@ -140,8 +140,8 @@ export function ScheduleCalendarPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>일정 관리</h1>
+      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
+        {/* <h1 style={{ margin: 0 }}>일정 관리</h1> */}
         <Button
           type="primary"
           icon={<PlusOutlined />}

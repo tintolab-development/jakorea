@@ -33,7 +33,7 @@ export function ActiveProgramCard() {
         value={count}
         prefix={<BookOutlined />}
         suffix="개"
-        valueStyle={{ color: domainColorsHex.program.primary }}
+        valueStyle={{ color: '#000000', fontWeight: 'bold' }}
       />
       <Space direction="vertical" size="small" style={{ marginTop: 16, width: '100%' }}>
         {thisWeekSchedules > 0 && (

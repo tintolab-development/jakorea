@@ -174,7 +174,7 @@ export function SettlementListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>정산 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>강사단 관리</h1>
         <Space>
           <Radio.Group value={viewMode} onChange={e => handleViewModeChange(e.target.value)} buttonStyle="solid">
             <Radio.Button value="list">
