@@ -150,8 +150,8 @@ export function MatchingListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>매칭 관리</h1>
+      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
+        {/* <h1 style={{ margin: 0 }}>매칭 관리</h1> */}
         <Button type="primary" icon={<UserAddOutlined />} onClick={() => {
           setEditingMatching(null)
           setFormModalOpen(true)

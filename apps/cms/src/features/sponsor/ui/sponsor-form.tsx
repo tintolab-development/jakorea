@@ -3,7 +3,7 @@
  * Phase 1.3: react-hook-form + zod
  */
 
-import { Form, Input, Button, Card, Space } from 'antd'
+import { Form, Input, Button, Space } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { sponsorSchema, type SponsorFormData } from '@/entities/sponsor/model/schema'
@@ -40,8 +40,7 @@ export function SponsorForm({ sponsor, onSubmit, onCancel, loading }: SponsorFor
   }
 
   return (
-    <Card title={sponsor ? '스폰서 수정' : '스폰서 등록'}>
-      <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
+    <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
         <Form.Item label="스폰서명" validateStatus={errors.name ? 'error' : ''} help={errors.name?.message}>
           <Input {...register('name')} />
         </Form.Item>
@@ -67,7 +66,6 @@ export function SponsorForm({ sponsor, onSubmit, onCancel, loading }: SponsorFor
           </Space>
         </Form.Item>
       </Form>
-    </Card>
   )
 }
 

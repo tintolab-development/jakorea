@@ -100,7 +100,7 @@ export function ScheduleNegotiationList({ data, loading, onView, onEdit, onDelet
       columns={columns}
       rowKey="id"
       loading={loading}
-      pagination={{ pageSize: 10, showTotal: total => `총 ${total}개` }}
+      pagination={{ defaultPageSize: 10, showSizeChanger: true, showTotal: total => `총 ${total}개` }}
     />
   )
 }

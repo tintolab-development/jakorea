@@ -47,12 +47,12 @@ export function MySettlementSubmissionPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/settlements/my')}>
             목록으로
           </Button>
-          <h1 style={{ margin: 0 }}>정산 제출</h1>
+          {/* <h1 style={{ margin: 0 }}>정산 제출</h1> */}
         </Space>
       </Space>
 

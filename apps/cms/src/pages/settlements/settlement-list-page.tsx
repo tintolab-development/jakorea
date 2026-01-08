@@ -5,9 +5,9 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { Button, Space, Modal, Radio, Card, Select } from 'antd'
-import { PlusOutlined, CalendarOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Button, Space, Modal, Card, Select, Tabs, Segmented } from 'antd'
+import { PlusOutlined, CalendarOutlined, SettingOutlined, TableOutlined } from '@ant-design/icons'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { SettlementList } from '@/features/settlement/ui/settlement-list'
 import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
 import { SettlementForm } from '@/features/settlement/ui/settlement-form'
@@ -17,11 +17,32 @@ import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import type { Settlement } from '@/types/domain'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import dayjs from 'dayjs'
+
+type TabKey = 'all' | 'pending' | 'review' | 'paid' | 'overview'
 
 export function SettlementListPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  
+  // 기존 URL 경로를 탭으로 변환 (리다이렉트 처리)
+  useEffect(() => {
+    const path = location.pathname
+    if (path === '/settlements/pending' && !searchParams.get('tab')) {
+      setSearchParams({ tab: 'pending' }, { replace: true })
+    } else if (path === '/settlements/review' && !searchParams.get('tab')) {
+      setSearchParams({ tab: 'review' }, { replace: true })
+    } else if (path === '/settlements/paid' && !searchParams.get('tab')) {
+      setSearchParams({ tab: 'paid' }, { replace: true })
+    } else if (path === '/settlements/overview' && !searchParams.get('tab')) {
+      setSearchParams({ tab: 'overview' }, { replace: true })
+    }
+  }, [location.pathname, searchParams, setSearchParams])
+  
+  // 2뎁스 카테고리명 가져오기
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
   const {
     settlements,
     loading,
@@ -43,6 +64,7 @@ export function SettlementListPage() {
   type ViewMode = 'list' | 'calendar'
   const viewMode = (searchParams.get('view') as ViewMode) || 'list'
   const selectedPeriod = searchParams.get('period') || dayjs().format('YYYY-MM')
+  const activeTab = (searchParams.get('tab') as TabKey) || 'all'
 
   useEffect(() => {
     fetchSettlements()
@@ -58,12 +80,46 @@ export function SettlementListPage() {
     return Array.from(periods).sort((a, b) => (a > b ? -1 : 1))
   }, [settlements])
 
+  // 탭별 정산 필터링
+  const filteredSettlements = useMemo(() => {
+    let filtered = settlements
+
+    // 탭별 상태 필터링
+    if (activeTab === 'pending') {
+      filtered = filtered.filter(s => s.status === 'pending')
+    } else if (activeTab === 'review') {
+      filtered = filtered.filter(s => s.status === 'review')
+    } else if (activeTab === 'paid') {
+      filtered = filtered.filter(s => s.status === 'paid')
+    }
+    // 'all'과 'overview'는 전체 표시
+
+    return filtered
+  }, [settlements, activeTab])
+
   const monthlySettlements = useMemo(() => {
-    return settlements.filter(s => {
+    return filteredSettlements.filter(s => {
       const period = s.period || dayjs(s.createdAt).format('YYYY-MM')
       return period === selectedPeriod
     })
-  }, [settlements, selectedPeriod])
+  }, [filteredSettlements, selectedPeriod])
+
+  // 탭별 카운트
+  const tabCounts = useMemo(() => {
+    return {
+      all: settlements.length,
+      pending: settlements.filter(s => s.status === 'pending').length,
+      review: settlements.filter(s => s.status === 'review').length,
+      paid: settlements.filter(s => s.status === 'paid').length,
+      overview: settlements.length,
+    }
+  }, [settlements])
+
+  const handleTabChange = (key: string) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', key)
+    setSearchParams(next, { replace: true })
+  }
 
   const handleView = (settlement: Settlement) => {
     setSelectedSettlement(settlement)
@@ -174,16 +230,34 @@ export function SettlementListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>정산 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
         <Space>
-          <Radio.Group value={viewMode} onChange={e => handleViewModeChange(e.target.value)} buttonStyle="solid">
-            <Radio.Button value="list">
-              <UnorderedListOutlined /> 리스트
-            </Radio.Button>
-            <Radio.Button value="calendar">
-              <CalendarOutlined /> 캘린더
-            </Radio.Button>
-          </Radio.Group>
+          <Segmented
+            value={viewMode}
+            onChange={(value) => handleViewModeChange(value as ViewMode)}
+            options={[
+              {
+                label: (
+                  <span>
+                    <TableOutlined style={{ marginRight: 4 }} />
+                    목록 보기
+                  </span>
+                ),
+                value: 'list',
+                title: '정산 목록을 테이블 형태로 확인합니다. 상세 정보와 상태 변경이 용이합니다.',
+              },
+              {
+                label: (
+                  <span>
+                    <CalendarOutlined style={{ marginRight: 4 }} />
+                    캘린더 보기
+                  </span>
+                ),
+                value: 'calendar',
+                title: '정산 일정을 캘린더 형태로 확인합니다. 기간별 정산 현황을 한눈에 파악할 수 있습니다.',
+              },
+            ]}
+          />
           <Button icon={<CalendarOutlined />} onClick={() => navigate('/settlements/monthly')}>
             월별 정산 관리
           </Button>
@@ -196,19 +270,74 @@ export function SettlementListPage() {
         </Space>
       </Space>
 
+      {/* 상태별 탭 */}
+      <Tabs
+        activeKey={activeTab}
+        onChange={handleTabChange}
+        items={[
+          {
+            key: 'all',
+            label: `전체${tabCounts.all > 0 ? ` (${tabCounts.all})` : ''}`,
+          },
+          {
+            key: 'pending',
+            label: `신청 대기${tabCounts.pending > 0 ? ` (${tabCounts.pending})` : ''}`,
+          },
+          {
+            key: 'review',
+            label: `확인 대기${tabCounts.review > 0 ? ` (${tabCounts.review})` : ''}`,
+          },
+          {
+            key: 'paid',
+            label: `지급 완료${tabCounts.paid > 0 ? ` (${tabCounts.paid})` : ''}`,
+          },
+          {
+            key: 'overview',
+            label: '전체 현황',
+          },
+        ]}
+        style={{ marginBottom: 16 }}
+      />
+
       {viewMode === 'list' && (
-        <SettlementList
-          data={settlements}
-          loading={loading}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
-          onStatusChange={handleStatusChange}
-        />
+        <>
+          {activeTab === 'overview' ? (
+            <Card title="전체 정산 현황 캘린더">
+              <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                <Space>
+                  <span>기간 선택:</span>
+                  <Select
+                    value={selectedPeriod}
+                    onChange={handlePeriodChange}
+                    style={{ width: 160 }}
+                    options={availablePeriods.map(p => ({
+                      label: dayjs(p).format('YYYY년 MM월'),
+                      value: p,
+                    }))}
+                  />
+                </Space>
+                <SettlementCalendar
+                  settlements={settlements}
+                  onDateSelect={handleCalendarSelect}
+                  selectedPeriod={selectedPeriod}
+                />
+              </Space>
+            </Card>
+          ) : (
+            <SettlementList
+              data={filteredSettlements}
+              loading={loading}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              onStatusChange={handleStatusChange}
+            />
+          )}
+        </>
       )}
 
       {viewMode === 'calendar' && (
-        <Card>
+        <Card title="정산 캘린더">
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <Space>
               <span>기간 선택:</span>
@@ -223,7 +352,7 @@ export function SettlementListPage() {
               />
             </Space>
             <SettlementCalendar
-              settlements={monthlySettlements}
+              settlements={activeTab === 'overview' ? settlements : monthlySettlements}
               onDateSelect={handleCalendarSelect}
               selectedPeriod={selectedPeriod}
             />

@@ -87,8 +87,8 @@ export function MySettlementDetailPage() {
   return (
     <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Space style={{ width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ margin: 0 }}>정산 상세</h1>
+        <Space style={{ width: '100%', justifyContent: 'flex-end', alignItems: 'center' }}>
+          {/* <h1 style={{ margin: 0 }}>정산 상세</h1> */}
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/settlements/my')}>
             목록으로
           </Button>

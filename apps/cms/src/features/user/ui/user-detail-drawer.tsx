@@ -32,7 +32,7 @@ export function UserDetailDrawer({
       placement="right"
       onClose={onClose}
       open={open}
-      width={600}
+      width={660}
       extra={
         onEdit && (
           <Space>

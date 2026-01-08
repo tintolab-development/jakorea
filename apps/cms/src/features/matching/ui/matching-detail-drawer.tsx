@@ -53,7 +53,7 @@ export function MatchingDetailDrawer({
     <Drawer
       title="매칭 상세 정보"
       placement="right"
-      width={600}
+      width={660}
       open={open}
       onClose={onClose}
       extra={

@@ -248,7 +248,7 @@ export function ReportListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>보고서 관리</h1>
+        {/* <h1 style={{ margin: 0 }}>보고서 관리</h1> */}
       </Space>
 
       {/* 통계 카드 - 간결한 한 줄 배치 */}
@@ -312,7 +312,7 @@ export function ReportListPage() {
           style: { cursor: 'pointer' },
         })}
         pagination={{
-          pageSize: 20,
+          defaultPageSize: 20,
           showSizeChanger: true,
           showTotal: total => `총 ${total}개`,
         }}

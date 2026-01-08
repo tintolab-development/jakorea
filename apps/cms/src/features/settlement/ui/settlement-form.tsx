@@ -104,9 +104,9 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
         <Select
           value={watch('programId')}
           onChange={value => {
-            setValue('programId', value)
+            setValue('programId', value, { shouldValidate: true })
             // 프로그램 변경 시 매칭 초기화
-            setValue('matchingId', '')
+            setValue('matchingId', '', { shouldValidate: true })
           }}
           placeholder="프로그램 선택"
           showSearch
@@ -140,9 +140,9 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
         <Select
           value={watch('instructorId')}
           onChange={value => {
-            setValue('instructorId', value)
+            setValue('instructorId', value, { shouldValidate: true })
             // 강사 변경 시 매칭 초기화
-            setValue('matchingId', '')
+            setValue('matchingId', '', { shouldValidate: true })
           }}
           placeholder="강사 선택"
           showSearch
@@ -175,7 +175,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
       >
         <Select
           value={watch('matchingId')}
-          onChange={value => setValue('matchingId', value)}
+          onChange={value => setValue('matchingId', value, { shouldValidate: true })}
           placeholder="매칭 선택"
           disabled={!selectedProgramId || !selectedInstructorId}
         >
@@ -204,7 +204,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
       >
         <Select
           value={watch('status')}
-          onChange={value => setValue('status', value)}
+          onChange={value => setValue('status', value, { shouldValidate: true })}
           placeholder="상태 선택"
         >
           {statusOptions.map(option => (

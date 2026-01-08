@@ -17,7 +17,7 @@ export function InterviewDetailDrawer({ open, interview, onClose }: InterviewDet
   if (!interview) return null
 
   return (
-    <Drawer title="면접 상세 정보" open={open} onClose={onClose} width={600}>
+    <Drawer title="면접 상세 정보" open={open} onClose={onClose} width={660}>
       <Descriptions column={1} bordered>
         <Descriptions.Item label="신청 유형">
           <Tag color={interview.userRole === 'INSTRUCTOR' ? 'blue' : 'green'}>

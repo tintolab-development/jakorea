@@ -4,12 +4,14 @@
  */
 
 import { useMemo } from 'react'
-import { Card, Space, Statistic, Table, Tag, Select } from 'antd'
+import { Card, Space, Statistic, Table, Tag, Select, Button } from 'antd'
+import { DownloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { mockPrograms } from '@/data/mock'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { exportTableToExcel } from '@/shared/utils/table-export'
 
 interface PerformanceRow {
   key: string
@@ -72,6 +74,10 @@ export default function PerformanceDashboardPage() {
   const totalParticipants = filteredRows.reduce((sum, r) => sum + r.totalParticipants, 0)
   const uniqueRegions = new Set(filteredRows.map(r => r.region)).size
 
+  const handleExportExcel = async () => {
+    await exportTableToExcel(columns, filteredRows, '실적통계')
+  }
+
   const columns: ColumnsType<PerformanceRow> = [
     {
       title: '기간',
@@ -117,7 +123,7 @@ export default function PerformanceDashboardPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 */}
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <h1 style={{ margin: 0 }}>예산 및 실적 관리 (요약)</h1>
+          <h1 style={{ margin: 0, fontSize: 20 }}>실적 통계</h1>
         </Space>
 
         {/* 기간/지역 선택 + 요약 카드 */}
@@ -161,13 +167,24 @@ export default function PerformanceDashboardPage() {
         </Card>
 
         {/* 테이블 */}
-        <Card title="기간/지역/후원사별 실적 요약">
+        <Card
+          title="기간/지역/후원사별 실적 요약"
+          extra={
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={handleExportExcel}
+            >
+              엑셀 다운로드
+            </Button>
+          }
+        >
           <Table
             columns={columns}
             dataSource={filteredRows}
             rowKey="key"
             pagination={{
-              pageSize: 10,
+              defaultPageSize: 10,
               showSizeChanger: true,
               showTotal: total => `총 ${total}개`,
             }}

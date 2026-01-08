@@ -182,7 +182,7 @@ export function InterviewList({
           : undefined
       }
       pagination={{
-        pageSize: 20,
+        defaultPageSize: 20,
         showSizeChanger: true,
         showTotal: total => `총 ${total}건`,
       }}

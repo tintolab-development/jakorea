@@ -6,7 +6,6 @@
 import { Card, Statistic, Row, Col, Tag } from 'antd'
 import { BookOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { domainColorsHex } from '@/shared/constants/colors'
 
 interface ProgramStatisticsCardProps {
   total: number
@@ -40,7 +39,8 @@ export function ProgramStatisticsCard({
             title="프로그램"
             value={total}
             prefix={<BookOutlined />}
-            valueStyle={{ color: domainColorsHex.program.primary }}
+            suffix="개"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
         <Col span={24} style={{ marginTop: 16 }}>

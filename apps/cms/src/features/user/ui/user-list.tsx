@@ -132,7 +132,7 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       rowKey="id"
       scroll={{ x: 1400 }}
       pagination={{
-        pageSize: 20,
+        defaultPageSize: 20,
         showSizeChanger: true,
         showTotal: (total) => `총 ${total}명`,
       }}

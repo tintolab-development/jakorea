@@ -75,8 +75,8 @@ export function RoleBadge({
   // 관리자 권한의 경우 특별한 스타일 적용
   const isAdmin = role === 'ADMIN'
   const tagStyle: React.CSSProperties = {
-    fontSize: size === 'small' ? '12px' : size === 'large' ? '16px' : '14px',
-    padding: size === 'small' ? '4px 10px' : size === 'large' ? '6px 12px' : '4px 10px',
+    fontSize: size === 'small' ? '11px' : size === 'large' ? '16px' : '13px',
+    padding: size === 'small' ? '2px 8px' : size === 'large' ? '6px 12px' : '3px 9px',
     borderRadius: '4px',
     border: isAdmin ? '1px solid #ff4d4f' : undefined,
     backgroundColor: isAdmin ? '#fff1f0' : undefined,
@@ -84,7 +84,8 @@ export function RoleBadge({
     fontWeight: 500,
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '4px',
+    gap: size === 'small' ? '2px' : '4px',
+    lineHeight: size === 'small' ? '1.2' : '1.5',
   }
 
   return (

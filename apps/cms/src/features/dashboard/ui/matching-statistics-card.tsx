@@ -6,7 +6,6 @@
 import { Card, Statistic, Row, Col, Tag } from 'antd'
 import { TeamOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { domainColorsHex } from '@/shared/constants/colors'
 
 interface MatchingStatisticsCardProps {
   total: number
@@ -40,7 +39,8 @@ export function MatchingStatisticsCard({
             title="매칭"
             value={total}
             prefix={<TeamOutlined />}
-            valueStyle={{ color: domainColorsHex.matching.primary }}
+            suffix="건"
+            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
         <Col span={24} style={{ marginTop: 16 }}>

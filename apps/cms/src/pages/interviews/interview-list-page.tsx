@@ -196,7 +196,7 @@ export function InterviewListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>면접 관리</h1>
+        {/* <h1 style={{ margin: 0 }}>면접 관리</h1> */}
       </Space>
 
       <Space style={{ marginBottom: 16 }} size="middle" wrap>

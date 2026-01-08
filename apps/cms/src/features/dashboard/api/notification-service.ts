@@ -101,3 +101,12 @@ export async function markAllNotificationsAsRead(_userId?: UUID): Promise<void> 
   // Mock: 실제로는 API 호출
 }
 
+/**
+ * 알림 삭제
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function deleteNotification(_notificationId?: UUID): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, 100))
+  // Mock: 실제로는 API 호출
+}
+

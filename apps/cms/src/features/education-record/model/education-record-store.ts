@@ -1,5 +1,5 @@
 /**
- * 교육실적 Zustand 스토어
+ * 실적 통계 Zustand 스토어
  * Program 엔티티 기반
  */
 

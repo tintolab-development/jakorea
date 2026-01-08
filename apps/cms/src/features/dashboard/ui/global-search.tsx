@@ -8,7 +8,7 @@ import { SearchOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { searchInstructorContent } from '../api/search-service'
+import { searchInstructorContent, searchAdminContent } from '../api/search-service'
 
 const { Search } = Input
 
@@ -23,20 +23,77 @@ export function GlobalSearch({ placeholder = '프로그램, 일정 검색...', s
   const [options, setOptions] = useState<Array<{ value: string; label: React.ReactNode }>>([])
 
   const handleSearch = async (value: string) => {
-    if (!value.trim() || !user?.instructorId) {
+    if (!value.trim()) {
       setOptions([])
       return
     }
 
     try {
-      const results = await searchInstructorContent(user.instructorId, value)
+      let results
+      
+      // 관리자인 경우 전체 검색
+      if (user?.role === 'ADMIN') {
+        results = await searchAdminContent(value)
+      } else if (user?.instructorId) {
+        // 강사/봉사자인 경우 본인 콘텐츠만 검색
+        results = await searchInstructorContent(user.instructorId, value)
+      } else {
+        setOptions([])
+        return
+      }
+
+      const getTypeLabel = (type: string) => {
+        switch (type) {
+          case 'program':
+            return '프로그램'
+          case 'schedule':
+            return '일정'
+          case 'user':
+            return '회원'
+          case 'school':
+            return '학교'
+          case 'instructor':
+            return '강사'
+          case 'application':
+            return '신청'
+          default:
+            return type
+        }
+      }
+
+      const getTypeColor = (type: string) => {
+        switch (type) {
+          case 'program':
+            return 'blue'
+          case 'schedule':
+            return 'green'
+          case 'user':
+            return 'purple'
+          case 'school':
+            return 'cyan'
+          case 'instructor':
+            return 'orange'
+          case 'application':
+            return 'geekblue'
+          default:
+            return 'default'
+        }
+      }
+
       const searchOptions = results.map(result => ({
         value: result.link,
         label: (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>{result.title}</span>
-            <Tag color={result.type === 'program' ? 'blue' : 'green'} style={{ marginLeft: 8 }}>
-              {result.type === 'program' ? '프로그램' : '일정'}
+            <div style={{ flex: 1 }}>
+              <div>{result.title}</div>
+              {result.description && (
+                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+                  {result.description}
+                </div>
+              )}
+            </div>
+            <Tag color={getTypeColor(result.type)} style={{ marginLeft: 8 }}>
+              {getTypeLabel(result.type)}
             </Tag>
           </div>
         ),

@@ -1,5 +1,5 @@
 /**
- * 교육실적 목록 페이지 (v2)
+ * 실적 통계 목록 페이지 (v2)
  * 핵심 컬럼만 표시, 상세 정보는 상세 패널에서 확인
  */
 
@@ -31,7 +31,7 @@ export function EducationRecordListPageV2() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>교육실적 관리 (v2)</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>실적 통계</h1>
       </Space>
 
       <EducationRecordListV2
@@ -48,10 +48,10 @@ export function EducationRecordListPageV2() {
           setSelectedRecord(null)
         }}
         onEdit={() => {
-          // 교육실적은 수정 기능 없음 (읽기 전용)
+          // 실적 통계는 수정 기능 없음 (읽기 전용)
         }}
         onDelete={() => {
-          // 교육실적은 삭제 기능 없음 (읽기 전용)
+          // 실적 통계는 삭제 기능 없음 (읽기 전용)
         }}
         loading={loading}
         hideActions={true}

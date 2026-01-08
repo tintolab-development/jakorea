@@ -163,8 +163,8 @@ export function MySettlementListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0 }}>본인 정산</h1>
+      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'flex-end' }}>
+        {/* <h1 style={{ margin: 0 }}>본인 정산</h1> */}
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -211,7 +211,7 @@ export function MySettlementListPage() {
                 rowKey="id"
                 loading={loading}
                 pagination={{
-                  pageSize: 10,
+                  defaultPageSize: 10,
                   showSizeChanger: true,
                   showTotal: total => `총 ${total}개`,
                 }}
