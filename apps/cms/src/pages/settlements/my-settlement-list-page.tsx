@@ -165,7 +165,11 @@ export function MySettlementListPage() {
     <div>
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>본인 정산</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setSubmitModalOpen(true)}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => navigate('/settlements/my/submit')}
+        >
           정산 제출
         </Button>
       </Space>

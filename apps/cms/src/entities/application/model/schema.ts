@@ -13,7 +13,7 @@ export const applicationSchema = z.object({
     .string()
     .transform(value => value.trim())
     .refine(value => value.length > 0, '신청 주체를 선택해주세요'),
-  status: z.enum(['submitted', 'reviewing', 'approved', 'rejected', 'cancelled']),
+  status: z.enum(['submitted', 'reviewing', 'approved', 'rejected', 'cancelled', 'waiting']),
   notes: z.string().optional(),
 })
 

@@ -13,6 +13,10 @@ import { mockPrograms, mockSchools, mockInstructors } from '@/data/mock'
 import type { ApplicationSubjectType } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
+import {
+  isApplicationAvailable,
+  getApplicationUnavailableReason,
+} from '@/features/program/lib/program-helpers'
 
 const { Option } = Select
 const { Text } = Typography
@@ -81,6 +85,28 @@ export function ApplicationForm({
     ? applicationPathService.getByProgramIdSync(selectedProgramId)
     : undefined
 
+  // 신청 가능한 프로그램 목록 필터링 (관리자가 아닌 경우)
+  const availablePrograms = useMemo(() => {
+    if (isAdmin) {
+      // 관리자는 모든 프로그램 선택 가능
+      return mockPrograms
+    }
+    // 일반 사용자는 신청 가능한 프로그램만 선택 가능 (로그인한 사용자의 역할에 따라)
+    if (fixedSubjectType) {
+      return mockPrograms.filter(program => isApplicationAvailable(program, fixedSubjectType))
+    }
+    return mockPrograms.filter(program => isApplicationAvailable(program))
+  }, [isAdmin, fixedSubjectType])
+
+  // 선택된 프로그램이 신청 불가능한 경우 경고 표시
+  const selectedProgramUnavailable = useMemo(() => {
+    if (!selectedProgram) return false
+    if (selectedSubjectType) {
+      return !isApplicationAvailable(selectedProgram, selectedSubjectType)
+    }
+    return !isApplicationAvailable(selectedProgram)
+  }, [selectedProgram, selectedSubjectType])
+
   // Ant Design + react-hook-form 연동을 위해 필드를 명시적으로 등록
   useEffect(() => {
     register('programId')
@@ -98,6 +124,16 @@ export function ApplicationForm({
 
   const onFormSubmit = async (data: ApplicationFormData) => {
     try {
+      // 신청 제출 시 프로그램 상태 검증 (신규 신청만)
+      if (!application && data.programId && data.subjectType) {
+        const program = mockPrograms.find(p => p.id === data.programId)
+        if (program && !isApplicationAvailable(program, data.subjectType)) {
+          const reason = getApplicationUnavailableReason(program, data.subjectType)
+          message.error(reason || '프로그램 상태로 인해 신청할 수 없습니다.')
+          return
+        }
+      }
+
       await onSubmit(data)
       message.success(application ? '신청이 수정되었습니다' : '신청이 등록되었습니다')
     } catch {
@@ -130,6 +166,28 @@ export function ApplicationForm({
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
+      {selectedProgramUnavailable && (
+        <Form.Item>
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              <Space direction="vertical" size={4}>
+                <Text strong>이 프로그램은 현재 신청할 수 없습니다</Text>
+                <Text type="secondary">
+                  {selectedProgram && selectedSubjectType
+                    ? getApplicationUnavailableReason(selectedProgram, selectedSubjectType) ||
+                      '프로그램 상태로 인해 신청할 수 없습니다.'
+                    : selectedProgram
+                      ? getApplicationUnavailableReason(selectedProgram) ||
+                        '프로그램 상태로 인해 신청할 수 없습니다.'
+                      : '프로그램 상태로 인해 신청할 수 없습니다.'}
+                </Text>
+              </Space>
+            }
+          />
+        </Form.Item>
+      )}
       {selectedProgram && applicationPath && (
         <Form.Item>
           <Alert
@@ -183,7 +241,7 @@ export function ApplicationForm({
             return false
           }}
         >
-          {mockPrograms.map(program => (
+          {availablePrograms.map(program => (
             <Option key={program.id} value={program.id}>
               {program.title}
             </Option>

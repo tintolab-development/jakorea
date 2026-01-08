@@ -155,11 +155,12 @@ const getDate = (daysAgo: number): string => {
   return date.toISOString()
 }
 
+// Mutable 배열로 export (report-service에서 push 가능하도록)
 export const mockReports: Report[] = [
   {
     id: 'report-001',
     type: 'lecture',
-    activityId: 'act-001',
+    activityId: 'lect-001', // 실제 존재하는 activity ID
     fields: {
       lecture_content: '청소년 리더십 워크샵 강의를 진행했습니다. 리더십의 기본 개념과 실전 사례를 다뤘습니다.',
       participant_count: 25,
@@ -167,6 +168,7 @@ export const mockReports: Report[] = [
       improvements: '다음에는 더 많은 그룹 활동을 포함하면 좋을 것 같습니다.',
       additional_notes: '특별 이슈 없음',
     },
+    status: 'submitted',
     submittedAt: getDate(5),
     createdAt: getDate(6),
     updatedAt: getDate(5),
@@ -174,7 +176,7 @@ export const mockReports: Report[] = [
   {
     id: 'report-002',
     type: 'volunteer',
-    activityId: 'act-002',
+    activityId: 'vol-001', // 실제 존재하는 activity ID
     fields: {
       activity_content: '온라인 과학 탐구 세미나에서 학생들을 지원하는 교육봉사 활동을 진행했습니다.',
       activity_hours: 4,
@@ -183,11 +185,50 @@ export const mockReports: Report[] = [
       challenges: '온라인 환경에서의 소통에 어려움이 있었지만, 적극적으로 해결했습니다.',
       additional_notes: '학생들의 질문이 많아 예상보다 시간이 소요되었습니다.',
     },
+    status: 'reviewing',
     submittedAt: getDate(3),
     createdAt: getDate(4),
     updatedAt: getDate(3),
   },
+  {
+    id: 'report-003',
+    type: 'program',
+    programId: 'program-001',
+    fields: {
+      program_summary: '2025년 상반기 청소년 경제교육 프로그램을 성공적으로 완료했습니다.',
+      total_participants: 150,
+      program_achievements: '참여 학생들의 경제 이해도가 크게 향상되었습니다.',
+      lessons_learned: '다양한 교육 방법론을 시도하여 효과적인 학습 환경을 조성할 수 있었습니다.',
+      recommendations: '향후 더 많은 학교와의 협력을 확대하는 것이 좋을 것 같습니다.',
+    },
+    status: 'approved',
+    submittedAt: getDate(10),
+    reviewedAt: getDate(8),
+    createdAt: getDate(11),
+    updatedAt: getDate(8),
+  },
+  {
+    id: 'report-004',
+    type: 'lecture',
+    activityId: 'lect-002', // 실제 존재하는 activity ID
+    fields: {
+      lecture_content: '기업가정신 교육 프로그램 강의를 진행했습니다.',
+      participant_count: 40,
+      participant_feedback: '학생들이 창업에 대한 관심을 보였습니다.',
+      improvements: '더 많은 사례 연구를 포함하면 좋을 것 같습니다.',
+      additional_notes: '시간 부족으로 일부 내용을 생략했습니다.',
+    },
+    status: 'rejected',
+    submittedAt: getDate(7),
+    reviewedAt: getDate(6),
+    reviewNotes: '내용이 부족합니다. 보충 제출 필요.',
+    createdAt: getDate(8),
+    updatedAt: getDate(6),
+  },
 ]
 
-export const mockReportsMap = new Map(mockReports.map(report => [report.id, report]))
+// Map은 매번 새로 생성 (mockReports 변경 시 자동 반영)
+export function getMockReportsMap(): Map<string, Report> {
+  return new Map(mockReports.map(report => [report.id, report]))
+}
 

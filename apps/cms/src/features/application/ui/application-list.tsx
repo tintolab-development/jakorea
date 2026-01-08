@@ -3,7 +3,7 @@
  * Phase 2.2: 테이블 + 필터 (Ant Design 컴포넌트 다양하게 활용)
  */
 
-import { Table, Select, Button, Space, Tag, Dropdown, Badge, Tooltip, Popconfirm } from 'antd'
+import { Table, Select, Button, Space, Tag, Dropdown, Badge, Tooltip } from 'antd'
 import { MoreOutlined } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import type { Application } from '@/types/domain'
@@ -19,10 +19,6 @@ import {
   getApplicationStatusIcon,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
-import {
-  getNextApplicationStatus,
-  isApplicationFinalStatus,
-} from '@/shared/lib/status-transition'
 
 const { Option } = Select
 
@@ -32,7 +28,7 @@ interface ApplicationListProps {
   onView: (application: Application) => void
   onEdit: (application: Application) => void
   onDelete: (application: Application) => void
-  onStatusChange: (application: Application, status: Application['status']) => void
+  onStatusChange: (application: Application, status: Application['status'], rejectionReason?: string) => void
   isAdmin?: boolean
   currentUser?: Pick<User, 'id' | 'role' | 'instructorId'> | null
 }
@@ -166,51 +162,23 @@ export function ApplicationList({
             width: 100,
             render: (_: unknown, record: Application) => (
               <div onClick={e => e.stopPropagation()}>
-                <Space>
-                  <Popconfirm
-                    title="상태 변경"
-                    description={`이 신청을 "${getApplicationStatusLabel(
-                      getNextApplicationStatus(record.status) || 'approved'
-                    )}" 상태로 변경하시겠습니까?`}
-                    onConfirm={() => {
-                      const nextStatus = getNextApplicationStatus(record.status)
-                      if (nextStatus) {
-                        onStatusChange(record, nextStatus)
-                      }
-                    }}
-                    okText="확인"
-                    cancelText="취소"
-                    disabled={isApplicationFinalStatus(record.status)}
-                  >
-                    <Button
-                      type="link"
-                      size="small"
-                      disabled={isApplicationFinalStatus(record.status)}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      다음 단계
-                    </Button>
-                  </Popconfirm>
-                  <div onClick={e => e.stopPropagation()}>
-                    <Dropdown
-                      menu={{
-                        items: createApplicationMenuItems(record, {
-                          onView,
-                          onEdit,
-                          onDelete,
-                          onStatusChange,
-                        }),
-                      }}
-                      trigger={['click']}
-                    >
-                      <Button
-                        type="text"
-                        icon={<MoreOutlined />}
-                        onClick={e => e.stopPropagation()}
-                      />
-                    </Dropdown>
-                  </div>
-                </Space>
+                <Dropdown
+                  menu={{
+                    items: createApplicationMenuItems(record, {
+                      onView,
+                      onEdit,
+                      onDelete,
+                      onStatusChange,
+                    }),
+                  }}
+                  trigger={['click']}
+                >
+                  <Button
+                    type="text"
+                    icon={<MoreOutlined />}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </Dropdown>
               </div>
             ),
           },

@@ -18,8 +18,7 @@ import type { Program } from '@/types/domain'
 export function ProgramListPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { programs, loading, fetchPrograms, deleteProgram } = useProgramStore()
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
+  const { programs, loading, fetchPrograms, deleteProgram, selectedProgram, setSelectedProgram } = useProgramStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null)
@@ -32,7 +31,7 @@ export function ProgramListPage() {
   }, [fetchPrograms])
 
   const handleView = (program: Program) => {
-    setSelectedProgram(program)
+    setSelectedProgram(program) // store에 동기화
     setDrawerOpen(true)
   }
 
@@ -79,11 +78,12 @@ export function ProgramListPage() {
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
+        showActions={isAdmin} // 관리자만 작업 컬럼 표시
       />
 
       <ProgramDetailDrawer
         open={drawerOpen}
-        program={selectedProgram}
+        program={selectedProgram || null}
         onClose={() => {
           setDrawerOpen(false)
           setSelectedProgram(null)

@@ -4,7 +4,7 @@
  */
 
 import type { LectureActivity, VolunteerActivity, NextRequiredAction } from '../../types/domain'
-import { mockSchedules, mockPrograms } from './index'
+import { mockSchedules, mockPrograms, mockInstructors } from './index'
 
 const getDate = (daysAgo: number): string => {
   const date = new Date()
@@ -103,11 +103,14 @@ export const mockVolunteerActivities: VolunteerActivity[] = mockSchedules
         : { type: 'NONE' }
     }
 
+    // 봉사자는 강사 목록에서 랜덤 선택 (실제로는 봉사자 전용 목록이 있지만, 여기서는 강사 목록 사용)
+    const volunteerInstructor = mockInstructors[index % mockInstructors.length]
+
     return {
       id: `vol-${String(index + 1).padStart(3, '0')}`,
       scheduleId: schedule.id,
       programId: schedule.programId,
-      volunteerId: `volunteer-${String(index + 1).padStart(3, '0')}`, // Mock volunteer ID
+      volunteerId: volunteerInstructor?.id || `volunteer-${String(index + 1).padStart(3, '0')}`, // 실제 instructorId 사용
       status,
       roleDescription: `${program?.title || '프로그램'}에서 봉사자로 참여하여 교육 활동을 지원합니다.`,
       volunteerHoursInfo: {

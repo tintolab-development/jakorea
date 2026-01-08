@@ -18,7 +18,7 @@ export {
   programReportFields,
   reportSubmissionGuides,
   mockReports,
-  mockReportsMap,
+  getMockReportsMap,
 } from './reports'
 export {
   mockLectureActivities,
@@ -36,6 +36,10 @@ export {
   mockApplicationPathsMap,
   getApplicationPathByProgramId,
 } from './application-paths'
+export {
+  mockScheduleNegotiations,
+  mockScheduleNegotiationsMap,
+} from './schedule-negotiations'
 export { mockUsers, getUserByEmail, getUsersByRole, validateLogin } from './users'
 export {
   mockInterviews,

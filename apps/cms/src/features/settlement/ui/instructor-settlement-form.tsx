@@ -1,34 +1,28 @@
 /**
- * 정산 등록/수정 폼 컴포넌트
- * Phase 4: react-hook-form + zod
+ * 강사/봉사자 정산 제출 폼 컴포넌트
+ * Phase 6.1.2: 강사/봉사자 정산 제출
  */
 
-import { Form, Input, Select, Button, Space, Table, InputNumber } from 'antd'
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Form, Input, Select, Button, Space, Table, InputNumber, Upload, Alert } from 'antd'
+import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { settlementSchema, type SettlementFormData } from '@/entities/settlement/model/schema'
 import type { Settlement } from '@/types/domain'
-import { mockPrograms, mockInstructors, mockMatchings } from '@/data/mock'
+import { mockPrograms, mockMatchings } from '@/data/mock'
 import { calculateSettlementTotal } from '../lib/settlement-helpers'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useMemo } from 'react'
 
 const { Option } = Select
 const { TextArea } = Input
 
-interface SettlementFormProps {
+interface InstructorSettlementFormProps {
   settlement?: Settlement
   onSubmit: (data: SettlementFormData) => Promise<void>
   onCancel: () => void
   loading?: boolean
 }
-
-const statusOptions = [
-  { value: 'pending', label: '대기' },
-  { value: 'calculated', label: '산출 완료' },
-  { value: 'approved', label: '승인' },
-  { value: 'paid', label: '지급 완료' },
-  { value: 'cancelled', label: '취소' },
-]
 
 const itemTypeOptions = [
   { value: 'instructor_fee', label: '강사비' },
@@ -37,7 +31,15 @@ const itemTypeOptions = [
   { value: 'other', label: '기타' },
 ]
 
-export function SettlementForm({ settlement, onSubmit, onCancel, loading }: SettlementFormProps) {
+export function InstructorSettlementForm({
+  settlement,
+  onSubmit,
+  onCancel,
+  loading,
+}: InstructorSettlementFormProps) {
+  const { user } = useAuthStore()
+  const instructorId = user?.instructorId || user?.id
+
   const {
     register,
     handleSubmit,
@@ -49,7 +51,6 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
     resolver: zodResolver(settlementSchema),
     defaultValues: (() => {
       if (settlement) {
-        // 폼에서는 검토(review) 상태를 직접 편집하지 않고, 워크플로우에서만 제어
         const status: SettlementFormData['status'] =
           settlement.status === 'review' ? 'calculated' : settlement.status
         return {
@@ -65,6 +66,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
       return {
         items: [{ type: 'instructor_fee', description: '강사비', amount: 0 }],
         status: 'pending' as const,
+        instructorId: instructorId || '',
       }
     })(),
   })
@@ -75,23 +77,46 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
   })
 
   const selectedProgramId = watch('programId')
-  const selectedInstructorId = watch('instructorId')
 
-  // 선택된 프로그램에 맞는 매칭 필터링
-  const filteredMatchings = selectedProgramId
-    ? mockMatchings.filter(m => m.programId === selectedProgramId)
-    : []
+  // 본인이 담당한 프로그램만 필터링
+  const availablePrograms = useMemo(() => {
+    if (!instructorId) return []
+    // 본인이 매칭된 프로그램만 필터링
+    const myMatchings = mockMatchings.filter(m => m.instructorId === instructorId)
+    const myProgramIds = new Set(myMatchings.map(m => m.programId))
+    return mockPrograms.filter(p => myProgramIds.has(p.id))
+  }, [instructorId])
 
-  // 선택된 강사에 맞는 매칭 필터링
-  const availableMatchings = selectedInstructorId
-    ? filteredMatchings.filter(m => m.instructorId === selectedInstructorId)
-    : filteredMatchings
+  // 선택된 프로그램에 맞는 매칭 필터링 (본인 매칭만)
+  const availableMatchings = useMemo(() => {
+    if (!selectedProgramId || !instructorId) return []
+    return mockMatchings.filter(
+      m => m.programId === selectedProgramId && m.instructorId === instructorId
+    )
+  }, [selectedProgramId, instructorId])
 
   const onFormSubmit: SubmitHandler<SettlementFormData> = async (data) => {
+    // 강사 ID 자동 설정
+    if (!data.instructorId && instructorId) {
+      data.instructorId = instructorId
+    }
+    // 상태는 pending으로 고정 (제출 시)
+    data.status = 'pending'
     await onSubmit(data)
   }
 
   const totalAmount = calculateSettlementTotal(watch('items') || [])
+
+  if (!instructorId) {
+    return (
+      <Alert
+        message="로그인이 필요합니다"
+        description="정산을 제출하려면 로그인이 필요합니다."
+        type="warning"
+        showIcon
+      />
+    )
+  }
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
@@ -115,69 +140,38 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
             if (typeof children === 'string') {
               return children.toLowerCase().includes(input.toLowerCase())
             }
-            if (Array.isArray(children)) {
-              return children.some((child: unknown) => 
-                typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
-              )
-            }
             return false
           }}
+          disabled={!!settlement}
         >
-          {mockPrograms.map(program => (
+          {availablePrograms.map(program => (
             <Option key={program.id} value={program.id}>
               {program.title}
             </Option>
           ))}
         </Select>
-      </Form.Item>
-
-      <Form.Item
-        label="강사"
-        validateStatus={errors.instructorId ? 'error' : ''}
-        help={errors.instructorId?.message}
-        required
-      >
-        <Select
-          value={watch('instructorId')}
-          onChange={value => {
-            setValue('instructorId', value)
-            // 강사 변경 시 매칭 초기화
-            setValue('matchingId', '')
-          }}
-          placeholder="강사 선택"
-          showSearch
-          filterOption={(input, option) => {
-            const children = option?.children as string | string[] | undefined
-            if (typeof children === 'string') {
-              return children.toLowerCase().includes(input.toLowerCase())
-            }
-            if (Array.isArray(children)) {
-              return children.some((child: unknown) => 
-                typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
-              )
-            }
-            return false
-          }}
-        >
-          {mockInstructors.map(instructor => (
-            <Option key={instructor.id} value={instructor.id}>
-              {instructor.name}
-            </Option>
-          ))}
-        </Select>
+        {availablePrograms.length === 0 && (
+          <Alert
+            message="담당 프로그램이 없습니다"
+            description="정산을 제출할 프로그램이 없습니다. 관리자에게 문의하세요."
+            type="info"
+            showIcon
+            style={{ marginTop: 8 }}
+          />
+        )}
       </Form.Item>
 
       <Form.Item
         label="매칭"
         validateStatus={errors.matchingId ? 'error' : ''}
-        help={errors.matchingId?.message}
+        help={errors.matchingId?.message || '해당 프로그램의 매칭 정보를 선택하세요'}
         required
       >
         <Select
           value={watch('matchingId')}
           onChange={value => setValue('matchingId', value)}
           placeholder="매칭 선택"
-          disabled={!selectedProgramId || !selectedInstructorId}
+          disabled={!selectedProgramId || !!settlement}
         >
           {availableMatchings.map(matching => (
             <Option key={matching.id} value={matching.id}>
@@ -185,6 +179,15 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
             </Option>
           ))}
         </Select>
+        {selectedProgramId && availableMatchings.length === 0 && (
+          <Alert
+            message="매칭 정보가 없습니다"
+            description="선택한 프로그램에 대한 매칭 정보가 없습니다."
+            type="warning"
+            showIcon
+            style={{ marginTop: 8 }}
+          />
+        )}
       </Form.Item>
 
       <Form.Item
@@ -194,25 +197,6 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
         required
       >
         <Input {...register('period')} placeholder="YYYY-MM 형식으로 입력" />
-      </Form.Item>
-
-      <Form.Item
-        label="상태"
-        validateStatus={errors.status ? 'error' : ''}
-        help={errors.status?.message}
-        required
-      >
-        <Select
-          value={watch('status')}
-          onChange={value => setValue('status', value)}
-          placeholder="상태 선택"
-        >
-          {statusOptions.map(option => (
-            <Option key={option.value} value={option.value}>
-              {option.label}
-            </Option>
-          ))}
-        </Select>
       </Form.Item>
 
       <Form.Item label="정산 항목" required>
@@ -325,6 +309,19 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
         </div>
       </Form.Item>
 
+      <Form.Item label="증빙 파일 (선택사항)">
+        <Upload
+          multiple
+          beforeUpload={() => false}
+          // TODO: 실제 파일 업로드 구현 필요
+        >
+          <Button icon={<UploadOutlined />}>파일 선택</Button>
+        </Upload>
+        <div style={{ marginTop: 8, fontSize: 12, color: '#8c8c8c' }}>
+          교통비, 숙박비 등 증빙이 필요한 항목의 증빙 파일을 업로드하세요.
+        </div>
+      </Form.Item>
+
       <Form.Item label="비고">
         <TextArea {...register('notes')} rows={3} placeholder="비고를 입력하세요" />
       </Form.Item>
@@ -332,7 +329,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit" loading={loading}>
-            {settlement ? '수정' : '등록'}
+            {settlement ? '수정' : '제출'}
           </Button>
           <Button onClick={onCancel}>취소</Button>
         </Space>

@@ -51,6 +51,7 @@ export const useMonthlySettlementStore = create<MonthlySettlementStore>((set, ge
           const statusCounts: Record<Settlement['status'], number> = {
             pending: 0,
             calculated: 0,
+            review: 0,
             approved: 0,
             paid: 0,
             cancelled: 0,
@@ -59,6 +60,7 @@ export const useMonthlySettlementStore = create<MonthlySettlementStore>((set, ge
           const statusAmounts: Record<Settlement['status'], number> = {
             pending: 0,
             calculated: 0,
+            review: 0,
             approved: 0,
             paid: 0,
             cancelled: 0,

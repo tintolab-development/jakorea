@@ -50,6 +50,16 @@ export interface ApplicationPath {
   updatedAt: DateValue
 }
 
+// 프로그램 진행 워크플로우 상태
+export type ProgramLifecycleStatus =
+  | 'planned' // 모집 예정
+  | 'recruiting_students' // 수강자 모집 중
+  | 'recruiting_instructors' // 강사 모집 중
+  | 'recruitment_completed_waiting' // 모집 완료 및 대기 중
+  | 'matching_completed_waiting' // 매칭 완료 및 진행 대기 중
+  | 'in_progress' // 진행 중
+  | 'completed' // 진행 완료
+
 // 프로그램
 export interface Program {
   id: UUID
@@ -63,6 +73,7 @@ export interface Program {
   startDate: DateValue
   endDate: DateValue
   status: Status
+  lifecycleStatus?: ProgramLifecycleStatus // 상세 진행 상태 (모집 예정~진행 완료)
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
@@ -149,6 +160,7 @@ export type ApplicationStatus =
   | 'approved' // 확정
   | 'rejected' // 거절
   | 'cancelled' // 취소
+  | 'waiting' // 대기 (정원 초과 시, Phase 3)
 
 // 신청
 export interface Application {
@@ -160,6 +172,8 @@ export interface Application {
   subjectId: UUID // 학교/학생/강사 ID
   status: ApplicationStatus
   notes?: string
+  rejectionReason?: string // 거절 사유 (Phase 2)
+  waitingListOrder?: number // 대기 목록 순번 (Phase 3)
   submittedAt: DateValue
   reviewedAt?: DateValue
   createdAt: DateValue
@@ -221,7 +235,8 @@ export interface SettlementItem {
 }
 
 // 정산 상태
-export type SettlementStatus = 'pending' | 'calculated' | 'approved' | 'paid' | 'cancelled'
+// pending -> calculated -> review -> approved -> paid (중간에 언제든 cancelled 가능)
+export type SettlementStatus = 'pending' | 'calculated' | 'review' | 'approved' | 'paid' | 'cancelled'
 
 // 정산 첨부 파일 (Mock용 메타데이터)
 export interface SettlementAttachment {
@@ -278,6 +293,9 @@ export interface Todo {
 // 보고서 타입
 export type ReportType = 'lecture' | 'volunteer' | 'program'
 
+// 보고서 상태
+export type ReportStatus = 'submitted' | 'reviewing' | 'approved' | 'rejected'
+
 // 보고서 필드 타입
 export type ReportFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select'
 
@@ -303,7 +321,11 @@ export interface Report {
   activityId?: UUID // 강의/봉사 활동 ID
   programId?: UUID // 프로그램 ID (프로그램 보고서일 경우)
   fields: Record<string, string | number | DateValue> // 필드 ID를 키로 하는 값
+  status: ReportStatus // 보고서 상태 (Phase 7.1.1)
   submittedAt: DateValue
+  reviewedAt?: DateValue // 검토일 (Phase 7.1.1)
+  reviewedBy?: UUID // 검토자 ID (Phase 7.1.1)
+  reviewNotes?: string // 검토 사유 (Phase 7.1.1)
   createdAt: DateValue
   updatedAt: DateValue
 }
@@ -429,6 +451,28 @@ export interface ProgramStatistics {
   instructors: number // 강사 수
   // 담당자
   managerName?: string // 담당자명
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 일정 협의 (Phase 8)
+export type NegotiationStatus = 'proposed' | 'accepted' | 'rejected' | 'revised'
+
+export interface ScheduleNegotiationProposal {
+  id: UUID
+  date: DateValue
+  startTime?: string // HH:mm
+  endTime?: string // HH:mm
+  status: 'pending' | 'accepted' | 'rejected'
+  note?: string
+}
+
+export interface ScheduleNegotiation {
+  id: UUID
+  programId: UUID
+  schoolId: UUID
+  proposals: ScheduleNegotiationProposal[]
+  status: NegotiationStatus
   createdAt: DateValue
   updatedAt: DateValue
 }

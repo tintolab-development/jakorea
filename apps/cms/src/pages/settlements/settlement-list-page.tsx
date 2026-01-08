@@ -1,12 +1,13 @@
 /**
  * 정산 목록 페이지
  * Phase 4: 목록 페이지
+ * - 관리자 화면에서 리스트/캘린더 두 가지 형태로 보기 제공
  */
 
-import { useState, useEffect } from 'react'
-import { Button, Space, Modal } from 'antd'
-import { PlusOutlined, CalendarOutlined, SettingOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { Button, Space, Modal, Radio, Card, Select } from 'antd'
+import { PlusOutlined, CalendarOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SettlementList } from '@/features/settlement/ui/settlement-list'
 import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
 import { SettlementForm } from '@/features/settlement/ui/settlement-form'
@@ -15,11 +16,23 @@ import { useSettlementStore } from '@/features/settlement/model/settlement-store
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import type { Settlement } from '@/types/domain'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
+import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
+import dayjs from 'dayjs'
 
 export function SettlementListPage() {
   const navigate = useNavigate()
-  const { settlements, loading, fetchSettlements, createSettlement, updateSettlement, deleteSettlement, updateStatus } = useSettlementStore()
-  const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const {
+    settlements,
+    loading,
+    fetchSettlements,
+    createSettlement,
+    updateSettlement,
+    deleteSettlement,
+    updateStatus,
+    selectedSettlement,
+    setSelectedSettlement,
+  } = useSettlementStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [editingSettlement, setEditingSettlement] = useState<Settlement | null>(null)
@@ -27,9 +40,30 @@ export function SettlementListPage() {
   const [settlementToDelete, setSettlementToDelete] = useState<Settlement | null>(null)
   const [formLoading, setFormLoading] = useState(false)
 
+  type ViewMode = 'list' | 'calendar'
+  const viewMode = (searchParams.get('view') as ViewMode) || 'list'
+  const selectedPeriod = searchParams.get('period') || dayjs().format('YYYY-MM')
+
   useEffect(() => {
     fetchSettlements()
   }, [fetchSettlements])
+
+  const availablePeriods = useMemo(() => {
+    const periods = new Set<string>()
+    settlements.forEach(s => {
+      const period = s.period || dayjs(s.createdAt).format('YYYY-MM')
+      periods.add(period)
+    })
+    // 최근 순 정렬
+    return Array.from(periods).sort((a, b) => (a > b ? -1 : 1))
+  }, [settlements])
+
+  const monthlySettlements = useMemo(() => {
+    return settlements.filter(s => {
+      const period = s.period || dayjs(s.createdAt).format('YYYY-MM')
+      return period === selectedPeriod
+    })
+  }, [settlements, selectedPeriod])
 
   const handleView = (settlement: Settlement) => {
     setSelectedSettlement(settlement)
@@ -71,10 +105,8 @@ export function SettlementListPage() {
     try {
       await updateStatus(settlement.id, status)
       showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
-      if (selectedSettlement?.id === settlement.id) {
-        const updated = settlements.find(s => s.id === settlement.id)
-        if (updated) setSelectedSettlement(updated)
-      }
+      // updateStatus가 Zustand 스토어의 settlements와 selectedSettlement를 함께 갱신하므로
+      // 여기서는 별도의 selectedSettlement 수동 업데이트가 필요 없음
     } catch (error) {
       handleError(error, {
         defaultMessage: '상태 변경 중 오류가 발생했습니다',
@@ -121,11 +153,37 @@ export function SettlementListPage() {
     setFormModalOpen(true)
   }
 
+  const handleViewModeChange = (mode: ViewMode) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('view', mode)
+    setSearchParams(next, { replace: true })
+  }
+
+  const handlePeriodChange = (period: string) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('period', period)
+    setSearchParams(next, { replace: true })
+  }
+
+  const handleCalendarSelect = (_date: dayjs.Dayjs, settlement?: Settlement) => {
+    if (settlement) {
+      handleView(settlement)
+    }
+  }
+
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0 }}>정산 관리</h1>
         <Space>
+          <Radio.Group value={viewMode} onChange={e => handleViewModeChange(e.target.value)} buttonStyle="solid">
+            <Radio.Button value="list">
+              <UnorderedListOutlined /> 리스트
+            </Radio.Button>
+            <Radio.Button value="calendar">
+              <CalendarOutlined /> 캘린더
+            </Radio.Button>
+          </Radio.Group>
           <Button icon={<CalendarOutlined />} onClick={() => navigate('/settlements/monthly')}>
             월별 정산 관리
           </Button>
@@ -138,14 +196,40 @@ export function SettlementListPage() {
         </Space>
       </Space>
 
-      <SettlementList
-        data={settlements}
-        loading={loading}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-        onStatusChange={handleStatusChange}
-      />
+      {viewMode === 'list' && (
+        <SettlementList
+          data={settlements}
+          loading={loading}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+          onStatusChange={handleStatusChange}
+        />
+      )}
+
+      {viewMode === 'calendar' && (
+        <Card>
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Space>
+              <span>기간 선택:</span>
+              <Select
+                value={selectedPeriod}
+                onChange={handlePeriodChange}
+                style={{ width: 160 }}
+                options={availablePeriods.map(p => ({
+                  label: dayjs(p).format('YYYY년 MM월'),
+                  value: p,
+                }))}
+              />
+            </Space>
+            <SettlementCalendar
+              settlements={monthlySettlements}
+              onDateSelect={handleCalendarSelect}
+              selectedPeriod={selectedPeriod}
+            />
+          </Space>
+        </Card>
+      )}
 
       <SettlementDetailDrawer
         open={drawerOpen}
