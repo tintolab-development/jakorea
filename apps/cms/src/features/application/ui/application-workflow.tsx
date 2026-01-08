@@ -193,17 +193,17 @@ export function ApplicationWorkflow({
 
           {/* 액션 버튼 */}
           <Space wrap>
-            {/* 검토 시작 버튼: submitted 상태에서만 */}
-            {canTransitionApplicationStatus(application.status, 'reviewing') && (
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={() => onStatusChange('reviewing')}
-                loading={loading}
-              >
-                검토 시작
-              </Button>
-            )}
+          {/* 검토 시작 버튼: submitted 상태에서만 */}
+          {application.status === 'submitted' && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={() => onStatusChange('reviewing')}
+              loading={loading}
+            >
+              검토 시작
+            </Button>
+          )}
 
             {/* 대기 목록으로 이동 버튼: submitted 또는 reviewing 상태에서 */}
             {canTransitionApplicationStatus(application.status, 'waiting') && (
