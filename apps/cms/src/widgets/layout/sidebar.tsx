@@ -28,34 +28,59 @@ export function Sidebar() {
   // 현재 경로에 따라 열린 서브메뉴 결정
   const openKeys = useMemo(() => {
     const path = location.pathname
-    // 정산 관리 관련 경로인 경우 서브메뉴 열기
-    if (path.startsWith('/settlements')) {
-      return ['settlements-group']
+    const keys: string[] = []
+
+    // 관리자용 정산 관리
+    if (path.startsWith('/settlements') && !path.startsWith('/settlements/my')) {
+      keys.push('settlements-group')
     }
-    return []
-  }, [location.pathname])
+
+    // 마이페이지 관련
+    if (
+      path.startsWith('/mypage') ||
+      path.startsWith('/histories') ||
+      path.startsWith('/programs/my') ||
+      path.startsWith('/programs/favorites') ||
+      path.startsWith('/settlements/my')
+    ) {
+      keys.push('mypage-group')
+
+      // 개인정보 관리 (개인정보 + 강사 이력)
+      if (path.startsWith('/mypage/profile') || path.startsWith('/histories')) {
+        keys.push('personal-info-group')
+      }
+
+      // 프로그램 관리
+      if (path.startsWith('/programs/my') || path.startsWith('/programs/favorites')) {
+        keys.push('program-management-group')
+      }
+
+      // 정산 이력/현황 관리
+      if (path.startsWith('/settlements/my')) {
+        keys.push('settlement-history-group')
+      }
+    }
+
+    // 사용자 봉사단
+    if (path.startsWith('/volunteers') && user?.role !== 'ADMIN') {
+      keys.push('volunteers-user-group')
+    }
+
+    return keys
+  }, [location.pathname, user?.role])
 
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
 
   return (
-    <Sider
-      width={220}
-      style={{
-        background: '#fff',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
+    <Sider width={220} className="sidebar-container">
       <Header />
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="sidebar-menu-wrapper">
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
           openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : openKeys}
           onOpenChange={setControlledOpenKeys}
-          style={{ flex: 1, borderRight: 0, overflowY: 'auto', overflowX: 'hidden' }}
+          className="sidebar-menu"
           items={menuItems}
           onClick={({ key }) => navigate(key)}
         />

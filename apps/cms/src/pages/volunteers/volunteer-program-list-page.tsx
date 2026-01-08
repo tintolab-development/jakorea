@@ -8,6 +8,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { Space, Card, Tabs, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { VolunteerRandomMatching } from '@/features/volunteer/ui/volunteer-random-matching'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { getVolunteerPrograms } from '@/data/mock'
@@ -130,7 +131,7 @@ export function VolunteerProgramListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
 
       <Tabs

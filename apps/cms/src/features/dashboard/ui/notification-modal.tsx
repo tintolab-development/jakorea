@@ -3,8 +3,9 @@
  * Phase: 관리자 홈 화면 - 알림 리스트 위젯 형식으로 변경
  */
 
-import { Modal, Typography, Button, Empty, Space, Badge, Card } from 'antd'
+import { Modal, Typography, Button, Empty, Space, Card } from 'antd'
 import { BellOutlined, DollarOutlined, FileTextOutlined, CalendarOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { useEffect, useState } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
 
 const { Text, Title } = Typography
@@ -58,6 +59,7 @@ interface NotificationModalProps {
   open: boolean
   onClose: () => void
   notifications: Notification[]
+  unreadCount?: number // 위젯에서 계산된 실제 읽지 않은 알림 개수
   onNotificationClick: (notification: Notification) => void
   onConfirm?: (notification: Notification) => void
   onMarkAllAsRead?: () => void
@@ -68,12 +70,27 @@ export function NotificationModal({
   open,
   onClose,
   notifications,
+  unreadCount: propUnreadCount,
   onNotificationClick,
   onConfirm,
   onMarkAllAsRead,
   onRefresh,
 }: NotificationModalProps) {
-  const unreadCount = notifications.filter(n => !n.read).length
+  // prop으로 전달된 unreadCount를 우선 사용, 없으면 notifications에서 계산
+  // 모달이 열려있는 동안 notifications가 변경되면 개수도 업데이트
+  const [unreadCount, setUnreadCount] = useState(
+    propUnreadCount !== undefined 
+      ? propUnreadCount 
+      : notifications.filter(n => !n.read).length
+  )
+
+  useEffect(() => {
+    // prop으로 전달된 unreadCount가 있으면 우선 사용, 없으면 notifications에서 계산
+    const count = propUnreadCount !== undefined 
+      ? propUnreadCount 
+      : notifications.filter(n => !n.read).length
+    setUnreadCount(count)
+  }, [propUnreadCount, notifications])
 
   return (
     <Modal
@@ -84,7 +101,9 @@ export function NotificationModal({
             알림
           </Title>
           {unreadCount > 0 && (
-            <Badge count={unreadCount} size="small" />
+            <Text type="secondary" style={{ fontSize: 14 }}>
+              ({unreadCount}건)
+            </Text>
           )}
         </Space>
       }

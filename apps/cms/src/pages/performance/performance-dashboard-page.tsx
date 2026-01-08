@@ -6,6 +6,7 @@
 import { useMemo } from 'react'
 import { Card, Space, Statistic, Table, Tag, Select, Button } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { mockPrograms } from '@/data/mock'
@@ -123,7 +124,7 @@ export default function PerformanceDashboardPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 */}
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <h1 style={{ margin: 0, fontSize: 20 }}>실적 통계</h1>
+          <h1 style={PAGE_HEADER_STYLE}>실적 통계</h1>
         </Space>
 
         {/* 기간/지역 선택 + 요약 카드 */}

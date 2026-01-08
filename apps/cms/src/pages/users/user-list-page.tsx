@@ -13,6 +13,7 @@ import { useUserStore } from '@/features/user/model/user-store'
 import type { User, UserRole } from '@/types/user'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 
 const { Option } = Select
 const { Search } = Input
@@ -126,7 +127,7 @@ export function UserListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
 
       <Space style={{ marginBottom: 16 }} size="middle">

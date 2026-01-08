@@ -14,6 +14,7 @@ import { InstructorForm } from '@/features/instructor/ui/instructor-form'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import { PermissionButton } from '@/shared/components'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 
@@ -67,7 +68,7 @@ export function InstructorListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         <PermissionButton
           type="primary"
           icon={<PlusOutlined />}

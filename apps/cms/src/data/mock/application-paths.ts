@@ -21,9 +21,18 @@ const guideMessages = [
 ]
 
 export const mockApplicationPaths: ApplicationPath[] = Array.from({ length: 30 }, (_, index) => {
-  const pathType = pathTypes[Math.floor(Math.random() * pathTypes.length)]
+  // 첫 번째 경로는 prog-001에 연결하고 활성화
+  const programId = index === 0 
+    ? 'prog-001' 
+    : `prog-${String((index % 40) + 1).padStart(3, '0')}`
+  
+  const pathType = index === 0 
+    ? 'internal' // 첫 번째는 내부 신청 경로로 설정
+    : pathTypes[Math.floor(Math.random() * pathTypes.length)]
   const isGoogleForm = pathType === 'google_form'
-  const programId = `prog-${String((index % 40) + 1).padStart(3, '0')}`
+  
+  // 첫 번째 프로그램(prog-001)은 신청 가능하도록 활성화
+  const isFirstProgram = programId === 'prog-001'
 
   return {
     id: `path-${String(index + 1).padStart(3, '0')}`,
@@ -32,8 +41,10 @@ export const mockApplicationPaths: ApplicationPath[] = Array.from({ length: 30 }
     googleFormUrl: isGoogleForm
       ? `https://docs.google.com/forms/d/e/${Math.random().toString(36).substring(7)}/viewform`
       : undefined,
-    guideMessage: guideMessages[Math.floor(Math.random() * guideMessages.length)],
-    isActive: Math.random() > 0.2, // 80% 확률로 활성화
+    guideMessage: isFirstProgram 
+      ? '자동화 프로그램 내에서 신청해주세요. 신청 후 관리자 승인을 거쳐 참여가 확정됩니다.'
+      : guideMessages[Math.floor(Math.random() * guideMessages.length)],
+    isActive: isFirstProgram ? true : Math.random() > 0.2, // 첫 번째 프로그램은 항상 활성화, 나머지는 80% 확률로 활성화
     createdAt: getDate(Math.floor(Math.random() * 60) + 5),
     updatedAt: getDate(Math.floor(Math.random() * 5)),
   }

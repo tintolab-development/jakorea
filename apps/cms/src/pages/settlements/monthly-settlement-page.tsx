@@ -14,6 +14,7 @@ import {
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
 import type { Settlement } from '@/types/domain'
 import dayjs from 'dayjs'
@@ -165,7 +166,7 @@ export function MonthlySettlementPage() {
         {/* 헤더 */}
         <Space style={{ width: '100%', justifyContent: 'flex-start' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+            <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
             {/* <Text type="secondary" style={{ fontSize: 12 }}>
               상단에서 기간을 선택하면 해당 월의 정산 목록을, 아래 요약 테이블에서는 월별·상태별 건수와 금액을 한눈에 보고
               상태 배지를 클릭해 바로 상세 목록으로 이동할 수 있습니다.

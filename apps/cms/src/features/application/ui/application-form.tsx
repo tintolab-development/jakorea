@@ -24,6 +24,7 @@ const { TextArea } = Input
 
 interface ApplicationFormProps {
   application?: Application
+  programId?: string // 모달에서 사용할 경우 프로그램 ID 고정
   onSubmit: (data: ApplicationFormData) => Promise<void>
   onCancel: () => void
   loading?: boolean
@@ -37,6 +38,7 @@ const subjectTypeLabels: Record<ApplicationSubjectType, string> = {
 
 export function ApplicationForm({
   application,
+  programId,
   onSubmit,
   onCancel,
   loading,
@@ -72,6 +74,7 @@ export function ApplicationForm({
         }
       : {
           status: 'submitted',
+          programId: programId || undefined, // 모달에서 전달받은 programId 설정
           // subjectType은 아래 useEffect에서 역할 기반으로 설정
         },
   })
@@ -121,6 +124,13 @@ export function ApplicationForm({
       setValue('subjectType', fixedSubjectType, { shouldValidate: true })
     }
   }, [application, fixedSubjectType, setValue])
+
+  // programId가 prop으로 전달된 경우 자동 설정
+  useEffect(() => {
+    if (!application && programId) {
+      setValue('programId', programId, { shouldValidate: true })
+    }
+  }, [application, programId, setValue])
 
   const onFormSubmit = async (data: ApplicationFormData) => {
     try {
@@ -227,6 +237,7 @@ export function ApplicationForm({
           }}
           placeholder="프로그램 선택"
           showSearch
+          disabled={!!programId} // programId가 prop으로 전달된 경우 비활성화
           filterOption={(input, option) => {
             const children = option?.children as string | string[] | undefined
             if (typeof children === 'string') {

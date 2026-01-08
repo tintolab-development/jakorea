@@ -12,6 +12,7 @@ import { SchoolList } from '@/features/school/ui/school-list'
 import { SchoolForm } from '@/features/school/ui/school-form'
 import { useSchoolStore } from '@/features/school/model/school-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { SchoolFormData } from '@/entities/school/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 
@@ -65,7 +66,7 @@ export function SchoolListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
           학교 등록
         </Button>

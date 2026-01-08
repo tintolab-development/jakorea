@@ -4,8 +4,8 @@
  * 프로그램 등록을 모달로 변경
  */
 
-import { useState, useEffect } from 'react'
-import { Button, Space, Modal, message } from 'antd'
+import { useState, useEffect, useMemo } from 'react'
+import { Button, Space, Modal, message, Tabs } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
@@ -14,11 +14,16 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import type { Program, ProgramLifecycleStatus, ProgramCategory } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
+import { useSearchParams, useLocation } from 'react-router-dom'
 
 export function ProgramListPage() {
   const { user } = useAuthStore()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { programs, loading, fetchPrograms, deleteProgram, updateProgram, createProgram, selectedProgram, setSelectedProgram } = useProgramStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
@@ -29,10 +34,50 @@ export function ProgramListPage() {
 
   // 관리자만 프로그램 등록 가능
   const isAdmin = user?.role === 'ADMIN'
+  // 강사/봉사자/학생용
+  const isInstructor = user?.role === 'INSTRUCTOR'
+  const isUserRole = isInstructor || user?.role === 'VOLUNTEER' || user?.role === 'STUDENT'
+
+  // 카테고리명 가져오기
+  const categoryName = getCategoryNameByPath(location.pathname, 1) || (isAdmin ? '프로그램 관리' : '진행 프로그램')
+
+  // 탭 필터 (강사용)
+  const categoryTab = (searchParams.get('category') as ProgramCategory | 'all') || 'all'
 
   useEffect(() => {
     fetchPrograms()
   }, [fetchPrograms])
+
+  // 강사용: 신청 가능한 프로그램 및 수강자 모집 완료 프로그램 필터링 + 카테고리 필터
+  const filteredPrograms = useMemo(() => {
+    let filtered = programs
+
+    // 강사용일 경우 신청 가능한 프로그램과 수강자 모집 완료 프로그램 표시
+    if (isUserRole && !isAdmin) {
+      filtered = filtered.filter(program => {
+        // 신청 가능한 상태와 수강자 모집 완료된 프로그램만 표시
+        const availableStatuses: ProgramLifecycleStatus[] = [
+          'recruiting_students', // 수강자 모집 중 (신청 가능)
+          'recruiting_instructors', // 강사 모집 중 (신청 가능)
+          'recruitment_completed_waiting', // 수강자 모집 완료 및 대기 중
+          'matching_completed_waiting', // 매칭 완료 및 진행 대기 중
+          'in_progress', // 진행 중
+          'completed', // 진행 완료
+        ]
+        return (
+          program.lifecycleStatus &&
+          availableStatuses.includes(program.lifecycleStatus)
+        )
+      })
+    }
+
+    // 카테고리 필터 (강사용)
+    if (isUserRole && categoryTab !== 'all') {
+      filtered = filtered.filter(program => program.category === categoryTab)
+    }
+
+    return filtered
+  }, [programs, isUserRole, isAdmin, categoryTab])
 
   const handleView = (program: Program) => {
     setSelectedProgram(program) // store에 동기화
@@ -121,10 +166,20 @@ export function ProgramListPage() {
     }
   }
 
+  const handleCategoryTabChange = (category: ProgramCategory | 'all') => {
+    const newParams = new URLSearchParams(searchParams)
+    if (category === 'all') {
+      newParams.delete('category')
+    } else {
+      newParams.set('category', category)
+    }
+    setSearchParams(newParams, { replace: true })
+  }
+
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>프로그램 관리</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         {isAdmin && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
             프로그램 등록
@@ -132,13 +187,37 @@ export function ProgramListPage() {
         )}
       </Space>
 
+      {/* 강사용: 개인/단체 탭 */}
+      {isUserRole && !isAdmin && (
+        <Tabs
+          activeKey={categoryTab}
+          onChange={(key) => handleCategoryTabChange(key as ProgramCategory | 'all')}
+          items={[
+            {
+              key: 'all',
+              label: '전체',
+            },
+            {
+              key: 'individual',
+              label: '개인 학생 대상 프로그램',
+            },
+            {
+              key: 'school',
+              label: '단체(학교) 대상 프로그램',
+            },
+          ]}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <ProgramList
-        data={programs}
+        data={filteredPrograms}
         loading={loading}
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         showActions={isAdmin} // 관리자만 작업 컬럼 표시
+        showFavorite={isUserRole && !isAdmin} // 강사/봉사자/학생만 찜하기 컬럼 표시
         onChangeStatus={isAdmin ? handleStatusChange : undefined}
       />
 
@@ -162,6 +241,7 @@ export function ProgramListPage() {
           }
         }}
         loading={loading}
+        hideActions={!isAdmin} // 관리자가 아니면 수정/삭제 버튼 숨김
       />
 
       <Modal

@@ -35,3 +35,34 @@
   align-items: center;
   margin-bottom: 4px;
 }
+
+/* 메뉴 디바이더 길이 80% & 중앙 정렬 */
+.sidebar-menu .ant-menu-item-divider {
+  width: 80%;
+  margin: 8px auto;
+}
+
+/* 사이드바 컨테이너 */
+.sidebar-container {
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 사이드바 메뉴 래퍼 */
+.sidebar-menu-wrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 사이드바 메뉴 */
+.sidebar-menu {
+  flex: 1;
+  border-right: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}

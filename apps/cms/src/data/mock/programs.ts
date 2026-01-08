@@ -1194,7 +1194,10 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     'in_progress',
     'completed',
   ]
-  const lifecycleStatus = lifecycleStatuses[index % lifecycleStatuses.length]
+  // 첫 번째 프로그램은 신청 가능한 상태로 설정
+  const lifecycleStatus = index === 0 
+    ? 'recruiting_students' 
+    : lifecycleStatuses[index % lifecycleStatuses.length]
 
   // 기존 공통 Status와 매핑 (기존 로직과의 호환을 위해 유지)
   const baseStatus =

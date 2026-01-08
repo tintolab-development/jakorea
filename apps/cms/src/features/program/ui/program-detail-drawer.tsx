@@ -4,8 +4,9 @@
  * Phase 5.1: 사용자 화면 기반 UI 개선 (공통 UI 원칙 적용)
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Alert, Typography, Divider, Modal } from 'antd'
+import { ApplicationFormModal } from '@/shared/ui/application-form-modal'
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import type { Program, ApplicationPath } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
@@ -25,7 +26,7 @@ import {
   isCapacityAlmostFull,
   isCapacityFull,
 } from '../lib/program-helpers'
-import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
+import { StatusDisplay, GuideMessage, DuplicateApplicationAlert } from '@/shared/ui'
 import {
   commonStatusConfig,
   getCommonStatusLabel,
@@ -42,6 +43,7 @@ import {
   getPreviousProgramLifecycleStatus,
 } from '@/shared/lib/status-transition'
 import type { ProgramLifecycleStatus } from '@/types/domain'
+import { checkDuplicateApplication } from '@/shared/utils/duplicate-application-check'
 import dayjs from 'dayjs'
 
 const { Paragraph, Text } = Typography
@@ -87,6 +89,12 @@ export function ProgramDetailDrawer({
   const { updateProgram, selectedProgram: storeSelectedProgram, setSelectedProgram } = useProgramStore()
   const { user } = useAuthStore()
   const [statusChangeLoading, setStatusChangeLoading] = useState(false)
+  const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
+  const [applicationModalOpen, setApplicationModalOpen] = useState(false)
+  
+  // 관리자만 수정/삭제 가능
+  const isAdmin = user?.role === 'ADMIN'
+  const showActions = !hideActions && isAdmin
   
   // prop으로 받은 program 또는 store의 selectedProgram 사용 (store가 최신 상태 유지)
   const currentProgram = program || storeSelectedProgram
@@ -117,6 +125,85 @@ export function ProgramDetailDrawer({
   // prop으로 받은 program이 있으면 store에 동기화
   // store의 selectedProgram이 최신 상태이므로 우선 사용
   const displayProgram = storeSelectedProgram || program
+
+  // 신청 경로 정보 조회 (early return 전에 hooks 호출)
+  const applicationPath = useMemo(() => {
+    if (!displayProgram) return undefined
+    return displayProgram.applicationPathId
+      ? applicationPathService.getByIdSync(displayProgram.applicationPathId)
+      : applicationPathService.getByProgramIdSync(displayProgram.id)
+  }, [displayProgram])
+
+  // 신청 가능 여부 및 URL (early return 전에 hooks 호출)
+  const applicationInfo = useMemo(() => {
+    if (!displayProgram) {
+      return {
+        applicationAvailable: false,
+        unavailableReason: null,
+        applicationUrl: undefined,
+      }
+    }
+
+    const applicationAvailable = isApplicationAvailable(displayProgram, userSubjectType)
+    const unavailableReason = getApplicationUnavailableReason(displayProgram, userSubjectType)
+    let applicationUrl: string | undefined
+    
+    // 이미 계산된 applicationPath를 사용 (applicationPath는 위에서 이미 계산됨)
+    if (applicationAvailable && applicationPath && applicationPath.isActive) {
+      if (applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl) {
+        applicationUrl = applicationPath.googleFormUrl
+      } else if (applicationPath.pathType === 'internal') {
+        applicationUrl = getApplicationUrl(displayProgram.id)
+      }
+    }
+
+    return {
+      applicationAvailable,
+      unavailableReason,
+      applicationUrl,
+    }
+  }, [displayProgram, userSubjectType, applicationPath])
+
+  const { applicationAvailable, unavailableReason, applicationUrl } = applicationInfo
+
+  // 사용자가 이미 신청했는지 확인 (early return 전에 hooks 호출)
+  const userHasApplied = useMemo(() => {
+    if (!displayProgram || !user || !userSubjectType) return false
+    
+    // 강사/봉사자인 경우 instructorId로 비교, 학생인 경우 userId로 비교
+    const subjectId = userSubjectType === 'instructor' ? user.instructorId : user.id
+    if (!subjectId) return false
+    
+    return mockApplications.some(
+      app =>
+        app.programId === displayProgram.id &&
+        app.subjectId === subjectId &&
+        app.subjectType === userSubjectType &&
+        app.status !== 'cancelled'
+    )
+  }, [displayProgram, user, userSubjectType])
+
+  // 디버깅: 신청하기 버튼 표시 조건 확인 (early return 전에 hooks 호출)
+  useEffect(() => {
+    if (import.meta.env.DEV && displayProgram) {
+      console.log('[신청하기 버튼 디버깅]', {
+        programId: displayProgram.id,
+        programTitle: displayProgram.title,
+        lifecycleStatus: displayProgram.lifecycleStatus,
+        userSubjectType,
+        applicationAvailable,
+        unavailableReason,
+        hasApplicationPath: !!applicationPath,
+        applicationPathId: applicationPath?.id,
+        applicationPathIsActive: applicationPath?.isActive,
+        applicationPathType: applicationPath?.pathType,
+        hasApplicationUrl: !!applicationUrl,
+        applicationUrl,
+        userHasApplied,
+        willShowButton: !!applicationUrl && !userHasApplied,
+      })
+    }
+  }, [displayProgram, userSubjectType, applicationAvailable, unavailableReason, applicationPath, applicationUrl, userHasApplied])
   
   if (!displayProgram) return null
   
@@ -132,23 +219,6 @@ export function ProgramDetailDrawer({
 
   // 확정된 일정만 필터링
   const confirmedRounds = getConfirmedRounds(displayProgram.rounds)
-
-  // 신청 경로 정보 조회 (V3 Phase 7)
-  const applicationPath = displayProgram.applicationPathId
-    ? applicationPathService.getByIdSync(displayProgram.applicationPathId)
-    : applicationPathService.getByProgramIdSync(displayProgram.id)
-
-  // 신청 가능 여부 및 URL (사용자 역할 고려)
-  const applicationAvailable = isApplicationAvailable(displayProgram, userSubjectType)
-  const unavailableReason = getApplicationUnavailableReason(displayProgram, userSubjectType)
-  let applicationUrl: string | undefined
-  if (applicationAvailable && applicationPath && applicationPath.isActive) {
-    if (applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl) {
-      applicationUrl = applicationPath.googleFormUrl
-    } else if (applicationPath.pathType === 'internal') {
-      applicationUrl = getApplicationUrl(displayProgram.id)
-    }
-  }
 
   // 정원 정보 계산
   const remainingCapacity = getRemainingCapacity(displayProgram)
@@ -255,7 +325,7 @@ export function ProgramDetailDrawer({
       open={open}
       onClose={onClose}
       extra={
-        !hideActions ? (
+        showActions ? (
           <Space>
             <Button icon={<EditOutlined />} onClick={onEdit}>
               수정
@@ -416,12 +486,45 @@ export function ProgramDetailDrawer({
                             )}
                           </Paragraph>
                         )}
-                        {applicationUrl && (
-                          <SingleCTA
-                            label={applicationPath?.pathType === 'google_form' ? '구글폼으로 신청하기' : '신청하기'}
-                            targetUrl={applicationUrl}
+                        {applicationUrl && !userHasApplied && (
+                          <Button
                             type="primary"
+                            size="large"
                             disabled={capacityFull}
+                            block
+                            onClick={() => {
+                              // 중복 신청 체크 (강사 권한인 경우에만)
+                              if (user?.role === 'INSTRUCTOR' && user?.id && displayProgram) {
+                                const duplicateResult = checkDuplicateApplication(
+                                  displayProgram,
+                                  user.id,
+                                  mockApplications
+                                )
+                                if (duplicateResult.isDuplicate) {
+                                  setDuplicateAlertOpen(true)
+                                  return
+                                }
+                              }
+                              // internal 타입인 경우 모달로 열기
+                              if (applicationPath?.pathType === 'internal') {
+                                setApplicationModalOpen(true)
+                              } else if (applicationPath?.pathType === 'google_form') {
+                                // 구글폼인 경우 새 창으로 열기
+                                if (applicationUrl) {
+                                  window.open(applicationUrl, '_blank')
+                                }
+                              }
+                            }}
+                          >
+                            {applicationPath?.pathType === 'google_form' ? '구글폼으로 신청하기' : '신청하기'}
+                          </Button>
+                        )}
+                        {userHasApplied && (
+                          <Alert
+                            type="info"
+                            message="이미 신청하신 프로그램입니다."
+                            description="신청 내역은 '마이페이지 > 내가 신청한 프로그램'에서 확인하실 수 있습니다."
+                            showIcon
                           />
                         )}
                       </div>
@@ -815,6 +918,19 @@ export function ProgramDetailDrawer({
         ]}
       />
 
+      {/* 신청 폼 모달 */}
+      {applicationModalOpen && (
+        <ApplicationFormModal
+          programId={displayProgram.id}
+          programTitle={displayProgram.title}
+          open={applicationModalOpen}
+          onClose={() => setApplicationModalOpen(false)}
+          onSuccess={() => {
+            setApplicationModalOpen(false)
+          }}
+        />
+      )}
+
       <Modal
         open={applicationPathModalOpen}
         title={editingApplicationPath ? '신청 경로 수정' : '신청 경로 등록'}
@@ -831,6 +947,28 @@ export function ProgramDetailDrawer({
           fixedProgramId={displayProgram.id}
         />
       </Modal>
+
+      {/* 중복 신청 알럿 */}
+      {user?.role === 'INSTRUCTOR' && user?.id && displayProgram && (
+        <DuplicateApplicationAlert
+          open={duplicateAlertOpen}
+          program={displayProgram}
+          duplicateResult={checkDuplicateApplication(displayProgram, user.id, mockApplications)}
+          onConfirm={() => {
+            setDuplicateAlertOpen(false)
+            // internal 타입인 경우 모달로 열기
+            if (applicationPath?.pathType === 'internal') {
+              setApplicationModalOpen(true)
+            } else if (applicationPath?.pathType === 'google_form' && applicationUrl) {
+              // 구글폼인 경우 새 창으로 열기
+              window.open(applicationUrl, '_blank')
+            }
+          }}
+          onCancel={() => {
+            setDuplicateAlertOpen(false)
+          }}
+        />
+      )}
     </Drawer>
   )
 }

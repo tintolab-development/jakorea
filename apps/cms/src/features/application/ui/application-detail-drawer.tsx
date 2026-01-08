@@ -27,10 +27,14 @@ import {
   getApplicationStatusLabel,
   getApplicationStatusColor,
 } from '@/shared/constants/status'
-import { isApplicationFinalStatus } from '@/shared/lib/status-transition'
+import { isApplicationFinalStatus, canTransitionApplicationStatus } from '@/shared/lib/status-transition'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { ApplicationWorkflow } from './application-workflow'
 import { useApplicationStore } from '@/features/application/model/application-store'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import type { User } from '@/types/user'
+import { Popconfirm, message } from 'antd'
+import { StopOutlined } from '@ant-design/icons'
 
 const { Text, Title } = Typography
 
@@ -42,6 +46,8 @@ interface ApplicationDetailDrawerProps {
   onDelete: () => void
   onStatusChange: (status: Application['status'], rejectionReason?: string) => void
   loading?: boolean
+  isAdmin?: boolean // 관리자 여부
+  currentUser?: Pick<User, 'id' | 'role' | 'instructorId'> | null // 현재 사용자 정보
 }
 
 export function ApplicationDetailDrawer({
@@ -52,8 +58,16 @@ export function ApplicationDetailDrawer({
   onDelete,
   onStatusChange,
   loading,
+  isAdmin = false,
+  currentUser,
 }: ApplicationDetailDrawerProps) {
-  const { selectedApplication: storeSelectedApplication } = useApplicationStore()
+  const { selectedApplication: storeSelectedApplication, updateStatus } = useApplicationStore()
+  const { user: authUser } = useAuthStore()
+  
+  // 실제 사용자 정보 (currentUser가 있으면 사용, 없으면 authUser 사용)
+  const user = currentUser || authUser
+  // 관리자 여부 결정 (isAdmin prop이 있으면 사용, 없으면 user.role로 판단)
+  const isAdminUser = isAdmin || user?.role === 'ADMIN'
 
   // store의 selectedApplication을 우선 사용, 없으면 prop의 application 사용
   const displayApplication = storeSelectedApplication || application
@@ -131,15 +145,42 @@ export function ApplicationDetailDrawer({
       onClose={onClose}
       extra={
         <Space>
-          {/* 최종 상태에서는 수정/삭제만 가능 */}
-          {!isFinalStatus && (
-            <Button icon={<EditOutlined />} onClick={onEdit}>
-              수정
-            </Button>
+          {/* 관리자만 수정/삭제 가능 */}
+          {isAdminUser && (
+            <>
+              {!isFinalStatus && (
+                <Button icon={<EditOutlined />} onClick={onEdit}>
+                  수정
+                </Button>
+              )}
+              <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
+                삭제
+              </Button>
+            </>
           )}
-          <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
-            삭제
-          </Button>
+          {/* 강사/수강자는 취소만 가능 (취소 가능한 상태일 때만) */}
+          {!isAdminUser && canTransitionApplicationStatus(displayApplication.status, 'cancelled') && (
+            <Popconfirm
+              title="신청 취소"
+              description="이 신청을 취소하시겠습니까? 취소된 신청은 복구할 수 없습니다."
+              onConfirm={async () => {
+                try {
+                  await updateStatus(displayApplication.id, 'cancelled')
+                  message.success('신청이 취소되었습니다.')
+                  onStatusChange('cancelled')
+                } catch (error) {
+                  message.error('신청 취소 중 오류가 발생했습니다.')
+                }
+              }}
+              okText="취소하기"
+              cancelText="아니오"
+              okButtonProps={{ danger: true }}
+            >
+              <Button icon={<StopOutlined />} loading={loading}>
+                취소
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       }
     >
@@ -255,18 +296,37 @@ export function ApplicationDetailDrawer({
           },
           {
             key: 'timeline',
-            label: '상태 이력',
+            label: isAdminUser ? '상태 이력 / 워크플로우' : '처리 이력',
             children: (
               <>
-                <ApplicationWorkflow
-                  application={displayApplication}
-                  onStatusChange={onStatusChange}
-                  loading={loading}
-                />
-                <Divider orientation="left" style={{ marginTop: 24 }}>
-                  처리 이력
-                </Divider>
-                <Timeline items={timelineItems} />
+                {/* 관리자만 워크플로우 표시 */}
+                {isAdminUser && (
+                  <>
+                    <ApplicationWorkflow
+                      application={displayApplication}
+                      onStatusChange={onStatusChange}
+                      loading={loading}
+                    />
+                    <Divider orientation="left" style={{ marginTop: 24 }}>
+                      처리 이력
+                    </Divider>
+                  </>
+                )}
+                {/* 강사/수강자는 처리 이력만 표시 */}
+                {!isAdminUser && (
+                  <>
+                    <Title level={5}>처리 이력</Title>
+                    <Timeline items={timelineItems} />
+                    <div style={{ marginTop: 24 }}>
+                      <Alert
+                        message="신청 취소"
+                        description="신청을 취소하려면 상단의 '취소' 버튼을 클릭하세요."
+                        type="info"
+                        showIcon
+                      />
+                    </div>
+                  </>
+                )}
               </>
             ),
           },

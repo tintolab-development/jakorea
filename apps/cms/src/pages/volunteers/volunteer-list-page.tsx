@@ -9,6 +9,7 @@ import { useSearchParams, useLocation } from 'react-router-dom'
 import { VolunteerList } from '@/features/volunteer/ui/volunteer-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { mockUsers } from '@/data/mock/users'
 import type { User, InterviewStatus } from '@/types/user'
 
@@ -128,7 +129,7 @@ export function VolunteerListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
 
       <Space style={{ marginBottom: 16 }} size="middle">

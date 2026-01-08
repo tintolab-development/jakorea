@@ -5,15 +5,18 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Card, Space, Typography, List, Tag, Button } from 'antd'
 import { HistoryOutlined, EyeOutlined } from '@ant-design/icons'
 import { EmptyState, GuideMessage } from '@/shared/ui'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import { mockUserHistories, mockProgramsMap } from '@/data/mock/mypage'
 import dayjs from 'dayjs'
 import type { UserHistory } from '@/types/domain'
 
-const { Title, Paragraph, Text } = Typography
+const { Paragraph, Text } = Typography
 
 // 참여 역할 라벨
 const roleLabels: Record<string, string> = {
@@ -38,8 +41,14 @@ const finalStatusColors: Record<string, string> = {
 
 export function HistoryListPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [histories, setHistories] = useState<UserHistory[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // 카테고리명 가져오기 (권한에 따라 다르게 표시)
+  const { user } = useAuthStore()
+  const defaultCategoryName = user?.role === 'VOLUNTEER' ? '봉사 이력 관리' : '강사 이력 관리'
+  const categoryName = getCategoryNameByPath(location.pathname, 3) || defaultCategoryName
 
   useEffect(() => {
     const loadHistories = () => {
@@ -68,9 +77,7 @@ export function HistoryListPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 페이지 헤더 영역 */}
         <div>
-          <Title level={2} style={{ margin: 0 }}>
-            이력
-          </Title>
+          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
           <Paragraph type="secondary" style={{ margin: '8px 0 0 0' }}>
             완료된 참여 이력만 표시됩니다.
           </Paragraph>
