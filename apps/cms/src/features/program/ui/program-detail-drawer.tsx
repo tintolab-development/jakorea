@@ -628,10 +628,10 @@ export function ProgramDetailDrawer({
           },
           {
             key: 'rounds',
-            label: `회차 정보 (${displayProgram.rounds.length})`,
+            label: `회차 정보 (${displayProgram.rounds?.length || 0})`,
             children: (
               <Table
-                dataSource={displayProgram.rounds}
+                dataSource={displayProgram.rounds || []}
                 columns={roundColumns}
                 rowKey="id"
                 pagination={false}
@@ -829,7 +829,7 @@ export function ProgramDetailDrawer({
                         {displayProgram.educationTime}시간
                       </Descriptions.Item>
                     )}
-                    {displayProgram.rounds[0]?.classCount && (
+                    {displayProgram.rounds && displayProgram.rounds[0]?.classCount && (
                       <Descriptions.Item label="학급수">
                         {displayProgram.rounds[0].classCount}
                       </Descriptions.Item>

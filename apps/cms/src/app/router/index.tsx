@@ -103,6 +103,8 @@ const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-
 const VolunteerListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-list-page'))
 const VolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-program-list-page'))
 const MyVolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-program-list-page'))
+const MyVolunteerHistoryPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-history-page'))
+const MyVolunteerSchedulePage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-schedule-page'))
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
 const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
@@ -285,6 +287,8 @@ export const router = createBrowserRouter([
             path: 'my',
             children: [
               { path: 'programs', element: <MyVolunteerProgramListPage /> },
+              { path: 'schedules', element: <MyVolunteerSchedulePage /> },
+              { path: 'histories', element: <MyVolunteerHistoryPage /> },
             ],
           },
           { path: ':id', element: <VolunteerDetailPage /> },

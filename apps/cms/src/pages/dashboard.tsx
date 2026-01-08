@@ -20,9 +20,11 @@ import { MonthlyApplicationCard } from '@/features/dashboard/ui/monthly-applicat
 import { ActiveProgramCard } from '@/features/dashboard/ui/active-program-card'
 import { UnifiedActivityFeed } from '@/features/dashboard/ui/unified-activity-feed'
 import { MyActivitySummary } from '@/features/dashboard/ui/my-activity-summary'
+import { MyVolunteerActivitySummary } from '@/features/dashboard/ui/my-volunteer-activity-summary'
 import { MyApplicationSummary } from '@/features/dashboard/ui/my-application-summary'
 import { UpcomingSchedulesList } from '@/features/dashboard/ui/upcoming-schedules-list'
 import { PendingTasksList } from '@/features/dashboard/ui/pending-tasks-list'
+import { VolunteerPendingTasksList } from '@/features/dashboard/ui/volunteer-pending-tasks-list'
 import { GlobalSearch } from '@/features/dashboard/ui/global-search'
 import { OverallProgramProgressCard } from '@/features/dashboard/ui/overall-program-progress-card'
 import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
@@ -159,6 +161,8 @@ export function Dashboard() {
         return <UnifiedActivityFeed pageSize={10} />
       case 'my-activity-summary':
         return <MyActivitySummary />
+      case 'my-volunteer-activity-summary':
+        return <MyVolunteerActivitySummary />
       case 'my-application-summary':
         return <MyApplicationSummary />
       case 'upcoming-schedules-list':
@@ -188,6 +192,21 @@ export function Dashboard() {
             reportPending={instructorActivity.pendingTasks.reportPending}
             settlementPending={instructorActivity.pendingTasks.settlementPending}
             settlementTasks={instructorActivity.pendingTasks.settlementTasks}
+            loading={instructorActivityLoading}
+          />
+        )
+      case 'volunteer-pending-tasks-list':
+        if (!instructorActivity) {
+          return (
+            <Card loading={instructorActivityLoading}>
+              <div style={{ height: 200 }} />
+            </Card>
+          )
+        }
+        return (
+          <VolunteerPendingTasksList
+            reportPending={instructorActivity.pendingTasks.reportPending}
+            reportTasks={[]} // TODO: API 연동 시 실제 작업 목록 전달
             loading={instructorActivityLoading}
           />
         )
