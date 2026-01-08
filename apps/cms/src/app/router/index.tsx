@@ -99,6 +99,7 @@ const ReportListPage = lazyLoad(() => import('@/pages/reports/report-list-page')
 const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
 const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-detail-page'))
 const VolunteerListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-list-page'))
+const VolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-program-list-page'))
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
 const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
@@ -218,6 +219,11 @@ export const router = createBrowserRouter([
         path: 'settlements',
         children: [
           { index: true, element: <SettlementListPage /> },
+          // 기존 URL 리다이렉트를 위한 라우트 유지 (내부적으로 SettlementListPage로 리다이렉트)
+          { path: 'pending', element: <SettlementListPage /> },
+          { path: 'review', element: <SettlementListPage /> },
+          { path: 'paid', element: <SettlementListPage /> },
+          { path: 'overview', element: <SettlementListPage /> },
           {
             path: 'my',
             children: [
@@ -264,6 +270,7 @@ export const router = createBrowserRouter([
         path: 'volunteers',
         children: [
           { index: true, element: <VolunteerListPage /> },
+          { path: 'programs', element: <VolunteerProgramListPage /> },
           { path: ':id', element: <VolunteerDetailPage /> },
         ],
       },

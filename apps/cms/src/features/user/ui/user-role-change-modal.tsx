@@ -6,7 +6,7 @@
 import { Modal, Form, Select, message } from 'antd'
 import { useEffect } from 'react'
 import type { User, UserRole } from '@/types/user'
-import { RoleBadge } from '@/shared/ui'
+import { RoleBadge, getRoleLabel } from '@/shared/ui'
 
 interface UserRoleChangeModalProps {
   open: boolean
@@ -88,7 +88,7 @@ export function UserRoleChangeModal({
           <Select placeholder="권한 선택">
             {roleOptions.map((role) => (
               <Option key={role} value={role}>
-                <RoleBadge role={role} size="small" variant="tag" />
+                {getRoleLabel(role)}
               </Option>
             ))}
           </Select>

@@ -42,7 +42,7 @@ export function ScheduleDetailDrawer({
           {isConflict && <Badge status="error" text="중복 일정" />}
         </Space>
       }
-      width={720}
+      width={792}
       open={open}
       onClose={onClose}
       extra={

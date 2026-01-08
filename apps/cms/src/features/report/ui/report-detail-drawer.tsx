@@ -104,7 +104,7 @@ export function ReportDetailDrawer({
     <>
       <Drawer
         title="보고서 상세"
-        width={720}
+        width={792}
         open={open}
         onClose={onClose}
         extra={

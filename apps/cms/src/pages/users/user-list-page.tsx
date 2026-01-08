@@ -3,22 +3,27 @@
  * Phase 5.1.2: 사용자 관리 페이지
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Space, Select, Input, Button } from 'antd'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { useUserStore } from '@/features/user/model/user-store'
 import type { User, UserRole } from '@/types/user'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
 
 const { Option } = Select
 const { Search } = Input
 
 export function UserListPage() {
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { users, loading, fetchUsers, changeUserRole } = useUserStore()
+  
+  // 2뎁스 카테고리명 가져오기
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || '회원 관리'
 
   // 상태 관리
   const [selectedUser, setSelectedUser] = useState<Omit<User, 'password'> | null>(null)
@@ -49,6 +54,11 @@ export function UserListPage() {
       handleError(error, { defaultMessage: '사용자 목록을 불러오는데 실패했습니다' })
     }
   }
+
+  // 페이지 로드 시 및 필터 변경 시 자동으로 데이터 불러오기
+  useEffect(() => {
+    loadUsers()
+  }, [roleFilter, searchQuery])
 
   // 필터 변경 핸들러
   const handleRoleFilterChange = (value: UserRole | 'ALL') => {
@@ -116,7 +126,7 @@ export function UserListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>회원 관리</h1>
+        <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
       </Space>
 
       <Space style={{ marginBottom: 16 }} size="middle">

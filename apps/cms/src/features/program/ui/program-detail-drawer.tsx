@@ -251,7 +251,7 @@ export function ProgramDetailDrawer({
           <Badge status={displayProgram.status === 'active' ? 'success' : 'default'} />
         </Space>
       }
-      width={720}
+      width={792}
       open={open}
       onClose={onClose}
       extra={
@@ -820,7 +820,7 @@ export function ProgramDetailDrawer({
         title={editingApplicationPath ? '신청 경로 수정' : '신청 경로 등록'}
         onCancel={handleApplicationPathFormCancel}
         footer={null}
-        width={800}
+        width={880}
         destroyOnClose
       >
         <ApplicationPathForm

@@ -7,7 +7,7 @@ import { Table, Input, Select, Button, Space, Tag, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { useProgramTable } from '../model/use-program-table'
-import type { Program } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
   getCommonStatusLabel,
@@ -27,6 +27,7 @@ interface ProgramListProps {
   onEdit?: (program: Program) => void // 관리자만 사용
   onDelete?: (program: Program) => void // 관리자만 사용
   showActions?: boolean // 작업 컬럼 표시 여부 (기본값: false, 관리자만 true)
+  onChangeStatus?: (program: Program, status: ProgramLifecycleStatus) => void
 }
 
 const programTypes = [
@@ -55,6 +56,7 @@ export function ProgramList({
   onEdit,
   onDelete,
   showActions = false,
+  onChangeStatus,
 }: ProgramListProps) {
   const { table, resetFilters } = useProgramTable(data)
 
@@ -220,7 +222,49 @@ export function ProgramList({
               const color = lifecycle
                 ? getProgramLifecycleColor(lifecycle)
                 : getCommonStatusColor(record.status)
-              return <Tag color={color}>{label}</Tag>
+              const tag = <Tag color={color}>{label}</Tag>
+
+              // 상태 변경 핸들러가 없으면 단순 뱃지로 표시
+              if (!onChangeStatus) {
+                return tag
+              }
+
+              const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                status => {
+                  const optionLabel = getProgramLifecycleLabel(status)
+                  const optionColor = getProgramLifecycleColor(status)
+                  return {
+                    key: status,
+                    label: (
+                      <Tag color={optionColor} style={{ margin: 0 }}>
+                        {optionLabel}
+                      </Tag>
+                    ),
+                    onClick: (e) => {
+                      e?.domEvent?.stopPropagation()
+                      onChangeStatus(record, status)
+                    },
+                  }
+                }
+              )
+
+              return (
+                <div onClick={e => e.stopPropagation()}>
+                  <Dropdown
+                    menu={{ items }}
+                    trigger={['click']}
+                    getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
+                  >
+                    <span
+                      className="program-status-dropdown-trigger"
+                      onClick={e => e.stopPropagation()}
+                      style={{ cursor: 'pointer', display: 'inline-block' }}
+                    >
+                      {tag}
+                    </span>
+                  </Dropdown>
+                </div>
+              )
             },
           },
           // 관리자만 작업 컬럼 표시
@@ -250,7 +294,13 @@ export function ProgramList({
         loading={loading}
         tableLayout="fixed"
         onRow={record => ({
-          onClick: () => onView(record),
+          onClick: event => {
+            const target = event.target as HTMLElement
+            if (target.closest('.program-status-dropdown-trigger')) {
+              return
+            }
+            onView(record)
+          },
           style: { cursor: 'pointer' },
         })}
         pagination={{

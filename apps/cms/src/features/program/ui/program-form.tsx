@@ -56,8 +56,11 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
     setValue,
     watch,
     control,
+    trigger,
   } = useForm<ProgramFormData>({
     resolver: zodResolver(programSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: program
       ? {
           sponsorId: program.sponsorId,
@@ -79,6 +82,10 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           })),
         }
       : {
+          title: '',
+          status: 'pending',
+          type: 'offline',
+          format: 'workshop',
           rounds: [{ roundNumber: 1, startDate: '', endDate: '', status: 'pending' }],
         },
   })
@@ -89,7 +96,17 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
   })
 
   const onFormSubmit = async (data: ProgramFormData) => {
-    await onSubmit(data)
+    try {
+      await onSubmit(data)
+    } catch (error) {
+      // 에러는 상위에서 처리하되, 폼 에러 표시를 위해 에러 필드로 스크롤
+      const firstErrorField = Object.keys(errors)[0]
+      if (firstErrorField) {
+        const element = document.querySelector(`[name="${firstErrorField}"]`) || 
+                       document.querySelector(`[id="${firstErrorField}"]`)
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
   }
 
   const steps = [
@@ -97,10 +114,10 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
       title: '기본 정보',
       content: (
         <div>
-          <Form.Item label="스폰서" validateStatus={errors.sponsorId ? 'error' : ''} help={errors.sponsorId?.message}>
+          <Form.Item label="스폰서" validateStatus={errors.sponsorId ? 'error' : ''} help={errors.sponsorId?.message} required>
             <Select
               value={watch('sponsorId')}
-              onChange={value => setValue('sponsorId', value)}
+              onChange={value => setValue('sponsorId', value, { shouldValidate: true })}
               placeholder="스폰서 선택"
               showSearch
               filterOption={(input, option) => {
@@ -116,14 +133,18 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
             </Select>
           </Form.Item>
 
-          <Form.Item label="프로그램명" validateStatus={errors.title ? 'error' : ''} help={errors.title?.message}>
-            <Input {...register('title')} />
+          <Form.Item label="프로그램명" validateStatus={errors.title ? 'error' : ''} help={errors.title?.message} required>
+            <Input 
+              value={watch('title') || ''}
+              onChange={(e) => setValue('title', e.target.value, { shouldValidate: true })}
+              placeholder="프로그램명을 입력해주세요"
+            />
           </Form.Item>
 
-          <Form.Item label="유형" validateStatus={errors.type ? 'error' : ''} help={errors.type?.message}>
+          <Form.Item label="유형" validateStatus={errors.type ? 'error' : ''} help={errors.type?.message} required>
             <Select
               value={watch('type')}
-              onChange={value => setValue('type', value as ProgramFormData['type'])}
+              onChange={value => setValue('type', value as ProgramFormData['type'], { shouldValidate: true })}
               placeholder="유형 선택"
             >
               {programTypes.map(type => (
@@ -134,10 +155,10 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
             </Select>
           </Form.Item>
 
-          <Form.Item label="형태" validateStatus={errors.format ? 'error' : ''} help={errors.format?.message}>
+          <Form.Item label="형태" validateStatus={errors.format ? 'error' : ''} help={errors.format?.message} required>
             <Select
               value={watch('format')}
-              onChange={value => setValue('format', value as ProgramFormData['format'])}
+              onChange={value => setValue('format', value as ProgramFormData['format'], { shouldValidate: true })}
               placeholder="형태 선택"
             >
               {programFormats.map(format => (
@@ -149,29 +170,33 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           </Form.Item>
 
           <Form.Item label="설명">
-            <TextArea {...register('description')} rows={4} />
+            <TextArea 
+              value={watch('description') || ''}
+              onChange={(e) => setValue('description', e.target.value)}
+              rows={4} 
+            />
           </Form.Item>
 
-          <Form.Item label="시작일" validateStatus={errors.startDate ? 'error' : ''} help={errors.startDate?.message}>
+          <Form.Item label="시작일" validateStatus={errors.startDate ? 'error' : ''} help={errors.startDate?.message} required>
             <DatePicker
               value={watch('startDate') ? dayjs(watch('startDate')) : null}
-              onChange={date => setValue('startDate', date ? date.toISOString() : '')}
+              onChange={date => setValue('startDate', date ? date.toISOString() : '', { shouldValidate: true })}
               style={{ width: '100%' }}
             />
           </Form.Item>
 
-          <Form.Item label="종료일" validateStatus={errors.endDate ? 'error' : ''} help={errors.endDate?.message}>
+          <Form.Item label="종료일" validateStatus={errors.endDate ? 'error' : ''} help={errors.endDate?.message} required>
             <DatePicker
               value={watch('endDate') ? dayjs(watch('endDate')) : null}
-              onChange={date => setValue('endDate', date ? date.toISOString() : '')}
+              onChange={date => setValue('endDate', date ? date.toISOString() : '', { shouldValidate: true })}
               style={{ width: '100%' }}
             />
           </Form.Item>
 
-          <Form.Item label="상태" validateStatus={errors.status ? 'error' : ''} help={errors.status?.message}>
+          <Form.Item label="상태" validateStatus={errors.status ? 'error' : ''} help={errors.status?.message} required>
             <Select
               value={watch('status')}
-              onChange={value => setValue('status', value as ProgramFormData['status'])}
+              onChange={value => setValue('status', value as ProgramFormData['status'], { shouldValidate: true })}
               placeholder="상태 선택"
             >
               {statusOptions.map(status => (
@@ -220,10 +245,14 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 label="회차 번호"
                 validateStatus={errors.rounds?.[index]?.roundNumber ? 'error' : ''}
                 help={errors.rounds?.[index]?.roundNumber?.message}
+                required
               >
                 <Input
                   type="number"
-                  {...register(`rounds.${index}.roundNumber`, { valueAsNumber: true })}
+                  min={1}
+                  {...register(`rounds.${index}.roundNumber`, { 
+                    valueAsNumber: true,
+                  })}
                 />
               </Form.Item>
 
@@ -231,12 +260,13 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 label="시작일"
                 validateStatus={errors.rounds?.[index]?.startDate ? 'error' : ''}
                 help={errors.rounds?.[index]?.startDate?.message}
+                required
               >
                 <DatePicker
                   value={watch(`rounds.${index}.startDate`) ? dayjs(watch(`rounds.${index}.startDate`)) : null}
-                  onChange={date =>
-                    setValue(`rounds.${index}.startDate`, date ? date.toISOString() : '')
-                  }
+                  onChange={date => {
+                    setValue(`rounds.${index}.startDate`, date ? date.toISOString() : '', { shouldValidate: true })
+                  }}
                   style={{ width: '100%' }}
                 />
               </Form.Item>
@@ -245,18 +275,29 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 label="종료일"
                 validateStatus={errors.rounds?.[index]?.endDate ? 'error' : ''}
                 help={errors.rounds?.[index]?.endDate?.message}
+                required
               >
                 <DatePicker
                   value={watch(`rounds.${index}.endDate`) ? dayjs(watch(`rounds.${index}.endDate`)) : null}
-                  onChange={date => setValue(`rounds.${index}.endDate`, date ? date.toISOString() : '')}
+                  onChange={date => {
+                    setValue(`rounds.${index}.endDate`, date ? date.toISOString() : '', { shouldValidate: true })
+                  }}
                   style={{ width: '100%' }}
                 />
               </Form.Item>
 
-              <Form.Item label="정원">
+              <Form.Item 
+                label="정원"
+                validateStatus={errors.rounds?.[index]?.capacity ? 'error' : ''}
+                help={errors.rounds?.[index]?.capacity?.message}
+              >
                 <Input
                   type="number"
-                  {...register(`rounds.${index}.capacity`, { valueAsNumber: true })}
+                  min={1}
+                  {...register(`rounds.${index}.capacity`, { 
+                    valueAsNumber: true,
+                    setValueAs: (value) => value === '' ? undefined : Number(value),
+                  })}
                 />
               </Form.Item>
 
@@ -264,12 +305,13 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 label="상태"
                 validateStatus={errors.rounds?.[index]?.status ? 'error' : ''}
                 help={errors.rounds?.[index]?.status?.message}
+                required
               >
                 <Select
                   value={watch(`rounds.${index}.status`)}
-                  onChange={value =>
-                    setValue(`rounds.${index}.status`, value as ProgramFormData['rounds'][0]['status'])
-                  }
+                  onChange={value => {
+                    setValue(`rounds.${index}.status`, value as ProgramFormData['rounds'][0]['status'], { shouldValidate: true })
+                  }}
                 >
                   {statusOptions.map(status => (
                     <Option key={status.value} value={status.value}>
@@ -296,33 +338,73 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
   ]
 
   return (
-    <Card title={program ? '프로그램 수정' : '프로그램 등록'}>
-      <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
-        <Steps current={currentStep} items={steps.map(s => ({ title: s.title }))} style={{ marginBottom: 24 }} />
+    <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
+      <Steps current={currentStep} items={steps.map(s => ({ title: s.title }))} style={{ marginBottom: 24 }} />
 
-        <div style={{ minHeight: 400 }}>{steps[currentStep].content}</div>
+      <div style={{ minHeight: 400 }}>{steps[currentStep].content}</div>
 
-        <Form.Item>
-          <Space>
-            {currentStep > 0 && (
-              <Button onClick={() => setCurrentStep(currentStep - 1)}>이전</Button>
-            )}
-            {currentStep < steps.length - 1 ? (
-              <Button type="primary" onClick={() => setCurrentStep(currentStep + 1)}>
-                다음
+      <Form.Item>
+        <Space>
+          {currentStep > 0 && (
+            <Button onClick={() => setCurrentStep(currentStep - 1)}>이전</Button>
+          )}
+          {currentStep < steps.length - 1 ? (
+            <Button 
+              type="primary" 
+              onClick={async () => {
+                // 현재 단계의 필수 필드 검증
+                if (currentStep === 0) {
+                  // 기본 정보 단계 검증
+                  const isValid = await trigger(['sponsorId', 'title', 'type', 'format', 'startDate', 'endDate', 'status'])
+                  if (isValid) {
+                    setCurrentStep(currentStep + 1)
+                  } else {
+                    // 에러가 있으면 첫 번째 에러 필드로 스크롤
+                    const firstErrorField = Object.keys(errors).find(key => 
+                      ['sponsorId', 'title', 'type', 'format', 'startDate', 'endDate', 'status'].includes(key)
+                    )
+                    if (firstErrorField) {
+                      const element = document.querySelector(`[name="${firstErrorField}"]`) || 
+                                     document.querySelector(`[id="${firstErrorField}"]`)
+                      element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }
+                  }
+                } else {
+                  setCurrentStep(currentStep + 1)
+                }
+              }}
+            >
+              다음
+            </Button>
+          ) : (
+            <>
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                loading={loading}
+                onClick={async (e) => {
+                  // 제출 전 전체 검증
+                  const isValid = await trigger()
+                  if (!isValid) {
+                    e.preventDefault()
+                    // 에러가 있으면 첫 번째 에러 필드로 스크롤
+                    const firstErrorField = Object.keys(errors)[0]
+                    if (firstErrorField) {
+                      const element = document.querySelector(`[name="${firstErrorField}"]`) || 
+                                     document.querySelector(`[id="${firstErrorField}"]`)
+                      element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }
+                  }
+                }}
+              >
+                {program ? '수정' : '등록'}
               </Button>
-            ) : (
-              <>
-                <Button type="primary" htmlType="submit" loading={loading}>
-                  {program ? '수정' : '등록'}
-                </Button>
-                <Button onClick={onCancel}>취소</Button>
-              </>
-            )}
-          </Space>
-        </Form.Item>
-      </Form>
-    </Card>
+              <Button onClick={onCancel}>취소</Button>
+            </>
+          )}
+        </Space>
+      </Form.Item>
+    </Form>
   )
 }
 

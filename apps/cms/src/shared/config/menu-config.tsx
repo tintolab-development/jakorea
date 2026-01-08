@@ -94,30 +94,10 @@ const allMenuItems: MenuItemConfig[] = [
         allowedRoles: ['ADMIN'],
       },
       {
-        key: 'settlements-group',
+        key: '/settlements',
         label: '정산',
         enabled: true,
         allowedRoles: ['ADMIN'],
-        children: [
-          {
-            key: '/settlements',
-            label: '정산 목록',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/settlements/monthly',
-            label: '월별 정산 관리',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/settlements/calculation-settings',
-            label: '산출 로직 설정',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-        ],
       },
     ],
   },
@@ -421,6 +401,36 @@ export function getMenuItemsByRole(userRole: UserRole | null): MenuProps['items'
 }
 
 /**
+ * 메뉴 아이템에서 경로 찾기 (내부 유틸리티)
+ */
+function findMenuItemByPath(
+  items: MenuItemConfig[],
+  targetPath: string,
+  parent?: MenuItemConfig
+): { item: MenuItemConfig; parent?: MenuItemConfig; depth: number } | null {
+  for (const item of items) {
+    if (item.key === targetPath) {
+      return { item, parent, depth: parent ? 2 : 1 }
+    }
+    if (item.children) {
+      for (const child of item.children) {
+        if (child.key === targetPath) {
+          return { item: child, parent: item, depth: 2 }
+        }
+        if (child.children) {
+          for (const grandchild of child.children) {
+            if (grandchild.key === targetPath) {
+              return { item: grandchild, parent: child, depth: 3 }
+            }
+          }
+        }
+      }
+    }
+  }
+  return null
+}
+
+/**
  * 특정 경로에 대한 접근 권한 확인
  * @param path 경로
  * @param userRole 사용자 권한
@@ -436,25 +446,13 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     return false
   }
 
-  // 메뉴 아이템에서 경로 찾기
-  const findMenuItem = (items: MenuItemConfig[], targetPath: string): MenuItemConfig | null => {
-    for (const item of items) {
-      if (item.key === targetPath) {
-        return item
-      }
-      if (item.children) {
-        const found = findMenuItem(item.children, targetPath)
-        if (found) return found
-      }
-    }
-    return null
-  }
-
-  const menuItem = findMenuItem(allMenuItems, path)
-  if (!menuItem) {
+  const result = findMenuItemByPath(allMenuItems, path)
+  if (!result) {
     // 메뉴에 없는 경로는 기본적으로 접근 가능 (기타 페이지)
     return true
   }
+
+  const menuItem = result.item
 
   // allowedRoles가 없으면 모든 권한 허용
   if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) {
@@ -463,5 +461,68 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
 
   // allowedRoles에 사용자 권한이 포함되어 있는지 확인
   return menuItem.allowedRoles.includes(userRole)
+}
+
+/**
+ * 현재 경로에 해당하는 카테고리명 가져오기
+ * @param path 경로
+ * @param depth 가져올 뎁스 (1: 1뎁스, 2: 2뎁스, 3: 3뎁스, 기본값: 자동 감지)
+ * @returns 카테고리명 (없으면 null)
+ */
+export function getCategoryNameByPath(path: string, depth?: number): string | null {
+  const result = findMenuItemByPath(allMenuItems, path)
+  if (!result) {
+    return null
+  }
+
+  // depth가 지정되지 않았으면 해당 뎁스의 카테고리명 반환
+  if (depth === undefined) {
+    return result.item.label
+  }
+
+  // depth에 따라 카테고리명 반환
+  if (depth === 1) {
+    // 1뎁스: 최상위 카테고리
+    if (result.depth === 1) {
+      return result.item.label
+    } else if (result.depth === 2 && result.parent) {
+      // 2뎁스 아이템의 경우, 1뎁스는 부모
+      return result.parent.label
+    } else if (result.depth === 3 && result.parent) {
+      // 3뎁스 아이템의 경우, 1뎁스는 부모의 부모를 찾아야 함
+      for (const topLevel of allMenuItems) {
+        if (topLevel.children?.some(child => 
+          child.children?.some(grandchild => grandchild.key === result.item.key)
+        )) {
+          return topLevel.label
+        }
+      }
+    }
+  } else if (depth === 2) {
+    // 2뎁스: 중간 카테고리
+    if (result.depth === 2) {
+      // 2뎁스 아이템은 자기 자신이 2뎁스
+      return result.item.label
+    } else if (result.depth === 3 && result.parent) {
+      // 3뎁스 아이템의 경우, 2뎁스는 부모
+      return result.parent.label
+    } else if (result.depth === 1) {
+      // 1뎁스 아이템은 2뎁스가 없으므로 자기 자신 반환
+      return result.item.label
+    }
+  } else if (depth === 3) {
+    // 3뎁스: 최하위 카테고리
+    if (result.depth === 3) {
+      return result.item.label
+    } else if (result.depth === 2) {
+      // 2뎁스 아이템은 3뎁스가 없으므로 자기 자신 반환
+      return result.item.label
+    } else if (result.depth === 1) {
+      // 1뎁스 아이템은 3뎁스가 없으므로 자기 자신 반환
+      return result.item.label
+    }
+  }
+
+  return result.item.label
 }
 

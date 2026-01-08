@@ -312,7 +312,7 @@ export function ReportListPage() {
           style: { cursor: 'pointer' },
         })}
         pagination={{
-          pageSize: 20,
+          defaultPageSize: 20,
           showSizeChanger: true,
           showTotal: total => `총 ${total}개`,
         }}

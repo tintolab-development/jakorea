@@ -3,7 +3,7 @@
  * Phase 1.2: react-hook-form + zod
  */
 
-import { Form, Input, Select, Button, Card, Space } from 'antd'
+import { Form, Input, Select, Button, Space } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { instructorSchema, type InstructorFormData } from '@/entities/instructor/model/schema'
@@ -61,8 +61,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
   }
 
   return (
-    <Card title={instructor ? '강사 수정' : '강사 등록'}>
-      <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
+    <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
         <Form.Item label="이름" validateStatus={errors.name ? 'error' : ''} help={errors.name?.message}>
           <Input {...register('name')} />
         </Form.Item>
@@ -83,10 +82,10 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           <Input type="email" {...register('contactEmail')} />
         </Form.Item>
 
-        <Form.Item label="지역" validateStatus={errors.region ? 'error' : ''} help={errors.region?.message}>
+        <Form.Item label="지역" validateStatus={errors.region ? 'error' : ''} help={errors.region?.message} required>
           <Select
             value={watch('region')}
-            onChange={value => setValue('region', value)}
+            onChange={value => setValue('region', value, { shouldValidate: true })}
             placeholder="지역 선택"
           >
             {regions.map(region => (
@@ -101,11 +100,12 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           label="전문분야"
           validateStatus={errors.specialty ? 'error' : ''}
           help={errors.specialty?.message}
+          required
         >
           <Select
             mode="multiple"
             value={selectedSpecialties}
-            onChange={value => setValue('specialty', value)}
+            onChange={value => setValue('specialty', value, { shouldValidate: true })}
             placeholder="전문분야 선택"
           >
             {specialties.map(specialty => (
@@ -141,7 +141,6 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           </Space>
         </Form.Item>
       </Form>
-    </Card>
   )
 }
 

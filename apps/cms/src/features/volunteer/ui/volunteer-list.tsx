@@ -1,25 +1,23 @@
 /**
- * 사용자 목록 컴포넌트
- * Phase 5.1.2: 사용자 관리 페이지
+ * 봉사자 목록 컴포넌트
+ * Phase: 봉사단 관리 하위 뎁스 구현
  */
 
 import { Table, Tag, Dropdown, Button } from 'antd'
 import type { MenuProps } from 'antd'
-import { MoreOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons'
+import { MoreOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import type { User, UserRole } from '@/types/user'
-import { RoleBadge } from '@/shared/ui'
+import type { User } from '@/types/user'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { formatDate } from '@/shared/utils'
 
-interface UserListProps {
+interface VolunteerListProps {
   data: Omit<User, 'password'>[]
   loading?: boolean
   onView?: (user: Omit<User, 'password'>) => void
-  onEdit?: (user: Omit<User, 'password'>) => void
 }
 
-export function UserList({ data, loading = false, onView, onEdit }: UserListProps) {
+export function VolunteerList({ data, loading = false, onView }: VolunteerListProps) {
   const columns: ColumnsType<Omit<User, 'password'>> = [
     {
       title: '이름',
@@ -35,23 +33,12 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       width: 200,
     },
     {
-      title: '권한',
-      dataIndex: 'role',
-      key: 'role',
-      width: 120,
-      render: (role: UserRole) => <RoleBadge role={role} size="small" variant="tag" />,
-    },
-    {
       title: '면접 상태',
       dataIndex: 'interviewStatus',
       key: 'interviewStatus',
       width: 140,
-      render: (status, record) => {
-        // 강사/봉사자만 면접 상태 표시
-        if (record.role === 'INSTRUCTOR' || record.role === 'VOLUNTEER') {
-          return status ? <InterviewStatusBadge status={status} /> : <Tag>-</Tag>
-        }
-        return <Tag>-</Tag>
+      render: (status) => {
+        return status ? <InterviewStatusBadge status={status} /> : <Tag>-</Tag>
       },
     },
     {
@@ -60,13 +47,7 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       key: 'participationHistory',
       width: 100,
       align: 'center',
-      render: (history, record) => {
-        // 강사/봉사자만 참여이력 표시
-        if (record.role === 'INSTRUCTOR' || record.role === 'VOLUNTEER') {
-          return history ?? 0
-        }
-        return <span>-</span>
-      },
+      render: (history) => history ?? 0,
     },
     {
       title: '상태',
@@ -106,12 +87,6 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
             icon: <EyeOutlined />,
             onClick: () => onView?.(record),
           },
-          {
-            key: 'edit',
-            label: '권한 변경',
-            icon: <EditOutlined />,
-            onClick: () => onEdit?.(record),
-          },
         ]
         return (
           <div onClick={e => e.stopPropagation()}>
@@ -130,7 +105,7 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       dataSource={data}
       loading={loading}
       rowKey="id"
-      scroll={{ x: 1400 }}
+      scroll={{ x: 1200 }}
       pagination={{
         defaultPageSize: 20,
         showSizeChanger: true,
@@ -139,4 +114,3 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
     />
   )
 }
-

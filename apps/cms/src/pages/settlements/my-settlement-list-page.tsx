@@ -211,7 +211,7 @@ export function MySettlementListPage() {
                 rowKey="id"
                 loading={loading}
                 pagination={{
-                  pageSize: 10,
+                  defaultPageSize: 10,
                   showSizeChanger: true,
                   showTotal: total => `총 ${total}개`,
                 }}

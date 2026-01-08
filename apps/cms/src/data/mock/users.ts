@@ -199,6 +199,166 @@ const mockStudents: User[] = [
 ]
 
 // ============================================
+// 추가 전체 회원 샘플 (필터/검색 테스트용)
+// ============================================
+
+const extraMockUsers: User[] = [
+  // 비활성 관리자
+  {
+    id: generateUUID(),
+    email: 'admin.inactive@jakorea.org',
+    password: 'admin123!',
+    name: '비활성관리자',
+    role: 'ADMIN',
+    isActive: false,
+    lastLoginAt: generatePastDate(120),
+    createdAt: generatePastDate(400),
+    updatedAt: generatePastDate(120),
+  },
+  // 최근 가입한 강사 (면접 예정)
+  {
+    id: generateUUID(),
+    email: 'instructor.new@jakorea.org',
+    password: 'instructor123!',
+    name: '신규강사',
+    role: 'INSTRUCTOR',
+    instructorId: generateUUID(),
+    interviewStatus: 'SCHEDULED',
+    interviewScheduledAt: generatePastDate(0),
+    participationHistory: 0,
+    isActive: true,
+    lastLoginAt: undefined,
+    createdAt: generatePastDate(5),
+    updatedAt: generatePastDate(1),
+  },
+  // 참여이력 많은 강사
+  {
+    id: generateUUID(),
+    email: 'instructor.senior@jakorea.org',
+    password: 'instructor123!',
+    name: '시니어강사',
+    role: 'INSTRUCTOR',
+    instructorId: generateUUID(),
+    interviewStatus: 'NOT_REQUIRED',
+    participationHistory: 25,
+    isActive: true,
+    lastLoginAt: generatePastDate(1),
+    createdAt: generatePastDate(730),
+    updatedAt: generatePastDate(1),
+  },
+  // 비활성 봉사자
+  {
+    id: generateUUID(),
+    email: 'volunteer.inactive@jakorea.org',
+    password: 'volunteer123!',
+    name: '휴면봉사자',
+    role: 'VOLUNTEER',
+    instructorId: generateUUID(),
+    interviewStatus: 'REJECTED',
+    participationHistory: 1,
+    isActive: false,
+    lastLoginAt: generatePastDate(365),
+    createdAt: generatePastDate(365),
+    updatedAt: generatePastDate(365),
+  },
+  // 추가 봉사자들 (랜덤 매칭 테스트용)
+  {
+    id: generateUUID(),
+    email: 'volunteer4@example.com',
+    password: 'volunteer123!',
+    name: '김봉사',
+    role: 'VOLUNTEER',
+    instructorId: generateUUID(),
+    interviewStatus: 'APPROVED',
+    participationHistory: 5,
+    isActive: true,
+    lastLoginAt: generatePastDate(2),
+    createdAt: generatePastDate(100),
+    updatedAt: generatePastDate(2),
+  },
+  {
+    id: generateUUID(),
+    email: 'volunteer5@example.com',
+    password: 'volunteer123!',
+    name: '이지원',
+    role: 'VOLUNTEER',
+    instructorId: generateUUID(),
+    interviewStatus: 'APPROVED',
+    participationHistory: 3,
+    isActive: true,
+    lastLoginAt: generatePastDate(5),
+    createdAt: generatePastDate(80),
+    updatedAt: generatePastDate(5),
+  },
+  {
+    id: generateUUID(),
+    email: 'volunteer6@example.com',
+    password: 'volunteer123!',
+    name: '박봉사',
+    role: 'VOLUNTEER',
+    instructorId: generateUUID(),
+    interviewStatus: 'APPROVED',
+    participationHistory: 8,
+    isActive: true,
+    lastLoginAt: generatePastDate(1),
+    createdAt: generatePastDate(200),
+    updatedAt: generatePastDate(1),
+  },
+  {
+    id: generateUUID(),
+    email: 'volunteer7@example.com',
+    password: 'volunteer123!',
+    name: '최자원',
+    role: 'VOLUNTEER',
+    instructorId: generateUUID(),
+    interviewStatus: 'APPROVED',
+    participationHistory: 2,
+    isActive: true,
+    lastLoginAt: generatePastDate(7),
+    createdAt: generatePastDate(60),
+    updatedAt: generatePastDate(7),
+  },
+  {
+    id: generateUUID(),
+    email: 'volunteer8@example.com',
+    password: 'volunteer123!',
+    name: '정봉사',
+    role: 'VOLUNTEER',
+    instructorId: generateUUID(),
+    interviewStatus: 'APPROVED',
+    participationHistory: 12,
+    isActive: true,
+    lastLoginAt: generatePastDate(0),
+    createdAt: generatePastDate(300),
+    updatedAt: generatePastDate(0),
+  },
+  // 최근 로그인한 수강자
+  {
+    id: generateUUID(),
+    email: 'student.active@jakorea.org',
+    password: 'student123!',
+    name: '활동수강자',
+    role: 'STUDENT',
+    isActive: true,
+    lastLoginAt: generatePastDate(0),
+    createdAt: generatePastDate(15),
+    updatedAt: generatePastDate(0),
+  },
+  // 오래된 수강자 (비활성)
+  {
+    id: generateUUID(),
+    email: 'student.inactive@jakorea.org',
+    password: 'student123!',
+    name: '휴면수강자',
+    role: 'STUDENT',
+    isActive: false,
+    lastLoginAt: generatePastDate(730),
+    createdAt: generatePastDate(800),
+    updatedAt: generatePastDate(730),
+  },
+]
+
+// ============================================
 // 전체 사용자 목록
 // ============================================
 
@@ -207,6 +367,7 @@ export const mockUsers: User[] = [
   ...mockInstructors,
   ...mockVolunteers,
   ...mockStudents,
+  ...extraMockUsers,
 ]
 
 // ============================================

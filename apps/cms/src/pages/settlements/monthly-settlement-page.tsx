@@ -4,17 +4,20 @@
  */
 
 import { useEffect, useState, useMemo, type CSSProperties } from 'react'
-import { Card, Space, Statistic, Table, Tag, Badge, Button, Select, Typography } from 'antd'
+import { Card, Space, Statistic, Table, Tag, Badge, Button, Select } from 'antd'
 import { CalendarOutlined, DownloadOutlined } from '@ant-design/icons'
-import { useMonthlySettlementStore, type MonthlySettlementSummary } from '@/features/settlement/model/monthly-settlement-store'
+import { useLocation } from 'react-router-dom'
+import {
+  useMonthlySettlementStore,
+  type MonthlySettlementSummary,
+} from '@/features/settlement/model/monthly-settlement-store'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
 import type { Settlement } from '@/types/domain'
 import dayjs from 'dayjs'
 import type { ColumnsType } from 'antd/es/table'
-
-const { Text } = Typography
 
 const statusLabels: Record<Settlement['status'], string> = {
   pending: '대기',
@@ -41,10 +44,15 @@ const countTagStyle: CSSProperties = {
 }
 
 export function MonthlySettlementPage() {
-  const { monthlySummaries, loading, fetchMonthlySummaries, getMonthlySummary } = useMonthlySettlementStore()
+  const location = useLocation()
+
+  // 2뎁스 카테고리명 가져오기
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
+  const { monthlySummaries, loading, fetchMonthlySummaries, getMonthlySummary } =
+    useMonthlySettlementStore()
   const { settlements, fetchSettlements } = useSettlementStore()
   const { params, setParams } = useQueryParams<{ period?: string; status?: Settlement['status'] }>()
-  
+
   // URL 파라미터를 우선으로 사용하되, 로컬 상태도 유지
   const selectedPeriod = useMemo(() => params.period || null, [params.period])
   const selectedStatus = params.status || null
@@ -110,7 +118,14 @@ export function MonthlySettlementPage() {
       dataIndex: 'status',
       key: 'status',
       sorter: (a: Settlement, b: Settlement) => {
-        const order: Settlement['status'][] = ['pending', 'calculated', 'review', 'approved', 'paid', 'cancelled']
+        const order: Settlement['status'][] = [
+          'pending',
+          'calculated',
+          'review',
+          'approved',
+          'paid',
+          'cancelled',
+        ]
         return order.indexOf(a.status) - order.indexOf(b.status)
       },
       filters: [
@@ -123,7 +138,10 @@ export function MonthlySettlementPage() {
       ],
       onFilter: (value, record) => record.status === value,
       render: (status: Settlement['status']) => (
-        <Badge status={statusColors[status] as any} text={statusLabels[status]} />
+        <Badge
+          status={statusColors[status] as 'default' | 'processing' | 'success' | 'error'}
+          text={statusLabels[status]}
+        />
       ),
     },
     {
@@ -137,8 +155,7 @@ export function MonthlySettlementPage() {
       title: '문서 생성일',
       dataIndex: 'documentGeneratedAt',
       key: 'documentGeneratedAt',
-      render: (date: string | undefined) =>
-        date ? dayjs(date).format('YYYY-MM-DD') : '-',
+      render: (date: string | undefined) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
     },
   ]
 
@@ -148,11 +165,11 @@ export function MonthlySettlementPage() {
         {/* 헤더 */}
         <Space style={{ width: '100%', justifyContent: 'flex-start' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 20 }}>강사단 관리</h1>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <h1 style={{ margin: 0, fontSize: 20 }}>{categoryName}</h1>
+            {/* <Text type="secondary" style={{ fontSize: 12 }}>
               상단에서 기간을 선택하면 해당 월의 정산 목록을, 아래 요약 테이블에서는 월별·상태별 건수와 금액을 한눈에 보고
               상태 배지를 클릭해 바로 상세 목록으로 이동할 수 있습니다.
-            </Text>
+            </Text> */}
           </div>
         </Space>
 
@@ -200,7 +217,7 @@ export function MonthlySettlementPage() {
                   title="총 정산 금액"
                   value={currentSummary.totalAmount}
                   suffix="원"
-                  formatter={(value) => `${Number(value).toLocaleString('ko-KR')}`}
+                  formatter={value => `${Number(value).toLocaleString('ko-KR')}`}
                 />
                 <Statistic
                   title="대기"
@@ -252,9 +269,9 @@ export function MonthlySettlementPage() {
               rowKey="id"
               loading={loading}
               pagination={{
-                pageSize: 10,
+                defaultPageSize: 10,
                 showSizeChanger: true,
-                showTotal: (total) => `총 ${total}개`,
+                showTotal: total => `총 ${total}개`,
               }}
             />
           </Card>
@@ -272,10 +289,7 @@ export function MonthlySettlementPage() {
                   key: 'period',
                   align: 'center' as const,
                   render: (period: string) => (
-                    <Button
-                      type="link"
-                      onClick={() => handlePeriodChange(period)}
-                    >
+                    <Button type="link" onClick={() => handlePeriodChange(period)}>
                       {period}
                     </Button>
                   ),
@@ -436,9 +450,9 @@ export function MonthlySettlementPage() {
               rowKey="period"
               loading={loading}
               pagination={{
-                pageSize: 12,
+                defaultPageSize: 12,
                 showSizeChanger: true,
-                showTotal: (total) => `총 ${total}개월`,
+                showTotal: total => `총 ${total}개월`,
               }}
             />
           </Card>
@@ -449,4 +463,3 @@ export function MonthlySettlementPage() {
 }
 
 // MonthlySettlementSummary는 monthly-settlement-store.ts에서 import해야 함
-

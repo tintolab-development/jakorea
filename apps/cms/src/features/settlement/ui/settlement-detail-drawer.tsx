@@ -121,7 +121,7 @@ export function SettlementDetailDrawer({
         </Space>
       }
       placement="right"
-      width={600}
+      width={660}
       onClose={onClose}
       open={open}
       extra={

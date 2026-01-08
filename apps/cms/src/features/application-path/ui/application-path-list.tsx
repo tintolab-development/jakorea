@@ -142,7 +142,7 @@ export function ApplicationPathList({
         rowKey="id"
         loading={loading}
         pagination={{
-          pageSize: 10,
+          defaultPageSize: 10,
           showSizeChanger: true,
           showTotal: (total, range) => `${range[0]}-${range[1]} / 총 ${total}개`,
         }}

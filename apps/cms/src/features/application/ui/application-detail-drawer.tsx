@@ -126,7 +126,7 @@ export function ApplicationDetailDrawer({
           </Title>
         </Space>
       }
-      width={720}
+      width={792}
       open={open}
       onClose={onClose}
       extra={
