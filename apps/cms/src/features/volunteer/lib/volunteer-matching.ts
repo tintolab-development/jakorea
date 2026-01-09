@@ -115,7 +115,7 @@ export function randomMatchVolunteers(
 
   // 랜덤 요소 추가: 참여 횟수가 같은 봉사자들끼리는 랜덤 셔플
   // 같은 참여 횟수를 가진 그룹 내에서 랜덤하게 섞기
-  let shuffledVolunteers: UUID[] = []
+  const shuffledVolunteers: UUID[] = []
   let currentGroup: UUID[] = []
   let currentCount = -1
 

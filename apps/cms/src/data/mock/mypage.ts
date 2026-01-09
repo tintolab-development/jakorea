@@ -14,6 +14,8 @@ const getDate = (daysAgo: number): string => {
 }
 
 // 사용자 이력 Mock 데이터
+const getPastFriday = (weeksAgo: number) => dayjs().day(5).subtract(weeksAgo, 'week').toISOString()
+
 export const mockUserHistories: UserHistory[] = [
   {
     id: 'history-001',
@@ -38,7 +40,7 @@ export const mockUserHistories: UserHistory[] = [
     id: 'history-002',
     programId: 'prog-002',
     role: 'VOLUNTEER',
-    completedAt: getDate(20),
+    completedAt: getPastFriday(2), // 2주 전 금요일
     finalStatus: 'CONFIRMED',
     volunteerHours: 4,
     certificates: [
@@ -46,7 +48,7 @@ export const mockUserHistories: UserHistory[] = [
         id: 'cert-002',
         title: '봉사활동 확인서',
         downloadUrl: '/certificates/cert-002.pdf',
-        issuedAt: getDate(20),
+        issuedAt: getPastFriday(2),
       },
     ],
     createdAt: getDate(50),

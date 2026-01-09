@@ -99,7 +99,85 @@ function createSettlement(
   }
 }
 
-const statuses: Settlement['status'][] = ['pending', 'calculated', 'approved', 'paid', 'cancelled']
+const statuses: Settlement['status'][] = ['pending', 'calculated', 'review', 'approved', 'paid', 'cancelled']
+
+// 2026년 1월 정산 데이터 10개 추가 생성 (강사1용)
+function createInstructor1Settlements2026(): Settlement[] {
+  const settlements: Settlement[] = []
+  const period = '2026-01'
+  
+  if (mockPrograms.length === 0) return []
+  const baseProgram = mockPrograms[0]
+
+  // 각 상태별로 데이터 분배
+  const janStatuses: Settlement['status'][] = [
+    'pending', 'pending',
+    'calculated', 'calculated',
+    'review', 'review',
+    'approved', 'approved',
+    'paid',
+    'cancelled'
+  ]
+
+  janStatuses.forEach((status, i) => {
+    const baseInstructorFee = Math.floor(Math.random() * 300000) + 200000
+    const items = createSettlementItems(
+      baseInstructorFee,
+      Math.random() > 0.4,
+      Math.random() > 0.7
+    )
+    const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
+    
+    // 2026년 1월 초 날짜들
+    const createdAt = new Date(2026, 0, Math.floor(Math.random() * 7) + 1)
+    createdAt.setHours(Math.floor(Math.random() * 12) + 9, Math.floor(Math.random() * 60), 0, 0)
+    
+    const updatedAt = new Date(createdAt)
+    updatedAt.setDate(updatedAt.getDate() + Math.floor(Math.random() * 2))
+
+    const documentGeneratedAt = (status !== 'pending' && status !== 'calculated')
+      ? new Date(updatedAt).toISOString()
+      : undefined
+
+    settlements.push({
+      id: `settle-202601-${String(i + 1).padStart(3, '0')}`,
+      programId: baseProgram.id,
+      instructorId: INSTRUCTOR1_ID,
+      matchingId: `match-202601-${String(i + 1).padStart(3, '0')}`,
+      period,
+      items,
+      totalAmount,
+      status,
+      documentGeneratedAt,
+      notes: status === 'cancelled' ? '정산 서류 미비로 인한 취소' : 
+             status === 'review' ? '교통비 영수증 확인 필요' : undefined,
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString(),
+      // 상세 이력 추가 (V3 Phase 4 대응)
+      approvalHistories: [
+        {
+          id: `hist-1-${i}`,
+          step: 'pending',
+          action: 'submitted',
+          actionLabel: '정산 신청',
+          reviewerName: '강사1',
+          createdAt: createdAt.toISOString()
+        },
+        ...(status !== 'pending' && status !== 'calculated' ? [{
+          id: `hist-2-${i}`,
+          step: 'review' as const,
+          action: (status === 'cancelled' ? 'cancelled' : 'reviewed') as any,
+          actionLabel: status === 'cancelled' ? '정산 취소' : '검토 완료',
+          reviewerName: '관리자',
+          comment: status === 'cancelled' ? '영수증 누락' : '검토 완료되었습니다.',
+          createdAt: updatedAt.toISOString()
+        }] : [])
+      ] as any // Use any temporarily to bypass strict literal check if status mapping is complex
+    })
+  })
+
+  return settlements
+}
 
 // instructor1@example.com용 정산 데이터 10개 생성
 function createInstructor1Settlements(): Settlement[] {
@@ -205,7 +283,8 @@ function createInstructor1Settlements(): Settlement[] {
 }
 
 export const mockSettlements: Settlement[] = [
-  ...createInstructor1Settlements(), // instructor1@example.com용 정산 데이터 10개를 먼저 추가
+  ...createInstructor1Settlements2026(), // 2026년 1월 데이터 10개 추가
+  ...createInstructor1Settlements(), // instructor1@example.com용 기존 정산 데이터 10개
   ...Array.from({ length: 35 }, (_, index) => {
     const matchingIndex = Math.floor(Math.random() * mockMatchings.length)
     const now = new Date()

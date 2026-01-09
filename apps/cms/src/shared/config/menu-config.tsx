@@ -85,7 +85,7 @@ const allMenuItems: MenuItemConfig[] = [
             key: '/programs/favorites',
             label: '관심 프로그램 관리',
             enabled: true,
-            allowedRoles: ['VOLUNTEER'],
+            allowedRoles: ['VOLUNTEER', 'INSTRUCTOR', 'STUDENT'],
           },
         ],
       },
@@ -162,7 +162,7 @@ const allMenuItems: MenuItemConfig[] = [
             key: '/programs/favorites',
             label: '관심 프로그램 관리',
             enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+            allowedRoles: ['VOLUNTEER', 'INSTRUCTOR', 'STUDENT'],
           },
           {
             key: '/programs/satisfaction',
@@ -309,7 +309,7 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
-    key: '/reports',
+    key: 'reports-group',
     label: '보고서',
     icon: <FileTextOutlined />,
     enabled: false,
@@ -390,32 +390,34 @@ export function getMenuItemsByRole(userRole: UserRole | null): MenuProps['items'
 
 /**
  * 메뉴 아이템에서 경로 찾기 (내부 유틸리티)
+ * 특정 경로에 해당하는 모든 메뉴 설정 반환
  */
-function findMenuItemByPath(
+function findAllMenuItemsByPath(
   items: MenuItemConfig[],
-  targetPath: string,
-  parent?: MenuItemConfig
-): { item: MenuItemConfig; parent?: MenuItemConfig; depth: number } | null {
+  targetPath: string
+): MenuItemConfig[] {
+  const matches: MenuItemConfig[] = []
+
   for (const item of items) {
     if (item.key === targetPath) {
-      return { item, parent, depth: parent ? 2 : 1 }
+      matches.push(item)
     }
     if (item.children) {
       for (const child of item.children) {
         if (child.key === targetPath) {
-          return { item: child, parent: item, depth: 2 }
+          matches.push(child)
         }
         if (child.children) {
           for (const grandchild of child.children) {
             if (grandchild.key === targetPath) {
-              return { item: grandchild, parent: child, depth: 3 }
+              matches.push(grandchild)
             }
           }
         }
       }
     }
   }
-  return null
+  return matches
 }
 
 /**
@@ -429,26 +431,34 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     return false
   }
 
+  // 경로 정규화 (끝에 있는 / 제거)
+  const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
+
+  // 관리자는 모든 경로 접근 가능
+  if (userRole === 'ADMIN') {
+    return true
+  }
+
   // 수강자는 정산 관련 경로 접근 불가 (Phase 6.1.3)
-  if (userRole === 'STUDENT' && path.startsWith('/settlements')) {
+  if (userRole === 'STUDENT' && normalizedPath.startsWith('/settlements')) {
     return false
   }
 
-  const result = findMenuItemByPath(allMenuItems, path)
-  if (!result) {
+  const matches = findAllMenuItemsByPath(allMenuItems, normalizedPath)
+  if (matches.length === 0) {
     // 메뉴에 없는 경로는 기본적으로 접근 가능 (기타 페이지)
     return true
   }
 
-  const menuItem = result.item
-
-  // allowedRoles가 없으면 모든 권한 허용
-  if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) {
-    return true
-  }
-
-  // allowedRoles에 사용자 권한이 포함되어 있는지 확인
-  return menuItem.allowedRoles.includes(userRole)
+  // 매칭된 메뉴 중 하나라도 권한이 허용되면 접근 가능
+  return matches.some(menuItem => {
+    // allowedRoles가 없으면 모든 권한 허용
+    if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) {
+      return true
+    }
+    // allowedRoles에 사용자 권한이 포함되어 있는지 확인
+    return menuItem.allowedRoles.includes(userRole)
+  })
 }
 
 /**
@@ -458,10 +468,38 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
  * @returns 카테고리명 (없으면 null)
  */
 export function getCategoryNameByPath(path: string, depth?: number): string | null {
-  const result = findMenuItemByPath(allMenuItems, path)
-  if (!result) {
+  // 경로 정규화
+  const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
+
+  // 모든 매칭 항목 찾기 (부모 정보 포함을 위해 로직 직접 구현)
+  const matches: Array<{ item: MenuItemConfig; parent?: MenuItemConfig; depth: number }> = []
+
+  for (const item of allMenuItems) {
+    if (item.key === normalizedPath) {
+      matches.push({ item, depth: 1 })
+    }
+    if (item.children) {
+      for (const child of item.children) {
+        if (child.key === normalizedPath) {
+          matches.push({ item: child, parent: item, depth: 2 })
+        }
+        if (child.children) {
+          for (const grandchild of child.children) {
+            if (grandchild.key === normalizedPath) {
+              matches.push({ item: grandchild, parent: child, depth: 3 })
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (matches.length === 0) {
     return null
   }
+
+  // 첫 번째 매칭 항목 사용 (향후 현재 사용자 권한에 따른 필터링 추가 가능)
+  const result = matches[0]
 
   // depth가 지정되지 않았으면 해당 뎁스의 카테고리명 반환
   if (depth === undefined) {

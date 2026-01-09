@@ -19,6 +19,7 @@ interface AuthState {
   login: (request: LoginRequest) => Promise<void>
   logout: () => void
   checkAuth: () => Promise<void>
+  updateUser: (userData: Partial<Omit<User, 'password'>>) => void
   clearError: () => void
 }
 
@@ -174,6 +175,20 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       } catch {
         get().logout()
       }
+    },
+
+    updateUser: (userData: Partial<Omit<User, 'password'>>) => {
+      const currentUser = get().user
+      if (!currentUser) return
+
+      const updatedUser = { ...currentUser, ...userData }
+      
+      // localStorage 업데이트
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+      }
+
+      set({ user: updatedUser })
     },
 
     clearError: () => {

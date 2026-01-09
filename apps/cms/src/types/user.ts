@@ -35,6 +35,19 @@ export interface User {
   lastLoginAt?: DateValue
   createdAt: DateValue
   updatedAt: DateValue
+  // 추가 프로필 정보
+  phone?: string
+  bio?: string
+  address?: string
+  detailAddress?: string
+  zipCode?: string
+  schoolName?: string // 봉사자용: 학교명
+  grade?: string // 봉사자용: 학년
+  bankInfo?: {
+    bankName: string
+    accountHolder: string
+    accountNumber: string // 민감정보, 실제로는 암호화/마스킹 필요
+  }
 }
 
 // 로그인 요청

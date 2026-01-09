@@ -168,7 +168,8 @@ export function ApplicationDetailDrawer({
                   await updateStatus(displayApplication.id, 'cancelled')
                   message.success('신청이 취소되었습니다.')
                   onStatusChange('cancelled')
-                } catch (error) {
+                } catch (e) {
+                  console.error('신청 취소 중 오류가 발생했습니다.', e)
                   message.error('신청 취소 중 오류가 발생했습니다.')
                 }
               }}

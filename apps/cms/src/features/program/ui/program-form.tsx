@@ -98,7 +98,8 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
   const onFormSubmit = async (data: ProgramFormData) => {
     try {
       await onSubmit(data)
-    } catch (error) {
+    } catch (e) {
+      console.error('Failed to submit form:', e)
       // 에러는 상위에서 처리하되, 폼 에러 표시를 위해 에러 필드로 스크롤
       const firstErrorField = Object.keys(errors)[0]
       if (firstErrorField) {

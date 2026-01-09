@@ -77,6 +77,16 @@ const mockInstructors: User[] = [
     lastLoginAt: generatePastDate(2),
     createdAt: generatePastDate(180),
     updatedAt: generatePastDate(2),
+    phone: '010-1234-5678',
+    address: '서울특별시 서초구 서초대로 123',
+    detailAddress: 'JA빌딩 10층',
+    zipCode: '06611',
+    bio: '안녕하세요, 경제교육 전문 강사 최강사입니다.',
+    bankInfo: {
+      bankName: '국민은행',
+      accountHolder: '최강사',
+      accountNumber: '123-456-789012'
+    }
   },
   {
     id: generateUUID(),
@@ -126,6 +136,18 @@ const mockVolunteers: User[] = [
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(240),
     updatedAt: generatePastDate(1),
+    phone: '010-9876-5432',
+    address: '서울특별시 마포구 월드컵북로 456',
+    detailAddress: '서교아파트 101동 202호',
+    zipCode: '03921',
+    schoolName: '한국대학교',
+    grade: '3학년',
+    bio: '금융교육 봉사활동에 열정을 가진 서봉사입니다.',
+    bankInfo: {
+      bankName: '신한은행',
+      accountHolder: '서봉사',
+      accountNumber: '987-654-321098'
+    }
   },
   {
     id: generateUUID(),

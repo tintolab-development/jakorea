@@ -4,111 +4,275 @@
  * 사용자 강사 권한용 문의하기 페이지
  */
 
-import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Card, Form, Input, Button, Select, Space, message } from 'antd'
-import { SendOutlined } from '@ant-design/icons'
+import { useState, useMemo } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import {
+  Card,
+  List,
+  Typography,
+  Tag,
+  Space,
+  Empty,
+  Input,
+  Tabs,
+  Button,
+  Divider,
+  Modal,
+  Descriptions,
+} from 'antd'
+import {
+  PlusOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  CalendarOutlined,
+  QuestionCircleOutlined,
+} from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { InquiryModal } from '@/shared/ui'
+import dayjs from 'dayjs'
+import { mockInquiries, type Inquiry } from '@/data/mock/inquiries'
 
-const { TextArea } = Input
-const { Option } = Select
-
-interface InquiryFormData {
-  category: string
-  title: string
-  content: string
-  contactEmail?: string
-  contactPhone?: string
-}
+const { Text, Title } = Typography
+const { Search } = Input
 
 export function InquiryPage() {
   const location = useLocation()
-  const [form] = Form.useForm()
-  const [submitting, setSubmitting] = useState(false)
-  
-  // 카테고리명 가져오기
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [writeModalOpen, setWriteModalOpen] = useState(false)
+
+  const activeTab = searchParams.get('status') || 'ALL'
+  const searchQuery = searchParams.get('q') || ''
+
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '문의하기'
 
-  const handleSubmit = async (_values: InquiryFormData) => {
-    setSubmitting(true)
-    try {
-      // TODO: API 연동 필요
-      // await submitInquiry(values)
-      message.success('문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.')
-      form.resetFields()
-    } catch (error) {
-      message.error('문의 접수 중 오류가 발생했습니다. 다시 시도해주세요.')
-    } finally {
-      setSubmitting(false)
-    }
+  const filteredInquiries = useMemo(() => {
+    return mockInquiries.filter(item => {
+      const matchStatus = activeTab === 'ALL' || item.status === activeTab
+      const matchSearch = !searchQuery || 
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchStatus && matchSearch
+    }).sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
+  }, [activeTab, searchQuery])
+
+  const handleTabChange = (key: string) => {
+    setSearchParams(prev => {
+      if (key === 'ALL') prev.delete('status')
+      else prev.set('status', key)
+      return prev
+    })
+  }
+
+  const handleSearch = (value: string) => {
+    setSearchParams(prev => {
+      if (!value) prev.delete('q')
+      else prev.set('q', value)
+      return prev
+    })
+  }
+
+  const openDetail = (inquiry: Inquiry) => {
+    setSelectedInquiry(inquiry)
+    setDetailModalOpen(true)
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div>
-          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+        {/* 헤더 섹션 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 8 }}>{categoryName}</h1>
+            <Text type="secondary">궁금하신 사항은 1:1 문의를 남겨주세요. 운영시간(평일 09:00~18:00) 내에 순차적으로 답변드립니다.</Text>
+          </div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setWriteModalOpen(true)}
+            size="large"
+          >
+            새 문의 작성
+          </Button>
         </div>
 
-        <Card>
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}
-          >
-            <Form.Item
-              label="문의 유형"
-              name="category"
-              rules={[{ required: true, message: '문의 유형을 선택해주세요' }]}
-            >
-              <Select placeholder="문의 유형을 선택하세요">
-                <Option value="settlement">정산 관련</Option>
-                <Option value="program">프로그램 관련</Option>
-                <Option value="account">계정 관련</Option>
-                <Option value="technical">기술 지원</Option>
-                <Option value="other">기타</Option>
-              </Select>
-            </Form.Item>
+        {/* 검색 및 필터 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '16px 24px', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+          <Tabs
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            className="inquiry-tabs"
+            items={[
+              { key: 'ALL', label: `전체 (${mockInquiries.length})` },
+              { key: 'PENDING', label: `답변대기 (${mockInquiries.filter(i => i.status === 'PENDING').length})` },
+              { key: 'ANSWERED', label: `답변완료 (${mockInquiries.filter(i => i.status === 'ANSWERED').length})` },
+            ]}
+          />
+          <Search
+            placeholder="문의 제목 또는 내용 검색"
+            allowClear
+            onSearch={handleSearch}
+            defaultValue={searchQuery}
+            style={{ width: 280 }}
+          />
+        </div>
 
-            <Form.Item
-              label="제목"
-              name="title"
-              rules={[{ required: true, message: '제목을 입력해주세요' }]}
-            >
-              <Input placeholder="문의 제목을 입력하세요" />
-            </Form.Item>
-
-            <Form.Item
-              label="문의 내용"
-              name="content"
-              rules={[{ required: true, message: '문의 내용을 입력해주세요' }]}
-            >
-              <TextArea
-                rows={8}
-                placeholder="문의 내용을 상세히 입력해주세요"
-                showCount
-                maxLength={2000}
-              />
-            </Form.Item>
-
-            <Form.Item label="연락처 이메일 (선택)" name="contactEmail">
-              <Input type="email" placeholder="답변 받을 이메일 주소 (선택사항)" />
-            </Form.Item>
-
-            <Form.Item label="연락처 전화번호 (선택)" name="contactPhone">
-              <Input placeholder="답변 받을 전화번호 (선택사항)" />
-            </Form.Item>
-
-            <Form.Item>
-              <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={submitting} size="large" block>
-                문의 접수
-              </Button>
-            </Form.Item>
-          </Form>
+        {/* 목록 영역 */}
+        <Card styles={{ body: { padding: 0 } }}>
+          {filteredInquiries.length === 0 ? (
+            <Empty description="문의 내역이 없습니다." style={{ padding: '60px 0' }} />
+          ) : (
+            <List
+              itemLayout="horizontal"
+              dataSource={filteredInquiries}
+              renderItem={inquiry => (
+                <List.Item
+                  onClick={() => openDetail(inquiry)}
+                  style={{
+                    padding: '20px 24px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                  }}
+                  className="inquiry-list-item"
+                >
+                  <List.Item.Meta
+                    title={
+                      <div style={{ marginBottom: 4 }}>
+                        <Space size="small" style={{ marginBottom: 4, display: 'block' }}>
+                          <Tag bordered={false} style={{ fontSize: 11, padding: '0 4px' }}>
+                            {inquiry.category}
+                          </Tag>
+                          <Tag 
+                            color={inquiry.status === 'ANSWERED' ? 'success' : 'default'} 
+                            style={{ fontSize: 11, padding: '0 4px', borderRadius: 2 }}
+                          >
+                            {inquiry.status === 'ANSWERED' ? '답변완료' : '답변대기'}
+                          </Tag>
+                        </Space>
+                        <Text strong style={{ fontSize: 16 }}>{inquiry.title}</Text>
+                      </div>
+                    }
+                    description={
+                      <Space size="middle" style={{ marginTop: 4 }}>
+                        <Text type="secondary" style={{ fontSize: 13 }}>
+                          <CalendarOutlined style={{ marginRight: 4 }} />
+                          {dayjs(inquiry.createdAt).format('YYYY-MM-DD HH:mm')}
+                        </Text>
+                        {inquiry.status === 'ANSWERED' && (
+                          <Text style={{ color: '#52c41a', fontSize: 13 }}>
+                            <CheckCircleOutlined style={{ marginRight: 4 }} /> 답변이 등록되었습니다
+                          </Text>
+                        )}
+                      </Space>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          )}
         </Card>
       </Space>
+
+      {/* 문의 상세 Modal */}
+      <Modal
+        title={
+          <div>
+            <div style={{ marginBottom: 4 }}>
+              <Tag bordered={false} style={{ fontSize: 12 }}>{selectedInquiry?.category}</Tag>
+              <Tag color={selectedInquiry?.status === 'ANSWERED' ? 'success' : 'default'} style={{ fontSize: 12 }}>
+                {selectedInquiry?.status === 'ANSWERED' ? '답변완료' : '답변대기'}
+              </Tag>
+            </div>
+            <Title level={4} style={{ margin: 0 }}>{selectedInquiry?.title}</Title>
+          </div>
+        }
+        open={detailModalOpen}
+        onCancel={() => setDetailModalOpen(false)}
+        width={800}
+        footer={[
+          <Button key="close" onClick={() => setDetailModalOpen(false)}>닫기</Button>
+        ]}
+        centered
+      >
+        {selectedInquiry && (
+          <div style={{ padding: '12px 0' }}>
+            <Descriptions bordered size="small" column={2} style={{ marginBottom: 24 }}>
+              <Descriptions.Item label="문의 유형">{selectedInquiry.category}</Descriptions.Item>
+              <Descriptions.Item label="작성일시">{dayjs(selectedInquiry.createdAt).format('YYYY-MM-DD HH:mm')}</Descriptions.Item>
+            </Descriptions>
+
+            <Title level={5} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <QuestionCircleOutlined style={{ color: '#1890ff' }} /> 문의 내용
+            </Title>
+            <div style={{ 
+              background: '#f9f9f9', 
+              padding: '20px', 
+              borderRadius: 8, 
+              marginBottom: 32,
+              whiteSpace: 'pre-wrap',
+              lineHeight: 1.6
+            }}>
+              {selectedInquiry.content}
+            </div>
+
+            {selectedInquiry.answer ? (
+              <>
+                <Title level={5} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <CheckCircleOutlined style={{ color: '#52c41a' }} /> 답변 내용
+                </Title>
+                <div style={{ 
+                  background: '#f6ffed', 
+                  padding: '20px', 
+                  borderRadius: 8, 
+                  border: '1px solid #b7eb8f',
+                  lineHeight: 1.6
+                }}>
+                  <div style={{ marginBottom: 12, borderBottom: '1px solid #d9f7be', paddingBottom: 8 }}>
+                    <Space split={<Divider type="vertical" />}>
+                      <Text strong>{selectedInquiry.answer.author}</Text>
+                      <Text type="secondary" style={{ fontSize: 13 }}>
+                        <CalendarOutlined style={{ marginRight: 4 }} /> {dayjs(selectedInquiry.answer.answeredAt).format('YYYY-MM-DD HH:mm')}
+                      </Text>
+                    </Space>
+                  </div>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedInquiry.answer.content}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c', background: '#fff7e6', borderRadius: 8 }}>
+                <ClockCircleOutlined style={{ fontSize: 24, marginBottom: 8, color: '#faad14' }} />
+                <p>답변을 준비 중입니다. 잠시만 기다려주세요.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* 새 문의 작성 Modal */}
+      <InquiryModal
+        open={writeModalOpen}
+        onCancel={() => setWriteModalOpen(false)}
+        onSuccess={() => {
+          setWriteModalOpen(false)
+          // 실제로는 목록 새로고침 로직이 필요함
+        }}
+      />
+
+      <style>{`
+        .inquiry-list-item:hover {
+          background-color: #f5f5f5 !important;
+        }
+        .inquiry-tabs .ant-tabs-nav {
+          margin-bottom: 0 !important;
+        }
+        .inquiry-tabs .ant-tabs-nav::before {
+          border-bottom: none !important;
+        }
+      `}</style>
     </div>
   )
 }
