@@ -105,7 +105,7 @@ export function MyActivitySummary() {
               </span>
             }
             suffix="개"
-            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            valueStyle={{ color: '#000000', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -118,7 +118,7 @@ export function MyActivitySummary() {
               </span>
             }
             suffix="개"
-            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            valueStyle={{ color: '#000000', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -131,7 +131,7 @@ export function MyActivitySummary() {
               </span>
             }
             suffix="개"
-            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            valueStyle={{ color: '#000000', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -144,7 +144,7 @@ export function MyActivitySummary() {
               </span>
             }
             suffix="개"
-            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            valueStyle={{ color: '#000000', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}
           />
         </Col>
       </Row>
@@ -159,7 +159,7 @@ export function MyActivitySummary() {
               </span>
             }
             suffix="개"
-            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            valueStyle={{ color: '#000000', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -172,7 +172,7 @@ export function MyActivitySummary() {
               </span>
             }
             suffix="건"
-            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            valueStyle={{ color: '#000000', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -185,7 +185,7 @@ export function MyActivitySummary() {
               </span>
             }
             suffix="건"
-            valueStyle={{ color: '#000000', fontWeight: 'bold' }}
+            valueStyle={{ color: '#000000', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center' }}
           />
         </Col>
       </Row>

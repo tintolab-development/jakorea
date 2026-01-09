@@ -34,17 +34,19 @@ export function MyProgramDetailPage() {
   }, [id, user?.instructorId])
 
   useEffect(() => {
-    if (id && user?.id) {
-      loadFavoriteStatus()
+    const userId = user?.instructorId || user?.id
+    if (id && userId) {
+      loadFavoriteStatus(userId)
     }
-  }, [id, user?.id])
+  }, [id, user])
 
   const loadProgram = async () => {
-    if (!id || !user?.instructorId) return
+    const userId = user?.instructorId || user?.id
+    if (!id || !userId) return
 
     setLoading(true)
     try {
-      const data = await getMyProgramDetail(user.instructorId, id)
+      const data = await getMyProgramDetail(userId, id)
       if (!data) {
         message.error('프로그램을 찾을 수 없습니다.')
         navigate('/programs/my/active')
@@ -59,11 +61,11 @@ export function MyProgramDetailPage() {
     }
   }
 
-  const loadFavoriteStatus = async () => {
-    if (!id || !user?.id) return
+  const loadFavoriteStatus = async (userId: string) => {
+    if (!id) return
 
     try {
-      const isFavorite = await isFavoriteProgram(user.id, id)
+      const isFavorite = await isFavoriteProgram(userId, id)
       setFavorite(isFavorite)
     } catch (error) {
       console.error('관심 프로그램 상태 로드 실패:', error)
@@ -71,14 +73,15 @@ export function MyProgramDetailPage() {
   }
 
   const handleToggleFavorite = async () => {
-    if (!id || !user?.id) return
+    const userId = user?.instructorId || user?.id
+    if (!id || !userId) return
 
     try {
       if (favorite) {
-        await removeFavoriteProgram(user.id, id)
+        await removeFavoriteProgram(userId, id)
         message.success('관심 프로그램에서 제거되었습니다.')
       } else {
-        await addFavoriteProgram(user.id, id)
+        await addFavoriteProgram(userId, id)
         message.success('관심 프로그램에 추가되었습니다.')
       }
       setFavorite(!favorite)

@@ -6,13 +6,14 @@
 
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Card, Descriptions, Button, Space, Avatar } from 'antd'
-import { UserOutlined, EditOutlined } from '@ant-design/icons'
+import { Card, Descriptions, Button, Space, Typography, Divider, Tag } from 'antd'
+import { EditOutlined, HomeOutlined, BankOutlined, InfoCircleOutlined, ReadOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { ProfileEditModal } from '@/shared/ui'
 
+const { Title, Text } = Typography
 
 export function ProfilePage() {
   const { user } = useAuthStore()
@@ -42,18 +43,98 @@ export function ProfilePage() {
 
         <Card>
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            {/* 프로필 이미지 */}
-            <div style={{ textAlign: 'center' }}>
-              <Avatar size={120} icon={<UserOutlined />} style={{ marginBottom: 16 }} />
+            {/* 상단 프로필 요약 */}
+            <div style={{ padding: '0 24px' }}>
+              <Space align="center" size="middle">
+                <Title level={3} style={{ margin: 0 }}>{user?.name}</Title>
+                <Tag color="blue">{user?.role === 'INSTRUCTOR' ? '강사' : '봉사자'}</Tag>
+              </Space>
+              <div style={{ marginTop: 8 }}>
+                <Text type="secondary">{user?.email}</Text>
+              </div>
+              {user?.bio && (
+                <div style={{ marginTop: 12 }}>
+                  <Text italic>"{user.bio}"</Text>
+                </div>
+              )}
             </div>
 
-            {/* 개인정보 조회 */}
-            <Descriptions bordered column={1} style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
-              <Descriptions.Item label="이름">{user?.name || '-'}</Descriptions.Item>
-              <Descriptions.Item label="이메일">{user?.email || '-'}</Descriptions.Item>
-              <Descriptions.Item label="전화번호">{'-'}</Descriptions.Item>
-              <Descriptions.Item label="자기소개">{'-'}</Descriptions.Item>
-            </Descriptions>
+            <Divider style={{ margin: '12px 0' }} />
+
+            {/* 상세 정보 섹션 */}
+            <div style={{ padding: '0 24px' }}>
+              <Space direction="vertical" size={32} style={{ width: '100%' }}>
+                
+                {/* 기본 정보 */}
+                <section>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    <Title level={5} style={{ margin: 0 }}>기본 정보</Title>
+                  </div>
+                  <Descriptions bordered column={1} size="small">
+                    <Descriptions.Item label="이름">{user?.name || '-'}</Descriptions.Item>
+                    <Descriptions.Item label="이메일">{user?.email || '-'}</Descriptions.Item>
+                    <Descriptions.Item label="전화번호">{user?.phone || '-'}</Descriptions.Item>
+                  </Descriptions>
+                </section>
+
+                {/* 학교 정보 (봉사자만 표시) */}
+                {user?.role === 'VOLUNTEER' && (
+                  <section style={{ marginTop: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                      <ReadOutlined style={{ color: '#1890ff' }} />
+                      <Title level={5} style={{ margin: 0 }}>학교 정보</Title>
+                    </div>
+                    <Descriptions bordered column={1} size="small">
+                      <Descriptions.Item label="학교명">{user?.schoolName || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="학년">{user?.grade || '-'}</Descriptions.Item>
+                    </Descriptions>
+                  </section>
+                )}
+
+                {/* 주소지 정보 */}
+                <section style={{ marginTop: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                    <HomeOutlined style={{ color: '#1890ff' }} />
+                    <Title level={5} style={{ margin: 0 }}>주소지 정보</Title>
+                  </div>
+                  <Descriptions bordered column={1} size="small">
+                    <Descriptions.Item label="우편번호">{user?.zipCode || '-'}</Descriptions.Item>
+                    <Descriptions.Item label="주소">{user?.address || '-'}</Descriptions.Item>
+                    <Descriptions.Item label="상세주소">{user?.detailAddress || '-'}</Descriptions.Item>
+                  </Descriptions>
+                </section>
+
+                {/* 정산 정보 (강사만 표시) */}
+                {user?.role === 'INSTRUCTOR' && (
+                  <section style={{ marginTop: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                      <BankOutlined style={{ color: '#1890ff' }} />
+                      <Title level={5} style={{ margin: 0 }}>정산 및 계좌 정보</Title>
+                    </div>
+                    <Card size="small" style={{ background: '#f0f5ff', border: '1px dashed #adc6ff' }}>
+                      <Descriptions column={1} size="small" colon={false}>
+                        <Descriptions.Item label={<Text strong>은행명</Text>}>{user?.bankInfo?.bankName || '-'}</Descriptions.Item>
+                        <Descriptions.Item label={<Text strong>예금주</Text>}>{user?.bankInfo?.accountHolder || '-'}</Descriptions.Item>
+                        <Descriptions.Item label={<Text strong>계좌번호</Text>}>
+                          {user?.bankInfo?.accountNumber ? (
+                            <Text copyable={{ text: user.bankInfo.accountNumber }}>
+                              {user.bankInfo.accountNumber.replace(/(\d{3})(\d{3,})(\d{4})/, '$1-****-$3')}
+                            </Text>
+                          ) : '-'}
+                        </Descriptions.Item>
+                      </Descriptions>
+                      <div style={{ marginTop: 8 }}>
+                        <Text style={{ fontSize: 12, color: 'rgba(0, 0, 0, 0.45)' }}>
+                          * 정산 정보는 본인 확인 후 지급을 위해 정확히 입력해 주세요.
+                        </Text>
+                      </div>
+                    </Card>
+                  </section>
+                )}
+
+              </Space>
+            </div>
           </Space>
         </Card>
       </Space>

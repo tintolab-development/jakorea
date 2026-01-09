@@ -5,7 +5,6 @@
 
 import { Modal, Typography, Button, Empty, Space, Card } from 'antd'
 import { BellOutlined, DollarOutlined, FileTextOutlined, CalendarOutlined, CheckCircleOutlined } from '@ant-design/icons'
-import { useEffect, useState } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
 
 const { Text, Title } = Typography
@@ -77,20 +76,9 @@ export function NotificationModal({
   onRefresh,
 }: NotificationModalProps) {
   // prop으로 전달된 unreadCount를 우선 사용, 없으면 notifications에서 계산
-  // 모달이 열려있는 동안 notifications가 변경되면 개수도 업데이트
-  const [unreadCount, setUnreadCount] = useState(
-    propUnreadCount !== undefined 
-      ? propUnreadCount 
-      : notifications.filter(n => !n.read).length
-  )
-
-  useEffect(() => {
-    // prop으로 전달된 unreadCount가 있으면 우선 사용, 없으면 notifications에서 계산
-    const count = propUnreadCount !== undefined 
-      ? propUnreadCount 
-      : notifications.filter(n => !n.read).length
-    setUnreadCount(count)
-  }, [propUnreadCount, notifications])
+  const unreadCount = propUnreadCount !== undefined 
+    ? propUnreadCount 
+    : notifications.filter(n => !n.read).length
 
   return (
     <Modal

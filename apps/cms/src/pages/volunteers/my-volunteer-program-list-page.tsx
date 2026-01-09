@@ -12,6 +12,7 @@ import { getVolunteerPrograms } from '@/data/mock'
 import {
   addFavoriteProgram,
   removeFavoriteProgram,
+  isFavoriteProgram,
 } from '@/entities/program/api/favorite-program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
@@ -46,11 +47,18 @@ export function MyVolunteerProgramListPage() {
   }, [searchParams])
 
   useEffect(() => {
-    if (user?.id) {
+    const userId = user?.instructorId || user?.id
+    if (userId) {
       loadPrograms()
-      loadFavorites()
     }
-  }, [user?.id, filters])
+  }, [user, filters])
+
+  useEffect(() => {
+    const userId = user?.instructorId || user?.id
+    if (userId && programs.length > 0) {
+      loadFavorites(userId)
+    }
+  }, [user, programs])
 
   const loadPrograms = async () => {
     if (!user?.id) return
@@ -104,14 +112,20 @@ export function MyVolunteerProgramListPage() {
     }
   }
 
-  const loadFavorites = async () => {
-    if (!user?.id) return
+  const loadFavorites = async (userId: string) => {
+    if (programs.length === 0) return
 
     try {
-      const favoriteIds = new Set<string>()
-      // TODO: API 연동 필요
-      // 현재는 로컬에서 관리
-      setFavorites(favoriteIds)
+      const favoriteStatuses = await Promise.all(
+        programs.map(p => isFavoriteProgram(userId, p.id))
+      )
+      const favoriteSet = new Set<string>()
+      programs.forEach((p, index) => {
+        if (favoriteStatuses[index]) {
+          favoriteSet.add(p.id)
+        }
+      })
+      setFavorites(favoriteSet)
     } catch (error) {
       console.error('관심 프로그램 로드 실패:', error)
     }
@@ -148,15 +162,16 @@ export function MyVolunteerProgramListPage() {
   }
 
   const handleToggleFavorite = async (programId: string) => {
-    if (!user?.id) return
+    const userId = user?.instructorId || user?.id
+    if (!userId) return
 
     const isFavorite = favorites.has(programId)
 
     try {
       if (isFavorite) {
-        await removeFavoriteProgram(user.id, programId)
+        await removeFavoriteProgram(userId, programId)
       } else {
-        await addFavoriteProgram(user.id, programId)
+        await addFavoriteProgram(userId, programId)
       }
 
       setFavorites(prev => {

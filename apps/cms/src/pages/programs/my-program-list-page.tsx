@@ -44,22 +44,19 @@ export function MyProgramListPage() {
   }, [searchParams])
 
   useEffect(() => {
-    if (user?.instructorId) {
-      loadPrograms()
+    const userId = user?.instructorId || user?.id
+    if (userId) {
+      loadPrograms(userId)
     }
-  }, [user?.instructorId, filters])
+  }, [user, filters])
 
-  const loadPrograms = async () => {
-    if (!user?.instructorId) return
-
+  const loadPrograms = async (userId: string) => {
     setLoading(true)
     try {
-      const data = await getMyPrograms(user.instructorId, filters)
+      const data = await getMyPrograms(userId, filters)
       setPrograms(data)
       // 프로그램 로드 후 관심 상태도 로드
-      if (user?.id) {
-        await loadFavoritesForPrograms(data, user.id)
-      }
+      await loadFavoritesForPrograms(data, userId)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
     } finally {
@@ -116,16 +113,17 @@ export function MyProgramListPage() {
   }
 
   const handleToggleFavorite = async (programId: string) => {
-    if (!user?.id) return
+    const userId = user?.instructorId || user?.id
+    if (!userId) return
 
     const isFavorite = favorites.has(programId)
 
     try {
       if (isFavorite) {
-        await removeFavoriteProgram(user.id, programId)
+        await removeFavoriteProgram(userId, programId)
         message.success('관심 프로그램에서 제거되었습니다.')
       } else {
-        await addFavoriteProgram(user.id, programId)
+        await addFavoriteProgram(userId, programId)
         message.success('관심 프로그램에 추가되었습니다.')
       }
 

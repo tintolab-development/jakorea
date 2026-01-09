@@ -72,20 +72,11 @@ export function ProgramList({
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
   const sponsors = sponsorService.getAllSync()
-
-  // 찜하기 상태 로드
-  useEffect(() => {
-    if (showFavorite && user?.id && data.length > 0) {
-      loadFavorites()
-    }
-  }, [showFavorite, user?.id, data])
-
-  const loadFavorites = async () => {
-    if (!user?.id) return
-
+  
+  const loadFavorites = async (userId: string) => {
     try {
       const favoriteStatuses = await Promise.all(
-        data.map(p => isFavoriteProgram(user.id!, p.id))
+        data.map(p => isFavoriteProgram(userId, p.id))
       )
       const favoriteSet = new Set<string>()
       data.forEach((p, index) => {
@@ -99,17 +90,30 @@ export function ProgramList({
     }
   }
 
+  // 찜하기 상태 로드
+  useEffect(() => {
+    const userId = user?.instructorId || user?.id
+    if (showFavorite && userId && data.length > 0) {
+      // setTimeout을 사용하여 비동기적으로 실행 (cascading render 경고 방지)
+      const timer = setTimeout(() => {
+        loadFavorites(userId)
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+  }, [showFavorite, user, data])
+
   const handleToggleFavorite = async (programId: string) => {
-    if (!user?.id) return
+    const userId = user?.instructorId || user?.id
+    if (!userId) return
 
     const isFavorite = favorites.has(programId)
 
     try {
       if (isFavorite) {
-        await removeFavoriteProgram(user.id, programId)
+        await removeFavoriteProgram(userId, programId)
         message.success('관심 프로그램에서 제거되었습니다.')
       } else {
-        await addFavoriteProgram(user.id, programId)
+        await addFavoriteProgram(userId, programId)
         message.success('관심 프로그램에 추가되었습니다.')
       }
 

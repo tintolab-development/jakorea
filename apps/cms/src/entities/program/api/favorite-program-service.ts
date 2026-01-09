@@ -23,10 +23,13 @@ export interface FavoriteProgram extends Program {
   favoritedAt: string // 관심 등록일
 }
 
+// instructor1@example.com용 고정 instructorId
+const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
+
 // Mock: 사용자별 관심 프로그램 목록 (실제로는 서버에서 관리)
 const mockFavoritePrograms: Record<UUID, Set<UUID>> = {
   // 예시: instructor-1이 program-1, program-2를 관심 등록
-  'instructor-1': new Set(['program-1', 'program-2']),
+  [INSTRUCTOR1_ID]: new Set(['program-1', 'program-2', 'program-3']),
   'instructor-2': new Set(['program-3']),
 }
 

@@ -10,7 +10,7 @@ const { TextArea } = Input
 const { Option } = Select
 
 interface InquiryFormData {
-  category: string
+  category: '활동' | '봉사시간' | '시스템' | '정산' | '안내' | '기타'
   title: string
   content: string
   contactEmail?: string
@@ -27,16 +27,18 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
   const [form] = Form.useForm()
   const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = async (_values: InquiryFormData) => {
+  const handleSubmit = async (values: InquiryFormData) => {
     setSubmitting(true)
     try {
       // TODO: API 연동 필요
+      console.log('Submitting inquiry:', values)
       // await submitInquiry(values)
       message.success('문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.')
       form.resetFields()
       onSuccess?.()
       onCancel()
-    } catch (error) {
+    } catch (e) {
+      console.error('Failed to submit inquiry:', e)
       message.error('문의 접수 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setSubmitting(false)
@@ -69,11 +71,12 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
           rules={[{ required: true, message: '문의 유형을 선택해주세요' }]}
         >
           <Select placeholder="문의 유형을 선택하세요">
-            <Option value="settlement">정산 관련</Option>
-            <Option value="program">프로그램 관련</Option>
-            <Option value="account">계정 관련</Option>
-            <Option value="technical">기술 지원</Option>
-            <Option value="other">기타</Option>
+            <Option value="활동">활동 관련 (배정, 일정 등)</Option>
+            <Option value="봉사시간">봉사시간 관련 (1365 연계 등)</Option>
+            <Option value="정산">정산 관련 (교통비 등)</Option>
+            <Option value="시스템">시스템 관련 (오류, 계정 등)</Option>
+            <Option value="안내">일반 안내 (인증서 등)</Option>
+            <Option value="기타">기타</Option>
           </Select>
         </Form.Item>
 

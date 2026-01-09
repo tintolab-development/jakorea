@@ -69,7 +69,8 @@ export function SettlementReviewPage() {
       await updateStatus(settlement.id, 'approved')
       message.success('정산이 승인되었습니다')
       fetchSettlements()
-    } catch (error) {
+    } catch (e) {
+      console.error('Failed to approve settlement:', e)
       message.error('승인 처리 중 오류가 발생했습니다')
     }
   }
@@ -81,7 +82,8 @@ export function SettlementReviewPage() {
       message.success(`상태가 "${getSettlementStatusLabel(status)}"로 변경되었습니다`)
       fetchSettlements()
       setDrawerOpen(false)
-    } catch (error) {
+    } catch (e) {
+      console.error('Failed to change status:', e)
       message.error('상태 변경 중 오류가 발생했습니다')
     }
   }

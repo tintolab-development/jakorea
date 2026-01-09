@@ -4,143 +4,235 @@
  * 사용자 강사 권한용 FAQ 조회 페이지
  */
 
-import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Card, Collapse, Typography, Input, Space, Empty, Button } from 'antd'
-import { SearchOutlined, FileSearchOutlined } from '@ant-design/icons'
+import { useState, useEffect, useMemo } from 'react'
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
+import {
+  Card,
+  Collapse,
+  Typography,
+  Input,
+  Space,
+  Empty,
+  Button,
+  Tabs,
+  Tag,
+  Badge,
+  Divider,
+  Row,
+  Col,
+  Tooltip,
+} from 'antd'
+import {
+  FileSearchOutlined,
+  LikeOutlined,
+  DislikeOutlined,
+  MessageOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { InquiryModal } from '@/shared/ui'
+import { mockFAQs } from '@/data/mock/faqs'
 
-const { Text } = Typography
+const { Text, Title, Paragraph } = Typography
 const { Panel } = Collapse
 const { Search } = Input
 
-interface FAQ {
-  id: string
-  category: string
-  question: string
-  answer: string
-}
-
-// TODO: API 연동 필요
-const mockFAQs: FAQ[] = [
-  {
-    id: '1',
-    category: '정산',
-    question: '정산 신청은 언제까지 해야 하나요?',
-    answer: '매월 25일까지 해당 월의 정산 신청을 완료해주세요. 신청 기간을 놓치면 다음 달로 이월됩니다.',
-  },
-  {
-    id: '2',
-    category: '정산',
-    question: '정산 지급은 언제 이루어지나요?',
-    answer: '정산 신청 후 관리자 확인을 거쳐 승인되면, 익월 10일경에 지급됩니다.',
-  },
-  {
-    id: '3',
-    category: '프로그램',
-    question: '프로그램 중복 신청이 가능한가요?',
-    answer: '동일한 정보의 프로그램은 중복 신청할 수 없습니다. 학교 프로그램의 경우, 동일 학교에서 다른 학년/날짜/신청자로 신청할 수 있습니다.',
-  },
-  {
-    id: '4',
-    category: '프로그램',
-    question: '프로그램 신청 후 취소가 가능한가요?',
-    answer: '프로그램 신청 후 관리자 승인 전까지는 취소가 가능합니다. 승인 후에는 관리자에게 문의해주세요.',
-  },
-]
-
 export function FAQPage() {
   const location = useLocation()
-  const [faqs] = useState<FAQ[]>(mockFAQs)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filteredFaqs, setFilteredFaqs] = useState<FAQ[]>(mockFAQs)
-  const [inquiryModalOpen, setInquiryModalOpen] = useState(false)
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   
-  // 카테고리명 가져오기
+  // 검색어 로컬 상태
+  const [searchInput, setSearchInput] = useState(searchParams.get('q') || '')
+
+  // 필터 상태
+  const activeCategory = searchParams.get('category') || '전체'
+
   const categoryName = getCategoryNameByPath(location.pathname, 2) || 'FAQ'
 
+  // Debounce 검색어 처리
   useEffect(() => {
-    if (!searchQuery) {
-      setFilteredFaqs(faqs)
-      return
-    }
+    const handler = setTimeout(() => {
+      setSearchParams(prev => {
+        if (!searchInput) prev.delete('q')
+        else prev.set('q', searchInput)
+        return prev
+      }, { replace: true })
+    }, 500)
+    return () => clearTimeout(handler)
+  }, [searchInput, setSearchParams])
 
-    const filtered = faqs.filter(
-      faq =>
-        faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        faq.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        faq.category.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    setFilteredFaqs(filtered)
-  }, [searchQuery, faqs])
+  // 필터링된 FAQ 목록
+  const filteredFaqs = useMemo(() => {
+    const q = searchParams.get('q')?.toLowerCase() || ''
+    return mockFAQs
+      .filter(faq => faq.status === 'published')
+      .filter(faq => {
+        const matchCategory = activeCategory === '전체' || faq.category === activeCategory
+        const matchSearch = !q || 
+          faq.question.toLowerCase().includes(q) || 
+          faq.answer.toLowerCase().includes(q) ||
+          faq.tags?.some(tag => tag.toLowerCase().includes(q))
+        
+        return matchCategory && matchSearch
+      })
+  }, [activeCategory, searchParams])
 
-  // 카테고리별로 그룹화
-  const faqsByCategory = filteredFaqs.reduce((acc, faq) => {
-    if (!acc[faq.category]) {
-      acc[faq.category] = []
-    }
-    acc[faq.category].push(faq)
-    return acc
-  }, {} as Record<string, FAQ[]>)
+  const handleCategoryChange = (key: string) => {
+    setSearchParams(prev => {
+      if (key === '전체') prev.delete('category')
+      else prev.set('category', key)
+      return prev
+    })
+  }
+
+  const categories = ['전체', '활동', '봉사시간', '시스템', '정산', '안내']
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+        {/* 헤더 섹션 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 8 }}>{categoryName}</h1>
+            <Text type="secondary">자주 묻는 질문들을 모아두었습니다. 원하는 정보를 찾지 못하셨다면 1:1 문의를 이용해주세요.</Text>
+          </div>
           <Button
             type="primary"
-            icon={<FileSearchOutlined />}
-            onClick={() => setInquiryModalOpen(true)}
+            icon={<MessageOutlined />}
+            onClick={() => navigate('/posts/inquiries')}
+            size="large"
           >
-            문의하기
+            1:1 문의하기
           </Button>
         </div>
 
-        <Card>
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-            <Search
-              placeholder="FAQ 검색"
-              allowClear
-              enterButton={<SearchOutlined />}
-              size="large"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
+        {/* 검색 섹션 */}
+        <Card styles={{ body: { padding: '32px' } }} style={{ background: '#f9f9f9', border: 'none' }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <Title level={3}>무엇을 도와드릴까요?</Title>
+          </div>
+          <Search
+            placeholder="궁금한 내용을 입력해보세요 (예: 봉사시간, 1365, 파트너...)"
+            allowClear
+            size="large"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            style={{ maxWidth: 600, margin: '0 auto', display: 'flex' }}
+          />
+        </Card>
 
-            {filteredFaqs.length === 0 ? (
-              <Empty description="검색 결과가 없습니다" />
-            ) : (
-              <Collapse>
-                {Object.entries(faqsByCategory).map(([category, categoryFaqs]) => (
-                  <Panel header={`${category} (${categoryFaqs.length})`} key={category}>
-                    <Collapse ghost>
-                      {categoryFaqs.map(faq => (
-                        <Panel
-                          header={<Text strong>{faq.question}</Text>}
-                          key={faq.id}
-                        >
-                          <Text>{faq.answer}</Text>
-                        </Panel>
-                      ))}
-                    </Collapse>
-                  </Panel>
-                ))}
-              </Collapse>
-            )}
+        {/* 카테고리 탭 */}
+        <Tabs
+          activeKey={activeCategory}
+          onChange={handleCategoryChange}
+          centered
+          items={categories.map(cat => ({
+            key: cat,
+            label: (
+              <span style={{ padding: '0 12px' }}>
+                {cat} {cat !== '전체' && <Badge count={mockFAQs.filter(f => f.category === cat).length} offset={[8, -4]} size="small" style={{ backgroundColor: '#bfbfbf' }} />}
+              </span>
+            )
+          }))}
+        />
+
+        {/* FAQ 리스트 */}
+        <div style={{ minHeight: 400 }}>
+          {filteredFaqs.length === 0 ? (
+            <Empty 
+              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+              description={
+                <Space direction="vertical">
+                  <Text type="secondary">검색 결과가 없습니다.</Text>
+                  <Button type="link" onClick={() => { setSearchInput(''); handleCategoryChange('전체'); }}>전체 보기</Button>
+                </Space>
+              } 
+              style={{ marginTop: 60 }}
+            />
+          ) : (
+            <Collapse
+              accordion
+              expandIconPosition="end"
+              style={{ background: 'transparent', border: 'none' }}
+              ghost
+            >
+              {filteredFaqs.map(faq => (
+                <Panel
+                  key={faq.id}
+                  header={
+                    <div style={{ padding: '4px 0' }}>
+                      <Space size="middle">
+                        <Tag color="blue" bordered={false}>{faq.category}</Tag>
+                        <Text strong style={{ fontSize: 16 }}>{faq.question}</Text>
+                      </Space>
+                      {faq.tags && (
+                        <div style={{ marginTop: 8, paddingLeft: 60 }}>
+                          {faq.tags.map(tag => (
+                            <Text key={tag} type="secondary" style={{ fontSize: 12, marginRight: 8 }}>#{tag}</Text>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  }
+                  style={{ 
+                    marginBottom: 16, 
+                    background: '#fff', 
+                    border: '1px solid #f0f0f0', 
+                    borderRadius: 8,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div style={{ padding: '8px 12px 12px 60px' }}>
+                    <Paragraph style={{ fontSize: 15, lineHeight: 1.8, color: '#434343', whiteSpace: 'pre-wrap' }}>
+                      {faq.answer}
+                    </Paragraph>
+                    
+                    <Divider style={{ margin: '16px 0' }} />
+                    
+                    <Row justify="space-between" align="middle">
+                      <Col>
+                        <Space style={{ color: '#8c8c8c', fontSize: 13 }}>
+                          <InfoCircleOutlined /> 추가 질문이 있으신가요? 
+                          <Button type="link" size="small" onClick={() => navigate('/posts/inquiries')} style={{ padding: 0 }}>상세 문의하기</Button>
+                        </Space>
+                      </Col>
+                      <Col>
+                        <Space>
+                          <Text type="secondary" style={{ fontSize: 12 }}>도움이 되었나요?</Text>
+                          <Tooltip title="도움됨">
+                            <Button size="small" icon={<LikeOutlined />} />
+                          </Tooltip>
+                          <Tooltip title="도움 안됨">
+                            <Button size="small" icon={<DislikeOutlined />} />
+                          </Tooltip>
+                        </Space>
+                      </Col>
+                    </Row>
+                  </div>
+                </Panel>
+              ))}
+            </Collapse>
+          )}
+        </div>
+
+        {/* 하단 안내 섹션 */}
+        <Card style={{ marginTop: 40, textAlign: 'center', background: '#f0f5ff', border: 'none' }}>
+          <Space direction="vertical" size="small">
+            <Title level={5}>찾으시는 내용이 없나요?</Title>
+            <Text type="secondary">JAKorea 운영팀에서 친절하게 답변해 드리겠습니다.</Text>
+            <Button 
+              type="primary" 
+              ghost 
+              icon={<FileSearchOutlined />} 
+              style={{ marginTop: 12 }}
+              onClick={() => navigate('/posts/inquiries')}
+            >
+              1:1 문의 게시판 바로가기
+            </Button>
           </Space>
         </Card>
       </Space>
-
-      <InquiryModal
-        open={inquiryModalOpen}
-        onCancel={() => setInquiryModalOpen(false)}
-        onSuccess={() => {
-          // 필요시 목록 새로고침
-        }}
-      />
     </div>
   )
 }

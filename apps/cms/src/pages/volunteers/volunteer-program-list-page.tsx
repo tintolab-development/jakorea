@@ -3,16 +3,21 @@
  * Phase: 봉사단 관리 하위 뎁스 구현
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { Space, Card, Tabs, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { VolunteerRandomMatching } from '@/features/volunteer/ui/volunteer-random-matching'
+import { VolunteerList } from '@/features/volunteer/ui/volunteer-list'
+import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { getVolunteerPrograms } from '@/data/mock'
+import { mockUsers } from '@/data/mock/users'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
+import type { User } from '@/types/user'
 import { formatDate } from '@/shared/utils'
 import { domainColorsHex } from '@/shared/constants/colors'
 import {
@@ -21,24 +26,32 @@ import {
 } from '@/shared/constants/status'
 
 export function VolunteerProgramListPage() {
+  const { user: currentUser } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
   
   // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '봉사 프로그램'
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || (currentUser?.role === 'VOLUNTEER' ? '봉사단' : '봉사 프로그램')
   
   // 봉사 프로그램 목록 가져오기
   const volunteerPrograms = getVolunteerPrograms()
 
-  // 기본 선택 프로그램 설정
-  useEffect(() => {
-    if (volunteerPrograms.length > 0 && !selectedProgram) {
-      setSelectedProgram(volunteerPrograms[0])
-    }
-  }, [volunteerPrograms, selectedProgram])
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(volunteerPrograms[0] || null)
+  const [detailOpen, setDetailOpen] = useState(false)
+
+  const volunteers = useMemo(() => {
+    return mockUsers
+      .filter(u => u.role === 'VOLUNTEER')
+      .map(u => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...userWithoutPassword } = u
+        return userWithoutPassword
+      })
+  }, [])
+
+  const [selectedUser, setSelectedUser] = useState<Omit<User, 'password'> | null>(null)
+  const [userDrawerOpen, setUserDrawerOpen] = useState(false)
 
   const programColumns: ColumnsType<Program> = [
     {
@@ -116,17 +129,83 @@ export function VolunteerProgramListPage() {
     },
   ]
 
-  const activeTabKey = searchParams.get('tab') || 'list'
+  const isVolunteer = currentUser?.role === 'VOLUNTEER'
+  const defaultTabKey = isVolunteer ? 'volunteers' : 'list'
+  const activeTabKey = searchParams.get('tab') || defaultTabKey
 
   const handleTabChange = (key: string) => {
     const newParams = new URLSearchParams(searchParams)
-    if (key === 'list') {
+    if (key === defaultTabKey) {
       newParams.delete('tab')
     } else {
       newParams.set('tab', key)
     }
     setSearchParams(newParams, { replace: true })
   }
+
+  const handleUserView = (user: Omit<User, 'password'>) => {
+    setSelectedUser(user)
+    setUserDrawerOpen(true)
+  }
+
+  // 탭 항목 구성
+  const tabItems = [
+    // 봉사자 권한일 때만 또는 첫 번째 탭으로 봉사단 목록 추가
+    {
+      key: 'volunteers',
+      label: '봉사단 목록',
+      children: (
+        <Card>
+          <VolunteerList
+            data={volunteers}
+            loading={false}
+            onView={handleUserView}
+          />
+        </Card>
+      ),
+    },
+    {
+      key: 'list',
+      label: '프로그램 목록',
+      children: (
+        <Card>
+          <Table
+            columns={programColumns}
+            dataSource={volunteerPrograms}
+            rowKey="id"
+            pagination={{
+              defaultPageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `총 ${total}개`,
+            }}
+            onRow={(record) => ({
+              onClick: () => {
+                setSelectedProgram(record)
+                setDetailOpen(true)
+              },
+              style: { cursor: 'pointer' },
+            })}
+          />
+        </Card>
+      ),
+    },
+    // 관리자만 랜덤 배치 탭 표시
+    ...(currentUser?.role === 'ADMIN' ? [
+      {
+        key: 'matching',
+        label: '봉사자 랜덤 배치',
+        children: (
+          <VolunteerRandomMatching
+            programId={selectedProgram?.id || volunteerPrograms[0]?.id || 'program-1'}
+            scheduleId="schedule-1"
+            onMatchComplete={(pairs: any) => {
+              console.log('매칭 완료:', pairs)
+            }}
+          />
+        ),
+      },
+    ] : []),
+  ]
 
   return (
     <div>
@@ -137,46 +216,7 @@ export function VolunteerProgramListPage() {
       <Tabs
         activeKey={activeTabKey}
         onChange={handleTabChange}
-        items={[
-          {
-            key: 'list',
-            label: '프로그램 목록',
-            children: (
-              <Card>
-                <Table
-                  columns={programColumns}
-                  dataSource={volunteerPrograms}
-                  rowKey="id"
-                  pagination={{
-                    defaultPageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `총 ${total}개`,
-                  }}
-                  onRow={(record) => ({
-                    onClick: () => {
-                      setSelectedProgram(record)
-                      setDetailOpen(true)
-                    },
-                    style: { cursor: 'pointer' },
-                  })}
-                />
-              </Card>
-            ),
-          },
-          {
-            key: 'matching',
-            label: '봉사자 랜덤 배치',
-            children: (
-              <VolunteerRandomMatching
-                programId={selectedProgram?.id || volunteerPrograms[0]?.id || 'program-1'}
-                scheduleId="schedule-1"
-                onMatchComplete={(pairs) => {
-                  console.log('매칭 완료:', pairs)
-                }}
-              />
-            ),
-          },
-        ]}
+        items={tabItems}
       />
 
       <ProgramDetailDrawer
@@ -193,6 +233,15 @@ export function VolunteerProgramListPage() {
         }}
         loading={false}
         hideActions
+      />
+
+      <UserDetailDrawer
+        open={userDrawerOpen}
+        user={selectedUser}
+        onClose={() => {
+          setUserDrawerOpen(false)
+          setSelectedUser(null)
+        }}
       />
     </div>
   )

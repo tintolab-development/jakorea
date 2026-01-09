@@ -19,6 +19,8 @@ import {
   Avatar,
   Button,
   Tooltip,
+  Popover,
+  Divider,
 } from 'antd'
 import {
   CalendarOutlined,
@@ -39,11 +41,13 @@ import type { Program } from '@/types/domain'
 
 const { Paragraph, Text, Title } = Typography
 
-// 가상 일정 데이터 확장
+// 금요일만 활동하는 봉사단 특성에 맞춘 mock 데이터
+const getFriday = (weekOffset: number) => dayjs().day(5).add(weekOffset, 'week').format('YYYY-MM-DD')
+
 const mockSchedules = [
   {
     id: '1',
-    date: dayjs().add(2, 'day').format('YYYY-MM-DD'),
+    date: getFriday(0), // 이번 주 금요일
     title: '서울초등학교 금융교육 봉사',
     status: 'approved',
     time: '09:00 ~ 13:00',
@@ -54,7 +58,7 @@ const mockSchedules = [
   },
   {
     id: '2',
-    date: dayjs().add(5, 'day').format('YYYY-MM-DD'),
+    date: getFriday(1), // 다음 주 금요일
     title: '경기중학교 진로체험 멘토링',
     status: 'reviewing',
     time: '14:00 ~ 17:00',
@@ -65,7 +69,7 @@ const mockSchedules = [
   },
   {
     id: '3',
-    date: dayjs().add(0, 'day').format('YYYY-MM-DD'),
+    date: getFriday(-1), // 지난 주 금요일
     title: '강남청소년수련관 경제 교실',
     status: 'approved',
     time: '10:00 ~ 12:00',
@@ -99,20 +103,63 @@ export default function MyVolunteerSchedulePage() {
       .sort((a, b) => dayjs(a.date).diff(dayjs(b.date)))
   }, [])
 
+  // 호버 시 보여줄 요약 정보 컴포넌트
+  const getPopoverContent = (item: any) => (
+    <div style={{ maxWidth: 250 }}>
+      <Space direction="vertical" size={4} style={{ width: '100%' }}>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          <ClockCircleOutlined style={{ marginRight: 4 }} /> {item.time}
+        </Text>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          <EnvironmentOutlined style={{ marginRight: 4 }} /> {item.location}
+        </Text>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          <TeamOutlined style={{ marginRight: 4 }} /> 파트너: {item.partner}
+        </Text>
+        <Divider style={{ margin: '8px 0' }} />
+        <Text type="secondary" style={{ fontSize: 11 }}>
+          * 클릭하면 전체 상세 정보를 확인하실 수 있습니다.
+        </Text>
+      </Space>
+    </div>
+  )
+
   const dateCellRender = (value: Dayjs) => {
     const listData = mockSchedules.filter(item => dayjs(item.date).isSame(value, 'day'))
     return (
       <ul className="events" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {listData.map(item => (
           <li key={item.id} style={{ marginBottom: 4 }}>
-            <Badge
-              status={item.status === 'approved' ? 'success' : 'processing'}
-              text={
-                <Text ellipsis style={{ fontSize: 11, maxWidth: '100%' }}>
-                  {item.title}
-                </Text>
-              }
-            />
+            <Popover
+              title={<Text strong>{item.title}</Text>}
+              content={getPopoverContent(item)}
+              trigger="hover"
+              placement="rightTop"
+              overlayStyle={{ width: 280 }}
+            >
+              <div
+                style={{
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  borderRadius: 4,
+                  transition: 'all 0.3s'
+                }}
+                className="calendar-event-item"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleViewDetails(item.id)
+                }}
+              >
+                <Badge
+                  status={item.status === 'approved' ? 'success' : 'processing'}
+                  text={
+                    <Text ellipsis style={{ fontSize: 11, maxWidth: '100%' }}>
+                      {item.title}
+                    </Text>
+                  }
+                />
+              </div>
+            </Popover>
           </li>
         ))}
       </ul>

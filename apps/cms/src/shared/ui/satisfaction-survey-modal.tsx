@@ -49,18 +49,20 @@ export function SatisfactionSurveyModal({
     }
   }, [open, existingRecord, form])
 
-  const handleSubmit = async (_values: SatisfactionFormData) => {
+  const handleSubmit = async (values: SatisfactionFormData) => {
     if (!program) return
 
     setSubmitting(true)
     try {
       // TODO: API 연동 필요
+      console.log('Submitting satisfaction survey:', values)
       // await submitSatisfactionSurvey(program.id, values)
       message.success('만족도 조사가 제출되었습니다. 감사합니다!')
       form.resetFields()
       onSuccess?.()
       onCancel()
-    } catch (error) {
+    } catch (e) {
+      console.error('Failed to submit satisfaction survey:', e)
       message.error('만족도 조사 제출 중 오류가 발생했습니다.')
     } finally {
       setSubmitting(false)

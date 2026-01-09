@@ -4,8 +4,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Input, Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
+import { useSearchParams, useLocation } from 'react-router-dom'
+import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
 import { HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -16,19 +16,22 @@ import {
 } from '@/entities/program/api/favorite-program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import type { Program } from '@/types/domain'
 
 const { Option } = Select
 const { Search } = Input
 
 export function MyFavoriteProgramsPage() {
   const { user } = useAuthStore()
-  const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [programs, setPrograms] = useState<FavoriteProgram[]>([])
   const [loading, setLoading] = useState(false)
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '관심 프로그램 관리'
@@ -43,20 +46,20 @@ export function MyFavoriteProgramsPage() {
   }, [searchParams])
 
   useEffect(() => {
-    if (user?.id) {
-      loadPrograms()
+    const userId = user?.instructorId || user?.id
+    if (userId) {
+      loadPrograms(userId)
     }
-  }, [user?.id, filters])
+  }, [user, filters])
 
-  const loadPrograms = async () => {
-    if (!user?.id) return
-
+  const loadPrograms = async (userId: string) => {
     setLoading(true)
     try {
-      const data = await getFavoritePrograms(user.id, filters)
+      const data = await getFavoritePrograms(userId, filters)
       setPrograms(data)
     } catch (error) {
       console.error('관심 프로그램 로드 실패:', error)
+      message.error('관심 프로그램을 불러오는 중 오류가 발생했습니다.')
     } finally {
       setLoading(false)
     }
@@ -93,23 +96,22 @@ export function MyFavoriteProgramsPage() {
   }
 
   const handleRemoveFavorite = async (programId: string) => {
-    if (!user?.id) return
+    const userId = user?.instructorId || user?.id
+    if (!userId) return
 
     try {
-      await removeFavoriteProgram(user.id, programId)
-      await loadPrograms() // 목록 새로고침
+      await removeFavoriteProgram(userId, programId)
+      message.success('관심 프로그램에서 제거되었습니다.')
+      await loadPrograms(userId) // 목록 새로고침
     } catch (error) {
       console.error('관심 프로그램 해제 실패:', error)
+      message.error('관심 프로그램 해제 중 오류가 발생했습니다.')
     }
   }
 
   const handleViewProgram = (program: FavoriteProgram) => {
-    // 본인 프로그램이면 본인 프로그램 상세로, 아니면 일반 프로그램 상세로
-    if (user?.instructorId) {
-      navigate(`/programs/my/active/${program.id}`)
-    } else {
-      navigate(`/programs/${program.id}`)
-    }
+    setSelectedProgram(program)
+    setDrawerOpen(true)
   }
 
   const getProgramStatus = (program: FavoriteProgram) => {
@@ -266,7 +268,22 @@ export function MyFavoriteProgramsPage() {
           emptyText: <Empty description="관심 등록한 프로그램이 없습니다." />,
         }}
       />
+
+      <ProgramDetailDrawer
+        open={drawerOpen}
+        program={selectedProgram}
+        onClose={() => {
+          setDrawerOpen(false)
+          setSelectedProgram(null)
+        }}
+        onEdit={() => {}}
+        onDelete={() => {}}
+        loading={false}
+        hideActions
+      />
     </div>
   )
 }
+
+export default MyFavoriteProgramsPage
 

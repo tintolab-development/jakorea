@@ -109,8 +109,6 @@ const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
 const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
 const NoticeListPage = lazyLoad(() => import('@/pages/notices/notice-list-page'))
-const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
-const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
 const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
 const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths/application-path-list-page'))
 const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
@@ -121,6 +119,10 @@ const ScheduleNegotiationListPage = lazyLoad(() => import('@/pages/schedule-nego
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
 const PostListPage = lazyLoad(() => import('@/pages/posts/post-list-page'))
+const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
+const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
+const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
+const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
 const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
 
 export const router = createBrowserRouter([
@@ -318,8 +320,10 @@ export const router = createBrowserRouter([
         path: 'posts',
         children: [
           { index: true, element: <PostListPage /> },
-          { path: 'faq', element: <FAQPage /> },
-          { path: 'inquiries', element: <InquiryPage /> },
+          { path: 'categories', element: <AdminCategoryPage /> },
+          { path: 'notices', element: <AdminNoticeListPage /> },
+          { path: 'faq', element: <AdminFAQPage /> },
+          { path: 'inquiries', element: <AdminInquiryPage /> },
         ],
       },
       {

@@ -90,7 +90,7 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="전체 봉사"
             value={summary.programs.total}
-            prefix={<HeartOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />}
+            prefix={<HeartOutlined style={{ color: '#000000', marginRight: 8 }} />}
             suffix="건"
             valueStyle={{ fontWeight: 'bold' }}
           />
@@ -99,7 +99,7 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="신청 완료"
             value={summary.programs.applicationCompleted}
-            prefix={<CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />}
+            prefix={<CheckCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
             suffix="건"
             valueStyle={{ fontWeight: 'bold' }}
           />
@@ -108,7 +108,7 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="진행 예정"
             value={summary.programs.scheduled}
-            prefix={<ClockCircleOutlined style={{ color: '#1890ff', marginRight: 8 }} />}
+            prefix={<ClockCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
             suffix="건"
             valueStyle={{ fontWeight: 'bold' }}
           />
@@ -117,7 +117,7 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="진행중"
             value={summary.programs.inProgress}
-            prefix={<PlayCircleOutlined style={{ color: '#faad14', marginRight: 8 }} />}
+            prefix={<PlayCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
             suffix="건"
             valueStyle={{ fontWeight: 'bold' }}
           />
@@ -128,7 +128,7 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="진행완료"
             value={summary.programs.completed}
-            prefix={<CheckCircleOutlined style={{ color: '#13c2c2', marginRight: 8 }} />}
+            prefix={<CheckCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
             suffix="건"
             valueStyle={{ fontWeight: 'bold' }}
           />
@@ -137,7 +137,7 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="예정된 일정"
             value={summary.schedules.total}
-            prefix={<CalendarOutlined style={{ color: '#722ed1', marginRight: 8 }} />}
+            prefix={<CalendarOutlined style={{ color: '#000000', marginRight: 8 }} />}
             suffix="건"
             valueStyle={{ fontWeight: 'bold' }}
           />
@@ -146,7 +146,7 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="누적 봉사시간"
             value={24} // 가상 데이터
-            prefix={<ClockCircleOutlined style={{ color: '#eb2f96', marginRight: 8 }} />}
+            prefix={<ClockCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
             suffix="시간"
             valueStyle={{ fontWeight: 'bold' }}
           />
