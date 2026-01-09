@@ -5,7 +5,7 @@
 
 import { Form, Input, Select, Button, Card, message, Space, Typography, InputNumber } from 'antd'
 import { UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -71,7 +71,14 @@ const specialtyOptions = [
 
 export function InstructorApplicationPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuthStore()
+
+  const roleParam = searchParams.get('role')
+  const fixedRole = searchParams.get('fixedRole') === '1'
+
+  const defaultRole: ApplicationFormData['role'] = roleParam === 'VOLUNTEER' ? 'VOLUNTEER' : 'INSTRUCTOR'
+
   const {
     control,
     handleSubmit,
@@ -80,7 +87,10 @@ export function InstructorApplicationPage() {
   } = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
-      role: 'INSTRUCTOR',
+      role: defaultRole,
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
       specialty: [],
       participationHistory: 0,
     },
@@ -130,12 +140,22 @@ export function InstructorApplicationPage() {
                 name="role"
                 control={control}
                 render={({ field }) => (
-                  <Select {...field} size="large" style={{ width: '100%' }}>
+                  <Select
+                    {...field}
+                    size="large"
+                    style={{ width: '100%' }}
+                    disabled={fixedRole}
+                  >
                     <Option value="INSTRUCTOR">강사</Option>
                     <Option value="VOLUNTEER">봉사자</Option>
                   </Select>
                 )}
               />
+              {fixedRole && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  * 봉사단 신청 플로우에서는 신청 유형이 봉사자로 고정됩니다.
+                </Text>
+              )}
             </Form.Item>
 
             <Form.Item
