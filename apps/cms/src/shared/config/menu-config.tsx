@@ -309,7 +309,7 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
-    key: '/reports',
+    key: 'reports-group',
     label: '보고서',
     icon: <FileTextOutlined />,
     enabled: false,

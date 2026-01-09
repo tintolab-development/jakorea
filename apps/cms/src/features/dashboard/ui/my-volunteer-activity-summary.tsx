@@ -77,6 +77,19 @@ export function MyVolunteerActivitySummary() {
     )
   }
 
+  const commonValueStyle = { 
+    color: '#000000', 
+    fontWeight: 'bold', 
+    display: 'inline-flex', 
+    alignItems: 'center' 
+  }
+
+  const getPrefix = (icon: React.ReactNode) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 8 }}>
+      {icon}
+    </span>
+  )
+
   return (
     <Card
       title="내 봉사 현황"
@@ -90,36 +103,36 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="전체 봉사"
             value={summary.programs.total}
-            prefix={<HeartOutlined style={{ color: '#000000', marginRight: 8 }} />}
+            prefix={getPrefix(<HeartOutlined style={{ color: '#000000' }} />)}
             suffix="건"
-            valueStyle={{ fontWeight: 'bold' }}
+            valueStyle={commonValueStyle}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="신청 완료"
             value={summary.programs.applicationCompleted}
-            prefix={<CheckCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
+            prefix={getPrefix(<CheckCircleOutlined style={{ color: '#000000' }} />)}
             suffix="건"
-            valueStyle={{ fontWeight: 'bold' }}
+            valueStyle={commonValueStyle}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="진행 예정"
             value={summary.programs.scheduled}
-            prefix={<ClockCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
+            prefix={getPrefix(<ClockCircleOutlined style={{ color: '#000000' }} />)}
             suffix="건"
-            valueStyle={{ fontWeight: 'bold' }}
+            valueStyle={commonValueStyle}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="진행중"
             value={summary.programs.inProgress}
-            prefix={<PlayCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
+            prefix={getPrefix(<PlayCircleOutlined style={{ color: '#000000' }} />)}
             suffix="건"
-            valueStyle={{ fontWeight: 'bold' }}
+            valueStyle={commonValueStyle}
           />
         </Col>
       </Row>
@@ -128,27 +141,27 @@ export function MyVolunteerActivitySummary() {
           <Statistic
             title="진행완료"
             value={summary.programs.completed}
-            prefix={<CheckCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
+            prefix={getPrefix(<CheckCircleOutlined style={{ color: '#000000' }} />)}
             suffix="건"
-            valueStyle={{ fontWeight: 'bold' }}
+            valueStyle={commonValueStyle}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="예정된 일정"
             value={summary.schedules.total}
-            prefix={<CalendarOutlined style={{ color: '#000000', marginRight: 8 }} />}
+            prefix={getPrefix(<CalendarOutlined style={{ color: '#000000' }} />)}
             suffix="건"
-            valueStyle={{ fontWeight: 'bold' }}
+            valueStyle={commonValueStyle}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Statistic
             title="누적 봉사시간"
             value={24} // 가상 데이터
-            prefix={<ClockCircleOutlined style={{ color: '#000000', marginRight: 8 }} />}
+            prefix={getPrefix(<ClockCircleOutlined style={{ color: '#000000' }} />)}
             suffix="시간"
-            valueStyle={{ fontWeight: 'bold' }}
+            valueStyle={commonValueStyle}
           />
         </Col>
       </Row>
