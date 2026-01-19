@@ -4,14 +4,22 @@
  */
 
 import { Space } from 'antd'
+import { useLocation } from 'react-router-dom'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
 
 export function PostListPage() {
+  const location = useLocation()
+  const categoryName =
+    getCategoryNameByPath(location.pathname, 1) ||
+    getCategoryNameByPath('/admin/posts/categories', 1) ||
+    '게시글 관리'
+
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>게시글 관리</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
       <ComingSoonPage 
         title="게시글 관리" 

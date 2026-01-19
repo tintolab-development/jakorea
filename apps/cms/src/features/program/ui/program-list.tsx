@@ -3,12 +3,13 @@
  * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
  */
 
-import { Table, Input, Select, Button, Space, Tag, Dropdown, message } from 'antd'
+import { Table, Input, Select, Button, Space, Tag, Dropdown, message, DatePicker } from 'antd'
 import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useProgramTable } from '../model/use-program-table'
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
   getCommonStatusLabel,
@@ -24,6 +25,12 @@ import {
   removeFavoriteProgram,
   isFavoriteProgram,
 } from '@/entities/program/api/favorite-program-service'
+import dayjs, { type Dayjs } from 'dayjs'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+
+dayjs.extend(isSameOrBefore)
+dayjs.extend(isSameOrAfter)
 
 const { Option } = Select
 
@@ -68,8 +75,80 @@ export function ProgramList({
   showFavorite = false,
 }: ProgramListProps) {
   const { user } = useAuthStore()
-  const { table, resetFilters } = useProgramTable(data)
+  const isStudent = user?.role === 'STUDENT'
+  const [searchParams, setSearchParams] = useSearchParams()
+  const periodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
+    const start = searchParams.get('startDate')
+    const end = searchParams.get('endDate')
+    if (!start || !end) return null
+    const startDate = dayjs(start)
+    const endDate = dayjs(end)
+    if (!startDate.isValid() || !endDate.isValid()) return null
+    return [startDate, endDate]
+  }, [searchParams])
+  const targetFilter = useMemo<ProgramCategory | 'all'>(() => {
+    const value = searchParams.get('target')
+    return value === 'individual' || value === 'school' ? value : 'all'
+  }, [searchParams])
+  const educationTypeFilter = useMemo<ProgramType | 'all'>(() => {
+    const value = searchParams.get('type')
+    return value === 'online' || value === 'offline' || value === 'hybrid' ? value : 'all'
+  }, [searchParams])
+  const progressStatusFilter = useMemo<ProgramLifecycleStatus | 'all'>(() => {
+    const value = searchParams.get('status') as ProgramLifecycleStatus | null
+    const validStatuses = new Set(programLifecycleStatusConfig.order)
+    return value && validStatuses.has(value) ? value : 'all'
+  }, [searchParams])
+  const searchQuery = useMemo(() => searchParams.get('search') || '', [searchParams])
+
+  const filteredData = useMemo(() => {
+    if (!isStudent) {
+      return data
+    }
+
+    let filtered = data
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.trim().toLowerCase()
+      filtered = filtered.filter(program => program.title.toLowerCase().includes(query))
+    }
+
+    if (periodRange?.[0] && periodRange?.[1]) {
+      const rangeStart = periodRange[0].startOf('day')
+      const rangeEnd = periodRange[1].endOf('day')
+      filtered = filtered.filter(program => {
+        const startDate = dayjs(program.startDate)
+        const endDate = dayjs(program.endDate)
+        return startDate.isSameOrBefore(rangeEnd) && endDate.isSameOrAfter(rangeStart)
+      })
+    }
+
+    if (targetFilter !== 'all') {
+      filtered = filtered.filter(program => program.category === targetFilter)
+    }
+
+    if (educationTypeFilter !== 'all') {
+      filtered = filtered.filter(program => program.type === educationTypeFilter)
+    }
+
+    if (progressStatusFilter !== 'all') {
+      filtered = filtered.filter(program => program.lifecycleStatus === progressStatusFilter)
+    }
+
+    return filtered
+  }, [
+    data,
+    educationTypeFilter,
+    isStudent,
+    periodRange,
+    progressStatusFilter,
+    searchQuery,
+    targetFilter,
+  ])
+
+  const { table, resetFilters } = useProgramTable(filteredData)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const studentFiltersInitialized = useRef(false)
 
   const sponsors = sponsorService.getAllSync()
   
@@ -101,6 +180,27 @@ export function ProgramList({
       return () => clearTimeout(timer)
     }
   }, [showFavorite, user, data, loadFavorites])
+
+  useEffect(() => {
+    if (isStudent && !studentFiltersInitialized.current) {
+      resetFilters()
+      studentFiltersInitialized.current = true
+    }
+    if (!isStudent) {
+      studentFiltersInitialized.current = false
+    }
+  }, [isStudent, resetFilters])
+
+  const updateSearchParams = useCallback(
+    (updater: (next: URLSearchParams) => void) => {
+      const nextParams = new URLSearchParams(searchParams)
+      updater(nextParams)
+      if (nextParams.toString() !== searchParams.toString()) {
+        setSearchParams(nextParams, { replace: true })
+      }
+    },
+    [searchParams, setSearchParams]
+  )
 
   const handleToggleFavorite = async (programId: string) => {
     const userId = user?.instructorId || user?.id
@@ -170,57 +270,169 @@ export function ProgramList({
   return (
     <div>
       <Space style={{ marginBottom: 16 }} size="middle" wrap>
-        <Input
-          placeholder="프로그램명 검색"
-          value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
-          onChange={e => table.getColumn('title')?.setFilterValue(e.target.value)}
-          style={{ width: 200 }}
-        />
-        <Select
-          placeholder="스폰서 선택"
-          value={(table.getColumn('sponsorId')?.getFilterValue() as string) || undefined}
-          onChange={value => table.getColumn('sponsorId')?.setFilterValue(value || null)}
-          allowClear
-          style={{ width: 150 }}
-          showSearch
-          filterOption={(input, option) => {
-            const label = option?.label as string | undefined
-            return label ? label.toLowerCase().includes(input.toLowerCase()) : false
-          }}
-        >
-          {sponsors.map(sponsor => (
-            <Option key={sponsor.id} value={sponsor.id}>
-              {sponsor.name}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="유형 선택"
-          value={(table.getColumn('type')?.getFilterValue() as string) || undefined}
-          onChange={value => table.getColumn('type')?.setFilterValue(value || null)}
-          allowClear
-          style={{ width: 120 }}
-        >
-          {programTypes.map(type => (
-            <Option key={type.value} value={type.value}>
-              {type.label}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="상태 선택"
-          value={(table.getColumn('lifecycleStatus')?.getFilterValue() as string) || undefined}
-          onChange={value => table.getColumn('lifecycleStatus')?.setFilterValue(value || null)}
-          allowClear
-          style={{ width: 200 }}
-        >
-          {statusOptions.map(status => (
-            <Option key={status.value} value={status.value}>
-              {status.label}
-            </Option>
-          ))}
-        </Select>
-        <Button onClick={() => resetFilters()}>필터 초기화</Button>
+        {isStudent ? (
+          <>
+           <Input
+              placeholder="프로그램명 검색"
+              value={searchQuery}
+              onChange={e =>
+                updateSearchParams(next => {
+                  const value = e.target.value.trim()
+                  if (value) {
+                    next.set('search', value)
+                  } else {
+                    next.delete('search')
+                  }
+                })
+              }
+              style={{ width: 200 }}
+            />
+            <DatePicker.RangePicker
+              value={periodRange || undefined}
+              onChange={value =>
+                updateSearchParams(next => {
+                  if (value?.[0] && value?.[1]) {
+                    next.set('startDate', value[0].format('YYYY-MM-DD'))
+                    next.set('endDate', value[1].format('YYYY-MM-DD'))
+                  } else {
+                    next.delete('startDate')
+                    next.delete('endDate')
+                  }
+                })
+              }
+              allowClear
+              placeholder={['시작일', '종료일']}
+            />
+            <Select
+              placeholder="수강 대상"
+              value={targetFilter === 'all' ? undefined : targetFilter}
+              onChange={value =>
+                updateSearchParams(next => {
+                  if (value) {
+                    next.set('target', value)
+                  } else {
+                    next.delete('target')
+                  }
+                })
+              }
+              allowClear
+              style={{ width: 160 }}
+            >
+              <Option value="individual">개인 학생</Option>
+              <Option value="school">학교(선생님)</Option>
+            </Select>
+            <Select
+              placeholder="교육 유형"
+              value={educationTypeFilter === 'all' ? undefined : educationTypeFilter}
+              onChange={value =>
+                updateSearchParams(next => {
+                  if (value) {
+                    next.set('type', value)
+                  } else {
+                    next.delete('type')
+                  }
+                })
+              }
+              allowClear
+              style={{ width: 160 }}
+            >
+              {programTypes.map(type => (
+                <Option key={type.value} value={type.value}>
+                  {type.label}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              placeholder="진행 상태"
+              value={progressStatusFilter === 'all' ? undefined : progressStatusFilter}
+              onChange={value =>
+                updateSearchParams(next => {
+                  if (value) {
+                    next.set('status', value)
+                  } else {
+                    next.delete('status')
+                  }
+                })
+              }
+              allowClear
+              style={{ width: 200 }}
+            >
+              {statusOptions.map(status => (
+                <Option key={status.value} value={status.value}>
+                  {status.label}
+                </Option>
+              ))}
+            </Select>
+            <Button
+              onClick={() => {
+                updateSearchParams(next => {
+                  next.delete('startDate')
+                  next.delete('endDate')
+                  next.delete('target')
+                  next.delete('type')
+                  next.delete('status')
+                  next.delete('search')
+                })
+              }}
+            >
+              필터 초기화
+            </Button>
+          </>
+        ) : (
+          <>
+            <Input
+              placeholder="프로그램명 검색"
+              value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
+              onChange={e => table.getColumn('title')?.setFilterValue(e.target.value)}
+              style={{ width: 200 }}
+            />
+            <Select
+              placeholder="스폰서 선택"
+              value={(table.getColumn('sponsorId')?.getFilterValue() as string) || undefined}
+              onChange={value => table.getColumn('sponsorId')?.setFilterValue(value || null)}
+              allowClear
+              style={{ width: 150 }}
+              showSearch
+              filterOption={(input, option) => {
+                const label = option?.label as string | undefined
+                return label ? label.toLowerCase().includes(input.toLowerCase()) : false
+              }}
+            >
+              {sponsors.map(sponsor => (
+                <Option key={sponsor.id} value={sponsor.id}>
+                  {sponsor.name}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              placeholder="유형 선택"
+              value={(table.getColumn('type')?.getFilterValue() as string) || undefined}
+              onChange={value => table.getColumn('type')?.setFilterValue(value || null)}
+              allowClear
+              style={{ width: 120 }}
+            >
+              {programTypes.map(type => (
+                <Option key={type.value} value={type.value}>
+                  {type.label}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              placeholder="상태 선택"
+              value={(table.getColumn('lifecycleStatus')?.getFilterValue() as string) || undefined}
+              onChange={value => table.getColumn('lifecycleStatus')?.setFilterValue(value || null)}
+              allowClear
+              style={{ width: 200 }}
+            >
+              {statusOptions.map(status => (
+                <Option key={status.value} value={status.value}>
+                  {status.label}
+                </Option>
+              ))}
+            </Select>
+            <Button onClick={() => resetFilters()}>필터 초기화</Button>
+          </>
+        )}
       </Space>
 
       <Table

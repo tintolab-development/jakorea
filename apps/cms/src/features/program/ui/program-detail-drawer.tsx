@@ -5,9 +5,9 @@
  */
 
 import { useState, useMemo, useEffect } from 'react'
-import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Alert, Typography, Divider, Modal } from 'antd'
+import { Drawer, Descriptions, Tag, Tabs, Table, Space, Button, Badge, Card, Alert, Typography, Divider, Modal, message } from 'antd'
 import { ApplicationFormModal } from '@/shared/ui/application-form-modal'
-import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
 import type { Program, ApplicationPath } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { schoolService } from '@/entities/school/api/school-service'
@@ -45,6 +45,11 @@ import {
 import type { ProgramLifecycleStatus } from '@/types/domain'
 import { checkDuplicateApplication } from '@/shared/utils/duplicate-application-check'
 import dayjs from 'dayjs'
+import {
+  addFavoriteProgram,
+  removeFavoriteProgram,
+  isFavoriteProgram,
+} from '@/entities/program/api/favorite-program-service'
 
 const { Paragraph, Text } = Typography
 
@@ -91,10 +96,14 @@ export function ProgramDetailDrawer({
   const [statusChangeLoading, setStatusChangeLoading] = useState(false)
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [applicationModalOpen, setApplicationModalOpen] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
   
   // 관리자만 수정/삭제 가능
   const isAdmin = user?.role === 'ADMIN'
   const showActions = !hideActions && isAdmin
+  const favoriteUserId = user?.instructorId || user?.id
+  const canFavorite = !!favoriteUserId && !isAdmin
   
   // prop으로 받은 program 또는 store의 selectedProgram 사용 (store가 최신 상태 유지)
   const currentProgram = program || storeSelectedProgram
@@ -104,8 +113,8 @@ export function ProgramDetailDrawer({
   const userSubjectType = useMemo(() => {
     if (!user || user.role === 'ADMIN') return undefined
     if (user.role === 'INSTRUCTOR') return 'instructor' as const
-    if (user.role === 'VOLUNTEER') return 'volunteer' as const
     if (user.role === 'STUDENT') return 'student' as const
+    if (user.role === 'VOLUNTEER') return 'volunteer' as const
     return undefined
   }, [user])
 
@@ -176,16 +185,15 @@ export function ProgramDetailDrawer({
     const subjectId =
       userSubjectType === 'instructor'
         ? user.instructorId
-        : userSubjectType === 'volunteer'
-          ? user.id
-          : user.id
+        : user.id
     if (!subjectId) return false
     
     return mockApplications.some(
       app =>
         app.programId === displayProgram.id &&
         app.subjectId === subjectId &&
-        app.subjectType === userSubjectType &&
+        (app.subjectType === userSubjectType ||
+          (user?.role === 'STUDENT' && app.subjectType === 'volunteer')) &&
         app.status !== 'cancelled'
     )
   }, [displayProgram, user, userSubjectType])
@@ -211,6 +219,30 @@ export function ProgramDetailDrawer({
       })
     }
   }, [displayProgram, userSubjectType, applicationAvailable, unavailableReason, applicationPath, applicationUrl, userHasApplied])
+
+  useEffect(() => {
+    if (!open || !displayProgram || !canFavorite || !favoriteUserId) {
+      setIsFavorite(false)
+      return
+    }
+
+    let cancelled = false
+    const loadFavorite = async () => {
+      try {
+        const favorite = await isFavoriteProgram(favoriteUserId, displayProgram.id)
+        if (!cancelled) {
+          setIsFavorite(favorite)
+        }
+      } catch (error) {
+        console.error('관심 프로그램 상태 로드 실패:', error)
+      }
+    }
+
+    loadFavorite()
+    return () => {
+      cancelled = true
+    }
+  }, [open, displayProgram, canFavorite, favoriteUserId])
   
   if (!displayProgram) return null
   
@@ -280,6 +312,28 @@ export function ProgramDetailDrawer({
     setEditingApplicationPath(null)
   }
 
+  const handleToggleFavorite = async () => {
+    if (!favoriteUserId || !displayProgram) return
+
+    setFavoriteLoading(true)
+    try {
+      if (isFavorite) {
+        await removeFavoriteProgram(favoriteUserId, displayProgram.id)
+        setIsFavorite(false)
+        message.success('관심 프로그램에서 제거되었습니다.')
+      } else {
+        await addFavoriteProgram(favoriteUserId, displayProgram.id)
+        setIsFavorite(true)
+        message.success('관심 프로그램에 추가되었습니다.')
+      }
+    } catch (error) {
+      console.error('관심 프로그램 토글 실패:', error)
+      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+    } finally {
+      setFavoriteLoading(false)
+    }
+  }
+
   const pathTypeLabels: Record<string, string> = {
     google_form: '구글폼',
     internal: '자동화 프로그램',
@@ -335,16 +389,28 @@ export function ProgramDetailDrawer({
       open={open}
       onClose={onClose}
       extra={
-        showActions ? (
-          <Space>
-            <Button icon={<EditOutlined />} onClick={onEdit}>
-              수정
+        <Space>
+          {canFavorite && (
+            <Button
+              type="text"
+              icon={isFavorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+              loading={favoriteLoading}
+              onClick={handleToggleFavorite}
+            >
+              {isFavorite ? '관심 해제' : '관심 등록'}
             </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
-              삭제
-            </Button>
-          </Space>
-        ) : null
+          )}
+          {showActions && (
+            <>
+              <Button icon={<EditOutlined />} onClick={onEdit}>
+                수정
+              </Button>
+              <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
+                삭제
+              </Button>
+            </>
+          )}
+        </Space>
       }
     >
       <Tabs

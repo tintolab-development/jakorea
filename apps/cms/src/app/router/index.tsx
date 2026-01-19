@@ -106,6 +106,7 @@ const VolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/volun
 const MyVolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-program-list-page'))
 const MyVolunteerHistoryPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-history-page'))
 const MyVolunteerSchedulePage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-schedule-page'))
+const VolunteerEducationPlanPage = lazyLoad(() => import('@/pages/volunteers/volunteer-education-plan-page'))
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
 const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
@@ -288,7 +289,9 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <InterviewListPage /> },
           { path: 'my', element: <MyInterviewPage /> },
-          { path: 'apply', element: <InstructorApplicationPage /> },
+          { path: 'apply', element: <VolunteerDetailPage /> },
+          { path: 'apply/form', element: <InstructorApplicationPage /> },
+          { path: 'apply/:id', element: <VolunteerDetailPage /> },
         ],
       },
       {
@@ -315,6 +318,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <VolunteerListPage /> },
           { path: 'programs', element: <VolunteerProgramListPage /> },
+          { path: 'education-plan', element: <VolunteerEducationPlanPage /> },
           {
             path: 'my',
             children: [

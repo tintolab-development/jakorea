@@ -78,7 +78,7 @@ export function NotificationWidget() {
 
     setLoading(true)
     try {
-      const data = await getNotifications(user.id)
+      const data = await getNotifications(user.id, user.role)
       setNotifications(data)
     } catch (error) {
       console.error('알림 로드 실패:', error)
@@ -144,7 +144,7 @@ export function NotificationWidget() {
             <Space>
               <BellOutlined style={{ color: '#000000', fontSize: 18 }} />
               <Title level={5} style={{ margin: 0, color: '#000000' }}>
-                알림
+                알림 리스트
               </Title>
               {unreadCount > 0 && (
                 <Text type="secondary" style={{ fontSize: 12 }}>

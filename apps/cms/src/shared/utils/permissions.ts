@@ -60,14 +60,14 @@ export function isAdmin(user: Omit<User, 'password'> | null): boolean {
 }
 
 /**
- * 사용자가 강사 또는 봉사자 권한을 가지고 있는지 확인
+ * 사용자가 강사 또는 수강자 권한을 가지고 있는지 확인
  * @param user 사용자 객체 (또는 null)
- * @returns 강사/봉사자 여부
+ * @returns 강사/수강자 여부
  */
-export function isInstructorOrVolunteer(
+export function isInstructorOrStudent(
   user: Omit<User, 'password'> | null
 ): boolean {
-  return hasAnyRole(user, ['INSTRUCTOR', 'VOLUNTEER'])
+  return hasAnyRole(user, ['INSTRUCTOR', 'STUDENT'])
 }
 
 /**
@@ -80,7 +80,7 @@ export function isStudent(user: Omit<User, 'password'> | null): boolean {
 }
 
 /**
- * 권한 레벨 비교 (관리자 > 강사/봉사자 > 수강자)
+ * 권한 레벨 비교 (관리자 > 강사 > 수강자)
  * @param role1 첫 번째 권한
  * @param role2 두 번째 권한
  * @returns role1이 role2보다 높은 권한이면 true
@@ -89,8 +89,8 @@ export function hasHigherRole(role1: UserRole, role2: UserRole): boolean {
   const roleHierarchy: Record<UserRole, number> = {
     ADMIN: 3,
     INSTRUCTOR: 2,
-    VOLUNTEER: 2,
     STUDENT: 1,
+    VOLUNTEER: 1,
   }
 
   return roleHierarchy[role1] > roleHierarchy[role2]
@@ -106,8 +106,8 @@ export function hasEqualOrHigherRole(role1: UserRole, role2: UserRole): boolean 
   const roleHierarchy: Record<UserRole, number> = {
     ADMIN: 3,
     INSTRUCTOR: 2,
-    VOLUNTEER: 2,
     STUDENT: 1,
+    VOLUNTEER: 1,
   }
 
   return roleHierarchy[role1] >= roleHierarchy[role2]

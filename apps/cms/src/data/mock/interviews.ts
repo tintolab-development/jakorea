@@ -1,6 +1,6 @@
 /**
  * 면접 Mock 데이터
- * Phase 4.3: 강사/봉사자 면접 및 승인 프로세스
+ * Phase 4.3: 강사/수강자 면접 및 승인 프로세스
  */
 
 import type { Interview } from '@/types/interview'
@@ -34,7 +34,7 @@ export const mockInterviews: Interview[] = [
   {
     id: generateUUID(),
     userId: 'user-3',
-    userRole: 'VOLUNTEER',
+    userRole: 'STUDENT',
     status: 'NOT_REQUIRED',
     participationHistory: 3,
     createdAt: new Date('2024-01-17').toISOString(),
@@ -67,7 +67,7 @@ export const mockInterviews: Interview[] = [
   {
     id: generateUUID(),
     userId: 'user-6',
-    userRole: 'VOLUNTEER',
+    userRole: 'STUDENT',
     status: 'REJECTED',
     rejectedAt: new Date('2024-01-12').toISOString(),
     rejectedBy: 'admin-1',

@@ -55,12 +55,12 @@ export function InterviewListPage() {
   const fetchInterviews = useCallback(async () => {
     setLoading(true)
     try {
-      const filters: { status?: InterviewStatus; userRole?: 'INSTRUCTOR' | 'VOLUNTEER' } = {}
+      const filters: { status?: InterviewStatus; userRole?: 'INSTRUCTOR' | 'STUDENT' } = {}
       if (statusFilter !== 'ALL') {
         filters.status = statusFilter
       }
       if (roleFilter !== 'ALL') {
-        filters.userRole = roleFilter as 'INSTRUCTOR' | 'VOLUNTEER'
+        filters.userRole = roleFilter as 'INSTRUCTOR' | 'STUDENT'
       }
       const data = await getInterviews(filters)
       setInterviews(data)
@@ -222,7 +222,7 @@ export function InterviewListPage() {
           allowClear
         >
           <Option value="INSTRUCTOR">강사</Option>
-          <Option value="VOLUNTEER">봉사자</Option>
+          <Option value="STUDENT">수강자</Option>
         </Select>
         {(statusFilter !== 'ALL' || roleFilter !== 'ALL') && (
           <Button onClick={handleResetFilters}>필터 초기화</Button>

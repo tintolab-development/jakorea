@@ -163,7 +163,7 @@ export async function approveOrRejectInterview(
  */
 export async function getInterviews(filters?: {
   status?: InterviewStatus
-  userRole?: 'INSTRUCTOR' | 'VOLUNTEER'
+  userRole?: 'INSTRUCTOR' | 'STUDENT'
   userId?: UUID
 }): Promise<Interview[]> {
   let interviews = [...mockInterviews]

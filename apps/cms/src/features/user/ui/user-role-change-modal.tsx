@@ -18,7 +18,7 @@ interface UserRoleChangeModalProps {
 
 const { Option } = Select
 
-const roleOptions: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT']
+const roleOptions: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'STUDENT']
 
 export function UserRoleChangeModal({
   open,

@@ -8,10 +8,11 @@
 
 import { Card, Row, Col, Statistic, Divider } from 'antd'
 import { useMemo, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { mockInstructors } from '@/data/mock'
 import { PendingActionsAlert } from '@/features/dashboard/ui/pending-actions-alert'
 import { OverallStatisticsCards } from '@/features/dashboard/ui/overall-statistics-cards'
@@ -34,6 +35,8 @@ import { getInstructorActivitySummary, type InstructorActivitySummary } from '@/
 export function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
+  const categoryName = getCategoryNameByPath(location.pathname, 1) || '메인 홈'
   const instructorCount = mockInstructors.length
   const [overallStatistics, setOverallStatistics] = useState<OverallStatistics | null>(null)
   const [statisticsLoading, setStatisticsLoading] = useState(false)
@@ -79,9 +82,9 @@ export function Dashboard() {
     }
   }, [user?.role])
 
-  // 강사/봉사자일 경우 본인 활동 데이터 로드
+  // 강사/수강자일 경우 본인 활동 데이터 로드
   useEffect(() => {
-    if (!((user?.role === 'INSTRUCTOR' || user?.role === 'VOLUNTEER') && user?.instructorId)) {
+    if (!((user?.role === 'INSTRUCTOR' || user?.role === 'STUDENT') && user?.instructorId)) {
       setInstructorActivity(null)
       return
     }
@@ -217,16 +220,16 @@ export function Dashboard() {
     }
   }
 
-  // 검색 및 알림 표시 (관리자, 강사, 봉사자)
+  // 검색 및 알림 표시 (관리자, 강사, 수강자)
   const showSearchAndNotification = 
     user?.role === 'ADMIN' || 
     user?.role === 'INSTRUCTOR' || 
-    user?.role === 'VOLUNTEER'
+    user?.role === 'STUDENT'
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={PAGE_HEADER_STYLE}>홈</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         {showSearchAndNotification && (
           <div style={{ width: 300 }}>
             <GlobalSearch />

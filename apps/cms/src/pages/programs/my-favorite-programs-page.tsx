@@ -22,7 +22,6 @@ import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/s
 import type { Program } from '@/types/domain'
 
 const { Option } = Select
-const { Search } = Input
 
 export function MyFavoriteProgramsPage() {
   const { user } = useAuthStore()
@@ -41,7 +40,7 @@ export function MyFavoriteProgramsPage() {
     return {
       status: (searchParams.get('status') as FavoriteProgramFilters['status']) || 'all',
       category: (searchParams.get('category') as FavoriteProgramFilters['category']) || 'all',
-      search: searchParams.get('search') || undefined,
+      search: searchParams.get('search') || '',
     }
   }, [searchParams])
 
@@ -65,34 +64,43 @@ export function MyFavoriteProgramsPage() {
     }
   }, [user, loadPrograms])
 
-  const handleStatusChange = (value: FavoriteProgramFilters['status']) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value || value === 'all') {
-      newParams.delete('status')
-    } else {
-      newParams.set('status', value)
+  const updateSearchParams = (updater: (next: URLSearchParams) => void) => {
+    const nextParams = new URLSearchParams(searchParams)
+    updater(nextParams)
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true })
     }
-    setSearchParams(newParams, { replace: true })
+  }
+
+  const handleStatusChange = (value: FavoriteProgramFilters['status']) => {
+    updateSearchParams(next => {
+      if (!value || value === 'all') {
+        next.delete('status')
+      } else {
+        next.set('status', value)
+      }
+    })
   }
 
   const handleCategoryChange = (value: FavoriteProgramFilters['category']) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value || value === 'all') {
-      newParams.delete('category')
-    } else {
-      newParams.set('category', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    updateSearchParams(next => {
+      if (!value || value === 'all') {
+        next.delete('category')
+      } else {
+        next.set('category', value)
+      }
+    })
   }
 
-  const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value) {
-      newParams.delete('search')
-    } else {
-      newParams.set('search', value)
-    }
-    setSearchParams(newParams, { replace: true })
+  const handleSearchChange = (value: string) => {
+    updateSearchParams(next => {
+      const trimmed = value.trim()
+      if (!trimmed) {
+        next.delete('search')
+      } else {
+        next.set('search', trimmed)
+      }
+    })
   }
 
   const handleRemoveFavorite = async (programId: string) => {
@@ -138,17 +146,7 @@ export function MyFavoriteProgramsPage() {
       key: 'title',
       width: 250,
       fixed: 'left' as const,
-      render: (title: string, record: FavoriteProgram) => (
-        <div>
-          <Button
-            type="link"
-            onClick={() => handleViewProgram(record)}
-            style={{ padding: 0, fontWeight: 500 }}
-          >
-            {title}
-          </Button>
-        </div>
-      ),
+      render: (title: string) => <span style={{ fontWeight: 500 }}>{title}</span>,
     },
     {
       title: '카테고리',
@@ -197,7 +195,10 @@ export function MyFavoriteProgramsPage() {
           type="text"
           danger
           icon={<HeartFilled style={{ color: '#ff4d4f' }} />}
-          onClick={() => handleRemoveFavorite(record.id)}
+          onClick={(event) => {
+            event.stopPropagation()
+            handleRemoveFavorite(record.id)
+          }}
         >
           해제
         </Button>
@@ -216,17 +217,18 @@ export function MyFavoriteProgramsPage() {
 
   return (
     <div>
-      <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 24 }}>{categoryName}</h1>
+      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+      </Space>
 
       <Card style={{ marginBottom: 16 }}>
         <Space size="middle" wrap>
-          <Search
+          <Input
             placeholder="프로그램명 검색"
             allowClear
             style={{ width: 250 }}
-            defaultValue={filters.search}
-            onSearch={handleSearch}
-            enterButton
+            value={filters.search}
+            onChange={event => handleSearchChange(event.target.value)}
           />
           <Select
             placeholder="상태 필터"
@@ -263,6 +265,10 @@ export function MyFavoriteProgramsPage() {
           showSizeChanger: true,
           showTotal: total => `총 ${total}개`,
         }}
+        onRow={record => ({
+          onClick: () => handleViewProgram(record),
+          style: { cursor: 'pointer' },
+        })}
         scroll={{ x: 1200 }}
         locale={{
           emptyText: <Empty description="관심 등록한 프로그램이 없습니다." />,

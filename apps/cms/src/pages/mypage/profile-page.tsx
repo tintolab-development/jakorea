@@ -47,7 +47,13 @@ export function ProfilePage() {
             <div style={{ padding: '0 24px' }}>
               <Space align="center" size="middle">
                 <Title level={3} style={{ margin: 0 }}>{user?.name}</Title>
-                <Tag color="blue">{user?.role === 'INSTRUCTOR' ? '강사' : '봉사자'}</Tag>
+                <Tag color="blue">
+                  {user?.role === 'INSTRUCTOR'
+                    ? '강사'
+                    : user?.role === 'STUDENT'
+                      ? (user?.studentType === 'SCHOOL_TEACHER' ? '학교(선생님)' : '개인 학생')
+                      : '수강자'}
+                </Tag>
               </Space>
               <div style={{ marginTop: 8 }}>
                 <Text type="secondary">{user?.email}</Text>
@@ -78,8 +84,8 @@ export function ProfilePage() {
                   </Descriptions>
                 </section>
 
-                {/* 학교 정보 (봉사자만 표시) */}
-                {user?.role === 'VOLUNTEER' && (
+                {/* 학교 정보 (수강자 중 학교/학년 정보가 있는 경우 표시) */}
+                {user?.role === 'STUDENT' && (user?.schoolName || user?.grade) && (
                   <section style={{ marginTop: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                       <ReadOutlined style={{ color: '#1890ff' }} />

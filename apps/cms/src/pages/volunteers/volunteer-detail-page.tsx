@@ -4,9 +4,9 @@
  * 참고 화면: U-04-02 봉사 상세
  */
 
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert } from 'antd'
+import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert, Button } from 'antd'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
 import { mockSchedulesMap, mockProgramsMap } from '@/data/mock'
 import { mockVolunteerActivitiesMap } from '@/data/mock/activities'
@@ -30,19 +30,22 @@ const volunteerStatusColors: Record<VolunteerActivity['status'], string> = {
 }
 
 export function VolunteerDetailPage() {
+  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [activity, setActivity] = useState<VolunteerActivity | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadActivity = () => {
-      if (!id) {
+      const fallbackActivity = Array.from(mockVolunteerActivitiesMap.values())[0]
+      const activityId = id || fallbackActivity?.id
+      if (!activityId) {
         setLoading(false)
         return
       }
 
       try {
-        const found = mockVolunteerActivitiesMap.get(id)
+        const found = mockVolunteerActivitiesMap.get(activityId)
         setActivity(found || null)
       } catch (error) {
         console.error('Failed to load volunteer activity:', error)
@@ -106,10 +109,16 @@ export function VolunteerDetailPage() {
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 페이지 헤더 영역 */}
-        <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Title level={2} style={{ margin: 0 }}>
             봉사 상세
           </Title>
+          <Button
+            type="primary"
+            onClick={() => navigate('/interviews/apply/form?role=STUDENT&fixedRole=1')}
+          >
+            봉사단 신청하기
+          </Button>
         </div>
 
         {/* 봉사 상태 요약 영역 (최상단, 가장 강조) */}

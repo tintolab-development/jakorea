@@ -217,7 +217,7 @@ export function ProgramListPage() {
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         showActions={isAdmin} // 관리자만 작업 컬럼 표시
-        showFavorite={isUserRole && !isAdmin} // 강사/봉사자/학생만 찜하기 컬럼 표시
+        showFavorite={false} // 찜하기는 상세 패널에서만 제공
         onChangeStatus={isAdmin ? handleStatusChange : undefined}
       />
 

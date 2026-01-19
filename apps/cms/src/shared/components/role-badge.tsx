@@ -4,7 +4,7 @@
  */
 
 import { Tag } from 'antd'
-import { UserOutlined, TeamOutlined, BookOutlined, CrownOutlined } from '@ant-design/icons'
+import { UserOutlined, BookOutlined, CrownOutlined, HeartOutlined } from '@ant-design/icons'
 import type { UserRole } from '@/types/user'
 
 interface RoleBadgeProps {
@@ -26,15 +26,15 @@ const roleConfig: Record<
     color: 'blue',
     icon: <UserOutlined />,
   },
-  VOLUNTEER: {
-    label: '봉사자',
-    color: 'green',
-    icon: <TeamOutlined />,
-  },
   STUDENT: {
     label: '수강자',
     color: 'default',
     icon: <BookOutlined />,
+  },
+  VOLUNTEER: {
+    label: '봉사자',
+    color: 'green',
+    icon: <HeartOutlined />,
   },
 }
 

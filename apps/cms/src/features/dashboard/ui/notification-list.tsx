@@ -60,7 +60,7 @@ export function NotificationList() {
 
     setLoading(true)
     try {
-      const data = await getNotifications(user.id)
+      const data = await getNotifications(user.id, user.role)
       setNotifications(data)
     } catch (error) {
       console.error('알림 로드 실패:', error)

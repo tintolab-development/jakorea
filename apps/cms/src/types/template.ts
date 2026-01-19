@@ -6,7 +6,6 @@ export type TemplateAudience =
   | 'ADMIN_INTERNAL'
   | 'SCHOOL'
   | 'INSTRUCTOR'
-  | 'VOLUNTEER'
   | 'STUDENT'
 
 export interface BaseTemplate {
