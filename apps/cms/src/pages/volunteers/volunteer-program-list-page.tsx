@@ -242,7 +242,6 @@ export function VolunteerProgramListPage() {
         </Card>
       ),
     },
-
     // 관리자만 랜덤 배치 탭 표시
     ...(isAdmin ? [
       {
