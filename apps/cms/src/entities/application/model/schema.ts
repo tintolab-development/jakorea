@@ -8,7 +8,7 @@ import { z } from 'zod'
 export const applicationSchema = z.object({
   programId: z.string().min(1, '프로그램을 선택해주세요'),
   roundId: z.string().optional(),
-  subjectType: z.enum(['school', 'student', 'instructor']),
+  subjectType: z.enum(['school', 'student', 'instructor', 'volunteer']),
   subjectId: z
     .string()
     .transform(value => value.trim())

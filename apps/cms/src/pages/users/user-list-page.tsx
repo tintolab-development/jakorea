@@ -3,7 +3,7 @@
  * Phase 5.1.2: 사용자 관리 페이지
  */
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Space, Select, Input, Button } from 'antd'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { UserList } from '@/features/user/ui/user-list'
@@ -41,7 +41,7 @@ export function UserListPage() {
     return searchParams.get('search') || ''
   }, [searchParams])
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const filters: { role?: UserRole; search?: string } = {}
       if (roleFilter !== 'ALL') {
@@ -54,12 +54,12 @@ export function UserListPage() {
     } catch (error) {
       handleError(error, { defaultMessage: '사용자 목록을 불러오는데 실패했습니다' })
     }
-  }
+  }, [fetchUsers, roleFilter, searchQuery])
 
   // 페이지 로드 시 및 필터 변경 시 자동으로 데이터 불러오기
   useEffect(() => {
     loadUsers()
-  }, [roleFilter, searchQuery])
+  }, [loadUsers])
 
   // 필터 변경 핸들러
   const handleRoleFilterChange = (value: UserRole | 'ALL') => {

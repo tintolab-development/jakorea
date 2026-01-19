@@ -3,7 +3,7 @@
  * Phase 5.2.6: 관심 프로그램 관리
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
 import { HeartFilled } from '@ant-design/icons'
@@ -45,14 +45,7 @@ export function MyFavoriteProgramsPage() {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    const userId = user?.instructorId || user?.id
-    if (userId) {
-      loadPrograms(userId)
-    }
-  }, [user, filters])
-
-  const loadPrograms = async (userId: string) => {
+  const loadPrograms = useCallback(async (userId: string) => {
     setLoading(true)
     try {
       const data = await getFavoritePrograms(userId, filters)
@@ -63,7 +56,14 @@ export function MyFavoriteProgramsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    const userId = user?.instructorId || user?.id
+    if (userId) {
+      loadPrograms(userId)
+    }
+  }, [user, loadPrograms])
 
   const handleStatusChange = (value: FavoriteProgramFilters['status']) => {
     const newParams = new URLSearchParams(searchParams)

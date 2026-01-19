@@ -53,7 +53,7 @@ export function ProtectedRoute({
     }
 
     initAuth()
-  }, []) // 초기 마운트 시에만 실행
+  }, [checkAuth, isAuthenticated]) // 초기 마운트 시에만 실행
 
   // 로딩 중이면 스피너 표시
   if (isChecking || loading) {

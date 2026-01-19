@@ -2,6 +2,7 @@
  * 일정 등록/수정 폼 컴포넌트
  * Phase 3.1: react-hook-form + zod
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { Form, Input, Select, Button, Card, Space, DatePicker, TimePicker, Alert } from 'antd'
 import { useForm } from 'react-hook-form'

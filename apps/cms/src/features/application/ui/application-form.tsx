@@ -2,6 +2,7 @@
  * 신청 등록/수정 폼 컴포넌트
  * Phase 2.2: react-hook-form + zod
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { useEffect, useMemo } from 'react'
 import { Form, Select, Input, Button, Space, message, Alert, Typography } from 'antd'
@@ -10,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationSchema, type ApplicationFormData } from '@/entities/application/model/schema'
 import type { Application } from '@/types/domain'
 import { mockPrograms, mockSchools, mockInstructors } from '@/data/mock'
+import { mockUsers } from '@/data/mock/users'
 import type { ApplicationSubjectType } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
@@ -34,6 +36,7 @@ const subjectTypeLabels: Record<ApplicationSubjectType, string> = {
   school: '학교',
   student: '학생',
   instructor: '강사',
+  volunteer: '봉사자',
 }
 
 export function ApplicationForm({
@@ -47,13 +50,44 @@ export function ApplicationForm({
   const userRole = user?.role
   const isAdmin = userRole === 'ADMIN'
 
-  // 로그인한 사용자의 역할에 따른 기본 신청 주체 타입 매핑
-  const fixedSubjectType: ApplicationSubjectType | undefined = useMemo(() => {
-    if (!userRole || isAdmin) return undefined
-    if (userRole === 'INSTRUCTOR' || userRole === 'VOLUNTEER') return 'instructor'
-    if (userRole === 'STUDENT') return 'student'
-    return undefined
-  }, [userRole, isAdmin])
+  // 로그인한 사용자의 역할에 따른 신청 주체 고정 (관리자 제외)
+  const fixedSubject = useMemo<{
+    subjectType: ApplicationSubjectType
+    subjectId: string
+    subjectName: string
+    eligibilitySubjectType: Exclude<ApplicationSubjectType, 'volunteer'>
+  } | null>(() => {
+    if (!userRole || isAdmin || !user) return null
+
+    if (userRole === 'INSTRUCTOR' && user.instructorId) {
+      return {
+        subjectType: 'instructor',
+        subjectId: user.instructorId,
+        subjectName: user.name,
+        eligibilitySubjectType: 'instructor',
+      }
+    }
+
+    if (userRole === 'VOLUNTEER') {
+      return {
+        subjectType: 'volunteer',
+        subjectId: user.id,
+        subjectName: user.name,
+        eligibilitySubjectType: 'instructor', // 모집 로직은 강사/봉사자 공통으로 'instructor'로 판단
+      }
+    }
+
+    if (userRole === 'STUDENT') {
+      return {
+        subjectType: 'student',
+        subjectId: user.id,
+        subjectName: user.name,
+        eligibilitySubjectType: 'student',
+      }
+    }
+
+    return null
+  }, [userRole, isAdmin, user])
 
   const {
     register,
@@ -95,17 +129,21 @@ export function ApplicationForm({
       return mockPrograms
     }
     // 일반 사용자는 신청 가능한 프로그램만 선택 가능 (로그인한 사용자의 역할에 따라)
-    if (fixedSubjectType) {
-      return mockPrograms.filter(program => isApplicationAvailable(program, fixedSubjectType))
+    if (fixedSubject) {
+      return mockPrograms.filter(program =>
+        isApplicationAvailable(program, fixedSubject.eligibilitySubjectType)
+      )
     }
     return mockPrograms.filter(program => isApplicationAvailable(program))
-  }, [isAdmin, fixedSubjectType])
+  }, [isAdmin, fixedSubject])
 
   // 선택된 프로그램이 신청 불가능한 경우 경고 표시
   const selectedProgramUnavailable = useMemo(() => {
     if (!selectedProgram) return false
     if (selectedSubjectType) {
-      return !isApplicationAvailable(selectedProgram, selectedSubjectType)
+      // volunteer는 program-helpers에서 'instructor'로 판단
+      const eligibilityType = selectedSubjectType === 'volunteer' ? 'instructor' : selectedSubjectType
+      return !isApplicationAvailable(selectedProgram, eligibilityType)
     }
     return !isApplicationAvailable(selectedProgram)
   }, [selectedProgram, selectedSubjectType])
@@ -118,12 +156,13 @@ export function ApplicationForm({
     register('subjectId')
   }, [register])
 
-  // 관리자 이외 역할에서는 로그인한 권한에 따라 신청 주체 타입을 고정
+  // 관리자 이외 역할에서는 로그인한 권한에 따라 신청 주체 타입/ID를 고정
   useEffect(() => {
-    if (!application && fixedSubjectType) {
-      setValue('subjectType', fixedSubjectType, { shouldValidate: true })
+    if (!application && fixedSubject) {
+      setValue('subjectType', fixedSubject.subjectType, { shouldValidate: true })
+      setValue('subjectId', fixedSubject.subjectId, { shouldValidate: true })
     }
-  }, [application, fixedSubjectType, setValue])
+  }, [application, fixedSubject, setValue])
 
   // programId가 prop으로 전달된 경우 자동 설정
   useEffect(() => {
@@ -137,8 +176,9 @@ export function ApplicationForm({
       // 신청 제출 시 프로그램 상태 검증 (신규 신청만)
       if (!application && data.programId && data.subjectType) {
         const program = mockPrograms.find(p => p.id === data.programId)
-        if (program && !isApplicationAvailable(program, data.subjectType)) {
-          const reason = getApplicationUnavailableReason(program, data.subjectType)
+        const eligibilityType = data.subjectType === 'volunteer' ? 'instructor' : data.subjectType
+        if (program && !isApplicationAvailable(program, eligibilityType)) {
+          const reason = getApplicationUnavailableReason(program, eligibilityType)
           message.error(reason || '프로그램 상태로 인해 신청할 수 없습니다.')
           return
         }
@@ -151,7 +191,7 @@ export function ApplicationForm({
     }
   }
 
-  // 신청 주체 목록 필터링
+  // 신청 주체 목록 필터링 (관리자 전용)
   const getSubjectOptions = () => {
     if (!selectedSubjectType) return []
 
@@ -166,6 +206,13 @@ export function ApplicationForm({
           value: instructor.id,
           label: instructor.name,
         }))
+      case 'volunteer':
+        return mockUsers
+          .filter(u => u.role === 'VOLUNTEER')
+          .map(volunteer => ({
+            value: volunteer.id,
+            label: volunteer.name,
+          }))
       case 'student':
         // 학생은 별도 목록이 없으므로 빈 배열 (실제로는 학생 목록이 필요)
         return []
@@ -186,7 +233,10 @@ export function ApplicationForm({
                 <Text strong>이 프로그램은 현재 신청할 수 없습니다</Text>
                 <Text type="secondary">
                   {selectedProgram && selectedSubjectType
-                    ? getApplicationUnavailableReason(selectedProgram, selectedSubjectType) ||
+                    ? getApplicationUnavailableReason(
+                        selectedProgram,
+                        selectedSubjectType === 'volunteer' ? 'instructor' : selectedSubjectType
+                      ) ||
                       '프로그램 상태로 인해 신청할 수 없습니다.'
                     : selectedProgram
                       ? getApplicationUnavailableReason(selectedProgram) ||
@@ -301,16 +351,18 @@ export function ApplicationForm({
           </Select>
         </Form.Item>
       ) : (
-        fixedSubjectType && (
+        fixedSubject && (
           <Form.Item label="신청 주체 타입" required>
-            <Select value={fixedSubjectType} disabled>
-              <Option value={fixedSubjectType}>{subjectTypeLabels[fixedSubjectType]}</Option>
+            <Select value={fixedSubject.subjectType} disabled>
+              <Option value={fixedSubject.subjectType}>
+                {subjectTypeLabels[fixedSubject.subjectType]}
+              </Option>
             </Select>
           </Form.Item>
         )
       )}
 
-      {selectedSubjectType && (
+      {isAdmin && selectedSubjectType && (
         <Form.Item
           label="신청 주체"
           validateStatus={errors.subjectId ? 'error' : ''}
@@ -354,6 +406,12 @@ export function ApplicationForm({
               ))}
             </Select>
           )}
+        </Form.Item>
+      )}
+
+      {!isAdmin && fixedSubject && (
+        <Form.Item label="신청 주체" required style={{ marginBottom: 30 }}>
+          <Input value={fixedSubject.subjectName} disabled />
         </Form.Item>
       )}
 

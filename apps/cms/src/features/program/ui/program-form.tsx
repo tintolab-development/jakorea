@@ -2,6 +2,7 @@
  * 프로그램 등록/수정 폼 컴포넌트
  * Phase 2.1: 복잡한 폼 (Steps로 분리, 기획자 요청)
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { useState } from 'react'
 import { Form, Input, Select, Button, Card, Space, Steps, DatePicker } from 'antd'

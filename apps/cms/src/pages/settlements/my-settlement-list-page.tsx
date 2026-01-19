@@ -4,7 +4,7 @@
  * 관리자 정산 페이지와 유사한 구조로 개선
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { Input, Space, Card, Tag, Button, Table, Tabs, Select, Segmented } from 'antd'
 import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
@@ -58,14 +58,7 @@ export function MySettlementListPage() {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    if (user?.instructorId) {
-      loadSettlements()
-      loadAllSettlements() // 탭 카운트용
-    }
-  }, [user?.instructorId, filters])
-
-  const loadSettlements = async () => {
+  const loadSettlements = useCallback(async () => {
     if (!user?.instructorId) return
 
     setLoading(true)
@@ -113,9 +106,9 @@ export function MySettlementListPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters.search, filters.status, user?.instructorId])
 
-  const loadAllSettlements = async () => {
+  const loadAllSettlements = useCallback(async () => {
     if (!user?.instructorId) return
 
     try {
@@ -124,7 +117,14 @@ export function MySettlementListPage() {
     } catch (error) {
       console.error('전체 정산 로드 실패:', error)
     }
-  }
+  }, [user?.instructorId])
+
+  useEffect(() => {
+    if (user?.instructorId) {
+      loadSettlements()
+      loadAllSettlements() // 탭 카운트용
+    }
+  }, [user?.instructorId, filters, loadSettlements, loadAllSettlements])
 
   const handleStatusChange = (status: SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all') => {
     const newParams = new URLSearchParams(searchParams)

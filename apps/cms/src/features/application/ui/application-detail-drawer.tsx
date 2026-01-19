@@ -21,6 +21,7 @@ import type { Application } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { mockUsers } from '@/data/mock/users'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import {
   applicationSubjectTypeConfig,
@@ -82,6 +83,8 @@ export function ApplicationDetailDrawer({
       ? schoolService.getNameById(displayApplication.subjectId)
       : displayApplication.subjectType === 'instructor'
         ? instructorService.getNameById(displayApplication.subjectId)
+        : displayApplication.subjectType === 'volunteer'
+          ? mockUsers.find(u => u.id === displayApplication.subjectId)?.name || '-'
         : '-'
 
   // 신청 경로 정보 (V3 Phase 7)

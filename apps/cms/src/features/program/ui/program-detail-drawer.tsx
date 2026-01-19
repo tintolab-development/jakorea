@@ -103,7 +103,8 @@ export function ProgramDetailDrawer({
   // hooks는 항상 동일한 순서로 호출되어야 하므로 early return 전에 호출
   const userSubjectType = useMemo(() => {
     if (!user || user.role === 'ADMIN') return undefined
-    if (user.role === 'INSTRUCTOR' || user.role === 'VOLUNTEER') return 'instructor' as const
+    if (user.role === 'INSTRUCTOR') return 'instructor' as const
+    if (user.role === 'VOLUNTEER') return 'volunteer' as const
     if (user.role === 'STUDENT') return 'student' as const
     return undefined
   }, [user])
@@ -120,7 +121,7 @@ export function ProgramDetailDrawer({
       return school ? { name: school.name, region: school.region } : null
     }
     return null
-  }, [currentProgram?.id])
+  }, [currentProgram])
 
   // prop으로 받은 program이 있으면 store에 동기화
   // store의 selectedProgram이 최신 상태이므로 우선 사용
@@ -144,8 +145,10 @@ export function ProgramDetailDrawer({
       }
     }
 
-    const applicationAvailable = isApplicationAvailable(displayProgram, userSubjectType)
-    const unavailableReason = getApplicationUnavailableReason(displayProgram, userSubjectType)
+    const eligibilitySubjectType =
+      userSubjectType === 'volunteer' ? 'instructor' : userSubjectType
+    const applicationAvailable = isApplicationAvailable(displayProgram, eligibilitySubjectType)
+    const unavailableReason = getApplicationUnavailableReason(displayProgram, eligibilitySubjectType)
     let applicationUrl: string | undefined
     
     // 이미 계산된 applicationPath를 사용 (applicationPath는 위에서 이미 계산됨)
@@ -170,8 +173,12 @@ export function ProgramDetailDrawer({
   const userHasApplied = useMemo(() => {
     if (!displayProgram || !user || !userSubjectType) return false
     
-    // 강사/봉사자인 경우 instructorId로 비교, 학생인 경우 userId로 비교
-    const subjectId = userSubjectType === 'instructor' ? user.instructorId : user.id
+    const subjectId =
+      userSubjectType === 'instructor'
+        ? user.instructorId
+        : userSubjectType === 'volunteer'
+          ? user.id
+          : user.id
     if (!subjectId) return false
     
     return mockApplications.some(
@@ -226,11 +233,13 @@ export function ProgramDetailDrawer({
   const capacityFull = isCapacityFull(displayProgram)
 
   const handleApplicationPathCreate = () => {
+    if (!isAdmin) return
     setEditingApplicationPath(null)
     setApplicationPathModalOpen(true)
   }
 
   const handleApplicationPathEdit = () => {
+    if (!isAdmin) return
     if (applicationPath) {
       setEditingApplicationPath(applicationPath)
       setApplicationPathModalOpen(true)
@@ -238,6 +247,7 @@ export function ProgramDetailDrawer({
   }
 
   const handleApplicationPathFormSubmit = async (formData: ApplicationPathFormData) => {
+    if (!isAdmin) return
     setFormLoading(true)
     try {
       if (editingApplicationPath) {
@@ -647,17 +657,19 @@ export function ProgramDetailDrawer({
                 <Card
                   title="신청 경로 설정"
                   extra={
-                    <Space>
-                      {applicationPath ? (
-                        <Button icon={<EditOutlined />} onClick={handleApplicationPathEdit}>
-                          수정
-                        </Button>
-                      ) : (
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleApplicationPathCreate}>
-                          신청 경로 등록
-                        </Button>
-                      )}
-                    </Space>
+                    isAdmin ? (
+                      <Space>
+                        {applicationPath ? (
+                          <Button icon={<EditOutlined />} onClick={handleApplicationPathEdit}>
+                            수정
+                          </Button>
+                        ) : (
+                          <Button type="primary" icon={<PlusOutlined />} onClick={handleApplicationPathCreate}>
+                            신청 경로 등록
+                          </Button>
+                        )}
+                      </Space>
+                    ) : null
                   }
                 >
                   {applicationPath ? (

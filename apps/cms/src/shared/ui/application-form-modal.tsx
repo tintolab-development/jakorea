@@ -36,13 +36,16 @@ export function ApplicationFormModal({
         programId, // 항상 현재 프로그램 ID로 고정
       }
 
-      // 강사/봉사자인 경우 subjectId를 instructorId로 설정
+      // 로그인한 권한 기준으로 subjectType/subjectId를 강제 (사용자 입력 오염 방지)
       if (user?.role === 'INSTRUCTOR' && user?.instructorId) {
         applicationData.subjectType = 'instructor'
         applicationData.subjectId = user.instructorId
-      } else if (user?.role === 'VOLUNTEER' && user?.instructorId) {
-        applicationData.subjectType = 'instructor'
-        applicationData.subjectId = user.instructorId
+      } else if (user?.role === 'VOLUNTEER' && user?.id) {
+        applicationData.subjectType = 'volunteer'
+        applicationData.subjectId = user.id
+      } else if (user?.role === 'STUDENT' && user?.id) {
+        applicationData.subjectType = 'student'
+        applicationData.subjectId = user.id
       }
 
       // createApplication은 submittedAt을 자동 생성하므로 제외하고 전달

@@ -17,6 +17,7 @@
         "@jakorea/ui": "workspace:*",
         "@jakorea/utils": "workspace:*",
         "@tanstack/react-table": "^8.20.5",
+        "@toast-ui/editor": "^3.2.2",
         "antd": "^5.28.0",
         "axios": "^1.7.9",
         "date-fns": "^4.1.0",

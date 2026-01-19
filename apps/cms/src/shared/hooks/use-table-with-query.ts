@@ -2,6 +2,7 @@
  * 공통 테이블 훅 (Query Parameter 동기화)
  * Phase 1.5: 테이블 훅 공통화
  */
+/* eslint-disable react-hooks/incompatible-library -- TanStack Table 사용 */
 
 import {
   useReactTable,
@@ -13,7 +14,7 @@ import {
   type ColumnDef,
   type TableOptions,
 } from '@tanstack/react-table'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useQueryParams } from './use-query-params'
 
 /**
@@ -92,7 +93,7 @@ export function useTableWithQuery<TData>({
    * "비교용" 문자열 키 생성: 항상 동일한 키 순서(filterKeys -> page -> pageSize)로 생성
    * - undefined 값은 제외되므로 URL에서 빠진 상태와 동일하게 취급됨
    */
-  const makeKey = (obj: Partial<QueryParams>) => {
+  const makeKey = useCallback((obj: Partial<QueryParams>) => {
     const normalized: Record<string, string> = {}
 
     // filterKeys 순서 고정
@@ -106,7 +107,7 @@ export function useTableWithQuery<TData>({
       normalized.pageSize = obj.pageSize
 
     return JSON.stringify(normalized)
-  }
+  }, [filterKeys])
 
   // 초기 필터 상태
   const initialFilters = useMemo<ColumnFiltersState>(() => {

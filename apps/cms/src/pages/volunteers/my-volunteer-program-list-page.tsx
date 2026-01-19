@@ -3,7 +3,7 @@
  * Phase: 봉사단 권한 마이그레이션
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { Input, Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
@@ -46,21 +46,7 @@ export function MyVolunteerProgramListPage() {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    const userId = user?.instructorId || user?.id
-    if (userId) {
-      loadPrograms()
-    }
-  }, [user, filters])
-
-  useEffect(() => {
-    const userId = user?.instructorId || user?.id
-    if (userId && programs.length > 0) {
-      loadFavorites(userId)
-    }
-  }, [user, programs])
-
-  const loadPrograms = async () => {
+  const loadPrograms = useCallback(async () => {
     if (!user?.id) return
 
     setLoading(true)
@@ -110,9 +96,9 @@ export function MyVolunteerProgramListPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, user?.id])
 
-  const loadFavorites = async (userId: string) => {
+  const loadFavorites = useCallback(async (userId: string) => {
     if (programs.length === 0) return
 
     try {
@@ -129,7 +115,21 @@ export function MyVolunteerProgramListPage() {
     } catch (error) {
       console.error('관심 프로그램 로드 실패:', error)
     }
-  }
+  }, [programs])
+
+  useEffect(() => {
+    const userId = user?.instructorId || user?.id
+    if (userId) {
+      loadPrograms()
+    }
+  }, [user, loadPrograms])
+
+  useEffect(() => {
+    const userId = user?.instructorId || user?.id
+    if (userId && programs.length > 0) {
+      loadFavorites(userId)
+    }
+  }, [user, programs, loadFavorites])
 
   const handleStatusChange = (status: 'all' | 'active' | 'scheduled' | 'completed') => {
     const newParams = new URLSearchParams(searchParams)

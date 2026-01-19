@@ -136,7 +136,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
       if (guFilter && parsed.gu !== guFilter) return false
       return true
     })
-  }, [data, params.sido, params.si, params.gun, params.gu])
+  }, [data, params.sido, params.gun, params.gu])
 
   const { table, resetFilters } = useEducationRecordTable(filteredDataByRegion)
 

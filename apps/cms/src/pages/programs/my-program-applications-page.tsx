@@ -41,19 +41,25 @@ export function MyProgramApplicationsPage() {
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '내가 신청한 프로그램'
 
   useEffect(() => {
-    // 강사 또는 수강자 권한일 때만 신청 목록 조회
-    if (user?.role === 'INSTRUCTOR' || user?.role === 'STUDENT') {
+    // 신청 주체 권한일 때만 신청 목록 조회
+    if (user?.role === 'INSTRUCTOR' || user?.role === 'VOLUNTEER' || user?.role === 'STUDENT') {
       fetchApplications()
     }
   }, [user?.role, fetchApplications])
 
-  // 강사/수강자가 신청한 프로그램만 필터링
+  // 로그인한 사용자가 신청한 프로그램만 필터링
   const myApplications = useMemo(() => {
     if (!user) return []
     
     if (user.role === 'INSTRUCTOR' && user.instructorId) {
       return applications.filter(
         app => app.subjectType === 'instructor' && app.subjectId === user.instructorId
+      )
+    }
+
+    if (user.role === 'VOLUNTEER' && user.id) {
+      return applications.filter(
+        app => app.subjectType === 'volunteer' && app.subjectId === user.id
       )
     }
     
@@ -158,7 +164,7 @@ export function MyProgramApplicationsPage() {
     },
   ]
 
-  if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'STUDENT')) {
+  if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'VOLUNTEER' && user.role !== 'STUDENT')) {
     return (
       <div>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>

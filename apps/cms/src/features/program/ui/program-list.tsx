@@ -6,7 +6,7 @@
 import { Table, Input, Select, Button, Space, Tag, Dropdown, message } from 'antd'
 import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useProgramTable } from '../model/use-program-table'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
@@ -73,7 +73,7 @@ export function ProgramList({
 
   const sponsors = sponsorService.getAllSync()
   
-  const loadFavorites = async (userId: string) => {
+  const loadFavorites = useCallback(async (userId: string) => {
     try {
       const favoriteStatuses = await Promise.all(
         data.map(p => isFavoriteProgram(userId, p.id))
@@ -88,7 +88,7 @@ export function ProgramList({
     } catch (error) {
       console.error('관심 프로그램 상태 로드 실패:', error)
     }
-  }
+  }, [data])
 
   // 찜하기 상태 로드
   useEffect(() => {
@@ -100,7 +100,7 @@ export function ProgramList({
       }, 0)
       return () => clearTimeout(timer)
     }
-  }, [showFavorite, user, data])
+  }, [showFavorite, user, data, loadFavorites])
 
   const handleToggleFavorite = async (programId: string) => {
     const userId = user?.instructorId || user?.id

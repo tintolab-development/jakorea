@@ -40,7 +40,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     initAuth()
-  }, []) // 초기 마운트 시에만 실행
+  }, [checkAuth, isAuthenticated]) // 초기 마운트 시에만 실행
 
   // 세션 만료 확인
   useEffect(() => {

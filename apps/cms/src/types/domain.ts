@@ -151,7 +151,7 @@ export interface Instructor {
 }
 
 // 신청 주체 타입
-export type ApplicationSubjectType = 'school' | 'student' | 'instructor'
+export type ApplicationSubjectType = 'school' | 'student' | 'instructor' | 'volunteer'
 
 // 신청 상태
 export type ApplicationStatus =

@@ -2,6 +2,7 @@
  * 강사 등록/수정 폼 컴포넌트
  * Phase 1.2: react-hook-form + zod
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { Form, Input, Select, Button, Space } from 'antd'
 import { useForm } from 'react-hook-form'
