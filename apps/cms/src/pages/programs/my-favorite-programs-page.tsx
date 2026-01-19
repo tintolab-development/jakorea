@@ -33,7 +33,7 @@ export function MyFavoriteProgramsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   
   // 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '관심 프로그램 관리'
+  const categoryName = getCategoryNameByPath(location.pathname, 3) || '관심 프로그램 관리'
 
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo<FavoriteProgramFilters>(() => {
