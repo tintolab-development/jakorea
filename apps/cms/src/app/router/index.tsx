@@ -10,25 +10,11 @@ import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/shared/components/protected-route'
 import { Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import './router.css'
 
 // 로딩 컴포넌트 - 화면 중앙 정렬
 const LoadingFallback = () => (
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-      zIndex: 9999,
-    }}
-  >
+  <div className="router-loading-fallback">
     <Spin size="large" />
   </div>
 )
@@ -93,6 +79,7 @@ const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-set
 const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
 const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
+const PaymentStatementListPage = lazyLoad(() => import('@/pages/settlements/payment-statement-list-page'))
 const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
 const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-page'))
 const InstructorApplicationPage = lazyLoad(() => import('@/pages/interviews/instructor-application-page'))
@@ -128,6 +115,7 @@ const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-pa
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
+const SurveyListPage = lazyLoad(() => import('@/pages/surveys/survey-list-page'))
 const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
@@ -194,6 +182,10 @@ export const router = createBrowserRouter([
           { path: ':id', element: <SponsorDetailPage /> },
           { path: ':id/edit', element: <SponsorFormPage /> },
         ],
+      },
+      {
+        path: 'surveys',
+        children: [{ index: true, element: <SurveyListPage /> }],
       },
       {
         path: 'schools',
@@ -280,6 +272,7 @@ export const router = createBrowserRouter([
           },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
+          { path: 'payment-statements', element: <PaymentStatementListPage /> },
           // Alias: 일정 협의 관리 (정착 경로는 /schedule-negotiations)
           { path: 'schedule-negotiations', element: <ScheduleNegotiationListPage /> },
         ],

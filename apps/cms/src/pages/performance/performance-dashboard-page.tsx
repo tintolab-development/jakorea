@@ -1,179 +1,190 @@
 /**
- * 예산 및 실적 관리 대시보드 (Phase 9 스캐폴딩)
- * - Program Mock 데이터를 기반으로 월별/지역별/프로그램별 실적 요약을 보여주는 관리자용 화면
+ * 예산 및 실적 관리 대시보드
+ * - 프로그램별 실적 통계 요약 (익명/집계)
  */
 
-import { useMemo } from 'react'
+import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Card, Space, Statistic, Table, Tag, Select, Button } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { mockPrograms } from '@/data/mock'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { exportTableToExcel } from '@/shared/utils/table-export'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
-
-interface PerformanceRow {
-  key: string
-  period: string // YYYY-MM
-  region: string
-  sponsorName: string
-  programCount: number
-  totalParticipants: number
-}
+import type { PerformanceStats } from '@/types/domain'
+import { usePerformanceStats } from '@/features/performance/hooks/use-performance-stats'
+import './performance-dashboard-page.css'
 
 export default function PerformanceDashboardPage() {
   const location = useLocation()
-  const { params, setParams } = useQueryParams<{ period?: string; region?: string }>()
+  const { params, setParams } = useQueryParams<{ period?: string; programId?: string }>()
   const categoryName = getCategoryNameByPath(location.pathname, 1) || '실적 통계'
 
-  // 원본 데이터에서 월, 지역, 후원사 기준 집계
-  const allRows: PerformanceRow[] = useMemo(() => {
-    const map = new Map<string, PerformanceRow>()
-
-    mockPrograms.forEach(program => {
-      if (!program.startDate) return
-      const period = dayjs(program.startDate).format('YYYY-MM')
-      const region = program.district || '미지정'
-      const sponsor = sponsorService.getByIdSync(program.sponsorId)
-      const sponsorName = sponsor?.name || '알 수 없음'
-      const key = `${period}__${region}__${sponsorName}`
-      const participants =
-        typeof program.totalParticipants === 'number' ? program.totalParticipants : 0
-
-      const existing = map.get(key)
-      if (existing) {
-        existing.programCount += 1
-        existing.totalParticipants += participants
-      } else {
-        map.set(key, {
-          key,
-          period,
-          region,
-          sponsorName,
-          programCount: 1,
-          totalParticipants: participants,
-        })
-      }
-    })
-
-    return Array.from(map.values()).sort((a, b) => a.period.localeCompare(b.period))
-  }, [])
-
-  const periods = Array.from(new Set(allRows.map(r => r.period))).sort()
-  const regions = Array.from(new Set(allRows.map(r => r.region))).sort()
-
-  const selectedPeriod = params.period || periods[periods.length - 1] || undefined
-  const selectedRegion = params.region
-
-  const filteredRows = allRows.filter(row => {
-    if (selectedPeriod && row.period !== selectedPeriod) return false
-    if (selectedRegion && row.region !== selectedRegion) return false
-    return true
+  const {
+    filteredStats,
+    loading,
+    summary,
+    availablePrograms,
+    availablePeriods,
+    fetchStats,
+  } = usePerformanceStats({
+    period: params.period,
+    programId: params.programId,
   })
 
-  const totalProgramCount = filteredRows.reduce((sum, r) => sum + r.programCount, 0)
-  const totalParticipants = filteredRows.reduce((sum, r) => sum + r.totalParticipants, 0)
-  const uniqueRegions = new Set(filteredRows.map(r => r.region)).size
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  const selectedPeriod = params.period || availablePeriods[0]
+  const selectedProgramId = params.programId
 
   const handleExportExcel = async () => {
-    await exportTableToExcel(columns, filteredRows, '실적통계')
+    await exportTableToExcel(columns, filteredStats, '실적통계')
   }
 
-  const columns: ColumnsType<PerformanceRow> = [
+  const columns: ColumnsType<PerformanceStats> = [
+    {
+      title: '프로그램',
+      dataIndex: 'programName',
+      key: 'programName',
+      width: 220,
+      render: (value: string) => <Tag color="cyan">{value}</Tag>,
+    },
     {
       title: '기간',
       dataIndex: 'period',
       key: 'period',
       width: 120,
-      render: (value: string) => dayjs(value).format('YYYY년 MM월'),
+      render: (value: PerformanceStats['period']) =>
+        `${dayjs(value.startDate).format('YYYY.MM')} ~ ${dayjs(value.endDate).format('YYYY.MM')}`,
     },
     {
-      title: '지역(시군구)',
-      dataIndex: 'region',
-      key: 'region',
-      width: 180,
-      render: (value: string) => value || '-',
-    },
-    {
-      title: '후원사',
-      dataIndex: 'sponsorName',
-      key: 'sponsorName',
-      width: 200,
-      render: (value: string) => <Tag color="cyan">{value}</Tag>,
-    },
-    {
-      title: '프로그램 수',
-      dataIndex: 'programCount',
-      key: 'programCount',
-      width: 120,
+      title: '총 신청',
+      dataIndex: ['stats', 'totalApplications'],
+      key: 'totalApplications',
+      width: 110,
       align: 'right',
-      render: (value: number) => `${value}개`,
+      render: (value: number) => `${value.toLocaleString('ko-KR')}건`,
     },
     {
-      title: '총 참가자 수',
-      dataIndex: 'totalParticipants',
-      key: 'totalParticipants',
-      width: 140,
+      title: '승인',
+      dataIndex: ['stats', 'approvedApplications'],
+      key: 'approvedApplications',
+      width: 90,
+      align: 'right',
+      render: (value: number) => `${value.toLocaleString('ko-KR')}건`,
+    },
+    {
+      title: '학교',
+      dataIndex: ['stats', 'totalSchools'],
+      key: 'totalSchools',
+      width: 80,
+      align: 'right',
+      render: (value: number) => `${value}곳`,
+    },
+    {
+      title: '학생',
+      dataIndex: ['stats', 'totalStudents'],
+      key: 'totalStudents',
+      width: 90,
       align: 'right',
       render: (value: number) => `${value.toLocaleString('ko-KR')}명`,
+    },
+    {
+      title: '강사',
+      dataIndex: ['stats', 'totalInstructors'],
+      key: 'totalInstructors',
+      width: 90,
+      align: 'right',
+      render: (value: number) => `${value.toLocaleString('ko-KR')}명`,
+    },
+    {
+      title: '총 차시',
+      dataIndex: ['stats', 'totalSessions'],
+      key: 'totalSessions',
+      width: 90,
+      align: 'right',
+      render: (value: number) => `${value.toLocaleString('ko-KR')}차시`,
+    },
+    {
+      title: '총 정산액',
+      dataIndex: ['stats', 'totalSettlementAmount'],
+      key: 'totalSettlementAmount',
+      width: 140,
+      align: 'right',
+      render: (value: number) => `${value.toLocaleString('ko-KR')}원`,
+    },
+    {
+      title: '만족도',
+      dataIndex: ['stats', 'satisfactionScore'],
+      key: 'satisfactionScore',
+      width: 90,
+      align: 'right',
+      render: (value: number) => `${value.toFixed(1)} / 5`,
     },
   ]
 
   return (
     <div>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Space direction="vertical" size="large" className="performance-dashboard">
         {/* 헤더 */}
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-        </Space>
+        <div className="performance-dashboard__header">
+          <h1 className="performance-dashboard__title">{categoryName}</h1>
+        </div>
 
-        {/* 기간/지역 선택 + 요약 카드 */}
+        {/* 필터 + 요약 카드 */}
         <Card>
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-            <Space size="middle" wrap>
+          <Space direction="vertical" size="middle" className="performance-dashboard__filters">
+            <Space size="middle" wrap className="performance-dashboard__filter-row">
               <span>기간 선택:</span>
               <Select
                 value={selectedPeriod}
-                style={{ width: 160 }}
+                className="performance-dashboard__select"
                 onChange={value => setParams({ period: value || undefined })}
-                options={periods.map(p => ({
-                  label: dayjs(p).format('YYYY년 MM월'),
-                  value: p,
+                options={availablePeriods.map(period => ({
+                  label: dayjs(period).format('YYYY년 MM월'),
+                  value: period,
                 }))}
               />
-              <span>지역:</span>
+              <span>프로그램:</span>
               <Select
                 allowClear
                 placeholder="전체"
-                value={selectedRegion}
-                style={{ width: 200 }}
-                onChange={value => setParams({ region: (value as string) || undefined })}
-                options={regions.map(r => ({
-                  label: r,
-                  value: r,
+                value={selectedProgramId}
+                className="performance-dashboard__select performance-dashboard__select--program"
+                onChange={value => setParams({ programId: (value as string) || undefined })}
+                options={availablePrograms.map(program => ({
+                  label: program.programName,
+                  value: program.programId,
                 }))}
               />
             </Space>
-            <Space size="large" wrap>
-              <Statistic title="총 프로그램 수" value={totalProgramCount} suffix="개" />
+            <Space size="large" wrap className="performance-dashboard__summary">
+              <Statistic title="프로그램 수" value={summary.programCount} suffix="개" />
               <Statistic
-                title="총 참가자 수"
-                value={totalParticipants}
-                suffix="명"
+                title="총 신청 수"
+                value={summary.totalApplications}
                 formatter={value => Number(value).toLocaleString('ko-KR')}
               />
-              <Statistic title="운영 지역 수" value={uniqueRegions} suffix="개" />
+              <Statistic
+                title="총 학생 수"
+                value={summary.totalStudents}
+                formatter={value => Number(value).toLocaleString('ko-KR')}
+              />
+              <Statistic
+                title="총 정산액"
+                value={summary.totalSettlementAmount}
+                formatter={value => Number(value).toLocaleString('ko-KR')}
+              />
             </Space>
           </Space>
         </Card>
 
         {/* 테이블 */}
         <Card
-          title="기간/지역/후원사별 실적 요약"
+          title="프로그램별 실적 통계"
           extra={
             <Button
               type="primary"
@@ -186,8 +197,9 @@ export default function PerformanceDashboardPage() {
         >
           <Table
             columns={columns}
-            dataSource={filteredRows}
-            rowKey="key"
+            dataSource={filteredStats}
+            rowKey="id"
+            loading={loading}
             pagination={{
               defaultPageSize: 10,
               showSizeChanger: true,

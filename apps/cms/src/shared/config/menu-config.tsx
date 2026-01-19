@@ -251,6 +251,7 @@ const allMenuItems: MenuItemConfig[] = [
     children: [
       { key: '/instructors', label: '강사진', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/settlements', label: '정산', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/settlements/payment-statements', label: '지급조서/이체리스트', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   {
@@ -290,6 +291,7 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   { key: '/sponsors', label: '후원사 관리', icon: <ShopOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  { key: '/surveys', label: '설문 관리', icon: <FileTextOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   { key: '/education-records', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   { key: '/education-records-v2', label: '실적 통계 (v2)', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
@@ -377,6 +379,10 @@ export function filterMenuByRole(
         key: item.key,
         label: item.label,
         icon: item.icon,
+      }
+
+      if (userRole === 'ADMIN' && item.key === 'programs-group') {
+        menuItem.label = '프로그램 관리'
       }
 
       // 자식 메뉴가 있는 경우 재귀적으로 필터링

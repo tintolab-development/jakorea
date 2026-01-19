@@ -11,6 +11,8 @@ export { mockApplications, mockApplicationsMap } from './applications'
 export { mockSchedules, mockSchedulesMap } from './schedules'
 export { mockMatchings, mockMatchingsMap } from './matchings'
 export { mockSettlements, mockSettlementsMap } from './settlements'
+export { mockPaymentStatements, mockPaymentStatementsMap } from './payment-statements'
+export { mockPerformanceStats, mockPerformanceStatsMap } from './performance-stats'
 export { mockTodos, mockTodosMap } from './todos'
 export {
   lectureReportFields,

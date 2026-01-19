@@ -1,0 +1,188 @@
+/**
+ * 지급조서 목록 컴포넌트
+ */
+
+import { Table, Select, Input, Button, Space, Tag, Badge } from 'antd'
+import type { PaymentStatement } from '@/types/domain'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { programService } from '@/entities/program/api/program-service'
+import { domainColorsHex } from '@/shared/constants/colors'
+import './payment-statement-list.css'
+
+const { Option } = Select
+
+const statusLabels: Record<PaymentStatement['status'], string> = {
+  ready: '준비됨',
+  downloaded: '다운로드 완료',
+  cancelled: '취소',
+}
+
+const statusColors: Record<PaymentStatement['status'], 'default' | 'success' | 'error' | 'processing'> = {
+  ready: 'processing',
+  downloaded: 'success',
+  cancelled: 'error',
+}
+
+interface PaymentStatementListProps {
+  data: PaymentStatement[]
+  loading?: boolean
+  availablePeriods: string[]
+  statusOptions: Array<{ label: string; value: PaymentStatement['status'] }>
+  filters: {
+    period?: string
+    status?: PaymentStatement['status']
+    programId?: string
+    keyword?: string
+  }
+  onChangeFilters: (next: PaymentStatementListProps['filters']) => void
+  onResetFilters: () => void
+  onDownload: (statement: PaymentStatement) => void
+}
+
+export function PaymentStatementList({
+  data,
+  loading,
+  availablePeriods,
+  statusOptions,
+  filters,
+  onChangeFilters,
+  onResetFilters,
+  onDownload,
+}: PaymentStatementListProps) {
+  const programs = programService.getAllSync()
+
+  return (
+    <div>
+      <Space className="payment-statement-list__filters" size="middle" wrap>
+        <Select
+          placeholder="기간 선택"
+          value={filters.period}
+          onChange={value => onChangeFilters({ ...filters, period: value || undefined })}
+          allowClear
+          className="payment-statement-list__filter--period"
+        >
+          {availablePeriods.map(period => (
+            <Option key={period} value={period}>
+              {period}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="상태 선택"
+          value={filters.status}
+          onChange={value => onChangeFilters({ ...filters, status: value || undefined })}
+          allowClear
+          className="payment-statement-list__filter--status"
+        >
+          {statusOptions.map(option => (
+            <Option key={option.value} value={option.value}>
+              {option.label}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          placeholder="프로그램 선택"
+          value={filters.programId}
+          onChange={value => onChangeFilters({ ...filters, programId: value || undefined })}
+          allowClear
+          className="payment-statement-list__filter--program"
+          showSearch
+          filterOption={(input, option) => {
+            const children = option?.children as string | string[] | undefined
+            if (typeof children === 'string') {
+              return children.toLowerCase().includes(input.toLowerCase())
+            }
+            if (Array.isArray(children)) {
+              return children.some((child: unknown) =>
+                typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
+              )
+            }
+            return false
+          }}
+        >
+          {programs.map(program => (
+            <Option key={program.id} value={program.id}>
+              {program.title}
+            </Option>
+          ))}
+        </Select>
+        <Input.Search
+          placeholder="강사/프로그램 검색"
+          value={filters.keyword}
+          onChange={event => onChangeFilters({ ...filters, keyword: event.target.value })}
+          className="payment-statement-list__filter--keyword"
+          allowClear
+        />
+        <Button onClick={onResetFilters}>필터 초기화</Button>
+      </Space>
+
+      <Table
+        dataSource={data}
+        rowKey="id"
+        loading={loading}
+        pagination={{
+          defaultPageSize: 10,
+          showSizeChanger: true,
+          showTotal: total => `총 ${total}개`,
+        }}
+        columns={[
+          {
+            title: '기간',
+            dataIndex: 'period',
+            key: 'period',
+            render: (period: string) => <Tag color="geekblue">{period}</Tag>,
+          },
+          {
+            title: '프로그램',
+            dataIndex: 'programId',
+            key: 'programId',
+            render: (programId: string) => {
+              const program = programService.getByIdSync(programId)
+              return program ? (
+                <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
+              ) : (
+                <Tag color="error">프로그램 정보 오류</Tag>
+              )
+            },
+          },
+          {
+            title: '강사',
+            dataIndex: 'instructorId',
+            key: 'instructorId',
+            render: (instructorId: string) => instructorService.getNameById(instructorId),
+          },
+          {
+            title: '상태',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status: PaymentStatement['status']) => (
+              <Badge status={statusColors[status]} text={statusLabels[status]} />
+            ),
+          },
+          {
+            title: '총액',
+            dataIndex: 'totalAmount',
+            key: 'totalAmount',
+            render: (amount: number) => `${amount.toLocaleString('ko-KR')}원`,
+          },
+          {
+            title: '생성일',
+            dataIndex: 'generatedAt',
+            key: 'generatedAt',
+            render: (generatedAt: PaymentStatement['generatedAt']) =>
+              new Date(generatedAt).toLocaleDateString('ko-KR'),
+          },
+          {
+            title: '다운로드',
+            key: 'action',
+            render: (_: unknown, record: PaymentStatement) => (
+              <Button type="link" onClick={() => onDownload(record)}>
+                지급조서 다운로드
+              </Button>
+            ),
+          },
+        ]}
+      />
+    </div>
+  )
+}

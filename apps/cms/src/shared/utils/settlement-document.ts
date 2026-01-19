@@ -21,6 +21,17 @@ interface InstructorPaymentInfo {
 }
 
 /**
+ * 이체리스트 행 정보
+ */
+interface TransferListRow {
+  period: string
+  programTitle: string
+  instructorName: string
+  bankAccount: string
+  amount: number
+}
+
+/**
  * 지급조서 Excel 생성
  */
 export async function generatePaymentStatement(
@@ -191,6 +202,53 @@ export async function generatePaymentStatement(
     `지급조서_${instructor.name}_${settlement.period}`,
     'xlsx',
     dayjs(settlement.documentGeneratedAt || settlement.createdAt).toDate()
+  )
+  downloadExcel(buffer, filename)
+}
+
+/**
+ * 이체리스트 Excel 생성 (Mock: 비밀번호는 파일에 적용되지 않음)
+ */
+export async function generateTransferList(
+  rows: TransferListRow[],
+  options: { passwordProvided: boolean }
+): Promise<void> {
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet('이체리스트')
+
+  worksheet.columns = [
+    { header: '기간', key: 'period', width: 12 },
+    { header: '프로그램', key: 'programTitle', width: 30 },
+    { header: '강사', key: 'instructorName', width: 16 },
+    { header: '계좌번호', key: 'bankAccount', width: 26 },
+    { header: '금액', key: 'amount', width: 16 },
+  ]
+
+  rows.forEach(row => {
+    worksheet.addRow({
+      period: row.period,
+      programTitle: row.programTitle,
+      instructorName: row.instructorName,
+      bankAccount: row.bankAccount,
+      amount: row.amount,
+    })
+  })
+
+  worksheet.getRow(1).font = { bold: true }
+  worksheet.getColumn('amount').numFmt = '#,##0'
+
+  const totalAmount = rows.reduce((sum, row) => sum + row.amount, 0)
+  const summaryRow = worksheet.addRow({
+    programTitle: '합계',
+    amount: totalAmount,
+  })
+  summaryRow.font = { bold: true }
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  const filename = generateFilename(
+    `이체리스트${options.passwordProvided ? '_protected' : ''}`,
+    'xlsx',
+    dayjs().toDate()
   )
   downloadExcel(buffer, filename)
 }

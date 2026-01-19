@@ -271,6 +271,47 @@ export interface Settlement {
   updatedAt: DateValue
 }
 
+// 지급조서 상태
+export type PaymentStatementStatus = 'ready' | 'downloaded' | 'cancelled'
+
+// 지급조서
+export interface PaymentStatement {
+  id: UUID
+  settlementId: UUID
+  programId: UUID
+  instructorId: UUID
+  period: string
+  totalAmount: number
+  status: PaymentStatementStatus
+  generatedAt: DateValue
+  lastDownloadedAt?: DateValue
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 실적 통계
+export interface PerformanceStats {
+  id: UUID
+  programId: UUID
+  programName: string
+  period: {
+    startDate: DateValue
+    endDate: DateValue
+  }
+  stats: {
+    totalApplications: number
+    approvedApplications: number
+    totalSchools: number
+    totalStudents: number
+    totalInstructors: number
+    totalSessions: number
+    totalSettlementAmount: number
+    satisfactionScore: number
+  }
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
 // To-do 타입
 export type TodoType = 'REPORT' | 'COMPLETE' | 'REVIEW' | 'SUBMIT' | 'OTHER'
 
