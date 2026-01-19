@@ -10,10 +10,12 @@ import {
   BookOutlined,
   HeartOutlined,
 } from '@ant-design/icons'
-import type { UserRole } from '@/types/user'
+import type { AdminProgramRole, AdminRole, UserRole } from '@/types/user'
+import './role-badge.css'
 
 interface RoleBadgeProps {
   role: UserRole
+  adminRole?: AdminRole
   showIcon?: boolean
   size?: 'default' | 'small' | 'large'
   variant?: 'badge' | 'tag'
@@ -50,23 +52,37 @@ const roleConfig: Record<
   },
 }
 
+const adminRoleLabels: Record<AdminRole, string> = {
+  MASTER: '마스터 관리자',
+  ADMIN: '관리자',
+  GENERAL: '일반',
+}
+
+const adminProgramRoleLabels: Record<AdminProgramRole, string> = {
+  OWNER: '담당자',
+  PARTNER: '파트너',
+  ASSISTANT: '보조',
+}
+
 /**
  * 권한 배지 컴포넌트
  * 사용자의 권한을 시각적으로 표시
  */
 export function RoleBadge({
   role,
+  adminRole,
   showIcon = true,
   size = 'default',
   variant = 'tag',
 }: RoleBadgeProps) {
   const config = roleConfig[role]
+  const label = role === 'ADMIN' && adminRole ? adminRoleLabels[adminRole] : config.label
 
   if (variant === 'badge') {
     return (
       <Badge
         status={config.color as any}
-        text={config.label}
+        text={label}
         style={{ fontSize: size === 'small' ? '12px' : size === 'large' ? '16px' : '14px' }}
       />
     )
@@ -94,7 +110,7 @@ export function RoleBadge({
       icon={showIcon ? config.icon : undefined}
       style={tagStyle}
     >
-      {config.label}
+      {label}
     </Tag>
   )
 }
@@ -102,15 +118,18 @@ export function RoleBadge({
 /**
  * 권한 아이콘만 표시하는 컴포넌트
  */
-export function RoleIcon({ role, size = 16 }: { role: UserRole; size?: number }) {
+export function RoleIcon({ role, size = 'default' }: { role: UserRole; size?: 'small' | 'default' | 'large' }) {
   const config = roleConfig[role]
-  return <span style={{ fontSize: `${size}px` }}>{config.icon}</span>
+  return <span className={`role-icon role-icon--${size}`}>{config.icon}</span>
 }
 
 /**
  * 권한 레이블만 반환하는 함수
  */
-export function getRoleLabel(role: UserRole): string {
+export function getRoleLabel(role: UserRole, adminRole?: AdminRole): string {
+  if (role === 'ADMIN' && adminRole) {
+    return adminRoleLabels[adminRole]
+  }
   return roleConfig[role].label
 }
 
@@ -119,5 +138,9 @@ export function getRoleLabel(role: UserRole): string {
  */
 export function getRoleColor(role: UserRole): string {
   return roleConfig[role].color
+}
+
+export function getAdminProgramRoleLabel(role: AdminProgramRole): string {
+  return adminProgramRoleLabels[role]
 }
 

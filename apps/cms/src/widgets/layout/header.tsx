@@ -46,7 +46,7 @@ export function Header() {
           <div className="header-user-card">
             <div className="header-user-top">
               <div className="header-user-avatar">
-                <RoleBadge role={user.role} size="small" variant="tag" />
+                <RoleBadge role={user.role} adminRole={user.adminRole} size="small" variant="tag" />
               </div>
               <Dropdown menu={{ items: userMenuItems }} placement="bottomLeft" trigger={['click']}>
                 <Button type="link" className="header-account-button">

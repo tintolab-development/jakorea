@@ -16,6 +16,7 @@ import {
   getCommonStatusColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
+import './matching-list.css'
 
 const { Option } = Select
 
@@ -111,7 +112,7 @@ export function MatchingList({
         const program = programService.getByIdSync(programId)
         return program ? (
           <Tooltip title={program.description}>
-            <span style={{ fontWeight: 500 }}>{program.title}</span>
+            <span className="matching-list__program-title">{program.title}</span>
           </Tooltip>
         ) : (
           '-'
@@ -144,7 +145,7 @@ export function MatchingList({
         return schedule ? (
           <Space direction="vertical" size="small">
             <span>{schedule.title}</span>
-            <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+            <span className="matching-list__schedule-meta">
               {typeof schedule.date === 'string' ? schedule.date : dayjs(schedule.date).format('YYYY-MM-DD')} {schedule.startTime} - {schedule.endTime}
             </span>
           </Space>
@@ -193,14 +194,14 @@ export function MatchingList({
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
-        <span>프로그램 필터:</span>
+      <Space className="matching-list__filters">
+        <span className="matching-list__filter-label">프로그램 필터:</span>
         <Select
           value={selectedProgramId || undefined}
           onChange={onProgramChange}
           allowClear
           placeholder="전체 프로그램"
-          style={{ width: 300 }}
+          className="matching-list__program-select"
         >
           {programs.map(program => (
             <Option key={program.id} value={program.id}>
@@ -215,6 +216,7 @@ export function MatchingList({
         columns={columns}
         rowKey="id"
         loading={loading}
+        rowClassName={() => 'matching-list__row'}
         pagination={{
           defaultPageSize: 10,
           showSizeChanger: true,
@@ -222,7 +224,6 @@ export function MatchingList({
         }}
         onRow={record => ({
           onClick: () => onView(record),
-          style: { cursor: 'pointer' },
         })}
       />
     </div>

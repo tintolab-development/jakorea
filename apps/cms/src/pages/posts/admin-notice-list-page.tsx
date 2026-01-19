@@ -47,7 +47,7 @@ export function AdminNoticeListPage() {
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
   const [form] = Form.useForm()
 
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '공지사항 관리'
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || '공지사항'
 
   // 필터 상태
   const [searchText, setSearchText] = useState('')

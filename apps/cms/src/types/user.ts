@@ -8,6 +8,12 @@ import type { UUID, DateValue } from './index'
 // 사용자 권한 타입
 export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT' | 'VOLUNTEER'
 
+// 관리자 권한 구분
+export type AdminRole = 'MASTER' | 'ADMIN' | 'GENERAL'
+
+// 관리자 프로그램 범위 역할
+export type AdminProgramRole = 'OWNER' | 'PARTNER' | 'ASSISTANT'
+
 // 수강자 하위 타입
 export type StudentType = 'INDIVIDUAL' | 'SCHOOL_TEACHER'
 
@@ -27,6 +33,9 @@ export interface User {
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
   role: UserRole
+  // 관리자 세부 권한 (관리자일 경우)
+  adminRole?: AdminRole
+  adminProgramRole?: AdminProgramRole
   // 수강자 하위 타입 (수강자일 경우)
   studentType?: StudentType
   // 강사/봉사자 관련 필드

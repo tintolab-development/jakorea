@@ -3,7 +3,7 @@
  * Phase 5.1.2: 사용자 관리 페이지
  */
 
-import type { User, UserRole } from '@/types/user'
+import type { AdminProgramRole, AdminRole, User, UserRole } from '@/types/user'
 import { mockUsers } from '@/data/mock/users'
 import type { UUID } from '@/types/index'
 
@@ -65,7 +65,9 @@ export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> 
  */
 export async function updateUserRole(
   userId: UUID,
-  newRole: UserRole
+  newRole: UserRole,
+  adminRole?: AdminRole,
+  adminProgramRole?: AdminProgramRole
 ): Promise<Omit<User, 'password'>> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -76,6 +78,13 @@ export async function updateUserRole(
 
   const user = mockUsers[userIndex]
   user.role = newRole
+  if (newRole === 'ADMIN') {
+    user.adminRole = adminRole || user.adminRole || 'ADMIN'
+    user.adminProgramRole = adminProgramRole || user.adminProgramRole || 'ASSISTANT'
+  } else {
+    user.adminRole = undefined
+    user.adminProgramRole = undefined
+  }
   user.updatedAt = new Date().toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

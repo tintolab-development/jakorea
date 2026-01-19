@@ -1,0 +1,10 @@
+.program-list-header {
+  margin-bottom: 16px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.program-list-title {
+  margin: 0;
+  font-size: 20px;
+}

@@ -17,6 +17,7 @@ import {
 } from '@/shared/constants/status'
 import { canTransitionSettlementStatus } from '@/shared/lib/status-transition'
 import { domainColorsHex } from '@/shared/constants/colors'
+import './settlement-list.css'
 
 const { Option } = Select
 
@@ -138,13 +139,13 @@ export function SettlementList({
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} size="middle" wrap>
+      <Space className="settlement-list__filters" size="middle" wrap>
         <Select
           placeholder="상태 선택"
           value={(table.getColumn('status')?.getFilterValue() as string) || undefined}
           onChange={value => table.getColumn('status')?.setFilterValue(value || null)}
           allowClear
-          style={{ width: 150 }}
+          className="settlement-list__filter--status"
         >
           {statuses.map(status => (
             <Option key={status} value={status}>
@@ -157,7 +158,7 @@ export function SettlementList({
           value={(table.getColumn('programId')?.getFilterValue() as string) || undefined}
           onChange={value => table.getColumn('programId')?.setFilterValue(value || null)}
           allowClear
-          style={{ width: 200 }}
+          className="settlement-list__filter--program"
           showSearch
           filterOption={(input, option) => {
             const children = option?.children as string | string[] | undefined
@@ -183,7 +184,7 @@ export function SettlementList({
           value={(table.getColumn('period')?.getFilterValue() as string) || undefined}
           onChange={value => table.getColumn('period')?.setFilterValue(value || null)}
           allowClear
-          style={{ width: 150 }}
+          className="settlement-list__filter--period"
         >
           {periods.map(period => (
             <Option key={period} value={period}>
@@ -276,8 +277,8 @@ export function SettlementList({
         }}
         onRow={(record) => ({
           onClick: () => onView(record),
-          style: { cursor: 'pointer' },
         })}
+        rowClassName={() => 'settlement-list__row'}
       />
     </div>
   )

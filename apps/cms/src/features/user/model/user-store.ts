@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand'
-import type { User, UserRole } from '@/types/user'
+import type { AdminProgramRole, AdminRole, User, UserRole } from '@/types/user'
 import { getUsers, getUserById, updateUserRole, updateUserStatus } from '@/entities/user/api/user-service'
 
 interface UserStore {
@@ -16,7 +16,12 @@ interface UserStore {
   // Actions
   fetchUsers: (filters?: { role?: UserRole; search?: string; isActive?: boolean }) => Promise<void>
   fetchUserById: (userId: string) => Promise<void>
-  changeUserRole: (userId: string, newRole: UserRole) => Promise<void>
+  changeUserRole: (
+    userId: string,
+    newRole: UserRole,
+    adminRole?: AdminRole,
+    adminProgramRole?: AdminProgramRole
+  ) => Promise<void>
   changeUserStatus: (userId: string, isActive: boolean) => Promise<void>
   clearSelectedUser: () => void
   clearError: () => void
@@ -52,10 +57,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  changeUserRole: async (userId, newRole) => {
+  changeUserRole: async (userId, newRole, adminRole, adminProgramRole) => {
     set({ loading: true, error: null })
     try {
-      const updatedUser = await updateUserRole(userId, newRole)
+      const updatedUser = await updateUserRole(userId, newRole, adminRole, adminProgramRole)
       
       // 목록 업데이트
       const users = get().users.map(user => 

@@ -60,7 +60,7 @@ export function AdminCategoryPage() {
   const [editingCategory, setEditingCategory] = useState<PostCategory | null>(null)
   const [form] = Form.useForm()
 
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '카테고리 관리'
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || '카테고리'
 
   // 필터 상태
   const [typeFilter, setTypeFilter] = useState<string>('all')

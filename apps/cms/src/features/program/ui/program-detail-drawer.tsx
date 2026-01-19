@@ -14,6 +14,7 @@ import { schoolService } from '@/entities/school/api/school-service'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { useApplicationPathStore } from '@/features/application-path/model/application-path-store'
 import { useProgramStore } from '@/features/program/model/program-store'
+import { useProgramStatusManager } from '@/features/program/hooks/use-program-status-manager'
 import { ApplicationPathForm } from '@/features/application-path/ui/application-path-form'
 import type { ApplicationPathFormData } from '@/entities/application-path/model/schema'
 import {
@@ -39,9 +40,6 @@ import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { mockApplications } from '@/data/mock'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ProgramLifecycleWorkflow } from './program-lifecycle-workflow'
-import {
-  getPreviousProgramLifecycleStatus,
-} from '@/shared/lib/status-transition'
 import type { ProgramLifecycleStatus } from '@/types/domain'
 import { checkDuplicateApplication } from '@/shared/utils/duplicate-application-check'
 import dayjs from 'dayjs'
@@ -92,8 +90,8 @@ export function ProgramDetailDrawer({
   const [formLoading, setFormLoading] = useState(false)
   const { createPath, updatePath } = useApplicationPathStore()
   const { updateProgram, selectedProgram: storeSelectedProgram, setSelectedProgram } = useProgramStore()
+  const { loading: statusChangeLoading, changeStatus, rollbackStatus } = useProgramStatusManager()
   const { user } = useAuthStore()
-  const [statusChangeLoading, setStatusChangeLoading] = useState(false)
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [applicationModalOpen, setApplicationModalOpen] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
@@ -639,44 +637,8 @@ export function ProgramDetailDrawer({
                   <>
                     <ProgramLifecycleWorkflow
                       program={displayProgram}
-                      onStatusChange={async (status: ProgramLifecycleStatus) => {
-                        setStatusChangeLoading(true)
-                        try {
-                          await updateProgram(displayProgram.id, { lifecycleStatus: status })
-                          // store 업데이트 후 최신 데이터를 가져오기
-                          await useProgramStore.getState().fetchProgramById(displayProgram.id)
-                          showSuccessMessage(
-                            `프로그램 상태가 "${getProgramLifecycleLabel(status)}"로 변경되었습니다`
-                          )
-                        } catch (error) {
-                          handleError(error, {
-                            defaultMessage: '상태 변경 중 오류가 발생했습니다',
-                            context: 'ProgramLifecycleStatusChange',
-                          })
-                        } finally {
-                          setStatusChangeLoading(false)
-                        }
-                      }}
-                      onRollback={async () => {
-                        const previousStatus = getPreviousProgramLifecycleStatus(displayProgram.lifecycleStatus)
-                        if (!previousStatus) return
-                        setStatusChangeLoading(true)
-                        try {
-                          await updateProgram(displayProgram.id, { lifecycleStatus: previousStatus })
-                          // store 업데이트 후 최신 데이터를 가져와서 로컬 상태도 업데이트
-                          await useProgramStore.getState().fetchProgramById(displayProgram.id)
-                          showSuccessMessage(
-                            `프로그램 상태가 "${getProgramLifecycleLabel(previousStatus)}"로 되돌아갔습니다`
-                          )
-                        } catch (error) {
-                          handleError(error, {
-                            defaultMessage: '상태 변경 중 오류가 발생했습니다',
-                            context: 'ProgramLifecycleStatusRollback',
-                          })
-                        } finally {
-                          setStatusChangeLoading(false)
-                        }
-                      }}
+                      onStatusChange={(status: ProgramLifecycleStatus) => changeStatus(displayProgram.id, status)}
+                      onRollback={() => rollbackStatus(displayProgram.id, displayProgram.lifecycleStatus)}
                       loading={statusChangeLoading}
                     />
                     <Divider />

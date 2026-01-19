@@ -6,12 +6,12 @@
 
 import { Form, Input, Select, Button, Space, Table, InputNumber } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { settlementSchema, type SettlementFormData } from '@/entities/settlement/model/schema'
+import { type SubmitHandler } from 'react-hook-form'
+import { type SettlementFormData } from '@/entities/settlement/model/schema'
 import type { Settlement } from '@/types/domain'
-import { mockPrograms, mockInstructors, mockMatchings } from '@/data/mock'
-import { calculateSettlementTotal } from '../lib/settlement-helpers'
+import { mockPrograms, mockInstructors } from '@/data/mock'
+import { useSettlementForm } from '../hooks/use-settlement-form'
+import './settlement-form.css'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -40,59 +40,27 @@ const itemTypeOptions = [
 
 export function SettlementForm({ settlement, onSubmit, onCancel, loading }: SettlementFormProps) {
   const {
+    form,
+    fields,
+    append,
+    remove,
+    selectedProgramId,
+    selectedInstructorId,
+    availableMatchings,
+    totalAmount,
+  } = useSettlementForm(settlement)
+
+  const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
     watch,
-    control,
-  } = useForm<SettlementFormData>({
-    resolver: zodResolver(settlementSchema),
-    defaultValues: (() => {
-      if (settlement) {
-        // 폼에서는 검토(review) 상태를 직접 편집하지 않고, 워크플로우에서만 제어
-        const status: SettlementFormData['status'] =
-          settlement.status === 'review' ? 'calculated' : settlement.status
-        return {
-          programId: settlement.programId,
-          instructorId: settlement.instructorId,
-          matchingId: settlement.matchingId,
-          period: settlement.period,
-          items: settlement.items,
-          status,
-          notes: settlement.notes || '',
-        }
-      }
-      return {
-        items: [{ type: 'instructor_fee', description: '강사비', amount: 0 }],
-        status: 'pending' as const,
-      }
-    })(),
-  })
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'items',
-  })
-
-  const selectedProgramId = watch('programId')
-  const selectedInstructorId = watch('instructorId')
-
-  // 선택된 프로그램에 맞는 매칭 필터링
-  const filteredMatchings = selectedProgramId
-    ? mockMatchings.filter(m => m.programId === selectedProgramId)
-    : []
-
-  // 선택된 강사에 맞는 매칭 필터링
-  const availableMatchings = selectedInstructorId
-    ? filteredMatchings.filter(m => m.instructorId === selectedInstructorId)
-    : filteredMatchings
+  } = form
 
   const onFormSubmit: SubmitHandler<SettlementFormData> = async (data) => {
     await onSubmit(data)
   }
-
-  const totalAmount = calculateSettlementTotal(watch('items') || [])
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
@@ -237,7 +205,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
                         setValue(`items.${index}.description`, '숙박비')
                       }
                     }}
-                    style={{ width: '100%' }}
+                    className="settlement-form__full-width"
                   >
                     {itemTypeOptions.map(option => (
                       <Option key={option.value} value={option.value}>
@@ -277,7 +245,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
                         }
                       }}
                       min={0}
-                      style={{ width: '100%' }}
+                    className="settlement-form__full-width"
                       disabled={isAccommodation}
                       formatter={value => `${value || ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
@@ -319,7 +287,7 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
             type="dashed"
             icon={<PlusOutlined />}
             onClick={() => append({ type: 'other', description: '', amount: 0 })}
-            style={{ width: '100%', marginTop: 16 }}
+            className="settlement-form__add-item"
           >
             항목 추가
           </Button>

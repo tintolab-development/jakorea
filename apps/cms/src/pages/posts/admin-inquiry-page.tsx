@@ -44,7 +44,7 @@ export function AdminInquiryPage() {
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
   const [form] = Form.useForm()
 
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '문의 관리'
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || '문의하기'
 
   // 필터 상태
   const [searchText, setSearchText] = useState('')

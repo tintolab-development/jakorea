@@ -230,7 +230,7 @@ export function SettlementPaidPage() {
         }}
         onEdit={() => {}}
         onDelete={() => {}}
-        onStatusChange={() => {}}
+        onStatusChange={async () => {}}
         loading={loading}
       />
     </div>

@@ -6,103 +6,69 @@
 
 import { Card, Button, Typography, Space, Empty } from 'antd'
 import { BellOutlined, DollarOutlined, FileTextOutlined, CalendarOutlined, CheckCircleOutlined } from '@ant-design/icons'
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  getNotifications,
-  markNotificationAsRead,
-  deleteNotification,
-  markAllNotificationsAsRead,
   type Notification,
   type NotificationType,
 } from '../api/notification-service'
 import { NotificationModal } from './notification-modal'
+import { useNotifications } from '../hooks/use-notifications'
+import './notification-widget.css'
 
 const { Text, Title } = Typography
 
 const getNotificationIcon = (type: NotificationType): React.ReactNode => {
   switch (type) {
     case 'schedule':
-      return <CalendarOutlined style={{ fontSize: 24 }} />
+      return <CalendarOutlined className="notification-item__icon-svg" />
     case 'matching':
-      return <CheckCircleOutlined style={{ fontSize: 24 }} />
+      return <CheckCircleOutlined className="notification-item__icon-svg" />
     case 'settlement':
-      return <DollarOutlined style={{ fontSize: 24 }} />
+      return <DollarOutlined className="notification-item__icon-svg" />
     case 'system':
-      return <FileTextOutlined style={{ fontSize: 24 }} />
+      return <FileTextOutlined className="notification-item__icon-svg" />
     default:
-      return <BellOutlined style={{ fontSize: 24 }} />
+      return <BellOutlined className="notification-item__icon-svg" />
   }
 }
 
-const getNotificationBackgroundColor = (type: NotificationType): string => {
+const getNotificationTypeClass = (type: NotificationType): string => {
   switch (type) {
     case 'schedule':
-      return '#e6f7ff' // 파란색 (일정)
+      return 'notification-item--schedule'
     case 'matching':
-      return '#f6ffed' // 연두색 (매칭)
+      return 'notification-item--matching'
     case 'settlement':
-      return '#fffbe6' // 노란색 (정산)
+      return 'notification-item--settlement'
     case 'system':
-      return '#f0f0f0' // 회색 (시스템)
+      return 'notification-item--system'
     default:
-      return '#f0f0f0'
-  }
-}
-
-const getNotificationIconColor = (type: NotificationType): string => {
-  switch (type) {
-    case 'schedule':
-      return '#1890ff' // 파란색
-    case 'matching':
-      return '#52c41a' // 초록색
-    case 'settlement':
-      return '#faad14' // 주황색
-    case 'system':
-      return '#595959' // 회색
-    default:
-      return '#595959'
+      return 'notification-item--system'
   }
 }
 
 export function NotificationWidget() {
-  const { user } = useAuthStore()
   const navigate = useNavigate()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-
-  const loadNotifications = useCallback(async () => {
-    if (!user?.id) return
-
-    setLoading(true)
-    try {
-      const data = await getNotifications(user.id, user.role)
-      setNotifications(data)
-    } catch (error) {
-      console.error('알림 로드 실패:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [user?.id])
-
-  useEffect(() => {
-    if (user?.id) {
-      loadNotifications()
-    }
-  }, [loadNotifications, user?.id])
+  const {
+    notifications,
+    loading,
+    unreadCount,
+    refresh,
+    markAsRead,
+    removeNotification,
+    markAllAsRead,
+  } = useNotifications()
 
   const handleConfirm = async (notification: Notification) => {
     try {
       // 읽음 처리
       if (!notification.read) {
-        await markNotificationAsRead(notification.id)
+        await markAsRead(notification.id)
       }
       // 알림 제거
-      await deleteNotification(notification.id)
-      // 목록에서 제거
-      setNotifications(prev => prev.filter(n => n.id !== notification.id))
+      await removeNotification(notification.id)
       
       // 링크가 있으면 이동
       if (notification.link) {
@@ -117,10 +83,7 @@ export function NotificationWidget() {
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
       try {
-        await markNotificationAsRead(notification.id)
-        setNotifications(prev =>
-          prev.map(n => (n.id === notification.id ? { ...n, read: true } : n))
-        )
+        await markAsRead(notification.id)
       } catch (error) {
         console.error('알림 읽음 처리 실패:', error)
       }
@@ -131,23 +94,22 @@ export function NotificationWidget() {
     }
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length
   const displayNotifications = notifications.filter(n => !n.read).slice(0, 10) // 읽지 않은 알림만 최대 10개 표시
 
   return (
     <>
       <Card
-        style={{ width: '100%' }}
+        className="notification-widget"
         loading={loading}
         title={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="notification-widget__title">
             <Space>
-              <BellOutlined style={{ color: '#000000', fontSize: 18 }} />
-              <Title level={5} style={{ margin: 0, color: '#000000' }}>
+              <BellOutlined className="notification-widget__bell" />
+              <Title level={5} className="notification-widget__title-text">
                 알림 리스트
               </Title>
               {unreadCount > 0 && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="notification-widget__count">
                   ({unreadCount}건)
                 </Text>
               )}
@@ -165,53 +127,40 @@ export function NotificationWidget() {
         }
       >
         {displayNotifications.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <div className="notification-widget__empty">
             <Empty
               description="새로운 알림이 없습니다"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           </div>
         ) : (
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space direction="vertical" size="middle" className="notification-widget__list">
             {displayNotifications.map((notification) => (
               <Card
                 key={notification.id}
                 size="small"
-                style={{
-                  backgroundColor: getNotificationBackgroundColor(notification.type),
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                }}
-                bodyStyle={{ padding: '16px 20px' }}
+                className={`notification-item ${getNotificationTypeClass(notification.type)}`}
                 onClick={() => handleNotificationClick(notification)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 16 }}>
-                    <div
-                      style={{
-                        color: getNotificationIconColor(notification.type),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
+                <div className="notification-item__row">
+                  <div className="notification-item__content">
+                    <div className="notification-item__icon">
                       {getNotificationIcon(notification.type)}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <Title level={5} style={{ margin: 0, marginBottom: 4, fontSize: 16 }}>
+                    <div className="notification-item__text">
+                      <Title level={5} className="notification-item__title">
                         {notification.title}
                       </Title>
-                      <Text type="secondary" style={{ fontSize: 13 }}>
+                      <Text type="secondary" className="notification-item__message">
                         {notification.message}
                       </Text>
                     </div>
                   </div>
-                  <div onClick={(e) => e.stopPropagation()}>
+                  <div onClick={(e) => e.stopPropagation()} className="notification-item__actions">
                     <Button
                       size="small"
                       onClick={() => handleConfirm(notification)}
-                      style={{ backgroundColor: '#f5f5f5', borderColor: '#d9d9d9' }}
+                      className="notification-item__confirm"
                     >
                       확인하기
                     </Button>
@@ -231,15 +180,13 @@ export function NotificationWidget() {
         onNotificationClick={handleNotificationClick}
         onConfirm={handleConfirm}
         onMarkAllAsRead={async () => {
-          if (!user?.id) return
           try {
-            await markAllNotificationsAsRead(user.id)
-            setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+            await markAllAsRead()
           } catch (error) {
             console.error('모든 알림 읽음 처리 실패:', error)
           }
         }}
-        onRefresh={loadNotifications}
+        onRefresh={refresh}
       />
     </>
   )

@@ -3,7 +3,7 @@
  * Phase 4.1.2: 권한 체계 정의
  */
 
-import type { User, UserRole } from '@/types/user'
+import type { AdminProgramRole, AdminRole, User, UserRole } from '@/types/user'
 
 /**
  * 사용자가 특정 권한을 보유하고 있는지 확인
@@ -57,6 +57,24 @@ export function hasAllRoles(
  */
 export function isAdmin(user: Omit<User, 'password'> | null): boolean {
   return hasRole(user, 'ADMIN')
+}
+
+export function isMasterAdmin(user: Omit<User, 'password'> | null): boolean {
+  return Boolean(user && user.role === 'ADMIN' && user.adminRole === 'MASTER')
+}
+
+export function hasAdminRole(
+  user: Omit<User, 'password'> | null,
+  adminRole: AdminRole
+): boolean {
+  return Boolean(user && user.role === 'ADMIN' && user.adminRole === adminRole)
+}
+
+export function hasAdminProgramRole(
+  user: Omit<User, 'password'> | null,
+  programRole: AdminProgramRole
+): boolean {
+  return Boolean(user && user.role === 'ADMIN' && user.adminProgramRole === programRole)
 }
 
 /**

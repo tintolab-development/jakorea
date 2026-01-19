@@ -5,7 +5,7 @@
 
 import { Drawer, Descriptions, Tag, Space, Button } from 'antd'
 import type { User } from '@/types/user'
-import { RoleBadge } from '@/shared/ui'
+import { RoleBadge, getAdminProgramRoleLabel, getRoleLabel } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { formatDate } from '@/shared/utils'
 
@@ -45,8 +45,18 @@ export function UserDetailDrawer({
         <Descriptions.Item label="이름">{user.name}</Descriptions.Item>
         <Descriptions.Item label="이메일">{user.email}</Descriptions.Item>
         <Descriptions.Item label="권한">
-          <RoleBadge role={user.role} size="small" variant="tag" />
+          <RoleBadge role={user.role} adminRole={user.adminRole} size="small" variant="tag" />
         </Descriptions.Item>
+        {user.role === 'ADMIN' && user.adminRole && (
+          <Descriptions.Item label="관리자 구분">
+            {getRoleLabel('ADMIN', user.adminRole)}
+          </Descriptions.Item>
+        )}
+        {user.role === 'ADMIN' && user.adminProgramRole && (
+          <Descriptions.Item label="프로그램 범위">
+            {getAdminProgramRoleLabel(user.adminProgramRole)}
+          </Descriptions.Item>
+        )}
         <Descriptions.Item label="상태">
           <Tag color={user.isActive ? 'green' : 'default'}>
             {user.isActive ? '활성' : '비활성'}

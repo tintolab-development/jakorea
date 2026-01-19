@@ -10,10 +10,10 @@ import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { useUserStore } from '@/features/user/model/user-store'
-import type { User, UserRole } from '@/types/user'
+import type { AdminProgramRole, AdminRole, User, UserRole } from '@/types/user'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import './user-list-page.css'
 
 const { Option } = Select
 const { Search } = Input
@@ -106,9 +106,14 @@ export function UserListPage() {
     setRoleChangeModalOpen(true)
   }
 
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  const handleRoleChange = async (
+    userId: string,
+    newRole: UserRole,
+    adminRole?: AdminRole,
+    adminProgramRole?: AdminProgramRole
+  ) => {
     try {
-      await changeUserRole(userId, newRole)
+      await changeUserRole(userId, newRole, adminRole, adminProgramRole)
       showSuccessMessage('권한이 변경되었습니다.')
       setRoleChangeModalOpen(false)
       setEditingUser(null)
@@ -126,21 +131,21 @@ export function UserListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+      <Space className="user-list-header">
+        <h1 className="user-list-title">{categoryName}</h1>
       </Space>
 
-      <Space style={{ marginBottom: 16 }} size="middle">
+      <Space className="user-list-filters" size="middle">
         <Search
           placeholder="이름 또는 이메일 검색"
           allowClear
-          style={{ width: 300 }}
+          className="user-list-search"
           defaultValue={searchQuery}
           onSearch={handleSearch}
         />
         <Select
           placeholder="권한 필터"
-          style={{ width: 150 }}
+          className="user-list-role-filter"
           value={roleFilter}
           onChange={handleRoleFilterChange}
         >

@@ -15,16 +15,18 @@ import { useProgramStore } from '@/features/program/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import './program-list-page.css'
 import type { Program, ProgramLifecycleStatus, ProgramCategory } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
 import { useSearchParams, useLocation } from 'react-router-dom'
+import { useProgramStatusManager } from '@/features/program/hooks/use-program-status-manager'
 
 export function ProgramListPage() {
   const { user } = useAuthStore()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { programs, loading, fetchPrograms, deleteProgram, updateProgram, createProgram, selectedProgram, setSelectedProgram } = useProgramStore()
+  const { changeStatus: changeProgramStatus } = useProgramStatusManager()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [editingProgram, setEditingProgram] = useState<Program | null>(null)
@@ -39,7 +41,9 @@ export function ProgramListPage() {
   const isUserRole = isInstructor || user?.role === 'VOLUNTEER' || user?.role === 'STUDENT'
 
   // 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 1) || (isAdmin ? '프로그램 관리' : '진행 프로그램')
+  const categoryName = isAdmin
+    ? '프로그램 관리'
+    : getCategoryNameByPath(location.pathname, 1) || '진행 프로그램'
 
   // 탭 필터 (강사용)
   const categoryTab = (searchParams.get('category') as ProgramCategory | 'all') || 'all'
@@ -158,12 +162,7 @@ export function ProgramListPage() {
   }
 
   const handleStatusChange = async (program: Program, status: ProgramLifecycleStatus) => {
-    try {
-      await updateProgram(program.id, { lifecycleStatus: status })
-      message.success('프로그램 상태가 변경되었습니다')
-    } catch {
-      message.error('상태 변경 중 오류가 발생했습니다')
-    }
+    await changeProgramStatus(program.id, status)
   }
 
   const handleCategoryTabChange = (category: ProgramCategory | 'all') => {
@@ -178,8 +177,8 @@ export function ProgramListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+      <Space className="program-list-header">
+        <h1 className="program-list-title">{categoryName}</h1>
         {isAdmin && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
             프로그램 등록

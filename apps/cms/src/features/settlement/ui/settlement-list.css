@@ -1,0 +1,19 @@
+.settlement-list__filters {
+  margin-bottom: 16px;
+}
+
+.settlement-list__filter--status {
+  width: 150px;
+}
+
+.settlement-list__filter--program {
+  width: 200px;
+}
+
+.settlement-list__filter--period {
+  width: 150px;
+}
+
+.settlement-list__row {
+  cursor: pointer;
+}

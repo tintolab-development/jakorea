@@ -174,7 +174,7 @@ export function SettlementOverviewPage() {
         }}
         onEdit={() => {}}
         onDelete={() => {}}
-        onStatusChange={() => {}}
+        onStatusChange={async () => {}}
         loading={loading}
       />
     </div>

@@ -29,6 +29,7 @@ interface ApplicationListProps {
   onEdit: (application: Application) => void
   onDelete: (application: Application) => void
   onStatusChange: (application: Application, status: Application['status'], rejectionReason?: string) => void
+  onReject?: (application: Application) => void
   isAdmin?: boolean
   currentUser?: Pick<User, 'id' | 'role' | 'instructorId'> | null
 }
@@ -40,6 +41,7 @@ export function ApplicationList({
   onEdit,
   onDelete,
   onStatusChange,
+  onReject,
   isAdmin = false,
   currentUser,
 }: ApplicationListProps) {
@@ -175,6 +177,7 @@ export function ApplicationList({
                       onEdit,
                       onDelete,
                       onStatusChange,
+                      onReject,
                     }),
                   }}
                   trigger={['click']}

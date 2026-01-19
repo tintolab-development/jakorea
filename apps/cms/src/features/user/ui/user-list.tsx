@@ -8,7 +8,7 @@ import type { MenuProps } from 'antd'
 import { MoreOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { User, UserRole } from '@/types/user'
-import { RoleBadge } from '@/shared/ui'
+import { RoleBadge, getRoleLabel, getAdminProgramRoleLabel } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { formatDate } from '@/shared/utils'
 
@@ -39,7 +39,33 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       dataIndex: 'role',
       key: 'role',
       width: 120,
-      render: (role: UserRole) => <RoleBadge role={role} size="small" variant="tag" />,
+      render: (role: UserRole, record) => (
+        <RoleBadge role={role} adminRole={record.adminRole} size="small" variant="tag" />
+      ),
+    },
+    {
+      title: '관리자 구분',
+      dataIndex: 'adminRole',
+      key: 'adminRole',
+      width: 140,
+      render: (adminRole, record) => {
+        if (record.role !== 'ADMIN' || !adminRole) {
+          return <Tag>-</Tag>
+        }
+        return <Tag>{getRoleLabel('ADMIN', adminRole)}</Tag>
+      },
+    },
+    {
+      title: '프로그램 범위',
+      dataIndex: 'adminProgramRole',
+      key: 'adminProgramRole',
+      width: 140,
+      render: (adminProgramRole, record) => {
+        if (record.role !== 'ADMIN' || !adminProgramRole) {
+          return <Tag>-</Tag>
+        }
+        return <Tag>{getAdminProgramRoleLabel(adminProgramRole)}</Tag>
+      },
     },
     {
       title: '면접 상태',

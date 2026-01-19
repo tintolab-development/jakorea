@@ -394,7 +394,7 @@ export function MySettlementListPage() {
         }}
         onEdit={() => {}}
         onDelete={() => {}}
-        onStatusChange={() => {}}
+        onStatusChange={async () => {}}
         loading={loading}
       />
 

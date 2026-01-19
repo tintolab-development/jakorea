@@ -1,0 +1,22 @@
+.user-list-header {
+  margin-bottom: 16px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.user-list-title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.user-list-filters {
+  margin-bottom: 16px;
+}
+
+.user-list-search {
+  width: 300px;
+}
+
+.user-list-role-filter {
+  width: 150px;
+}

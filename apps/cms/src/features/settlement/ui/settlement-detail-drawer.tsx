@@ -6,17 +6,14 @@
 import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, message } from 'antd'
 import { EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
-import { matchingService } from '@/entities/matching/api/matching-service'
-import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 import { SettlementApprovalWorkflow } from './settlement-approval-workflow'
 import {
   getSettlementStatusLabel,
   getSettlementStatusColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
-import { canTransitionSettlementStatus, getPreviousSettlementStatus } from '@/shared/lib/status-transition'
+import { useSettlementDetail } from '../hooks/use-settlement-detail'
+import './settlement-detail-drawer.css'
 
 const { Text, Title } = Typography
 
@@ -26,15 +23,8 @@ interface SettlementDetailDrawerProps {
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
-  onStatusChange: (status: Settlement['status']) => void
+  onStatusChange: (status: Settlement['status']) => Promise<void>
   loading?: boolean
-}
-
-const itemTypeLabels: Record<string, string> = {
-  instructor_fee: '강사비',
-  transportation: '교통비',
-  accommodation: '숙박비',
-  other: '기타',
 }
 
 export function SettlementDetailDrawer({
@@ -46,75 +36,24 @@ export function SettlementDetailDrawer({
   onStatusChange,
   loading,
 }: SettlementDetailDrawerProps) {
+  const {
+    programTitle,
+    instructorName,
+    matchingLabel,
+    canDownload,
+    itemColumns,
+    changeStatus,
+    rollbackStatus,
+    downloadPaymentStatement,
+  } = useSettlementDetail(settlement, onStatusChange)
+
   if (!settlement) return null
-
-  const program = programService.getByIdSync(settlement.programId)
-  const instructor = instructorService.getByIdSync(settlement.instructorId)
-  const matching = matchingService.getByIdSync(settlement.matchingId)
-
-  const handleDownloadPaymentStatement = async () => {
-    if (!program || !instructor) {
-      message.error('프로그램 또는 강사 정보를 찾을 수 없습니다')
-      return
-    }
-
-    try {
-      await generatePaymentStatement(settlement, instructor, program.title)
-      message.success('지급조서가 다운로드되었습니다')
-    } catch (error) {
-      console.error('Failed to generate payment statement:', error)
-      message.error('지급조서 생성 중 오류가 발생했습니다')
-    }
-  }
-
-  const canDownload = settlement.status === 'approved' || settlement.status === 'paid' // isSettlementFinalStatus로 체크 가능하지만, 다운로드는 paid도 포함해야 함
-
-  const changeStatus = async (nextStatus: Settlement['status']) => {
-    if (!canTransitionSettlementStatus(settlement.status, nextStatus)) {
-      message.warning('현재 상태에서는 해당 단계로 전환할 수 없습니다.')
-      return
-    }
-    try {
-      await onStatusChange(nextStatus)
-    } catch {
-      // 상위에서 에러 처리
-    }
-  }
-
-  const rollbackStatus = async () => {
-    const previous = getPreviousSettlementStatus(settlement.status)
-    if (!previous) {
-      message.warning('이전 단계로 되돌릴 수 없는 상태입니다.')
-      return
-    }
-    await changeStatus(previous)
-  }
-
-  const itemColumns = [
-    {
-      title: '항목',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type: string) => itemTypeLabels[type] || type,
-    },
-    {
-      title: '설명',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: '금액',
-      dataIndex: 'amount',
-      key: 'amount',
-      render: (amount: number) => `${amount.toLocaleString('ko-KR')}원`,
-    },
-  ]
 
   return (
     <Drawer
       title={
         <Space>
-          <Title level={4} style={{ margin: 0 }}>
+          <Title level={4} className="settlement-detail-drawer__title">
             정산 상세
           </Title>
           <Badge status={getSettlementStatusColor(settlement.status) as any} text={getSettlementStatusLabel(settlement.status)} />
@@ -127,7 +66,7 @@ export function SettlementDetailDrawer({
       extra={
         <Space>
           {canDownload && (
-            <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownloadPaymentStatement}>
+            <Button type="primary" icon={<DownloadOutlined />} onClick={downloadPaymentStatement}>
               지급조서 다운로드
             </Button>
           )}
@@ -145,15 +84,15 @@ export function SettlementDetailDrawer({
           <Tag color="geekblue">{settlement.period}</Tag>
         </Descriptions.Item>
         <Descriptions.Item label="프로그램">
-          {program ? (
-            <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
+          {programTitle ? (
+            <Tag color={domainColorsHex.program.primary}>{programTitle}</Tag>
           ) : (
             <Tag color="error">프로그램 정보 오류 (ID: {settlement.programId.slice(-8)})</Tag>
           )}
         </Descriptions.Item>
-        <Descriptions.Item label="강사">{instructor ? instructor.name : '-'}</Descriptions.Item>
+        <Descriptions.Item label="강사">{instructorName || '-'}</Descriptions.Item>
         <Descriptions.Item label="매칭">
-          {matching ? `매칭 #${matching.id.slice(-6)}` : '-'}
+          {matchingLabel || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="상태">
           <Badge status={getSettlementStatusColor(settlement.status) as any} text={getSettlementStatusLabel(settlement.status)} />
@@ -210,9 +149,7 @@ export function SettlementDetailDrawer({
             message.warning('검토 단계 진입은 산출 완료 상태에서만 가능합니다.')
           }
         }}
-        onRollback={() => {
-          void rollbackStatus()
-        }}
+        onRollback={() => void rollbackStatus()}
         loading={loading}
       />
 

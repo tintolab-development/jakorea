@@ -6,42 +6,13 @@
 
 import { Card, Row, Col, Statistic, Tag } from 'antd'
 import { BookOutlined } from '@ant-design/icons'
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getOverallProgramProgress, type OverallProgramProgress } from '../api/statistics-service'
+import { useProgramProgress } from '../hooks/use-program-progress'
+import './overall-program-progress-card.css'
 
 export function OverallProgramProgressCard() {
   const navigate = useNavigate()
-  const [progress, setProgress] = useState<OverallProgramProgress | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-
-    const loadData = async () => {
-      setLoading(true)
-      try {
-        const data = await getOverallProgramProgress()
-        if (!cancelled) {
-          setProgress(data)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error('전체 강의 진행 현황 조회 실패:', error)
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    loadData()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const { progress, loading } = useProgramProgress()
 
   const handleClick = () => {
     navigate('/programs')
@@ -52,10 +23,10 @@ export function OverallProgramProgressCard() {
       <Card
         hoverable
         onClick={handleClick}
-        style={{ cursor: 'pointer', height: '100%' }}
+        className="overall-program-progress-card"
         loading={loading}
       >
-        <div style={{ height: 150 }} />
+        <div className="overall-program-progress-card__placeholder" />
       </Card>
     )
   }
@@ -66,32 +37,32 @@ export function OverallProgramProgressCard() {
     <Card
       hoverable
       onClick={handleClick}
-      style={{ cursor: 'pointer', height: '100%' }}
+      className="overall-program-progress-card"
       loading={loading}
     >
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Statistic
-            title="전체 강의 진행 현황"
+            title="전체 프로그램 진행 현황"
             value={total}
             prefix={<BookOutlined />}
             suffix="개"
             valueStyle={{ color: '#000000', fontWeight: 'bold' }}
           />
         </Col>
-        <Col span={24} style={{ marginTop: 16 }}>
+        <Col span={24} className="overall-program-progress-card__status-row">
           <Row gutter={[8, 8]} wrap>
             <Col>
-              <Tag color="blue">신청 완료: {progress.applicationCompleted}</Tag>
+              <Tag color="blue">신청완료: {progress.applicationCompleted}</Tag>
             </Col>
             <Col>
-              <Tag color="orange">진행 예정: {progress.scheduled}</Tag>
+              <Tag color="orange">진행예정: {progress.scheduled}</Tag>
             </Col>
             <Col>
-              <Tag color="green">진행 중: {progress.inProgress}</Tag>
+              <Tag color="green">진행중: {progress.inProgress}</Tag>
             </Col>
             <Col>
-              <Tag color="default">진행 완료: {progress.completed}</Tag>
+              <Tag color="default">진행완료: {progress.completed}</Tag>
             </Col>
           </Row>
         </Col>

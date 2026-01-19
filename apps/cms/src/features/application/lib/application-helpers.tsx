@@ -40,6 +40,7 @@ export function createApplicationMenuItems(
     onEdit: (application: Application) => void
     onDelete: (application: Application) => void
     onStatusChange: (application: Application, status: ApplicationStatus) => void
+    onReject?: (application: Application) => void
   }
 ): MenuProps['items'] {
   return [
@@ -80,7 +81,13 @@ export function createApplicationMenuItems(
       key: 'status-rejected',
       label: '거절로 변경',
       disabled: !canTransitionApplicationStatus(application.status, 'rejected'),
-      onClick: () => handlers.onStatusChange(application, 'rejected'),
+      onClick: () => {
+        if (handlers.onReject) {
+          handlers.onReject(application)
+        } else {
+          handlers.onStatusChange(application, 'rejected')
+        }
+      },
     },
     {
       type: 'divider',

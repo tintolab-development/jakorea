@@ -41,7 +41,7 @@ export function AdminFAQPage() {
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null)
   const [form] = Form.useForm()
 
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || 'FAQ 관리'
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || 'FAQ'
 
   // 필터 상태
   const [searchText, setSearchText] = useState('')
