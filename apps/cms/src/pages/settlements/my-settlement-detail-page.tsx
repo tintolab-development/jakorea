@@ -3,7 +3,7 @@
  * Phase 5.2.4: 본인 정산 정보
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Descriptions, Tag, Button, Space, Spin, message } from 'antd'
 import { ArrowLeftOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons'
@@ -21,13 +21,7 @@ export function MySettlementDetailPage() {
   const [settlement, setSettlement] = useState<Settlement | null>(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (id && user?.instructorId) {
-      loadSettlement()
-    }
-  }, [id, user?.instructorId])
-
-  const loadSettlement = async () => {
+  const loadSettlement = useCallback(async () => {
     if (!id || !user?.instructorId) return
 
     setLoading(true)
@@ -46,7 +40,13 @@ export function MySettlementDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, navigate, user?.instructorId])
+
+  useEffect(() => {
+    if (id && user?.instructorId) {
+      loadSettlement()
+    }
+  }, [id, user?.instructorId, loadSettlement])
 
   if (!user?.instructorId) {
     return (

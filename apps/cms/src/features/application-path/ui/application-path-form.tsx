@@ -2,6 +2,7 @@
  * 신청 경로 등록/수정 폼 컴포넌트
  * V3 Phase 7: 신청 경로 관리
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import React from 'react'
 import { Form, Select, Input, Button, Space, Switch } from 'antd'

@@ -3,7 +3,7 @@
  * Phase 5.2.4: 본인 정산 정보 - 월별 정산 관리
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, Space, Button, Radio, Table, Tag, Select, Statistic, Empty } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
@@ -31,13 +31,7 @@ export function MyMonthlySettlementPage() {
   // 선택된 월 (YYYY-MM 형식)
   const selectedPeriod = searchParams.get('period') || dayjs().format('YYYY-MM')
 
-  useEffect(() => {
-    if (user?.instructorId) {
-      loadSettlements()
-    }
-  }, [user?.instructorId, selectedPeriod])
-
-  const loadSettlements = async () => {
+  const loadSettlements = useCallback(async () => {
     if (!user?.instructorId) return
 
     setLoading(true)
@@ -54,7 +48,13 @@ export function MyMonthlySettlementPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedPeriod, user?.instructorId])
+
+  useEffect(() => {
+    if (user?.instructorId) {
+      loadSettlements()
+    }
+  }, [loadSettlements, user?.instructorId])
 
   const handleViewModeChange = (mode: ViewMode) => {
     const newParams = new URLSearchParams(searchParams)

@@ -7,7 +7,11 @@ import type { Application, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockSchools } from './schools'
 import { mockInstructors } from './instructors'
+import { mockUsers } from './users'
 import { getApplicationPathByProgramId } from './application-paths'
+
+const mockStudentUsers = mockUsers.filter(u => u.role === 'STUDENT')
+const mockVolunteerUsers = mockUsers.filter(u => u.role === 'VOLUNTEER')
 
 function createApplication(
   id: string,
@@ -49,6 +53,12 @@ function createApplication(
     subjectId = mockSchools[subjectIndex % mockSchools.length].id
   } else if (subjectType === 'instructor') {
     subjectId = mockInstructors[subjectIndex % mockInstructors.length].id
+  } else if (subjectType === 'volunteer') {
+    subjectId = (mockVolunteerUsers[subjectIndex % mockVolunteerUsers.length]?.id ||
+      mockUsers[subjectIndex % mockUsers.length].id) as UUID
+  } else if (subjectType === 'student') {
+    subjectId = (mockStudentUsers[subjectIndex % mockStudentUsers.length]?.id ||
+      mockUsers[subjectIndex % mockUsers.length].id) as UUID
   } else {
     subjectId = mockSchools[subjectIndex % mockSchools.length].id
   }
@@ -63,7 +73,7 @@ function createApplication(
     status,
     notes:
       Math.random() > 0.7
-        ? `신청 메모: ${subjectType === 'school' ? '학교' : subjectType === 'instructor' ? '강사' : '학생'} 신청 관련 추가 정보`
+        ? `신청 메모: ${subjectType === 'school' ? '학교' : subjectType === 'instructor' ? '강사' : subjectType === 'volunteer' ? '봉사자' : '학생'} 신청 관련 추가 정보`
         : undefined,
     submittedAt: submittedAt.toISOString(),
     reviewedAt,
@@ -79,7 +89,7 @@ const statuses: Application['status'][] = [
   'rejected',
   'cancelled',
 ]
-const subjectTypes: Application['subjectType'][] = ['school', 'student', 'instructor']
+const subjectTypes: Application['subjectType'][] = ['school', 'student', 'instructor', 'volunteer']
 
 export const mockApplications: Application[] = Array.from({ length: 50 }, (_, index) => {
   const programIndex = Math.floor(Math.random() * mockPrograms.length)

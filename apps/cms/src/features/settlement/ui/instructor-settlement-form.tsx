@@ -2,6 +2,7 @@
  * 강사/봉사자 정산 제출 폼 컴포넌트
  * Phase 6.1.2: 강사/봉사자 정산 제출
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { Form, Input, Select, Button, Space, Table, InputNumber, Upload, Alert } from 'antd'
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'

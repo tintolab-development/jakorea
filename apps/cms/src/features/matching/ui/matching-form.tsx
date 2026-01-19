@@ -2,6 +2,7 @@
  * 매칭 등록/수정 폼 컴포넌트
  * Phase 3.2: 강사 매칭 관리
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { Form, Select, Button, Space, Card, Alert, List, Tag, Divider } from 'antd'
 import { useForm } from 'react-hook-form'

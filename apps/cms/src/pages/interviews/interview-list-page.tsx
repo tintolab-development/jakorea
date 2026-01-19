@@ -3,7 +3,7 @@
  * Phase 4.3.2: 면접 관리
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Space, Select, Button, Modal } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { InterviewList } from '@/features/interview/ui/interview-list'
@@ -52,22 +52,7 @@ export function InterviewListPage() {
     return searchParams.get('id')
   }, [searchParams])
 
-  useEffect(() => {
-    fetchInterviews()
-  }, [statusFilter, roleFilter])
-
-  // 쿼리 파라미터에서 면접 ID가 있으면 Drawer 열기
-  useEffect(() => {
-    if (selectedInterviewId) {
-      const interview = interviews.find(i => i.id === selectedInterviewId)
-      if (interview) {
-        setSelectedInterview(interview)
-        setDrawerOpen(true)
-      }
-    }
-  }, [selectedInterviewId, interviews])
-
-  const fetchInterviews = async () => {
+  const fetchInterviews = useCallback(async () => {
     setLoading(true)
     try {
       const filters: { status?: InterviewStatus; userRole?: 'INSTRUCTOR' | 'VOLUNTEER' } = {}
@@ -84,7 +69,22 @@ export function InterviewListPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [roleFilter, statusFilter])
+
+  useEffect(() => {
+    fetchInterviews()
+  }, [fetchInterviews])
+
+  // 쿼리 파라미터에서 면접 ID가 있으면 Drawer 열기
+  useEffect(() => {
+    if (selectedInterviewId) {
+      const interview = interviews.find(i => i.id === selectedInterviewId)
+      if (interview) {
+        setSelectedInterview(interview)
+        setDrawerOpen(true)
+      }
+    }
+  }, [selectedInterviewId, interviews])
 
   // 필터 변경 핸들러
   const handleStatusFilterChange = (value: InterviewStatus | null) => {

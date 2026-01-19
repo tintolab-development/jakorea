@@ -6,7 +6,7 @@
 
 import { Card, Button, Typography, Space, Empty } from 'antd'
 import { BellOutlined, DollarOutlined, FileTextOutlined, CalendarOutlined, CheckCircleOutlined } from '@ant-design/icons'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -73,13 +73,7 @@ export function NotificationWidget() {
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
 
-  useEffect(() => {
-    if (user?.id) {
-      loadNotifications()
-    }
-  }, [user?.id])
-
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     if (!user?.id) return
 
     setLoading(true)
@@ -91,7 +85,13 @@ export function NotificationWidget() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (user?.id) {
+      loadNotifications()
+    }
+  }, [loadNotifications, user?.id])
 
   const handleConfirm = async (notification: Notification) => {
     try {

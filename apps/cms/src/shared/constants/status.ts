@@ -87,12 +87,14 @@ export const applicationSubjectTypeConfig = {
     school: '학교',
     student: '학생',
     instructor: '강사',
+    volunteer: '봉사자',
   },
 
   colors: {
     school: 'cyan',
     student: 'blue',
     instructor: 'purple',
+    volunteer: 'green',
   },
 }
 

@@ -3,7 +3,7 @@
  * Phase: 봉사단 관리 하위 뎁스 구현
  */
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { Space, Card, Tabs, Table, Tag, Button, Typography, Alert } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -55,7 +55,7 @@ export function VolunteerProgramListPage() {
   const [selectedUser, setSelectedUser] = useState<Omit<User, 'password'> | null>(null)
   const [userDrawerOpen, setUserDrawerOpen] = useState(false)
 
-  const programColumns: ColumnsType<Program> = [
+  const programColumns: ColumnsType<Program> = useMemo(() => [
     {
       title: '프로그램명',
       dataIndex: 'title',
@@ -129,31 +129,33 @@ export function VolunteerProgramListPage() {
         return <Tag color={color}>{label}</Tag>
       },
     },
-  ]
+  ], [])
 
   const isVolunteer = currentUser?.role === 'VOLUNTEER'
   const isAdmin = currentUser?.role === 'ADMIN'
 
-  const defaultTabKey = 'volunteers'
-  const activeTabKey = searchParams.get('tab') || defaultTabKey
+  // 역할별 기본 탭
+  // - VOLUNTEER: 봉사단 목록(봉사자 전용 탭 존재)
+  // - ADMIN/그 외: 프로그램 목록
+  const defaultTabKey = isVolunteer ? 'volunteers' : 'list'
+
+  const tabParam = searchParams.get('tab')
+  const activeTabKey = tabParam || defaultTabKey
 
   const handleTabChange = (key: string) => {
     const newParams = new URLSearchParams(searchParams)
-    if (key === defaultTabKey) {
-      newParams.delete('tab')
-    } else {
-      newParams.set('tab', key)
-    }
+    // 탭 상태를 항상 URL에 유지 (관리자 화면에서 탭 지정 안정화)
+    newParams.set('tab', key)
     setSearchParams(newParams, { replace: true })
   }
 
-  const handleUserView = (user: Omit<User, 'password'>) => {
+  const handleUserView = useCallback((user: Omit<User, 'password'>) => {
     setSelectedUser(user)
     setUserDrawerOpen(true)
-  }
+  }, [])
 
   // 탭 항목 구성
-  const tabItems = [
+  const tabItems = useMemo(() => [
     // 봉사자(VOLUNTEER): 봉사단 목록 탭 (기본)
     ...(isVolunteer ? [
       {
@@ -257,7 +259,30 @@ export function VolunteerProgramListPage() {
         ),
       },
     ] : []),
-  ]
+  ], [
+    isVolunteer,
+    isAdmin,
+    volunteers,
+    programColumns,
+    volunteerPrograms,
+    selectedProgram?.id,
+    navigate,
+    handleUserView,
+  ])
+
+  // tab 쿼리파라미터가 없거나, 현재 역할에서 유효하지 않은 값이면 기본 탭으로 강제 세팅
+  useEffect(() => {
+    const validKeys = new Set(tabItems.map(t => t.key))
+    const current = searchParams.get('tab')
+    const next = current && validKeys.has(current) ? current : defaultTabKey
+
+    // 이미 올바른 값이면 아무 것도 하지 않음
+    if (current === next) return
+
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('tab', next)
+    setSearchParams(nextParams, { replace: true })
+  }, [defaultTabKey, searchParams, setSearchParams, tabItems])
 
   return (
     <div>

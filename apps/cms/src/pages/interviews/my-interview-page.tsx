@@ -3,7 +3,7 @@
  * Phase 4.3.2: 면접 관리
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Card, Descriptions, Tag, Alert, Space } from 'antd'
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -16,13 +16,7 @@ export function MyInterviewPage() {
   const [interview, setInterview] = useState<Interview | null>(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchMyInterview()
-    }
-  }, [user?.id])
-
-  const fetchMyInterview = async () => {
+  const fetchMyInterview = useCallback(async () => {
     setLoading(true)
     try {
       const data = await getInterviewByUserId(user!.id)
@@ -32,7 +26,13 @@ export function MyInterviewPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchMyInterview()
+    }
+  }, [fetchMyInterview, user?.id])
 
   if (!user) {
     return <Alert message="로그인이 필요합니다" type="warning" />

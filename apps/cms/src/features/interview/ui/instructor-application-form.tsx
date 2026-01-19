@@ -2,6 +2,7 @@
  * 강사/봉사자 신청 폼 컴포넌트
  * Phase 4.3.1: 강사/봉사자 신청
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { Form, Input, Select, Button, Card, Space, Alert, Divider } from 'antd'
 import { useForm, Controller } from 'react-hook-form'

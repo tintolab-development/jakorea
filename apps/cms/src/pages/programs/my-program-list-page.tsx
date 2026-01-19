@@ -3,7 +3,7 @@
  * Phase 5.2.2: 본인 프로그램 조회
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
@@ -43,29 +43,8 @@ export function MyProgramListPage() {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    const userId = user?.instructorId || user?.id
-    if (userId) {
-      loadPrograms(userId)
-    }
-  }, [user, filters])
-
-  const loadPrograms = async (userId: string) => {
-    setLoading(true)
-    try {
-      const data = await getMyPrograms(userId, filters)
-      setPrograms(data)
-      // 프로그램 로드 후 관심 상태도 로드
-      await loadFavoritesForPrograms(data, userId)
-    } catch (error) {
-      console.error('프로그램 로드 실패:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // 프로그램 목록에 대한 관심 상태 로드
-  const loadFavoritesForPrograms = async (programList: MyProgram[], userId: string) => {
+  const loadFavoritesForPrograms = useCallback(async (programList: MyProgram[], userId: string) => {
     try {
       const favoriteStatuses = await Promise.all(
         programList.map(p => isFavoriteProgram(userId, p.id))
@@ -80,7 +59,28 @@ export function MyProgramListPage() {
     } catch (error) {
       console.error('관심 프로그램 상태 로드 실패:', error)
     }
-  }
+  }, [])
+
+  const loadPrograms = useCallback(async (userId: string) => {
+    setLoading(true)
+    try {
+      const data = await getMyPrograms(userId, filters)
+      setPrograms(data)
+      // 프로그램 로드 후 관심 상태도 로드
+      await loadFavoritesForPrograms(data, userId)
+    } catch (error) {
+      console.error('프로그램 로드 실패:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, loadFavoritesForPrograms])
+
+  useEffect(() => {
+    const userId = user?.instructorId || user?.id
+    if (userId) {
+      loadPrograms(userId)
+    }
+  }, [user, loadPrograms])
 
   const handleStatusChange = (value: MyProgramFilters['status']) => {
     const newParams = new URLSearchParams(searchParams)

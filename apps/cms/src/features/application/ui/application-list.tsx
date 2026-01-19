@@ -47,17 +47,23 @@ export function ApplicationList({
 
   if (!isAdmin && currentUser) {
     switch (currentUser.role) {
-      case 'INSTRUCTOR':
-      case 'VOLUNTEER': {
+      case 'INSTRUCTOR': {
         const instructorId = currentUser.instructorId
         filteredData = instructorId
           ? data.filter(app => app.subjectType === 'instructor' && app.subjectId === instructorId)
           : []
         break
       }
+      case 'VOLUNTEER': {
+        filteredData = currentUser.id
+          ? data.filter(app => app.subjectType === 'volunteer' && app.subjectId === currentUser.id)
+          : []
+        break
+      }
       case 'STUDENT': {
-        // 학생은 아직 별도 ID 매핑이 없어, 일단 학생 타입 신청만 표시
-        filteredData = data.filter(app => app.subjectType === 'student')
+        filteredData = currentUser.id
+          ? data.filter(app => app.subjectType === 'student' && app.subjectId === currentUser.id)
+          : []
         break
       }
       default:
@@ -217,6 +223,7 @@ export function ApplicationList({
           <Option value="school">학교</Option>
           <Option value="student">학생</Option>
           <Option value="instructor">강사</Option>
+          <Option value="volunteer">봉사자</Option>
         </Select>
         <Select
           placeholder="상태 선택"

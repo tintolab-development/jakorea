@@ -3,7 +3,7 @@
  * Phase 6.1.2: 강사/봉사자 정산 제출
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Modal,
   Form,
@@ -71,17 +71,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
     (typeof transportationFee === 'number' ? transportationFee : 0) +
     accommodationFee
 
-  useEffect(() => {
-    if (open && user?.instructorId) {
-      loadAvailableSettlements()
-      // 모달이 열릴 때 폼 초기화
-      form.resetFields()
-      setSelectedProgram(null)
-      setCostItemsOpen(true) // 모달 열릴 때 비용 항목 펼침
-    }
-  }, [open, user?.instructorId])
-
-  const loadAvailableSettlements = async () => {
+  const loadAvailableSettlements = useCallback(async () => {
     if (!user?.instructorId) return
 
     try {
@@ -91,7 +81,17 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       console.error('제출 가능한 정산 목록 로드 실패:', error)
       message.error('제출 가능한 정산 목록을 불러오는 중 오류가 발생했습니다.')
     }
-  }
+  }, [user?.instructorId])
+
+  useEffect(() => {
+    if (open && user?.instructorId) {
+      loadAvailableSettlements()
+      // 모달이 열릴 때 폼 초기화
+      form.resetFields()
+      setSelectedProgram(null)
+      setCostItemsOpen(true) // 모달 열릴 때 비용 항목 펼침
+    }
+  }, [open, user?.instructorId, form, loadAvailableSettlements])
 
   const handleProgramChange = (matchingId: string) => {
     const program = availableSettlements.find(s => s.matchingId === matchingId)

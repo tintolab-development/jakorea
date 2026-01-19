@@ -4,7 +4,7 @@
  * 사용자 강사 권한용 프로그램 만족도 조사
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Card, Button, Space, Table, Tag, Empty, Spin } from 'antd'
 import { CheckCircleOutlined } from '@ant-design/icons'
@@ -67,13 +67,7 @@ export function ProgramSatisfactionPage() {
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '만족도 조사'
 
-  useEffect(() => {
-    if (user?.instructorId) {
-      loadPrograms()
-    }
-  }, [user?.instructorId])
-
-  const loadPrograms = async () => {
+  const loadPrograms = useCallback(async () => {
     if (!user?.instructorId) return
 
     setLoading(true)
@@ -89,7 +83,13 @@ export function ProgramSatisfactionPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.instructorId])
+
+  useEffect(() => {
+    if (user?.instructorId) {
+      loadPrograms()
+    }
+  }, [loadPrograms, user?.instructorId])
 
   const handleOpenModal = (program: MyProgram) => {
     setSelectedProgram(program)

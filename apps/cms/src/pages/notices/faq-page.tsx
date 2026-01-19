@@ -100,7 +100,7 @@ export function FAQPage() {
           <Button
             type="primary"
             icon={<MessageOutlined />}
-            onClick={() => navigate('/posts/inquiries')}
+            onClick={() => navigate('/notices/inquiries')}
             size="large"
           >
             1:1 문의하기
@@ -194,7 +194,7 @@ export function FAQPage() {
                       <Col>
                         <Space style={{ color: '#8c8c8c', fontSize: 13 }}>
                           <InfoCircleOutlined /> 추가 질문이 있으신가요? 
-                          <Button type="link" size="small" onClick={() => navigate('/posts/inquiries')} style={{ padding: 0 }}>상세 문의하기</Button>
+                          <Button type="link" size="small" onClick={() => navigate('/notices/inquiries')} style={{ padding: 0 }}>상세 문의하기</Button>
                         </Space>
                       </Col>
                       <Col>
@@ -226,7 +226,7 @@ export function FAQPage() {
               ghost 
               icon={<FileSearchOutlined />} 
               style={{ marginTop: 12 }}
-              onClick={() => navigate('/posts/inquiries')}
+              onClick={() => navigate('/notices/inquiries')}
             >
               1:1 문의 게시판 바로가기
             </Button>

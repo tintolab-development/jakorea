@@ -5,10 +5,11 @@
  */
 
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/shared/components/protected-route'
 import { Spin } from 'antd'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 
 // 로딩 컴포넌트 - 화면 중앙 정렬
 const LoadingFallback = () => (
@@ -118,12 +119,41 @@ const PerformanceDashboardPage = lazyLoad(() => import('@/pages/performance/perf
 const ScheduleNegotiationListPage = lazyLoad(() => import('@/pages/schedule-negotiations/schedule-negotiation-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
+const TemplateFilesPage = lazyLoad(() => import('@/pages/templates/template-files-page'))
+const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
+const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
 const PostListPage = lazyLoad(() => import('@/pages/posts/post-list-page'))
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
 const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
+const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
+const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
+
+function LegacyPostsRedirect({ kind }: { kind: 'root' | 'faq' | 'inquiries' | 'notices' | 'categories' }) {
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'ADMIN'
+
+  if (kind === 'root') {
+    return <Navigate to={isAdmin ? '/admin/posts' : '/notices'} replace />
+  }
+
+  if (kind === 'faq') {
+    return <Navigate to={isAdmin ? '/admin/posts/faq' : '/notices/faq'} replace />
+  }
+
+  if (kind === 'inquiries') {
+    return <Navigate to={isAdmin ? '/admin/posts/inquiries' : '/notices/inquiries'} replace />
+  }
+
+  if (kind === 'notices') {
+    return <Navigate to={isAdmin ? '/admin/posts/notices' : '/notices'} replace />
+  }
+
+  // categories: 관리자 전용이지만 legacy URL 호환을 위해 리다이렉트 유지
+  return <Navigate to="/admin/posts/categories" replace />
+}
 
 export const router = createBrowserRouter([
   {
@@ -312,18 +342,38 @@ export const router = createBrowserRouter([
       },
       {
         path: 'templates',
+        element: <TemplateListPage />,
         children: [
-          { index: true, element: <TemplateListPage /> },
+          { index: true, element: <Navigate to="files?tab=files" replace /> },
+          { path: 'files', element: <TemplateFilesPage /> },
+          { path: 'sms', element: <TemplateSmsPage /> },
+          { path: 'email', element: <TemplateEmailPage /> },
         ],
       },
       {
+        path: 'admin',
+        children: [
+          {
+            path: 'posts',
+            children: [
+              { index: true, element: <PostListPage /> },
+              { path: 'categories', element: <AdminCategoryPage /> },
+              { path: 'notices', element: <AdminNoticeListPage /> },
+              { path: 'faq', element: <AdminFAQPage /> },
+              { path: 'inquiries', element: <AdminInquiryPage /> },
+            ],
+          },
+        ],
+      },
+      // legacy routes (기존 링크 호환)
+      {
         path: 'posts',
         children: [
-          { index: true, element: <PostListPage /> },
-          { path: 'categories', element: <AdminCategoryPage /> },
-          { path: 'notices', element: <AdminNoticeListPage /> },
-          { path: 'faq', element: <AdminFAQPage /> },
-          { path: 'inquiries', element: <AdminInquiryPage /> },
+          { index: true, element: <LegacyPostsRedirect kind="root" /> },
+          { path: 'faq', element: <LegacyPostsRedirect kind="faq" /> },
+          { path: 'inquiries', element: <LegacyPostsRedirect kind="inquiries" /> },
+          { path: 'notices', element: <LegacyPostsRedirect kind="notices" /> },
+          { path: 'categories', element: <LegacyPostsRedirect kind="categories" /> },
         ],
       },
       {
@@ -336,6 +386,8 @@ export const router = createBrowserRouter([
         path: 'notices',
         children: [
           { index: true, element: <NoticeListPage /> },
+          { path: 'faq', element: <FAQPage /> },
+          { path: 'inquiries', element: <InquiryPage /> },
         ],
       },
       {

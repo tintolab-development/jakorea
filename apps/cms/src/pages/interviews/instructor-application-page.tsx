@@ -2,6 +2,7 @@
  * 강사/봉사자 신청 페이지
  * Phase 4.3.1: 강사/봉사자 신청
  */
+/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { Form, Input, Select, Button, Card, message, Space, Typography, InputNumber } from 'antd'
 import { UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'

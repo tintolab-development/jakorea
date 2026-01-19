@@ -3,7 +3,7 @@
  * Phase 5.2.3: 본인 일정 관리
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Spin, Empty, message } from 'antd'
 import { Calendar, Badge } from 'antd'
@@ -19,13 +19,7 @@ export function MyScheduleCalendarPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (user?.instructorId) {
-      loadSchedules()
-    }
-  }, [user?.instructorId])
-
-  const loadSchedules = async () => {
+  const loadSchedules = useCallback(async () => {
     if (!user?.instructorId) return
 
     setLoading(true)
@@ -38,7 +32,13 @@ export function MyScheduleCalendarPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.instructorId])
+
+  useEffect(() => {
+    if (user?.instructorId) {
+      loadSchedules()
+    }
+  }, [loadSchedules, user?.instructorId])
 
   const getListData = (value: Dayjs) => {
     const dateStr = value.format('YYYY-MM-DD')

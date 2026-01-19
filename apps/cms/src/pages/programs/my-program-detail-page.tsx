@@ -3,7 +3,7 @@
  * Phase 5.2.2: 본인 프로그램 조회
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Descriptions, Tag, Button, Table, Space, Empty, Spin, message } from 'antd'
 import { HeartOutlined, HeartFilled, ArrowLeftOutlined, CalendarOutlined, FormOutlined } from '@ant-design/icons'
@@ -27,20 +27,7 @@ export function MyProgramDetailPage() {
   const [favorite, setFavorite] = useState(false) // 찜하기 상태 (Mock)
   const [satisfactionModalOpen, setSatisfactionModalOpen] = useState(false)
 
-  useEffect(() => {
-    if (id && user?.instructorId) {
-      loadProgram()
-    }
-  }, [id, user?.instructorId])
-
-  useEffect(() => {
-    const userId = user?.instructorId || user?.id
-    if (id && userId) {
-      loadFavoriteStatus(userId)
-    }
-  }, [id, user])
-
-  const loadProgram = async () => {
+  const loadProgram = useCallback(async () => {
     const userId = user?.instructorId || user?.id
     if (!id || !userId) return
 
@@ -59,9 +46,9 @@ export function MyProgramDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, navigate, user?.id, user?.instructorId])
 
-  const loadFavoriteStatus = async (userId: string) => {
+  const loadFavoriteStatus = useCallback(async (userId: string) => {
     if (!id) return
 
     try {
@@ -70,7 +57,21 @@ export function MyProgramDetailPage() {
     } catch (error) {
       console.error('관심 프로그램 상태 로드 실패:', error)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    if (id && user?.instructorId) {
+      loadProgram()
+    }
+  }, [id, user?.instructorId, loadProgram])
+
+  useEffect(() => {
+    const userId = user?.instructorId || user?.id
+    if (id && userId) {
+      loadFavoriteStatus(userId)
+    }
+  }, [id, user, loadFavoriteStatus])
+
 
   const handleToggleFavorite = async () => {
     const userId = user?.instructorId || user?.id

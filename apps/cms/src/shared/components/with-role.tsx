@@ -36,7 +36,7 @@ export function withRole<P extends object>(
       if (!hasRole(user, requiredRole)) {
         navigate(redirectTo, { replace: true })
       }
-    }, [user, requiredRole, redirectTo, navigate])
+    }, [user, navigate])
 
     if (!hasRole(user, requiredRole)) {
       return null
@@ -68,7 +68,7 @@ export function withAnyRole<P extends object>(
       if (!hasAnyRole(user, requiredRoles)) {
         navigate(redirectTo, { replace: true })
       }
-    }, [user, requiredRoles, redirectTo, navigate])
+    }, [user, navigate])
 
     if (!hasAnyRole(user, requiredRoles)) {
       return null

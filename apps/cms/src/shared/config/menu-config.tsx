@@ -199,19 +199,26 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
   },
   {
-    key: '/posts/faq',
+    key: '/notices/faq',
     label: 'FAQ',
     icon: <QuestionCircleOutlined />,
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
   },
   {
-    key: '/posts/inquiries',
+    key: '/notices/inquiries',
     label: '문의하기',
     icon: <FileSearchOutlined />,
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'VOLUNTEER', 'STUDENT'],
   },
+
+  // legacy support paths (호환/리다이렉트 용도 - 메뉴에는 노출하지 않음)
+  { key: '/posts', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT'] },
+  { key: '/posts/faq', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT'] },
+  { key: '/posts/inquiries', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'VOLUNTEER', 'STUDENT'] },
+  { key: '/posts/categories', enabled: false, allowedRoles: ['ADMIN'] },
+  { key: '/posts/notices', enabled: false, allowedRoles: ['ADMIN'] },
   { key: 'divider-admin', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
   // 관리자 영역
@@ -267,10 +274,10 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/posts/categories', label: '카테고리', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/posts/notices', label: '공지사항', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/posts/faq', label: 'FAQ', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/posts/inquiries', label: '문의하기', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/posts/categories', label: '카테고리', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/posts/notices', label: '공지사항', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/posts/faq', label: 'FAQ', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/posts/inquiries', label: '문의하기', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   { key: '/sponsors', label: '후원사 관리', icon: <ShopOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
