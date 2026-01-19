@@ -1207,13 +1207,15 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
         ? ('active' as const)
         : ('pending' as const)
 
+  const category: ProgramCategory = record.schoolName === '해당없음' ? 'individual' : 'school'
+
   return {
     id: programId,
     sponsorId,
     title: record.title === '해당없음' ? record.mainTitle : record.title,
     type: convertEducationType(record.educationType),
     format: 'workshop' as const,
-    category: 'school' as ProgramCategory,
+    category,
     description: `${record.businessArea} 분야 ${record.title}`,
     rounds,
     startDate,

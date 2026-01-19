@@ -23,7 +23,6 @@ const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
 const roleOptions = [
   { value: 'ADMIN', label: '관리자' },
   { value: 'INSTRUCTOR', label: '강사' },
-  { value: 'VOLUNTEER', label: '봉사자' },
   { value: 'STUDENT', label: '수강자' },
 ] as const
 

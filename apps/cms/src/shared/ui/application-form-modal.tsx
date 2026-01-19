@@ -40,9 +40,6 @@ export function ApplicationFormModal({
       if (user?.role === 'INSTRUCTOR' && user?.instructorId) {
         applicationData.subjectType = 'instructor'
         applicationData.subjectId = user.instructorId
-      } else if (user?.role === 'VOLUNTEER' && user?.id) {
-        applicationData.subjectType = 'volunteer'
-        applicationData.subjectId = user.id
       } else if (user?.role === 'STUDENT' && user?.id) {
         applicationData.subjectType = 'student'
         applicationData.subjectId = user.id

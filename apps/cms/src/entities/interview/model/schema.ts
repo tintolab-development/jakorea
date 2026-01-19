@@ -6,7 +6,7 @@
 import { z } from 'zod'
 
 /**
- * 강사/봉사자 신청 폼 스키마
+ * 강사/수강자 신청 폼 스키마
  */
 export const instructorApplicationFormSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요'),
@@ -17,7 +17,7 @@ export const instructorApplicationFormSchema = z.object({
   participationHistory: z.number().int().min(0, '참여이력은 0 이상이어야 합니다'),
   experience: z.string().optional(),
   availableTime: z.string().optional(),
-  role: z.enum(['INSTRUCTOR', 'VOLUNTEER']),
+  role: z.enum(['INSTRUCTOR', 'STUDENT']),
 })
 
 export type InstructorApplicationFormData = z.infer<typeof instructorApplicationFormSchema>

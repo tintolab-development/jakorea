@@ -4,6 +4,7 @@
  */
 
 import { useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Card, Space, Statistic, Table, Tag, Select, Button } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
@@ -13,6 +14,7 @@ import { mockPrograms } from '@/data/mock'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { exportTableToExcel } from '@/shared/utils/table-export'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
 
 interface PerformanceRow {
   key: string
@@ -24,7 +26,9 @@ interface PerformanceRow {
 }
 
 export default function PerformanceDashboardPage() {
+  const location = useLocation()
   const { params, setParams } = useQueryParams<{ period?: string; region?: string }>()
+  const categoryName = getCategoryNameByPath(location.pathname, 1) || '실적 통계'
 
   // 원본 데이터에서 월, 지역, 후원사 기준 집계
   const allRows: PerformanceRow[] = useMemo(() => {
@@ -124,7 +128,7 @@ export default function PerformanceDashboardPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 */}
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <h1 style={PAGE_HEADER_STYLE}>실적 통계</h1>
+          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         </Space>
 
         {/* 기간/지역 선택 + 요약 카드 */}

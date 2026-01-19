@@ -52,6 +52,7 @@ export {
   getVolunteerPrograms,
   mockVolunteerProgramsMap,
 } from './volunteer-programs'
+export { getStudentEnrolledPrograms } from './student-enrollments'
 
 
 

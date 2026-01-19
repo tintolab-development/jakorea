@@ -1,6 +1,6 @@
 /**
- * 강사/봉사자 신청 폼 컴포넌트
- * Phase 4.3.1: 강사/봉사자 신청
+ * 강사/수강자 신청 폼 컴포넌트
+ * Phase 4.3.1: 강사/수강자 신청
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
@@ -126,7 +126,7 @@ export function InstructorApplicationForm({
             >
               <Select {...field} style={{ width: '100%' }}>
                 <Option value="INSTRUCTOR">강사</Option>
-                <Option value="VOLUNTEER">봉사자</Option>
+                <Option value="STUDENT">수강자</Option>
               </Select>
             </Form.Item>
           )}

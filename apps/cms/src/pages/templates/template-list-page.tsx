@@ -7,11 +7,13 @@ import { useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams, Outlet } from 'react-router-dom'
 import { Space, Tabs } from 'antd'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { getCategoryNameByPath } from '@/shared/config/menu-config'
 
 export function TemplateListPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const categoryName = getCategoryNameByPath(location.pathname, 1) || '템플릿 관리'
 
   const tabItems = useMemo(
     () => [
@@ -59,7 +61,7 @@ export function TemplateListPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>템플릿 관리</h1>
+        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
       <Tabs
         activeKey={activeKey}

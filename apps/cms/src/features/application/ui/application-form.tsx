@@ -68,15 +68,6 @@ export function ApplicationForm({
       }
     }
 
-    if (userRole === 'VOLUNTEER') {
-      return {
-        subjectType: 'volunteer',
-        subjectId: user.id,
-        subjectName: user.name,
-        eligibilitySubjectType: 'instructor', // 모집 로직은 강사/봉사자 공통으로 'instructor'로 판단
-      }
-    }
-
     if (userRole === 'STUDENT') {
       return {
         subjectType: 'student',
@@ -208,7 +199,7 @@ export function ApplicationForm({
         }))
       case 'volunteer':
         return mockUsers
-          .filter(u => u.role === 'VOLUNTEER')
+          .filter(u => u.role === 'STUDENT')
           .map(volunteer => ({
             value: volunteer.id,
             label: volunteer.name,

@@ -34,7 +34,7 @@ export function VolunteerProgramListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   
   // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || (currentUser?.role === 'VOLUNTEER' ? '봉사단' : '봉사 프로그램')
+  const categoryName = getCategoryNameByPath(location.pathname, 2) || (currentUser?.role === 'STUDENT' ? '봉사단' : '봉사 프로그램')
   
   // 봉사 프로그램 목록 가져오기
   const volunteerPrograms = getVolunteerPrograms()
@@ -44,7 +44,7 @@ export function VolunteerProgramListPage() {
 
   const volunteers = useMemo(() => {
     return mockUsers
-      .filter(u => u.role === 'VOLUNTEER')
+      .filter(u => u.role === 'STUDENT')
       .map(u => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = u
@@ -62,7 +62,7 @@ export function VolunteerProgramListPage() {
       key: 'title',
       width: 300,
       ellipsis: true,
-      render: (text: string, record: Program) => (
+      render: (text: string) => (
         <Tag
           color={domainColorsHex.program.primary}
           style={{
@@ -72,11 +72,6 @@ export function VolunteerProgramListPage() {
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             verticalAlign: 'middle',
-            cursor: 'pointer',
-          }}
-          onClick={() => {
-            setSelectedProgram(record)
-            setDetailOpen(true)
           }}
         >
           {text}
@@ -131,13 +126,13 @@ export function VolunteerProgramListPage() {
     },
   ], [])
 
-  const isVolunteer = currentUser?.role === 'VOLUNTEER'
+  const isStudent = currentUser?.role === 'STUDENT'
   const isAdmin = currentUser?.role === 'ADMIN'
 
   // 역할별 기본 탭
-  // - VOLUNTEER: 봉사단 목록(봉사자 전용 탭 존재)
+  // - STUDENT: 봉사단 목록(수강자 전용 탭 존재)
   // - ADMIN/그 외: 프로그램 목록
-  const defaultTabKey = isVolunteer ? 'volunteers' : 'list'
+  const defaultTabKey = isStudent ? 'volunteers' : 'list'
 
   const tabParam = searchParams.get('tab')
   const activeTabKey = tabParam || defaultTabKey
@@ -156,8 +151,8 @@ export function VolunteerProgramListPage() {
 
   // 탭 항목 구성
   const tabItems = useMemo(() => [
-    // 봉사자(VOLUNTEER): 봉사단 목록 탭 (기본)
-    ...(isVolunteer ? [
+    // 수강자(STUDENT): 봉사단 목록 탭 (기본)
+    ...(isStudent ? [
       {
         key: 'volunteers',
         label: '봉사단 목록',
@@ -199,7 +194,7 @@ export function VolunteerProgramListPage() {
                 <Button
                   type="primary"
                   size="large"
-                  onClick={() => navigate('/interviews/apply?role=VOLUNTEER&fixedRole=1')}
+                  onClick={() => navigate('/interviews/apply/form?role=STUDENT&fixedRole=1')}
                 >
                   봉사 신청하기
                 </Button>
@@ -259,7 +254,7 @@ export function VolunteerProgramListPage() {
       },
     ] : []),
   ], [
-    isVolunteer,
+    isStudent,
     isAdmin,
     volunteers,
     programColumns,

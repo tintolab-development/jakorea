@@ -58,18 +58,21 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
     { type: 'pending-tasks-list', colSpan: 12, order: 4 },
     { type: 'unified-activity-feed', colSpan: 24, order: 5 },
   ],
-  // 봉사자: 본인 활동 요약
+  // 수강자: 본인 신청 + 봉사단 활동 요약
+  STUDENT: [
+    { type: 'notification-widget', colSpan: 24, order: 1 },
+    { type: 'my-volunteer-activity-summary', colSpan: 24, order: 2 },
+    { type: 'my-application-summary', colSpan: 24, order: 3 },
+    { type: 'upcoming-schedules-list', colSpan: 12, order: 4 },
+    { type: 'volunteer-pending-tasks-list', colSpan: 12, order: 5 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 6 },
+  ],
   VOLUNTEER: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
     { type: 'my-volunteer-activity-summary', colSpan: 24, order: 2 },
     { type: 'upcoming-schedules-list', colSpan: 12, order: 3 },
     { type: 'volunteer-pending-tasks-list', colSpan: 12, order: 4 },
     { type: 'unified-activity-feed', colSpan: 24, order: 5 },
-  ],
-  // 수강자: 본인 신청 현황
-  STUDENT: [
-    { type: 'my-application-summary', colSpan: 24, order: 1 },
-    { type: 'unified-activity-feed', colSpan: 24, order: 2 },
   ],
 }
 

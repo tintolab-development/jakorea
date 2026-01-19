@@ -1,6 +1,6 @@
 /**
- * 강사/봉사자 신청 페이지
- * Phase 4.3.1: 강사/봉사자 신청
+ * 강사/수강자 신청 페이지
+ * Phase 4.3.1: 강사/수강자 신청
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
@@ -29,7 +29,7 @@ const applicationSchema = z.object({
   participationHistory: z.number().min(0, '참여이력은 0 이상이어야 합니다'),
   experience: z.string().optional(),
   availableTime: z.string().optional(),
-  role: z.enum(['INSTRUCTOR', 'VOLUNTEER']),
+  role: z.enum(['INSTRUCTOR', 'STUDENT']),
 })
 
 type ApplicationFormData = z.infer<typeof applicationSchema>
@@ -78,7 +78,7 @@ export function InstructorApplicationPage() {
   const roleParam = searchParams.get('role')
   const fixedRole = searchParams.get('fixedRole') === '1'
 
-  const defaultRole: ApplicationFormData['role'] = roleParam === 'VOLUNTEER' ? 'VOLUNTEER' : 'INSTRUCTOR'
+  const defaultRole: ApplicationFormData['role'] = roleParam === 'STUDENT' ? 'STUDENT' : 'INSTRUCTOR'
 
   const {
     control,
@@ -115,12 +115,12 @@ export function InstructorApplicationPage() {
       
       await submitInstructorApplication(formData, user.id)
       showSuccessMessage(
-        `${selectedRole === 'INSTRUCTOR' ? '강사' : '봉사자'} 신청이 완료되었습니다. 면접 일정이 확정되면 알려드리겠습니다.`
+        `${selectedRole === 'INSTRUCTOR' ? '강사' : '수강자'} 신청이 완료되었습니다. 면접 일정이 확정되면 알려드리겠습니다.`
       )
       navigate('/interviews/my')
     } catch (error) {
       handleError(error)
-      message.error(`${selectedRole === 'INSTRUCTOR' ? '강사' : '봉사자'} 신청에 실패했습니다.`)
+      message.error(`${selectedRole === 'INSTRUCTOR' ? '강사' : '수강자'} 신청에 실패했습니다.`)
     }
   }
 
@@ -129,9 +129,9 @@ export function InstructorApplicationPage() {
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
-            <Title level={3}>강사/봉사자 신청</Title>
+            <Title level={3}>강사/수강자 신청</Title>
             <Text type="secondary">
-              JA Korea 프로그램에 참여할 강사 또는 봉사자로 신청해주세요.
+              JA Korea 프로그램에 참여할 강사 또는 수강자로 신청해주세요.
             </Text>
           </div>
 
@@ -148,13 +148,13 @@ export function InstructorApplicationPage() {
                     disabled={fixedRole}
                   >
                     <Option value="INSTRUCTOR">강사</Option>
-                    <Option value="VOLUNTEER">봉사자</Option>
+                    <Option value="STUDENT">수강자</Option>
                   </Select>
                 )}
               />
               {fixedRole && (
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  * 봉사단 신청 플로우에서는 신청 유형이 봉사자로 고정됩니다.
+                  * 수강자 신청 플로우에서는 신청 유형이 수강자로 고정됩니다.
                 </Text>
               )}
             </Form.Item>

@@ -5,10 +5,10 @@
 
 import { Badge, Tag } from 'antd'
 import {
-  UserOutlined,
   TeamOutlined,
   SafetyOutlined,
   BookOutlined,
+  HeartOutlined,
 } from '@ant-design/icons'
 import type { UserRole } from '@/types/user'
 
@@ -38,15 +38,15 @@ const roleConfig: Record<
     color: 'blue',
     icon: <TeamOutlined />,
   },
-  VOLUNTEER: {
-    label: '봉사자',
-    color: 'green',
-    icon: <UserOutlined />,
-  },
   STUDENT: {
     label: '수강자',
     color: 'orange',
     icon: <BookOutlined />,
+  },
+  VOLUNTEER: {
+    label: '봉사자',
+    color: 'green',
+    icon: <HeartOutlined />,
   },
 }
 

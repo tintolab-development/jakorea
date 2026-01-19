@@ -147,7 +147,6 @@ export function UserListPage() {
           <Option value="ALL">전체</Option>
           <Option value="ADMIN">관리자</Option>
           <Option value="INSTRUCTOR">강사</Option>
-          <Option value="VOLUNTEER">봉사자</Option>
           <Option value="STUDENT">수강자</Option>
         </Select>
         <Button onClick={loadUsers}>새로고침</Button>

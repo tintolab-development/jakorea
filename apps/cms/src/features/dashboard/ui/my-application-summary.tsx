@@ -9,13 +9,14 @@ import {
   FileTextOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  CloseCircleOutlined,
+  SyncOutlined,
 } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { mockApplications } from '@/data/mock'
 import { useNavigate } from 'react-router-dom'
 import { programService } from '@/entities/program/api/program-service'
+import './my-application-summary.css'
 
 export function MyApplicationSummary() {
   const { user } = useAuthStore()
@@ -31,15 +32,47 @@ export function MyApplicationSummary() {
     return mockApplications.filter(application => application.subjectType === 'student')
   }, [user])
 
-  // 상태별 신청 수
+  type ProgressStatus = 'APPLIED' | 'UPCOMING' | 'IN_PROGRESS' | 'COMPLETED'
+
+  const getProgressStatus = useCallback((status: string, programId: string): ProgressStatus => {
+    if (status !== 'approved') {
+      return 'APPLIED'
+    }
+
+    const program = programService.getByIdSync(programId)
+    const lifecycleStatus = program?.lifecycleStatus
+
+    if (lifecycleStatus === 'in_progress') {
+      return 'IN_PROGRESS'
+    }
+
+    if (lifecycleStatus === 'completed') {
+      return 'COMPLETED'
+    }
+
+    return 'UPCOMING'
+  }, [])
+
+  // 상태별 신청 수 (신청 완료/진행 예정/진행 중/진행 완료)
   const statusCounts = useMemo(() => {
-    return {
-      pending: myApplications.filter(app => app.status === 'reviewing').length,
-      confirmed: myApplications.filter(app => app.status === 'approved').length,
-      rejected: myApplications.filter(app => app.status === 'rejected').length,
+    const counts = {
+      applied: 0,
+      upcoming: 0,
+      inProgress: 0,
+      completed: 0,
       total: myApplications.length,
     }
-  }, [myApplications])
+
+    myApplications.forEach(app => {
+      const progressStatus = getProgressStatus(app.status, app.programId)
+      if (progressStatus === 'APPLIED') counts.applied += 1
+      if (progressStatus === 'UPCOMING') counts.upcoming += 1
+      if (progressStatus === 'IN_PROGRESS') counts.inProgress += 1
+      if (progressStatus === 'COMPLETED') counts.completed += 1
+    })
+
+    return counts
+  }, [getProgressStatus, myApplications])
 
   // 최근 신청 (최근 3개)
   const recentApplications = useMemo(() => {
@@ -48,26 +81,25 @@ export function MyApplicationSummary() {
       .slice(0, 3)
   }, [myApplications])
 
-  const getStatusTag = (status: string) => {
-    switch (status) {
-      case 'submitted':
-        return <Tag color="blue">접수</Tag>
-      case 'reviewing':
-        return <Tag color="orange">검토 중</Tag>
-      case 'approved':
-        return <Tag color="green">확정</Tag>
-      case 'rejected':
-        return <Tag color="red">반려</Tag>
-      case 'cancelled':
-        return <Tag color="default">취소</Tag>
+  const getStatusTag = (status: string, programId: string) => {
+    const progressStatus = getProgressStatus(status, programId)
+    switch (progressStatus) {
+      case 'APPLIED':
+        return <Tag color="default" className="my-application-summary__status-tag">신청 완료</Tag>
+      case 'UPCOMING':
+        return <Tag color="default" className="my-application-summary__status-tag">진행 예정</Tag>
+      case 'IN_PROGRESS':
+        return <Tag color="default" className="my-application-summary__status-tag">진행 중</Tag>
+      case 'COMPLETED':
+        return <Tag color="default" className="my-application-summary__status-tag">진행 완료</Tag>
       default:
-        return <Tag>{status}</Tag>
+        return <Tag color="default" className="my-application-summary__status-tag">신청 완료</Tag>
     }
   }
 
   return (
     <Card
-      title="내 신청 현황"
+      title="내 프로그램 현황"
       extra={
         <Button type="link" onClick={() => navigate('/applications')}>
           전체 보기
@@ -77,57 +109,56 @@ export function MyApplicationSummary() {
     >
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col span={6}>
-          <Statistic title="전체 신청" value={statusCounts.total} prefix={<FileTextOutlined />} />
-        </Col>
-        <Col span={6}>
           <Statistic
-            title="검토 중"
-            value={statusCounts.pending}
-            prefix={<ClockCircleOutlined />}
-            valueStyle={{ color: '#faad14' }}
+            className="my-application-summary__statistic"
+            title={<span className="my-application-summary__statistic-title">신청 완료</span>}
+            value={statusCounts.applied}
+            prefix={<span className="my-application-summary__statistic-icon"><FileTextOutlined /></span>}
           />
         </Col>
         <Col span={6}>
           <Statistic
-            title="확정"
-            value={statusCounts.confirmed}
-            prefix={<CheckCircleOutlined />}
-            valueStyle={{ color: '#52c41a' }}
+            className="my-application-summary__statistic"
+            title={<span className="my-application-summary__statistic-title">진행 예정</span>}
+            value={statusCounts.upcoming}
+            prefix={<span className="my-application-summary__statistic-icon"><ClockCircleOutlined /></span>}
           />
         </Col>
         <Col span={6}>
           <Statistic
-            title="반려"
-            value={statusCounts.rejected}
-            prefix={<CloseCircleOutlined />}
-            valueStyle={{ color: '#ff4d4f' }}
+            className="my-application-summary__statistic"
+            title={<span className="my-application-summary__statistic-title">진행 중</span>}
+            value={statusCounts.inProgress}
+            prefix={<span className="my-application-summary__statistic-icon"><SyncOutlined /></span>}
+          />
+        </Col>
+        <Col span={6}>
+          <Statistic
+            className="my-application-summary__statistic"
+            title={<span className="my-application-summary__statistic-title">진행 완료</span>}
+            value={statusCounts.completed}
+            prefix={<span className="my-application-summary__statistic-icon"><CheckCircleOutlined /></span>}
           />
         </Col>
       </Row>
 
       {recentApplications.length > 0 && (
-        <div>
-          <div style={{ marginBottom: 8, fontWeight: 500 }}>최근 신청</div>
+        <div className="my-application-summary__recent">
+          <div className="my-application-summary__recent-title">최근 신청</div>
           {recentApplications.map(application => (
             <div
               key={application.id}
-              style={{
-                padding: '8px 0',
-                borderBottom: '1px solid #f0f0f0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
+              className="my-application-summary__recent-item"
             >
-              <div>
-                <div style={{ marginBottom: 4 }}>
+              <div className="my-application-summary__recent-info">
+                <div className="my-application-summary__recent-name">
                   {programService.getNameById(application.programId) || '프로그램 정보 없음'}
                 </div>
-                <div style={{ fontSize: '12px', color: 'rgba(0, 0, 0, 0.45)' }}>
+                <div className="my-application-summary__recent-date">
                   {new Date(application.createdAt).toLocaleDateString('ko-KR')}
                 </div>
               </div>
-              {getStatusTag(application.status)}
+              {getStatusTag(application.status, application.programId)}
             </div>
           ))}
         </div>

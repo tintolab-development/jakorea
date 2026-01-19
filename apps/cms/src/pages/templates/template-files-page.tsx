@@ -32,7 +32,6 @@ const audienceOptions: Array<{ value: TemplateAudience; label: string }> = [
   { value: 'ADMIN_INTERNAL', label: '운영(내부)' },
   { value: 'SCHOOL', label: '학교' },
   { value: 'INSTRUCTOR', label: '강사' },
-  { value: 'VOLUNTEER', label: '봉사자' },
   { value: 'STUDENT', label: '수강자' },
 ]
 
@@ -70,7 +69,7 @@ export default function TemplateFilesPage() {
     form.resetFields()
     form.setFieldsValue({
       status: 'draft',
-      audience: ['ADMIN_INTERNAL', 'SCHOOL', 'INSTRUCTOR', 'VOLUNTEER'],
+      audience: ['ADMIN_INTERNAL', 'SCHOOL', 'INSTRUCTOR', 'STUDENT'],
       tags: [],
       mimeType: 'application/pdf',
       version: 'v1.0',

@@ -6,7 +6,10 @@
 import type { UUID, DateValue } from './index'
 
 // 사용자 권한 타입
-export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'VOLUNTEER' | 'STUDENT'
+export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT' | 'VOLUNTEER'
+
+// 수강자 하위 타입
+export type StudentType = 'INDIVIDUAL' | 'SCHOOL_TEACHER'
 
 // 강사/봉사자 면접 상태
 export type InterviewStatus =
@@ -24,6 +27,8 @@ export interface User {
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
   role: UserRole
+  // 수강자 하위 타입 (수강자일 경우)
+  studentType?: StudentType
   // 강사/봉사자 관련 필드
   instructorId?: UUID // 강사 DB와 연결 (강사/봉사자일 경우)
   interviewStatus?: InterviewStatus // 면접 상태 (강사/봉사자일 경우)
