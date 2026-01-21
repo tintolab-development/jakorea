@@ -158,7 +158,7 @@ export default function TemplateEmailPage() {
     }
     if (!editorHostRef.current) return
 
-    // 모달 열릴 때마다 새 인스턴스 생성 (destroyOnClose와 동일한 효과)
+    // 모달 열릴 때마다 새 인스턴스 생성 (destroyOnHidden과 동일한 효과)
     destroyEditor()
 
     const instance = new Editor({
@@ -443,7 +443,7 @@ export default function TemplateEmailPage() {
         onOk={handleSubmit}
         okText={editing ? '수정' : '등록'}
         width={1100}
-        destroyOnClose
+        destroyOnHidden
       >
         <Row gutter={16}>
           <Col span={9}>
@@ -572,7 +572,7 @@ export default function TemplateEmailPage() {
           </Button>,
         ]}
         width={900}
-        destroyOnClose
+        destroyOnHidden
       >
         <Card size="small" title="렌더링 미리보기">
           <div ref={viewerHostRef} />

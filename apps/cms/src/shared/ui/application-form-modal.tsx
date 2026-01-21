@@ -74,7 +74,7 @@ export function ApplicationFormModal({
       onCancel={onClose}
       footer={null}
       width={700}
-      destroyOnClose
+      destroyOnHidden
     >
       <ApplicationForm
         programId={programId} // 프로그램 ID 전달

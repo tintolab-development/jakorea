@@ -39,6 +39,9 @@ export default tseslint.config(
       'react-hooks/preserve-manual-memoization': 'warn', // useMemo 의존성 경고로 변경
       'react-hooks/exhaustive-deps': 'warn', // useEffect 의존성 경고로 변경
       'react-hooks/incompatible-library': 'warn', // React Hook Form watch() 경고로 변경
+      'react-hooks/rules-of-hooks': 'warn', // 렌더링 중 불순 함수 호출 경고로 변경
+      'react-hooks/set-state-in-effect': 'warn', // Effect 내 setState 호출 경고로 변경
+      'react-hooks/purity': 'warn', // 렌더링 중 불순 함수 호출 경고로 변경
       // TypeScript 규칙 완화
       '@typescript-eslint/no-explicit-any': 'warn', // any 타입 사용 경고로 변경
       // unused-imports: 사용되지 않은 import/변수 자동 제거

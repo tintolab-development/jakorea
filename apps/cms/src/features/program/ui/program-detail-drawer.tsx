@@ -977,7 +977,7 @@ export function ProgramDetailDrawer({
         onCancel={handleApplicationPathFormCancel}
         footer={null}
         width={880}
-        destroyOnClose
+        destroyOnHidden
       >
         <ApplicationPathForm
           path={editingApplicationPath || undefined}

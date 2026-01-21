@@ -249,7 +249,7 @@ export function ProgramListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={900}
-        destroyOnClose
+        destroyOnHidden
       >
         <ProgramForm
           program={editingProgram || undefined}

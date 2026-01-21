@@ -196,7 +196,7 @@ export default function ScheduleNegotiationListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={720}
-        destroyOnClose
+        destroyOnHidden
       >
         <ScheduleNegotiationForm
           initial={editing || undefined}

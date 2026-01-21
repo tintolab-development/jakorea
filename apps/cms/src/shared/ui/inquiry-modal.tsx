@@ -57,7 +57,7 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
       onCancel={handleCancel}
       footer={null}
       width={700}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}

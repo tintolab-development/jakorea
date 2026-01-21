@@ -302,7 +302,7 @@ export default function TemplateFilesPage() {
         onOk={handleSubmit}
         okText={editing ? '수정' : '등록'}
         width={720}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical">
           <Form.Item name="title" label="제목" rules={[{ required: true, message: '제목을 입력해주세요' }]}>

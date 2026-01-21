@@ -89,7 +89,7 @@ export function SatisfactionSurveyModal({
       onCancel={handleCancel}
       footer={null}
       width={700}
-      destroyOnClose
+      destroyOnHidden
     >
       {existingRecord && (
         <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>

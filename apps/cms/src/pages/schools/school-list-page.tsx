@@ -79,7 +79,7 @@ export function SchoolListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         <SchoolForm
           school={editingSchool ? schools.find(s => s.id === editingSchool.id) : undefined}

@@ -77,7 +77,7 @@ export function SponsorListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         <SponsorForm
           sponsor={editingSponsor ? sponsors.find(s => s.id === editingSponsor.id) : undefined}

@@ -254,10 +254,24 @@ export function useInstructorListWithFilters() {
 - [ ] 재사용 가능한 Hook은 `shared/hooks/`에 배치했는가?
 - [ ] Feature별 Hook은 `features/*/model/`에 배치했는가?
 - [ ] 타입이 명확하게 정의되었는가?
+- [ ] 비즈니스 로직이 컴포넌트에서 분리되었는가? (리팩토링 원칙 참고)
+
+## 리팩토링 원칙 적용
+
+Hook 작성 시 다음 원칙을 준수해야 합니다:
+
+1. **재사용성**: 독립적으로 재사용 가능하게 작성
+2. **테스트 용이성**: Hook을 독립적으로 테스트 가능하게 작성
+3. **유지보수성**: 관심사 분리로 수정 범위 최소화
+4. **가독성**: 각 Hook이 단일 책임을 가져 이해하기 쉽게 작성
+5. **타입 안전성**: 모든 타입 체크 통과 (`pnpm typecheck`)
+
+자세한 내용은 [리팩토링 원칙](./refactoring-principles.md) 문서를 참고하세요.
 
 ## 관련 규칙
 
 - [컴포넌트 패턴](./component-patterns.md)
+- [리팩토링 원칙](./refactoring-principles.md)
 - [상태 관리](../state/state-management.md)
 
 

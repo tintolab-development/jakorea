@@ -86,7 +86,7 @@ export function InstructorListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         <InstructorForm
           instructor={editingInstructor ? instructors.find(i => i.id === editingInstructor.id) : undefined}

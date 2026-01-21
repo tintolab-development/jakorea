@@ -362,7 +362,7 @@ export default function TemplateSmsPage() {
         onOk={handleSubmit}
         okText={editing ? '수정' : '등록'}
         width={960}
-        destroyOnClose
+        destroyOnHidden
       >
         <Row gutter={16}>
           <Col span={14}>
@@ -486,7 +486,7 @@ export default function TemplateSmsPage() {
           </Button>,
         ]}
         width={900}
-        destroyOnClose
+        destroyOnHidden
       >
         {previewTarget ? (
           <Row gutter={16}>
