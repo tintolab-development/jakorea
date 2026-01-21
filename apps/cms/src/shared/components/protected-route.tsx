@@ -22,7 +22,7 @@ export function ProtectedRoute({
   requiredRoles,
   requireAuth = true,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user, loading, checkAuth } = useAuthStore()
+  const { isAuthenticated, user, loading, checkAuth, requiresMfa, mfaState } = useAuthStore()
   const location = useLocation()
   const [isChecking, setIsChecking] = useState(true)
 
@@ -66,6 +66,14 @@ export function ProtectedRoute({
 
   // 인증이 필요한 경우
   if (requireAuth && !isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Phase 0.5.1: 관리자는 MFA 인증 완료 필요
+  // 모달로 처리하므로 리다이렉트는 하지 않음 (로그인 페이지에서 모달로 처리)
+  // 단, 이미 로그인된 상태에서 MFA 미완료 시에는 로그인 페이지로 리다이렉트
+  if (requireAuth && user?.role === 'ADMIN' && requiresMfa && (!mfaState?.isVerified)) {
+    // 로그인 페이지에서 모달이 열리도록 로그인 페이지로 리다이렉트
     return <Navigate to="/login" replace />
   }
 

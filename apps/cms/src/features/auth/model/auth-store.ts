@@ -4,7 +4,8 @@
  */
 
 import { create } from 'zustand'
-import type { User, LoginRequest, LoginResponse } from '@/types/user'
+import type { User, LoginRequest } from '@/types/user'
+import type { MfaState } from '@/types/mfa'
 import { login as loginApi, validateToken } from '@/entities/user/api/auth-service'
 
 interface AuthState {
@@ -14,13 +15,16 @@ interface AuthState {
   loading: boolean
   error: Error | null
   isAuthenticated: boolean
+  mfaState: MfaState | null // Phase 0.5.1: MFA 상태
+  requiresMfa: boolean // Phase 0.5.1: MFA 필요 여부
 
   // Actions
-  login: (request: LoginRequest) => Promise<void>
+  login: (request: LoginRequest) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
   logout: () => void
   checkAuth: () => Promise<void>
   updateUser: (userData: Partial<Omit<User, 'password'>>) => void
   clearError: () => void
+  setMfaVerified: () => void // Phase 0.5.1: MFA 인증 완료 처리
 }
 
 const TOKEN_STORAGE_KEY = 'auth_token'
@@ -84,13 +88,31 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     isAuthenticated: initialState.isAuthenticated ?? false,
     loading: false,
     error: null,
+    mfaState: null, // Phase 0.5.1: MFA 상태
+    requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
 
     login: async (request: LoginRequest) => {
       set({ loading: true, error: null })
 
       try {
-        const response: LoginResponse = await loginApi(request)
+        const response = await loginApi(request)
 
+        // MFA 필요 시 MFA 상태만 설정하고 인증은 완료하지 않음
+        if (response.requiresMfa && response.mfaState) {
+          set({
+            user: response.user,
+            token: null, // MFA 완료 전에는 토큰 저장 안 함
+            expiresAt: null,
+            isAuthenticated: false, // MFA 완료 전에는 인증되지 않음
+            loading: false,
+            error: null,
+            mfaState: response.mfaState,
+            requiresMfa: true,
+          })
+          return { requiresMfa: true, mfaState: response.mfaState }
+        }
+
+        // MFA 불필요 시 바로 인증 완료
         // localStorage에 저장
         if (typeof window !== 'undefined' && window.localStorage) {
           localStorage.setItem(TOKEN_STORAGE_KEY, response.token)
@@ -105,6 +127,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           isAuthenticated: true,
           loading: false,
           error: null,
+          mfaState: null,
+          requiresMfa: false,
         })
       } catch (err) {
         const error = err instanceof Error ? err : new Error('로그인에 실패했습니다.')
@@ -112,8 +136,36 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           loading: false,
           error,
           isAuthenticated: false,
+          mfaState: null,
+          requiresMfa: false,
         })
         throw error
+      }
+    },
+
+    setMfaVerified: () => {
+      const state = get()
+      if (state.user) {
+        // MFA 완료 후 토큰 생성 및 저장
+        const token = `mock-jwt-token-${state.user.id}-${Date.now()}`
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem(TOKEN_STORAGE_KEY, token)
+          localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt)
+          localStorage.setItem('auth_user', JSON.stringify(state.user))
+        }
+
+        set({
+          token,
+          expiresAt,
+          isAuthenticated: true,
+          mfaState: state.mfaState ? {
+            ...state.mfaState,
+            isVerified: true,
+          } : null,
+          requiresMfa: false,
+        })
       }
     },
 
@@ -131,6 +183,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         expiresAt: null,
         isAuthenticated: false,
         error: null,
+        mfaState: null, // Phase 0.5.1: MFA 상태 초기화
+        requiresMfa: false, // Phase 0.5.1: MFA 필요 여부 초기화
       })
     },
 

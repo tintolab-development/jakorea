@@ -4,12 +4,15 @@
  */
 
 import type { LoginRequest, LoginResponse, User } from '@/types/user'
+import type { MfaState } from '@/types/mfa'
 import { validateLogin } from '@/data/mock/users'
+import { createMockMfaState } from '@/data/mock/mfa'
 
 /**
  * 로그인 API
+ * Phase 0.5.1: MFA 지원 추가
  */
-export async function login(request: LoginRequest): Promise<LoginResponse> {
+export async function login(request: LoginRequest): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
   // Mock: 실제 API 호출 대신 지연 시간 시뮬레이션
   await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -19,7 +22,16 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
   }
 
-  // Mock JWT 토큰 생성
+  // 관리자는 MFA 필요
+  const requiresMfa = user.role === 'ADMIN'
+  let mfaState: MfaState | undefined
+
+  if (requiresMfa) {
+    const phoneNumber = user.phone || '010-1234-5678'
+    mfaState = createMockMfaState(user.id, phoneNumber)
+  }
+
+  // Mock JWT 토큰 생성 (MFA 완료 전에는 임시 토큰)
   const token = `mock-jwt-token-${user.id}-${Date.now()}`
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
 
@@ -38,9 +50,12 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
       lastLoginAt: new Date().toISOString(),
       createdAt: user.createdAt,
       updatedAt: new Date().toISOString(),
+      phone: user.phone,
     },
     token,
     expiresAt,
+    requiresMfa,
+    mfaState,
   }
 }
 
