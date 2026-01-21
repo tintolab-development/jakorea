@@ -42,6 +42,7 @@ const lazyLoad = <T extends React.ComponentType<any>>(
 
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
+import { MfaPage } from '@/pages/auth/mfa-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
@@ -77,9 +78,11 @@ const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement
 const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
 const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-settlement-detail-page'))
 const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
+const MySettlementSubmissionPage = lazyLoad(() => import('@/pages/settlements/my-settlement-submission-page'))
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
 const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
 const PaymentStatementListPage = lazyLoad(() => import('@/pages/settlements/payment-statement-list-page'))
+const SettlementOverviewPage = lazyLoad(() => import('@/pages/settlements/settlement-overview-page'))
 const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
 const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-page'))
 const InstructorApplicationPage = lazyLoad(() => import('@/pages/interviews/instructor-application-page'))
@@ -103,6 +106,9 @@ const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths
 const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
 const EducationRecordListPageV2 = lazyLoad(() => import('@/pages/education-records/education-record-list-page-v2'))
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
+const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
+const AdminInstructorListPage = lazyLoad(() => import('@/pages/users/instructor-list-page'))
+const InstructorApplicationListPage = lazyLoad(() => import('@/pages/instructor-applications/instructor-application-list-page'))
 const PerformanceDashboardPage = lazyLoad(() => import('@/pages/performance/performance-dashboard-page'))
 const ScheduleNegotiationListPage = lazyLoad(() => import('@/pages/schedule-negotiations/schedule-negotiation-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
@@ -115,6 +121,8 @@ const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-pa
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
+const AdminSettlementReviewPage = lazyLoad(() => import('@/pages/admin/admin-settlement-review-page'))
+const PermissionRequestListPage = lazyLoad(() => import('@/pages/admin/permission-request-list-page'))
 const SurveyListPage = lazyLoad(() => import('@/pages/surveys/survey-list-page'))
 const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
@@ -148,6 +156,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/auth/mfa',
+    element: <MfaPage />,
   },
   {
     path: '/forbidden',
@@ -221,6 +233,12 @@ export const router = createBrowserRouter([
         ],
       },
       {
+        path: 'instructor-applications',
+        children: [
+          { index: true, element: <InstructorApplicationListPage /> },
+        ],
+      },
+      {
         path: 'application-paths',
         children: [{ index: true, element: <ApplicationPathListPage /> }],
       },
@@ -267,9 +285,11 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <MySettlementListPage /> },
               { path: 'monthly', element: <MyMonthlySettlementPage /> },
+              { path: 'submit', element: <MySettlementSubmissionPage /> },
               { path: ':id', element: <MySettlementDetailPage /> },
             ],
           },
+          { path: 'overview', element: <SettlementOverviewPage /> },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
           { path: 'payment-statements', element: <PaymentStatementListPage /> },
@@ -289,7 +309,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'users',
-        children: [{ index: true, element: <UserListPage /> }],
+        children: [
+          { index: true, element: <UserListPage /> },
+          { path: 'participants', element: <ParticipantListPage /> },
+          { path: 'instructors', element: <AdminInstructorListPage /> },
+        ],
       },
       {
         path: 'todos',
@@ -358,6 +382,18 @@ export const router = createBrowserRouter([
               { path: 'notices', element: <AdminNoticeListPage /> },
               { path: 'faq', element: <AdminFAQPage /> },
               { path: 'inquiries', element: <AdminInquiryPage /> },
+            ],
+          },
+          {
+            path: 'settlements',
+            children: [
+              { index: true, element: <AdminSettlementReviewPage /> },
+            ],
+          },
+          {
+            path: 'permission-requests',
+            children: [
+              { index: true, element: <PermissionRequestListPage /> },
             ],
           },
         ],

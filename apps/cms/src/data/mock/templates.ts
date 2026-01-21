@@ -185,7 +185,7 @@ export function extractTemplateVariables(text: string): string[] {
   const vars = new Set<string>()
   const re = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g
   let m: RegExpExecArray | null
-  // eslint-disable-next-line no-cond-assign
+   
   while ((m = re.exec(text)) !== null) {
     if (m[1]) vars.add(m[1])
   }

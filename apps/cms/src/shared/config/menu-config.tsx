@@ -239,7 +239,19 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       { key: '/users', label: '전체 회원', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/users/participants', label: '참여자 조회', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/users/instructors', label: '강사 조회', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/schools', label: '학교(교사)', enabled: true, allowedRoles: ['ADMIN'] },
+    ],
+  },
+  {
+    key: 'applications-group',
+    label: '신청 관리',
+    icon: <FileTextOutlined />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+    children: [
+      { key: '/applications', label: '신청 승인/반려', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   {
@@ -250,6 +262,8 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       { key: '/instructors', label: '강사진', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/instructor-applications', label: '강의 신청 관리', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/matchings', label: '매칭 관리', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/settlements', label: '정산', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/settlements/payment-statements', label: '지급조서/이체리스트', enabled: true, allowedRoles: ['ADMIN'] },
     ],
@@ -263,6 +277,16 @@ const allMenuItems: MenuItemConfig[] = [
     children: [
       { key: '/volunteers', label: '봉사자', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/volunteers/programs', label: '봉사 프로그램', enabled: true, allowedRoles: ['ADMIN'] },
+    ],
+  },
+  {
+    key: 'admin-system-group',
+    label: '시스템 관리',
+    icon: <DatabaseOutlined />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+    children: [
+      { key: '/admin/permission-requests', label: '권한 요청 관리', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   {
@@ -299,7 +323,6 @@ const allMenuItems: MenuItemConfig[] = [
   { key: 'divider-bottom', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
   // 기타 (비활성)
-  { key: '/applications', label: '신청 관리', icon: <FileTextOutlined />, enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'] },
   { key: '/application-paths', label: '신청 경로 관리', icon: <FileTextOutlined />, enabled: false, allowedRoles: ['ADMIN'] },
   {
     key: 'schedules-group',
@@ -313,7 +336,6 @@ const allMenuItems: MenuItemConfig[] = [
       { key: '/schedule-negotiations', label: '일정 협의 관리', enabled: false, allowedRoles: ['ADMIN'] },
     ],
   },
-  { key: '/matchings', label: '매칭 관리', icon: <TeamOutlined />, enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR'] },
   {
     key: 'interviews-group',
     label: '면접 관리',

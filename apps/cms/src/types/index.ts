@@ -30,3 +30,4 @@ export interface PaginatedResponse<T> {
 export * from './domain'
 export * from './user'
 export * from './volunteer'
+export * from './download-log'
