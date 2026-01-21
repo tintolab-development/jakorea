@@ -49,12 +49,7 @@ export function ApplicationListPage() {
   return (
     <div>
       <Space className="application-list-header">
-        <div>
-          <h1 className="application-list-title">{isAdmin ? '신청 승인/반려' : '신청 내역'}</h1>
-          <Typography.Text type="secondary">
-            {isAdmin ? '접수된 신청을 검토하고 승인 또는 반려 처리합니다.' : '내 신청 내역을 확인합니다.'}
-          </Typography.Text>
-        </div>
+        <h1 className="application-list-title">{isAdmin ? '신청 승인/반려' : '신청 내역'}</h1>
         {!isAdmin && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm()}>
             신청 등록
@@ -124,10 +119,17 @@ export function ApplicationListPage() {
         okText="거절하기"
         cancelText="취소"
         okButtonProps={{ danger: true }}
+        width={520}
       >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Typography.Text>이 신청을 거절하시겠습니까?</Typography.Text>
-          <Typography.Text type="secondary">거절 사유를 입력해주세요 (선택사항)</Typography.Text>
+        <div style={{ paddingTop: 8 }}>
+          <Typography.Paragraph style={{ marginBottom: 16 }}>
+            이 신청을 거절하시겠습니까?
+          </Typography.Paragraph>
+          <div style={{ marginBottom: 8 }}>
+            <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+              거절 사유를 입력해주세요 (선택사항)
+            </Typography.Text>
+          </div>
           <Input.TextArea
             value={rejectionReason}
             onChange={e => setRejectionReason(e.target.value)}
@@ -135,8 +137,9 @@ export function ApplicationListPage() {
             rows={4}
             maxLength={500}
             showCount
+            style={{ marginBottom: 24, resize: 'none' }}
           />
-        </Space>
+        </div>
       </Modal>
     </div>
   )

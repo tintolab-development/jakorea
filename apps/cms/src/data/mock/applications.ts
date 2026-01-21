@@ -91,7 +91,8 @@ const statuses: Application['status'][] = [
 ]
 const subjectTypes: Application['subjectType'][] = ['school', 'student', 'instructor', 'volunteer']
 
-export const mockApplications: Application[] = Array.from({ length: 50 }, (_, index) => {
+// 기본 50개 Application 생성
+const baseApplications: Application[] = Array.from({ length: 50 }, (_, index) => {
   const programIndex = Math.floor(Math.random() * mockPrograms.length)
   const program = mockPrograms[programIndex]
   const hasRound = program.rounds.length > 0 && Math.random() > 0.3
@@ -113,6 +114,33 @@ export const mockApplications: Application[] = Array.from({ length: 50 }, (_, in
     reviewedDaysAgo
   )
 })
+
+// Phase 4.1: 참여자 조회를 위한 추가 school/student 타입 Application (30개 추가)
+const participantApplications: Application[] = Array.from({ length: 30 }, (_, index) => {
+  const programIndex = Math.floor(Math.random() * mockPrograms.length)
+  const program = mockPrograms[programIndex]
+  const hasRound = program.rounds.length > 0 && Math.random() > 0.3
+  const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
+  // school과 student 타입만 생성 (참여자 조회용)
+  const subjectType = Math.random() > 0.5 ? 'school' : 'student'
+  const subjectIndex = Math.floor(Math.random() * Math.max(mockSchools.length, mockStudentUsers.length))
+  const status = statuses[Math.floor(Math.random() * statuses.length)]
+  const daysAgo = Math.floor(Math.random() * 60) + 1
+  const reviewedDaysAgo = status !== 'submitted' ? Math.floor(Math.random() * daysAgo) : undefined
+
+  return createApplication(
+    `app-participant-${String(index + 1).padStart(3, '0')}`,
+    programIndex,
+    roundIndex,
+    subjectType,
+    subjectIndex,
+    status,
+    daysAgo,
+    reviewedDaysAgo
+  )
+})
+
+export const mockApplications: Application[] = [...baseApplications, ...participantApplications]
 
 export const mockApplicationsMap = new Map<UUID, Application>()
 mockApplications.forEach(app => {

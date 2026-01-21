@@ -31,11 +31,19 @@ import {
 import { isApplicationFinalStatus, canTransitionApplicationStatus } from '@/shared/lib/status-transition'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { ApplicationWorkflow } from './application-workflow'
+import { NotificationButton } from './notification-button'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { User } from '@/types/user'
 import { Popconfirm, message } from 'antd'
 import { StopOutlined } from '@ant-design/icons'
+import { useState, useEffect } from 'react'
+import { getNotificationStatus, sendApplicationNotification } from '@/entities/application/api/application-notification-service'
+import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { StatusChangeDropdown } from '@/features/application-progress/ui/status-change-dropdown'
+import { StatusHistoryList } from '@/features/application-progress/ui/status-history-list'
+import { useStatusChange } from '@/features/application-progress/hooks/use-status-change'
+import type { ApplicationProgressStatus } from '@/types/application-progress'
 
 const { Text, Title } = Typography
 
@@ -72,6 +80,49 @@ export function ApplicationDetailDrawer({
 
   // store의 selectedApplication을 우선 사용, 없으면 prop의 application 사용
   const displayApplication = storeSelectedApplication || application
+
+  // Phase 4.2: 알림 발송 상태 관리
+  const [notificationSent, setNotificationSent] = useState(false)
+  const [notificationLoading, setNotificationLoading] = useState(false)
+
+  // Phase 4.6: 진행 상태 관리
+  const { history, fetchHistory, loading: statusHistoryLoading } = useStatusChange()
+  const [currentProgressStatus, setCurrentProgressStatus] = useState<ApplicationProgressStatus | null>(null)
+
+  // 승인된 신청의 경우 진행 상태 관리
+  const isApproved = displayApplication?.status === 'approved'
+  
+  useEffect(() => {
+    if (isApproved && displayApplication && open) {
+      // Mock: 승인된 신청의 기본 진행 상태는 RECEIVED
+      setCurrentProgressStatus('RECEIVED')
+      fetchHistory(displayApplication.id)
+    }
+  }, [isApproved, displayApplication, open, fetchHistory])
+
+  useEffect(() => {
+    if (displayApplication && open) {
+      getNotificationStatus(displayApplication.id).then(status => {
+        setNotificationSent(status.notificationSent)
+      })
+    }
+  }, [displayApplication, open])
+
+  const handleSendNotification = async () => {
+    if (!displayApplication || !user) return
+
+    setNotificationLoading(true)
+    try {
+      const action = displayApplication.status === 'approved' ? 'APPROVE' : 'REJECT'
+      await sendApplicationNotification(displayApplication, action, user.id)
+      setNotificationSent(true)
+      showSuccessMessage('알림이 발송되었습니다.')
+    } catch (error) {
+      handleError(error, { defaultMessage: '알림 발송 중 오류가 발생했습니다.' })
+    } finally {
+      setNotificationLoading(false)
+    }
+  }
 
   if (!displayApplication) return null
 
@@ -280,6 +331,17 @@ export function ApplicationDetailDrawer({
                       />
                     </Descriptions.Item>
                   )}
+                  {/* Phase 4.2: 알림 발송 버튼 (관리자만, 승인/반려 상태일 때만) */}
+                  {isAdminUser && (displayApplication.status === 'approved' || displayApplication.status === 'rejected') && (
+                    <Descriptions.Item label="알림 발송">
+                      <NotificationButton
+                        application={displayApplication}
+                        notificationSent={notificationSent}
+                        onSend={handleSendNotification}
+                        loading={notificationLoading}
+                      />
+                    </Descriptions.Item>
+                  )}
                   <Descriptions.Item label="접수일">
                     {new Date(displayApplication.submittedAt).toLocaleString('ko-KR')}
                   </Descriptions.Item>
@@ -314,6 +376,32 @@ export function ApplicationDetailDrawer({
                     <Divider orientation="left" style={{ marginTop: 24 }}>
                       처리 이력
                     </Divider>
+                    
+                    {/* Phase 4.6: 승인된 신청의 진행 상태 관리 */}
+                    {isApproved && currentProgressStatus && (
+                      <>
+                        <Divider orientation="left" style={{ marginTop: 24 }}>
+                          진행 상태 관리
+                        </Divider>
+                        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                          <div>
+                            <Text strong style={{ marginRight: 8 }}>현재 진행 상태:</Text>
+                            <StatusChangeDropdown
+                              applicationId={displayApplication.id}
+                              currentStatus={currentProgressStatus}
+                              onStatusChange={(newStatus) => {
+                                setCurrentProgressStatus(newStatus)
+                                fetchHistory(displayApplication.id)
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Text strong>상태 변경 이력:</Text>
+                            <StatusHistoryList history={history} loading={statusHistoryLoading} />
+                          </div>
+                        </Space>
+                      </>
+                    )}
                   </>
                 )}
                 {/* 강사/수강자는 처리 이력만 표시 */}
