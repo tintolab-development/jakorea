@@ -2,15 +2,17 @@
  * 정산 등록/수정 폼 컴포넌트
  * Phase 4: react-hook-form + zod
  */
-/* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
+ 
 
-import { Form, Input, Select, Button, Space, Table, InputNumber } from 'antd'
+import { Form, Input, Select, Button, Space, Table, InputNumber, DatePicker } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { type SubmitHandler } from 'react-hook-form'
 import { type SettlementFormData } from '@/entities/settlement/model/schema'
 import type { Settlement } from '@/types/domain'
 import { mockPrograms, mockInstructors } from '@/data/mock'
 import { useSettlementForm } from '../hooks/use-settlement-form'
+import dayjs, { type Dayjs } from 'dayjs'
+import locale from 'antd/es/date-picker/locale/ko_KR'
 import './settlement-form.css'
 
 const { Option } = Select
@@ -159,10 +161,23 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
       <Form.Item
         label="기간"
         validateStatus={errors.period ? 'error' : ''}
-        help={errors.period?.message || '예: 2025-01'}
+        help={errors.period?.message || '기간을 선택하세요'}
         required
       >
-        <Input {...register('period')} placeholder="YYYY-MM 형식으로 입력" />
+        <DatePicker
+          style={{ width: '100%' }}
+          format="YYYY-MM-DD"
+          locale={locale}
+          placeholder="기간을 선택하세요"
+          value={watch('period') ? (watch('period').includes('-') && watch('period').split('-').length === 2 ? dayjs(watch('period') + '-01') : dayjs(watch('period'))) : null}
+          onChange={(date: Dayjs | null) => {
+            if (date) {
+              setValue('period', date.format('YYYY-MM-DD'), { shouldValidate: true })
+            } else {
+              setValue('period', '', { shouldValidate: true })
+            }
+          }}
+        />
       </Form.Item>
 
       <Form.Item
@@ -188,6 +203,8 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
         <div>
           <Table
             dataSource={fields}
+            scroll={fields.length > 4 ? { y: 300 } : undefined}
+            pagination={false}
             columns={[
               {
                 title: '항목 타입',
@@ -269,7 +286,6 @@ export function SettlementForm({ settlement, onSubmit, onCancel, loading }: Sett
               },
             ]}
             rowKey={(_record, index) => `item-${index}`}
-            pagination={false}
             summary={() => (
               <Table.Summary>
                 <Table.Summary.Row>
