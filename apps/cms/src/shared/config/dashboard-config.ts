@@ -12,6 +12,7 @@ export type DashboardWidgetType =
   | 'pending-actions-alert' // 즉시 처리 필요 작업
   | 'overall-statistics-cards' // 전체 통계 카드 (프로그램, 신청, 매칭, 정산)
   | 'overall-program-progress-card' // 전체 강의 진행 현황 (신청 완료, 진행 예정, 진행 중, 진행 완료)
+  | 'program-progress-widget' // Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계)
   | 'monthly-settlement-card' // 월별 정산 현황
   | 'monthly-application-card' // 월별 신청 현황
   | 'active-program-card' // 활성 프로그램
@@ -24,6 +25,9 @@ export type DashboardWidgetType =
   | 'pending-tasks-list' // 대기 중인 작업 목록
   | 'my-volunteer-activity-summary' // 본인 활동 요약 (봉사자)
   | 'volunteer-pending-tasks-list' // 대기 중인 작업 목록 (봉사자)
+  | 'pending-applications-card' // Phase 4.5: 대기 중인 신청 카드
+  | 'pending-matchings-card' // Phase 4.5: 대기 중인 매칭 카드
+  | 'pending-settlements-card' // Phase 4.5: 대기 중인 정산 카드
 
 /**
  * 대시보드 위젯 설정
@@ -42,13 +46,16 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 관리자: 전체 통계 및 현황
   ADMIN: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
-    { type: 'overall-program-progress-card', colSpan: 6, order: 2 },
-    { type: 'overall-statistics-cards', colSpan: 24, order: 3 },
-    { type: 'monthly-settlement-card', colSpan: 6, order: 4 },
-    { type: 'monthly-application-card', colSpan: 6, order: 5 },
-    { type: 'active-program-card', colSpan: 6, order: 6 },
-    { type: 'instructor-count-card', colSpan: 6, order: 7 },
-    { type: 'unified-activity-feed', colSpan: 24, order: 8 },
+    { type: 'program-progress-widget', colSpan: 24, order: 2 },
+    { type: 'pending-applications-card', colSpan: 8, order: 3 },
+    { type: 'pending-matchings-card', colSpan: 8, order: 4 },
+    { type: 'pending-settlements-card', colSpan: 8, order: 5 },
+    { type: 'overall-statistics-cards', colSpan: 24, order: 6 },
+    { type: 'monthly-settlement-card', colSpan: 6, order: 7 },
+    { type: 'monthly-application-card', colSpan: 6, order: 8 },
+    { type: 'active-program-card', colSpan: 6, order: 9 },
+    { type: 'instructor-count-card', colSpan: 6, order: 10 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 11 },
   ],
   // 강사: 본인 활동 요약
   INSTRUCTOR: [

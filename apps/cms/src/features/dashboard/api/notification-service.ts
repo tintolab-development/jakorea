@@ -21,7 +21,7 @@ export interface Notification {
 /**
  * 알림 목록 조회
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export async function getNotifications(
   _userId?: UUID,
   userRole: UserRole = 'STUDENT'

@@ -28,6 +28,10 @@ import { PendingTasksList } from '@/features/dashboard/ui/pending-tasks-list'
 import { VolunteerPendingTasksList } from '@/features/dashboard/ui/volunteer-pending-tasks-list'
 import { GlobalSearch } from '@/features/dashboard/ui/global-search'
 import { OverallProgramProgressCard } from '@/features/dashboard/ui/overall-program-progress-card'
+import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget'
+import { PendingApplicationsCard } from '@/features/dashboard/ui/pending-applications-card'
+import { PendingMatchingsCard } from '@/features/dashboard/ui/pending-matchings-card'
+import { PendingSettlementsCard } from '@/features/dashboard/ui/pending-settlements-card'
 import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
 import { getOverallStatistics, type OverallStatistics } from '@/features/dashboard/api/statistics-service'
 import { getInstructorActivitySummary, type InstructorActivitySummary } from '@/features/dashboard/api/instructor-activity-service'
@@ -139,6 +143,14 @@ export function Dashboard() {
         )
       case 'overall-program-progress-card':
         return <OverallProgramProgressCard />
+      case 'program-progress-widget':
+        return <ProgramProgressWidget />
+      case 'pending-applications-card':
+        return <PendingApplicationsCard />
+      case 'pending-matchings-card':
+        return <PendingMatchingsCard />
+      case 'pending-settlements-card':
+        return <PendingSettlementsCard />
       case 'monthly-settlement-card':
         return <MonthlySettlementCard />
       case 'monthly-application-card':
