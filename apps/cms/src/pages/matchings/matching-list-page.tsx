@@ -1,18 +1,27 @@
 /**
  * 매칭 목록 페이지
  * Phase 0.3.6: 매칭 관리 UI
+ * Phase 4.4: 캘린더/목록 뷰 전환 및 엑셀 다운로드 (FR-F03)
  */
 
-import { Button, Space, Modal, Typography } from 'antd'
-import { UserAddOutlined } from '@ant-design/icons'
+import { useState } from 'react'
+import { Button, Space, Modal, Typography, Radio, Tabs } from 'antd'
+import { UserAddOutlined, CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { MatchingList } from '@/features/matching/ui/matching-list'
+import { MatchingCalendarView } from '@/features/matching/ui/matching-calendar-view'
+import { MatchingStatusList } from '@/features/matching/ui/matching-status-list'
 import { MatchingDetailDrawer } from '@/features/matching/ui/matching-detail-drawer'
 import { MatchingForm } from '@/features/matching/ui/matching-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useMatchingManagement } from '@/features/matching/hooks/use-matching-management'
+import { useMatchingStatus } from '@/features/matching/hooks/use-matching-status'
+import type { MatchingStatusItem } from '@/entities/matching/api/matching-status-service'
 import './matching-list-page.css'
 
 export function MatchingListPage() {
+  const [viewMode, setViewMode] = useState<'management' | 'status'>('management')
+  const [statusViewMode, setStatusViewMode] = useState<'calendar' | 'list'>('list')
+
   const {
     matchings,
     loading,
@@ -35,6 +44,17 @@ export function MatchingListPage() {
     requestCancel,
   } = useMatchingManagement()
 
+  const {
+    statusItems,
+    loading: statusLoading,
+    exportToExcel,
+  } = useMatchingStatus()
+
+  const handleStatusDateClick = (date: string, items: MatchingStatusItem[]) => {
+    // 날짜 클릭 시 상세 정보 표시 (추후 구현)
+    console.log('Date clicked:', date, items)
+  }
+
   return (
     <div>
       <Space className="matching-list-header">
@@ -49,16 +69,60 @@ export function MatchingListPage() {
         </Button>
       </Space>
 
-      <MatchingList
-        matchings={matchings}
-        loading={loading}
-        selectedProgramId={selectedProgramId}
-        onProgramChange={setProgramFilter}
-        onView={openDrawer}
-        onEdit={openForm}
-        onDelete={openDeleteConfirm}
-        onConfirm={confirmMatching}
-        onCancel={requestCancel}
+      <Tabs
+        activeKey={viewMode}
+        onChange={(key) => setViewMode(key as 'management' | 'status')}
+        items={[
+          {
+            key: 'management',
+            label: '매칭 관리',
+            children: (
+              <MatchingList
+                matchings={matchings}
+                loading={loading}
+                selectedProgramId={selectedProgramId}
+                onProgramChange={setProgramFilter}
+                onView={openDrawer}
+                onEdit={openForm}
+                onDelete={openDeleteConfirm}
+                onConfirm={confirmMatching}
+                onCancel={requestCancel}
+              />
+            ),
+          },
+          {
+            key: 'status',
+            label: '매칭 현황',
+            children: (
+              <div>
+                <div style={{ marginBottom: 16, textAlign: 'right' }}>
+                  <Radio.Group
+                    value={statusViewMode}
+                    onChange={(e) => setStatusViewMode(e.target.value)}
+                    buttonStyle="solid"
+                  >
+                    <Radio.Button value="calendar">
+                      <CalendarOutlined /> 캘린더
+                    </Radio.Button>
+                    <Radio.Button value="list">
+                      <UnorderedListOutlined /> 목록
+                    </Radio.Button>
+                  </Radio.Group>
+                </div>
+
+                {statusViewMode === 'calendar' ? (
+                  <MatchingCalendarView onDateClick={handleStatusDateClick} />
+                ) : (
+                  <MatchingStatusList
+                    data={statusItems}
+                    loading={statusLoading}
+                    onExport={exportToExcel}
+                  />
+                )}
+              </div>
+            ),
+          },
+        ]}
       />
 
       <MatchingDetailDrawer
