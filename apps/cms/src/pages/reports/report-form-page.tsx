@@ -6,8 +6,8 @@
 
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { Card, Space, Typography, Form, Input, InputNumber, Button, Alert, message } from 'antd'
-import { GuideMessage } from '@/shared/ui'
+import { Card, Space, Typography, Form, Input, InputNumber, Alert, message } from 'antd'
+import { GuideMessage, SingleCTA } from '@/shared/ui'
 import {
   lectureReportFields,
   volunteerReportFields,
@@ -168,22 +168,23 @@ export function ReportFormPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        {/* 보고서 안내 영역 (상단) */}
+        {/* 보고서 안내 영역 (상단) - Phase 5.9: 보고서 제출의 의미와 중요성 강조 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <Title level={2} style={{ margin: 0 }}>
               {reportTitle}
             </Title>
             {submissionGuide && (
-              <Paragraph style={{ margin: 0, fontSize: 16 }}>
+              <Paragraph style={{ margin: 0, fontSize: 16, lineHeight: 1.8 }}>
                 {submissionGuide}
               </Paragraph>
             )}
             <Alert
               message="보고서 제출은 필수 절차입니다"
-              description="보고서를 제출하지 않으면 다음 단계로 진행할 수 없습니다."
-              type="info"
+              description="보고서를 제출하지 않으면 다음 단계로 진행할 수 없습니다. 제출 후에는 수정할 수 없으니 내용을 신중히 작성해 주세요."
+              type="warning"
               showIcon
+              style={{ marginTop: 8 }}
             />
           </Space>
         </Card>
@@ -200,28 +201,28 @@ export function ReportFormPage() {
           </Form>
         </Card>
 
-        {/* 제출 전 주의 안내 영역 */}
+        {/* 제출 전 주의 안내 영역 - Phase 5.9: 제출 후 수정 불가 안내 강화 */}
         <Card>
           <Alert
-            message="제출 전 확인"
-            description="보고서 제출 후에는 수정할 수 없습니다. 내용을 다시 한 번 확인해 주세요."
-            type="warning"
+            message="제출 전 반드시 확인해 주세요"
+            description="보고서 제출 후에는 수정할 수 없습니다. 모든 내용을 다시 한 번 확인한 후 제출해 주세요."
+            type="error"
             showIcon
+            style={{ margin: 0 }}
           />
         </Card>
 
-        {/* 제출 CTA 영역 (단일) */}
+        {/* 제출 CTA 영역 (단일) - Phase 5.9: 공통 UI 원칙 적용 (SingleCTA 사용) */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%', textAlign: 'center' }}>
-            <Button
-              type="primary"
-              size="large"
+            <SingleCTA
+              label="보고서 제출하기"
               onClick={() => form.submit()}
+              type="primary"
               loading={loading}
-              style={{ minWidth: 200 }}
-            >
-              보고서 제출하기
-            </Button>
+              block
+              size="large"
+            />
           </Space>
         </Card>
 

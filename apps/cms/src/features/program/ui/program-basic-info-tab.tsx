@@ -1,0 +1,156 @@
+/**
+ * 프로그램 기본 정보 탭
+ * 프로그램 상세 Drawer의 기본 정보 탭 컴포넌트
+ */
+
+import { Space, Card, Descriptions, Typography, Divider } from 'antd'
+import type { Program } from '@/types/domain'
+import { GuideMessage } from '@/shared/ui'
+import dayjs from 'dayjs'
+import { ProgramLifecycleWorkflow } from './program-lifecycle-workflow'
+import type { ProgramLifecycleStatus } from '@/types/domain'
+import { ProgramInfoCard } from './program-info-card'
+import { ProgramApplicationCard } from './program-application-card'
+import { ProgramScheduleSummaryCard } from './program-schedule-summary-card'
+
+const { Paragraph, Text } = Typography
+
+interface ProgramBasicInfoTabProps {
+  program: Program
+  sponsorName?: string
+  confirmedRounds: Array<{
+    id: string
+    roundNumber: number
+    startDate: string
+    endDate: string
+    capacity?: number
+  }>
+  applicationInfo: {
+    applicationAvailable: boolean
+    unavailableReason: string | null
+    applicationUrl?: string
+  }
+  applicationPath?: {
+    id: string
+    pathType: 'google_form' | 'internal'
+    googleFormUrl?: string
+    guideMessage?: string
+    isActive: boolean
+  }
+  remainingCapacity?: number
+  capacityFull: boolean
+  capacityAlmostFull: boolean
+  applicationCount: number
+  userHasApplied: boolean
+  userRole?: string
+  onApplicationClick: () => void
+  onDuplicateAlertOpen: () => void
+  statusChangeLoading: boolean
+  onStatusChange: (status: ProgramLifecycleStatus) => void
+  onRollback: () => void
+}
+
+export function ProgramBasicInfoTab({
+  program,
+  sponsorName,
+  confirmedRounds,
+  applicationInfo,
+  applicationPath,
+  remainingCapacity,
+  capacityFull,
+  capacityAlmostFull,
+  applicationCount,
+  userHasApplied,
+  userRole,
+  onApplicationClick,
+  onDuplicateAlertOpen,
+  statusChangeLoading,
+  onStatusChange,
+  onRollback,
+}: ProgramBasicInfoTabProps) {
+  return (
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      {/* 프로그램 핵심 정보 영역 */}
+      <ProgramInfoCard program={program} sponsorName={sponsorName} />
+
+      {/* 대상 및 참여 방식 안내 영역 */}
+      <Card title="대상 및 참여 방식">
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Paragraph style={{ margin: 0 }}>
+            <Text strong>대상 사용자:</Text> 학교, 학생, 강사
+          </Paragraph>
+          <Paragraph style={{ margin: 0 }}>
+            <Text strong>참여 방식:</Text> 프로그램 유형에 따라 온라인/오프라인/하이브리드로 진행됩니다.
+          </Paragraph>
+          {program.format === 'workshop' || program.format === 'seminar' ? (
+            <Paragraph style={{ margin: 0, color: '#8c8c8c' }}>
+              이 프로그램은 강사 및 봉사자 참여가 필요할 수 있습니다.
+            </Paragraph>
+          ) : null}
+        </Space>
+      </Card>
+
+      {/* 일정 요약 영역 (조건부) */}
+      <ProgramScheduleSummaryCard
+        confirmedRounds={confirmedRounds}
+        lifecycleStatus={program.lifecycleStatus}
+      />
+
+      {/* 신청 안내 및 상태 영역 (핵심) */}
+      <ProgramApplicationCard
+        applicationAvailable={applicationInfo.applicationAvailable}
+        unavailableReason={applicationInfo.unavailableReason}
+        applicationUrl={applicationInfo.applicationUrl}
+        applicationPath={applicationPath}
+        remainingCapacity={remainingCapacity}
+        capacityFull={capacityFull}
+        capacityAlmostFull={capacityAlmostFull}
+        applicationCount={applicationCount}
+        userHasApplied={userHasApplied}
+        userRole={userRole}
+        onApplicationClick={onApplicationClick}
+        onDuplicateAlertOpen={onDuplicateAlertOpen}
+      />
+
+      {/* 보조 안내 영역 */}
+      <Card>
+        <GuideMessage
+          message="신청 전 프로그램 내용을 다시 한 번 확인해주세요. 승인 결과는 마이페이지에서 확인하실 수 있습니다."
+          type="info"
+        />
+      </Card>
+
+      <Divider />
+
+      {/* 관리자용: 프로그램 상태 워크플로우 */}
+      {userRole === 'ADMIN' && (program.lifecycleStatus !== undefined || !program.lifecycleStatus) && (
+        <>
+          <ProgramLifecycleWorkflow
+            program={program}
+            onStatusChange={onStatusChange}
+            onRollback={onRollback}
+            loading={statusChangeLoading}
+          />
+          <Divider />
+        </>
+      )}
+
+      {/* 관리자용 상세 정보 */}
+      <Card title="관리자 정보" size="small">
+        <Descriptions column={1} bordered size="small">
+          <Descriptions.Item label="등록일">
+            {dayjs(program.createdAt).format('YYYY-MM-DD HH:mm')}
+          </Descriptions.Item>
+          <Descriptions.Item label="수정일">
+            {dayjs(program.updatedAt).format('YYYY-MM-DD HH:mm')}
+          </Descriptions.Item>
+          {program.settlementRuleId && (
+            <Descriptions.Item label="정산 규칙 ID">
+              {program.settlementRuleId}
+            </Descriptions.Item>
+          )}
+        </Descriptions>
+      </Card>
+    </Space>
+  )
+}

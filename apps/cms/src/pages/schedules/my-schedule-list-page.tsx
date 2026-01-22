@@ -6,9 +6,9 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Space, Typography, List, Tag, Button } from 'antd'
-import { CalendarOutlined, EyeOutlined } from '@ant-design/icons'
-import { EmptyState, StatusDisplay } from '@/shared/ui'
+import { Card, Space, Typography, List, Tag } from 'antd'
+import { CalendarOutlined } from '@ant-design/icons'
+import { EmptyState, StatusDisplay, SingleCTA } from '@/shared/ui'
 import { mockSchedules, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 import type { Schedule } from '@/types/domain'
@@ -18,12 +18,12 @@ const { Title, Paragraph, Text } = Typography
 // 일정 상태 타입 (Mock 데이터 기반, 실제로는 서버에서 제공)
 type ScheduleStatus = 'SCH_01' | 'SCH_02' | 'SCH_03' | 'SCH_04' // 예정, 진행, 종료, 취소
 
-// 일정 상태 라벨
+// 일정 상태 라벨 - Phase 5.5: 공통 UI 원칙 적용 (문장으로 표시)
 const scheduleStatusLabels: Record<ScheduleStatus, string> = {
-  SCH_01: '예정',
-  SCH_02: '진행 중',
-  SCH_03: '종료',
-  SCH_04: '취소',
+  SCH_01: '예정된 일정입니다.',
+  SCH_02: '현재 진행 중인 일정입니다.',
+  SCH_03: '종료된 일정입니다.',
+  SCH_04: '취소된 일정입니다.',
 }
 
 // 일정 상태 색상
@@ -227,15 +227,13 @@ export function MyScheduleListPage() {
                         )}
                       </Space>
 
-                      {/* 일정 상세 이동 영역 */}
-                      <div style={{ textAlign: 'right' }}>
-                        <Button
-                          type="primary"
-                          icon={<EyeOutlined />}
+                      {/* 일정 상세 이동 영역 - Phase 5.5: 공통 UI 원칙 적용 (단일 CTA) */}
+                      <div style={{ textAlign: 'right', marginTop: 8 }}>
+                        <SingleCTA
+                          label="일정 상세 보기"
                           onClick={() => handleViewDetail(schedule)}
-                        >
-                          일정 상세 보기
-                        </Button>
+                          type="primary"
+                        />
                       </div>
                     </Space>
                   </Card>

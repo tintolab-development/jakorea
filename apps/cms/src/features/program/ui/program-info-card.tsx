@@ -1,0 +1,89 @@
+/**
+ * 프로그램 정보 카드 컴포넌트
+ */
+
+import { Card, Descriptions, Tag, Space, Typography } from 'antd'
+import type { Program } from '@/types/domain'
+import { StatusDisplay } from '@/shared/ui'
+import {
+  commonStatusConfig,
+  getProgramLifecycleLabel,
+  getProgramLifecycleColor,
+} from '@/shared/constants/status'
+import { domainColorsHex } from '@/shared/constants/colors'
+import dayjs from 'dayjs'
+
+const { Paragraph, Text } = Typography
+
+const programTypeLabels: Record<string, string> = {
+  online: '온라인',
+  offline: '오프라인',
+  hybrid: '하이브리드',
+}
+
+const programFormatLabels: Record<string, string> = {
+  workshop: '워크샵',
+  seminar: '세미나',
+  course: '과정',
+  lecture: '강의',
+  other: '기타',
+}
+
+interface ProgramInfoCardProps {
+  program: Program
+  sponsorName?: string
+}
+
+export function ProgramInfoCard({ program, sponsorName }: ProgramInfoCardProps) {
+  return (
+    <Card title="프로그램 정보">
+      <Descriptions column={1} bordered>
+        <Descriptions.Item label="프로그램명">
+          <Text strong ellipsis={{ tooltip: program.title }}>
+            {program.title}
+          </Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="카테고리">
+          <Space>
+            <Tag color={domainColorsHex.program.primary}>
+              {programTypeLabels[program.type] || program.type}
+            </Tag>
+            <Tag>{programFormatLabels[program.format] || program.format}</Tag>
+          </Space>
+        </Descriptions.Item>
+        {program.description && (
+          <Descriptions.Item label="프로그램 목적 및 내용">
+            <Card size="small" style={{ backgroundColor: '#fafafa', marginTop: 8 }}>
+              <Paragraph
+                style={{ margin: 0, fontSize: 14, lineHeight: 1.8 }}
+                ellipsis={{ rows: 5, expandable: true, symbol: '더보기' }}
+              >
+                {program.description}
+              </Paragraph>
+            </Card>
+          </Descriptions.Item>
+        )}
+        <Descriptions.Item label="스폰서">
+          <Tag color={domainColorsHex.sponsor.primary}>{sponsorName || '-'}</Tag>
+        </Descriptions.Item>
+        <Descriptions.Item label="상태">
+          {program.lifecycleStatus ? (
+            <Tag color={getProgramLifecycleColor(program.lifecycleStatus)}>
+              {getProgramLifecycleLabel(program.lifecycleStatus)}
+            </Tag>
+          ) : (
+            <StatusDisplay
+              status={program.status}
+              statusLabels={commonStatusConfig.labels}
+              statusColors={commonStatusConfig.colors}
+            />
+          )}
+        </Descriptions.Item>
+        <Descriptions.Item label="기간">
+          {dayjs(program.startDate).format('YYYY-MM-DD')} ~{' '}
+          {dayjs(program.endDate).format('YYYY-MM-DD')}
+        </Descriptions.Item>
+      </Descriptions>
+    </Card>
+  )
+}

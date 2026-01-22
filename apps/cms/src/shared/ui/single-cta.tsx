@@ -13,6 +13,8 @@ interface SingleCTAProps {
   type?: 'primary' | 'default'
   loading?: boolean
   disabled?: boolean
+  block?: boolean
+  size?: 'large' | 'middle' | 'small'
 }
 
 export function SingleCTA({ 
@@ -21,7 +23,9 @@ export function SingleCTA({
   onClick, 
   type = 'primary',
   loading = false,
-  disabled = false
+  disabled = false,
+  block = false,
+  size = 'middle'
 }: SingleCTAProps) {
   const navigate = useNavigate()
   
@@ -39,6 +43,8 @@ export function SingleCTA({
       onClick={handleClick}
       loading={loading}
       disabled={disabled || (!targetUrl && !onClick)}
+      block={block}
+      size={size}
     >
       {label}
     </Button>

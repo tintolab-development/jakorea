@@ -6,9 +6,8 @@
 
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Button, Result, Spin, Alert } from 'antd'
-import { LinkOutlined } from '@ant-design/icons'
-import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
+import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert } from 'antd'
+import { StatusDisplay, SingleCTA } from '@/shared/ui'
 import { mockSchedulesMap, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 import type { Schedule } from '@/types/domain'
@@ -127,7 +126,7 @@ export function MyScheduleDetailPage() {
           </Paragraph>
         </div>
 
-        {/* 일정 상태 요약 영역 (최상단, 가장 강조) */}
+        {/* 일정 상태 요약 영역 (최상단, 가장 강조) - Phase 5.6 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <StatusDisplay
@@ -135,12 +134,16 @@ export function MyScheduleDetailPage() {
               statusLabels={scheduleStatusLabels}
               statusColors={scheduleStatusColors}
             />
+            {/* SCH_04(취소) 또는 변경 이슈가 있는 경우 reason_public 표시 - Phase 5.6 */}
             {(status as string) === 'SCH_04' && (
               <Alert
                 message="일정이 취소되었습니다"
-                description="취소된 일정입니다. 자세한 사유는 관리자에게 문의해주세요."
-                type="warning"
+                description={
+                  (schedule as any).reasonPublic || '사유를 확인할 수 없습니다.'
+                }
+                type="error"
                 showIcon
+                style={{ marginTop: 12 }}
               />
             )}
           </Space>
@@ -173,15 +176,9 @@ export function MyScheduleDetailPage() {
               <Descriptions.Item label="진행 방식">
                 <Tag color="green">온라인</Tag>
                 {canJoinOnline && (
-                  <Button
-                    type="link"
-                    icon={<LinkOutlined />}
-                    href={schedule.onlineLink}
-                    target="_blank"
-                    style={{ marginLeft: 8 }}
-                  >
-                    참여 링크
-                  </Button>
+                  <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+                    (온라인 참여 링크는 아래 버튼을 통해 접속하실 수 있습니다)
+                  </Text>
                 )}
               </Descriptions.Item>
             )}
@@ -197,7 +194,7 @@ export function MyScheduleDetailPage() {
           </Card>
         )}
 
-        {/* 다음 행동 안내 영역 */}
+        {/* 다음 행동 안내 영역 - Phase 5.6: 조건부 CTA 표시 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%', textAlign: 'center' }}>
             {canJoinOnline ? (
@@ -205,31 +202,24 @@ export function MyScheduleDetailPage() {
                 <Paragraph style={{ margin: 0 }}>
                   <Text>온라인으로 참여하실 수 있습니다.</Text>
                 </Paragraph>
-                <Button
+                <SingleCTA
+                  label="온라인 참여하기"
+                  onClick={() => {
+                    if (schedule.onlineLink) {
+                      window.open(schedule.onlineLink, '_blank')
+                    }
+                  }}
                   type="primary"
+                  block
                   size="large"
-                  icon={<LinkOutlined />}
-                  href={schedule.onlineLink}
-                  target="_blank"
-                  style={{ minWidth: 200 }}
-                >
-                  온라인 참여하기
-                </Button>
+                />
               </>
             ) : (
-              <Paragraph style={{ margin: 0, color: '#8c8c8c' }}>
+              <Paragraph style={{ margin: 0, color: '#8c8c8c', fontSize: 15 }}>
                 현재 추가로 하실 일은 없습니다.
               </Paragraph>
             )}
           </Space>
-        </Card>
-
-        {/* 보조 안내 영역 */}
-        <Card>
-          <GuideMessage
-            message="일정 변경이나 취소가 필요한 경우 관리자에게 문의해주세요."
-            type="info"
-          />
         </Card>
       </Space>
     </div>
