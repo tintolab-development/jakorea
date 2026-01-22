@@ -8,6 +8,7 @@ import { PlusOutlined } from '@ant-design/icons'
 import { useScheduleNegotiationStore } from '@/features/schedule-negotiation/model/schedule-negotiation-store'
 import { ScheduleNegotiationList } from '@/features/schedule-negotiation/ui/schedule-negotiation-list'
 import { ScheduleNegotiationForm, type ScheduleNegotiationFormData } from '@/features/schedule-negotiation/ui/schedule-negotiation-form'
+import { ScheduleNegotiationDetailDrawer } from '@/features/schedule-negotiation/ui/schedule-negotiation-detail-drawer'
 import type { ScheduleNegotiation } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { schoolService } from '@/entities/school/api/school-service'
@@ -26,7 +27,9 @@ export default function ScheduleNegotiationListPage() {
   const { items, loading, fetchAll, create, update, delete: remove } = useScheduleNegotiationStore()
   const { params, setParams, clearParams } = useQueryParams<NegotiationQueryParams>()
   const [open, setOpen] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
   const [editing, setEditing] = useState<ScheduleNegotiation | null>(null)
+  const [viewing, setViewing] = useState<ScheduleNegotiation | null>(null)
   const [formLoading, setFormLoading] = useState(false)
 
   const selectedProgramId = params.programId
@@ -52,6 +55,11 @@ export default function ScheduleNegotiationListPage() {
   const handleCreate = () => {
     setEditing(null)
     setOpen(true)
+  }
+
+  const handleView = (item: ScheduleNegotiation) => {
+    setViewing(item)
+    setDetailOpen(true)
   }
 
   const handleEdit = (item: ScheduleNegotiation) => {
@@ -185,7 +193,7 @@ export default function ScheduleNegotiationListPage() {
       <ScheduleNegotiationList
         data={filtered}
         loading={loading}
-        onView={item => setEditing(item)}
+        onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
@@ -206,6 +214,54 @@ export default function ScheduleNegotiationListPage() {
           fixedProgramId={selectedProgramId}
         />
       </Modal>
+
+      <ScheduleNegotiationDetailDrawer
+        open={detailOpen}
+        negotiation={viewing}
+        onClose={() => {
+          setDetailOpen(false)
+          setViewing(null)
+        }}
+        onEdit={() => {
+          if (viewing) {
+            setDetailOpen(false)
+            setEditing(viewing)
+            setOpen(true)
+          }
+        }}
+        onDelete={async () => {
+          if (viewing) {
+            await handleDelete(viewing)
+            setDetailOpen(false)
+            setViewing(null)
+          }
+        }}
+        onAccept={async () => {
+          if (viewing) {
+            try {
+              await update(viewing.id, { status: 'accepted' })
+              showSuccessMessage('합의 처리되었습니다.')
+              setDetailOpen(false)
+              setViewing(null)
+            } catch (error) {
+              handleError(error, { context: 'ScheduleNegotiationListPage -> onAccept' })
+            }
+          }
+        }}
+        onReject={async () => {
+          if (viewing) {
+            try {
+              await update(viewing.id, { status: 'rejected' })
+              showSuccessMessage('거절 처리되었습니다.')
+              setDetailOpen(false)
+              setViewing(null)
+            } catch (error) {
+              handleError(error, { context: 'ScheduleNegotiationListPage -> onReject' })
+            }
+          }
+        }}
+        loading={loading}
+      />
     </div>
   )
 }

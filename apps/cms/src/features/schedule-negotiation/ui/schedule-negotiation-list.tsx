@@ -52,7 +52,15 @@ export function ScheduleNegotiationList({ data, loading, onView, onEdit, onDelet
       title: '상태',
       dataIndex: 'status',
       key: 'status',
-      render: (st: ScheduleNegotiation['status']) => <Tag color={statusColor[st]}>{st}</Tag>,
+      render: (st: ScheduleNegotiation['status']) => {
+        const statusLabels: Record<ScheduleNegotiation['status'], string> = {
+          proposed: '제안',
+          accepted: '합의',
+          rejected: '거절',
+          revised: '재제안',
+        }
+        return <Tag color={statusColor[st]}>{statusLabels[st]}</Tag>
+      },
     },
     {
       title: '작업',
