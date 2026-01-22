@@ -63,8 +63,16 @@ export function usePermissionRequests(
 
   const approveRequest = useCallback(async (input: ReviewPermissionRequestInput) => {
     try {
-      await reviewPermissionRequest({ ...input, approved: true })
-      message.success('권한 요청이 승인되었습니다.')
+      // Phase 0.5.2: 승인 시 임시 권한 부여
+      const { temporaryPermission } = await reviewPermissionRequest({ ...input, approved: true })
+      
+      if (temporaryPermission) {
+        const expiresAt = new Date(temporaryPermission.expiresAt).toLocaleDateString('ko-KR')
+        message.success(`권한 요청이 승인되었습니다. 임시 권한이 부여되었습니다. (만료: ${expiresAt})`)
+      } else {
+        message.success('권한 요청이 승인되었습니다.')
+      }
+      
       await fetchRequests()
     } catch (err: any) {
       message.error(err.message || '권한 요청 승인에 실패했습니다.')

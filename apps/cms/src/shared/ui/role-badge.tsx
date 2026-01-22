@@ -73,11 +73,13 @@ const programRoleLabels: Record<ProgramRole, string> = {
 export function RoleBadge({
   role,
   adminLevel,
-  programRole: _programRole, // 향후 사용 예정
+  programRole,
   showIcon = true,
   size = 'default',
   variant = 'tag',
 }: RoleBadgeProps) {
+  // programRole은 향후 사용 예정
+  void programRole
   const config = roleConfig[role]
   const label =
     role === 'ADMIN' && adminLevel

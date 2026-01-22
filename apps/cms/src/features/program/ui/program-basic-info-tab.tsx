@@ -3,7 +3,7 @@
  * 프로그램 상세 Drawer의 기본 정보 탭 컴포넌트
  */
 
-import { Space, Card, Descriptions, Typography, Divider } from 'antd'
+import { Space, Card, Descriptions, Typography, Divider, Image } from 'antd'
 import type { Program } from '@/types/domain'
 import { GuideMessage } from '@/shared/ui'
 import dayjs from 'dayjs'
@@ -70,6 +70,35 @@ export function ProgramBasicInfoTab({
 }: ProgramBasicInfoTabProps) {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      {/* FR-C02: 포스터/키비주얼 이미지 상단 배치 */}
+      {program.posterImage ? (
+        <Card size="small" style={{ overflow: 'hidden', padding: 0 }}>
+          <Image
+            src={program.posterImage}
+            alt={`${program.title} 포스터`}
+            style={{ width: '100%', maxHeight: 320, objectFit: 'cover', display: 'block' }}
+            preview={{ mask: '확대 보기' }}
+          />
+        </Card>
+      ) : (
+        <Card size="small">
+          <div
+            style={{
+              width: '100%',
+              height: 160,
+              background: '#f5f5f5',
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#bfbfbf',
+            }}
+          >
+            포스터 이미지 없음
+          </div>
+        </Card>
+      )}
+
       {/* 프로그램 핵심 정보 영역 */}
       <ProgramInfoCard program={program} sponsorName={sponsorName} />
 

@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Modal, Form, Radio, Input, Button, Space, Alert, Typography } from 'antd'
+import { Modal, Form, Radio, Input, Button, Space, Alert, Typography, message } from 'antd'
 import { useDownloadOptions } from '../hooks/use-download-options'
 import { useDownloadQuota } from '../hooks/use-download-quota'
 import type { DownloadOptions, DownloadTargetType } from '@/types/download'
@@ -22,6 +22,8 @@ interface DownloadOptionsModalProps {
   rowCount: number
   onCancel: () => void
   onDownload: (options: DownloadOptions) => Promise<void>
+  /** OWNER/MASTER 등 기존 권한 보유 시 원본 다운로드 허용 */
+  canDownloadOriginalOverride?: boolean
 }
 
 export function DownloadOptionsModal({
@@ -32,37 +34,44 @@ export function DownloadOptionsModal({
   rowCount,
   onCancel,
   onDownload,
+  canDownloadOriginalOverride,
 }: DownloadOptionsModalProps) {
   const [form] = Form.useForm()
   const [downloading, setDownloading] = useState(false)
 
-  const { canDownloadOriginal, options, setOptions, resetOptions } = useDownloadOptions({
+  const { canDownloadOriginal, resetOptions } = useDownloadOptions({
     programId,
     targetType,
     action: 'DOWNLOAD',
   })
 
+  const allowOriginal = canDownloadOriginalOverride ?? canDownloadOriginal
+
   const { canDownload, recordDownload } = useDownloadQuota()
 
   useEffect(() => {
     if (open) {
+      // 모달이 열릴 때만 초기값 설정
       form.setFieldsValue({
-        maskingEnabled: options.maskingEnabled,
-        reason: options.reason || '',
+        maskingEnabled: true, // 기본값으로 초기화
+        reason: '',
       })
     } else {
+      // 모달이 닫힐 때만 리셋
       resetOptions()
       form.resetFields()
     }
-  }, [open, options, form, resetOptions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
 
-      // 다운로드 가능 여부 체크
+      // 다운로드 가능 여부 체크 (행수/쿼터/레이트리밋)
       const checkResult = canDownload(rowCount)
       if (!checkResult.allowed) {
+        message.warning(checkResult.reason ?? '다운로드할 수 없습니다.')
         return
       }
 
@@ -153,15 +162,11 @@ export function DownloadOptionsModal({
           name="maskingEnabled"
           rules={[{ required: true, message: '데이터 형식을 선택해주세요.' }]}
         >
-          <Radio.Group
-            onChange={(e) => {
-              setOptions({ maskingEnabled: e.target.value })
-            }}
-          >
+          <Radio.Group>
             <Radio value={true}>마스킹 적용 (기본)</Radio>
-            <Radio value={false} disabled={!canDownloadOriginal}>
+            <Radio value={false} disabled={!allowOriginal}>
               원본 데이터
-              {!canDownloadOriginal && ' (권한 필요)'}
+              {!allowOriginal && ' (권한 필요)'}
             </Radio>
           </Radio.Group>
         </Form.Item>

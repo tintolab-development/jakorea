@@ -5,7 +5,7 @@
  * UX/UI 디자이너: Ant Design Form 컴포넌트 활용, 깔끔한 로그인 UI
  */
 
-import { Form, Input, Button, Card, message, Typography } from 'antd'
+import { Form, Input, Button, Card, message, Typography, Space } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -16,6 +16,22 @@ import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import './login-page.css'
 
 const { Text } = Typography
+
+// 개발용 테스트 계정 (임시)
+const TEST_ACCOUNTS = {
+  admin: {
+    email: 'admin1@jakorea.org',
+    password: 'admin123!',
+  },
+  instructor: {
+    email: 'instructor1@example.com',
+    password: 'instructor123!',
+  },
+  student: {
+    email: 'individual1@example.com',
+    password: 'individual123!',
+  },
+}
 
 // 로고 이미지 경로
 const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
@@ -149,6 +165,48 @@ export function LoginPage() {
             </Button>
           </Form.Item>
         </Form>
+
+        {/* 개발용 테스트 계정 버튼 (임시) */}
+        <div style={{ marginTop: 16, marginBottom: 16 }}>
+          <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 8 }}>
+            [개발용] 빠른 로그인:
+          </Text>
+          <Space size="small" wrap>
+            <Button
+              size="small"
+              onClick={() => {
+                form.setFieldsValue({
+                  email: TEST_ACCOUNTS.admin.email,
+                  password: TEST_ACCOUNTS.admin.password,
+                })
+              }}
+            >
+              관리자
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                form.setFieldsValue({
+                  email: TEST_ACCOUNTS.instructor.email,
+                  password: TEST_ACCOUNTS.instructor.password,
+                })
+              }}
+            >
+              강사
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                form.setFieldsValue({
+                  email: TEST_ACCOUNTS.student.email,
+                  password: TEST_ACCOUNTS.student.password,
+                })
+              }}
+            >
+              수강자
+            </Button>
+          </Space>
+        </div>
 
         <div className="login-footer">
           <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 8 }}>

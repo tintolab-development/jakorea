@@ -29,7 +29,21 @@ export const schoolApplicationSchema = baseApplicationSchema.extend({
   classCount: z.number().int().positive().optional(), // 학급 수
   studentsPerClass: z.number().int().positive().optional(), // 학급별 인원
   instructorWaitingRoom: z.string().optional(), // 강사 대기장소
-  studentListFile: z.instanceof(File).optional(), // 엑셀 파일 (FR-C03)
+  // Phase 0.2.2: 엑셀 파일 (FR-C03) - 파일 검증 포함
+  studentListFile: z
+    .instanceof(File, { message: '엑셀 파일을 선택해주세요' })
+    .refine(
+      file => {
+        const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+        return ['.xlsx', '.xls'].includes(extension)
+      },
+      { message: '엑셀 파일(.xlsx, .xls)만 업로드 가능합니다' }
+    )
+    .refine(
+      file => file.size <= 5 * 1024 * 1024,
+      { message: '파일 크기는 5MB 이하여야 합니다' }
+    )
+    .optional(),
   mealAvailable: z.boolean().optional(), // 급식 가능 여부
   canEatInWaitingRoom: z.boolean().optional(), // 대기실 내 취식 가능 여부
 })

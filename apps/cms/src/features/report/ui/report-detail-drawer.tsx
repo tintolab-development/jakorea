@@ -32,6 +32,8 @@ interface ReportDetailDrawerProps {
   report: Report | null
   onClose: () => void
   onReviewComplete?: () => void
+  /** Phase 0.2.7: 강사 보기 시 검토/승인/반려 버튼 숨김 */
+  showReviewActions?: boolean
 }
 
 export function ReportDetailDrawer({
@@ -39,6 +41,7 @@ export function ReportDetailDrawer({
   report,
   onClose,
   onReviewComplete,
+  showReviewActions = true,
 }: ReportDetailDrawerProps) {
   const { user } = useAuthStore()
   const [reviewNotes, setReviewNotes] = useState('')
@@ -108,31 +111,33 @@ export function ReportDetailDrawer({
         open={open}
         onClose={onClose}
         extra={
-          <Space>
-            {report.status === 'submitted' && (
-              <Button onClick={handleReview} loading={loading}>
-                검토 시작
-              </Button>
-            )}
-            {report.status === 'reviewing' && (
-              <>
-                <Button
-                  type="primary"
-                  icon={<CheckOutlined />}
-                  onClick={() => setApproveModalOpen(true)}
-                >
-                  승인
+          showReviewActions ? (
+            <Space>
+              {report.status === 'submitted' && (
+                <Button onClick={handleReview} loading={loading}>
+                  검토 시작
                 </Button>
-                <Button
-                  danger
-                  icon={<CloseOutlined />}
-                  onClick={() => setRejectModalOpen(true)}
-                >
-                  반려
-                </Button>
-              </>
-            )}
-          </Space>
+              )}
+              {report.status === 'reviewing' && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    onClick={() => setApproveModalOpen(true)}
+                  >
+                    승인
+                  </Button>
+                  <Button
+                    danger
+                    icon={<CloseOutlined />}
+                    onClick={() => setRejectModalOpen(true)}
+                  >
+                    반려
+                  </Button>
+                </>
+              )}
+            </Space>
+          ) : undefined
         }
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>

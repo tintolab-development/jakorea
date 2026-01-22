@@ -15,7 +15,7 @@ export function getRedirectPathByRole(user: Omit<User, 'password'> | null): stri
 
   switch (user.role) {
     case 'ADMIN':
-      return '/admin'
+      return '/' // 관리자는 메인 홈(Dashboard)으로
     case 'INSTRUCTOR':
       return '/instructor'
     case 'SCHOOL':

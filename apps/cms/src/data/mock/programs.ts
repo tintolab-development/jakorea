@@ -1251,6 +1251,7 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     educatedTeachers: record.educatedTeachers,
     instructors: record.instructors,
     managerName: record.managerName,
+    posterImage: `https://picsum.photos/seed/${programId}/400/300`,
     createdAt: getDate(365 - (record.month * 30)),
     updatedAt: getDate(365 - (record.month * 30) + 5),
   }

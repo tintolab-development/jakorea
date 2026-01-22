@@ -4,6 +4,8 @@
  */
 
 import type { Application, UUID } from '../../types'
+import type { ApplicationProgressStatus } from '../../types/application-progress'
+import { APPLICATION_PROGRESS_ORDER } from '../../types/application-progress'
 import { mockPrograms } from './programs'
 import { mockSchools } from './schools'
 import { mockInstructors } from './instructors'
@@ -151,7 +153,14 @@ const participantApplications: Application[] = Array.from({ length: 30 }, (_, in
   )
 })
 
-export const mockApplications: Application[] = [...baseApplications, ...participantApplications]
+// Phase 0.2.4: 승인된 신청에 progressStatus 부여 (타임라인용)
+const rawApplications: Application[] = [...baseApplications, ...participantApplications]
+export const mockApplications: Application[] = rawApplications.map((app, index) => {
+  if (app.status !== 'approved') return app
+  const progressIndex = index % APPLICATION_PROGRESS_ORDER.length
+  const progressStatus = APPLICATION_PROGRESS_ORDER[progressIndex] as ApplicationProgressStatus
+  return { ...app, progressStatus }
+})
 
 export const mockApplicationsMap = new Map<UUID, Application>()
 mockApplications.forEach(app => {

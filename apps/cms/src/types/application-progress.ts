@@ -14,6 +14,18 @@ export type ApplicationProgressStatus =
   | 'SURVEY_SUBMITTED' // 만족도 조사 제출
   | 'REPORT_SUBMITTED' // 강의보고서 제출
 
+/** Phase 0.2.4: 타임라인 표시 순서 (FR-D01) */
+export const APPLICATION_PROGRESS_ORDER: ApplicationProgressStatus[] = [
+  'RECEIVED',
+  'MATCHING_IN_PROGRESS',
+  'MATCHING_COMPLETED',
+  'MATERIAL_PREPARING',
+  'MATERIAL_SHIPPED',
+  'IN_PROGRESS',
+  'SURVEY_SUBMITTED',
+  'REPORT_SUBMITTED',
+]
+
 // 상태 전이 규칙
 export const PROGRESS_STATUS_TRANSITIONS: Record<ApplicationProgressStatus, ApplicationProgressStatus[]> = {
   RECEIVED: ['MATCHING_IN_PROGRESS'],

@@ -16,6 +16,7 @@ import { schoolService } from '@/entities/school/api/school-service'
 import { mockLectureActivities } from '@/data/mock'
 import { mockApplications } from '@/data/mock'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { ReportDetailDrawer } from '@/features/report/ui/report-detail-drawer'
 import dayjs from 'dayjs'
 import type { Schedule, Report } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
@@ -62,6 +63,8 @@ export function InstructorReportsPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<LectureReportStatus | 'all'>('all')
+  const [detailDrawerOpen, setDetailDrawerOpen] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -109,13 +112,16 @@ export function InstructorReportsPage() {
         const school = application ? schoolService.getByIdSync(application.subjectId) : null
         const schoolName = school?.name
 
-        // 강의보고서 찾기 (activityId 기반)
+        // 강의보고서 찾기: activityId 또는 scheduleId (Phase 0.2.7)
         const activity = mockLectureActivities.find(
           act => act.scheduleId === schedule.id && act.instructorId === user?.instructorId
         )
-        const report = activity
-          ? reports.find(r => r.activityId === activity.id && r.type === 'lecture')
-          : null
+        const report =
+          reports.find(r => {
+            if (r.type !== 'lecture') return false
+            if (activity && r.activityId === activity.id) return true
+            return r.scheduleId === schedule.id
+          }) ?? null
 
         // Phase 0.2.7: 상태값 결정
         let status: LectureReportStatus = 'NOT_SUBMITTED'
@@ -162,22 +168,27 @@ export function InstructorReportsPage() {
     }
   }, [reportList])
 
-  const handleView = (item: LectureReportListItem) => {
+  const handleView = async (item: LectureReportListItem) => {
     if (item.reportId) {
-      // Phase 0.2.7: 기존 보고서 상세 보기 (관리자 보고서 상세 페이지 활용)
-      navigate(`/reports/${item.reportId}`)
-    } else {
-      // Phase 0.2.7: 새 보고서 작성
-      const activity = mockLectureActivities.find(
-        act => act.scheduleId === item.scheduleId && act.instructorId === user?.instructorId
-      )
-      if (activity) {
-        navigate(`/reports/new?type=lecture&activityId=${activity.id}`)
-      } else {
-        // activity가 없으면 scheduleId로 직접 작성
-        navigate(`/reports/new?type=lecture&scheduleId=${item.scheduleId}`)
+      try {
+        const report = await reportService.getById(item.reportId)
+        setSelectedReport(report)
+        setDetailDrawerOpen(true)
+      } catch (e) {
+        console.error('보고서 조회 실패:', e)
       }
+      return
     }
+    const schedule = schedules.find(s => s.id === item.scheduleId)
+    const program = schedule ? programService.getByIdSync(schedule.programId) : null
+    const activity = mockLectureActivities.find(
+      act => act.scheduleId === item.scheduleId && act.instructorId === user?.instructorId
+    )
+    const params = new URLSearchParams({ type: 'lecture' })
+    if (activity) params.set('activityId', activity.id)
+    params.set('scheduleId', item.scheduleId)
+    if (program?.id) params.set('programId', program.id)
+    navigate(`/reports/new?${params.toString()}`)
   }
 
   const columns: ColumnsType<LectureReportListItem> = [
@@ -285,6 +296,16 @@ export function InstructorReportsPage() {
           }}
         />
       </Card>
+
+      <ReportDetailDrawer
+        open={detailDrawerOpen}
+        report={selectedReport}
+        onClose={() => {
+          setDetailDrawerOpen(false)
+          setSelectedReport(null)
+        }}
+        showReviewActions={false}
+      />
     </div>
   )
 }

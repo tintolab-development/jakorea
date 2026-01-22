@@ -10,6 +10,8 @@ import { settlementService } from '@/entities/settlement/api/settlement-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { programService } from '@/entities/program/api/program-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
+import { canDownloadPaymentStatement } from '@/shared/utils/download-permission'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { TransferListRow } from './use-transfer-list-export'
 
 export type PaymentStatementFilter = {
@@ -20,6 +22,7 @@ export type PaymentStatementFilter = {
 }
 
 export function usePaymentStatements() {
+  const { user } = useAuthStore()
   const [statements, setStatements] = useState<PaymentStatement[]>([])
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<PaymentStatementFilter>({})
@@ -88,6 +91,12 @@ export function usePaymentStatements() {
   }, [statements])
 
   const downloadStatement = useCallback(async (statement: PaymentStatement) => {
+    // Phase 0.4.3: 권한 체크 (OWNER만 다운로드 가능)
+    if (!canDownloadPaymentStatement(user, statement.programId)) {
+      message.warning('지급조서 다운로드는 OWNER 권한에서만 가능합니다')
+      return
+    }
+
     try {
       const settlement = await settlementService.getById(statement.settlementId)
       const program = programService.getByIdSync(statement.programId)
@@ -111,7 +120,7 @@ export function usePaymentStatements() {
       console.error('Failed to download payment statement:', error)
       message.error('지급조서 다운로드 중 오류가 발생했습니다')
     }
-  }, [])
+  }, [user])
 
   const resetFilters = () => setFilters({})
 

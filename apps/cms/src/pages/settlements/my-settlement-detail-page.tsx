@@ -11,6 +11,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
 import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
 import { programService } from '@/entities/program/api/program-service'
+import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
 
@@ -134,16 +135,22 @@ export function MySettlementDetailPage() {
           </Descriptions>
         </Card>
 
-        <Card title="정산 항목">
-          <Descriptions bordered column={1}>
-            {settlement.items.map((item, index) => (
-              <Descriptions.Item key={index} label={item.type}>
-                {item.amount.toLocaleString()}원
-                {item.description && ` (${item.description})`}
-              </Descriptions.Item>
-            ))}
-          </Descriptions>
-        </Card>
+        {settlement.calculationResult ? (
+          <Card title="산출내역 (강사비 · 교통비)">
+            <SettlementCalculationSummary result={settlement.calculationResult} />
+          </Card>
+        ) : (
+          <Card title="정산 항목">
+            <Descriptions bordered column={1}>
+              {settlement.items.map((item, index) => (
+                <Descriptions.Item key={index} label={item.type}>
+                  {item.amount.toLocaleString()}원
+                  {item.description && ` (${item.description})`}
+                </Descriptions.Item>
+              ))}
+            </Descriptions>
+          </Card>
+        )}
 
         <Card title="증빙 파일">
           {settlement.attachments && settlement.attachments.length > 0 ? (

@@ -154,6 +154,7 @@ export function SchoolApplicationForm({
         label="참여학생 리스트 (엑셀)"
         validateStatus={errors.studentListFile ? 'error' : ''}
         help={errors.studentListFile?.message || '엑셀 파일(.xlsx, .xls)을 업로드해주세요. (최대 5MB)'}
+        required={false}
       >
         <Upload
           beforeUpload={handleFileUpload}

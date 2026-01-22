@@ -3,9 +3,10 @@
  * Phase 0.4.2: 관리자 정산 검토 - 증빙자료 확인, 승인/반려 버튼
  */
 
-import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, Card, List } from 'antd'
-import { CheckOutlined, CloseOutlined, FileTextOutlined } from '@ant-design/icons'
-import type { Settlement } from '@/types/domain'
+import { useState } from 'react'
+import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, Card, List, Modal, Form, InputNumber, Input, message } from 'antd'
+import { CheckOutlined, CloseOutlined, FileTextOutlined, EditOutlined } from '@ant-design/icons'
+import type { Settlement, SettlementItem } from '@/types/domain'
 import {
   getSettlementStatusLabel,
   getSettlementStatusColor,
@@ -13,6 +14,7 @@ import {
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useSettlementDetail } from '../hooks/use-settlement-detail'
 import { useSettlementReview } from '../hooks/use-settlement-review'
+import { settlementService } from '@/entities/settlement/api/settlement-service'
 import './settlement-detail-drawer.css'
 
 const { Text, Title } = Typography
@@ -23,6 +25,7 @@ interface SettlementDetailReviewDrawerProps {
   onClose: () => void
   onApprove: (settlement: Settlement) => Promise<void>
   onReject: (settlement: Settlement) => Promise<void>
+  onUpdate?: (settlement: Settlement) => Promise<void> // Phase 0.4.2: 금액 조정 후 업데이트 콜백
   loading?: boolean
 }
 
@@ -32,8 +35,14 @@ export function SettlementDetailReviewDrawer({
   onClose,
   onApprove,
   onReject,
+  onUpdate,
   loading,
 }: SettlementDetailReviewDrawerProps) {
+  const [adjustModalOpen, setAdjustModalOpen] = useState(false)
+  const [adjustingItem, setAdjustingItem] = useState<SettlementItem | null>(null)
+  const [adjustForm] = Form.useForm()
+  const [adjusting, setAdjusting] = useState(false)
+
   const {
     programTitle,
     instructorName,
@@ -47,6 +56,60 @@ export function SettlementDetailReviewDrawer({
     handleApprove,
     handleReject,
   } = useSettlementReview(settlement, onApprove, onReject)
+
+  const handleOpenAdjustModal = (item: SettlementItem) => {
+    setAdjustingItem(item)
+    adjustForm.setFieldsValue({
+      amount: item.amount,
+      reason: '',
+    })
+    setAdjustModalOpen(true)
+  }
+
+  const handleAdjustAmount = async () => {
+    if (!settlement || !adjustingItem) return
+
+    try {
+      const values = await adjustForm.validateFields()
+      setAdjusting(true)
+
+      // items 배열에서 해당 항목 찾아서 금액 업데이트
+      const updatedItems = settlement.items.map(item =>
+        item === adjustingItem
+          ? { ...item, amount: values.amount }
+          : item
+      )
+
+      // 조정 사유를 notes에 추가 (기존 notes가 있으면 이어서)
+      const adjustmentNote = `[금액 조정] ${adjustingItem.description}: ${adjustingItem.amount.toLocaleString()}원 → ${values.amount.toLocaleString()}원${values.reason ? ` (사유: ${values.reason})` : ''}`
+      const updatedNotes = settlement.notes
+        ? `${settlement.notes}\n${adjustmentNote}`
+        : adjustmentNote
+
+      const updated = await settlementService.update(settlement.id, {
+        items: updatedItems,
+        notes: updatedNotes,
+      })
+
+      message.success('금액이 조정되었습니다')
+      setAdjustModalOpen(false)
+      adjustForm.resetFields()
+      setAdjustingItem(null)
+
+      // 부모 컴포넌트에 업데이트 알림
+      if (onUpdate) {
+        await onUpdate(updated)
+      }
+    } catch (error) {
+      if (error && typeof error === 'object' && 'errorFields' in error) {
+        return
+      }
+      console.error('Failed to adjust amount:', error)
+      message.error('금액 조정 중 오류가 발생했습니다')
+    } finally {
+      setAdjusting(false)
+    }
+  }
 
   if (!settlement) return null
 
@@ -152,7 +215,32 @@ export function SettlementDetailReviewDrawer({
       <Title level={5}>정산 항목</Title>
       <Table
         dataSource={settlement.items}
-        columns={itemColumns}
+        columns={[
+          ...itemColumns,
+          // Phase 0.4.2: 금액 조정 버튼 (교통비, 숙박비만)
+          {
+            title: '조정',
+            key: 'adjust',
+            width: 80,
+            render: (_: unknown, record: SettlementItem) => {
+              const isAdjustable = record.type === 'transportation' || record.type === 'accommodation'
+              if (!isAdjustable || !canApprove) return null
+              return (
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleOpenAdjustModal(record)
+                  }}
+                >
+                  조정
+                </Button>
+              )
+            },
+          },
+        ]}
         rowKey={(record, index) => `${record.type}-${index}`}
         pagination={false}
         summary={() => (
@@ -168,6 +256,54 @@ export function SettlementDetailReviewDrawer({
           </Table.Summary>
         )}
       />
+
+      {/* Phase 0.4.2: 금액 조정 모달 */}
+      <Modal
+        title="금액 조정"
+        open={adjustModalOpen}
+        onCancel={() => {
+          setAdjustModalOpen(false)
+          adjustForm.resetFields()
+          setAdjustingItem(null)
+        }}
+        onOk={handleAdjustAmount}
+        confirmLoading={adjusting}
+        okText="조정"
+        cancelText="취소"
+      >
+        {adjustingItem && (
+          <Form form={adjustForm} layout="vertical">
+            <Form.Item label="항목">
+              <Text>{adjustingItem.description}</Text>
+            </Form.Item>
+            <Form.Item label="현재 금액">
+              <Text>{adjustingItem.amount.toLocaleString('ko-KR')}원</Text>
+            </Form.Item>
+            <Form.Item
+              name="amount"
+              label="조정 금액"
+              rules={[
+                { required: true, message: '조정 금액을 입력해주세요' },
+                { type: 'number', min: 0, message: '금액은 0 이상이어야 합니다' },
+              ]}
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                min={0}
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
+                suffix="원"
+              />
+            </Form.Item>
+            <Form.Item
+              name="reason"
+              label="조정 사유 (선택사항)"
+            >
+              <Input.TextArea rows={3} placeholder="금액 조정 사유를 입력해주세요" />
+            </Form.Item>
+          </Form>
+        )}
+      </Modal>
     </Drawer>
   )
 }

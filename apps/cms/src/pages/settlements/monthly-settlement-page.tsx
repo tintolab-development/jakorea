@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useMemo, type CSSProperties } from 'react'
-import { Card, Space, Statistic, Table, Tag, Badge, Button, Select } from 'antd'
+import { Card, Space, Statistic, Table, Tag, Badge, Button, Select, message } from 'antd'
 import { CalendarOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
 import {
@@ -189,9 +189,29 @@ export function MonthlySettlementPage() {
             {currentPeriod && (
               <Button
                 icon={<DownloadOutlined />}
-                onClick={() => {
-                  // TODO: 월별 정산 일괄 다운로드
-                  console.log('Download monthly settlements:', currentPeriod)
+                onClick={async () => {
+                  try {
+                    // 월별 정산 일괄 다운로드 (Excel)
+                    const { generateTransferList } = await import('@/shared/utils/settlement-document')
+                    const transferRows = currentSettlements
+                      .filter(s => s.status !== 'cancelled')
+                      .map(s => {
+                        const program = mockProgramsMap.get(s.programId)
+                        const instructor = mockInstructorsMap.get(s.instructorId)
+                        return {
+                          period: s.period,
+                          programTitle: program?.title || '프로그램 정보 없음',
+                          instructorName: instructor?.name || '강사 정보 없음',
+                          bankAccount: instructor?.bankAccount || '-',
+                          amount: s.totalAmount,
+                        }
+                      })
+                    await generateTransferList(transferRows, { passwordProvided: false })
+                    message.success('월별 지급조서가 다운로드되었습니다.')
+                  } catch (error) {
+                    console.error('Failed to download monthly settlements:', error)
+                    message.error('월별 지급조서 다운로드 중 오류가 발생했습니다.')
+                  }
                 }}
               >
                 월별 지급조서 일괄 다운로드

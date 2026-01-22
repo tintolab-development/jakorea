@@ -1,19 +1,25 @@
 /**
  * 참여자 목록 컴포넌트
  * Phase 4.1: 참여자 조회 (FR-F00)
+ * Phase 0.5.3: 다운로드 보호 UX - 옵션 모달, 마스킹, 쿼터
  */
 
+import { useState } from 'react'
 import { Table, Button, Space, Tag, Tooltip } from 'antd'
 import { DownloadOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
-// import { programService } from '@/entities/program/api/program-service' // 사용하지 않음
+import { programService } from '@/entities/program/api/program-service'
 import { getApplicationStatusLabel, getApplicationStatusColor } from '@/shared/constants/status'
 import { canDownloadParticipants } from '@/shared/utils/download-permission'
 import { logDownload } from '@/entities/download-log/api/download-log-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { PermissionRequestButton } from '@/features/permission-request/ui/permission-request-button'
+import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import type { DownloadOptions } from '@/types/download'
 import ExcelJS from 'exceljs'
 
 interface ParticipantListItem {
@@ -45,16 +51,23 @@ export function ParticipantList({
   const { user } = useAuthStore()
 
   const canDownload = canDownloadParticipants(currentUser || user, programId)
+  // Phase 0.5.2: 권한 없는 관리자 → 권한 요청 버튼 노출
+  const showPermissionRequest =
+    !canDownload &&
+    (currentUser || user)?.role === 'ADMIN' &&
+    !!programId
+  const programName = programId ? programService.getByIdSync(programId)?.title ?? '프로그램' : ''
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false)
 
-  const handleDownload = async () => {
-    if (!currentUser && !user) return
+  const handleDownload = async (options: DownloadOptions) => {
+    const u = currentUser || user
+    if (!u) return
 
     try {
-      // Excel 파일 생성
+      const { maskingEnabled } = options
       const workbook = new ExcelJS.Workbook()
       const worksheet = workbook.addWorksheet('참여자 목록')
 
-      // 헤더 설정
       worksheet.columns = [
         { header: '이름', key: 'name', width: 20 },
         { header: '이메일', key: 'email', width: 30 },
@@ -64,11 +77,12 @@ export function ParticipantList({
         { header: '신청일', key: 'appliedAt', width: 20 },
       ]
 
-      // 데이터 추가
       data.forEach(item => {
+        const name = maskingEnabled ? MASKING_POLICY.name(item.name) : item.name
+        const email = maskingEnabled ? MASKING_POLICY.email(item.email) : item.email
         worksheet.addRow({
-          name: item.name,
-          email: item.email,
+          name,
+          email,
           role: item.role === 'INDIVIDUAL' ? '개인' : '학교',
           programName: item.programName,
           status: getApplicationStatusLabel(item.status),
@@ -76,7 +90,6 @@ export function ParticipantList({
         })
       })
 
-      // 파일 다운로드
       const buffer = await workbook.xlsx.writeBuffer()
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -84,18 +97,17 @@ export function ParticipantList({
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `참여자_목록_${new Date().toISOString().split('T')[0]}.xlsx`
+      link.download = `참여자_목록_${new Date().toISOString().split('T')[0]}${maskingEnabled ? '_마스킹' : ''}.xlsx`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
 
-      // 다운로드 이력 기록
       await logDownload({
-        userId: (currentUser || user)!.id,
+        userId: u.id,
         action: 'DOWNLOAD',
         targetType: 'PARTICIPANTS',
-        filters: { programId, ...(programId ? { programId } : {}) },
+        filters: programId ? { programId } : {},
         rowCount: data.length,
         ...(programId ? { programId } : {}),
       })
@@ -190,13 +202,32 @@ export function ParticipantList({
           <Button
             type="primary"
             icon={<DownloadOutlined />}
-            onClick={handleDownload}
+            onClick={() => setDownloadModalOpen(true)}
             disabled={data.length === 0}
           >
             다운로드 ({data.length}건)
           </Button>
         )}
+        {showPermissionRequest && programId && (
+          <PermissionRequestButton
+            programId={programId}
+            programName={programName}
+            action="DOWNLOAD"
+          />
+        )}
       </Space>
+
+      <DownloadOptionsModal
+        open={downloadModalOpen}
+        programId={programId}
+        programName={programName || undefined}
+        targetType="PARTICIPANTS"
+        rowCount={data.length}
+        onCancel={() => setDownloadModalOpen(false)}
+        onDownload={handleDownload}
+        canDownloadOriginalOverride={canDownload}
+      />
+
       <Table
         columns={columns}
         dataSource={data}

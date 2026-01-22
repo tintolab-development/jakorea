@@ -262,6 +262,12 @@ export function AdminSettlementReviewPage() {
             message.error('반려 처리 중 오류가 발생했습니다')
           }
         }}
+        onUpdate={async (updatedSettlement) => {
+          // Phase 0.4.2: 금액 조정 후 목록 새로고침
+          await fetchSettlements()
+          // 선택된 정산도 업데이트
+          setSelectedSettlement(updatedSettlement)
+        }}
         loading={loading}
       />
     </div>

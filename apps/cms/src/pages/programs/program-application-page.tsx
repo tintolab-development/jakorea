@@ -75,15 +75,24 @@ export function ProgramApplicationPage() {
 
     setLoading(true)
     try {
-      // ApplicationFormData에서 Application 타입으로 변환 (기본 필드만)
-      // 파일 업로드 필드는 향후 별도 처리 예정
-      const applicationData = {
+      // ApplicationFormData에서 Application 타입으로 변환
+      const applicationData: Parameters<typeof createApplication>[0] = {
         programId: data.programId,
         roundId: data.roundId,
         subjectType: data.subjectType,
         subjectId: data.subjectId,
         status: data.status,
         notes: data.notes,
+      }
+      // Phase 0.2.2: 개인 신청 시 템플릿 기반 customFields 전달 (FR-C03)
+      if (data.subjectType === 'student' && 'customFields' in data && data.customFields) {
+        applicationData.customFields = data.customFields
+      }
+      // Phase 0.2.2: 학교 신청 시 엑셀 파일 업로드 처리 (FR-C03)
+      if (data.subjectType === 'school' && 'studentListFile' in data && data.studentListFile) {
+        const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
+        const uploadResult = await fileUploadService.upload(data.studentListFile, 'studentList')
+        applicationData.studentListFileUrl = uploadResult.url
       }
       await createApplication(applicationData)
       message.success('신청이 완료되었습니다.')

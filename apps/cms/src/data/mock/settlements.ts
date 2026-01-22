@@ -100,6 +100,15 @@ function createSettlement(
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
 
+  const calculationResult = calculateSettlement({
+    sessions,
+    distance,
+    fuelCost,
+    tollFee,
+    accommodationRequired: hasAccommodation,
+    isBusinessIncome,
+  })
+
   const createdAt = new Date()
   createdAt.setDate(createdAt.getDate() - daysAgo)
   createdAt.setHours(Math.floor(Math.random() * 12) + 9, Math.floor(Math.random() * 60), 0, 0)
@@ -128,6 +137,7 @@ function createSettlement(
     status,
     documentGeneratedAt,
     notes: status === 'cancelled' ? '정산 취소됨' : undefined,
+    calculationResult,
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
   }
@@ -175,7 +185,15 @@ function createInstructor1Settlements2026(): Settlement[] {
       isBusinessIncome
     )
     const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
-    
+    const calculationResult = calculateSettlement({
+      sessions,
+      distance,
+      fuelCost,
+      tollFee,
+      accommodationRequired: hasAccommodation,
+      isBusinessIncome,
+    })
+
     // 2026년 1월 초 날짜들
     const createdAt = new Date(2026, 0, Math.floor(Math.random() * 7) + 1)
     createdAt.setHours(Math.floor(Math.random() * 12) + 9, Math.floor(Math.random() * 60), 0, 0)
@@ -199,6 +217,7 @@ function createInstructor1Settlements2026(): Settlement[] {
       documentGeneratedAt,
       notes: status === 'cancelled' ? '정산 서류 미비로 인한 취소' : 
              status === 'review' ? '교통비 영수증 확인 필요' : undefined,
+      calculationResult,
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
       // 상세 이력 추가 (V3 Phase 4 대응)
@@ -294,16 +313,24 @@ function createInstructor1Settlements(): Settlement[] {
     )
     
     const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
-    
+    const calculationResult = calculateSettlement({
+      sessions,
+      distance,
+      fuelCost,
+      tollFee,
+      accommodationRequired: hasAccommodation,
+      isBusinessIncome,
+    })
+
     const createdAt = new Date()
     createdAt.setDate(createdAt.getDate() - daysAgo)
     createdAt.setHours(Math.floor(Math.random() * 12) + 9, Math.floor(Math.random() * 60), 0, 0)
-    
+
     const updatedAt = new Date(createdAt)
     if (Math.random() > 0.5) {
       updatedAt.setDate(updatedAt.getDate() + Math.floor(Math.random() * 5))
     }
-    
+
     const documentGeneratedAt = documentGenerated
       ? (() => {
           const date = new Date(createdAt)
@@ -311,22 +338,22 @@ function createInstructor1Settlements(): Settlement[] {
           return date.toISOString()
         })()
       : undefined
-    
+
     // 테스트용 매칭 ID는 사용하지 않고, 다른 매칭 ID 사용 (실제 매칭과 연결되지 않도록)
-    // 이렇게 하면 match-test-instructor1-001 매칭은 정산 제출 가능한 상태로 유지됨
     const testMatchingId = `match-instructor1-${String(i + 1).padStart(3, '0')}`
-    
+
     instructor1Settlements.push({
       id: `settle-instructor1-${String(i + 1).padStart(3, '0')}`,
       programId: baseProgram.id,
-      instructorId: INSTRUCTOR1_ID, // instructor1의 고정 ID
-      matchingId: testMatchingId, // 테스트 매칭과 다른 ID 사용
+      instructorId: INSTRUCTOR1_ID,
+      matchingId: testMatchingId,
       period,
       items,
       totalAmount,
       status,
       documentGeneratedAt,
       notes: status === 'cancelled' ? '정산 취소됨' : undefined,
+      calculationResult,
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
     })

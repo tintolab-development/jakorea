@@ -1,9 +1,10 @@
 /**
  * 정산 산출 로직 설정 페이지
  * V3 Phase 4: 정산 산출 로직 설정
+ * Phase 0.4.1: 프로젝트별 규칙 설정 UI ↔ rule service 연동
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Card,
   Space,
@@ -15,53 +16,75 @@ import {
   message,
   Typography,
   Alert,
+  Spin,
 } from 'antd'
 import { SaveOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { SettlementCalculationRule } from '@/types/settlement-calculation'
+import { settlementCalculationRuleService } from '@/entities/settlement/api/settlement-calculation-rule-service'
+import { ACCOMMODATION_FEE } from '@/shared/constants/settlement-rules'
 
 const { Title, Paragraph } = Typography
 
-// Mock 데이터 (실제로는 API에서 가져와야 함)
-const defaultRule: Partial<SettlementCalculationRule> = {
-  name: '기본 정산 규칙',
-  description: '전역 정산 산출 규칙',
-  instructorFee: {
-    defaultAmount: 200000,
-  },
-  transportation: {
-    type: 'distance',
-    distanceThreshold: 60,
-    ratePerKm: 100,
-    enabled: true,
-  },
-  accommodation: {
-    type: 'fixed',
-    fixedAmount: 80000,
-    enabled: true,
-  },
-  enabled: true,
+/** 규칙 → 폼 초기값 */
+function ruleToFormValues(rule: SettlementCalculationRule) {
+  return {
+    name: rule.name,
+    description: rule.description,
+    instructorFee: {
+      defaultAmount: rule.instructorFee?.defaultAmount ?? 200000,
+    },
+    transportation: {
+      type: rule.transportation?.type ?? 'distance',
+      distanceThreshold: rule.transportation?.distanceThreshold ?? 60,
+      ratePerKm: rule.transportation?.ratePerKm ?? 100,
+      fixedAmount: rule.transportation?.fixedAmount,
+      enabled: rule.transportation?.enabled ?? true,
+    },
+    accommodation: {
+      type: rule.accommodation?.type ?? 'fixed',
+      fixedAmount: rule.accommodation?.fixedAmount ?? ACCOMMODATION_FEE,
+      maxAmount: rule.accommodation?.maxAmount,
+      enabled: rule.accommodation?.enabled ?? true,
+    },
+    enabled: rule.enabled ?? true,
+  }
 }
 
 export function SettlementCalculationSettingsPage() {
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const fetchRule = useCallback(async () => {
+    setLoading(true)
+    try {
+      const rule = await settlementCalculationRuleService.getGlobalRule()
+      form.setFieldsValue(ruleToFormValues(rule))
+    } catch (e) {
+      console.error('Failed to fetch calculation rule:', e)
+      message.error('정산 규칙을 불러오는 중 오류가 발생했습니다')
+    } finally {
+      setLoading(false)
+    }
+  }, [form])
 
   useEffect(() => {
-    // Mock: 실제로는 API에서 가져와야 함
-    form.setFieldsValue(defaultRule)
-  }, [form])
+    fetchRule()
+  }, [fetchRule])
 
   const handleSave = async () => {
     try {
-      await form.validateFields()
+      const values = await form.validateFields()
       setSaving(true)
 
-      // TODO: 실제 API 호출
-      // const values = form.getFieldsValue()
-      // await settlementCalculationService.updateRule(values)
-
-      // Mock: 저장 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await settlementCalculationRuleService.updateGlobalRule({
+        name: values.name ?? '기본 정산 규칙',
+        description: values.description ?? '전역 정산 산출 규칙',
+        instructorFee: values.instructorFee,
+        transportation: values.transportation,
+        accommodation: values.accommodation,
+        enabled: values.enabled ?? true,
+      })
 
       message.success('정산 산출 규칙이 저장되었습니다')
     } catch (error) {
@@ -75,9 +98,26 @@ export function SettlementCalculationSettingsPage() {
     }
   }
 
-  const handleReset = () => {
-    form.setFieldsValue(defaultRule)
-    message.info('기본값으로 초기화되었습니다')
+  const handleReset = async () => {
+    try {
+      setSaving(true)
+      const rule = await settlementCalculationRuleService.resetGlobalRule()
+      form.setFieldsValue(ruleToFormValues(rule))
+      message.info('기본값으로 초기화되었습니다')
+    } catch (e) {
+      console.error('Failed to reset rule:', e)
+      message.error('초기화 중 오류가 발생했습니다')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px', textAlign: 'center' }}>
+        <Spin size="large" tip="규칙 불러오는 중…" />
+      </div>
+    )
   }
 
   return (

@@ -101,13 +101,15 @@ export function InstructorDocumentsPage() {
     return false // 자동 업로드 방지
   }
 
-  const handleView = (_document: DocumentFile) => {
+  const handleView = (document: DocumentFile) => {
     // TODO: 파일 미리보기 API 연결
+    void document
     message.info('파일 미리보기 기능은 준비 중입니다.')
   }
 
-  const handleDownload = (_document: DocumentFile) => {
+  const handleDownload = (document: DocumentFile) => {
     // TODO: 파일 다운로드 API 연결
+    void document
     message.info('파일 다운로드 기능은 준비 중입니다.')
   }
 

@@ -110,8 +110,9 @@ export function MatchingStatusList({
             type="primary"
             icon={<DownloadOutlined />}
             onClick={onExport}
+            disabled={data.length === 0}
           >
-            엑셀 다운로드
+            엑셀 다운로드 {data.length > 0 && `(${data.length}건)`}
           </Button>
         </div>
       )}

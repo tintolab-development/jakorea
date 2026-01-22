@@ -7,6 +7,9 @@ import type { Schedule, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockInstructors } from './instructors'
 
+// Phase 0.2.6: instructor-1-fixed-id-for-testing용 일정 할당
+const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
+
 function createSchedule(
   id: string,
   programIndex: number,
@@ -91,7 +94,8 @@ const locations = [
   '충청남도 천안시',
 ]
 
-export const mockSchedules: Schedule[] = Array.from({ length: 40 }, (_, index) => {
+// Phase 0.2.6: 일반 일정 생성 (30개)
+const baseSchedules: Schedule[] = Array.from({ length: 30 }, (_, index) => {
   const programIndex = Math.floor(Math.random() * mockPrograms.length)
   const program = mockPrograms[programIndex]
   const hasRound = program.rounds.length > 0 && Math.random() > 0.3
@@ -123,6 +127,45 @@ export const mockSchedules: Schedule[] = Array.from({ length: 40 }, (_, index) =
     onlineLink
   )
 })
+
+// Phase 0.2.6: instructor-1-fixed-id-for-testing용 일정 (10개)
+const instructor1Schedules: Schedule[] = Array.from({ length: 10 }, (_, index) => {
+  const programIndex = Math.floor(Math.random() * mockPrograms.length)
+  const program = mockPrograms[programIndex]
+  const hasRound = program.rounds.length > 0 && Math.random() > 0.3
+  const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
+  const dateOffset = Math.floor(Math.random() * 60) - 10 // 과거/현재/미래 일정
+  const startHour = Math.floor(Math.random() * 8) + 9
+  const startMinute = Math.random() > 0.5 ? 0 : 30
+  const durationHours = Math.random() > 0.5 ? 2 : 3
+  const title = `${scheduleTitles[index % scheduleTitles.length]} ${Math.floor(index / scheduleTitles.length) + 1}차시`
+  const isOnline = program.type === 'online' || (program.type === 'hybrid' && Math.random() > 0.5)
+  const location = !isOnline ? locations[Math.floor(Math.random() * locations.length)] : undefined
+  const onlineLink = isOnline
+    ? `https://zoom.us/j/${Math.floor(Math.random() * 900000) + 100000}`
+    : undefined
+
+  const schedule = createSchedule(
+    `sch-instructor1-${String(index + 1).padStart(3, '0')}`,
+    programIndex,
+    roundIndex,
+    0, // instructorIndex는 사용하지 않고 직접 할당
+    dateOffset,
+    startHour,
+    startMinute,
+    durationHours,
+    title,
+    location,
+    onlineLink
+  )
+  // instructor-1-fixed-id-for-testing으로 직접 할당
+  return {
+    ...schedule,
+    instructorId: INSTRUCTOR1_ID,
+  }
+})
+
+export const mockSchedules: Schedule[] = [...baseSchedules, ...instructor1Schedules]
 
 export const mockSchedulesMap = new Map<UUID, Schedule>()
 mockSchedules.forEach(schedule => {

@@ -3,7 +3,7 @@
  * Phase 4: 사이드 패널로 상세 정보 표시
  */
 
-import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, message } from 'antd'
+import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, message, Radio } from 'antd'
 import { EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
 import { SettlementApprovalWorkflow } from './settlement-approval-workflow'
@@ -13,6 +13,9 @@ import {
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useSettlementDetail } from '../hooks/use-settlement-detail'
+import { PaymentInfoSection } from './payment-info-section'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useState } from 'react'
 import './settlement-detail-drawer.css'
 
 const { Text, Title } = Typography
@@ -44,8 +47,10 @@ export function SettlementDetailDrawer({
     itemColumns,
     changeStatus,
     rollbackStatus,
-    downloadPaymentStatement,
   } = useSettlementDetail(settlement, onStatusChange)
+  
+  const [downloadFormat, setDownloadFormat] = useState<'excel' | 'pdf'>('excel')
+  const instructor = settlement ? instructorService.getByIdSync(settlement.instructorId) : null
 
   if (!settlement) return null
 
@@ -66,9 +71,33 @@ export function SettlementDetailDrawer({
       extra={
         <Space>
           {canDownload && (
-            <Button type="primary" icon={<DownloadOutlined />} onClick={downloadPaymentStatement}>
-              지급조서 다운로드
-            </Button>
+            <Space>
+              <Radio.Group
+                value={downloadFormat}
+                onChange={e => setDownloadFormat(e.target.value)}
+                size="small"
+              >
+                <Radio.Button value="excel">Excel</Radio.Button>
+                <Radio.Button value="pdf">PDF</Radio.Button>
+              </Radio.Group>
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+                onClick={async () => {
+                  if (!settlement || !programTitle || !instructor) return
+                  try {
+                    const { generatePaymentStatement } = await import('@/shared/utils/settlement-document')
+                    await generatePaymentStatement(settlement, instructor, programTitle, undefined, downloadFormat)
+                    message.success(`지급조서(${downloadFormat.toUpperCase()})가 다운로드되었습니다`)
+                  } catch (error) {
+                    console.error('Failed to download payment statement:', error)
+                    message.error('지급조서 다운로드 중 오류가 발생했습니다')
+                  }
+                }}
+              >
+                지급조서 다운로드
+              </Button>
+            </Space>
           )}
           <Button icon={<EditOutlined />} onClick={onEdit}>
             수정
@@ -154,6 +183,18 @@ export function SettlementDetailDrawer({
       />
 
       <Divider />
+
+      {/* 지급정보 섹션 (V3 Phase 4) */}
+      {instructor && (
+        <>
+          <Title level={5}>지급정보</Title>
+          <PaymentInfoSection
+            instructor={instructor}
+            readOnly={settlement.status === 'paid'}
+          />
+          <Divider />
+        </>
+      )}
 
       <Title level={5}>정산 항목</Title>
       <Table

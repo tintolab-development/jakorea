@@ -1,8 +1,10 @@
 /**
  * 강사 목록 컴포넌트
  * Phase 4.1: 강사 조회 (FR-F00)
+ * Phase 0.5.3: 다운로드 보호 UX - 옵션 모달, 마스킹, 쿼터
  */
 
+import { useState } from 'react'
 import { Table, Button, Space, Tag, Tooltip } from 'antd'
 import { DownloadOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -11,6 +13,9 @@ import { canDownloadInstructors } from '@/shared/utils/download-permission'
 import { logDownload } from '@/entities/download-log/api/download-log-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import type { DownloadOptions } from '@/types/download'
 import ExcelJS from 'exceljs'
 
 export interface InstructorListItem {
@@ -41,16 +46,17 @@ export function InstructorList({
   const { user } = useAuthStore()
 
   const canDownload = canDownloadInstructors(currentUser || user)
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false)
 
-  const handleDownload = async () => {
-    if (!currentUser && !user) return
+  const handleDownload = async (options: DownloadOptions) => {
+    const u = currentUser || user
+    if (!u) return
 
     try {
-      // Excel 파일 생성
+      const { maskingEnabled } = options
       const workbook = new ExcelJS.Workbook()
       const worksheet = workbook.addWorksheet('강사 목록')
 
-      // 헤더 설정
       worksheet.columns = [
         { header: '이름', key: 'name', width: 20 },
         { header: '이메일', key: 'email', width: 30 },
@@ -61,12 +67,18 @@ export function InstructorList({
         { header: '등록일', key: 'createdAt', width: 20 },
       ]
 
-      // 데이터 추가
       data.forEach(item => {
+        const name = maskingEnabled ? MASKING_POLICY.name(item.name) : item.name
+        const email = maskingEnabled ? MASKING_POLICY.email(item.email) : item.email
+        const phone = item.phone
+          ? maskingEnabled
+            ? MASKING_POLICY.phone(item.phone)
+            : item.phone
+          : '-'
         worksheet.addRow({
-          name: item.name,
-          email: item.email,
-          phone: item.phone || '-',
+          name,
+          email,
+          phone,
           pillar: item.pillar,
           specialty: item.specialty || '-',
           status: item.status === 'ACTIVE' ? '활성' : '비활성',
@@ -74,7 +86,6 @@ export function InstructorList({
         })
       })
 
-      // 파일 다운로드
       const buffer = await workbook.xlsx.writeBuffer()
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -82,15 +93,14 @@ export function InstructorList({
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `강사_목록_${new Date().toISOString().split('T')[0]}.xlsx`
+      link.download = `강사_목록_${new Date().toISOString().split('T')[0]}${maskingEnabled ? '_마스킹' : ''}.xlsx`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
 
-      // 다운로드 이력 기록
       await logDownload({
-        userId: (currentUser || user)!.id,
+        userId: u.id,
         action: 'DOWNLOAD',
         targetType: 'INSTRUCTORS',
         filters: {},
@@ -192,13 +202,23 @@ export function InstructorList({
           <Button
             type="primary"
             icon={<DownloadOutlined />}
-            onClick={handleDownload}
+            onClick={() => setDownloadModalOpen(true)}
             disabled={data.length === 0}
           >
             다운로드 ({data.length}건)
           </Button>
         )}
       </Space>
+
+      <DownloadOptionsModal
+        open={downloadModalOpen}
+        targetType="INSTRUCTORS"
+        rowCount={data.length}
+        onCancel={() => setDownloadModalOpen(false)}
+        onDownload={handleDownload}
+        canDownloadOriginalOverride={canDownload}
+      />
+
       <Table
         columns={columns}
         dataSource={data}

@@ -14,12 +14,12 @@ import { useStatusTimeline } from '@/features/auth/hooks/use-status-timeline'
 import { APPLICATION_STATUS, getApplicationStatusLabel, getApplicationStatusColor } from '@/shared/constants/application-status'
 import { programService } from '@/entities/program/api/program-service'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import type { ApplicationProgressStatus } from '@/types/application-progress'
+import { APPLICATION_PROGRESS_ORDER, type ApplicationProgressStatus } from '@/types/application-progress'
 import dayjs from 'dayjs'
 
 const { Title, Text } = Typography
 
-// Phase 0.2.4: 상태별 안내 문구
+// Phase 0.2.4: 상태별 안내 문구 (FR-D01)
 const STATUS_MESSAGES: Record<ApplicationProgressStatus, string> = {
   RECEIVED: '신청이 접수되었습니다. 관리자 검토 중입니다.',
   MATCHING_IN_PROGRESS: '강사 매칭이 진행 중입니다.',
@@ -30,18 +30,6 @@ const STATUS_MESSAGES: Record<ApplicationProgressStatus, string> = {
   SURVEY_SUBMITTED: '만족도 조사가 제출되었습니다.',
   REPORT_SUBMITTED: '모든 과정이 완료되었습니다.',
 }
-
-// 8단계 상태 순서
-const STATUS_ORDER: ApplicationProgressStatus[] = [
-  'RECEIVED',
-  'MATCHING_IN_PROGRESS',
-  'MATCHING_COMPLETED',
-  'MATERIAL_PREPARING',
-  'MATERIAL_SHIPPED',
-  'IN_PROGRESS',
-  'SURVEY_SUBMITTED',
-  'REPORT_SUBMITTED',
-]
 
 export function ApplicationProgressPage() {
   const { id } = useParams<{ id: string }>()
@@ -63,9 +51,8 @@ export function ApplicationProgressPage() {
           setApplication(found)
           // 승인된 신청의 경우 진행 상태 확인
           if (found.status === 'approved') {
-            // 타임라인에서 최신 상태 가져오기
-            const latestStatus = timeline.length > 0 ? timeline[0].status : 'RECEIVED'
-            setCurrentStatus(latestStatus)
+            const latest = timeline.length > 0 ? timeline[0].status : (found.progressStatus ?? 'RECEIVED')
+            setCurrentStatus(latest)
           } else {
             setCurrentStatus(null)
           }
@@ -169,15 +156,19 @@ export function ApplicationProgressPage() {
     )
   }
 
-  // 타임라인에서 각 상태의 완료 여부 확인
+  // 타임라인에서 각 상태의 완료 여부 (이력 있으면 이력 기준, 없으면 progressStatus 기준)
   const getStatusCompletion = (status: ApplicationProgressStatus) => {
-    return timeline.some(item => item.status === status)
+    if (timeline.length > 0) return timeline.some(item => item.status === status)
+    const cur = application.progressStatus ?? 'RECEIVED'
+    const idx = APPLICATION_PROGRESS_ORDER.indexOf(status)
+    const curIdx = APPLICATION_PROGRESS_ORDER.indexOf(cur as ApplicationProgressStatus)
+    return idx >= 0 && curIdx >= 0 && idx <= curIdx
   }
 
   const currentStatusMessage = currentStatus ? STATUS_MESSAGES[currentStatus] : null
 
-  // 타임라인 아이템 생성
-  const timelineItems = STATUS_ORDER.map((status) => {
+  // 타임라인 아이템 생성 (8단계 고정)
+  const timelineItems = APPLICATION_PROGRESS_ORDER.map((status) => {
     const isCompleted = getStatusCompletion(status)
     const isCurrent = currentStatus === status
     const statusConfig = APPLICATION_STATUS[status]
@@ -276,8 +267,6 @@ export function ApplicationProgressPage() {
             type="error"
             showIcon
           />
-        ) : timeline.length === 0 ? (
-          <Empty description="진행상황 정보가 없습니다." />
         ) : (
           <Timeline items={timelineItems} />
         )}

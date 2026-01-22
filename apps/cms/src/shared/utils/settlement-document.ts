@@ -1,6 +1,7 @@
 /**
  * 정산 문서 생성 유틸리티
- * 지급조서 Excel 생성
+ * 지급조서 Excel/PDF 생성
+ * V3 Phase 4: PDF 생성 기능 추가
  */
 
 import ExcelJS from 'exceljs'
@@ -32,9 +33,26 @@ interface TransferListRow {
 }
 
 /**
- * 지급조서 Excel 생성
+ * 지급조서 생성 (Excel 또는 PDF)
+ * @param format 'excel' | 'pdf' (기본값: 'excel')
  */
 export async function generatePaymentStatement(
+  settlement: Settlement,
+  instructor: Instructor,
+  programTitle: string,
+  paymentInfo?: Partial<InstructorPaymentInfo>,
+  format: 'excel' | 'pdf' = 'excel'
+): Promise<void> {
+  if (format === 'pdf') {
+    return generatePaymentStatementPDF(settlement, instructor, programTitle, paymentInfo)
+  }
+  return generatePaymentStatementExcel(settlement, instructor, programTitle, paymentInfo)
+}
+
+/**
+ * 지급조서 Excel 생성
+ */
+async function generatePaymentStatementExcel(
   settlement: Settlement,
   instructor: Instructor,
   programTitle: string,
@@ -207,11 +225,105 @@ export async function generatePaymentStatement(
 }
 
 /**
- * 이체리스트 Excel 생성 (Mock: 비밀번호는 파일에 적용되지 않음)
+ * 지급조서 PDF 생성
+ * V3 Phase 4: PDF 생성 기능 추가
+ * TODO: jsPDF 라이브러리 설치 후 실제 PDF 생성 구현
+ */
+async function generatePaymentStatementPDF(
+  settlement: Settlement,
+  instructor: Instructor,
+  programTitle: string,
+  paymentInfo?: Partial<InstructorPaymentInfo>
+): Promise<void> {
+  // TODO: jsPDF 라이브러리 설치 후 실제 PDF 생성 구현
+  // 현재는 HTML을 PDF로 변환하는 방식으로 Mock 구현
+  
+  // PDF 콘텐츠 생성 (HTML 기반)
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>지급조서</title>
+      <style>
+        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .total { font-weight: bold; font-size: 16px; }
+      </style>
+    </head>
+    <body>
+      <h1>지급조서</h1>
+      <table>
+        <tr><th>기간</th><td>${settlement.period}</td></tr>
+        <tr><th>프로그램명</th><td>${programTitle}</td></tr>
+        <tr><th>강사명</th><td>${paymentInfo?.name || instructor.name}</td></tr>
+        <tr><th>전화번호</th><td>${paymentInfo?.phone || instructor.contactPhone || '-'}</td></tr>
+        <tr><th>계좌번호</th><td>${paymentInfo?.bankAccount || instructor.bankAccount || '-'}</td></tr>
+        ${paymentInfo?.residentRegistrationNumber ? `<tr><th>주민등록번호</th><td>${paymentInfo.residentRegistrationNumber}</td></tr>` : ''}
+        <tr><th>개인정보 동의</th><td>${paymentInfo?.personalInfoConsent ? '동의함' : '동의 안함'}</td></tr>
+      </table>
+      <h2>정산 항목</h2>
+      <table>
+        <tr>
+          <th>항목</th>
+          <th>설명</th>
+          <th>금액</th>
+        </tr>
+        ${settlement.items.map(item => `
+          <tr>
+            <td>${getItemTypeLabel(item.type)}</td>
+            <td>${item.description}</td>
+            <td>${item.amount.toLocaleString('ko-KR')}원</td>
+          </tr>
+        `).join('')}
+        <tr class="total">
+          <td colspan="2">총액</td>
+          <td>${settlement.totalAmount.toLocaleString('ko-KR')}원</td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+  
+  // HTML을 Blob으로 변환하여 다운로드
+  // 실제로는 jsPDF를 사용하여 PDF를 생성해야 함
+  const blob = new Blob([htmlContent], { type: 'text/html' })
+  const filename = generateFilename(
+    `지급조서_${instructor.name}_${settlement.period}`,
+    'html', // 임시로 HTML로 저장 (실제로는 PDF)
+    dayjs(settlement.documentGeneratedAt || settlement.createdAt).toDate()
+  )
+  
+  // TODO: 실제 PDF 생성 시 downloadPDF 사용
+  // 현재는 HTML로 다운로드 (개발 중)
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
+
+function getItemTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    instructor_fee: '강사비',
+    transportation: '교통비',
+    accommodation: '숙박비',
+    other: '기타',
+  }
+  return labels[type] || type
+}
+
+/**
+ * Phase 0.4.3: 이체리스트 Excel 생성
+ * 암호화: ExcelJS는 기본적으로 workbook 암호화를 지원하지 않음
+ * 실제 구현 시 @zurmokeeper/exceljs 또는 xlsx-populate Encryptor 사용 필요
  */
 export async function generateTransferList(
   rows: TransferListRow[],
-  options: { passwordProvided: boolean }
+  options: { passwordProvided: boolean; password?: string }
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('이체리스트')
@@ -244,7 +356,20 @@ export async function generateTransferList(
   })
   summaryRow.font = { bold: true }
 
+  // Phase 0.4.3: 암호화 처리 (Mock 환경에서는 실제 암호화 미적용)
+  // 실제 구현 시: @zurmokeeper/exceljs 또는 xlsx-populate Encryptor 사용
+  // 예: const encrypted = await Encryptor.encrypt(buffer, options.password || '')
   const buffer = await workbook.xlsx.writeBuffer()
+  
+  // TODO: 실제 암호화 구현
+  // if (options.passwordProvided && options.password) {
+  //   const Encryptor = require('xlsx-populate/lib/Encryptor')
+  //   const encrypted = await Encryptor.encrypt(buffer, options.password)
+  //   downloadExcel(encrypted, filename)
+  // } else {
+  //   downloadExcel(buffer, filename)
+  // }
+  
   const filename = generateFilename(
     `이체리스트${options.passwordProvided ? '_protected' : ''}`,
     'xlsx',

@@ -4,9 +4,12 @@
 
 import { Table, Select, Input, Button, Space, Tag, Badge } from 'antd'
 import type { PaymentStatement } from '@/types/domain'
+import type { User } from '@/types/user'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { programService } from '@/entities/program/api/program-service'
+import { canDownloadPaymentStatement } from '@/shared/utils/download-permission'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { PermissionRequestButton } from '@/features/permission-request/ui/permission-request-button'
 import './payment-statement-list.css'
 
 const { Option } = Select
@@ -37,6 +40,8 @@ interface PaymentStatementListProps {
   onChangeFilters: (next: PaymentStatementListProps['filters']) => void
   onResetFilters: () => void
   onDownload: (statement: PaymentStatement) => void
+  /** Phase 0.5.2: 권한 없을 때 '권한 요청' 버튼 노출 */
+  currentUser?: Omit<User, 'password'> | null
 }
 
 export function PaymentStatementList({
@@ -48,6 +53,7 @@ export function PaymentStatementList({
   onChangeFilters,
   onResetFilters,
   onDownload,
+  currentUser,
 }: PaymentStatementListProps) {
   const programs = programService.getAllSync()
 
@@ -175,11 +181,29 @@ export function PaymentStatementList({
           {
             title: '다운로드',
             key: 'action',
-            render: (_: unknown, record: PaymentStatement) => (
-              <Button type="link" onClick={() => onDownload(record)}>
-                지급조서 다운로드
-              </Button>
-            ),
+            render: (_: unknown, record: PaymentStatement) => {
+              const canDownload = currentUser && canDownloadPaymentStatement(currentUser, record.programId)
+              const program = programService.getByIdSync(record.programId)
+              const programName = program?.title ?? '프로그램'
+
+              if (canDownload) {
+                return (
+                  <Button type="link" onClick={() => onDownload(record)}>
+                    지급조서 다운로드
+                  </Button>
+                )
+              }
+              if (currentUser?.role === 'ADMIN') {
+                return (
+                  <PermissionRequestButton
+                    programId={record.programId}
+                    programName={programName}
+                    action="DOWNLOAD"
+                  />
+                )
+              }
+              return null
+            },
           },
         ]}
       />

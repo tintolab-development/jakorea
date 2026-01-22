@@ -13,7 +13,7 @@ import type { Application } from '@/types/domain'
 import { useApplicationReview } from '@/features/application/hooks/use-application-review'
 import './application-list-page.css'
 
-export function ApplicationListPage() {
+function ApplicationListPage() {
   const {
     applications,
     selectedApplication,
@@ -145,3 +145,4 @@ export function ApplicationListPage() {
   )
 }
 
+export default ApplicationListPage

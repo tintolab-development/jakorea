@@ -142,14 +142,15 @@ export function ReportFormPage() {
       const values = await form.validateFields()
       setLoading(true)
 
-      // activityId와 programId는 URL 파라미터에서 가져올 수 있음 (현재는 Mock)
       const activityId = searchParams.get('activityId') || undefined
       const programId = searchParams.get('programId') || undefined
+      const scheduleId = searchParams.get('scheduleId') || undefined
 
       await reportService.submit({
         type: reportType,
         activityId,
         programId,
+        scheduleId,
         fields: values,
       })
 

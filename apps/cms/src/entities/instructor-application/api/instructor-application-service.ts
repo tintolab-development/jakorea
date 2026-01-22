@@ -10,6 +10,7 @@ import { mockInstructors } from '@/data/mock/instructors'
 import { mockPrograms } from '@/data/mock/programs'
 import { mockInstructorUsers } from '@/data/mock/instructor-users'
 import { mockUsers } from '@/data/mock/users'
+import { applicationService } from '@/entities/application/api/application-service'
 
 export interface InstructorApplicationItem {
   id: string
@@ -113,7 +114,7 @@ export async function getInstructorApplications(
 }
 
 /**
- * 강사 신청 승인/마감 처리
+ * Phase 0.3.3: 강사 신청 승인/마감 처리
  */
 export async function reviewInstructorApplication(
   applicationId: UUID,
@@ -127,24 +128,18 @@ export async function reviewInstructorApplication(
     throw new Error('신청을 찾을 수 없습니다.')
   }
 
-  // Application 상태 업데이트
+  // Phase 0.3.3: application-service.updateStatus 사용 (progressStatus, appendReceivedLog 등 자동 처리)
   switch (action) {
     case 'APPROVE':
-      application.status = 'approved'
-      application.reviewedAt = new Date().toISOString()
+      await applicationService.updateStatus(applicationId, 'approved')
       break
     case 'REJECT':
-      application.status = 'rejected'
-      application.rejectionReason = reason
-      application.reviewedAt = new Date().toISOString()
+      await applicationService.updateStatus(applicationId, 'rejected', reason)
       break
     case 'CLOSE':
-      application.status = 'cancelled'
-      application.reviewedAt = new Date().toISOString()
+      await applicationService.updateStatus(applicationId, 'cancelled')
       break
   }
-
-  application.updatedAt = new Date().toISOString()
 }
 
 /**

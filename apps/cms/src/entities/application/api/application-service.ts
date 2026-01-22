@@ -11,6 +11,7 @@ import {
   isCapacityFull,
 } from '@/features/program/lib/program-helpers'
 import { mockPrograms } from '@/data/mock'
+import { appendReceivedLog } from '@/entities/application-progress/api/status-change-service'
 
 export const applicationService = {
   getAll: async (): Promise<Application[]> => {
@@ -91,14 +92,21 @@ export const applicationService = {
       }
     }
 
-    return applicationService.update(id, { 
+    // Phase 0.3.2: 승인 시 progressStatus 초기화 (타임라인용)
+    const updates: Partial<Application> = {
       status,
       rejectionReason: status === 'rejected' ? rejectionReason : undefined,
-      // waiting 상태로 변경 시 대기 순번 설정
       waitingListOrder: status === 'waiting' ? getNextWaitingListOrder(application.programId, application.roundId) : undefined,
-      // waiting이 아닌 상태로 변경 시 대기 순번 제거
       ...(status !== 'waiting' && application.waitingListOrder !== undefined ? { waitingListOrder: undefined } : {}),
-    })
+    }
+    if (status === 'approved') {
+      updates.progressStatus = 'RECEIVED'
+      appendReceivedLog(id, application.submittedAt as string)
+    } else if (status === 'rejected' || status === 'cancelled') {
+      updates.progressStatus = undefined
+    }
+
+    return applicationService.update(id, updates)
   },
 
   delete: async (id: string): Promise<void> => {

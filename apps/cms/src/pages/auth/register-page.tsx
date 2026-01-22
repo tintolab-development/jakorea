@@ -126,7 +126,7 @@ export function RegisterPage() {
       }
 
       await register(registerRequest)
-    } catch (err) {
+    } catch {
       // 에러는 useRegister에서 처리됨
     }
   }

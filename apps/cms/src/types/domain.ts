@@ -4,6 +4,8 @@
  */
 
 import type { UUID, Status, DateValue } from './index'
+import type { ApplicationProgressStatus } from './application-progress'
+import type { SettlementCalculationResult } from './settlement-result'
 
 // 스폰서
 export interface Sponsor {
@@ -105,6 +107,7 @@ export interface Program {
   educatedTeachers?: number // 교육받은교사
   instructors?: number // 강사 수
   managerName?: string // 담당자명
+  posterImage?: string // 포스터/키비주얼 이미지 URL
   createdAt: DateValue
   updatedAt: DateValue
 }
@@ -172,8 +175,14 @@ export interface Application {
   subjectId: UUID // 학교/학생/강사 ID
   status: ApplicationStatus
   notes?: string
+  /** Phase 0.2.2: 템플릿 기반 동적 신청서 커스텀 필드 (FR-C03) */
+  customFields?: Record<string, unknown>
+  /** Phase 0.2.2: 학교 신청서 학생 명단 엑셀 파일 URL (FR-C03) */
+  studentListFileUrl?: string
   rejectionReason?: string // 거절 사유 (Phase 2)
   waitingListOrder?: number // 대기 목록 순번 (Phase 3)
+  /** Phase 0.2.4: 승인 후 진행 단계 (FR-D01 타임라인) */
+  progressStatus?: ApplicationProgressStatus
   submittedAt: DateValue
   reviewedAt?: DateValue
   createdAt: DateValue
@@ -258,6 +267,8 @@ export interface Settlement {
   documentGeneratedAt?: DateValue
   notes?: string
   attachments?: SettlementAttachment[] // 증빙 파일 메타데이터 (Mock)
+  /** Phase 0.2.5: 강사 산출내역 확인 (FR-E01) */
+  calculationResult?: SettlementCalculationResult
   approvalHistories?: Array<{
     id: string
     step: 'pending' | 'review' | 'approval' | 'payment'
@@ -361,6 +372,8 @@ export interface Report {
   type: ReportType
   activityId?: UUID // 강의/봉사 활동 ID
   programId?: UUID // 프로그램 ID (프로그램 보고서일 경우)
+  /** Phase 0.2.7: 강의보고서 일정 ID (activity 없이 제출 시) */
+  scheduleId?: UUID
   fields: Record<string, string | number | DateValue> // 필드 ID를 키로 하는 값
   status: ReportStatus // 보고서 상태 (Phase 7.1.1)
   submittedAt: DateValue

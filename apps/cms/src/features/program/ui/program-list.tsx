@@ -3,7 +3,7 @@
  * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
  */
 
-import { Table, Input, Select, Button, Space, Tag, Dropdown, message, DatePicker } from 'antd'
+import { Table, Input, Select, Button, Space, Tag, Dropdown, message, DatePicker, Image } from 'antd'
 import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
@@ -441,6 +441,46 @@ export function ProgramList({
         dataSource={table.getRowModel().rows.map(row => row.original)}
         columns={[
           {
+            title: '포스터',
+            dataIndex: 'posterImage',
+            key: 'posterImage',
+            width: 100,
+            render: (_: unknown, record: Program) => {
+              const src = record.posterImage
+              if (!src) {
+                return (
+                  <div
+                    style={{
+                      width: 72,
+                      height: 54,
+                      background: '#f0f0f0',
+                      borderRadius: 4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 10,
+                      color: '#bfbfbf',
+                    }}
+                  >
+                    이미지 없음
+                  </div>
+                )
+              }
+              return (
+                <div onClick={e => e.stopPropagation()}>
+                  <Image
+                    src={src}
+                    alt=""
+                    width={72}
+                    height={54}
+                    style={{ objectFit: 'cover', borderRadius: 4 }}
+                    preview={{ mask: '확대' }}
+                  />
+                </div>
+              )
+            },
+          },
+          {
             title: '프로그램명',
             dataIndex: 'title',
             key: 'title',
@@ -600,7 +640,16 @@ export function ProgramList({
         onRow={record => ({
           onClick: event => {
             const target = event.target as HTMLElement
+            // 상태 드롭다운 클릭 시 무시
             if (target.closest('.program-status-dropdown-trigger')) {
+              return
+            }
+            // 이미지 preview 영역 클릭 시 무시 (이벤트 버블링 방지)
+            if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
+              return
+            }
+            // 이미지 mask (확대 버튼) 클릭 시 무시
+            if (target.closest('.ant-image-mask')) {
               return
             }
             onView(record)

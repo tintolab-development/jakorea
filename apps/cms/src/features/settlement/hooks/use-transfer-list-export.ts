@@ -44,7 +44,8 @@ export function useTransferListExport(rows: TransferListRow[], canExport: boolea
 
     setLoading(true)
     try {
-      await generateTransferList(rows, { passwordProvided: true })
+      // Phase 0.4.3: 암호 전달 (실제 암호화는 Mock 환경에서 미적용)
+      await generateTransferList(rows, { passwordProvided: true, password })
       message.success('이체리스트가 다운로드되었습니다 (Mock: 암호 미적용)')
       closeModal()
     } catch (error) {

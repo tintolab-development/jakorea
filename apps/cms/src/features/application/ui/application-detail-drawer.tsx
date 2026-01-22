@@ -38,7 +38,14 @@ import type { User } from '@/types/user'
 import { Popconfirm, message } from 'antd'
 import { StopOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
-import { getNotificationStatus, sendApplicationNotification } from '@/entities/application/api/application-notification-service'
+import {
+  getNotificationStatus,
+  getNotificationHistory,
+  sendApplicationNotification,
+  channelLabels,
+  type NotificationChannel,
+  type NotificationRecord,
+} from '@/entities/application/api/application-notification-service'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { StatusChangeDropdown } from '@/features/application-progress/ui/status-change-dropdown'
 import { StatusHistoryList } from '@/features/application-progress/ui/status-history-list'
@@ -81,9 +88,10 @@ export function ApplicationDetailDrawer({
   // store의 selectedApplication을 우선 사용, 없으면 prop의 application 사용
   const displayApplication = storeSelectedApplication || application
 
-  // Phase 4.2: 알림 발송 상태 관리
+  // Phase 4.2 / 0.2.3: 알림 발송 상태 및 이력
   const [notificationSent, setNotificationSent] = useState(false)
   const [notificationLoading, setNotificationLoading] = useState(false)
+  const [notificationHistory, setNotificationHistory] = useState<NotificationRecord[]>([])
 
   // Phase 4.6: 진행 상태 관리
   const { history, fetchHistory, loading: statusHistoryLoading } = useStatusChange()
@@ -94,29 +102,33 @@ export function ApplicationDetailDrawer({
   
   useEffect(() => {
     if (isApproved && displayApplication && open) {
-      // Mock: 승인된 신청의 기본 진행 상태는 RECEIVED
-      setCurrentProgressStatus('RECEIVED')
+      // Phase 0.3.6: 실제 progressStatus 사용 (없으면 RECEIVED)
+      const initialStatus = displayApplication.progressStatus || 'RECEIVED'
+      setCurrentProgressStatus(initialStatus)
       fetchHistory(displayApplication.id)
     }
-  }, [isApproved, displayApplication, open, fetchHistory])
+  }, [isApproved, displayApplication?.id, displayApplication?.progressStatus, open, fetchHistory])
 
   useEffect(() => {
     if (displayApplication && open) {
       getNotificationStatus(displayApplication.id).then(status => {
         setNotificationSent(status.notificationSent)
       })
+      getNotificationHistory(displayApplication.id).then(setNotificationHistory)
     }
   }, [displayApplication, open])
 
-  const handleSendNotification = async () => {
+  const handleSendNotification = async (channel: NotificationChannel) => {
     if (!displayApplication || !user) return
 
     setNotificationLoading(true)
     try {
       const action = displayApplication.status === 'approved' ? 'APPROVE' : 'REJECT'
-      await sendApplicationNotification(displayApplication, action, user.id)
+      await sendApplicationNotification(displayApplication, action, user.id, channel)
       setNotificationSent(true)
-      showSuccessMessage('알림이 발송되었습니다.')
+      const history = await getNotificationHistory(displayApplication.id)
+      setNotificationHistory(history)
+      showSuccessMessage(`${channelLabels[channel]} 알림이 발송되었습니다.`)
     } catch (error) {
       handleError(error, { defaultMessage: '알림 발송 중 오류가 발생했습니다.' })
     } finally {
@@ -331,16 +343,41 @@ export function ApplicationDetailDrawer({
                       />
                     </Descriptions.Item>
                   )}
-                  {/* Phase 4.2: 알림 발송 버튼 (관리자만, 승인/반려 상태일 때만) */}
+                  {/* Phase 4.2 / 0.2.3: 알림 발송 (관리자만, 승인/반려 상태일 때만) */}
                   {isAdminUser && (displayApplication.status === 'approved' || displayApplication.status === 'rejected') && (
-                    <Descriptions.Item label="알림 발송">
-                      <NotificationButton
-                        application={displayApplication}
-                        notificationSent={notificationSent}
-                        onSend={handleSendNotification}
-                        loading={notificationLoading}
-                      />
-                    </Descriptions.Item>
+                    <>
+                      <Descriptions.Item label="알림 발송">
+                        <NotificationButton
+                          application={displayApplication}
+                          notificationSent={notificationSent}
+                          onSend={handleSendNotification}
+                          loading={notificationLoading}
+                        />
+                      </Descriptions.Item>
+                      <Descriptions.Item label="알림 발송 이력" span={3}>
+                        {notificationHistory.length === 0 ? (
+                          <Text type="secondary">발송 이력 없음</Text>
+                        ) : (
+                          <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                            {notificationHistory.map(r => (
+                              <div key={r.id}>
+                                <Tag color={r.status === 'SENT' ? 'green' : 'red'}>
+                                  {channelLabels[r.type]} {r.status === 'SENT' ? '발송완료' : '실패'}
+                                </Tag>
+                                <Text type="secondary" style={{ marginLeft: 8 }}>
+                                  {new Date(r.sentAt).toLocaleString('ko-KR')}
+                                </Text>
+                                <div>
+                                  <Text strong>{r.title}</Text>
+                                  {' · '}
+                                  <Text type="secondary">{r.content}</Text>
+                                </div>
+                              </div>
+                            ))}
+                          </Space>
+                        )}
+                      </Descriptions.Item>
+                    </>
                   )}
                   <Descriptions.Item label="접수일">
                     {new Date(displayApplication.submittedAt).toLocaleString('ko-KR')}
@@ -388,10 +425,14 @@ export function ApplicationDetailDrawer({
                             <Text strong style={{ marginRight: 8 }}>현재 진행 상태:</Text>
                             <StatusChangeDropdown
                               applicationId={displayApplication.id}
-                              currentStatus={currentProgressStatus}
-                              onStatusChange={(newStatus) => {
+                              currentStatus={currentProgressStatus || 'RECEIVED'}
+                              onStatusChange={async (newStatus) => {
                                 setCurrentProgressStatus(newStatus)
-                                fetchHistory(displayApplication.id)
+                                await fetchHistory(displayApplication.id)
+                                // Phase 0.3.6: store의 selectedApplication도 갱신
+                                if (storeSelectedApplication?.id === displayApplication.id) {
+                                  await useApplicationStore.getState().fetchApplicationById(displayApplication.id)
+                                }
                               }}
                             />
                           </div>

@@ -48,9 +48,9 @@ export function useTemporaryPermissions(
       })
       setPermissions(data)
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('임시 권한 조회에 실패했습니다.')
-      setError(error)
-      message.error(error.message)
+      const errorObj = err instanceof Error ? err : new Error('임시 권한 조회에 실패했습니다.')
+      setError(errorObj)
+      message.error(errorObj.message)
     } finally {
       setLoading(false)
     }
@@ -60,7 +60,8 @@ export function useTemporaryPermissions(
     if (user) {
       fetchPermissions()
     }
-  }, [user, fetchPermissions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, programId, activeOnly])
 
   const canAccess = useCallback(async (
     targetProgramId: string,

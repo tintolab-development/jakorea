@@ -180,7 +180,7 @@ export async function getTemporaryPermissions(filters?: {
 }
 
 /**
- * 특정 사용자의 프로그램 접근 권한 확인
+ * 특정 사용자의 프로그램 접근 권한 확인 (비동기)
  */
 export async function checkPermission(
   userId: string,
@@ -192,6 +192,29 @@ export async function checkPermission(
   // 활성 임시 권한 확인
   const activePermissions = temporaryPermissions.filter(p => {
     const isExpired = new Date(p.expiresAt) <= new Date()
+    return !isExpired && 
+           p.userId === userId && 
+           p.programId === programId &&
+           p.grantedActions.includes(action)
+  })
+
+  return activePermissions.length > 0
+}
+
+/**
+ * Phase 0.5.2: 특정 사용자의 프로그램 접근 권한 확인 (동기)
+ * 다운로드 권한 체크 등 동기 함수에서 사용
+ */
+export function checkPermissionSync(
+  userId: string,
+  programId: string,
+  action: PermissionRequest['requestedAction']
+): boolean {
+  const now = new Date()
+  
+  // 활성 임시 권한 확인
+  const activePermissions = temporaryPermissions.filter(p => {
+    const isExpired = new Date(p.expiresAt) <= now
     return !isExpired && 
            p.userId === userId && 
            p.programId === programId &&

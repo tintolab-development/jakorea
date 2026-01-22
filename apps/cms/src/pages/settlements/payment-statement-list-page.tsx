@@ -88,6 +88,7 @@ export function PaymentStatementListPage() {
         onChangeFilters={setFilters}
         onResetFilters={resetFilters}
         onDownload={downloadStatement}
+        currentUser={user}
       />
 
       <Modal

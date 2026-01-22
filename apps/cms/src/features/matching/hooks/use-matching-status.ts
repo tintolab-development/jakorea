@@ -9,7 +9,7 @@ import {
   type MatchingStatusItem,
   type MatchingStatusFilters,
 } from '@/entities/matching/api/matching-status-service'
-import { handleError } from '@/shared/utils/error-handler'
+import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 
 interface UseMatchingStatusResult {
   statusItems: MatchingStatusItem[]
@@ -35,6 +35,12 @@ export function useMatchingStatus(): UseMatchingStatusResult {
   }, [])
 
   const exportToExcel = useCallback(async () => {
+    if (statusItems.length === 0) {
+      handleError(new Error('다운로드할 매칭 현황이 없습니다.'), {
+        defaultMessage: '다운로드할 매칭 현황이 없습니다.',
+      })
+      return
+    }
     try {
       const ExcelJS = (await import('exceljs')).default
       const { saveAs } = await import('file-saver')
@@ -83,6 +89,7 @@ export function useMatchingStatus(): UseMatchingStatusResult {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
       saveAs(blob, `매칭현황_${new Date().toISOString().split('T')[0]}.xlsx`)
+      showSuccessMessage('매칭 현황 엑셀 다운로드가 완료되었습니다.')
     } catch (error) {
       handleError(error, { defaultMessage: '엑셀 다운로드 중 오류가 발생했습니다' })
     }

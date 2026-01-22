@@ -4,8 +4,10 @@
  */
 
 import type { ApplicationProgressStatus } from '@/types/application-progress'
+import { APPLICATION_PROGRESS_ORDER } from '@/types/application-progress'
 import { mockApplications } from '@/data/mock/applications'
 import { showSuccessMessage } from '@/shared/utils/error-handler'
+import dayjs from 'dayjs'
 
 export interface StatusChangeLog {
   id: string
@@ -20,6 +22,67 @@ export interface StatusChangeLog {
 
 // Mock 상태 변경 이력 저장소
 const statusChangeLogs: StatusChangeLog[] = []
+
+let seedDone = false
+
+/** Phase 0.2.4: 승인된 신청에 Mock 타임라인 이력 시드 (FR-D01) */
+function seedMockStatusHistory(): void {
+  if (seedDone) return
+  seedDone = true
+  const approved = mockApplications.filter(
+    (a): a is typeof a & { progressStatus: ApplicationProgressStatus } =>
+      a.status === 'approved' && !!a.progressStatus
+  )
+  for (const app of approved) {
+    const base = dayjs(app.submittedAt)
+    let from: ApplicationProgressStatus = 'RECEIVED'
+    statusChangeLogs.push({
+      id: `seed-${app.id}-RECEIVED`,
+      applicationId: app.id,
+      fromStatus: 'RECEIVED',
+      toStatus: 'RECEIVED',
+      changedBy: 'system',
+      changedAt: base.toISOString(),
+      notificationSent: false,
+    })
+    if (app.progressStatus === 'RECEIVED') continue
+    for (let i = 1; i < APPLICATION_PROGRESS_ORDER.length; i++) {
+      const to = APPLICATION_PROGRESS_ORDER[i] as ApplicationProgressStatus
+      statusChangeLogs.push({
+        id: `seed-${app.id}-${to}`,
+        applicationId: app.id,
+        fromStatus: from,
+        toStatus: to,
+        changedBy: 'system',
+        changedAt: base.add(i, 'day').toISOString(),
+        notificationSent: false,
+      })
+      if (to === app.progressStatus) break
+      from = to
+    }
+  }
+}
+
+seedMockStatusHistory()
+
+/**
+ * Phase 0.3.2: 승인 시 RECEIVED 로그 추가 (타임라인 표시용)
+ */
+export function appendReceivedLog(applicationId: string, submittedAt: string): void {
+  const exists = statusChangeLogs.some(
+    log => log.applicationId === applicationId && log.toStatus === 'RECEIVED'
+  )
+  if (exists) return
+  statusChangeLogs.push({
+    id: `log-approved-${applicationId}-${Date.now()}`,
+    applicationId,
+    fromStatus: 'RECEIVED',
+    toStatus: 'RECEIVED',
+    changedBy: 'system',
+    changedAt: submittedAt,
+    notificationSent: false,
+  })
+}
 
 /**
  * 상태 변경 이력 조회
@@ -45,8 +108,7 @@ export async function changeApplicationProgressStatus(
     throw new Error('신청을 찾을 수 없습니다')
   }
 
-  // 현재 진행 상태 가져오기 (Application에 progressStatus 필드가 있다고 가정)
-  const currentStatus = (application as any).progressStatus as ApplicationProgressStatus | undefined
+  const currentStatus = application.progressStatus
 
   // 상태 전이 규칙 확인
   if (currentStatus) {
@@ -58,22 +120,21 @@ export async function changeApplicationProgressStatus(
   }
 
   // 상태 변경 이력 기록
-  if (currentStatus) {
-    const log: StatusChangeLog = {
-      id: `log-${Date.now()}-${Math.random()}`,
-      applicationId,
-      fromStatus: currentStatus,
-      toStatus: newStatus,
-      changedBy,
-      changedAt: new Date().toISOString(),
-      notificationSent: false, // 알림 발송은 별도 처리
-      reason,
-    }
-    statusChangeLogs.push(log)
+  const log: StatusChangeLog = {
+    id: `log-${Date.now()}-${Math.random()}`,
+    applicationId,
+    fromStatus: currentStatus || 'RECEIVED',
+    toStatus: newStatus,
+    changedBy,
+    changedAt: new Date().toISOString(),
+    notificationSent: false, // 알림 발송은 별도 처리
+    reason,
   }
+  statusChangeLogs.push(log)
 
-  // Application 상태 업데이트 (실제로는 API 호출)
-  // (application as any).progressStatus = newStatus
+  // Phase 0.3.6: Application 상태 업데이트 (Mock)
+  application.progressStatus = newStatus
+  application.updatedAt = new Date().toISOString()
 
   showSuccessMessage(`상태가 "${newStatus}"로 변경되었습니다`)
 }
