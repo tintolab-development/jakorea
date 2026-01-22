@@ -21,10 +21,14 @@ const { Option } = Select
 const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
 
 // 권한별 옵션
+// Phase 0.1.1: 역할 체계 재정의
 const roleOptions = [
   { value: 'ADMIN', label: '관리자' },
   { value: 'INSTRUCTOR', label: '강사' },
-  { value: 'STUDENT', label: '수강자' },
+  { value: 'INDIVIDUAL', label: '개인(참여자)' },
+  { value: 'SCHOOL', label: '학교' },
+  // 하위 호환성: 기존 역할 유지
+  { value: 'STUDENT', label: '수강자 (구)' },
 ] as const
 
 export function LoginPage() {

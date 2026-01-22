@@ -42,7 +42,14 @@ export function MyProgramApplicationsPage() {
 
   useEffect(() => {
     // 신청 주체 권한일 때만 신청 목록 조회
-    if (user?.role === 'INSTRUCTOR' || user?.role === 'STUDENT') {
+    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+    if (
+      user?.role === 'INSTRUCTOR' ||
+      user?.role === 'INDIVIDUAL' ||
+      user?.role === 'SCHOOL' ||
+      // 하위 호환성
+      user?.role === 'STUDENT'
+    ) {
       fetchApplications()
     }
   }, [user?.role, fetchApplications])
@@ -57,6 +64,17 @@ export function MyProgramApplicationsPage() {
       )
     }
 
+    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+    if ((user.role === 'INDIVIDUAL' || user.role === 'SCHOOL') && user.id) {
+      return applications.filter(
+        app =>
+          (app.subjectType === 'student' ||
+            app.subjectType === 'school' ||
+            app.subjectType === 'volunteer') &&
+          app.subjectId === user.id
+      )
+    }
+    // 하위 호환성: STUDENT
     if (user.role === 'STUDENT' && user.id) {
       return applications.filter(
         app =>
@@ -160,7 +178,15 @@ export function MyProgramApplicationsPage() {
     },
   ]
 
-  if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'STUDENT')) {
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  if (
+    !user ||
+    (user.role !== 'INSTRUCTOR' &&
+      user.role !== 'INDIVIDUAL' &&
+      user.role !== 'SCHOOL' &&
+      // 하위 호환성
+      user.role !== 'STUDENT')
+  ) {
     return (
       <div>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>

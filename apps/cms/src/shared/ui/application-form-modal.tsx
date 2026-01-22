@@ -37,10 +37,16 @@ export function ApplicationFormModal({
       }
 
       // 로그인한 권한 기준으로 subjectType/subjectId를 강제 (사용자 입력 오염 방지)
+      // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
       if (user?.role === 'INSTRUCTOR' && user?.instructorId) {
         applicationData.subjectType = 'instructor'
         applicationData.subjectId = user.instructorId
-      } else if (user?.role === 'STUDENT' && user?.id) {
+      } else if ((user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL') && user?.id) {
+        applicationData.subjectType = user.role === 'SCHOOL' ? 'school' : 'student'
+        applicationData.subjectId = user.id
+      }
+      // 하위 호환성: STUDENT
+      else if (user?.role === 'STUDENT' && user?.id) {
         applicationData.subjectType = 'student'
         applicationData.subjectId = user.id
       }

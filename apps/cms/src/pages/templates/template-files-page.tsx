@@ -32,7 +32,10 @@ const audienceOptions: Array<{ value: TemplateAudience; label: string }> = [
   { value: 'ADMIN_INTERNAL', label: '운영(내부)' },
   { value: 'SCHOOL', label: '학교' },
   { value: 'INSTRUCTOR', label: '강사' },
-  { value: 'STUDENT', label: '수강자' },
+  { value: 'INDIVIDUAL', label: '개인(참여자)' },
+  { value: 'SCHOOL', label: '학교' },
+  // 하위 호환성
+  { value: 'STUDENT', label: '수강자 (구)' },
 ]
 
 function statusLabel(status: TemplateStatus) {
@@ -69,7 +72,8 @@ export default function TemplateFilesPage() {
     form.resetFields()
     form.setFieldsValue({
       status: 'draft',
-      audience: ['ADMIN_INTERNAL', 'SCHOOL', 'INSTRUCTOR', 'STUDENT'],
+      // Phase 0.1.1: INDIVIDUAL 추가
+      audience: ['ADMIN_INTERNAL', 'SCHOOL', 'INSTRUCTOR', 'INDIVIDUAL', 'STUDENT'],
       tags: [],
       mimeType: 'application/pdf',
       version: 'v1.0',

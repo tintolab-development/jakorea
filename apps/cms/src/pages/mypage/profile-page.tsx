@@ -50,9 +50,16 @@ export function ProfilePage() {
                 <Tag color="blue">
                   {user?.role === 'INSTRUCTOR'
                     ? '강사'
-                    : user?.role === 'STUDENT'
-                      ? (user?.studentType === 'SCHOOL_TEACHER' ? '학교(선생님)' : '개인 학생')
-                      : '수강자'}
+                    : user?.role === 'INDIVIDUAL'
+                      ? '개인(참여자)'
+                      : user?.role === 'SCHOOL'
+                        ? '학교'
+                        : // 하위 호환성
+                        user?.role === 'STUDENT'
+                          ? user?.studentType === 'SCHOOL_TEACHER'
+                            ? '학교(선생님)'
+                            : '개인 학생'
+                          : '수강자'}
                 </Tag>
               </Space>
               <div style={{ marginTop: 8 }}>
@@ -84,16 +91,18 @@ export function ProfilePage() {
                   </Descriptions>
                 </section>
 
-                {/* 학교 정보 (수강자 중 학교/학년 정보가 있는 경우 표시) */}
-                {user?.role === 'STUDENT' && (user?.schoolName || user?.grade) && (
+                {/* 학교 정보 (학교 역할인 경우 표시) */}
+                {/* Phase 0.1.1: SCHOOL 추가 */}
+                {user?.role === 'SCHOOL' && user?.schoolInfo && (
                   <section style={{ marginTop: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                       <ReadOutlined style={{ color: '#1890ff' }} />
                       <Title level={5} style={{ margin: 0 }}>학교 정보</Title>
                     </div>
                     <Descriptions bordered column={1} size="small">
-                      <Descriptions.Item label="학교명">{user?.schoolName || '-'}</Descriptions.Item>
-                      <Descriptions.Item label="학년">{user?.grade || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="학교명">{user.schoolInfo.schoolName || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="주소">{user.schoolInfo.address || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="직책">{user.schoolInfo.position || '-'}</Descriptions.Item>
                     </Descriptions>
                   </section>
                 )}
@@ -106,7 +115,6 @@ export function ProfilePage() {
                   </div>
                   <Descriptions bordered column={1} size="small">
                     <Descriptions.Item label="우편번호">{user?.zipCode || '-'}</Descriptions.Item>
-                    <Descriptions.Item label="주소">{user?.address || '-'}</Descriptions.Item>
                     <Descriptions.Item label="상세주소">{user?.detailAddress || '-'}</Descriptions.Item>
                   </Descriptions>
                 </section>

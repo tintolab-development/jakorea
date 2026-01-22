@@ -75,7 +75,12 @@ export function ProgramList({
   showFavorite = false,
 }: ProgramListProps) {
   const { user } = useAuthStore()
-  const isStudent = user?.role === 'STUDENT'
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  const isStudent =
+    user?.role === 'INDIVIDUAL' ||
+    user?.role === 'SCHOOL' ||
+    // 하위 호환성
+    user?.role === 'STUDENT'
   const [searchParams, setSearchParams] = useSearchParams()
   const periodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
     const start = searchParams.get('startDate')

@@ -51,7 +51,8 @@ export interface InstructorApplicationFormData {
   experience?: string // 이력
   availableTime?: string // 가능시간
   // 신청 타입
-  role: 'INSTRUCTOR' | 'STUDENT'
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  role: 'INSTRUCTOR' | 'INDIVIDUAL' | 'SCHOOL' | 'STUDENT'
 }
 
 /**

@@ -1,6 +1,7 @@
 /**
  * 권한별 대시보드 위젯 구성 설정
  * Phase 4.2.1: 권한별 대시보드 위젯 구성
+ * Phase 0.1.1: 역할 체계 재정의 (STUDENT → INDIVIDUAL, SCHOOL 추가)
  */
 
 import type { UserRole } from '@/types/user'
@@ -65,7 +66,24 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
     { type: 'pending-tasks-list', colSpan: 12, order: 4 },
     { type: 'unified-activity-feed', colSpan: 24, order: 5 },
   ],
-  // 수강자: 본인 신청 + 봉사단 활동 요약
+  // 개인(참여자): 본인 신청 + 봉사단 활동 요약
+  INDIVIDUAL: [
+    { type: 'notification-widget', colSpan: 24, order: 1 },
+    { type: 'my-volunteer-activity-summary', colSpan: 24, order: 2 },
+    { type: 'my-application-summary', colSpan: 24, order: 3 },
+    { type: 'upcoming-schedules-list', colSpan: 12, order: 4 },
+    { type: 'volunteer-pending-tasks-list', colSpan: 12, order: 5 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 6 },
+  ],
+  // 학교: 학교 단위 신청 및 진행 상황
+  SCHOOL: [
+    { type: 'notification-widget', colSpan: 24, order: 1 },
+    { type: 'my-application-summary', colSpan: 24, order: 2 },
+    { type: 'upcoming-schedules-list', colSpan: 12, order: 3 },
+    { type: 'pending-tasks-list', colSpan: 12, order: 4 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 5 },
+  ],
+  // 하위 호환성: STUDENT, VOLUNTEER
   STUDENT: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
     { type: 'my-volunteer-activity-summary', colSpan: 24, order: 2 },

@@ -20,6 +20,8 @@ export {
   RoleIcon,
   getRoleLabel,
   getRoleColor,
+  getAdminLevelLabel,
+  getProgramRoleLabel,
   getAdminProgramRoleLabel,
 } from './role-badge'
 

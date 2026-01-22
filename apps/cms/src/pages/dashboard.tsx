@@ -86,9 +86,18 @@ export function Dashboard() {
     }
   }, [user?.role])
 
-  // 강사/수강자일 경우 본인 활동 데이터 로드
+  // 강사/개인(참여자)일 경우 본인 활동 데이터 로드
+  // Phase 0.1.1: INDIVIDUAL 추가
   useEffect(() => {
-    if (!((user?.role === 'INSTRUCTOR' || user?.role === 'STUDENT') && user?.instructorId)) {
+    if (
+      !(
+        (user?.role === 'INSTRUCTOR' ||
+          user?.role === 'INDIVIDUAL' ||
+          // 하위 호환성
+          user?.role === 'STUDENT') &&
+        user?.instructorId
+      )
+    ) {
       setInstructorActivity(null)
       return
     }
@@ -232,10 +241,14 @@ export function Dashboard() {
     }
   }
 
-  // 검색 및 알림 표시 (관리자, 강사, 수강자)
-  const showSearchAndNotification = 
-    user?.role === 'ADMIN' || 
-    user?.role === 'INSTRUCTOR' || 
+  // 검색 및 알림 표시 (관리자, 강사, 개인(참여자), 학교)
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  const showSearchAndNotification =
+    user?.role === 'ADMIN' ||
+    user?.role === 'INSTRUCTOR' ||
+    user?.role === 'INDIVIDUAL' ||
+    user?.role === 'SCHOOL' ||
+    // 하위 호환성
     user?.role === 'STUDENT'
 
   return (

@@ -15,10 +15,8 @@ interface ProfileFormData {
   phone?: string
   bio?: string
   zipCode?: string
-  address?: string
   detailAddress?: string
   schoolName?: string
-  grade?: string
   bankName?: string
   accountHolder?: string
   accountNumber?: string
@@ -43,10 +41,8 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
         phone: user.phone || '',
         bio: user.bio || '',
         zipCode: user.zipCode || '',
-        address: user.address || '',
         detailAddress: user.detailAddress || '',
-        schoolName: user.schoolName || '',
-        grade: user.grade || '',
+        schoolName: user.schoolName || user.schoolInfo?.schoolName || '',
         bankName: user.bankInfo?.bankName || '',
         accountHolder: user.bankInfo?.accountHolder || '',
         accountNumber: user.bankInfo?.accountNumber || '',
@@ -63,10 +59,8 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
         phone: values.phone,
         bio: values.bio,
         zipCode: values.zipCode,
-        address: values.address,
         detailAddress: values.detailAddress,
         schoolName: values.schoolName,
-        grade: values.grade,
         bankInfo: {
           bankName: values.bankName || '',
           accountHolder: values.accountHolder || '',
@@ -146,8 +140,9 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
           <Input.TextArea rows={2} placeholder="자기소개를 입력하세요" />
         </Form.Item>
 
-        {/* 학교 정보 (봉사자만 표시) */}
-        {user?.role === 'VOLUNTEER' && (
+        {/* 학교 정보 (학교 역할만 표시) */}
+        {/* Phase 0.1.1: SCHOOL 추가, VOLUNTEER는 하위 호환성 */}
+        {(user?.role === 'SCHOOL' || user?.role === 'VOLUNTEER') && (
           <>
             <Divider orientation="left" style={{ margin: '32px 0 16px' }}>
               <Space><ReadOutlined /> 학교 정보</Space>

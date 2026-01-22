@@ -199,7 +199,8 @@ export function ApplicationForm({
         }))
       case 'volunteer':
         return mockUsers
-          .filter(u => u.role === 'STUDENT')
+          // Phase 0.1.1: INDIVIDUAL 우선 사용
+          .filter(u => u.role === 'INDIVIDUAL' || u.role === 'STUDENT')
           .map(volunteer => ({
             value: volunteer.id,
             label: volunteer.name,

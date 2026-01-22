@@ -1,6 +1,7 @@
 /**
  * 권한별 메뉴 구성 설정
  * Phase 4.2.1: 권한별 메뉴 구성
+ * Phase 0.1.1: 역할 체계 재정의 (STUDENT → INDIVIDUAL, SCHOOL 추가)
  */
 
 import type { UserRole } from '@/types/user'
@@ -64,56 +65,59 @@ const allMenuItems: MenuItemConfig[] = [
     label: '봉사단',
     icon: <HeartOutlined />,
     enabled: true,
-    allowedRoles: ['STUDENT'],
+    // Phase 0.1.1: INDIVIDUAL로 변경, 하위 호환성을 위해 STUDENT도 유지
+    allowedRoles: ['INDIVIDUAL', 'STUDENT'],
     children: [
       {
         key: '/interviews/apply',
         label: '봉사자 신청',
         enabled: true,
-        allowedRoles: ['STUDENT'],
+        allowedRoles: ['INDIVIDUAL', 'STUDENT'],
       },
       {
         key: 'volunteer-info-group',
         label: '봉사 정보',
         enabled: true,
-        allowedRoles: ['STUDENT'],
+        allowedRoles: ['INDIVIDUAL', 'STUDENT'],
         children: [
           {
             key: '/volunteers/my/schedules',
             label: '진행 상세정보',
             enabled: true,
-            allowedRoles: ['STUDENT'],
+            allowedRoles: ['INDIVIDUAL', 'STUDENT'],
           },
           {
             key: '/volunteers/education-plan',
             label: '교육 계획서 작성',
             enabled: true,
-            allowedRoles: ['STUDENT'],
+            allowedRoles: ['INDIVIDUAL', 'STUDENT'],
           },
         ],
       },
     ],
   },
 
-  // 강사(INSTRUCTOR) 및 수강자(STUDENT) 마이페이지
+  // 강사(INSTRUCTOR), 개인(참여자)(INDIVIDUAL), 학교(SCHOOL) 마이페이지
   {
     key: 'mypage-group',
     label: '마이페이지',
     icon: <UserSwitchOutlined />,
     enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가, 하위 호환성을 위해 STUDENT도 유지
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
     children: [
       {
         key: 'personal-info-group',
         label: '개인정보 관리',
         enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+        // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
         children: [
           {
             key: '/mypage/profile',
             label: '개인정보 관리',
             enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
           },
           {
             key: '/histories',
@@ -127,13 +131,14 @@ const allMenuItems: MenuItemConfig[] = [
         key: 'program-management-group',
         label: '프로그램 관리',
         enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+        // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
         children: [
           {
             key: '/volunteers/my/programs',
             label: '수강 프로그램',
             enabled: true,
-            allowedRoles: ['STUDENT'],
+            allowedRoles: ['INDIVIDUAL', 'STUDENT'],
           },
           {
             key: '/programs/my',
@@ -151,7 +156,8 @@ const allMenuItems: MenuItemConfig[] = [
             key: '/programs/favorites',
             label: '관심 프로그램 관리',
             enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+            // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
           },
           {
             key: '/programs/satisfaction',
@@ -165,19 +171,20 @@ const allMenuItems: MenuItemConfig[] = [
         key: 'volunteer-activity-mgmt',
         label: '봉사단 활동 관리',
         enabled: true,
-        allowedRoles: ['STUDENT'],
+        // Phase 0.1.1: INDIVIDUAL로 변경
+        allowedRoles: ['INDIVIDUAL', 'STUDENT'],
         children: [
           {
             key: '/volunteers/my/schedules',
             label: '내 봉사 일정',
             enabled: true,
-            allowedRoles: ['STUDENT'],
+            allowedRoles: ['INDIVIDUAL', 'STUDENT'],
           },
           {
             key: '/volunteers/my/histories',
             label: '봉사단 참여 이력',
             enabled: true,
-            allowedRoles: ['STUDENT'],
+            allowedRoles: ['INDIVIDUAL', 'STUDENT'],
           },
         ],
       },
@@ -205,27 +212,28 @@ const allMenuItems: MenuItemConfig[] = [
     label: '공지사항',
     icon: <InfoCircleOutlined />,
     enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
   },
   {
     key: '/notices/faq',
     label: 'FAQ',
     icon: <QuestionCircleOutlined />,
     enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
   },
   {
     key: '/notices/inquiries',
     label: '문의하기',
     icon: <FileSearchOutlined />,
     enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'STUDENT'],
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
   },
 
   // legacy support paths (호환/리다이렉트 용도 - 메뉴에는 노출하지 않음)
-  { key: '/posts', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'] },
-  { key: '/posts/faq', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'] },
-  { key: '/posts/inquiries', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'] },
+  { key: '/posts', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'] },
+  { key: '/posts/faq', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'] },
+  { key: '/posts/inquiries', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'] },
   { key: '/posts/categories', enabled: false, allowedRoles: ['ADMIN'] },
   { key: '/posts/notices', enabled: false, allowedRoles: ['ADMIN'] },
   { key: 'divider-admin', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
@@ -331,8 +339,8 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: false,
     children: [
       { key: '/schedules', label: '일정 캘린더', enabled: false },
-      { key: '/schedules/my', label: '본인 일정 목록', enabled: false, allowedRoles: ['INSTRUCTOR', 'STUDENT'] },
-      { key: '/schedules/my/calendar', label: '본인 일정 캘린더', enabled: false, allowedRoles: ['INSTRUCTOR', 'STUDENT'] },
+      { key: '/schedules/my', label: '본인 일정 목록', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'] },
+      { key: '/schedules/my/calendar', label: '본인 일정 캘린더', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'] },
       { key: '/schedule-negotiations', label: '일정 협의 관리', enabled: false, allowedRoles: ['ADMIN'] },
     ],
   },
@@ -341,11 +349,11 @@ const allMenuItems: MenuItemConfig[] = [
     label: '면접 관리',
     icon: <TeamOutlined />,
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'],
+    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
     children: [
       { key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] },
       { key: '/interviews/apply', label: '강사 신청', enabled: false, allowedRoles: ['INSTRUCTOR'] },
-      { key: '/interviews/my', label: '내 면접 일정', enabled: false, allowedRoles: ['INSTRUCTOR', 'STUDENT'] },
+      { key: '/interviews/my', label: '내 면접 일정', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'] },
     ],
   },
   {
@@ -353,10 +361,10 @@ const allMenuItems: MenuItemConfig[] = [
     label: '보고서',
     icon: <FileTextOutlined />,
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'STUDENT'],
+    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'],
     children: [
       { key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] },
-      { key: '/reports/new', label: '보고서 작성', enabled: false, allowedRoles: ['INSTRUCTOR', 'STUDENT'] },
+      { key: '/reports/new', label: '보고서 작성', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT'] },
     ],
   },
 ]
@@ -483,8 +491,12 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     return true
   }
 
-  // 수강자는 정산 관련 경로 접근 불가 (Phase 6.1.3)
-  if (userRole === 'STUDENT' && normalizedPath.startsWith('/settlements')) {
+  // 개인(참여자) 및 학교는 정산 관련 경로 접근 불가 (Phase 6.1.3)
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가, 하위 호환성을 위해 STUDENT도 유지
+  if (
+    (userRole === 'STUDENT' || userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') &&
+    normalizedPath.startsWith('/settlements')
+  ) {
     return false
   }
 

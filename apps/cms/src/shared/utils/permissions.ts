@@ -1,9 +1,10 @@
 /**
  * 권한 검증 유틸리티 함수
- * Phase 4.1.2: 권한 체계 정의
+ * Phase 0.1.1: 역할/권한 체계 재정의
+ * requirements.md §2 역할 및 권한 기준
  */
 
-import type { AdminProgramRole, AdminRole, User, UserRole } from '@/types/user'
+import type { AdminLevel, AdminProgramRole, AdminRole, ProgramRole, User, UserRole } from '@/types/user'
 
 /**
  * 사용자가 특정 권한을 보유하고 있는지 확인
@@ -60,41 +61,89 @@ export function isAdmin(user: Omit<User, 'password'> | null): boolean {
 }
 
 export function isMasterAdmin(user: Omit<User, 'password'> | null): boolean {
-  return Boolean(user && user.role === 'ADMIN' && user.adminRole === 'MASTER')
+  return Boolean(
+    user && user.role === 'ADMIN' && (user.adminLevel === 'MASTER' || user.adminRole === 'MASTER')
+  )
 }
 
+export function hasAdminLevel(
+  user: Omit<User, 'password'> | null,
+  adminLevel: AdminLevel
+): boolean {
+  return Boolean(
+    user && user.role === 'ADMIN' && (user.adminLevel === adminLevel || user.adminRole === adminLevel)
+  )
+}
+
+// 하위 호환성 함수
+/** @deprecated Use hasAdminLevel instead */
 export function hasAdminRole(
   user: Omit<User, 'password'> | null,
   adminRole: AdminRole
 ): boolean {
-  return Boolean(user && user.role === 'ADMIN' && user.adminRole === adminRole)
+  return hasAdminLevel(user, adminRole as AdminLevel)
 }
 
+export function hasProgramRole(
+  user: Omit<User, 'password'> | null,
+  programId: string,
+  programRole: ProgramRole
+): boolean {
+  if (!user || user.role !== 'ADMIN') return false
+  return user.programRoles?.[programId] === programRole || user.adminProgramRole === programRole
+}
+
+// 하위 호환성 함수
+/** @deprecated Use hasProgramRole instead */
 export function hasAdminProgramRole(
   user: Omit<User, 'password'> | null,
   programRole: AdminProgramRole
 ): boolean {
-  return Boolean(user && user.role === 'ADMIN' && user.adminProgramRole === programRole)
+  return Boolean(
+    user && user.role === 'ADMIN' && (user.adminProgramRole === programRole || user.programRoles)
+  )
 }
 
 /**
- * 사용자가 강사 또는 수강자 권한을 가지고 있는지 확인
+ * 사용자가 강사 또는 개인(참여자) 권한을 가지고 있는지 확인
  * @param user 사용자 객체 (또는 null)
- * @returns 강사/수강자 여부
+ * @returns 강사/개인 여부
  */
+export function isInstructorOrIndividual(
+  user: Omit<User, 'password'> | null
+): boolean {
+  return hasAnyRole(user, ['INSTRUCTOR', 'INDIVIDUAL'])
+}
+
+/**
+ * 사용자가 개인(참여자) 권한을 가지고 있는지 확인
+ * @param user 사용자 객체 (또는 null)
+ * @returns 개인(참여자) 여부
+ */
+export function isIndividual(user: Omit<User, 'password'> | null): boolean {
+  return hasRole(user, 'INDIVIDUAL')
+}
+
+/**
+ * 사용자가 학교 권한을 가지고 있는지 확인
+ * @param user 사용자 객체 (또는 null)
+ * @returns 학교 여부
+ */
+export function isSchool(user: Omit<User, 'password'> | null): boolean {
+  return hasRole(user, 'SCHOOL')
+}
+
+// 하위 호환성 함수
+/** @deprecated Use isInstructorOrIndividual instead */
 export function isInstructorOrStudent(
   user: Omit<User, 'password'> | null
 ): boolean {
-  return hasAnyRole(user, ['INSTRUCTOR', 'STUDENT'])
+  return isInstructorOrIndividual(user) || Boolean(user && user.role === 'STUDENT')
 }
 
-/**
- * 사용자가 수강자 권한을 가지고 있는지 확인
- * @param user 사용자 객체 (또는 null)
- * @returns 수강자 여부
- */
+/** @deprecated Use isIndividual instead */
 export function isStudent(user: Omit<User, 'password'> | null): boolean {
-  return hasRole(user, 'STUDENT')
+  return isIndividual(user) || Boolean(user && user.role === 'STUDENT')
 }
 
 /**
@@ -105,13 +154,16 @@ export function isStudent(user: Omit<User, 'password'> | null): boolean {
  */
 export function hasHigherRole(role1: UserRole, role2: UserRole): boolean {
   const roleHierarchy: Record<UserRole, number> = {
-    ADMIN: 3,
-    INSTRUCTOR: 2,
+    ADMIN: 4,
+    INSTRUCTOR: 3,
+    SCHOOL: 2,
+    INDIVIDUAL: 1,
+    // 하위 호환성
     STUDENT: 1,
     VOLUNTEER: 1,
-  }
+  } as Record<UserRole, number>
 
-  return roleHierarchy[role1] > roleHierarchy[role2]
+  return (roleHierarchy[role1] || 0) > (roleHierarchy[role2] || 0)
 }
 
 /**
@@ -122,13 +174,16 @@ export function hasHigherRole(role1: UserRole, role2: UserRole): boolean {
  */
 export function hasEqualOrHigherRole(role1: UserRole, role2: UserRole): boolean {
   const roleHierarchy: Record<UserRole, number> = {
-    ADMIN: 3,
-    INSTRUCTOR: 2,
+    ADMIN: 4,
+    INSTRUCTOR: 3,
+    SCHOOL: 2,
+    INDIVIDUAL: 1,
+    // 하위 호환성
     STUDENT: 1,
     VOLUNTEER: 1,
-  }
+  } as Record<UserRole, number>
 
-  return roleHierarchy[role1] >= roleHierarchy[role2]
+  return (roleHierarchy[role1] || 0) >= (roleHierarchy[role2] || 0)
 }
 
 

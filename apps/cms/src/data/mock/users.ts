@@ -1,7 +1,7 @@
 /**
  * 사용자 계정 Mock 데이터
- * MVP_ROADMAP_V4 기반
- * 각 권한별 3개씩 총 12개 계정
+ * Phase 0.1.1: 역할/권한 체계 재정의
+ * requirements.md §2 역할 및 권한 기준
  */
 
 import type { User } from '../../types/user'
@@ -27,6 +27,9 @@ const mockAdmins: User[] = [
     password: 'admin123!', // Mock 데이터용
     name: '김관리',
     role: 'ADMIN',
+    adminLevel: 'MASTER',
+    programRoles: { 'program-1': 'OWNER' },
+    // 하위 호환성
     adminRole: 'MASTER',
     adminProgramRole: 'OWNER',
     isActive: true,
@@ -40,6 +43,9 @@ const mockAdmins: User[] = [
     password: 'admin123!',
     name: '이운영',
     role: 'ADMIN',
+    adminLevel: 'ADMIN',
+    programRoles: { 'program-1': 'PARTNER' },
+    // 하위 호환성
     adminRole: 'ADMIN',
     adminProgramRole: 'PARTNER',
     isActive: true,
@@ -53,6 +59,9 @@ const mockAdmins: User[] = [
     password: 'admin123!',
     name: '박시스템',
     role: 'ADMIN',
+    adminLevel: 'GENERAL',
+    programRoles: { 'program-1': 'ASSISTANT' },
+    // 하위 호환성
     adminRole: 'GENERAL',
     adminProgramRole: 'ASSISTANT',
     isActive: true,
@@ -84,7 +93,7 @@ const mockInstructors: User[] = [
     createdAt: generatePastDate(180),
     updatedAt: generatePastDate(2),
     phone: '010-1234-5678',
-    address: '서울특별시 서초구 서초대로 123',
+    // address 필드는 schoolInfo.address로 이동 (Phase 0.1.1)
     detailAddress: 'JA빌딩 10층',
     zipCode: '06611',
     bio: '안녕하세요, 경제교육 전문 강사 최강사입니다.',
@@ -125,107 +134,105 @@ const mockInstructors: User[] = [
 ]
 
 // ============================================
-// 봉사자 (Volunteer) 계정 - 3개
+// 학교 (School) 계정 - 3개
+// Phase 0.1.1: VOLUNTEER 역할 제거, SCHOOL 역할 추가
 // ============================================
 
-const mockVolunteers: User[] = [
+const mockSchools: User[] = [
   {
     id: generateUUID(),
-    email: 'volunteer1@example.com',
-    password: 'volunteer123!',
-    name: '서봉사',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'APPROVED', // 승인 완료
-    participationHistory: 10, // 참여이력 10건
+    email: 'school1@example.com',
+    password: 'school123!',
+    name: '서울초등학교',
+    role: 'SCHOOL',
+    schoolInfo: {
+      schoolName: '서울초등학교',
+      address: '서울특별시 마포구 월드컵북로 456',
+      position: '교사',
+    },
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(240),
     updatedAt: generatePastDate(1),
-    phone: '010-9876-5432',
-    address: '서울특별시 마포구 월드컵북로 456',
-    detailAddress: '서교아파트 101동 202호',
-    zipCode: '03921',
-    schoolName: '한국대학교',
-    grade: '3학년',
-    bio: '금융교육 봉사활동에 열정을 가진 서봉사입니다.',
-    bankInfo: {
-      bankName: '신한은행',
-      accountHolder: '서봉사',
-      accountNumber: '987-654-321098'
-    }
+    phone: '02-1234-5678',
   },
   {
     id: generateUUID(),
-    email: 'volunteer2@example.com',
-    password: 'volunteer123!',
-    name: '윤지원',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'APPROVED',
-    participationHistory: 7,
+    email: 'school2@example.com',
+    password: 'school123!',
+    name: '부산중학교',
+    role: 'SCHOOL',
+    schoolInfo: {
+      schoolName: '부산중학교',
+      address: '부산광역시 해운대구 센텀중앙로 123',
+      position: '담당교사',
+    },
     isActive: true,
     lastLoginAt: generatePastDate(4),
     createdAt: generatePastDate(150),
     updatedAt: generatePastDate(4),
+    phone: '051-2345-6789',
   },
   {
     id: generateUUID(),
-    email: 'volunteer3@example.com',
-    password: 'volunteer123!',
-    name: '오자원',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'COMPLETED', // 면접 완료 (승인 대기)
-    interviewCompletedAt: generatePastDate(5), // 면접 완료
-    participationHistory: 0, // 참여이력 없음
+    email: 'school3@example.com',
+    password: 'school123!',
+    name: '대구고등학교',
+    role: 'SCHOOL',
+    schoolInfo: {
+      schoolName: '대구고등학교',
+      address: '대구광역시 수성구 범어천로 789',
+      position: '교감',
+    },
     isActive: true,
     lastLoginAt: generatePastDate(3),
     createdAt: generatePastDate(45),
     updatedAt: generatePastDate(3),
+    phone: '053-3456-7890',
   },
 ]
 
 // ============================================
-// 수강자 (Student) 계정 - 3개
+// 개인(참여자) (Individual) 계정 - 3개
+// Phase 0.1.1: STUDENT → INDIVIDUAL
 // ============================================
 
-const mockStudents: User[] = [
+const mockIndividuals: User[] = [
   {
     id: generateUUID(),
-    email: 'student1@example.com',
-    password: 'student123!',
+    email: 'individual1@example.com',
+    password: 'individual123!',
     name: '장학생',
-    role: 'STUDENT',
-    studentType: 'INDIVIDUAL',
+    role: 'INDIVIDUAL',
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(60),
     updatedAt: generatePastDate(1),
+    phone: '010-1111-2222',
   },
   {
     id: generateUUID(),
-    email: 'student2@example.com',
-    password: 'student123!',
+    email: 'individual2@example.com',
+    password: 'individual123!',
     name: '임참여',
-    role: 'STUDENT',
-    studentType: 'SCHOOL_TEACHER',
+    role: 'INDIVIDUAL',
     isActive: true,
     lastLoginAt: generatePastDate(3),
     createdAt: generatePastDate(45),
     updatedAt: generatePastDate(3),
+    phone: '010-2222-3333',
   },
   {
     id: generateUUID(),
-    email: 'student3@example.com',
-    password: 'student123!',
+    email: 'individual3@example.com',
+    password: 'individual123!',
     name: '한청년',
-    role: 'STUDENT',
-    studentType: 'INDIVIDUAL',
+    role: 'INDIVIDUAL',
     isActive: true,
     lastLoginAt: generatePastDate(7),
     createdAt: generatePastDate(30),
     updatedAt: generatePastDate(7),
+    phone: '010-3333-4444',
   },
 ]
 
@@ -241,6 +248,9 @@ const extraMockUsers: User[] = [
     password: 'admin123!',
     name: '비활성관리자',
     role: 'ADMIN',
+    adminLevel: 'GENERAL',
+    programRoles: { 'program-1': 'ASSISTANT' },
+    // 하위 호환성
     adminRole: 'GENERAL',
     adminProgramRole: 'ASSISTANT',
     isActive: false,
@@ -279,117 +289,31 @@ const extraMockUsers: User[] = [
     createdAt: generatePastDate(730),
     updatedAt: generatePastDate(1),
   },
-  // 비활성 봉사자
+  // 추가 개인(참여자) 계정
   {
     id: generateUUID(),
-    email: 'volunteer.inactive@jakorea.org',
-    password: 'volunteer123!',
-    name: '휴면봉사자',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'REJECTED',
-    participationHistory: 1,
-    isActive: false,
-    lastLoginAt: generatePastDate(365),
-    createdAt: generatePastDate(365),
-    updatedAt: generatePastDate(365),
-  },
-  // 추가 봉사자들 (랜덤 매칭 테스트용)
-  {
-    id: generateUUID(),
-    email: 'volunteer4@example.com',
-    password: 'volunteer123!',
-    name: '김봉사',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'APPROVED',
-    participationHistory: 5,
-    isActive: true,
-    lastLoginAt: generatePastDate(2),
-    createdAt: generatePastDate(100),
-    updatedAt: generatePastDate(2),
-  },
-  {
-    id: generateUUID(),
-    email: 'volunteer5@example.com',
-    password: 'volunteer123!',
-    name: '이지원',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'APPROVED',
-    participationHistory: 3,
-    isActive: true,
-    lastLoginAt: generatePastDate(5),
-    createdAt: generatePastDate(80),
-    updatedAt: generatePastDate(5),
-  },
-  {
-    id: generateUUID(),
-    email: 'volunteer6@example.com',
-    password: 'volunteer123!',
-    name: '박봉사',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'APPROVED',
-    participationHistory: 8,
-    isActive: true,
-    lastLoginAt: generatePastDate(1),
-    createdAt: generatePastDate(200),
-    updatedAt: generatePastDate(1),
-  },
-  {
-    id: generateUUID(),
-    email: 'volunteer7@example.com',
-    password: 'volunteer123!',
-    name: '최자원',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'APPROVED',
-    participationHistory: 2,
-    isActive: true,
-    lastLoginAt: generatePastDate(7),
-    createdAt: generatePastDate(60),
-    updatedAt: generatePastDate(7),
-  },
-  {
-    id: generateUUID(),
-    email: 'volunteer8@example.com',
-    password: 'volunteer123!',
-    name: '정봉사',
-    role: 'STUDENT',
-    instructorId: generateUUID(),
-    interviewStatus: 'APPROVED',
-    participationHistory: 12,
-    isActive: true,
-    lastLoginAt: generatePastDate(0),
-    createdAt: generatePastDate(300),
-    updatedAt: generatePastDate(0),
-  },
-  // 최근 로그인한 수강자
-  {
-    id: generateUUID(),
-    email: 'student.active@jakorea.org',
-    password: 'student123!',
-    name: '활동수강자',
-    role: 'STUDENT',
-    studentType: 'SCHOOL_TEACHER',
+    email: 'individual.active@jakorea.org',
+    password: 'individual123!',
+    name: '활동참여자',
+    role: 'INDIVIDUAL',
     isActive: true,
     lastLoginAt: generatePastDate(0),
     createdAt: generatePastDate(15),
     updatedAt: generatePastDate(0),
+    phone: '010-4444-5555',
   },
-  // 오래된 수강자 (비활성)
+  // 오래된 개인(참여자) (비활성)
   {
     id: generateUUID(),
-    email: 'student.inactive@jakorea.org',
-    password: 'student123!',
-    name: '휴면수강자',
-    role: 'STUDENT',
-    studentType: 'INDIVIDUAL',
+    email: 'individual.inactive@jakorea.org',
+    password: 'individual123!',
+    name: '휴면참여자',
+    role: 'INDIVIDUAL',
     isActive: false,
     lastLoginAt: generatePastDate(730),
     createdAt: generatePastDate(800),
     updatedAt: generatePastDate(730),
+    phone: '010-5555-6666',
   },
 ]
 
@@ -400,8 +324,8 @@ const extraMockUsers: User[] = [
 export const mockUsers: User[] = [
   ...mockAdmins,
   ...mockInstructors,
-  ...mockVolunteers,
-  ...mockStudents,
+  ...mockSchools,
+  ...mockIndividuals,
   ...extraMockUsers,
 ]
 

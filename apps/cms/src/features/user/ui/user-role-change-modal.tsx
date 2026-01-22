@@ -1,12 +1,13 @@
 /**
  * 사용자 권한 변경 모달
  * Phase 5.1.2: 사용자 관리 페이지
+ * Phase 0.1.1: 역할 체계 재정의
  */
 
 import { Modal, Form, Select, message } from 'antd'
 import { useEffect } from 'react'
-import type { AdminProgramRole, AdminRole, User, UserRole } from '@/types/user'
-import { RoleBadge, getRoleLabel, getAdminProgramRoleLabel } from '@/shared/ui'
+import type { AdminProgramRole, AdminLevel, AdminRole, ProgramRole, User, UserRole } from '@/types/user'
+import { RoleBadge, getRoleLabel, getAdminLevelLabel, getProgramRoleLabel } from '@/shared/ui'
 import './user-role-change-modal.css'
 
 interface UserRoleChangeModalProps {
@@ -16,17 +17,23 @@ interface UserRoleChangeModalProps {
   onConfirm: (
     userId: string,
     newRole: UserRole,
-    adminRole?: AdminRole,
-    adminProgramRole?: AdminProgramRole
+    adminLevel?: AdminLevel,
+    adminRole?: AdminRole, // 하위 호환성
+    programRole?: ProgramRole,
+    adminProgramRole?: AdminProgramRole // 하위 호환성
   ) => Promise<void>
   onCancel: () => void
 }
 
 const { Option } = Select
 
-const roleOptions: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'STUDENT']
-const adminRoleOptions: AdminRole[] = ['MASTER', 'ADMIN', 'GENERAL']
-const adminProgramRoleOptions: AdminProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
+// Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+const roleOptions: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT', 'VOLUNTEER']
+const adminLevelOptions: AdminLevel[] = ['MASTER', 'ADMIN', 'GENERAL']
+const programRoleOptions: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
+// 하위 호환성
+const adminRoleOptions: AdminRole[] = adminLevelOptions
+const adminProgramRoleOptions: AdminProgramRole[] = programRoleOptions
 
 export function UserRoleChangeModal({
   open,
@@ -39,10 +46,13 @@ export function UserRoleChangeModal({
 
   useEffect(() => {
     if (open && user) {
+      // Phase 0.1.1: adminLevel, programRole 우선 사용
       form.setFieldsValue({
         role: user.role,
-        adminRole: user.adminRole || 'ADMIN',
-        adminProgramRole: user.adminProgramRole || 'ASSISTANT',
+        adminLevel: user.adminLevel || user.adminRole || 'ADMIN',
+        adminRole: user.adminRole || user.adminLevel || 'ADMIN', // 하위 호환성
+        programRole: user.programRoles?.['program-1'] || user.adminProgramRole || 'ASSISTANT',
+        adminProgramRole: user.adminProgramRole || user.programRoles?.['program-1'] || 'ASSISTANT', // 하위 호환성
       })
     }
   }, [open, user, form])
@@ -52,7 +62,15 @@ export function UserRoleChangeModal({
       const values = await form.validateFields()
       if (!user) return
 
-      await onConfirm(user.id, values.role, values.adminRole, values.adminProgramRole)
+      // Phase 0.1.1: adminLevel, programRole 우선 전달
+      await onConfirm(
+        user.id,
+        values.role,
+        values.adminLevel || values.adminRole,
+        values.adminRole, // 하위 호환성
+        values.programRole || values.adminProgramRole,
+        values.adminProgramRole // 하위 호환성
+      )
       message.success('권한이 변경되었습니다.')
       form.resetFields()
       onCancel()
@@ -87,7 +105,15 @@ export function UserRoleChangeModal({
           </p>
           <p>
             <strong>현재 권한:</strong>{' '}
-            <RoleBadge role={user.role} adminRole={user.adminRole} size="small" variant="tag" />
+            <RoleBadge
+              role={user.role}
+              adminLevel={user.adminLevel}
+              adminRole={user.adminRole}
+              programRole={user.programRoles?.['program-1']}
+              adminProgramRole={user.adminProgramRole}
+              size="small"
+              variant="tag"
+            />
           </p>
         </div>
       )}
@@ -114,27 +140,46 @@ export function UserRoleChangeModal({
             return (
               <>
                 <Form.Item
-                  name="adminRole"
-                  label="관리자 구분"
-                  rules={[{ required: true, message: '관리자 구분을 선택해주세요.' }]}
+                  name="adminLevel"
+                  label="관리자 권한 레벨"
+                  rules={[{ required: true, message: '관리자 권한 레벨을 선택해주세요.' }]}
                 >
-                  <Select placeholder="관리자 구분 선택">
-                    {adminRoleOptions.map((adminRole) => (
-                      <Option key={adminRole} value={adminRole}>
-                        {getRoleLabel('ADMIN', adminRole)}
+                  <Select placeholder="관리자 권한 레벨 선택">
+                    {adminLevelOptions.map((adminLevel) => (
+                      <Option key={adminLevel} value={adminLevel}>
+                        {getAdminLevelLabel(adminLevel)}
                       </Option>
                     ))}
                   </Select>
                 </Form.Item>
                 <Form.Item
-                  name="adminProgramRole"
-                  label="프로그램 범위 역할"
-                  rules={[{ required: true, message: '프로그램 범위 역할을 선택해주세요.' }]}
+                  name="programRole"
+                  label="프로그램 역할"
+                  rules={[{ required: true, message: '프로그램 역할을 선택해주세요.' }]}
                 >
-                  <Select placeholder="프로그램 범위 역할 선택">
+                  <Select placeholder="프로그램 역할 선택">
+                    {programRoleOptions.map((programRole) => (
+                      <Option key={programRole} value={programRole}>
+                        {getProgramRoleLabel(programRole)}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                {/* 하위 호환성 필드 (숨김) */}
+                <Form.Item name="adminRole" hidden>
+                  <Select>
+                    {adminRoleOptions.map((adminRole) => (
+                      <Option key={adminRole} value={adminRole}>
+                        {adminRole}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item name="adminProgramRole" hidden>
+                  <Select>
                     {adminProgramRoleOptions.map((adminProgramRole) => (
                       <Option key={adminProgramRole} value={adminProgramRole}>
-                        {getAdminProgramRoleLabel(adminProgramRole)}
+                        {adminProgramRole}
                       </Option>
                     ))}
                   </Select>

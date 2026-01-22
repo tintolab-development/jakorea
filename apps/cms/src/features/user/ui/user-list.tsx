@@ -73,8 +73,15 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       key: 'interviewStatus',
       width: 140,
       render: (status, record) => {
-        // 강사/수강자만 면접 상태 표시
-        if (record.role === 'INSTRUCTOR' || record.role === 'STUDENT') {
+        // 강사/개인(참여자)/학교만 면접 상태 표시
+        // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+        if (
+          record.role === 'INSTRUCTOR' ||
+          record.role === 'INDIVIDUAL' ||
+          record.role === 'SCHOOL' ||
+          // 하위 호환성
+          record.role === 'STUDENT'
+        ) {
           return status ? <InterviewStatusBadge status={status} /> : <Tag>-</Tag>
         }
         return <Tag>-</Tag>
@@ -87,8 +94,15 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       width: 100,
       align: 'center',
       render: (history, record) => {
-        // 강사/수강자만 참여이력 표시
-        if (record.role === 'INSTRUCTOR' || record.role === 'STUDENT') {
+        // 강사/개인(참여자)/학교만 참여이력 표시
+        // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+        if (
+          record.role === 'INSTRUCTOR' ||
+          record.role === 'INDIVIDUAL' ||
+          record.role === 'SCHOOL' ||
+          // 하위 호환성
+          record.role === 'STUDENT'
+        ) {
           return history ?? 0
         }
         return <span>-</span>

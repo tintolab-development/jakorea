@@ -10,6 +10,10 @@ import { mockInstructors } from './instructors'
 import { mockUsers } from './users'
 import { getApplicationPathByProgramId } from './application-paths'
 
+// Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+const mockIndividualUsers = mockUsers.filter(u => u.role === 'INDIVIDUAL')
+const mockSchoolUsers = mockUsers.filter(u => u.role === 'SCHOOL')
+// 하위 호환성
 const mockStudentUsers = mockUsers.filter(u => u.role === 'STUDENT')
 const mockVolunteerUsers = mockUsers.filter(u => u.role === 'VOLUNTEER')
 
@@ -54,10 +58,15 @@ function createApplication(
   } else if (subjectType === 'instructor') {
     subjectId = mockInstructors[subjectIndex % mockInstructors.length].id
   } else if (subjectType === 'volunteer') {
-    subjectId = (mockVolunteerUsers[subjectIndex % mockVolunteerUsers.length]?.id ||
+    // Phase 0.1.1: mockIndividualUsers 우선 사용
+    subjectId = (mockIndividualUsers[subjectIndex % mockIndividualUsers.length]?.id ||
+      mockVolunteerUsers[subjectIndex % mockVolunteerUsers.length]?.id ||
       mockUsers[subjectIndex % mockUsers.length].id) as UUID
   } else if (subjectType === 'student') {
-    subjectId = (mockStudentUsers[subjectIndex % mockStudentUsers.length]?.id ||
+    // Phase 0.1.1: mockIndividualUsers, mockSchoolUsers 우선 사용
+    subjectId = (mockIndividualUsers[subjectIndex % mockIndividualUsers.length]?.id ||
+      mockSchoolUsers[subjectIndex % mockSchoolUsers.length]?.id ||
+      mockStudentUsers[subjectIndex % mockStudentUsers.length]?.id ||
       mockUsers[subjectIndex % mockUsers.length].id) as UUID
   } else {
     subjectId = mockSchools[subjectIndex % mockSchools.length].id
@@ -123,7 +132,16 @@ const participantApplications: Application[] = Array.from({ length: 30 }, (_, in
   const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
   // school과 student 타입만 생성 (참여자 조회용)
   const subjectType = Math.random() > 0.5 ? 'school' : 'student'
-  const subjectIndex = Math.floor(Math.random() * Math.max(mockSchools.length, mockStudentUsers.length))
+  // Phase 0.1.1: mockIndividualUsers, mockSchoolUsers 포함
+  const subjectIndex = Math.floor(
+    Math.random() *
+      Math.max(
+        mockSchools.length,
+        mockIndividualUsers.length,
+        mockSchoolUsers.length,
+        mockStudentUsers.length
+      )
+  )
   const status = statuses[Math.floor(Math.random() * statuses.length)]
   const daysAgo = Math.floor(Math.random() * 60) + 1
   const reviewedDaysAgo = status !== 'submitted' ? Math.floor(Math.random() * daysAgo) : undefined

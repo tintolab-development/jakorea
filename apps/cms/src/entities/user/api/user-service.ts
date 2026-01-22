@@ -1,9 +1,10 @@
 /**
  * 사용자 관리 API 서비스 (Mock)
  * Phase 5.1.2: 사용자 관리 페이지
+ * Phase 0.1.1: 역할 체계 재정의
  */
 
-import type { AdminProgramRole, AdminRole, User, UserRole } from '@/types/user'
+import type { AdminProgramRole, AdminLevel, AdminRole, ProgramRole, User, UserRole } from '@/types/user'
 import { mockUsers } from '@/data/mock/users'
 import type { UUID } from '@/types/index'
 
@@ -62,12 +63,15 @@ export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> 
 
 /**
  * 사용자 권한 변경
+ * Phase 0.1.1: adminLevel, programRole 지원 추가
  */
 export async function updateUserRole(
   userId: UUID,
   newRole: UserRole,
-  adminRole?: AdminRole,
-  adminProgramRole?: AdminProgramRole
+  adminLevel?: AdminLevel,
+  adminRole?: AdminRole, // 하위 호환성
+  programRole?: ProgramRole,
+  adminProgramRole?: AdminProgramRole // 하위 호환성
 ): Promise<Omit<User, 'password'>> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -78,13 +82,25 @@ export async function updateUserRole(
 
   const user = mockUsers[userIndex]
   user.role = newRole
+
+  // Phase 0.1.1: adminLevel, programRole 우선 사용
   if (newRole === 'ADMIN') {
-    user.adminRole = adminRole || user.adminRole || 'ADMIN'
-    user.adminProgramRole = adminProgramRole || user.adminProgramRole || 'ASSISTANT'
+    const effectiveAdminLevel = adminLevel || adminRole || user.adminLevel || user.adminRole || 'ADMIN'
+    const effectiveProgramRole = programRole || adminProgramRole || user.programRoles?.['program-1'] || user.adminProgramRole || 'ASSISTANT'
+
+    user.adminLevel = effectiveAdminLevel
+    user.programRoles = { 'program-1': effectiveProgramRole }
+    // 하위 호환성
+    user.adminRole = effectiveAdminLevel
+    user.adminProgramRole = effectiveProgramRole
   } else {
+    user.adminLevel = undefined
+    user.programRoles = undefined
+    // 하위 호환성
     user.adminRole = undefined
     user.adminProgramRole = undefined
   }
+
   user.updatedAt = new Date().toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

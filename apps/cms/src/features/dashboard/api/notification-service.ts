@@ -136,6 +136,57 @@ export async function getNotifications(
         30
       ),
     ],
+    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+    INDIVIDUAL: [
+      createNotification(
+        'notif-individual-1',
+        'system',
+        '할일',
+        '마이페이지에서 확인해야 할 작업이 있습니다.',
+        '/mypage',
+        false,
+        3
+      ),
+      createNotification(
+        'notif-individual-2',
+        'schedule',
+        '일정',
+        '예정된 프로그램 일정이 있습니다.',
+        '/schedules/my',
+        false,
+        10
+      ),
+      createNotification(
+        'notif-individual-3',
+        'system',
+        '개별 안내사항',
+        '신청한 프로그램 관련 안내사항이 도착했습니다.',
+        '/notices',
+        true,
+        30
+      ),
+    ],
+    SCHOOL: [
+      createNotification(
+        'notif-school-1',
+        'system',
+        '할일',
+        '학교 단위 신청 관련 확인이 필요합니다.',
+        '/mypage',
+        false,
+        3
+      ),
+      createNotification(
+        'notif-school-2',
+        'schedule',
+        '일정',
+        '예정된 프로그램 일정이 있습니다.',
+        '/schedules/my',
+        false,
+        10
+      ),
+    ],
+    // 하위 호환성
     VOLUNTEER: [
       createNotification(
         'notif-volunteer-1',

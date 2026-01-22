@@ -13,6 +13,7 @@ interface RoleBadgeProps {
   showIcon?: boolean
 }
 
+// Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
 const roleConfig: Record<
   UserRole,
   { label: string; color: string; icon: React.ReactNode }
@@ -27,13 +28,24 @@ const roleConfig: Record<
     color: 'blue',
     icon: <UserOutlined />,
   },
+  INDIVIDUAL: {
+    label: '개인(참여자)',
+    color: 'orange',
+    icon: <UserOutlined />,
+  },
+  SCHOOL: {
+    label: '학교',
+    color: 'purple',
+    icon: <BookOutlined />,
+  },
+  // 하위 호환성
   STUDENT: {
-    label: '수강자',
+    label: '수강자 (구)',
     color: 'default',
     icon: <BookOutlined />,
   },
   VOLUNTEER: {
-    label: '봉사자',
+    label: '봉사자 (구)',
     color: 'green',
     icon: <HeartOutlined />,
   },

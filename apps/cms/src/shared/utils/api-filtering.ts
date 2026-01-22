@@ -1,6 +1,7 @@
 /**
  * API 필터링 유틸리티
  * Phase 4.2.2: 권한별 데이터 필터링
+ * Phase 0.1.1: 역할 체계 재정의 (STUDENT → INDIVIDUAL, SCHOOL 추가)
  */
 
 import type { UserRole } from '@/types/user'
@@ -26,16 +27,26 @@ export function buildQueryParamsByRole(
     return params
   }
 
-  // 강사/봉사자/수강자는 본인 데이터만 조회
-  if (userRole === 'INSTRUCTOR' || userRole === 'VOLUNTEER') {
-    // 강사/봉사자는 instructorId로 필터링
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  // 강사는 instructorId로 필터링
+  if (userRole === 'INSTRUCTOR') {
     if (userId) {
       params.instructorId = userId
     }
-  } else if (userRole === 'STUDENT') {
-    // 수강자는 userId로 필터링
+  } else if (userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') {
+    // 개인(참여자), 학교는 userId로 필터링
     if (userId) {
       params.userId = userId
+    }
+  }
+  // 하위 호환성: STUDENT, VOLUNTEER
+  else if (userRole === 'STUDENT') {
+    if (userId) {
+      params.userId = userId
+    }
+  } else if (userRole === 'VOLUNTEER') {
+    if (userId) {
+      params.instructorId = userId
     }
   }
 
@@ -90,7 +101,12 @@ export function filterByInstructorId<T extends { instructorId?: string }>(
     return true
   }
 
-  if (userRole === 'INSTRUCTOR' || userRole === 'VOLUNTEER') {
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  if (userRole === 'INSTRUCTOR') {
+    return item.instructorId === userId
+  }
+  // 하위 호환성
+  if (userRole === 'VOLUNTEER') {
     return item.instructorId === userId
   }
 
@@ -98,7 +114,8 @@ export function filterByInstructorId<T extends { instructorId?: string }>(
 }
 
 /**
- * 수강자 데이터 필터링 함수
+ * 개인(참여자)/학교 데이터 필터링 함수
+ * Phase 0.1.1: INDIVIDUAL, SCHOOL 지원
  * @param item 데이터 아이템
  * @param userRole 사용자 권한
  * @param userId 사용자 ID
@@ -113,6 +130,11 @@ export function filterByUserId<T extends { userId?: string }>(
     return true
   }
 
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  if (userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') {
+    return item.userId === userId
+  }
+  // 하위 호환성
   if (userRole === 'STUDENT') {
     return item.userId === userId
   }

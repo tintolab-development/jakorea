@@ -34,7 +34,10 @@ export function VolunteerProgramListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   
   // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || (currentUser?.role === 'STUDENT' ? '봉사단' : '봉사 프로그램')
+  // Phase 0.1.1: INDIVIDUAL 추가
+  const categoryName =
+    getCategoryNameByPath(location.pathname, 2) ||
+    (currentUser?.role === 'INDIVIDUAL' || currentUser?.role === 'STUDENT' ? '봉사단' : '봉사 프로그램')
   
   // 봉사 프로그램 목록 가져오기
   const volunteerPrograms = getVolunteerPrograms()
@@ -43,8 +46,9 @@ export function VolunteerProgramListPage() {
   const [detailOpen, setDetailOpen] = useState(false)
 
   const volunteers = useMemo(() => {
+    // Phase 0.1.1: INDIVIDUAL 우선 사용
     return mockUsers
-      .filter(u => u.role === 'STUDENT')
+      .filter(u => u.role === 'INDIVIDUAL' || u.role === 'STUDENT')
       .map(u => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = u
@@ -126,7 +130,8 @@ export function VolunteerProgramListPage() {
     },
   ], [])
 
-  const isStudent = currentUser?.role === 'STUDENT'
+  // Phase 0.1.1: INDIVIDUAL 추가
+  const isStudent = currentUser?.role === 'INDIVIDUAL' || currentUser?.role === 'STUDENT'
   const isAdmin = currentUser?.role === 'ADMIN'
 
   // 역할별 기본 탭

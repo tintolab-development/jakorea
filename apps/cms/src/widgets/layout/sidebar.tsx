@@ -61,8 +61,9 @@ export function Sidebar() {
       }
     }
 
-    // 사용자 봉사단 관련 메뉴 (VOLUNTEER 역할일 때)
-    if (user?.role === 'VOLUNTEER') {
+    // 사용자 봉사단 관련 메뉴 (INDIVIDUAL 역할일 때)
+    // Phase 0.1.1: INDIVIDUAL 추가
+    if (user?.role === 'INDIVIDUAL' || user?.role === 'VOLUNTEER') {
       if (
         path.startsWith('/mypage') ||
         path.startsWith('/volunteers/my') ||

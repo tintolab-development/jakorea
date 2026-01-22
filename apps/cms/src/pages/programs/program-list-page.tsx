@@ -36,9 +36,16 @@ export function ProgramListPage() {
 
   // 관리자만 프로그램 등록 가능
   const isAdmin = user?.role === 'ADMIN'
-  // 강사/봉사자/학생용
+  // 강사용
   const isInstructor = user?.role === 'INSTRUCTOR'
-  const isUserRole = isInstructor || user?.role === 'VOLUNTEER' || user?.role === 'STUDENT'
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  const isUserRole =
+    isInstructor ||
+    user?.role === 'INDIVIDUAL' ||
+    user?.role === 'SCHOOL' ||
+    // 하위 호환성
+    user?.role === 'VOLUNTEER' ||
+    user?.role === 'STUDENT'
 
   // 카테고리명 가져오기
   const categoryName = isAdmin

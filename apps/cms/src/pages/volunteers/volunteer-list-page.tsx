@@ -47,7 +47,8 @@ export function VolunteerListPage() {
   // 봉사자 목록 필터링
   const filteredVolunteers = useMemo(() => {
     let volunteers = mockUsers
-      .filter(user => user.role === 'VOLUNTEER')
+      // Phase 0.1.1: INDIVIDUAL 우선 사용
+      .filter(user => user.role === 'INDIVIDUAL' || user.role === 'VOLUNTEER')
       .map(user => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = user

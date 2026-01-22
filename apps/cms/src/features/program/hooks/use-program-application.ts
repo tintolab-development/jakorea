@@ -30,9 +30,13 @@ export function useProgramApplication({
   applicationPath,
 }: UseProgramApplicationProps) {
   // 현재 사용자의 역할에 따른 신청 주체 타입 결정
+  // Phase 0.1.1: STUDENT → INDIVIDUAL, VOLUNTEER 제거
   const userSubjectType = useMemo(() => {
     if (!user || user.role === 'ADMIN') return undefined
     if (user.role === 'INSTRUCTOR') return 'instructor' as const
+    if (user.role === 'INDIVIDUAL') return 'student' as const // 개인(참여자)는 student 타입으로 매핑
+    if (user.role === 'SCHOOL') return 'school' as const
+    // 하위 호환성: 기존 STUDENT, VOLUNTEER 역할 지원
     if (user.role === 'STUDENT') return 'student' as const
     if (user.role === 'VOLUNTEER') return 'volunteer' as const
     return undefined
@@ -81,7 +85,8 @@ export function useProgramApplication({
         app.programId === program.id &&
         app.subjectId === subjectId &&
         (app.subjectType === userSubjectType ||
-          (user?.role === 'STUDENT' && app.subjectType === 'volunteer')) &&
+          // 하위 호환성: 기존 STUDENT 역할 지원
+          ((user?.role === 'STUDENT' || user?.role === 'INDIVIDUAL') && app.subjectType === 'volunteer')) &&
         app.status !== 'cancelled'
     )
   }, [program, user, userSubjectType])

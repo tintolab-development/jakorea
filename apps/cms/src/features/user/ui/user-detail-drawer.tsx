@@ -62,7 +62,12 @@ export function UserDetailDrawer({
             {user.isActive ? '활성' : '비활성'}
           </Tag>
         </Descriptions.Item>
-        {(user.role === 'INSTRUCTOR' || user.role === 'STUDENT') && (
+        {/* Phase 0.1.1: INDIVIDUAL, SCHOOL 추가 */}
+        {(user.role === 'INSTRUCTOR' ||
+          user.role === 'INDIVIDUAL' ||
+          user.role === 'SCHOOL' ||
+          // 하위 호환성
+          user.role === 'STUDENT') && (
           <>
             <Descriptions.Item label="면접 상태">
               {user.interviewStatus ? (
