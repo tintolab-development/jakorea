@@ -96,8 +96,14 @@ export function MyProgramApplicationsPage() {
   }, [myApplications])
 
   const handleView = (application: Application) => {
-    setSelectedApplication(application)
-    setDrawerOpen(true)
+    // Phase 0.2.4: 진행상황 조회 페이지로 이동
+    if (application.status === 'approved') {
+      navigate(`/${user?.role === 'SCHOOL' ? 'school' : user?.role === 'INSTRUCTOR' ? 'instructor' : 'my'}/applications/${application.id}`)
+    } else {
+      // 승인되지 않은 경우 기존 drawer 사용
+      setSelectedApplication(application)
+      setDrawerOpen(true)
+    }
   }
 
   const handleViewProgram = (programId: string) => {

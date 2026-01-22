@@ -53,6 +53,10 @@ import { Dashboard } from '@/pages/dashboard'
 const InstructorListPage = lazyLoad(() => import('@/pages/instructors/instructor-list-page'))
 const InstructorDetailPage = lazyLoad(() => import('@/pages/instructors/instructor-detail-page'))
 const InstructorFormPage = lazyLoad(() => import('@/pages/instructors/instructor-form-page'))
+const InstructorMypagePage = lazyLoad(() => import('@/pages/instructors/instructor-mypage-page'))
+const InstructorDocumentsPage = lazyLoad(() => import('@/pages/instructors/instructor-documents-page'))
+const InstructorSchedulePage = lazyLoad(() => import('@/pages/instructors/instructor-schedule-page'))
+const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
 const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
 const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
 const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-page'))
@@ -61,11 +65,14 @@ const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-pa
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
+const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
+const ProgramApplicationCompletePage = lazyLoad(() => import('@/pages/programs/program-application-complete-page'))
 const MyProgramListPage = lazyLoad(() => import('@/pages/programs/my-program-list-page'))
 const MyProgramDetailPage = lazyLoad(() => import('@/pages/programs/my-program-detail-page'))
 const MyProgramHistoryPage = lazyLoad(() => import('@/pages/programs/my-program-history-page'))
 const ProgramSatisfactionPage = lazyLoad(() => import('@/pages/programs/program-satisfaction-page'))
 const MyProgramApplicationsPage = lazyLoad(() => import('@/pages/programs/my-program-applications-page'))
+const ApplicationProgressPage = lazyLoad(() => import('@/pages/applications/application-progress-page'))
 const MyFavoriteProgramsPage = lazyLoad(() => import('@/pages/programs/my-favorite-programs-page'))
 const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
 const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
@@ -217,6 +224,8 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
+          { path: ':id/apply', element: <ProgramApplicationPage /> }, // Phase 0.2.2: 신청서 작성 페이지
+          { path: ':id/apply/complete', element: <ProgramApplicationCompletePage /> }, // Phase 0.2.3: 신청 완료 페이지
           { path: 'my', element: <MyProgramApplicationsPage /> },
           { path: 'my/active', element: <MyProgramListPage /> },
           { path: 'my/active/:id', element: <MyProgramDetailPage /> },
@@ -235,6 +244,32 @@ export const router = createBrowserRouter([
           { path: 'new', element: <ApplicationFormPage /> },
           { path: ':id/edit', element: <ApplicationFormPage /> },
           { path: ':id/result', element: <ApplicationResultPage /> },
+        ],
+      },
+      // Phase 0.2.3: 역할별 신청 내역 페이지 (FR-C04)
+      {
+        path: 'my',
+        children: [
+          { path: 'applications', element: <MyProgramApplicationsPage /> }, // 개인(참여자) 신청 내역
+          { path: 'applications/:id', element: <ApplicationProgressPage /> }, // Phase 0.2.4: 진행상황 조회
+        ],
+      },
+      {
+        path: 'school',
+        children: [
+          { path: 'applications', element: <MyProgramApplicationsPage /> }, // 학교 신청 내역
+          { path: 'applications/:id', element: <ApplicationProgressPage /> }, // Phase 0.2.4: 진행상황 조회
+        ],
+      },
+      {
+        path: 'instructor',
+        children: [
+          { index: true, element: <InstructorMypagePage /> }, // Phase 0.2.5: 강사 마이페이지
+          { path: 'applications', element: <MyProgramApplicationsPage /> }, // 강사 신청 내역
+          { path: 'applications/:id', element: <ApplicationProgressPage /> }, // Phase 0.2.4: 진행상황 조회
+          { path: 'documents', element: <InstructorDocumentsPage /> }, // Phase 0.2.5: 제출 서류 관리
+          { path: 'schedule', element: <InstructorSchedulePage /> }, // Phase 0.2.6: 교육 일정 (캘린더/목록)
+          { path: 'reports', element: <InstructorReportsPage /> }, // Phase 0.2.7: 강의보고서 목록
         ],
       },
       {

@@ -8,6 +8,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Card, Space, Typography, Form, Input, InputNumber, Alert, message } from 'antd'
 import { GuideMessage, SingleCTA } from '@/shared/ui'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   lectureReportFields,
   volunteerReportFields,
@@ -23,6 +24,7 @@ const { TextArea } = Input
 export function ReportFormPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
 
@@ -152,7 +154,12 @@ export function ReportFormPage() {
       })
 
       message.success('보고서가 제출되었습니다.')
-      navigate('/')
+      // Phase 0.2.7: 강사인 경우 강사 보고서 목록으로 리다이렉트
+      if (user?.role === 'INSTRUCTOR' && reportType === 'lecture') {
+        navigate('/instructor/reports')
+      } else {
+        navigate('/')
+      }
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error) {
         // Form validation error

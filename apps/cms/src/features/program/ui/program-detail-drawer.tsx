@@ -7,6 +7,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { Drawer, Tabs, Space, Button, Badge, Modal, Typography, Tag } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import { ApplicationFormModal } from '@/shared/ui/application-form-modal'
 import { EditOutlined, DeleteOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
@@ -51,7 +52,8 @@ export function ProgramDetailDrawer({
   loading,
   hideActions = false,
 }: ProgramDetailDrawerProps) {
-  const { user } = useAuthStore()
+  const navigate = useNavigate()
+  const { user, isAuthenticated } = useAuthStore()
   const { selectedProgram: storeSelectedProgram, setSelectedProgram } = useProgramStore()
   const { loading: statusChangeLoading, changeStatus, rollbackStatus } = useProgramStatusManager()
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
@@ -160,7 +162,17 @@ export function ProgramDetailDrawer({
   if (!displayProgram) return null
 
   // 신청하기 버튼 클릭 핸들러
+  // Phase 0.2.1: FR-C01 - 비로그인 시 로그인/회원가입 유도
   const handleApplicationClick = () => {
+    // 비로그인 시 로그인 페이지로 리다이렉트 (redirect 파라미터 포함)
+    if (!user || !isAuthenticated) {
+      const redirectPath = applicationPath?.pathType === 'internal'
+        ? `/programs/${displayProgram?.id}/apply`
+        : window.location.pathname
+      navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`)
+      return
+    }
+
     // 중복 신청 체크 (강사 권한인 경우에만)
     if (user?.role === 'INSTRUCTOR' && user?.id && displayProgram) {
       const duplicateResult = checkDuplicate(displayProgram, user.id)

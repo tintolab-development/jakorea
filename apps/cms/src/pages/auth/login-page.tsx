@@ -7,7 +7,7 @@
 
 import { Form, Input, Button, Card, message, Typography } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
@@ -22,18 +22,22 @@ const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const authStore = useAuthStore()
   const { login, loading, error, isAuthenticated, requiresMfa, user } = authStore
   const [form] = Form.useForm()
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
 
-  // 이미 로그인된 경우 역할별 리다이렉트
+  // Phase 0.2.1: FR-C01 - redirect 파라미터 처리
+  const redirectPath = searchParams.get('redirect')
+
+  // 이미 로그인된 경우 redirect 파라미터 또는 역할별 리다이렉트
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirectPath = getRedirectPathByRole(user)
-      navigate(redirectPath, { replace: true })
+      const finalRedirectPath = redirectPath || getRedirectPathByRole(user)
+      navigate(finalRedirectPath, { replace: true })
     }
-  }, [isAuthenticated, user, navigate])
+  }, [isAuthenticated, user, navigate, redirectPath])
 
   const onFinish = async (values: LoginRequest) => {
     try {
@@ -45,14 +49,14 @@ export function LoginPage() {
         return
       }
 
-      // Phase 0.1.3: 역할별 리다이렉트
+      // Phase 0.2.1: FR-C01 - redirect 파라미터 우선, 없으면 역할별 리다이렉트
       const currentUser = authStore.user
       if (currentUser) {
-        const redirectPath = getRedirectPathByRole(currentUser)
+        const finalRedirectPath = redirectPath || getRedirectPathByRole(currentUser)
         message.success('로그인 성공')
-        navigate(redirectPath, { replace: true })
+        navigate(finalRedirectPath, { replace: true })
       } else {
-        navigate('/', { replace: true })
+        navigate(redirectPath || '/', { replace: true })
       }
     } catch {
       message.error(error?.message || '로그인에 실패했습니다.')
@@ -70,10 +74,10 @@ export function LoginPage() {
     // Zustand store의 최신 상태를 직접 확인
     if (currentIsAuthenticated && !currentRequiresMfa && mfaModalOpen && currentUser) {
       setMfaModalOpen(false)
-      // Phase 0.1.3: 역할별 리다이렉트
-      const redirectPath = getRedirectPathByRole(currentUser)
+      // Phase 0.2.1: FR-C01 - redirect 파라미터 우선, 없으면 역할별 리다이렉트
+      const finalRedirectPath = redirectPath || getRedirectPathByRole(currentUser)
       setTimeout(() => {
-        navigate(redirectPath, { replace: true })
+        navigate(finalRedirectPath, { replace: true })
       }, 200)
     }
   }, [isAuthenticated, requiresMfa, mfaModalOpen, navigate, user])
@@ -86,9 +90,9 @@ export function LoginPage() {
       const authState = useAuthStore.getState()
       if (authState.isAuthenticated && !authState.requiresMfa && mfaModalOpen && authState.user) {
         setMfaModalOpen(false)
-        // Phase 0.1.3: 역할별 리다이렉트
-        const redirectPath = getRedirectPathByRole(authState.user)
-        navigate(redirectPath, { replace: true })
+        // Phase 0.2.1: FR-C01 - redirect 파라미터 우선, 없으면 역할별 리다이렉트
+        const finalRedirectPath = redirectPath || getRedirectPathByRole(authState.user)
+        navigate(finalRedirectPath, { replace: true })
       }
     }, 500) // 0.5초마다 확인
     
