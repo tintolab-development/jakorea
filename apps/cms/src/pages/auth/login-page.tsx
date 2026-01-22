@@ -1,63 +1,39 @@
 /**
  * 로그인 페이지
  * Phase 4.1.1: 사용자 인증 시스템
+ * Phase 0.1.3: 로그인 흐름 개선 (역할 자동 판별)
  * UX/UI 디자이너: Ant Design Form 컴포넌트 활용, 깔끔한 로그인 UI
  */
 
-import { Form, Input, Button, Card, message, Typography, Select } from 'antd'
+import { Form, Input, Button, Card, message, Typography } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useEffect, useState } from 'react'
-import type { LoginRequest, UserRole } from '@/types/user'
-import { getUsersByRole } from '@/data/mock/users'
+import type { LoginRequest } from '@/types/user'
 import { MfaVerificationModal } from '@/features/auth/ui/mfa-verification-modal'
+import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import './login-page.css'
 
 const { Text } = Typography
-const { Option } = Select
 
 // 로고 이미지 경로
 const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
 
-// 권한별 옵션
-// Phase 0.1.1: 역할 체계 재정의
-const roleOptions = [
-  { value: 'ADMIN', label: '관리자' },
-  { value: 'INSTRUCTOR', label: '강사' },
-  { value: 'INDIVIDUAL', label: '개인(참여자)' },
-  { value: 'SCHOOL', label: '학교' },
-  // 하위 호환성: 기존 역할 유지
-  { value: 'STUDENT', label: '수강자 (구)' },
-] as const
-
 export function LoginPage() {
   const navigate = useNavigate()
   const authStore = useAuthStore()
-  const { login, loading, error, isAuthenticated, requiresMfa } = authStore
+  const { login, loading, error, isAuthenticated, requiresMfa, user } = authStore
   const [form] = Form.useForm()
-  const [selectedRole, setSelectedRole] = useState<UserRole>('ADMIN')
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
 
-  // 이미 로그인된 경우 대시보드로 리다이렉트
+  // 이미 로그인된 경우 역할별 리다이렉트
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/')
+    if (isAuthenticated && user) {
+      const redirectPath = getRedirectPathByRole(user)
+      navigate(redirectPath, { replace: true })
     }
-  }, [isAuthenticated, navigate])
-
-  // 권한 변경 시 해당 권한의 첫 번째 계정으로 자동 입력
-  const handleRoleChange = (role: UserRole) => {
-    setSelectedRole(role)
-    const users = getUsersByRole(role)
-    if (users.length > 0) {
-      const firstUser = users[0]
-      form.setFieldsValue({
-        email: firstUser.email,
-        password: firstUser.password,
-      })
-    }
-  }
+  }, [isAuthenticated, user, navigate])
 
   const onFinish = async (values: LoginRequest) => {
     try {
@@ -69,40 +45,38 @@ export function LoginPage() {
         return
       }
 
-      message.success('로그인 성공')
-      navigate('/')
+      // Phase 0.1.3: 역할별 리다이렉트
+      const currentUser = authStore.user
+      if (currentUser) {
+        const redirectPath = getRedirectPathByRole(currentUser)
+        message.success('로그인 성공')
+        navigate(redirectPath, { replace: true })
+      } else {
+        navigate('/', { replace: true })
+      }
     } catch {
       message.error(error?.message || '로그인에 실패했습니다.')
     }
   }
 
-  // MFA 인증 완료 시 모달 닫기 및 대시보드로 이동
+  // MFA 인증 완료 시 모달 닫기 및 역할별 리다이렉트
   useEffect(() => {
     // Zustand store의 최신 상태를 직접 확인 (구독된 값보다 정확함)
     const authState = useAuthStore.getState()
     const currentIsAuthenticated = authState.isAuthenticated
     const currentRequiresMfa = authState.requiresMfa
-    
-    console.log('[Login Page] Auth state changed', {
-      isAuthenticated, // 구독된 값
-      requiresMfa, // 구독된 값
-      mfaModalOpen,
-      currentIsAuthenticated, // 실제 store 값
-      currentRequiresMfa, // 실제 store 값
-      hasToken: !!authState.token,
-      userId: authState.user?.id,
-    })
+    const currentUser = authState.user
     
     // Zustand store의 최신 상태를 직접 확인
-    if (currentIsAuthenticated && !currentRequiresMfa && mfaModalOpen) {
-      console.log('[Login Page] MFA completed, closing modal and navigating')
+    if (currentIsAuthenticated && !currentRequiresMfa && mfaModalOpen && currentUser) {
       setMfaModalOpen(false)
-      // 약간의 지연을 두어 상태 업데이트가 완전히 반영되도록 함
+      // Phase 0.1.3: 역할별 리다이렉트
+      const redirectPath = getRedirectPathByRole(currentUser)
       setTimeout(() => {
-        navigate('/', { replace: true })
+        navigate(redirectPath, { replace: true })
       }, 200)
     }
-  }, [isAuthenticated, requiresMfa, mfaModalOpen, navigate])
+  }, [isAuthenticated, requiresMfa, mfaModalOpen, navigate, user])
   
   // 추가: 주기적으로 상태 확인 (구독이 제대로 작동하지 않는 경우 대비)
   useEffect(() => {
@@ -110,27 +84,16 @@ export function LoginPage() {
     
     const interval = setInterval(() => {
       const authState = useAuthStore.getState()
-      if (authState.isAuthenticated && !authState.requiresMfa && mfaModalOpen) {
-        console.log('[Login Page] Interval check: MFA completed, closing modal')
+      if (authState.isAuthenticated && !authState.requiresMfa && mfaModalOpen && authState.user) {
         setMfaModalOpen(false)
-        navigate('/', { replace: true })
+        // Phase 0.1.3: 역할별 리다이렉트
+        const redirectPath = getRedirectPathByRole(authState.user)
+        navigate(redirectPath, { replace: true })
       }
     }, 500) // 0.5초마다 확인
     
     return () => clearInterval(interval)
   }, [mfaModalOpen, navigate])
-
-  // 초기 로드 시 관리자 계정으로 자동 입력
-  useEffect(() => {
-    const adminUsers = getUsersByRole('ADMIN')
-    if (adminUsers.length > 0) {
-      const firstAdmin = adminUsers[0]
-      form.setFieldsValue({
-        email: firstAdmin.email,
-        password: firstAdmin.password,
-      })
-    }
-  }, [form])
 
   return (
     <div className="login-page">
@@ -146,24 +109,10 @@ export function LoginPage() {
           autoComplete="off"
           layout="vertical"
           size="large"
-          initialValues={{ role: 'ADMIN' }}
         >
-          <Form.Item name="role" style={{ marginBottom: 16 }}>
-            <Select
-              value={selectedRole}
-              onChange={handleRoleChange}
-              size="large"
-              style={{ width: '100%' }}
-            >
-              {roleOptions.map(option => (
-                <Option key={option.value} value={option.value}>
-                  {option.label} 로그인
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
           <Form.Item
             name="email"
+            label="이메일"
             rules={[
               { required: true, message: '이메일을 입력해주세요.' },
               { type: 'email', message: '올바른 이메일 형식이 아닙니다.' },
@@ -174,6 +123,7 @@ export function LoginPage() {
 
           <Form.Item
             name="password"
+            label="비밀번호"
             rules={[{ required: true, message: '비밀번호를 입력해주세요.' }]}
           >
             <Input.Password
@@ -197,8 +147,11 @@ export function LoginPage() {
         </Form>
 
         <div className="login-footer">
+          <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 8 }}>
+            이메일과 비밀번호로 로그인하세요. 역할은 자동으로 판별됩니다.
+          </Text>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            권한을 선택하면 해당 권한의 테스트 계정이 자동으로 입력됩니다.
+            계정이 없으신가요? <Link to="/register">회원가입</Link>
           </Text>
         </div>
       </Card>

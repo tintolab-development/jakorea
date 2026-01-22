@@ -1,0 +1,53 @@
+/**
+ * 회원가입 페이지 스타일
+ * Phase 0.1.2: 회원가입 흐름
+ */
+
+.register-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #fff;
+  padding: 20px;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.register-logo {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 24px;
+}
+
+.register-step-content {
+  min-height: 400px;
+  padding: 0 8px;
+}
+
+.register-error {
+  margin-bottom: 16px;
+  text-align: center;
+  padding: 12px;
+  background: #fff1f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+}
+
+.register-footer {
+  margin-top: 24px;
+  text-align: center;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}

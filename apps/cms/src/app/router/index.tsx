@@ -42,6 +42,7 @@ const lazyLoad = <T extends React.ComponentType<any>>(
 
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
+import { RegisterPage } from '@/pages/auth/register-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 
@@ -153,6 +154,10 @@ function LegacyPostsRedirect({ kind }: { kind: 'root' | 'faq' | 'inquiries' | 'n
 }
 
 export const router = createBrowserRouter([
+  {
+    path: '/register',
+    element: <RegisterPage />,
+  },
   {
     path: '/login',
     element: <LoginPage />,
