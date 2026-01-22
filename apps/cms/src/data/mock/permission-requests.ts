@@ -25,11 +25,11 @@ function generateFutureDate(daysAhead: number): string {
 }
 
 // 관리자 사용자 (마스터)
-const masterUser = mockUsers.find(u => u.role === 'ADMIN' && u.adminRole === 'MASTER')
-const adminUsers = mockUsers.filter(u => u.role === 'ADMIN' && u.adminRole !== 'MASTER')
+const masterUser = mockUsers.find(u => u.role === 'ADMIN' && u.adminLevel === 'MASTER')
+const adminUsers = mockUsers.filter(u => u.role === 'ADMIN' && u.adminLevel !== 'MASTER')
 
 // 일반 관리자 사용자 (권한 요청자)
-const requesterUsers = adminUsers.filter(u => u.adminRole === 'GENERAL' || u.adminProgramRole === 'ASSISTANT')
+const requesterUsers = adminUsers.filter(u => u.adminLevel === 'GENERAL' || (u.programRoles && Object.values(u.programRoles).includes('ASSISTANT')))
 
 // 프로그램 선택
 const selectedPrograms = mockPrograms.slice(0, 5)

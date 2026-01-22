@@ -4,10 +4,10 @@
  */
 
 import type { UUID, DateValue } from './index'
-import type { AdminProgramRole } from './user'
+import type { ProgramRole } from './user'
 
-// AdminProgramRole을 재export하여 다른 파일에서 사용 가능하게 함
-export type { AdminProgramRole } from './user'
+// ProgramRole을 재export하여 다른 파일에서 사용 가능하게 함
+export type { ProgramRole } from './user'
 
 /**
  * 권한 요청 액션 타입
@@ -28,7 +28,7 @@ export interface PermissionRequest {
   requesterName: string
   programId: UUID
   programName: string
-  requestedRole: AdminProgramRole
+  requestedRole: ProgramRole
   requestedAction: PermissionAction
   reason: string
   requestedPeriod?: {
@@ -49,7 +49,7 @@ export interface PermissionRequest {
  */
 export interface CreatePermissionRequestInput {
   programId: UUID
-  requestedRole: AdminProgramRole
+  requestedRole: ProgramRole
   requestedAction: PermissionAction
   reason: string
   requestedPeriod?: {
@@ -80,7 +80,7 @@ export interface TemporaryPermission {
   userName: string
   programId: UUID
   programName: string
-  grantedRole: AdminProgramRole
+  grantedRole: ProgramRole
   grantedActions: PermissionAction[]
   expiresAt: DateValue
   grantedBy: UUID

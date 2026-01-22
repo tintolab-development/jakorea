@@ -29,9 +29,6 @@ const mockAdmins: User[] = [
     role: 'ADMIN',
     adminLevel: 'MASTER',
     programRoles: { 'program-1': 'OWNER' },
-    // 하위 호환성
-    adminRole: 'MASTER',
-    adminProgramRole: 'OWNER',
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(365),
@@ -45,9 +42,6 @@ const mockAdmins: User[] = [
     role: 'ADMIN',
     adminLevel: 'ADMIN',
     programRoles: { 'program-1': 'PARTNER' },
-    // 하위 호환성
-    adminRole: 'ADMIN',
-    adminProgramRole: 'PARTNER',
     isActive: true,
     lastLoginAt: generatePastDate(3),
     createdAt: generatePastDate(300),
@@ -61,9 +55,6 @@ const mockAdmins: User[] = [
     role: 'ADMIN',
     adminLevel: 'GENERAL',
     programRoles: { 'program-1': 'ASSISTANT' },
-    // 하위 호환성
-    adminRole: 'GENERAL',
-    adminProgramRole: 'ASSISTANT',
     isActive: true,
     lastLoginAt: generatePastDate(7),
     createdAt: generatePastDate(200),
@@ -97,10 +88,11 @@ const mockInstructors: User[] = [
     detailAddress: 'JA빌딩 10층',
     zipCode: '06611',
     bio: '안녕하세요, 경제교육 전문 강사 최강사입니다.',
-    bankInfo: {
+    instructorInfo: {
       bankName: '국민은행',
       accountHolder: '최강사',
-      accountNumber: '123-456-789012'
+      accountNumber: '123-456-789012',
+      isBusinessIncome: false,
     }
   },
   {
@@ -135,7 +127,6 @@ const mockInstructors: User[] = [
 
 // ============================================
 // 학교 (School) 계정 - 3개
-// Phase 0.1.1: VOLUNTEER 역할 제거, SCHOOL 역할 추가
 // ============================================
 
 const mockSchools: User[] = [
@@ -194,7 +185,6 @@ const mockSchools: User[] = [
 
 // ============================================
 // 개인(참여자) (Individual) 계정 - 3개
-// Phase 0.1.1: STUDENT → INDIVIDUAL
 // ============================================
 
 const mockIndividuals: User[] = [
@@ -250,9 +240,6 @@ const extraMockUsers: User[] = [
     role: 'ADMIN',
     adminLevel: 'GENERAL',
     programRoles: { 'program-1': 'ASSISTANT' },
-    // 하위 호환성
-    adminRole: 'GENERAL',
-    adminProgramRole: 'ASSISTANT',
     isActive: false,
     lastLoginAt: generatePastDate(120),
     createdAt: generatePastDate(400),

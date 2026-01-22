@@ -6,7 +6,7 @@
 
 import { Modal, Form, Input, DatePicker, Select, Button, Space, message } from 'antd'
 import { usePermissionRequest } from '../hooks/use-permission-request'
-import type { AdminProgramRole, PermissionAction } from '@/types/permission-request'
+import type { ProgramRole, PermissionAction } from '@/types/permission-request'
 import type { UUID } from '@/types'
 import dayjs from 'dayjs'
 
@@ -22,7 +22,7 @@ interface PermissionRequestModalProps {
   onSuccess?: () => void
 }
 
-const roleOptions: { value: AdminProgramRole; label: string }[] = [
+const roleOptions: { value: ProgramRole; label: string }[] = [
   { value: 'OWNER', label: '소유자' },
   { value: 'PARTNER', label: '파트너' },
   { value: 'ASSISTANT', label: '어시스턴트' },

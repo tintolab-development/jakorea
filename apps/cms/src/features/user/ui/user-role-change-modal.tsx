@@ -1,12 +1,11 @@
 /**
  * 사용자 권한 변경 모달
  * Phase 5.1.2: 사용자 관리 페이지
- * Phase 0.1.1: 역할 체계 재정의
  */
 
 import { Modal, Form, Select, message } from 'antd'
 import { useEffect } from 'react'
-import type { AdminProgramRole, AdminLevel, AdminRole, ProgramRole, User, UserRole } from '@/types/user'
+import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import { RoleBadge, getRoleLabel, getAdminLevelLabel, getProgramRoleLabel } from '@/shared/ui'
 import './user-role-change-modal.css'
 
@@ -18,22 +17,16 @@ interface UserRoleChangeModalProps {
     userId: string,
     newRole: UserRole,
     adminLevel?: AdminLevel,
-    adminRole?: AdminRole, // 하위 호환성
-    programRole?: ProgramRole,
-    adminProgramRole?: AdminProgramRole // 하위 호환성
+    programRole?: ProgramRole
   ) => Promise<void>
   onCancel: () => void
 }
 
 const { Option } = Select
 
-// Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
-const roleOptions: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT', 'VOLUNTEER']
+const roleOptions: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL']
 const adminLevelOptions: AdminLevel[] = ['MASTER', 'ADMIN', 'GENERAL']
 const programRoleOptions: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
-// 하위 호환성
-const adminRoleOptions: AdminRole[] = adminLevelOptions
-const adminProgramRoleOptions: AdminProgramRole[] = programRoleOptions
 
 export function UserRoleChangeModal({
   open,
@@ -46,13 +39,10 @@ export function UserRoleChangeModal({
 
   useEffect(() => {
     if (open && user) {
-      // Phase 0.1.1: adminLevel, programRole 우선 사용
       form.setFieldsValue({
         role: user.role,
-        adminLevel: user.adminLevel || user.adminRole || 'ADMIN',
-        adminRole: user.adminRole || user.adminLevel || 'ADMIN', // 하위 호환성
-        programRole: user.programRoles?.['program-1'] || user.adminProgramRole || 'ASSISTANT',
-        adminProgramRole: user.adminProgramRole || user.programRoles?.['program-1'] || 'ASSISTANT', // 하위 호환성
+        adminLevel: user.adminLevel || 'ADMIN',
+        programRole: user.programRoles?.['program-1'] || 'ASSISTANT',
       })
     }
   }, [open, user, form])
@@ -62,14 +52,11 @@ export function UserRoleChangeModal({
       const values = await form.validateFields()
       if (!user) return
 
-      // Phase 0.1.1: adminLevel, programRole 우선 전달
       await onConfirm(
         user.id,
         values.role,
-        values.adminLevel || values.adminRole,
-        values.adminRole, // 하위 호환성
-        values.programRole || values.adminProgramRole,
-        values.adminProgramRole // 하위 호환성
+        values.adminLevel,
+        values.programRole
       )
       message.success('권한이 변경되었습니다.')
       form.resetFields()
@@ -108,9 +95,7 @@ export function UserRoleChangeModal({
             <RoleBadge
               role={user.role}
               adminLevel={user.adminLevel}
-              adminRole={user.adminRole}
               programRole={user.programRoles?.['program-1']}
-              adminProgramRole={user.adminProgramRole}
               size="small"
               variant="tag"
             />
@@ -161,25 +146,6 @@ export function UserRoleChangeModal({
                     {programRoleOptions.map((programRole) => (
                       <Option key={programRole} value={programRole}>
                         {getProgramRoleLabel(programRole)}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                {/* 하위 호환성 필드 (숨김) */}
-                <Form.Item name="adminRole" hidden>
-                  <Select>
-                    {adminRoleOptions.map((adminRole) => (
-                      <Option key={adminRole} value={adminRole}>
-                        {adminRole}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item name="adminProgramRole" hidden>
-                  <Select>
-                    {adminProgramRoleOptions.map((adminProgramRole) => (
-                      <Option key={adminProgramRole} value={adminProgramRole}>
-                        {adminProgramRole}
                       </Option>
                     ))}
                   </Select>

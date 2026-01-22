@@ -69,11 +69,8 @@ export function VolunteerPairDetailModal({
               {user.isActive ? '활성' : '비활성'}
             </Tag>
           </Descriptions.Item>
-          {/* Phase 0.1.1: INDIVIDUAL 추가 */}
           {(user.role === 'INSTRUCTOR' ||
-            user.role === 'INDIVIDUAL' ||
-            // 하위 호환성
-            user.role === 'VOLUNTEER') && (
+            user.role === 'INDIVIDUAL') && (
             <>
               <Descriptions.Item label="면접 상태">
                 {user.interviewStatus ? (

@@ -231,7 +231,6 @@ export function randomMatchVolunteers(
  */
 export function getVolunteerIds(): UUID[] {
   return mockUsers
-    // Phase 0.1.1: INDIVIDUAL 우선 사용
-    .filter(user => (user.role === 'INDIVIDUAL' || user.role === 'VOLUNTEER') && user.isActive)
+    .filter(user => user.role === 'INDIVIDUAL' && user.isActive)
     .map(user => user.id)
 }

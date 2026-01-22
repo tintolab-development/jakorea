@@ -1,34 +1,28 @@
 /**
  * 권한 표시 컴포넌트
  * Phase 4.1.2: 권한 체계 정의
- * Phase 0.1.1: 역할 체계 재정의
  */
 
 import { Badge, Tag } from 'antd'
 import {
   TeamOutlined,
   SafetyOutlined,
-  BookOutlined,
-  HeartOutlined,
   UserOutlined,
   BankOutlined,
 } from '@ant-design/icons'
-import type { AdminProgramRole, AdminLevel, AdminRole, ProgramRole, UserRole } from '@/types/user'
+import type { AdminLevel, ProgramRole, UserRole } from '@/types/user'
 import './role-badge.css'
 
 interface RoleBadgeProps {
   role: UserRole
   adminLevel?: AdminLevel
-  adminRole?: AdminRole // 하위 호환성
   programRole?: ProgramRole
-  adminProgramRole?: AdminProgramRole // 하위 호환성
   showIcon?: boolean
   size?: 'default' | 'small' | 'large'
   variant?: 'badge' | 'tag'
 }
 
 // 권한별 설정
-// Phase 0.1.1: INDIVIDUAL, SCHOOL 추가, STUDENT, VOLUNTEER는 하위 호환성
 const roleConfig: Record<
   UserRole,
   {
@@ -57,17 +51,6 @@ const roleConfig: Record<
     color: 'purple',
     icon: <BankOutlined />,
   },
-  // 하위 호환성
-  STUDENT: {
-    label: '수강자 (구)',
-    color: 'orange',
-    icon: <BookOutlined />,
-  },
-  VOLUNTEER: {
-    label: '봉사자 (구)',
-    color: 'green',
-    icon: <HeartOutlined />,
-  },
 }
 
 const adminLevelLabels: Record<AdminLevel, string> = {
@@ -82,8 +65,6 @@ const programRoleLabels: Record<ProgramRole, string> = {
   ASSISTANT: '보조',
 }
 
-// 하위 호환성 (getAdminProgramRoleLabel에서 사용)
-const adminProgramRoleLabels: Record<AdminProgramRole, string> = programRoleLabels
 
 /**
  * 권한 배지 컴포넌트
@@ -92,19 +73,15 @@ const adminProgramRoleLabels: Record<AdminProgramRole, string> = programRoleLabe
 export function RoleBadge({
   role,
   adminLevel,
-  adminRole, // 하위 호환성
   programRole: _programRole, // 향후 사용 예정
-  adminProgramRole: _adminProgramRole, // 하위 호환성, 향후 사용 예정
   showIcon = true,
   size = 'default',
   variant = 'tag',
 }: RoleBadgeProps) {
   const config = roleConfig[role]
-  // Phase 0.1.1: adminLevel 우선 사용, 없으면 adminRole (하위 호환성)
-  const effectiveAdminLevel = adminLevel || adminRole
   const label =
-    role === 'ADMIN' && effectiveAdminLevel
-      ? adminLevelLabels[effectiveAdminLevel]
+    role === 'ADMIN' && adminLevel
+      ? adminLevelLabels[adminLevel]
       : config.label
 
   if (variant === 'badge') {
@@ -154,18 +131,10 @@ export function RoleIcon({ role, size = 'default' }: { role: UserRole; size?: 's
 
 /**
  * 권한 레이블만 반환하는 함수
- * Phase 0.1.1: adminLevel 지원 추가
  */
-export function getRoleLabel(
-  role: UserRole,
-  adminLevel?: AdminLevel,
-  adminRole?: AdminRole // 하위 호환성
-): string {
-  if (role === 'ADMIN') {
-    const effectiveAdminLevel = adminLevel || adminRole
-    if (effectiveAdminLevel) {
-      return adminLevelLabels[effectiveAdminLevel]
-    }
+export function getRoleLabel(role: UserRole, adminLevel?: AdminLevel): string {
+  if (role === 'ADMIN' && adminLevel) {
+    return adminLevelLabels[adminLevel]
   }
   return roleConfig[role]?.label || role
 }
@@ -179,7 +148,6 @@ export function getRoleColor(role: UserRole): string {
 
 /**
  * 관리자 권한 레벨 라벨 반환
- * Phase 0.1.1: AdminLevel 지원
  */
 export function getAdminLevelLabel(level: AdminLevel): string {
   return adminLevelLabels[level] || level
@@ -187,16 +155,9 @@ export function getAdminLevelLabel(level: AdminLevel): string {
 
 /**
  * 프로그램 역할 라벨 반환
- * Phase 0.1.1: ProgramRole 지원
  */
 export function getProgramRoleLabel(role: ProgramRole): string {
   return programRoleLabels[role] || role
 }
 
-// 하위 호환성 함수
-/** @deprecated Use getProgramRoleLabel instead */
-export function getAdminProgramRoleLabel(role: AdminProgramRole): string {
-  // adminProgramRoleLabels를 사용하여 하위 호환성 유지
-  return adminProgramRoleLabels[role] || getProgramRoleLabel(role as ProgramRole)
-}
 

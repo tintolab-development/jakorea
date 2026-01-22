@@ -42,13 +42,10 @@ export function MyProgramApplicationsPage() {
 
   useEffect(() => {
     // 신청 주체 권한일 때만 신청 목록 조회
-    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
     if (
       user?.role === 'INSTRUCTOR' ||
       user?.role === 'INDIVIDUAL' ||
-      user?.role === 'SCHOOL' ||
-      // 하위 호환성
-      user?.role === 'STUDENT'
+      user?.role === 'SCHOOL'
     ) {
       fetchApplications()
     }
@@ -57,14 +54,13 @@ export function MyProgramApplicationsPage() {
   // 로그인한 사용자가 신청한 프로그램만 필터링
   const myApplications = useMemo(() => {
     if (!user) return []
-    
+
     if (user.role === 'INSTRUCTOR' && user.instructorId) {
       return applications.filter(
         app => app.subjectType === 'instructor' && app.subjectId === user.instructorId
       )
     }
 
-    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
     if ((user.role === 'INDIVIDUAL' || user.role === 'SCHOOL') && user.id) {
       return applications.filter(
         app =>
@@ -74,15 +70,7 @@ export function MyProgramApplicationsPage() {
           app.subjectId === user.id
       )
     }
-    // 하위 호환성: STUDENT
-    if (user.role === 'STUDENT' && user.id) {
-      return applications.filter(
-        app =>
-          (app.subjectType === 'student' || app.subjectType === 'volunteer') &&
-          app.subjectId === user.id
-      )
-    }
-    
+
     return []
   }, [applications, user])
 
@@ -183,9 +171,7 @@ export function MyProgramApplicationsPage() {
     !user ||
     (user.role !== 'INSTRUCTOR' &&
       user.role !== 'INDIVIDUAL' &&
-      user.role !== 'SCHOOL' &&
-      // 하위 호환성
-      user.role !== 'STUDENT')
+      user.role !== 'SCHOOL')
   ) {
     return (
       <div>

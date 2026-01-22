@@ -9,9 +9,7 @@ import type { UUID, DateValue } from './index'
 // ===== 역할 정의 =====
 
 // 프론트 사용자 역할 (§2.1)
-export type UserRole = 'INDIVIDUAL' | 'SCHOOL' | 'INSTRUCTOR' | 'ADMIN' | 'STUDENT' | 'VOLUNTEER'
-// 하위 호환성: STUDENT, VOLUNTEER는 deprecated (점진적 마이그레이션용)
-// TODO: Phase 0.1.1 완료 후 제거 예정
+export type UserRole = 'INDIVIDUAL' | 'SCHOOL' | 'INSTRUCTOR' | 'ADMIN'
 
 // 관리자 권한 레벨 (§2.2)
 export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
@@ -19,17 +17,6 @@ export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
 // 프로그램 단위 역할 (§백오피스 권한 구조)
 export type ProgramRole = 'OWNER' | 'PARTNER' | 'ASSISTANT'
 
-// ===== 하위 호환성을 위한 타입 별칭 (점진적 마이그레이션용) =====
-// TODO: Phase 0.1.1 완료 후 제거 예정
-/** @deprecated Use AdminLevel instead */
-export type AdminRole = AdminLevel
-/** @deprecated Use ProgramRole instead */
-export type AdminProgramRole = ProgramRole
-
-// ===== 하위 호환성 타입 (점진적 마이그레이션용) =====
-// TODO: Phase 0.1.1 완료 후 제거 예정
-/** @deprecated Use UserRole instead */
-export type StudentType = 'INDIVIDUAL' | 'SCHOOL_TEACHER'
 
 // 강사/봉사자 면접 상태
 export type InterviewStatus =
@@ -100,22 +87,6 @@ export interface User {
   detailAddress?: string
   zipCode?: string
 
-  // ===== 하위 호환성 필드 (점진적 마이그레이션용) =====
-  // TODO: Phase 0.1.1 완료 후 제거 예정
-  /** @deprecated Use adminLevel instead */
-  adminRole?: AdminLevel
-  /** @deprecated Use programRoles instead */
-  adminProgramRole?: ProgramRole
-  /** @deprecated Use role === 'INDIVIDUAL' instead */
-  studentType?: StudentType
-  /** @deprecated Use schoolInfo.schoolName instead */
-  schoolName?: string
-  /** @deprecated Use instructorInfo instead */
-  bankInfo?: {
-    bankName: string
-    accountHolder: string
-    accountNumber: string
-  }
 }
 
 // 로그인 요청

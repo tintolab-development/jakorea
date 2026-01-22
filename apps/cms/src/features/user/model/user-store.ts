@@ -1,11 +1,10 @@
 /**
  * 사용자 관리 상태 관리 스토어
  * Phase 5.1.2: 사용자 관리 페이지
- * Phase 0.1.1: 역할 체계 재정의
  */
 
 import { create } from 'zustand'
-import type { AdminProgramRole, AdminLevel, AdminRole, ProgramRole, User, UserRole } from '@/types/user'
+import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import { getUsers, getUserById, updateUserRole, updateUserStatus } from '@/entities/user/api/user-service'
 
 interface UserStore {
@@ -21,9 +20,7 @@ interface UserStore {
     userId: string,
     newRole: UserRole,
     adminLevel?: AdminLevel,
-    adminRole?: AdminRole, // 하위 호환성
-    programRole?: ProgramRole,
-    adminProgramRole?: AdminProgramRole // 하위 호환성
+    programRole?: ProgramRole
   ) => Promise<void>
   changeUserStatus: (userId: string, isActive: boolean) => Promise<void>
   clearSelectedUser: () => void
@@ -60,19 +57,14 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  changeUserRole: async (userId, newRole, adminLevel, adminRole, programRole, adminProgramRole) => {
+  changeUserRole: async (userId, newRole, adminLevel, programRole) => {
     set({ loading: true, error: null })
     try {
-      // Phase 0.1.1: adminLevel, programRole 우선 사용
-      const effectiveAdminLevel = adminLevel || adminRole
-      const effectiveProgramRole = programRole || adminProgramRole
       const updatedUser = await updateUserRole(
         userId,
         newRole,
-        effectiveAdminLevel,
-        adminRole, // 하위 호환성
-        effectiveProgramRole,
-        adminProgramRole // 하위 호환성
+        adminLevel,
+        programRole
       )
       
       // 목록 업데이트

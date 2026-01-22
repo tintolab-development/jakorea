@@ -76,12 +76,12 @@ export function useInstructorApplications(): UseInstructorApplicationsResult {
   const fetchInterviews = useCallback(async () => {
     setLoading(true)
     try {
-      const filters: { status?: InterviewStatus; userRole?: 'INSTRUCTOR' | 'STUDENT' } = {}
+      const filters: { status?: InterviewStatus; userRole?: 'INSTRUCTOR' | 'INDIVIDUAL' | 'SCHOOL' } = {}
       if (statusFilter !== 'ALL') {
         filters.status = statusFilter
       }
       if (roleFilter !== 'ALL') {
-        filters.userRole = roleFilter as 'INSTRUCTOR' | 'STUDENT'
+        filters.userRole = roleFilter as 'INSTRUCTOR' | 'INDIVIDUAL' | 'SCHOOL'
       }
       const data = await getInterviews(filters)
       setInterviews(data)

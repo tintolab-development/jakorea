@@ -13,7 +13,6 @@ export function getRedirectPathByRole(user: Omit<User, 'password'> | null): stri
     return '/login'
   }
 
-  // Phase 0.1.3: 역할별 리다이렉트
   switch (user.role) {
     case 'ADMIN':
       return '/admin'
@@ -22,9 +21,6 @@ export function getRedirectPathByRole(user: Omit<User, 'password'> | null): stri
     case 'SCHOOL':
       return '/school'
     case 'INDIVIDUAL':
-    case 'STUDENT': // 하위 호환성
-      return '/my'
-    case 'VOLUNTEER': // 하위 호환성
       return '/my'
     default:
       return '/'

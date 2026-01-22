@@ -12,7 +12,7 @@ import type { InterviewStatus, UserRole } from './user'
 export interface Interview {
   id: UUID
   userId: UUID // 신청한 사용자 ID
-  userRole: UserRole // 'INSTRUCTOR' | 'STUDENT'
+  userRole: UserRole // 신청자 역할
   instructorId?: UUID // 강사 DB와 연결 (승인 후)
   // 면접 일정
   scheduledAt?: DateValue // 면접 일정
@@ -51,8 +51,7 @@ export interface InstructorApplicationFormData {
   experience?: string // 이력
   availableTime?: string // 가능시간
   // 신청 타입
-  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
-  role: 'INSTRUCTOR' | 'INDIVIDUAL' | 'SCHOOL' | 'STUDENT'
+  role: 'INSTRUCTOR' | 'INDIVIDUAL' | 'SCHOOL'
 }
 
 /**

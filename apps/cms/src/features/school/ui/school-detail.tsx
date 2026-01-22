@@ -57,9 +57,9 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
       }
     })
 
-    // User에서 role이 'STUDENT'이고 해당 ID를 가진 사용자들
-    const teachers = users.filter(user => 
-      user.role === 'STUDENT' && studentIds.has(user.id)
+    // User에서 role이 'INDIVIDUAL'이고 해당 ID를 가진 사용자들
+    const teachers = users.filter(user =>
+      user.role === 'INDIVIDUAL' && studentIds.has(user.id)
     )
 
     return teachers

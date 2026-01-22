@@ -10,12 +10,8 @@ import { mockInstructors } from './instructors'
 import { mockUsers } from './users'
 import { getApplicationPathByProgramId } from './application-paths'
 
-// Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
 const mockIndividualUsers = mockUsers.filter(u => u.role === 'INDIVIDUAL')
 const mockSchoolUsers = mockUsers.filter(u => u.role === 'SCHOOL')
-// 하위 호환성
-const mockStudentUsers = mockUsers.filter(u => u.role === 'STUDENT')
-const mockVolunteerUsers = mockUsers.filter(u => u.role === 'VOLUNTEER')
 
 function createApplication(
   id: string,
@@ -58,15 +54,13 @@ function createApplication(
   } else if (subjectType === 'instructor') {
     subjectId = mockInstructors[subjectIndex % mockInstructors.length].id
   } else if (subjectType === 'volunteer') {
-    // Phase 0.1.1: mockIndividualUsers 우선 사용
+    // volunteer 타입은 INDIVIDUAL 사용자로 매핑
     subjectId = (mockIndividualUsers[subjectIndex % mockIndividualUsers.length]?.id ||
-      mockVolunteerUsers[subjectIndex % mockVolunteerUsers.length]?.id ||
       mockUsers[subjectIndex % mockUsers.length].id) as UUID
   } else if (subjectType === 'student') {
-    // Phase 0.1.1: mockIndividualUsers, mockSchoolUsers 우선 사용
+    // student 타입은 INDIVIDUAL 또는 SCHOOL 사용자로 매핑
     subjectId = (mockIndividualUsers[subjectIndex % mockIndividualUsers.length]?.id ||
       mockSchoolUsers[subjectIndex % mockSchoolUsers.length]?.id ||
-      mockStudentUsers[subjectIndex % mockStudentUsers.length]?.id ||
       mockUsers[subjectIndex % mockUsers.length].id) as UUID
   } else {
     subjectId = mockSchools[subjectIndex % mockSchools.length].id
@@ -138,8 +132,7 @@ const participantApplications: Application[] = Array.from({ length: 30 }, (_, in
       Math.max(
         mockSchools.length,
         mockIndividualUsers.length,
-        mockSchoolUsers.length,
-        mockStudentUsers.length
+        mockSchoolUsers.length
       )
   )
   const status = statuses[Math.floor(Math.random() * statuses.length)]

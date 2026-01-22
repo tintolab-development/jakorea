@@ -6,7 +6,7 @@ function daysAgo(days: number) {
   return d.toISOString()
 }
 
-const commonAudience: TemplateAudience[] = ['ADMIN_INTERNAL', 'SCHOOL', 'INSTRUCTOR', 'STUDENT']
+const commonAudience: TemplateAudience[] = ['ADMIN_INTERNAL', 'SCHOOL', 'INSTRUCTOR', 'INDIVIDUAL']
 
 export const mockFileTemplates: FileTemplate[] = [
   {
@@ -72,7 +72,7 @@ export const mockSmsTemplates: SmsTemplate[] = [
     title: '[봉사단] 활동 일정 안내',
     description: '봉사자 대상 일정 안내 기본 문구',
     tags: ['봉사단', '일정', '안내'],
-    audience: ['STUDENT'],
+    audience: ['INDIVIDUAL'],
     status: 'published',
     updatedAt: daysAgo(1),
     updatedBy: '관리자(운영)',
@@ -104,7 +104,7 @@ export const mockSmsTemplates: SmsTemplate[] = [
     title: '[공통] 안내/공지 템플릿(초안)',
     description: '대상 공통 공지용 초안 템플릿',
     tags: ['공지', '공통'],
-    audience: ['SCHOOL', 'INSTRUCTOR', 'STUDENT'],
+    audience: ['SCHOOL', 'INSTRUCTOR', 'INDIVIDUAL'],
     status: 'draft',
     updatedAt: daysAgo(7),
     updatedBy: '관리자(운영)',
@@ -123,7 +123,7 @@ export const mockEmailTemplates: EmailTemplate[] = [
     title: '[봉사단] 활동 안내 메일(기본)',
     description: '봉사자 대상 활동 안내 기본 메일 템플릿',
     tags: ['봉사단', '안내', '기본'],
-    audience: ['STUDENT'],
+    audience: ['INDIVIDUAL'],
     status: 'published',
     updatedAt: daysAgo(2),
     updatedBy: '관리자(운영)',

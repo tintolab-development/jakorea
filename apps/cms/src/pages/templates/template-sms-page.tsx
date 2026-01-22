@@ -43,9 +43,6 @@ const audienceOptions: Array<{ value: TemplateAudience; label: string }> = [
   { value: 'SCHOOL', label: '학교' },
   { value: 'INSTRUCTOR', label: '강사' },
   { value: 'INDIVIDUAL', label: '개인(참여자)' },
-  { value: 'SCHOOL', label: '학교' },
-  // 하위 호환성
-  { value: 'STUDENT', label: '수강자 (구)' },
 ]
 
 const statusOptions: Array<{ value: TemplateStatus; label: string }> = [
@@ -104,8 +101,7 @@ export default function TemplateSmsPage() {
     form.resetFields()
     form.setFieldsValue({
       status: 'draft',
-      // Phase 0.1.1: INDIVIDUAL 추가
-      audience: ['INDIVIDUAL', 'STUDENT'],
+      audience: ['INDIVIDUAL'],
       tags: [],
       text:
         '안녕하세요 {{name}}님, {{date}}(금) {{time}} 일정 안내드립니다.\n상세: {{link}}',

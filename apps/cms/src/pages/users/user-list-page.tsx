@@ -10,7 +10,7 @@ import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { useUserStore } from '@/features/user/model/user-store'
-import type { AdminProgramRole, AdminLevel, AdminRole, ProgramRole, User, UserRole } from '@/types/user'
+import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import './user-list-page.css'
@@ -110,19 +110,14 @@ export function UserListPage() {
     userId: string,
     newRole: UserRole,
     adminLevel?: AdminLevel,
-    adminRole?: AdminRole, // 하위 호환성
-    programRole?: ProgramRole,
-    adminProgramRole?: AdminProgramRole // 하위 호환성
+    programRole?: ProgramRole
   ) => {
     try {
-      // Phase 0.1.1: adminLevel, programRole 우선 사용
       await changeUserRole(
         userId,
         newRole,
         adminLevel,
-        adminRole,
-        programRole,
-        adminProgramRole
+        programRole
       )
       showSuccessMessage('권한이 변경되었습니다.')
       setRoleChangeModalOpen(false)
@@ -164,8 +159,6 @@ export function UserListPage() {
           <Option value="INSTRUCTOR">강사</Option>
           <Option value="INDIVIDUAL">개인(참여자)</Option>
           <Option value="SCHOOL">학교</Option>
-          {/* 하위 호환성 */}
-          <Option value="STUDENT">수강자 (구)</Option>
         </Select>
         <Button onClick={loadUsers}>새로고침</Button>
       </Space>

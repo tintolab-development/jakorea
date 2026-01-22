@@ -4,7 +4,7 @@
  * requirements.md §2 역할 및 권한 기준
  */
 
-import type { AdminLevel, AdminProgramRole, AdminRole, ProgramRole, User, UserRole } from '@/types/user'
+import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 
 /**
  * 사용자가 특정 권한을 보유하고 있는지 확인
@@ -61,27 +61,14 @@ export function isAdmin(user: Omit<User, 'password'> | null): boolean {
 }
 
 export function isMasterAdmin(user: Omit<User, 'password'> | null): boolean {
-  return Boolean(
-    user && user.role === 'ADMIN' && (user.adminLevel === 'MASTER' || user.adminRole === 'MASTER')
-  )
+  return Boolean(user && user.role === 'ADMIN' && user.adminLevel === 'MASTER')
 }
 
 export function hasAdminLevel(
   user: Omit<User, 'password'> | null,
   adminLevel: AdminLevel
 ): boolean {
-  return Boolean(
-    user && user.role === 'ADMIN' && (user.adminLevel === adminLevel || user.adminRole === adminLevel)
-  )
-}
-
-// 하위 호환성 함수
-/** @deprecated Use hasAdminLevel instead */
-export function hasAdminRole(
-  user: Omit<User, 'password'> | null,
-  adminRole: AdminRole
-): boolean {
-  return hasAdminLevel(user, adminRole as AdminLevel)
+  return Boolean(user && user.role === 'ADMIN' && user.adminLevel === adminLevel)
 }
 
 export function hasProgramRole(
@@ -90,18 +77,7 @@ export function hasProgramRole(
   programRole: ProgramRole
 ): boolean {
   if (!user || user.role !== 'ADMIN') return false
-  return user.programRoles?.[programId] === programRole || user.adminProgramRole === programRole
-}
-
-// 하위 호환성 함수
-/** @deprecated Use hasProgramRole instead */
-export function hasAdminProgramRole(
-  user: Omit<User, 'password'> | null,
-  programRole: AdminProgramRole
-): boolean {
-  return Boolean(
-    user && user.role === 'ADMIN' && (user.adminProgramRole === programRole || user.programRoles)
-  )
+  return user.programRoles?.[programId] === programRole
 }
 
 /**
@@ -133,18 +109,6 @@ export function isSchool(user: Omit<User, 'password'> | null): boolean {
   return hasRole(user, 'SCHOOL')
 }
 
-// 하위 호환성 함수
-/** @deprecated Use isInstructorOrIndividual instead */
-export function isInstructorOrStudent(
-  user: Omit<User, 'password'> | null
-): boolean {
-  return isInstructorOrIndividual(user) || Boolean(user && user.role === 'STUDENT')
-}
-
-/** @deprecated Use isIndividual instead */
-export function isStudent(user: Omit<User, 'password'> | null): boolean {
-  return isIndividual(user) || Boolean(user && user.role === 'STUDENT')
-}
 
 /**
  * 권한 레벨 비교 (관리자 > 강사 > 수강자)
@@ -158,10 +122,7 @@ export function hasHigherRole(role1: UserRole, role2: UserRole): boolean {
     INSTRUCTOR: 3,
     SCHOOL: 2,
     INDIVIDUAL: 1,
-    // 하위 호환성
-    STUDENT: 1,
-    VOLUNTEER: 1,
-  } as Record<UserRole, number>
+  }
 
   return (roleHierarchy[role1] || 0) > (roleHierarchy[role2] || 0)
 }
@@ -178,10 +139,7 @@ export function hasEqualOrHigherRole(role1: UserRole, role2: UserRole): boolean 
     INSTRUCTOR: 3,
     SCHOOL: 2,
     INDIVIDUAL: 1,
-    // 하위 호환성
-    STUDENT: 1,
-    VOLUNTEER: 1,
-  } as Record<UserRole, number>
+  }
 
   return (roleHierarchy[role1] || 0) >= (roleHierarchy[role2] || 0)
 }

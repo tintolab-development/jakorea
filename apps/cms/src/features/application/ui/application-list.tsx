@@ -56,15 +56,15 @@ export function ApplicationList({
           : []
         break
       }
-      case 'VOLUNTEER': {
+      case 'INDIVIDUAL': {
         filteredData = currentUser.id
-          ? data.filter(app => app.subjectType === 'volunteer' && app.subjectId === currentUser.id)
+          ? data.filter(app => (app.subjectType === 'student' || app.subjectType === 'volunteer') && app.subjectId === currentUser.id)
           : []
         break
       }
-      case 'STUDENT': {
+      case 'SCHOOL': {
         filteredData = currentUser.id
-          ? data.filter(app => app.subjectType === 'student' && app.subjectId === currentUser.id)
+          ? data.filter(app => app.subjectType === 'school' && app.subjectId === currentUser.id)
           : []
         break
       }

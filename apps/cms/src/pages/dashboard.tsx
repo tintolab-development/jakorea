@@ -87,14 +87,11 @@ export function Dashboard() {
   }, [user?.role])
 
   // 강사/개인(참여자)일 경우 본인 활동 데이터 로드
-  // Phase 0.1.1: INDIVIDUAL 추가
   useEffect(() => {
     if (
       !(
         (user?.role === 'INSTRUCTOR' ||
-          user?.role === 'INDIVIDUAL' ||
-          // 하위 호환성
-          user?.role === 'STUDENT') &&
+          user?.role === 'INDIVIDUAL') &&
         user?.instructorId
       )
     ) {
@@ -247,9 +244,7 @@ export function Dashboard() {
     user?.role === 'ADMIN' ||
     user?.role === 'INSTRUCTOR' ||
     user?.role === 'INDIVIDUAL' ||
-    user?.role === 'SCHOOL' ||
-    // 하위 호환성
-    user?.role === 'STUDENT'
+    user?.role === 'SCHOOL'
 
   return (
     <div>

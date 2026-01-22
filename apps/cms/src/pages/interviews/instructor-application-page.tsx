@@ -29,8 +29,7 @@ const applicationSchema = z.object({
   participationHistory: z.number().min(0, '참여이력은 0 이상이어야 합니다'),
   experience: z.string().optional(),
   availableTime: z.string().optional(),
-  // Phase 0.1.1: INDIVIDUAL 추가
-  role: z.enum(['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL', 'STUDENT']),
+  role: z.enum(['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL']),
 })
 
 type ApplicationFormData = z.infer<typeof applicationSchema>
@@ -79,9 +78,8 @@ export function InstructorApplicationPage() {
   const roleParam = searchParams.get('role')
   const fixedRole = searchParams.get('fixedRole') === '1'
 
-  // Phase 0.1.1: INDIVIDUAL, SCHOOL 지원
   const defaultRole: ApplicationFormData['role'] =
-    roleParam === 'STUDENT' || roleParam === 'INDIVIDUAL' || roleParam === 'SCHOOL'
+    roleParam === 'INDIVIDUAL' || roleParam === 'SCHOOL'
       ? (roleParam as ApplicationFormData['role'])
       : 'INSTRUCTOR'
 
@@ -155,8 +153,6 @@ export function InstructorApplicationPage() {
                     <Option value="INSTRUCTOR">강사</Option>
                     <Option value="INDIVIDUAL">개인(참여자)</Option>
                     <Option value="SCHOOL">학교</Option>
-                    {/* 하위 호환성 */}
-                    <Option value="STUDENT">수강자 (구)</Option>
                   </Select>
                 )}
               />

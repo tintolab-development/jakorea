@@ -68,12 +68,21 @@ export function ApplicationForm({
       }
     }
 
-    if (userRole === 'STUDENT') {
+    if (userRole === 'INDIVIDUAL') {
       return {
         subjectType: 'student',
         subjectId: user.id,
         subjectName: user.name,
         eligibilitySubjectType: 'student',
+      }
+    }
+
+    if (userRole === 'SCHOOL') {
+      return {
+        subjectType: 'school',
+        subjectId: user.id,
+        subjectName: user.name,
+        eligibilitySubjectType: 'school',
       }
     }
 
@@ -199,8 +208,7 @@ export function ApplicationForm({
         }))
       case 'volunteer':
         return mockUsers
-          // Phase 0.1.1: INDIVIDUAL 우선 사용
-          .filter(u => u.role === 'INDIVIDUAL' || u.role === 'STUDENT')
+          .filter(u => u.role === 'INDIVIDUAL')
           .map(volunteer => ({
             value: volunteer.id,
             label: volunteer.name,

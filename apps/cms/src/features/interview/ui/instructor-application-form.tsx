@@ -126,7 +126,8 @@ export function InstructorApplicationForm({
             >
               <Select {...field} style={{ width: '100%' }}>
                 <Option value="INSTRUCTOR">강사</Option>
-                <Option value="STUDENT">수강자</Option>
+                <Option value="INDIVIDUAL">개인(참여자)</Option>
+                <Option value="SCHOOL">학교</Option>
               </Select>
             </Form.Item>
           )}

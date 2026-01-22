@@ -26,7 +26,7 @@ export function canDownloadParticipants(
   }
 
   // 마스터 관리자는 모든 프로그램 다운로드 가능
-  if (user.adminRole === 'MASTER') {
+  if (user.adminLevel === 'MASTER') {
     return true
   }
 
@@ -36,10 +36,7 @@ export function canDownloadParticipants(
   }
 
   // 담당자(OWNER)만 다운로드 가능
-  // TODO: user.programRoles 구조가 실제로는 어떻게 되어있는지 확인 필요
-  // 현재는 타입에 programRoles가 없으므로, 추후 확장 필요
-  // 임시로 adminProgramRole이 OWNER인 경우만 허용
-  return user.adminProgramRole === 'OWNER'
+  return user.programRoles?.[programId] === 'OWNER'
 }
 
 /**

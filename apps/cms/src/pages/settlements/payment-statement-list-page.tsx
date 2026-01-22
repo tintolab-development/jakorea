@@ -11,7 +11,7 @@ import { usePaymentStatements } from '@/features/settlement/hooks/use-payment-st
 import { useTransferListExport } from '@/features/settlement/hooks/use-transfer-list-export'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { hasAdminProgramRole } from '@/shared/utils/permissions'
+import { isMasterAdmin } from '@/shared/utils/permissions'
 import './payment-statement-list-page.css'
 
 export function PaymentStatementListPage() {
@@ -19,7 +19,11 @@ export function PaymentStatementListPage() {
   const { user } = useAuthStore()
 
   const categoryName = getCategoryNameByPath(location.pathname, 3) || '지급조서/이체리스트'
-  const canExport = hasAdminProgramRole(user, 'OWNER')
+  // MASTER 관리자 또는 OWNER 역할을 가진 관리자만 내보내기 가능
+  const canExport = Boolean(
+    isMasterAdmin(user) ||
+    (user?.role === 'ADMIN' && user?.programRoles && Object.values(user.programRoles).includes('OWNER'))
+  )
 
   const {
     filteredStatements,

@@ -54,12 +54,7 @@ export function ProfilePage() {
                       ? '개인(참여자)'
                       : user?.role === 'SCHOOL'
                         ? '학교'
-                        : // 하위 호환성
-                        user?.role === 'STUDENT'
-                          ? user?.studentType === 'SCHOOL_TEACHER'
-                            ? '학교(선생님)'
-                            : '개인 학생'
-                          : '수강자'}
+                        : '관리자'}
                 </Tag>
               </Space>
               <div style={{ marginTop: 8 }}>
@@ -128,12 +123,12 @@ export function ProfilePage() {
                     </div>
                     <Card size="small" style={{ background: '#f0f5ff', border: '1px dashed #adc6ff' }}>
                       <Descriptions column={1} size="small" colon={false}>
-                        <Descriptions.Item label={<Text strong>은행명</Text>}>{user?.bankInfo?.bankName || '-'}</Descriptions.Item>
-                        <Descriptions.Item label={<Text strong>예금주</Text>}>{user?.bankInfo?.accountHolder || '-'}</Descriptions.Item>
+                        <Descriptions.Item label={<Text strong>은행명</Text>}>{user?.instructorInfo?.bankName || '-'}</Descriptions.Item>
+                        <Descriptions.Item label={<Text strong>예금주</Text>}>{user?.instructorInfo?.accountHolder || '-'}</Descriptions.Item>
                         <Descriptions.Item label={<Text strong>계좌번호</Text>}>
-                          {user?.bankInfo?.accountNumber ? (
-                            <Text copyable={{ text: user.bankInfo.accountNumber }}>
-                              {user.bankInfo.accountNumber.replace(/(\d{3})(\d{3,})(\d{4})/, '$1-****-$3')}
+                          {user?.instructorInfo?.accountNumber ? (
+                            <Text copyable={{ text: user.instructorInfo.accountNumber }}>
+                              {user.instructorInfo.accountNumber.replace(/(\d{3})(\d{3,})(\d{4})/, '$1-****-$3')}
                             </Text>
                           ) : '-'}
                         </Descriptions.Item>

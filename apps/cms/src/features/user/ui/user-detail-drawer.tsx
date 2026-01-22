@@ -5,7 +5,7 @@
 
 import { Drawer, Descriptions, Tag, Space, Button } from 'antd'
 import type { User } from '@/types/user'
-import { RoleBadge, getAdminProgramRoleLabel, getRoleLabel } from '@/shared/ui'
+import { RoleBadge, getProgramRoleLabel, getRoleLabel } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { formatDate } from '@/shared/utils'
 
@@ -45,16 +45,16 @@ export function UserDetailDrawer({
         <Descriptions.Item label="이름">{user.name}</Descriptions.Item>
         <Descriptions.Item label="이메일">{user.email}</Descriptions.Item>
         <Descriptions.Item label="권한">
-          <RoleBadge role={user.role} adminRole={user.adminRole} size="small" variant="tag" />
+          <RoleBadge role={user.role} adminLevel={user.adminLevel} size="small" variant="tag" />
         </Descriptions.Item>
-        {user.role === 'ADMIN' && user.adminRole && (
+        {user.role === 'ADMIN' && user.adminLevel && (
           <Descriptions.Item label="관리자 구분">
-            {getRoleLabel('ADMIN', user.adminRole)}
+            {getRoleLabel('ADMIN', user.adminLevel)}
           </Descriptions.Item>
         )}
-        {user.role === 'ADMIN' && user.adminProgramRole && (
+        {user.role === 'ADMIN' && user.programRoles && (
           <Descriptions.Item label="프로그램 범위">
-            {getAdminProgramRoleLabel(user.adminProgramRole)}
+            {Object.values(user.programRoles)[0] ? getProgramRoleLabel(Object.values(user.programRoles)[0]) : '-'}
           </Descriptions.Item>
         )}
         <Descriptions.Item label="상태">
@@ -62,12 +62,9 @@ export function UserDetailDrawer({
             {user.isActive ? '활성' : '비활성'}
           </Tag>
         </Descriptions.Item>
-        {/* Phase 0.1.1: INDIVIDUAL, SCHOOL 추가 */}
         {(user.role === 'INSTRUCTOR' ||
           user.role === 'INDIVIDUAL' ||
-          user.role === 'SCHOOL' ||
-          // 하위 호환성
-          user.role === 'STUDENT') && (
+          user.role === 'SCHOOL') && (
           <>
             <Descriptions.Item label="면접 상태">
               {user.interviewStatus ? (

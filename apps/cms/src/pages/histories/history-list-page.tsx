@@ -47,7 +47,7 @@ export function HistoryListPage() {
   
   // 카테고리명 가져오기 (권한에 따라 다르게 표시)
   const { user } = useAuthStore()
-  const defaultCategoryName = user?.role === 'VOLUNTEER' ? '봉사 이력 관리' : '강사 이력 관리'
+  const defaultCategoryName = user?.role === 'INDIVIDUAL' ? '봉사 이력 관리' : '강사 이력 관리'
   const categoryName = getCategoryNameByPath(location.pathname, 3) || defaultCategoryName
 
   useEffect(() => {

@@ -75,12 +75,9 @@ export function ProgramList({
   showFavorite = false,
 }: ProgramListProps) {
   const { user } = useAuthStore()
-  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
-  const isStudent =
+  const isParticipant =
     user?.role === 'INDIVIDUAL' ||
-    user?.role === 'SCHOOL' ||
-    // 하위 호환성
-    user?.role === 'STUDENT'
+    user?.role === 'SCHOOL'
   const [searchParams, setSearchParams] = useSearchParams()
   const periodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
     const start = searchParams.get('startDate')
@@ -107,7 +104,7 @@ export function ProgramList({
   const searchQuery = useMemo(() => searchParams.get('search') || '', [searchParams])
 
   const filteredData = useMemo(() => {
-    if (!isStudent) {
+    if (!isParticipant) {
       return data
     }
 
@@ -144,7 +141,7 @@ export function ProgramList({
   }, [
     data,
     educationTypeFilter,
-    isStudent,
+    isParticipant,
     periodRange,
     progressStatusFilter,
     searchQuery,
@@ -187,14 +184,14 @@ export function ProgramList({
   }, [showFavorite, user, data, loadFavorites])
 
   useEffect(() => {
-    if (isStudent && !studentFiltersInitialized.current) {
+    if (isParticipant && !studentFiltersInitialized.current) {
       resetFilters()
       studentFiltersInitialized.current = true
     }
-    if (!isStudent) {
+    if (!isParticipant) {
       studentFiltersInitialized.current = false
     }
-  }, [isStudent, resetFilters])
+  }, [isParticipant, resetFilters])
 
   const updateSearchParams = useCallback(
     (updater: (next: URLSearchParams) => void) => {
@@ -275,7 +272,7 @@ export function ProgramList({
   return (
     <div>
       <Space style={{ marginBottom: 16 }} size="middle" wrap>
-        {isStudent ? (
+        {isParticipant ? (
           <>
            <Input
               placeholder="프로그램명 검색"

@@ -24,7 +24,7 @@ export interface Notification {
  
 export async function getNotifications(
   _userId?: UUID,
-  userRole: UserRole = 'STUDENT'
+  userRole: UserRole = 'INDIVIDUAL'
 ): Promise<Notification[]> {
   await new Promise(resolve => setTimeout(resolve, 200))
 
@@ -107,36 +107,6 @@ export async function getNotifications(
         24
       ),
     ],
-    STUDENT: [
-      createNotification(
-        'notif-student-1',
-        'system',
-        '할일',
-        '마이페이지에서 확인해야 할 작업이 있습니다.',
-        '/mypage',
-        false,
-        3
-      ),
-      createNotification(
-        'notif-student-2',
-        'schedule',
-        '일정',
-        '예정된 프로그램 일정이 있습니다.',
-        '/schedules/my',
-        false,
-        10
-      ),
-      createNotification(
-        'notif-student-3',
-        'system',
-        '개별 안내사항',
-        '신청한 프로그램 관련 안내사항이 도착했습니다.',
-        '/notices',
-        true,
-        30
-      ),
-    ],
-    // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
     INDIVIDUAL: [
       createNotification(
         'notif-individual-1',
@@ -183,27 +153,6 @@ export async function getNotifications(
         '예정된 프로그램 일정이 있습니다.',
         '/schedules/my',
         false,
-        10
-      ),
-    ],
-    // 하위 호환성
-    VOLUNTEER: [
-      createNotification(
-        'notif-volunteer-1',
-        'system',
-        '할일',
-        '봉사 일정 및 안내를 확인해주세요.',
-        '/volunteers/my/schedules',
-        false,
-        3
-      ),
-      createNotification(
-        'notif-volunteer-2',
-        'schedule',
-        '봉사 일정 안내',
-        '이번 주 봉사 일정이 확정되었습니다.',
-        '/volunteers/my/schedules',
-        true,
         10
       ),
     ],

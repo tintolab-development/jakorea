@@ -288,6 +288,7 @@ export function MfaVerificationModal({ open }: Props) {
 - [컴포넌트 패턴](./component-patterns.md)
 - [Custom Hooks 작성 가이드](./custom-hooks.md)
 - [코딩 스타일](./code-style.md)
+- [타입 안전성 및 일관성](./type-safety-and-consistency.md) - Deprecated 코드 사용 금지, 타입 일관성 유지
 
 ---
 

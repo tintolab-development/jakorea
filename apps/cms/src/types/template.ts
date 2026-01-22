@@ -7,7 +7,6 @@ export type TemplateAudience =
   | 'SCHOOL'
   | 'INSTRUCTOR'
   | 'INDIVIDUAL'
-  | 'STUDENT' // 하위 호환성
 
 export interface BaseTemplate {
   id: UUID

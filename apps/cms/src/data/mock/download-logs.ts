@@ -24,7 +24,7 @@ export const mockDownloadLogs: DownloadLog[] = [
     userId: 'user-admin1',
     action: 'DOWNLOAD',
     targetType: 'PARTICIPANTS',
-    filters: { programId: 'prog-001', role: 'STUDENT' },
+    filters: { programId: 'prog-001', role: 'INDIVIDUAL' },
     rowCount: 25,
     programId: 'prog-001',
     createdAt: generatePastDate(1, 2),

@@ -17,6 +17,8 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 - [코드 스타일](./coding/code-style.md) - ESLint, Prettier, TypeScript, 파일 명명 규칙
 - [컴포넌트 패턴](./coding/component-patterns.md) - 컴포넌트 관심사 분리 및 패턴
 - [Custom Hooks](./coding/custom-hooks.md) - Custom Hooks 작성 가이드
+- [타입 안전성 및 일관성](./coding/type-safety-and-consistency.md) - Deprecated 코드 사용 금지, 타입 일관성 유지
+- [리팩토링 원칙](./coding/refactoring-principles.md) - 코드 품질 원칙
 
 ## 🎨 UI/UX
 

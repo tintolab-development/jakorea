@@ -38,14 +38,10 @@ export function ProgramListPage() {
   const isAdmin = user?.role === 'ADMIN'
   // 강사용
   const isInstructor = user?.role === 'INSTRUCTOR'
-  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
   const isUserRole =
     isInstructor ||
     user?.role === 'INDIVIDUAL' ||
-    user?.role === 'SCHOOL' ||
-    // 하위 호환성
-    user?.role === 'VOLUNTEER' ||
-    user?.role === 'STUDENT'
+    user?.role === 'SCHOOL'
 
   // 카테고리명 가져오기
   const categoryName = isAdmin

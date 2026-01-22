@@ -79,8 +79,6 @@ export function InterviewListPage() {
           <Option value="INSTRUCTOR">강사</Option>
           <Option value="INDIVIDUAL">개인(참여자)</Option>
           <Option value="SCHOOL">학교</Option>
-          {/* 하위 호환성 */}
-          <Option value="STUDENT">수강자 (구)</Option>
         </Select>
         {(filters.status !== 'ALL' || filters.role !== 'ALL') && (
           <Button onClick={resetFilters}>필터 초기화</Button>

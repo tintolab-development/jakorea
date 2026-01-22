@@ -8,7 +8,7 @@ import type { MenuProps } from 'antd'
 import { MoreOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { User, UserRole } from '@/types/user'
-import { RoleBadge, getRoleLabel, getAdminProgramRoleLabel } from '@/shared/ui'
+import { RoleBadge, getRoleLabel, getProgramRoleLabel } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { formatDate } from '@/shared/utils'
 
@@ -40,31 +40,33 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       key: 'role',
       width: 120,
       render: (role: UserRole, record) => (
-        <RoleBadge role={role} adminRole={record.adminRole} size="small" variant="tag" />
+        <RoleBadge role={role} adminLevel={record.adminLevel} size="small" variant="tag" />
       ),
     },
     {
       title: '관리자 구분',
-      dataIndex: 'adminRole',
-      key: 'adminRole',
+      dataIndex: 'adminLevel',
+      key: 'adminLevel',
       width: 140,
-      render: (adminRole, record) => {
-        if (record.role !== 'ADMIN' || !adminRole) {
+      render: (adminLevel, record) => {
+        if (record.role !== 'ADMIN' || !adminLevel) {
           return <Tag>-</Tag>
         }
-        return <Tag>{getRoleLabel('ADMIN', adminRole)}</Tag>
+        return <Tag>{getRoleLabel('ADMIN', adminLevel)}</Tag>
       },
     },
     {
       title: '프로그램 범위',
-      dataIndex: 'adminProgramRole',
-      key: 'adminProgramRole',
+      dataIndex: 'programRoles',
+      key: 'programRoles',
       width: 140,
-      render: (adminProgramRole, record) => {
-        if (record.role !== 'ADMIN' || !adminProgramRole) {
+      render: (programRoles, record) => {
+        if (record.role !== 'ADMIN' || !programRoles) {
           return <Tag>-</Tag>
         }
-        return <Tag>{getAdminProgramRoleLabel(adminProgramRole)}</Tag>
+        // 첫 번째 프로그램 역할 표시
+        const firstRole = Object.values(programRoles)[0]
+        return firstRole ? <Tag>{getProgramRoleLabel(firstRole as any)}</Tag> : <Tag>-</Tag>
       },
     },
     {
@@ -74,13 +76,10 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       width: 140,
       render: (status, record) => {
         // 강사/개인(참여자)/학교만 면접 상태 표시
-        // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
         if (
           record.role === 'INSTRUCTOR' ||
           record.role === 'INDIVIDUAL' ||
-          record.role === 'SCHOOL' ||
-          // 하위 호환성
-          record.role === 'STUDENT'
+          record.role === 'SCHOOL'
         ) {
           return status ? <InterviewStatusBadge status={status} /> : <Tag>-</Tag>
         }
@@ -95,13 +94,10 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       align: 'center',
       render: (history, record) => {
         // 강사/개인(참여자)/학교만 참여이력 표시
-        // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
         if (
           record.role === 'INSTRUCTOR' ||
           record.role === 'INDIVIDUAL' ||
-          record.role === 'SCHOOL' ||
-          // 하위 호환성
-          record.role === 'STUDENT'
+          record.role === 'SCHOOL'
         ) {
           return history ?? 0
         }
