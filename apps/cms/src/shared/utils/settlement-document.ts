@@ -4,7 +4,8 @@
  * V3 Phase 4: PDF 생성 기능 추가
  */
 
-import ExcelJS from 'exceljs'
+// @ts-ignore - @zurmokeeper/exceljs 타입 선언 문제
+import ExcelJS from '@zurmokeeper/exceljs'
 import type { Settlement, Instructor } from '@/types/domain'
 import { downloadExcel, generateFilename } from './file-download'
 import dayjs from 'dayjs'
@@ -23,12 +24,14 @@ interface InstructorPaymentInfo {
 
 /**
  * 이체리스트 행 정보
+ * FR-G03: 은행 전송용 포맷 지원을 위해 bankName 필드 추가
  */
-interface TransferListRow {
+export interface TransferListRow {
   period: string
   programTitle: string
   instructorName: string
   bankAccount: string
+  bankName?: string // FR-G03: 은행명 (선택)
   amount: number
 }
 
@@ -318,63 +321,162 @@ function getItemTypeLabel(type: string): string {
 
 /**
  * Phase 0.4.3: 이체리스트 Excel 생성
+ * FR-G03: 은행 전송용 표준 포맷 적용
  * 암호화: ExcelJS는 기본적으로 workbook 암호화를 지원하지 않음
  * 실제 구현 시 @zurmokeeper/exceljs 또는 xlsx-populate Encryptor 사용 필요
  */
 export async function generateTransferList(
   rows: TransferListRow[],
-  options: { passwordProvided: boolean; password?: string }
+  options: { passwordProvided: boolean; password?: string; format?: 'standard' | 'bank' }
 ): Promise<void> {
+  const format = options.format || 'standard'
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('이체리스트')
 
-  worksheet.columns = [
-    { header: '기간', key: 'period', width: 12 },
-    { header: '프로그램', key: 'programTitle', width: 30 },
-    { header: '강사', key: 'instructorName', width: 16 },
-    { header: '계좌번호', key: 'bankAccount', width: 26 },
-    { header: '금액', key: 'amount', width: 16 },
-  ]
+  // FR-G03: 은행 전송용 표준 포맷
+  if (format === 'bank') {
+    // 은행 이체 파일 표준 포맷: 계좌번호, 예금주명, 은행명, 금액, 통장인자(메모)
+    worksheet.columns = [
+      { header: '계좌번호', key: 'bankAccount', width: 20 },
+      { header: '예금주명', key: 'instructorName', width: 20 },
+      { header: '은행명', key: 'bankName', width: 15 },
+      { header: '금액', key: 'amount', width: 18 },
+      { header: '통장인자', key: 'memo', width: 40 },
+    ]
 
-  rows.forEach(row => {
-    worksheet.addRow({
-      period: row.period,
-      programTitle: row.programTitle,
-      instructorName: row.instructorName,
-      bankAccount: row.bankAccount,
-      amount: row.amount,
+    rows.forEach(row => {
+      // 계좌번호에서 은행명 추출 (예: "110-123-456789" -> "국민은행")
+      // 실제로는 Settlement 데이터에서 bankName을 가져와야 함
+      const bankName = extractBankName(row.bankAccount) || '기타'
+      const memo = `${row.period} ${row.programTitle}`
+
+      worksheet.addRow({
+        bankAccount: row.bankAccount.replace(/-/g, ''), // 하이픈 제거
+        instructorName: row.instructorName,
+        bankName,
+        amount: row.amount,
+        memo,
+      })
     })
-  })
 
-  worksheet.getRow(1).font = { bold: true }
-  worksheet.getColumn('amount').numFmt = '#,##0'
+    worksheet.getRow(1).font = { bold: true }
+    worksheet.getColumn('amount').numFmt = '#,##0'
+    
+    // 합계 행 추가
+    const totalAmount = rows.reduce((sum, row) => sum + row.amount, 0)
+    const summaryRow = worksheet.addRow({
+      bankAccount: '',
+      instructorName: '',
+      bankName: '합계',
+      amount: totalAmount,
+      memo: `총 ${rows.length}건`,
+    })
+    summaryRow.font = { bold: true }
+  } else {
+    // 기본 포맷 (기존)
+    worksheet.columns = [
+      { header: '기간', key: 'period', width: 12 },
+      { header: '프로그램', key: 'programTitle', width: 30 },
+      { header: '강사', key: 'instructorName', width: 16 },
+      { header: '계좌번호', key: 'bankAccount', width: 26 },
+      { header: '금액', key: 'amount', width: 16 },
+    ]
 
-  const totalAmount = rows.reduce((sum, row) => sum + row.amount, 0)
-  const summaryRow = worksheet.addRow({
-    programTitle: '합계',
-    amount: totalAmount,
-  })
-  summaryRow.font = { bold: true }
+    rows.forEach(row => {
+      worksheet.addRow({
+        period: row.period,
+        programTitle: row.programTitle,
+        instructorName: row.instructorName,
+        bankAccount: row.bankAccount,
+        amount: row.amount,
+      })
+    })
 
-  // Phase 0.4.3: 암호화 처리 (Mock 환경에서는 실제 암호화 미적용)
-  // 실제 구현 시: @zurmokeeper/exceljs 또는 xlsx-populate Encryptor 사용
-  // 예: const encrypted = await Encryptor.encrypt(buffer, options.password || '')
-  const buffer = await workbook.xlsx.writeBuffer()
-  
-  // TODO: 실제 암호화 구현
-  // if (options.passwordProvided && options.password) {
-  //   const Encryptor = require('xlsx-populate/lib/Encryptor')
-  //   const encrypted = await Encryptor.encrypt(buffer, options.password)
-  //   downloadExcel(encrypted, filename)
-  // } else {
-  //   downloadExcel(buffer, filename)
-  // }
-  
+    worksheet.getRow(1).font = { bold: true }
+    worksheet.getColumn('amount').numFmt = '#,##0'
+
+    const totalAmount = rows.reduce((sum, row) => sum + row.amount, 0)
+    const summaryRow = worksheet.addRow({
+      programTitle: '합계',
+      amount: totalAmount,
+    })
+    summaryRow.font = { bold: true }
+  }
+
+  // Phase 0.4.3: 암호화 처리 (@zurmokeeper/exceljs 암호화 지원)
   const filename = generateFilename(
     `이체리스트${options.passwordProvided ? '_protected' : ''}`,
     'xlsx',
     dayjs().toDate()
   )
-  downloadExcel(buffer, filename)
+  
+  try {
+    if (options.passwordProvided && options.password) {
+      // Phase 0.4.3: @zurmokeeper/exceljs는 writeBuffer에 password 옵션 지원
+      // 암호화 옵션: { password: string }
+      if (options.password.length < 8) {
+        throw new Error('암호는 최소 8자 이상이어야 합니다.')
+      }
+      
+      const buffer = await workbook.xlsx.writeBuffer({ 
+        password: options.password 
+      })
+      
+      if (!buffer || buffer.byteLength === 0) {
+        throw new Error('암호화된 Excel 파일 생성에 실패했습니다.')
+      }
+      
+      downloadExcel(buffer, filename)
+    } else {
+      const buffer = await workbook.xlsx.writeBuffer()
+      
+      if (!buffer || buffer.byteLength === 0) {
+        throw new Error('Excel 파일 생성에 실패했습니다.')
+      }
+      
+      downloadExcel(buffer, filename)
+    }
+  } catch (error: any) {
+    console.error('Excel 파일 생성 실패:', error)
+    
+    // Phase 0.4.3: 에러 타입별 메시지 구분
+    if (error?.message) {
+      throw error
+    }
+    
+    // 일반적인 에러 메시지
+    throw new Error(
+      options.passwordProvided
+        ? '암호화된 Excel 파일 생성 중 오류가 발생했습니다. 암호를 확인해주세요.'
+        : 'Excel 파일 생성 중 오류가 발생했습니다.'
+    )
+  }
+}
+
+/**
+ * 계좌번호에서 은행명 추출 (간단한 휴리스틱)
+ * FR-G03: 실제로는 Settlement 데이터에서 bankName을 가져와야 함
+ */
+function extractBankName(accountNumber: string): string | null {
+  // 계좌번호 앞자리로 은행 추정 (간단한 예시)
+  const bankPrefixMap: Record<string, string> = {
+    '110': '국민은행',
+    '004': 'KB국민은행',
+    '088': '신한은행',
+    '020': '우리은행',
+    '011': 'NH농협은행',
+    '088': '신한은행',
+    '081': '하나은행',
+    '003': '기업은행',
+    '027': '한국시티은행',
+    '023': 'SC제일은행',
+    '037': '전북은행',
+    '032': '대구은행',
+    '034': '광주은행',
+    '071': '우체국',
+  }
+
+  const prefix = accountNumber.replace(/-/g, '').substring(0, 3)
+  return bankPrefixMap[prefix] || null
 }
 

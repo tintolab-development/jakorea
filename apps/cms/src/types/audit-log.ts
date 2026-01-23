@@ -22,6 +22,7 @@ export type AuditEventType =
   | 'DOWNLOAD'                  // 다운로드/내보내기
   | 'SETTLEMENT_CONFIRMED'      // 정산 확정
   | 'OWNER_TRANSFERRED'         // Owner 소유권 이전
+  | 'APPLICATION_EDIT'          // FR-F01: 신청서 오기재 사항 수정
 
 /**
  * 감사 로그

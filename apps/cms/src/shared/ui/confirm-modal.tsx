@@ -32,7 +32,9 @@ export function ConfirmModal({
       open={open}
       title={
         <span>
-          <ExclamationCircleOutlined style={{ color: danger ? '#ff4d4f' : '#1890ff', marginRight: 8 }} />
+          <ExclamationCircleOutlined
+            style={{ color: danger ? '#ff4d4f' : '#1890ff', marginRight: 8 }}
+          />
           {title}
         </span>
       }
@@ -41,16 +43,9 @@ export function ConfirmModal({
       okText={confirmText}
       cancelText={cancelText}
       okButtonProps={{ danger }}
+      zIndex={1001}
     >
       <p>{content}</p>
     </Modal>
   )
 }
-
-
-
-
-
-
-
-

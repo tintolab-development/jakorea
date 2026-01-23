@@ -42,7 +42,7 @@ export function useMatchingStatus(): UseMatchingStatusResult {
       return
     }
     try {
-      const ExcelJS = (await import('exceljs')).default
+      const ExcelJS = (await import('@zurmokeeper/exceljs')).default
       const { saveAs } = await import('file-saver')
 
       const workbook = new ExcelJS.Workbook()

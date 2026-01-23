@@ -22,6 +22,7 @@ export const AUDIT_EVENT_OPTIONS: { value: AuditEventType; label: string }[] = [
   { value: 'DOWNLOAD', label: '다운로드' },
   { value: 'SETTLEMENT_CONFIRMED', label: '정산 확정' },
   { value: 'OWNER_TRANSFERRED', label: '소유권 이전' },
+  { value: 'APPLICATION_EDIT', label: '신청서 오기재 수정' },
 ]
 
 /**
@@ -41,4 +42,5 @@ export const AUDIT_EVENT_COLORS: Record<AuditEventType, string> = {
   DOWNLOAD: 'cyan',
   SETTLEMENT_CONFIRMED: 'green',
   OWNER_TRANSFERRED: 'purple',
+  APPLICATION_EDIT: 'gold',
 }

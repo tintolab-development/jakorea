@@ -24,7 +24,10 @@ interface SchoolDetailProps {
 }
 
 export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetailProps) {
-  const { users, fetchUsers } = useUserStore()
+  // 스토어에서 정규화된 데이터 구독
+  const usersById = useUserStore(state => state.usersById)
+  const userIds = useUserStore(state => state.userIds)
+  const fetchUsers = useUserStore(state => state.fetchUsers)
   const [activeTab, setActiveTab] = useState('info')
 
   useEffect(() => {
@@ -39,14 +42,14 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
       .map(program => program.id)
 
     // 해당 학교의 프로그램에 신청한 Application들
-    const programApplications = mockApplications.filter(
-      app => schoolProgramIds.includes(app.programId)
+    const programApplications = mockApplications.filter(app =>
+      schoolProgramIds.includes(app.programId)
     )
 
     // Application에서 subjectType이 'student'인 경우 subjectId가 학생(교사 회원) ID
     // 또는 subjectType이 'school'이고 subjectId가 해당 학교 ID인 경우도 포함
     const studentIds = new Set<string>()
-    
+
     programApplications.forEach(app => {
       if (app.subjectType === 'student') {
         // subjectId가 학생 ID
@@ -58,12 +61,12 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
     })
 
     // User에서 role이 'INDIVIDUAL'이고 해당 ID를 가진 사용자들
-    const teachers = users.filter(user =>
-      user.role === 'INDIVIDUAL' && studentIds.has(user.id)
-    )
+    const teachers = userIds
+      .map(id => usersById[id])
+      .filter(user => user && user.role === 'INDIVIDUAL' && studentIds.has(user.id))
 
     return teachers
-  }, [school.id, users])
+  }, [school.id, usersById, userIds])
 
   const teacherColumns: ColumnsType<Omit<User, 'password'>> = [
     {
@@ -80,16 +83,14 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
       title: '권한',
       dataIndex: 'role',
       key: 'role',
-      render: (role) => <RoleBadge role={role} size="small" variant="tag" />,
+      render: role => <RoleBadge role={role} size="small" variant="tag" />,
     },
     {
       title: '상태',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'default'}>
-          {isActive ? '활성' : '비활성'}
-        </Tag>
+        <Tag color={isActive ? 'green' : 'default'}>{isActive ? '활성' : '비활성'}</Tag>
       ),
     },
     {
@@ -115,8 +116,12 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
           <Descriptions.Item label="지역">{school.region}</Descriptions.Item>
           {school.address && <Descriptions.Item label="주소">{school.address}</Descriptions.Item>}
           <Descriptions.Item label="담당자">{school.contactPerson}</Descriptions.Item>
-          {school.contactPhone && <Descriptions.Item label="연락처">{school.contactPhone}</Descriptions.Item>}
-          {school.contactEmail && <Descriptions.Item label="이메일">{school.contactEmail}</Descriptions.Item>}
+          {school.contactPhone && (
+            <Descriptions.Item label="연락처">{school.contactPhone}</Descriptions.Item>
+          )}
+          {school.contactEmail && (
+            <Descriptions.Item label="이메일">{school.contactEmail}</Descriptions.Item>
+          )}
           <Descriptions.Item label="등록일">
             {new Date(school.createdAt).toLocaleDateString('ko-KR')}
           </Descriptions.Item>
@@ -162,7 +167,3 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
     </Card>
   )
 }
-
-
-
-

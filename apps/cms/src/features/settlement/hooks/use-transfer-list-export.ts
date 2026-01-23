@@ -1,5 +1,6 @@
 /**
  * 이체리스트 다운로드 훅
+ * Phase 0.4.3: Excel 암호화 기능 검증 및 테스트
  */
 
 import { useCallback, useState } from 'react'
@@ -14,10 +15,39 @@ export interface TransferListRow {
   amount: number
 }
 
+/**
+ * 비밀번호 강도 계산
+ */
+function calculatePasswordStrength(password: string): {
+  strength: 'weak' | 'medium' | 'strong'
+  score: number
+} {
+  let score = 0
+
+  // 길이 체크
+  if (password.length >= 8) score += 1
+  if (password.length >= 12) score += 1
+
+  // 복잡도 체크
+  if (/[a-z]/.test(password)) score += 1
+  if (/[A-Z]/.test(password)) score += 1
+  if (/[0-9]/.test(password)) score += 1
+  if (/[^a-zA-Z0-9]/.test(password)) score += 1
+
+  if (score <= 2) return { strength: 'weak', score }
+  if (score <= 4) return { strength: 'medium', score }
+  return { strength: 'strong', score }
+}
+
 export function useTransferListExport(rows: TransferListRow[], canExport: boolean) {
   const [isOpen, setIsOpen] = useState(false)
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [enableEncryption, setEnableEncryption] = useState(true)
   const [loading, setLoading] = useState(false)
+
+  const passwordStrength = calculatePasswordStrength(password)
+  const passwordsMatch = password === passwordConfirm || !passwordConfirm
 
   const openModal = useCallback(() => {
     if (!canExport) {
@@ -34,35 +64,78 @@ export function useTransferListExport(rows: TransferListRow[], canExport: boolea
   const closeModal = useCallback(() => {
     setIsOpen(false)
     setPassword('')
+    setPasswordConfirm('')
+    setEnableEncryption(true)
   }, [])
 
   const confirmExport = useCallback(async () => {
-    if (!password.trim()) {
-      message.warning('암호를 입력해주세요')
-      return
+    // Phase 0.4.3: 암호화 옵션 체크
+    if (enableEncryption) {
+      if (!password.trim()) {
+        message.warning('암호를 입력해주세요')
+        return
+      }
+
+      if (password.length < 8) {
+        message.warning('암호는 최소 8자 이상이어야 합니다')
+        return
+      }
+
+      if (!passwordsMatch) {
+        message.warning('암호 확인이 일치하지 않습니다')
+        return
+      }
     }
 
     setLoading(true)
     try {
-      // Phase 0.4.3: 암호 전달 (실제 암호화는 Mock 환경에서 미적용)
-      await generateTransferList(rows, { passwordProvided: true, password })
-      message.success('이체리스트가 다운로드되었습니다 (Mock: 암호 미적용)')
+      // Phase 0.4.3: 암호화 옵션에 따라 처리
+      await generateTransferList(rows, {
+        passwordProvided: enableEncryption,
+        password: enableEncryption ? password : undefined,
+      })
+      message.success(
+        enableEncryption
+          ? '암호화된 이체리스트가 다운로드되었습니다. 파일을 열 때 암호가 필요합니다.'
+          : '이체리스트가 다운로드되었습니다'
+      )
       closeModal()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to export transfer list:', error)
-      message.error('이체리스트 다운로드 중 오류가 발생했습니다')
+
+      // Phase 0.4.3: 에러 타입별 메시지 처리
+      let errorMessage = '이체리스트 다운로드 중 오류가 발생했습니다'
+
+      if (error?.message) {
+        errorMessage = error.message
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      // 암호 관련 에러인 경우 특별 처리
+      if (errorMessage.includes('암호') || errorMessage.includes('password')) {
+        message.error(errorMessage)
+      } else {
+        message.error(`${errorMessage}\n파일 생성에 실패했습니다. 다시 시도해주세요.`)
+      }
     } finally {
       setLoading(false)
     }
-  }, [closeModal, password, rows])
+  }, [closeModal, password, passwordConfirm, passwordsMatch, enableEncryption, rows])
 
   return {
     isOpen,
     password,
+    passwordConfirm,
+    enableEncryption,
+    passwordStrength,
+    passwordsMatch,
     loading,
     openModal,
     closeModal,
     setPassword,
+    setPasswordConfirm,
+    setEnableEncryption,
     confirmExport,
   }
 }

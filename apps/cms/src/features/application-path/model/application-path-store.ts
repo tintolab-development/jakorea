@@ -10,18 +10,27 @@ import { applicationPathService } from '@/entities/application-path/api/applicat
 
 interface ApplicationPathStore {
   paths: ApplicationPath[]
+  selectedPath: ApplicationPath | null
   loading: boolean
   error: string | null
   fetchPaths: () => Promise<void>
   fetchPathById: (id: UUID) => Promise<ApplicationPath | undefined>
   fetchPathByProgramId: (programId: string) => Promise<ApplicationPath | undefined>
-  createPath: (data: Omit<ApplicationPath, 'id' | 'createdAt' | 'updatedAt'>) => Promise<ApplicationPath>
-  updatePath: (id: UUID, data: Partial<Omit<ApplicationPath, 'id' | 'createdAt'>>) => Promise<ApplicationPath>
+  createPath: (
+    data: Omit<ApplicationPath, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<ApplicationPath>
+  updatePath: (
+    id: UUID,
+    data: Partial<Omit<ApplicationPath, 'id' | 'createdAt'>>
+  ) => Promise<ApplicationPath>
   deletePath: (id: UUID) => Promise<void>
+  setSelectedPath: (path: ApplicationPath | null) => void
+  clearSelectedPath: () => void
 }
 
 export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
   paths: [],
+  selectedPath: null,
   loading: false,
   error: null,
 
@@ -77,6 +86,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       const updated = await applicationPathService.update(id, data)
       set(state => ({
         paths: state.paths.map(p => (p.id === id ? updated : p)),
+        selectedPath: state.selectedPath?.id === id ? updated : state.selectedPath,
         loading: false,
       }))
       return updated
@@ -92,6 +102,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       await applicationPathService.delete(id)
       set(state => ({
         paths: state.paths.filter(p => p.id !== id),
+        selectedPath: state.selectedPath?.id === id ? null : state.selectedPath,
         loading: false,
       }))
     } catch (error) {
@@ -99,5 +110,8 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       throw error
     }
   },
-}))
 
+  setSelectedPath: path => set({ selectedPath: path }),
+
+  clearSelectedPath: () => set({ selectedPath: null }),
+}))

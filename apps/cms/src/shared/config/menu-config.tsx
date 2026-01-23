@@ -1,6 +1,7 @@
 /**
  * 권한별 메뉴 구성 설정
  * Phase 4.2.1: 권한별 메뉴 구성
+ * Phase 0.1.5: 역할별 메뉴 완전 분리 및 권한 기반 라우트 가드 완성
  */
 
 import type { UserRole } from '@/types/user'
@@ -48,14 +49,31 @@ const allMenuItems: MenuItemConfig[] = [
   { key: '/', label: '메인 홈', icon: <DashboardOutlined />, enabled: true },
   {
     key: 'programs-group',
-    label: '진행 프로그램(수강)',
+    label: '프로그램',
     icon: <BookOutlined />,
     enabled: true,
+    allowedRoles: ['ADMIN', 'INDIVIDUAL', 'SCHOOL'],
     children: [
       {
         key: '/programs',
         label: '프로그램 리스트',
         enabled: true,
+        allowedRoles: ['ADMIN', 'INDIVIDUAL', 'SCHOOL'],
+      },
+    ],
+  },
+  {
+    key: 'applications-group-user',
+    label: '신청내역',
+    icon: <FileTextOutlined />,
+    enabled: true,
+    allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
+    children: [
+      {
+        key: '/programs/my',
+        label: '내 신청내역',
+        enabled: true,
+        allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
       },
     ],
   },
@@ -199,6 +217,120 @@ const allMenuItems: MenuItemConfig[] = [
   },
 
   { key: 'divider-user', type: 'divider', enabled: true },
+
+  // Phase 0.1.5: 역할별 메뉴 완전 분리
+  // 개인(INDIVIDUAL) 전용 메뉴
+  {
+    key: 'schedules-group-individual',
+    label: '일정',
+    icon: <CalendarOutlined />,
+    enabled: true,
+    allowedRoles: ['INDIVIDUAL'],
+    children: [
+      {
+        key: '/schedules/my',
+        label: '내 일정',
+        enabled: true,
+        allowedRoles: ['INDIVIDUAL'],
+      },
+      {
+        key: '/schedules/my/calendar',
+        label: '일정 캘린더',
+        enabled: true,
+        allowedRoles: ['INDIVIDUAL'],
+      },
+    ],
+  },
+  {
+    key: '/assignments',
+    label: '과제',
+    icon: <FileTextOutlined />,
+    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    allowedRoles: ['INDIVIDUAL'],
+  },
+  {
+    key: '/certificates',
+    label: '수료증',
+    icon: <FileOutlined />,
+    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    allowedRoles: ['INDIVIDUAL'],
+  },
+
+  // 학교(SCHOOL) 전용 메뉴
+  {
+    key: '/community',
+    label: '커뮤니티',
+    icon: <TeamOutlined />,
+    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    allowedRoles: ['SCHOOL'],
+  },
+  {
+    key: '/surveys',
+    label: '만족도설문',
+    icon: <FileTextOutlined />,
+    enabled: true,
+    allowedRoles: ['SCHOOL'],
+  },
+  {
+    key: '/certificates-school',
+    label: '수료증',
+    icon: <FileOutlined />,
+    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    allowedRoles: ['SCHOOL'],
+  },
+
+  // 강사(INSTRUCTOR) 전용 메뉴
+  {
+    key: 'instructor-schedule-group',
+    label: '교육일정',
+    icon: <CalendarOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR'],
+    children: [
+      {
+        key: '/instructor/schedule',
+        label: '교육 일정',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+    ],
+  },
+  {
+    key: '/community-instructor',
+    label: '커뮤니티',
+    icon: <TeamOutlined />,
+    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    allowedRoles: ['INSTRUCTOR'],
+  },
+  {
+    key: '/instructor/reports',
+    label: '강의보고서',
+    icon: <FileTextOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR'],
+  },
+  {
+    key: '/instructor/settlements',
+    label: '강사비신청',
+    icon: <FileTextOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR'],
+    children: [
+      {
+        key: '/settlements/my',
+        label: '강사비 신청',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+    ],
+  },
+  {
+    key: '/instructor/certificates',
+    label: '경력증명서',
+    icon: <FileOutlined />,
+    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    allowedRoles: ['INSTRUCTOR'],
+  },
 
   {
     key: '/notices',
@@ -381,6 +513,10 @@ export function filterMenuByRole(
       if (item.type === 'divider') {
         return true
       }
+      // Phase 0.1.5: hidden 처리된 메뉴는 완전히 제외
+      if (item.hidden === true) {
+        return false
+      }
       // 비활성화된 메뉴는 제외
       if (item.enabled === false) {
         return false
@@ -407,7 +543,7 @@ export function filterMenuByRole(
         menuItem.label = '프로그램 관리'
       }
 
-      // 자식 메뉴가 있는 경우 재귀적으로 필터링
+      // Phase 0.1.5: 자식 메뉴가 있는 경우 재귀적으로 필터링 (강화)
       if (item.children && item.children.length > 0) {
         const filteredChildren = filterMenuByRole(userRole, item.children)
         if (filteredChildren && filteredChildren.length > 0) {
@@ -478,15 +614,19 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
   // 경로 정규화 (끝에 있는 / 제거)
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
 
-  // 관리자는 모든 경로 접근 가능
+  // Phase 0.1.5: 관리자 레벨별 접근 제어
   if (userRole === 'ADMIN') {
+    // MASTER 관리자는 모든 경로 접근 가능
+    // 일반 관리자는 프로그램 ACL로 제어됨
+    // 여기서는 기본적으로 접근 허용 (프로그램 ACL은 protected-route에서 체크)
     return true
   }
 
-  // 개인(참여자) 및 학교는 정산 관련 경로 접근 불가 (Phase 6.1.3)
+  // Phase 0.1.5: 개인(참여자) 및 학교는 정산 관련 경로 접근 불가
   if (
     (userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') &&
-    normalizedPath.startsWith('/settlements')
+    normalizedPath.startsWith('/settlements') &&
+    !normalizedPath.startsWith('/settlements/my')
   ) {
     return false
   }
@@ -497,8 +637,16 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     return true
   }
 
-  // 매칭된 메뉴 중 하나라도 권한이 허용되면 접근 가능
+  // Phase 0.1.5: 매칭된 메뉴 중 하나라도 권한이 허용되면 접근 가능 (강화)
   return matches.some(menuItem => {
+    // hidden 처리된 메뉴는 접근 불가
+    if (menuItem.hidden === true) {
+      return false
+    }
+    // 비활성화된 메뉴는 접근 불가
+    if (menuItem.enabled === false) {
+      return false
+    }
     // allowedRoles가 없으면 모든 권한 허용
     if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) {
       return true

@@ -41,7 +41,10 @@ function ApplicationListPage() {
     cancelReject,
   } = useApplicationReview()
 
-  const handleStatusChangeInDrawer = async (status: Application['status'], rejectionReason?: string) => {
+  const handleStatusChangeInDrawer = async (
+    status: Application['status'],
+    rejectionReason?: string
+  ) => {
     if (!selectedApplication) return
     await changeStatus(selectedApplication, status, rejectionReason)
   }
@@ -87,11 +90,12 @@ function ApplicationListPage() {
 
       <Modal
         open={formModalOpen}
-        title={editingApplication ? '신청 수정' : '신청 등록'}
+        title={editingApplication ? '오기재 사항 수정' : '신청 등록'}
         onCancel={closeForm}
         footer={null}
         width={800}
         destroyOnHidden
+        zIndex={1001}
       >
         <ApplicationForm
           application={editingApplication || undefined}
@@ -115,6 +119,7 @@ function ApplicationListPage() {
         title="신청 거절"
         open={rejectModalOpen}
         onOk={confirmReject}
+        zIndex={1001}
         onCancel={cancelReject}
         okText="거절하기"
         cancelText="취소"

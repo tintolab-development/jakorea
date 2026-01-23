@@ -3,19 +3,30 @@
  * V3 Phase 8: 일정 협의 관리
  */
 
-import { Drawer, Descriptions, Tag, Space, Button, Timeline, Alert, Typography, Divider } from 'antd'
+import {
+  Descriptions,
+  Tag,
+  Space,
+  Timeline,
+  Alert,
+  Typography,
+  Divider,
+} from 'antd'
 import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { ScheduleNegotiation, ScheduleNegotiationProposal } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
+import { useScheduleNegotiationStore } from '@/features/schedule-negotiation/model/schedule-negotiation-store'
+import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 import dayjs from 'dayjs'
 
 const { Text, Title } = Typography
 
 interface ScheduleNegotiationDetailDrawerProps {
   open: boolean
-  negotiation: ScheduleNegotiation | null
+  negotiation?: ScheduleNegotiation | null // optional로 변경하여 store의 selectedNegotiation 우선 사용
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
@@ -60,12 +71,17 @@ export function ScheduleNegotiationDetailDrawer({
   onReject,
   loading,
 }: ScheduleNegotiationDetailDrawerProps) {
-  if (!negotiation) return null
+  const { selectedNegotiation: storeSelectedNegotiation } = useScheduleNegotiationStore()
 
-  const program = programService.getByIdSync(negotiation.programId)
-  const school = schoolService.getByIdSync(negotiation.schoolId)
+  // prop의 negotiation을 우선 사용 (즉시 표시), 없으면 store의 selectedNegotiation 사용
+  const displayNegotiation = negotiation || storeSelectedNegotiation || null
 
-  const timelineItems = negotiation.proposals.map((proposal, index) => {
+  if (!displayNegotiation) return null
+
+  const program = programService.getByIdSync(displayNegotiation.programId)
+  const school = schoolService.getByIdSync(displayNegotiation.schoolId)
+
+  const timelineItems = displayNegotiation.proposals.map((proposal, index) => {
     const date = dayjs(proposal.date)
     const timeRange =
       proposal.startTime && proposal.endTime
@@ -91,7 +107,7 @@ export function ScheduleNegotiationDetailDrawer({
           {proposal.note && (
             <>
               <br />
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
                 {proposal.note}
               </Text>
             </>
@@ -101,37 +117,58 @@ export function ScheduleNegotiationDetailDrawer({
     }
   })
 
-  const hasAcceptedProposal = negotiation.proposals.some(p => p.status === 'accepted')
-  const canAccept = negotiation.status === 'proposed' && !hasAcceptedProposal
-  const canReject = negotiation.status === 'proposed' || negotiation.status === 'revised'
+  const hasAcceptedProposal = displayNegotiation.proposals.some(p => p.status === 'accepted')
+  const canAccept = displayNegotiation.status === 'proposed' && !hasAcceptedProposal
+  const canReject =
+    displayNegotiation.status === 'proposed' || displayNegotiation.status === 'revised'
+
+  // 액션 버튼 구성
+  const actions = [
+    ...(canAccept && onAccept
+      ? [
+          {
+            key: 'accept',
+            label: '합의',
+            onClick: onAccept,
+            icon: <CheckOutlined />,
+          },
+        ]
+      : []),
+    ...(canReject && onReject
+      ? [
+          {
+            key: 'reject',
+            label: '거절',
+            onClick: onReject,
+            danger: true,
+            icon: <CloseOutlined />,
+          },
+        ]
+      : []),
+    {
+      key: 'edit',
+      label: '수정',
+      onClick: onEdit,
+      icon: <EditOutlined />,
+    },
+    {
+      key: 'delete',
+      label: '삭제',
+      onClick: onDelete,
+      danger: true,
+      icon: <DeleteOutlined />,
+      loading,
+    },
+  ]
 
   return (
-    <Drawer
-      title="일정 협의 상세"
-      placement="right"
-      width={720}
+    <BaseDetailDrawer
       open={open}
       onClose={onClose}
-      extra={
-        <Space>
-          {canAccept && onAccept && (
-            <Button type="primary" icon={<CheckOutlined />} onClick={onAccept}>
-              합의
-            </Button>
-          )}
-          {canReject && onReject && (
-            <Button danger icon={<CloseOutlined />} onClick={onReject}>
-              거절
-            </Button>
-          )}
-          <Button icon={<EditOutlined />} onClick={onEdit}>
-            수정
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
-            삭제
-          </Button>
-        </Space>
-      }
+      title="일정 협의 상세"
+      width={LAYOUT_CONSTANTS.widths.modal.medium}
+      loading={loading}
+      actions={actions}
     >
       <Descriptions column={1} bordered>
         <Descriptions.Item label="프로그램">
@@ -141,16 +178,18 @@ export function ScheduleNegotiationDetailDrawer({
           <Text strong>{school?.name || '-'}</Text>
         </Descriptions.Item>
         <Descriptions.Item label="협의 상태">
-          <Tag color={statusColor[negotiation.status]}>{statusLabel[negotiation.status]}</Tag>
+          <Tag color={statusColor[displayNegotiation.status]}>
+            {statusLabel[displayNegotiation.status]}
+          </Tag>
         </Descriptions.Item>
         <Descriptions.Item label="제안 수">
-          <Text>{negotiation.proposals.length}개</Text>
+          <Text>{displayNegotiation.proposals.length}개</Text>
         </Descriptions.Item>
         <Descriptions.Item label="등록일">
-          {dayjs(negotiation.createdAt).format('YYYY-MM-DD HH:mm')}
+          {dayjs(displayNegotiation.createdAt).format('YYYY-MM-DD HH:mm')}
         </Descriptions.Item>
         <Descriptions.Item label="수정일">
-          {dayjs(negotiation.updatedAt).format('YYYY-MM-DD HH:mm')}
+          {dayjs(displayNegotiation.updatedAt).format('YYYY-MM-DD HH:mm')}
         </Descriptions.Item>
       </Descriptions>
 
@@ -163,10 +202,10 @@ export function ScheduleNegotiationDetailDrawer({
           description="하나 이상의 일정 제안이 승인되었습니다."
           type="success"
           showIcon
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}
         />
       )}
       <Timeline items={timelineItems} />
-    </Drawer>
+    </BaseDetailDrawer>
   )
 }

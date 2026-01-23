@@ -71,13 +71,28 @@ export function AuditLogListPage() {
       title: '사용자',
       dataIndex: 'userName',
       key: 'userName',
-      width: 120,
-      render: (userName: string, record: AuditLog) => (
-        <div>
-          <div>{userName}</div>
-          <div style={{ fontSize: '12px', color: '#999' }}>{record.userRole}</div>
-        </div>
-      ),
+      width: 180,
+      render: (userName: string, record: AuditLog) => {
+        const adminLevel = record.details?.adminLevel as string | undefined
+        const programRoles = record.details?.programRoles as Record<string, string> | undefined
+        
+        return (
+          <div>
+            <div>{userName}</div>
+            <div style={{ fontSize: '12px', color: '#999' }}>{record.userRole}</div>
+            {adminLevel && (
+              <div style={{ fontSize: '11px', color: '#1890ff', marginTop: 2 }}>
+                관리자 레벨: {adminLevel}
+              </div>
+            )}
+            {programRoles && Object.keys(programRoles).length > 0 && (
+              <div style={{ fontSize: '11px', color: '#52c41a', marginTop: 2 }}>
+                프로그램 역할: {Object.entries(programRoles).map(([progId, role]) => `${role}`).join(', ')}
+              </div>
+            )}
+          </div>
+        )
+      },
     },
     {
       title: '대상',
@@ -99,18 +114,25 @@ export function AuditLogListPage() {
       title: '상세 정보',
       key: 'details',
       ellipsis: true,
+      width: 250,
       render: (_: unknown, record: AuditLog) => {
         const detailKeys = Object.keys(record.details)
         if (detailKeys.length === 0) return '-'
         
-        const preview = detailKeys.slice(0, 2).map(key => {
-          const value = record.details[key]
+        // adminLevel과 programRoles는 이미 사용자 컬럼에 표시되므로 제외
+        const otherDetails = Object.entries(record.details).filter(
+          ([key]) => key !== 'adminLevel' && key !== 'programRoles'
+        )
+        
+        if (otherDetails.length === 0) return '-'
+        
+        const preview = otherDetails.slice(0, 2).map(([key, value]) => {
           return `${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`
         }).join(', ')
         
         return (
           <div title={JSON.stringify(record.details, null, 2)}>
-            {preview}{detailKeys.length > 2 ? '...' : ''}
+            {preview}{otherDetails.length > 2 ? '...' : ''}
           </div>
         )
       },

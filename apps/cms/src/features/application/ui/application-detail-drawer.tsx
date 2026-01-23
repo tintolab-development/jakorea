@@ -4,12 +4,10 @@
  */
 
 import {
-  Drawer,
   Descriptions,
   Tag,
   Tabs,
   Space,
-  Button,
   Badge,
   Timeline,
   Alert,
@@ -28,14 +26,17 @@ import {
   getApplicationStatusLabel,
   getApplicationStatusColor,
 } from '@/shared/constants/status'
-import { isApplicationFinalStatus, canTransitionApplicationStatus } from '@/shared/lib/status-transition'
+import {
+  isApplicationFinalStatus,
+  canTransitionApplicationStatus,
+} from '@/shared/lib/status-transition'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { ApplicationWorkflow } from './application-workflow'
 import { NotificationButton } from './notification-button'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { User } from '@/types/user'
-import { Popconfirm, message } from 'antd'
+import { message } from 'antd'
 import { StopOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
 import {
@@ -51,6 +52,9 @@ import { StatusChangeDropdown } from '@/features/application-progress/ui/status-
 import { StatusHistoryList } from '@/features/application-progress/ui/status-history-list'
 import { useStatusChange } from '@/features/application-progress/hooks/use-status-change'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
+import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 
 const { Text, Title } = Typography
 
@@ -79,11 +83,14 @@ export function ApplicationDetailDrawer({
 }: ApplicationDetailDrawerProps) {
   const { selectedApplication: storeSelectedApplication, updateStatus } = useApplicationStore()
   const { user: authUser } = useAuthStore()
-  
+
   // 실제 사용자 정보 (currentUser가 있으면 사용, 없으면 authUser 사용)
-  const user = currentUser || authUser
+  // currentUser는 Pick<User, ...>이므로 authUser를 우선 사용
+  const user = authUser || (currentUser ? { ...currentUser } as Omit<User, 'password'> : null)
   // 관리자 여부 결정 (isAdmin prop이 있으면 사용, 없으면 user.role로 판단)
   const isAdminUser = isAdmin || user?.role === 'ADMIN'
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
 
   // store의 selectedApplication을 우선 사용, 없으면 prop의 application 사용
   const displayApplication = storeSelectedApplication || application
@@ -95,11 +102,12 @@ export function ApplicationDetailDrawer({
 
   // Phase 4.6: 진행 상태 관리
   const { history, fetchHistory, loading: statusHistoryLoading } = useStatusChange()
-  const [currentProgressStatus, setCurrentProgressStatus] = useState<ApplicationProgressStatus | null>(null)
+  const [currentProgressStatus, setCurrentProgressStatus] =
+    useState<ApplicationProgressStatus | null>(null)
 
   // 승인된 신청의 경우 진행 상태 관리
   const isApproved = displayApplication?.status === 'approved'
-  
+
   useEffect(() => {
     if (isApproved && displayApplication && open) {
       // Phase 0.3.6: 실제 progressStatus 사용 (없으면 RECEIVED)
@@ -148,7 +156,7 @@ export function ApplicationDetailDrawer({
         ? instructorService.getNameById(displayApplication.subjectId)
         : displayApplication.subjectType === 'volunteer'
           ? mockUsers.find(u => u.id === displayApplication.subjectId)?.name || '-'
-        : '-'
+          : '-'
 
   // 신청 경로 정보 (V3 Phase 7)
   const applicationPath = displayApplication.applicationPathId
@@ -196,8 +204,56 @@ export function ApplicationDetailDrawer({
       : []),
   ]
 
+  // 액션 버튼 구성
+  const actions = [
+    ...(isAdminUser && canWrite
+      ? [
+          ...(!isFinalStatus
+            ? [
+                {
+                  key: 'edit',
+                  label: '오기재 사항 수정',
+                  onClick: onEdit,
+                  icon: <EditOutlined />,
+                },
+              ]
+            : []),
+          {
+            key: 'delete',
+            label: '삭제',
+            onClick: onDelete,
+            danger: true,
+            icon: <DeleteOutlined />,
+            loading,
+          },
+        ]
+      : []),
+    ...(!isAdminUser && canTransitionApplicationStatus(displayApplication.status, 'cancelled')
+      ? [
+          {
+            key: 'cancel',
+            label: '취소',
+            onClick: async () => {
+              try {
+                await updateStatus(displayApplication.id, 'cancelled')
+                message.success('신청이 취소되었습니다.')
+                onStatusChange('cancelled')
+              } catch (e) {
+                console.error('신청 취소 중 오류가 발생했습니다.', e)
+                message.error('신청 취소 중 오류가 발생했습니다.')
+              }
+            },
+            icon: <StopOutlined />,
+            loading,
+          },
+        ]
+      : []),
+  ]
+
   return (
-    <Drawer
+    <BaseDetailDrawer
+      open={open}
+      onClose={onClose}
       title={
         <Space>
           <Badge status={getApplicationStatusColor(displayApplication.status) as any} />
@@ -206,50 +262,10 @@ export function ApplicationDetailDrawer({
           </Title>
         </Space>
       }
-      width={792}
-      open={open}
-      onClose={onClose}
-      extra={
-        <Space>
-          {/* 관리자만 수정/삭제 가능 */}
-          {isAdminUser && (
-            <>
-              {!isFinalStatus && (
-                <Button icon={<EditOutlined />} onClick={onEdit}>
-                  수정
-                </Button>
-              )}
-              <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
-                삭제
-              </Button>
-            </>
-          )}
-          {/* 강사/수강자는 취소만 가능 (취소 가능한 상태일 때만) */}
-          {!isAdminUser && canTransitionApplicationStatus(displayApplication.status, 'cancelled') && (
-            <Popconfirm
-              title="신청 취소"
-              description="이 신청을 취소하시겠습니까? 취소된 신청은 복구할 수 없습니다."
-              onConfirm={async () => {
-                try {
-                  await updateStatus(displayApplication.id, 'cancelled')
-                  message.success('신청이 취소되었습니다.')
-                  onStatusChange('cancelled')
-                } catch (e) {
-                  console.error('신청 취소 중 오류가 발생했습니다.', e)
-                  message.error('신청 취소 중 오류가 발생했습니다.')
-                }
-              }}
-              okText="취소하기"
-              cancelText="아니오"
-              okButtonProps={{ danger: true }}
-            >
-              <Button icon={<StopOutlined />} loading={loading}>
-                취소
-              </Button>
-            </Popconfirm>
-          )}
-        </Space>
-      }
+      width={LAYOUT_CONSTANTS.widths.modal.large}
+      loading={loading}
+      actions={actions}
+      hideActions={actions.length === 0}
     >
       <Tabs
         defaultActiveKey="basic"
@@ -344,41 +360,44 @@ export function ApplicationDetailDrawer({
                     </Descriptions.Item>
                   )}
                   {/* Phase 4.2 / 0.2.3: 알림 발송 (관리자만, 승인/반려 상태일 때만) */}
-                  {isAdminUser && (displayApplication.status === 'approved' || displayApplication.status === 'rejected') && (
-                    <>
-                      <Descriptions.Item label="알림 발송">
-                        <NotificationButton
-                          application={displayApplication}
-                          notificationSent={notificationSent}
-                          onSend={handleSendNotification}
-                          loading={notificationLoading}
-                        />
-                      </Descriptions.Item>
-                      <Descriptions.Item label="알림 발송 이력" span={3}>
-                        {notificationHistory.length === 0 ? (
-                          <Text type="secondary">발송 이력 없음</Text>
-                        ) : (
-                          <Space direction="vertical" size={4} style={{ width: '100%' }}>
-                            {notificationHistory.map(r => (
-                              <div key={r.id}>
-                                <Tag color={r.status === 'SENT' ? 'green' : 'red'}>
-                                  {channelLabels[r.type]} {r.status === 'SENT' ? '발송완료' : '실패'}
-                                </Tag>
-                                <Text type="secondary" style={{ marginLeft: 8 }}>
-                                  {new Date(r.sentAt).toLocaleString('ko-KR')}
-                                </Text>
-                                <div>
-                                  <Text strong>{r.title}</Text>
-                                  {' · '}
-                                  <Text type="secondary">{r.content}</Text>
+                  {isAdminUser &&
+                    (displayApplication.status === 'approved' ||
+                      displayApplication.status === 'rejected') && (
+                      <>
+                        <Descriptions.Item label="알림 발송">
+                          <NotificationButton
+                            application={displayApplication}
+                            notificationSent={notificationSent}
+                            onSend={handleSendNotification}
+                            loading={notificationLoading}
+                          />
+                        </Descriptions.Item>
+                        <Descriptions.Item label="알림 발송 이력" span={3}>
+                          {notificationHistory.length === 0 ? (
+                            <Text type="secondary">발송 이력 없음</Text>
+                          ) : (
+                            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                              {notificationHistory.map(r => (
+                                <div key={r.id}>
+                                  <Tag color={r.status === 'SENT' ? 'green' : 'red'}>
+                                    {channelLabels[r.type]}{' '}
+                                    {r.status === 'SENT' ? '발송완료' : '실패'}
+                                  </Tag>
+                                  <Text type="secondary" style={{ marginLeft: 8 }}>
+                                    {new Date(r.sentAt).toLocaleString('ko-KR')}
+                                  </Text>
+                                  <div>
+                                    <Text strong>{r.title}</Text>
+                                    {' · '}
+                                    <Text type="secondary">{r.content}</Text>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                          </Space>
-                        )}
-                      </Descriptions.Item>
-                    </>
-                  )}
+                              ))}
+                            </Space>
+                          )}
+                        </Descriptions.Item>
+                      </>
+                    )}
                   <Descriptions.Item label="접수일">
                     {new Date(displayApplication.submittedAt).toLocaleString('ko-KR')}
                   </Descriptions.Item>
@@ -413,7 +432,7 @@ export function ApplicationDetailDrawer({
                     <Divider orientation="left" style={{ marginTop: 24 }}>
                       처리 이력
                     </Divider>
-                    
+
                     {/* Phase 4.6: 승인된 신청의 진행 상태 관리 */}
                     {isApproved && currentProgressStatus && (
                       <>
@@ -422,16 +441,20 @@ export function ApplicationDetailDrawer({
                         </Divider>
                         <Space direction="vertical" style={{ width: '100%' }} size="middle">
                           <div>
-                            <Text strong style={{ marginRight: 8 }}>현재 진행 상태:</Text>
+                            <Text strong style={{ marginRight: 8 }}>
+                              현재 진행 상태:
+                            </Text>
                             <StatusChangeDropdown
                               applicationId={displayApplication.id}
                               currentStatus={currentProgressStatus || 'RECEIVED'}
-                              onStatusChange={async (newStatus) => {
+                              onStatusChange={async newStatus => {
                                 setCurrentProgressStatus(newStatus)
                                 await fetchHistory(displayApplication.id)
                                 // Phase 0.3.6: store의 selectedApplication도 갱신
                                 if (storeSelectedApplication?.id === displayApplication.id) {
-                                  await useApplicationStore.getState().fetchApplicationById(displayApplication.id)
+                                  await useApplicationStore
+                                    .getState()
+                                    .fetchApplicationById(displayApplication.id)
                                 }
                               }}
                             />
@@ -465,6 +488,6 @@ export function ApplicationDetailDrawer({
           },
         ]}
       />
-    </Drawer>
+    </BaseDetailDrawer>
   )
 }

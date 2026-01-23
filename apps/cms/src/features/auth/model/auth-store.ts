@@ -25,6 +25,9 @@ interface AuthState {
   updateUser: (userData: Partial<Omit<User, 'password'>>) => void
   clearError: () => void
   setMfaVerified: () => void // Phase 0.5.1: MFA 인증 완료 처리
+  setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
+  refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
+  checkSessionExpiry: () => boolean // Phase 0.5: 세션 만료 확인
 }
 
 const TOKEN_STORAGE_KEY = 'auth_token'
@@ -160,10 +163,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           token,
           expiresAt,
           isAuthenticated: true,
-          mfaState: state.mfaState ? {
-            ...state.mfaState,
-            isVerified: true,
-          } : null,
+          mfaState: state.mfaState
+            ? {
+                ...state.mfaState,
+                isVerified: true,
+              }
+            : null,
           requiresMfa: false,
         })
       }
@@ -204,10 +209,27 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return
       }
 
-      // 만료 확인
-      if (new Date(expiresAt) <= new Date()) {
+      // Phase 0.5: 세션 만료 확인
+      const now = new Date()
+      const expiryTime = new Date(expiresAt)
+
+      if (expiryTime <= now) {
+        // 만료된 경우 로그아웃
         get().logout()
         return
+      }
+
+      // Phase 0.5: 토큰 갱신 필요 여부 확인 (만료 1시간 전)
+      const timeUntilExpiry = expiryTime.getTime() - now.getTime()
+      const oneHour = 60 * 60 * 1000
+
+      if (timeUntilExpiry < oneHour && timeUntilExpiry > 0) {
+        // 자동 토큰 갱신 시도 (백그라운드)
+        get()
+          .refreshToken()
+          .catch(() => {
+            // 갱신 실패는 조용히 처리 (사용자에게 노출하지 않음)
+          })
       }
 
       try {
@@ -236,7 +258,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       if (!currentUser) return
 
       const updatedUser = { ...currentUser, ...userData }
-      
+
       // localStorage 업데이트
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem('auth_user', JSON.stringify(updatedUser))
@@ -248,6 +270,78 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     clearError: () => {
       set({ error: null })
     },
+
+    // Phase 0.1.3: 인증 상태 직접 설정 (휴대폰/소셜 로그인용)
+    setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => {
+      // localStorage에 저장
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, authData.token)
+        localStorage.setItem(TOKEN_EXPIRY_KEY, authData.expiresAt)
+        localStorage.setItem('auth_user', JSON.stringify(authData.user))
+      }
+
+      set({
+        user: authData.user,
+        token: authData.token,
+        expiresAt: authData.expiresAt,
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+        mfaState: null,
+        requiresMfa: false,
+      })
+    },
+
+    // Phase 0.5: 토큰 갱신 Mock 로직
+    refreshToken: async (): Promise<boolean> => {
+      const state = get()
+      if (!state.user || !state.token) {
+        return false
+      }
+
+      try {
+        // Mock: 토큰 갱신 시뮬레이션
+        await new Promise(resolve => setTimeout(resolve, 300))
+
+        // 새 토큰 생성
+        const newToken = `mock-jwt-token-${state.user.id}-${Date.now()}`
+        const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
+
+        // localStorage 업데이트
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem(TOKEN_STORAGE_KEY, newToken)
+          localStorage.setItem(TOKEN_EXPIRY_KEY, newExpiresAt)
+        }
+
+        set({
+          token: newToken,
+          expiresAt: newExpiresAt,
+        })
+
+        return true
+      } catch (error) {
+        console.error('Token refresh failed:', error)
+        return false
+      }
+    },
+
+    // Phase 0.5: 세션 만료 확인
+    checkSessionExpiry: (): boolean => {
+      const state = get()
+      if (!state.expiresAt) {
+        return true // 만료된 것으로 간주
+      }
+
+      const now = new Date()
+      const expiryTime = new Date(state.expiresAt)
+
+      if (expiryTime <= now) {
+        // 만료된 경우 로그아웃
+        get().logout()
+        return true
+      }
+
+      return false
+    },
   }
 })
-

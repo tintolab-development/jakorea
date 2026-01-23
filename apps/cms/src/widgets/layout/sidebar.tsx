@@ -2,6 +2,7 @@
  * 사이드바 컴포넌트
  * Phase 1.1: Ant Design Menu를 활용한 네비게이션
  * Phase 4.2.1: 권한별 메뉴 구성 적용
+ * Phase 0.1.5: 역할별 메뉴 필터링 강화 (hidden 처리, 권한별 필터링)
  * 타이틀을 사이드바 최상단에 배치
  */
 
@@ -29,6 +30,11 @@ export function Sidebar() {
   const openKeys = useMemo(() => {
     const path = location.pathname
     const keys: string[] = []
+
+    // 관리자용 프로그램 관리
+    if (user?.role === 'ADMIN' && path.startsWith('/programs') && !path.startsWith('/programs/my') && !path.startsWith('/programs/favorites')) {
+      keys.push('programs-group')
+    }
 
     // 관리자용 정산 관리
     if (path.startsWith('/settlements') && !path.startsWith('/settlements/my')) {

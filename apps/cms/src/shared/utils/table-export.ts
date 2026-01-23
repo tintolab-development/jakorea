@@ -2,7 +2,8 @@
  * 테이블 데이터 엑셀 다운로드 유틸리티
  */
 
-import ExcelJS from 'exceljs'
+// @ts-ignore - @zurmokeeper/exceljs 타입 선언 문제
+import ExcelJS from '@zurmokeeper/exceljs'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
 import { downloadExcel, generateFilename } from './file-download'
 
@@ -50,18 +51,18 @@ export async function exportTableToExcel<T extends Record<string, any>>(
 
   // 헤더 행 생성
   const headerRow = worksheet.addRow(
-    columns
-      .filter(col => col.key !== 'action' && !col.hidden)
-      .map(col => col.title as string)
+    columns.filter(col => col.key !== 'action' && !col.hidden).map(col => col.title as string)
   )
-  headerRow.eachCell(cell => {
+  headerRow.eachCell((cell: any) => {
     cell.style = headerStyle
   })
 
   // 데이터 행 생성
   dataSource.forEach(rowData => {
     const rowValues = columns
-      .filter((col): col is ColumnType<T> => 'dataIndex' in col && col.key !== 'action' && !col.hidden)
+      .filter(
+        (col): col is ColumnType<T> => 'dataIndex' in col && col.key !== 'action' && !col.hidden
+      )
       .map(col => {
         const dataIndex = col.dataIndex
         if (!dataIndex) return ''
@@ -84,13 +85,13 @@ export async function exportTableToExcel<T extends Record<string, any>>(
       })
 
     const row = worksheet.addRow(rowValues)
-    row.eachCell(cell => {
+    row.eachCell((cell: any) => {
       cell.style = cellStyle
     })
   })
 
   // 컬럼 너비 자동 조정
-  worksheet.columns.forEach((column, index) => {
+  worksheet.columns.forEach((column: any, index: number) => {
     if (column && column.header) {
       const headerLength = String(column.header).length
       const maxDataLength = Math.max(

@@ -14,6 +14,8 @@ import { createManualAssignment, type ManualAssignmentData } from '@/entities/in
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { programService } from '@/entities/program/api/program-service'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 import './instructor-application-list-page.css'
 
 const { Option } = Select
@@ -21,6 +23,10 @@ const { TextArea } = Input
 
 export function InstructorApplicationListPage() {
   const location = useLocation()
+  const { user } = useAuthStore()
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
+
   const [searchParams, setSearchParams] = useSearchParams()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사 신청 관리'
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
@@ -147,13 +153,16 @@ export function InstructorApplicationListPage() {
         <Button onClick={() => fetchApplications({ programId: programFilter, status: statusFilter })}>
           새로고침
         </Button>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setAssignmentModalOpen(true)}
-        >
-          추가 배정
-        </Button>
+        {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
+        {canWrite && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setAssignmentModalOpen(true)}
+          >
+            추가 배정
+          </Button>
+        )}
       </Space>
 
       <InstructorApplicationList

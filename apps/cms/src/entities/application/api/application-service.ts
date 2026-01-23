@@ -12,6 +12,7 @@ import {
 } from '@/features/program/lib/program-helpers'
 import { mockPrograms } from '@/data/mock'
 import { appendReceivedLog } from '@/entities/application-progress/api/status-change-service'
+import { createAuditLog } from '@/entities/audit-log/api/audit-log-service'
 
 export const applicationService = {
   getAll: async (): Promise<Application[]> => {
@@ -64,6 +65,30 @@ export const applicationService = {
       mockApplications[index] = updatedApplication
     }
     mockApplicationsMap.set(id, updatedApplication)
+
+    // FR-F01: 신청서 오기재 사항 수정 이력 기록 (감사 로그)
+    const editedFields = Object.keys(data).filter(k => !['updatedAt', 'reviewedAt'].includes(k))
+    if (editedFields.length > 0) {
+      try {
+        await createAuditLog({
+          eventType: 'APPLICATION_EDIT',
+          targetId: id,
+          targetType: 'application',
+          targetName: `신청 ${id}`,
+          details: {
+            applicationId: id,
+            programId: application.programId,
+            subjectType: application.subjectType,
+            editedFields,
+            previousStatus: application.status,
+            newStatus: data.status ?? application.status,
+          },
+        })
+      } catch (e) {
+        console.warn('[ApplicationService] 감사 로그 기록 실패:', e)
+      }
+    }
+
     return Promise.resolve(updatedApplication)
   },
 

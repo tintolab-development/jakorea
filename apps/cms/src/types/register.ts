@@ -1,9 +1,11 @@
 /**
  * 회원가입 관련 타입 정의
  * Phase 0.1.2: 회원가입 흐름 (FR-B01, FR-B02)
+ * Phase 0.1.3: 소셜 회원가입 지원 추가
  */
 
 import type { ConsentFormData } from './consent'
+import type { SocialProvider } from '@/entities/user/api/auth-service'
 
 /**
  * 공통 회원가입 폼 데이터
@@ -54,10 +56,12 @@ export type RegisterFormData =
 
 /**
  * 회원가입 요청 (동의 포함)
+ * Phase 0.1.3 수정: 소셜 제공자 정보 추가
  */
 export interface RegisterRequest {
   formData: RegisterFormData
   consent: ConsentFormData
+  socialProvider?: SocialProvider // Phase 0.1.3 수정: OAuth 연동 정보
 }
 
 /**

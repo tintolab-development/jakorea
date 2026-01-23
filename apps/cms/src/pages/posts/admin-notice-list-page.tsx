@@ -33,6 +33,8 @@ import {
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { mockNotices, type Notice } from '@/data/mock/notices'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 import dayjs from 'dayjs'
 
 const { Text } = Typography
@@ -42,6 +44,10 @@ const { Dragger } = Upload
 
 export function AdminNoticeListPage() {
   const location = useLocation()
+  const { user } = useAuthStore()
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
+
   const [data, setData] = useState<Notice[]>(mockNotices)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
@@ -207,7 +213,8 @@ export function AdminNoticeListPage() {
         return <Tag color={config.color}>{config.label}</Tag>
       }
     },
-    {
+    // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+    ...(canWrite ? [{
       title: '관리',
       key: 'action',
       width: 120,
@@ -215,10 +222,10 @@ export function AdminNoticeListPage() {
       render: (_: any, record: Notice) => (
         <Space>
           <Tooltip title="수정">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => showModal(record)} 
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => showModal(record)}
             />
           </Tooltip>
           <Popconfirm
@@ -235,7 +242,7 @@ export function AdminNoticeListPage() {
           </Popconfirm>
         </Space>
       ),
-    },
+    }] : []),
   ]
 
   return (
@@ -243,13 +250,16 @@ export function AdminNoticeListPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={() => showModal()}
-          >
-            공지사항 등록
-          </Button>
+          {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
+          {canWrite && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => showModal()}
+            >
+              공지사항 등록
+            </Button>
+          )}
         </div>
 
         <Card size="small">

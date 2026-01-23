@@ -75,6 +75,7 @@ export function ApplicationFormModal({
       footer={null}
       width={700}
       destroyOnHidden
+      zIndex={1001}
     >
       <ApplicationForm
         programId={programId} // 프로그램 ID 전달

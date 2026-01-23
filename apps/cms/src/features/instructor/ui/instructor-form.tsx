@@ -31,6 +31,13 @@ const specialties = [
   '진로/진학', '창의성', '리더십', '커뮤니케이션', '기업가정신',
 ]
 
+const banks = [
+  '국민은행', '신한은행', '우리은행', '하나은행', 'SC제일은행',
+  '기업은행', '농협은행', '카카오뱅크', '토스뱅크', '케이뱅크',
+  '새마을금고', '신협', '우체국', '수협은행', '대구은행',
+  '부산은행', '경남은행', '광주은행', '전북은행', '제주은행',
+]
+
 export function InstructorForm({ instructor, onSubmit, onCancel, loading }: InstructorFormProps) {
   const {
     register,
@@ -50,7 +57,9 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           availableTime: instructor.availableTime || '',
           experience: instructor.experience || '',
           rating: instructor.rating,
+          bankName: instructor.bankName || '',
           bankAccount: instructor.bankAccount || '',
+          accountHolder: instructor.accountHolder || '',
         }
       : undefined,
   })
@@ -129,8 +138,35 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           <Input type="number" min={0} max={5} step={0.1} {...register('rating', { valueAsNumber: true })} />
         </Form.Item>
 
-        <Form.Item label="계좌번호">
-          <Input {...register('bankAccount')} />
+        <Form.Item
+          label="은행명"
+          validateStatus={errors.bankName ? 'error' : ''}
+          help={errors.bankName?.message}
+        >
+          <Select
+            value={watch('bankName')}
+            onChange={value => setValue('bankName', value, { shouldValidate: true })}
+            placeholder="은행 선택"
+            allowClear
+          >
+            {banks.map(bank => (
+              <Option key={bank} value={bank}>
+                {bank}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          label="계좌번호"
+          validateStatus={errors.bankAccount ? 'error' : ''}
+          help={errors.bankAccount?.message}
+        >
+          <Input {...register('bankAccount')} placeholder="'-' 없이 숫자만 입력" />
+        </Form.Item>
+
+        <Form.Item label="예금주">
+          <Input {...register('accountHolder')} placeholder="예금주명" />
         </Form.Item>
 
         <Form.Item>

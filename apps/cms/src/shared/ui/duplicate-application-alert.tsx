@@ -50,10 +50,9 @@ export function DuplicateApplicationAlert({
       okText={duplicateResult.case === 'case1' ? '확인' : '추가 신청하기'}
       cancelText="취소"
       width={500}
+      zIndex={1001}
     >
-      <div style={{ whiteSpace: 'pre-line', padding: '16px 0' }}>
-        {duplicateResult.message}
-      </div>
+      <div style={{ whiteSpace: 'pre-line', padding: '16px 0' }}>{duplicateResult.message}</div>
       {duplicateResult.existingApplication && (
         <div style={{ marginTop: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
           <div style={{ fontSize: 12, color: '#666' }}>

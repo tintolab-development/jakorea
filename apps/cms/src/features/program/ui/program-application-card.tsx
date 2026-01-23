@@ -4,6 +4,8 @@
 
 import { Card, Space, Alert, Typography } from 'antd'
 import { StatusDisplay, GuideMessage, SingleCTA } from '@/shared/ui'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { Link } from 'react-router-dom'
 
 const { Paragraph, Text } = Typography
 
@@ -24,6 +26,7 @@ interface ProgramApplicationCardProps {
   applicationCount: number
   userHasApplied: boolean
   userRole?: string
+  isAdmin?: boolean // Phase 0.5.2: 관리자는 신청하기 버튼 숨김
   onApplicationClick: () => void
   onDuplicateAlertOpen?: () => void
 }
@@ -38,11 +41,35 @@ export function ProgramApplicationCard({
   capacityAlmostFull,
   applicationCount,
   userHasApplied,
+  userRole,
+  isAdmin = false,
   onApplicationClick,
 }: ProgramApplicationCardProps) {
+  const { isAuthenticated } = useAuthStore()
+
+  // Phase 0.5.2: 관리자는 신청하기 버튼을 볼 수 없음
+  const shouldShowApplicationButton =
+    !isAdmin && applicationAvailable && applicationUrl && !userHasApplied
+
   return (
     <Card title="신청 안내">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        {/* Phase 0.2.1: 비로그인 사용자 로그인/회원가입 유도 */}
+        {!isAuthenticated && applicationAvailable && (
+          <Alert
+            message="로그인이 필요합니다"
+            description={
+              <span>
+                프로그램 신청을 위해 <Link to="/login">로그인</Link> 또는{' '}
+                <Link to="/register">회원가입</Link>이 필요합니다.
+              </span>
+            }
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
         {/* 승인제 안내 */}
         <Alert
           message="이 프로그램은 승인제로 운영됩니다."
@@ -95,14 +122,12 @@ export function ProgramApplicationCard({
               </div>
             )}
 
-            {/* 단일 CTA */}
-            {applicationUrl && !userHasApplied && (
+            {/* 단일 CTA - 관리자는 신청하기 버튼 숨김 */}
+            {shouldShowApplicationButton && (
               <div style={{ marginTop: 16 }}>
                 <SingleCTA
                   label={
-                    applicationPath?.pathType === 'google_form'
-                      ? '구글폼으로 신청하기'
-                      : '신청하기'
+                    applicationPath?.pathType === 'google_form' ? '구글폼으로 신청하기' : '신청하기'
                   }
                   onClick={onApplicationClick}
                   type="primary"

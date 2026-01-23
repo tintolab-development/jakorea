@@ -148,7 +148,10 @@ export interface Instructor {
   availableTime?: string // 가능시간
   experience?: string // 이력
   rating?: number // 평가 (0-5)
-  bankAccount?: string // 정산 계좌 (민감정보, 마스킹 필요)
+  // 정산 계좌 정보 (민감정보, 마스킹 필요)
+  bankName?: string // 은행명
+  bankAccount?: string // 계좌번호
+  accountHolder?: string // 예금주
   createdAt: DateValue
   updatedAt: DateValue
 }

@@ -43,6 +43,7 @@ interface ProgramBasicInfoTabProps {
   applicationCount: number
   userHasApplied: boolean
   userRole?: string
+  canWrite?: boolean // Phase 0.5.2: 쓰기 권한이 있는 관리자인지 여부
   onApplicationClick: () => void
   onDuplicateAlertOpen: () => void
   statusChangeLoading: boolean
@@ -62,6 +63,7 @@ export function ProgramBasicInfoTab({
   applicationCount,
   userHasApplied,
   userRole,
+  canWrite = false,
   onApplicationClick,
   onDuplicateAlertOpen,
   statusChangeLoading,
@@ -109,7 +111,8 @@ export function ProgramBasicInfoTab({
             <Text strong>대상 사용자:</Text> 학교, 학생, 강사
           </Paragraph>
           <Paragraph style={{ margin: 0 }}>
-            <Text strong>참여 방식:</Text> 프로그램 유형에 따라 온라인/오프라인/하이브리드로 진행됩니다.
+            <Text strong>참여 방식:</Text> 프로그램 유형에 따라 온라인/오프라인/하이브리드로
+            진행됩니다.
           </Paragraph>
           {program.format === 'workshop' || program.format === 'seminar' ? (
             <Paragraph style={{ margin: 0, color: '#8c8c8c' }}>
@@ -137,6 +140,7 @@ export function ProgramBasicInfoTab({
         applicationCount={applicationCount}
         userHasApplied={userHasApplied}
         userRole={userRole}
+        isAdmin={userRole === 'ADMIN'} // Phase 0.5.2: 관리자는 신청하기 버튼 숨김
         onApplicationClick={onApplicationClick}
         onDuplicateAlertOpen={onDuplicateAlertOpen}
       />
@@ -151,14 +155,24 @@ export function ProgramBasicInfoTab({
 
       <Divider />
 
-      {/* 관리자용: 프로그램 상태 워크플로우 */}
-      {userRole === 'ADMIN' && (program.lifecycleStatus !== undefined || !program.lifecycleStatus) && (
+      {/* 관리자용: 프로그램 상태 워크플로우 (쓰기 권한이 있는 관리자만) */}
+      {/* Phase 0.5.2: GENERAL 관리자는 상태 워크플로우 조정 불가 */}
+      {userRole === 'ADMIN' && canWrite && (
         <>
+          {process.env.NODE_ENV === 'development' && (
+            <div style={{ marginBottom: 8, padding: 8, background: '#f0f0f0', borderRadius: 4 }}>
+              <small>
+                [디버깅] 권한 체크: userRole={userRole}, canWrite={String(canWrite)},
+                hasOnStatusChange={String(!!onStatusChange)}, hasOnRollback={String(!!onRollback)}
+              </small>
+            </div>
+          )}
           <ProgramLifecycleWorkflow
             program={program}
             onStatusChange={onStatusChange}
             onRollback={onRollback}
             loading={statusChangeLoading}
+            canWrite={canWrite}
           />
           <Divider />
         </>
@@ -174,9 +188,7 @@ export function ProgramBasicInfoTab({
             {dayjs(program.updatedAt).format('YYYY-MM-DD HH:mm')}
           </Descriptions.Item>
           {program.settlementRuleId && (
-            <Descriptions.Item label="정산 규칙 ID">
-              {program.settlementRuleId}
-            </Descriptions.Item>
+            <Descriptions.Item label="정산 규칙 ID">{program.settlementRuleId}</Descriptions.Item>
           )}
         </Descriptions>
       </Card>

@@ -24,7 +24,8 @@ interface InstructorDetailProps {
 }
 
 export function InstructorDetail({ instructor, onEdit, onDelete, loading }: InstructorDetailProps) {
-  const { settlements, fetchSettlements, selectedSettlement, setSelectedSettlement } = useSettlementStore()
+  const { settlements, fetchSettlements, selectedSettlement, setSelectedSettlement } =
+    useSettlementStore()
   const [activeTab, setActiveTab] = useState('info')
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -80,7 +81,10 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
       dataIndex: 'status',
       key: 'status',
       render: (status: Settlement['status']) => (
-        <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
+        <Badge
+          status={getSettlementStatusColor(status) as any}
+          text={getSettlementStatusLabel(status)}
+        />
       ),
     },
     {
@@ -142,13 +146,19 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
           {instructor.availableTime && (
             <Descriptions.Item label="가능 시간">{instructor.availableTime}</Descriptions.Item>
           )}
-          {instructor.experience && <Descriptions.Item label="이력">{instructor.experience}</Descriptions.Item>}
+          {instructor.experience && (
+            <Descriptions.Item label="이력">{instructor.experience}</Descriptions.Item>
+          )}
           {instructor.rating && (
             <Descriptions.Item label="평점">{instructor.rating.toFixed(1)}/5.0</Descriptions.Item>
           )}
-          {instructor.bankAccount && (
-            <Descriptions.Item label="계좌번호">
-              {instructor.bankAccount.replace(/(\d{4})(\d{4})(\d+)/, '$1-****-****')}
+          {(instructor.bankName || instructor.bankAccount) && (
+            <Descriptions.Item label="정산 계좌">
+              {instructor.bankName && <span>{instructor.bankName} </span>}
+              {instructor.bankAccount && (
+                <span>{instructor.bankAccount.replace(/(\d{4})(\d{4})(\d+)/, '$1-****-****')}</span>
+              )}
+              {instructor.accountHolder && <span> ({instructor.accountHolder})</span>}
             </Descriptions.Item>
           )}
           <Descriptions.Item label="등록일">
@@ -181,7 +191,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
           columns={settlementColumns}
           rowKey="id"
           pagination={{ pageSize: 10 }}
-          onRow={(record) => ({
+          onRow={record => ({
             onClick: () => handleViewSettlement(record),
             style: { cursor: 'pointer' },
           })}
@@ -203,7 +213,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
       }
     >
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
-      
+
       <SettlementDetailDrawer
         open={drawerOpen}
         settlement={selectedSettlement}
@@ -218,7 +228,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
           }
         }}
         onDelete={() => {}}
-        onStatusChange={async (status) => {
+        onStatusChange={async status => {
           if (selectedSettlement) {
             const { updateStatus } = useSettlementStore.getState()
             await updateStatus(selectedSettlement.id, status)
@@ -226,15 +236,8 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
           }
         }}
         loading={loading}
+        zIndex={1001}
       />
     </Card>
   )
 }
-
-
-
-
-
-
-
-

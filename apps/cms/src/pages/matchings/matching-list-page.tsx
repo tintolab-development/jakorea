@@ -16,9 +16,15 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useMatchingManagement } from '@/features/matching/hooks/use-matching-management'
 import { useMatchingStatus } from '@/features/matching/hooks/use-matching-status'
 import type { MatchingStatusItem } from '@/entities/matching/api/matching-status-service'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 import './matching-list-page.css'
 
 export function MatchingListPage() {
+  const { user } = useAuthStore()
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
+
   const [viewMode, setViewMode] = useState<'management' | 'status'>('management')
   const [statusViewMode, setStatusViewMode] = useState<'calendar' | 'list'>('list')
 
@@ -44,11 +50,7 @@ export function MatchingListPage() {
     requestCancel,
   } = useMatchingManagement()
 
-  const {
-    statusItems,
-    loading: statusLoading,
-    exportToExcel,
-  } = useMatchingStatus()
+  const { statusItems, loading: statusLoading, exportToExcel } = useMatchingStatus()
 
   const handleStatusDateClick = (date: string, items: MatchingStatusItem[]) => {
     // 날짜 클릭 시 상세 정보 표시 (추후 구현)
@@ -64,14 +66,17 @@ export function MatchingListPage() {
             프로그램별 강사 매칭 현황을 관리합니다.
           </Typography.Text>
         </div>
-        <Button type="primary" icon={<UserAddOutlined />} onClick={() => openForm()}>
-          매칭 등록
-        </Button>
+        {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
+        {canWrite && (
+          <Button type="primary" icon={<UserAddOutlined />} onClick={() => openForm()}>
+            매칭 등록
+          </Button>
+        )}
       </Space>
 
       <Tabs
         activeKey={viewMode}
-        onChange={(key) => setViewMode(key as 'management' | 'status')}
+        onChange={key => setViewMode(key as 'management' | 'status')}
         items={[
           {
             key: 'management',
@@ -98,7 +103,7 @@ export function MatchingListPage() {
                 <div style={{ marginBottom: 16, textAlign: 'right' }}>
                   <Radio.Group
                     value={statusViewMode}
-                    onChange={(e) => setStatusViewMode(e.target.value)}
+                    onChange={e => setStatusViewMode(e.target.value)}
                     buttonStyle="solid"
                   >
                     <Radio.Button value="calendar">
@@ -142,6 +147,7 @@ export function MatchingListPage() {
         onCancel={closeForm}
         footer={null}
         width={800}
+        zIndex={1001}
       >
         <MatchingForm
           matching={editingMatching || undefined}
@@ -163,4 +169,3 @@ export function MatchingListPage() {
     </div>
   )
 }
-

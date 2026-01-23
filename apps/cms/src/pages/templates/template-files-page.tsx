@@ -23,6 +23,8 @@ import type { MenuProps } from 'antd'
 import dayjs from 'dayjs'
 import { MoreOutlined } from '@ant-design/icons'
 import type { FileTemplate, TemplateAudience, TemplateStatus } from '@/types/template'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { mockFileTemplates, getTemplateStatusColor, getTemplateStatusLabel } from '@/data/mock/templates'
 
 const { Text } = Typography
@@ -40,6 +42,10 @@ function statusLabel(status: TemplateStatus) {
 }
 
 export default function TemplateFilesPage() {
+  const { user } = useAuthStore()
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
+
   const [rows, setRows] = useState<FileTemplate[]>(mockFileTemplates)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<TemplateStatus | 'all'>('all')
@@ -153,28 +159,63 @@ export default function TemplateFilesPage() {
     )
   }
 
-  const getRowMenuItems = (row: FileTemplate): MenuProps['items'] => [
-    {
-      key: 'download',
-      label: '다운로드',
-      onClick: () => {
-        message.info('다운로드 링크는 추후 실제 파일 스토리지 연동 시 활성화됩니다.')
-        window.open(row.content.downloadUrl || '#', '_blank')
+  // 템플릿 복사 기능 (FR-H01)
+  const handleCopyTemplate = (row: FileTemplate) => {
+    const now = new Date().toISOString()
+    const copiedTemplate: FileTemplate = {
+      ...row,
+      id: `tpl-file-${String(rows.length + 1).padStart(3, '0')}`,
+      title: `${row.title} (복사본)`,
+      status: 'draft',
+      createdAt: now,
+      updatedAt: now,
+      updatedBy: '관리자(운영)',
+    }
+    
+    setRows(prev => [copiedTemplate, ...prev])
+    message.success('템플릿이 복사되었습니다.')
+    // 복사된 템플릿을 바로 편집 모드로 열기
+    openEdit(copiedTemplate)
+  }
+
+  const getRowMenuItems = (row: FileTemplate): MenuProps['items'] => {
+    const baseItems: MenuProps['items'] = [
+      {
+        key: 'download',
+        label: '다운로드',
+        onClick: () => {
+          message.info('다운로드 링크는 추후 실제 파일 스토리지 연동 시 활성화됩니다.')
+          window.open(row.content.downloadUrl || '#', '_blank')
+        },
       },
-    },
-    {
-      key: 'edit',
-      label: '수정',
-      onClick: () => openEdit(row),
-    },
-    { type: 'divider' },
-    {
-      key: 'toggle-archive',
-      label: row.status === 'archived' ? '게시' : '아카이브',
-      danger: row.status !== 'archived',
-      onClick: () => handleArchiveToggle(row),
-    },
-  ]
+    ]
+
+    // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+    if (canWrite) {
+      baseItems.push(
+        { type: 'divider' },
+        {
+          key: 'copy',
+          label: '복사',
+          onClick: () => handleCopyTemplate(row),
+        },
+        {
+          key: 'edit',
+          label: '수정',
+          onClick: () => openEdit(row),
+        },
+        { type: 'divider' },
+        {
+          key: 'toggle-archive',
+          label: row.status === 'archived' ? '게시' : '아카이브',
+          danger: row.status !== 'archived',
+          onClick: () => handleArchiveToggle(row),
+        }
+      )
+    }
+
+    return baseItems
+  }
 
   const columns: ColumnsType<FileTemplate> = [
     {
@@ -274,9 +315,12 @@ export default function TemplateFilesPage() {
               { value: 'archived', label: '아카이브' },
             ]}
           />
-          <Button type="primary" onClick={openCreate}>
-            파일 양식 등록
-          </Button>
+          {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
+          {canWrite && (
+            <Button type="primary" onClick={openCreate}>
+              파일 양식 등록
+            </Button>
+          )}
         </Space>
       </Card>
 

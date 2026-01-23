@@ -16,8 +16,18 @@ import type { Schedule } from '@/types/domain'
 import type { ScheduleFormData } from '@/entities/schedule/model/schema'
 
 export function ScheduleCalendarPage() {
-  const { schedules, loading, fetchSchedules, createSchedule, updateSchedule, deleteSchedule, checkConflict } =
-    useScheduleStore()
+  const {
+    schedules,
+    loading,
+    fetchSchedules,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    checkConflict,
+    selectedSchedule: storeSelectedSchedule,
+    setSelectedSchedule: setStoreSelectedSchedule,
+    clearSelectedSchedule,
+  } = useScheduleStore()
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [formModalOpen, setFormModalOpen] = useState(false)
@@ -35,6 +45,7 @@ export function ScheduleCalendarPage() {
     // schedule이 있는 경우: 일정 상세 drawer 열기
     if (schedule) {
       setSelectedSchedule(schedule)
+      setStoreSelectedSchedule(schedule) // store에도 동기화
       setDrawerOpen(true)
     } else {
       // schedule이 없는 경우 (빈 날짜 셀 클릭): 일정 등록 모달 열기
@@ -64,6 +75,10 @@ export function ScheduleCalendarPage() {
             if (editingSchedule) {
               await updateSchedule(editingSchedule.id, data)
               message.success('일정이 수정되었습니다')
+              // store의 updateSchedule이 이미 selectedSchedule을 업데이트하므로 로컬 상태도 동기화
+              if (storeSelectedSchedule && selectedSchedule?.id === storeSelectedSchedule.id) {
+                setSelectedSchedule(storeSelectedSchedule)
+              }
             } else {
               await createSchedule(scheduleData)
               message.success('일정이 등록되었습니다')
@@ -81,6 +96,10 @@ export function ScheduleCalendarPage() {
       if (editingSchedule) {
         await updateSchedule(editingSchedule.id, data)
         message.success('일정이 수정되었습니다')
+        // store의 updateSchedule이 이미 selectedSchedule을 업데이트하므로 로컬 상태도 동기화
+        if (storeSelectedSchedule && selectedSchedule?.id === storeSelectedSchedule.id) {
+          setSelectedSchedule(storeSelectedSchedule)
+        }
       } else {
         await createSchedule(scheduleData)
         message.success('일정이 등록되었습니다')
@@ -120,6 +139,7 @@ export function ScheduleCalendarPage() {
       if (selectedSchedule?.id === scheduleToDelete.id) {
         setDrawerOpen(false)
         setSelectedSchedule(null)
+        clearSelectedSchedule() // store도 초기화
       }
       fetchSchedules()
     } catch {
@@ -167,6 +187,7 @@ export function ScheduleCalendarPage() {
         onClose={() => {
           setDrawerOpen(false)
           setSelectedSchedule(null)
+          clearSelectedSchedule() // store도 초기화
         }}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
@@ -216,4 +237,3 @@ export function ScheduleCalendarPage() {
     </div>
   )
 }
-

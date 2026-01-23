@@ -103,16 +103,36 @@ export async function createAuditLog(input: CreateAuditLogInput): Promise<AuditL
     ? window.navigator.userAgent
     : 'Mozilla/5.0'
 
+  // 관리자 권한 정보 구성
+  let userRoleDisplay = user?.role || 'UNKNOWN'
+  const adminDetails: Record<string, unknown> = {}
+  
+  if (user?.role === 'ADMIN') {
+    // 관리자 레벨 정보 추가
+    if (user.adminLevel) {
+      userRoleDisplay = `${user.role} (${user.adminLevel})`
+      adminDetails.adminLevel = user.adminLevel
+    }
+    
+    // 프로그램별 역할 정보 추가
+    if (user.programRoles && Object.keys(user.programRoles).length > 0) {
+      adminDetails.programRoles = user.programRoles
+    }
+  }
+
   const newLog: AuditLog = {
     id: `audit-${Date.now()}`,
     eventType: input.eventType,
     userId: input.userId || user!.id,
     userName: user?.name || 'Unknown',
-    userRole: user?.role || 'UNKNOWN',
+    userRole: userRoleDisplay,
     targetId: input.targetId,
     targetType: input.targetType,
     targetName: input.targetName,
-    details: input.details || {},
+    details: {
+      ...input.details,
+      ...adminDetails,
+    },
     ipAddress,
     userAgent,
     createdAt: new Date().toISOString(),

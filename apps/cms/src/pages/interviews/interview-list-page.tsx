@@ -11,11 +11,17 @@ import { InterviewResultForm } from '@/features/interview/ui/interview-result-fo
 import { ApprovalModal } from '@/features/interview/ui/approval-modal'
 import type { UserRole } from '@/types/user'
 import { useInstructorApplications } from '@/features/interview/hooks/use-instructor-applications'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 import './interview-list-page.css'
 
 const { Option } = Select
 
 export function InterviewListPage() {
+  const { user } = useAuthStore()
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
+
   const {
     interviews,
     loading,
@@ -48,9 +54,7 @@ export function InterviewListPage() {
       <Space className="interview-list-header">
         <div>
           <h1 className="interview-list-title">강사 신청 관리</h1>
-          <Typography.Text type="secondary">
-            강사 신청(면접/승인)을 관리합니다.
-          </Typography.Text>
+          <Typography.Text type="secondary">강사 신청(면접/승인)을 관리합니다.</Typography.Text>
         </div>
       </Space>
 
@@ -89,9 +93,9 @@ export function InterviewListPage() {
         data={interviews}
         loading={loading}
         onView={openDetail}
-        onSchedule={openSchedule}
-        onApprove={openApprove}
-        onReject={openReject}
+        onSchedule={canWrite ? openSchedule : undefined}
+        onApprove={canWrite ? openApprove : undefined}
+        onReject={canWrite ? openReject : undefined}
         onRowClick={openDetail}
       />
 
@@ -107,6 +111,7 @@ export function InterviewListPage() {
         onCancel={closeScheduleModal}
         footer={null}
         width={600}
+        zIndex={1001}
       >
         <InterviewScheduleForm
           interview={selectedInterview}
@@ -121,6 +126,7 @@ export function InterviewListPage() {
         onCancel={closeResultModal}
         footer={null}
         width={600}
+        zIndex={1001}
       >
         <InterviewResultForm
           interview={selectedInterview}

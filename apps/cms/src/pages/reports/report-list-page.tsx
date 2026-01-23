@@ -11,7 +11,11 @@ import { reportService } from '@/entities/report/api/report-service'
 import { getReportStatusLabel, getReportStatusColor } from '@/shared/constants/status'
 import type { Report, ReportType, ReportStatus } from '@/types/domain'
 import { ReportDetailDrawer } from '@/features/report/ui/report-detail-drawer'
-import { mockInstructorsMap, mockLectureActivitiesMap, mockVolunteerActivitiesMap } from '@/data/mock'
+import {
+  mockInstructorsMap,
+  mockLectureActivitiesMap,
+  mockVolunteerActivitiesMap,
+} from '@/data/mock'
 import dayjs from 'dayjs'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -32,7 +36,7 @@ const reportTypeColors: Record<ReportType, string> = {
 // 보고서 작성자 찾기 헬퍼 함수
 const getReportAuthor = (report: Report): string => {
   const instructors = Array.from(mockInstructorsMap.values())
-  
+
   if (report.type === 'lecture' && report.activityId) {
     const activity = mockLectureActivitiesMap.get(report.activityId)
     if (activity?.instructorId) {
@@ -101,8 +105,10 @@ export function ReportListPage() {
     try {
       const data = await reportService.getAll()
       setReports(data)
+      return data // 업데이트된 데이터 반환
     } catch (error) {
       console.error('보고서 로드 실패:', error)
+      return []
     } finally {
       setLoading(false)
     }
@@ -187,9 +193,15 @@ export function ReportListPage() {
     setDrawerOpen(true)
   }
 
-  const handleReviewComplete = () => {
-    loadReports()
-    setDrawerOpen(false)
+  const handleReviewComplete = async () => {
+    const updatedReports = await loadReports()
+    // 상태 변경 후 업데이트된 report로 selectedReport 갱신
+    if (selectedReport && updatedReports) {
+      const updatedReport = updatedReports.find(r => r.id === selectedReport.id)
+      if (updatedReport) {
+        setSelectedReport(updatedReport)
+      }
+    }
   }
 
   const columns: ColumnsType<Report> = [
@@ -256,7 +268,11 @@ export function ReportListPage() {
         <Space size="large" wrap>
           <Statistic title="전체" value={statistics.total} />
           <Statistic title="제출" value={statistics.submitted} valueStyle={{ color: '#1890ff' }} />
-          <Statistic title="검토 중" value={statistics.reviewing} valueStyle={{ color: '#faad14' }} />
+          <Statistic
+            title="검토 중"
+            value={statistics.reviewing}
+            valueStyle={{ color: '#faad14' }}
+          />
           <Statistic title="승인" value={statistics.approved} valueStyle={{ color: '#52c41a' }} />
           <Statistic title="반려" value={statistics.rejected} valueStyle={{ color: '#ff4d4f' }} />
         </Space>
@@ -332,4 +348,3 @@ export function ReportListPage() {
     </div>
   )
 }
-

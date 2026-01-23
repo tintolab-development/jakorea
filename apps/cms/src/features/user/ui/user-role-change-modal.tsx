@@ -52,12 +52,7 @@ export function UserRoleChangeModal({
       const values = await form.validateFields()
       if (!user) return
 
-      await onConfirm(
-        user.id,
-        values.role,
-        values.adminLevel,
-        values.programRole
-      )
+      await onConfirm(user.id, values.role, values.adminLevel, values.programRole)
       message.success('권한이 변경되었습니다.')
       form.resetFields()
       onCancel()
@@ -84,6 +79,7 @@ export function UserRoleChangeModal({
       confirmLoading={loading}
       okText="변경"
       cancelText="취소"
+      zIndex={1001}
     >
       {user && (
         <div className="user-role-change-modal__summary">
@@ -110,7 +106,7 @@ export function UserRoleChangeModal({
           rules={[{ required: true, message: '권한을 선택해주세요.' }]}
         >
           <Select placeholder="권한 선택">
-            {roleOptions.map((role) => (
+            {roleOptions.map(role => (
               <Option key={role} value={role}>
                 {getRoleLabel(role)}
               </Option>
@@ -130,7 +126,7 @@ export function UserRoleChangeModal({
                   rules={[{ required: true, message: '관리자 권한 레벨을 선택해주세요.' }]}
                 >
                   <Select placeholder="관리자 권한 레벨 선택">
-                    {adminLevelOptions.map((adminLevel) => (
+                    {adminLevelOptions.map(adminLevel => (
                       <Option key={adminLevel} value={adminLevel}>
                         {getAdminLevelLabel(adminLevel)}
                       </Option>
@@ -143,7 +139,7 @@ export function UserRoleChangeModal({
                   rules={[{ required: true, message: '프로그램 역할을 선택해주세요.' }]}
                 >
                   <Select placeholder="프로그램 역할 선택">
-                    {programRoleOptions.map((programRole) => (
+                    {programRoleOptions.map(programRole => (
                       <Option key={programRole} value={programRole}>
                         {getProgramRoleLabel(programRole)}
                       </Option>
@@ -158,4 +154,3 @@ export function UserRoleChangeModal({
     </Modal>
   )
 }
-

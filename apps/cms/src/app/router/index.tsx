@@ -21,9 +21,7 @@ const LoadingFallback = () => (
 
 // Lazy loading wrapper - named export를 default export로 변환
 // 타입 복잡도를 줄이기 위해 import 함수는 느슨하게 any로 처리
-const lazyLoad = <T extends React.ComponentType<any>>(
-  importFunc: () => Promise<any>
-) => {
+const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<any>) => {
   const LazyComponent = lazy(async () => {
     const module = await importFunc()
     // default export를 우선 사용, 없으면 첫 번째 named export 사용
@@ -54,8 +52,12 @@ const InstructorListPage = lazyLoad(() => import('@/pages/instructors/instructor
 const InstructorDetailPage = lazyLoad(() => import('@/pages/instructors/instructor-detail-page'))
 const InstructorFormPage = lazyLoad(() => import('@/pages/instructors/instructor-form-page'))
 const InstructorMypagePage = lazyLoad(() => import('@/pages/instructors/instructor-mypage-page'))
-const InstructorDocumentsPage = lazyLoad(() => import('@/pages/instructors/instructor-documents-page'))
-const InstructorSchedulePage = lazyLoad(() => import('@/pages/instructors/instructor-schedule-page'))
+const InstructorDocumentsPage = lazyLoad(
+  () => import('@/pages/instructors/instructor-documents-page')
+)
+const InstructorSchedulePage = lazyLoad(
+  () => import('@/pages/instructors/instructor-schedule-page')
+)
 const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
 const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
 const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
@@ -66,13 +68,19 @@ const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page')
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
-const ProgramApplicationCompletePage = lazyLoad(() => import('@/pages/programs/program-application-complete-page'))
+const ProgramApplicationCompletePage = lazyLoad(
+  () => import('@/pages/programs/program-application-complete-page')
+)
 const MyProgramListPage = lazyLoad(() => import('@/pages/programs/my-program-list-page'))
 const MyProgramDetailPage = lazyLoad(() => import('@/pages/programs/my-program-detail-page'))
 const MyProgramHistoryPage = lazyLoad(() => import('@/pages/programs/my-program-history-page'))
 const ProgramSatisfactionPage = lazyLoad(() => import('@/pages/programs/program-satisfaction-page'))
-const MyProgramApplicationsPage = lazyLoad(() => import('@/pages/programs/my-program-applications-page'))
-const ApplicationProgressPage = lazyLoad(() => import('@/pages/applications/application-progress-page'))
+const MyProgramApplicationsPage = lazyLoad(
+  () => import('@/pages/programs/my-program-applications-page')
+)
+const ApplicationProgressPage = lazyLoad(
+  () => import('@/pages/applications/application-progress-page')
+)
 const MyFavoriteProgramsPage = lazyLoad(() => import('@/pages/programs/my-favorite-programs-page'))
 const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
 const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
@@ -84,41 +92,77 @@ const MyScheduleDetailPage = lazyLoad(() => import('@/pages/schedules/my-schedul
 const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-page'))
 const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
 const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
-const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-settlement-detail-page'))
-const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
-const MySettlementSubmissionPage = lazyLoad(() => import('@/pages/settlements/my-settlement-submission-page'))
+const MySettlementDetailPage = lazyLoad(
+  () => import('@/pages/settlements/my-settlement-detail-page')
+)
+const MyMonthlySettlementPage = lazyLoad(
+  () => import('@/pages/settlements/my-monthly-settlement-page')
+)
+const MySettlementSubmissionPage = lazyLoad(
+  () => import('@/pages/settlements/my-settlement-submission-page')
+)
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
-const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
-const PaymentStatementListPage = lazyLoad(() => import('@/pages/settlements/payment-statement-list-page'))
-const SettlementOverviewPage = lazyLoad(() => import('@/pages/settlements/settlement-overview-page'))
+const SettlementCalculationSettingsPage = lazyLoad(
+  () => import('@/pages/settlements/settlement-calculation-settings-page')
+)
+const PaymentStatementListPage = lazyLoad(
+  () => import('@/pages/settlements/payment-statement-list-page')
+)
+const SettlementOverviewPage = lazyLoad(
+  () => import('@/pages/settlements/settlement-overview-page')
+)
 const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
 const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-page'))
-const InstructorApplicationPage = lazyLoad(() => import('@/pages/interviews/instructor-application-page'))
+const InstructorApplicationPage = lazyLoad(
+  () => import('@/pages/interviews/instructor-application-page')
+)
 const TodoDetailPage = lazyLoad(() => import('@/pages/todos/todo-detail-page'))
 const ReportFormPage = lazyLoad(() => import('@/pages/reports/report-form-page'))
 const ReportListPage = lazyLoad(() => import('@/pages/reports/report-list-page'))
 const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
 const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-detail-page'))
 const VolunteerListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-list-page'))
-const VolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-program-list-page'))
-const MyVolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-program-list-page'))
-const MyVolunteerHistoryPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-history-page'))
-const MyVolunteerSchedulePage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-schedule-page'))
-const VolunteerEducationPlanPage = lazyLoad(() => import('@/pages/volunteers/volunteer-education-plan-page'))
+const VolunteerProgramListPage = lazyLoad(
+  () => import('@/pages/volunteers/volunteer-program-list-page')
+)
+const MyVolunteerProgramListPage = lazyLoad(
+  () => import('@/pages/volunteers/my-volunteer-program-list-page')
+)
+const MyVolunteerHistoryPage = lazyLoad(
+  () => import('@/pages/volunteers/my-volunteer-history-page')
+)
+const MyVolunteerSchedulePage = lazyLoad(
+  () => import('@/pages/volunteers/my-volunteer-schedule-page')
+)
+const VolunteerEducationPlanPage = lazyLoad(
+  () => import('@/pages/volunteers/volunteer-education-plan-page')
+)
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
 const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
 const NoticeListPage = lazyLoad(() => import('@/pages/notices/notice-list-page'))
 const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
-const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths/application-path-list-page'))
-const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
-const EducationRecordListPageV2 = lazyLoad(() => import('@/pages/education-records/education-record-list-page-v2'))
+const ApplicationPathListPage = lazyLoad(
+  () => import('@/pages/application-paths/application-path-list-page')
+)
+const EducationRecordListPage = lazyLoad(
+  () => import('@/pages/education-records/education-record-list-page')
+)
+const EducationRecordListPageV2 = lazyLoad(
+  () => import('@/pages/education-records/education-record-list-page-v2')
+)
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
 const AdminInstructorListPage = lazyLoad(() => import('@/pages/users/instructor-list-page'))
-const InstructorApplicationListPage = lazyLoad(() => import('@/pages/instructor-applications/instructor-application-list-page'))
-const PerformanceDashboardPage = lazyLoad(() => import('@/pages/performance/performance-dashboard-page'))
-const ScheduleNegotiationListPage = lazyLoad(() => import('@/pages/schedule-negotiations/schedule-negotiation-list-page'))
+const InstructorApplicationListPage = lazyLoad(
+  () => import('@/pages/instructor-applications/instructor-application-list-page')
+)
+const PerformanceDashboardPage = lazyLoad(
+  () => import('@/pages/performance/performance-dashboard-page')
+)
+const ScheduleNegotiationListPage = lazyLoad(
+  () => import('@/pages/schedule-negotiations/schedule-negotiation-list-page')
+)
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
 const TemplateFilesPage = lazyLoad(() => import('@/pages/templates/template-files-page'))
@@ -129,14 +173,23 @@ const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-pa
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
-const AdminSettlementReviewPage = lazyLoad(() => import('@/pages/admin/admin-settlement-review-page'))
-const PermissionRequestListPage = lazyLoad(() => import('@/pages/admin/permission-request-list-page'))
+const AdminSettlementReviewPage = lazyLoad(
+  () => import('@/pages/admin/admin-settlement-review-page')
+)
+const PermissionRequestListPage = lazyLoad(
+  () => import('@/pages/admin/permission-request-list-page')
+)
+const AuditLogListPage = lazyLoad(() => import('@/pages/admin/audit-log-list-page'))
 const SurveyListPage = lazyLoad(() => import('@/pages/surveys/survey-list-page'))
 const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
 
-function LegacyPostsRedirect({ kind }: { kind: 'root' | 'faq' | 'inquiries' | 'notices' | 'categories' }) {
+function LegacyPostsRedirect({
+  kind,
+}: {
+  kind: 'root' | 'faq' | 'inquiries' | 'notices' | 'categories'
+}) {
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'ADMIN'
 
@@ -274,9 +327,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'instructor-applications',
-        children: [
-          { index: true, element: <InstructorApplicationListPage /> },
-        ],
+        children: [{ index: true, element: <InstructorApplicationListPage /> }],
       },
       {
         path: 'application-paths',
@@ -426,15 +477,15 @@ export const router = createBrowserRouter([
           },
           {
             path: 'settlements',
-            children: [
-              { index: true, element: <AdminSettlementReviewPage /> },
-            ],
+            children: [{ index: true, element: <AdminSettlementReviewPage /> }],
           },
           {
             path: 'permission-requests',
-            children: [
-              { index: true, element: <PermissionRequestListPage /> },
-            ],
+            children: [{ index: true, element: <PermissionRequestListPage /> }],
+          },
+          {
+            path: 'logs',
+            children: [{ path: 'audit', element: <AuditLogListPage /> }],
           },
         ],
       },
@@ -451,9 +502,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'logs',
-        children: [
-          { index: true, element: <LogListPage /> },
-        ],
+        children: [{ index: true, element: <LogListPage /> }],
       },
       {
         path: 'notices',
@@ -468,8 +517,13 @@ export const router = createBrowserRouter([
         element: <ErrorPage />,
       },
       {
+        path: 'unauthorized',
+        element: <Navigate to="/forbidden" replace />,
+      },
+      // Phase 0.1.5: 404 페이지 개선
+      {
         path: '*',
-        element: <ErrorPage />,
+        element: <Navigate to="/error?code=404" replace />,
       },
     ],
   },

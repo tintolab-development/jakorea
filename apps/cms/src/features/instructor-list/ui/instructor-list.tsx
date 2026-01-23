@@ -16,7 +16,8 @@ import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
-import ExcelJS from 'exceljs'
+// @ts-ignore - @zurmokeeper/exceljs 타입 선언 문제
+import ExcelJS from '@zurmokeeper/exceljs'
 
 export interface InstructorListItem {
   id: string
@@ -138,9 +139,7 @@ export function InstructorList({
       dataIndex: 'pillar',
       key: 'pillar',
       width: 120,
-      render: (pillar: string) => (
-        <Tag color="blue">{pillar}</Tag>
-      ),
+      render: (pillar: string) => <Tag color="blue">{pillar}</Tag>,
     },
     {
       title: '전문분야',
@@ -181,12 +180,7 @@ export function InstructorList({
       render: (_: unknown, record: InstructorListItem) => (
         <Space>
           {onView && (
-            <Button
-              type="link"
-              icon={<EyeOutlined />}
-              onClick={() => onView(record)}
-              size="small"
-            >
+            <Button type="link" icon={<EyeOutlined />} onClick={() => onView(record)} size="small">
               조회
             </Button>
           )}
@@ -227,7 +221,7 @@ export function InstructorList({
         scroll={{ x: 1000 }}
         pagination={{
           showSizeChanger: true,
-          showTotal: (total) => `총 ${total}건`,
+          showTotal: total => `총 ${total}건`,
         }}
       />
     </div>

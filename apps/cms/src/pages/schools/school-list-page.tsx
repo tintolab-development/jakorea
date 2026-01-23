@@ -15,14 +15,20 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { SchoolFormData } from '@/entities/school/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 
 export function SchoolListPage() {
   const location = useLocation()
+  const { user } = useAuthStore()
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
+
   const { schools, loading, fetchSchools, createSchool, updateSchool } = useSchoolStore()
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [editingSchool, setEditingSchool] = useState<{ id: string; data: SchoolFormData } | null>(null)
   const [formLoading, setFormLoading] = useState(false)
-  
+
   // 2뎁스 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '회원 관리'
 
@@ -67,9 +73,12 @@ export function SchoolListPage() {
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
-          학교 등록
-        </Button>
+        {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
+        {canWrite && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
+            학교 등록
+          </Button>
+        )}
       </Space>
       <SchoolList data={schools} loading={loading} />
 

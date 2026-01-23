@@ -60,8 +60,8 @@ export function SchoolApplicationForm({
     },
   })
 
-  // 엑셀 파일 업로드 핸들러
-  const handleFileUpload = (file: File) => {
+  // 엑셀 파일 업로드 핸들러 (FR-C03: 엑셀 파일 파싱 및 검증)
+  const handleFileUpload = async (file: File) => {
     // 파일 확장자 검증
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
     if (!UPLOAD_POLICY.studentList.allowedExtensions.includes(fileExtension)) {
@@ -75,8 +75,27 @@ export function SchoolApplicationForm({
       return false
     }
 
-    setValue('studentListFile', file)
-    message.success('파일이 선택되었습니다.')
+    // 엑셀 파일 파싱 및 검증
+    try {
+      const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
+      const parseResult = await fileUploadService.parseStudentList(file)
+      
+      if (parseResult.errors.length > 0) {
+        message.warning(`파싱 중 경고: ${parseResult.errors.join(', ')}`)
+      }
+      
+      if (parseResult.totalCount === 0) {
+        message.error('학생 정보를 찾을 수 없습니다. 엑셀 파일 형식을 확인해주세요.')
+        return false
+      }
+
+      setValue('studentListFile', file)
+      message.success(`파일이 선택되었습니다. (학생 ${parseResult.totalCount}명)`)
+    } catch (error: any) {
+      message.error(error?.message || '엑셀 파일 파싱에 실패했습니다.')
+      return false
+    }
+
     return false // 자동 업로드 방지
   }
 

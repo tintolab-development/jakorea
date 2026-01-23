@@ -20,7 +20,8 @@ import { PermissionRequestButton } from '@/features/permission-request/ui/permis
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
-import ExcelJS from 'exceljs'
+// @ts-ignore - @zurmokeeper/exceljs 타입 선언 문제
+import ExcelJS from '@zurmokeeper/exceljs'
 
 interface ParticipantListItem {
   id: string
@@ -53,10 +54,8 @@ export function ParticipantList({
   const canDownload = canDownloadParticipants(currentUser || user, programId)
   // Phase 0.5.2: 권한 없는 관리자 → 권한 요청 버튼 노출
   const showPermissionRequest =
-    !canDownload &&
-    (currentUser || user)?.role === 'ADMIN' &&
-    !!programId
-  const programName = programId ? programService.getByIdSync(programId)?.title ?? '프로그램' : ''
+    !canDownload && (currentUser || user)?.role === 'ADMIN' && !!programId
+  const programName = programId ? (programService.getByIdSync(programId)?.title ?? '프로그램') : ''
   const [downloadModalOpen, setDownloadModalOpen] = useState(false)
 
   const handleDownload = async (options: DownloadOptions) => {
@@ -161,9 +160,7 @@ export function ParticipantList({
       key: 'status',
       width: 120,
       render: (status: Application['status']) => (
-        <Tag color={getApplicationStatusColor(status)}>
-          {getApplicationStatusLabel(status)}
-        </Tag>
+        <Tag color={getApplicationStatusColor(status)}>{getApplicationStatusLabel(status)}</Tag>
       ),
     },
     {
@@ -181,12 +178,7 @@ export function ParticipantList({
       render: (_: unknown, record: ParticipantListItem) => (
         <Space>
           {onView && (
-            <Button
-              type="link"
-              icon={<EyeOutlined />}
-              onClick={() => onView(record)}
-              size="small"
-            >
+            <Button type="link" icon={<EyeOutlined />} onClick={() => onView(record)} size="small">
               조회
             </Button>
           )}
@@ -236,7 +228,7 @@ export function ParticipantList({
         scroll={{ x: 1000 }}
         pagination={{
           showSizeChanger: true,
-          showTotal: (total) => `총 ${total}건`,
+          showTotal: total => `총 ${total}건`,
         }}
       />
     </div>

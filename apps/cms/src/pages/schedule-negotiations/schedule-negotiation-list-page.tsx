@@ -7,7 +7,10 @@ import { Button, Space, Modal, Select } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { useScheduleNegotiationStore } from '@/features/schedule-negotiation/model/schedule-negotiation-store'
 import { ScheduleNegotiationList } from '@/features/schedule-negotiation/ui/schedule-negotiation-list'
-import { ScheduleNegotiationForm, type ScheduleNegotiationFormData } from '@/features/schedule-negotiation/ui/schedule-negotiation-form'
+import {
+  ScheduleNegotiationForm,
+  type ScheduleNegotiationFormData,
+} from '@/features/schedule-negotiation/ui/schedule-negotiation-form'
 import { ScheduleNegotiationDetailDrawer } from '@/features/schedule-negotiation/ui/schedule-negotiation-detail-drawer'
 import type { ScheduleNegotiation } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
@@ -24,7 +27,17 @@ interface NegotiationQueryParams extends Record<string, string | undefined> {
 }
 
 export default function ScheduleNegotiationListPage() {
-  const { items, loading, fetchAll, create, update, delete: remove } = useScheduleNegotiationStore()
+  const {
+    items,
+    loading,
+    fetchAll,
+    create,
+    update,
+    delete: remove,
+    selectedNegotiation: storeSelectedNegotiation,
+    setSelectedNegotiation,
+    clearSelectedNegotiation,
+  } = useScheduleNegotiationStore()
   const { params, setParams, clearParams } = useQueryParams<NegotiationQueryParams>()
   const [open, setOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -59,6 +72,7 @@ export default function ScheduleNegotiationListPage() {
 
   const handleView = (item: ScheduleNegotiation) => {
     setViewing(item)
+    setSelectedNegotiation(item) // store에도 동기화
     setDetailOpen(true)
   }
 
@@ -221,6 +235,7 @@ export default function ScheduleNegotiationListPage() {
         onClose={() => {
           setDetailOpen(false)
           setViewing(null)
+          clearSelectedNegotiation() // store도 초기화
         }}
         onEdit={() => {
           if (viewing) {
@@ -241,8 +256,10 @@ export default function ScheduleNegotiationListPage() {
             try {
               await update(viewing.id, { status: 'accepted' })
               showSuccessMessage('합의 처리되었습니다.')
-              setDetailOpen(false)
-              setViewing(null)
+              // store의 update가 이미 selectedNegotiation을 업데이트하므로 로컬 상태도 동기화
+              if (storeSelectedNegotiation) {
+                setViewing(storeSelectedNegotiation)
+              }
             } catch (error) {
               handleError(error, { context: 'ScheduleNegotiationListPage -> onAccept' })
             }
@@ -253,8 +270,10 @@ export default function ScheduleNegotiationListPage() {
             try {
               await update(viewing.id, { status: 'rejected' })
               showSuccessMessage('거절 처리되었습니다.')
-              setDetailOpen(false)
-              setViewing(null)
+              // store의 update가 이미 selectedNegotiation을 업데이트하므로 로컬 상태도 동기화
+              if (storeSelectedNegotiation) {
+                setViewing(storeSelectedNegotiation)
+              }
             } catch (error) {
               handleError(error, { context: 'ScheduleNegotiationListPage -> onReject' })
             }
@@ -265,5 +284,3 @@ export default function ScheduleNegotiationListPage() {
     </div>
   )
 }
-
-

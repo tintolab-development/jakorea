@@ -93,7 +93,7 @@ const mockInstructors: User[] = [
       accountHolder: '최강사',
       accountNumber: '123-456-789012',
       isBusinessIncome: false,
-    }
+    },
   },
   {
     id: generateUUID(),
@@ -345,5 +345,16 @@ export function validateLogin(email: string, password: string): User | null {
   return user
 }
 
-
-
+/**
+ * 전화번호로 사용자 찾기
+ * Phase 0.1.3: 휴대폰 본인인증 로그인
+ */
+export function getUserByPhone(phone: string): User | undefined {
+  // 하이픈 제거하여 비교
+  const normalizedPhone = phone.replace(/-/g, '')
+  return mockUsers.find(user => {
+    if (!user.phone) return false
+    const normalizedUserPhone = user.phone.replace(/-/g, '')
+    return normalizedUserPhone === normalizedPhone && user.isActive
+  })
+}

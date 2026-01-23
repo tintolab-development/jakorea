@@ -12,9 +12,10 @@ const { Option } = Select
 interface InstructorListProps {
   data: Instructor[]
   loading?: boolean
+  onView?: (instructor: Instructor) => void
 }
 
-export function InstructorList({ data, loading }: InstructorListProps) {
+export function InstructorList({ data, loading, onView }: InstructorListProps) {
   const { table } = useInstructorTable(data)
 
   const regions = Array.from(new Set(data.map(i => i.region))).sort()
@@ -46,6 +47,14 @@ export function InstructorList({ data, loading }: InstructorListProps) {
 
       <Table
         dataSource={table.getRowModel().rows.map(row => row.original)}
+        onRow={
+          onView
+            ? record => ({
+                onClick: () => onView(record),
+                style: { cursor: 'pointer' },
+              })
+            : undefined
+        }
         columns={[
           {
             title: '이름',
@@ -87,7 +96,7 @@ export function InstructorList({ data, loading }: InstructorListProps) {
           pageSize: table.getState().pagination.pageSize,
           total: table.getFilteredRowModel().rows.length,
           showSizeChanger: true,
-          showTotal: (total) => `총 ${total}개`,
+          showTotal: total => `총 ${total}개`,
           onChange: (page, pageSize) => {
             table.setPageIndex(page - 1)
             table.setPageSize(pageSize)
@@ -97,4 +106,3 @@ export function InstructorList({ data, loading }: InstructorListProps) {
     </div>
   )
 }
-

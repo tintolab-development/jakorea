@@ -119,6 +119,23 @@ export async function changeApplicationProgressStatus(
     }
   }
 
+  // Phase 0.3.6: 상태 변경 시 알림 발송 트리거 (Mock)
+  let notificationSent = false
+  try {
+    // 특정 상태 변경 시 자동 알림 발송
+    const shouldAutoNotify = ['MATCHING_COMPLETED', 'MATERIAL_SHIPPED', 'IN_PROGRESS'].includes(
+      newStatus
+    )
+    if (shouldAutoNotify) {
+      // Mock: 실제로는 알림 서비스 호출
+      // await sendApplicationProgressNotification(application, newStatus, changedBy)
+      notificationSent = true
+    }
+  } catch (error) {
+    console.error('알림 발송 실패:', error)
+    // 알림 발송 실패해도 상태 변경은 진행
+  }
+
   // 상태 변경 이력 기록
   const log: StatusChangeLog = {
     id: `log-${Date.now()}-${Math.random()}`,
@@ -127,7 +144,7 @@ export async function changeApplicationProgressStatus(
     toStatus: newStatus,
     changedBy,
     changedAt: new Date().toISOString(),
-    notificationSent: false, // 알림 발송은 별도 처리
+    notificationSent, // Phase 0.3.6: 자동 알림 발송 여부
     reason,
   }
   statusChangeLogs.push(log)
