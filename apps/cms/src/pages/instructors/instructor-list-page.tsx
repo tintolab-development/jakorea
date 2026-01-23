@@ -2,12 +2,13 @@
  * 강사 목록 페이지
  * Phase 1.2: 목록 페이지
  * Phase 4.2.3: 권한별 UI 컴포넌트 적용
+ * Phase 2: 리팩토링 패턴 적용
  * 강사 등록을 모달로 변경
  */
 
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Space, Modal, Drawer, message } from 'antd'
+import { Space, Modal, Drawer } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { InstructorList } from '@/features/instructor/ui/instructor-list'
 import { InstructorForm } from '@/features/instructor/ui/instructor-form'
@@ -16,6 +17,8 @@ import { useInstructorStore } from '@/features/instructor/model/instructor-store
 import { PermissionButton } from '@/shared/components'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { useModalState } from '@/shared/hooks/use-modal-state'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
@@ -32,13 +35,23 @@ export function InstructorListPage() {
     selectedInstructor,
     setSelectedInstructor,
   } = useInstructorStore()
-  const [formModalOpen, setFormModalOpen] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerInstructor, setDrawerInstructor] = useState<Instructor | null>(null)
-  const [editingInstructor, setEditingInstructor] = useState<{
-    id: string
-    data: InstructorFormData
-  } | null>(null)
+  // Form 모달 상태 관리
+  const {
+    open: formModalOpen,
+    openModal: openFormModal,
+    closeModal: closeFormModal,
+    selectedItem: editingInstructor,
+    isEditing: isEditingMode,
+  } = useModalState<{ id: string; data: InstructorFormData }>()
+
+  // Drawer 상태 관리
+  const {
+    open: drawerOpen,
+    openModal: openDrawer,
+    closeModal: closeDrawer,
+    selectedItem: drawerInstructor,
+  } = useModalState<Instructor>()
+
   const [formLoading, setFormLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
@@ -50,8 +63,7 @@ export function InstructorListPage() {
   }, [fetchInstructors])
 
   const handleNewClick = () => {
-    setEditingInstructor(null)
-    setFormModalOpen(true)
+    openFormModal()
   }
 
   const handleFormSubmit = async (data: InstructorFormData) => {
@@ -59,19 +71,16 @@ export function InstructorListPage() {
     try {
       if (editingInstructor) {
         await updateInstructor(editingInstructor.id, data)
-        showSuccessMessage('강사 정보가 수정되었습니다')
+        showSuccessMessage(MESSAGES.success.updated)
       } else {
         await createInstructor(data)
-        showSuccessMessage('강사가 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.created)
       }
-      setFormModalOpen(false)
-      setEditingInstructor(null)
+      closeFormModal()
       fetchInstructors()
     } catch (error) {
       handleError(error, {
-        defaultMessage: editingInstructor
-          ? '수정 중 오류가 발생했습니다'
-          : '등록 중 오류가 발생했습니다',
+        defaultMessage: editingInstructor ? MESSAGES.error.update : MESSAGES.error.create,
         context: 'InstructorFormSubmit',
       })
     } finally {
@@ -80,36 +89,32 @@ export function InstructorListPage() {
   }
 
   const handleFormCancel = () => {
-    setFormModalOpen(false)
-    setEditingInstructor(null)
+    closeFormModal()
   }
 
   const handleView = (instructor: Instructor) => {
     setSelectedInstructor(instructor)
-    setDrawerInstructor(instructor)
-    setDrawerOpen(true)
+    openDrawer(instructor)
   }
 
   const handleEdit = (instructor: Instructor) => {
-    setEditingInstructor({ id: instructor.id, data: {} as InstructorFormData })
-    setDrawerOpen(false)
-    setFormModalOpen(true)
+    openFormModal({ id: instructor.id, data: {} as InstructorFormData })
+    closeDrawer()
   }
 
   const handleDelete = async (instructor: Instructor) => {
     setDeleteLoading(true)
     try {
       await deleteInstructor(instructor.id)
-      message.success('강사가 삭제되었습니다')
+      showSuccessMessage(MESSAGES.success.deleted)
       if (selectedInstructor?.id === instructor.id) {
-        setDrawerOpen(false)
-        setDrawerInstructor(null)
+        closeDrawer()
         setSelectedInstructor(null)
       }
       fetchInstructors()
     } catch (error) {
       handleError(error, {
-        defaultMessage: '삭제 중 오류가 발생했습니다',
+        defaultMessage: MESSAGES.error.delete,
         context: 'InstructorDelete',
       })
     } finally {
@@ -139,11 +144,10 @@ export function InstructorListPage() {
       <Drawer
         title="강사 상세"
         placement="right"
-        width={792}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
         open={drawerOpen}
         onClose={() => {
-          setDrawerOpen(false)
-          setDrawerInstructor(null)
+          closeDrawer()
           setSelectedInstructor(null)
         }}
       >
@@ -159,10 +163,10 @@ export function InstructorListPage() {
 
       <Modal
         open={formModalOpen}
-        title={editingInstructor ? '강사 수정' : '강사 등록'}
+        title={isEditingMode ? '강사 수정' : '강사 등록'}
         onCancel={handleFormCancel}
         footer={null}
-        width={600}
+        width={LAYOUT_CONSTANTS.widths.modal.medium}
         destroyOnHidden
       >
         <InstructorForm

@@ -2,6 +2,7 @@
  * 매칭 목록 페이지
  * Phase 0.3.6: 매칭 관리 UI
  * Phase 4.4: 캘린더/목록 뷰 전환 및 엑셀 다운로드 (FR-F03)
+ * Phase 2: 리팩토링 패턴 적용
  */
 
 import { useState } from 'react'
@@ -13,6 +14,7 @@ import { MatchingStatusList } from '@/features/matching/ui/matching-status-list'
 import { MatchingDetailDrawer } from '@/features/matching/ui/matching-detail-drawer'
 import { MatchingForm } from '@/features/matching/ui/matching-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useMatchingManagement } from '@/features/matching/hooks/use-matching-management'
 import { useMatchingStatus } from '@/features/matching/hooks/use-matching-status'
 import type { MatchingStatusItem } from '@/entities/matching/api/matching-status-service'
@@ -146,7 +148,7 @@ export function MatchingListPage() {
         open={formModalOpen}
         onCancel={closeForm}
         footer={null}
-        width={800}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
         zIndex={1001}
       >
         <MatchingForm

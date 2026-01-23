@@ -1,21 +1,22 @@
 /**
  * 강사 신청 관리 페이지 (관리자용)
  * Phase 0.3.5: 강사 신청 관리 UI
+ * Phase 2: 리팩토링 패턴 적용
  */
 
-import { Space, Select, Button, Modal, Typography } from 'antd'
+import { Space, Modal, Typography } from 'antd'
 import { InterviewList } from '@/features/interview/ui/interview-list'
 import { InterviewDetailDrawer } from '@/features/interview/ui/interview-detail-drawer'
 import { InterviewScheduleForm } from '@/features/interview/ui/interview-schedule-form'
 import { InterviewResultForm } from '@/features/interview/ui/interview-result-form'
 import { ApprovalModal } from '@/features/interview/ui/approval-modal'
+import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import type { UserRole } from '@/types/user'
 import { useInstructorApplications } from '@/features/interview/hooks/use-instructor-applications'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import './interview-list-page.css'
-
-const { Option } = Select
 
 export function InterviewListPage() {
   const { user } = useAuthStore()
@@ -58,36 +59,46 @@ export function InterviewListPage() {
         </div>
       </Space>
 
-      <Space className="interview-list-filters" size="middle" wrap>
-        <Select
-          value={filters.status === 'ALL' ? undefined : filters.status}
-          onChange={setStatusFilter}
-          className="interview-list-filter--status"
-          placeholder="상태 선택"
-          allowClear
-        >
-          <Option value="PENDING">면접 필요</Option>
-          <Option value="SCHEDULED">면접 일정 확정</Option>
-          <Option value="COMPLETED">면접 완료</Option>
-          <Option value="APPROVED">승인 완료</Option>
-          <Option value="REJECTED">반려</Option>
-          <Option value="NOT_REQUIRED">면접 불필요</Option>
-        </Select>
-        <Select
-          value={filters.role === 'ALL' ? undefined : filters.role}
-          onChange={setRoleFilter as (value: UserRole | null) => void}
-          className="interview-list-filter--role"
-          placeholder="신청 유형"
-          allowClear
-        >
-          <Option value="INSTRUCTOR">강사</Option>
-          <Option value="INDIVIDUAL">개인(참여자)</Option>
-          <Option value="SCHOOL">학교</Option>
-        </Select>
-        {(filters.status !== 'ALL' || filters.role !== 'ALL') && (
-          <Button onClick={resetFilters}>필터 초기화</Button>
-        )}
-      </Space>
+      <ListPageFilters
+        filters={{
+          status: filters.status === 'ALL' ? undefined : filters.status,
+          role: filters.role === 'ALL' ? undefined : filters.role,
+        }}
+        onFilterChange={(key, value) => {
+          if (key === 'status') {
+            setStatusFilter(value || 'ALL')
+          } else if (key === 'role') {
+            setRoleFilter((value || 'ALL') as UserRole | 'ALL')
+          }
+        }}
+        filterConfig={[
+          {
+            key: 'status',
+            type: 'select',
+            options: [
+              { label: '면접 필요', value: 'PENDING' },
+              { label: '면접 일정 확정', value: 'SCHEDULED' },
+              { label: '면접 완료', value: 'COMPLETED' },
+              { label: '승인 완료', value: 'APPROVED' },
+              { label: '반려', value: 'REJECTED' },
+              { label: '면접 불필요', value: 'NOT_REQUIRED' },
+            ],
+            placeholder: '상태 선택',
+          },
+          {
+            key: 'role',
+            type: 'select',
+            options: [
+              { label: '강사', value: 'INSTRUCTOR' },
+              { label: '개인(참여자)', value: 'INDIVIDUAL' },
+              { label: '학교', value: 'SCHOOL' },
+            ],
+            placeholder: '신청 유형',
+          },
+        ]}
+        onReset={resetFilters}
+        showReset={filters.status !== 'ALL' || filters.role !== 'ALL'}
+      />
 
       <InterviewList
         data={interviews}
@@ -110,7 +121,7 @@ export function InterviewListPage() {
         title="일정 등록"
         onCancel={closeScheduleModal}
         footer={null}
-        width={600}
+        width={LAYOUT_CONSTANTS.widths.modal.medium}
         zIndex={1001}
       >
         <InterviewScheduleForm
@@ -125,7 +136,7 @@ export function InterviewListPage() {
         title="면접 결과 입력"
         onCancel={closeResultModal}
         footer={null}
-        width={600}
+        width={LAYOUT_CONSTANTS.widths.modal.medium}
         zIndex={1001}
       >
         <InterviewResultForm

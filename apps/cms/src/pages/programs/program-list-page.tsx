@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { Button, Space, Modal, message, Tabs } from 'antd'
+import { Space, Modal, Tabs } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
@@ -17,19 +17,29 @@ import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PermissionButton } from '@/shared/components/permission-button'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { useModalState } from '@/shared/hooks/use-modal-state'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import './program-list-page.css'
 import type { Program, ProgramLifecycleStatus, ProgramCategory } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
-import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useProgramStatusManager } from '@/features/program/hooks/use-program-status-manager'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 // import { filterProgramsByACL } from '@/shared/utils/program-acl' // 개발 환경에서는 ACL 필터링 비활성화
+
+interface ProgramListQueryParams extends Record<string, string | undefined> {
+  programId?: string
+  category?: ProgramCategory | 'all'
+  status?: ProgramLifecycleStatus
+  progressStatus?: string
+}
 
 export function ProgramListPage() {
   const navigate = useNavigate()
   const authStore = useAuthStore()
   const { user } = authStore
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParam } = useQueryParams<ProgramListQueryParams>()
   const {
     programs,
     loading,
@@ -41,12 +51,33 @@ export function ProgramListPage() {
     setSelectedProgram,
   } = useProgramStore()
   const { changeStatus: changeProgramStatus } = useProgramStatusManager()
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerProgram, setDrawerProgram] = useState<Program | null>(null) // Drawer에 표시할 프로그램 (즉시 표시용)
-  const [formModalOpen, setFormModalOpen] = useState(false)
-  const [editingProgram, setEditingProgram] = useState<Program | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [programToDelete, setProgramToDelete] = useState<Program | null>(null)
+  
+  // Drawer 상태 관리
+  const {
+    open: drawerOpen,
+    openModal: openDrawer,
+    closeModal: closeDrawer,
+    selectedItem: drawerProgram,
+    setSelectedItem: setDrawerProgram,
+  } = useModalState<Program>()
+
+  // Form 모달 상태 관리
+  const {
+    open: formModalOpen,
+    openModal: openFormModal,
+    closeModal: closeFormModal,
+    selectedItem: editingProgram,
+    isEditing: isEditingMode,
+  } = useModalState<Program>()
+
+  // Delete 모달 상태 관리
+  const {
+    open: deleteModalOpen,
+    openModal: openDeleteModal,
+    closeModal: closeDeleteModal,
+    selectedItem: programToDelete,
+  } = useModalState<Program>()
+
   const [formLoading, setFormLoading] = useState(false)
 
   // 관리자만 프로그램 등록 가능
@@ -74,7 +105,7 @@ export function ProgramListPage() {
     : getCategoryNameByPath(location.pathname, 1) || '진행 프로그램'
 
   // 탭 필터 (강사용)
-  const categoryTab = (searchParams.get('category') as ProgramCategory | 'all') || 'all'
+  const categoryTab = (params.category as ProgramCategory | 'all') || 'all'
 
   useEffect(() => {
     fetchPrograms()
@@ -82,20 +113,18 @@ export function ProgramListPage() {
 
   // Phase 0.2.1: 로그인 후 redirect 파라미터로 프로그램 상세 열기
   useEffect(() => {
-    const programId = searchParams.get('programId')
+    const programId = params.programId
     if (programId && user && authStore.isAuthenticated) {
       const program = programs.find(p => p.id === programId)
       if (program) {
         setSelectedProgram(program)
         setDrawerProgram(program)
-        setDrawerOpen(true)
+        openDrawer(program)
         // URL에서 programId 제거
-        const newParams = new URLSearchParams(searchParams)
-        newParams.delete('programId')
-        setSearchParams(newParams, { replace: true })
+        setParam('programId', null)
       }
     }
-  }, [searchParams, user, authStore.isAuthenticated, programs, setSearchParams])
+  }, [params.programId, user, authStore.isAuthenticated, programs, setParam])
 
   // status 쿼리 파라미터 읽기
   // ProgramProgressSummary 상태를 ProgramLifecycleStatus로 매핑하는 로직
@@ -116,7 +145,7 @@ export function ProgramListPage() {
   }
 
   const statusFilter = useMemo<ProgramLifecycleStatus | null>(() => {
-    const value = searchParams.get('status') as ProgramLifecycleStatus | null
+    const value = params.status as ProgramLifecycleStatus | null
     const validStatuses: ProgramLifecycleStatus[] = [
       'planned',
       'recruiting_students',
@@ -127,12 +156,12 @@ export function ProgramListPage() {
       'completed',
     ]
     return value && validStatuses.includes(value) ? value : null
-  }, [searchParams])
+  }, [params.status])
 
   // progressStatus 쿼리 파라미터 읽기 (대시보드에서 클릭한 경우)
   const progressStatusFilter = useMemo<string | null>(() => {
-    return searchParams.get('progressStatus') || null
-  }, [searchParams])
+    return params.progressStatus || null
+  }, [params.progressStatus])
 
   // 강사용: 신청 가능한 프로그램 및 수강자 모집 완료 프로그램 필터링 + 카테고리 필터
   // Phase 0.5.2: 프로그램 단위 ACL 필터링 추가
@@ -198,18 +227,16 @@ export function ProgramListPage() {
     // store에 동기화하고 Drawer 열기 (즉시 표시를 위해 drawerProgram도 설정)
     setSelectedProgram(program)
     setDrawerProgram(program)
-    setDrawerOpen(true)
+    openDrawer(program)
   }
 
   const handleEdit = (program: Program) => {
-    setEditingProgram(program)
-    setDrawerOpen(false)
-    setFormModalOpen(true)
+    openFormModal(program)
+    closeDrawer()
   }
 
   const handleNewClick = () => {
-    setEditingProgram(null)
-    setFormModalOpen(true)
+    openFormModal()
   }
 
   const handleFormSubmit = async (data: ProgramFormData) => {
@@ -229,19 +256,16 @@ export function ProgramListPage() {
 
       if (editingProgram) {
         await updateProgram(editingProgram.id, programData)
-        showSuccessMessage('프로그램 정보가 수정되었습니다')
+        showSuccessMessage(MESSAGES.success.updated)
       } else {
         await createProgram(programData as Omit<Program, 'id' | 'createdAt' | 'updatedAt'>)
-        showSuccessMessage('프로그램이 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.created)
       }
-      setFormModalOpen(false)
-      setEditingProgram(null)
+      closeFormModal()
       fetchPrograms()
     } catch (error) {
       handleError(error, {
-        defaultMessage: editingProgram
-          ? '수정 중 오류가 발생했습니다'
-          : '등록 중 오류가 발생했습니다',
+        defaultMessage: editingProgram ? MESSAGES.error.update : MESSAGES.error.create,
         context: 'ProgramFormSubmit',
       })
     } finally {
@@ -250,13 +274,11 @@ export function ProgramListPage() {
   }
 
   const handleFormCancel = () => {
-    setFormModalOpen(false)
-    setEditingProgram(null)
+    closeFormModal()
   }
 
   const handleDeleteClick = (program: Program) => {
-    setProgramToDelete(program)
-    setDeleteModalOpen(true)
+    openDeleteModal(program)
   }
 
   const handleDeleteConfirm = async () => {
@@ -264,16 +286,18 @@ export function ProgramListPage() {
 
     try {
       await deleteProgram(programToDelete.id)
-      message.success('프로그램이 삭제되었습니다')
-      setDeleteModalOpen(false)
-      setProgramToDelete(null)
+      showSuccessMessage(MESSAGES.success.deleted)
+      closeDeleteModal()
       if (selectedProgram?.id === programToDelete.id) {
-        setDrawerOpen(false)
+        closeDrawer()
         setDrawerProgram(null)
         setSelectedProgram(null)
       }
-    } catch {
-      message.error('삭제 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: MESSAGES.error.delete,
+        context: 'ProgramDelete',
+      })
     }
   }
 
@@ -282,13 +306,11 @@ export function ProgramListPage() {
   }
 
   const handleCategoryTabChange = (category: ProgramCategory | 'all') => {
-    const newParams = new URLSearchParams(searchParams)
     if (category === 'all') {
-      newParams.delete('category')
+      setParam('category', null)
     } else {
-      newParams.set('category', category)
+      setParam('category', category)
     }
-    setSearchParams(newParams, { replace: true })
   }
 
   return (
@@ -344,19 +366,19 @@ export function ProgramListPage() {
         open={drawerOpen}
         program={drawerProgram || selectedProgram || undefined}
         onClose={() => {
-          setDrawerOpen(false)
+          closeDrawer()
           setDrawerProgram(null)
           setSelectedProgram(null)
         }}
         onEdit={() => {
           if (selectedProgram) {
-            setDrawerOpen(false)
+            closeDrawer()
             handleEdit(selectedProgram)
           }
         }}
         onDelete={() => {
           if (selectedProgram) {
-            setDrawerOpen(false)
+            closeDrawer()
             handleDeleteClick(selectedProgram)
           }
         }}
@@ -366,10 +388,10 @@ export function ProgramListPage() {
 
       <Modal
         open={formModalOpen}
-        title={editingProgram ? '프로그램 수정' : '프로그램 등록'}
+        title={isEditingMode ? '프로그램 수정' : '프로그램 등록'}
         onCancel={handleFormCancel}
         footer={null}
-        width={900}
+        width={LAYOUT_CONSTANTS.widths.modal.xlarge}
         destroyOnHidden
         zIndex={1001}
       >
@@ -386,10 +408,7 @@ export function ProgramListPage() {
         title="프로그램 삭제"
         content="정말 이 프로그램을 삭제하시겠습니까? 관련된 신청, 일정, 매칭 정보도 함께 삭제될 수 있습니다."
         onConfirm={handleDeleteConfirm}
-        onCancel={() => {
-          setDeleteModalOpen(false)
-          setProgramToDelete(null)
-        }}
+        onCancel={closeDeleteModal}
         confirmText="삭제"
         danger
       />

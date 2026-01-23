@@ -5,7 +5,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Space, Select, Input, Button } from 'antd'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { ParticipantList } from '@/features/participant/ui/participant-list'
 import { getParticipants, type ParticipantListFilters } from '@/entities/participant/api/participant-service'
 import { programService } from '@/entities/program/api/program-service'
@@ -13,6 +14,13 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import type { Application } from '@/types/domain'
+
+interface ParticipantListQueryParams extends Record<string, string | undefined> {
+  programId?: string
+  role?: 'INDIVIDUAL' | 'SCHOOL' | 'ALL'
+  status?: Application['status'] | 'ALL'
+  search?: string
+}
 import './participant-list-page.css'
 
 const { Option } = Select
@@ -20,7 +28,7 @@ const { Search } = Input
 
 export function ParticipantListPage() {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParam } = useQueryParams<ParticipantListQueryParams>()
   const { user } = useAuthStore()
 
   // 2뎁스 카테고리명 가져오기
@@ -34,20 +42,20 @@ export function ParticipantListPage() {
 
   // 쿼리 파라미터에서 필터 값 읽기
   const programId = useMemo(() => {
-    return searchParams.get('programId') || undefined
-  }, [searchParams])
+    return params.programId || undefined
+  }, [params.programId])
 
   const roleFilter = useMemo(() => {
-    return (searchParams.get('role') || 'ALL') as 'INDIVIDUAL' | 'SCHOOL' | 'ALL'
-  }, [searchParams])
+    return (params.role || 'ALL') as 'INDIVIDUAL' | 'SCHOOL' | 'ALL'
+  }, [params.role])
 
   const statusFilter = useMemo(() => {
-    return (searchParams.get('status') || 'ALL') as Application['status'] | 'ALL'
-  }, [searchParams])
+    return (params.status || 'ALL') as Application['status'] | 'ALL'
+  }, [params.status])
 
   const searchQuery = useMemo(() => {
-    return searchParams.get('search') || ''
-  }, [searchParams])
+    return params.search || ''
+  }, [params.search])
 
   // 프로그램 목록 조회
   const programs = programService.getAllSync()
@@ -78,43 +86,31 @@ export function ParticipantListPage() {
 
   // 필터 변경 핸들러
   const handleProgramFilterChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
     if (value === 'ALL') {
-      newParams.delete('programId')
+      setParam('programId', null)
     } else {
-      newParams.set('programId', value)
+      setParam('programId', value)
     }
-    setSearchParams(newParams, { replace: true })
   }
 
   const handleRoleFilterChange = (value: 'INDIVIDUAL' | 'SCHOOL' | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
     if (value === 'ALL') {
-      newParams.delete('role')
+      setParam('role', null)
     } else {
-      newParams.set('role', value)
+      setParam('role', value)
     }
-    setSearchParams(newParams, { replace: true })
   }
 
   const handleStatusFilterChange = (value: Application['status'] | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
     if (value === 'ALL') {
-      newParams.delete('status')
+      setParam('status', null)
     } else {
-      newParams.set('status', value)
+      setParam('status', value)
     }
-    setSearchParams(newParams, { replace: true })
   }
 
   const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value) {
-      newParams.set('search', value)
-    } else {
-      newParams.delete('search')
-    }
-    setSearchParams(newParams, { replace: true })
+    setParam('search', value || null)
   }
 
   return (

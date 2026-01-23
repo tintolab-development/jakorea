@@ -7,6 +7,7 @@ import { Modal, Form, Select, message } from 'antd'
 import { useEffect } from 'react'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import { RoleBadge, getRoleLabel, getAdminLevelLabel, getProgramRoleLabel } from '@/shared/ui'
+import { MESSAGES } from '@/shared/constants/messages'
 import './user-role-change-modal.css'
 
 interface UserRoleChangeModalProps {
@@ -53,7 +54,7 @@ export function UserRoleChangeModal({
       if (!user) return
 
       await onConfirm(user.id, values.role, values.adminLevel, values.programRole)
-      message.success('권한이 변경되었습니다.')
+      message.success(MESSAGES.success.roleChanged)
       form.resetFields()
       onCancel()
     } catch (error) {
@@ -61,7 +62,7 @@ export function UserRoleChangeModal({
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
-      message.error('권한 변경에 실패했습니다.')
+      message.error(MESSAGES.error.roleChange)
     }
   }
 

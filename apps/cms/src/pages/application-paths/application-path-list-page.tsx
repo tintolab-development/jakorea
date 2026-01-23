@@ -9,7 +9,7 @@ import { PlusOutlined } from '@ant-design/icons'
 import { ApplicationPathList } from '@/features/application-path/ui/application-path-list'
 import { ApplicationPathForm } from '@/features/application-path/ui/application-path-form'
 import { useApplicationPathStore } from '@/features/application-path/model/application-path-store'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { PermissionButton } from '@/shared/components'
 import type { ApplicationPath, ApplicationPathType } from '@/types/domain'
@@ -26,6 +26,7 @@ interface ApplicationPathQueryParams extends Record<string, string | undefined> 
 export function ApplicationPathListPage() {
   const { paths, loading, fetchPaths, createPath, updatePath, deletePath } = useApplicationPathStore()
   const { params, setParams, clearParams } = useQueryParams<ApplicationPathQueryParams>()
+  const { getByIdSync, getAllSync } = useProgramService()
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [editingPath, setEditingPath] = useState<ApplicationPath | null>(null)
   const [formLoading, setFormLoading] = useState(false)
@@ -45,7 +46,7 @@ export function ApplicationPathListPage() {
     return paths.filter(path => {
       // 검색어 필터 (프로그램 이름으로 검색)
       if (searchKeyword) {
-        const program = programService.getByIdSync(path.programId)
+        const program = getByIdSync(path.programId)
         const programName = program?.title || ''
         if (!programName.toLowerCase().includes(searchKeyword.toLowerCase())) {
           return false
@@ -120,7 +121,7 @@ export function ApplicationPathListPage() {
     setEditingPath(null)
   }
 
-  const programs = programService.getAllSync()
+  const programs = getAllSync()
 
   // 필터 변경 핸들러 (쿼리 파라미터 동기화)
   const handleSearchChange = (value: string) => {

@@ -2,29 +2,25 @@
  * 지급조서 목록 컴포넌트
  */
 
-import { Table, Select, Input, Button, Space, Tag, Badge } from 'antd'
+import { Table, Select, Input, Button, Space, Tag } from 'antd'
 import type { PaymentStatement } from '@/types/domain'
 import type { User } from '@/types/user'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { canDownloadPaymentStatement } from '@/shared/utils/download-permission'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { PermissionRequestButton } from '@/features/permission-request/ui/permission-request-button'
 import './payment-statement-list.css'
 
 const { Option } = Select
 
-const statusLabels: Record<PaymentStatement['status'], string> = {
-  ready: '준비됨',
-  downloaded: '다운로드 완료',
-  cancelled: '취소',
-}
-
-const statusColors: Record<PaymentStatement['status'], 'default' | 'success' | 'error' | 'processing'> = {
-  ready: 'processing',
-  downloaded: 'success',
-  cancelled: 'error',
-}
+// 지급조서 상태 설정 (StatusBadge용)
+const paymentStatementStatusConfig = {
+  ready: { label: '준비됨', color: 'processing' },
+  downloaded: { label: '다운로드 완료', color: 'success' },
+  cancelled: { label: '취소', color: 'error' },
+} as Record<PaymentStatement['status'], { label: string; color: string }>
 
 interface PaymentStatementListProps {
   data: PaymentStatement[]
@@ -55,7 +51,8 @@ export function PaymentStatementList({
   onDownload,
   currentUser,
 }: PaymentStatementListProps) {
-  const programs = programService.getAllSync()
+  const { getAllSync, getByIdSync } = useProgramService()
+  const programs = getAllSync()
 
   return (
     <div>
@@ -143,7 +140,7 @@ export function PaymentStatementList({
             dataIndex: 'programId',
             key: 'programId',
             render: (programId: string) => {
-              const program = programService.getByIdSync(programId)
+              const program = getByIdSync(programId)
               return program ? (
                 <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
               ) : (
@@ -162,7 +159,12 @@ export function PaymentStatementList({
             dataIndex: 'status',
             key: 'status',
             render: (status: PaymentStatement['status']) => (
-              <Badge status={statusColors[status]} text={statusLabels[status]} />
+              <StatusBadge
+                status={status}
+                statusConfig={paymentStatementStatusConfig}
+                variant="badge"
+                showIcon={false}
+              />
             ),
           },
           {
@@ -183,7 +185,7 @@ export function PaymentStatementList({
             key: 'action',
             render: (_: unknown, record: PaymentStatement) => {
               const canDownload = currentUser && canDownloadPaymentStatement(currentUser, record.programId)
-              const program = programService.getByIdSync(record.programId)
+              const program = getByIdSync(record.programId)
               const programName = program?.title ?? '프로그램'
 
               if (canDownload) {

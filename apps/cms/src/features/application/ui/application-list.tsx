@@ -3,21 +3,19 @@
  * Phase 2.2: 테이블 + 필터 (Ant Design 컴포넌트 다양하게 활용)
  */
 
-import { Table, Select, Button, Space, Tag, Dropdown, Badge, Tooltip } from 'antd'
+import { Table, Select, Button, Space, Tag, Dropdown, Tooltip } from 'antd'
 import { MoreOutlined } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { getApplicationSubjectName, createApplicationMenuItems } from '../lib/application-helpers'
 import {
   applicationStatusConfig,
   applicationSubjectTypeConfig,
-  getApplicationStatusLabel,
-  getApplicationStatusColor,
-  getApplicationStatusIcon,
 } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Option } = Select
@@ -74,8 +72,21 @@ export function ApplicationList({
   }
 
   const { table, resetFilters } = useApplicationTable(filteredData)
+  const { getAllSync, getByIdSync } = useProgramService()
 
-  const programs = programService.getAllSync()
+  const programs = getAllSync()
+
+  // 신청 상태 설정 (StatusBadge용)
+  const applicationStatusStatusConfig = Object.fromEntries(
+    Object.entries(applicationStatusConfig.labels).map(([status, label]) => [
+      status,
+      {
+        label,
+        color: applicationStatusConfig.colors[status as keyof typeof applicationStatusConfig.colors],
+        icon: applicationStatusConfig.icons[status as keyof typeof applicationStatusConfig.icons],
+      },
+    ])
+  ) as Record<Application['status'], { label: string; color: string; icon: React.ComponentType }>
 
   const pathTypeLabels: Record<string, string> = {
     google_form: '구글폼',
@@ -88,7 +99,7 @@ export function ApplicationList({
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getByIdSync(programId)
         return program ? (
           <Tooltip title={program.description || ''}>
             <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
@@ -134,20 +145,9 @@ export function ApplicationList({
       title: '상태',
       dataIndex: 'status',
       key: 'status',
-      render: (status: Application['status']) => {
-        const IconComponent = getApplicationStatusIcon(status)
-        return (
-          <Badge
-            status={getApplicationStatusColor(status) as any}
-            text={
-              <Space>
-                <IconComponent />
-                {getApplicationStatusLabel(status)}
-              </Space>
-            }
-          />
-        )
-      },
+      render: (status: Application['status']) => (
+        <StatusBadge status={status} statusConfig={applicationStatusStatusConfig} />
+      ),
     },
     {
       title: '접수일',

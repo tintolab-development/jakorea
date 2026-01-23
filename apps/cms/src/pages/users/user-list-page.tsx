@@ -9,11 +9,14 @@
  */
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
-import { Space, Select, Input, Button } from 'antd'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { Space } from 'antd'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
+import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { MESSAGES } from '@/shared/constants'
 import {
   useUserStore,
   selectFilteredUserIds,
@@ -21,23 +24,25 @@ import {
   selectUserById,
 } from '@/features/user/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
+
+interface UserListQueryParams extends Record<string, string | undefined> {
+  role?: UserRole | 'ALL'
+  search?: string
+  id?: string
+}
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import './user-list-page.css'
 
-const { Option } = Select
-const { Search } = Input
-
 export function UserListPage() {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParam } = useQueryParams<UserListQueryParams>()
 
   // 스토어에서 필요한 데이터만 선택적으로 구독
   const usersById = useUserStore(state => state.usersById)
   const userIds = useUserStore(state => state.userIds)
   const loading = useUserStore(state => state.loading)
   const filters = useUserStore(state => state.filters)
-  const selectedUserId = useUserStore(state => state.selectedUserId)
   const fetchUsers = useUserStore(state => state.fetchUsers)
   const changeUserRole = useUserStore(state => state.changeUserRole)
   const setSelectedUserId = useUserStore(state => state.setSelectedUserId)
@@ -57,12 +62,12 @@ export function UserListPage() {
 
   // 쿼리 파라미터에서 필터 값 읽기
   const roleFilter = useMemo(() => {
-    return (searchParams.get('role') || 'ALL') as UserRole | 'ALL'
-  }, [searchParams])
+    return (params.role || 'ALL') as UserRole | 'ALL'
+  }, [params.role])
 
   const searchQuery = useMemo(() => {
-    return searchParams.get('search') || ''
-  }, [searchParams])
+    return params.search || ''
+  }, [params.search])
 
   // 필터 조건을 스토어에 동기화 (실제 변경이 있을 때만)
   useEffect(() => {
@@ -128,41 +133,29 @@ export function UserListPage() {
 
   // 필터 변경 핸들러
   const handleRoleFilterChange = (value: UserRole | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
     if (value === 'ALL') {
-      newParams.delete('role')
+      setParam('role', null)
     } else {
-      newParams.set('role', value)
+      setParam('role', value)
     }
-    setSearchParams(newParams, { replace: true })
   }
 
   const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value) {
-      newParams.set('search', value)
-    } else {
-      newParams.delete('search')
-    }
-    setSearchParams(newParams, { replace: true })
+    setParam('search', value || null)
   }
 
   // 사용자 상세 보기
   const handleView = (user: Omit<User, 'password'>) => {
     setSelectedUserId(user.id) // 스토어에 ID만 저장
     setDrawerOpen(true)
-    const newParams = new URLSearchParams(searchParams)
-    newParams.set('id', user.id)
-    setSearchParams(newParams, { replace: true })
+    setParam('id', user.id)
   }
 
   // Drawer 닫기
   const handleDrawerClose = () => {
     setDrawerOpen(false)
     clearSelectedUserId(null) // 스토어에서 선택 해제
-    const newParams = new URLSearchParams(searchParams)
-    newParams.delete('id')
-    setSearchParams(newParams, { replace: true })
+    setParam('id', null)
   }
 
   // 권한 변경
@@ -179,7 +172,7 @@ export function UserListPage() {
   ) => {
     try {
       await changeUserRole(userId, newRole, adminLevel, programRole)
-      showSuccessMessage('권한이 변경되었습니다.')
+      showSuccessMessage(MESSAGES.success.updated)
       setRoleChangeModalOpen(false)
       setEditingUserId(null)
 
@@ -208,28 +201,32 @@ export function UserListPage() {
         <h1 className="user-list-title">{categoryName}</h1>
       </Space>
 
-      <Space className="user-list-filters" size="middle">
-        <Search
-          placeholder="이름 또는 이메일 검색"
-          allowClear
-          className="user-list-search"
-          defaultValue={searchQuery}
-          onSearch={handleSearch}
-        />
-        <Select
-          placeholder="권한 필터"
-          className="user-list-role-filter"
-          value={roleFilter}
-          onChange={handleRoleFilterChange}
-        >
-          <Option value="ALL">전체</Option>
-          <Option value="ADMIN">관리자</Option>
-          <Option value="INSTRUCTOR">강사</Option>
-          <Option value="INDIVIDUAL">개인(참여자)</Option>
-          <Option value="SCHOOL">학교</Option>
-        </Select>
-        <Button onClick={loadUsers}>새로고침</Button>
-      </Space>
+      <ListPageFilters
+        filters={{ role: roleFilter === 'ALL' ? undefined : roleFilter }}
+        onFilterChange={(key, value) => {
+          if (key === 'role') {
+            handleRoleFilterChange(value || 'ALL')
+          }
+        }}
+        searchValue={searchQuery}
+        onSearchChange={handleSearch}
+        searchPlaceholder="이름 또는 이메일 검색"
+        filterConfig={[
+          {
+            key: 'role',
+            type: 'select',
+            options: [
+              { label: '전체', value: 'ALL' },
+              { label: '관리자', value: 'ADMIN' },
+              { label: '강사', value: 'INSTRUCTOR' },
+              { label: '개인(참여자)', value: 'INDIVIDUAL' },
+              { label: '학교', value: 'SCHOOL' },
+            ],
+            placeholder: '권한 필터',
+          },
+        ]}
+        extra={<button onClick={loadUsers}>새로고침</button>}
+      />
 
       <UserList data={filteredUsers} loading={loading} onView={handleView} onEdit={handleEdit} />
 

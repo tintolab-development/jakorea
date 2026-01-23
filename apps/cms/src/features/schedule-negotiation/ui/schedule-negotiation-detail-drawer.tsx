@@ -14,7 +14,7 @@ import {
 } from 'antd'
 import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { ScheduleNegotiation, ScheduleNegotiationProposal } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -78,7 +78,8 @@ export function ScheduleNegotiationDetailDrawer({
 
   if (!displayNegotiation) return null
 
-  const program = programService.getByIdSync(displayNegotiation.programId)
+  const { getByIdSync } = useProgramService()
+  const program = getByIdSync(displayNegotiation.programId)
   const school = schoolService.getByIdSync(displayNegotiation.schoolId)
 
   const timelineItems = displayNegotiation.proposals.map((proposal, index) => {

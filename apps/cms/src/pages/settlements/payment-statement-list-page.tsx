@@ -1,5 +1,6 @@
 /**
  * 지급조서/이체리스트 목록 페이지
+ * Phase 2: 리팩토링 패턴 적용
  */
 
 import { useEffect } from 'react'
@@ -9,6 +10,7 @@ import { useLocation } from 'react-router-dom'
 import { PaymentStatementList } from '@/features/settlement/ui/payment-statement-list'
 import { usePaymentStatements } from '@/features/settlement/hooks/use-payment-statements'
 import { useTransferListExport } from '@/features/settlement/hooks/use-transfer-list-export'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMasterAdmin } from '@/shared/utils/permissions'
@@ -114,7 +116,7 @@ export function PaymentStatementListPage() {
         okButtonProps={{
           disabled: enableEncryption && (!password || !passwordsMatch || password.length < 8),
         }}
-        width={500}
+        width={LAYOUT_CONSTANTS.widths.modal.small}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           {/* Phase 0.4.3: 암호화 옵션 체크박스 */}

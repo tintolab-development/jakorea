@@ -1,6 +1,7 @@
 /**
  * 신청 목록 페이지
  * Phase 2.2: 목록 페이지
+ * Phase 2: 리팩토링 패턴 적용
  */
 
 import { Button, Space, Modal, Typography, Input } from 'antd'
@@ -9,6 +10,7 @@ import { ApplicationList } from '@/features/application/ui/application-list'
 import { ApplicationDetailDrawer } from '@/features/application/ui/application-detail-drawer'
 import { ApplicationForm } from '@/features/application/ui/application-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import type { Application } from '@/types/domain'
 import { useApplicationReview } from '@/features/application/hooks/use-application-review'
 import './application-list-page.css'
@@ -93,7 +95,7 @@ function ApplicationListPage() {
         title={editingApplication ? '오기재 사항 수정' : '신청 등록'}
         onCancel={closeForm}
         footer={null}
-        width={800}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
         destroyOnHidden
         zIndex={1001}
       >
@@ -108,7 +110,7 @@ function ApplicationListPage() {
       <ConfirmModal
         open={deleteModalOpen}
         title="신청 삭제"
-        content="정말 이 신청을 삭제하시겠습니까?"
+        content={MESSAGES.confirm.delete}
         onConfirm={confirmDelete}
         onCancel={closeDeleteConfirm}
         confirmText="삭제"
@@ -124,7 +126,7 @@ function ApplicationListPage() {
         okText="거절하기"
         cancelText="취소"
         okButtonProps={{ danger: true }}
-        width={520}
+        width={LAYOUT_CONSTANTS.widths.modal.small}
       >
         <div style={{ paddingTop: 8 }}>
           <Typography.Paragraph style={{ marginBottom: 16 }}>

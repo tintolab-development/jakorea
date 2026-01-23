@@ -7,14 +7,12 @@ import { Table, Tag, Space, Button, Select, Tooltip, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { EyeOutlined, CheckOutlined, CloseOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import dayjs from 'dayjs'
-import {
-  getCommonStatusLabel,
-  getCommonStatusColor,
-} from '@/shared/constants/status'
+import { commonStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import './matching-list.css'
 
@@ -43,7 +41,17 @@ export function MatchingList({
   onConfirm,
   onCancel,
 }: MatchingListProps) {
-  const programs = programService.getAllSync()
+  const { getAllSync, getByIdSync } = useProgramService()
+  const programs = getAllSync()
+
+  // 매칭 상태 설정 (StatusBadge용)
+  const matchingStatusStatusConfig = {
+    active: { label: commonStatusConfig.labels.active, color: commonStatusConfig.colors.active },
+    inactive: { label: commonStatusConfig.labels.inactive, color: commonStatusConfig.colors.inactive },
+    pending: { label: commonStatusConfig.labels.pending, color: commonStatusConfig.colors.pending },
+    completed: { label: commonStatusConfig.labels.completed, color: commonStatusConfig.colors.completed },
+    cancelled: { label: commonStatusConfig.labels.cancelled, color: commonStatusConfig.colors.cancelled },
+  }
 
   const getMenuItems = (matching: Matching): MenuProps['items'] => {
     const items: MenuProps['items'] = [
@@ -109,7 +117,7 @@ export function MatchingList({
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getByIdSync(programId)
         return program ? (
           <Tooltip title={program.description}>
             <span className="matching-list__program-title">{program.title}</span>
@@ -159,7 +167,11 @@ export function MatchingList({
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+        <StatusBadge
+          status={status}
+          statusConfig={matchingStatusStatusConfig}
+          showIcon={false}
+        />
       ),
     },
     {

@@ -9,10 +9,10 @@ import type { Report } from '@/types/domain'
 import { getReportStatusLabel, getReportStatusColor } from '@/shared/constants/status'
 import { getReportTypeLabel, getReportTypeColor } from '@/shared/constants/domain-status'
 import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
-import { reportService } from '@/entities/report/api/report-service'
+import { useReportService } from '@/features/report/hooks/use-report-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useState } from 'react'
-import { programService } from '@/entities/program/api/program-service'
 import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 import dayjs from 'dayjs'
 
@@ -35,62 +35,55 @@ export function ReportDetailDrawer({
   showReviewActions = true,
 }: ReportDetailDrawerProps) {
   const { user } = useAuthStore()
+  const { review, approve, reject, loading: serviceLoading } = useReportService()
+  const { getByIdSync } = useProgramService()
   const [reviewNotes, setReviewNotes] = useState('')
   const [approveModalOpen, setApproveModalOpen] = useState(false)
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
 
   if (!report) return null
 
-  const program = report.programId ? programService.getByIdSync(report.programId) : undefined
+  const program = report.programId ? getByIdSync(report.programId) : undefined
+  const loading = serviceLoading
 
   const handleReview = async () => {
     if (!user?.id) return
-    setLoading(true)
     try {
-      await reportService.review(report.id, user.id)
-      message.success('보고서가 검토 상태로 변경되었습니다')
+      await review(report.id, user.id)
+      message.success(MESSAGES.success.reviewed)
       onReviewComplete?.()
     } catch {
       message.error(MESSAGES.error.unknown)
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleApprove = async () => {
     if (!user?.id) return
-    setLoading(true)
     try {
-      await reportService.approve(report.id, user.id, reviewNotes || undefined)
+      await approve(report.id, user.id, reviewNotes || undefined)
       message.success(MESSAGES.success.approved)
       setApproveModalOpen(false)
       setReviewNotes('')
       onReviewComplete?.()
     } catch {
       message.error(MESSAGES.error.approve)
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleReject = async () => {
     if (!user?.id) return
     if (!reviewNotes.trim()) {
-      message.warning('반려 사유를 입력해주세요')
+      message.warning(MESSAGES.warning.enterRejectionReason)
       return
     }
-    setLoading(true)
     try {
-      await reportService.reject(report.id, user.id, reviewNotes)
+      await reject(report.id, user.id, reviewNotes)
       message.success(MESSAGES.success.rejected)
       setRejectModalOpen(false)
       setReviewNotes('')
       onReviewComplete?.()
     } catch {
       message.error(MESSAGES.error.reject)
-    } finally {
-      setLoading(false)
     }
   }
 

@@ -9,6 +9,7 @@ import { Form, Select, Input, Button, Space, message, Alert, Typography } from '
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationSchema, type ApplicationFormData } from '@/entities/application/model/schema'
+import { MESSAGES } from '@/shared/constants/messages'
 import type { Application } from '@/types/domain'
 import { mockPrograms, mockSchools, mockInstructors } from '@/data/mock'
 import { mockUsers } from '@/data/mock/users'
@@ -179,15 +180,15 @@ export function ApplicationForm({
         const eligibilityType = data.subjectType === 'volunteer' ? 'instructor' : data.subjectType
         if (program && !isApplicationAvailable(program, eligibilityType)) {
           const reason = getApplicationUnavailableReason(program, eligibilityType)
-          message.error(reason || '프로그램 상태로 인해 신청할 수 없습니다.')
+          message.error(reason || MESSAGES.warning.cannotApply)
           return
         }
       }
 
       await onSubmit(data)
-      message.success(application ? '신청이 수정되었습니다' : '신청이 등록되었습니다')
+      message.success(application ? MESSAGES.success.updated : MESSAGES.success.created)
     } catch {
-      message.error(application ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+      message.error(application ? MESSAGES.error.update : MESSAGES.error.create)
     }
   }
 

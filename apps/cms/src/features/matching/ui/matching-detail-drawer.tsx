@@ -6,7 +6,7 @@
 import { Descriptions, Tag, Timeline, Space, Alert, Badge } from 'antd'
 import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
@@ -45,7 +45,8 @@ export function MatchingDetailDrawer({
 
   if (!displayMatching) return null
 
-  const program = displayMatching ? programService.getByIdSync(displayMatching.programId) : null
+  const { getByIdSync } = useProgramService()
+  const program = displayMatching ? getByIdSync(displayMatching.programId) : null
   const instructor = displayMatching
     ? instructorService.getByIdSync(displayMatching.instructorId)
     : null

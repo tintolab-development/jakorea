@@ -3,7 +3,8 @@
  * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
  */
 
-import { Table, Input, Select, Button, Space, Tag, Dropdown, message, DatePicker, Image } from 'antd'
+import { Table, Input, Select, Button, Space, Tag, Dropdown, DatePicker, Image } from 'antd'
+import { message } from 'antd'
 import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
@@ -12,12 +13,12 @@ import { useProgramTable } from '../model/use-program-table'
 import type { Program, ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/types/domain'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
-  getCommonStatusLabel,
-  getCommonStatusColor,
   programLifecycleStatusConfig,
   getProgramLifecycleLabel,
   getProgramLifecycleColor,
 } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { MESSAGES } from '@/shared/constants/messages'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -63,6 +64,26 @@ const statusOptions = programLifecycleStatusConfig.order.map(status => ({
   value: status,
   label: getProgramLifecycleLabel(status),
 }))
+
+// 프로그램 상태 설정 (StatusBadge용)
+const programLifecycleStatusStatusConfig = Object.fromEntries(
+  programLifecycleStatusConfig.order.map(status => [
+    status,
+    {
+      label: programLifecycleStatusConfig.labels[status],
+      color: programLifecycleStatusConfig.colors[status],
+    },
+  ])
+) as Record<ProgramLifecycleStatus, { label: string; color: string }>
+
+// 공통 상태 설정 (StatusBadge용)
+const commonStatusStatusConfig = {
+  active: { label: '활성', color: 'green' },
+  inactive: { label: '비활성', color: 'default' },
+  pending: { label: '대기', color: 'orange' },
+  completed: { label: '완료', color: 'blue' },
+  cancelled: { label: '취소', color: 'red' },
+}
 
 export function ProgramList({
   data,
@@ -230,7 +251,7 @@ export function ProgramList({
       })
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.unknown)
     }
   }
 
@@ -540,17 +561,24 @@ export function ProgramList({
             key: 'status',
             render: (_status: string, record: Program) => {
               const lifecycle = record.lifecycleStatus
-              const label = lifecycle
-                ? getProgramLifecycleLabel(lifecycle)
-                : getCommonStatusLabel(_status)
-              const color = lifecycle
-                ? getProgramLifecycleColor(lifecycle)
-                : getCommonStatusColor(record.status)
-              const tag = <Tag color={color}>{label}</Tag>
+
+              const badge = lifecycle ? (
+                <StatusBadge
+                  status={lifecycle}
+                  statusConfig={programLifecycleStatusStatusConfig}
+                  showIcon={false}
+                />
+              ) : (
+                <StatusBadge
+                  status={record.status}
+                  statusConfig={commonStatusStatusConfig}
+                  showIcon={false}
+                />
+              )
 
               // 상태 변경 핸들러가 없으면 단순 뱃지로 표시
               if (!onChangeStatus) {
-                return tag
+                return badge
               }
 
               const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
@@ -584,7 +612,7 @@ export function ProgramList({
                       onClick={e => e.stopPropagation()}
                       style={{ cursor: 'pointer', display: 'inline-block' }}
                     >
-                      {tag}
+                      {badge}
                     </span>
                   </Dropdown>
                 </div>

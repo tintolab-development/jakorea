@@ -16,7 +16,7 @@ import {
 } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { mockUsers } from '@/data/mock/users'
@@ -26,6 +26,7 @@ import {
   getApplicationStatusLabel,
   getApplicationStatusColor,
 } from '@/shared/constants/status'
+import { MESSAGES } from '@/shared/constants/messages'
 import {
   isApplicationFinalStatus,
   canTransitionApplicationStatus,
@@ -148,7 +149,8 @@ export function ApplicationDetailDrawer({
 
   const isFinalStatus = isApplicationFinalStatus(displayApplication.status)
 
-  const program = programService.getByIdSync(displayApplication.programId)
+  const { getByIdSync } = useProgramService()
+  const program = getByIdSync(displayApplication.programId)
   const subjectName =
     displayApplication.subjectType === 'school'
       ? schoolService.getNameById(displayApplication.subjectId)
@@ -236,11 +238,11 @@ export function ApplicationDetailDrawer({
             onClick: async () => {
               try {
                 await updateStatus(displayApplication.id, 'cancelled')
-                message.success('신청이 취소되었습니다.')
+                message.success(MESSAGES.success.cancelled)
                 onStatusChange('cancelled')
               } catch (e) {
                 console.error('신청 취소 중 오류가 발생했습니다.', e)
-                message.error('신청 취소 중 오류가 발생했습니다.')
+                message.error(MESSAGES.error.cancel)
               }
             },
             icon: <StopOutlined />,

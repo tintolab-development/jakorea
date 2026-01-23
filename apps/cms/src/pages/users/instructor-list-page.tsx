@@ -5,7 +5,14 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Space, Select, Input, Button } from 'antd'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+
+interface InstructorListQueryParams extends Record<string, string | undefined> {
+  pillar?: string
+  status?: 'ACTIVE' | 'INACTIVE' | 'ALL'
+  search?: string
+}
 import { InstructorList } from '@/features/instructor-list/ui/instructor-list'
 import { getInstructors, type InstructorListFilters } from '@/entities/instructor/api/instructor-list-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -18,7 +25,7 @@ const { Search } = Input
 
 export function InstructorListPage() {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParam } = useQueryParams<InstructorListQueryParams>()
   const { user } = useAuthStore()
 
   // 2뎁스 카테고리명 가져오기
@@ -46,16 +53,16 @@ export function InstructorListPage() {
 
   // 쿼리 파라미터에서 필터 값 읽기
   const pillarFilter = useMemo(() => {
-    return searchParams.get('pillar') || undefined
-  }, [searchParams])
+    return params.pillar || undefined
+  }, [params.pillar])
 
   const statusFilter = useMemo(() => {
-    return (searchParams.get('status') || 'ALL') as 'ACTIVE' | 'INACTIVE' | 'ALL'
-  }, [searchParams])
+    return (params.status || 'ALL') as 'ACTIVE' | 'INACTIVE' | 'ALL'
+  }, [params.status])
 
   const searchQuery = useMemo(() => {
-    return searchParams.get('search') || ''
-  }, [searchParams])
+    return params.search || ''
+  }, [params.search])
 
   // 강사 목록 조회
   const loadInstructors = useCallback(async () => {
@@ -82,33 +89,23 @@ export function InstructorListPage() {
 
   // 필터 변경 핸들러
   const handlePillarFilterChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
     if (value === 'ALL') {
-      newParams.delete('pillar')
+      setParam('pillar', null)
     } else {
-      newParams.set('pillar', value)
+      setParam('pillar', value)
     }
-    setSearchParams(newParams, { replace: true })
   }
 
   const handleStatusFilterChange = (value: 'ACTIVE' | 'INACTIVE' | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
     if (value === 'ALL') {
-      newParams.delete('status')
+      setParam('status', null)
     } else {
-      newParams.set('status', value)
+      setParam('status', value)
     }
-    setSearchParams(newParams, { replace: true })
   }
 
   const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value) {
-      newParams.set('search', value)
-    } else {
-      newParams.delete('search')
-    }
-    setSearchParams(newParams, { replace: true })
+    setParam('search', value || null)
   }
 
   return (
