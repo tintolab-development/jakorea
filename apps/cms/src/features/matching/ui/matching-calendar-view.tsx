@@ -1,44 +1,35 @@
 /**
  * 매칭 캘린더 뷰
  * Phase 4.4: 매칭 관리 - 캘린더 보기 (FR-F03)
+ * Task 3.3.2: 상위에서 내려준 calendarData 사용, 캘린더/목록 데이터 동기화
  */
 
 import { Calendar, Badge, Card } from 'antd'
 import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
-import { useState, useEffect, useCallback } from 'react'
 import type { MatchingStatusItem } from '@/entities/matching/api/matching-status-service'
-import { getMatchingStatusCalendar } from '@/entities/matching/api/matching-status-service'
-import { handleError } from '@/shared/utils/error-handler'
 
-interface MatchingCalendarViewProps {
+export interface MatchingCalendarViewProps {
+  /** 날짜별 매칭 현황 (useMatchingStatus.calendarData) */
+  calendarData: Record<string, MatchingStatusItem[]>
+  /** 캘린더 기준 월 */
+  value: Dayjs
+  /** 월 변경 시 (캘린더/목록 공통 기간 갱신) */
+  onPanelChange: (date: Dayjs) => void
+  /** 날짜·일정 클릭 시 */
   onDateClick?: (date: string, items: MatchingStatusItem[]) => void
+  loading?: boolean
 }
 
-export function MatchingCalendarView({ onDateClick }: MatchingCalendarViewProps) {
-  const [currentDate, setCurrentDate] = useState(dayjs())
-  const [calendarData, setCalendarData] = useState<Record<string, MatchingStatusItem[]>>({})
-  const [loading, setLoading] = useState(false)
-
-  const loadCalendarData = useCallback(async (year: number, month: number) => {
-    setLoading(true)
-    try {
-      const data = await getMatchingStatusCalendar(year, month)
-      setCalendarData(data)
-    } catch (error) {
-      handleError(error, { defaultMessage: '캘린더 데이터를 불러오는데 실패했습니다' })
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadCalendarData(currentDate.year(), currentDate.month() + 1)
-  }, [currentDate, loadCalendarData])
-
-  const dateCellRender = (value: Dayjs) => {
-    const dateStr = value.format('YYYY-MM-DD')
-    const items = calendarData[dateStr] || []
+export function MatchingCalendarView({
+  calendarData,
+  value,
+  onPanelChange,
+  onDateClick,
+  loading = false,
+}: MatchingCalendarViewProps) {
+  const dateCellRender = (cellValue: Dayjs) => {
+    const dateStr = cellValue.format('YYYY-MM-DD')
+    const items = calendarData[dateStr] ?? []
 
     if (items.length === 0) return null
 
@@ -74,22 +65,16 @@ export function MatchingCalendarView({ onDateClick }: MatchingCalendarViewProps)
     )
   }
 
-  const onPanelChange = (date: Dayjs) => {
-    setCurrentDate(date)
-  }
-
   return (
     <Card loading={loading}>
       <Calendar
-        value={currentDate}
+        value={value}
         onPanelChange={onPanelChange}
         dateCellRender={dateCellRender}
-        onSelect={(date) => {
+        onSelect={date => {
           const dateStr = date.format('YYYY-MM-DD')
-          const items = calendarData[dateStr] || []
-          if (items.length > 0) {
-            onDateClick?.(dateStr, items)
-          }
+          const items = calendarData[dateStr] ?? []
+          if (items.length > 0) onDateClick?.(dateStr, items)
         }}
       />
     </Card>

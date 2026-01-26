@@ -1,9 +1,10 @@
 /**
  * 매칭 현황 훅
  * Phase 4.4: 매칭 관리 (FR-F03)
+ * Task 3.3.2: filters 기반 조회, 캘린더/목록 데이터 동기화
  */
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import {
   getMatchingStatusList,
   type MatchingStatusItem,
@@ -11,28 +12,56 @@ import {
 } from '@/entities/matching/api/matching-status-service'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 
+export interface UseMatchingStatusOptions {
+  /** 기간 등 필터. 설정 시 해당 조건으로 조회하며, 캘린더/목록이 동일 데이터 사용 */
+  filters?: MatchingStatusFilters | null
+}
+
 interface UseMatchingStatusResult {
   statusItems: MatchingStatusItem[]
+  /** 날짜별 그룹 (캘린더 뷰용) */
+  calendarData: Record<string, MatchingStatusItem[]>
   loading: boolean
   fetchStatusList: (filters?: MatchingStatusFilters) => Promise<void>
   exportToExcel: () => Promise<void>
 }
 
-export function useMatchingStatus(): UseMatchingStatusResult {
+export function useMatchingStatus(
+  options: UseMatchingStatusOptions = {}
+): UseMatchingStatusResult {
+  const { filters = null } = options
   const [statusItems, setStatusItems] = useState<MatchingStatusItem[]>([])
   const [loading, setLoading] = useState(false)
 
-  const fetchStatusList = useCallback(async (filters?: MatchingStatusFilters) => {
-    setLoading(true)
-    try {
-      const data = await getMatchingStatusList(filters)
-      setStatusItems(data)
-    } catch (error) {
-      handleError(error, { defaultMessage: '매칭 현황을 불러오는데 실패했습니다' })
-    } finally {
-      setLoading(false)
+  const fetchStatusList = useCallback(
+    async (overrideFilters?: MatchingStatusFilters) => {
+      setLoading(true)
+      try {
+        const f = overrideFilters ?? filters ?? undefined
+        const data = await getMatchingStatusList(f)
+        setStatusItems(data)
+      } catch (error) {
+        handleError(error, { defaultMessage: '매칭 현황을 불러오는데 실패했습니다' })
+      } finally {
+        setLoading(false)
+      }
+    },
+    // filters 변경 시 fetchStatusList 갱신 (useEffect에서 호출)
+    [filters]
+  )
+
+  const calendarData = useMemo(() => {
+    const grouped: Record<string, MatchingStatusItem[]> = {}
+    for (const item of statusItems) {
+      if (!grouped[item.date]) grouped[item.date] = []
+      grouped[item.date].push(item)
     }
-  }, [])
+    return grouped
+  }, [statusItems])
+
+  useEffect(() => {
+    if (filters) fetchStatusList()
+  }, [fetchStatusList, filters])
 
   const exportToExcel = useCallback(async () => {
     if (statusItems.length === 0) {
@@ -95,12 +124,9 @@ export function useMatchingStatus(): UseMatchingStatusResult {
     }
   }, [statusItems])
 
-  useEffect(() => {
-    fetchStatusList()
-  }, [fetchStatusList])
-
   return {
     statusItems,
+    calendarData,
     loading,
     fetchStatusList,
     exportToExcel,

@@ -2,12 +2,13 @@
  * 매칭 목록 페이지
  * Phase 0.3.6: 매칭 관리 UI
  * Phase 4.4: 캘린더/목록 뷰 전환 및 엑셀 다운로드 (FR-F03)
- * Phase 2: 리팩토링 패턴 적용
+ * Task 3.3.2: 실제 매칭 데이터 연동, 캘린더/목록 동기화, 날짜 클릭 상세 모달
  */
 
-import { useState } from 'react'
-import { Button, Space, Modal, Typography, Radio, Tabs } from 'antd'
-import { UserAddOutlined, CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { useState, useMemo } from 'react'
+import { Button, Space, Modal, Typography, Radio, Tabs, List, Tag } from 'antd'
+import { UserAddOutlined, CalendarOutlined, UnorderedListOutlined, ReloadOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
 import { MatchingList } from '@/features/matching/ui/matching-list'
 import { MatchingCalendarView } from '@/features/matching/ui/matching-calendar-view'
 import { MatchingStatusList } from '@/features/matching/ui/matching-status-list'
@@ -20,15 +21,33 @@ import { useMatchingStatus } from '@/features/matching/hooks/use-matching-status
 import type { MatchingStatusItem } from '@/entities/matching/api/matching-status-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import type { StatusConfig } from '@/shared/ui/status-badge'
 import './matching-list-page.css'
+
+const statusConfig: Record<MatchingStatusItem['status'], StatusConfig> = {
+  PENDING: { label: '대기', color: 'orange' },
+  CONFIRMED: { label: '확정', color: 'green' },
+  COMPLETED: { label: '완료', color: 'blue' },
+}
 
 export function MatchingListPage() {
   const { user } = useAuthStore()
-  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
 
   const [viewMode, setViewMode] = useState<'management' | 'status'>('management')
   const [statusViewMode, setStatusViewMode] = useState<'calendar' | 'list'>('list')
+  const [statusViewMonth, setStatusViewMonth] = useState(() => dayjs())
+  const [dateDetailOpen, setDateDetailOpen] = useState(false)
+  const [dateDetailDate, setDateDetailDate] = useState<string | null>(null)
+  const [dateDetailItems, setDateDetailItems] = useState<MatchingStatusItem[]>([])
+
+  const statusFilters = useMemo(() => {
+    if (viewMode !== 'status') return null
+    const start = statusViewMonth.startOf('month').format('YYYY-MM-DD')
+    const end = statusViewMonth.endOf('month').format('YYYY-MM-DD')
+    return { startDate: start, endDate: end }
+  }, [viewMode, statusViewMonth])
 
   const {
     matchings,
@@ -52,11 +71,24 @@ export function MatchingListPage() {
     requestCancel,
   } = useMatchingManagement()
 
-  const { statusItems, loading: statusLoading, exportToExcel } = useMatchingStatus()
+  const {
+    statusItems,
+    calendarData,
+    loading: statusLoading,
+    fetchStatusList,
+    exportToExcel,
+  } = useMatchingStatus({ filters: statusFilters })
 
   const handleStatusDateClick = (date: string, items: MatchingStatusItem[]) => {
-    // 날짜 클릭 시 상세 정보 표시 (추후 구현)
-    console.log('Date clicked:', date, items)
+    setDateDetailDate(date)
+    setDateDetailItems(items)
+    setDateDetailOpen(true)
+  }
+
+  const closeDateDetail = () => {
+    setDateDetailOpen(false)
+    setDateDetailDate(null)
+    setDateDetailItems([])
   }
 
   return (
@@ -103,22 +135,37 @@ export function MatchingListPage() {
             children: (
               <div>
                 <div style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, textAlign: 'right' }}>
-                  <Radio.Group
-                    value={statusViewMode}
-                    onChange={e => setStatusViewMode(e.target.value)}
-                    buttonStyle="solid"
-                  >
-                    <Radio.Button value="calendar">
-                      <CalendarOutlined /> 캘린더
-                    </Radio.Button>
-                    <Radio.Button value="list">
-                      <UnorderedListOutlined /> 목록
-                    </Radio.Button>
-                  </Radio.Group>
+                  <Space wrap>
+                    <Radio.Group
+                      value={statusViewMode}
+                      onChange={e => setStatusViewMode(e.target.value)}
+                      buttonStyle="solid"
+                    >
+                      <Radio.Button value="calendar">
+                        <CalendarOutlined /> 캘린더
+                      </Radio.Button>
+                      <Radio.Button value="list">
+                        <UnorderedListOutlined /> 목록
+                      </Radio.Button>
+                    </Radio.Group>
+                    <Button
+                      icon={<ReloadOutlined />}
+                      onClick={() => fetchStatusList()}
+                      loading={statusLoading}
+                    >
+                      새로고침
+                    </Button>
+                  </Space>
                 </div>
 
                 {statusViewMode === 'calendar' ? (
-                  <MatchingCalendarView onDateClick={handleStatusDateClick} />
+                  <MatchingCalendarView
+                    calendarData={calendarData}
+                    value={statusViewMonth}
+                    onPanelChange={setStatusViewMonth}
+                    onDateClick={handleStatusDateClick}
+                    loading={statusLoading}
+                  />
                 ) : (
                   <MatchingStatusList
                     data={statusItems}
@@ -168,6 +215,39 @@ export function MatchingListPage() {
         confirmText="삭제"
         danger
       />
+
+      <Modal
+        title={dateDetailDate ? `${dateDetailDate} 매칭 일정` : '매칭 일정'}
+        open={dateDetailOpen}
+        onCancel={closeDateDetail}
+        footer={null}
+        width={520}
+      >
+        {dateDetailDate && (
+          <List
+            size="small"
+            dataSource={dateDetailItems}
+            renderItem={item => (
+              <List.Item>
+                <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                  <Space wrap>
+                    <span style={{ fontWeight: 500 }}>{item.schoolName}</span>
+                    <Tag>{item.programName}</Tag>
+                    <StatusBadge status={item.status} statusConfig={statusConfig} />
+                  </Space>
+                  <Space>
+                    {item.instructors.map(inst => (
+                      <Tag key={inst.id} color={inst.role === 'LEAD' ? 'blue' : 'default'}>
+                        {inst.role === 'LEAD' ? '대표' : '보조'} {inst.name}
+                      </Tag>
+                    ))}
+                  </Space>
+                </Space>
+              </List.Item>
+            )}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

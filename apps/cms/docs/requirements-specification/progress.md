@@ -351,24 +351,26 @@
 
 ---
 
-### ⚠️ FR-F03 (P1) 강의 매칭 현황
+### ✅ FR-F03 (P1) 강의 매칭 현황
 
 **요구사항**: 일자별 학교 교육 일자에 신청된 강의신청 내역 확인, 캘린더/목록보기 2가지 형태, 엑셀 다운로드
 
-**구현 상태**: ⚠️ **부분 완료** (엑셀 다운로드 완료)
+**구현 상태**: ✅ **완료** (2026-01-26, Task 3.3.2)
 
 - ✅ 매칭 목록 페이지 존재
 - ✅ 캘린더 뷰 존재
 - ✅ 목록 뷰 존재
 - ✅ 뷰 전환 기능 존재
 - ✅ 엑셀 다운로드 기능 (2026-01-22)
-- ❌ 실제 매칭 데이터 연동 미구현
+- ✅ 실제 매칭 데이터 연동 (matching-status-service 기반 조회)
+- ✅ 캘린더/목록 뷰 데이터 동기화 (보기 월 공유, filters 기반 일원화)
+- ✅ 날짜 클릭 시 해당 일자 매칭 상세 모달
 
 **파일 위치**:
-- `src/pages/matchings/matching-list-page.tsx`
-- `src/features/matching/ui/matching-calendar-view.tsx`
+- `src/pages/matchings/matching-list-page.tsx` (statusViewMonth, 날짜 클릭 모달, 새로고침, 2026-01-26)
+- `src/features/matching/ui/matching-calendar-view.tsx` (calendarData/value/onPanelChange props, 2026-01-26)
 - `src/features/matching/ui/matching-status-list.tsx`
-- `src/features/matching/hooks/use-matching-status.ts` — exportToExcel (2026-01-22)
+- `src/features/matching/hooks/use-matching-status.ts` (filters, calendarData, 2026-01-26)
 - `src/entities/matching/api/matching-status-service.ts`
 
 ---
