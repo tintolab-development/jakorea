@@ -1,7 +1,8 @@
 import { Button, Card, Col, Divider, Modal, Row, Typography } from 'antd'
 import type { SmsTemplate } from '@/types/template'
 import { useClipboard } from '../hooks/use-clipboard'
-import { applyTemplateVariables, defaultSampleValues, estimateMessageBytes } from '@/data/mock/templates'
+import { applyTemplateVariables, estimateMessageBytes } from '@/data/mock/templates'
+import { defaultSampleValues } from '@/features/template/constants'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 
 const { Text } = Typography

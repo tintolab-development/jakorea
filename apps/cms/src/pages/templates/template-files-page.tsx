@@ -168,14 +168,12 @@ export default function TemplateFilesPage() {
       id: `tpl-file-${String(rows.length + 1).padStart(3, '0')}`,
       title: `${row.title} (복사본)`,
       status: 'draft',
-      createdAt: now,
       updatedAt: now,
       updatedBy: '관리자(운영)',
     }
-    
+
     setRows(prev => [copiedTemplate, ...prev])
     message.success(MESSAGES.success.templateCopied)
-    // 복사된 템플릿을 바로 편집 모드로 열기
     openEdit(copiedTemplate)
   }
 
@@ -347,7 +345,7 @@ export default function TemplateFilesPage() {
         onOk={handleSubmit}
         okText={editing ? '수정' : '등록'}
         width={720}
-        destroyOnHidden
+        destroyOnClose
       >
         <Form form={form} layout="vertical">
           <Form.Item name="title" label="제목" rules={[{ required: true, message: '제목을 입력해주세요' }]}>

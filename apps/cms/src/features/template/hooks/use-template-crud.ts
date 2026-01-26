@@ -6,9 +6,9 @@ import type { EmailTemplate, SmsTemplate } from '@/types/template'
 type TemplateType = EmailTemplate | SmsTemplate
 
 export function useTemplateCRUD<T extends TemplateType>(
-  initialRows: T[],
+  _initialRows: T[],
   setRows: (updater: (prev: T[]) => T[]) => void,
-  generateId: (index: number) => string
+  getNextId: () => string
 ) {
   const [editing, setEditing] = useState<T | null>(null)
   const [open, setOpen] = useState(false)
@@ -46,10 +46,9 @@ export function useTemplateCRUD<T extends TemplateType>(
     const now = new Date().toISOString()
     const copiedTemplate: T = {
       ...row,
-      id: generateId(initialRows.length + 1),
+      id: getNextId(),
       title: `${row.title} (복사본)`,
       status: 'draft',
-      createdAt: now,
       updatedAt: now,
       updatedBy: '관리자(운영)',
     } as T

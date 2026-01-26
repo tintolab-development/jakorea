@@ -26,7 +26,7 @@ export default function TemplateSmsPage() {
   const [rows, setRows] = useState<SmsTemplate[]>(mockSmsTemplates)
   const { query, setQuery, status, setStatus, filtered } = useTemplateFilters(rows)
   const { editing, open, openCreate, openEdit, closeModal, handleArchiveToggle, handleCopyTemplate } =
-    useTemplateCRUD(rows, setRows, (index) => `tpl-sms-${String(index).padStart(3, '0')}`)
+    useTemplateCRUD(rows, setRows, () => `tpl-sms-${String(rows.length + 1).padStart(3, '0')}`)
   const { copyText } = useClipboard()
 
   const [previewTarget, setPreviewTarget] = useState<SmsTemplate | null>(null)
@@ -54,13 +54,13 @@ export default function TemplateSmsPage() {
     const now = new Date().toISOString()
     const vars = extractTemplateVariables(values.text)
 
-    const next: SmsTemplate = editing
+        const next: SmsTemplate = editing
       ? {
           ...editing,
           title: values.title,
           description: values.description,
           tags: values.tags || [],
-          audience: values.audience,
+          audience: values.audience as SmsTemplate['audience'],
           status: values.status as SmsTemplate['status'],
           updatedAt: now,
           updatedBy: '관리자(운영)',
@@ -69,7 +69,7 @@ export default function TemplateSmsPage() {
             variables: vars,
           },
         }
-      : {
+        : {
           id: `tpl-sms-${String(rows.length + 1).padStart(3, '0')}`,
           type: 'sms',
           title: values.title,

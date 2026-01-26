@@ -28,7 +28,7 @@ export default function TemplateEmailPage() {
   const [rows, setRows] = useState<EmailTemplate[]>(mockEmailTemplates)
   const { query, setQuery, status, setStatus, filtered } = useTemplateFilters(rows)
   const { editing, open, openCreate, openEdit, closeModal, handleArchiveToggle, handleCopyTemplate } =
-    useTemplateCRUD(rows, setRows, (index) => `tpl-email-${String(index).padStart(3, '0')}`)
+    useTemplateCRUD(rows, setRows, () => `tpl-email-${String(rows.length + 1).padStart(3, '0')}`)
   const { copyText } = useClipboard()
 
   const [previewTarget, setPreviewTarget] = useState<EmailTemplate | null>(null)
@@ -67,7 +67,7 @@ export default function TemplateEmailPage() {
           title: values.title,
           description: values.description,
           tags: values.tags || [],
-          audience: values.audience,
+          audience: values.audience as EmailTemplate['audience'],
           status: values.status as EmailTemplate['status'],
           updatedAt: now,
           updatedBy: '관리자(운영)',

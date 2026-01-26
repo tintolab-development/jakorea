@@ -443,20 +443,24 @@
 
 ## 8. 템플릿 관리 (H)
 
-### ⚠️ FR-H01 (P1) 템플릿 복사/저장
+### ✅ FR-H01 (P1) 템플릿 복사/저장
 
 **요구사항**: "양식 복사하기/템플릿 복사하기, 저장하기" 기능, 템플릿 기반으로 신청서/만족도 설문 생성/운영
 
-**구현 상태**: ⚠️ **부분 완료** (UI/Mock만 존재)
+**구현 상태**: ✅ **완료** (2026-01-26)
 
 - ✅ 템플릿 목록 페이지 존재
 - ✅ 템플릿 관리 UI 존재
-- ❌ 템플릿 복사 기능 미구현
-- ❌ 템플릿 저장 기능 미구현
-- ❌ 템플릿 기반 동적 폼 생성 미구현
+- ✅ 템플릿 복사 기능 (파일/문자/메일 양식 공통, "복사" → 제목 "(복사본)", 상태 초안)
+- ✅ 템플릿 저장 기능 (등록/수정 모달에서 저장, 목록 반영)
+- ⚠️ 템플릿 기반 동적 폼 생성: FR-C03에서 신청서 동적 폼 구현됨, 만족도 설문은 별도
 
 **파일 위치**:
 - `src/pages/templates/template-list-page.tsx`
+- `src/pages/templates/template-files-page.tsx` - 복사/저장 (2026-01-26)
+- `src/pages/templates/template-sms-page.tsx`, `template-email-page.tsx` - useTemplateCRUD 복사/저장
+- `src/features/template/hooks/use-template-crud.ts` - getNextId 기반 복사, ID 충돌 방지 (2026-01-26)
+- `src/shared/constants/messages.ts` - template* success 메시지 추가, error 중복 제거 (2026-01-26)
 
 ---
 

@@ -2,7 +2,8 @@ import { Button, Card, Modal } from 'antd'
 import type { EmailTemplate } from '@/types/template'
 import { useTemplatePreview } from '../hooks/use-template-preview'
 import { useClipboard } from '../hooks/use-clipboard'
-import { applyTemplateVariables, defaultSampleValues } from '@/data/mock/templates'
+import { applyTemplateVariables } from '@/data/mock/templates'
+import { defaultSampleValues } from '@/features/template/constants'
 
 interface EmailTemplatePreviewModalProps {
   open: boolean
