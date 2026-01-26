@@ -5,7 +5,7 @@
 
 import type { UUID } from '@/types'
 import type { Application } from '@/types/domain'
-import { mockApplications } from '@/data/mock/applications'
+import { mockApplications, mockApplicationsMap } from '@/data/mock'
 import { mockInstructors } from '@/data/mock/instructors'
 import { mockPrograms } from '@/data/mock/programs'
 import { mockInstructorUsers } from '@/data/mock/instructor-users'
@@ -144,6 +144,7 @@ export async function reviewInstructorApplication(
 
 /**
  * 추가 배정 (관리자 직접 입력)
+ * Task 3.3.1: 검증 로직 및 중복 배정 방지
  */
 export interface ManualAssignmentData {
   programId: UUID
@@ -158,18 +159,54 @@ export interface ManualAssignmentData {
   notes?: string
 }
 
+export interface ManualAssignmentValidation {
+  valid: boolean
+  error?: string
+}
+
+/**
+ * 수동 배정 검증: 중복 배정 방지
+ * 동일 강사가 같은 프로그램에 대해 이미 승인된 강사 신청이 있으면 중복
+ */
+export function validateManualAssignment(
+  data: ManualAssignmentData
+): ManualAssignmentValidation {
+  if (!data.instructorId) {
+    return { valid: true }
+  }
+  const duplicate = mockApplications.find(
+    a =>
+      a.subjectType === 'instructor' &&
+      a.subjectId === data.instructorId &&
+      a.programId === data.programId &&
+      a.status === 'approved'
+  )
+  if (duplicate) {
+    return {
+      valid: false,
+      error: '이미 해당 프로그램에 배정된 강사입니다. 중복 배정할 수 없습니다.',
+    }
+  }
+  return { valid: true }
+}
+
 export async function createManualAssignment(
   data: ManualAssignmentData
 ): Promise<Application> {
+  const validation = validateManualAssignment(data)
+  if (!validation.valid) {
+    throw new Error(validation.error)
+  }
+
   await new Promise(resolve => setTimeout(resolve, 500))
 
-  // 새 Application 생성 (강사 신청)
+  const subjectId = data.instructorId || `instructor-new-${Date.now()}`
   const newApplication: Application = {
     id: `app-manual-${Date.now()}`,
     programId: data.programId,
     subjectType: 'instructor',
-    subjectId: data.instructorId || `instructor-new-${Date.now()}`,
-    status: 'approved', // 추가 배정은 즉시 승인
+    subjectId,
+    status: 'approved',
     notes: data.notes || '관리자 직접 배정',
     submittedAt: new Date().toISOString(),
     reviewedAt: new Date().toISOString(),
@@ -177,8 +214,8 @@ export async function createManualAssignment(
     updatedAt: new Date().toISOString(),
   }
 
-  // Mock 데이터에 추가
   mockApplications.push(newApplication)
+  mockApplicationsMap.set(newApplication.id, newApplication)
 
   return newApplication
 }

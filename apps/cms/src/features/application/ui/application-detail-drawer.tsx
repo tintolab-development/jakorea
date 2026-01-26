@@ -68,13 +68,14 @@ export function ApplicationDetailDrawer({
   open,
   application,
   onClose,
-  onEdit,
+  onEdit: _onEdit,
   onDelete,
   onStatusChange,
   loading,
   isAdmin = false,
   currentUser,
 }: ApplicationDetailDrawerProps) {
+  void _onEdit
   const { selectedApplication: storeSelectedApplication, updateStatus, updateApplication, fetchApplicationById } = useApplicationStore()
   const { user: authUser } = useAuthStore()
 
@@ -155,15 +156,16 @@ export function ApplicationDetailDrawer({
   const handleEditSubmit = async (data: unknown) => {
     if (!displayApplication) return
     setEditLoading(true)
+    const payload = data as {
+      notes?: string
+      customFields?: Record<string, unknown>
+    }
     try {
-      // 역할별 폼 데이터를 Application 업데이트 데이터로 변환
       const updateData: Parameters<typeof updateApplication>[1] = {
-        notes: (data as { notes?: string }).notes,
+        notes: payload.notes,
       }
-
-      // 개인 신청서: customFields 업데이트
-      if (displayApplication.subjectType === 'student' && 'customFields' in data) {
-        updateData.customFields = (data as { customFields?: Record<string, unknown> }).customFields
+      if (displayApplication.subjectType === 'student' && payload.customFields !== undefined) {
+        updateData.customFields = payload.customFields
       }
 
       // 학교 신청서: 세부 정보는 현재 Application 타입에 직접 필드가 없으므로

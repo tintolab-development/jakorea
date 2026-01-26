@@ -3,11 +3,14 @@
  * Phase 4.3: 모집 종료 후 추가 배정 (FR-F02)
  */
 
-import { Modal, Form, Select, Input, Space, Radio } from 'antd'
+import { Modal, Form, Select, Input, Space, Radio, message } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { ManualAssignmentData } from '@/entities/instructor-application/api/instructor-application-service'
+import {
+  type ManualAssignmentData,
+  validateManualAssignment,
+} from '@/entities/instructor-application/api/instructor-application-service'
 import { mockInstructors } from '@/data/mock/instructors'
 import { mockPrograms } from '@/data/mock/programs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -62,9 +65,7 @@ export function ManualAssignmentModal({
   const assignmentType = watch('assignmentType')
 
   const onSubmit = async (data: AssignmentFormData) => {
-    if (!user?.id) {
-      return
-    }
+    if (!user?.id) return
 
     const assignmentData: ManualAssignmentData = {
       programId: data.programId,
@@ -77,6 +78,12 @@ export function ManualAssignmentModal({
       assignmentData.instructorId = data.instructorId
     } else if (data.assignmentType === 'new' && data.newInstructor) {
       assignmentData.newInstructor = data.newInstructor
+    }
+
+    const validation = validateManualAssignment(assignmentData)
+    if (!validation.valid) {
+      message.error(validation.error)
+      return
     }
 
     await onSuccess(assignmentData)

@@ -327,23 +327,26 @@
 
 ---
 
-### ⚠️ FR-F02 (P1) 강의 신청 내역
+### ✅ FR-F02 (P1) 강의 신청 내역
 
 **요구사항**: 강사 신청 승인/마감, 학교별 강사 매칭, 모집 기간 종료 후 추가 배정
 
-**구현 상태**: ⚠️ **부분 완료** (승인/마감 로직 완료)
+**구현 상태**: ✅ **완료** (2026-01-26, Task 3.3.1)
 
 - ✅ 강의 신청 목록 페이지 존재
 - ✅ 승인/마감 UI 존재
 - ✅ 매칭 기능 UI 존재
 - ✅ 수동 배정 모달 존재
 - ✅ 실제 승인/마감 로직 (Mock, application-service 사용, 2026-01-22)
-- ❌ 매칭 로직 미완성
+- ✅ 자동 매칭 알고리즘 (지역·전문분야·일정 기반, `matching-algorithm.ts`)
+- ✅ 수동 배정 검증 및 중복 배정 방지
 
 **파일 위치**:
 - `src/pages/instructor-applications/instructor-application-list-page.tsx`
-- `src/features/instructor-application/ui/manual-assignment-modal.tsx`
-- `src/entities/instructor-application/api/instructor-application-service.ts` - reviewInstructorApplication 개선 (2026-01-22)
+- `src/features/instructor-application/ui/manual-assignment-modal.tsx` (배정 전 검증 연동, 2026-01-26)
+- `src/entities/instructor-application/api/instructor-application-service.ts` - reviewInstructorApplication, validateManualAssignment, createManualAssignment
+- `src/entities/matching/lib/matching-algorithm.ts` (신규, 2026-01-26)
+- `src/features/matching/ui/matching-form.tsx` (자동 매칭 제안 UI 연동, 2026-01-26)
 - `src/features/instructor-application/hooks/use-instructor-application-review.ts` - 승인/반려/마감 훅 (2026-01-22)
 
 ---

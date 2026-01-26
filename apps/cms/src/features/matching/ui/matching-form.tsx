@@ -13,6 +13,7 @@ import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import { suggestInstructorCandidates } from '../lib/instructor-candidate'
+import { runMatchingAlgorithm, type MatchingCandidate } from '@/entities/matching/lib/matching-algorithm'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
@@ -50,16 +51,36 @@ export function MatchingForm({ matching, onSubmit, onCancel, loading }: Matching
   const selectedProgramId = watch('programId')
   const selectedRoundId = watch('roundId')
   const [candidates, setCandidates] = useState<ReturnType<typeof suggestInstructorCandidates>>([])
+  const [algorithmSuggestions, setAlgorithmSuggestions] = useState<MatchingCandidate[]>([])
 
   useEffect(() => {
     if (selectedProgramId) {
       const program = programService.getByIdSync(selectedProgramId)
       if (program) {
         const suggested = suggestInstructorCandidates(program)
-        setCandidates(suggested.slice(0, 5)) // 상위 5명만 표시
+        setCandidates(suggested.slice(0, 5))
       }
+    } else {
+      setCandidates([])
     }
   }, [selectedProgramId])
+
+  useEffect(() => {
+    if (
+      selectedProgramId &&
+      selectedRoundId &&
+      String(selectedRoundId).trim() !== '' &&
+      !matching
+    ) {
+      const results = runMatchingAlgorithm({
+        programId: selectedProgramId,
+        roundId: selectedRoundId,
+      })
+      setAlgorithmSuggestions(results.slice(0, 5))
+    } else {
+      setAlgorithmSuggestions([])
+    }
+  }, [selectedProgramId, selectedRoundId, matching])
 
   const program = selectedProgramId ? programService.getByIdSync(selectedProgramId) : null
   const round = program && selectedRoundId ? program.rounds.find(r => r.id === selectedRoundId) : null
@@ -132,6 +153,46 @@ export function MatchingForm({ matching, onSubmit, onCancel, loading }: Matching
             ))}
           </Select>
         </Form.Item>
+      )}
+
+      {algorithmSuggestions.length > 0 && !matching && (
+        <Card title="자동 매칭 제안 (학교·지역·일정 기반)" size="small" style={{ marginBottom: 16 }}>
+          <Alert
+            message="프로그램·회차에 맞는 강사–일정 매칭 후보입니다. 클릭하면 강사와 일정이 자동 입력됩니다."
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+          />
+          <List
+            size="small"
+            dataSource={algorithmSuggestions}
+            renderItem={item => (
+              <List.Item
+                style={{ cursor: 'pointer', padding: '8px 12px' }}
+                onClick={() => {
+                  setValue('instructorId', item.instructor.id)
+                  setValue('scheduleId', item.schedule.id)
+                }}
+              >
+                <Space style={{ width: '100%', justifyContent: 'space-between' }} wrap>
+                  <Space wrap>
+                    <span style={{ fontWeight: 500 }}>{item.instructor.name}</span>
+                    <Tag color={domainColorsHex.instructor.primary}>{item.instructor.region}</Tag>
+                    <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                      {item.schedule.title} · {typeof item.schedule.date === 'string' ? item.schedule.date : dayjs(item.schedule.date).format('YYYY-MM-DD')}
+                    </span>
+                  </Space>
+                  <Tag color={domainColorsHex.matching.primary}>점수: {item.score}</Tag>
+                </Space>
+                {item.reasons.length > 0 && (
+                  <div style={{ marginTop: 4, fontSize: 12, color: '#8c8c8c' }}>
+                    {item.reasons.slice(0, 3).join(' · ')}
+                  </div>
+                )}
+              </List.Item>
+            )}
+          />
+        </Card>
       )}
 
       {candidates.length > 0 && !matching && (
