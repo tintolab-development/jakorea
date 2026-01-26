@@ -6,11 +6,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
-import { Input, Space, Card, Tag, Button, Table, Tabs, Select, Segmented } from 'antd'
+import { Input, Space, Card, Button, Table, Tabs, Select, Segmented } from 'antd'
 import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { SettlementSubmitModal } from '@/features/settlement/ui/settlement-submit-modal'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
@@ -206,7 +207,7 @@ export function MySettlementListPage() {
       key: 'status',
       width: 120,
       render: (status: SettlementStatus) => (
-        <Tag color={getSettlementStatusColor(status)}>{getSettlementStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
       ),
     },
     {

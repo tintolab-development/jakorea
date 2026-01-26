@@ -7,11 +7,14 @@ import { message } from 'antd'
 import type { PaymentStatement } from '@/types/domain'
 import { paymentStatementService } from '@/entities/settlement/api/payment-statement-service'
 import { settlementService } from '@/entities/settlement/api/settlement-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { programService } from '@/entities/program/api/program-service'
+import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 import { canDownloadPaymentStatement } from '@/shared/utils/download-permission'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES } from '@/shared/constants'
 import type { TransferListRow } from './use-transfer-list-export'
 
 export type PaymentStatementFilter = {
@@ -23,6 +26,8 @@ export type PaymentStatementFilter = {
 
 export function usePaymentStatements() {
   const { user } = useAuthStore()
+  const { getNameById: getInstructorNameById } = useInstructorService()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [statements, setStatements] = useState<PaymentStatement[]>([])
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<PaymentStatementFilter>({})
@@ -34,7 +39,7 @@ export function usePaymentStatements() {
       setStatements(data)
     } catch (error) {
       console.error('Failed to fetch payment statements:', error)
-      message.error('지급조서 목록을 불러오는 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.paymentStatementListLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -53,18 +58,28 @@ export function usePaymentStatements() {
       }
       if (filters.keyword) {
         const keyword = filters.keyword.toLowerCase()
-        const instructorName = instructorService.getNameById(statement.instructorId).toLowerCase()
-        const programTitle = programService.getByIdSync(statement.programId)?.title.toLowerCase() || ''
+        const instructorName = getInstructorNameById(statement.instructorId).toLowerCase()
+        const programTitle = getProgramByIdSync(statement.programId)?.title.toLowerCase() || ''
         if (!instructorName.includes(keyword) && !programTitle.includes(keyword)) {
           return false
         }
       }
       return true
     })
-  }, [filters.keyword, filters.period, filters.programId, filters.status, statements])
+  }, [
+    filters.keyword,
+    filters.period,
+    filters.programId,
+    filters.status,
+    statements,
+    getInstructorNameById,
+    getProgramByIdSync,
+  ])
 
   const availablePeriods = useMemo(() => {
-    return Array.from(new Set(statements.map(statement => statement.period))).sort().reverse()
+    return Array.from(new Set(statements.map(statement => statement.period)))
+      .sort()
+      .reverse()
   }, [statements])
 
   const statusOptions: Array<{ label: string; value: PaymentStatement['status'] }> = [
@@ -90,37 +105,40 @@ export function usePaymentStatements() {
       })
   }, [statements])
 
-  const downloadStatement = useCallback(async (statement: PaymentStatement) => {
-    // Phase 0.4.3: 권한 체크 (OWNER만 다운로드 가능)
-    if (!canDownloadPaymentStatement(user, statement.programId)) {
-      message.warning('지급조서 다운로드는 OWNER 권한에서만 가능합니다')
-      return
-    }
-
-    try {
-      const settlement = await settlementService.getById(statement.settlementId)
-      const program = programService.getByIdSync(statement.programId)
-      const instructor = instructorService.getByIdSync(statement.instructorId)
-
-      if (!settlement || !program || !instructor) {
-        message.error('지급조서 정보를 찾을 수 없습니다')
+  const downloadStatement = useCallback(
+    async (statement: PaymentStatement) => {
+      // Phase 0.4.3: 권한 체크 (OWNER만 다운로드 가능)
+      if (!canDownloadPaymentStatement(user, statement.programId)) {
+        message.warning(MESSAGES.warning.paymentStatementDownloadOwnerOnly)
         return
       }
 
-      await generatePaymentStatement(settlement, instructor, program.title)
+      try {
+        const settlement = await settlementService.getById(statement.settlementId)
+        const program = programService.getByIdSync(statement.programId)
+        const instructor = instructorService.getByIdSync(statement.instructorId)
 
-      const updated = await paymentStatementService.update(statement.id, {
-        status: 'downloaded',
-        lastDownloadedAt: new Date().toISOString(),
-      })
+        if (!settlement || !program || !instructor) {
+          message.error('지급조서 정보를 찾을 수 없습니다')
+          return
+        }
 
-      setStatements(prev => prev.map(item => (item.id === updated.id ? updated : item)))
-      message.success('지급조서가 다운로드되었습니다')
-    } catch (error) {
-      console.error('Failed to download payment statement:', error)
-      message.error('지급조서 다운로드 중 오류가 발생했습니다')
-    }
-  }, [user])
+        await generatePaymentStatement(settlement, instructor, program.title)
+
+        const updated = await paymentStatementService.update(statement.id, {
+          status: 'downloaded',
+          lastDownloadedAt: new Date().toISOString(),
+        })
+
+        setStatements(prev => prev.map(item => (item.id === updated.id ? updated : item)))
+        message.success('지급조서가 다운로드되었습니다')
+      } catch (error) {
+        console.error('Failed to download payment statement:', error)
+        message.error('지급조서 다운로드 중 오류가 발생했습니다')
+      }
+    },
+    [user]
+  )
 
   const resetFilters = () => setFilters({})
 

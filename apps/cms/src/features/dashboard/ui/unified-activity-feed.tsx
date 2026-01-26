@@ -18,12 +18,12 @@ import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import dayjs from 'dayjs'
 import {
+  applicationStatusStatusConfig,
+  commonStatusStatusConfig,
+  settlementStatusStatusConfig,
   getApplicationStatusLabel,
-  getApplicationStatusColor,
   getCommonStatusLabel,
-  getCommonStatusColor,
   getSettlementStatusLabel,
-  getSettlementStatusColor,
 } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
 
@@ -67,7 +67,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           },
           createdAt: typeof application.createdAt === 'string' ? application.createdAt : application.createdAt.toISOString(),
           icon: <FileTextOutlined />,
-          color: getApplicationStatusColor(application.status),
+          color: applicationStatusStatusConfig[application.status]?.color || 'default',
           path: `/applications`,
         }
       })
@@ -89,7 +89,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           },
           createdAt: typeof matching.createdAt === 'string' ? matching.createdAt : matching.createdAt.toISOString(),
           icon: <TeamOutlined />,
-          color: getCommonStatusColor(matching.status),
+          color: commonStatusStatusConfig[matching.status]?.color || 'default',
           path: `/matchings`,
         }
       })
@@ -140,7 +140,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           },
           createdAt: typeof settlement.createdAt === 'string' ? settlement.createdAt : settlement.createdAt.toISOString(),
           icon: <DollarOutlined />,
-          color: getSettlementStatusColor(settlement.status),
+          color: settlementStatusStatusConfig[settlement.status]?.color || 'default',
           path: `/settlements`,
         }
       })

@@ -5,13 +5,20 @@
 
 import { Table, Tag, Space, Button, Select, Tooltip, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
-import { EyeOutlined, CheckOutlined, CloseOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import {
+  EyeOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  MoreOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import dayjs from 'dayjs'
-import { commonStatusConfig } from '@/shared/constants/status'
+import { commonStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import './matching-list.css'
@@ -42,16 +49,8 @@ export function MatchingList({
   onCancel,
 }: MatchingListProps) {
   const { getAllSync, getByIdSync } = useProgramService()
+  const { getByIdSync: getInstructorByIdSync } = useInstructorService()
   const programs = getAllSync()
-
-  // 매칭 상태 설정 (StatusBadge용)
-  const matchingStatusStatusConfig = {
-    active: { label: commonStatusConfig.labels.active, color: commonStatusConfig.colors.active },
-    inactive: { label: commonStatusConfig.labels.inactive, color: commonStatusConfig.colors.inactive },
-    pending: { label: commonStatusConfig.labels.pending, color: commonStatusConfig.colors.pending },
-    completed: { label: commonStatusConfig.labels.completed, color: commonStatusConfig.colors.completed },
-    cancelled: { label: commonStatusConfig.labels.cancelled, color: commonStatusConfig.colors.cancelled },
-  }
 
   const getMenuItems = (matching: Matching): MenuProps['items'] => {
     const items: MenuProps['items'] = [
@@ -132,7 +131,7 @@ export function MatchingList({
       dataIndex: 'instructorId',
       key: 'instructorId',
       render: (instructorId: string) => {
-        const instructor = instructorService.getByIdSync(instructorId)
+        const instructor = getInstructorByIdSync(instructorId)
         return instructor ? (
           <Space>
             <span>{instructor.name}</span>
@@ -154,7 +153,10 @@ export function MatchingList({
           <Space direction="vertical" size="small">
             <span>{schedule.title}</span>
             <span className="matching-list__schedule-meta">
-              {typeof schedule.date === 'string' ? schedule.date : dayjs(schedule.date).format('YYYY-MM-DD')} {schedule.startTime} - {schedule.endTime}
+              {typeof schedule.date === 'string'
+                ? schedule.date
+                : dayjs(schedule.date).format('YYYY-MM-DD')}{' '}
+              {schedule.startTime} - {schedule.endTime}
             </span>
           </Space>
         ) : (
@@ -167,11 +169,7 @@ export function MatchingList({
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <StatusBadge
-          status={status}
-          statusConfig={matchingStatusStatusConfig}
-          showIcon={false}
-        />
+        <StatusBadge status={status} statusConfig={commonStatusStatusConfig} showIcon={false} />
       ),
     },
     {
@@ -187,13 +185,9 @@ export function MatchingList({
       key: 'action',
       width: 100,
       render: (_: unknown, record: Matching) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={e => e.stopPropagation()}>
           <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
-            <Button
-              type="text"
-              icon={<MoreOutlined />}
-              onClick={(e) => e.stopPropagation()}
-            />
+            <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
           </Dropdown>
         </div>
       ),
@@ -241,4 +235,3 @@ export function MatchingList({
     </div>
   )
 }
-

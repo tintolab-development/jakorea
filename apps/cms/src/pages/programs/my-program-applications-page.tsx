@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Card, Table, Tag, Space, Empty, Tabs, Button } from 'antd'
+import { Card, Table, Space, Empty, Tabs, Button } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useApplicationStore } from '@/features/application/model/application-store'
@@ -13,10 +13,8 @@ import { ApplicationDetailDrawer } from '@/features/application/ui/application-d
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { programService } from '@/entities/program/api/program-service'
-import {
-  getApplicationStatusLabel,
-  getApplicationStatusColor,
-} from '@/shared/constants/status'
+import { applicationStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import dayjs from 'dayjs'
 import type { Application, ApplicationStatus } from '@/types/domain'
 
@@ -144,9 +142,7 @@ export function MyProgramApplicationsPage() {
       key: 'status',
       width: 120,
       render: (status: ApplicationStatus) => (
-        <Tag color={getApplicationStatusColor(status)}>
-          {getApplicationStatusLabel(status)}
-        </Tag>
+        <StatusBadge status={status} statusConfig={applicationStatusStatusConfig} />
       ),
     },
     {

@@ -9,7 +9,8 @@ import { Card, Space, Button, Radio, Table, Tag, Select, Statistic, Empty } from
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { programService } from '@/entities/program/api/program-service'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -133,7 +134,7 @@ export function MyMonthlySettlementPage() {
       key: 'status',
       width: 120,
       render: (status: SettlementStatus) => (
-        <Tag color={getSettlementStatusColor(status)}>{getSettlementStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
       ),
     },
     {

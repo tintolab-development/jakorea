@@ -11,11 +11,10 @@ import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import dayjs from 'dayjs'
 import {
-  getApplicationStatusLabel,
-  getApplicationStatusColor,
-  getCommonStatusLabel,
-  getCommonStatusColor,
+  applicationStatusStatusConfig,
+  commonStatusStatusConfig,
 } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 
 const { Text } = Typography
@@ -85,7 +84,7 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
                       title={
                         <Space>
                           <Text strong>{program?.title || '프로그램 없음'}</Text>
-                          <Tag color={getApplicationStatusColor(application.status)}>{getApplicationStatusLabel(application.status)}</Tag>
+                          <StatusBadge status={application.status} statusConfig={applicationStatusStatusConfig} />
                         </Space>
                       }
                       description={
@@ -130,9 +129,7 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
                       title={
                         <Space>
                           <Text strong>{program?.title || '프로그램 없음'}</Text>
-                          <Tag color={getCommonStatusColor(matching.status)}>
-                            {getCommonStatusLabel(matching.status)}
-                          </Tag>
+                          <StatusBadge status={matching.status} statusConfig={commonStatusStatusConfig} />
                         </Space>
                       }
                       description={

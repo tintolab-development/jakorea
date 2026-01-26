@@ -32,9 +32,16 @@ import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-
 import { PendingApplicationsCard } from '@/features/dashboard/ui/pending-applications-card'
 import { PendingMatchingsCard } from '@/features/dashboard/ui/pending-matchings-card'
 import { PendingSettlementsCard } from '@/features/dashboard/ui/pending-settlements-card'
+import { PendingActionsRow } from '@/features/dashboard/ui/pending-actions-row'
 import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
-import { getOverallStatistics, type OverallStatistics } from '@/features/dashboard/api/statistics-service'
-import { getInstructorActivitySummary, type InstructorActivitySummary } from '@/features/dashboard/api/instructor-activity-service'
+import {
+  getOverallStatistics,
+  type OverallStatistics,
+} from '@/features/dashboard/api/statistics-service'
+import {
+  getInstructorActivitySummary,
+  type InstructorActivitySummary,
+} from '@/features/dashboard/api/instructor-activity-service'
 
 export function Dashboard() {
   const { user } = useAuthStore()
@@ -44,7 +51,9 @@ export function Dashboard() {
   const instructorCount = mockInstructors.length
   const [overallStatistics, setOverallStatistics] = useState<OverallStatistics | null>(null)
   const [statisticsLoading, setStatisticsLoading] = useState(false)
-  const [instructorActivity, setInstructorActivity] = useState<InstructorActivitySummary | null>(null)
+  const [instructorActivity, setInstructorActivity] = useState<InstructorActivitySummary | null>(
+    null
+  )
   const [instructorActivityLoading, setInstructorActivityLoading] = useState(false)
 
   // 권한별 위젯 구성
@@ -60,7 +69,7 @@ export function Dashboard() {
     }
 
     let cancelled = false
-    
+
     const loadData = async () => {
       setStatisticsLoading(true)
       try {
@@ -88,22 +97,16 @@ export function Dashboard() {
 
   // 강사/개인(참여자)일 경우 본인 활동 데이터 로드
   useEffect(() => {
-    if (
-      !(
-        (user?.role === 'INSTRUCTOR' ||
-          user?.role === 'INDIVIDUAL') &&
-        user?.instructorId
-      )
-    ) {
+    if (!((user?.role === 'INSTRUCTOR' || user?.role === 'INDIVIDUAL') && user?.instructorId)) {
       setInstructorActivity(null)
       return
     }
 
     let cancelled = false
-    
+
     const loadData = async () => {
       if (!user.instructorId) return
-      
+
       setInstructorActivityLoading(true)
       try {
         const data = await getInstructorActivitySummary(user.instructorId)
@@ -141,16 +144,13 @@ export function Dashboard() {
             </Card>
           )
         }
-        return (
-          <OverallStatisticsCards
-            statistics={overallStatistics}
-            loading={statisticsLoading}
-          />
-        )
+        return <OverallStatisticsCards statistics={overallStatistics} loading={statisticsLoading} />
       case 'overall-program-progress-card':
         return <OverallProgramProgressCard />
       case 'program-progress-widget':
         return <ProgramProgressWidget />
+      case 'pending-actions-row':
+        return <PendingActionsRow />
       case 'pending-applications-card':
         return <PendingApplicationsCard />
       case 'pending-matchings-card':
@@ -170,8 +170,8 @@ export function Dashboard() {
             onClick={() => navigate('/instructors')}
             style={{ height: '100%', cursor: 'pointer' }}
           >
-            <Statistic 
-              title="등록된 강사" 
+            <Statistic
+              title="등록된 강사"
               value={instructorCount}
               suffix="명"
               valueStyle={{ color: '#000000', fontWeight: 'bold' }}
@@ -248,7 +248,14 @@ export function Dashboard() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 24,
+        }}
+      >
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         {showSearchAndNotification && (
           <div style={{ width: 300 }}>

@@ -22,6 +22,7 @@ import { SaveOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { SettlementCalculationRule } from '@/types/settlement-calculation'
 import { settlementCalculationRuleService } from '@/entities/settlement/api/settlement-calculation-rule-service'
 import { ACCOMMODATION_FEE } from '@/shared/constants/settlement-rules'
+import { MESSAGES } from '@/shared/constants'
 
 const { Title, Paragraph } = Typography
 
@@ -62,7 +63,7 @@ export function SettlementCalculationSettingsPage() {
       form.setFieldsValue(ruleToFormValues(rule))
     } catch (e) {
       console.error('Failed to fetch calculation rule:', e)
-      message.error('정산 규칙을 불러오는 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.calculationRuleLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -86,13 +87,13 @@ export function SettlementCalculationSettingsPage() {
         enabled: values.enabled ?? true,
       })
 
-      message.success('정산 산출 규칙이 저장되었습니다')
+      message.success(MESSAGES.success.calculationRulesSaved)
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
       console.error('Failed to save calculation rule:', error)
-      message.error('저장 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.calculationRuleSaveFailed)
     } finally {
       setSaving(false)
     }
@@ -103,10 +104,10 @@ export function SettlementCalculationSettingsPage() {
       setSaving(true)
       const rule = await settlementCalculationRuleService.resetGlobalRule()
       form.setFieldsValue(ruleToFormValues(rule))
-      message.info('기본값으로 초기화되었습니다')
+      message.info(MESSAGES.success.resetToDefault)
     } catch (e) {
       console.error('Failed to reset rule:', e)
-      message.error('초기화 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.calculationRuleResetFailed)
     } finally {
       setSaving(false)
     }

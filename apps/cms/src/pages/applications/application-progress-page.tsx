@@ -11,7 +11,9 @@ import { ArrowLeftOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@an
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import { useStatusTimeline } from '@/features/auth/hooks/use-status-timeline'
-import { APPLICATION_STATUS, getApplicationStatusLabel, getApplicationStatusColor } from '@/shared/constants/application-status'
+import { APPLICATION_STATUS } from '@/shared/constants/application-status'
+import { applicationStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { programService } from '@/entities/program/api/program-service'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { APPLICATION_PROGRESS_ORDER, type ApplicationProgressStatus } from '@/types/application-progress'
@@ -251,9 +253,7 @@ export function ApplicationProgressPage() {
           {currentStatus && (
             <div>
               <Text strong>현재 진행 단계: </Text>
-              <Tag color={getApplicationStatusColor(currentStatus)}>
-                {getApplicationStatusLabel(currentStatus)}
-              </Tag>
+              <StatusBadge status={currentStatus} statusConfig={applicationStatusStatusConfig} />
             </div>
           )}
         </Space>

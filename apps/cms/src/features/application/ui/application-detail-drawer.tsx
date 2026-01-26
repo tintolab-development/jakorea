@@ -3,29 +3,20 @@
  * Phase 2.2: 사이드 패널로 상세 정보 표시 (Ant Design 컴포넌트 다양하게 활용)
  */
 
-import {
-  Descriptions,
-  Tag,
-  Tabs,
-  Space,
-  Badge,
-  Timeline,
-  Alert,
-  Typography,
-  Divider,
-} from 'antd'
+import { Descriptions, Tag, Tabs, Space, Timeline, Alert, Typography, Divider } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
-import { schoolService } from '@/entities/school/api/school-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useSchoolService } from '@/features/school/hooks/use-school-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { mockUsers } from '@/data/mock/users'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import {
   applicationSubjectTypeConfig,
+  applicationStatusStatusConfig,
   getApplicationStatusLabel,
-  getApplicationStatusColor,
 } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
 import {
   isApplicationFinalStatus,
@@ -87,7 +78,7 @@ export function ApplicationDetailDrawer({
 
   // 실제 사용자 정보 (currentUser가 있으면 사용, 없으면 authUser 사용)
   // currentUser는 Pick<User, ...>이므로 authUser를 우선 사용
-  const user = authUser || (currentUser ? { ...currentUser } as Omit<User, 'password'> : null)
+  const user = authUser || (currentUser ? ({ ...currentUser } as Omit<User, 'password'>) : null)
   // 관리자 여부 결정 (isAdmin prop이 있으면 사용, 없으면 user.role로 판단)
   const isAdminUser = isAdmin || user?.role === 'ADMIN'
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
@@ -150,12 +141,14 @@ export function ApplicationDetailDrawer({
   const isFinalStatus = isApplicationFinalStatus(displayApplication.status)
 
   const { getByIdSync } = useProgramService()
+  const { getNameById: getSchoolNameById } = useSchoolService()
+  const { getNameById: getInstructorNameById } = useInstructorService()
   const program = getByIdSync(displayApplication.programId)
   const subjectName =
     displayApplication.subjectType === 'school'
-      ? schoolService.getNameById(displayApplication.subjectId)
+      ? getSchoolNameById(displayApplication.subjectId)
       : displayApplication.subjectType === 'instructor'
-        ? instructorService.getNameById(displayApplication.subjectId)
+        ? getInstructorNameById(displayApplication.subjectId)
         : displayApplication.subjectType === 'volunteer'
           ? mockUsers.find(u => u.id === displayApplication.subjectId)?.name || '-'
           : '-'
@@ -258,7 +251,7 @@ export function ApplicationDetailDrawer({
       onClose={onClose}
       title={
         <Space>
-          <Badge status={getApplicationStatusColor(displayApplication.status) as any} />
+          <StatusBadge status={displayApplication.status} statusConfig={applicationStatusStatusConfig} variant="badge" showIcon={false} />
           <Title level={4} style={{ margin: 0 }}>
             신청 상세
           </Title>
@@ -341,10 +334,7 @@ export function ApplicationDetailDrawer({
                     <Text strong>{subjectName || '-'}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="상태">
-                    <Badge
-                      status={getApplicationStatusColor(displayApplication.status) as any}
-                      text={getApplicationStatusLabel(displayApplication.status)}
-                    />
+                    <StatusBadge status={displayApplication.status} statusConfig={applicationStatusStatusConfig} variant="badge" />
                   </Descriptions.Item>
                   {displayApplication.notes && (
                     <Descriptions.Item label="비고">

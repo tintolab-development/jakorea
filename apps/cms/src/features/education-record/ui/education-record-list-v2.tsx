@@ -12,7 +12,8 @@ import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { mockApplications } from '@/data/mock'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { commonStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { useMemo, useState } from 'react'
 import { MOCK_SIDO_SIGUNGU } from '@/shared/constants/sido-sigungu'
 import dayjs from 'dayjs'
@@ -345,7 +346,7 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
         width: 80,
         align: 'center' as const,
         render: (status: string) => (
-          <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+          <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
         ),
       },
     ],

@@ -7,7 +7,7 @@ import { Descriptions, Tag, Space, Badge, Alert } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Schedule } from '@/types/domain'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useScheduleStore } from '@/features/schedule/model/schedule-store'
@@ -40,9 +40,10 @@ export function ScheduleDetailDrawer({
   if (!displaySchedule) return null
 
   const { getByIdSync } = useProgramService()
+  const { getByIdSync: getInstructorByIdSync } = useInstructorService()
   const program = getByIdSync(displaySchedule.programId)
   const instructor = displaySchedule.instructorId
-    ? instructorService.getByIdSync(displaySchedule.instructorId)
+    ? getInstructorByIdSync(displaySchedule.instructorId)
     : null
 
   // 액션 버튼 구성

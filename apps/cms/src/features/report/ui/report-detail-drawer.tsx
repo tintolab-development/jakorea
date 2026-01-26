@@ -6,7 +6,8 @@
 import { Descriptions, Tag, Space, Modal, Input, message } from 'antd'
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { Report } from '@/types/domain'
-import { getReportStatusLabel, getReportStatusColor } from '@/shared/constants/status'
+import { reportStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { getReportTypeLabel, getReportTypeColor } from '@/shared/constants/domain-status'
 import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { useReportService } from '@/features/report/hooks/use-report-service'
@@ -139,9 +140,7 @@ export function ReportDetailDrawer({
               <Tag color={getReportTypeColor(report.type)}>{getReportTypeLabel(report.type)}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="상태">
-              <Tag color={getReportStatusColor(report.status)}>
-                {getReportStatusLabel(report.status)}
-              </Tag>
+              <StatusBadge status={report.status} statusConfig={reportStatusStatusConfig} />
             </Descriptions.Item>
             {program && <Descriptions.Item label="프로그램">{program.title}</Descriptions.Item>}
             <Descriptions.Item label="제출일">

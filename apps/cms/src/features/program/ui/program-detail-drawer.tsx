@@ -12,8 +12,8 @@ import { useNavigate } from 'react-router-dom'
 import { ApplicationFormModal } from '@/shared/ui/application-form-modal'
 import { EditOutlined, DeleteOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
-import { schoolService } from '@/entities/school/api/school-service'
+import { useSponsorService } from '@/features/sponsor/hooks/use-sponsor-service'
+import { useSchoolService } from '@/features/school/hooks/use-school-service'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { useProgramStatusManager } from '@/features/program/hooks/use-program-status-manager'
@@ -55,6 +55,8 @@ export function ProgramDetailDrawer({
   loading,
   hideActions = false,
 }: ProgramDetailDrawerProps) {
+  const { getByIdSync: getSchoolByIdSync } = useSchoolService()
+  const { getByIdSync: getSponsorByIdSync } = useSponsorService()
   const navigate = useNavigate()
   const { user, isAuthenticated } = useAuthStore()
   const { selectedProgram: storeSelectedProgram, setSelectedProgram } = useProgramStore()
@@ -161,17 +163,17 @@ export function ProgramDetailDrawer({
       app => app.programId === displayProgram.id && app.subjectType === 'school'
     )
     if (schoolApp) {
-      const school = schoolService.getByIdSync(schoolApp.subjectId)
+      const school = getSchoolByIdSync(schoolApp.subjectId)
       return school ? { name: school.name, region: school.region } : null
     }
     return null
-  }, [displayProgram])
+  }, [displayProgram, getSchoolByIdSync])
 
   // 스폰서 정보
   const sponsor = useMemo(() => {
     if (!displayProgram) return null
-    return sponsorService.getByIdSync(displayProgram.sponsorId)
-  }, [displayProgram])
+    return getSponsorByIdSync(displayProgram.sponsorId)
+  }, [displayProgram, getSponsorByIdSync])
 
   // 디버깅: 신청하기 버튼 표시 조건 확인
   useEffect(() => {

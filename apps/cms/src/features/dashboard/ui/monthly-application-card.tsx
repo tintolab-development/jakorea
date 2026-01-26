@@ -8,7 +8,7 @@
 import { Card, Statistic, Space, Tag, Typography } from 'antd'
 import { FileTextOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { getApplicationStatusColor } from '@/shared/constants/status'
+import { applicationStatusStatusConfig } from '@/shared/constants/status'
 import { useDashboardData } from '../model/use-dashboard-data'
 
 const { Text } = Typography
@@ -49,22 +49,22 @@ export function MonthlyApplicationCard() {
       )}
       <Space size="small" style={{ marginTop: 16, flexWrap: 'wrap' }}>
         {statusCounts.submitted > 0 && (
-          <Tag color={getApplicationStatusColor('submitted')}>
+          <Tag color={applicationStatusStatusConfig.submitted.color}>
             접수: {statusCounts.submitted}
           </Tag>
         )}
         {statusCounts.reviewing > 0 && (
-          <Tag color={getApplicationStatusColor('reviewing')}>
+          <Tag color={applicationStatusStatusConfig.reviewing.color}>
             검토: {statusCounts.reviewing}
           </Tag>
         )}
         {statusCounts.approved > 0 && (
-          <Tag color={getApplicationStatusColor('approved')}>
+          <Tag color={applicationStatusStatusConfig.approved.color}>
             확정: {statusCounts.approved}
           </Tag>
         )}
         {statusCounts.rejected > 0 && (
-          <Tag color={getApplicationStatusColor('rejected')}>
+          <Tag color={applicationStatusStatusConfig.rejected.color}>
             거절: {statusCounts.rejected}
           </Tag>
         )}

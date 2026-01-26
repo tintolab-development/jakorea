@@ -7,7 +7,6 @@ import {
   Descriptions,
   Tag,
   Space,
-  Badge,
   Typography,
   Divider,
   Table,
@@ -18,11 +17,13 @@ import {
 import { EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
 import { SettlementApprovalWorkflow } from './settlement-approval-workflow'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { MESSAGES } from '@/shared/constants'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useSettlementDetail } from '../hooks/use-settlement-detail'
 import { PaymentInfoSection } from './payment-info-section'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { useState } from 'react'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -53,6 +54,7 @@ export function SettlementDetailDrawer({
   zIndex,
 }: SettlementDetailDrawerProps) {
   const { selectedSettlement: storeSelectedSettlement } = useSettlementStore()
+  const { getByIdSync: getInstructorByIdSync } = useInstructorService()
 
   // prop의 settlement를 우선 사용 (즉시 표시), 없으면 store의 selectedSettlement 사용
   const displaySettlement = settlement || storeSelectedSettlement || null
@@ -69,15 +71,14 @@ export function SettlementDetailDrawer({
 
   const [downloadFormat, setDownloadFormat] = useState<'excel' | 'pdf'>('excel')
   const instructor = displaySettlement
-    ? instructorService.getByIdSync(displaySettlement.instructorId)
+    ? getInstructorByIdSync(displaySettlement.instructorId)
     : null
 
   // 다운로드 핸들러
   const handleDownload = async () => {
     if (!displaySettlement || !programTitle || !instructor) return
     try {
-      const { generatePaymentStatement } =
-        await import('@/shared/utils/settlement-document')
+      const { generatePaymentStatement } = await import('@/shared/utils/settlement-document')
       await generatePaymentStatement(
         displaySettlement,
         instructor,
@@ -85,12 +86,10 @@ export function SettlementDetailDrawer({
         undefined,
         downloadFormat
       )
-      message.success(
-        `지급조서(${downloadFormat.toUpperCase()})가 다운로드되었습니다`
-      )
+      message.success(MESSAGES.success.paymentStatementDownloaded)
     } catch (error) {
       console.error('Failed to download payment statement:', error)
-      message.error('지급조서 다운로드 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.paymentStatementDownloadFailed)
     }
   }
 
@@ -119,7 +118,7 @@ export function SettlementDetailDrawer({
     <Space>
       <Radio.Group
         value={downloadFormat}
-        onChange={(e) => setDownloadFormat(e.target.value)}
+        onChange={e => setDownloadFormat(e.target.value)}
         size="small"
       >
         <Radio.Button value="excel">Excel</Radio.Button>
@@ -140,9 +139,10 @@ export function SettlementDetailDrawer({
           <Title level={4} className="settlement-detail-drawer__title">
             정산 상세
           </Title>
-          <Badge
-            status={getSettlementStatusColor(displaySettlement.status) as any}
-            text={getSettlementStatusLabel(displaySettlement.status)}
+          <StatusBadge
+            status={displaySettlement.status}
+            statusConfig={settlementStatusStatusConfig}
+            variant="badge"
           />
         </Space>
       }
@@ -168,9 +168,10 @@ export function SettlementDetailDrawer({
         <Descriptions.Item label="강사">{instructorName || '-'}</Descriptions.Item>
         <Descriptions.Item label="매칭">{matchingLabel || '-'}</Descriptions.Item>
         <Descriptions.Item label="상태">
-          <Badge
-            status={getSettlementStatusColor(displaySettlement.status) as any}
-            text={getSettlementStatusLabel(displaySettlement.status)}
+          <StatusBadge
+            status={displaySettlement.status}
+            statusConfig={settlementStatusStatusConfig}
+            variant="badge"
           />
         </Descriptions.Item>
         {displaySettlement.documentGeneratedAt && (
@@ -198,7 +199,7 @@ export function SettlementDetailDrawer({
           if (displaySettlement.status === 'pending') {
             void changeStatus('calculated')
           } else {
-            message.warning('현재 상태에서는 산출 완료 처리를 할 수 없습니다.')
+            message.warning(MESSAGES.warning.cannotProcessCalculated)
           }
         }}
         onApprove={() => {
@@ -216,7 +217,7 @@ export function SettlementDetailDrawer({
           if (displaySettlement.status === 'calculated' || displaySettlement.status === 'review') {
             void changeStatus('cancelled')
           } else {
-            message.warning('현재 상태에서는 반려할 수 없습니다.')
+            message.warning(MESSAGES.warning.cannotRejectCurrentStatus)
           }
         }}
         onReview={() => {
@@ -224,7 +225,7 @@ export function SettlementDetailDrawer({
           if (displaySettlement.status === 'calculated') {
             void changeStatus('review')
           } else {
-            message.warning('검토 단계 진입은 산출 완료 상태에서만 가능합니다.')
+            message.warning(MESSAGES.warning.reviewOnlyFromCalculated)
           }
         }}
         onRollback={() => void rollbackStatus()}

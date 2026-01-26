@@ -15,7 +15,8 @@ import {
   removeFavoriteProgram,
   isFavoriteProgram,
 } from '@/entities/program/api/favorite-program-service'
-import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { commonStatusStatusConfig, getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import dayjs from 'dayjs'
 
 export function MyProgramDetailPage() {
@@ -158,7 +159,7 @@ export function MyProgramDetailPage() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
       ),
     },
   ]

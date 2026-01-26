@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Space, Table, Radio, Badge, Tag, Select } from 'antd'
+import { Card, Space, Table, Radio, Tag, Select } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
@@ -13,7 +13,8 @@ import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-deta
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { domainColorsHex } from '@/shared/constants/colors'
@@ -98,7 +99,7 @@ export function SettlementOverviewPage() {
       dataIndex: 'status',
       key: 'status',
       render: (status: Settlement['status']) => (
-        <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} variant="badge" />
       ),
     },
     {

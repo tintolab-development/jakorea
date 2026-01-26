@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Space, Card, Table, Statistic } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { reportService } from '@/entities/report/api/report-service'
+import { useReportService } from '@/features/report/hooks/use-report-service'
 import { reportStatusConfig } from '@/shared/constants/status'
 import { REPORT_TYPE_CONFIG } from '@/shared/constants/domain-status'
 import { PAGINATION_CONFIG, LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -127,6 +127,7 @@ const reportStatusStatusConfig = {
 
 export function ReportListPage() {
   const { params, setParams, clearParams } = useQueryParams<ReportListQueryParams>()
+  const { getAll: getAllReports, loading: serviceLoading } = useReportService()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -150,7 +151,7 @@ export function ReportListPage() {
   const loadReports = async () => {
     setLoading(true)
     try {
-      const data = await reportService.getAll()
+      const data = await getAllReports()
       setReports(data)
       return data // 업데이트된 데이터 반환
     } catch (error) {
@@ -162,7 +163,10 @@ export function ReportListPage() {
   }
 
   // 필터 상태 관리
-  const [filters, setFilters] = useState<{ type: ReportType | 'all'; status: ReportStatus | 'all' }>({
+  const [filters, setFilters] = useState<{
+    type: ReportType | 'all'
+    status: ReportStatus | 'all'
+  }>({
     type: typeFilter,
     status: statusFilter,
   })

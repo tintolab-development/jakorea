@@ -8,8 +8,11 @@ import { Space, Select, Input, Button } from 'antd'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { ParticipantList } from '@/features/participant/ui/participant-list'
-import { getParticipants, type ParticipantListFilters } from '@/entities/participant/api/participant-service'
-import { programService } from '@/entities/program/api/program-service'
+import {
+  getParticipants,
+  type ParticipantListFilters,
+} from '@/entities/participant/api/participant-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError } from '@/shared/utils/error-handler'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
@@ -30,14 +33,13 @@ export function ParticipantListPage() {
   const location = useLocation()
   const { params, setParam } = useQueryParams<ParticipantListQueryParams>()
   const { user } = useAuthStore()
+  const { getAllSync } = useProgramService()
 
   // 2뎁스 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '참여자 조회'
 
   // 상태 관리
-  const [participants, setParticipants] = useState<
-    Awaited<ReturnType<typeof getParticipants>>
-  >([])
+  const [participants, setParticipants] = useState<Awaited<ReturnType<typeof getParticipants>>>([])
   const [loading, setLoading] = useState(false)
 
   // 쿼리 파라미터에서 필터 값 읽기
@@ -58,7 +60,7 @@ export function ParticipantListPage() {
   }, [params.search])
 
   // 프로그램 목록 조회
-  const programs = programService.getAllSync()
+  const programs = getAllSync()
 
   // 참여자 목록 조회
   const loadParticipants = useCallback(async () => {

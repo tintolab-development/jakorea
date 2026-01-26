@@ -2,12 +2,10 @@
  * 프로그램 회차 정보 탭
  */
 
-import { Table, Tag } from 'antd'
+import { Table } from 'antd'
 import type { Program } from '@/types/domain'
-import {
-  getCommonStatusLabel,
-  getCommonStatusColor,
-} from '@/shared/constants/status'
+import { commonStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 
 interface ProgramRoundsTabProps {
   rounds: Program['rounds']
@@ -43,7 +41,7 @@ export function ProgramRoundsTab({ rounds }: ProgramRoundsTabProps) {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
       ),
     },
   ]

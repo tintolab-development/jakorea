@@ -5,14 +5,16 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Space, Table, Button, Badge, Tag, message } from 'antd'
+import { Card, Space, Table, Button, Tag, message } from 'antd'
 import { DownloadOutlined, EditOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig, getSettlementStatusLabel } from '@/shared/constants/status'
+import { MESSAGES } from '@/shared/constants'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
@@ -51,20 +53,20 @@ export function SettlementPendingPage() {
     const instructor = instructorService.getByIdSync(settlement.instructorId)
 
     if (!program || !instructor) {
-      message.error('프로그램 또는 강사 정보를 찾을 수 없습니다')
+      message.error(MESSAGES.error.programOrInstructorNotFound)
       return
     }
 
     try {
       await generatePaymentStatement(settlement, instructor, program.title)
-      message.success('지급조서가 생성되었습니다')
+      message.success(MESSAGES.success.paymentStatementGenerated)
       // 지급조서 작성 후 산출 완료 상태로 변경
       await updateStatus(settlement.id, 'calculated')
-      message.success('상태가 산출 완료로 변경되었습니다')
+      message.success(MESSAGES.success.statusChangedToCalculated)
       fetchSettlements()
     } catch (error) {
       console.error('Failed to generate payment statement:', error)
-      message.error('지급조서 생성 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.paymentStatementGenerationFailed)
     }
   }
 
@@ -77,7 +79,7 @@ export function SettlementPendingPage() {
       setDrawerOpen(false)
     } catch (e) {
       console.error('Failed to change status:', e)
-      message.error('상태 변경 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.statusChangeFailed)
     }
   }
 
@@ -114,7 +116,7 @@ export function SettlementPendingPage() {
       dataIndex: 'status',
       key: 'status',
       render: (status: Settlement['status']) => (
-        <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} variant="badge" />
       ),
     },
     {

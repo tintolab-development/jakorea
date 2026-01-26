@@ -15,6 +15,7 @@ import { useSettlementStore } from '@/features/settlement/model/settlement-store
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { MESSAGES } from '@/shared/constants'
 import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
 import type { Settlement } from '@/types/domain'
 import dayjs from 'dayjs'
@@ -207,10 +208,10 @@ export function MonthlySettlementPage() {
                         }
                       })
                     await generateTransferList(transferRows, { passwordProvided: false })
-                    message.success('월별 지급조서가 다운로드되었습니다.')
+                    message.success(MESSAGES.success.monthlyPaymentStatementDownloaded)
                   } catch (error) {
                     console.error('Failed to download monthly settlements:', error)
-                    message.error('월별 지급조서 다운로드 중 오류가 발생했습니다.')
+                    message.error(MESSAGES.error.monthlyPaymentStatementDownloadFailed)
                   }
                 }}
               >

@@ -4,14 +4,13 @@
  */
 
 import { useState } from 'react'
-import { Drawer, Descriptions, Tag, Space, Button, Badge, Typography, Divider, Table, Card, List, Modal, Form, InputNumber, Input, message } from 'antd'
+import { Drawer, Descriptions, Tag, Space, Button, Typography, Divider, Table, Card, List, Modal, Form, InputNumber, Input, message } from 'antd'
 import { CheckOutlined, CloseOutlined, FileTextOutlined, EditOutlined } from '@ant-design/icons'
 import type { Settlement, SettlementItem } from '@/types/domain'
-import {
-  getSettlementStatusLabel,
-  getSettlementStatusColor,
-} from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { MESSAGES } from '@/shared/constants'
 import { useSettlementDetail } from '../hooks/use-settlement-detail'
 import { useSettlementReview } from '../hooks/use-settlement-review'
 import { settlementService } from '@/entities/settlement/api/settlement-service'
@@ -91,7 +90,7 @@ export function SettlementDetailReviewDrawer({
         notes: updatedNotes,
       })
 
-      message.success('금액이 조정되었습니다')
+      message.success(MESSAGES.success.amountAdjusted)
       setAdjustModalOpen(false)
       adjustForm.resetFields()
       setAdjustingItem(null)
@@ -105,7 +104,7 @@ export function SettlementDetailReviewDrawer({
         return
       }
       console.error('Failed to adjust amount:', error)
-      message.error('금액 조정 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.amountAdjustFailed)
     } finally {
       setAdjusting(false)
     }
@@ -120,7 +119,7 @@ export function SettlementDetailReviewDrawer({
           <Title level={4} className="settlement-detail-drawer__title">
             정산 상세 검토
           </Title>
-          <Badge status={getSettlementStatusColor(settlement.status) as any} text={getSettlementStatusLabel(settlement.status)} />
+          <StatusBadge status={settlement.status} statusConfig={settlementStatusStatusConfig} variant="badge" />
         </Space>
       }
       placement="right"
@@ -168,7 +167,7 @@ export function SettlementDetailReviewDrawer({
           {matchingLabel || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="상태">
-          <Badge status={getSettlementStatusColor(settlement.status) as any} text={getSettlementStatusLabel(settlement.status)} />
+          <StatusBadge status={settlement.status} statusConfig={settlementStatusStatusConfig} variant="badge" />
         </Descriptions.Item>
         {settlement.documentGeneratedAt && (
           <Descriptions.Item label="문서 생성일">

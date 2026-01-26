@@ -216,86 +216,89 @@ export function ProgramProgressWidget() {
           />
         </Col>
 
-        {/* 파이 차트 */}
-        <Col span={24}>
-          <div style={{ width: '100%', height: 300, marginTop: 16 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <RechartsTooltip content={<CustomTooltip />} />
-                <Legend
-                  verticalAlign="bottom"
-                  height={36}
-                  formatter={(value, entry: any) => {
-                    const percentage =
-                      progress.total > 0
-                        ? ((entry.payload.value / progress.total) * 100).toFixed(1)
-                        : '0'
-                    return `${value} (${percentage}%)`
-                  }}
-                />
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="45%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
-                  }
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  onClick={handlePieClick}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={statusColors[entry.status]} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Col>
-
-        {/* 단계별 타임라인 */}
-        <Col span={24}>
-          <div style={{ marginTop: 8 }}>
-            <div style={{ marginBottom: 16, fontWeight: 600, fontSize: 14, color: '#666' }}>
-              프로그램 라이프사이클 단계
-            </div>
-            <Timeline
-              mode="left"
-              items={timelineData.map(item => {
-                const percentage =
-                  progress.total > 0 ? ((item.count / progress.total) * 100).toFixed(1) : '0'
-                return {
-                  color: item.color,
-                  children: (
-                    <div
-                      onClick={() => handleTimelineClick(item)}
-                      style={{
-                        cursor: 'pointer',
-                        padding: '4px 8px',
-                        borderRadius: 4,
-                        transition: 'background-color 0.2s',
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor = '#f5f5f5'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, marginBottom: 4 }}>{item.label}</div>
-                      <div style={{ fontSize: 12, color: '#666' }}>
-                        {item.count}개 ({percentage}%)
+        {/* 라이프사이클 단계(왼쪽)와 차트(오른쪽)를 나란히 배치 */}
+        <Row gutter={[24, 0]} style={{ width: '100%' }}>
+          {/* 단계별 타임라인 - 왼쪽 */}
+          <Col span={12}>
+            <div style={{ marginTop: 8 }}>
+              <div style={{ marginBottom: 16, fontWeight: 600, fontSize: 14, color: '#666' }}>
+                프로그램 라이프사이클 단계
+              </div>
+              <Timeline
+                mode="left"
+                items={timelineData.map(item => {
+                  const percentage =
+                    progress.total > 0 ? ((item.count / progress.total) * 100).toFixed(1) : '0'
+                  return {
+                    color: item.color,
+                    children: (
+                      <div
+                        onClick={() => handleTimelineClick(item)}
+                        style={{
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: 4,
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = '#f5f5f5'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>{item.label}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>
+                          {item.count}개 ({percentage}%)
+                        </div>
                       </div>
-                    </div>
-                  ),
-                }
-              })}
-            />
-          </div>
-        </Col>
+                    ),
+                  }
+                })}
+              />
+            </div>
+          </Col>
+
+          {/* 파이 차트 - 오른쪽 */}
+          <Col span={12}>
+            <div style={{ width: '100%', height: 300, marginTop: 16 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <RechartsTooltip content={<CustomTooltip />} />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={36}
+                    formatter={(value, entry: any) => {
+                      const percentage =
+                        progress.total > 0
+                          ? ((entry.payload.value / progress.total) * 100).toFixed(1)
+                          : '0'
+                      return `${value} (${percentage}%)`
+                    }}
+                  />
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="45%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
+                    }
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                    onClick={handlePieClick}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={statusColors[entry.status]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </Col>
+        </Row>
       </Row>
     </Card>
   )

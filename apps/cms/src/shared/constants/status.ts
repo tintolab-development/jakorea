@@ -200,3 +200,66 @@ export function getReportStatusColor(status: ReportStatus | string): string {
   return reportStatusConfig.colors[status as ReportStatus] || 'default'
 }
 
+// StatusBadge용 config (StatusBadge 컴포넌트에서 직접 사용 가능)
+import type { StatusConfig } from '@/shared/ui/status-badge'
+
+// 공통 상태 StatusBadge용 config
+export const commonStatusStatusConfig: Record<Status, StatusConfig> = Object.fromEntries(
+  Object.keys(commonStatusConfig.labels).map(status => [
+    status,
+    {
+      label: commonStatusConfig.labels[status as Status],
+      color: commonStatusConfig.colors[status as Status],
+    },
+  ])
+) as Record<Status, StatusConfig>
+
+// 신청 상태 StatusBadge용 config
+export const applicationStatusStatusConfig: Record<ApplicationStatus, StatusConfig> =
+  Object.fromEntries(
+    Object.keys(applicationStatusConfig.labels).map(status => [
+      status,
+      {
+        label: applicationStatusConfig.labels[status as ApplicationStatus],
+        color: applicationStatusConfig.colors[status as ApplicationStatus],
+        icon: applicationStatusConfig.icons[status as ApplicationStatus],
+      },
+    ])
+  ) as Record<ApplicationStatus, StatusConfig>
+
+// 정산 상태 StatusBadge용 config
+export const settlementStatusStatusConfig: Record<SettlementStatus, StatusConfig> =
+  Object.fromEntries(
+    Object.keys(settlementStatusConfig.labels).map(status => [
+      status,
+      {
+        label: settlementStatusConfig.labels[status as SettlementStatus],
+        color: settlementStatusConfig.colors[status as SettlementStatus],
+      },
+    ])
+  ) as Record<SettlementStatus, StatusConfig>
+
+// 프로그램 라이프사이클 상태 StatusBadge용 config
+export const programLifecycleStatusStatusConfig: Record<ProgramLifecycleStatus, StatusConfig> =
+  Object.fromEntries(
+    programLifecycleStatusConfig.order.map(status => [
+      status,
+      {
+        label: programLifecycleStatusConfig.labels[status],
+        color: programLifecycleStatusConfig.colors[status],
+      },
+    ])
+  ) as Record<ProgramLifecycleStatus, StatusConfig>
+
+// 보고서 상태 StatusBadge용 config
+export const reportStatusStatusConfig: Record<ReportStatus, StatusConfig> = Object.fromEntries(
+  Object.keys(reportStatusConfig.labels).map(status => [
+    status,
+    {
+      label: reportStatusConfig.labels[status as ReportStatus],
+      color: reportStatusConfig.colors[status as ReportStatus],
+      icon: reportStatusConfig.icons[status as ReportStatus],
+    },
+  ])
+) as Record<ReportStatus, StatusConfig>
+

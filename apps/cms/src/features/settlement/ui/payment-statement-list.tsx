@@ -5,7 +5,7 @@
 import { Table, Select, Input, Button, Space, Tag } from 'antd'
 import type { PaymentStatement } from '@/types/domain'
 import type { User } from '@/types/user'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { canDownloadPaymentStatement } from '@/shared/utils/download-permission'
 import { StatusBadge } from '@/shared/ui/status-badge'
@@ -52,6 +52,7 @@ export function PaymentStatementList({
   currentUser,
 }: PaymentStatementListProps) {
   const { getAllSync, getByIdSync } = useProgramService()
+  const { getNameById: getInstructorNameById } = useInstructorService()
   const programs = getAllSync()
 
   return (
@@ -96,8 +97,9 @@ export function PaymentStatementList({
               return children.toLowerCase().includes(input.toLowerCase())
             }
             if (Array.isArray(children)) {
-              return children.some((child: unknown) =>
-                typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
+              return children.some(
+                (child: unknown) =>
+                  typeof child === 'string' && child.toLowerCase().includes(input.toLowerCase())
               )
             }
             return false
@@ -152,7 +154,7 @@ export function PaymentStatementList({
             title: '강사',
             dataIndex: 'instructorId',
             key: 'instructorId',
-            render: (instructorId: string) => instructorService.getNameById(instructorId),
+            render: (instructorId: string) => getInstructorNameById(instructorId),
           },
           {
             title: '상태',
@@ -184,7 +186,8 @@ export function PaymentStatementList({
             title: '다운로드',
             key: 'action',
             render: (_: unknown, record: PaymentStatement) => {
-              const canDownload = currentUser && canDownloadPaymentStatement(currentUser, record.programId)
+              const canDownload =
+                currentUser && canDownloadPaymentStatement(currentUser, record.programId)
               const program = getByIdSync(record.programId)
               const programName = program?.title ?? '프로그램'
 

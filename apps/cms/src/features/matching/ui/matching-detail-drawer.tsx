@@ -7,9 +7,10 @@ import { Descriptions, Tag, Timeline, Space, Alert, Badge } from 'antd'
 import { EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { scheduleService } from '@/entities/schedule/api/schedule-service'
-import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { commonStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { getMatchingActionLabel } from '@/shared/constants/domain-status'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -46,10 +47,9 @@ export function MatchingDetailDrawer({
   if (!displayMatching) return null
 
   const { getByIdSync } = useProgramService()
+  const { getByIdSync: getInstructorByIdSync } = useInstructorService()
   const program = displayMatching ? getByIdSync(displayMatching.programId) : null
-  const instructor = displayMatching
-    ? instructorService.getByIdSync(displayMatching.instructorId)
-    : null
+  const instructor = displayMatching ? getInstructorByIdSync(displayMatching.instructorId) : null
   const schedule = displayMatching?.scheduleId
     ? scheduleService.getByIdSync(displayMatching.scheduleId)
     : null
@@ -100,9 +100,7 @@ export function MatchingDetailDrawer({
     >
       <Descriptions column={1} bordered>
         <Descriptions.Item label="상태">
-          <Tag color={getCommonStatusColor(displayMatching.status)}>
-            {getCommonStatusLabel(displayMatching.status)}
-          </Tag>
+          <StatusBadge status={displayMatching.status} statusConfig={commonStatusStatusConfig} />
         </Descriptions.Item>
         <Descriptions.Item label="프로그램">
           {program ? (

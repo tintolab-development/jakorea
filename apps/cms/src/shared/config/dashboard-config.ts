@@ -28,6 +28,7 @@ export type DashboardWidgetType =
   | 'pending-applications-card' // Phase 4.5: 대기 중인 신청 카드
   | 'pending-matchings-card' // Phase 4.5: 대기 중인 매칭 카드
   | 'pending-settlements-card' // Phase 4.5: 대기 중인 정산 카드
+  | 'pending-actions-row' // 대기 중인 작업 Row (신청, 매칭, 정산을 한 레이어에)
 
 /**
  * 대시보드 위젯 설정
@@ -47,15 +48,13 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   ADMIN: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
     { type: 'program-progress-widget', colSpan: 24, order: 2 },
-    { type: 'pending-applications-card', colSpan: 8, order: 3 },
-    { type: 'pending-matchings-card', colSpan: 8, order: 4 },
-    { type: 'pending-settlements-card', colSpan: 8, order: 5 },
-    { type: 'overall-statistics-cards', colSpan: 24, order: 6 },
-    { type: 'monthly-settlement-card', colSpan: 6, order: 7 },
-    { type: 'monthly-application-card', colSpan: 6, order: 8 },
-    { type: 'active-program-card', colSpan: 6, order: 9 },
-    { type: 'instructor-count-card', colSpan: 6, order: 10 },
-    { type: 'unified-activity-feed', colSpan: 24, order: 11 },
+    { type: 'pending-actions-row', colSpan: 24, order: 3 },
+    { type: 'overall-statistics-cards', colSpan: 24, order: 4 },
+    { type: 'monthly-settlement-card', colSpan: 6, order: 5 },
+    { type: 'monthly-application-card', colSpan: 6, order: 6 },
+    { type: 'active-program-card', colSpan: 6, order: 7 },
+    { type: 'instructor-count-card', colSpan: 6, order: 8 },
+    { type: 'unified-activity-feed', colSpan: 24, order: 9 },
   ],
   // 강사: 본인 활동 요약
   INSTRUCTOR: [
@@ -89,9 +88,7 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
  * @param userRole 사용자 권한
  * @returns 대시보드 위젯 설정 목록 (정렬됨)
  */
-export function getDashboardWidgetsByRole(
-  userRole: UserRole | null
-): DashboardWidgetConfig[] {
+export function getDashboardWidgetsByRole(userRole: UserRole | null): DashboardWidgetConfig[] {
   if (!userRole) {
     return []
   }
@@ -118,6 +115,3 @@ export function isWidgetAllowed(
   const widgets = getDashboardWidgetsByRole(userRole)
   return widgets.some(widget => widget.type === widgetType)
 }
-
-
-

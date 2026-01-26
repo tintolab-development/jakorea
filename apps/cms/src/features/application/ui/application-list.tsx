@@ -12,6 +12,7 @@ import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { getApplicationSubjectName, createApplicationMenuItems } from '../lib/application-helpers'
 import {
+  applicationStatusStatusConfig,
   applicationStatusConfig,
   applicationSubjectTypeConfig,
 } from '@/shared/constants/status'
@@ -75,18 +76,6 @@ export function ApplicationList({
   const { getAllSync, getByIdSync } = useProgramService()
 
   const programs = getAllSync()
-
-  // 신청 상태 설정 (StatusBadge용)
-  const applicationStatusStatusConfig = Object.fromEntries(
-    Object.entries(applicationStatusConfig.labels).map(([status, label]) => [
-      status,
-      {
-        label,
-        color: applicationStatusConfig.colors[status as keyof typeof applicationStatusConfig.colors],
-        icon: applicationStatusConfig.icons[status as keyof typeof applicationStatusConfig.icons],
-      },
-    ])
-  ) as Record<Application['status'], { label: string; color: string; icon: React.ComponentType }>
 
   const pathTypeLabels: Record<string, string> = {
     google_form: '구글폼',

@@ -11,7 +11,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
-import { getApplicationStatusLabel, getApplicationStatusColor } from '@/shared/constants/status'
+import { applicationStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { canDownloadParticipants } from '@/shared/utils/download-permission'
 import { logDownload } from '@/entities/download-log/api/download-log-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -84,7 +85,7 @@ export function ParticipantList({
           email,
           role: item.role === 'INDIVIDUAL' ? '개인' : '학교',
           programName: item.programName,
-          status: getApplicationStatusLabel(item.status),
+          status: applicationStatusStatusConfig[item.status]?.label || item.status,
           appliedAt: new Date(item.appliedAt).toLocaleDateString('ko-KR'),
         })
       })
@@ -160,7 +161,7 @@ export function ParticipantList({
       key: 'status',
       width: 120,
       render: (status: Application['status']) => (
-        <Tag color={getApplicationStatusColor(status)}>{getApplicationStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={applicationStatusStatusConfig} />
       ),
     },
     {

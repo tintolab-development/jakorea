@@ -5,15 +5,17 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Space, Table, Button, Badge, Tag, message, Input, Select } from 'antd'
+import { Card, Space, Table, Button, Tag, message, Input, Select } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { SettlementDetailReviewDrawer } from '@/features/settlement/ui/settlement-detail-review-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { programService } from '@/entities/program/api/program-service'
+import { MESSAGES } from '@/shared/constants'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useSettlementReviewList } from '@/features/settlement/hooks/use-settlement-review-list'
@@ -45,23 +47,23 @@ export function AdminSettlementReviewPage() {
     onApprove: async (settlement) => {
       try {
         await approveSettlement(settlement)
-        message.success('정산이 승인되었습니다')
+        message.success(MESSAGES.success.settlementApproved)
         await fetchSettlements()
         setDrawerOpen(false)
       } catch (e) {
         console.error('Failed to approve settlement:', e)
-        message.error('승인 처리 중 오류가 발생했습니다')
+        message.error(MESSAGES.error.approvalProcessFailed)
       }
     },
     onReject: async (settlement) => {
       try {
         await rejectSettlement(settlement)
-        message.success('정산이 반려되었습니다')
+        message.success(MESSAGES.success.settlementRejected)
         await fetchSettlements()
         setDrawerOpen(false)
       } catch (e) {
         console.error('Failed to reject settlement:', e)
-        message.error('반려 처리 중 오류가 발생했습니다')
+        message.error(MESSAGES.error.rejectionProcessFailed)
       }
     },
   })
@@ -133,7 +135,7 @@ export function AdminSettlementReviewPage() {
       key: 'status',
       width: 100,
       render: (status: Settlement['status']) => (
-        <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} variant="badge" />
       ),
     },
     {
@@ -243,23 +245,23 @@ export function AdminSettlementReviewPage() {
         onApprove={async (settlement) => {
           try {
             await approveSettlement(settlement)
-            message.success('정산이 승인되었습니다')
+            message.success(MESSAGES.success.settlementApproved)
             await fetchSettlements()
             setDrawerOpen(false)
           } catch (e) {
             console.error('Failed to approve settlement:', e)
-            message.error('승인 처리 중 오류가 발생했습니다')
+            message.error(MESSAGES.error.approvalProcessFailed)
           }
         }}
         onReject={async (settlement) => {
           try {
             await rejectSettlement(settlement)
-            message.success('정산이 반려되었습니다')
+            message.success(MESSAGES.success.settlementRejected)
             await fetchSettlements()
             setDrawerOpen(false)
           } catch (e) {
             console.error('Failed to reject settlement:', e)
-            message.error('반려 처리 중 오류가 발생했습니다')
+            message.error(MESSAGES.error.rejectionProcessFailed)
           }
         }}
         onUpdate={async (updatedSettlement) => {

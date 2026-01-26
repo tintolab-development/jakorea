@@ -9,7 +9,8 @@ import { Card, Descriptions, Tag, Button, Space, Spin, message } from 'antd'
 import { ArrowLeftOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { programService } from '@/entities/program/api/program-service'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
 import dayjs from 'dayjs'
@@ -99,9 +100,7 @@ export function MySettlementDetailPage() {
           <Descriptions title="정산 정보" bordered column={2}>
             <Descriptions.Item label="정산 ID">{settlement.id}</Descriptions.Item>
             <Descriptions.Item label="상태">
-              <Tag color={getSettlementStatusColor(settlement.status)}>
-                {getSettlementStatusLabel(settlement.status)}
-              </Tag>
+              <StatusBadge status={settlement.status} statusConfig={settlementStatusStatusConfig} />
             </Descriptions.Item>
             <Descriptions.Item label="프로그램">
               {program ? (

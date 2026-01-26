@@ -14,6 +14,8 @@ import type { Program, ProgramLifecycleStatus, ProgramCategory, ProgramType } fr
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
   programLifecycleStatusConfig,
+  programLifecycleStatusStatusConfig,
+  commonStatusStatusConfig,
   getProgramLifecycleLabel,
   getProgramLifecycleColor,
 } from '@/shared/constants/status'
@@ -64,26 +66,6 @@ const statusOptions = programLifecycleStatusConfig.order.map(status => ({
   value: status,
   label: getProgramLifecycleLabel(status),
 }))
-
-// 프로그램 상태 설정 (StatusBadge용)
-const programLifecycleStatusStatusConfig = Object.fromEntries(
-  programLifecycleStatusConfig.order.map(status => [
-    status,
-    {
-      label: programLifecycleStatusConfig.labels[status],
-      color: programLifecycleStatusConfig.colors[status],
-    },
-  ])
-) as Record<ProgramLifecycleStatus, { label: string; color: string }>
-
-// 공통 상태 설정 (StatusBadge용)
-const commonStatusStatusConfig = {
-  active: { label: '활성', color: 'green' },
-  inactive: { label: '비활성', color: 'default' },
-  pending: { label: '대기', color: 'orange' },
-  completed: { label: '완료', color: 'blue' },
-  cancelled: { label: '취소', color: 'red' },
-}
 
 export function ProgramList({
   data,
@@ -234,10 +216,10 @@ export function ProgramList({
     try {
       if (isFavorite) {
         await removeFavoriteProgram(userId, programId)
-        message.success('관심 프로그램에서 제거되었습니다.')
+        message.success(MESSAGES.success.removedFromFavorites)
       } else {
         await addFavoriteProgram(userId, programId)
-        message.success('관심 프로그램에 추가되었습니다.')
+        message.success(MESSAGES.success.addedToFavorites)
       }
 
       setFavorites(prev => {

@@ -3,14 +3,15 @@
  * Phase 4: 프로그램 상태 전환 워크플로우 UI
  */
 
-import { Card, Space, Typography, Timeline, Tag, Button } from 'antd'
+import { Card, Space, Typography, Timeline, Button } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import {
-  getProgramLifecycleLabel,
-  getProgramLifecycleColor,
+  programLifecycleStatusStatusConfig,
   programLifecycleStatusConfig,
+  getProgramLifecycleLabel,
 } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import {
   canTransitionProgramLifecycleStatus,
   getNextProgramLifecycleStatus,
@@ -71,9 +72,7 @@ export function ProgramLifecycleWorkflow({
         {/* 현재 상태 표시 */}
         <div>
           <Text strong>현재 상태: </Text>
-          <Tag color={getProgramLifecycleColor(currentStatus)}>
-            {getProgramLifecycleLabel(currentStatus)}
-          </Tag>
+          <StatusBadge status={currentStatus} statusConfig={programLifecycleStatusStatusConfig} />
         </div>
 
         {/* 상태 단계 Timeline */}

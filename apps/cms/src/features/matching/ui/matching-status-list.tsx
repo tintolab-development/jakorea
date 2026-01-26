@@ -8,6 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import { MoreOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import type { MatchingStatusItem } from '@/entities/matching/api/matching-status-service'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import type { StatusConfig } from '@/shared/ui/status-badge'
 
 interface MatchingStatusListProps {
   data: MatchingStatusItem[]
@@ -16,10 +18,7 @@ interface MatchingStatusListProps {
   onExport?: () => void
 }
 
-const statusConfig: Record<
-  MatchingStatusItem['status'],
-  { label: string; color: string }
-> = {
+const statusConfig: Record<MatchingStatusItem['status'], StatusConfig> = {
   PENDING: { label: '대기', color: 'orange' },
   CONFIRMED: { label: '확정', color: 'green' },
   COMPLETED: { label: '완료', color: 'blue' },
@@ -74,10 +73,9 @@ export function MatchingStatusList({
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status: MatchingStatusItem['status']) => {
-        const config = statusConfig[status]
-        return <Tag color={config.color}>{config.label}</Tag>
-      },
+      render: (status: MatchingStatusItem['status']) => (
+        <StatusBadge status={status} statusConfig={statusConfig} />
+      ),
     },
     {
       title: '작업',
