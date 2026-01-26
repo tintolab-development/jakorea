@@ -321,12 +321,12 @@ export function ReportListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
+      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.xl, width: '100%', justifyContent: 'space-between' }}>
         {/* <h1 style={{ margin: 0 }}>보고서 관리</h1> */}
       </Space>
 
       {/* 통계 카드 - 간결한 한 줄 배치 */}
-      <Card style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}>
         <Space size="large" wrap>
           <Statistic title="전체" value={statistics.total} />
           <Statistic title="제출" value={statistics.submitted} valueStyle={{ color: '#1890ff' }} />

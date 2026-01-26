@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom'
 import { Card, Space, Typography, Form, Input, DatePicker, Select, Button, message } from 'antd'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { MESSAGES } from '@/shared/constants'
 
 const { Paragraph } = Typography
 const { RangePicker } = DatePicker
@@ -43,7 +44,7 @@ export default function VolunteerEducationPlanPage() {
             <Form.Item
               name="programTitle"
               label="프로그램명"
-              rules={[{ required: true, message: '프로그램명을 입력해주세요.' }]}
+              rules={[{ required: true, message: MESSAGES.validation.programNameRequired }]}
             >
               <Input placeholder="예: 서울초등학교 금융교육 봉사" />
             </Form.Item>
@@ -52,7 +53,7 @@ export default function VolunteerEducationPlanPage() {
               <Form.Item
                 name="period"
                 label="진행 기간"
-                rules={[{ required: true, message: '진행 기간을 선택해주세요.' }]}
+                rules={[{ required: true, message: MESSAGES.validation.periodRequired }]}
                 style={{ flex: 1 }}
               >
                 <RangePicker style={{ width: '100%' }} />
@@ -60,7 +61,7 @@ export default function VolunteerEducationPlanPage() {
               <Form.Item
                 name="target"
                 label="수강 대상"
-                rules={[{ required: true, message: '수강 대상을 선택해주세요.' }]}
+                rules={[{ required: true, message: MESSAGES.validation.targetRequired }]}
                 style={{ flex: 1 }}
               >
                 <Select placeholder="대상 선택">
@@ -73,7 +74,7 @@ export default function VolunteerEducationPlanPage() {
             <Form.Item
               name="objectives"
               label="교육 목표"
-              rules={[{ required: true, message: '교육 목표를 입력해주세요.' }]}
+              rules={[{ required: true, message: MESSAGES.validation.goalRequired }]}
             >
               <TextArea rows={3} placeholder="교육 목표를 입력해주세요" />
             </Form.Item>
@@ -81,7 +82,7 @@ export default function VolunteerEducationPlanPage() {
             <Form.Item
               name="contents"
               label="교육 내용"
-              rules={[{ required: true, message: '교육 내용을 입력해주세요.' }]}
+              rules={[{ required: true, message: MESSAGES.validation.contentRequired }]}
             >
               <TextArea rows={6} placeholder="교육 내용 및 진행 순서를 입력해주세요" />
             </Form.Item>

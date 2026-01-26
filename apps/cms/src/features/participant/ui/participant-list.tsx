@@ -10,13 +10,14 @@ import { DownloadOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { applicationStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { canDownloadParticipants } from '@/shared/utils/download-permission'
 import { logDownload } from '@/entities/download-log/api/download-log-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 import { PermissionRequestButton } from '@/features/permission-request/ui/permission-request-button'
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
@@ -51,13 +52,20 @@ export function ParticipantList({
   currentUser,
 }: ParticipantListProps) {
   const { user } = useAuthStore()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
 
   const canDownload = canDownloadParticipants(currentUser || user, programId)
   // Phase 0.5.2: 권한 없는 관리자 → 권한 요청 버튼 노출
   const showPermissionRequest =
     !canDownload && (currentUser || user)?.role === 'ADMIN' && !!programId
-  const programName = programId ? (programService.getByIdSync(programId)?.title ?? '프로그램') : ''
+  const programName = programId ? (getProgramByIdSync(programId)?.title ?? '프로그램') : ''
   const [downloadModalOpen, setDownloadModalOpen] = useState(false)
+
+  // StatusBadge용 statusConfig 생성
+  const participantRoleStatusConfig = {
+    INDIVIDUAL: { label: '개인', color: 'blue' },
+    SCHOOL: { label: '학교', color: 'green' },
+  } as const
 
   const handleDownload = async (options: DownloadOptions) => {
     const u = currentUser || user
@@ -112,9 +120,9 @@ export function ParticipantList({
         ...(programId ? { programId } : {}),
       })
 
-      showSuccessMessage('다운로드가 완료되었습니다.')
+      showSuccessMessage(MESSAGES.success.downloaded)
     } catch (error) {
-      handleError(error, { defaultMessage: '다운로드 중 오류가 발생했습니다.' })
+      handleError(error, { defaultMessage: MESSAGES.error.download })
     }
   }
 
@@ -137,9 +145,11 @@ export function ParticipantList({
       key: 'role',
       width: 100,
       render: (role: string) => (
-        <Tag color={role === 'INDIVIDUAL' ? 'blue' : 'green'}>
-          {role === 'INDIVIDUAL' ? '개인' : '학교'}
-        </Tag>
+        <StatusBadge 
+          status={role as keyof typeof participantRoleStatusConfig} 
+          statusConfig={participantRoleStatusConfig}
+          showIcon={false}
+        />
       ),
     },
     {

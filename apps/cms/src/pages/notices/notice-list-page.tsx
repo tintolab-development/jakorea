@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import dayjs from 'dayjs'
 import { mockNotices, type Notice } from '@/data/mock/notices'
 
@@ -162,7 +163,7 @@ export function NoticeListPage() {
                         <Tag color={notice.category === '정산' ? 'orange' : 'default'}>
                           {notice.category}
                         </Tag>
-                        <Text strong style={{ fontSize: 16 }}>{notice.title}</Text>
+                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>{notice.title}</Text>
                       </Space>
                     }
                     description={

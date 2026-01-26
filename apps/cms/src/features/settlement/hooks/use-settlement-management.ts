@@ -3,10 +3,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { MESSAGES } from '@/shared/constants'
 import type { Settlement } from '@/types/domain'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 
@@ -44,9 +46,15 @@ interface UseSettlementManagementResult {
   handleCalendarSelect: (_date: dayjs.Dayjs, settlement?: Settlement) => void
 }
 
+interface SettlementQueryParams extends Record<string, string | undefined> {
+  tab?: SettlementTabKey
+  view?: SettlementViewMode
+  period?: string
+}
+
 export function useSettlementManagement(): UseSettlementManagementResult {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParam, setParams } = useQueryParams<SettlementQueryParams>()
 
   const {
     settlements,
@@ -68,20 +76,20 @@ export function useSettlementManagement(): UseSettlementManagementResult {
 
   useEffect(() => {
     const path = location.pathname
-    if (path === '/settlements/pending' && !searchParams.get('tab')) {
-      setSearchParams({ tab: 'pending' }, { replace: true })
-    } else if (path === '/settlements/review' && !searchParams.get('tab')) {
-      setSearchParams({ tab: 'review' }, { replace: true })
-    } else if (path === '/settlements/paid' && !searchParams.get('tab')) {
-      setSearchParams({ tab: 'paid' }, { replace: true })
-    } else if (path === '/settlements/overview' && !searchParams.get('tab')) {
-      setSearchParams({ tab: 'overview' }, { replace: true })
+    if (path === '/settlements/pending' && !params.tab) {
+      setParam('tab', 'pending')
+    } else if (path === '/settlements/review' && !params.tab) {
+      setParam('tab', 'review')
+    } else if (path === '/settlements/paid' && !params.tab) {
+      setParam('tab', 'paid')
+    } else if (path === '/settlements/overview' && !params.tab) {
+      setParam('tab', 'overview')
     }
-  }, [location.pathname, searchParams, setSearchParams])
+  }, [location.pathname, params.tab, setParam])
 
-  const viewMode = (searchParams.get('view') as SettlementViewMode) || 'list'
-  const selectedPeriod = searchParams.get('period') || dayjs().format('YYYY-MM')
-  const activeTab = (searchParams.get('tab') as SettlementTabKey) || 'all'
+  const viewMode = (params.view as SettlementViewMode) || 'list'
+  const selectedPeriod = params.period || dayjs().format('YYYY-MM')
+  const activeTab = (params.tab as SettlementTabKey) || 'all'
 
   useEffect(() => {
     fetchSettlements()
@@ -126,22 +134,16 @@ export function useSettlementManagement(): UseSettlementManagementResult {
   }, [settlements])
 
   const setViewMode = useCallback((mode: SettlementViewMode) => {
-    const next = new URLSearchParams(searchParams)
-    next.set('view', mode)
-    setSearchParams(next, { replace: true })
-  }, [searchParams, setSearchParams])
+    setParam('view', mode)
+  }, [setParam])
 
   const setTab = useCallback((key: SettlementTabKey) => {
-    const next = new URLSearchParams(searchParams)
-    next.set('tab', key)
-    setSearchParams(next, { replace: true })
-  }, [searchParams, setSearchParams])
+    setParam('tab', key)
+  }, [setParam])
 
   const setPeriod = useCallback((period: string) => {
-    const next = new URLSearchParams(searchParams)
-    next.set('period', period)
-    setSearchParams(next, { replace: true })
-  }, [searchParams, setSearchParams])
+    setParam('period', period)
+  }, [setParam])
 
   const openDrawer = useCallback((settlement: Settlement) => {
     setSelectedSettlement(settlement)
@@ -167,16 +169,16 @@ export function useSettlementManagement(): UseSettlementManagementResult {
     try {
       if (editingSettlement) {
         await updateSettlement(editingSettlement.id, data)
-        showSuccessMessage('정산이 수정되었습니다')
+        showSuccessMessage(MESSAGES.success.updated)
       } else {
         await createSettlement(data)
-        showSuccessMessage('정산이 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.created)
       }
       closeForm()
       fetchSettlements()
     } catch (error) {
       handleError(error, {
-        defaultMessage: editingSettlement ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다',
+        defaultMessage: editingSettlement ? MESSAGES.error.update : MESSAGES.error.create,
         context: 'SettlementFormSubmit',
       })
     }
@@ -197,14 +199,14 @@ export function useSettlementManagement(): UseSettlementManagementResult {
 
     try {
       await deleteSettlement(settlementToDelete.id)
-      showSuccessMessage('정산이 삭제되었습니다')
+      showSuccessMessage(MESSAGES.success.deleted)
       closeDeleteConfirm()
       if (selectedSettlement?.id === settlementToDelete.id) {
         closeDrawer()
       }
     } catch (error) {
       handleError(error, {
-        defaultMessage: '삭제 중 오류가 발생했습니다',
+        defaultMessage: MESSAGES.error.delete,
         context: 'SettlementDelete',
       })
     }
@@ -213,10 +215,10 @@ export function useSettlementManagement(): UseSettlementManagementResult {
   const changeStatus = useCallback(async (settlement: Settlement, status: Settlement['status']) => {
     try {
       await updateStatus(settlement.id, status)
-      showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
+      showSuccessMessage(MESSAGES.success.statusChanged(status))
     } catch (error) {
       handleError(error, {
-        defaultMessage: '상태 변경 중 오류가 발생했습니다',
+        defaultMessage: MESSAGES.error.statusChangeFailed,
         context: 'SettlementStatusChange',
       })
     }

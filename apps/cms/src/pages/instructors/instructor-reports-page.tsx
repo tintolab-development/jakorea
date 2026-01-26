@@ -10,8 +10,8 @@ import { Card, Table, Tag, Button, Space, Typography, Empty, Tabs } from 'antd'
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
-import { reportService } from '@/entities/report/api/report-service'
-import { programService } from '@/entities/program/api/program-service'
+import { useReportService } from '@/features/report/hooks/use-report-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { mockLectureActivities } from '@/data/mock'
 import { mockApplications } from '@/data/mock'
@@ -59,6 +59,8 @@ const statusTabs: Array<{ key: LectureReportStatus | 'all'; label: string }> = [
 export function InstructorReportsPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { getAll: getAllReports, getById: getReportById } = useReportService()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
@@ -77,7 +79,7 @@ export function InstructorReportsPage() {
         setSchedules(scheduleData)
 
         // 강의보고서 조회 (lecture 타입만)
-        const reportData = await reportService.getAll()
+        const reportData = await getAllReports()
         const lectureReports = reportData.filter(r => r.type === 'lecture')
         setReports(lectureReports)
       } catch (error) {
@@ -99,7 +101,7 @@ export function InstructorReportsPage() {
         return scheduleDate.isBefore(dayjs(), 'day')
       })
       .map(schedule => {
-        const program = programService.getByIdSync(schedule.programId)
+        const program = getProgramByIdSync(schedule.programId)
         const programName = program?.title || '-'
 
         // 학교 정보 찾기
@@ -171,7 +173,7 @@ export function InstructorReportsPage() {
   const handleView = async (item: LectureReportListItem) => {
     if (item.reportId) {
       try {
-        const report = await reportService.getById(item.reportId)
+        const report = await getReportById(item.reportId)
         setSelectedReport(report)
         setDetailDrawerOpen(true)
       } catch (e) {

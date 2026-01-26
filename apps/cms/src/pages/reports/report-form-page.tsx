@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Card, Space, Typography, Form, Input, InputNumber, Alert, message } from 'antd'
 import { GuideMessage, SingleCTA } from '@/shared/ui'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   lectureReportFields,
@@ -17,8 +18,8 @@ import {
   reportSubmissionGuides,
 } from '@/data/mock/reports'
 import type { ReportType, ReportField } from '@/types/domain'
-import { reportService } from '@/entities/report/api/report-service'
-import { MESSAGES } from '@/shared/constants'
+import { useReportService } from '@/features/report/hooks/use-report-service'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 
 const { Title, Paragraph } = Typography
 const { TextArea } = Input
@@ -27,8 +28,9 @@ export function ReportFormPage() {
   const { params } = useQueryParams<{ type?: string; activityId?: string; scheduleId?: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { submit: submitReport, loading: serviceLoading } = useReportService()
   const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
+  const loading = serviceLoading
 
   const reportType = (params.type || 'lecture') as ReportType
 
@@ -63,7 +65,7 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 입력해주세요.`,
+                message: MESSAGES.validation.fieldRequired(field.label),
               },
             ]}
           >
@@ -84,13 +86,13 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 입력해주세요.`,
+                message: MESSAGES.validation.fieldRequired(field.label),
               },
               {
                 type: 'number',
                 min: field.validation?.min,
                 max: field.validation?.max,
-                message: `${field.validation?.min || 0} 이상 ${field.validation?.max || '무제한'} 이하의 값을 입력해주세요.`,
+                message: MESSAGES.validation.numberRange(field.validation?.min || 0, field.validation?.max || '무제한'),
               },
             ]}
           >
@@ -111,7 +113,7 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 입력해주세요.`,
+                message: MESSAGES.validation.fieldRequired(field.label),
               },
             ]}
           >
@@ -127,7 +129,7 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 선택해주세요.`,
+                message: MESSAGES.validation.selectRequired(field.label),
               },
             ]}
           >
@@ -142,13 +144,12 @@ export function ReportFormPage() {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
-      setLoading(true)
 
       const activityId = params.activityId || undefined
       const programId = params.programId || undefined
       const scheduleId = params.scheduleId || undefined
 
-      await reportService.submit({
+      await submitReport({
         type: reportType,
         activityId,
         programId,
@@ -170,8 +171,6 @@ export function ReportFormPage() {
       }
       console.error('Failed to submit report:', error)
       message.error(MESSAGES.error.reportSubmitFailed)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -185,7 +184,7 @@ export function ReportFormPage() {
               {reportTitle}
             </Title>
             {submissionGuide && (
-              <Paragraph style={{ margin: 0, fontSize: 16, lineHeight: 1.8 }}>
+              <Paragraph style={{ margin: 0, fontSize: LAYOUT_CONSTANTS.fontSizes.lg, lineHeight: 1.8 }}>
                 {submissionGuide}
               </Paragraph>
             )}

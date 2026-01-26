@@ -74,7 +74,7 @@ export function LoginPage() {
     // Phase 0.5.5: 잠금 상태 확인
     if (checkLocked()) {
       const remainingMinutes = getRemainingLockMinutes()
-      message.error(`계정이 잠겼습니다. ${remainingMinutes}분 후 다시 시도해주세요.`)
+      message.error(MESSAGES.error.accountLocked(remainingMinutes))
       return
     }
 
@@ -172,8 +172,8 @@ export function LoginPage() {
               name="email"
               label="이메일"
               rules={[
-                { required: true, message: '이메일을 입력해주세요.' },
-                { type: 'email', message: '올바른 이메일 형식이 아닙니다.' },
+                { required: true, message: MESSAGES.validation.emailRequired },
+                { type: 'email', message: MESSAGES.validation.email },
               ]}
             >
               <Input prefix={<UserOutlined />} placeholder="이메일" autoComplete="email" />
@@ -182,7 +182,7 @@ export function LoginPage() {
             <Form.Item
               name="password"
               label="비밀번호"
-              rules={[{ required: true, message: '비밀번호를 입력해주세요.' }]}
+              rules={[{ required: true, message: MESSAGES.validation.passwordRequired }]}
             >
               <Input.Password
                 prefix={<LockOutlined />}

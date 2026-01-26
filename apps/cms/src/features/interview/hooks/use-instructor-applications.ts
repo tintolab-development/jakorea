@@ -14,6 +14,7 @@ import {
 import type { Interview } from '@/types/interview'
 import type { InterviewStatus, UserRole } from '@/types/user'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 
 interface InterviewFilters {
   status: InterviewStatus | 'ALL'
@@ -94,7 +95,7 @@ export function useInstructorApplications(): UseInstructorApplicationsResult {
       setInterviews(data)
       return data // 업데이트된 데이터 반환
     } catch (error) {
-      handleError(error, { defaultMessage: '면접 목록을 불러오는데 실패했습니다' })
+      handleError(error, { defaultMessage: MESSAGES.error.interviewListLoadFailed })
       return []
     } finally {
       setLoading(false)
@@ -188,7 +189,7 @@ export function useInstructorApplications(): UseInstructorApplicationsResult {
           ...data,
           interviewerId: user?.id,
         })
-        showSuccessMessage('면접 일정이 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.interviewScheduleRegistered)
         setScheduleModalOpen(false)
         // 상태 변경 후 업데이트된 interview로 갱신
         const updatedInterviews = await fetchInterviews()
@@ -199,7 +200,7 @@ export function useInstructorApplications(): UseInstructorApplicationsResult {
           }
         }
       } catch (error) {
-        handleError(error, { defaultMessage: '면접 일정 등록에 실패했습니다' })
+        handleError(error, { defaultMessage: MESSAGES.error.interviewScheduleRegisterFailed })
       }
     },
     [fetchInterviews, selectedInterview, user?.id]
@@ -211,7 +212,7 @@ export function useInstructorApplications(): UseInstructorApplicationsResult {
 
       try {
         await submitInterviewResult(selectedInterview.id, data)
-        showSuccessMessage('면접 결과가 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.interviewResultRegistered)
         setResultModalOpen(false)
         // 상태 변경 후 업데이트된 interview로 갱신
         const updatedInterviews = await fetchInterviews()

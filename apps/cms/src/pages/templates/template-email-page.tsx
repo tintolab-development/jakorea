@@ -16,6 +16,7 @@ import { useTemplateFilters } from '@/features/template/hooks/use-template-filte
 import { useTemplateCRUD } from '@/features/template/hooks/use-template-crud'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import { TemplateFilters } from '@/features/template/ui/template-filters'
+import { MESSAGES } from '@/shared/constants'
 import { EmailTemplateTable } from '@/features/template/ui/email-template-table'
 import { EmailTemplateFormModal } from '@/features/template/ui/email-template-form-modal'
 import { EmailTemplatePreviewModal } from '@/features/template/ui/email-template-preview-modal'
@@ -100,7 +101,7 @@ export default function TemplateEmailPage() {
       return [next, ...prev]
     })
 
-    message.success(editing ? '메일 양식이 수정되었습니다.' : '메일 양식이 등록되었습니다.')
+    message.success(editing ? MESSAGES.success.templateEmailUpdated : MESSAGES.success.templateEmailCreated)
     closeModal()
   }
 

@@ -397,8 +397,8 @@ export function RegisterPage() {
                 name="email"
                 label="이메일"
                 rules={[
-                  { required: true, message: '이메일을 입력해주세요.' },
-                  { type: 'email', message: '올바른 이메일 형식이 아닙니다.' },
+                  { required: true, message: MESSAGES.validation.emailRequired },
+                  { type: 'email', message: MESSAGES.validation.email },
                 ]}
               >
                 <Input
@@ -415,8 +415,8 @@ export function RegisterPage() {
                     name="password"
                     label="비밀번호"
                     rules={[
-                      { required: true, message: '비밀번호를 입력해주세요.' },
-                      { min: 8, message: '비밀번호는 8자 이상이어야 합니다.' },
+                      { required: true, message: MESSAGES.validation.passwordRequired },
+                      { min: 8, message: MESSAGES.validation.passwordMinLength(8) },
                     ]}
                   >
                     <Input.Password prefix={<LockOutlined />} placeholder="비밀번호" />
@@ -427,13 +427,13 @@ export function RegisterPage() {
                     label="비밀번호 확인"
                     dependencies={['password']}
                     rules={[
-                      { required: true, message: '비밀번호 확인을 입력해주세요.' },
+                      { required: true, message: MESSAGES.validation.passwordConfirmRequired },
                       ({ getFieldValue }) => ({
                         validator(_, value) {
                           if (!value || getFieldValue('password') === value) {
                             return Promise.resolve()
                           }
-                          return Promise.reject(new Error('비밀번호가 일치하지 않습니다.'))
+                          return Promise.reject(new Error(MESSAGES.validation.passwordMismatch))
                         },
                       }),
                     ]}
@@ -446,7 +446,7 @@ export function RegisterPage() {
               <Form.Item
                 name="name"
                 label="이름"
-                rules={[{ required: true, message: '이름을 입력해주세요.' }]}
+                rules={[{ required: true, message: MESSAGES.validation.nameRequired }]}
               >
                 <Input placeholder="이름" disabled={!!socialData?.name} />
               </Form.Item>
@@ -456,10 +456,10 @@ export function RegisterPage() {
                 name="phone"
                 label="전화번호"
                 rules={[
-                  { required: true, message: '전화번호를 입력해주세요.' },
+                  { required: true, message: MESSAGES.validation.phoneRequired },
                   {
                     pattern: /^010-\d{4}-\d{4}$/,
-                    message: '올바른 전화번호 형식이 아닙니다. (010-0000-0000)',
+                    message: MESSAGES.validation.phoneFormat,
                   },
                 ]}
               >
@@ -501,7 +501,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="schoolName"
                     label="학교명"
-                    rules={[{ required: true, message: '학교명을 입력해주세요.' }]}
+                    rules={[{ required: true, message: MESSAGES.validation.schoolNameRequired }]}
                   >
                     <Input placeholder="학교명" />
                   </Form.Item>
@@ -509,7 +509,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="schoolAddress"
                     label="학교 주소"
-                    rules={[{ required: true, message: '학교 주소를 입력해주세요.' }]}
+                    rules={[{ required: true, message: MESSAGES.validation.schoolAddressRequired }]}
                   >
                     <Input placeholder="학교 주소" />
                   </Form.Item>
@@ -526,7 +526,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="bankName"
                     label="은행명"
-                    rules={[{ required: true, message: '은행명을 입력해주세요.' }]}
+                    rules={[{ required: true, message: MESSAGES.validation.bankNameRequired }]}
                   >
                     <Input placeholder="은행명" />
                   </Form.Item>
@@ -534,7 +534,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="accountNumber"
                     label="계좌번호"
-                    rules={[{ required: true, message: '계좌번호를 입력해주세요.' }]}
+                    rules={[{ required: true, message: MESSAGES.validation.accountNumberRequired }]}
                   >
                     <Input placeholder="계좌번호" />
                   </Form.Item>
@@ -542,7 +542,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="accountHolder"
                     label="예금주"
-                    rules={[{ required: true, message: '예금주를 입력해주세요.' }]}
+                    rules={[{ required: true, message: MESSAGES.validation.accountHolderRequired }]}
                   >
                     <Input placeholder="예금주" />
                   </Form.Item>

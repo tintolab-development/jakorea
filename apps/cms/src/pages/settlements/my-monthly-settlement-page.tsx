@@ -13,7 +13,7 @@ import { getMySettlements } from '@/entities/settlement/api/instructor-settlemen
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
@@ -23,6 +23,7 @@ type ViewMode = 'list' | 'calendar'
 export function MyMonthlySettlementPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const { params, setParams } = useQueryParams<{ view?: string; period?: string }>()
   const [settlements, setSettlements] = useState<Settlement[]>([])
   const [loading, setLoading] = useState(false)
@@ -121,7 +122,7 @@ export function MyMonthlySettlementPage() {
       key: 'programId',
       width: 200,
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Tag color="cyan">{program.title}</Tag>
         ) : (

@@ -15,7 +15,7 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { domainColorsHex } from '@/shared/constants/colors'
 import type { Settlement } from '@/types/domain'
@@ -27,6 +27,7 @@ type ViewMode = 'table' | 'calendar'
 export function SettlementOverviewPage() {
   const location = useLocation()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   
   const { settlements, loading, fetchSettlements, selectedSettlement, setSelectedSettlement } = useSettlementStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -78,7 +79,7 @@ export function SettlementOverviewPage() {
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
         ) : (

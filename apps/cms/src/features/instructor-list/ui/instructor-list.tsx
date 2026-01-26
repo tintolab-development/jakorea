@@ -13,6 +13,7 @@ import { canDownloadInstructors } from '@/shared/utils/download-permission'
 import { logDownload } from '@/entities/download-log/api/download-log-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
@@ -108,9 +109,9 @@ export function InstructorList({
         rowCount: data.length,
       })
 
-      showSuccessMessage('다운로드가 완료되었습니다.')
+      showSuccessMessage(MESSAGES.success.downloaded)
     } catch (error) {
-      handleError(error, { defaultMessage: '다운로드 중 오류가 발생했습니다.' })
+      handleError(error, { defaultMessage: MESSAGES.error.download })
     }
   }
 

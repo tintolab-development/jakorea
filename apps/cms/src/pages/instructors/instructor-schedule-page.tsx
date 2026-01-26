@@ -13,7 +13,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { mockMatchings } from '@/data/mock'
 import { mockApplications } from '@/data/mock'
@@ -39,6 +39,7 @@ interface ScheduleWithDetails extends Schedule {
 export function InstructorSchedulePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [schedulesWithDetails, setSchedulesWithDetails] = useState<ScheduleWithDetails[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>('calendar')
   const [loading, setLoading] = useState(false)
@@ -47,7 +48,7 @@ export function InstructorSchedulePage() {
 
   // Phase 0.2.6: 일정 상세 정보 조회 (개선)
   const enrichScheduleDetails = useCallback((schedule: Schedule): ScheduleWithDetails => {
-    const program = programService.getByIdSync(schedule.programId)
+    const program = getProgramByIdSync(schedule.programId)
     const programName = program?.title
 
     // 매칭 정보에서 학교 정보 찾기 (scheduleId로 정확히 매칭)

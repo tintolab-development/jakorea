@@ -145,7 +145,7 @@ export default function TemplateFilesPage() {
       return [next, ...prev]
     })
 
-    message.success(editing ? '파일 양식이 수정되었습니다.' : '파일 양식이 등록되었습니다.')
+    message.success(editing ? MESSAGES.success.templateFileUpdated : MESSAGES.success.templateFileCreated)
     setOpen(false)
     setEditing(null)
   }

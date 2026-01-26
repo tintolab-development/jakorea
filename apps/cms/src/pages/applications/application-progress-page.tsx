@@ -14,7 +14,7 @@ import { useStatusTimeline } from '@/features/auth/hooks/use-status-timeline'
 import { APPLICATION_STATUS } from '@/shared/constants/application-status'
 import { applicationStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { APPLICATION_PROGRESS_ORDER, type ApplicationProgressStatus } from '@/types/application-progress'
 import dayjs from 'dayjs'
@@ -37,6 +37,7 @@ export function ApplicationProgressPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const { applications, fetchApplications, loading: applicationsLoading } = useApplicationStore()
   const { timeline, loading: timelineLoading, error: timelineError } = useStatusTimeline(id || null)
   const [application, setApplication] = useState<typeof applications[0] | null>(null)
@@ -113,7 +114,7 @@ export function ApplicationProgressPage() {
     )
   }
 
-  const program = programService.getByIdSync(application.programId)
+  const program = getProgramByIdSync(application.programId)
   const programName = program?.title || '알 수 없는 프로그램'
 
   // 승인되지 않은 경우 안내

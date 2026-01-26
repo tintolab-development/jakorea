@@ -12,7 +12,7 @@ import { useApplicationStore } from '@/features/application/model/application-st
 import { ApplicationDetailDrawer } from '@/features/application/ui/application-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { applicationStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import dayjs from 'dayjs'
@@ -31,6 +31,7 @@ export function MyProgramApplicationsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const { applications, loading, fetchApplications, selectedApplication, setSelectedApplication, updateStatus } = useApplicationStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<ApplicationStatus | 'all'>('all')
@@ -115,7 +116,7 @@ export function MyProgramApplicationsPage() {
       key: 'programId',
       width: 300,
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Button
             type="link"

@@ -8,10 +8,11 @@
  * - 필터 조건은 스토어에 저장, 결과는 selector로 계산
  */
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useMemo, useEffect, useCallback, useRef } from 'react'
 import { Space } from 'antd'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { useModalState } from '@/shared/hooks/use-modal-state'
 import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
@@ -52,10 +53,20 @@ export function UserListPage() {
   // 2뎁스 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '회원 관리'
 
-  // UI 상태만 로컬에서 관리 (도메인 데이터 아님)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [roleChangeModalOpen, setRoleChangeModalOpen] = useState(false)
-  const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  // Drawer 상태 관리 (useModalState 사용)
+  const {
+    open: drawerOpen,
+    openModal: openDrawer,
+    closeModal: closeDrawer,
+  } = useModalState<Omit<User, 'password'>>()
+
+  // 권한 변경 모달 상태 관리 (useModalState 사용)
+  const {
+    open: roleChangeModalOpen,
+    openModal: openRoleChangeModal,
+    closeModal: closeRoleChangeModal,
+    selectedItem: editingUser,
+  } = useModalState<Omit<User, 'password'>>()
 
   // 이전 필터 값을 추적하여 불필요한 업데이트 방지
   const prevFiltersRef = useRef<{ role?: UserRole; search?: string }>({})
@@ -105,11 +116,6 @@ export function UserListPage() {
   // 선택된 사용자 (selector로 계산)
   const selectedUser = useUserStore(state => selectSelectedUser(state))
 
-  // 편집 중인 사용자
-  const editingUser = useMemo(() => {
-    return editingUserId ? selectUserById({ usersById }, editingUserId) : null
-  }, [editingUserId, usersById])
-
   // 데이터 불러오기 함수
   const loadUsers = useCallback(async () => {
     try {
@@ -122,7 +128,7 @@ export function UserListPage() {
       }
       await fetchUsers(filters)
     } catch (error) {
-      handleError(error, { defaultMessage: '사용자 목록을 불러오는데 실패했습니다' })
+      handleError(error, { defaultMessage: MESSAGES.error.userListLoadFailed })
     }
   }, [fetchUsers, roleFilter, searchQuery])
 
@@ -147,21 +153,20 @@ export function UserListPage() {
   // 사용자 상세 보기
   const handleView = (user: Omit<User, 'password'>) => {
     setSelectedUserId(user.id) // 스토어에 ID만 저장
-    setDrawerOpen(true)
+    openDrawer(user)
     setParam('id', user.id)
   }
 
   // Drawer 닫기
   const handleDrawerClose = () => {
-    setDrawerOpen(false)
+    closeDrawer()
     clearSelectedUserId(null) // 스토어에서 선택 해제
     setParam('id', null)
   }
 
   // 권한 변경
   const handleEdit = (user: Omit<User, 'password'>) => {
-    setEditingUserId(user.id) // ID만 저장
-    setRoleChangeModalOpen(true)
+    openRoleChangeModal(user)
   }
 
   const handleRoleChange = async (
@@ -173,8 +178,7 @@ export function UserListPage() {
     try {
       await changeUserRole(userId, newRole, adminLevel, programRole)
       showSuccessMessage(MESSAGES.success.updated)
-      setRoleChangeModalOpen(false)
-      setEditingUserId(null)
+      closeRoleChangeModal()
 
       // 목록 새로고침 (필터 조건 유지)
       const currentFilters: { role?: UserRole; search?: string } = {}
@@ -186,13 +190,12 @@ export function UserListPage() {
       }
       await fetchUsers(currentFilters)
     } catch (error) {
-      handleError(error, { defaultMessage: '권한 변경에 실패했습니다' })
+      handleError(error, { defaultMessage: MESSAGES.error.roleChangeFailed })
     }
   }
 
   const handleRoleChangeCancel = () => {
-    setRoleChangeModalOpen(false)
-    setEditingUserId(null)
+    closeRoleChangeModal()
   }
 
   return (

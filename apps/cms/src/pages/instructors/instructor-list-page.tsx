@@ -182,7 +182,7 @@ export function InstructorListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'space-between' }}>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         <PermissionButton
           type="primary"

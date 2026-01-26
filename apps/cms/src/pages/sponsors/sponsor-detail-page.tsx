@@ -30,7 +30,7 @@ export function SponsorDetailPage() {
   const handleDelete = async () => {
     if (!id || !selectedSponsor) return
 
-    if (window.confirm('정말 삭제하시겠습니까?')) {
+    if (window.confirm(MESSAGES.confirm.delete)) {
       try {
         await deleteSponsor(id)
         message.success(MESSAGES.success.sponsorDeleted)

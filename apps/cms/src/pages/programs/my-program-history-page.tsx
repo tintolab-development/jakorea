@@ -15,7 +15,7 @@ import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES } from '@/shared/constants'
 import { mockApplications, mockMatchings } from '@/data/mock'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
@@ -24,6 +24,7 @@ export function MyProgramHistoryPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [program, setProgram] = useState<MyProgram | null>(null)
   const [settlements, setSettlements] = useState<Settlement[]>([])
   const [loading, setLoading] = useState(false)
@@ -87,7 +88,7 @@ export function MyProgramHistoryPage() {
     )
   }
 
-  const fullProgram = programService.getByIdSync(program.id)
+  const fullProgram = getProgramByIdSync(program.id)
   const matching = mockMatchings.find(m => m.programId === program.id && m.instructorId === user?.instructorId)
   const applications = mockApplications.filter(app => app.programId === program.id)
 

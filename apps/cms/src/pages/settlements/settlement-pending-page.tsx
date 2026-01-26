@@ -15,7 +15,7 @@ import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { settlementStatusStatusConfig, getSettlementStatusLabel } from '@/shared/constants/status'
 import { MESSAGES } from '@/shared/constants'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 import { domainColorsHex } from '@/shared/constants/colors'
@@ -26,6 +26,7 @@ export function SettlementPendingPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   
   const { settlements, loading, fetchSettlements, selectedSettlement, setSelectedSettlement, updateStatus } = useSettlementStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -49,7 +50,7 @@ export function SettlementPendingPage() {
   }
 
   const handleCreatePaymentStatement = async (settlement: Settlement) => {
-    const program = programService.getByIdSync(settlement.programId)
+    const program = getProgramByIdSync(settlement.programId)
     const instructor = instructorService.getByIdSync(settlement.instructorId)
 
     if (!program || !instructor) {
@@ -74,7 +75,7 @@ export function SettlementPendingPage() {
     if (!selectedSettlement) return
     try {
       await updateStatus(selectedSettlement.id, status)
-      message.success(`상태가 "${getSettlementStatusLabel(status)}"로 변경되었습니다`)
+      message.success(MESSAGES.success.statusChanged(getSettlementStatusLabel(status)))
       fetchSettlements()
       setDrawerOpen(false)
     } catch (e) {

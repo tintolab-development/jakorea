@@ -11,7 +11,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { MESSAGES } from '@/shared/constants'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
 import dayjs from 'dayjs'
@@ -21,6 +21,7 @@ export function MySettlementDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [settlement, setSettlement] = useState<Settlement | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -85,7 +86,7 @@ export function MySettlementDetailPage() {
     )
   }
 
-  const program = programService.getByIdSync(settlement.programId)
+  const program = getProgramByIdSync(settlement.programId)
 
   return (
     <div>

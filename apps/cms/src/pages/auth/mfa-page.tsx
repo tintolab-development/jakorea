@@ -12,7 +12,7 @@ import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { useOtpCountdown } from '@/features/auth/hooks/use-otp-countdown'
 import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
-import { MESSAGES } from '@/shared/constants'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import './mfa-page.css'
 
 const { Text, Title } = Typography
@@ -44,7 +44,7 @@ export function MfaPage() {
       form.setFieldsValue({ otpCode: '' })
       setOtpCode('')
     } catch (error: any) {
-      message.error(error.message || '인증번호 발송에 실패했습니다.')
+      message.error(error.message || MESSAGES.error.otpSendFailed)
     }
   }, [user, sendOtpCode, startCountdown, resetVerification, form])
 
@@ -112,7 +112,7 @@ export function MfaPage() {
         setOtpCode('')
       }
     } catch (error: any) {
-      message.error(error.message || '인증에 실패했습니다.')
+      message.error(error.message || MESSAGES.error.authenticationFailed)
       form.setFieldsValue({ otpCode: '' })
       setOtpCode('')
     }
@@ -120,7 +120,7 @@ export function MfaPage() {
 
   const handleResend = async () => {
     if (!canResend) {
-      message.warning(`재전송은 ${Math.ceil(resendCooldownSeconds / 60)}분 후에 가능합니다.`)
+      message.warning(MESSAGES.warning.resendCooldown(Math.ceil(resendCooldownSeconds / 60)))
       return
     }
     await handleSendOtp()
@@ -139,7 +139,7 @@ export function MfaPage() {
     <div className="mfa-page">
       <Card className="mfa-card">
         <div className="mfa-header">
-          <SafetyOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
+          <SafetyOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: LAYOUT_CONSTANTS.margins.lg }} />
           <Title level={3} style={{ marginBottom: 8 }}>
             2단계 인증
           </Title>
@@ -157,7 +157,7 @@ export function MfaPage() {
           <Alert
             type="error"
             message={lockMessage}
-            style={{ marginBottom: 24 }}
+            style={{ marginBottom: LAYOUT_CONSTANTS.margins.xl }}
             showIcon
           />
         )}
@@ -171,8 +171,8 @@ export function MfaPage() {
             label="인증번호"
             name="otpCode"
             rules={[
-              { required: true, message: '인증번호를 입력해주세요.' },
-              { len: OTP_LENGTH, message: `인증번호는 ${OTP_LENGTH}자리입니다.` },
+              { required: true, message: MESSAGES.validation.otpRequired },
+              { len: OTP_LENGTH, message: MESSAGES.validation.otpLength(OTP_LENGTH) },
             ]}
           >
             <Input.OTP
@@ -184,7 +184,7 @@ export function MfaPage() {
             />
           </Form.Item>
 
-          <div style={{ marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, textAlign: 'center' }}>
             <Text type={isExpired ? 'danger' : 'secondary'}>
               유효시간: {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}
             </Text>

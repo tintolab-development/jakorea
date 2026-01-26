@@ -14,7 +14,7 @@ import { MatchingStatusList } from '@/features/matching/ui/matching-status-list'
 import { MatchingDetailDrawer } from '@/features/matching/ui/matching-detail-drawer'
 import { MatchingForm } from '@/features/matching/ui/matching-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
-import { LAYOUT_CONSTANTS } from '@/shared/constants'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { useMatchingManagement } from '@/features/matching/hooks/use-matching-management'
 import { useMatchingStatus } from '@/features/matching/hooks/use-matching-status'
 import type { MatchingStatusItem } from '@/entities/matching/api/matching-status-service'
@@ -102,7 +102,7 @@ export function MatchingListPage() {
             label: '매칭 현황',
             children: (
               <div>
-                <div style={{ marginBottom: 16, textAlign: 'right' }}>
+                <div style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, textAlign: 'right' }}>
                   <Radio.Group
                     value={statusViewMode}
                     onChange={e => setStatusViewMode(e.target.value)}
@@ -162,7 +162,7 @@ export function MatchingListPage() {
       <ConfirmModal
         open={deleteModalOpen}
         title="매칭 삭제"
-        content="정말 이 매칭을 삭제하시겠습니까?"
+        content={MESSAGES.confirm.delete}
         onConfirm={confirmDelete}
         onCancel={closeDeleteConfirm}
         confirmText="삭제"

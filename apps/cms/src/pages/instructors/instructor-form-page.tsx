@@ -9,6 +9,7 @@ import { InstructorForm } from '@/features/instructor/ui/instructor-form'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import { message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 
 export function InstructorFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -35,7 +36,7 @@ export function InstructorFormPage() {
       }
       navigate('/instructors')
     } catch {
-      message.error(isEdit ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+      message.error(isEdit ? MESSAGES.error.update : MESSAGES.error.create)
     }
   }
 

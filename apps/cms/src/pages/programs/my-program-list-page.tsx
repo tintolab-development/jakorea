@@ -19,6 +19,7 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 
 const { Option } = Select
 const { Search } = Input
@@ -153,6 +154,18 @@ export function MyProgramListPage() {
     return { label: getCommonStatusLabel(program.status), color: getCommonStatusColor(program.status) }
   }
 
+  // StatusBadge용 statusConfig 생성
+  const programCategoryStatusConfig = {
+    school: { label: '학교 프로그램', color: 'blue' },
+    individual: { label: '개인 프로그램', color: 'purple' },
+  } as const
+
+  const programStatusStatusConfig = {
+    completed: { label: '진행완료', color: 'default' },
+    planned: { label: '진행 예정', color: 'blue' },
+    in_progress: { label: '진행중', color: 'green' },
+  } as const
+
   const columns = [
     {
       title: '프로그램명',
@@ -178,9 +191,11 @@ export function MyProgramListPage() {
       key: 'category',
       width: 120,
       render: (category: string) => (
-        <Tag color={category === 'school' ? 'blue' : 'purple'}>
-          {category === 'school' ? '학교 프로그램' : '개인 프로그램'}
-        </Tag>
+        <StatusBadge 
+          status={category as keyof typeof programCategoryStatusConfig} 
+          statusConfig={programCategoryStatusConfig}
+          showIcon={false}
+        />
       ),
     },
     {
@@ -189,6 +204,13 @@ export function MyProgramListPage() {
       width: 120,
       render: (_: any, record: MyProgram) => {
         const status = getProgramStatus(record)
+        // 동적 상태는 StatusBadge 대신 Tag 사용 (statusConfig에 없는 경우)
+        const statusKey = record.status === 'completed' ? 'completed' : 
+                         dayjs().isBefore(dayjs(record.startDate)) ? 'planned' : 
+                         dayjs().isAfter(dayjs(record.endDate)) ? 'completed' : 'in_progress'
+        if (statusKey in programStatusStatusConfig) {
+          return <StatusBadge status={statusKey as keyof typeof programStatusStatusConfig} statusConfig={programStatusStatusConfig} showIcon={false} />
+        }
         return <Tag color={status.color}>{status.label}</Tag>
       },
     },

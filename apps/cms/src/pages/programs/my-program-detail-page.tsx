@@ -17,7 +17,7 @@ import {
 } from '@/entities/program/api/favorite-program-service'
 import { commonStatusStatusConfig, getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { MESSAGES } from '@/shared/constants'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import dayjs from 'dayjs'
 
 export function MyProgramDetailPage() {
@@ -128,7 +128,7 @@ export function MyProgramDetailPage() {
   if (!program) {
     return (
       <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')} style={{ marginBottom: 16 }}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')} style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}>
           목록으로
         </Button>
         <Empty description="프로그램 정보를 찾을 수 없습니다." />
@@ -167,7 +167,7 @@ export function MyProgramDetailPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'space-between' }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')}>
           목록으로
         </Button>
@@ -193,7 +193,7 @@ export function MyProgramDetailPage() {
         </Space>
       </Space>
 
-      <Card title={program.title} style={{ marginBottom: 16 }}>
+      <Card title={program.title} style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}>
         <Descriptions bordered column={{ xs: 1, sm: 2, lg: 3 }}>
           <Descriptions.Item label="상태">
             <Tag color={status.color}>{status.label}</Tag>

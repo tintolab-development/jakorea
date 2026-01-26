@@ -13,6 +13,7 @@ import {
   type ProgramProgressSummary,
 } from '../api/admin-dashboard-service'
 import { handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 import {
   ResponsiveContainer,
   PieChart,
@@ -56,7 +57,7 @@ export function ProgramProgressWidget() {
         const data = await getProgramProgressSummary()
         setProgress(data)
       } catch (error) {
-        handleError(error, { defaultMessage: '프로그램 진행 현황을 불러오는데 실패했습니다' })
+        handleError(error, { defaultMessage: MESSAGES.error.programProgressLoadFailed })
       } finally {
         setLoading(false)
       }

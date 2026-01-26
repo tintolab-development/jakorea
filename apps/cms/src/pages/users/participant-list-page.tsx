@@ -15,6 +15,7 @@ import {
 import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import type { Application } from '@/types/domain'
 
@@ -75,7 +76,7 @@ export function ParticipantListPage() {
       const data = await getParticipants(filters)
       setParticipants(data)
     } catch (error) {
-      handleError(error, { defaultMessage: '참여자 목록을 불러오는데 실패했습니다' })
+      handleError(error, { defaultMessage: MESSAGES.error.participantListLoadFailed })
     } finally {
       setLoading(false)
     }

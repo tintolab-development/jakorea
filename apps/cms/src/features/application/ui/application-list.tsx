@@ -83,6 +83,19 @@ export function ApplicationList({
     internal: '자동화 프로그램',
   }
 
+  // StatusBadge용 statusConfig 생성
+  const applicationSubjectTypeStatusConfig = {
+    school: { label: applicationSubjectTypeConfig.labels.school, color: applicationSubjectTypeConfig.colors.school },
+    student: { label: applicationSubjectTypeConfig.labels.student, color: applicationSubjectTypeConfig.colors.student },
+    instructor: { label: applicationSubjectTypeConfig.labels.instructor, color: applicationSubjectTypeConfig.colors.instructor },
+    volunteer: { label: applicationSubjectTypeConfig.labels.volunteer, color: applicationSubjectTypeConfig.colors.volunteer },
+  } as const
+
+  const applicationPathTypeStatusConfig = {
+    google_form: { label: pathTypeLabels.google_form, color: 'orange' },
+    internal: { label: pathTypeLabels.internal, color: 'blue' },
+  } as const
+
   const columns = [
     {
       title: '프로그램',
@@ -104,9 +117,11 @@ export function ApplicationList({
       key: 'subject',
       render: (_: unknown, record: Application) => (
         <Space>
-          <Tag color={applicationSubjectTypeConfig.colors[record.subjectType]}>
-            {applicationSubjectTypeConfig.labels[record.subjectType]}
-          </Tag>
+          <StatusBadge 
+            status={record.subjectType} 
+            statusConfig={applicationSubjectTypeStatusConfig}
+            showIcon={false}
+          />
           <span>{getApplicationSubjectName(record)}</span>
         </Space>
       ),
@@ -123,11 +138,12 @@ export function ApplicationList({
           return '-'
         }
 
-        const label = pathTypeLabels[applicationPath.pathType] || applicationPath.pathType
         return (
-          <Tag color={applicationPath.pathType === 'google_form' ? 'orange' : 'blue'}>
-            {label}
-          </Tag>
+          <StatusBadge 
+            status={applicationPath.pathType} 
+            statusConfig={applicationPathTypeStatusConfig}
+            showIcon={false}
+          />
         )
       },
     },

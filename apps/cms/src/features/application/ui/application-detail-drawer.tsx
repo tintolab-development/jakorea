@@ -128,9 +128,9 @@ export function ApplicationDetailDrawer({
       setNotificationSent(true)
       const history = await getNotificationHistory(displayApplication.id)
       setNotificationHistory(history)
-      showSuccessMessage(`${channelLabels[channel]} 알림이 발송되었습니다.`)
+      showSuccessMessage(MESSAGES.success.notificationSent(channelLabels[channel]))
     } catch (error) {
-      handleError(error, { defaultMessage: '알림 발송 중 오류가 발생했습니다.' })
+      handleError(error, { defaultMessage: MESSAGES.error.notificationSendFailed })
     } finally {
       setNotificationLoading(false)
     }
@@ -275,13 +275,13 @@ export function ApplicationDetailDrawer({
                   message={`현재 상태: ${getApplicationStatusLabel(displayApplication.status)}`}
                   description={
                     displayApplication.status === 'waiting'
-                      ? '이 신청은 대기 목록에 있습니다. 프로그램 정원에 여유가 생기면 자동으로 확정됩니다.'
+                      ? MESSAGES.application.waitingDescription
                       : displayApplication.status === 'reviewing'
-                        ? '현재 검토 중인 신청입니다. 검토를 완료하고 확정 또는 거절 처리를 진행해주세요.'
+                        ? MESSAGES.application.reviewingDescription
                         : displayApplication.status === 'submitted'
-                          ? '접수된 신청입니다. 검토를 시작해주세요.'
+                          ? MESSAGES.application.submittedDescription
                           : isFinalStatus
-                            ? '최종 처리된 신청입니다.'
+                            ? MESSAGES.application.finalStatusDescription
                             : undefined
                   }
                   type={

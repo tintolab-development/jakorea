@@ -13,6 +13,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getFormTemplateByProgramId } from '@/data/mock/form-templates'
 import { DynamicFormFields } from './dynamic-form-fields'
 import type { FormFieldDef } from '@/types/form-template'
+import { MESSAGES } from '@/shared/constants'
 
 const { TextArea } = Input
 
@@ -33,7 +34,7 @@ function validateCustomFields(
     if (!f.required) continue
     const v = value[f.id]
     if (v === undefined || v === null || v === '') {
-      err[f.id] = `${f.label}을(를) 입력해주세요.`
+      err[f.id] = MESSAGES.validation.fieldRequired(f.label)
     }
   }
   return err

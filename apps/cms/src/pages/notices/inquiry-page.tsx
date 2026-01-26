@@ -30,6 +30,7 @@ import {
 } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { InquiryModal } from '@/shared/ui'
 import dayjs from 'dayjs'
 import { mockInquiries, type Inquiry } from '@/data/mock/inquiries'
@@ -148,17 +149,17 @@ export function InquiryPage() {
                             {inquiry.status === 'ANSWERED' ? '답변완료' : '답변대기'}
                           </Tag>
                         </Space>
-                        <Text strong style={{ fontSize: 16 }}>{inquiry.title}</Text>
+                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>{inquiry.title}</Text>
                       </div>
                     }
                     description={
                       <Space size="middle" style={{ marginTop: 4 }}>
-                        <Text type="secondary" style={{ fontSize: 13 }}>
+                        <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}>
                           <CalendarOutlined style={{ marginRight: 4 }} />
                           {dayjs(inquiry.createdAt).format('YYYY-MM-DD HH:mm')}
                         </Text>
                         {inquiry.status === 'ANSWERED' && (
-                          <Text style={{ color: '#52c41a', fontSize: 13 }}>
+                          <Text style={{ color: '#52c41a', fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}>
                             <CheckCircleOutlined style={{ marginRight: 4 }} /> 답변이 등록되었습니다
                           </Text>
                         )}
@@ -177,8 +178,8 @@ export function InquiryPage() {
         title={
           <div>
             <div style={{ marginBottom: 4 }}>
-              <Tag bordered={false} style={{ fontSize: 12 }}>{selectedInquiry?.category}</Tag>
-              <Tag color={selectedInquiry?.status === 'ANSWERED' ? 'success' : 'default'} style={{ fontSize: 12 }}>
+              <Tag bordered={false} style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>{selectedInquiry?.category}</Tag>
+              <Tag color={selectedInquiry?.status === 'ANSWERED' ? 'success' : 'default'} style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
                 {selectedInquiry?.status === 'ANSWERED' ? '답변완료' : '답변대기'}
               </Tag>
             </div>

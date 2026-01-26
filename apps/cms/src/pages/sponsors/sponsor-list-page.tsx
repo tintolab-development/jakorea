@@ -14,6 +14,7 @@ import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { SponsorFormData } from '@/entities/sponsor/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -44,10 +45,10 @@ export function SponsorListPage() {
     try {
       if (editingSponsor) {
         await updateSponsor(editingSponsor.id, data)
-        showSuccessMessage('스폰서 정보가 수정되었습니다')
+        showSuccessMessage(MESSAGES.success.sponsorInfoUpdated)
       } else {
         await createSponsor(data)
-        showSuccessMessage('스폰서가 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.sponsorRegistered)
       }
       setFormModalOpen(false)
       setEditingSponsor(null)

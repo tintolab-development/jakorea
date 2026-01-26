@@ -92,8 +92,8 @@ export function ScheduleCalendarPage() {
       if (detectedConflicts.length > 0) {
         setConflicts(detectedConflicts)
         Modal.confirm({
-          title: '일정 중복 경고',
-          content: `${detectedConflicts.length}개의 일정과 시간이 겹칩니다. 계속 진행하시겠습니까?`,
+          title: MESSAGES.title.scheduleConflict,
+          content: MESSAGES.confirm.scheduleConflict(detectedConflicts.length),
           onOk: async () => {
             if (editingSchedule) {
               await updateSchedule(editingSchedule.id, data)
@@ -184,7 +184,7 @@ export function ScheduleCalendarPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
+      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'flex-end' }}>
         {/* <h1 style={{ margin: 0 }}>일정 관리</h1> */}
         <Button
           type="primary"
@@ -219,7 +219,7 @@ export function ScheduleCalendarPage() {
       />
 
       <Modal
-        title={isEditingMode ? '일정 수정' : '일정 등록'}
+        title={isEditingMode ? MESSAGES.title.scheduleEdit : MESSAGES.title.scheduleCreate}
         open={formModalOpen}
         onCancel={() => {
           closeFormModal()
@@ -245,8 +245,8 @@ export function ScheduleCalendarPage() {
 
       <ConfirmModal
         open={deleteModalOpen}
-        title="일정 삭제"
-        content="정말 이 일정을 삭제하시겠습니까?"
+        title={MESSAGES.title.scheduleDelete}
+        content={MESSAGES.confirm.deleteSchedule}
         onConfirm={handleDeleteConfirm}
         onCancel={closeDeleteModal}
         confirmText="삭제"

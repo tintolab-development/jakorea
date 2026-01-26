@@ -14,6 +14,7 @@ import { useTemplateCRUD } from '@/features/template/hooks/use-template-crud'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import { defaultSampleValues } from '@/features/template/constants'
 import { TemplateFilters } from '@/features/template/ui/template-filters'
+import { MESSAGES } from '@/shared/constants'
 import { SmsTemplateTable } from '@/features/template/ui/sms-template-table'
 import { SmsTemplateFormModal } from '@/features/template/ui/sms-template-form-modal'
 import { SmsTemplatePreviewModal } from '@/features/template/ui/sms-template-preview-modal'
@@ -89,7 +90,7 @@ export default function TemplateSmsPage() {
       return [next, ...prev]
     })
 
-    message.success(editing ? '문자 양식이 수정되었습니다.' : '문자 양식이 등록되었습니다.')
+    message.success(editing ? MESSAGES.success.templateSmsUpdated : MESSAGES.success.templateSmsCreated)
     closeModal()
   }
 

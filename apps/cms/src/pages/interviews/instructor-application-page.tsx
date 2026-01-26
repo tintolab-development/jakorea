@@ -15,7 +15,7 @@ import type { InstructorApplicationFormData } from '@/types/interview'
 import { submitInstructorApplication } from '@/entities/interview/api/interview-service'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { MESSAGES } from '@/shared/constants'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -125,7 +125,7 @@ export function InstructorApplicationPage() {
       navigate('/interviews/my')
     } catch (error) {
       handleError(error)
-      message.error(`${selectedRole === 'INSTRUCTOR' ? '강사' : '수강자'} 신청에 실패했습니다.`)
+      message.error(MESSAGES.error.applicationSubmitFailed(selectedRole === 'INSTRUCTOR' ? '강사' : '수강자'))
     }
   }
 
@@ -159,7 +159,7 @@ export function InstructorApplicationPage() {
                 )}
               />
               {fixedRole && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
                   * 수강자 신청 플로우에서는 신청 유형이 수강자로 고정됩니다.
                 </Text>
               )}

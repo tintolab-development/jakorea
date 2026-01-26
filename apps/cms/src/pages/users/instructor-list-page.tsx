@@ -17,6 +17,7 @@ import { InstructorList } from '@/features/instructor-list/ui/instructor-list'
 import { getInstructors, type InstructorListFilters } from '@/entities/instructor/api/instructor-list-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import './instructor-list-page.css'
 
@@ -76,7 +77,7 @@ export function InstructorListPage() {
       const data = await getInstructors(filters)
       setInstructors(data)
     } catch (error) {
-      handleError(error, { defaultMessage: '강사 목록을 불러오는데 실패했습니다' })
+      handleError(error, { defaultMessage: MESSAGES.error.instructorListLoadFailed })
     } finally {
       setLoading(false)
     }

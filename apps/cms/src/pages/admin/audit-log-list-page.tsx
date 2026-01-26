@@ -11,7 +11,7 @@ import { AUDIT_EVENT_OPTIONS, AUDIT_EVENT_COLORS } from '@/shared/constants/audi
 import type { AuditLog, AuditLogFilters } from '@/types/audit-log'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { PAGINATION_CONFIG } from '@/shared/constants'
+import { PAGINATION_CONFIG, LAYOUT_CONSTANTS } from '@/shared/constants'
 import dayjs from 'dayjs'
 
 const { RangePicker } = DatePicker
@@ -26,7 +26,7 @@ interface AuditLogQueryParams extends Record<string, string | undefined> {
 }
 
 export function AuditLogListPage() {
-  const { params } = useQueryParams<AuditLogQueryParams>()
+  const { params, setParams, setParam } = useQueryParams<AuditLogQueryParams>()
   
   // URL 파라미터에서 필터 값 읽기
   const filters = useMemo<AuditLogFilters>(() => ({
@@ -44,11 +44,15 @@ export function AuditLogListPage() {
   })
 
   const handleFilterChange = (key: keyof AuditLogFilters, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-      page: 1, // 필터 변경 시 첫 페이지로
-    }))
+    if (key === 'page' || key === 'pageSize') {
+      setParam(key, value ? String(value) : undefined)
+    } else {
+      setParam(key, value || undefined)
+    }
+    // 필터 변경 시 첫 페이지로
+    if (key !== 'page' && key !== 'pageSize') {
+      setParam('page', '1')
+    }
   }
 
   const handleSearch = () => {
@@ -56,18 +60,19 @@ export function AuditLogListPage() {
   }
 
   const handleReset = () => {
-    setFilters({
-      page: 1,
-      pageSize: 20,
+    setParams({
+      page: '1',
+      pageSize: String(PAGINATION_CONFIG.defaultPageSize),
+      eventType: undefined,
+      userName: undefined,
+      startDate: undefined,
+      endDate: undefined,
     })
   }
 
   const handleTableChange = (newPage: number, newPageSize: number) => {
-    setFilters(prev => ({
-      ...prev,
-      page: newPage,
-      pageSize: newPageSize,
-    }))
+    setParam('page', String(newPage))
+    setParam('pageSize', String(newPageSize))
   }
 
   const columns: ColumnsType<AuditLog> = [
@@ -75,7 +80,7 @@ export function AuditLogListPage() {
       title: '이벤트 유형',
       dataIndex: 'eventType',
       key: 'eventType',
-      width: 150,
+      width: LAYOUT_CONSTANTS.widths.filter,
       render: (eventType: AuditLog['eventType']) => {
         const option = AUDIT_EVENT_OPTIONS.find(opt => opt.value === eventType)
         return (
@@ -89,7 +94,7 @@ export function AuditLogListPage() {
       title: '사용자',
       dataIndex: 'userName',
       key: 'userName',
-      width: 180,
+      width: LAYOUT_CONSTANTS.widths.search,
       render: (userName: string, record: AuditLog) => {
         const adminLevel = record.details?.adminLevel as string | undefined
         const programRoles = record.details?.programRoles as Record<string, string> | undefined
@@ -115,7 +120,7 @@ export function AuditLogListPage() {
     {
       title: '대상',
       key: 'target',
-      width: 200,
+      width: LAYOUT_CONSTANTS.widths.search,
       render: (_: unknown, record: AuditLog) => {
         if (!record.targetName) return '-'
         return (
@@ -132,7 +137,7 @@ export function AuditLogListPage() {
       title: '상세 정보',
       key: 'details',
       ellipsis: true,
-      width: 250,
+      width: LAYOUT_CONSTANTS.widths.search,
       render: (_: unknown, record: AuditLog) => {
         const detailKeys = Object.keys(record.details)
         if (detailKeys.length === 0) return '-'
@@ -159,13 +164,13 @@ export function AuditLogListPage() {
       title: 'IP 주소',
       dataIndex: 'ipAddress',
       key: 'ipAddress',
-      width: 130,
+      width: LAYOUT_CONSTANTS.widths.status,
     },
     {
       title: '발생 시간',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 180,
+      width: LAYOUT_CONSTANTS.widths.search,
       render: (date: string) => new Date(date).toLocaleString('ko-KR'),
       sorter: (a: AuditLog, b: AuditLog) => 
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
@@ -173,18 +178,18 @@ export function AuditLogListPage() {
   ]
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: LAYOUT_CONSTANTS.margins.xl }}>
       <Card>
-        <h2 style={{ marginBottom: 24 }}>감사 로그</h2>
+        <h2 style={{ marginBottom: LAYOUT_CONSTANTS.margins.xl }}>감사 로그</h2>
 
-        <Form layout="inline" style={{ marginBottom: 16 }}>
+        <Form layout="inline" style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}>
           <Form.Item label="이벤트 유형">
             <Select
               value={filters.eventType}
               onChange={(value) => handleFilterChange('eventType', value)}
               placeholder="전체"
               allowClear
-              style={{ width: 150 }}
+              style={{ width: LAYOUT_CONSTANTS.widths.filter }}
               options={AUDIT_EVENT_OPTIONS}
             />
           </Form.Item>
@@ -194,7 +199,7 @@ export function AuditLogListPage() {
               value={filters.userName}
               onChange={(e) => handleFilterChange('userName', e.target.value)}
               placeholder="사용자 이름"
-              style={{ width: 150 }}
+              style={{ width: LAYOUT_CONSTANTS.widths.filter }}
               allowClear
             />
           </Form.Item>

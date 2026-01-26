@@ -35,7 +35,7 @@ export function SponsorFormPage() {
       }
       navigate('/sponsors')
     } catch {
-      message.error(isEdit ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+      message.error(isEdit ? MESSAGES.error.update : MESSAGES.error.create)
     }
   }
 

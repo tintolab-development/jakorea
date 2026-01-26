@@ -13,7 +13,7 @@ import { ManualAssignmentModal } from '@/features/instructor-application/ui/manu
 import { useInstructorApplicationReview } from '@/features/instructor-application/hooks/use-instructor-application-review'
 import { createManualAssignment, type ManualAssignmentData } from '@/entities/instructor-application/api/instructor-application-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -59,7 +59,8 @@ export function InstructorApplicationListPage() {
     | 'ALL'
 
   // 프로그램 목록
-  const programs = programService.getAllSync()
+  const { getAllSync: getAllProgramsSync } = useProgramService()
+  const programs = getAllProgramsSync()
 
   // 초기 로드 및 필터 변경 시 데이터 불러오기
   useEffect(() => {
@@ -200,11 +201,11 @@ export function InstructorApplicationListPage() {
           setAssignmentLoading(true)
           try {
             await createManualAssignment(data)
-            showSuccessMessage('추가 배정이 완료되었습니다.')
+            showSuccessMessage(MESSAGES.success.manualAssignmentCompleted)
             setAssignmentModalOpen(false)
             await fetchApplications({ programId: programFilter, status: statusFilter })
           } catch (error) {
-            handleError(error, { defaultMessage: '추가 배정 중 오류가 발생했습니다' })
+            handleError(error, { defaultMessage: MESSAGES.error.manualAssignmentFailed })
           } finally {
             setAssignmentLoading(false)
           }

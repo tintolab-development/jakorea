@@ -30,7 +30,7 @@ export function InstructorDetailPage() {
   const handleDelete = async () => {
     if (!id || !selectedInstructor) return
 
-    if (window.confirm('정말 삭제하시겠습니까?')) {
+    if (window.confirm(MESSAGES.confirm.delete)) {
       try {
         await deleteInstructor(id)
         message.success(MESSAGES.success.instructorDeleted)

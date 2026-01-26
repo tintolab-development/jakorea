@@ -30,7 +30,7 @@ export function SchoolDetailPage() {
   const handleDelete = async () => {
     if (!id || !selectedSchool) return
 
-    if (window.confirm('정말 삭제하시겠습니까?')) {
+    if (window.confirm(MESSAGES.confirm.delete)) {
       try {
         await deleteSchool(id)
         message.success(MESSAGES.success.schoolDeleted)

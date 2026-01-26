@@ -32,6 +32,7 @@ import {
 } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { mockFAQs } from '@/data/mock/faqs'
 
 const { Text, Title, Paragraph } = Typography
@@ -91,8 +92,8 @@ export function FAQPage() {
         {/* 헤더 섹션 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 8 }}>{categoryName}</h1>
-            <Text type="secondary">자주 묻는 질문들을 모아두었습니다. 원하는 정보를 찾지 못하셨다면 1:1 문의를 이용해주세요.</Text>
+            <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: LAYOUT_CONSTANTS.spacing.sm }}>{categoryName}</h1>
+            <Text type="secondary">{MESSAGES.info.faqDescription}</Text>
           </div>
           <Button
             type="primary"
@@ -106,8 +107,8 @@ export function FAQPage() {
 
         {/* 검색 섹션 */}
         <Card styles={{ body: { padding: '32px' } }} style={{ background: '#f9f9f9', border: 'none' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <Title level={3}>무엇을 도와드릴까요?</Title>
+          <div style={{ textAlign: 'center', marginBottom: LAYOUT_CONSTANTS.margins.xl }}>
+            <Title level={3}>{MESSAGES.info.faqSearchTitle}</Title>
           </div>
           <Search
             placeholder="궁금한 내용을 입력해보세요 (예: 봉사시간, 1365, 파트너...)"
@@ -141,7 +142,7 @@ export function FAQPage() {
               image={Empty.PRESENTED_IMAGE_SIMPLE} 
               description={
                 <Space direction="vertical">
-                  <Text type="secondary">검색 결과가 없습니다.</Text>
+                  <Text type="secondary">{MESSAGES.info.noSearchResults}</Text>
                   <Button type="link" onClick={() => { setSearchInput(''); handleCategoryChange('전체'); }}>전체 보기</Button>
                 </Space>
               } 
@@ -161,19 +162,19 @@ export function FAQPage() {
                     <div style={{ padding: '4px 0' }}>
                       <Space size="middle">
                         <Tag color="blue" bordered={false}>{faq.category}</Tag>
-                        <Text strong style={{ fontSize: 16 }}>{faq.question}</Text>
+                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>{faq.question}</Text>
                       </Space>
                       {faq.tags && (
                         <div style={{ marginTop: 8, paddingLeft: 60 }}>
                           {faq.tags.map(tag => (
-                            <Text key={tag} type="secondary" style={{ fontSize: 12, marginRight: 8 }}>#{tag}</Text>
+                            <Text key={tag} type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm, marginRight: LAYOUT_CONSTANTS.spacing.sm }}>#{tag}</Text>
                           ))}
                         </div>
                       )}
                     </div>
                   }
                   style={{ 
-                    marginBottom: 16, 
+                    marginBottom: LAYOUT_CONSTANTS.margins.lg, 
                     background: '#fff', 
                     border: '1px solid #f0f0f0', 
                     borderRadius: 8,
@@ -181,7 +182,7 @@ export function FAQPage() {
                   }}
                 >
                   <div style={{ padding: '8px 12px 12px 60px' }}>
-                    <Paragraph style={{ fontSize: 15, lineHeight: 1.8, color: '#434343', whiteSpace: 'pre-wrap' }}>
+                    <Paragraph style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.md + 1, lineHeight: 1.8, color: '#434343', whiteSpace: 'pre-wrap' }}>
                       {faq.answer}
                     </Paragraph>
                     
@@ -189,14 +190,14 @@ export function FAQPage() {
                     
                     <Row justify="space-between" align="middle">
                       <Col>
-                        <Space style={{ color: '#8c8c8c', fontSize: 13 }}>
+                        <Space style={{ color: '#8c8c8c', fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}>
                           <InfoCircleOutlined /> 추가 질문이 있으신가요? 
                           <Button type="link" size="small" onClick={() => navigate('/notices/inquiries')} style={{ padding: 0 }}>상세 문의하기</Button>
                         </Space>
                       </Col>
                       <Col>
                         <Space>
-                          <Text type="secondary" style={{ fontSize: 12 }}>도움이 되었나요?</Text>
+                          <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>도움이 되었나요?</Text>
                           <Tooltip title="도움됨">
                             <Button size="small" icon={<LikeOutlined />} />
                           </Tooltip>
