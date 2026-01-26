@@ -1,10 +1,9 @@
 /**
  * 파일 업로드 Mock 서비스
  * Phase 0.2.2: 학교 신청서 엑셀 업로드 (FR-C03)
- * Phase 0.2.2 수정: 엑셀 파일 파싱 및 검증 기능 추가
+ * Task 2.4.1: 엑셀 파싱(ExcelJS), 샘플 양식 생성
  */
 
-// @ts-expect-error - @zurmokeeper/exceljs 타입 선언 문제
 import ExcelJS from '@zurmokeeper/exceljs'
 
 /**
@@ -131,8 +130,30 @@ export const fileUploadService = {
         errors: errors.length > 0 ? errors : [],
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '엑셀 파일 파싱에 실패했습니다.'
+      const errorMessage =
+        error instanceof Error ? error.message : '엑셀 파일 파싱에 실패했습니다.'
       throw new Error(errorMessage)
     }
+  },
+
+  /**
+   * 참여학생 리스트 샘플 엑셀 생성 (FR-C03)
+   * "이름", "학년", "반", "번호" 헤더 + 예시 행 포함
+   */
+  createSampleStudentListBlob: async (): Promise<Blob> => {
+    const workbook = new ExcelJS.Workbook()
+    const sheet = workbook.addWorksheet('학생명단', { views: [{ state: 'frozen', ySplit: 1 }] })
+
+    const headers = ['이름', '학년', '반', '번호']
+    sheet.addRow(headers)
+    sheet.getRow(1).font = { bold: true }
+    sheet.addRow(['홍길동', '3', '1', '1'])
+    sheet.addRow(['김철수', '3', '1', '2'])
+    sheet.addRow(['이영희', '3', '2', '1'])
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    return new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
   },
 }

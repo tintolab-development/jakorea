@@ -7,7 +7,8 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, Input, InputNumber, Button, Space, Upload, message, Alert } from 'antd'
-import { UploadOutlined } from '@ant-design/icons'
+import { UploadOutlined, DownloadOutlined } from '@ant-design/icons'
+import { downloadBlob } from '@/shared/utils/file-download'
 import { schoolApplicationSchema, type SchoolApplicationFormData } from '@/entities/application/model/schema'
 import type { Program } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -61,39 +62,47 @@ export function SchoolApplicationForm({
     },
   })
 
-  // 엑셀 파일 업로드 핸들러 (FR-C03: 엑셀 파일 파싱 및 검증)
+  const handleSampleDownload = async () => {
+    try {
+      const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
+      const blob = await fileUploadService.createSampleStudentListBlob()
+      const filename = `참여학생명단_샘플_${new Date().toISOString().split('T')[0]}.xlsx`
+      downloadBlob(blob, filename)
+      message.success(MESSAGES.success.downloaded)
+    } catch {
+      message.error(MESSAGES.error.download)
+    }
+  }
+
+  // 엑셀 파일 업로드 핸들러 (FR-C03: 엑셀 파일 파싱 및 검증, ExcelJS 활용)
   const handleFileUpload = async (file: File) => {
-    // 파일 확장자 검증
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
     if (!UPLOAD_POLICY.studentList.allowedExtensions.includes(fileExtension)) {
       message.error(MESSAGES.warning.fileType)
       return false
     }
-
-    // 파일 크기 검증
     if (file.size > UPLOAD_POLICY.studentList.maxSize) {
       message.error(MESSAGES.warning.fileSizeMax5MB)
       return false
     }
 
-    // 엑셀 파일 파싱 및 검증
     try {
       const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
       const parseResult = await fileUploadService.parseStudentList(file)
-      
+
       if (parseResult.errors.length > 0) {
-        message.warning(`파싱 중 경고: ${parseResult.errors.join(', ')}`)
+        message.warning(MESSAGES.warning.parseWarning(parseResult.errors.join(', ')))
       }
-      
       if (parseResult.totalCount === 0) {
-        message.error(MESSAGES.error.studentInfoNotFound)
+        message.error(MESSAGES.warning.studentInfoNotFound)
         return false
       }
 
       setValue('studentListFile', file)
-      message.success(`파일이 선택되었습니다. (학생 ${parseResult.totalCount}명)`)
-    } catch (error: any) {
-      message.error(error?.message || '엑셀 파일 파싱에 실패했습니다.')
+      message.success(MESSAGES.info.studentsFound(parseResult.totalCount))
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '엑셀 파일 파싱에 실패했습니다.'
+      message.error(msg)
       return false
     }
 
@@ -169,41 +178,46 @@ export function SchoolApplicationForm({
         <Input {...register('instructorWaitingRoom')} placeholder="강사 대기장소를 입력해주세요" />
       </Form.Item>
 
-      {/* Phase 0.2.2: FR-C03 - 학생 명단 엑셀 업로드 */}
+      {/* Phase 0.2.2: FR-C03 - 학생 명단 엑셀 업로드 (ExcelJS 파싱, 샘플 양식 다운로드) */}
       <Form.Item
         label="참여학생 리스트 (엑셀)"
         validateStatus={errors.studentListFile ? 'error' : ''}
         help={errors.studentListFile?.message || '엑셀 파일(.xlsx, .xls)을 업로드해주세요. (최대 5MB)'}
         required={false}
       >
-        <Upload
-          beforeUpload={handleFileUpload}
-          maxCount={1}
-          accept=".xlsx,.xls"
-          fileList={
-            studentListFile
-              ? [
-                  {
-                    uid: '1',
-                    name: studentListFile.name,
-                    size: studentListFile.size,
-                  } as UploadFile,
-                ]
-              : []
-          }
-          onRemove={() => {
-            setValue('studentListFile', undefined)
-          }}
-        >
-          <Button icon={<UploadOutlined />}>엑셀 파일 선택</Button>
-        </Upload>
-        <Alert
-          type="info"
-          message="학생 명단 엑셀 파일을 업로드해주세요"
-          description="엑셀 파일에는 학생 이름, 학년, 반 등의 정보가 포함되어야 합니다."
-          showIcon
-          style={{ marginTop: 8 }}
-        />
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Space wrap>
+            <Upload
+              beforeUpload={handleFileUpload}
+              maxCount={1}
+              accept=".xlsx,.xls"
+              fileList={
+                studentListFile
+                  ? [
+                      {
+                        uid: '1',
+                        name: studentListFile.name,
+                        size: studentListFile.size,
+                      } as UploadFile,
+                    ]
+                  : []
+              }
+              onRemove={() => setValue('studentListFile', undefined)}
+            >
+              <Button icon={<UploadOutlined />}>엑셀 파일 선택</Button>
+            </Upload>
+            <Button type="link" icon={<DownloadOutlined />} onClick={handleSampleDownload}>
+              샘플 양식 다운로드
+            </Button>
+          </Space>
+          <Alert
+            type="info"
+            message="학생 명단 엑셀 파일을 업로드해주세요"
+            description="엑셀 파일에는 '이름'(필수), '학년', '반', '번호' 컬럼을 포함해주세요. 샘플 양식을 다운로드하여 형식을 확인할 수 있습니다."
+            showIcon
+            style={{ marginTop: 0 }}
+          />
+        </Space>
       </Form.Item>
 
       <Form.Item label="비고">

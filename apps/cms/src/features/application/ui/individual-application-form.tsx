@@ -11,9 +11,10 @@ import { individualApplicationSchema, type IndividualApplicationFormData } from 
 import type { Program } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getFormTemplateByProgramId } from '@/data/mock/form-templates'
-import { DynamicFormFields } from './dynamic-form-fields'
-import type { FormFieldDef } from '@/types/form-template'
-import { MESSAGES } from '@/shared/constants'
+import {
+  DynamicApplicationForm,
+  validateDynamicFields,
+} from './dynamic-application-form'
 
 const { TextArea } = Input
 
@@ -23,21 +24,6 @@ interface IndividualApplicationFormProps {
   onSubmit: (data: IndividualApplicationFormData) => Promise<void>
   onCancel: () => void
   loading?: boolean
-}
-
-function validateCustomFields(
-  fields: FormFieldDef[],
-  value: Record<string, unknown>
-): Record<string, string> {
-  const err: Record<string, string> = {}
-  for (const f of fields) {
-    if (!f.required) continue
-    const v = value[f.id]
-    if (v === undefined || v === null || v === '') {
-      err[f.id] = MESSAGES.validation.fieldRequired(f.label)
-    }
-  }
-  return err
 }
 
 export function IndividualApplicationForm({
@@ -80,7 +66,10 @@ export function IndividualApplicationForm({
   )
 
   const onFormSubmit = async (data: IndividualApplicationFormData) => {
-    const customErrors = validateCustomFields(template.customFields, data.customFields ?? {})
+    const customErrors = validateDynamicFields(
+      template.customFields,
+      data.customFields ?? {}
+    )
     if (Object.keys(customErrors).length > 0) {
       setCustomFieldErrors(customErrors)
       return
@@ -108,7 +97,7 @@ export function IndividualApplicationForm({
         />
       </Form.Item>
 
-      <DynamicFormFields
+      <DynamicApplicationForm
         fields={template.customFields}
         value={customFieldsValue}
         onChange={handleCustomFieldsChange}

@@ -1,12 +1,18 @@
 /**
  * 템플릿 기반 동적 폼 필드 컴포넌트
  * Phase 0.2.2: 템플릿 기반 동적 신청서 (FR-C03)
+ * Task 2.4.1: file 타입 지원 추가
  */
 
-import { Form, Input, InputNumber, Select, Checkbox } from 'antd'
+import { Form, Input, InputNumber, Select, Checkbox, Upload, Button, message } from 'antd'
+import { UploadOutlined } from '@ant-design/icons'
+import { MESSAGES } from '@/shared/constants'
+import type { UploadFile } from 'antd/es/upload/interface'
 import type { FormFieldDef } from '@/types/form-template'
 
 const { TextArea } = Input
+
+const DEFAULT_FILE_MAX_SIZE = 5 * 1024 * 1024 // 5MB
 
 export interface DynamicFormFieldsProps {
   fields: FormFieldDef[]
@@ -90,6 +96,37 @@ export function DynamicFormFields({
                 value={(val as string) ?? ''}
                 onChange={e => update(field.id, e.target.value || undefined)}
               />
+            )}
+            {field.type === 'file' && (
+              <Upload
+                maxCount={1}
+                accept={field.fileAccept}
+                beforeUpload={file => {
+                  const maxSize = field.fileMaxSize ?? DEFAULT_FILE_MAX_SIZE
+                  if (file.size > maxSize) {
+                    message.error(MESSAGES.warning.fileSizeMax5MB)
+                    return false
+                  }
+                  update(field.id, file)
+                  return false
+                }}
+                fileList={
+                  val && val instanceof File
+                    ? ([
+                        {
+                          uid: '1',
+                          name: (val as File).name,
+                          size: (val as File).size,
+                        } as UploadFile,
+                      ] as UploadFile[])
+                    : []
+                }
+                onRemove={() => update(field.id, undefined)}
+              >
+                <Button icon={<UploadOutlined />}>
+                  {field.placeholder ?? '파일 선택'}
+                </Button>
+              </Upload>
             )}
           </Form.Item>
         )

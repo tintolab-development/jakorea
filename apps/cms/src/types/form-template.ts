@@ -4,7 +4,7 @@
  */
 
 /** 동적 폼 필드 타입 */
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'date'
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'date' | 'file'
 
 /** 동적 폼 필드 정의 */
 export interface FormFieldDef {
@@ -17,6 +17,10 @@ export interface FormFieldDef {
   options?: { value: string; label: string }[]
   /** 기본값 */
   defaultValue?: string | number | boolean
+  /** file 타입: accept (예: ".xlsx,.xls" 또는 "image/*") */
+  fileAccept?: string
+  /** file 타입: 최대 크기(bytes, 기본 5MB) */
+  fileMaxSize?: number
 }
 
 /** 프로그램별 신청서 폼 템플릿 */

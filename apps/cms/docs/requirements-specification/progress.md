@@ -124,22 +124,26 @@
 
 ---
 
-### ⚠️ FR-C03 (P1) 신청서 작성: 템플릿 기반 + 커스터마이징
+### ✅ FR-C03 (P1) 신청서 작성: 템플릿 기반 + 커스터마이징
 
 **요구사항**: 관리자가 업로드한 신청서 양식 작성 및 제출, 학교의 경우 참여학생 리스트(엑셀) 업로드
 
-**구현 상태**: ⚠️ **부분 완료** (UI/Mock만 존재)
+**구현 상태**: ✅ **완료** (2026-01-26, Task 2.4.1)
 
 - ✅ 신청서 작성 폼 존재
 - ✅ 역할별 신청서 폼 분기 (개인/학교/강사)
 - ✅ 학교 신청서 폼 존재
-- ❌ 템플릿 기반 동적 폼 생성 미구현
-- ❌ 엑셀 업로드 기능 미구현
+- ✅ 템플릿 기반 동적 폼 생성 (`DynamicApplicationForm`, `validateDynamicFields`, 필드 타입: text/textarea/number/select/checkbox/date/file)
+- ✅ 엑셀 업로드 기능 (ExcelJS 파싱, 샘플 양식 다운로드, 학생 리스트 검증)
 
 **파일 위치**:
 - `src/pages/programs/program-application-page.tsx`
 - `src/features/application/ui/school-application-form.tsx`
 - `src/features/application/ui/individual-application-form.tsx`
+- `src/features/application/ui/dynamic-application-form.tsx` (신규)
+- `src/features/application/ui/dynamic-form-fields.tsx` (file 타입 추가)
+- `src/entities/application/api/file-upload-service.ts` (`createSampleStudentListBlob` 추가)
+- `src/types/form-template.ts` (FormFieldType `file`, `fileAccept`/`fileMaxSize` 추가)
 
 ---
 
