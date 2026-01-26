@@ -243,19 +243,24 @@
 
 ---
 
-### ⚠️ FR-E03 (P1) 강의보고서 제출
+### ✅ FR-E03 (P1) 강의보고서 제출
 
 **요구사항**: 강의별 제출 항목 생성, 제출 상태값(미제출/제출완료/승인)
 
-**구현 상태**: ⚠️ **부분 완료** (UI/Mock만 존재)
+**구현 상태**: ✅ **완료** (2026-01-26)
 
 - ✅ 강의보고서 제출 페이지 존재
 - ✅ 보고서 작성 화면 개선 완료 (2025-01-19)
-- ❌ 실제 제출 프로세스 미구현
-- ❌ 제출 상태 관리 미완성
+- ✅ 실제 제출 프로세스 구현 (reportService.submit, mockReports 저장)
+- ✅ 제출 상태 관리 완성 (미제출/제출완료/승인/반려)
+- ✅ 동일 일정 복수 제출 시 최신 보고서 표시 (updatedAt 기준 정렬)
+- ✅ 반려된 보고서 재제출 기능 ("다시 작성" 버튼)
 
 **파일 위치**:
-- `src/pages/instructors/instructor-reports-page.tsx`
+- `src/pages/instructors/instructor-reports-page.tsx` - 상태 탭(전체/미제출/제출완료/승인/반려), 최신 보고서 매칭, 재제출 (2026-01-26)
+- `src/pages/reports/report-form-page.tsx` - programId 파라미터 추가 (2026-01-26)
+- `src/entities/report/api/report-service.ts` - submit() 구현 (mockReports 저장)
+- `src/features/report/hooks/use-report-service.ts` - 제출 훅
 
 ---
 

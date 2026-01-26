@@ -23,19 +23,21 @@ import type { ColumnsType } from 'antd/es/table'
 
 const { Title, Paragraph } = Typography
 
-// Phase 0.2.7: FR-E03 - 제출 상태값
-type LectureReportStatus = 'NOT_SUBMITTED' | 'SUBMITTED' | 'APPROVED'
+// Phase 0.2.7: FR-E03 - 제출 상태값 (미제출/제출완료/승인/반려)
+type LectureReportStatus = 'NOT_SUBMITTED' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
 
 const REPORT_STATUS_LABELS: Record<LectureReportStatus, string> = {
   NOT_SUBMITTED: '미제출',
   SUBMITTED: '제출완료',
   APPROVED: '승인',
+  REJECTED: '반려',
 }
 
 const REPORT_STATUS_COLORS: Record<LectureReportStatus, string> = {
   NOT_SUBMITTED: 'default',
   SUBMITTED: 'processing',
   APPROVED: 'success',
+  REJECTED: 'error',
 }
 
 interface LectureReportListItem {
@@ -54,6 +56,7 @@ const statusTabs: Array<{ key: LectureReportStatus | 'all'; label: string }> = [
   { key: 'NOT_SUBMITTED', label: '미제출' },
   { key: 'SUBMITTED', label: '제출완료' },
   { key: 'APPROVED', label: '승인' },
+  { key: 'REJECTED', label: '반려' },
 ]
 
 export function InstructorReportsPage() {
@@ -74,14 +77,12 @@ export function InstructorReportsPage() {
 
       setLoading(true)
       try {
-        // 본인 일정 조회
-        const scheduleData = await getMySchedules(user.instructorId)
+        const [scheduleData, reportData] = await Promise.all([
+          getMySchedules(user.instructorId),
+          getAllReports(),
+        ])
         setSchedules(scheduleData)
-
-        // 강의보고서 조회 (lecture 타입만)
-        const reportData = await getAllReports()
-        const lectureReports = reportData.filter(r => r.type === 'lecture')
-        setReports(lectureReports)
+        setReports(reportData.filter(r => r.type === 'lecture'))
       } catch (error) {
         console.error('데이터 로드 실패:', error)
       } finally {
@@ -90,7 +91,7 @@ export function InstructorReportsPage() {
     }
 
     loadData()
-  }, [user?.instructorId])
+  }, [user?.instructorId, getAllReports])
 
   // Phase 0.2.7: 강의보고서 목록 생성 (일정 기반)
   const reportList = useMemo<LectureReportListItem[]>(() => {
@@ -114,25 +115,25 @@ export function InstructorReportsPage() {
         const school = application ? schoolService.getByIdSync(application.subjectId) : null
         const schoolName = school?.name
 
-        // 강의보고서 찾기: activityId 또는 scheduleId (Phase 0.2.7)
+        // 강의보고서 찾기: activityId 또는 scheduleId, 동일 일정 복수 제출 시 최신만 사용 (FR-E03)
         const activity = mockLectureActivities.find(
           act => act.scheduleId === schedule.id && act.instructorId === user?.instructorId
         )
-        const report =
-          reports.find(r => {
+        const matchingReports = reports
+          .filter(r => {
             if (r.type !== 'lecture') return false
             if (activity && r.activityId === activity.id) return true
             return r.scheduleId === schedule.id
-          }) ?? null
+          })
+          .sort((a, b) => dayjs(b.updatedAt).valueOf() - dayjs(a.updatedAt).valueOf())
+        const report = matchingReports[0] ?? null
 
-        // Phase 0.2.7: 상태값 결정
+        // Phase 0.2.7 / FR-E03: 상태값 (미제출/제출완료/승인/반려)
         let status: LectureReportStatus = 'NOT_SUBMITTED'
         if (report) {
-          if (report.status === 'approved') {
-            status = 'APPROVED'
-          } else if (report.status === 'submitted' || report.status === 'reviewing') {
-            status = 'SUBMITTED'
-          }
+          if (report.status === 'approved') status = 'APPROVED'
+          else if (report.status === 'rejected') status = 'REJECTED'
+          else if (report.status === 'submitted' || report.status === 'reviewing') status = 'SUBMITTED'
         }
 
         return {
@@ -167,10 +168,29 @@ export function InstructorReportsPage() {
       NOT_SUBMITTED: reportList.filter(item => item.status === 'NOT_SUBMITTED').length,
       SUBMITTED: reportList.filter(item => item.status === 'SUBMITTED').length,
       APPROVED: reportList.filter(item => item.status === 'APPROVED').length,
+      REJECTED: reportList.filter(item => item.status === 'REJECTED').length,
     }
   }, [reportList])
 
+  const scheduleToFormParams = (scheduleId: string) => {
+    const schedule = schedules.find(s => s.id === scheduleId)
+    const program = schedule ? getProgramByIdSync(schedule.programId) : null
+    const activity = mockLectureActivities.find(
+      act => act.scheduleId === scheduleId && act.instructorId === user?.instructorId
+    )
+    const params = new URLSearchParams({ type: 'lecture' })
+    if (activity) params.set('activityId', activity.id)
+    params.set('scheduleId', scheduleId)
+    if (program?.id) params.set('programId', program.id)
+    return params
+  }
+
   const handleView = async (item: LectureReportListItem) => {
+    const canResubmit = item.status === 'NOT_SUBMITTED' || item.status === 'REJECTED'
+    if (canResubmit) {
+      navigate(`/reports/new?${scheduleToFormParams(item.scheduleId).toString()}`)
+      return
+    }
     if (item.reportId) {
       try {
         const report = await getReportById(item.reportId)
@@ -179,18 +199,7 @@ export function InstructorReportsPage() {
       } catch (e) {
         console.error('보고서 조회 실패:', e)
       }
-      return
     }
-    const schedule = schedules.find(s => s.id === item.scheduleId)
-    const program = schedule ? programService.getByIdSync(schedule.programId) : null
-    const activity = mockLectureActivities.find(
-      act => act.scheduleId === item.scheduleId && act.instructorId === user?.instructorId
-    )
-    const params = new URLSearchParams({ type: 'lecture' })
-    if (activity) params.set('activityId', activity.id)
-    params.set('scheduleId', item.scheduleId)
-    if (program?.id) params.set('programId', program.id)
-    navigate(`/reports/new?${params.toString()}`)
   }
 
   const columns: ColumnsType<LectureReportListItem> = [
@@ -241,6 +250,15 @@ export function InstructorReportsPage() {
               onClick={() => handleView(record)}
             >
               작성
+            </Button>
+          ) : record.status === 'REJECTED' ? (
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => handleView(record)}
+            >
+              다시 작성
             </Button>
           ) : (
             <Button

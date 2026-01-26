@@ -5,11 +5,9 @@
  */
 
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Card, Space, Typography, Form, Input, InputNumber, Alert, message } from 'antd'
 import { GuideMessage, SingleCTA } from '@/shared/ui'
-import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   lectureReportFields,
@@ -25,7 +23,12 @@ const { Title, Paragraph } = Typography
 const { TextArea } = Input
 
 export function ReportFormPage() {
-  const { params } = useQueryParams<{ type?: string; activityId?: string; scheduleId?: string }>()
+  const { params } = useQueryParams<{
+    type?: string
+    activityId?: string
+    scheduleId?: string
+    programId?: string
+  }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { submit: submitReport, loading: serviceLoading } = useReportService()
