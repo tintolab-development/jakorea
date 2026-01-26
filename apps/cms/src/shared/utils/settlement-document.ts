@@ -345,13 +345,11 @@ export async function generateTransferList(
     ]
 
     rows.forEach(row => {
-      // 계좌번호에서 은행명 추출 (예: "110-123-456789" -> "국민은행")
-      // 실제로는 Settlement 데이터에서 bankName을 가져와야 함
-      const bankName = extractBankName(row.bankAccount) || '기타'
-      const memo = `${row.period} ${row.programTitle}`
+      const bankName = row.bankName || extractBankName(row.bankAccount) || '기타'
+      const memo = `${row.period} ${row.programTitle}`.trim()
 
       worksheet.addRow({
-        bankAccount: row.bankAccount.replace(/-/g, ''), // 하이픈 제거
+        bankAccount: String(row.bankAccount).replace(/-/g, ''),
         instructorName: row.instructorName,
         bankName,
         amount: row.amount,

@@ -4,7 +4,7 @@
  */
 
 import { useEffect } from 'react'
-import { Button, Modal, Space, Tooltip, Typography, Input, Checkbox, Progress, Alert } from 'antd'
+import { Button, Modal, Space, Tooltip, Typography, Input, Checkbox, Progress, Alert, Radio } from 'antd'
 import { DownloadOutlined, LockOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
 import { PaymentStatementList } from '@/features/settlement/ui/payment-statement-list'
@@ -47,6 +47,8 @@ export function PaymentStatementListPage() {
     password,
     passwordConfirm,
     enableEncryption,
+    format,
+    setFormat,
     passwordStrength,
     passwordsMatch,
     loading: exportLoading,
@@ -119,6 +121,27 @@ export function PaymentStatementListPage() {
         width={LAYOUT_CONSTANTS.widths.modal.small}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          {/* FR-G03: 이체리스트 포맷 선택 */}
+          <div>
+            <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
+              엑셀 포맷
+            </Typography.Text>
+            <Radio.Group
+              value={format}
+              onChange={e => setFormat(e.target.value)}
+              optionType="button"
+              buttonStyle="solid"
+            >
+              <Radio.Button value="bank">은행 업로드용</Radio.Button>
+              <Radio.Button value="standard">일반(상세)</Radio.Button>
+            </Radio.Group>
+            <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: 12 }}>
+              {format === 'bank'
+                ? '계좌번호, 예금주, 은행명, 금액, 통장인자 — 은행 이체 파일 업로드용'
+                : '기간, 프로그램, 강사, 계좌번호, 금액 — 상세 내역 확인용'}
+            </Typography.Text>
+          </div>
+
           {/* Phase 0.4.3: 암호화 옵션 체크박스 */}
           <Checkbox
             checked={enableEncryption}

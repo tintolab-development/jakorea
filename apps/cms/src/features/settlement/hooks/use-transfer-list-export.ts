@@ -13,6 +13,7 @@ export interface TransferListRow {
   programTitle: string
   instructorName: string
   bankAccount: string
+  bankName?: string
   amount: number
 }
 
@@ -40,11 +41,14 @@ function calculatePasswordStrength(password: string): {
   return { strength: 'strong', score }
 }
 
+export type TransferListFormat = 'standard' | 'bank'
+
 export function useTransferListExport(rows: TransferListRow[], canExport: boolean) {
   const [isOpen, setIsOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [enableEncryption, setEnableEncryption] = useState(true)
+  const [format, setFormat] = useState<TransferListFormat>('bank')
   const [loading, setLoading] = useState(false)
 
   const passwordStrength = calculatePasswordStrength(password)
@@ -68,6 +72,7 @@ export function useTransferListExport(rows: TransferListRow[], canExport: boolea
     setPasswordConfirm('')
     setEnableEncryption(true)
   }, [])
+  const setFormatHandler = useCallback((v: TransferListFormat) => setFormat(v), [])
 
   const confirmExport = useCallback(async () => {
     // Phase 0.4.3: 암호화 옵션 체크
@@ -90,10 +95,10 @@ export function useTransferListExport(rows: TransferListRow[], canExport: boolea
 
     setLoading(true)
     try {
-      // Phase 0.4.3: 암호화 옵션에 따라 처리
       await generateTransferList(rows, {
         passwordProvided: enableEncryption,
         password: enableEncryption ? password : undefined,
+        format,
       })
       message.success(
         enableEncryption
@@ -122,13 +127,15 @@ export function useTransferListExport(rows: TransferListRow[], canExport: boolea
     } finally {
       setLoading(false)
     }
-  }, [closeModal, password, passwordConfirm, passwordsMatch, enableEncryption, rows])
+  }, [closeModal, password, passwordConfirm, passwordsMatch, enableEncryption, format, rows])
 
   return {
     isOpen,
     password,
     passwordConfirm,
     enableEncryption,
+    format,
+    setFormat: setFormatHandler,
     passwordStrength,
     passwordsMatch,
     loading,

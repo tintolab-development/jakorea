@@ -411,11 +411,11 @@
 
 ---
 
-### ⚠️ FR-G03 (P1) 지급조서/이체리스트 출력
+### ✅ FR-G03 (P1) 지급조서/이체리스트 출력
 
 **요구사항**: 프로그램별 + 월별 지급조서 인쇄/다운로드, 지급조서 항목 이체 리스트 엑셀 다운로드, 암호화 설정
 
-**구현 상태**: ⚠️ **부분 완료** (권한 체크 완료)
+**구현 상태**: ✅ **완료** (2026-01-26, 이체 리스트 포맷 완성)
 
 - ✅ 정산 문서 생성 기능 존재
 - ✅ Excel 다운로드 기능 존재
@@ -423,14 +423,16 @@
 - ✅ 월별 정산 일괄 다운로드 기능
 - ✅ 지급조서 템플릿 존재
 - ✅ 권한별 다운로드 제한 구현 (OWNER만, 2026-01-22)
+- ✅ 이체 리스트 엑셀 포맷 완성 (은행 업로드용 / 일반(상세), 2026-01-26)
 - ⚠️ 암호화 설정 (Mock, ExcelJS 기본 미지원, 외부 라이브러리 필요, 2026-01-22)
-- ❌ 이체 리스트 엑셀 포맷 미완성
 
 **파일 위치**:
-- `src/shared/utils/settlement-document.ts`
+- `src/shared/utils/settlement-document.ts` - generateTransferList format: standard | bank, bankName (2026-01-26)
+- `src/features/settlement/hooks/use-transfer-list-export.ts` - format 선택, bankName (2026-01-26)
+- `src/features/settlement/hooks/use-payment-statements.ts` - transferRows에 bankName (2026-01-26)
+- `src/pages/settlements/payment-statement-list-page.tsx` - 포맷 선택 UI (2026-01-26)
 - `src/features/settlement/ui/settlement-detail-drawer.tsx`
 - `src/shared/utils/download-permission.ts` - canDownloadPaymentStatement (2026-01-22)
-- `src/features/settlement/hooks/use-payment-statements.ts` - 권한 체크 추가 (2026-01-22)
 
 ---
 

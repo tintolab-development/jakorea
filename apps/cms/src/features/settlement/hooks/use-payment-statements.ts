@@ -100,6 +100,7 @@ export function usePaymentStatements() {
           programTitle: program?.title || '프로그램 정보 없음',
           instructorName: instructor?.name || '강사 정보 없음',
           bankAccount: instructor?.bankAccount || '-',
+          bankName: instructor?.bankName,
           amount: statement.totalAmount,
         }
       })
