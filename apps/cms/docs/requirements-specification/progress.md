@@ -147,23 +147,25 @@
 
 ---
 
-### ⚠️ FR-C04 (P1) 신청 결과/상태 안내
+### ✅ FR-C04 (P1) 신청 결과/상태 안내
 
 **요구사항**: 신청 완료 화면, 관리자 확정 결과 확인, 확정 후 안내 문자/이메일 발송
 
-**구현 상태**: ⚠️ **부분 완료** (UI 완료, 알림 미구현)
+**구현 상태**: ✅ **완료** (2026-01-26, Task 2.4.2)
 
 - ✅ 신청 완료 화면 구현
 - ✅ 신청 결과 화면 개선 완료 (2025-01-19)
 - ✅ 신청 상태별 화면 (승인 대기, 반려, 승인 완료)
 - ✅ 알림 발송 버튼 UI 존재
-- ❌ 실제 문자/이메일 발송 기능 미구현
-- ❌ 카카오 알림 연동 미구현
+- ✅ 실제 문자/이메일 발송 (Provider 인터페이스 + Mock, API 연동 준비)
+- ✅ 카카오 알림 (Provider + Mock 연동)
+- ✅ 수신자 resolve (User/School/Instructor), 발송 결과·에러 핸들링
 
 **파일 위치**:
 - `src/pages/programs/program-application-complete-page.tsx`
 - `src/features/application/ui/notification-button.tsx`
 - `src/entities/application/api/application-notification-service.ts`
+- `src/entities/application/api/notification-providers.ts` (신규)
 
 ---
 
