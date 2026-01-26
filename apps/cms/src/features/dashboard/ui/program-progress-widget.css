@@ -1,0 +1,126 @@
+/**
+ * 프로그램 진행 현황 위젯 스타일
+ * FR-C01: 7단계 위젯 수평 배치
+ */
+
+.program-progress-widget__placeholder {
+  height: 120px;
+}
+
+.program-progress-widget__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.program-progress-widget__extra-text {
+  font-size: 12px;
+  color: #666;
+}
+
+.program-progress-widget__extra-icon {
+  cursor: pointer;
+}
+
+.program-progress-widget {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.program-progress-widget__stages {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+  padding-right: 16px;
+  border-right: 1px solid #e8e8e8;
+  margin-right: 16px;
+}
+
+.program-progress-widget__stage {
+  background: #ffffff;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 16px 20px;
+  min-width: 140px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 0;
+}
+
+.program-progress-widget__stage:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+.program-progress-widget__stage--highlighted {
+  border-color: #13c2c2;
+}
+
+.program-progress-widget__stage--highlighted .program-progress-widget__stage-label,
+.program-progress-widget__stage--highlighted .program-progress-widget__stage-count {
+  color: #13c2c2;
+}
+
+.program-progress-widget__stage-label {
+  display: block;
+  font-size: 13px;
+  color: #595959;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.program-progress-widget__stage-count {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  color: #262626;
+}
+
+.program-progress-widget__total {
+  background: #13c2c2;
+  border-radius: 8px;
+  padding: 16px 24px;
+  text-align: center;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.program-progress-widget__total-label {
+  display: block;
+  font-size: 13px;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.program-progress-widget__total-count {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* 반응형: 작은 화면에서는 세로 배치 */
+@media (max-width: 1200px) {
+  .program-progress-widget {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .program-progress-widget__stages {
+    flex-direction: column;
+  }
+
+  .program-progress-widget__stage {
+    width: 100%;
+  }
+
+  .program-progress-widget__total {
+    width: 100%;
+  }
+}
