@@ -143,6 +143,9 @@ export function ProgramBasicInfoTab({
         isAdmin={userRole === 'ADMIN'} // Phase 0.5.2: 관리자는 신청하기 버튼 숨김
         onApplicationClick={onApplicationClick}
         onDuplicateAlertOpen={onDuplicateAlertOpen}
+        applyRedirectPath={
+          applicationPath?.pathType === 'internal' ? `/programs/${program.id}/apply` : undefined
+        }
       />
 
       {/* 보조 안내 영역 */}

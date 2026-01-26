@@ -304,7 +304,16 @@ export function LoginPage() {
             이메일/비밀번호 또는 간편인증으로 로그인하세요.
           </Text>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            계정이 없으신가요? <Link to="/register">회원가입</Link>
+            계정이 없으신가요?{' '}
+            <Link
+              to={
+                redirectPath
+                  ? `/register?redirect=${encodeURIComponent(redirectPath)}`
+                  : '/register'
+              }
+            >
+              회원가입
+            </Link>
           </Text>
         </div>
       </Card>

@@ -29,6 +29,7 @@ import {
   HomeOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useRegister } from '@/features/auth/hooks/use-register'
 import { useConsent } from '@/features/auth/hooks/use-consent'
 import { PhoneVerificationForm } from '@/features/auth/ui/phone-verification-form'
@@ -73,7 +74,8 @@ const REGISTER_TYPES: Array<{
 ]
 
 export function RegisterPage() {
-  const { register, loading, error } = useRegister()
+  const { params } = useQueryParams<{ redirect?: string }>()
+  const { register, loading, error } = useRegister({ redirectPath: params.redirect })
   const { consent, updateConsent, isValid: consentValid } = useConsent()
   const [form] = Form.useForm()
   const [currentStep, setCurrentStep] = useState(0)
@@ -584,7 +586,16 @@ export function RegisterPage() {
 
         <div className="register-footer">
           <Text type="secondary">
-            이미 계정이 있으신가요? <Link to="/login">로그인</Link>
+            이미 계정이 있으신가요?{' '}
+            <Link
+              to={
+                params.redirect
+                  ? `/login?redirect=${encodeURIComponent(params.redirect)}`
+                  : '/login'
+              }
+            >
+              로그인
+            </Link>
           </Text>
         </div>
       </Card>

@@ -29,6 +29,8 @@ interface ProgramApplicationCardProps {
   isAdmin?: boolean // Phase 0.5.2: 관리자는 신청하기 버튼 숨김
   onApplicationClick: () => void
   onDuplicateAlertOpen?: () => void
+  /** FR-C01: 비로그인 시 로그인/회원가입 링크에 넘길 redirect 경로 (예: /programs/:id/apply) */
+  applyRedirectPath?: string
 }
 
 export function ProgramApplicationCard({
@@ -44,6 +46,7 @@ export function ProgramApplicationCard({
   userRole: _userRole, // eslint-disable-line @typescript-eslint/no-unused-vars
   isAdmin = false,
   onApplicationClick,
+  applyRedirectPath,
 }: ProgramApplicationCardProps) {
   const { isAuthenticated } = useAuthStore()
 
@@ -51,17 +54,24 @@ export function ProgramApplicationCard({
   const shouldShowApplicationButton =
     !isAdmin && applicationAvailable && applicationUrl && !userHasApplied
 
+  const loginTo = applyRedirectPath
+    ? `/login?redirect=${encodeURIComponent(applyRedirectPath)}`
+    : '/login'
+  const registerTo = applyRedirectPath
+    ? `/register?redirect=${encodeURIComponent(applyRedirectPath)}`
+    : '/register'
+
   return (
     <Card title="신청 안내">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        {/* Phase 0.2.1: 비로그인 사용자 로그인/회원가입 유도 */}
+        {/* Phase 0.2.1 / FR-C01: 비로그인 사용자 로그인/회원가입 유도 (redirect 연동) */}
         {!isAuthenticated && applicationAvailable && (
           <Alert
             message="로그인이 필요합니다"
             description={
               <span>
-                프로그램 신청을 위해 <Link to="/login">로그인</Link> 또는{' '}
-                <Link to="/register">회원가입</Link>이 필요합니다.
+                프로그램 신청을 위해 <Link to={loginTo}>로그인</Link> 또는{' '}
+                <Link to={registerTo}>회원가입</Link>이 필요합니다.
               </span>
             }
             type="warning"

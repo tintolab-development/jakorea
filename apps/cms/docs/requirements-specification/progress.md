@@ -87,21 +87,27 @@
 
 ## 3. 프로그램 (C)
 
-### ⚠️ FR-C01 (P1) "신청 참여" 페이지
+### ✅ FR-C01 (P1) "신청 참여" 페이지
 
 **요구사항**: 프로그램 리스트 + 상세 진입 + 신청 CTA 제공
 
-**구현 상태**: ⚠️ **부분 완료** (UI/Mock만 존재)
+**구현 상태**: ✅ **완료** (2026-01-26)
 
 - ✅ 프로그램 목록 페이지 존재
 - ✅ 프로그램 상세 Drawer 존재
 - ✅ 신청 CTA 제공
-- ❌ 실제 신청 프로세스 미구현 (Mock 데이터 기반)
-- ❌ 로그인/회원가입 유도 동선 미명확
+- ✅ 실제 신청 프로세스 (createApplication, /programs/:id/apply 역할별 폼, 내부 모달)
+- ✅ 로그인/회원가입 유도 동선: 비로그인 시 로그인·회원가입 링크에 redirect 연동, 로그인 후 신청 페이지 복귀
 
 **파일 위치**:
 - `src/pages/programs/program-list-page.tsx`
-- `src/features/program/ui/program-detail-drawer.tsx`
+- `src/features/program/ui/program-detail-drawer.tsx` — handleApplicationClick 로그인 redirect (기존)
+- `src/features/program/ui/program-application-card.tsx` — applyRedirectPath, 로그인/회원가입 Link redirect (2026-01-26)
+- `src/features/program/ui/program-basic-info-tab.tsx` — applyRedirectPath 전달 (2026-01-26)
+- `src/features/auth/hooks/use-register.ts` — redirectPath 지원, 가입 후 /login?redirect=… (2026-01-26)
+- `src/pages/auth/register-page.tsx` — redirect 쿼리 연동, 푸터 로그인 링크 redirect (2026-01-26)
+- `src/pages/auth/login-page.tsx` — 회원가입 링크 redirect 연동 (2026-01-26)
+- `src/pages/programs/program-application-page.tsx` — 비로그인 시 /login?redirect=… 리다이렉트 (기존)
 
 ---
 

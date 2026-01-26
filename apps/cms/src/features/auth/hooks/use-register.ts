@@ -1,6 +1,7 @@
 /**
  * 회원가입 Hook
  * Phase 0.1.2: 회원가입 흐름 (FR-B01, FR-B02)
+ * FR-C01: redirectPath 지원 — 신청 유도 후 회원가입 시 로그인 redirect 유지
  */
 
 import { useState } from 'react'
@@ -8,6 +9,12 @@ import { useNavigate } from 'react-router-dom'
 import { message } from 'antd'
 import { register } from '@/entities/user/api/register-service'
 import type { RegisterRequest, RegisterResponse } from '@/types/register'
+import { MESSAGES } from '@/shared/constants'
+
+interface UseRegisterOptions {
+  /** 로그인 페이지로 이동 시 넘길 redirect 쿼리 (예: /programs/:id/apply) */
+  redirectPath?: string
+}
 
 interface UseRegisterReturn {
   loading: boolean
@@ -16,7 +23,8 @@ interface UseRegisterReturn {
   clearError: () => void
 }
 
-export function useRegister(): UseRegisterReturn {
+export function useRegister(options: UseRegisterOptions = {}): UseRegisterReturn {
+  const { redirectPath } = options
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -28,14 +36,16 @@ export function useRegister(): UseRegisterReturn {
     try {
       const response = await register(request)
       message.success(MESSAGES.success.registerCompleted)
-      // 회원가입 성공 시 로그인 페이지로 이동
-      navigate('/login', { replace: true })
+      const loginUrl = redirectPath
+        ? `/login?redirect=${encodeURIComponent(redirectPath)}`
+        : '/login'
+      navigate(loginUrl, { replace: true })
       return response
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('회원가입에 실패했습니다.')
-      setError(error)
-      message.error(error.message)
-      throw error
+      const errObj = err instanceof Error ? err : new Error('회원가입에 실패했습니다.')
+      setError(errObj)
+      message.error(errObj.message)
+      throw errObj
     } finally {
       setLoading(false)
     }
