@@ -3,9 +3,11 @@
  * Phase 2.2: 사이드 패널로 상세 정보 표시 (Ant Design 컴포넌트 다양하게 활용)
  */
 
-import { Descriptions, Tag, Tabs, Space, Timeline, Alert, Typography, Divider } from 'antd'
+import { Descriptions, Tag, Tabs, Space, Timeline, Alert, Typography, Divider, Modal } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
+import { SchoolApplicationForm } from './school-application-form'
+import { IndividualApplicationForm } from './individual-application-form'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { useSchoolService } from '@/features/school/hooks/use-school-service'
 import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
@@ -73,7 +75,7 @@ export function ApplicationDetailDrawer({
   isAdmin = false,
   currentUser,
 }: ApplicationDetailDrawerProps) {
-  const { selectedApplication: storeSelectedApplication, updateStatus } = useApplicationStore()
+  const { selectedApplication: storeSelectedApplication, updateStatus, updateApplication, fetchApplicationById } = useApplicationStore()
   const { user: authUser } = useAuthStore()
 
   // 실제 사용자 정보 (currentUser가 있으면 사용, 없으면 authUser 사용)
@@ -91,6 +93,10 @@ export function ApplicationDetailDrawer({
   const [notificationSent, setNotificationSent] = useState(false)
   const [notificationLoading, setNotificationLoading] = useState(false)
   const [notificationHistory, setNotificationHistory] = useState<NotificationRecord[]>([])
+
+  // Task 3.2.1: FR-F01 - 신청서 수정 모달
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editLoading, setEditLoading] = useState(false)
 
   // Phase 4.6: 진행 상태 관리
   const { history, fetchHistory, loading: statusHistoryLoading } = useStatusChange()
@@ -134,6 +140,49 @@ export function ApplicationDetailDrawer({
     } finally {
       setNotificationLoading(false)
     }
+  }
+
+  // Task 3.2.1: FR-F01 - 신청서 수정 핸들러
+  const handleEdit = () => {
+    if (!displayApplication || !isAdminUser || !canWrite) return
+    if (isApplicationFinalStatus(displayApplication.status)) {
+      message.warning('최종 상태인 신청서는 수정할 수 없습니다.')
+      return
+    }
+    setEditModalOpen(true)
+  }
+
+  const handleEditSubmit = async (data: unknown) => {
+    if (!displayApplication) return
+    setEditLoading(true)
+    try {
+      // 역할별 폼 데이터를 Application 업데이트 데이터로 변환
+      const updateData: Parameters<typeof updateApplication>[1] = {
+        notes: (data as { notes?: string }).notes,
+      }
+
+      // 개인 신청서: customFields 업데이트
+      if (displayApplication.subjectType === 'student' && 'customFields' in data) {
+        updateData.customFields = (data as { customFields?: Record<string, unknown> }).customFields
+      }
+
+      // 학교 신청서: 세부 정보는 현재 Application 타입에 직접 필드가 없으므로
+      // notes에 텍스트로 저장 (향후 Application 타입 확장 시 별도 필드로 저장 가능)
+      // TODO: Application 타입에 schoolName, address 등 필드 추가 시 별도 처리
+
+      await updateApplication(displayApplication.id, updateData)
+      await fetchApplicationById(displayApplication.id)
+      setEditModalOpen(false)
+      showSuccessMessage(MESSAGES.success.updated)
+    } catch (error) {
+      handleError(error, { defaultMessage: MESSAGES.error.update })
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const handleEditCancel = () => {
+    setEditModalOpen(false)
   }
 
   const { getByIdSync } = useProgramService()
@@ -209,7 +258,7 @@ export function ApplicationDetailDrawer({
                 {
                   key: 'edit',
                   label: '오기재 사항 수정',
-                  onClick: onEdit,
+                  onClick: handleEdit,
                   icon: <EditOutlined />,
                 },
               ]
@@ -481,6 +530,45 @@ export function ApplicationDetailDrawer({
           },
         ]}
       />
+      {/* Task 3.2.1: FR-F01 - 역할별 신청서 수정 모달 */}
+      {displayApplication && editModalOpen && (
+        <Modal
+          open={editModalOpen}
+          title="오기재 사항 수정"
+          onCancel={handleEditCancel}
+          footer={null}
+          width={LAYOUT_CONSTANTS.widths.modal.large}
+          destroyOnClose
+        >
+          {displayApplication.subjectType === 'school' && program ? (
+            <SchoolApplicationForm
+              program={program}
+              application={displayApplication}
+              onSubmit={async data => {
+                await handleEditSubmit(data)
+              }}
+              onCancel={handleEditCancel}
+              loading={editLoading}
+            />
+          ) : displayApplication.subjectType === 'student' && program ? (
+            <IndividualApplicationForm
+              program={program}
+              application={displayApplication}
+              onSubmit={async data => {
+                await handleEditSubmit(data)
+              }}
+              onCancel={handleEditCancel}
+              loading={editLoading}
+            />
+          ) : (
+            <Alert
+              type="warning"
+              message="이 신청서 유형은 수정할 수 없습니다."
+              description="학교 또는 개인 신청서만 수정 가능합니다."
+            />
+          )}
+        </Modal>
+      )}
     </BaseDetailDrawer>
   )
 }

@@ -302,25 +302,28 @@
 **파일 위치**:
 - `src/pages/applications/application-list-page.tsx`
 - `src/features/application/ui/notification-button.tsx`
-- `src/entities/application/api/application-service.ts` - updateStatus (2026-01-22)
+- `src/features/application/ui/application-detail-drawer.tsx` (역할별 폼 수정 모달 추가, 2026-01-26)
+- `src/features/application/ui/school-application-form.tsx` (수정 모드 지원, 2026-01-26)
+- `src/entities/application/api/application-service.ts` - updateStatus, update (수정 이력 기록)
 - `src/entities/application-progress/api/status-change-service.ts` - appendReceivedLog (2026-01-22)
 - `src/entities/application/api/application-notification-service.ts` - sendApplicationNotification (2026-01-22)
 - `src/shared/constants/application-notification.ts` - getReviewMessage (2026-01-22)
 
 ---
 
-### ⚠️ FR-F01-1 (P1) 교육 신청 내역 (개인)
+### ✅ FR-F01-1 (P1) 교육 신청 내역 (개인)
 
 **요구사항**: 교육 신청 결과 안내, 신청서 오기재 사항 수정
 
-**구현 상태**: ⚠️ **부분 완료** (UI/Mock만 존재)
+**구현 상태**: ✅ **완료** (2026-01-26, Task 3.2.1)
 
 - ✅ 개인 신청 폼 존재
 - ✅ 신청 결과 화면 존재
-- ❌ 신청서 수정 기능 미구현
+- ✅ 신청서 수정 기능 (역할별 폼 수정 모드, 수정 가능 상태 체크, 수정 이력 기록)
 
 **파일 위치**:
-- `src/features/application/ui/individual-application-form.tsx`
+- `src/features/application/ui/individual-application-form.tsx` (수정 모드 지원, 2026-01-26)
+- `src/features/application/ui/application-detail-drawer.tsx` (역할별 폼 수정 모달, 2026-01-26)
 
 ---
 

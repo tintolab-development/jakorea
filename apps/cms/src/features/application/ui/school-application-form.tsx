@@ -1,16 +1,18 @@
 /**
  * 학교 신청서 폼 컴포넌트
  * Phase 0.2.2: 신청서 작성 (FR-C03)
+ * Task 3.2.1: FR-F01 - 신청서 수정 기능 (수정 모드 지원)
  * §3.1 학교 신청 프로세스 - 신청서 작성
  */
 
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, Input, InputNumber, Button, Space, Upload, message, Alert } from 'antd'
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { schoolApplicationSchema, type SchoolApplicationFormData } from '@/entities/application/model/schema'
-import type { Program } from '@/types/domain'
+import type { Program, Application } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UploadFile } from 'antd/es/upload/interface'
 import { MESSAGES } from '@/shared/constants'
@@ -19,6 +21,7 @@ const { TextArea } = Input
 
 interface SchoolApplicationFormProps {
   program: Program
+  application?: Application // 수정 모드: 기존 신청서 데이터
   applicationPath?: unknown // 향후 사용 예정
   onSubmit: (data: SchoolApplicationFormData) => Promise<void>
   onCancel: () => void
@@ -35,6 +38,7 @@ const UPLOAD_POLICY = {
 
 export function SchoolApplicationForm({
   program,
+  application,
   applicationPath, // 향후 사용 예정
   onSubmit,
   onCancel,
@@ -43,6 +47,7 @@ export function SchoolApplicationForm({
   // 향후 applicationPath 사용 예정
   void applicationPath
   const { user } = useAuthStore()
+  const isEditMode = !!application
 
   const {
     register,
@@ -50,17 +55,34 @@ export function SchoolApplicationForm({
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm<SchoolApplicationFormData>({
     resolver: zodResolver(schoolApplicationSchema),
     defaultValues: {
       programId: program.id,
       subjectType: 'school',
-      subjectId: user?.id || '',
-      status: 'submitted',
+      subjectId: application?.subjectId || user?.id || '',
+      status: application?.status || 'submitted',
       schoolName: user?.schoolInfo?.schoolName || '',
       address: user?.schoolInfo?.address || '',
+      notes: application?.notes || '',
     },
   })
+
+  // 수정 모드: Application 데이터로 폼 초기화
+  useEffect(() => {
+    if (application) {
+      reset({
+        programId: application.programId,
+        subjectType: 'school',
+        subjectId: application.subjectId,
+        status: application.status,
+        schoolName: user?.schoolInfo?.schoolName || '',
+        address: user?.schoolInfo?.address || '',
+        notes: application.notes || '',
+      })
+    }
+  }, [application, user, reset])
 
   const handleSampleDownload = async () => {
     try {
@@ -227,7 +249,7 @@ export function SchoolApplicationForm({
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit" loading={loading}>
-            신청하기
+            {isEditMode ? '수정하기' : '신청하기'}
           </Button>
           <Button onClick={onCancel}>취소</Button>
         </Space>

@@ -1,14 +1,15 @@
 /**
  * 개인(참여자) 신청서 폼 컴포넌트
  * Phase 0.2.2: 신청서 작성 (FR-C03) + 템플릿 기반 동적 폼
+ * Task 3.2.1: FR-F01 - 신청서 수정 기능 (수정 모드 지원)
  */
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, Input, Button, Space } from 'antd'
 import { individualApplicationSchema, type IndividualApplicationFormData } from '@/entities/application/model/schema'
-import type { Program } from '@/types/domain'
+import type { Program, Application } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getFormTemplateByProgramId } from '@/data/mock/form-templates'
 import {
@@ -20,6 +21,7 @@ const { TextArea } = Input
 
 interface IndividualApplicationFormProps {
   program: Program
+  application?: Application // 수정 모드: 기존 신청서 데이터
   applicationPath?: unknown
   onSubmit: (data: IndividualApplicationFormData) => Promise<void>
   onCancel: () => void
@@ -28,6 +30,7 @@ interface IndividualApplicationFormProps {
 
 export function IndividualApplicationForm({
   program,
+  application,
   applicationPath,
   onSubmit,
   onCancel,
@@ -37,6 +40,7 @@ export function IndividualApplicationForm({
   const { user } = useAuthStore()
   const template = useMemo(() => getFormTemplateByProgramId(program.id), [program.id])
   const [customFieldErrors, setCustomFieldErrors] = useState<Record<string, string>>({})
+  const isEditMode = !!application
 
   const {
     register,
@@ -44,16 +48,32 @@ export function IndividualApplicationForm({
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm<IndividualApplicationFormData>({
     resolver: zodResolver(individualApplicationSchema),
     defaultValues: {
       programId: program.id,
       subjectType: 'student',
-      subjectId: user?.id || '',
-      status: 'submitted',
-      customFields: {},
+      subjectId: application?.subjectId || user?.id || '',
+      status: application?.status || 'submitted',
+      customFields: (application?.customFields as Record<string, unknown>) || {},
+      notes: application?.notes || '',
     },
   })
+
+  // 수정 모드: Application 데이터로 폼 초기화
+  useEffect(() => {
+    if (application) {
+      reset({
+        programId: application.programId,
+        subjectType: 'student',
+        subjectId: application.subjectId,
+        status: application.status,
+        customFields: (application.customFields as Record<string, unknown>) || {},
+        notes: application.notes || '',
+      })
+    }
+  }, [application, reset])
 
   const customFieldsValue = watch('customFields') ?? {}
 
@@ -111,7 +131,7 @@ export function IndividualApplicationForm({
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit" loading={loading}>
-            신청하기
+            {isEditMode ? '수정하기' : '신청하기'}
           </Button>
           <Button onClick={onCancel}>취소</Button>
         </Space>
