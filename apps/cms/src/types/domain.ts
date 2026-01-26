@@ -270,6 +270,13 @@ export interface Settlement {
   documentGeneratedAt?: DateValue
   notes?: string
   attachments?: SettlementAttachment[] // 증빙 파일 메타데이터 (Mock)
+  /** FR-G01: 통행료 증빙 검토 (관리자 검토 프로세스) */
+  tollReceiptReview?: {
+    status: 'pending' | 'approved' | 'rejected'
+    reviewedAt?: DateValue
+    reviewedBy?: UUID
+    comment?: string
+  }
   /** Phase 0.2.5: 강사 산출내역 확인 (FR-E01) */
   calculationResult?: SettlementCalculationResult
   approvalHistories?: Array<{

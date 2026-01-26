@@ -377,11 +377,11 @@
 
 ## 7. 정산/지급 (G)
 
-### ⚠️ FR-G01 (P1) 교통비/강사료 자동 산출
+### ✅ FR-G01 (P1) 교통비/강사료 자동 산출
 
 **요구사항**: 산출 로직은 정책표 기반(지역/정액/실비 등), 강사비 지급 시 사업소득자 여부 확인(3.3% / 8.8%)
 
-**구현 상태**: ⚠️ **부분 완료** (기본 UI 완료, 산출 로직 부분 구현)
+**구현 상태**: ✅ **완료** (2026-01-26, Task 4.1.1)
 
 - ✅ 정산 목록 페이지 존재
 - ✅ 정산 상세 Drawer 존재
@@ -391,7 +391,9 @@
 - ✅ 교통비 계산 로직 (60km 초과 시)
 - ✅ 숙박비 계산 로직 (일괄 80,000원)
 - ✅ 사업소득자 여부 확인 필드 존재
-- ⚠️ 일사일교 사업 특수성 반영 (부분 완료)
+- ✅ 일사일교 사업 특수성 반영 (rule.isSpecialProgram, 설정 UI, 2026-01-26)
+- ✅ 거리 계산 로직 (Haversine Mock, 지도 API 연동 준비, `distance-calculation.ts`, 2026-01-26)
+- ✅ 통행료 증빙 검토 프로세스 (검토 완료/반려, `tollReceiptReview`, 2026-01-26)
 - ✅ 실제 산출 결과 검증 (validateSettlementResult, 2026-01-22)
 - ✅ 프로젝트별 커스터마이징 구현 (정산 규칙 서비스, 프로그램별 규칙 적용, 2026-01-22)
 - ✅ 관리자 검토/승인 프로세스 (정산 검토 목록, 증빙자료 확인, 승인/반려, 2026-01-22)
@@ -399,10 +401,12 @@
 
 **파일 위치**:
 - `src/pages/settlements/monthly-settlement-page.tsx`
-- `src/entities/settlement/lib/settlement-calculation.ts` - validateSettlementResult, calculateSettlementWithProgramRule 추가 (2026-01-22)
-- `src/entities/settlement/api/settlement-calculation-rule-service.ts` - 정산 규칙 서비스 (2026-01-22)
+- `src/entities/settlement/lib/settlement-calculation.ts` - validateSettlementResult, calculateSettlementWithProgramRule, isSpecialProgram (2026-01-26)
+- `src/entities/settlement/lib/distance-calculation.ts` (신규, 2026-01-26)
+- `src/entities/settlement/api/settlement-calculation-rule-service.ts` - isSpecialProgram (2026-01-26)
 - `src/pages/admin/admin-settlement-review-page.tsx` - 정산 검토 목록 페이지 (2026-01-22)
-- `src/features/settlement/ui/settlement-detail-review-drawer.tsx` - 정산 상세 검토 Drawer, 금액 조정 기능 (2026-01-22)
+- `src/features/settlement/ui/settlement-detail-review-drawer.tsx` - 금액 조정, 통행료 증빙 검토 (2026-01-26)
+- `src/pages/settlements/settlement-calculation-settings-page.tsx` - 일사일교 사업 적용 스위치 (2026-01-26)
 - `src/shared/constants/settlement-rules.ts`
 
 ---
@@ -576,23 +580,24 @@
 
 ## 11. 정산 산식 (별첨2)
 
-### ⚠️ 부분 완료: 정산 산식 구현
+### ✅ 정산 산식 구현 (FR-G01 연동)
 
 **요구사항**: 별첨2 교통비 산출 산식
 
-**구현 상태**: ⚠️ **부분 완료**
+**구현 상태**: ✅ **완료** (2026-01-26)
 
 - ✅ 강사비 지급기준표 정의 (1~6차시, 기본/장거리)
 - ✅ 교통비 지급 기준 (60km 초과 시)
 - ✅ 숙박비 (일괄 80,000원)
 - ✅ 사업소득자 여부 확인 (3.3% / 8.8%)
-- ⚠️ 일사일교 사업 특수성 반영 (부분 완료)
-- ❌ 거리 계산 로직 미완성
-- ❌ 통행료 증빙 검토 프로세스 미구현
+- ✅ 일사일교 사업 특수성 반영 (rule.isSpecialProgram, 설정 UI)
+- ✅ 거리 계산 로직 (Haversine Mock, 지도 API 연동 준비)
+- ✅ 통행료 증빙 검토 프로세스 (검토 완료/반려)
 
 **파일 위치**:
 - `src/shared/constants/settlement-rules.ts`
 - `src/entities/settlement/lib/settlement-calculation.ts`
+- `src/entities/settlement/lib/distance-calculation.ts`
 
 ---
 

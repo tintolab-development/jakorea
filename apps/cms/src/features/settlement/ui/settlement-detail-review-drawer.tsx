@@ -1,6 +1,7 @@
 /**
  * 정산 상세 검토 Drawer 컴포넌트
  * Phase 0.4.2: 관리자 정산 검토 - 증빙자료 확인, 승인/반려 버튼
+ * Task 4.1.1 (FR-G01): 통행료 증빙 검토 프로세스
  */
 
 import { useState } from 'react'
@@ -14,6 +15,7 @@ import { MESSAGES } from '@/shared/constants'
 import { useSettlementDetail } from '../hooks/use-settlement-detail'
 import { useSettlementReview } from '../hooks/use-settlement-review'
 import { settlementService } from '@/entities/settlement/api/settlement-service'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import './settlement-detail-drawer.css'
 
 const { Text, Title } = Typography
@@ -41,6 +43,11 @@ export function SettlementDetailReviewDrawer({
   const [adjustingItem, setAdjustingItem] = useState<SettlementItem | null>(null)
   const [adjustForm] = Form.useForm()
   const [adjusting, setAdjusting] = useState(false)
+  const [tollRejectModalOpen, setTollRejectModalOpen] = useState(false)
+  const [tollRejectComment, setTollRejectComment] = useState('')
+  const [tollReviewing, setTollReviewing] = useState(false)
+
+  const { user } = useAuthStore()
 
   const {
     programTitle,
@@ -107,6 +114,57 @@ export function SettlementDetailReviewDrawer({
       message.error(MESSAGES.error.amountAdjustFailed)
     } finally {
       setAdjusting(false)
+    }
+  }
+
+  const hasTransportFee = settlement?.items.some(i => i.type === 'transportation') ?? false
+  const tollReview = settlement?.tollReceiptReview
+  const tollStatus = tollReview?.status ?? 'pending'
+
+  const handleTollReceiptApprove = async () => {
+    if (!settlement || !user?.id) return
+    setTollReviewing(true)
+    try {
+      const updated = await settlementService.update(settlement.id, {
+        tollReceiptReview: {
+          status: 'approved',
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: user.id,
+        },
+      })
+      message.success(MESSAGES.success.tollReceiptReviewCompleted)
+      if (onUpdate) await onUpdate(updated)
+    } catch {
+      message.error(MESSAGES.error.tollReceiptReviewFailed)
+    } finally {
+      setTollReviewing(false)
+    }
+  }
+
+  const handleTollReceiptRejectOpen = () => {
+    setTollRejectComment('')
+    setTollRejectModalOpen(true)
+  }
+
+  const handleTollReceiptRejectConfirm = async () => {
+    if (!settlement || !user?.id) return
+    setTollReviewing(true)
+    try {
+      const updated = await settlementService.update(settlement.id, {
+        tollReceiptReview: {
+          status: 'rejected',
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: user.id,
+          comment: tollRejectComment.trim() || undefined,
+        },
+      })
+      message.success(MESSAGES.success.tollReceiptReviewCompleted)
+      setTollRejectModalOpen(false)
+      if (onUpdate) await onUpdate(updated)
+    } catch {
+      message.error(MESSAGES.error.tollReceiptReviewFailed)
+    } finally {
+      setTollReviewing(false)
     }
   }
 
@@ -209,6 +267,62 @@ export function SettlementDetailReviewDrawer({
         )}
       </Card>
 
+      {hasTransportFee && (
+        <>
+          <Divider />
+          <Card title="통행료 증빙 검토" size="small">
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              {tollStatus === 'pending' && (
+                <Text type="secondary">교통비 항목이 있어 통행료 증빙 검토가 필요합니다.</Text>
+              )}
+              {tollStatus === 'approved' && (
+                <Space>
+                  <Tag color="success">검토 완료</Tag>
+                  {tollReview?.reviewedAt && (
+                    <Text type="secondary">
+                      {new Date(tollReview.reviewedAt).toLocaleString('ko-KR')}
+                    </Text>
+                  )}
+                </Space>
+              )}
+              {tollStatus === 'rejected' && (
+                <Space direction="vertical" size={4}>
+                  <Tag color="error">반려</Tag>
+                  {tollReview?.comment && <Text type="secondary">{tollReview.comment}</Text>}
+                  {tollReview?.reviewedAt && (
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {new Date(tollReview.reviewedAt).toLocaleString('ko-KR')}
+                    </Text>
+                  )}
+                </Space>
+              )}
+              {tollStatus === 'pending' && canApprove && (
+                <Space>
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<CheckOutlined />}
+                    onClick={handleTollReceiptApprove}
+                    loading={tollReviewing}
+                  >
+                    검토 완료
+                  </Button>
+                  <Button
+                    danger
+                    size="small"
+                    icon={<CloseOutlined />}
+                    onClick={handleTollReceiptRejectOpen}
+                    loading={tollReviewing}
+                  >
+                    반려
+                  </Button>
+                </Space>
+              )}
+            </Space>
+          </Card>
+        </>
+      )}
+
       <Divider />
 
       <Title level={5}>정산 항목</Title>
@@ -255,6 +369,28 @@ export function SettlementDetailReviewDrawer({
           </Table.Summary>
         )}
       />
+
+      {/* 통행료 증빙 반려 모달 */}
+      <Modal
+        title="통행료 증빙 반려"
+        open={tollRejectModalOpen}
+        onCancel={() => setTollRejectModalOpen(false)}
+        onOk={handleTollReceiptRejectConfirm}
+        confirmLoading={tollReviewing}
+        okText="반려 확정"
+        cancelText="취소"
+      >
+        <Form layout="vertical">
+          <Form.Item label="반려 사유 (선택)">
+            <Input.TextArea
+              rows={3}
+              value={tollRejectComment}
+              onChange={e => setTollRejectComment(e.target.value)}
+              placeholder="통행료 증빙 반려 사유를 입력하세요"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Phase 0.4.2: 금액 조정 모달 */}
       <Modal

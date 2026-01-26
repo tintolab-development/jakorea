@@ -14,7 +14,7 @@ import {
 const defaultGlobalRule: SettlementCalculationRule = {
   id: 'global-rule-1',
   name: '기본 정산 규칙',
-  description: '전역 기본 정산 산출 규칙 (§별첨2 기준)',
+  description: '전역 기본 정산 산출 규칙 (§별첨2 기준, 일사일교 특수성)',
   instructorFee: {},
   transportation: {
     type: 'distance',
@@ -27,6 +27,7 @@ const defaultGlobalRule: SettlementCalculationRule = {
     fixedAmount: ACCOMMODATION_FEE,
     enabled: true,
   },
+  isSpecialProgram: false,
   enabled: true,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -58,6 +59,7 @@ export const settlementCalculationRuleService = {
       ...patch,
       id: globalRule.id,
       programId: undefined,
+      isSpecialProgram: patch.isSpecialProgram ?? globalRule.isSpecialProgram,
       createdAt: globalRule.createdAt,
       updatedAt: now,
       instructorFee: { ...globalRule.instructorFee, ...(patch.instructorFee ?? {}) },

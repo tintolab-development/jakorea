@@ -31,6 +31,7 @@ function ruleToFormValues(rule: SettlementCalculationRule) {
   return {
     name: rule.name,
     description: rule.description,
+    isSpecialProgram: rule.isSpecialProgram ?? false,
     instructorFee: {
       defaultAmount: rule.instructorFee?.defaultAmount ?? 200000,
     },
@@ -81,6 +82,7 @@ export function SettlementCalculationSettingsPage() {
       await settlementCalculationRuleService.updateGlobalRule({
         name: values.name ?? '기본 정산 규칙',
         description: values.description ?? '전역 정산 산출 규칙',
+        isSpecialProgram: values.isSpecialProgram ?? false,
         instructorFee: values.instructorFee,
         transportation: values.transportation,
         accommodation: values.accommodation,
@@ -153,6 +155,24 @@ export function SettlementCalculationSettingsPage() {
             >
               <InputNumber style={{ width: '100%' }} min={0} suffix="원" />
             </Form.Item>
+          </Card>
+
+          {/* 일사일교 사업 특수성 (FR-G01) */}
+          <Card title="일사일교 사업 특수성" style={{ marginBottom: 16 }}>
+            <Form.Item
+              name="isSpecialProgram"
+              valuePropName="checked"
+              label="일사일교 사업 적용"
+              tooltip="거리 기준 60km 초과 시 교통비 지급, 타지역 이동 시 숙박비 실비 등"
+            >
+              <Switch checkedChildren="적용" unCheckedChildren="미적용" />
+            </Form.Item>
+            <Alert
+              message="적용 시 거주지 기준 60km 초과 교통비, 숙박비 실비(타지역) 등이 반영됩니다."
+              type="info"
+              showIcon
+              style={{ marginTop: 8 }}
+            />
           </Card>
 
           {/* 교통비 계산 규칙 */}

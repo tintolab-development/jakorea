@@ -154,22 +154,22 @@ export function calculateSettlement(
   return result
 }
 
-/**
- * Phase 0.4.1: 프로그램별 규칙을 적용한 정산 계산 (비동기)
- * @param programId 프로그램 ID
- * @param params 산출 파라미터
- * @returns 산출 결과
- */
+  /**
+   * Phase 0.4.1: 프로그램별 규칙을 적용한 정산 계산 (비동기)
+   * FR-G01: 일사일교 사업 특수성 - rule.isSpecialProgram 반영
+   * @param programId 프로그램 ID
+   * @param params 산출 파라미터
+   * @returns 산출 결과
+   */
 export async function calculateSettlementWithProgramRule(
   programId: UUID,
   params: Omit<SettlementCalculationParams, 'rule'>
 ): Promise<SettlementCalculationResult> {
-  // 프로그램별 규칙 가져오기
   const rule = await settlementCalculationRuleService.getRuleByProgram(programId)
-  
-  // 규칙을 적용하여 계산
+  const isSpecialProgram = params.isSpecialProgram ?? rule?.isSpecialProgram ?? false
   return calculateSettlement({
     ...params,
+    isSpecialProgram,
     rule,
   })
 }
