@@ -377,10 +377,7 @@ export function ReportListPage() {
           style: { cursor: 'pointer' },
         })}
         pagination={{
-          defaultPageSize: PAGINATION_CONFIG.defaultPageSize,
-          pageSizeOptions: [...PAGINATION_CONFIG.pageSizeOptions],
-          showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
-          showTotal: PAGINATION_CONFIG.showTotal,
+          ...PAGINATION_CONFIG,
         }}
         scroll={{ x: 1000 }}
       />

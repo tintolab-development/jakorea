@@ -6,7 +6,7 @@
  * 강사 등록을 모달로 변경
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Space, Modal, Drawer } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
@@ -22,6 +22,13 @@ import { useModalState } from '@/shared/hooks/use-modal-state'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+
+interface InstructorListQueryParams extends Record<string, string | undefined> {
+  search?: string
+  region?: string
+}
 
 export function InstructorListPage() {
   const location = useLocation()
@@ -35,6 +42,8 @@ export function InstructorListPage() {
     selectedInstructor,
     setSelectedInstructor,
   } = useInstructorStore()
+  const { params, setParams } = useQueryParams<InstructorListQueryParams>()
+
   // Form 모달 상태 관리
   const {
     open: formModalOpen,
@@ -61,6 +70,52 @@ export function InstructorListPage() {
   useEffect(() => {
     fetchInstructors()
   }, [fetchInstructors])
+
+  // 지역 옵션 생성
+  const regionOptions = useMemo(() => {
+    const regions = Array.from(new Set(instructors.map(i => i.region))).sort()
+    return [
+      { label: '전체', value: 'all' },
+      ...regions.map(region => ({ label: region, value: region })),
+    ]
+  }, [instructors])
+
+  // 필터링된 데이터
+  const filteredInstructors = useMemo(() => {
+    let filtered = instructors
+
+    // 검색어 필터
+    if (params.search) {
+      const searchLower = params.search.toLowerCase()
+      filtered = filtered.filter(
+        instructor =>
+          instructor.name.toLowerCase().includes(searchLower) ||
+          instructor.contactEmail?.toLowerCase().includes(searchLower) ||
+          instructor.specialty?.some(s => s.toLowerCase().includes(searchLower))
+      )
+    }
+
+    // 지역 필터
+    if (params.region && params.region !== 'all') {
+      filtered = filtered.filter(instructor => instructor.region === params.region)
+    }
+
+    return filtered
+  }, [instructors, params.search, params.region])
+
+  // 필터 핸들러
+  const handleFilterChange = (key: keyof InstructorListQueryParams, value: any) => {
+    setParams({
+      [key]: value === 'all' || value === '' ? undefined : value,
+    })
+  }
+
+  const handleFilterReset = () => {
+    setParams({
+      search: undefined,
+      region: undefined,
+    })
+  }
 
   const handleNewClick = () => {
     openFormModal()
@@ -139,7 +194,27 @@ export function InstructorListPage() {
           강사 등록
         </PermissionButton>
       </Space>
-      <InstructorList data={instructors} loading={loading} onView={handleView} />
+      <ListPageFilters
+        filters={{
+          region: params.region || 'all',
+        }}
+        onFilterChange={handleFilterChange}
+        searchValue={params.search || ''}
+        onSearchChange={(value) => setParams({ search: value || undefined })}
+        searchPlaceholder="이름, 이메일, 전문분야 검색"
+        filterConfig={[
+          {
+            key: 'region',
+            type: 'select',
+            options: regionOptions,
+            placeholder: '지역 선택',
+          },
+        ]}
+        onReset={handleFilterReset}
+        showReset={!!(params.search || params.region)}
+      />
+
+      <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />
 
       <Drawer
         title="강사 상세"

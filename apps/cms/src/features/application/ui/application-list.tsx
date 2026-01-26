@@ -18,6 +18,7 @@ import {
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 
 const { Option } = Select
 
@@ -243,11 +244,10 @@ export function ApplicationList({
           style: { cursor: 'pointer' },
         })}
         pagination={{
+          ...PAGINATION_CONFIG,
           current: table.getState().pagination.pageIndex + 1,
           pageSize: table.getState().pagination.pageSize,
           total: table.getFilteredRowModel().rows.length,
-          showSizeChanger: true,
-          showTotal: (total) => `총 ${total}개`,
           onChange: (page, pageSize) => {
             table.setPageIndex(page - 1)
             table.setPageSize(pageSize)

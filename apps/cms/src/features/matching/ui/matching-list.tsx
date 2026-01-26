@@ -21,6 +21,7 @@ import dayjs from 'dayjs'
 import { commonStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import './matching-list.css'
 
 const { Option } = Select
@@ -224,8 +225,7 @@ export function MatchingList({
         loading={loading}
         rowClassName={() => 'matching-list__row'}
         pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
+          ...PAGINATION_CONFIG,
           showTotal: total => `총 ${total}개`,
         }}
         onRow={record => ({

@@ -17,6 +17,7 @@ import type { Interview } from '@/types/interview'
 import type { User } from '@/types/user'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { mockUsers } from '@/data/mock'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 
 interface InterviewListProps {
   data: Interview[]
@@ -182,8 +183,7 @@ export function InterviewList({
           : undefined
       }
       pagination={{
-        defaultPageSize: 20,
-        showSizeChanger: true,
+        ...PAGINATION_CONFIG,
         showTotal: total => `총 ${total}건`,
       }}
     />

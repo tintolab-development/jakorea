@@ -11,6 +11,7 @@ import type { User, UserRole } from '@/types/user'
 import { RoleBadge, getRoleLabel, getProgramRoleLabel } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { formatDate } from '@/shared/utils'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 
 interface UserListProps {
   data: Omit<User, 'password'>[]
@@ -168,8 +169,7 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       rowKey="id"
       scroll={{ x: 1400 }}
       pagination={{
-        defaultPageSize: 20,
-        showSizeChanger: true,
+        ...PAGINATION_CONFIG,
         showTotal: (total) => `총 ${total}명`,
       }}
     />

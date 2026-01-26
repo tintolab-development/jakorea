@@ -11,6 +11,7 @@ import { canDownloadPaymentStatement } from '@/shared/utils/download-permission'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { PermissionRequestButton } from '@/features/permission-request/ui/permission-request-button'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import './payment-statement-list.css'
 
 const { Option } = Select
@@ -126,8 +127,7 @@ export function PaymentStatementList({
         rowKey="id"
         loading={loading}
         pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
+          ...PAGINATION_CONFIG,
           showTotal: total => `총 ${total}개`,
         }}
         columns={[

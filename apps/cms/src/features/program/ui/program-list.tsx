@@ -3,7 +3,7 @@
  * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
  */
 
-import { Table, Input, Select, Button, Space, Tag, Dropdown, DatePicker, Image } from 'antd'
+import { Table, Input, Select, Button, Space, Dropdown, DatePicker, Image, Tag } from 'antd'
 import { message } from 'antd'
 import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons'
@@ -22,6 +22,7 @@ import {
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   addFavoriteProgram,
@@ -565,14 +566,14 @@ export function ProgramList({
 
               const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
                 status => {
-                  const optionLabel = getProgramLifecycleLabel(status)
-                  const optionColor = getProgramLifecycleColor(status)
                   return {
                     key: status,
                     label: (
-                      <Tag color={optionColor} style={{ margin: 0 }}>
-                        {optionLabel}
-                      </Tag>
+                      <StatusBadge
+                        status={status}
+                        statusConfig={programLifecycleStatusStatusConfig}
+                        showIcon={false}
+                      />
                     ),
                     onClick: (e) => {
                       e?.domEvent?.stopPropagation()
@@ -667,11 +668,10 @@ export function ProgramList({
           style: { cursor: 'pointer' },
         })}
         pagination={{
+          ...PAGINATION_CONFIG,
           current: table.getState().pagination.pageIndex + 1,
           pageSize: table.getState().pagination.pageSize,
           total: table.getFilteredRowModel().rows.length,
-          showSizeChanger: true,
-          showTotal: total => `총 ${total}개`,
           onChange: (page, pageSize) => {
             table.setPageIndex(page - 1)
             table.setPageSize(pageSize)

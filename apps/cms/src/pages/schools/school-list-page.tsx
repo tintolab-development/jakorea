@@ -5,7 +5,7 @@
  * 학교 등록을 모달로 변경
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Button, Space, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
@@ -20,6 +20,14 @@ import type { SchoolFormData } from '@/entities/school/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import type { School } from '@/types/domain'
+
+interface SchoolListQueryParams extends Record<string, string | undefined> {
+  search?: string
+  region?: string
+}
 
 export function SchoolListPage() {
   const location = useLocation()
@@ -28,6 +36,7 @@ export function SchoolListPage() {
   const canWrite = canPerformWriteAction(user)
 
   const { schools, loading, fetchSchools, createSchool, updateSchool } = useSchoolStore()
+  const { params, setParams } = useQueryParams<SchoolListQueryParams>()
   
   // Form 모달 상태 관리
   const {
@@ -46,6 +55,52 @@ export function SchoolListPage() {
   useEffect(() => {
     fetchSchools()
   }, [fetchSchools])
+
+  // 지역 옵션 생성
+  const regionOptions = useMemo(() => {
+    const regions = Array.from(new Set(schools.map(s => s.region))).sort()
+    return [
+      { label: '전체', value: 'all' },
+      ...regions.map(region => ({ label: region, value: region })),
+    ]
+  }, [schools])
+
+  // 필터링된 데이터
+  const filteredSchools = useMemo(() => {
+    let filtered = schools
+
+    // 검색어 필터
+    if (params.search) {
+      const searchLower = params.search.toLowerCase()
+      filtered = filtered.filter(
+        school =>
+          school.name.toLowerCase().includes(searchLower) ||
+          school.contactPerson?.toLowerCase().includes(searchLower) ||
+          school.contactEmail?.toLowerCase().includes(searchLower)
+      )
+    }
+
+    // 지역 필터
+    if (params.region && params.region !== 'all') {
+      filtered = filtered.filter(school => school.region === params.region)
+    }
+
+    return filtered
+  }, [schools, params.search, params.region])
+
+  // 필터 핸들러
+  const handleFilterChange = (key: keyof SchoolListQueryParams, value: any) => {
+    setParams({
+      [key]: value === 'all' || value === '' ? undefined : value,
+    })
+  }
+
+  const handleFilterReset = () => {
+    setParams({
+      search: undefined,
+      region: undefined,
+    })
+  }
 
   const handleNewClick = () => {
     openFormModal()
@@ -88,7 +143,27 @@ export function SchoolListPage() {
           </Button>
         )}
       </Space>
-      <SchoolList data={schools} loading={loading} />
+      <ListPageFilters
+        filters={{
+          region: params.region || 'all',
+        }}
+        onFilterChange={handleFilterChange}
+        searchValue={params.search || ''}
+        onSearchChange={(value) => setParams({ search: value || undefined })}
+        searchPlaceholder="학교명, 담당자, 이메일 검색"
+        filterConfig={[
+          {
+            key: 'region',
+            type: 'select',
+            options: regionOptions,
+            placeholder: '지역 선택',
+          },
+        ]}
+        onReset={handleFilterReset}
+        showReset={!!(params.search || params.region)}
+      />
+
+      <SchoolList data={filteredSchools} loading={loading} />
 
       <Modal
         open={formModalOpen}

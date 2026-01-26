@@ -6,7 +6,7 @@
 
 import { useState, useCallback } from 'react'
 import { settlementService } from '@/entities/settlement/api/settlement-service'
-import type { Settlement } from '@/types/domain'
+import type { Settlement, SettlementStatus } from '@/types/domain'
 
 export interface UseSettlementServiceReturn {
   /** 로딩 상태 */
@@ -25,6 +25,14 @@ export interface UseSettlementServiceReturn {
   update: (id: string, data: Partial<Omit<Settlement, 'id' | 'createdAt'>>) => Promise<Settlement>
   /** 정산 삭제 */
   delete: (id: string) => Promise<void>
+  /** 정산 산출 완료 처리 (pending -> calculated) */
+  calculate: (id: string) => Promise<Settlement>
+  /** 정산 승인 처리 (review -> approved 또는 approved -> paid) */
+  approve: (id: string, targetStatus?: 'approved' | 'paid') => Promise<Settlement>
+  /** 정산 반려 처리 (calculated/review -> cancelled) */
+  reject: (id: string, reason?: string) => Promise<Settlement>
+  /** 정산 상태 변경 */
+  updateStatus: (id: string, status: SettlementStatus) => Promise<Settlement>
 }
 
 /**
@@ -123,6 +131,69 @@ export function useSettlementService(): UseSettlementServiceReturn {
     }
   }, [])
 
+  const calculate = useCallback(async (id: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await settlementService.update(id, { status: 'calculated' })
+      return result
+    } catch (err) {
+      const error = err as Error
+      setError(error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const approve = useCallback(async (id: string, targetStatus: 'approved' | 'paid' = 'approved') => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await settlementService.update(id, { status: targetStatus })
+      return result
+    } catch (err) {
+      const error = err as Error
+      setError(error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const reject = useCallback(async (id: string, _reason?: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      // rejectionReason은 Settlement 타입에 없으므로 status만 업데이트
+      const result = await settlementService.update(id, { 
+        status: 'cancelled',
+      })
+      return result
+    } catch (err) {
+      const error = err as Error
+      setError(error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const updateStatus = useCallback(async (id: string, status: SettlementStatus) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await settlementService.update(id, { status })
+      return result
+    } catch (err) {
+      const error = err as Error
+      setError(error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   return {
     loading,
     error,
@@ -131,5 +202,9 @@ export function useSettlementService(): UseSettlementServiceReturn {
     create,
     update,
     delete: deleteSettlement,
+    calculate,
+    approve,
+    reject,
+    updateStatus,
   }
 }
