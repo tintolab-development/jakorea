@@ -100,7 +100,8 @@ export function ProgramDetailDrawer({
 
   // Phase 0.5.2: 프로그램 ACL 접근 제어 (수정/삭제 버튼 노출용, Drawer 열기에는 미적용)
   // 리스트 클릭 시 상세 패널은 항상 표시. ACL은 편집 권한 제어에만 사용.
-  const canAccessForEdit = useMemo(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _canAccessForEdit = useMemo(() => {
     if (!displayProgram || !user) return false
     return canAccessProgramItem(user, displayProgram, 'VIEW')
   }, [displayProgram, user])

@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Space, Card, Tabs, Table, Tag, Button, Typography, Alert } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
@@ -31,7 +32,7 @@ export function VolunteerProgramListPage() {
   const { user: currentUser } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ tab?: string }>()
   
   // 2뎁스 카테고리명 가져오기
   const categoryName =
@@ -136,14 +137,14 @@ export function VolunteerProgramListPage() {
   // - ADMIN/그 외: 프로그램 목록
   const defaultTabKey = isIndividual ? 'volunteers' : 'list'
 
-  const tabParam = searchParams.get('tab')
+  const tabParam = params.tab
   const activeTabKey = tabParam || defaultTabKey
 
   const handleTabChange = (key: string) => {
-    const newParams = new URLSearchParams(searchParams)
     // 탭 상태를 항상 URL에 유지 (관리자 화면에서 탭 지정 안정화)
-    newParams.set('tab', key)
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      tab: key,
+    })
   }
 
   const handleUserView = useCallback((user: Omit<User, 'password'>) => {
@@ -269,16 +270,16 @@ export function VolunteerProgramListPage() {
   // tab 쿼리파라미터가 없거나, 현재 역할에서 유효하지 않은 값이면 기본 탭으로 강제 세팅
   useEffect(() => {
     const validKeys = new Set(tabItems.map(t => t.key))
-    const current = searchParams.get('tab')
+    const current = params.tab
     const next = current && validKeys.has(current) ? current : defaultTabKey
 
     // 이미 올바른 값이면 아무 것도 하지 않음
     if (current === next) return
 
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.set('tab', next)
-    setSearchParams(nextParams, { replace: true })
-  }, [defaultTabKey, searchParams, setSearchParams, tabItems])
+    setParams({
+      tab: next,
+    })
+  }, [defaultTabKey, params.tab, setParams, tabItems])
 
   return (
     <div>

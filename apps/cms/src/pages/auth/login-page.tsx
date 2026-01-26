@@ -7,7 +7,8 @@
 
 import { Form, Input, Button, Card, message, Typography, Space, Alert, Tabs } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
@@ -16,6 +17,7 @@ import { SocialLoginForm } from '@/features/auth/ui/social-login-form'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
+import { MESSAGES } from '@/shared/constants'
 import './login-page.css'
 
 const { Text } = Typography
@@ -41,7 +43,7 @@ const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const { params } = useQueryParams<{ redirect?: string }>()
   const authStore = useAuthStore()
   const { login, loading, error, isAuthenticated, requiresMfa, user } = authStore
   const [form] = Form.useForm()
@@ -58,7 +60,7 @@ export function LoginPage() {
   } = useLoginAttempts()
 
   // Phase 0.2.1: FR-C01 - redirect 파라미터 처리
-  const redirectPath = searchParams.get('redirect')
+  const redirectPath = params.redirect
 
   // 이미 로그인된 경우 redirect 파라미터 또는 역할별 리다이렉트
   useEffect(() => {
@@ -92,7 +94,7 @@ export function LoginPage() {
       const currentUser = authStore.user
       if (currentUser) {
         const finalRedirectPath = redirectPath || getRedirectPathByRole(currentUser)
-        message.success('로그인 성공')
+        message.success(MESSAGES.success.loginSuccess)
         navigate(finalRedirectPath, { replace: true })
       } else {
         navigate(redirectPath || '/', { replace: true })

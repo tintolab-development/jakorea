@@ -5,6 +5,7 @@
 import { Modal, Form, Input, Select, Button, message } from 'antd'
 import { SendOutlined } from '@ant-design/icons'
 import { useState } from 'react'
+import { MESSAGES } from '@/shared/constants'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -33,13 +34,13 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
       // TODO: API 연동 필요
       console.log('Submitting inquiry:', values)
       // await submitInquiry(values)
-      message.success('문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.')
+      message.success(MESSAGES.success.inquirySubmitted)
       form.resetFields()
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to submit inquiry:', e)
-      message.error('문의 접수 중 오류가 발생했습니다. 다시 시도해주세요.')
+      message.error(MESSAGES.error.inquirySubmitFailed)
     } finally {
       setSubmitting(false)
     }

@@ -5,7 +5,8 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Input, Space, Card, Button, Table, Tabs, Select, Segmented } from 'antd'
 import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -36,7 +37,7 @@ type ViewMode = 'list' | 'calendar'
 export function MySettlementListPage() {
   const { user } = useAuthStore()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams, clearParams } = useQueryParams<{ view?: string; period?: string; status?: string; search?: string }>()
   const [settlements, setSettlements] = useState<Settlement[]>([])
   const [allSettlements, setAllSettlements] = useState<Settlement[]>([]) // 탭 카운트용
   const [loading, setLoading] = useState(false)
@@ -48,16 +49,16 @@ export function MySettlementListPage() {
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '정산 이력/현황'
 
   // 뷰 모드와 기간 필터 (쿼리 파라미터에서 읽기)
-  const viewMode = (searchParams.get('view') as ViewMode) || 'list'
-  const selectedPeriod = searchParams.get('period') || dayjs().format('YYYY-MM')
+  const viewMode = (params.view as ViewMode) || 'list'
+  const selectedPeriod = params.period || dayjs().format('YYYY-MM')
   
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo(() => {
     return {
-      status: (searchParams.get('status') as SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all') || 'all',
-      search: searchParams.get('search') || undefined,
+      status: (params.status as SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all') || 'all',
+      search: params.search || undefined,
     }
-  }, [searchParams])
+  }, [params])
 
   const loadSettlements = useCallback(async () => {
     if (!user?.instructorId) return
@@ -128,23 +129,15 @@ export function MySettlementListPage() {
   }, [user?.instructorId, filters, loadSettlements, loadAllSettlements])
 
   const handleStatusChange = (status: SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all') => {
-    const newParams = new URLSearchParams(searchParams)
-    if (status === 'all') {
-      newParams.delete('status')
-    } else {
-      newParams.set('status', status)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      status: status === 'all' ? undefined : status,
+    })
   }
 
   const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value) {
-      newParams.delete('search')
-    } else {
-      newParams.set('search', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      search: value || undefined,
+    })
   }
 
   const handleViewSettlement = (settlement: Settlement) => {
@@ -153,15 +146,15 @@ export function MySettlementListPage() {
   }
 
   const handleViewModeChange = (mode: ViewMode) => {
-    const newParams = new URLSearchParams(searchParams)
-    newParams.set('view', mode)
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      view: mode,
+    })
   }
 
   const handlePeriodChange = (period: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    newParams.set('period', period)
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      period: period,
+    })
   }
 
   const handleCalendarSelect = (_date: dayjs.Dayjs, settlement?: Settlement) => {
@@ -345,7 +338,7 @@ export function MySettlementListPage() {
                   }))}
                 />
               </Space>
-              <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
+              <Button onClick={() => clearParams()}>필터 초기화</Button>
             </Space>
           </Card>
           <Card>

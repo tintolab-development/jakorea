@@ -8,6 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { InstructorDetail } from '@/features/instructor/ui/instructor-detail'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import { message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 
 export function InstructorDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -32,10 +33,10 @@ export function InstructorDetailPage() {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       try {
         await deleteInstructor(id)
-        message.success('강사가 삭제되었습니다')
+        message.success(MESSAGES.success.instructorDeleted)
         navigate('/instructors')
       } catch {
-        message.error('삭제 중 오류가 발생했습니다')
+        message.error(MESSAGES.error.delete)
       }
     }
   }

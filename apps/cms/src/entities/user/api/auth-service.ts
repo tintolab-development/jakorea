@@ -125,7 +125,7 @@ const socialUserMap = new Map<string, string>()
  */
 export async function loginWithPhone(
   phoneNumber: string,
-  _otpCode: string
+  _otpCode: string // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
   // Mock: 실제 API 호출 대신 지연 시간 시뮬레이션
   await new Promise(resolve => setTimeout(resolve, 500))

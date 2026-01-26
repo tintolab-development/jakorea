@@ -5,7 +5,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
   Card,
   List,
@@ -35,31 +36,29 @@ const { Search } = Input
 
 export function NoticeListPage() {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ category?: string; q?: string }>()
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
 
   // 검색어 로컬 상태 (즉각적인 UI 반영용)
-  const [searchInput, setSearchInput] = useState(searchParams.get('q') || '')
+  const [searchInput, setSearchInput] = useState(params.q || '')
 
   // 필터 상태 (URL과 동기화)
-  const categoryFilter = searchParams.get('category') || '전체'
-  const searchQuery = searchParams.get('q') || ''
+  const categoryFilter = params.category || '전체'
+  const searchQuery = params.q || ''
 
   const categoryName = getCategoryNameByPath(location.pathname, 1) || '공지사항'
 
   // Debounce 로직: searchInput이 변경되면 500ms 후 URL 파라미터 업데이트
   useEffect(() => {
     const handler = setTimeout(() => {
-      setSearchParams(prev => {
-        if (!searchInput) prev.delete('q')
-        else prev.set('q', searchInput)
-        return prev
-      }, { replace: true })
+      setParams({
+        q: searchInput || undefined,
+      })
     }, 500)
 
     return () => clearTimeout(handler)
-  }, [searchInput, setSearchParams])
+  }, [searchInput, setParams])
 
   // 필터링 및 정렬 로직
   const filteredNotices = useMemo(() => {
@@ -88,10 +87,8 @@ export function NoticeListPage() {
   }, [categoryFilter, searchQuery])
 
   const handleCategoryChange = (key: string) => {
-    setSearchParams(prev => {
-      if (key === '전체') prev.delete('category')
-      else prev.set('category', key)
-      return prev
+    setParams({
+      category: key === '전체' ? undefined : key,
     })
   }
 

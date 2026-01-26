@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Modal, message } from 'antd'
 import { useMatchingStore } from '@/features/matching/model/matching-store'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { MESSAGES } from '@/shared/constants'
 import type { Matching } from '@/types/domain'
 import type { MatchingFormData } from '@/entities/matching/model/schema'
 
@@ -91,10 +92,10 @@ export function useMatchingManagement(): UseMatchingManagementResult {
     try {
       if (editingMatching) {
         await updateMatching(editingMatching.id, data)
-        message.success('매칭이 수정되었습니다')
+        message.success(MESSAGES.success.matchingUpdated)
       } else {
         await createMatching(data)
-        message.success('매칭이 등록되었습니다')
+        message.success(MESSAGES.success.matchingCreated)
       }
       closeForm()
       fetchMatchings()
@@ -118,24 +119,24 @@ export function useMatchingManagement(): UseMatchingManagementResult {
 
     try {
       await deleteMatching(matchingToDelete.id)
-      message.success('매칭이 삭제되었습니다')
+      message.success(MESSAGES.success.matchingDeleted)
       closeDeleteConfirm()
       if (selectedMatching?.id === matchingToDelete.id) {
         closeDrawer()
       }
       fetchMatchings()
     } catch {
-      message.error('삭제 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.matchingDeleteFailed)
     }
   }, [closeDeleteConfirm, closeDrawer, deleteMatching, fetchMatchings, matchingToDelete, selectedMatching?.id])
 
   const confirmMatchingStatus = useCallback(async (matching: Matching) => {
     try {
       await confirmMatching(matching.id)
-      message.success('매칭이 확정되었습니다')
+      message.success(MESSAGES.success.matchingConfirmed)
       fetchMatchings()
     } catch {
-      message.error('확정 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.matchingConfirmFailed)
     }
   }, [confirmMatching, fetchMatchings])
 
@@ -146,10 +147,10 @@ export function useMatchingManagement(): UseMatchingManagementResult {
       onOk: async () => {
         try {
           await cancelMatching(matching.id, '사용자 요청')
-          message.success('매칭이 취소되었습니다')
+          message.success(MESSAGES.success.matchingCancelled)
           fetchMatchings()
         } catch {
-          message.error('취소 중 오류가 발생했습니다')
+          message.error(MESSAGES.error.matchingCancelFailed)
         }
       },
     })

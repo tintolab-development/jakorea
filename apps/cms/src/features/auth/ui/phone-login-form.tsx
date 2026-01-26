@@ -13,6 +13,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import type { OtpSendRequest, OtpVerifyRequest } from '@/types/mfa'
 import { getUserByPhone } from '@/data/mock/users'
+import { MESSAGES } from '@/shared/constants'
 
 interface PhoneLoginFormProps {
   onSuccess?: () => void
@@ -69,7 +70,7 @@ export function PhoneLoginForm({ onSuccess }: PhoneLoginFormProps) {
       // 전화번호로 사용자 찾기
       const user = getUserByPhone(phone)
       if (!user) {
-        message.error('등록된 전화번호가 아닙니다.')
+        message.error(MESSAGES.error.phoneNotRegistered)
         return
       }
 
@@ -80,7 +81,7 @@ export function PhoneLoginForm({ onSuccess }: PhoneLoginFormProps) {
       } as OtpSendRequest)
 
       setOtpSent(true)
-      message.success('인증번호가 발송되었습니다.')
+      message.success(MESSAGES.success.codeSent)
     } catch (error: any) {
       if (error?.errorFields) {
         // Form validation error
@@ -99,7 +100,7 @@ export function PhoneLoginForm({ onSuccess }: PhoneLoginFormProps) {
       // 전화번호로 사용자 찾기
       const user = getUserByPhone(phone)
       if (!user) {
-        message.error('등록된 전화번호가 아닙니다.')
+        message.error(MESSAGES.error.phoneNotRegistered)
         return
       }
 
@@ -111,12 +112,12 @@ export function PhoneLoginForm({ onSuccess }: PhoneLoginFormProps) {
 
       if (verified) {
         setOtpVerified(true)
-        message.success('인증이 완료되었습니다.')
+        message.success(MESSAGES.success.authenticated)
 
         // 로그인 처리
         await handleLogin(phone, values.otpCode)
       } else {
-        message.error('인증번호가 올바르지 않습니다.')
+        message.error(MESSAGES.error.invalidCode)
       }
     } catch (error: any) {
       message.error(error?.message || '인증에 실패했습니다.')
@@ -142,7 +143,7 @@ export function PhoneLoginForm({ onSuccess }: PhoneLoginFormProps) {
       // MFA 필요 시 처리 (관리자)
       if (response.requiresMfa && response.mfaState) {
         // MFA는 별도 모달에서 처리되므로 여기서는 성공으로 간주
-        message.success('로그인 성공')
+        message.success(MESSAGES.success.loginSuccess)
         if (onSuccess) {
           onSuccess()
         }
@@ -151,7 +152,7 @@ export function PhoneLoginForm({ onSuccess }: PhoneLoginFormProps) {
 
       // 역할별 리다이렉트
       const finalRedirectPath = redirectPath || getRedirectPathByRole(response.user)
-      message.success('로그인 성공')
+      message.success(MESSAGES.success.loginSuccess)
       navigate(finalRedirectPath, { replace: true })
 
       if (onSuccess) {

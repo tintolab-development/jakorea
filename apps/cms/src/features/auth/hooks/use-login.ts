@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { message } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+import { MESSAGES } from '@/shared/constants'
 import type { LoginRequest } from '@/types/user'
 
 interface UseLoginReturn {
@@ -36,7 +37,7 @@ export function useLogin(): UseLoginReturn {
         const currentUser = authStore.user
         if (currentUser) {
           const redirectPath = getRedirectPathByRole(currentUser)
-          message.success('로그인 성공')
+          message.success(MESSAGES.success.loginSuccess)
           navigate(redirectPath, { replace: true })
         } else {
           navigate('/', { replace: true })

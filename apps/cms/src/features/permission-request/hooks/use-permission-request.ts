@@ -25,7 +25,7 @@ export function usePermissionRequest(): UsePermissionRequestResult {
     setSubmitting(true)
     try {
       const request = await createPermissionRequest(input)
-      message.success('권한 요청이 제출되었습니다.')
+      message.success(MESSAGES.success.permissionRequestSubmitted)
       return request
     } catch (error: any) {
       message.error(error.message || '권한 요청 제출에 실패했습니다.')

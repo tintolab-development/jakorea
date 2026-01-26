@@ -9,6 +9,7 @@ import { SponsorForm } from '@/features/sponsor/ui/sponsor-form'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
 import type { SponsorFormData } from '@/entities/sponsor/model/schema'
 import { message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 
 export function SponsorFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -27,10 +28,10 @@ export function SponsorFormPage() {
     try {
       if (isEdit && id) {
         await updateSponsor(id, data)
-        message.success('스폰서 정보가 수정되었습니다')
+        message.success(MESSAGES.success.sponsorUpdated)
       } else {
         await createSponsor(data)
-        message.success('스폰서가 등록되었습니다')
+        message.success(MESSAGES.success.sponsorCreated)
       }
       navigate('/sponsors')
     } catch {

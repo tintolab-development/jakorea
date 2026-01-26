@@ -6,7 +6,8 @@
 
 import { Form, Input, Select, Button, Card, message, Space, Typography, InputNumber } from 'antd'
 import { UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -14,6 +15,7 @@ import type { InstructorApplicationFormData } from '@/types/interview'
 import { submitInstructorApplication } from '@/entities/interview/api/interview-service'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES } from '@/shared/constants'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -72,11 +74,11 @@ const specialtyOptions = [
 
 export function InstructorApplicationPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const { params } = useQueryParams<{ programId?: string; role?: string; fixedRole?: string }>()
   const { user } = useAuthStore()
 
-  const roleParam = searchParams.get('role')
-  const fixedRole = searchParams.get('fixedRole') === '1'
+  const roleParam = params.role
+  const fixedRole = params.fixedRole === '1'
 
   const defaultRole: ApplicationFormData['role'] =
     roleParam === 'INDIVIDUAL' || roleParam === 'SCHOOL'
@@ -104,7 +106,7 @@ export function InstructorApplicationPage() {
 
   const onSubmit = async (data: ApplicationFormData) => {
     if (!user?.id) {
-      message.error('로그인이 필요합니다.')
+      message.error(MESSAGES.error.loginRequired)
       navigate('/login')
       return
     }

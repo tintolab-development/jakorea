@@ -107,10 +107,10 @@ export function HistoryDetailPage() {
   const handleDownload = async (certificate: { id: string; title: string; downloadUrl: string; issuedAt: Date | string }) => {
     try {
       await downloadCertificate(certificate)
-      message.success('증빙 문서가 다운로드되었습니다')
+      message.success(MESSAGES.success.certificateDownloaded)
     } catch (error) {
       console.error('Failed to download certificate:', error)
-      message.error('증빙 문서 다운로드 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.certificateDownloadFailed)
     }
   }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { message } from 'antd'
 import { MESSAGES } from '@/shared/constants/messages'
-import type { EmailTemplate, SmsTemplate, Template } from '@/types/template'
+import type { EmailTemplate, SmsTemplate } from '@/types/template'
 
 type TemplateType = EmailTemplate | SmsTemplate
 

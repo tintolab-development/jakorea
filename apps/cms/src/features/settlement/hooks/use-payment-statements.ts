@@ -119,7 +119,7 @@ export function usePaymentStatements() {
         const instructor = instructorService.getByIdSync(statement.instructorId)
 
         if (!settlement || !program || !instructor) {
-          message.error('지급조서 정보를 찾을 수 없습니다')
+          message.error(MESSAGES.error.paymentStatementNotFound)
           return
         }
 
@@ -131,10 +131,10 @@ export function usePaymentStatements() {
         })
 
         setStatements(prev => prev.map(item => (item.id === updated.id ? updated : item)))
-        message.success('지급조서가 다운로드되었습니다')
+        message.success(MESSAGES.success.paymentStatementDownloaded)
       } catch (error) {
         console.error('Failed to download payment statement:', error)
-        message.error('지급조서 다운로드 중 오류가 발생했습니다')
+        message.error(MESSAGES.error.paymentStatementDownloadFailed)
       }
     },
     [user]

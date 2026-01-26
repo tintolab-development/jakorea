@@ -16,6 +16,7 @@ import { SchoolApplicationForm } from '@/features/application/ui/school-applicat
 import { InstructorApplicationForm } from '@/features/application/ui/instructor-application-form'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
+import { MESSAGES } from '@/shared/constants'
 
 const { Title } = Typography
 
@@ -40,7 +41,7 @@ export function ProgramApplicationPage() {
   useEffect(() => {
     const loadProgram = async () => {
       if (!programId) {
-        message.error('프로그램 ID가 없습니다.')
+        message.error(MESSAGES.error.programIdRequired)
         navigate('/programs', { replace: true })
         return
       }
@@ -50,7 +51,7 @@ export function ProgramApplicationPage() {
         await fetchPrograms()
       } catch (error) {
         console.error('프로그램 로드 실패:', error)
-        message.error('프로그램 정보를 불러오는 중 오류가 발생했습니다.')
+        message.error(MESSAGES.error.programLoadFailed)
         navigate('/programs', { replace: true })
       } finally {
         setProgramLoading(false)
@@ -95,12 +96,12 @@ export function ProgramApplicationPage() {
         applicationData.studentListFileUrl = uploadResult.url
       }
       await createApplication(applicationData)
-      message.success('신청이 완료되었습니다.')
+      message.success(MESSAGES.success.applicationCompleted)
       // Phase 0.2.3: 신청 완료 페이지로 이동
       navigate(`/programs/${programId}/apply/complete`, { replace: true })
     } catch (error) {
       console.error('신청 실패:', error)
-      message.error('신청 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.applicationFailed)
       throw error
     } finally {
       setLoading(false)

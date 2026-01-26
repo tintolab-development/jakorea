@@ -4,7 +4,7 @@
  * V3 Phase 4: PDF 생성 기능 추가
  */
 
-// @ts-ignore - @zurmokeeper/exceljs 타입 선언 문제
+// @ts-expect-error - @zurmokeeper/exceljs 타입 선언 문제
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { Settlement, Instructor } from '@/types/domain'
 import { downloadExcel, generateFilename } from './file-download'

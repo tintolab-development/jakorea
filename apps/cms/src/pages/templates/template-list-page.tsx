@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useMemo } from 'react'
-import { useLocation, useNavigate, useSearchParams, Outlet } from 'react-router-dom'
+import { useLocation, useNavigate, Outlet } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Space, Tabs } from 'antd'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
@@ -12,7 +13,7 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 export function TemplateListPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ tab?: string }>()
   const categoryName = getCategoryNameByPath(location.pathname, 1) || '템플릿 관리'
 
   const tabItems = useMemo(
@@ -33,7 +34,7 @@ export function TemplateListPage() {
   }, [location.pathname])
 
   // query 기반 활성 탭 (우선순위: query -> path)
-  const tabParam = searchParams.get('tab')
+  const tabParam = params.tab
   const activeKey = tabParam || activeFromPath
 
   useEffect(() => {
@@ -41,16 +42,16 @@ export function TemplateListPage() {
     const validKeys = new Set(tabItems.map(t => t.key))
     const next = tabParam && validKeys.has(tabParam) ? tabParam : activeFromPath
     if (tabParam !== next) {
-      const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('tab', next)
-      setSearchParams(nextParams, { replace: true })
+      setParams({
+        tab: next,
+      })
     }
-  }, [activeFromPath, searchParams, setSearchParams, tabItems, tabParam])
+  }, [activeFromPath, params.tab, setParams, tabItems, tabParam])
 
   const handleTabChange = (key: string) => {
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.set('tab', key)
-    setSearchParams(nextParams, { replace: true })
+    setParams({
+      tab: key,
+    })
 
     const target = tabItems.find(t => t.key === key)?.path || '/templates/files'
     if (location.pathname !== target) {

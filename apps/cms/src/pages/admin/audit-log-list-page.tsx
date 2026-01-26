@@ -3,22 +3,40 @@
  * Phase 0.5.4: 감사 로그 UI
  */
 
-import { useState } from 'react'
+import { useMemo } from 'react'
 import { Table, Form, Select, Input, DatePicker, Button, Space, Tag, Card } from 'antd'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useAuditLogs } from '@/features/audit-log/hooks/use-audit-logs'
 import { AUDIT_EVENT_OPTIONS, AUDIT_EVENT_COLORS } from '@/shared/constants/audit-events'
 import type { AuditLog, AuditLogFilters } from '@/types/audit-log'
 import type { ColumnsType } from 'antd/es/table'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { PAGINATION_CONFIG } from '@/shared/constants'
 import dayjs from 'dayjs'
 
 const { RangePicker } = DatePicker
 
+interface AuditLogQueryParams extends Record<string, string | undefined> {
+  page?: string
+  pageSize?: string
+  eventType?: string
+  userName?: string
+  startDate?: string
+  endDate?: string
+}
+
 export function AuditLogListPage() {
-  const [filters, setFilters] = useState<AuditLogFilters>({
-    page: 1,
-    pageSize: 20,
-  })
+  const { params } = useQueryParams<AuditLogQueryParams>()
+  
+  // URL 파라미터에서 필터 값 읽기
+  const filters = useMemo<AuditLogFilters>(() => ({
+    page: params.page ? parseInt(params.page, 10) : 1,
+    pageSize: params.pageSize ? parseInt(params.pageSize, 10) : PAGINATION_CONFIG.defaultPageSize,
+    eventType: params.eventType || undefined,
+    userName: params.userName || undefined,
+    startDate: params.startDate || undefined,
+    endDate: params.endDate || undefined,
+  }), [params])
 
   const { logs, total, page, pageSize, loading, fetchLogs } = useAuditLogs({
     filters,
@@ -87,7 +105,7 @@ export function AuditLogListPage() {
             )}
             {programRoles && Object.keys(programRoles).length > 0 && (
               <div style={{ fontSize: '11px', color: '#52c41a', marginTop: 2 }}>
-                프로그램 역할: {Object.entries(programRoles).map(([progId, role]) => `${role}`).join(', ')}
+                프로그램 역할: {Object.entries(programRoles).map(([, role]) => `${role}`).join(', ')}
               </div>
             )}
           </div>
@@ -229,8 +247,9 @@ export function AuditLogListPage() {
             current: page,
             pageSize,
             total,
-            showSizeChanger: true,
-            showTotal: (total) => `총 ${total}건`,
+            showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
+            pageSizeOptions: PAGINATION_CONFIG.pageSizeOptions,
+            showTotal: PAGINATION_CONFIG.showTotal,
             onChange: handleTableChange,
             onShowSizeChange: handleTableChange,
           }}

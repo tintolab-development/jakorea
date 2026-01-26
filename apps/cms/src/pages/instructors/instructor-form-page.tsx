@@ -28,10 +28,10 @@ export function InstructorFormPage() {
     try {
       if (isEdit && id) {
         await updateInstructor(id, data)
-        message.success('강사 정보가 수정되었습니다')
+        message.success(MESSAGES.success.instructorUpdated)
       } else {
         await createInstructor(data)
-        message.success('강사가 등록되었습니다')
+        message.success(MESSAGES.success.instructorCreated)
       }
       navigate('/instructors')
     } catch {

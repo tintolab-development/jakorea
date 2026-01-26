@@ -136,13 +136,14 @@ export function ApplicationDetailDrawer({
     }
   }
 
+  const { getByIdSync } = useProgramService()
+  const { getNameById: getSchoolNameById } = useSchoolService()
+  const { getNameById: getInstructorNameById } = useInstructorService()
+
   if (!displayApplication) return null
 
   const isFinalStatus = isApplicationFinalStatus(displayApplication.status)
 
-  const { getByIdSync } = useProgramService()
-  const { getNameById: getSchoolNameById } = useSchoolService()
-  const { getNameById: getInstructorNameById } = useInstructorService()
   const program = getByIdSync(displayApplication.programId)
   const subjectName =
     displayApplication.subjectType === 'school'

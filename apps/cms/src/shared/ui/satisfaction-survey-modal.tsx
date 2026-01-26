@@ -57,13 +57,13 @@ export function SatisfactionSurveyModal({
       // TODO: API 연동 필요
       console.log('Submitting satisfaction survey:', values)
       // await submitSatisfactionSurvey(program.id, values)
-      message.success('만족도 조사가 제출되었습니다. 감사합니다!')
+      message.success(MESSAGES.success.satisfactionSurveySubmittedWithThanks)
       form.resetFields()
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to submit satisfaction survey:', e)
-      message.error('만족도 조사 제출 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.satisfactionSurveySubmitFailed)
     } finally {
       setSubmitting(false)
     }

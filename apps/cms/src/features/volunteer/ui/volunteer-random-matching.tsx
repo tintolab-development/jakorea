@@ -14,6 +14,7 @@ import {
   getVolunteerIds,
 } from '../lib/volunteer-matching'
 import { VolunteerPairDetailModal } from './volunteer-pair-detail-modal'
+import { MESSAGES } from '@/shared/constants'
 
 const { Text } = Typography
 
@@ -40,7 +41,7 @@ export function VolunteerRandomMatching({
       const volunteerIds = getVolunteerIds()
 
       if (volunteerIds.length < 2) {
-        message.warning('매칭할 봉사자가 2명 이상 필요합니다.')
+        message.warning(MESSAGES.warning.needAtLeastTwoVolunteers)
         setLoading(false)
         return
       }
@@ -60,7 +61,7 @@ export function VolunteerRandomMatching({
       const matchedPairs = randomMatchVolunteers(volunteerIds, options, matchingHistory)
 
       if (matchedPairs.length === 0) {
-        message.warning('매칭 가능한 조합이 없습니다. 옵션을 조정해주세요.')
+        message.warning(MESSAGES.warning.noMatchingCombination)
         setLoading(false)
         return
       }
@@ -70,7 +71,7 @@ export function VolunteerRandomMatching({
       onMatchComplete?.(matchedPairs)
     } catch (error) {
       console.error('봉사자 매칭 실패:', error)
-      message.error('봉사자 매칭 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.volunteerMatchingFailed)
     } finally {
       setLoading(false)
     }

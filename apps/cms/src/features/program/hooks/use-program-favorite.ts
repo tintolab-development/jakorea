@@ -10,6 +10,7 @@ import {
   removeFavoriteProgram,
   isFavoriteProgram,
 } from '@/entities/program/api/favorite-program-service'
+import { MESSAGES } from '@/shared/constants'
 
 interface UseProgramFavoriteProps {
   open: boolean
@@ -61,15 +62,15 @@ export function useProgramFavorite({
       if (isFavorite) {
         await removeFavoriteProgram(favoriteUserId, program.id)
         setIsFavorite(false)
-        message.success('관심 프로그램에서 제거되었습니다.')
+        message.success(MESSAGES.success.removedFromFavorites)
       } else {
         await addFavoriteProgram(favoriteUserId, program.id)
         setIsFavorite(true)
-        message.success('관심 프로그램에 추가되었습니다.')
+        message.success(MESSAGES.success.addedToFavorites)
       }
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.favoriteProgramProcessFailed)
     } finally {
       setFavoriteLoading(false)
     }

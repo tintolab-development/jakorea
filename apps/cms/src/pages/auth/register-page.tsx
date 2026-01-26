@@ -36,6 +36,7 @@ import { SocialRegisterForm } from '@/features/auth/ui/social-register-form'
 import type { UserRole } from '@/types/user'
 import type { RegisterFormData, RegisterRequest } from '@/types/register'
 import type { SocialProvider } from '@/entities/user/api/auth-service'
+import { MESSAGES } from '@/shared/constants'
 import './register-page.css'
 
 const { Title, Text, Paragraph } = Typography
@@ -94,7 +95,7 @@ export function RegisterPage() {
   // Step 2: 약관 동의 완료
   const handleConsentNext = () => {
     if (!consentValid) {
-      message.warning('필수 약관에 동의해주세요.')
+      message.warning(MESSAGES.warning.requiredAgreement)
       return
     }
     setCurrentStep(2)
@@ -136,19 +137,19 @@ export function RegisterPage() {
   // Step 3: 정보 입력 및 회원가입
   const handleSubmit = async (values: any) => {
     if (!selectedRole) {
-      message.error('가입 유형을 선택해주세요.')
+      message.error(MESSAGES.error.selectRoleType)
       return
     }
 
     // Phase 0.1.3 수정: 휴대폰 본인인증 확인
     if (!phoneVerified && !socialData?.phone) {
-      message.warning('휴대폰 본인인증을 완료해주세요.')
+      message.warning(MESSAGES.warning.completeVerification)
       return
     }
 
     // Phase 0.1.3 수정: 소셜 회원가입이 아닌 경우 비밀번호 필수
     if (!socialProvider && (!values.password || !values.passwordConfirm)) {
-      message.warning('비밀번호를 입력해주세요.')
+      message.warning(MESSAGES.warning.enterPassword)
       return
     }
 

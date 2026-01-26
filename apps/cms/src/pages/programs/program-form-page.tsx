@@ -40,10 +40,10 @@ export function ProgramFormPage() {
 
       if (isEdit && id) {
         await updateProgram(id, programData)
-        message.success('프로그램 정보가 수정되었습니다')
+        message.success(MESSAGES.success.programUpdated)
       } else {
         await createProgram(programData as Omit<Program, 'id' | 'createdAt' | 'updatedAt'>)
-        message.success('프로그램이 등록되었습니다')
+        message.success(MESSAGES.success.programCreated)
       }
       navigate('/programs')
     } catch {

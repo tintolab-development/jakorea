@@ -16,7 +16,7 @@ import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
-// @ts-ignore - @zurmokeeper/exceljs 타입 선언 문제
+// @ts-expect-error - @zurmokeeper/exceljs 타입 선언 문제
 import ExcelJS from '@zurmokeeper/exceljs'
 
 export interface InstructorListItem {

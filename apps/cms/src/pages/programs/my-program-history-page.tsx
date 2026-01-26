@@ -13,6 +13,7 @@ import { getMyProgramDetail, type MyProgram } from '@/entities/program/api/instr
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
 import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
+import { MESSAGES } from '@/shared/constants'
 import { mockApplications, mockMatchings } from '@/data/mock'
 import { programService } from '@/entities/program/api/program-service'
 import { schoolService } from '@/entities/school/api/school-service'
@@ -34,14 +35,14 @@ export function MyProgramHistoryPage() {
     try {
       const data = await getMyProgramDetail(user.instructorId, id)
       if (!data) {
-        message.error('프로그램을 찾을 수 없습니다.')
+        message.error(MESSAGES.error.programNotFound)
         navigate('/programs/my/active')
         return
       }
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      message.error('프로그램 정보를 불러오는 중 오류가 발생했습니다.')
+        message.error(MESSAGES.error.programLoadFailed)
     } finally {
       setLoading(false)
     }

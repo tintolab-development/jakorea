@@ -12,6 +12,7 @@ import { schoolApplicationSchema, type SchoolApplicationFormData } from '@/entit
 import type { Program } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UploadFile } from 'antd/es/upload/interface'
+import { MESSAGES } from '@/shared/constants'
 
 const { TextArea } = Input
 
@@ -65,13 +66,13 @@ export function SchoolApplicationForm({
     // 파일 확장자 검증
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
     if (!UPLOAD_POLICY.studentList.allowedExtensions.includes(fileExtension)) {
-      message.error('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.')
+      message.error(MESSAGES.warning.fileType)
       return false
     }
 
     // 파일 크기 검증
     if (file.size > UPLOAD_POLICY.studentList.maxSize) {
-      message.error('파일 크기는 5MB 이하여야 합니다.')
+      message.error(MESSAGES.warning.fileSizeMax5MB)
       return false
     }
 
@@ -85,7 +86,7 @@ export function SchoolApplicationForm({
       }
       
       if (parseResult.totalCount === 0) {
-        message.error('학생 정보를 찾을 수 없습니다. 엑셀 파일 형식을 확인해주세요.')
+        message.error(MESSAGES.error.studentInfoNotFound)
         return false
       }
 

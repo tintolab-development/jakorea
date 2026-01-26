@@ -12,6 +12,7 @@ import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { useOtpCountdown } from '@/features/auth/hooks/use-otp-countdown'
 import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
+import { MESSAGES } from '@/shared/constants'
 import './mfa-page.css'
 
 const { Text, Title } = Typography
@@ -37,7 +38,7 @@ export function MfaPage() {
         userId: user.id,
         phoneNumber: user.phone || '010-1234-5678',
       })
-      message.success('인증번호가 발송되었습니다.')
+      message.success(MESSAGES.success.codeSent)
       startCountdown()
       resetVerification()
       form.setFieldsValue({ otpCode: '' })
@@ -83,13 +84,13 @@ export function MfaPage() {
   // 만료 시 알림
   useEffect(() => {
     if (isExpired && mfaState && !mfaState.isVerified) {
-      message.warning('인증번호가 만료되었습니다. 다시 발송해주세요.')
+      message.warning(MESSAGES.warning.codeExpired)
     }
   }, [isExpired, mfaState])
 
   const handleVerify = async () => {
     if (!user || !otpCode || otpCode.length !== OTP_LENGTH) {
-      message.error('인증번호 6자리를 입력해주세요.')
+      message.error(MESSAGES.error.enterOtpCode)
       return
     }
 
@@ -103,10 +104,10 @@ export function MfaPage() {
         completeMfa()
         // auth-store의 MFA 인증 완료 처리
         setMfaVerified()
-        message.success('인증이 완료되었습니다.')
+        message.success(MESSAGES.success.authenticated)
         navigate('/')
       } else {
-        message.error('인증번호가 올바르지 않습니다.')
+        message.error(MESSAGES.error.invalidCode)
         form.setFieldsValue({ otpCode: '' })
         setOtpCode('')
       }

@@ -4,7 +4,7 @@
  * Phase 0.2.2 수정: 엑셀 파일 파싱 및 검증 기능 추가
  */
 
-// @ts-ignore - @zurmokeeper/exceljs 타입 선언 문제
+// @ts-expect-error - @zurmokeeper/exceljs 타입 선언 문제
 import ExcelJS from '@zurmokeeper/exceljs'
 
 /**

@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
 import { HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -19,6 +20,7 @@ import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { MESSAGES } from '@/shared/constants'
 import type { Program } from '@/types/domain'
 
 const { Option } = Select
@@ -26,7 +28,7 @@ const { Option } = Select
 export function MyFavoriteProgramsPage() {
   const { user } = useAuthStore()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ status?: string; category?: string; search?: string }>()
   const [programs, setPrograms] = useState<FavoriteProgram[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
@@ -38,11 +40,11 @@ export function MyFavoriteProgramsPage() {
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo<FavoriteProgramFilters>(() => {
     return {
-      status: (searchParams.get('status') as FavoriteProgramFilters['status']) || 'all',
-      category: (searchParams.get('category') as FavoriteProgramFilters['category']) || 'all',
-      search: searchParams.get('search') || '',
+      status: (params.status as FavoriteProgramFilters['status']) || 'all',
+      category: (params.category as FavoriteProgramFilters['category']) || 'all',
+      search: params.search || '',
     }
-  }, [searchParams])
+  }, [params])
 
   const loadPrograms = useCallback(async (userId: string) => {
     setLoading(true)
@@ -51,7 +53,7 @@ export function MyFavoriteProgramsPage() {
       setPrograms(data)
     } catch (error) {
       console.error('관심 프로그램 로드 실패:', error)
-      message.error('관심 프로그램을 불러오는 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.favoriteProgramsLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -64,42 +66,21 @@ export function MyFavoriteProgramsPage() {
     }
   }, [user, loadPrograms])
 
-  const updateSearchParams = (updater: (next: URLSearchParams) => void) => {
-    const nextParams = new URLSearchParams(searchParams)
-    updater(nextParams)
-    if (nextParams.toString() !== searchParams.toString()) {
-      setSearchParams(nextParams, { replace: true })
-    }
-  }
-
   const handleStatusChange = (value: FavoriteProgramFilters['status']) => {
-    updateSearchParams(next => {
-      if (!value || value === 'all') {
-        next.delete('status')
-      } else {
-        next.set('status', value)
-      }
+    setParams({
+      status: !value || value === 'all' ? undefined : value,
     })
   }
 
   const handleCategoryChange = (value: FavoriteProgramFilters['category']) => {
-    updateSearchParams(next => {
-      if (!value || value === 'all') {
-        next.delete('category')
-      } else {
-        next.set('category', value)
-      }
+    setParams({
+      category: !value || value === 'all' ? undefined : value,
     })
   }
 
   const handleSearchChange = (value: string) => {
-    updateSearchParams(next => {
-      const trimmed = value.trim()
-      if (!trimmed) {
-        next.delete('search')
-      } else {
-        next.set('search', trimmed)
-      }
+    setParams({
+      search: value.trim() || undefined,
     })
   }
 
@@ -109,11 +90,11 @@ export function MyFavoriteProgramsPage() {
 
     try {
       await removeFavoriteProgram(userId, programId)
-      message.success('관심 프로그램에서 제거되었습니다.')
+      message.success(MESSAGES.success.removedFromFavorites)
       await loadPrograms(userId) // 목록 새로고침
     } catch (error) {
       console.error('관심 프로그램 해제 실패:', error)
-      message.error('관심 프로그램 해제 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.favoriteProgramRemoveFailed)
     }
   }
 
@@ -251,7 +232,7 @@ export function MyFavoriteProgramsPage() {
             <Option value="school">학교 프로그램</Option>
             <Option value="individual">개인 프로그램</Option>
           </Select>
-          <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
+          <Button onClick={() => setParams({ status: undefined, category: undefined, search: undefined })}>필터 초기화</Button>
         </Space>
       </Card>
 

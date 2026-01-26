@@ -33,7 +33,7 @@ export function EmailTemplateFormModal({
 }: EmailTemplateFormModalProps) {
   const [form] = Form.useForm()
   const { copyText } = useClipboard()
-  const { editorHostRef, editorRef, watchedMarkdown, insertVariable, getMarkdown, getHTML, setMarkdown } =
+  const { editorHostRef, editorRef: _editorRef, watchedMarkdown, insertVariable, getMarkdown, getHTML, setMarkdown } = // eslint-disable-line @typescript-eslint/no-unused-vars
     useTemplateEditor(open, editing?.content.markdown || '')
 
   const watchedVars = useMemo(() => extractTemplateVariables(watchedMarkdown), [watchedMarkdown])

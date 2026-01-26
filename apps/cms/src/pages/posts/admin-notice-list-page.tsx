@@ -31,6 +31,7 @@ import {
   InboxOutlined,
 } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { MESSAGES } from '@/shared/constants'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { mockNotices, type Notice } from '@/data/mock/notices'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -78,7 +79,7 @@ export function AdminNoticeListPage() {
   // 삭제 핸들러
   const handleDelete = (id: string) => {
     setData(prev => prev.filter(item => item.id !== id))
-    message.success('공지사항이 삭제되었습니다.')
+    message.success(MESSAGES.success.noticeDeleted)
   }
 
   // 중요 설정 토글
@@ -86,7 +87,7 @@ export function AdminNoticeListPage() {
     setData(prev => prev.map(item => {
       if (item.id === id) {
         const nextValue = !item.isImportant
-        message.success(`중요 공지 설정이 ${nextValue ? '활성화' : '해제'}되었습니다.`)
+        message.success(MESSAGES.success.importantNoticeToggled(nextValue))
         return { ...item, isImportant: nextValue }
       }
       return item
@@ -128,10 +129,10 @@ export function AdminNoticeListPage() {
 
       if (editingNotice) {
         setData(prev => prev.map(item => item.id === editingNotice.id ? newNotice : item))
-        message.success('공지사항이 수정되었습니다.')
+        message.success(MESSAGES.success.noticeUpdated)
       } else {
         setData(prev => [newNotice, ...prev])
-        message.success('새 공지사항이 등록되었습니다.')
+        message.success(MESSAGES.success.noticeCreated)
       }
       setIsModalOpen(false)
     } catch (e) {

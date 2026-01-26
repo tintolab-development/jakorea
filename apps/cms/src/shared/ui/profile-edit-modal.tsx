@@ -7,6 +7,7 @@ import { SaveOutlined, HomeOutlined, BankOutlined, InfoCircleOutlined, ReadOutli
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { User } from '@/types/user'
+import { MESSAGES } from '@/shared/constants'
 
 const { Text } = Typography
 
@@ -90,12 +91,12 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
       updateUser(updateData)
       
-      message.success('개인정보가 수정되었습니다')
+      message.success(MESSAGES.success.profileUpdated)
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to update profile:', e)
-      message.error('개인정보 수정 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.profileUpdateFailed)
     } finally {
       setSaving(false)
     }

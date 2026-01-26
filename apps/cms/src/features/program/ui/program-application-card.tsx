@@ -41,7 +41,7 @@ export function ProgramApplicationCard({
   capacityAlmostFull,
   applicationCount,
   userHasApplied,
-  userRole,
+  userRole: _userRole, // eslint-disable-line @typescript-eslint/no-unused-vars
   isAdmin = false,
   onApplicationClick,
 }: ProgramApplicationCardProps) {

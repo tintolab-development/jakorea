@@ -127,7 +127,7 @@ const reportStatusStatusConfig = {
 
 export function ReportListPage() {
   const { params, setParams, clearParams } = useQueryParams<ReportListQueryParams>()
-  const { getAll: getAllReports, loading: serviceLoading } = useReportService()
+  const { getAll: getAllReports } = useReportService()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Viewer from '@toast-ui/editor/dist/toastui-editor-viewer'
 import type { EmailTemplate, SmsTemplate } from '@/types/template'
 

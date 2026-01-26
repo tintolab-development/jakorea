@@ -22,9 +22,9 @@ export default function VolunteerEducationPlanPage() {
   const handleSubmit = async () => {
     try {
       await form.validateFields()
-      message.success('교육 계획서가 저장되었습니다.')
+      message.success(MESSAGES.success.educationPlanSaved)
     } catch {
-      message.error('필수 항목을 확인해주세요.')
+      message.error(MESSAGES.error.checkRequiredFields)
     }
   }
 

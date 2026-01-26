@@ -31,7 +31,7 @@ export function useDownloadQuota(): UseDownloadQuotaResult {
       const newQuota = getCurrentUserDownloadQuota()
       setQuota(newQuota)
     } catch {
-      message.error('다운로드 쿼터 조회에 실패했습니다.')
+      message.error(MESSAGES.error.downloadQuotaLoadFailed)
     } finally {
       setLoading(false)
     }

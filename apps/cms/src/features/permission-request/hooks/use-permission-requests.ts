@@ -68,9 +68,9 @@ export function usePermissionRequests(
       
       if (temporaryPermission) {
         const expiresAt = new Date(temporaryPermission.expiresAt).toLocaleDateString('ko-KR')
-        message.success(`권한 요청이 승인되었습니다. 임시 권한이 부여되었습니다. (만료: ${expiresAt})`)
+        message.success(MESSAGES.success.permissionRequestApprovedWithExpiry(expiresAt))
       } else {
-        message.success('권한 요청이 승인되었습니다.')
+        message.success(MESSAGES.success.permissionRequestApproved)
       }
       
       await fetchRequests()
@@ -82,7 +82,7 @@ export function usePermissionRequests(
   const rejectRequest = useCallback(async (input: ReviewPermissionRequestInput) => {
     try {
       await reviewPermissionRequest({ ...input, approved: false })
-      message.success('권한 요청이 거부되었습니다.')
+      message.success(MESSAGES.success.permissionRequestRejected)
       await fetchRequests()
     } catch (err: any) {
       message.error(err.message || '권한 요청 거부에 실패했습니다.')

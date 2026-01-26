@@ -7,7 +7,7 @@ import { Form, Input, Button, message, Space } from 'antd'
 import { MobileOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useState, useMemo } from 'react'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
-import { MESSAGES } from '@/shared/constants/messages'
+import { MESSAGES } from '@/shared/constants'
 import type { OtpSendRequest, OtpVerifyRequest } from '@/types/mfa'
 
 interface PhoneVerificationFormProps {
@@ -16,25 +16,6 @@ interface PhoneVerificationFormProps {
   disabled?: boolean
 }
 
-/**
- * 전화번호 포맷팅 (010-0000-0000)
- */
-function formatPhoneNumber(value: string): string {
-  // 숫자만 추출
-  const numbers = value.replace(/\D/g, '')
-  
-  // 길이 제한 (11자리)
-  const limited = numbers.slice(0, 11)
-  
-  // 하이픈 추가
-  if (limited.length <= 3) {
-    return limited
-  } else if (limited.length <= 7) {
-    return `${limited.slice(0, 3)}-${limited.slice(3)}`
-  } else {
-    return `${limited.slice(0, 3)}-${limited.slice(3, 7)}-${limited.slice(7)}`
-  }
-}
 
 export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: PhoneVerificationFormProps) {
   const [form] = Form.useForm()
@@ -53,7 +34,8 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
   // 전화번호가 변경되면 새로운 tempUserId 생성
   const tempUserId = useMemo(() => {
     const phone = phoneNumber.replace(/-/g, '')
-    return `temp-${phone || Date.now()}`
+    // eslint-disable-next-line react-hooks/purity
+    return `temp-${phone || String(Date.now())}`
   }, [phoneNumber])
 
   // 본인인증 버튼 클릭 (OTP 발송)
@@ -64,8 +46,6 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
     }
 
     try {
-      const phone = phoneNumber.replace(/-/g, '')
-      
       // OTP 발송
       await sendOtpCode({
         userId: tempUserId,

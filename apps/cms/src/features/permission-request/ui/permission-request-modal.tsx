@@ -66,7 +66,7 @@ export function PermissionRequestModal({
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
-      message.error('권한 요청 제출에 실패했습니다.')
+      message.error(MESSAGES.error.permissionRequestSubmitFailed)
     }
   }
 

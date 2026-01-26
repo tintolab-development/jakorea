@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { SponsorDetail } from '@/features/sponsor/ui/sponsor-detail'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
+import { MESSAGES } from '@/shared/constants'
 import { message } from 'antd'
 
 export function SponsorDetailPage() {
@@ -32,10 +33,10 @@ export function SponsorDetailPage() {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       try {
         await deleteSponsor(id)
-        message.success('스폰서가 삭제되었습니다')
+        message.success(MESSAGES.success.sponsorDeleted)
         navigate('/sponsors')
       } catch {
-        message.error('삭제 중 오류가 발생했습니다')
+        message.error(MESSAGES.error.delete)
       }
     }
   }

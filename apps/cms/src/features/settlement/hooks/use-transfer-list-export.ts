@@ -6,6 +6,7 @@
 import { useCallback, useState } from 'react'
 import { message } from 'antd'
 import { generateTransferList } from '@/shared/utils/settlement-document'
+import { MESSAGES } from '@/shared/constants'
 
 export interface TransferListRow {
   period: string
@@ -51,11 +52,11 @@ export function useTransferListExport(rows: TransferListRow[], canExport: boolea
 
   const openModal = useCallback(() => {
     if (!canExport) {
-      message.warning('이체리스트 다운로드는 OWNER 권한에서만 가능합니다')
+      message.warning(MESSAGES.warning.transferListDownloadOwnerOnly)
       return
     }
     if (rows.length === 0) {
-      message.info('다운로드할 이체리스트 데이터가 없습니다')
+      message.info(MESSAGES.info.noTransferListData)
       return
     }
     setIsOpen(true)
@@ -72,17 +73,17 @@ export function useTransferListExport(rows: TransferListRow[], canExport: boolea
     // Phase 0.4.3: 암호화 옵션 체크
     if (enableEncryption) {
       if (!password.trim()) {
-        message.warning('암호를 입력해주세요')
+        message.warning(MESSAGES.warning.enterPassword)
         return
       }
 
       if (password.length < 8) {
-        message.warning('암호는 최소 8자 이상이어야 합니다')
+        message.warning(MESSAGES.warning.passwordMinLength)
         return
       }
 
       if (!passwordsMatch) {
-        message.warning('암호 확인이 일치하지 않습니다')
+        message.warning(MESSAGES.warning.passwordMismatch)
         return
       }
     }

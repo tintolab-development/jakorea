@@ -24,7 +24,7 @@ export function usePerformanceStats(filters: PerformanceStatsFilter) {
       setStats(data)
     } catch (error) {
       console.error('Failed to fetch performance stats:', error)
-      message.error('실적 통계를 불러오는 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.performanceStatsLoadFailed)
     } finally {
       setLoading(false)
     }

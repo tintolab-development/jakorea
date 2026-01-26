@@ -6,7 +6,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Space, Select, Button, Modal, Input, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { InstructorApplicationList } from '@/features/instructor-application/ui/instructor-application-list'
 import { ManualAssignmentModal } from '@/features/instructor-application/ui/manual-assignment-modal'
 import { useInstructorApplicationReview } from '@/features/instructor-application/hooks/use-instructor-application-review'
@@ -16,6 +17,7 @@ import { programService } from '@/entities/program/api/program-service'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { MESSAGES } from '@/shared/constants'
 import './instructor-application-list-page.css'
 
 const { Option } = Select
@@ -27,7 +29,7 @@ export function InstructorApplicationListPage() {
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
 
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ programId?: string; status?: string }>()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사 신청 관리'
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
   const [assignmentLoading, setAssignmentLoading] = useState(false)
@@ -48,8 +50,8 @@ export function InstructorApplicationListPage() {
   } = useInstructorApplicationReview()
 
   // 필터 상태
-  const programFilter = searchParams.get('programId') || undefined
-  const statusFilter = (searchParams.get('status') || 'ALL') as
+  const programFilter = params.programId || undefined
+  const statusFilter = (params.status || 'ALL') as
     | 'PENDING'
     | 'APPROVED'
     | 'REJECTED'
@@ -69,31 +71,23 @@ export function InstructorApplicationListPage() {
 
   // 필터 변경 핸들러
   const handleProgramFilterChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value === 'ALL') {
-      newParams.delete('programId')
-    } else {
-      newParams.set('programId', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      programId: value === 'ALL' ? undefined : value,
+    })
   }
 
   const handleStatusFilterChange = (
     value: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED' | 'ALL'
   ) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value === 'ALL') {
-      newParams.delete('status')
-    } else {
-      newParams.set('status', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      status: value === 'ALL' ? undefined : value,
+    })
   }
 
   const handleView = useCallback((item: typeof applications[0]) => {
     setSelectedApplication(item)
     // TODO: 상세 Drawer 구현
-    message.info('상세 보기 기능은 추후 구현 예정입니다.')
+    message.info(MESSAGES.info.detailViewComingSoon)
   }, [setSelectedApplication])
 
   const handleApprove = useCallback(

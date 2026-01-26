@@ -26,6 +26,7 @@ import type { FileTemplate, TemplateAudience, TemplateStatus } from '@/types/tem
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { mockFileTemplates, getTemplateStatusColor, getTemplateStatusLabel } from '@/data/mock/templates'
+import { MESSAGES } from '@/shared/constants'
 
 const { Text } = Typography
 const { Search } = Input
@@ -173,7 +174,7 @@ export default function TemplateFilesPage() {
     }
     
     setRows(prev => [copiedTemplate, ...prev])
-    message.success('템플릿이 복사되었습니다.')
+    message.success(MESSAGES.success.templateCopied)
     // 복사된 템플릿을 바로 편집 모드로 열기
     openEdit(copiedTemplate)
   }
@@ -184,7 +185,7 @@ export default function TemplateFilesPage() {
         key: 'download',
         label: '다운로드',
         onClick: () => {
-          message.info('다운로드 링크는 추후 실제 파일 스토리지 연동 시 활성화됩니다.')
+          message.info(MESSAGES.info.downloadLinkComingSoon)
           window.open(row.content.downloadUrl || '#', '_blank')
         },
       },

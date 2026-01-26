@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -26,7 +27,7 @@ export function MyProgramListPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ status?: string; category?: string; search?: string }>()
   const [programs, setPrograms] = useState<MyProgram[]>([])
   const [loading, setLoading] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set()) // 찜하기 상태
@@ -37,11 +38,11 @@ export function MyProgramListPage() {
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo<MyProgramFilters>(() => {
     return {
-      status: (searchParams.get('status') as MyProgramFilters['status']) || 'all',
-      category: (searchParams.get('category') as MyProgramFilters['category']) || 'all',
-      search: searchParams.get('search') || undefined,
+      status: (params.status as MyProgramFilters['status']) || 'all',
+      category: (params.category as MyProgramFilters['category']) || 'all',
+      search: params.search || undefined,
     }
-  }, [searchParams])
+  }, [params])
 
   // 프로그램 목록에 대한 관심 상태 로드
   const loadFavoritesForPrograms = useCallback(async (programList: MyProgram[], userId: string) => {
@@ -83,33 +84,21 @@ export function MyProgramListPage() {
   }, [user, loadPrograms])
 
   const handleStatusChange = (value: MyProgramFilters['status']) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value || value === 'all') {
-      newParams.delete('status')
-    } else {
-      newParams.set('status', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      status: !value || value === 'all' ? undefined : value,
+    })
   }
 
   const handleCategoryChange = (value: MyProgramFilters['category']) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value || value === 'all') {
-      newParams.delete('category')
-    } else {
-      newParams.set('category', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      category: !value || value === 'all' ? undefined : value,
+    })
   }
 
   const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value) {
-      newParams.delete('search')
-    } else {
-      newParams.set('search', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      search: value || undefined,
+    })
   }
 
   const handleToggleFavorite = async (programId: string) => {
@@ -121,10 +110,10 @@ export function MyProgramListPage() {
     try {
       if (isFavorite) {
         await removeFavoriteProgram(userId, programId)
-        message.success('관심 프로그램에서 제거되었습니다.')
+        message.success(MESSAGES.success.removedFromFavorites)
       } else {
         await addFavoriteProgram(userId, programId)
-        message.success('관심 프로그램에 추가되었습니다.')
+        message.success(MESSAGES.success.addedToFavorites)
       }
 
       // 상태 업데이트
@@ -139,7 +128,7 @@ export function MyProgramListPage() {
       })
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.favoriteProgramProcessFailed)
     }
   }
 

@@ -11,6 +11,7 @@ import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { useOtpCountdown } from '@/features/auth/hooks/use-otp-countdown'
 import { OTP_LENGTH } from '@/shared/constants/mfa-policy'
+import { MESSAGES } from '@/shared/constants'
 
 interface UseMfaVerificationOptions {
   open: boolean
@@ -221,7 +222,7 @@ export function useMfaVerification({ open, messageApi }: UseMfaVerificationOptio
           hasToken: !!authStateAfterDelay.token,
         })
         
-        message.success('인증이 완료되었습니다.')
+        message.success(MESSAGES.success.authenticated)
         
         // form이 연결되어 있을 때만 resetFields 호출
         try {

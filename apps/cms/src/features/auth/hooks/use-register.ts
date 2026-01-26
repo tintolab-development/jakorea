@@ -27,7 +27,7 @@ export function useRegister(): UseRegisterReturn {
 
     try {
       const response = await register(request)
-      message.success('회원가입이 완료되었습니다. 로그인해주세요.')
+      message.success(MESSAGES.success.registerCompleted)
       // 회원가입 성공 시 로그인 페이지로 이동
       navigate('/login', { replace: true })
       return response

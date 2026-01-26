@@ -5,7 +5,8 @@
 
 import { useState, useMemo } from 'react'
 import { Space, Select, Input, Button } from 'antd'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { VolunteerList } from '@/features/volunteer/ui/volunteer-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
@@ -18,7 +19,7 @@ const { Search } = Input
 
 export function VolunteerListPage() {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ interviewStatus?: string; isActive?: string; search?: string; id?: string }>()
   
   // 2뎁스 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '봉사자'
@@ -30,19 +31,19 @@ export function VolunteerListPage() {
 
   // 쿼리 파라미터에서 필터 값 읽기
   const interviewStatusFilter = useMemo(() => {
-    return (searchParams.get('interviewStatus') || 'ALL') as InterviewStatus | 'ALL'
-  }, [searchParams])
+    return (params.interviewStatus || 'ALL') as InterviewStatus | 'ALL'
+  }, [params.interviewStatus])
 
   const isActiveFilter = useMemo(() => {
-    const value = searchParams.get('isActive')
+    const value = params.isActive
     if (value === 'true') return true
     if (value === 'false') return false
     return 'ALL' as const
-  }, [searchParams])
+  }, [params.isActive])
 
   const searchQuery = useMemo(() => {
-    return searchParams.get('search') || ''
-  }, [searchParams])
+    return params.search || ''
+  }, [params.search])
 
   // 봉사자 목록 필터링
   const filteredVolunteers = useMemo(() => {
@@ -79,51 +80,39 @@ export function VolunteerListPage() {
 
   // 필터 변경 핸들러
   const handleInterviewStatusFilterChange = (value: InterviewStatus | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value === 'ALL') {
-      newParams.delete('interviewStatus')
-    } else {
-      newParams.set('interviewStatus', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      interviewStatus: value === 'ALL' ? undefined : value,
+    })
   }
 
   const handleIsActiveFilterChange = (value: boolean | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value === 'ALL') {
-      newParams.delete('isActive')
-    } else {
-      newParams.set('isActive', String(value))
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      isActive: value === 'ALL' ? undefined : String(value),
+    })
   }
 
   const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value) {
-      newParams.set('search', value)
-    } else {
-      newParams.delete('search')
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      search: value || undefined,
+    })
   }
 
   // 사용자 상세 보기
   const handleView = (user: Omit<User, 'password'>) => {
     setSelectedUser(user)
     setDrawerOpen(true)
-    const newParams = new URLSearchParams(searchParams)
-    newParams.set('id', user.id)
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      id: user.id,
+    })
   }
 
   // Drawer 닫기
   const handleDrawerClose = () => {
     setDrawerOpen(false)
     setSelectedUser(null)
-    const newParams = new URLSearchParams(searchParams)
-    newParams.delete('id')
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      id: undefined,
+    })
   }
 
   return (

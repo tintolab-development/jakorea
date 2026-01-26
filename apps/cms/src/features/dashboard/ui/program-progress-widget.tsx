@@ -115,8 +115,9 @@ export function ProgramProgressWidget() {
   }, [progress])
 
   // ProgramProgressSummary 상태를 ProgramLifecycleStatus로 매핑
-  const mapProgressStatusToLifecycleStatus = (
-    status: keyof ProgramProgressSummary['byStatus']
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _mapProgressStatusToLifecycleStatus = (
+    _status: keyof ProgramProgressSummary['byStatus']
   ): ProgramLifecycleStatus | null => {
     const statusMap: Record<keyof ProgramProgressSummary['byStatus'], ProgramLifecycleStatus[]> = {
       RECEIVED: ['recruiting_students', 'recruiting_instructors', 'recruitment_completed_waiting'],
@@ -129,7 +130,7 @@ export function ProgramProgressWidget() {
       REPORT_SUBMITTED: ['completed'],
     }
     // 첫 번째 매핑된 상태 반환 (여러 상태가 매핑된 경우 가장 일반적인 상태 사용)
-    return statusMap[status]?.[0] || null
+    return statusMap[_status]?.[0] || null
   }
 
   // 파이 차트 섹션 클릭 핸들러
@@ -281,7 +282,7 @@ export function ProgramProgressWidget() {
                     cx="50%"
                     cy="45%"
                     labelLine={false}
-                    label={({ name, percent }) =>
+                    label={({ percent }) =>
                       percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
                     }
                     outerRadius={100}

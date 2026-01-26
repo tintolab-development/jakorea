@@ -12,6 +12,7 @@ import { instructorApplicationSchema, type InstructorApplicationFormData } from 
 import type { Program } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UploadFile } from 'antd/es/upload/interface'
+import { MESSAGES } from '@/shared/constants'
 
 const { TextArea } = Input
 
@@ -63,18 +64,18 @@ export function InstructorApplicationForm({
     // 파일 확장자 검증
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
     if (!UPLOAD_POLICY.documents.allowedExtensions.includes(fileExtension)) {
-      message.error('PDF, DOC, DOCX, HWP 파일만 업로드 가능합니다.')
+      message.error(MESSAGES.warning.fileTypeDocuments)
       return false
     }
 
     // 파일 크기 검증
     if (file.size > UPLOAD_POLICY.documents.maxSize) {
-      message.error('파일 크기는 10MB 이하여야 합니다.')
+      message.error(MESSAGES.warning.fileSizeMax10MB)
       return false
     }
 
     setValue(type, file)
-    message.success('파일이 선택되었습니다.')
+    message.success(MESSAGES.success.fileSelected)
     return false // 자동 업로드 방지
   }
 

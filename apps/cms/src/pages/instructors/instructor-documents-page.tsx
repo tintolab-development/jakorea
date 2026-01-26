@@ -9,6 +9,7 @@ import { Card, Upload, Button, Table, Tag, Space, Typography, message, Alert } f
 import { UploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { MESSAGES } from '@/shared/constants'
 import dayjs from 'dayjs'
 
 const { Title, Paragraph, Text } = Typography
@@ -97,20 +98,20 @@ export function InstructorDocumentsPage() {
     }
 
     setDocuments(prev => [...prev, newDocument])
-    message.success('파일이 업로드되었습니다. 관리자 검토 후 승인됩니다.')
+    message.success(MESSAGES.info.fileUploaded)
     return false // 자동 업로드 방지
   }
 
   const handleView = (document: DocumentFile) => {
     // TODO: 파일 미리보기 API 연결
     void document
-    message.info('파일 미리보기 기능은 준비 중입니다.')
+    message.info(MESSAGES.info.filePreviewComingSoon)
   }
 
   const handleDownload = (document: DocumentFile) => {
     // TODO: 파일 다운로드 API 연결
     void document
-    message.info('파일 다운로드 기능은 준비 중입니다.')
+    message.info(MESSAGES.info.fileDownloadComingSoon)
   }
 
   const columns = [

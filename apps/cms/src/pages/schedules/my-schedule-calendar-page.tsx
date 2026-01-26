@@ -28,7 +28,7 @@ export function MyScheduleCalendarPage() {
       setSchedules(data)
     } catch (error) {
       console.error('일정 로드 실패:', error)
-      message.error('일정 정보를 불러오는 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.scheduleLoadFailed)
     } finally {
       setLoading(false)
     }

@@ -10,6 +10,7 @@ import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { matchingService } from '@/entities/matching/api/matching-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
 import { canTransitionSettlementStatus, getPreviousSettlementStatus } from '@/shared/lib/status-transition'
+import { MESSAGES } from '@/shared/constants'
 
 const itemTypeLabels: Record<string, string> = {
   instructor_fee: '강사비',
@@ -46,22 +47,22 @@ export function useSettlementDetail(
 
   const downloadPaymentStatement = useCallback(async () => {
     if (!settlement || !program || !instructor) {
-      message.error('프로그램 또는 강사 정보를 찾을 수 없습니다')
+      message.error(MESSAGES.error.programOrInstructorNotFound)
       return
     }
 
     try {
       await generatePaymentStatement(settlement, instructor, program.title)
-      message.success('지급조서가 다운로드되었습니다')
+      message.success(MESSAGES.success.paymentStatementDownloaded)
     } catch (error) {
       console.error('Failed to generate payment statement:', error)
-      message.error('지급조서 생성 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.paymentStatementGenerationFailed)
     }
   }, [instructor, program, settlement])
 
   const changeStatus = useCallback(async (nextStatus: Settlement['status']) => {
     if (!settlement || !canTransitionSettlementStatus(settlement.status, nextStatus)) {
-      message.warning('현재 상태에서는 해당 단계로 전환할 수 없습니다.')
+      message.warning(MESSAGES.warning.cannotTransitionStatus)
       return
     }
     await onStatusChange(nextStatus)
@@ -69,12 +70,12 @@ export function useSettlementDetail(
 
   const rollbackStatus = useCallback(async () => {
     if (!settlement) {
-      message.warning('정산 정보가 없습니다.')
+      message.warning(MESSAGES.warning.settlementInfoNotFound)
       return
     }
     const previous = getPreviousSettlementStatus(settlement.status)
     if (!previous) {
-      message.warning('이전 단계로 되돌릴 수 없는 상태입니다.')
+      message.warning(MESSAGES.warning.cannotRollbackStatus)
       return
     }
     await changeStatus(previous)

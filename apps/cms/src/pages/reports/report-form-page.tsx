@@ -4,8 +4,9 @@
  * 참고 화면: U-04-04 보고서 작성
  */
 
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Card, Space, Typography, Form, Input, InputNumber, Alert, message } from 'antd'
 import { GuideMessage, SingleCTA } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -17,18 +18,19 @@ import {
 } from '@/data/mock/reports'
 import type { ReportType, ReportField } from '@/types/domain'
 import { reportService } from '@/entities/report/api/report-service'
+import { MESSAGES } from '@/shared/constants'
 
 const { Title, Paragraph } = Typography
 const { TextArea } = Input
 
 export function ReportFormPage() {
-  const [searchParams] = useSearchParams()
+  const { params } = useQueryParams<{ type?: string; activityId?: string; scheduleId?: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
 
-  const reportType = (searchParams.get('type') || 'lecture') as ReportType
+  const reportType = (params.type || 'lecture') as ReportType
 
   // 보고서 타입에 따른 필드 선택
   const reportFields: ReportField[] =
@@ -142,9 +144,9 @@ export function ReportFormPage() {
       const values = await form.validateFields()
       setLoading(true)
 
-      const activityId = searchParams.get('activityId') || undefined
-      const programId = searchParams.get('programId') || undefined
-      const scheduleId = searchParams.get('scheduleId') || undefined
+      const activityId = params.activityId || undefined
+      const programId = params.programId || undefined
+      const scheduleId = params.scheduleId || undefined
 
       await reportService.submit({
         type: reportType,
@@ -154,7 +156,7 @@ export function ReportFormPage() {
         fields: values,
       })
 
-      message.success('보고서가 제출되었습니다.')
+      message.success(MESSAGES.success.reportSubmitted)
       // Phase 0.2.7: 강사인 경우 강사 보고서 목록으로 리다이렉트
       if (user?.role === 'INSTRUCTOR' && reportType === 'lecture') {
         navigate('/instructor/reports')
@@ -167,7 +169,7 @@ export function ReportFormPage() {
         return
       }
       console.error('Failed to submit report:', error)
-      message.error('보고서 제출 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.reportSubmitFailed)
     } finally {
       setLoading(false)
     }

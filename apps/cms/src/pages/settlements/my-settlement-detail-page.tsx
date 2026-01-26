@@ -12,6 +12,7 @@ import { getMySettlementDetail } from '@/entities/settlement/api/instructor-sett
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { programService } from '@/entities/program/api/program-service'
+import { MESSAGES } from '@/shared/constants'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
@@ -32,12 +33,12 @@ export function MySettlementDetailPage() {
       if (data) {
         setSettlement(data)
       } else {
-        message.error('정산 정보를 찾을 수 없습니다')
+        message.error(MESSAGES.error.settlementNotFound)
         navigate('/settlements/my')
       }
     } catch (error) {
       console.error('정산 로드 실패:', error)
-      message.error('정산 정보를 불러오는데 실패했습니다')
+        message.error(MESSAGES.error.settlementLoadFailed)
       navigate('/settlements/my')
     } finally {
       setLoading(false)
@@ -169,7 +170,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 미리보기 API 연결
-                          message.info('파일 미리보기 기능은 준비 중입니다.')
+                          message.info(MESSAGES.info.filePreviewComingSoon)
                         }}
                       >
                         미리보기
@@ -179,7 +180,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 다운로드 API 연결
-                          message.info('파일 다운로드 기능은 준비 중입니다.')
+                          message.info(MESSAGES.info.fileDownloadComingSoon)
                         }}
                       >
                         다운로드

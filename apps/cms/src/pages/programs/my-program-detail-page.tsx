@@ -17,6 +17,7 @@ import {
 } from '@/entities/program/api/favorite-program-service'
 import { commonStatusStatusConfig, getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
+import { MESSAGES } from '@/shared/constants'
 import dayjs from 'dayjs'
 
 export function MyProgramDetailPage() {
@@ -36,14 +37,14 @@ export function MyProgramDetailPage() {
     try {
       const data = await getMyProgramDetail(userId, id)
       if (!data) {
-        message.error('프로그램을 찾을 수 없습니다.')
+        message.error(MESSAGES.error.programNotFound)
         navigate('/programs/my/active')
         return
       }
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      message.error('프로그램 정보를 불러오는 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.programLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -81,15 +82,15 @@ export function MyProgramDetailPage() {
     try {
       if (favorite) {
         await removeFavoriteProgram(userId, id)
-        message.success('관심 프로그램에서 제거되었습니다.')
+        message.success(MESSAGES.success.removedFromFavorites)
       } else {
         await addFavoriteProgram(userId, id)
-        message.success('관심 프로그램에 추가되었습니다.')
+        message.success(MESSAGES.success.addedToFavorites)
       }
       setFavorite(!favorite)
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error('관심 프로그램 처리 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.favoriteProgramProcessFailed)
     }
   }
 
@@ -250,7 +251,7 @@ export function MyProgramDetailPage() {
           onCancel={() => setSatisfactionModalOpen(false)}
           onSuccess={() => {
             // 만족도 조사 제출 후 처리
-            message.success('만족도 조사가 제출되었습니다.')
+            message.success(MESSAGES.success.satisfactionSurveySubmitted)
             setSatisfactionModalOpen(false)
           }}
         />

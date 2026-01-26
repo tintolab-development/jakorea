@@ -3,15 +3,16 @@
  * 404, 403, 500 등 다양한 에러 코드 처리
  */
 
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Result, Button, Space } from 'antd'
 import { HomeOutlined, ReloadOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 
 export function ErrorPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const errorCode = searchParams.get('code') || '404'
-  const errorMessage = searchParams.get('message') || '페이지를 찾을 수 없습니다'
+  const { params } = useQueryParams<{ code?: string; message?: string }>()
+  const errorCode = params.code || '404'
+  const errorMessage = params.message || '페이지를 찾을 수 없습니다'
 
   const getErrorConfig = () => {
     switch (errorCode) {
@@ -78,7 +79,7 @@ export function ErrorPage() {
       }}
     >
       <Result
-        status={config.status as any}
+        status={config.status as 'success' | 'error' | 'info' | 'warning' | '404' | '403' | '500'}
         title={config.title}
         subTitle={config.subTitle}
         extra={

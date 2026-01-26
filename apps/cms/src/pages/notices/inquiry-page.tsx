@@ -5,7 +5,8 @@
  */
 
 import { useState, useMemo } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
   Card,
   List,
@@ -38,13 +39,13 @@ const { Search } = Input
 
 export function InquiryPage() {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ status?: string; q?: string }>()
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [writeModalOpen, setWriteModalOpen] = useState(false)
 
-  const activeTab = searchParams.get('status') || 'ALL'
-  const searchQuery = searchParams.get('q') || ''
+  const activeTab = params.status || 'ALL'
+  const searchQuery = params.q || ''
 
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '문의하기'
 
@@ -59,18 +60,14 @@ export function InquiryPage() {
   }, [activeTab, searchQuery])
 
   const handleTabChange = (key: string) => {
-    setSearchParams(prev => {
-      if (key === 'ALL') prev.delete('status')
-      else prev.set('status', key)
-      return prev
+    setParams({
+      status: key === 'ALL' ? undefined : key,
     })
   }
 
   const handleSearch = (value: string) => {
-    setSearchParams(prev => {
-      if (!value) prev.delete('q')
-      else prev.set('q', value)
-      return prev
+    setParams({
+      q: value || undefined,
     })
   }
 

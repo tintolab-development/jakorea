@@ -9,6 +9,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { loginWithSocial, type SocialProvider } from '@/entities/user/api/auth-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+import { MESSAGES } from '@/shared/constants'
 import './social-login-form.css'
 
 interface SocialLoginFormProps {
@@ -78,7 +79,7 @@ export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
       // MFA 필요 시 처리 (관리자)
       if (response.requiresMfa && response.mfaState) {
         // MFA는 별도 모달에서 처리되므로 여기서는 성공으로 간주
-        message.success('로그인 성공')
+        message.success(MESSAGES.success.loginSuccess)
         if (onSuccess) {
           onSuccess()
         }
@@ -87,7 +88,7 @@ export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
 
       // 역할별 리다이렉트
       const finalRedirectPath = redirectPath || getRedirectPathByRole(response.user)
-      message.success('로그인 성공')
+      message.success(MESSAGES.success.loginSuccess)
       navigate(finalRedirectPath, { replace: true })
 
       if (onSuccess) {

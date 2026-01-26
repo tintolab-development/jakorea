@@ -28,6 +28,7 @@ import {
   BarsOutlined,
 } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { MESSAGES } from '@/shared/constants'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 
 const { Text } = Typography
@@ -79,7 +80,7 @@ export function AdminCategoryPage() {
   // 삭제 핸들러
   const handleDelete = (id: string) => {
     setData(prev => prev.filter(item => item.id !== id))
-    message.success('카테고리가 삭제되었습니다.')
+    message.success(MESSAGES.success.categoryDeleted)
   }
 
   // 등록/수정 모달 열기
@@ -111,10 +112,10 @@ export function AdminCategoryPage() {
 
       if (editingCategory) {
         setData(prev => prev.map(item => item.id === editingCategory.id ? newCategory : item))
-        message.success('카테고리가 수정되었습니다.')
+        message.success(MESSAGES.success.categoryUpdated)
       } else {
         setData(prev => [...prev, newCategory])
-        message.success('새 카테고리가 등록되었습니다.')
+        message.success(MESSAGES.success.categoryCreated)
       }
       setIsModalOpen(false)
     } catch (error) {

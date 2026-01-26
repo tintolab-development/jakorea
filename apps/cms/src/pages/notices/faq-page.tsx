@@ -5,7 +5,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
   Card,
   Collapse,
@@ -40,31 +41,29 @@ const { Search } = Input
 export function FAQPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ category?: string; q?: string }>()
   
   // 검색어 로컬 상태
-  const [searchInput, setSearchInput] = useState(searchParams.get('q') || '')
+  const [searchInput, setSearchInput] = useState(params.q || '')
 
   // 필터 상태
-  const activeCategory = searchParams.get('category') || '전체'
+  const activeCategory = params.category || '전체'
 
   const categoryName = getCategoryNameByPath(location.pathname, 2) || 'FAQ'
 
   // Debounce 검색어 처리
   useEffect(() => {
     const handler = setTimeout(() => {
-      setSearchParams(prev => {
-        if (!searchInput) prev.delete('q')
-        else prev.set('q', searchInput)
-        return prev
-      }, { replace: true })
+      setParams({
+        q: searchInput || undefined,
+      })
     }, 500)
     return () => clearTimeout(handler)
-  }, [searchInput, setSearchParams])
+  }, [searchInput, setParams])
 
   // 필터링된 FAQ 목록
   const filteredFaqs = useMemo(() => {
-    const q = searchParams.get('q')?.toLowerCase() || ''
+    const q = params.q?.toLowerCase() || ''
     return mockFAQs
       .filter(faq => faq.status === 'published')
       .filter(faq => {
@@ -76,13 +75,11 @@ export function FAQPage() {
         
         return matchCategory && matchSearch
       })
-  }, [activeCategory, searchParams])
+  }, [activeCategory, params.q])
 
   const handleCategoryChange = (key: string) => {
-    setSearchParams(prev => {
-      if (key === '전체') prev.delete('category')
-      else prev.set('category', key)
-      return prev
+    setParams({
+      category: key === '전체' ? undefined : key,
     })
   }
 

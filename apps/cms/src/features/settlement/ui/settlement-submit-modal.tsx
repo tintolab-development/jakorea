@@ -24,6 +24,7 @@ import {
 } from 'antd'
 import { UploadOutlined, CalculatorOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES } from '@/shared/constants'
 import {
   submitSettlement,
   getAvailableSettlements,
@@ -126,7 +127,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       setAvailableSettlements(data)
     } catch (error) {
       console.error('제출 가능한 정산 목록 로드 실패:', error)
-      message.error('제출 가능한 정산 목록을 불러오는 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.submitableSettlementsLoadFailed)
     }
   }, [user?.instructorId])
 
@@ -187,7 +188,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       if (calculationMode === 'auto') {
         // Phase 0.4.1: 자동 산출 모드
         if (!calculationResult) {
-          message.error('산출 결과가 없습니다. 입력값을 확인해주세요.')
+          message.error(MESSAGES.error.calculationResultNotFound)
           setSubmitting(false)
           return
         }
@@ -226,7 +227,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
 
         // 강사비 필수 검증
         if (!instructorFeeValue || instructorFeeValue <= 0) {
-          message.error('강사비를 입력해주세요.')
+          message.error(MESSAGES.error.instructorFeeRequired)
           form.setFields([{ name: 'instructorFee', errors: ['강사비를 입력해주세요.'] }])
           setSubmitting(false)
           return
@@ -234,7 +235,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
 
         // 교통비 음수 검증
         if (transportationFeeValue < 0) {
-          message.error('교통비는 0원 이상이어야 합니다.')
+          message.error(MESSAGES.error.transportationFeeMustBePositive)
           form.setFields([{ name: 'transportationFee', errors: ['교통비는 0원 이상이어야 합니다.'] }])
           setSubmitting(false)
           return
@@ -282,7 +283,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             hasAccommodation,
             items,
           })
-          message.error('총액 계산 중 오류가 발생했습니다. 다시 시도해주세요.')
+          message.error(MESSAGES.error.totalAmountCalculationFailed)
           setSubmitting(false)
           return
         }
@@ -312,7 +313,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       }
 
       await submitSettlement(user.instructorId, formData)
-      message.success('정산이 제출되었습니다.')
+      message.success(MESSAGES.success.settlementSubmitted)
       // 제출 성공 후 모든 상태 초기화
       form.resetFields()
       setSelectedProgram(null)
