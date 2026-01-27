@@ -1,47 +1,27 @@
 /**
- * 헤더 컴포넌트
+ * 헤더 컴포넌트 (사이드바 상단)
  * Phase 1.1: Ant Design Header
  * Phase 4.1.1: 사용자 정보 및 로그아웃 버튼 추가
+ * 유저 로그인 정보는 MainHeader(콘텐츠 상단)로 이동, 여기서는 로고만 표시
  */
 
-import { Layout, Typography, Button, Dropdown } from 'antd'
+import { Layout } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { LogoutOutlined } from '@ant-design/icons'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { RoleBadge } from '@/shared/ui'
-import type { MenuProps } from 'antd'
+import logoImage from '@/assets/images/logo/ja_korea_logo.png'
 import './header.css'
 
 const { Header: AntHeader } = Layout
-const { Text } = Typography
-
-// 로고 이미지 경로 (public 폴더 사용 시)
-const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
 
 export function Header() {
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
-  const userMenuItems: MenuProps['items'] = [
-    {
-      key: 'logout',
-      label: '로그아웃',
-      icon: <LogoutOutlined />,
-      onClick: handleLogout,
-    },
-  ]
 
   return (
     <AntHeader className="app-header sidebar-header">
       <div className="sidebar-logo-container" onClick={() => navigate('/')}>
-        <img src={LOGO_PATH} alt="JA Korea" className="sidebar-logo" />
+        <img src={logoImage} alt="JA Korea" className="sidebar-logo" />
       </div>
-      {user && (
+      {/* 유저 로그인 정보: 헤더(MainHeader)로 이동 – 임시 주석 처리 */}
+      {/* {user && (
         <div className="header-user-section">
           <div className="header-user-card">
             <div className="header-user-top">
@@ -64,7 +44,7 @@ export function Header() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </AntHeader>
   )
 }

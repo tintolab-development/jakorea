@@ -1,3 +1,9 @@
+.program-list-widget-container,
+.program-progress-widget-container {
+  margin-bottom: 24px;
+  width: 100%;
+}
+
 .program-list-header {
   margin-bottom: 16px;
   width: 100%;

@@ -31,9 +31,23 @@ export function Sidebar() {
     const path = location.pathname
     const keys: string[] = []
 
-    // 관리자용 프로그램 관리
-    if (user?.role === 'ADMIN' && path.startsWith('/programs') && !path.startsWith('/programs/my') && !path.startsWith('/programs/favorites')) {
+    // 관리자용 프로그램 관리 (1뎁스 프로그램 관리 > 2뎁스 교육/봉사 > 3뎁스 목록·일정·수강/강의 신청 현황)
+    const isProgramMgmt =
+      user?.role === 'ADMIN' &&
+      ((path.startsWith('/programs') &&
+        !path.startsWith('/programs/my') &&
+        !path.startsWith('/programs/favorites')) ||
+        path === '/applications' ||
+        path === '/instructor-applications')
+    if (isProgramMgmt) {
       keys.push('programs-group')
+      if (
+        path.startsWith('/programs/education') ||
+        path === '/applications' ||
+        path === '/instructor-applications'
+      ) {
+        keys.push('education-programs-group')
+      }
     }
 
     // 관리자용 정산 관리
@@ -82,7 +96,10 @@ export function Sidebar() {
         }
 
         // 봉사단 활동 관리
-        if (path.startsWith('/volunteers/my/schedules') || path.startsWith('/volunteers/my/histories')) {
+        if (
+          path.startsWith('/volunteers/my/schedules') ||
+          path.startsWith('/volunteers/my/histories')
+        ) {
           keys.push('volunteer-activity-mgmt')
         }
       }
@@ -104,7 +121,9 @@ export function Sidebar() {
           onOpenChange={setControlledOpenKeys}
           className="sidebar-menu"
           items={menuItems}
-          onClick={({ key }) => navigate(key)}
+          onClick={({ key }) => {
+            if (typeof key === 'string' && key.startsWith('/')) navigate(key)
+          }}
         />
       </div>
     </Sider>

@@ -5,17 +5,13 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { Space, Modal, Tabs } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Modal, Tabs } from 'antd'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { ProgramForm } from '@/features/program/ui/program-form'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PermissionButton } from '@/shared/components/permission-button'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -25,13 +21,22 @@ import type { ProgramFormData } from '@/entities/program/model/schema'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useProgramStatusManager } from '@/features/program/hooks/use-program-status-manager'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { programLifecycleStatusConfig } from '@/shared/constants/status'
+import {
+  getVolunteerPrograms,
+  getEducationPrograms,
+  mockApplications,
+  mockMatchings,
+  mockSchedules,
+} from '@/data/mock'
+import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget'
+import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
 // import { filterProgramsByACL } from '@/shared/utils/program-acl' // 개발 환경에서는 ACL 필터링 비활성화
 
 interface ProgramListQueryParams extends Record<string, string | undefined> {
   programId?: string
   category?: ProgramCategory | 'all'
   status?: ProgramLifecycleStatus
-  progressStatus?: string
 }
 
 export function ProgramListPage() {
@@ -51,7 +56,7 @@ export function ProgramListPage() {
     setSelectedProgram,
   } = useProgramStore()
   const { changeStatus: changeProgramStatus } = useProgramStatusManager()
-  
+
   // Drawer 상태 관리
   const {
     open: drawerOpen,
@@ -70,15 +75,10 @@ export function ProgramListPage() {
     isEditing: isEditingMode,
   } = useModalState<Program>()
 
-  // Delete 모달 상태 관리
-  const {
-    open: deleteModalOpen,
-    openModal: openDeleteModal,
-    closeModal: closeDeleteModal,
-    selectedItem: programToDelete,
-  } = useModalState<Program>()
+  // Delete 모달은 handleDeleteClick에서 직접 Modal.confirm 사용
 
   const [formLoading, setFormLoading] = useState(false)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   // 관리자만 프로그램 등록 가능
   const isAdmin = user?.role === 'ADMIN'
@@ -99,10 +99,12 @@ export function ProgramListPage() {
   const isInstructor = user?.role === 'INSTRUCTOR'
   const isUserRole = isInstructor || user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
 
-  // 카테고리명 가져오기
-  const categoryName = isAdmin
-    ? '프로그램 관리'
-    : getCategoryNameByPath(location.pathname, 1) || '진행 프로그램'
+  // 프로그램 타입 구분 (교육/봉사)
+  const programType = useMemo<'education' | 'volunteer' | 'all'>(() => {
+    if (location.pathname === '/programs/education') return 'education'
+    if (location.pathname === '/programs/volunteer') return 'volunteer'
+    return 'all'
+  }, [location.pathname])
 
   // 탭 필터 (강사용)
   const categoryTab = (params.category as ProgramCategory | 'all') || 'all'
@@ -126,42 +128,11 @@ export function ProgramListPage() {
     }
   }, [params.programId, user, authStore.isAuthenticated, programs, setParam])
 
-  // status 쿼리 파라미터 읽기
-  // ProgramProgressSummary 상태를 ProgramLifecycleStatus로 매핑하는 로직
-  const getLifecycleStatusesForProgressStatus = (
-    progressStatus: string
-  ): ProgramLifecycleStatus[] => {
-    const statusMap: Record<string, ProgramLifecycleStatus[]> = {
-      RECEIVED: ['recruiting_students', 'recruiting_instructors', 'recruitment_completed_waiting'],
-      MATCHING_IN_PROGRESS: ['matching_completed_waiting'],
-      MATCHING_COMPLETED: ['matching_completed_waiting'],
-      MATERIAL_PREPARING: ['matching_completed_waiting'],
-      MATERIAL_SHIPPED: ['matching_completed_waiting'],
-      IN_PROGRESS: ['in_progress'],
-      SURVEY_SUBMITTED: ['completed'],
-      REPORT_SUBMITTED: ['completed'],
-    }
-    return statusMap[progressStatus] || []
-  }
-
   const statusFilter = useMemo<ProgramLifecycleStatus | null>(() => {
     const value = params.status as ProgramLifecycleStatus | null
-    const validStatuses: ProgramLifecycleStatus[] = [
-      'planned',
-      'recruiting_students',
-      'recruiting_instructors',
-      'recruitment_completed_waiting',
-      'matching_completed_waiting',
-      'in_progress',
-      'completed',
-    ]
-    return value && validStatuses.includes(value) ? value : null
+    const validStatuses = new Set(programLifecycleStatusConfig.order)
+    return value && validStatuses.has(value) ? value : null
   }, [params.status])
-
-  // progressStatus 쿼리 파라미터 읽기 (대시보드에서 클릭한 경우)
-  const progressStatusFilter = useMemo<string | null>(() => {
-    return params.progressStatus || null
-  }, [params.progressStatus])
 
   // 강사용: 신청 가능한 프로그램 및 수강자 모집 완료 프로그램 필터링 + 카테고리 필터
   // Phase 0.5.2: 프로그램 단위 ACL 필터링 추가
@@ -175,35 +146,45 @@ export function ProgramListPage() {
     //   filtered = filterProgramsByACL(filtered, user, 'VIEW')
     // }
 
-    // status 쿼리 파라미터 필터링 (관리자 및 참여자 모두)
+    // 관리자용: 교육 프로그램 / 봉사 프로그램 필터링
+    if (isAdmin && programType !== 'all') {
+      if (programType === 'volunteer') {
+        // 봉사 프로그램만 표시
+        const volunteerPrograms = getVolunteerPrograms()
+        const volunteerProgramIds = new Set(volunteerPrograms.map(p => p.id))
+        filtered = filtered.filter(program => volunteerProgramIds.has(program.id))
+      } else if (programType === 'education') {
+        // 교육 프로그램만 표시 (getEducationPrograms 결과를 직접 사용)
+        const educationPrograms = getEducationPrograms()
+        const educationProgramIds = new Set(educationPrograms.map(p => p.id))
+        // store의 programs와 매칭하되, 추가 생성된 프로그램도 포함
+        filtered = filtered.filter(program => educationProgramIds.has(program.id))
+        // store에 없는 추가 생성된 프로그램도 포함
+        const missingPrograms = educationPrograms.filter(ep => !filtered.some(p => p.id === ep.id))
+        filtered = [...filtered, ...missingPrograms]
+      }
+    }
+
+    // status 쿼리 파라미터 필터링 (대시보드 7단계·프로그램 관리와 동일)
     if (statusFilter) {
       filtered = filtered.filter(program => program.lifecycleStatus === statusFilter)
     }
 
-    // progressStatus 쿼리 파라미터 필터링 (대시보드에서 클릭한 경우)
-    // 여러 lifecycleStatus를 포함하도록 필터링
-    if (progressStatusFilter) {
-      const lifecycleStatuses = getLifecycleStatusesForProgressStatus(progressStatusFilter)
-      if (lifecycleStatuses.length > 0) {
-        filtered = filtered.filter(
-          program => program.lifecycleStatus && lifecycleStatuses.includes(program.lifecycleStatus)
-        )
-      }
-    }
-
-    // 강사용일 경우 신청 가능한 프로그램과 수강자 모집 완료 프로그램 표시
+    // 강사용일 경우 신청 가능한 프로그램 및 진행 단계 프로그램 표시 (7단계)
     if (isUserRole && !isAdmin) {
       filtered = filtered.filter(program => {
-        // 신청 가능한 상태와 수강자 모집 완료된 프로그램만 표시
-        const availableStatuses: ProgramLifecycleStatus[] = [
-          'recruiting_students', // 수강자 모집 중 (신청 가능)
-          'recruiting_instructors', // 강사 모집 중 (신청 가능)
-          'recruitment_completed_waiting', // 수강자 모집 완료 및 대기 중
-          'matching_completed_waiting', // 매칭 완료 및 진행 대기 중
-          'in_progress', // 진행 중
-          'completed', // 진행 완료
+        const status = program.lifecycleStatus
+        if (!status) return false
+        const available: ProgramLifecycleStatus[] = [
+          'recruiting_students',
+          'recruiting_instructors',
+          'matching_completed',
+          'education_before_textbook',
+          'education_after_textbook',
+          'education_completed',
+          'document_processing_completed',
         ]
-        return program.lifecycleStatus && availableStatuses.includes(program.lifecycleStatus)
+        return available.includes(status)
       })
     }
 
@@ -213,7 +194,7 @@ export function ProgramListPage() {
     }
 
     return filtered
-  }, [programs, isUserRole, isAdmin, categoryTab, user, statusFilter, progressStatusFilter])
+  }, [programs, isUserRole, isAdmin, categoryTab, user, statusFilter, programType])
 
   // Phase 0.2.1: 비로그인 사용자 로그인 유도
   const handleView = (program: Program) => {
@@ -277,18 +258,173 @@ export function ProgramListPage() {
     closeFormModal()
   }
 
-  const handleDeleteClick = (program: Program) => {
-    openDeleteModal(program)
+  // 프로그램 삭제 전 관련 데이터 확인
+  const checkProgramRelatedData = (programId: string) => {
+    const relatedApplications = mockApplications.filter(app => app.programId === programId)
+    const relatedMatchings = mockMatchings.filter(m => m.programId === programId)
+    const relatedSchedules = mockSchedules.filter(s => s.programId === programId)
+
+    return {
+      hasApplications: relatedApplications.length > 0,
+      hasMatchings: relatedMatchings.length > 0,
+      hasSchedules: relatedSchedules.length > 0,
+      applicationCount: relatedApplications.length,
+      matchingCount: relatedMatchings.length,
+      scheduleCount: relatedSchedules.length,
+    }
   }
 
-  const handleDeleteConfirm = async () => {
-    if (!programToDelete) return
+  const handleDeleteClick = (program: Program) => {
+    // 삭제 전 관련 데이터 확인
+    const relatedData = checkProgramRelatedData(program.id)
+
+    // 관련 데이터가 있는 경우 경고 메시지 구성
+    const warnings: string[] = []
+    if (relatedData.hasApplications) {
+      warnings.push(`신청서 ${relatedData.applicationCount}건`)
+    }
+    if (relatedData.hasMatchings) {
+      warnings.push(`매칭 ${relatedData.matchingCount}건`)
+    }
+    if (relatedData.hasSchedules) {
+      warnings.push(`일정 ${relatedData.scheduleCount}건`)
+    }
+
+    const hasRelatedData = warnings.length > 0
+    const warningMessage = hasRelatedData
+      ? `이 프로그램과 연결된 ${warnings.join(', ')}이(가) 있습니다. 삭제하면 관련 데이터도 함께 삭제됩니다. 정말 삭제하시겠습니까?`
+      : '정말 이 프로그램을 삭제하시겠습니까?'
+
+    // 확인 모달 표시
+    Modal.confirm({
+      title: '프로그램 삭제',
+      content: warningMessage,
+      okText: '삭제',
+      okType: 'danger',
+      cancelText: '취소',
+      onOk: async () => {
+        try {
+          // 관련 데이터 삭제 (Cascade Delete)
+          if (relatedData.hasApplications) {
+            // 신청서 삭제는 실제로는 서비스 레이어에서 처리되어야 하지만,
+            // Mock 데이터이므로 여기서 직접 처리
+            const relatedAppIds = mockApplications
+              .filter(app => app.programId === program.id)
+              .map(app => app.id)
+            relatedAppIds.forEach(appId => {
+              const index = mockApplications.findIndex(a => a.id === appId)
+              if (index !== -1) {
+                mockApplications.splice(index, 1)
+              }
+            })
+          }
+
+          if (relatedData.hasMatchings) {
+            // 매칭 삭제
+            const relatedMatchingIds = mockMatchings
+              .filter(m => m.programId === program.id)
+              .map(m => m.id)
+            relatedMatchingIds.forEach(matchingId => {
+              const index = mockMatchings.findIndex(m => m.id === matchingId)
+              if (index !== -1) {
+                mockMatchings.splice(index, 1)
+              }
+            })
+          }
+
+          if (relatedData.hasSchedules) {
+            // 일정 삭제
+            const relatedScheduleIds = mockSchedules
+              .filter(s => s.programId === program.id)
+              .map(s => s.id)
+            relatedScheduleIds.forEach(scheduleId => {
+              const index = mockSchedules.findIndex(s => s.id === scheduleId)
+              if (index !== -1) {
+                mockSchedules.splice(index, 1)
+              }
+            })
+          }
+
+          // 프로그램 삭제
+          await deleteProgram(program.id)
+          showSuccessMessage(MESSAGES.success.deleted)
+          // 선택된 행 키에서 삭제된 프로그램 제거
+          setSelectedRowKeys(prev => prev.filter(key => key !== program.id))
+          // 프로그램 목록 새로고침
+          await fetchPrograms()
+          // 삭제된 프로그램이 상세 Drawer에 열려있으면 닫기
+          if (selectedProgram?.id === program.id) {
+            closeDrawer()
+            setDrawerProgram(null)
+            setSelectedProgram(null)
+          }
+        } catch (error) {
+          handleError(error, {
+            defaultMessage: MESSAGES.error.delete,
+            context: 'ProgramDelete',
+          })
+        }
+      },
+    })
+  }
+
+  const handleBulkDelete = async (programs: Program[]) => {
+    if (programs.length === 0) return
+    const ids = new Set(programs.map(p => p.id))
 
     try {
-      await deleteProgram(programToDelete.id)
-      showSuccessMessage(MESSAGES.success.deleted)
-      closeDeleteModal()
-      if (selectedProgram?.id === programToDelete.id) {
+      // 각 프로그램의 관련 데이터 확인 및 삭제
+      for (const program of programs) {
+        const relatedData = checkProgramRelatedData(program.id)
+
+        // 관련 데이터 삭제 (Cascade Delete)
+        if (relatedData.hasApplications) {
+          const relatedAppIds = mockApplications
+            .filter(app => app.programId === program.id)
+            .map(app => app.id)
+          relatedAppIds.forEach(appId => {
+            const index = mockApplications.findIndex(a => a.id === appId)
+            if (index !== -1) {
+              mockApplications.splice(index, 1)
+            }
+          })
+        }
+
+        if (relatedData.hasMatchings) {
+          const relatedMatchingIds = mockMatchings
+            .filter(m => m.programId === program.id)
+            .map(m => m.id)
+          relatedMatchingIds.forEach(matchingId => {
+            const index = mockMatchings.findIndex(m => m.id === matchingId)
+            if (index !== -1) {
+              mockMatchings.splice(index, 1)
+            }
+          })
+        }
+
+        if (relatedData.hasSchedules) {
+          const relatedScheduleIds = mockSchedules
+            .filter(s => s.programId === program.id)
+            .map(s => s.id)
+          relatedScheduleIds.forEach(scheduleId => {
+            const index = mockSchedules.findIndex(s => s.id === scheduleId)
+            if (index !== -1) {
+              mockSchedules.splice(index, 1)
+            }
+          })
+        }
+
+        // 프로그램 삭제
+        await deleteProgram(program.id)
+      }
+
+      showSuccessMessage(`선택한 ${programs.length}건이 삭제되었습니다.`)
+      // 선택된 행 키 초기화
+      setSelectedRowKeys([])
+      // 프로그램 목록 새로고침
+      await fetchPrograms()
+      // 삭제된 프로그램이 상세 Drawer에 열려있으면 닫기
+      if (selectedProgram && ids.has(selectedProgram.id)) {
         closeDrawer()
         setDrawerProgram(null)
         setSelectedProgram(null)
@@ -296,7 +432,7 @@ export function ProgramListPage() {
     } catch (error) {
       handleError(error, {
         defaultMessage: MESSAGES.error.delete,
-        context: 'ProgramDelete',
+        context: 'ProgramBulkDelete',
       })
     }
   }
@@ -313,20 +449,23 @@ export function ProgramListPage() {
     }
   }
 
+  const showEducationActions = Boolean(isAdmin && canWrite && programType === 'education')
+
   return (
     <div>
-      <Space className="program-list-header">
-        <h1 className="program-list-title">{categoryName}</h1>
-        <PermissionButton
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleNewClick}
-          allowedRoles={['ADMIN']}
-          isWriteAction={true}
-        >
-          프로그램 등록
-        </PermissionButton>
-      </Space>
+      {/* 관리자용: 프로그램 진행 현황 위젯 (교육 프로그램) */}
+      {isAdmin && programType === 'education' && (
+        <div className="program-progress-widget-container">
+          <ProgramProgressWidget title={null} showDetailLink={false} />
+        </div>
+      )}
+
+      {/* 관리자용: 프로그램 진행 현황 (탭+테이블) — 전체 현황 */}
+      {isAdmin && programType === 'all' && (
+        <div className="program-list-widget-container">
+          <ProgramProgressTabsTable />
+        </div>
+      )}
 
       {/* 강사용: 개인/단체 탭 */}
       {isUserRole && !isAdmin && (
@@ -355,11 +494,17 @@ export function ProgramListPage() {
         data={filteredPrograms}
         loading={loading}
         onView={handleView}
-        onEdit={canWrite ? handleEdit : undefined}
-        onDelete={canWrite ? handleDeleteClick : undefined}
-        showActions={isAdmin && canWrite} // Phase 0.5.2: 쓰기 권한이 있는 관리자만 작업 컬럼 표시 (MASTER, ADMIN 허용)
-        showFavorite={false} // 찜하기는 상세 패널에서만 제공
-        onChangeStatus={canWrite ? handleStatusChange : undefined}
+        onEdit={showEducationActions ? handleEdit : undefined}
+        onDelete={showEducationActions ? handleDeleteClick : undefined}
+        onBulkDelete={showEducationActions ? handleBulkDelete : undefined}
+        onSelectionChange={showEducationActions ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showEducationActions ? selectedRowKeys : undefined}
+        showActions={showEducationActions}
+        showRowSelection={showEducationActions}
+        showFavorite={false}
+        onChangeStatus={showEducationActions ? handleStatusChange : undefined}
+        showCalendarView={isAdmin && programType === 'education'}
+        onCreateNew={showEducationActions ? handleNewClick : undefined}
       />
 
       <ProgramDetailDrawer
@@ -383,7 +528,7 @@ export function ProgramListPage() {
           }
         }}
         loading={loading}
-        hideActions={!isAdmin} // 관리자가 아니면 수정/삭제 버튼 숨김
+        hideActions={!showEducationActions}
       />
 
       <Modal
@@ -403,15 +548,7 @@ export function ProgramListPage() {
         />
       </Modal>
 
-      <ConfirmModal
-        open={deleteModalOpen}
-        title="프로그램 삭제"
-        content="정말 이 프로그램을 삭제하시겠습니까? 관련된 신청, 일정, 매칭 정보도 함께 삭제될 수 있습니다."
-        onConfirm={handleDeleteConfirm}
-        onCancel={closeDeleteModal}
-        confirmText="삭제"
-        danger
-      />
+      {/* 삭제 확인은 handleDeleteConfirm 내부의 Modal.confirm으로 처리 */}
     </div>
   )
 }

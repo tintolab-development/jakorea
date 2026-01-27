@@ -1,29 +1,205 @@
 /**
  * 사이드바 스타일
+ * 디자이너 가이드라인 기반 색상 적용
+ * - 배경색: #296075
+ * - 카테고리 텍스트: #fff
+ * - 나머지 색상: 디자이너 가이드라인 참고
  */
 
-/* 스크롤바 스타일링 (선택사항) */
+/* Ant Design Sider 오버라이드 */
+.sidebar-container.ant-layout-sider {
+  position: fixed !important;
+  left: 0;
+  top: 0;
+  height: 100vh !important;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* 사이드바 컨테이너 */
+.sidebar-container {
+  background: #296075;
+  display: flex !important;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh !important;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* 사이드바 메뉴 래퍼 */
+.sidebar-menu-wrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* flexbox에서 스크롤이 작동하려면 필요 */
+  position: relative; /* 스크롤 컨테이너로 작동 */
+  height: calc(100vh - var(--sidebar-header-height, 120px)); /* 헤더 높이를 제외한 높이 */
+}
+
+/* 사이드바 메뉴 */
+.sidebar-menu {
+  width: 100%;
+  border-right: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #296075;
+  min-height: 0; /* flexbox에서 스크롤이 작동하려면 필요 */
+  height: 100% !important; /* 전체 높이 사용 */
+  position: relative;
+  max-height: 100%;
+}
+
+/* 스크롤바 스타일링 */
 .sidebar-menu::-webkit-scrollbar {
   width: 6px;
 }
 
 .sidebar-menu::-webkit-scrollbar-track {
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-menu::-webkit-scrollbar-thumb {
-  background: #d9d9d9;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 3px;
 }
 
 .sidebar-menu::-webkit-scrollbar-thumb:hover {
-  background: #bfbfbf;
+  background: rgba(255, 255, 255, 0.5);
 }
 
+/* Ant Design Menu 오버라이드 */
+.sidebar-menu.ant-menu {
+  background: #296075;
+  color: #fff;
+}
+
+/* 메뉴 아이템 기본 스타일 */
+.sidebar-menu .ant-menu-item {
+  color: #fff;
+  margin: 4px 8px;
+  border-radius: 6px;
+  font-family:
+    'Pretendard',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.sidebar-menu .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* 선택된 메뉴 아이템 */
+.sidebar-menu .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.sidebar-menu .ant-menu-item-selected::after {
+  display: none;
+}
+
+/* 메뉴 아이콘 */
+.sidebar-menu .ant-menu-item-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sidebar-menu .ant-menu-item:hover .ant-menu-item-icon,
+.sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
+  color: #fff;
+}
+
+/* 서브메뉴 (카테고리) */
+.sidebar-menu .ant-menu-submenu {
+  color: #fff;
+}
+
+.sidebar-menu .ant-menu-submenu-title {
+  color: #fff;
+  margin: 4px 8px;
+  border-radius: 6px;
+  font-family:
+    'Pretendard',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.sidebar-menu .ant-menu-submenu-title:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-menu .ant-menu-submenu-open > .ant-menu-submenu-title {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-menu .ant-menu-submenu-arrow {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sidebar-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow,
+.sidebar-menu .ant-menu-submenu-open > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  color: #fff;
+}
+
+/* 서브메뉴 내부 */
+.sidebar-menu .ant-menu-sub {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-item {
+  color: rgba(255, 255, 255, 0.75);
+  padding-left: 48px;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* 메뉴 디바이더 - 프로그램 관리 카테고리 하위에서는 숨김 */
+.sidebar-menu .ant-menu-item-divider {
+  display: none;
+}
+
+/* 프로그램 관리 카테고리 하위 서브메뉴에서 디바이더 숨김 */
+.sidebar-menu .ant-menu-submenu[data-menu-id*='programs-group'] .ant-menu-item-divider {
+  display: none;
+}
+
+/* 사용자 섹션 (사용 안 함, 주석 처리) */
 .sidebar-user-section {
   padding: 12px 16px;
-  background: #fafafa;
-  border-top: 1px solid #f0f0f0;
+  background: rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .sidebar-user-info {
@@ -34,35 +210,4 @@
   display: flex;
   align-items: center;
   margin-bottom: 4px;
-}
-
-/* 메뉴 디바이더 길이 80% & 중앙 정렬 */
-.sidebar-menu .ant-menu-item-divider {
-  width: 80%;
-  margin: 8px auto;
-}
-
-/* 사이드바 컨테이너 */
-.sidebar-container {
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* 사이드바 메뉴 래퍼 */
-.sidebar-menu-wrapper {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 사이드바 메뉴 */
-.sidebar-menu {
-  flex: 1;
-  border-right: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
