@@ -6,12 +6,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { Tag, Button, Table, Empty, message } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import type { Dayjs } from 'dayjs'
 import {
   getMyPrograms,
   type MyProgram,
@@ -29,7 +27,6 @@ import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 
-const { Option } = Select
 
 export function MyProgramListPage() {
   const { user } = useAuthStore()

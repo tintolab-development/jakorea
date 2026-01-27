@@ -6,7 +6,6 @@
 import { useMemo, useState } from 'react'
 import {
   Button,
-  Card,
   Dropdown,
   Form,
   Input,
@@ -19,11 +18,17 @@ import {
   message,
 } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { PageHeader } from '@/shared/ui/page-header'
 import type { ColumnsType } from 'antd/es/table'
 import type { MenuProps } from 'antd'
 import dayjs from 'dayjs'
-import { MoreOutlined } from '@ant-design/icons'
-import type { FileTemplate, TemplateAudience, TemplateStatus } from '@/types/template'
+import { MoreOutlined, DownloadOutlined } from '@ant-design/icons'
+import type {
+  FileTemplate,
+  FileTemplateCategory,
+  TemplateAudience,
+  TemplateStatus,
+} from '@/types/template'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
@@ -32,6 +37,7 @@ import {
   getTemplateStatusLabel,
 } from '@/data/mock/templates'
 import { MESSAGES } from '@/shared/constants'
+import { downloadBlob } from '@/shared/utils/file-download'
 
 const { Text } = Typography
 
@@ -40,6 +46,19 @@ const audienceOptions: Array<{ value: TemplateAudience; label: string }> = [
   { value: 'SCHOOL', label: '학교' },
   { value: 'INSTRUCTOR', label: '강사' },
   { value: 'INDIVIDUAL', label: '학생' },
+]
+
+const categoryOptions: Array<{ value: FileTemplateCategory | 'all'; label: string }> = [
+  { value: 'all', label: '전체 카테고리' },
+  { value: 'instructor-resume', label: '강사 이력서' },
+  { value: 'lecture-report', label: '강의 보고서' },
+  { value: 'education-plan', label: '교육계획서' },
+  { value: 'certificate', label: '수료증' },
+  { value: 'activity-confirmation', label: '활동확인서' },
+  { value: 'receipt', label: '영수증' },
+  { value: 'payment-statement', label: '지급조서' },
+  { value: 'employment-certificate', label: '경력증명서' },
+  { value: 'other', label: '기타' },
 ]
 
 function statusLabel(status: TemplateStatus) {
@@ -55,10 +74,12 @@ export default function TemplateFilesPage() {
   const [pendingFilters, setPendingFilters] = useState({
     query: '',
     status: 'all' as TemplateStatus | 'all',
+    category: 'all' as FileTemplateCategory | 'all',
   })
   const [appliedFilters, setAppliedFilters] = useState({
     query: '',
     status: 'all' as TemplateStatus | 'all',
+    category: 'all' as FileTemplateCategory | 'all',
   })
   const [editing, setEditing] = useState<FileTemplate | null>(null)
   const [open, setOpen] = useState(false)
@@ -68,6 +89,9 @@ export default function TemplateFilesPage() {
     const q = appliedFilters.query.trim().toLowerCase()
     return rows
       .filter(r => (appliedFilters.status === 'all' ? true : r.status === appliedFilters.status))
+      .filter(r =>
+        appliedFilters.category === 'all' ? true : r.content.category === appliedFilters.category
+      )
       .filter(r => {
         if (!q) return true
         return (
@@ -90,10 +114,12 @@ export default function TemplateFilesPage() {
     setPendingFilters({
       query: '',
       status: 'all',
+      category: 'all',
     })
     setAppliedFilters({
       query: '',
       status: 'all',
+      category: 'all',
     })
   }
 
@@ -108,6 +134,7 @@ export default function TemplateFilesPage() {
       mimeType: 'application/pdf',
       version: 'v1.0',
       downloadUrl: '#',
+      category: undefined,
     })
   }
 
@@ -124,6 +151,7 @@ export default function TemplateFilesPage() {
       mimeType: row.content.mimeType,
       version: row.content.version,
       downloadUrl: row.content.downloadUrl,
+      category: row.content.category,
     })
   }
 
@@ -147,6 +175,7 @@ export default function TemplateFilesPage() {
             mimeType: values.mimeType,
             version: values.version,
             downloadUrl: values.downloadUrl,
+            category: values.category,
           },
         }
       : {
@@ -164,6 +193,7 @@ export default function TemplateFilesPage() {
             mimeType: values.mimeType,
             version: values.version,
             downloadUrl: values.downloadUrl,
+            category: values.category,
           },
         }
 
@@ -210,15 +240,56 @@ export default function TemplateFilesPage() {
     openEdit(copiedTemplate)
   }
 
+  const handleDownload = async (row: FileTemplate) => {
+    const downloadUrl = row.content.downloadUrl
+    const fileName = row.content.fileName
+    const mimeType = row.content.mimeType
+
+    try {
+      // URL이 유효한지 확인 (# 또는 빈 문자열이 아닌 경우)
+      if (downloadUrl && downloadUrl !== '#' && downloadUrl.trim() !== '') {
+        // 실제 URL인 경우: 서버에서 파일 다운로드
+        try {
+          const response = await fetch(downloadUrl)
+          if (response.ok) {
+            const blob = await response.blob()
+            downloadBlob(blob, fileName)
+            message.success(`${fileName} 다운로드를 완료했습니다`)
+          } else {
+            throw new Error('파일을 가져올 수 없습니다')
+          }
+        } catch (error) {
+          // URL이 유효하지 않거나 CORS 문제인 경우, 링크로 열기 시도
+          const link = document.createElement('a')
+          link.href = downloadUrl
+          link.download = fileName
+          link.target = '_blank'
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          message.success(`${fileName} 다운로드를 시작합니다`)
+        }
+      } else {
+        // Mock 데이터인 경우: 파일명과 MIME 타입 기반으로 빈 파일 생성하여 다운로드
+        // 실제 구현 시에는 서버에서 파일을 가져와서 다운로드해야 함
+        const mockContent = `이 파일은 ${row.title}의 템플릿 파일입니다.\n파일명: ${fileName}\n버전: ${row.content.version}\n\n실제 파일은 서버에서 제공됩니다.`
+        const blob = new Blob([mockContent], { type: mimeType || 'application/octet-stream' })
+        downloadBlob(blob, fileName)
+        message.success(`${fileName} 다운로드를 완료했습니다 (Mock 데이터)`)
+      }
+    } catch (error) {
+      console.error('Download failed:', error)
+      message.error('다운로드 중 오류가 발생했습니다')
+    }
+  }
+
   const getRowMenuItems = (row: FileTemplate): MenuProps['items'] => {
     const baseItems: MenuProps['items'] = [
       {
         key: 'download',
         label: '다운로드',
-        onClick: () => {
-          message.info(MESSAGES.info.downloadLinkComingSoon)
-          window.open(row.content.downloadUrl || '#', '_blank')
-        },
+        icon: <DownloadOutlined />,
+        onClick: () => handleDownload(row),
       },
     ]
 
@@ -266,6 +337,17 @@ export default function TemplateFilesPage() {
           </Space>
         </Space>
       ),
+    },
+    {
+      title: '카테고리',
+      key: 'category',
+      width: 140,
+      render: (_: unknown, row) => {
+        const category = row.content.category
+        if (!category) return <Text type="secondary">-</Text>
+        const option = categoryOptions.find(o => o.value === category)
+        return <Tag color="blue">{option?.label || category}</Tag>
+      },
     },
     {
       title: '파일',
@@ -329,6 +411,17 @@ export default function TemplateFilesPage() {
 
   return (
     <div>
+      <PageHeader
+        title="파일 양식"
+        actions={
+          canWrite ? (
+            <Button type="primary" onClick={openCreate}>
+              파일 양식 등록
+            </Button>
+          ) : undefined
+        }
+      />
+
       <UnifiedFilterCard
         fields={[
           {
@@ -336,6 +429,13 @@ export default function TemplateFilesPage() {
             type: 'search',
             label: '검색',
             placeholder: '제목/설명/태그/파일명 검색',
+          },
+          {
+            key: 'category',
+            type: 'select',
+            label: '카테고리',
+            placeholder: '전체 카테고리',
+            options: categoryOptions,
           },
           {
             key: 'status',
@@ -357,13 +457,6 @@ export default function TemplateFilesPage() {
         }}
         onSearch={handleSearch}
         onReset={handleFilterReset}
-        extra={
-          canWrite ? (
-            <Button type="primary" onClick={openCreate}>
-              파일 양식 등록
-            </Button>
-          ) : undefined
-        }
       />
 
       <Table
@@ -388,7 +481,7 @@ export default function TemplateFilesPage() {
         onOk={handleSubmit}
         okText={editing ? '수정' : '등록'}
         width={720}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -427,6 +520,18 @@ export default function TemplateFilesPage() {
               <Input placeholder="v1.0" />
             </Form.Item>
           </Space>
+
+          <Form.Item
+            name="category"
+            label="카테고리"
+            tooltip="파일 양식의 카테고리를 선택하세요 (선택사항)"
+          >
+            <Select
+              placeholder="카테고리 선택 (선택사항)"
+              allowClear
+              options={categoryOptions.filter(o => o.value !== 'all')}
+            />
+          </Form.Item>
 
           <Form.Item
             name="audience"

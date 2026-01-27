@@ -3,12 +3,14 @@
  * Phase 4.1: 강사 조회/다운로드 (필라별) (FR-F00)
  */
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Select, Button } from 'antd'
+import { useState, useEffect, useCallback } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+
+import type { InstructorType } from '@/types/domain'
 
 interface InstructorListQueryParams extends Record<string, string | undefined> {
   pillar?: string
+  instructorType?: InstructorType | 'ALL'
   status?: 'ACTIVE' | 'INACTIVE' | 'ALL'
   search?: string
 }
@@ -23,7 +25,6 @@ import { MESSAGES } from '@/shared/constants'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import './instructor-list-page.css'
 
-const { Option } = Select
 
 export function InstructorListPage() {
   const { params, setParam } = useQueryParams<InstructorListQueryParams>()
@@ -51,6 +52,7 @@ export function InstructorListPage() {
   const [pendingFilters, setPendingFilters] = useState({
     search: params.search || '',
     pillar: params.pillar || 'ALL',
+    instructorType: (params.instructorType || 'ALL') as InstructorType | 'ALL',
     status: (params.status || 'ALL') as 'ACTIVE' | 'INACTIVE' | 'ALL',
   })
 
@@ -59,9 +61,10 @@ export function InstructorListPage() {
     setPendingFilters({
       search: params.search || '',
       pillar: params.pillar || 'ALL',
+      instructorType: (params.instructorType || 'ALL') as InstructorType | 'ALL',
       status: (params.status || 'ALL') as 'ACTIVE' | 'INACTIVE' | 'ALL',
     })
-  }, [params.search, params.pillar, params.status])
+  }, [params.search, params.pillar, params.instructorType, params.status])
 
   // 강사 목록 조회
   const loadInstructors = useCallback(async () => {
@@ -70,6 +73,9 @@ export function InstructorListPage() {
       const filters: InstructorListFilters = {}
       if (pendingFilters.pillar && pendingFilters.pillar !== 'ALL') {
         filters.pillar = pendingFilters.pillar
+      }
+      if (pendingFilters.instructorType && pendingFilters.instructorType !== 'ALL') {
+        filters.instructorType = pendingFilters.instructorType
       }
       if (pendingFilters.status !== 'ALL') {
         filters.status = pendingFilters.status
@@ -91,6 +97,10 @@ export function InstructorListPage() {
   const handleSearch = () => {
     setParam('search', pendingFilters.search || null)
     setParam('pillar', pendingFilters.pillar === 'ALL' ? null : pendingFilters.pillar)
+    setParam(
+      'instructorType',
+      pendingFilters.instructorType === 'ALL' ? null : pendingFilters.instructorType
+    )
     setParam('status', pendingFilters.status === 'ALL' ? null : pendingFilters.status)
     loadInstructors()
   }
@@ -100,10 +110,12 @@ export function InstructorListPage() {
     setPendingFilters({
       search: '',
       pillar: 'ALL',
+      instructorType: 'ALL',
       status: 'ALL',
     })
     setParam('search', null)
     setParam('pillar', null)
+    setParam('instructorType', null)
     setParam('status', null)
     loadInstructors()
   }
@@ -122,6 +134,19 @@ export function InstructorListPage() {
             type: 'search',
             label: '이름/이메일/전문분야',
             placeholder: '이름, 이메일 또는 전문분야를 입력하세요',
+          },
+          {
+            key: 'instructorType',
+            type: 'select',
+            label: '강사단 종류',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: 'ALL' },
+              { label: 'JA강사단', value: 'JA' },
+              { label: '특강 강사', value: 'SPECIAL' },
+              { label: '제미나이 강사단', value: 'GEMINAI' },
+              { label: '기타', value: 'OTHER' },
+            ],
           },
           {
             key: 'pillar',

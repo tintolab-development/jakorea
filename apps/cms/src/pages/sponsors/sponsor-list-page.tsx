@@ -5,7 +5,6 @@
  */
 
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import { Button, Space, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { SponsorList } from '@/features/sponsor/ui/sponsor-list'
@@ -18,7 +17,6 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 
 export function SponsorListPage() {
-  const location = useLocation()
   const { user } = useAuthStore()
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
@@ -88,9 +86,10 @@ export function SponsorListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={600}
-        destroyOnHidden
+        destroyOnClose
       >
         <SponsorForm
+          key={editingSponsor?.id || 'new'}
           sponsor={editingSponsor ? sponsors.find(s => s.id === editingSponsor.id) : undefined}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}

@@ -146,11 +146,6 @@ export function MySettlementListPage() {
     })
   }
 
-  const handleSearch = (value: string) => {
-    setParams({
-      search: value || undefined,
-    })
-  }
 
   const handleSearchChange = (value: string) => {
     setParams({
@@ -340,7 +335,6 @@ export function MySettlementListPage() {
                 placeholder="정산 ID를 입력하세요"
                 value={filters.search || ''}
                 onChange={handleSearchChange}
-                onSearch={handleSearch}
                 width={300}
               />
               <Space>

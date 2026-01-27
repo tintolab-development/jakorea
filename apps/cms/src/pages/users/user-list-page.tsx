@@ -8,20 +8,26 @@
  * - 필터 조건은 스토어에 저장, 결과는 selector로 계산
  */
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { Button, Modal } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
+import { UserCreateForm } from '@/features/user/ui/user-create-form'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
-import { MESSAGES } from '@/shared/constants'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import {
   useUserStore,
   selectFilteredUserIds,
   selectSelectedUser,
 } from '@/features/user/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
+import type { CreateUserRequest } from '@/entities/user/api/user-service'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 
 interface UserListQueryParams extends Record<string, string | undefined> {
   role?: UserRole | 'ALL'
@@ -33,6 +39,8 @@ import './user-list-page.css'
 
 export function UserListPage() {
   const { params, setParam } = useQueryParams<UserListQueryParams>()
+  const { user } = useAuthStore()
+  const canWrite = canPerformWriteAction(user)
 
   // 스토어에서 필요한 데이터만 선택적으로 구독
   const usersById = useUserStore(state => state.usersById)
@@ -40,6 +48,8 @@ export function UserListPage() {
   const loading = useUserStore(state => state.loading)
   const filters = useUserStore(state => state.filters)
   const fetchUsers = useUserStore(state => state.fetchUsers)
+  const createUser = useUserStore(state => state.createUser)
+  const deleteUser = useUserStore(state => state.deleteUser)
   const changeUserRole = useUserStore(state => state.changeUserRole)
   const setSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const setFilters = useUserStore(state => state.setFilters)
@@ -60,8 +70,18 @@ export function UserListPage() {
     selectedItem: editingUser,
   } = useModalState<Omit<User, 'password'>>()
 
-  // 이전 필터 값을 추적하여 불필요한 업데이트 방지
-  const prevFiltersRef = useRef<{ role?: UserRole; search?: string }>({})
+  // 회원 추가 모달 상태 관리
+  const {
+    open: createModalOpen,
+    openModal: openCreateModal,
+    closeModal: closeCreateModal,
+  } = useModalState()
+
+  // 삭제 확인 모달 상태
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+
 
   // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
   const [pendingFilters, setPendingFilters] = useState({
@@ -191,8 +211,82 @@ export function UserListPage() {
     closeRoleChangeModal()
   }
 
+  // 회원 추가
+  const handleCreateUser = async (request: CreateUserRequest) => {
+    try {
+      await createUser(request)
+      showSuccessMessage(MESSAGES.success.created)
+      closeCreateModal()
+
+      // 목록 새로고침 (필터 조건 유지)
+      const currentFilters: { role?: UserRole; search?: string } = {}
+      if (filters.role) {
+        currentFilters.role = filters.role
+      }
+      if (filters.search) {
+        currentFilters.search = filters.search
+      }
+      await fetchUsers(currentFilters)
+    } catch (error) {
+      handleError(error, { defaultMessage: '회원 추가에 실패했습니다.' })
+      throw error
+    }
+  }
+
+  // 회원 삭제
+  const handleDeleteClick = (user: Omit<User, 'password'>) => {
+    setDeletingUser(user)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingUser) return
+
+    setDeleteLoading(true)
+    try {
+      await deleteUser(deletingUser.id)
+      showSuccessMessage(MESSAGES.success.deleted)
+      setDeleteModalOpen(false)
+      setDeletingUser(null)
+
+      // 목록 새로고침 (필터 조건 유지)
+      const currentFilters: { role?: UserRole; search?: string } = {}
+      if (filters.role) {
+        currentFilters.role = filters.role
+      }
+      if (filters.search) {
+        currentFilters.search = filters.search
+      }
+      await fetchUsers(currentFilters)
+    } catch (error) {
+      handleError(error, { defaultMessage: '회원 삭제에 실패했습니다.' })
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setDeletingUser(null)
+  }
+
   return (
     <div>
+      {canWrite && (
+        <div
+          style={{
+            marginBottom: LAYOUT_CONSTANTS.margins.lg,
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+            회원 추가
+          </Button>
+        </div>
+      )}
+
       <UnifiedFilterCard
         fields={[
           {
@@ -224,7 +318,13 @@ export function UserListPage() {
         loading={loading}
       />
 
-      <UserList data={filteredUsers} loading={loading} onView={handleView} onEdit={handleEdit} />
+      <UserList
+        data={filteredUsers}
+        loading={loading}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={canWrite ? handleDeleteClick : undefined}
+      />
 
       <UserDetailDrawer
         open={drawerOpen}
@@ -240,6 +340,38 @@ export function UserListPage() {
         onConfirm={handleRoleChange}
         onCancel={handleRoleChangeCancel}
       />
+
+      <Modal
+        open={createModalOpen}
+        title="회원 추가"
+        onCancel={closeCreateModal}
+        footer={null}
+        width={LAYOUT_CONSTANTS.widths.modal.medium}
+        destroyOnHidden
+      >
+        <UserCreateForm onSubmit={handleCreateUser} onCancel={closeCreateModal} loading={loading} />
+      </Modal>
+
+      <Modal
+        open={deleteModalOpen}
+        title="회원 삭제 확인"
+        onOk={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        confirmLoading={deleteLoading}
+        okText="삭제"
+        cancelText="취소"
+        okButtonProps={{ danger: true }}
+      >
+        {deletingUser && (
+          <>
+            <p>정말로 다음 회원을 삭제하시겠습니까?</p>
+            <p style={{ fontWeight: 'bold', margin: '16px 0' }}>
+              {deletingUser.name} ({deletingUser.email})
+            </p>
+            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 회원은 복구할 수 없습니다.</p>
+          </>
+        )}
+      </Modal>
     </div>
   )
 }

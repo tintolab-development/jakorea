@@ -13,13 +13,13 @@ import { SchoolForm } from '@/features/school/ui/school-form'
 import { useSchoolStore } from '@/features/school/model/school-store'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useModalState } from '@/shared/hooks/use-modal-state'
-import { useListFilters } from '@/shared/hooks/use-list-filters'
 import type { SchoolFormData } from '@/entities/school/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { School } from '@/types/domain'
 
 interface SchoolListQueryParams extends Record<string, string | undefined> {
@@ -32,7 +32,8 @@ export function SchoolListPage() {
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
 
-  const { schools, loading, fetchSchools, createSchool, updateSchool } = useSchoolStore()
+  const { schools, loading, fetchSchools, createSchool, updateSchool, deleteSchool } =
+    useSchoolStore()
   const { params, setParams } = useQueryParams<SchoolListQueryParams>()
 
   // Form 모달 상태 관리
@@ -42,9 +43,12 @@ export function SchoolListPage() {
     closeModal: closeFormModal,
     selectedItem: editingSchool,
     isEditing: isEditingMode,
-  } = useModalState<{ id: string; data: SchoolFormData }>()
+  } = useModalState<School>()
 
   const [formLoading, setFormLoading] = useState(false)
+  const [, setDeleteLoading] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deletingSchool, setDeletingSchool] = useState<School | null>(null)
 
   useEffect(() => {
     fetchSchools()
@@ -146,6 +150,39 @@ export function SchoolListPage() {
     closeFormModal()
   }
 
+  // 학교 수정
+  const handleEditClick = (school: School) => {
+    openFormModal(school)
+  }
+
+  // 학교 삭제
+  const handleDeleteClick = (school: School) => {
+    setDeletingSchool(school)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingSchool) return
+
+    setDeleteLoading(true)
+    try {
+      await deleteSchool(deletingSchool.id)
+      showSuccessMessage(MESSAGES.success.deleted)
+      setDeleteModalOpen(false)
+      setDeletingSchool(null)
+      fetchSchools()
+    } catch (error) {
+      handleError(error, { defaultMessage: '학교 삭제에 실패했습니다.' })
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setDeletingSchool(null)
+  }
+
   return (
     <div>
       <div
@@ -187,7 +224,12 @@ export function SchoolListPage() {
         onReset={handleFilterReset}
       />
 
-      <SchoolList data={filteredSchools} loading={loading} />
+      <SchoolList
+        data={filteredSchools}
+        loading={loading}
+        onEdit={canWrite ? handleEditClick : undefined}
+        onDelete={canWrite ? handleDeleteClick : undefined}
+      />
 
       <Modal
         open={formModalOpen}
@@ -195,15 +237,28 @@ export function SchoolListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnHidden
+        destroyOnClose
       >
         <SchoolForm
-          school={editingSchool ? schools.find(s => s.id === editingSchool.id) : undefined}
+          key={editingSchool?.id || 'new'} // 수정 모드일 때는 school.id를 key로 사용하여 컴포넌트 재마운트
+          school={editingSchool || undefined}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
           loading={formLoading}
         />
       </Modal>
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        title="학교 삭제"
+        content={deletingSchool ? `정말로 이 학교를 삭제하시겠습니까?` : ''}
+        warningMessage="삭제된 학교는 복구할 수 없습니다."
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        confirmText="삭제"
+        cancelText="취소"
+        danger
+      />
     </div>
   )
 }

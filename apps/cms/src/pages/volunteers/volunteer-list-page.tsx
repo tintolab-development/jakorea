@@ -96,11 +96,6 @@ export function VolunteerListPage() {
     })
   }
 
-  const handleSearch = (value: string) => {
-    setParams({
-      search: value || undefined,
-    })
-  }
 
   const handleSearchChange = (value: string) => {
     setParams({
@@ -138,7 +133,6 @@ export function VolunteerListPage() {
           placeholder="이름 또는 이메일을 입력하세요"
           value={searchQuery}
           onChange={handleSearchChange}
-          onSearch={handleSearch}
           width={300}
         />
         <Select

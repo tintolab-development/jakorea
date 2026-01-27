@@ -106,9 +106,6 @@ export function ParticipantListPage() {
     }
   }
 
-  const handleSearch = (value: string) => {
-    setParam('search', value || null)
-  }
 
   const handleSearchChange = (value: string) => {
     setParam('search', value || null)
@@ -122,7 +119,6 @@ export function ParticipantListPage() {
           placeholder="이름 또는 이메일을 입력하세요"
           value={searchQuery}
           onChange={handleSearchChange}
-          onSearch={handleSearch}
           width={300}
         />
         <Select
