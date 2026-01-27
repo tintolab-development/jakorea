@@ -5,6 +5,7 @@
  */
 
 import { Modal, Form, Input, DatePicker, Select, Button, Space, message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 import { usePermissionRequest } from '../hooks/use-permission-request'
 import type { ProgramRole, PermissionAction } from '@/types/permission-request'
 import type { UUID } from '@/types'
@@ -42,7 +43,7 @@ export function PermissionRequestModal({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
-      
+
       const result = await submitRequest({
         programId,
         requestedRole: values.requestedRole,
@@ -90,11 +91,7 @@ export function PermissionRequestModal({
       width={600}
       destroyOnHidden
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-      >
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item label="프로그램">
           <Input value={programName} disabled />
         </Form.Item>
@@ -132,7 +129,7 @@ export function PermissionRequestModal({
           <RangePicker
             style={{ width: '100%' }}
             format="YYYY-MM-DD"
-            disabledDate={(current) => current && current < dayjs().startOf('day')}
+            disabledDate={current => current && current < dayjs().startOf('day')}
           />
         </Form.Item>
 

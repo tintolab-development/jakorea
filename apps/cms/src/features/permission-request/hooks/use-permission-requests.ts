@@ -5,14 +5,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 import {
   getPermissionRequests,
   reviewPermissionRequest,
 } from '@/entities/permission-request/api/permission-request-service'
-import type {
-  PermissionRequest,
-  ReviewPermissionRequestInput,
-} from '@/types/permission-request'
+import type { PermissionRequest, ReviewPermissionRequestInput } from '@/types/permission-request'
 
 interface UsePermissionRequestsOptions {
   status?: PermissionRequest['status']
@@ -61,33 +59,39 @@ export function usePermissionRequests(
     }
   }, [autoFetch, fetchRequests])
 
-  const approveRequest = useCallback(async (input: ReviewPermissionRequestInput) => {
-    try {
-      // Phase 0.5.2: 승인 시 임시 권한 부여
-      const { temporaryPermission } = await reviewPermissionRequest({ ...input, approved: true })
-      
-      if (temporaryPermission) {
-        const expiresAt = new Date(temporaryPermission.expiresAt).toLocaleDateString('ko-KR')
-        message.success(MESSAGES.success.permissionRequestApprovedWithExpiry(expiresAt))
-      } else {
-        message.success(MESSAGES.success.permissionRequestApproved)
-      }
-      
-      await fetchRequests()
-    } catch (err: any) {
-      message.error(err.message || '권한 요청 승인에 실패했습니다.')
-    }
-  }, [fetchRequests])
+  const approveRequest = useCallback(
+    async (input: ReviewPermissionRequestInput) => {
+      try {
+        // Phase 0.5.2: 승인 시 임시 권한 부여
+        const { temporaryPermission } = await reviewPermissionRequest({ ...input, approved: true })
 
-  const rejectRequest = useCallback(async (input: ReviewPermissionRequestInput) => {
-    try {
-      await reviewPermissionRequest({ ...input, approved: false })
-      message.success(MESSAGES.success.permissionRequestRejected)
-      await fetchRequests()
-    } catch (err: any) {
-      message.error(err.message || '권한 요청 거부에 실패했습니다.')
-    }
-  }, [fetchRequests])
+        if (temporaryPermission) {
+          const expiresAt = new Date(temporaryPermission.expiresAt).toLocaleDateString('ko-KR')
+          message.success(MESSAGES.info.permissionRequestApprovedWithExpiry(expiresAt))
+        } else {
+          message.success(MESSAGES.success.permissionRequestApproved)
+        }
+
+        await fetchRequests()
+      } catch (err: any) {
+        message.error(err.message || '권한 요청 승인에 실패했습니다.')
+      }
+    },
+    [fetchRequests]
+  )
+
+  const rejectRequest = useCallback(
+    async (input: ReviewPermissionRequestInput) => {
+      try {
+        await reviewPermissionRequest({ ...input, approved: false })
+        message.success(MESSAGES.success.permissionRequestRejected)
+        await fetchRequests()
+      } catch (err: any) {
+        message.error(err.message || '권한 요청 거부에 실패했습니다.')
+      }
+    },
+    [fetchRequests]
+  )
 
   const pendingCount = requests.filter(r => r.status === 'PENDING').length
 
