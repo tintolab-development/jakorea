@@ -1,0 +1,40 @@
+/**
+ * 공통 브레드크럼 스타일
+ * 헤더 등 회색 작은 글씨 + " > " 구분자
+ */
+
+.app-breadcrumb {
+  font-size: 13px;
+  color: #8c8c8c;
+  line-height: 1;
+}
+
+.app-breadcrumb .ant-breadcrumb-separator {
+  color: #8c8c8c;
+  margin: 0 6px;
+}
+
+.app-breadcrumb__link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 400;
+  color: #8c8c8c;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.app-breadcrumb__link:hover {
+  color: #1890ff;
+}
+
+.app-breadcrumb__current {
+  color: #8c8c8c;
+  font-weight: 400;
+}
+
+.app-breadcrumb__last {
+  color: #595959;
+  font-weight: 700;
+}

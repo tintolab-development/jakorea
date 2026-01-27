@@ -5,6 +5,7 @@
 export * from './colors'
 export * from './status'
 export * from './login-policy'
+export * from './widget-styles'
 export * from './session-policy'
 export * from './layout'
 export * from './pagination'

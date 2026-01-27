@@ -7,6 +7,7 @@
 import type { UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
 import {
+  FolderOutlined,
   DashboardOutlined,
   BookOutlined,
   FileTextOutlined,
@@ -46,19 +47,65 @@ export interface MenuItemConfig {
  */
 const allMenuItems: MenuItemConfig[] = [
   // 사용자 영역
-  { key: '/', label: '메인 홈', icon: <DashboardOutlined />, enabled: true },
+  { key: '/', label: '메인 홈', icon: <FolderOutlined />, enabled: true },
+  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 교육/봉사, 3뎁스 교육 하위 [목록, 일정, 수강 신청 현황, 강의 신청 현황] */
   {
     key: 'programs-group',
-    label: '프로그램',
-    icon: <BookOutlined />,
+    label: '프로그램 관리',
+    icon: <FolderOutlined />,
     enabled: true,
-    allowedRoles: ['ADMIN', 'INDIVIDUAL', 'SCHOOL'],
+    allowedRoles: ['ADMIN'],
+    children: [
+      {
+        key: 'education-programs-group',
+        label: '교육 프로그램',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+        children: [
+          {
+            key: '/programs/education',
+            label: '프로그램 목록',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/programs/education/schedule',
+            label: '프로그램 일정',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          { key: '/applications', label: '수강 신청 현황', enabled: true, allowedRoles: ['ADMIN'] },
+          {
+            key: '/instructor-applications',
+            label: '강의 신청 현황',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+        ],
+      },
+      {
+        key: '/programs/volunteer',
+        label: '봉사 프로그램',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+    ],
+  },
+  /* 사용자용 프로그램 메뉴 (INDIVIDUAL, SCHOOL) */
+  {
+    key: 'programs-user-group',
+    label: '프로그램',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
     children: [
       {
         key: '/programs',
         label: '프로그램 리스트',
         enabled: true,
-        allowedRoles: ['ADMIN', 'INDIVIDUAL', 'SCHOOL'],
+        allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
       },
     ],
   },
@@ -356,8 +403,16 @@ const allMenuItems: MenuItemConfig[] = [
 
   // legacy support paths (호환/리다이렉트 용도 - 메뉴에는 노출하지 않음)
   { key: '/posts', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
-  { key: '/posts/faq', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
-  { key: '/posts/inquiries', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
+  {
+    key: '/posts/faq',
+    enabled: false,
+    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+  {
+    key: '/posts/inquiries',
+    enabled: false,
+    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
   { key: '/posts/categories', enabled: false, allowedRoles: ['ADMIN'] },
   { key: '/posts/notices', enabled: false, allowedRoles: ['ADMIN'] },
   { key: 'divider-admin', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
@@ -366,7 +421,7 @@ const allMenuItems: MenuItemConfig[] = [
   {
     key: 'members-group',
     label: '회원 관리',
-    icon: <TeamOutlined />,
+    icon: <FolderOutlined />,
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
@@ -376,55 +431,55 @@ const allMenuItems: MenuItemConfig[] = [
       { key: '/schools', label: '학교(교사)', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
-  {
-    key: 'applications-group',
-    label: '신청 관리',
-    icon: <FileTextOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'],
-    children: [
-      { key: '/applications', label: '신청 승인/반려', enabled: true, allowedRoles: ['ADMIN'] },
-    ],
-  },
-  {
-    key: 'instructors-group',
-    label: '강사단 관리',
-    icon: <UserOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'],
-    children: [
-      { key: '/instructors', label: '강사진', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/instructor-applications', label: '강의 신청 관리', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/matchings', label: '매칭 관리', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/settlements', label: '정산', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/settlements/payment-statements', label: '지급조서/이체리스트', enabled: true, allowedRoles: ['ADMIN'] },
-    ],
-  },
-  {
-    key: 'volunteers-group',
-    label: '봉사단 관리',
-    icon: <HeartOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'],
-    children: [
-      { key: '/volunteers', label: '봉사자', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/volunteers/programs', label: '봉사 프로그램', enabled: true, allowedRoles: ['ADMIN'] },
-    ],
-  },
-  {
-    key: 'admin-system-group',
-    label: '시스템 관리',
-    icon: <DatabaseOutlined />,
-    enabled: true,
-    allowedRoles: ['ADMIN'],
-    children: [
-      { key: '/admin/permission-requests', label: '권한 요청 관리', enabled: true, allowedRoles: ['ADMIN'] },
-    ],
-  },
+  // {
+  //   key: 'applications-group',
+  //   label: '신청 관리',
+  //   icon: <FileTextOutlined />,
+  //   enabled: true,
+  //   allowedRoles: ['ADMIN'],
+  //   children: [
+  //     { key: '/applications', label: '신청 승인/반려', enabled: true, allowedRoles: ['ADMIN'] },
+  //   ],
+  // },
+  // {
+  //   key: 'instructors-group',
+  //   label: '강사단 관리',
+  //   icon: <UserOutlined />,
+  //   enabled: true,
+  //   allowedRoles: ['ADMIN'],
+  //   children: [
+  //     { key: '/instructors', label: '강사진', enabled: true, allowedRoles: ['ADMIN'] },
+  //     { key: '/instructor-applications', label: '강의 신청 관리', enabled: true, allowedRoles: ['ADMIN'] },
+  //     { key: '/matchings', label: '매칭 관리', enabled: true, allowedRoles: ['ADMIN'] },
+  //     { key: '/settlements', label: '정산', enabled: true, allowedRoles: ['ADMIN'] },
+  //     { key: '/settlements/payment-statements', label: '지급조서/이체리스트', enabled: true, allowedRoles: ['ADMIN'] },
+  //   ],
+  // },
+  // {
+  //   key: 'volunteers-group',
+  //   label: '봉사단 관리',
+  //   icon: <HeartOutlined />,
+  //   enabled: true,
+  //   allowedRoles: ['ADMIN'],
+  //   children: [
+  //     { key: '/volunteers', label: '봉사자', enabled: true, allowedRoles: ['ADMIN'] },
+  //     { key: '/volunteers/programs', label: '봉사 프로그램', enabled: true, allowedRoles: ['ADMIN'] },
+  //   ],
+  // },
+  // {
+  //   key: 'admin-system-group',
+  //   label: '시스템 관리',
+  //   icon: <DatabaseOutlined />,
+  //   enabled: true,
+  //   allowedRoles: ['ADMIN'],
+  //   children: [
+  //     { key: '/admin/permission-requests', label: '권한 요청 관리', enabled: true, allowedRoles: ['ADMIN'] },
+  //   ],
+  // },
   {
     key: 'templates-group',
     label: '템플릿 관리',
-    icon: <FileOutlined />,
+    icon: <FolderOutlined />,
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
@@ -436,7 +491,7 @@ const allMenuItems: MenuItemConfig[] = [
   {
     key: 'posts-group',
     label: '게시글 관리',
-    icon: <EditOutlined />,
+    icon: <FolderOutlined />,
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
@@ -446,16 +501,40 @@ const allMenuItems: MenuItemConfig[] = [
       { key: '/admin/posts/inquiries', label: '문의하기', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
-  { key: '/sponsors', label: '후원사 관리', icon: <ShopOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-  { key: '/surveys', label: '설문 관리', icon: <FileTextOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-  { key: '/education-records', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-  { key: '/education-records-v2', label: '실적 통계 (v2)', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-  { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-  { key: '/logs', label: '로그 관리', icon: <DatabaseOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  {
+    key: '/sponsors',
+    label: '후원사 관리',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+  },
+  // { key: '/surveys', label: '설문 관리', icon: <FileTextOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  {
+    key: '/education-records',
+    label: '실적 관리',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+  },
+  // { key: '/education-records-v2', label: '실적 통계 (v2)', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  // { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  {
+    key: '/logs',
+    label: '로그 관리',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+  },
   { key: 'divider-bottom', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
   // 기타 (비활성)
-  { key: '/application-paths', label: '신청 경로 관리', icon: <FileTextOutlined />, enabled: false, allowedRoles: ['ADMIN'] },
+  {
+    key: '/application-paths',
+    label: '신청 경로 관리',
+    icon: <FileTextOutlined />,
+    enabled: false,
+    allowedRoles: ['ADMIN'],
+  },
   {
     key: 'schedules-group',
     label: '일정 관리',
@@ -463,9 +542,24 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: false,
     children: [
       { key: '/schedules', label: '일정 캘린더', enabled: false },
-      { key: '/schedules/my', label: '본인 일정 목록', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
-      { key: '/schedules/my/calendar', label: '본인 일정 캘린더', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
-      { key: '/schedule-negotiations', label: '일정 협의 관리', enabled: false, allowedRoles: ['ADMIN'] },
+      {
+        key: '/schedules/my',
+        label: '본인 일정 목록',
+        enabled: false,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
+      {
+        key: '/schedules/my/calendar',
+        label: '본인 일정 캘린더',
+        enabled: false,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
+      {
+        key: '/schedule-negotiations',
+        label: '일정 협의 관리',
+        enabled: false,
+        allowedRoles: ['ADMIN'],
+      },
     ],
   },
   {
@@ -476,8 +570,18 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
     children: [
       { key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] },
-      { key: '/interviews/apply', label: '강사 신청', enabled: false, allowedRoles: ['INSTRUCTOR'] },
-      { key: '/interviews/my', label: '내 면접 일정', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
+      {
+        key: '/interviews/apply',
+        label: '강사 신청',
+        enabled: false,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+      {
+        key: '/interviews/my',
+        label: '내 면접 일정',
+        enabled: false,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
     ],
   },
   {
@@ -488,7 +592,12 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
     children: [
       { key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] },
-      { key: '/reports/new', label: '보고서 작성', enabled: false, allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
+      {
+        key: '/reports/new',
+        label: '보고서 작성',
+        enabled: false,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
     ],
   },
 ]
@@ -539,8 +648,8 @@ export function filterMenuByRole(
         icon: item.icon,
       }
 
-      if (userRole === 'ADMIN' && item.key === 'programs-group') {
-        menuItem.label = '프로그램 관리'
+      if (userRole === 'ADMIN' && item.key === '/') {
+        menuItem.label = '관리자 홈'
       }
 
       // Phase 0.1.5: 자식 메뉴가 있는 경우 재귀적으로 필터링 (강화)
@@ -572,10 +681,7 @@ export function getMenuItemsByRole(userRole: UserRole | null): MenuProps['items'
  * 메뉴 아이템에서 경로 찾기 (내부 유틸리티)
  * 특정 경로에 해당하는 모든 메뉴 설정 반환
  */
-function findAllMenuItemsByPath(
-  items: MenuItemConfig[],
-  targetPath: string
-): MenuItemConfig[] {
+function findAllMenuItemsByPath(items: MenuItemConfig[], targetPath: string): MenuItemConfig[] {
   const matches: MenuItemConfig[] = []
 
   for (const item of items) {
@@ -747,4 +853,85 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
   }
 
   return result.item.label || null
+}
+
+/**
+ * 브레드크럼 아이템 타입
+ * path가 있으면 링크(클릭 시 이동), 없으면 현재 페이지 또는 그룹
+ */
+export interface BreadcrumbItem {
+  label: string
+  path?: string
+}
+
+type MatchResult = {
+  item: MenuItemConfig
+  parent?: MenuItemConfig
+  grandparent?: MenuItemConfig
+  depth: 1 | 2 | 3
+}
+
+function findMenuMatch(path: string): MatchResult | null {
+  const n = path === '/' ? path : path.replace(/\/$/, '')
+  for (const item of allMenuItems) {
+    if (item.type === 'divider' || !item.label) continue
+    if (item.key === n) return { item, depth: 1 }
+    if (!item.children) continue
+    for (const child of item.children) {
+      if (child.type === 'divider' || !child.label) continue
+      if (child.key === n) return { item: child, parent: item, depth: 2 }
+      if (!child.children) continue
+      for (const grandchild of child.children) {
+        if (grandchild.type === 'divider' || !grandchild.label) continue
+        if (grandchild.key === n)
+          return { item: grandchild, parent: child, grandparent: item, depth: 3 }
+      }
+    }
+  }
+  return null
+}
+
+function toBreadcrumbItem(menuItem: MenuItemConfig): BreadcrumbItem {
+  const label = menuItem.label || ''
+  const path =
+    typeof menuItem.key === 'string' && menuItem.key.startsWith('/') ? menuItem.key : undefined
+  return { label, path }
+}
+
+/**
+ * 경로·역할에 따른 브레드크럼 체인 반환
+ * 사이드바 메뉴 뎁스(1·2·3)를 브레드크럼으로 표현할 때 사용
+ */
+export function getBreadcrumbByPath(pathname: string, userRole: UserRole | null): BreadcrumbItem[] {
+  const n = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+
+  if (n === '/') {
+    const label = userRole === 'ADMIN' ? '관리자 홈' : '메인 홈'
+    return [{ label }]
+  }
+
+  if (userRole === 'ADMIN' && n === '/programs') {
+    return [{ label: '프로그램 관리' }, { label: '프로그램 현황' }]
+  }
+
+  const match = findMenuMatch(n)
+  if (!match) return []
+
+  const chain: BreadcrumbItem[] = []
+  if (match.depth === 1) {
+    chain.push(toBreadcrumbItem(match.item))
+  } else if (match.depth === 2 && match.parent) {
+    chain.push(toBreadcrumbItem(match.parent))
+    chain.push(toBreadcrumbItem(match.item))
+  } else if (match.depth === 3 && match.parent && match.grandparent) {
+    chain.push(toBreadcrumbItem(match.grandparent))
+    chain.push(toBreadcrumbItem(match.parent))
+    chain.push(toBreadcrumbItem(match.item))
+  }
+  // 현재 페이지(마지막 항목)는 링크 제거
+  if (chain.length > 0) {
+    const last = chain[chain.length - 1]
+    chain[chain.length - 1] = { label: last.label }
+  }
+  return chain
 }

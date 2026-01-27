@@ -1,0 +1,21 @@
+/**
+ * 위젯 더보기 버튼 공통 스타일
+ * 모든 위젯의 더보기 버튼에 통일된 스타일 적용
+ */
+
+.widget-more-button,
+.widget-more-button.ant-btn-link {
+  padding: 0 !important;
+  font-size: 13px !important;
+  color: var(--color-ui-more-button) !important;
+  text-decoration: underline !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: auto !important;
+}
+
+.widget-more-button:hover,
+.widget-more-button.ant-btn-link:hover {
+  color: var(--color-ui-more-button-hover) !important;
+  text-decoration: underline !important;
+}

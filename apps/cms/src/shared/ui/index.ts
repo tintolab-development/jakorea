@@ -29,4 +29,7 @@ export { ListPageFilters } from './list-page-filters'
 export type { ListPageFiltersProps, FilterConfig, FilterOption } from './list-page-filters'
 export { StatusBadge } from './status-badge'
 export type { StatusBadgeProps, StatusConfig } from './status-badge'
-
+export { PageHeader } from './page-header'
+export { AppBreadcrumb } from './app-breadcrumb'
+export type { AppBreadcrumbProps } from './app-breadcrumb'
+export type { BreadcrumbItem } from '@/shared/config/menu-config'

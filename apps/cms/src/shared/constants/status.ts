@@ -3,12 +3,13 @@
  * Phase 1.1: 상태 표시 로직 중앙화
  */
 
-import {
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-} from '@ant-design/icons'
-import type { ApplicationStatus, SettlementStatus, ProgramLifecycleStatus, ReportStatus } from '@/types/domain'
+import { ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import type {
+  ApplicationStatus,
+  SettlementStatus,
+  ProgramLifecycleStatus,
+  ReportStatus,
+} from '@/types/domain'
 import type { Status } from '@/types'
 
 // 공통 상태 (Program, Matching 등에서 사용)
@@ -129,34 +130,37 @@ export function getApplicationStatusIcon(status: ApplicationStatus): React.Compo
   return applicationStatusConfig.icons[status]
 }
 
-// 프로그램 진행 워크플로우 상태
+// 프로그램 진행 워크플로우 상태 (7단계, 대시보드·프로그램 관리 공통)
 export const programLifecycleStatusConfig = {
   order: [
     'planned',
     'recruiting_students',
     'recruiting_instructors',
-    'recruitment_completed_waiting',
-    'matching_completed_waiting',
-    'in_progress',
-    'completed',
+    'matching_completed',
+    'education_before_textbook',
+    'education_after_textbook',
+    'education_completed',
+    'document_processing_completed',
   ] as ProgramLifecycleStatus[],
   labels: {
     planned: '모집 예정',
-    recruiting_students: '수강자 모집 중',
-    recruiting_instructors: '강사 모집 중',
-    recruitment_completed_waiting: '모집 완료 및 대기 중',
-    matching_completed_waiting: '매칭 완료 및 진행 대기 중',
-    in_progress: '진행 중',
-    completed: '진행 완료',
+    recruiting_students: '수강자 모집',
+    recruiting_instructors: '강사 모집',
+    matching_completed: '매칭 완료',
+    education_before_textbook: '교육 진행 중 (교재 발송 전)',
+    education_after_textbook: '교육 진행 중 (교재 발송 후)',
+    education_completed: '교육 진행 완료',
+    document_processing_completed: '서류 처리 완료',
   } as Record<ProgramLifecycleStatus, string>,
   colors: {
     planned: 'default',
     recruiting_students: 'geekblue',
     recruiting_instructors: 'purple',
-    recruitment_completed_waiting: 'gold',
-    matching_completed_waiting: 'cyan',
-    in_progress: 'green',
-    completed: 'blue',
+    matching_completed: 'cyan',
+    education_before_textbook: 'cyan',
+    education_after_textbook: 'cyan',
+    education_completed: 'green',
+    document_processing_completed: 'blue',
   } as Record<ProgramLifecycleStatus, string>,
 }
 
@@ -262,4 +266,3 @@ export const reportStatusStatusConfig: Record<ReportStatus, StatusConfig> = Obje
     },
   ])
 ) as Record<ReportStatus, StatusConfig>
-
