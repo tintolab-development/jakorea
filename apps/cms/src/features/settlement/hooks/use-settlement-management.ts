@@ -54,7 +54,7 @@ interface SettlementQueryParams extends Record<string, string | undefined> {
 
 export function useSettlementManagement(): UseSettlementManagementResult {
   const location = useLocation()
-  const { params, setParam, setParams } = useQueryParams<SettlementQueryParams>()
+  const { params, setParam } = useQueryParams<SettlementQueryParams>()
 
   const {
     settlements,
@@ -133,22 +133,34 @@ export function useSettlementManagement(): UseSettlementManagementResult {
     }
   }, [settlements])
 
-  const setViewMode = useCallback((mode: SettlementViewMode) => {
-    setParam('view', mode)
-  }, [setParam])
+  const setViewMode = useCallback(
+    (mode: SettlementViewMode) => {
+      setParam('view', mode)
+    },
+    [setParam]
+  )
 
-  const setTab = useCallback((key: SettlementTabKey) => {
-    setParam('tab', key)
-  }, [setParam])
+  const setTab = useCallback(
+    (key: SettlementTabKey) => {
+      setParam('tab', key)
+    },
+    [setParam]
+  )
 
-  const setPeriod = useCallback((period: string) => {
-    setParam('period', period)
-  }, [setParam])
+  const setPeriod = useCallback(
+    (period: string) => {
+      setParam('period', period)
+    },
+    [setParam]
+  )
 
-  const openDrawer = useCallback((settlement: Settlement) => {
-    setSelectedSettlement(settlement)
-    setDrawerOpen(true)
-  }, [setSelectedSettlement])
+  const openDrawer = useCallback(
+    (settlement: Settlement) => {
+      setSelectedSettlement(settlement)
+      setDrawerOpen(true)
+    },
+    [setSelectedSettlement]
+  )
 
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false)
@@ -165,24 +177,27 @@ export function useSettlementManagement(): UseSettlementManagementResult {
     setEditingSettlement(null)
   }, [])
 
-  const submitForm = useCallback(async (data: SettlementFormData) => {
-    try {
-      if (editingSettlement) {
-        await updateSettlement(editingSettlement.id, data)
-        showSuccessMessage(MESSAGES.success.updated)
-      } else {
-        await createSettlement(data)
-        showSuccessMessage(MESSAGES.success.created)
+  const submitForm = useCallback(
+    async (data: SettlementFormData) => {
+      try {
+        if (editingSettlement) {
+          await updateSettlement(editingSettlement.id, data)
+          showSuccessMessage(MESSAGES.success.updated)
+        } else {
+          await createSettlement(data)
+          showSuccessMessage(MESSAGES.success.created)
+        }
+        closeForm()
+        fetchSettlements()
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: editingSettlement ? MESSAGES.error.update : MESSAGES.error.create,
+          context: 'SettlementFormSubmit',
+        })
       }
-      closeForm()
-      fetchSettlements()
-    } catch (error) {
-      handleError(error, {
-        defaultMessage: editingSettlement ? MESSAGES.error.update : MESSAGES.error.create,
-        context: 'SettlementFormSubmit',
-      })
-    }
-  }, [closeForm, createSettlement, editingSettlement, fetchSettlements, updateSettlement])
+    },
+    [closeForm, createSettlement, editingSettlement, fetchSettlements, updateSettlement]
+  )
 
   const openDeleteConfirm = useCallback((settlement: Settlement) => {
     setSettlementToDelete(settlement)
@@ -210,25 +225,37 @@ export function useSettlementManagement(): UseSettlementManagementResult {
         context: 'SettlementDelete',
       })
     }
-  }, [closeDeleteConfirm, closeDrawer, deleteSettlement, selectedSettlement?.id, settlementToDelete])
+  }, [
+    closeDeleteConfirm,
+    closeDrawer,
+    deleteSettlement,
+    selectedSettlement?.id,
+    settlementToDelete,
+  ])
 
-  const changeStatus = useCallback(async (settlement: Settlement, status: Settlement['status']) => {
-    try {
-      await updateStatus(settlement.id, status)
-      showSuccessMessage(MESSAGES.success.statusChanged(status))
-    } catch (error) {
-      handleError(error, {
-        defaultMessage: MESSAGES.error.statusChangeFailed,
-        context: 'SettlementStatusChange',
-      })
-    }
-  }, [updateStatus])
+  const changeStatus = useCallback(
+    async (settlement: Settlement, status: Settlement['status']) => {
+      try {
+        await updateStatus(settlement.id, status)
+        showSuccessMessage(MESSAGES.success.statusChanged(status))
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: MESSAGES.error.statusChangeFailed,
+          context: 'SettlementStatusChange',
+        })
+      }
+    },
+    [updateStatus]
+  )
 
-  const handleCalendarSelect = useCallback((_date: dayjs.Dayjs, settlement?: Settlement) => {
-    if (settlement) {
-      openDrawer(settlement)
-    }
-  }, [openDrawer])
+  const handleCalendarSelect = useCallback(
+    (_date: dayjs.Dayjs, settlement?: Settlement) => {
+      if (settlement) {
+        openDrawer(settlement)
+      }
+    },
+    [openDrawer]
+  )
 
   return {
     settlements,

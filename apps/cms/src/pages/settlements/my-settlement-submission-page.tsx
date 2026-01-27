@@ -10,6 +10,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons'
 import { InstructorSettlementForm } from '@/features/settlement/ui/instructor-settlement-form'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES } from '@/shared/constants'
 import { message } from 'antd'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 
@@ -66,4 +67,3 @@ export function MySettlementSubmissionPage() {
     </div>
   )
 }
-

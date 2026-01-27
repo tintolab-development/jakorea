@@ -26,8 +26,15 @@ export function SettlementReviewPage() {
   const location = useLocation()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
   const { getByIdSync: getProgramByIdSync } = useProgramService()
-  
-  const { settlements, loading, fetchSettlements, selectedSettlement, setSelectedSettlement, updateStatus } = useSettlementStore()
+
+  const {
+    settlements,
+    loading,
+    fetchSettlements,
+    selectedSettlement,
+    setSelectedSettlement,
+    updateStatus,
+  } = useSettlementStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
@@ -64,7 +71,7 @@ export function SettlementReviewPage() {
 
   const handleDownloadReceipt = async () => {
     // TODO: 영수증 발급 기능 구현
-      message.info(MESSAGES.warning.receiptFeatureComingSoon)
+    message.info(MESSAGES.warning.receiptFeatureComingSoon)
   }
 
   const handleApprove = async (settlement: Settlement) => {
@@ -103,7 +110,7 @@ export function SettlementReviewPage() {
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
         ) : (
@@ -141,7 +148,7 @@ export function SettlementReviewPage() {
           <Button
             type="primary"
             icon={<DownloadOutlined />}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               handleDownloadPaymentStatement(record)
             }}
@@ -150,7 +157,7 @@ export function SettlementReviewPage() {
           </Button>
           <Button
             icon={<FileTextOutlined />}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               handleDownloadReceipt()
             }}
@@ -159,7 +166,7 @@ export function SettlementReviewPage() {
           </Button>
           <Button
             type="default"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               handleApprove(record)
             }}
@@ -188,7 +195,7 @@ export function SettlementReviewPage() {
             showSizeChanger: true,
             showTotal: total => `총 ${total}개`,
           }}
-          onRow={(record) => ({
+          onRow={record => ({
             onClick: () => handleView(record),
             style: { cursor: 'pointer' },
           })}

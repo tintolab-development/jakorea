@@ -27,8 +27,15 @@ export function SettlementPendingPage() {
   const location = useLocation()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
   const { getByIdSync: getProgramByIdSync } = useProgramService()
-  
-  const { settlements, loading, fetchSettlements, selectedSettlement, setSelectedSettlement, updateStatus } = useSettlementStore()
+
+  const {
+    settlements,
+    loading,
+    fetchSettlements,
+    selectedSettlement,
+    setSelectedSettlement,
+    updateStatus,
+  } = useSettlementStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
@@ -96,7 +103,7 @@ export function SettlementPendingPage() {
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
         ) : (
@@ -134,7 +141,7 @@ export function SettlementPendingPage() {
           <Button
             type="primary"
             icon={<DownloadOutlined />}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               handleCreatePaymentStatement(record)
             }}
@@ -143,7 +150,7 @@ export function SettlementPendingPage() {
           </Button>
           <Button
             icon={<EditOutlined />}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               handleEdit(record)
             }}
@@ -172,7 +179,7 @@ export function SettlementPendingPage() {
             showSizeChanger: true,
             showTotal: total => `총 ${total}개`,
           }}
-          onRow={(record) => ({
+          onRow={record => ({
             onClick: () => handleView(record),
             style: { cursor: 'pointer' },
           })}

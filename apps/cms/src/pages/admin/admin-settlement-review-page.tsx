@@ -28,8 +28,9 @@ export function AdminSettlementReviewPage() {
   const location = useLocation()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '정산 관리'
   const { getByIdSync: getProgramByIdSync } = useProgramService()
-  
-  const { settlements, loading, fetchSettlements, selectedSettlement, setSelectedSettlement } = useSettlementStore()
+
+  const { settlements, loading, fetchSettlements, selectedSettlement, setSelectedSettlement } =
+    useSettlementStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -41,11 +42,11 @@ export function AdminSettlementReviewPage() {
     handleView,
   } = useSettlementReviewList({
     settlements,
-    onView: (settlement) => {
+    onView: settlement => {
       setSelectedSettlement(settlement)
       setDrawerOpen(true)
     },
-    onApprove: async (settlement) => {
+    onApprove: async settlement => {
       try {
         await approveSettlement(settlement)
         message.success(MESSAGES.success.settlementApproved)
@@ -56,7 +57,7 @@ export function AdminSettlementReviewPage() {
         message.error(MESSAGES.error.approvalProcessFailed)
       }
     },
-    onReject: async (settlement) => {
+    onReject: async settlement => {
       try {
         await rejectSettlement(settlement)
         message.success(MESSAGES.success.settlementRejected)
@@ -113,7 +114,7 @@ export function AdminSettlementReviewPage() {
       key: 'programId',
       width: 200,
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
         ) : (
@@ -170,7 +171,7 @@ export function AdminSettlementReviewPage() {
           <Button
             type="default"
             icon={<EyeOutlined />}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               handleView(record)
             }}
@@ -197,14 +198,10 @@ export function AdminSettlementReviewPage() {
                 allowClear
                 style={{ width: 300 }}
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onSearch={(value) => setSearchText(value)}
+                onChange={e => setSearchText(e.target.value)}
+                onSearch={value => setSearchText(value)}
               />
-              <Select
-                value={statusFilter}
-                onChange={setStatusFilter}
-                style={{ width: 150 }}
-              >
+              <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 150 }}>
                 <Select.Option value="all">전체 상태</Select.Option>
                 <Select.Option value="pending">대기</Select.Option>
                 <Select.Option value="calculated">산출 완료</Select.Option>
@@ -227,7 +224,7 @@ export function AdminSettlementReviewPage() {
               showSizeChanger: true,
               showTotal: total => `총 ${total}개`,
             }}
-            onRow={(record) => ({
+            onRow={record => ({
               onClick: () => handleView(record),
               style: { cursor: 'pointer' },
             })}
@@ -243,7 +240,7 @@ export function AdminSettlementReviewPage() {
           setDrawerOpen(false)
           setSelectedSettlement(null)
         }}
-        onApprove={async (settlement) => {
+        onApprove={async settlement => {
           try {
             await approveSettlement(settlement)
             message.success(MESSAGES.success.settlementApproved)
@@ -254,7 +251,7 @@ export function AdminSettlementReviewPage() {
             message.error(MESSAGES.error.approvalProcessFailed)
           }
         }}
-        onReject={async (settlement) => {
+        onReject={async settlement => {
           try {
             await rejectSettlement(settlement)
             message.success(MESSAGES.success.settlementRejected)
@@ -265,7 +262,7 @@ export function AdminSettlementReviewPage() {
             message.error(MESSAGES.error.rejectionProcessFailed)
           }
         }}
-        onUpdate={async (updatedSettlement) => {
+        onUpdate={async updatedSettlement => {
           // Phase 0.4.2: 금액 조정 후 목록 새로고침
           await fetchSettlements()
           // 선택된 정산도 업데이트
