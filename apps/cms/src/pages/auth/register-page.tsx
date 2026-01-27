@@ -43,8 +43,7 @@ import './register-page.css'
 const { Title, Text, Paragraph } = Typography
 const { Step } = Steps
 
-// 로고 이미지 경로
-const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
+import logoImage from '@/assets/images/logo/ja_korea_logo.png'
 
 // 가입 유형 옵션
 const REGISTER_TYPES: Array<{
@@ -219,7 +218,7 @@ export function RegisterPage() {
     <div className="register-page">
       <Card className="register-card">
         <div className="register-header">
-          <img src={LOGO_PATH} alt="JA Korea" className="register-logo" />
+          <img src={logoImage} alt="JA Korea" className="register-logo" />
           <Title level={2} style={{ marginTop: 16, marginBottom: 8 }}>
             회원가입
           </Title>

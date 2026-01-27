@@ -83,10 +83,7 @@ export function DynamicFormFields({
               />
             )}
             {field.type === 'checkbox' && (
-              <Checkbox
-                checked={!!val}
-                onChange={e => update(field.id, e.target.checked)}
-              >
+              <Checkbox checked={!!val} onChange={e => update(field.id, e.target.checked)}>
                 {field.placeholder || field.label}
               </Checkbox>
             )}
@@ -123,9 +120,7 @@ export function DynamicFormFields({
                 }
                 onRemove={() => update(field.id, undefined)}
               >
-                <Button icon={<UploadOutlined />}>
-                  {field.placeholder ?? '파일 선택'}
-                </Button>
+                <Button icon={<UploadOutlined />}>{field.placeholder ?? '파일 선택'}</Button>
               </Upload>
             )}
           </Form.Item>

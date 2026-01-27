@@ -5,6 +5,7 @@
 
 import { Modal, Form, Select, Input, Space, Radio, message } from 'antd'
 import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -39,6 +40,7 @@ interface ManualAssignmentModalProps {
   onCancel: () => void
   onSuccess: (data: ManualAssignmentData) => Promise<void>
   loading?: boolean
+  fixedProgramId?: string // 프로그램 상세에서 열 때 고정된 programId
 }
 
 export function ManualAssignmentModal({
@@ -46,6 +48,7 @@ export function ManualAssignmentModal({
   onCancel,
   onSuccess,
   loading = false,
+  fixedProgramId,
 }: ManualAssignmentModalProps) {
   const { user } = useAuthStore()
   const {
@@ -59,16 +62,30 @@ export function ManualAssignmentModal({
     resolver: zodResolver(assignmentSchema),
     defaultValues: {
       assignmentType: 'existing',
+      programId: fixedProgramId || '',
     },
   })
+
+  // fixedProgramId가 있으면 자동으로 설정
+  useEffect(() => {
+    if (fixedProgramId) {
+      setValue('programId', fixedProgramId)
+    }
+  }, [fixedProgramId, setValue])
 
   const assignmentType = watch('assignmentType')
 
   const onSubmit = async (data: AssignmentFormData) => {
     if (!user?.id) return
 
+    const programId = fixedProgramId || data.programId
+    if (!programId) {
+      message.error('프로그램을 선택해주세요.')
+      return
+    }
+
     const assignmentData: ManualAssignmentData = {
-      programId: data.programId,
+      programId,
       scheduleIds: [], // TODO: 일정 선택 기능 추가
       assignedBy: user.id,
       notes: data.notes,
@@ -107,24 +124,26 @@ export function ManualAssignmentModal({
       width={600}
     >
       <Form layout="vertical">
-        <Form.Item label="프로그램" required>
-          <Select
-            {...register('programId')}
-            placeholder="프로그램을 선택해주세요"
-            status={errors.programId ? 'error' : ''}
-          >
-            {mockPrograms.map(program => (
-              <Option key={program.id} value={program.id}>
-                {program.title}
-              </Option>
-            ))}
-          </Select>
-          {errors.programId && (
-            <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-              {errors.programId.message}
-            </div>
-          )}
-        </Form.Item>
+        {!fixedProgramId && (
+          <Form.Item label="프로그램" required>
+            <Select
+              {...register('programId')}
+              placeholder="프로그램을 선택해주세요"
+              status={errors.programId ? 'error' : ''}
+            >
+              {mockPrograms.map(program => (
+                <Option key={program.id} value={program.id}>
+                  {program.title}
+                </Option>
+              ))}
+            </Select>
+            {errors.programId && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.programId.message}
+              </div>
+            )}
+          </Form.Item>
+        )}
 
         <Form.Item label="배정 방식" required>
           <Radio.Group
@@ -199,11 +218,7 @@ export function ManualAssignmentModal({
         )}
 
         <Form.Item label="비고">
-          <TextArea
-            {...register('notes')}
-            placeholder="비고를 입력해주세요 (선택사항)"
-            rows={3}
-          />
+          <TextArea {...register('notes')} placeholder="비고를 입력해주세요 (선택사항)" rows={3} />
         </Form.Item>
       </Form>
     </Modal>

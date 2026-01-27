@@ -38,8 +38,7 @@ const TEST_ACCOUNTS = {
   },
 }
 
-// 로고 이미지 경로
-const LOGO_PATH = '/logo/JA_New_Brand_Logo_01.webp'
+import logoImage from '@/assets/images/logo/ja_korea_logo.png'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -294,7 +293,7 @@ export function LoginPage() {
     <div className="login-page">
       <Card className="login-card">
         <div className="login-header">
-          <img src={LOGO_PATH} alt="JA Korea" className="login-logo" />
+          <img src={logoImage} alt="JA Korea" className="login-logo" />
         </div>
 
         <Tabs items={tabItems} defaultActiveKey="email" centered size="large" />
