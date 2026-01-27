@@ -483,7 +483,7 @@ export function ProgramDetailDrawer({
         onCancel={handleApplicationPathFormCancel}
         footer={null}
         width={880}
-        destroyOnClose
+        destroyOnHidden
         zIndex={1001}
       >
         <ApplicationPathForm
