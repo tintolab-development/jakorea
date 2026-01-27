@@ -7,7 +7,7 @@
 import { Form, Input, Select, Button, Card, Space, DatePicker, TimePicker, Alert } from 'antd'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { scheduleSchema, type ScheduleFormData } from '@/entities/schedule/model/schema'
 import type { Schedule } from '@/types/domain'
 import { mockPrograms, mockInstructors } from '@/data/mock'
@@ -24,39 +24,76 @@ interface ScheduleFormProps {
   conflicts?: Schedule[]
 }
 
-export function ScheduleForm({ schedule, initialDate, onSubmit, onCancel, loading, conflicts = [] }: ScheduleFormProps) {
+export function ScheduleForm({
+  schedule,
+  initialDate,
+  onSubmit,
+  onCancel,
+  loading,
+  conflicts = [],
+}: ScheduleFormProps) {
+  const defaultValues = useMemo<ScheduleFormData>(() => {
+    if (schedule) {
+      return {
+        programId: schedule.programId,
+        roundId: schedule.roundId || '',
+        title: schedule.title,
+        date:
+          typeof schedule.date === 'string'
+            ? schedule.date
+            : schedule.date.toISOString().split('T')[0],
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        location: schedule.location || '',
+        onlineLink: schedule.onlineLink || '',
+        instructorId: schedule.instructorId || '',
+      }
+    }
+    return {
+      programId: '',
+      title: '',
+      date: initialDate || dayjs().format('YYYY-MM-DD'),
+      startTime: '09:00',
+      endTime: '18:00',
+    }
+  }, [schedule, initialDate])
+
   const {
     handleSubmit,
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleSchema),
-    defaultValues: schedule
-      ? {
-          programId: schedule.programId,
-          roundId: schedule.roundId || '',
-          title: schedule.title,
-          date: typeof schedule.date === 'string' ? schedule.date : schedule.date.toISOString().split('T')[0],
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          location: schedule.location || '',
-          onlineLink: schedule.onlineLink || '',
-          instructorId: schedule.instructorId || '',
-        }
-      : {
-          date: initialDate || dayjs().format('YYYY-MM-DD'),
-          startTime: '09:00',
-          endTime: '18:00',
-        },
+    defaultValues,
   })
 
-  // initialDate가 변경될 때 날짜 필드 업데이트
+  // schedule prop이 변경될 때 폼 값 업데이트
   useEffect(() => {
-    if (initialDate && !schedule) {
-      setValue('date', initialDate)
+    if (schedule) {
+      reset({
+        programId: schedule.programId,
+        roundId: schedule.roundId || '',
+        title: schedule.title,
+        date:
+          typeof schedule.date === 'string'
+            ? schedule.date
+            : schedule.date.toISOString().split('T')[0],
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        location: schedule.location || '',
+        onlineLink: schedule.onlineLink || '',
+        instructorId: schedule.instructorId || '',
+      })
+    } else {
+      reset({
+        date: initialDate || dayjs().format('YYYY-MM-DD'),
+        startTime: '09:00',
+        endTime: '18:00',
+      })
     }
-  }, [initialDate, schedule, setValue])
+  }, [schedule, initialDate, reset])
 
   const selectedProgramId = watch('programId')
   const selectedProgram = mockPrograms.find(p => p.id === selectedProgramId)
@@ -90,7 +127,11 @@ export function ScheduleForm({ schedule, initialDate, onSubmit, onCancel, loadin
       )}
 
       <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
-        <Form.Item label="프로그램" validateStatus={errors.programId ? 'error' : ''} help={errors.programId?.message}>
+        <Form.Item
+          label="프로그램"
+          validateStatus={errors.programId ? 'error' : ''}
+          help={errors.programId?.message}
+        >
           <Select
             value={watch('programId')}
             onChange={value => setValue('programId', value)}
@@ -126,7 +167,11 @@ export function ScheduleForm({ schedule, initialDate, onSubmit, onCancel, loadin
           </Form.Item>
         )}
 
-        <Form.Item label="일정 제목" validateStatus={errors.title ? 'error' : ''} help={errors.title?.message}>
+        <Form.Item
+          label="일정 제목"
+          validateStatus={errors.title ? 'error' : ''}
+          help={errors.title?.message}
+        >
           <Input
             value={watch('title') || ''}
             onChange={e => setValue('title', e.target.value)}
@@ -134,7 +179,11 @@ export function ScheduleForm({ schedule, initialDate, onSubmit, onCancel, loadin
           />
         </Form.Item>
 
-        <Form.Item label="날짜" validateStatus={errors.date ? 'error' : ''} help={errors.date?.message}>
+        <Form.Item
+          label="날짜"
+          validateStatus={errors.date ? 'error' : ''}
+          help={errors.date?.message}
+        >
           <DatePicker
             value={watch('date') ? dayjs(watch('date')) : null}
             onChange={date => setValue('date', date ? date.format('YYYY-MM-DD') : '')}
@@ -224,4 +273,3 @@ export function ScheduleForm({ schedule, initialDate, onSubmit, onCancel, loadin
     </Card>
   )
 }
-

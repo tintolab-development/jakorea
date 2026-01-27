@@ -4,7 +4,7 @@
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Form,
   Input,
@@ -17,7 +17,7 @@ import {
   Upload,
   Typography,
 } from 'antd'
-import { UploadOutlined } from '@ant-design/icons'
+import { UploadOutlined, EditOutlined } from '@ant-design/icons'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { programSchema, type ProgramFormData } from '@/entities/program/model/schema'
@@ -26,6 +26,9 @@ import { mockSponsors } from '@/data/mock'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { programService } from '@/entities/program/api/program-service'
 import { mockFileTemplates } from '@/data/mock/templates'
+import { getFormTemplateByProgramId, formTemplatesByProgramId } from '@/data/mock/form-templates'
+import type { FormFieldDef } from '@/types/form-template'
+import { FormFieldEditor } from './form-field-editor'
 import dayjs from 'dayjs'
 
 const { Option } = Select
@@ -63,6 +66,58 @@ const statusOptions = [
 
 export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFormProps) {
   const [currentStep, setCurrentStep] = useState(0)
+  const [customizeModalOpen, setCustomizeModalOpen] = useState(false)
+
+  const defaultValues = useMemo<ProgramFormData>(() => {
+    if (program) {
+      return {
+        sponsorId: program.sponsorId,
+        title: program.title,
+        type: program.type,
+        format: program.format,
+        description: program.description || '',
+        startDate:
+          typeof program.startDate === 'string'
+            ? program.startDate
+            : program.startDate.toISOString(),
+        endDate:
+          typeof program.endDate === 'string' ? program.endDate : program.endDate.toISOString(),
+        status: program.status,
+        settlementRuleId: program.settlementRuleId || '',
+        applicationPathId: program.applicationPathId || '',
+        venue: program.venue || '',
+        curriculum: program.curriculum || '',
+        contactEmail: program.contactEmail || '',
+        contactPhone: program.contactPhone || '',
+        oneLineIntroduction: program.oneLineIntroduction || '',
+        keyVisualImage: program.keyVisualImage || '',
+        applicationFormTemplateId: program.applicationFormTemplateId || '',
+        surveyFormTemplateId: program.surveyFormTemplateId || '',
+        satisfactionFormTemplateId: program.satisfactionFormTemplateId || '',
+        lectureReportFormTemplateId: program.lectureReportFormTemplateId || '',
+        totalParticipants: program.totalParticipants || undefined,
+        textbookName: program.textbookName || '',
+        textbookNameEn: program.textbookNameEn || '',
+        rounds: program.rounds.map(r => ({
+          roundNumber: r.roundNumber,
+          startDate: typeof r.startDate === 'string' ? r.startDate : r.startDate.toISOString(),
+          endDate: typeof r.endDate === 'string' ? r.endDate : r.endDate.toISOString(),
+          capacity: r.capacity,
+          status: r.status,
+        })),
+      }
+    }
+    return {
+      sponsorId: '',
+      title: '',
+      status: 'pending',
+      type: 'offline',
+      format: 'workshop',
+      startDate: '',
+      endDate: '',
+      rounds: [{ roundNumber: 1, startDate: '', endDate: '', status: 'pending' }],
+    }
+  }, [program])
 
   const {
     register,
@@ -72,64 +127,91 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
     watch,
     control,
     trigger,
+    reset,
   } = useForm<ProgramFormData>({
     resolver: zodResolver(programSchema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
-    defaultValues: program
-      ? {
-          sponsorId: program.sponsorId,
-          title: program.title,
-          type: program.type,
-          format: program.format,
-          description: program.description || '',
-          startDate:
-            typeof program.startDate === 'string'
-              ? program.startDate
-              : program.startDate.toISOString(),
-          endDate:
-            typeof program.endDate === 'string' ? program.endDate : program.endDate.toISOString(),
-          status: program.status,
-          settlementRuleId: program.settlementRuleId || '',
-          applicationPathId: program.applicationPathId || '',
-          venue: program.venue || '',
-          curriculum: program.curriculum || '',
-          contactEmail: program.contactEmail || '',
-          contactPhone: program.contactPhone || '',
-          oneLineIntroduction: program.oneLineIntroduction || '',
-          keyVisualImage: program.keyVisualImage || '',
-          applicationFormTemplateId: program.applicationFormTemplateId || '',
-          surveyFormTemplateId: program.surveyFormTemplateId || '',
-          satisfactionFormTemplateId: program.satisfactionFormTemplateId || '',
-          lectureReportFormTemplateId: program.lectureReportFormTemplateId || '',
-          totalParticipants: program.totalParticipants || undefined,
-          textbookName: program.textbookName || '',
-          textbookNameEn: program.textbookNameEn || '',
-          rounds: program.rounds.map(r => ({
-            roundNumber: r.roundNumber,
-            startDate: typeof r.startDate === 'string' ? r.startDate : r.startDate.toISOString(),
-            endDate: typeof r.endDate === 'string' ? r.endDate : r.endDate.toISOString(),
-            capacity: r.capacity,
-            status: r.status,
-          })),
-        }
-      : {
-          title: '',
-          status: 'pending',
-          type: 'offline',
-          format: 'workshop',
-          rounds: [{ roundNumber: 1, startDate: '', endDate: '', status: 'pending' }],
-        },
+    defaultValues,
   })
+
+  // program prop이 변경될 때 폼 값 업데이트
+  useEffect(() => {
+    if (program) {
+      reset({
+        sponsorId: program.sponsorId,
+        title: program.title,
+        type: program.type,
+        format: program.format,
+        description: program.description || '',
+        startDate:
+          typeof program.startDate === 'string'
+            ? program.startDate
+            : program.startDate.toISOString(),
+        endDate:
+          typeof program.endDate === 'string' ? program.endDate : program.endDate.toISOString(),
+        status: program.status,
+        settlementRuleId: program.settlementRuleId || '',
+        applicationPathId: program.applicationPathId || '',
+        venue: program.venue || '',
+        curriculum: program.curriculum || '',
+        contactEmail: program.contactEmail || '',
+        contactPhone: program.contactPhone || '',
+        oneLineIntroduction: program.oneLineIntroduction || '',
+        keyVisualImage: program.keyVisualImage || '',
+        applicationFormTemplateId: program.applicationFormTemplateId || '',
+        surveyFormTemplateId: program.surveyFormTemplateId || '',
+        satisfactionFormTemplateId: program.satisfactionFormTemplateId || '',
+        lectureReportFormTemplateId: program.lectureReportFormTemplateId || '',
+        totalParticipants: program.totalParticipants || undefined,
+        textbookName: program.textbookName || '',
+        textbookNameEn: program.textbookNameEn || '',
+        rounds: program.rounds.map(r => ({
+          roundNumber: r.roundNumber,
+          startDate: typeof r.startDate === 'string' ? r.startDate : r.startDate.toISOString(),
+          endDate: typeof r.endDate === 'string' ? r.endDate : r.endDate.toISOString(),
+          capacity: r.capacity,
+          status: r.status,
+        })),
+      })
+    } else {
+      reset({
+        title: '',
+        status: 'pending',
+        type: 'offline',
+        format: 'workshop',
+        rounds: [{ roundNumber: 1, startDate: '', endDate: '', status: 'pending' }],
+      })
+    }
+  }, [program, reset])
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'rounds',
   })
 
+  const programId = program?.id || 'new'
+  const currentTemplate = getFormTemplateByProgramId(programId)
+  const [customFields, setCustomFields] = useState<FormFieldDef[]>(currentTemplate.customFields)
+
+  const handleSaveCustomFields = (fields: FormFieldDef[]) => {
+    setCustomFields(fields)
+    // 프로그램별 템플릿 저장 (프로그램 저장 시 함께 저장됨)
+    // 실제로는 API 호출로 저장해야 함
+    setCustomizeModalOpen(false)
+  }
+
   const onFormSubmit = async (data: ProgramFormData) => {
     try {
       await onSubmit(data)
+      // 프로그램 저장 후 커스텀 필드도 저장
+      const savedProgramId = program?.id || `program-${Date.now()}`
+      if (customFields.length > 0 || program) {
+        formTemplatesByProgramId.set(savedProgramId, {
+          programId: savedProgramId,
+          customFields: customFields,
+        })
+      }
     } catch (e) {
       console.error('Failed to submit form:', e)
       // 에러는 상위에서 처리하되, 폼 에러 표시를 위해 에러 필드로 스크롤
@@ -391,25 +473,35 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
               label="신청서 폼 템플릿"
               help="템플릿 관리에서 등록한 신청서 폼 템플릿을 선택하거나 나중에 설정할 수 있습니다."
             >
-              <Select
-                value={watch('applicationFormTemplateId') || undefined}
-                onChange={value => setValue('applicationFormTemplateId', value || '')}
-                placeholder="신청서 폼 템플릿 선택 (선택사항)"
-                allowClear
-                showSearch
-                filterOption={(input, option) => {
-                  const label = option?.label as string | undefined
-                  return label ? label.toLowerCase().includes(input.toLowerCase()) : false
-                }}
-              >
-                {mockFileTemplates
-                  .filter(t => t.status === 'published')
-                  .map(template => (
-                    <Option key={template.id} value={template.id}>
-                      {template.title}
-                    </Option>
-                  ))}
-              </Select>
+              <Space.Compact style={{ width: '100%' }}>
+                <Select
+                  value={watch('applicationFormTemplateId') || undefined}
+                  onChange={value => setValue('applicationFormTemplateId', value || '')}
+                  placeholder="신청서 폼 템플릿 선택 (선택사항)"
+                  allowClear
+                  showSearch
+                  style={{ flex: 1 }}
+                  filterOption={(input, option) => {
+                    const label = option?.label as string | undefined
+                    return label ? label.toLowerCase().includes(input.toLowerCase()) : false
+                  }}
+                >
+                  {mockFileTemplates
+                    .filter(t => t.status === 'published')
+                    .map(template => (
+                      <Option key={template.id} value={template.id}>
+                        {template.title}
+                      </Option>
+                    ))}
+                </Select>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => setCustomizeModalOpen(true)}
+                  disabled={!watch('applicationFormTemplateId') && !program?.id}
+                >
+                  커스터마이징
+                </Button>
+              </Space.Compact>
             </Form.Item>
 
             <Form.Item
@@ -759,6 +851,13 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           )}
         </Space>
       </Form.Item>
+
+      <FormFieldEditor
+        open={customizeModalOpen}
+        fields={customFields}
+        onSave={handleSaveCustomFields}
+        onCancel={() => setCustomizeModalOpen(false)}
+      />
     </Form>
   )
 }
