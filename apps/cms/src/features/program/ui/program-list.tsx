@@ -119,6 +119,11 @@ const getRecruitmentStatus = (program: Program): 'scheduled' | 'recruiting' | 'c
   const startDate = dayjs(program.applicationStartDate)
   const endDate = dayjs(program.applicationEndDate)
 
+  // 날짜 유효성 검사
+  if (!startDate.isValid() || !endDate.isValid()) {
+    return null
+  }
+
   if (now.isBefore(startDate, 'day')) {
     return 'scheduled' // 모집 예정
   } else if (now.isSameOrAfter(startDate, 'day') && now.isSameOrBefore(endDate, 'day')) {
@@ -163,10 +168,10 @@ export function ProgramList({
   onChangeStatus,
   showFavorite = false,
   showCalendarView = false,
-  onCreateNew: _onCreateNew,
-  tableTitle: _tableTitle = '전체 프로그램',
+  onCreateNew: _onCreateNew, // eslint-disable-line @typescript-eslint/no-unused-vars
+  tableTitle: _tableTitle = '전체 프로그램', // eslint-disable-line @typescript-eslint/no-unused-vars
   viewMode: externalViewMode,
-  onViewModeChange: _onViewModeChange,
+  onViewModeChange: _onViewModeChange, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: ProgramListProps) {
   const { user } = useAuthStore()
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
@@ -247,8 +252,15 @@ export function ProgramList({
         const rangeStart = operationPeriodRange[0].startOf('day')
         const rangeEnd = operationPeriodRange[1].endOf('day')
         filtered = filtered.filter(program => {
+          if (!program.startDate || !program.endDate) {
+            return false
+          }
           const startDate = dayjs(program.startDate)
           const endDate = dayjs(program.endDate)
+          // 날짜 유효성 검사
+          if (!startDate.isValid() || !endDate.isValid()) {
+            return false
+          }
           return startDate.isSameOrBefore(rangeEnd) && endDate.isSameOrAfter(rangeStart)
         })
       }
@@ -262,6 +274,10 @@ export function ProgramList({
           if (program.applicationStartDate && program.applicationEndDate) {
             const appStart = dayjs(program.applicationStartDate)
             const appEnd = dayjs(program.applicationEndDate)
+            // 날짜 유효성 검사
+            if (!appStart.isValid() || !appEnd.isValid()) {
+              return false
+            }
             // 신청 기간과 필터 범위가 겹치는지 확인
             return appStart.isSameOrBefore(rangeEnd) && appEnd.isSameOrAfter(rangeStart)
           }
@@ -284,8 +300,15 @@ export function ProgramList({
       const rangeStart = periodRange[0].startOf('day')
       const rangeEnd = periodRange[1].endOf('day')
       filtered = filtered.filter(program => {
+        if (!program.startDate || !program.endDate) {
+          return false
+        }
         const startDate = dayjs(program.startDate)
         const endDate = dayjs(program.endDate)
+        // 날짜 유효성 검사
+        if (!startDate.isValid() || !endDate.isValid()) {
+          return false
+        }
         return startDate.isSameOrBefore(rangeEnd) && endDate.isSameOrAfter(rangeStart)
       })
     }
@@ -381,6 +404,9 @@ export function ProgramList({
       const operationStartDateStr = searchParamsAdmin.get('operationStartDate')
       const operationEndDateStr = searchParamsAdmin.get('operationEndDate')
 
+      // URL 파라미터와 외부 상태를 동기화하기 위한 setState 호출
+      // 조건부 업데이트로 무한 루프 방지
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       setPendingFilters(prev => {
         // 값이 변경된 경우에만 업데이트 (무한 루프 방지)
         const hasChanges =
@@ -870,7 +896,10 @@ export function ProgramList({
                 title: '스폰서',
                 dataIndex: 'sponsorId',
                 key: 'sponsorId',
-                render: (sponsorId: string) => {
+                render: (sponsorId: string | undefined) => {
+                  if (!sponsorId) {
+                    return '-'
+                  }
                   return sponsorService.getNameById(sponsorId)
                 },
               },
@@ -1121,7 +1150,10 @@ export function ProgramList({
                 title: '스폰서',
                 dataIndex: 'sponsorId',
                 key: 'sponsorId',
-                render: (sponsorId: string) => {
+                render: (sponsorId: string | undefined) => {
+                  if (!sponsorId) {
+                    return '-'
+                  }
                   return sponsorService.getNameById(sponsorId)
                 },
               },
