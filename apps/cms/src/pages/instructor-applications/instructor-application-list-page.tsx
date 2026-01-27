@@ -3,40 +3,45 @@
  * Phase 4.3: 강의 신청 관리 (FR-F02)
  */
 
-import { useState, useEffect, useCallback } from 'react'
-import { Space, Select, Button, Modal, Input, message } from 'antd'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Space, Button, Modal, Input } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { InstructorApplicationList } from '@/features/instructor-application/ui/instructor-application-list'
+import { InstructorApplicationDetailDrawer } from '@/features/instructor-application/ui/instructor-application-detail-drawer'
 import { ManualAssignmentModal } from '@/features/instructor-application/ui/manual-assignment-modal'
 import { useInstructorApplicationReview } from '@/features/instructor-application/hooks/use-instructor-application-review'
-import { createManualAssignment, type ManualAssignmentData } from '@/entities/instructor-application/api/instructor-application-service'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import {
+  createManualAssignment,
+  type ManualAssignmentData,
+  type InstructorApplicationItem,
+} from '@/entities/instructor-application/api/instructor-application-service'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { MESSAGES } from '@/shared/constants'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import './instructor-application-list-page.css'
 
-const { Option } = Select
 const { TextArea } = Input
 
+type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED' | 'ALL'
+
 export function InstructorApplicationListPage() {
-  const location = useLocation()
   const { user } = useAuthStore()
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
 
   const { params, setParams } = useQueryParams<{ programId?: string; status?: string }>()
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사 신청 관리'
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
   const [assignmentLoading, setAssignmentLoading] = useState(false)
 
   const {
     applications,
     loading,
+    currentFilters,
+    selectedApplication,
     rejectModalOpen,
     rejectionReason,
     setRejectionReason,
@@ -49,64 +54,123 @@ export function InstructorApplicationListPage() {
     setSelectedApplication,
   } = useInstructorApplicationReview()
 
-  // 필터 상태
-  const programFilter = params.programId || undefined
-  const statusFilter = (params.status || 'ALL') as
-    | 'PENDING'
-    | 'APPROVED'
-    | 'REJECTED'
-    | 'CLOSED'
-    | 'ALL'
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // 프로그램 목록
   const { getAllSync: getAllProgramsSync } = useProgramService()
   const programs = getAllProgramsSync()
 
+  // 쿼리 파라미터에서 필터 값 파싱
+  const parseFiltersFromParams = useCallback(() => {
+    const programId = params.programId || undefined
+    const status = (params.status || 'ALL') as ApplicationStatus
+    return { programId, status }
+  }, [params])
+
+  // 적용된 필터 (쿼리 파라미터에서 가져옴)
+  const appliedFilters = useMemo(() => parseFiltersFromParams(), [parseFiltersFromParams])
+
+  // 임시 필터 상태 (조회 버튼 클릭 전까지)
+  const [pendingFilters, setPendingFilters] = useState(() => ({
+    programId: appliedFilters.programId || 'ALL',
+    status: appliedFilters.status,
+  }))
+
+  // 쿼리 파라미터 변경 시 pendingFilters 동기화
+  useEffect(() => {
+    const filters = parseFiltersFromParams()
+    setPendingFilters({
+      programId: filters.programId || 'ALL',
+      status: filters.status,
+    })
+  }, [parseFiltersFromParams])
+
   // 초기 로드 및 필터 변경 시 데이터 불러오기
   useEffect(() => {
+    const filters = parseFiltersFromParams()
     fetchApplications({
-      programId: programFilter,
-      status: statusFilter,
+      programId: filters.programId,
+      status: filters.status === 'ALL' ? undefined : filters.status,
     })
-  }, [programFilter, statusFilter, fetchApplications])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 필터 변경 핸들러
-  const handleProgramFilterChange = (value: string) => {
+  // 필터 옵션
+  const programOptions = useMemo(() => {
+    return [
+      { label: '전체 프로그램', value: 'ALL' },
+      ...programs.map(program => ({
+        label: program.title,
+        value: program.id,
+      })),
+    ]
+  }, [programs])
+
+  const statusOptions = [
+    { label: '전체', value: 'ALL' },
+    { label: '대기', value: 'PENDING' },
+    { label: '승인', value: 'APPROVED' },
+    { label: '거절', value: 'REJECTED' },
+    { label: '마감', value: 'CLOSED' },
+  ]
+
+  // 조회 버튼 클릭 핸들러
+  const handleSearch = useCallback(() => {
+    const programId = pendingFilters.programId === 'ALL' ? undefined : pendingFilters.programId
+    const status = pendingFilters.status === 'ALL' ? undefined : pendingFilters.status
+
+    // 쿼리 파라미터 업데이트
     setParams({
-      programId: value === 'ALL' ? undefined : value,
+      programId: programId as string | undefined,
+      status: status as string | undefined,
     })
-  }
 
-  const handleStatusFilterChange = (
-    value: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED' | 'ALL'
-  ) => {
+    // 필터 적용하여 데이터 조회
+    fetchApplications({
+      programId: programId as string | undefined,
+      status: status as 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED' | undefined,
+    })
+  }, [pendingFilters, setParams, fetchApplications])
+
+  // 초기화 핸들러
+  const handleFilterReset = useCallback(() => {
+    setPendingFilters({
+      programId: 'ALL',
+      status: 'ALL',
+    })
     setParams({
-      status: value === 'ALL' ? undefined : value,
+      programId: undefined,
+      status: undefined,
     })
-  }
+    fetchApplications({
+      programId: undefined,
+      status: undefined,
+    })
+  }, [setParams, fetchApplications])
 
-  const handleView = useCallback((item: typeof applications[0]) => {
-    setSelectedApplication(item)
-    // TODO: 상세 Drawer 구현
-    message.info(MESSAGES.info.detailViewComingSoon)
-  }, [setSelectedApplication])
+  const handleView = useCallback(
+    (item: InstructorApplicationItem) => {
+      setSelectedApplication(item)
+      setDrawerOpen(true)
+    },
+    [setSelectedApplication]
+  )
 
   const handleApprove = useCallback(
-    async (item: typeof applications[0]) => {
+    async (item: InstructorApplicationItem) => {
       await approveApplication(item.id)
     },
     [approveApplication]
   )
 
   const handleReject = useCallback(
-    (item: typeof applications[0]) => {
+    (item: InstructorApplicationItem) => {
       requestReject(item)
     },
     [requestReject]
   )
 
   const handleClose = useCallback(
-    async (item: typeof applications[0]) => {
+    async (item: InstructorApplicationItem) => {
       await closeApplication(item.id)
     },
     [closeApplication]
@@ -114,40 +178,16 @@ export function InstructorApplicationListPage() {
 
   return (
     <div>
-      <Space className="instructor-application-list-header">
-        <h1 className="instructor-application-list-title">{categoryName}</h1>
-      </Space>
-
-      <Space className="instructor-application-list-filters" size="middle" wrap>
-        <Select
-          placeholder="프로그램 선택"
-          value={programFilter || 'ALL'}
-          onChange={handleProgramFilterChange}
-          style={{ width: 200 }}
-          allowClear
-        >
-          <Option value="ALL">전체 프로그램</Option>
-          {programs.map(program => (
-            <Option key={program.id} value={program.id}>
-              {program.title}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="상태 선택"
-          value={statusFilter}
-          onChange={handleStatusFilterChange}
-          style={{ width: 150 }}
-        >
-          <Option value="ALL">전체</Option>
-          <Option value="PENDING">대기</Option>
-          <Option value="APPROVED">승인</Option>
-          <Option value="REJECTED">거절</Option>
-          <Option value="CLOSED">마감</Option>
-        </Select>
-        <Button onClick={() => fetchApplications({ programId: programFilter, status: statusFilter })}>
-          새로고침
-        </Button>
+      {/* 페이지 헤더 영역 - 추가배정 버튼만 */}
+      <div
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.lg,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+        }}
+      >
         {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
         {canWrite && (
           <Button
@@ -158,7 +198,35 @@ export function InstructorApplicationListPage() {
             추가 배정
           </Button>
         )}
-      </Space>
+      </div>
+
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'programId',
+            type: 'select',
+            label: '프로그램',
+            placeholder: '전체 프로그램',
+            options: programOptions,
+            defaultValue: pendingFilters.programId,
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '상태',
+            placeholder: '전체',
+            options: statusOptions,
+            defaultValue: pendingFilters.status,
+          },
+        ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+        loading={loading}
+      />
 
       <InstructorApplicationList
         data={applications}
@@ -167,6 +235,17 @@ export function InstructorApplicationListPage() {
         onApprove={handleApprove}
         onReject={handleReject}
         onClose={handleClose}
+      />
+
+      {/* 강사 신청 상세 Drawer */}
+      <InstructorApplicationDetailDrawer
+        open={drawerOpen}
+        application={selectedApplication}
+        onClose={() => {
+          setDrawerOpen(false)
+          setSelectedApplication(null)
+        }}
+        loading={loading}
       />
 
       {/* 거절 사유 입력 모달 */}
@@ -203,7 +282,8 @@ export function InstructorApplicationListPage() {
             await createManualAssignment(data)
             showSuccessMessage(MESSAGES.success.manualAssignmentCompleted)
             setAssignmentModalOpen(false)
-            await fetchApplications({ programId: programFilter, status: statusFilter })
+            // 현재 필터로 다시 조회
+            await fetchApplications(currentFilters)
           } catch (error) {
             handleError(error, { defaultMessage: MESSAGES.error.manualAssignmentFailed })
           } finally {
