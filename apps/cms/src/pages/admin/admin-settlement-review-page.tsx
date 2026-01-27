@@ -197,7 +197,6 @@ export function AdminSettlementReviewPage() {
                 placeholder="프로그램명, 강사명, 기간을 입력하세요"
                 value={searchText}
                 onChange={setSearchText}
-                onSearch={setSearchText}
                 width={350}
               />
               <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 150 }}>
