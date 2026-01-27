@@ -16,6 +16,9 @@ import {
   getUserById,
   updateUserRole,
   updateUserStatus,
+  createUser,
+  deleteUser,
+  type CreateUserRequest,
 } from '@/entities/user/api/user-service'
 
 type UserId = string
@@ -45,6 +48,8 @@ interface UserStore {
   // Actions
   fetchUsers: (filters?: UserFilters) => Promise<void>
   fetchUserById: (userId: UserId) => Promise<void>
+  createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>
+  deleteUser: (userId: UserId) => Promise<void>
   changeUserRole: (
     userId: UserId,
     newRole: UserRole,
@@ -164,6 +169,57 @@ export const useUserStore = create<UserStore>((set, get) => ({
       })
     } catch (err) {
       const error = err instanceof Error ? err : new Error('사용자 정보를 불러오는데 실패했습니다.')
+      set({ error, loading: false })
+      throw error
+    }
+  },
+
+  createUser: async request => {
+    set({ loading: true, error: null })
+    try {
+      const newUser = await createUser(request)
+      const state = get()
+
+      // usersById에 추가
+      set({
+        usersById: {
+          ...state.usersById,
+          [newUser.id]: newUser,
+        },
+        // userIds에 추가
+        userIds: [...state.userIds, newUser.id],
+        loading: false,
+      })
+
+      return newUser
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('사용자 생성에 실패했습니다.')
+      set({ error, loading: false })
+      throw error
+    }
+  },
+
+  deleteUser: async userId => {
+    set({ loading: true, error: null })
+    try {
+      await deleteUser(userId)
+      const state = get()
+
+      // usersById에서 제거
+      const { [userId]: removed, ...remainingUsers } = state.usersById
+
+      // userIds에서 제거
+      const updatedUserIds = state.userIds.filter(id => id !== userId)
+
+      set({
+        usersById: remainingUsers,
+        userIds: updatedUserIds,
+        // 선택된 사용자가 삭제된 경우 선택 해제
+        selectedUserId: state.selectedUserId === userId ? null : state.selectedUserId,
+        loading: false,
+      })
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('사용자 삭제에 실패했습니다.')
       set({ error, loading: false })
       throw error
     }

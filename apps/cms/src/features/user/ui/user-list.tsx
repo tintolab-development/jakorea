@@ -5,7 +5,7 @@
 
 import { Table, Tag, Dropdown, Button } from 'antd'
 import type { MenuProps } from 'antd'
-import { MoreOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons'
+import { MoreOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { User, UserRole } from '@/types/user'
 import { RoleBadge, getRoleLabel, getProgramRoleLabel } from '@/shared/ui'
@@ -18,9 +18,10 @@ interface UserListProps {
   loading?: boolean
   onView?: (user: Omit<User, 'password'>) => void
   onEdit?: (user: Omit<User, 'password'>) => void
+  onDelete?: (user: Omit<User, 'password'>) => void
 }
 
-export function UserList({ data, loading = false, onView, onEdit }: UserListProps) {
+export function UserList({ data, loading = false, onView, onEdit, onDelete }: UserListProps) {
   const columns: ColumnsType<Omit<User, 'password'>> = [
     {
       title: '이름',
@@ -111,9 +112,7 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       key: 'isActive',
       width: 100,
       render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'default'}>
-          {isActive ? '활성' : '비활성'}
-        </Tag>
+        <Tag color={isActive ? 'green' : 'default'}>{isActive ? '활성' : '비활성'}</Tag>
       ),
     },
     {
@@ -149,6 +148,17 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
             icon: <EditOutlined />,
             onClick: () => onEdit?.(record),
           },
+          ...(onDelete
+            ? [
+                {
+                  key: 'delete',
+                  label: '삭제',
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                  onClick: () => onDelete(record),
+                },
+              ]
+            : []),
         ]
         return (
           <div onClick={e => e.stopPropagation()}>
@@ -170,9 +180,8 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       scroll={{ x: 1400 }}
       pagination={{
         ...PAGINATION_CONFIG,
-        showTotal: (total) => `총 ${total}명`,
+        showTotal: total => `총 ${total}명`,
       }}
     />
   )
 }
-
