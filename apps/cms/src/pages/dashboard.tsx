@@ -7,12 +7,10 @@
  */
 
 import { Card, Row, Col, Statistic, Divider } from 'antd'
-import { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { mockInstructors } from '@/data/mock'
 import { PendingActionsAlert } from '@/features/dashboard/ui/pending-actions-alert'
 import { OverallStatisticsCards } from '@/features/dashboard/ui/overall-statistics-cards'
@@ -28,12 +26,15 @@ import { PendingTasksList } from '@/features/dashboard/ui/pending-tasks-list'
 import { VolunteerPendingTasksList } from '@/features/dashboard/ui/volunteer-pending-tasks-list'
 import { GlobalSearch } from '@/features/dashboard/ui/global-search'
 import { OverallProgramProgressCard } from '@/features/dashboard/ui/overall-program-progress-card'
-import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget'
+// import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget' // 임시 주석
+import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
 import { PendingApplicationsCard } from '@/features/dashboard/ui/pending-applications-card'
 import { PendingMatchingsCard } from '@/features/dashboard/ui/pending-matchings-card'
 import { PendingSettlementsCard } from '@/features/dashboard/ui/pending-settlements-card'
 import { PendingActionsRow } from '@/features/dashboard/ui/pending-actions-row'
 import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
+import { CustomerInquiryStatusWidget } from '@/features/dashboard/ui/customer-inquiry-status-widget'
+import { ProgramScheduleWidget } from '@/features/dashboard/ui/program-schedule-widget'
 import {
   getOverallStatistics,
   type OverallStatistics,
@@ -42,12 +43,11 @@ import {
   getInstructorActivitySummary,
   type InstructorActivitySummary,
 } from '@/features/dashboard/api/instructor-activity-service'
+import './dashboard.css'
 
 export function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const location = useLocation()
-  const categoryName = getCategoryNameByPath(location.pathname, 1) || '메인 홈'
   const instructorCount = mockInstructors.length
   const [overallStatistics, setOverallStatistics] = useState<OverallStatistics | null>(null)
   const [statisticsLoading, setStatisticsLoading] = useState(false)
@@ -147,8 +147,10 @@ export function Dashboard() {
         return <OverallStatisticsCards statistics={overallStatistics} loading={statisticsLoading} />
       case 'overall-program-progress-card':
         return <OverallProgramProgressCard />
-      case 'program-progress-widget':
-        return <ProgramProgressWidget />
+      // case 'program-progress-widget':
+      //   return <ProgramProgressWidget /> // 임시 주석
+      case 'program-progress-tabs-table':
+        return <ProgramProgressTabsTable />
       case 'pending-actions-row':
         return <PendingActionsRow />
       case 'pending-applications-card':
@@ -233,6 +235,10 @@ export function Dashboard() {
         )
       case 'notification-widget':
         return <NotificationWidget />
+      case 'customer-inquiry-status-widget':
+        return <CustomerInquiryStatusWidget />
+      case 'program-schedule-widget':
+        return <ProgramScheduleWidget />
       default:
         return null
     }
@@ -248,38 +254,48 @@ export function Dashboard() {
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-        }}
-      >
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-        {showSearchAndNotification && (
-          <div style={{ width: 300 }}>
-            <GlobalSearch />
-          </div>
-        )}
-      </div>
-
       {/* 권한별 위젯 렌더링 */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} align="stretch">
         {widgets.map((widget, index) => {
           const widgetComponent = renderWidget(widget.type)
           if (!widgetComponent) return null
 
           const isNotificationWidget = widget.type === 'notification-widget'
-          const isFirstWidget = index === 0
+          const isCustomerInquiryWidget = widget.type === 'customer-inquiry-status-widget'
+          const isProgramScheduleWidget = widget.type === 'program-schedule-widget'
 
-          if (isNotificationWidget && isFirstWidget) {
-            return (
-              <Col key={`notification-wrapper-${index}`} span={24}>
-                {widgetComponent}
-                <Divider style={{ margin: '24px 0' }} />
-              </Col>
+          // 상단 블록: 알림 + 고객문의 (왼쪽) | 프로그램 일정 (오른쪽) — 높이 동일
+          if (isNotificationWidget) {
+            const hasCustomerInquiry = widgets.some(
+              w => w.type === 'customer-inquiry-status-widget'
             )
+            const hasProgramSchedule = widgets.some(w => w.type === 'program-schedule-widget')
+            const programScheduleComponent = hasProgramSchedule
+              ? renderWidget('program-schedule-widget')
+              : null
+            const customerInquiryComponent = hasCustomerInquiry
+              ? renderWidget('customer-inquiry-status-widget')
+              : null
+
+            return (
+              <React.Fragment key={`dashboard-top-${index}`}>
+                <Col span={12}>
+                  <div className="dashboard-widgets-left">
+                    {widgetComponent}
+                    {customerInquiryComponent}
+                  </div>
+                </Col>
+                {programScheduleComponent && (
+                  <Col span={12}>
+                    <div className="dashboard-widgets-right">{programScheduleComponent}</div>
+                  </Col>
+                )}
+              </React.Fragment>
+            )
+          }
+
+          if (isProgramScheduleWidget || isCustomerInquiryWidget) {
+            return null
           }
 
           return (

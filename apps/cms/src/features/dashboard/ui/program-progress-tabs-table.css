@@ -1,0 +1,124 @@
+/**
+ * 전체 프로그램 진행 현황 (탭 + 테이블)
+ * UI 참고: 라벨 + 카운트 배지, 세로 디바이더, 탭-테이블 디바이더 없음
+ */
+
+.program-progress-tabs-table {
+  width: 100%;
+}
+
+.program-progress-tabs-table .ant-card-body {
+  padding-top: 16px;
+}
+
+.program-progress-tabs-table__tabs .ant-tabs-nav {
+  margin-bottom: 12px;
+}
+
+/* 탭–테이블 사이 디바이더 제거 */
+.program-progress-tabs-table__tabs .ant-tabs-nav::before {
+  display: none;
+}
+
+/* 탭 내부: 라벨 + 배지, 가운데 정렬 */
+.program-progress-tabs-table__tab-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.program-progress-tabs-table__tab-text {
+  font-size: 14px;
+  color: #595959;
+}
+
+.program-progress-tabs-table__tab-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #f5f5f5;
+  color: #8c8c8c;
+}
+
+/* active: teal */
+.program-progress-tabs-table__tabs .ant-tabs-tab-active .program-progress-tabs-table__tab-text {
+  color: #01a1af;
+}
+
+.program-progress-tabs-table__tabs .ant-tabs-tab-active .program-progress-tabs-table__tab-badge {
+  background: #e6f7f9;
+  color: #01a1af;
+}
+
+/* 탭 사이 디바이더 (탭 높이 80%) */
+.program-progress-tabs-table__tabs .ant-tabs-tab {
+  margin-right: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.program-progress-tabs-table__tabs .ant-tabs-tab:first-child {
+  padding-left: 0;
+}
+
+.program-progress-tabs-table__tabs .ant-tabs-tab:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 80%;
+  background: #f0f0f0;
+}
+
+.program-progress-tabs-table__table {
+  margin-top: 0;
+}
+
+.program-progress-tabs-table__table .ant-table {
+  table-layout: fixed;
+}
+
+.program-progress-tabs-table__table .ant-table-cell {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.program-progress-tabs-table__table .ant-table-thead > tr > th {
+  text-align: center;
+}
+
+.program-progress-tabs-table__table .ant-table-tbody > tr > td {
+  text-align: center;
+}
+
+/* 테이블 컬럼 구분선 (가독성) */
+.program-progress-tabs-table__table .ant-table-thead > tr > th,
+.program-progress-tabs-table__table .ant-table-tbody > tr > td {
+  border-right: 1px solid #f0f0f0;
+}
+
+.program-progress-tabs-table__table .ant-table-thead > tr > th:last-child,
+.program-progress-tabs-table__table .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.program-progress-tabs-table__table .ant-table-thead > tr > th {
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.program-progress-tabs-table__table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.program-progress-tabs-table__table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}

@@ -3,6 +3,16 @@
  * FR-C01: 7단계 위젯 수평 배치
  */
 
+/* 위젯 컨테이너 전체 너비 */
+.program-progress-widget-container {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.program-progress-widget-container .ant-card {
+  width: 100%;
+}
+
 .program-progress-widget__placeholder {
   height: 120px;
 }
@@ -13,44 +23,84 @@
   gap: 8px;
 }
 
-.program-progress-widget__extra-text {
+/* 상세 보기 + 아이콘 일괄 클릭 */
+.program-progress-widget__detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  margin: -4px 0;
+  border: none;
+  background: none;
+  font: inherit;
   font-size: 12px;
   color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
-.program-progress-widget__extra-icon {
-  cursor: pointer;
+.program-progress-widget__detail-link:hover {
+  color: #1890ff;
+}
+
+.program-progress-widget__detail-link:focus {
+  outline: none;
+}
+
+.program-progress-widget__detail-link:focus-visible {
+  outline: 2px solid #1890ff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.program-progress-widget__detail-link .program-progress-widget__extra-icon {
+  font-size: 12px;
 }
 
 .program-progress-widget {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .program-progress-widget__stages {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
-  flex-wrap: wrap;
+  min-width: 0;
   padding-right: 16px;
   border-right: 1px solid #e8e8e8;
   margin-right: 16px;
+}
+
+/* 카드 균등 분배: 7개 카드가 동일 비율, 화살표는 고정 폭 */
+.program-progress-widget__stages > .program-progress-widget__stage {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.program-progress-widget__stages > .program-progress-widget__arrow {
+  flex: 0 0 auto;
+  color: #8c8c8c;
+  font-size: 12px;
+  margin: 0 2px;
 }
 
 .program-progress-widget__stage {
   background: #ffffff;
   border: 1px solid #d9d9d9;
   border-radius: 8px;
-  padding: 16px 20px;
-  min-width: 140px;
+  padding: 14px 12px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
-  flex: 1;
-  min-width: 0;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .program-progress-widget__stage:hover {
@@ -69,15 +119,16 @@
 
 .program-progress-widget__stage-label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   color: #595959;
-  margin-bottom: 8px;
-  line-height: 1.4;
+  margin-bottom: 6px;
+  line-height: 1.35;
+  word-break: keep-all;
 }
 
 .program-progress-widget__stage-count {
   display: block;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
   color: #262626;
 }
@@ -85,22 +136,26 @@
 .program-progress-widget__total {
   background: #13c2c2;
   border-radius: 8px;
-  padding: 16px 24px;
+  padding: 14px 20px;
   text-align: center;
-  min-width: 120px;
-  flex-shrink: 0;
+  min-width: 100px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .program-progress-widget__total-label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .program-progress-widget__total-count {
   display: block;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
   color: #ffffff;
 }
@@ -114,10 +169,23 @@
 
   .program-progress-widget__stages {
     flex-direction: column;
+    padding-right: 0;
+    padding-bottom: 16px;
+    border-right: none;
+    border-bottom: 1px solid #e8e8e8;
+    margin-right: 0;
+    margin-bottom: 16px;
   }
 
-  .program-progress-widget__stage {
+  .program-progress-widget__stages > .program-progress-widget__stage {
+    flex: 1 1 auto;
     width: 100%;
+    min-height: 64px;
+  }
+
+  .program-progress-widget__stages > .program-progress-widget__arrow {
+    align-self: center;
+    margin: 4px 0;
   }
 
   .program-progress-widget__total {

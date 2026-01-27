@@ -1,0 +1,74 @@
+/**
+ * 고객 문의 현황 위젯 스타일
+ */
+
+.customer-inquiry-status-widget {
+  height: 100%;
+}
+
+.customer-inquiry-status-widget__cards {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.customer-inquiry-status-widget__stat-card {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 16px 12px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #f0f0f0;
+  background: #ffffff;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.customer-inquiry-status-widget__stat-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.customer-inquiry-status-widget__stat-card--pending {
+  border-color: #ff4d4f;
+}
+
+.customer-inquiry-status-widget__stat-card--answered {
+  border-color: #1890ff;
+}
+
+.customer-inquiry-status-widget__stat-card--total {
+  border-color: #595959;
+  border-style: dashed;
+}
+
+.customer-inquiry-status-widget__stat-label {
+  display: block;
+  font-size: 14px;
+  color: #8c8c8c;
+  margin-bottom: 8px;
+}
+
+.customer-inquiry-status-widget__stat-count {
+  display: block;
+  font-size: 24px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.customer-inquiry-status-widget__stat-card--pending .customer-inquiry-status-widget__stat-count {
+  color: #ff4d4f;
+}
+
+.customer-inquiry-status-widget__stat-card--answered .customer-inquiry-status-widget__stat-count {
+  color: #1890ff;
+}
+
+.customer-inquiry-status-widget__stat-card--total .customer-inquiry-status-widget__stat-count {
+  color: #595959;
+}
+
+/* 더보기 버튼은 공통 클래스 .widget-more-button 사용 */

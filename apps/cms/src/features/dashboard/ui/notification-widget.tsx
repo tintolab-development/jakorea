@@ -1,51 +1,54 @@
 /**
  * 알림 위젯 컴포넌트
  * Phase: 관리자 홈 화면 - 알림 리스트 위젯 형식으로 변경
- * 가로 전체 너비, 홈 위젯과 디자인 통일, 확인 기능 및 색상 중요도 구분
+ * Row 방식: 상태 태그 | 타이틀 | 타임스탬프
  */
 
-import { Card, Button, Typography, Space, Empty } from 'antd'
-import { BellOutlined, DollarOutlined, FileTextOutlined, CalendarOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { Card, Button, Typography, Space, Empty, Tag } from 'antd'
+import { BellOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  type Notification,
-  type NotificationType,
-} from '../api/notification-service'
+import dayjs from 'dayjs'
+import { type Notification, type NotificationType } from '../api/notification-service'
 import { NotificationModal } from './notification-modal'
 import { useNotifications } from '../hooks/use-notifications'
+import '@/shared/ui/widget-more-button.css'
 import './notification-widget.css'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
-const getNotificationIcon = (type: NotificationType): React.ReactNode => {
+const getNotificationTypeLabel = (type: NotificationType): string => {
   switch (type) {
     case 'schedule':
-      return <CalendarOutlined className="notification-item__icon-svg" />
+      return '일정'
     case 'matching':
-      return <CheckCircleOutlined className="notification-item__icon-svg" />
+      return '매칭'
     case 'settlement':
-      return <DollarOutlined className="notification-item__icon-svg" />
+      return '정산 요청'
     case 'system':
-      return <FileTextOutlined className="notification-item__icon-svg" />
+      return '신규 교사'
     default:
-      return <BellOutlined className="notification-item__icon-svg" />
+      return '알림'
   }
 }
 
-const getNotificationTypeClass = (type: NotificationType): string => {
+const getNotificationTypeTagColor = (type: NotificationType): { bg: string; text: string } => {
   switch (type) {
-    case 'schedule':
-      return 'notification-item--schedule'
-    case 'matching':
-      return 'notification-item--matching'
     case 'settlement':
-      return 'notification-item--settlement'
+      return { bg: '#fff0f6', text: '#c41d7f' } // 분홍
+    case 'matching':
+    case 'schedule':
+      return { bg: '#e6f7ff', text: '#1890ff' } // 파랑
     case 'system':
-      return 'notification-item--system'
+      return { bg: '#f5f5f5', text: '#595959' } // 회색
     default:
-      return 'notification-item--system'
+      return { bg: '#f5f5f5', text: '#595959' }
   }
+}
+
+const formatTimestamp = (dateString: string): string => {
+  const date = dayjs(dateString)
+  return `${date.format('YY.MM.DD')} | ${date.format('HH:mm')}`
 }
 
 export function NotificationWidget() {
@@ -69,7 +72,7 @@ export function NotificationWidget() {
       }
       // 알림 제거
       await removeNotification(notification.id)
-      
+
       // 링크가 있으면 이동
       if (notification.link) {
         navigate(notification.link)
@@ -78,7 +81,6 @@ export function NotificationWidget() {
       console.error('알림 확인 처리 실패:', error)
     }
   }
-
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
@@ -104,13 +106,12 @@ export function NotificationWidget() {
         title={
           <div className="notification-widget__title">
             <Space>
-              <BellOutlined className="notification-widget__bell" />
-              <Title level={5} className="notification-widget__title-text">
+              <Text strong className="notification-widget__title-text">
                 알림 리스트
-              </Title>
+              </Text>
               {unreadCount > 0 && (
                 <Text type="secondary" className="notification-widget__count">
-                  ({unreadCount}건)
+                  미확인 {unreadCount}건
                 </Text>
               )}
             </Space>
@@ -119,8 +120,9 @@ export function NotificationWidget() {
                 type="link"
                 size="small"
                 onClick={() => setModalOpen(true)}
+                className="widget-more-button"
               >
-                더 보기
+                더보기
               </Button>
             )}
           </div>
@@ -128,47 +130,38 @@ export function NotificationWidget() {
       >
         {displayNotifications.length === 0 ? (
           <div className="notification-widget__empty">
-            <Empty
-              description="새로운 알림이 없습니다"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
+            <Empty description="새로운 알림이 없습니다" image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         ) : (
-          <Space direction="vertical" size="middle" className="notification-widget__list">
-            {displayNotifications.map((notification) => (
-              <Card
-                key={notification.id}
-                size="small"
-                className={`notification-item ${getNotificationTypeClass(notification.type)}`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="notification-item__row">
-                  <div className="notification-item__content">
-                    <div className="notification-item__icon">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="notification-item__text">
-                      <Title level={5} className="notification-item__title">
-                        {notification.title}
-                      </Title>
-                      <Text type="secondary" className="notification-item__message">
-                        {notification.message}
-                      </Text>
-                    </div>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()} className="notification-item__actions">
-                    <Button
-                      size="small"
-                      onClick={() => handleConfirm(notification)}
-                      className="notification-item__confirm"
-                    >
-                      확인하기
-                    </Button>
-                  </div>
+          <div className="notification-widget__list">
+            {displayNotifications.map(notification => {
+              const tagColor = getNotificationTypeTagColor(notification.type)
+              return (
+                <div
+                  key={notification.id}
+                  className="notification-item"
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <Tag
+                    className="notification-item__tag"
+                    style={{
+                      backgroundColor: tagColor.bg,
+                      color: tagColor.text,
+                      border: 'none',
+                    }}
+                  >
+                    {getNotificationTypeLabel(notification.type)}
+                  </Tag>
+                  <Text className="notification-item__title">
+                    {notification.message || notification.title}
+                  </Text>
+                  <Text type="secondary" className="notification-item__timestamp">
+                    {formatTimestamp(notification.createdAt)}
+                  </Text>
                 </div>
-              </Card>
-            ))}
-          </Space>
+              )
+            })}
+          </div>
         )}
       </Card>
 

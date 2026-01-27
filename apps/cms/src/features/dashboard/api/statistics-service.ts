@@ -108,35 +108,39 @@ export async function getOverallProgramProgress(): Promise<OverallProgramProgres
   programs.forEach(program => {
     const startDate = new Date(program.startDate)
     const endDate = new Date(program.endDate)
+    const s = program.lifecycleStatus
 
-    // 진행 완료: lifecycleStatus가 'completed'이거나 종료일이 지난 경우
-    if (program.lifecycleStatus === 'completed' || now > endDate) {
+    // 진행 완료 (7단계: 서류 처리 완료)
+    if (s === 'document_processing_completed' || now > endDate) {
       completed++
       return
     }
 
-    // 진행 중: lifecycleStatus가 'in_progress'이거나 현재 날짜가 시작일과 종료일 사이인 경우
-    if (program.lifecycleStatus === 'in_progress' || (now >= startDate && now <= endDate)) {
+    // 진행 중 (7단계: 교재 발송 전·후, 교육 진행 완료)
+    if (
+      s === 'education_before_textbook' ||
+      s === 'education_after_textbook' ||
+      s === 'education_completed' ||
+      (now >= startDate && now <= endDate)
+    ) {
       inProgress++
       return
     }
 
-    // 진행 예정: lifecycleStatus가 'matching_completed_waiting'이거나 시작일이 미래인 경우
+    // 진행 예정 (7단계: 매칭 완료 등, 시작일 미래)
     if (
-      program.lifecycleStatus === 'matching_completed_waiting' ||
-      (program.lifecycleStatus === 'recruitment_completed_waiting' && now < startDate) ||
-      (now < startDate && program.lifecycleStatus !== 'planned' && program.lifecycleStatus !== 'recruiting_students' && program.lifecycleStatus !== 'recruiting_instructors')
+      s === 'matching_completed' ||
+      (now < startDate &&
+        s !== 'planned' &&
+        s !== 'recruiting_students' &&
+        s !== 'recruiting_instructors')
     ) {
       scheduled++
       return
     }
 
-    // 신청 완료: Application status가 'approved'이고 프로그램이 아직 시작하지 않은 경우
-    // 또는 모집 완료 단계
-    if (
-      program.lifecycleStatus === 'recruitment_completed_waiting' ||
-      program.lifecycleStatus === 'recruiting_instructors'
-    ) {
+    // 신청 완료 (7단계: 수강자/강사 모집)
+    if (s === 'recruiting_students' || s === 'recruiting_instructors') {
       applicationCompleted++
       return
     }
@@ -149,4 +153,3 @@ export async function getOverallProgramProgress(): Promise<OverallProgramProgres
     completed,
   }
 }
-
