@@ -53,6 +53,7 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
   }
 
   // Phase 0.1.3 수정: 새 사용자 생성 (소셜 회원가입 정보 포함)
+  // P1: 관리자 회원가입 처리 추가
   const newUser: User = {
     id: generateUUID(),
     email: formData.email,
@@ -78,6 +79,12 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
         accountHolder: formData.accountHolder,
         isBusinessIncome: formData.isBusinessIncome,
       },
+    }),
+    // P1: 관리자 회원가입 시 adminLevel 및 초기 programRole 설정
+    ...(formData.role === 'ADMIN' && {
+      adminLevel: formData.adminLevel || 'GENERAL',
+      // 초기 programRole은 ASSISTANT로 설정 (프로그램 생성 시 OWNER로 변경됨)
+      programRoles: {},
     }),
   }
 

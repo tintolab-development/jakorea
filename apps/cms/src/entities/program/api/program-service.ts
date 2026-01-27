@@ -2,11 +2,13 @@
  * 프로그램 Mock 서비스
  * Phase 2.1: Mock API 서비스
  * Phase 4.2.2: 권한별 데이터 필터링
+ * P0: 프로그램 생성 시 자동 OWNER 권한 부여
  */
 
 import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
 import type { UserRole } from '@/types/user'
+import { updateUserProgramRole } from '@/entities/user/api/user-service'
 
 export const programService = {
   /**
@@ -39,7 +41,10 @@ export const programService = {
     return Promise.resolve(program)
   },
 
-  create: async (data: Omit<Program, 'id' | 'createdAt' | 'updatedAt'>): Promise<Program> => {
+  create: async (
+    data: Omit<Program, 'id' | 'createdAt' | 'updatedAt'>,
+    creatorUserId?: string
+  ): Promise<Program> => {
     const programId = `program-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const newProgram: Program = {
       ...data,
@@ -54,6 +59,17 @@ export const programService = {
     }
     mockPrograms.push(newProgram)
     mockProgramsMap.set(newProgram.id, newProgram)
+
+    // P0: 프로그램 생성 시 생성한 관리자에게 자동으로 OWNER 권한 부여
+    if (creatorUserId) {
+      try {
+        await updateUserProgramRole(creatorUserId, programId, 'OWNER')
+      } catch (error) {
+        // 사용자가 관리자가 아니거나 권한 부여 실패 시 에러 로그만 출력 (프로그램 생성은 계속 진행)
+        console.warn('프로그램 생성자에게 OWNER 권한 부여 실패:', error)
+      }
+    }
+
     return Promise.resolve(newProgram)
   },
 
@@ -135,5 +151,15 @@ export const programService = {
    */
   getAllSync: (): Program[] => {
     return [...mockPrograms]
+  },
+
+  /**
+   * 후원사 ID로 프로그램 목록 조회
+   * @param sponsorId 후원사 ID
+   * @returns 해당 후원사의 프로그램 배열
+   */
+  getBySponsorId: async (sponsorId: string): Promise<Program[]> => {
+    const programs = mockPrograms.filter(p => p.sponsorId === sponsorId)
+    return Promise.resolve(programs)
   },
 }

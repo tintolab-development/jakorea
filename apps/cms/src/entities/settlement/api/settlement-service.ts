@@ -19,7 +19,9 @@ export const settlementService = {
     return Promise.resolve(settlement)
   },
 
-  create: async (data: Omit<Settlement, 'id' | 'createdAt' | 'updatedAt' | 'totalAmount'>): Promise<Settlement> => {
+  create: async (
+    data: Omit<Settlement, 'id' | 'createdAt' | 'updatedAt' | 'totalAmount'>
+  ): Promise<Settlement> => {
     // totalAmount는 items에서 자동 계산
     const totalAmount = data.items.reduce((sum, item) => sum + item.amount, 0)
 
@@ -35,7 +37,10 @@ export const settlementService = {
     return Promise.resolve(newSettlement)
   },
 
-  update: async (id: string, data: Partial<Omit<Settlement, 'id' | 'createdAt'>>): Promise<Settlement> => {
+  update: async (
+    id: string,
+    data: Partial<Omit<Settlement, 'id' | 'createdAt'>>
+  ): Promise<Settlement> => {
     const settlement = mockSettlementsMap.get(id)
     if (!settlement) {
       throw new Error(`Settlement not found: ${id}`)
@@ -68,9 +73,24 @@ export const settlementService = {
     mockSettlementsMap.delete(id)
     return Promise.resolve()
   },
+
+  updateStatus: async (id: string, status: Settlement['status']): Promise<Settlement> => {
+    const settlement = mockSettlementsMap.get(id)
+    if (!settlement) {
+      throw new Error(`Settlement not found: ${id}`)
+    }
+
+    const updatedSettlement: Settlement = {
+      ...settlement,
+      status,
+      updatedAt: new Date().toISOString(),
+    }
+
+    const index = mockSettlements.findIndex(s => s.id === id)
+    if (index !== -1) {
+      mockSettlements[index] = updatedSettlement
+    }
+    mockSettlementsMap.set(id, updatedSettlement)
+    return Promise.resolve(updatedSettlement)
+  },
 }
-
-
-
-
-

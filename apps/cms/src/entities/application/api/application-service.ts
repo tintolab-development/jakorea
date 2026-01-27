@@ -13,10 +13,29 @@ import {
 import { mockPrograms } from '@/data/mock'
 import { appendReceivedLog } from '@/entities/application-progress/api/status-change-service'
 import { createAuditLog } from '@/entities/audit-log/api/audit-log-service'
+import { getNotificationStatus } from './application-notification-service'
 
 export const applicationService = {
   getAll: async (): Promise<Application[]> => {
-    return Promise.resolve(mockApplications)
+    // 알림 발송 상태를 함께 조회하여 Application에 포함
+    const applicationsWithNotificationStatus = await Promise.all(
+      mockApplications.map(async app => {
+        if (app.status === 'approved' || app.status === 'rejected') {
+          try {
+            const notificationStatus = await getNotificationStatus(app.id)
+            return {
+              ...app,
+              notificationSent: notificationStatus.notificationSent,
+            }
+          } catch (error) {
+            console.warn(`Failed to get notification status for application ${app.id}:`, error)
+            return app
+          }
+        }
+        return app
+      })
+    )
+    return Promise.resolve(applicationsWithNotificationStatus)
   },
 
   getById: async (id: string): Promise<Application> => {
@@ -27,7 +46,9 @@ export const applicationService = {
     return Promise.resolve(application)
   },
 
-  create: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'submittedAt'>): Promise<Application> => {
+  create: async (
+    data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'submittedAt'>
+  ): Promise<Application> => {
     const newApplication: Application = {
       ...data,
       id: `application-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -40,12 +61,15 @@ export const applicationService = {
     return Promise.resolve(newApplication)
   },
 
-  update: async (id: string, data: Partial<Omit<Application, 'id' | 'createdAt'>>): Promise<Application> => {
+  update: async (
+    id: string,
+    data: Partial<Omit<Application, 'id' | 'createdAt'>>
+  ): Promise<Application> => {
     const application = mockApplicationsMap.get(id)
     if (!application) {
       throw new Error(`Application not found: ${id}`)
     }
-    
+
     // reviewedAt 설정: reviewing, approved, rejected 상태로 변경될 때만 설정
     let reviewedAt = application.reviewedAt
     if (data.status && data.status !== application.status) {
@@ -53,7 +77,7 @@ export const applicationService = {
         reviewedAt = new Date().toISOString()
       }
     }
-    
+
     const updatedApplication: Application = {
       ...application,
       ...data,
@@ -92,14 +116,21 @@ export const applicationService = {
     return Promise.resolve(updatedApplication)
   },
 
-  updateStatus: async (id: string, status: ApplicationStatus, rejectionReason?: string): Promise<Application> => {
+  updateStatus: async (
+    id: string,
+    status: ApplicationStatus,
+    rejectionReason?: string
+  ): Promise<Application> => {
     const application = mockApplicationsMap.get(id)
     if (!application) {
       throw new Error(`Application not found: ${id}`)
     }
 
     // 신청 취소 시 대기 목록 자동 승인 (Phase 3)
-    if (status === 'cancelled' && (application.status === 'approved' || application.status === 'reviewing')) {
+    if (
+      status === 'cancelled' &&
+      (application.status === 'approved' || application.status === 'reviewing')
+    ) {
       const program = mockPrograms.find(p => p.id === application.programId)
       if (program) {
         // 정원이 가득 찬 경우에만 대기 목록 자동 승인
@@ -121,8 +152,13 @@ export const applicationService = {
     const updates: Partial<Application> = {
       status,
       rejectionReason: status === 'rejected' ? rejectionReason : undefined,
-      waitingListOrder: status === 'waiting' ? getNextWaitingListOrder(application.programId, application.roundId) : undefined,
-      ...(status !== 'waiting' && application.waitingListOrder !== undefined ? { waitingListOrder: undefined } : {}),
+      waitingListOrder:
+        status === 'waiting'
+          ? getNextWaitingListOrder(application.programId, application.roundId)
+          : undefined,
+      ...(status !== 'waiting' && application.waitingListOrder !== undefined
+        ? { waitingListOrder: undefined }
+        : {}),
     }
     if (status === 'approved') {
       updates.progressStatus = 'RECEIVED'
@@ -143,12 +179,38 @@ export const applicationService = {
     mockApplicationsMap.delete(id)
     return Promise.resolve()
   },
+
+  /**
+   * 사용자별 신청 이력 조회
+   * @param userId 사용자 ID
+   * @param subjectType 주체 유형 (선택)
+   * @returns 신청 목록
+   */
+  getByUserId: async (
+    userId: string,
+    subjectType?: Application['subjectType']
+  ): Promise<Application[]> => {
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    let filtered = mockApplications.filter(app => {
+      // subjectId가 사용자 ID와 일치하는 경우
+      if (app.subjectId === userId) {
+        // subjectType 필터가 있으면 추가 필터링
+        if (subjectType) {
+          return app.subjectType === subjectType
+        }
+        return true
+      }
+      return false
+    })
+
+    // 최신순 정렬
+    filtered.sort((a, b) => {
+      const aTime = new Date(a.submittedAt).getTime()
+      const bTime = new Date(b.submittedAt).getTime()
+      return bTime - aTime
+    })
+
+    return Promise.resolve(filtered)
+  },
 }
-
-
-
-
-
-
-
-
