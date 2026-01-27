@@ -38,7 +38,7 @@ export function SchoolListPage() {
 
   const { schools, loading, fetchSchools, createSchool, updateSchool } = useSchoolStore()
   const { params, setParams } = useQueryParams<SchoolListQueryParams>()
-  
+
   // Form 모달 상태 관리
   const {
     open: formModalOpen,
@@ -113,11 +113,13 @@ export function SchoolListPage() {
   }, [filteredByListFilters, filters.region])
 
   // 필터 핸들러 (useQueryParams와 연동)
-  const handleFilterChange = (key: keyof SchoolListQueryParams, value: any) => {
-    handleListFilterChange(key, value)
-    setParams({
-      [key]: value === 'all' || value === '' ? undefined : value,
-    })
+  const handleFilterChange = (key: string, value: any) => {
+    if (key === 'region') {
+      handleListFilterChange(key, value)
+      setParams({
+        region: value === 'all' || value === '' ? undefined : value,
+      })
+    }
   }
 
   const handleFilterReset = () => {
@@ -165,7 +167,13 @@ export function SchoolListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'space-between' }}>
+      <Space
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.lg,
+          width: '100%',
+          justifyContent: 'space-between',
+        }}
+      >
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
         {canWrite && (
@@ -214,11 +222,3 @@ export function SchoolListPage() {
     </div>
   )
 }
-
-
-
-
-
-
-
-

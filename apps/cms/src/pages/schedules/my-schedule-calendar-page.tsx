@@ -10,6 +10,7 @@ import { Calendar, Badge } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES } from '@/shared/constants'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
 import type { Schedule } from '@/types/domain'
 
@@ -133,4 +134,3 @@ export function MyScheduleCalendarPage() {
     </div>
   )
 }
-

@@ -26,18 +26,20 @@ interface ApplicationPathQueryParams extends Record<string, string | undefined> 
 }
 
 export function ApplicationPathListPage() {
-  const { paths, loading, fetchPaths, createPath, updatePath, deletePath } = useApplicationPathStore()
+  const { paths, loading, fetchPaths, createPath, updatePath, deletePath } =
+    useApplicationPathStore()
   const { params, setParams, clearParams } = useQueryParams<ApplicationPathQueryParams>()
   const { getByIdSync, getAllSync } = useProgramService()
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [editingPath, setEditingPath] = useState<ApplicationPath | null>(null)
   const [formLoading, setFormLoading] = useState(false)
-  
+
   // 쿼리 파라미터에서 필터 상태 초기화
   const searchKeyword = params.search || ''
   const selectedProgramId = params.programId
   const selectedPathType = params.pathType
-  const selectedStatus = params.status === 'true' ? true : params.status === 'false' ? false : undefined
+  const selectedStatus =
+    params.status === 'true' ? true : params.status === 'false' ? false : undefined
 
   useEffect(() => {
     fetchPaths()
@@ -128,7 +130,7 @@ export function ApplicationPathListPage() {
   // 필터 변경 핸들러 (쿼리 파라미터 동기화)
   const handleFilterChange = (key: keyof ApplicationPathQueryParams, value: any) => {
     if (key === 'status') {
-      setParams({ status: value === true ? 'true' : value === false ? 'false' : undefined })
+      setParams({ status: value === 'true' ? 'true' : value === 'false' ? 'false' : undefined })
     } else {
       setParams({ [key]: value || undefined })
     }
@@ -153,7 +155,13 @@ export function ApplicationPathListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'flex-end' }}>
+      <Space
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.lg,
+          width: '100%',
+          justifyContent: 'flex-end',
+        }}
+      >
         {/* <h1 style={{ margin: 0 }}>신청 경로 관리</h1> */}
         <PermissionButton
           type="primary"
@@ -198,15 +206,17 @@ export function ApplicationPathListPage() {
             key: 'status',
             type: 'select',
             options: [
-              { label: '활성', value: true },
-              { label: '비활성', value: false },
+              { label: '활성', value: 'true' },
+              { label: '비활성', value: 'false' },
             ],
             placeholder: '상태',
             style: { width: LAYOUT_CONSTANTS.widths.status },
           },
         ]}
         onReset={handleResetFilters}
-        showReset={!!(searchKeyword || selectedProgramId || selectedPathType || selectedStatus !== undefined)}
+        showReset={
+          !!(searchKeyword || selectedProgramId || selectedPathType || selectedStatus !== undefined)
+        }
       />
 
       <ApplicationPathList
@@ -235,4 +245,3 @@ export function ApplicationPathListPage() {
     </div>
   )
 }
-

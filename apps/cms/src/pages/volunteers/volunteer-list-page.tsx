@@ -19,11 +19,16 @@ const { Search } = Input
 
 export function VolunteerListPage() {
   const location = useLocation()
-  const { params, setParams } = useQueryParams<{ interviewStatus?: string; isActive?: string; search?: string; id?: string }>()
-  
+  const { params, setParams } = useQueryParams<{
+    interviewStatus?: string
+    isActive?: string
+    search?: string
+    id?: string
+  }>()
+
   // 2뎁스 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '봉사자'
-  
+
   // 상태 관리
   const [selectedUser, setSelectedUser] = useState<Omit<User, 'password'> | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -153,20 +158,12 @@ export function VolunteerListPage() {
           <Option value={true}>활성</Option>
           <Option value={false}>비활성</Option>
         </Select>
-        <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
+        <Button onClick={() => setParams({})}>필터 초기화</Button>
       </Space>
 
-      <VolunteerList
-        data={filteredVolunteers}
-        loading={loading}
-        onView={handleView}
-      />
+      <VolunteerList data={filteredVolunteers} loading={loading} onView={handleView} />
 
-      <UserDetailDrawer
-        open={drawerOpen}
-        user={selectedUser}
-        onClose={handleDrawerClose}
-      />
+      <UserDetailDrawer open={drawerOpen} user={selectedUser} onClose={handleDrawerClose} />
     </div>
   )
 }

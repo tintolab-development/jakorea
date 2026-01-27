@@ -27,16 +27,19 @@ interface AuditLogQueryParams extends Record<string, string | undefined> {
 
 export function AuditLogListPage() {
   const { params, setParams, setParam } = useQueryParams<AuditLogQueryParams>()
-  
+
   // URL 파라미터에서 필터 값 읽기
-  const filters = useMemo<AuditLogFilters>(() => ({
-    page: params.page ? parseInt(params.page, 10) : 1,
-    pageSize: params.pageSize ? parseInt(params.pageSize, 10) : PAGINATION_CONFIG.defaultPageSize,
-    eventType: params.eventType || undefined,
-    userName: params.userName || undefined,
-    startDate: params.startDate || undefined,
-    endDate: params.endDate || undefined,
-  }), [params])
+  const filters = useMemo<AuditLogFilters>(
+    () => ({
+      page: params.page ? parseInt(params.page, 10) : 1,
+      pageSize: params.pageSize ? parseInt(params.pageSize, 10) : PAGINATION_CONFIG.defaultPageSize,
+      eventType: params.eventType ? (params.eventType as AuditLog['eventType']) : undefined,
+      userName: params.userName || undefined,
+      startDate: params.startDate || undefined,
+      endDate: params.endDate || undefined,
+    }),
+    [params]
+  )
 
   const { logs, total, page, pageSize, loading, fetchLogs } = useAuditLogs({
     filters,
@@ -83,11 +86,7 @@ export function AuditLogListPage() {
       width: LAYOUT_CONSTANTS.widths.filter,
       render: (eventType: AuditLog['eventType']) => {
         const option = AUDIT_EVENT_OPTIONS.find(opt => opt.value === eventType)
-        return (
-          <Tag color={AUDIT_EVENT_COLORS[eventType]}>
-            {option?.label || eventType}
-          </Tag>
-        )
+        return <Tag color={AUDIT_EVENT_COLORS[eventType]}>{option?.label || eventType}</Tag>
       },
     },
     {
@@ -98,7 +97,7 @@ export function AuditLogListPage() {
       render: (userName: string, record: AuditLog) => {
         const adminLevel = record.details?.adminLevel as string | undefined
         const programRoles = record.details?.programRoles as Record<string, string> | undefined
-        
+
         return (
           <div>
             <div>{userName}</div>
@@ -110,7 +109,10 @@ export function AuditLogListPage() {
             )}
             {programRoles && Object.keys(programRoles).length > 0 && (
               <div style={{ fontSize: '11px', color: '#52c41a', marginTop: 2 }}>
-                프로그램 역할: {Object.entries(programRoles).map(([, role]) => `${role}`).join(', ')}
+                프로그램 역할:{' '}
+                {Object.entries(programRoles)
+                  .map(([, role]) => `${role}`)
+                  .join(', ')}
               </div>
             )}
           </div>
@@ -141,21 +143,25 @@ export function AuditLogListPage() {
       render: (_: unknown, record: AuditLog) => {
         const detailKeys = Object.keys(record.details)
         if (detailKeys.length === 0) return '-'
-        
+
         // adminLevel과 programRoles는 이미 사용자 컬럼에 표시되므로 제외
         const otherDetails = Object.entries(record.details).filter(
           ([key]) => key !== 'adminLevel' && key !== 'programRoles'
         )
-        
+
         if (otherDetails.length === 0) return '-'
-        
-        const preview = otherDetails.slice(0, 2).map(([key, value]) => {
-          return `${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`
-        }).join(', ')
-        
+
+        const preview = otherDetails
+          .slice(0, 2)
+          .map(([key, value]) => {
+            return `${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`
+          })
+          .join(', ')
+
         return (
           <div title={JSON.stringify(record.details, null, 2)}>
-            {preview}{otherDetails.length > 2 ? '...' : ''}
+            {preview}
+            {otherDetails.length > 2 ? '...' : ''}
           </div>
         )
       },
@@ -172,7 +178,7 @@ export function AuditLogListPage() {
       key: 'createdAt',
       width: LAYOUT_CONSTANTS.widths.search,
       render: (date: string) => new Date(date).toLocaleString('ko-KR'),
-      sorter: (a: AuditLog, b: AuditLog) => 
+      sorter: (a: AuditLog, b: AuditLog) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     },
   ]
@@ -186,7 +192,7 @@ export function AuditLogListPage() {
           <Form.Item label="이벤트 유형">
             <Select
               value={filters.eventType}
-              onChange={(value) => handleFilterChange('eventType', value)}
+              onChange={value => handleFilterChange('eventType', value)}
               placeholder="전체"
               allowClear
               style={{ width: LAYOUT_CONSTANTS.widths.filter }}
@@ -197,7 +203,7 @@ export function AuditLogListPage() {
           <Form.Item label="사용자">
             <Input
               value={filters.userName}
-              onChange={(e) => handleFilterChange('userName', e.target.value)}
+              onChange={e => handleFilterChange('userName', e.target.value)}
               placeholder="사용자 이름"
               style={{ width: LAYOUT_CONSTANTS.widths.filter }}
               allowClear
@@ -211,7 +217,7 @@ export function AuditLogListPage() {
                   ? [dayjs(filters.startDate), dayjs(filters.endDate)]
                   : null
               }
-              onChange={(dates) => {
+              onChange={dates => {
                 if (dates && dates[0] && dates[1]) {
                   handleFilterChange('startDate', dates[0].toISOString())
                   handleFilterChange('endDate', dates[1].toISOString())
@@ -226,17 +232,10 @@ export function AuditLogListPage() {
 
           <Form.Item>
             <Space>
-              <Button
-                type="primary"
-                icon={<SearchOutlined />}
-                onClick={handleSearch}
-              >
+              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
                 검색
               </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={handleReset}
-              >
+              <Button icon={<ReloadOutlined />} onClick={handleReset}>
                 초기화
               </Button>
             </Space>

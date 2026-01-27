@@ -22,7 +22,6 @@ import {
   useUserStore,
   selectFilteredUserIds,
   selectSelectedUser,
-  selectUserById,
 } from '@/features/user/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 

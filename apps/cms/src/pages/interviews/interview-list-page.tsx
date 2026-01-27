@@ -68,7 +68,8 @@ export function InterviewListPage() {
           if (key === 'status') {
             setStatusFilter(value || 'ALL')
           } else if (key === 'role') {
-            setRoleFilter((value || 'ALL') as UserRole | 'ALL')
+            // "ALL"인 경우 null로 변환하여 필터 제거
+            setRoleFilter(value && value !== 'ALL' ? (value as UserRole) : null)
           }
         }}
         filterConfig={[
