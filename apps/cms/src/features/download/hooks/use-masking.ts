@@ -28,6 +28,18 @@ interface UseMaskingResult {
     fieldMappings: Record<keyof T, MaskingPolicy | MaskingPolicy[]>
   ) => T
   maskValue: (value: string, policy: MaskingPolicy) => string
+  getMaskedFields: <T extends Record<string, any>>(
+    data: T,
+    fieldMappings: Record<keyof T, MaskingPolicy | MaskingPolicy[]>
+  ) => MaskedFieldInfo[]
+  maskBatch: <T extends Record<string, any>>(
+    dataList: T[],
+    fieldMappings: Record<keyof T, MaskingPolicy | MaskingPolicy[]>
+  ) => T[]
+  maskByOptions: <T extends Record<string, any>>(
+    data: T,
+    fieldMappings: Record<keyof T, MaskingPolicy | MaskingPolicy[]>
+  ) => T
 }
 
 /**
