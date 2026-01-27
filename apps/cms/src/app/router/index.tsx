@@ -43,6 +43,7 @@ import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
+import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { Dashboard } from '@/pages/dashboard'
@@ -277,6 +278,9 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
+          { path: 'education/schedule', element: <ComingSoonPage title="페이지 준비중" /> }, // 교육 프로그램 > 프로그램 일정
+          { path: 'education', element: <ProgramListPage /> }, // 교육 프로그램 > 프로그램 목록
+          { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램
           { path: ':id/apply', element: <ProgramApplicationPage /> }, // Phase 0.2.2: 신청서 작성 페이지
           { path: ':id/apply/complete', element: <ProgramApplicationCompletePage /> }, // Phase 0.2.3: 신청 완료 페이지
           { path: 'my', element: <MyProgramApplicationsPage /> },

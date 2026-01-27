@@ -62,8 +62,8 @@
   --color-bg-secondary: #fafafa;
   --color-bg-accent: #e6f7f9;
   --color-bg-hover: #f0f0f0;
+
+  /* UI 컴포넌트 색상 */
+  --color-ui-more-button: #3d3d3d;
+  --color-ui-more-button-hover: #595959;
 }
-
-
-
-

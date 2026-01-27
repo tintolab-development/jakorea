@@ -52,15 +52,16 @@ export interface ApplicationPath {
   updatedAt: DateValue
 }
 
-// 프로그램 진행 워크플로우 상태
+// 프로그램 진행 워크플로우 상태 (7단계, 대시보드 위젯·프로그램 관리 공통)
 export type ProgramLifecycleStatus =
-  | 'planned' // 모집 예정
-  | 'recruiting_students' // 수강자 모집 중
-  | 'recruiting_instructors' // 강사 모집 중
-  | 'recruitment_completed_waiting' // 모집 완료 및 대기 중
-  | 'matching_completed_waiting' // 매칭 완료 및 진행 대기 중
-  | 'in_progress' // 진행 중
-  | 'completed' // 진행 완료
+  | 'planned' // 모집 예정 (선택)
+  | 'recruiting_students' // 수강자 모집
+  | 'recruiting_instructors' // 강사 모집
+  | 'matching_completed' // 매칭 완료
+  | 'education_before_textbook' // 교육 진행 중 (교재 발송 전)
+  | 'education_after_textbook' // 교육 진행 중 (교재 발송 후)
+  | 'education_completed' // 교육 진행 완료
+  | 'document_processing_completed' // 서류 처리 완료
 
 // 프로그램
 export interface Program {
@@ -74,6 +75,8 @@ export interface Program {
   rounds: ProgramRound[] // 회차 정보
   startDate: DateValue
   endDate: DateValue
+  applicationStartDate?: DateValue // 신청 시작일
+  applicationEndDate?: DateValue // 신청 종료일
   status: Status
   lifecycleStatus?: ProgramLifecycleStatus // 상세 진행 상태 (모집 예정~진행 완료)
   settlementRuleId?: UUID // 정산 규칙 참조
@@ -108,6 +111,18 @@ export interface Program {
   instructors?: number // 강사 수
   managerName?: string // 담당자명
   posterImage?: string // 포스터/키비주얼 이미지 URL
+  // 프로그램 등록 추가 필드 (기획 요구사항)
+  venue?: string // 진행 장소
+  curriculum?: string // 커리큘럼
+  contactEmail?: string // 문의처 이메일
+  contactPhone?: string // 문의처 연락처
+  oneLineIntroduction?: string // 한 줄 소개
+  keyVisualImage?: string // 키비주얼 이미지 URL
+  // 프로그램별 폼 업로드 (기획 요구사항)
+  applicationFormTemplateId?: UUID // 신청서 폼 템플릿 ID
+  surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID
+  satisfactionFormTemplateId?: UUID // 만족도 조사 폼 템플릿 ID
+  lectureReportFormTemplateId?: UUID // 강의보고서 폼 템플릿 ID
   createdAt: DateValue
   updatedAt: DateValue
 }
@@ -248,7 +263,13 @@ export interface SettlementItem {
 
 // 정산 상태
 // pending -> calculated -> review -> approved -> paid (중간에 언제든 cancelled 가능)
-export type SettlementStatus = 'pending' | 'calculated' | 'review' | 'approved' | 'paid' | 'cancelled'
+export type SettlementStatus =
+  | 'pending'
+  | 'calculated'
+  | 'review'
+  | 'approved'
+  | 'paid'
+  | 'cancelled'
 
 // 정산 첨부 파일 (Mock용 메타데이터)
 export interface SettlementAttachment {
@@ -540,7 +561,3 @@ export interface ScheduleNegotiation {
   createdAt: DateValue
   updatedAt: DateValue
 }
-
-
-
-
