@@ -34,9 +34,9 @@ interface ProgramProgressWidgetProps {
 }
 
 export function ProgramProgressWidget({
-  title = '전체 프로그램 진행 현황',
-  showDetailLink = true,
-}: ProgramProgressWidgetProps = {}) {
+  title: _title = '전체 프로그램 진행 현황',
+  showDetailLink: _showDetailLink = true,
+}: ProgramProgressWidgetProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [progress, setProgress] = useState<ProgramProgress7Stage | null>(null)

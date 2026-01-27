@@ -526,7 +526,7 @@ export function ProgramListPage() {
       {/* 관리자용: 프로그램 진행 현황 위젯 (교육 프로그램) */}
       {isAdmin && programType === 'education' && (
         <div className="program-progress-widget-container">
-          <ProgramProgressWidget title={null} showDetailLink={false} />
+            <ProgramProgressWidget title={null} />
         </div>
       )}
 
@@ -692,10 +692,11 @@ export function ProgramListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.xlarge}
-        destroyOnHidden
+        destroyOnClose
         zIndex={1001}
       >
         <ProgramForm
+          key={editingProgram?.id || 'new'}
           program={editingProgram || undefined}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
