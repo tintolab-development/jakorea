@@ -17,11 +17,11 @@ export type ProgramProgressStageKey =
 
 /** 7단계 라벨 */
 export const PROGRAM_PROGRESS_STAGE_LABELS: Record<ProgramProgressStageKey, string> = {
-  studentRecruitment: '수강자 모집',
-  instructorRecruitment: '강사 모집',
-  matchingCompleted: '매칭 완료',
-  educationBeforeTextbook: '교육 진행 중 (교재 발송 전)',
-  educationAfterTextbook: '교육 진행 중 (교재 발송 후)',
+  studentRecruitment: '수강자 모집 중',
+  instructorRecruitment: '강사 모집 중',
+  matchingCompleted: '매칭 완료 / 교재 준비 중',
+  educationBeforeTextbook: '매칭 완료 / 교재 준비 중',
+  educationAfterTextbook: '교재 발송 완료',
   educationCompleted: '교육 진행 완료',
   documentProcessingCompleted: '서류 처리 완료',
 }
@@ -62,8 +62,9 @@ export const STAGE_TO_PROGRAMS_QUERY: Record<
   documentProcessingCompleted: { type: 'status', value: 'document_processing_completed' },
 }
 
-/** 이 단계 다음에 오른쪽 화살표 표시 (강사모집↔매칭완료, 교재발송후↔교육진행완료) */
+/** 이 단계 다음에 오른쪽 화살표 표시 (강사모집↔매칭완료, 교재발송완료↔교육진행완료) */
 export const STAGE_HAS_ARROW_AFTER: Set<ProgramProgressStageKey> = new Set([
   'instructorRecruitment',
   'educationAfterTextbook',
+  'educationCompleted',
 ])

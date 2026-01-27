@@ -35,9 +35,12 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* flexbox에서 스크롤이 작동하려면 필요 */
-  position: relative; /* 스크롤 컨테이너로 작동 */
-  height: calc(100vh - var(--sidebar-header-height, 120px)); /* 헤더 높이를 제외한 높이 */
+  min-height: 0;
+  /* flexbox에서 스크롤이 작동하려면 필요 */
+  position: relative;
+  /* 스크롤 컨테이너로 작동 */
+  height: calc(100vh - var(--sidebar-header-height, 120px));
+  /* 헤더 높이를 제외한 높이 */
 }
 
 /* 사이드바 메뉴 */
@@ -47,8 +50,10 @@
   overflow-y: auto !important;
   overflow-x: hidden !important;
   background: #296075;
-  min-height: 0; /* flexbox에서 스크롤이 작동하려면 필요 */
-  height: 100% !important; /* 전체 높이 사용 */
+  min-height: 0;
+  /* flexbox에서 스크롤이 작동하려면 필요 */
+  height: 100% !important;
+  /* 전체 높이 사용 */
   position: relative;
   max-height: 100%;
 }
@@ -95,6 +100,9 @@
   font-style: normal;
   font-weight: 700;
   line-height: 120%;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .sidebar-menu .ant-menu-item:hover {
@@ -115,11 +123,34 @@
 /* 메뉴 아이콘 */
 .sidebar-menu .ant-menu-item-icon {
   color: rgba(255, 255, 255, 0.85);
+  transition: color 0.2s ease;
 }
 
 .sidebar-menu .ant-menu-item:hover .ant-menu-item-icon,
 .sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
   color: #fff;
+}
+
+/* 2뎁스 메뉴 아이콘 */
+.sidebar-menu .ant-menu-sub .ant-menu-item-icon {
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s ease;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-item:hover .ant-menu-item-icon,
+.sidebar-menu .ant-menu-sub .ant-menu-item-selected .ant-menu-item-icon {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 3뎁스 메뉴 아이콘 */
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item-icon {
+  color: rgba(255, 255, 255, 0.65);
+  transition: color 0.2s ease;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item:hover .ant-menu-item-icon,
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item-selected .ant-menu-item-icon {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* 서브메뉴 (카테고리) */
@@ -144,6 +175,9 @@
   font-style: normal;
   font-weight: 700;
   line-height: 120%;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .sidebar-menu .ant-menu-submenu-title:hover {
@@ -158,6 +192,7 @@
 
 .sidebar-menu .ant-menu-submenu-arrow {
   color: rgba(255, 255, 255, 0.85);
+  transition: color 0.2s ease;
 }
 
 .sidebar-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow,
@@ -170,19 +205,42 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
+/* 2뎁스 메뉴 아이템 */
 .sidebar-menu .ant-menu-sub .ant-menu-item {
   color: rgba(255, 255, 255, 0.75);
   padding-left: 48px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .sidebar-menu .ant-menu-sub .ant-menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .sidebar-menu .ant-menu-sub .ant-menu-item-selected {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
+}
+
+/* 3뎁스 메뉴 아이템 (자연스러운 호버 효과) */
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item {
+  color: rgba(255, 255, 255, 0.7);
+  padding-left: 64px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* 메뉴 디바이더 - 프로그램 관리 카테고리 하위에서는 숨김 */

@@ -4,7 +4,7 @@
  * Phase 4.2.1: 권한별 메뉴 구성 적용
  * Phase 0.1.5: 역할별 메뉴 필터링 강화 (hidden 처리, 권한별 필터링)
  * 타이틀을 사이드바 최상단에 배치
- * 
+ *
  * 참고사항:
  * - 각 권한(INSTRUCTOR/INDIVIDUAL/SCHOOL)별로 완전히 분리된 메뉴 구조
  * - 공통 메뉴 없이 권한별로 독립적으로 관리됨
@@ -64,7 +64,7 @@ export function Sidebar() {
     if (
       path.startsWith('/instructor/schedule') ||
       path.startsWith('/schedules/my') ||
-      path.startsWith('/surveys')
+      path.startsWith('/school/my-learning')
     ) {
       keys.push('my-learning-group')
     }
@@ -85,44 +85,24 @@ export function Sidebar() {
       keys.push('volunteer-programs-group')
     }
 
-    // 마이페이지 (권한별로 다른 그룹 키 사용)
+    // 마이페이지 (공통 2뎁스 구조)
     if (
       path.startsWith('/mypage') ||
       path.startsWith('/settlements/my') ||
       path.startsWith('/notices/inquiries/my')
     ) {
-      if (user?.role === 'INSTRUCTOR') {
-        keys.push('instructor-mypage-group')
-        if (
-          path.startsWith('/mypage/profile') ||
-          path.startsWith('/mypage/school-auth') ||
-          path.startsWith('/mypage/school-info') ||
-          path.startsWith('/mypage/instructor-auth') ||
-          path.startsWith('/mypage/instructor-info')
-        ) {
-          keys.push('instructor-personal-info-group')
-        }
-      } else if (user?.role === 'INDIVIDUAL') {
-        keys.push('individual-mypage-group')
-        if (
-          path.startsWith('/mypage/profile') ||
-          path.startsWith('/mypage/instructor-auth') ||
-          path.startsWith('/mypage/instructor-info')
-        ) {
-          keys.push('individual-personal-info-group')
-        }
-      } else if (user?.role === 'SCHOOL') {
-        keys.push('school-mypage-group')
-        if (
-          path.startsWith('/mypage/profile') ||
-          path.startsWith('/mypage/school-auth') ||
-          path.startsWith('/mypage/school-info')
-        ) {
-          keys.push('school-personal-info-group')
-        }
+      keys.push('mypage-group')
+      // 개인정보 관리 하위 메뉴인 경우 확장
+      if (
+        path.startsWith('/mypage/profile') ||
+        path.startsWith('/mypage/school-auth') ||
+        path.startsWith('/mypage/school-info') ||
+        path.startsWith('/mypage/instructor-auth') ||
+        path.startsWith('/mypage/instructor-info')
+      ) {
+        keys.push('personal-info-group')
       }
     }
-
 
     return keys
   }, [location.pathname, user?.role])
@@ -132,16 +112,16 @@ export function Sidebar() {
   // 선택된 메뉴 키 결정 (역할별 내 학습 관리 페이지일 때 /my-learning 활성화)
   const selectedKeys = useMemo(() => {
     const path = location.pathname
-    
+
     // 역할별 내 학습 관리 페이지일 때 /my-learning 활성화
     if (
       (user?.role === 'INSTRUCTOR' && path.startsWith('/instructor/schedule')) ||
       (user?.role === 'INDIVIDUAL' && path.startsWith('/schedules/my')) ||
-      (user?.role === 'SCHOOL' && path.startsWith('/surveys'))
+      (user?.role === 'SCHOOL' && path.startsWith('/school/my-learning'))
     ) {
       return ['/my-learning']
     }
-    
+
     return [path]
   }, [location.pathname, user?.role])
 

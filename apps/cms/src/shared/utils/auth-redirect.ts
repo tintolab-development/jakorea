@@ -21,7 +21,7 @@ export function getRedirectPathByRole(user: Omit<User, 'password'> | null): stri
     case 'INDIVIDUAL':
       return '/schedules/my' // 학생은 내 일정 페이지로
     case 'SCHOOL':
-      return '/surveys' // 학교는 만족도설문 페이지로
+      return '/school/my-learning' // 학교는 내 학습 관리 페이지로
     default:
       return '/'
   }

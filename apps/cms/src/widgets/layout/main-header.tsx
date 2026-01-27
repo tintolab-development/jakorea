@@ -5,10 +5,10 @@
  * 카테고리별 동적 타이틀 표시
  */
 
-import { Layout, Dropdown, Button, Space, Typography, Avatar } from 'antd'
+import { Layout, Button, Space, Typography, Avatar } from 'antd'
 import { BellOutlined, BellFilled, UserOutlined, ExportOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
 import { getRoleLabel, AppBreadcrumb } from '@/shared/ui'
@@ -16,7 +16,7 @@ import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
 import type { Notification } from '@/features/dashboard/api/notification-service'
-import { timeSince } from '@/shared/utils/date'
+import { NotificationModal } from '@/features/dashboard/ui/notification-modal'
 import './main-header.css'
 
 const { Header: AntHeader } = Layout
@@ -26,8 +26,10 @@ export function MainHeader() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout, checkAuth } = useAuthStore()
-  const { notifications, unreadCount, markAsRead } = useNotifications()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, refresh } =
+    useNotifications()
   const { items: breadcrumbItems } = useBreadcrumb()
+  const [modalOpen, setModalOpen] = useState(false)
 
   // 상태 동기화 확인: user 상태 변경 시 권한 정보 업데이트 확인
   useEffect(() => {
@@ -58,7 +60,7 @@ export function MainHeader() {
       if (
         (user.role === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
         (user.role === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
-        (user.role === 'SCHOOL' && normalizedPath === '/surveys')
+        (user.role === 'SCHOOL' && normalizedPath === '/school/my-learning')
       ) {
         return '내 학습 관리'
       }
@@ -98,59 +100,28 @@ export function MainHeader() {
     }
     if (notification.link) {
       navigate(notification.link)
+      setModalOpen(false)
     }
   }
 
-  const handleViewAllNotifications = () => {
-    navigate('/')
-  }
+  const handleConfirm = async (notification: Notification) => {
+    try {
+      // 읽음 처리
+      if (!notification.read) {
+        await markAsRead(notification.id)
+      }
+      // 알림 제거
+      await removeNotification(notification.id)
 
-  // 알림 드롭다운 메뉴
-  const unreadNotifications = notifications.filter(n => !n.read).slice(0, 5)
-  const notificationMenuItems =
-    unreadNotifications.length > 0
-      ? [
-          ...unreadNotifications.map(notification => ({
-            key: notification.id,
-            label: (
-              <div
-                className="main-header-notification-item"
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="main-header-notification-title">{notification.title}</div>
-                <div className="main-header-notification-message">{notification.message}</div>
-                <div className="main-header-notification-time">
-                  {timeSince(notification.createdAt)}
-                </div>
-              </div>
-            ),
-          })),
-          {
-            type: 'divider' as const,
-          },
-          {
-            key: 'view-all',
-            label: (
-              <Button type="link" block onClick={handleViewAllNotifications}>
-                더보기
-              </Button>
-            ),
-          },
-        ]
-      : [
-          {
-            key: 'no-notifications',
-            label: (
-              <div
-                className="main-header-notification-item"
-                style={{ textAlign: 'center', padding: '16px' }}
-              >
-                <Text type="secondary">알림이 없습니다</Text>
-              </div>
-            ),
-            disabled: true,
-          },
-        ]
+      // 링크가 있으면 이동
+      if (notification.link) {
+        navigate(notification.link)
+        setModalOpen(false)
+      }
+    } catch (error) {
+      console.error('알림 확인 처리 실패:', error)
+    }
+  }
 
   // 세부 권한 정보 계산 (상태 동기화 확인)
   const userRoleLabel = useMemo(() => {
@@ -188,22 +159,15 @@ export function MainHeader() {
         </div>
         <div className="main-header-right">
           <Space size="middle" align="center">
-            {/* 알림 - 타원형 배지 스타일 */}
-            <Dropdown
-              menu={{ items: notificationMenuItems }}
-              placement="bottomRight"
-              trigger={['click']}
-              overlayClassName="main-header-notification-dropdown"
-            >
-              <div className="main-header-notification-badge">
-                {unreadCount > 0 ? (
-                  <BellFilled className="main-header-notification-icon" />
-                ) : (
-                  <BellOutlined className="main-header-notification-icon" />
-                )}
-                <Text className="main-header-notification-count">{unreadCount}건</Text>
-              </div>
-            </Dropdown>
+            {/* 알림 - 모달 방식 */}
+            <div className="main-header-notification-badge" onClick={() => setModalOpen(true)}>
+              {unreadCount > 0 ? (
+                <BellFilled className="main-header-notification-icon" />
+              ) : (
+                <BellOutlined className="main-header-notification-icon" />
+              )}
+              <Text className="main-header-notification-count">{unreadCount}건</Text>
+            </div>
 
             {/* 유저 정보 */}
             <div className="main-header-user-info">
@@ -225,6 +189,23 @@ export function MainHeader() {
           </Space>
         </div>
       </div>
+
+      <NotificationModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onNotificationClick={handleNotificationClick}
+        onConfirm={handleConfirm}
+        onMarkAllAsRead={async () => {
+          try {
+            await markAllAsRead()
+          } catch (error) {
+            console.error('모든 알림 읽음 처리 실패:', error)
+          }
+        }}
+        onRefresh={refresh}
+      />
     </AntHeader>
   )
 }

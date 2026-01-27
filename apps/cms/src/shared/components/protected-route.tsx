@@ -10,6 +10,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useEffect, useState } from 'react'
 import { canAccessPath } from '@/shared/config/menu-config'
 import { canAccessProgram } from '@/shared/utils/program-acl'
+import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import type { UserRole } from '@/types/user'
 
 interface ProtectedRouteProps {
@@ -81,28 +82,43 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace />
   }
 
-  // 권한이 필요한 경우
+  // 권한이 필요한 경우 - ComingSoonPage로 표시
   if (requiredRoles && requiredRoles.length > 0 && user) {
     const hasRequiredRole = requiredRoles.includes(user.role)
     if (!hasRequiredRole) {
-      return <Navigate to="/forbidden" replace />
+      return (
+        <ComingSoonPage
+          title="접근 권한이 없습니다"
+          description="이 페이지에 접근할 권한이 없습니다. 해당 기능은 현재 준비 중입니다."
+        />
+      )
     }
   }
 
-  // 메뉴 설정 기반 경로 접근 제어
+  // 메뉴 설정 기반 경로 접근 제어 - ComingSoonPage로 표시
   // IndexPage('/')는 예외 처리 - IndexPage에서 역할별로 리다이렉트 처리
   if (user && location.pathname !== '/' && !canAccessPath(location.pathname, user.role)) {
-    return <Navigate to="/forbidden" replace />
+    return (
+      <ComingSoonPage
+        title="접근 권한이 없습니다"
+        description="이 페이지에 접근할 권한이 없습니다. 해당 기능은 현재 준비 중입니다."
+      />
+    )
   }
 
-  // Phase 0.1.5: 프로그램 단위 ACL 체크
+  // Phase 0.1.5: 프로그램 단위 ACL 체크 - ComingSoonPage로 표시
   // URL에서 프로그램 ID 추출 (예: /programs/:id, /programs/:id/edit 등)
   const programId = params.id || params.programId
   if (user && programId && location.pathname.includes('/programs/')) {
     // 프로그램 관련 경로인 경우 ACL 체크
     const action = location.pathname.includes('/edit') ? 'EDIT' : 'VIEW'
     if (!canAccessProgram(user, programId, action)) {
-      return <Navigate to="/forbidden" replace />
+      return (
+        <ComingSoonPage
+          title="접근 권한이 없습니다"
+          description="이 프로그램에 접근할 권한이 없습니다. 해당 기능은 현재 준비 중입니다."
+        />
+      )
     }
   }
 

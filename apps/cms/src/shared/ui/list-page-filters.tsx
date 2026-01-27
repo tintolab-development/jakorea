@@ -3,11 +3,10 @@
  * 검색, Select 필터, 초기화 버튼 패턴 추상화
  */
 
-import { Card, Space, Input, Select, Button } from 'antd'
+import { Card, Space, Select, Button } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { LAYOUT_CONSTANTS } from '@/shared/constants/layout'
-
-const { Search } = Input
+import { LabeledSearchInput } from './labeled-search-input'
 
 export interface FilterOption {
   label: string
@@ -34,6 +33,8 @@ export interface ListPageFiltersProps<T extends Record<string, any>> {
   searchValue?: string
   /** 검색어 변경 핸들러 */
   onSearchChange?: (value: string) => void
+  /** 검색 레이블 (기본값: "검색") */
+  searchLabel?: string
   /** 검색 placeholder */
   searchPlaceholder?: string
   /** 초기화 핸들러 */
@@ -48,7 +49,7 @@ export interface ListPageFiltersProps<T extends Record<string, any>> {
 
 /**
  * List 페이지 필터 공통 컴포넌트
- * 
+ *
  * @example
  * ```tsx
  * <ListPageFilters
@@ -74,7 +75,8 @@ export function ListPageFilters<T extends Record<string, any>>({
   filterConfig = [],
   searchValue = '',
   onSearchChange,
-  searchPlaceholder = '검색',
+  searchLabel = '검색',
+  searchPlaceholder,
   onReset,
   showReset = true,
   extra,
@@ -82,27 +84,27 @@ export function ListPageFilters<T extends Record<string, any>>({
 }: ListPageFiltersProps<T>) {
   return (
     <Card style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}>
-      <Space wrap>
+      <Space wrap align="start">
         {onSearchChange && (
-          <Search
-            placeholder={searchPlaceholder}
+          <LabeledSearchInput
+            label={searchLabel}
+            placeholder={searchPlaceholder || `${searchLabel}을(를) 입력하세요`}
             value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            style={{ width: LAYOUT_CONSTANTS.widths.search }}
-            allowClear
+            onChange={onSearchChange}
+            width={LAYOUT_CONSTANTS.widths.search}
           />
         )}
-        
-        {filterConfig.map((config) => (
+
+        {filterConfig.map(config => (
           <Select
             key={config.key}
             placeholder={config.placeholder}
             value={filters[config.key]}
-            onChange={(value) => onFilterChange(config.key, value)}
+            onChange={value => onFilterChange(config.key, value)}
             allowClear={config.allowClear !== false}
             style={{ width: LAYOUT_CONSTANTS.widths.filter, ...config.style }}
           >
-            {config.options.map((option) => (
+            {config.options.map(option => (
               <Select.Option key={String(option.value)} value={option.value}>
                 {option.label}
               </Select.Option>

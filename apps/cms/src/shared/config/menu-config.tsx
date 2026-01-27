@@ -6,12 +6,23 @@
 
 import type { UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
-import {
-  FolderOutlined,
-  FileTextOutlined,
-  CalendarOutlined,
-  TeamOutlined,
-} from '@ant-design/icons'
+import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
+import React from 'react'
+
+// 3뎁스 메뉴용 닷 아이콘
+const DotIcon = () => (
+  <span
+    style={{
+      display: 'inline-block',
+      width: 4,
+      height: 4,
+      borderRadius: '50%',
+      backgroundColor: 'currentColor',
+      marginRight: 6,
+      verticalAlign: 'middle',
+    }}
+  />
+)
 
 /**
  * 메뉴 아이템 타입 정의
@@ -34,8 +45,14 @@ export interface MenuItemConfig {
  */
 const allMenuItems: MenuItemConfig[] = [
   // 관리자 전용 홈
-  { key: '/', label: '관리자 홈', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-  
+  {
+    key: '/',
+    label: '관리자 홈',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+  },
+
   /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 교육/봉사, 3뎁스 교육 하위 [목록, 일정, 수강 신청 현황, 강의 신청 현황] */
   {
     key: 'programs-group',
@@ -54,13 +71,21 @@ const allMenuItems: MenuItemConfig[] = [
           {
             key: '/programs/education',
             label: '프로그램 목록',
+            icon: <DotIcon />,
             enabled: true,
             allowedRoles: ['ADMIN'],
           },
-          { key: '/applications', label: '수강 신청 현황', enabled: true, allowedRoles: ['ADMIN'] },
+          {
+            key: '/applications',
+            label: '수강 신청 현황',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
           {
             key: '/instructor-applications',
             label: '강의 신청 현황',
+            icon: <DotIcon />,
             enabled: true,
             allowedRoles: ['ADMIN'],
           },
@@ -81,7 +106,7 @@ const allMenuItems: MenuItemConfig[] = [
   // ============================================
   // 사용자(INSTRUCTOR, INDIVIDUAL, SCHOOL) 공통 1뎁스 메뉴
   // ============================================
-  
+
   // 1. 내 학습 관리 (1뎁스)
   {
     key: '/my-learning',
@@ -90,7 +115,7 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
   },
-  
+
   // 2. 교육 프로그램 (1뎁스)
   {
     key: '/programs',
@@ -99,7 +124,7 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
   },
-  
+
   // 3. 봉사 프로그램 (1뎁스)
   {
     key: '/programs/volunteer',
@@ -108,16 +133,79 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
   },
-  
-  // 4. 마이페이지 (1뎁스)
+
+  // 4. 마이페이지 (1뎁스) - 2뎁스 구조
   {
-    key: '/mypage',
+    key: 'mypage-group',
     label: '마이페이지',
     icon: <FolderOutlined />,
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+    children: [
+      // 개인정보 관리 (2뎁스) - 3뎁스 확장 가능
+      {
+        key: 'personal-info-group',
+        label: '개인정보 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+        children: [
+          {
+            key: '/mypage/profile',
+            label: '내 정보',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+          },
+          // 학교(교사) 인증 / 교사 정보 (SCHOOL 권한에서만, 인증 상태에 따라 라벨 변경)
+          {
+            key: '/mypage/school-auth',
+            label: '학교(교사) 인증',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['SCHOOL'],
+          },
+          // 강사 인증 / 강사 정보 (INSTRUCTOR, INDIVIDUAL 권한에서만, 인증 상태에 따라 라벨 변경)
+          {
+            key: '/mypage/instructor-auth',
+            label: '강사 인증',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL'],
+          },
+        ],
+      },
+      // 내 프로그램 일정 (2뎁스)
+      {
+        key: '/mypage/program-schedule',
+        label: '내 프로그램 일정',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
+      // 강의료 정산 (2뎁스) - 강사(INSTRUCTOR) 권한에서만
+      {
+        key: '/settlements/my',
+        label: '강의료 정산',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+      // 서류 발급 이력 (2뎁스)
+      {
+        key: '/mypage/documents',
+        label: '서류 발급 이력',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
+      // 내 문의 내역 (2뎁스)
+      {
+        key: '/notices/inquiries/my',
+        label: '내 문의 내역',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
+    ],
   },
-  
+
   // 5. 공지사항 (1뎁스)
   {
     key: '/notices',
@@ -126,7 +214,7 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
   },
-  
+
   // 6. FAQ (1뎁스)
   {
     key: '/notices/faq',
@@ -135,7 +223,7 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
   },
-  
+
   // 7. 문의하기 (1뎁스)
   {
     key: '/notices/inquiries',
@@ -148,7 +236,7 @@ const allMenuItems: MenuItemConfig[] = [
   // ============================================
   // 주석 처리된 메뉴 (일반 사용자용)
   // ============================================
-  
+
   /* 
   // 1. 내 학습 관리 (권한별로 다른 페이지로 연결) - 주석 처리
   {
@@ -171,8 +259,8 @@ const allMenuItems: MenuItemConfig[] = [
         allowedRoles: ['INDIVIDUAL'],
       },
       {
-        key: '/surveys',
-        label: '만족도설문',
+        key: '/school/my-learning',
+        label: '내 학습 관리',
         enabled: true,
         allowedRoles: ['SCHOOL'],
       },
@@ -278,7 +366,7 @@ const allMenuItems: MenuItemConfig[] = [
   // ============================================
   // 주석 처리된 메뉴 (역할별 전용 메뉴)
   // ============================================
-  
+
   /* 
   { key: 'divider-mypage', type: 'divider', enabled: true },
   
@@ -436,7 +524,7 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
-    key: '/surveys',
+    key: '/school/my-learning',
     label: '만족도설문',
     icon: <FileTextOutlined />,
     enabled: true,
@@ -814,13 +902,13 @@ const allMenuItems: MenuItemConfig[] = [
 
 /**
  * 권한별 메뉴 필터링
- * 
+ *
  * 참고사항:
  * - 각 권한(INSTRUCTOR/INDIVIDUAL/SCHOOL)별로 완전히 분리된 메뉴 구조
  * - 공통 메뉴 없이 권한별로 독립적으로 관리
  * - allowedRoles로 접근 가능한 메뉴만 필터링하여 표시
  * - 인증 상태에 따라 메뉴 라벨이 동적으로 변경됨
- * 
+ *
  * @param userRole 사용자 권한
  * @param items 메뉴 아이템 목록
  * @param user 사용자 정보 (인증 상태 확인용, 선택적)
@@ -867,25 +955,34 @@ export function filterMenuByRole(
         icon: item.icon,
       }
 
-      // 인증 상태에 따른 동적 메뉴 라벨 변경
+      // 인증 상태에 따른 동적 메뉴 라벨 변경 (재귀적으로 모든 뎁스에서 적용)
+      // 권한별 렌더링 확실히: 인증 상태에 따라 메뉴 라벨과 경로 동적 변경
       if (user) {
-        // 학교(교사) 인증 / 교사 정보
-        if (item.key === '/mypage/school-auth') {
+        // 학교(교사) 인증 / 교사 정보 (SCHOOL 권한에서만)
+        // 케이스 1: 교사 인증이 안 되어있으면 "교사 인증"으로 메뉴 노출 + 진입 시 교사 인증 프로세스
+        // 케이스 2: 인증된 교사인 경우, "교사 정보"로 메뉴 노출 + 진입 시 교사 정보 노출
+        if (item.key === '/mypage/school-auth' || item.key === '/mypage/school-info') {
           if (user.schoolInfo) {
+            // 인증된 교사: "교사 정보"로 표시
             menuItem.label = '교사 정보'
             menuItem.key = '/mypage/school-info'
           } else {
+            // 인증 안 된 교사: "학교(교사) 인증"으로 표시
             menuItem.label = '학교(교사) 인증'
             menuItem.key = '/mypage/school-auth'
           }
         }
-        
-        // 강사 인증 / 강사 정보
-        if (item.key === '/mypage/instructor-auth') {
+
+        // 강사 인증 / 강사 정보 (INSTRUCTOR, INDIVIDUAL 권한에서만)
+        // 케이스 1: 강사 인증이 안 되어있으면 "강사 인증"으로 메뉴 노출 + 진입 시 강사 인증 프로세스
+        // 케이스 2: 인증된 강사인 경우, "강사 정보"로 메뉴 노출 + 진입 시 강사 정보 노출
+        if (item.key === '/mypage/instructor-auth' || item.key === '/mypage/instructor-info') {
           if (user.instructorId) {
+            // 인증된 강사: "강사 정보"로 표시
             menuItem.label = '강사 정보'
             menuItem.key = '/mypage/instructor-info'
           } else {
+            // 인증 안 된 강사: "강사 인증"으로 표시
             menuItem.label = '강사 인증'
             menuItem.key = '/mypage/instructor-auth'
           }
@@ -893,6 +990,7 @@ export function filterMenuByRole(
       }
 
       // Phase 0.1.5: 자식 메뉴가 있는 경우 재귀적으로 필터링 (강화)
+      // 재귀 호출 시 동적 라벨 변경도 함께 적용됨
       if (item.children && item.children.length > 0) {
         const filteredChildren = filterMenuByRole(userRole, item.children, user)
         if (filteredChildren && filteredChildren.length > 0) {
@@ -976,7 +1074,7 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
   if (
     (userRole === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
     (userRole === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
-    (userRole === 'SCHOOL' && normalizedPath === '/surveys')
+    (userRole === 'SCHOOL' && normalizedPath === '/school/my-learning')
   ) {
     return true
   }
@@ -1039,7 +1137,7 @@ export function getCategoryNameByPath(
     if (
       (userRole === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
       (userRole === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
-      (userRole === 'SCHOOL' && normalizedPath === '/surveys')
+      (userRole === 'SCHOOL' && normalizedPath === '/school/my-learning')
     ) {
       // depth가 1뎁스로 요청된 경우 또는 depth가 없는 경우 "내 학습 관리" 반환
       // depth가 2뎁스 이상인 경우도 "내 학습 관리"를 반환하여 일관성 유지
@@ -1247,7 +1345,7 @@ function toBreadcrumbItem(menuItem: MenuItemConfig): BreadcrumbItem {
  * 경로·역할에 따른 브레드크럼 체인 반환
  * 사이드바 메뉴 뎁스(1·2·3)를 브레드크럼으로 표현할 때 사용
  * 권한별 필터링된 메뉴에서 검색하여 올바른 breadcrumb 생성
- * 
+ *
  * @param pathname 경로
  * @param userRole 사용자 권한
  * @param user 사용자 정보 (동적 라벨 변경용, 선택적)
@@ -1271,7 +1369,7 @@ export function getBreadcrumbByPath(
     if (
       (userRole === 'INSTRUCTOR' && n.startsWith('/instructor/schedule')) ||
       (userRole === 'INDIVIDUAL' && n.startsWith('/schedules/my')) ||
-      (userRole === 'SCHOOL' && n === '/surveys')
+      (userRole === 'SCHOOL' && n === '/school/my-learning')
     ) {
       // 1뎁스 메뉴이므로 breadcrumb은 표시하지 않음 (AppBreadcrumb에서 length <= 1이면 null 반환)
       // 하지만 명시적으로 "내 학습 관리"만 반환하여 일관성 유지
