@@ -4,7 +4,7 @@
  * Phase 2: 리팩토링 패턴 적용
  */
 
-import { Button, Space, Modal, Typography, Input } from 'antd'
+import { Button, Modal, Typography, Input } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { ApplicationList } from '@/features/application/ui/application-list'
 import { ApplicationDetailDrawer } from '@/features/application/ui/application-detail-drawer'
@@ -13,6 +13,7 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import type { Application } from '@/types/domain'
 import { useApplicationReview } from '@/features/application/hooks/use-application-review'
+import { useApplicationStore } from '@/features/application/model/application-store'
 import './application-list-page.css'
 
 function ApplicationListPage() {
@@ -53,14 +54,13 @@ function ApplicationListPage() {
 
   return (
     <div>
-      <Space className="application-list-header">
-        <h1 className="application-list-title">{isAdmin ? '신청 승인/반려' : '신청 내역'}</h1>
-        {!isAdmin && (
+      {!isAdmin && (
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm()}>
             신청 등록
           </Button>
-        )}
-      </Space>
+        </div>
+      )}
 
       <ApplicationList
         data={applications}
@@ -82,7 +82,14 @@ function ApplicationListPage() {
           if (selectedApplication) openForm(selectedApplication)
         }}
         onDelete={() => {
-          if (selectedApplication) openDeleteConfirm(selectedApplication)
+          // store의 selectedApplication을 우선 사용
+          const storeSelectedApplication = useApplicationStore.getState().selectedApplication
+          const applicationToDelete = storeSelectedApplication || selectedApplication
+          if (applicationToDelete) {
+            openDeleteConfirm(applicationToDelete)
+          } else {
+            console.warn('삭제할 신청을 찾을 수 없습니다.')
+          }
         }}
         onStatusChange={handleStatusChangeInDrawer}
         loading={loading}

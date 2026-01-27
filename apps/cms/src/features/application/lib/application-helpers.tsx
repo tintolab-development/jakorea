@@ -31,6 +31,7 @@ export function getApplicationSubjectName(application: Application): string {
  * 신청 상태 변경 메뉴 아이템 생성
  * @param application 신청 정보
  * @param handlers 핸들러 함수들
+ * @param canWrite 쓰기 작업 권한 여부 (GENERAL 관리자는 false)
  * @returns Ant Design Menu 아이템 배열
  */
 export function createApplicationMenuItems(
@@ -41,64 +42,91 @@ export function createApplicationMenuItems(
     onDelete: (application: Application) => void
     onStatusChange: (application: Application, status: ApplicationStatus) => void
     onReject?: (application: Application) => void
-  }
+  },
+  canWrite: boolean = true
 ): MenuProps['items'] {
-  return [
+  const items: MenuProps['items'] = [
     {
       key: 'view',
       label: '상세 보기',
       icon: <EyeOutlined />,
-      onClick: () => handlers.onView(application),
-    },
-    {
-      key: 'edit',
-      label: '수정',
-      icon: <EditOutlined />,
-      onClick: () => handlers.onEdit(application),
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'status-submitted',
-      label: '접수로 변경',
-      disabled: !canTransitionApplicationStatus(application.status, 'submitted'),
-      onClick: () => handlers.onStatusChange(application, 'submitted'),
-    },
-    {
-      key: 'status-reviewing',
-      label: '검토로 변경',
-      disabled: !canTransitionApplicationStatus(application.status, 'reviewing'),
-      onClick: () => handlers.onStatusChange(application, 'reviewing'),
-    },
-    {
-      key: 'status-approved',
-      label: '확정으로 변경',
-      disabled: !canTransitionApplicationStatus(application.status, 'approved'),
-      onClick: () => handlers.onStatusChange(application, 'approved'),
-    },
-    {
-      key: 'status-rejected',
-      label: '거절로 변경',
-      disabled: !canTransitionApplicationStatus(application.status, 'rejected'),
-      onClick: () => {
-        if (handlers.onReject) {
-          handlers.onReject(application)
-        } else {
-          handlers.onStatusChange(application, 'rejected')
-        }
+      onClick: e => {
+        e?.domEvent?.stopPropagation()
+        handlers.onView(application)
       },
     },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'delete',
-      label: '삭제',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => handlers.onDelete(application),
-    },
   ]
-}
 
+  // 쓰기 작업 권한이 있는 경우에만 수정, 상태 변경, 삭제 메뉴 표시
+  if (canWrite) {
+    items.push(
+      {
+        key: 'edit',
+        label: '수정',
+        icon: <EditOutlined />,
+        onClick: e => {
+          e?.domEvent?.stopPropagation()
+          handlers.onEdit(application)
+        },
+      },
+      {
+        type: 'divider',
+      },
+      {
+        key: 'status-submitted',
+        label: '접수로 변경',
+        disabled: !canTransitionApplicationStatus(application.status, 'submitted'),
+        onClick: e => {
+          e?.domEvent?.stopPropagation()
+          handlers.onStatusChange(application, 'submitted')
+        },
+      },
+      {
+        key: 'status-reviewing',
+        label: '검토로 변경',
+        disabled: !canTransitionApplicationStatus(application.status, 'reviewing'),
+        onClick: e => {
+          e?.domEvent?.stopPropagation()
+          handlers.onStatusChange(application, 'reviewing')
+        },
+      },
+      {
+        key: 'status-approved',
+        label: '확정으로 변경',
+        disabled: !canTransitionApplicationStatus(application.status, 'approved'),
+        onClick: e => {
+          e?.domEvent?.stopPropagation()
+          handlers.onStatusChange(application, 'approved')
+        },
+      },
+      {
+        key: 'status-rejected',
+        label: '거절로 변경',
+        disabled: !canTransitionApplicationStatus(application.status, 'rejected'),
+        onClick: e => {
+          e?.domEvent?.stopPropagation()
+          if (handlers.onReject) {
+            handlers.onReject(application)
+          } else {
+            handlers.onStatusChange(application, 'rejected')
+          }
+        },
+      },
+      {
+        type: 'divider',
+      },
+      {
+        key: 'delete',
+        label: '삭제',
+        icon: <DeleteOutlined />,
+        danger: true,
+        onClick: e => {
+          e?.domEvent?.stopPropagation()
+          handlers.onDelete(application)
+        },
+      }
+    )
+  }
+
+  return items
+}

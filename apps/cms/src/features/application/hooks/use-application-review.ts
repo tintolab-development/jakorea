@@ -32,24 +32,27 @@ interface UseApplicationReviewResult {
   closeDeleteConfirm: () => void
   confirmDelete: () => Promise<void>
   submitForm: (data: ApplicationFormData) => Promise<void>
-  changeStatus: (application: Application, status: Application['status'], reason?: string) => Promise<void>
+  changeStatus: (
+    application: Application,
+    status: Application['status'],
+    reason?: string
+  ) => Promise<void>
   requestReject: (application: Application) => void
   confirmReject: () => Promise<void>
   cancelReject: () => void
 }
 
 export function useApplicationReview(): UseApplicationReviewResult {
-  const {
-    applications,
-    selectedApplication,
-    loading,
-    fetchApplications,
-    createApplication,
-    updateApplication,
-    deleteApplication,
-    updateStatus,
-    setSelectedApplication,
-  } = useApplicationStore()
+  const applications = useApplicationStore(state => state.applications)
+  const selectedApplication = useApplicationStore(state => state.selectedApplication)
+  const loading = useApplicationStore(state => state.loading)
+  const fetchApplications = useApplicationStore(state => state.fetchApplications)
+  const fetchApplicationById = useApplicationStore(state => state.fetchApplicationById)
+  const createApplication = useApplicationStore(state => state.createApplication)
+  const updateApplication = useApplicationStore(state => state.updateApplication)
+  const deleteApplication = useApplicationStore(state => state.deleteApplication)
+  const updateStatus = useApplicationStore(state => state.updateStatus)
+  const setSelectedApplication = useApplicationStore(state => state.setSelectedApplication)
   const { user } = useAuthStore()
 
   const isAdmin = user?.role === 'ADMIN'
@@ -67,10 +70,22 @@ export function useApplicationReview(): UseApplicationReviewResult {
     fetchApplications()
   }, [fetchApplications])
 
-  const openDrawer = useCallback((application: Application) => {
-    setSelectedApplication(application)
-    setDrawerOpen(true)
-  }, [setSelectedApplication])
+  const openDrawer = useCallback(
+    async (application: Application) => {
+      // 먼저 선택된 신청을 설정하여 drawer가 즉시 표시되도록 함
+      setSelectedApplication(application)
+      setDrawerOpen(true)
+
+      // 그 다음 최신 데이터를 가져옴 (비동기로 실행)
+      try {
+        await fetchApplicationById(application.id)
+      } catch (error) {
+        // 에러가 발생해도 기존 데이터로 표시 (이미 setSelectedApplication으로 설정됨)
+        console.error('신청 상세 정보를 가져오는 중 오류가 발생했습니다:', error)
+      }
+    },
+    [fetchApplicationById, setSelectedApplication]
+  )
 
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false)
@@ -87,24 +102,29 @@ export function useApplicationReview(): UseApplicationReviewResult {
     setEditingApplication(null)
   }, [])
 
-  const submitForm = useCallback(async (data: ApplicationFormData) => {
-    try {
-      if (editingApplication) {
-        await updateApplication(editingApplication.id, data)
-        showSuccessMessage('신청이 수정되었습니다')
-      } else {
-        await createApplication(data)
-        showSuccessMessage('신청이 등록되었습니다')
+  const submitForm = useCallback(
+    async (data: ApplicationFormData) => {
+      try {
+        if (editingApplication) {
+          await updateApplication(editingApplication.id, data)
+          showSuccessMessage('신청이 수정되었습니다')
+        } else {
+          await createApplication(data)
+          showSuccessMessage('신청이 등록되었습니다')
+        }
+        closeForm()
+        fetchApplications()
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: editingApplication
+            ? '수정 중 오류가 발생했습니다'
+            : '등록 중 오류가 발생했습니다',
+          context: 'ApplicationFormSubmit',
+        })
       }
-      closeForm()
-      fetchApplications()
-    } catch (error) {
-      handleError(error, {
-        defaultMessage: editingApplication ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다',
-        context: 'ApplicationFormSubmit',
-      })
-    }
-  }, [closeForm, createApplication, editingApplication, fetchApplications, updateApplication])
+    },
+    [closeForm, createApplication, editingApplication, fetchApplications, updateApplication]
+  )
 
   const openDeleteConfirm = useCallback((application: Application) => {
     setApplicationToDelete(application)
@@ -135,21 +155,20 @@ export function useApplicationReview(): UseApplicationReviewResult {
     }
   }, [applicationToDelete, closeDeleteConfirm, closeDrawer, deleteApplication])
 
-  const changeStatus = useCallback(async (
-    application: Application,
-    status: Application['status'],
-    reason?: string
-  ) => {
-    try {
-      await updateStatus(application.id, status, reason)
-      showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
-    } catch (error) {
-      handleError(error, {
-        defaultMessage: '상태 변경 중 오류가 발생했습니다',
-        context: 'ApplicationStatusChange',
-      })
-    }
-  }, [updateStatus])
+  const changeStatus = useCallback(
+    async (application: Application, status: Application['status'], reason?: string) => {
+      try {
+        await updateStatus(application.id, status, reason)
+        showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: '상태 변경 중 오류가 발생했습니다',
+          context: 'ApplicationStatusChange',
+        })
+      }
+    },
+    [updateStatus]
+  )
 
   const requestReject = useCallback((application: Application) => {
     setPendingRejection(application)

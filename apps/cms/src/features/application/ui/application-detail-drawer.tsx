@@ -76,7 +76,10 @@ export function ApplicationDetailDrawer({
   currentUser,
 }: ApplicationDetailDrawerProps) {
   void _onEdit
-  const { selectedApplication: storeSelectedApplication, updateStatus, updateApplication, fetchApplicationById } = useApplicationStore()
+  const storeSelectedApplication = useApplicationStore(state => state.selectedApplication)
+  const updateStatus = useApplicationStore(state => state.updateStatus)
+  const updateApplication = useApplicationStore(state => state.updateApplication)
+  const fetchApplicationById = useApplicationStore(state => state.fetchApplicationById)
   const { user: authUser } = useAuthStore()
 
   // 실제 사용자 정보 (currentUser가 있으면 사용, 없으면 authUser 사용)
@@ -118,12 +121,26 @@ export function ApplicationDetailDrawer({
 
   useEffect(() => {
     if (displayApplication && open) {
-      getNotificationStatus(displayApplication.id).then(status => {
-        setNotificationSent(status.notificationSent)
+      // Drawer가 열릴 때 최신 데이터를 가져옴
+      fetchApplicationById(displayApplication.id).catch(error => {
+        console.error('신청 상세 정보를 가져오는 중 오류가 발생했습니다:', error)
       })
-      getNotificationHistory(displayApplication.id).then(setNotificationHistory)
+
+      getNotificationStatus(displayApplication.id)
+        .then(status => {
+          setNotificationSent(status.notificationSent)
+        })
+        .catch(error => {
+          console.error('알림 상태를 가져오는 중 오류가 발생했습니다:', error)
+        })
+
+      getNotificationHistory(displayApplication.id)
+        .then(setNotificationHistory)
+        .catch(error => {
+          console.error('알림 이력을 가져오는 중 오류가 발생했습니다:', error)
+        })
     }
-  }, [displayApplication, open])
+  }, [displayApplication?.id, open, fetchApplicationById])
 
   const handleSendNotification = async (channel: NotificationChannel) => {
     if (!displayApplication || !user) return
@@ -303,7 +320,12 @@ export function ApplicationDetailDrawer({
       onClose={onClose}
       title={
         <Space>
-          <StatusBadge status={displayApplication.status} statusConfig={applicationStatusStatusConfig} variant="badge" showIcon={false} />
+          <StatusBadge
+            status={displayApplication.status}
+            statusConfig={applicationStatusStatusConfig}
+            variant="badge"
+            showIcon={false}
+          />
           <Title level={4} style={{ margin: 0 }}>
             신청 상세
           </Title>
@@ -386,7 +408,11 @@ export function ApplicationDetailDrawer({
                     <Text strong>{subjectName || '-'}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="상태">
-                    <StatusBadge status={displayApplication.status} statusConfig={applicationStatusStatusConfig} variant="badge" />
+                    <StatusBadge
+                      status={displayApplication.status}
+                      statusConfig={applicationStatusStatusConfig}
+                      variant="badge"
+                    />
                   </Descriptions.Item>
                   {displayApplication.notes && (
                     <Descriptions.Item label="비고">

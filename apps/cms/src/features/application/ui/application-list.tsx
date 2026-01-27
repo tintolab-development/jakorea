@@ -3,9 +3,11 @@
  * Phase 2.2: 테이블 + 필터 (Ant Design 컴포넌트 다양하게 활용)
  */
 
+import { useState } from 'react'
 import { Table, Select, Button, Space, Tag, Dropdown, Tooltip } from 'antd'
 import { MoreOutlined } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
@@ -19,6 +21,7 @@ import {
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 
 const { Option } = Select
 
@@ -28,7 +31,11 @@ interface ApplicationListProps {
   onView: (application: Application) => void
   onEdit: (application: Application) => void
   onDelete: (application: Application) => void
-  onStatusChange: (application: Application, status: Application['status'], rejectionReason?: string) => void
+  onStatusChange: (
+    application: Application,
+    status: Application['status'],
+    rejectionReason?: string
+  ) => void
   onReject?: (application: Application) => void
   isAdmin?: boolean
   currentUser?: Pick<User, 'id' | 'role' | 'instructorId'> | null
@@ -58,7 +65,11 @@ export function ApplicationList({
       }
       case 'INDIVIDUAL': {
         filteredData = currentUser.id
-          ? data.filter(app => (app.subjectType === 'student' || app.subjectType === 'volunteer') && app.subjectId === currentUser.id)
+          ? data.filter(
+              app =>
+                (app.subjectType === 'student' || app.subjectType === 'volunteer') &&
+                app.subjectId === currentUser.id
+            )
           : []
         break
       }
@@ -85,10 +96,22 @@ export function ApplicationList({
 
   // StatusBadge용 statusConfig 생성
   const applicationSubjectTypeStatusConfig = {
-    school: { label: applicationSubjectTypeConfig.labels.school, color: applicationSubjectTypeConfig.colors.school },
-    student: { label: applicationSubjectTypeConfig.labels.student, color: applicationSubjectTypeConfig.colors.student },
-    instructor: { label: applicationSubjectTypeConfig.labels.instructor, color: applicationSubjectTypeConfig.colors.instructor },
-    volunteer: { label: applicationSubjectTypeConfig.labels.volunteer, color: applicationSubjectTypeConfig.colors.volunteer },
+    school: {
+      label: applicationSubjectTypeConfig.labels.school,
+      color: applicationSubjectTypeConfig.colors.school,
+    },
+    student: {
+      label: applicationSubjectTypeConfig.labels.student,
+      color: applicationSubjectTypeConfig.colors.student,
+    },
+    instructor: {
+      label: applicationSubjectTypeConfig.labels.instructor,
+      color: applicationSubjectTypeConfig.colors.instructor,
+    },
+    volunteer: {
+      label: applicationSubjectTypeConfig.labels.volunteer,
+      color: applicationSubjectTypeConfig.colors.volunteer,
+    },
   } as const
 
   const applicationPathTypeStatusConfig = {
@@ -117,8 +140,8 @@ export function ApplicationList({
       key: 'subject',
       render: (_: unknown, record: Application) => (
         <Space>
-          <StatusBadge 
-            status={record.subjectType} 
+          <StatusBadge
+            status={record.subjectType}
             statusConfig={applicationSubjectTypeStatusConfig}
             showIcon={false}
           />
@@ -139,8 +162,8 @@ export function ApplicationList({
         }
 
         return (
-          <StatusBadge 
-            status={applicationPath.pathType} 
+          <StatusBadge
+            status={applicationPath.pathType}
             statusConfig={applicationPathTypeStatusConfig}
             showIcon={false}
           />
@@ -174,81 +197,120 @@ export function ApplicationList({
             key: 'action',
             fixed: 'right' as const,
             width: 100,
-            render: (_: unknown, record: Application) => (
-              <div onClick={e => e.stopPropagation()}>
-                <Dropdown
-                  menu={{
-                    items: createApplicationMenuItems(record, {
-                      onView,
-                      onEdit,
-                      onDelete,
-                      onStatusChange,
-                      onReject,
-                    }),
-                  }}
-                  trigger={['click']}
-                >
-                  <Button
-                    type="text"
-                    icon={<MoreOutlined />}
-                    onClick={e => e.stopPropagation()}
-                  />
-                </Dropdown>
-              </div>
-            ),
+            render: (_: unknown, record: Application) => {
+              const canWrite = currentUser
+                ? canPerformWriteAction(currentUser as Omit<User, 'password'>)
+                : false
+              return (
+                <div onClick={e => e.stopPropagation()}>
+                  <Dropdown
+                    menu={{
+                      items: createApplicationMenuItems(
+                        record,
+                        {
+                          onView,
+                          onEdit,
+                          onDelete,
+                          onStatusChange,
+                          onReject,
+                        },
+                        canWrite
+                      ),
+                      onClick: e => {
+                        e.domEvent.stopPropagation()
+                      },
+                    }}
+                    trigger={['click']}
+                  >
+                    <Button
+                      type="text"
+                      icon={<MoreOutlined />}
+                      onClick={e => e.stopPropagation()}
+                    />
+                  </Dropdown>
+                </div>
+              )
+            },
           },
         ]
       : []),
   ]
 
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    programId: (table.getColumn('programId')?.getFilterValue() as string) || undefined,
+    subjectType: (table.getColumn('subjectType')?.getFilterValue() as string) || undefined,
+    status: (table.getColumn('status')?.getFilterValue() as string) || undefined,
+  })
+
+  // 조회 버튼 클릭 시 필터 적용
+  const handleSearch = () => {
+    table.getColumn('programId')?.setFilterValue(pendingFilters.programId || null)
+    table.getColumn('subjectType')?.setFilterValue(pendingFilters.subjectType || null)
+    table.getColumn('status')?.setFilterValue(pendingFilters.status || null)
+  }
+
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setPendingFilters({
+      programId: undefined,
+      subjectType: undefined,
+      status: undefined,
+    })
+    resetFilters()
+  }
+
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} size="middle" wrap>
-        <Select
-          placeholder="프로그램 선택"
-          value={(table.getColumn('programId')?.getFilterValue() as string) || undefined}
-          onChange={value => table.getColumn('programId')?.setFilterValue(value || null)}
-          allowClear
-          style={{ width: 200 }}
-          showSearch
-          filterOption={(input, option) => {
-            const label = option?.label as string | undefined
-            return label ? label.toLowerCase().includes(input.toLowerCase()) : false
-          }}
-        >
-          {programs.map(program => (
-            <Option key={program.id} value={program.id}>
-              {program.title}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="신청 주체 선택"
-          value={(table.getColumn('subjectType')?.getFilterValue() as string) || undefined}
-          onChange={value => table.getColumn('subjectType')?.setFilterValue(value || null)}
-          allowClear
-          style={{ width: 150 }}
-        >
-          <Option value="school">학교</Option>
-          <Option value="student">학생</Option>
-          <Option value="instructor">강사</Option>
-          <Option value="volunteer">봉사자</Option>
-        </Select>
-        <Select
-          placeholder="상태 선택"
-          value={(table.getColumn('status')?.getFilterValue() as string) || undefined}
-          onChange={value => table.getColumn('status')?.setFilterValue(value || null)}
-          allowClear
-          style={{ width: 150 }}
-        >
-          {Object.entries(applicationStatusConfig.labels).map(([value, label]) => (
-            <Option key={value} value={value}>
-              {label}
-            </Option>
-          ))}
-        </Select>
-        <Button onClick={() => resetFilters()}>필터 초기화</Button>
-      </Space>
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'programId',
+            type: 'select',
+            label: '프로그램',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: 'all' },
+              ...programs.map(program => ({
+                label: program.title,
+                value: program.id,
+              })),
+            ],
+          },
+          {
+            key: 'subjectType',
+            type: 'select',
+            label: '신청 주체',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: 'all' },
+              { label: '학교', value: 'school' },
+              { label: '학생', value: 'student' },
+              { label: '강사', value: 'instructor' },
+              { label: '봉사자', value: 'volunteer' },
+            ],
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '상태',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: 'all' },
+              ...Object.entries(applicationStatusConfig.labels).map(([value, label]) => ({
+                label,
+                value,
+              })),
+            ],
+          },
+        ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value === 'all' ? undefined : value }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+      />
 
       <Table
         dataSource={table.getRowModel().rows.map(row => row.original)}
@@ -273,4 +335,3 @@ export function ApplicationList({
     </div>
   )
 }
-
