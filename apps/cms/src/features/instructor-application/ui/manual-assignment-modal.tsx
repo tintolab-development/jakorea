@@ -4,7 +4,7 @@
  */
 
 import { Modal, Form, Select, Input, Space, Radio, message } from 'antd'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -19,19 +19,57 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 const { Option } = Select
 const { TextArea } = Input
 
-const assignmentSchema = z.object({
-  programId: z.string().min(1, '프로그램을 선택해주세요'),
-  assignmentType: z.enum(['existing', 'new']),
-  instructorId: z.string().optional(),
-  newInstructor: z
-    .object({
-      name: z.string().min(1, '이름을 입력해주세요'),
-      phone: z.string().min(1, '전화번호를 입력해주세요'),
-      email: z.string().email('올바른 이메일 형식이 아닙니다'),
-    })
-    .optional(),
-  notes: z.string().optional(),
-})
+// 전화번호 형식 검증 (한국 전화번호: 010-1234-5678, 01012345678, 02-123-4567 등)
+const phoneRegex = /^(\d{2,3})-?(\d{3,4})-?(\d{4})$/
+
+const assignmentSchema = z
+  .object({
+    programId: z.string().min(1, '프로그램을 선택해주세요'),
+    assignmentType: z.enum(['existing', 'new']),
+    instructorId: z.string().optional(),
+    newInstructor: z
+      .object({
+        name: z.string().min(1, '이름을 입력해주세요').max(50, '이름은 50자 이하로 입력해주세요'),
+        phone: z
+          .string()
+          .min(1, '전화번호를 입력해주세요')
+          .regex(phoneRegex, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
+        email: z.string().email('올바른 이메일 형식이 아닙니다'),
+      })
+      .optional(),
+    notes: z.string().optional(),
+  })
+  .refine(
+    data => {
+      // assignmentType이 'existing'일 때 instructorId는 필수
+      if (data.assignmentType === 'existing') {
+        return !!data.instructorId && data.instructorId.trim().length > 0
+      }
+      return true
+    },
+    {
+      message: '강사를 선택해주세요',
+      path: ['instructorId'],
+    }
+  )
+  .refine(
+    data => {
+      // assignmentType이 'new'일 때 newInstructor는 필수
+      if (data.assignmentType === 'new') {
+        return (
+          !!data.newInstructor &&
+          !!data.newInstructor.name &&
+          !!data.newInstructor.phone &&
+          !!data.newInstructor.email
+        )
+      }
+      return true
+    },
+    {
+      message: '신규 강사 정보를 모두 입력해주세요',
+      path: ['newInstructor'],
+    }
+  )
 
 type AssignmentFormData = z.infer<typeof assignmentSchema>
 
@@ -56,6 +94,7 @@ export function ManualAssignmentModal({
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
     reset,
   } = useForm<AssignmentFormData>({
@@ -66,22 +105,59 @@ export function ManualAssignmentModal({
     },
   })
 
-  // fixedProgramId가 있으면 자동으로 설정
+  // 모달이 열릴 때 폼 초기화 및 fixedProgramId 설정
   useEffect(() => {
-    if (fixedProgramId) {
-      setValue('programId', fixedProgramId)
+    if (open) {
+      reset({
+        assignmentType: 'existing',
+        programId: fixedProgramId || '',
+        instructorId: undefined,
+        newInstructor: undefined,
+        notes: undefined,
+      })
+      if (fixedProgramId) {
+        setValue('programId', fixedProgramId)
+      }
     }
-  }, [fixedProgramId, setValue])
+  }, [open, fixedProgramId, reset, setValue])
 
   const assignmentType = watch('assignmentType')
 
   const onSubmit = async (data: AssignmentFormData) => {
-    if (!user?.id) return
+    if (!user?.id) {
+      message.error('로그인이 필요합니다.')
+      return
+    }
 
     const programId = fixedProgramId || data.programId
-    if (!programId) {
+    if (!programId || programId.trim().length === 0) {
       message.error('프로그램을 선택해주세요.')
       return
+    }
+
+    // 배정 방식별 필수 필드 검증
+    if (data.assignmentType === 'existing') {
+      if (!data.instructorId || data.instructorId.trim().length === 0) {
+        message.error('강사를 선택해주세요.')
+        return
+      }
+    } else if (data.assignmentType === 'new') {
+      if (!data.newInstructor) {
+        message.error('신규 강사 정보를 입력해주세요.')
+        return
+      }
+      if (!data.newInstructor.name || data.newInstructor.name.trim().length === 0) {
+        message.error('이름을 입력해주세요.')
+        return
+      }
+      if (!data.newInstructor.phone || data.newInstructor.phone.trim().length === 0) {
+        message.error('전화번호를 입력해주세요.')
+        return
+      }
+      if (!data.newInstructor.email || data.newInstructor.email.trim().length === 0) {
+        message.error('이메일을 입력해주세요.')
+        return
+      }
     }
 
     const assignmentData: ManualAssignmentData = {
@@ -94,17 +170,27 @@ export function ManualAssignmentModal({
     if (data.assignmentType === 'existing' && data.instructorId) {
       assignmentData.instructorId = data.instructorId
     } else if (data.assignmentType === 'new' && data.newInstructor) {
-      assignmentData.newInstructor = data.newInstructor
+      assignmentData.newInstructor = {
+        name: data.newInstructor.name.trim(),
+        phone: data.newInstructor.phone.trim(),
+        email: data.newInstructor.email.trim(),
+      }
     }
 
+    // 서버 측 검증
     const validation = validateManualAssignment(assignmentData)
     if (!validation.valid) {
-      message.error(validation.error)
+      message.error(validation.error || '배정 정보가 유효하지 않습니다.')
       return
     }
 
-    await onSuccess(assignmentData)
-    reset()
+    try {
+      await onSuccess(assignmentData)
+      reset()
+    } catch (error) {
+      // onSuccess에서 에러 처리하므로 여기서는 로깅만
+      console.error('배정 처리 중 오류:', error)
+    }
   }
 
   const handleCancel = () => {
@@ -125,18 +211,24 @@ export function ManualAssignmentModal({
     >
       <Form layout="vertical">
         {!fixedProgramId && (
-          <Form.Item label="프로그램" required>
-            <Select
-              {...register('programId')}
-              placeholder="프로그램을 선택해주세요"
-              status={errors.programId ? 'error' : ''}
-            >
-              {mockPrograms.map(program => (
-                <Option key={program.id} value={program.id}>
-                  {program.title}
-                </Option>
-              ))}
-            </Select>
+          <Form.Item label="프로그램" required validateStatus={errors.programId ? 'error' : ''}>
+            <Controller
+              name="programId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  placeholder="프로그램을 선택해주세요"
+                  status={errors.programId ? 'error' : ''}
+                >
+                  {mockPrograms.map(program => (
+                    <Option key={program.id} value={program.id}>
+                      {program.title}
+                    </Option>
+                  ))}
+                </Select>
+              )}
+            />
             {errors.programId && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                 {errors.programId.message}
@@ -156,18 +248,25 @@ export function ManualAssignmentModal({
         </Form.Item>
 
         {assignmentType === 'existing' && (
-          <Form.Item label="강사 선택" required>
-            <Select
-              {...register('instructorId')}
-              placeholder="강사를 선택해주세요"
-              status={errors.instructorId ? 'error' : ''}
-            >
-              {mockInstructors.map(instructor => (
-                <Option key={instructor.id} value={instructor.id}>
-                  {instructor.name}
-                </Option>
-              ))}
-            </Select>
+          <Form.Item label="강사 선택" required validateStatus={errors.instructorId ? 'error' : ''}>
+            <Controller
+              name="instructorId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  placeholder="강사를 선택해주세요"
+                  status={errors.instructorId ? 'error' : ''}
+                  allowClear
+                >
+                  {mockInstructors.map(instructor => (
+                    <Option key={instructor.id} value={instructor.id}>
+                      {instructor.name}
+                    </Option>
+                  ))}
+                </Select>
+              )}
+            />
             {errors.instructorId && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                 {errors.instructorId.message}
@@ -193,8 +292,9 @@ export function ManualAssignmentModal({
             <Form.Item label="전화번호" required>
               <Input
                 {...register('newInstructor.phone')}
-                placeholder="전화번호를 입력해주세요"
+                placeholder="전화번호를 입력해주세요 (예: 010-1234-5678)"
                 status={errors.newInstructor?.phone ? 'error' : ''}
+                maxLength={20}
               />
               {errors.newInstructor?.phone && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>

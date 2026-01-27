@@ -16,6 +16,7 @@ interface UseInstructorApplicationReviewResult {
   applications: InstructorApplicationItem[]
   loading: boolean
   selectedApplication: InstructorApplicationItem | null
+  currentFilters: InstructorApplicationFilters | undefined
   rejectModalOpen: boolean
   rejectionReason: string
   setRejectionReason: (value: string) => void
@@ -31,7 +32,12 @@ interface UseInstructorApplicationReviewResult {
 export function useInstructorApplicationReview(): UseInstructorApplicationReviewResult {
   const [applications, setApplications] = useState<InstructorApplicationItem[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedApplication, setSelectedApplication] = useState<InstructorApplicationItem | null>(null)
+  const [currentFilters, setCurrentFilters] = useState<InstructorApplicationFilters | undefined>(
+    undefined
+  )
+  const [selectedApplication, setSelectedApplication] = useState<InstructorApplicationItem | null>(
+    null
+  )
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [pendingRejection, setPendingRejection] = useState<InstructorApplicationItem | null>(null)
@@ -41,6 +47,7 @@ export function useInstructorApplicationReview(): UseInstructorApplicationReview
     try {
       const data = await getInstructorApplications(filters)
       setApplications(data)
+      setCurrentFilters(filters)
     } catch (error) {
       handleError(error, { defaultMessage: '강사 신청 목록을 불러오는데 실패했습니다' })
     } finally {
@@ -48,15 +55,19 @@ export function useInstructorApplicationReview(): UseInstructorApplicationReview
     }
   }, [])
 
-  const approveApplication = useCallback(async (applicationId: string) => {
-    try {
-      await reviewInstructorApplication(applicationId, 'APPROVE')
-      showSuccessMessage('강사 신청이 승인되었습니다.')
-      await fetchApplications()
-    } catch (error) {
-      handleError(error, { defaultMessage: '승인 처리 중 오류가 발생했습니다' })
-    }
-  }, [fetchApplications])
+  const approveApplication = useCallback(
+    async (applicationId: string) => {
+      try {
+        await reviewInstructorApplication(applicationId, 'APPROVE')
+        showSuccessMessage('강사 신청이 승인되었습니다.')
+        // 현재 필터로 다시 조회
+        await fetchApplications(currentFilters)
+      } catch (error) {
+        handleError(error, { defaultMessage: '승인 처리 중 오류가 발생했습니다' })
+      }
+    },
+    [currentFilters, fetchApplications]
+  )
 
   const requestReject = useCallback((application: InstructorApplicationItem) => {
     setPendingRejection(application)
@@ -73,11 +84,12 @@ export function useInstructorApplicationReview(): UseInstructorApplicationReview
       setRejectModalOpen(false)
       setRejectionReason('')
       setPendingRejection(null)
-      await fetchApplications()
+      // 현재 필터로 다시 조회
+      await fetchApplications(currentFilters)
     } catch (error) {
       handleError(error, { defaultMessage: '거절 처리 중 오류가 발생했습니다' })
     }
-  }, [pendingRejection, rejectionReason, fetchApplications])
+  }, [pendingRejection, rejectionReason, currentFilters, fetchApplications])
 
   const cancelReject = useCallback(() => {
     setRejectModalOpen(false)
@@ -85,20 +97,25 @@ export function useInstructorApplicationReview(): UseInstructorApplicationReview
     setPendingRejection(null)
   }, [])
 
-  const closeApplication = useCallback(async (applicationId: string) => {
-    try {
-      await reviewInstructorApplication(applicationId, 'CLOSE')
-      showSuccessMessage('강사 신청이 마감되었습니다.')
-      await fetchApplications()
-    } catch (error) {
-      handleError(error, { defaultMessage: '마감 처리 중 오류가 발생했습니다' })
-    }
-  }, [fetchApplications])
+  const closeApplication = useCallback(
+    async (applicationId: string) => {
+      try {
+        await reviewInstructorApplication(applicationId, 'CLOSE')
+        showSuccessMessage('강사 신청이 마감되었습니다.')
+        // 현재 필터로 다시 조회
+        await fetchApplications(currentFilters)
+      } catch (error) {
+        handleError(error, { defaultMessage: '마감 처리 중 오류가 발생했습니다' })
+      }
+    },
+    [currentFilters, fetchApplications]
+  )
 
   return {
     applications,
     loading,
     selectedApplication,
+    currentFilters,
     rejectModalOpen,
     rejectionReason,
     setRejectionReason,
