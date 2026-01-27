@@ -44,39 +44,48 @@ export function MainHeader() {
     return () => clearInterval(interval)
   }, [checkAuth])
 
-  // 카테고리명 동적 계산
-  const categoryName = (() => {
-    // 관리자 홈
+  // 카테고리명 동적 계산 - 메뉴 설정과 자동 동기화 (사용자 권한 고려)
+  const categoryName = useMemo(() => {
+    // 관리자 홈 특수 처리
     if (user?.role === 'ADMIN' && location.pathname === '/') {
       return '관리자 홈'
     }
-    // 프로그램 관리 1/2/3뎁스: 3뎁스(목록·일정·수강/강의 신청 현황)는 3뎁스 라벨, 2뎁스(봉사)는 2뎁스 라벨
-    if (user?.role === 'ADMIN' && location.pathname.startsWith('/programs')) {
-      if (location.pathname === '/programs/education/schedule') {
-        return '프로그램 일정'
-      }
-      if (location.pathname === '/programs/education') {
-        return '프로그램 목록'
-      }
-      if (location.pathname === '/programs/volunteer') {
-        return '봉사 프로그램'
-      }
-      if (location.pathname === '/programs') {
-        return '프로그램 현황'
+
+    // 내 학습 관리 리다이렉트 경로 우선 확인 (권한별 렌더링 확실히)
+    // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, 헤더 타이틀은 "내 학습 관리"로 통일
+    if (user?.role && user.role !== 'ADMIN') {
+      const normalizedPath = location.pathname === '/' ? '/' : location.pathname.replace(/\/$/, '')
+      if (
+        (user.role === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
+        (user.role === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
+        (user.role === 'SCHOOL' && normalizedPath === '/surveys')
+      ) {
+        return '내 학습 관리'
       }
     }
-    if (
-      user?.role === 'ADMIN' &&
-      (location.pathname === '/applications' || location.pathname === '/instructor-applications')
-    ) {
-      return (
-        getCategoryNameByPath(location.pathname, 3) ||
-        (location.pathname === '/applications' ? '수강 신청 현황' : '강의 신청 현황')
-      )
+
+    // 메뉴 설정에서 카테고리명 자동 감지 (사용자 권한별 필터링된 메뉴에서 검색)
+    // 3뎁스부터 우선 확인 (가장 구체적인 경로)
+    const depth3Name = getCategoryNameByPath(location.pathname, 3, user?.role, user)
+    if (depth3Name) {
+      return depth3Name
     }
-    // 기본: 메뉴 설정에서 카테고리명 가져오기
-    return getCategoryNameByPath(location.pathname, 1) || '메인 홈'
-  })()
+
+    // 2뎁스 확인
+    const depth2Name = getCategoryNameByPath(location.pathname, 2, user?.role, user)
+    if (depth2Name) {
+      return depth2Name
+    }
+
+    // 1뎁스 확인
+    const depth1Name = getCategoryNameByPath(location.pathname, 1, user?.role, user)
+    if (depth1Name) {
+      return depth1Name
+    }
+
+    // 기본값
+    return user?.role === 'ADMIN' ? '관리자 홈' : '메인 홈'
+  }, [location.pathname, user?.role, user])
 
   const handleLogout = () => {
     logout()
