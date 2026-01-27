@@ -19,6 +19,7 @@ import {
   getApplicationStatusLabel,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
+import { EditableCell } from '@/shared/ui/editable-cell'
 import { MESSAGES } from '@/shared/constants/messages'
 import {
   isApplicationFinalStatus,
@@ -414,11 +415,31 @@ export function ApplicationDetailDrawer({
                       variant="badge"
                     />
                   </Descriptions.Item>
-                  {displayApplication.notes && (
+                  {isAdminUser && canWrite ? (
+                    <Descriptions.Item label="비고">
+                      <EditableCell
+                        value={displayApplication.notes}
+                        type="textarea"
+                        placeholder="비고를 입력하세요"
+                        onSave={async value => {
+                          try {
+                            await updateApplication(displayApplication.id, {
+                              notes: value as string,
+                            })
+                            showSuccessMessage('비고가 수정되었습니다')
+                            await fetchApplicationById(displayApplication.id)
+                          } catch (error) {
+                            handleError(error, { defaultMessage: '비고 수정에 실패했습니다' })
+                            throw error
+                          }
+                        }}
+                      />
+                    </Descriptions.Item>
+                  ) : displayApplication.notes ? (
                     <Descriptions.Item label="비고">
                       <Text>{displayApplication.notes}</Text>
                     </Descriptions.Item>
-                  )}
+                  ) : null}
                   {displayApplication.rejectionReason && (
                     <Descriptions.Item label="거절 사유">
                       <Alert
@@ -566,7 +587,7 @@ export function ApplicationDetailDrawer({
           onCancel={handleEditCancel}
           footer={null}
           width={LAYOUT_CONSTANTS.widths.modal.large}
-          destroyOnClose
+          destroyOnHidden
         >
           {displayApplication.subjectType === 'school' && program ? (
             <SchoolApplicationForm
