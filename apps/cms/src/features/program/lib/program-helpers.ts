@@ -86,14 +86,12 @@ export function getApplicationUnavailableReason(
         return null // 강사는 신청 가능
       case 'planned':
         return '모집이 아직 시작되지 않았습니다.'
-      case 'recruitment_completed_waiting':
-        return '모집이 완료되었습니다.'
-      case 'matching_completed_waiting':
-        return '매칭이 완료되어 신청할 수 없습니다.'
-      case 'in_progress':
-        return '프로그램이 진행 중입니다.'
-      case 'completed':
-        return '프로그램이 종료되었습니다.'
+      case 'matching_completed':
+      case 'education_before_textbook':
+      case 'education_after_textbook':
+      case 'education_completed':
+      case 'document_processing_completed':
+        return '해당 단계에서는 신청할 수 없습니다.'
       default:
         return '프로그램 상태로 인해 신청할 수 없습니다.'
     }
@@ -129,10 +127,7 @@ export function getApplicationUrl(programId: string): string | undefined {
  * @param roundId 회차 ID (선택사항)
  * @returns 승인된 신청 수
  */
-export function getApprovedApplicationCount(
-  programId: string,
-  roundId?: string
-): number {
+export function getApprovedApplicationCount(programId: string, roundId?: string): number {
   return mockApplications.filter(
     app =>
       app.programId === programId &&
@@ -165,10 +160,7 @@ export function getCapacity(program: Program, roundId?: string): number | undefi
  * @param roundId 회차 ID (선택사항)
  * @returns 남은 정원 수 (정원이 없으면 undefined)
  */
-export function getRemainingCapacity(
-  program: Program,
-  roundId?: string
-): number | undefined {
+export function getRemainingCapacity(program: Program, roundId?: string): number | undefined {
   const capacity = getCapacity(program, roundId)
   if (capacity === undefined) return undefined
 
@@ -193,10 +185,7 @@ export function isCapacityFull(program: Program, roundId?: string): boolean {
  * @param roundId 회차 ID (선택사항)
  * @returns 마감 임박 여부
  */
-export function isCapacityAlmostFull(
-  program: Program,
-  roundId?: string
-): boolean {
+export function isCapacityAlmostFull(program: Program, roundId?: string): boolean {
   const capacity = getCapacity(program, roundId)
   if (capacity === undefined) return false
 
@@ -212,10 +201,7 @@ export function isCapacityAlmostFull(
  * @param roundId 회차 ID (선택사항)
  * @returns 대기 목록
  */
-export function getWaitingList(
-  programId: string,
-  roundId?: string
-): Application[] {
+export function getWaitingList(programId: string, roundId?: string): Application[] {
   return mockApplications
     .filter(
       app =>
@@ -236,17 +222,10 @@ export function getWaitingList(
  * @param roundId 회차 ID (선택사항)
  * @returns 다음 순번
  */
-export function getNextWaitingListOrder(
-  programId: string,
-  roundId?: string
-): number {
+export function getNextWaitingListOrder(programId: string, roundId?: string): number {
   const waitingList = getWaitingList(programId, roundId)
   if (waitingList.length === 0) return 1
 
-  const maxOrder = Math.max(
-    ...waitingList.map(app => app.waitingListOrder ?? 0)
-  )
+  const maxOrder = Math.max(...waitingList.map(app => app.waitingListOrder ?? 0))
   return maxOrder + 1
 }
-
-

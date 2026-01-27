@@ -5,10 +5,7 @@
 import { Card, Descriptions, Tag, Space, Typography } from 'antd'
 import type { Program } from '@/types/domain'
 import { StatusDisplay } from '@/shared/ui'
-import {
-  commonStatusConfig,
-  programLifecycleStatusStatusConfig,
-} from '@/shared/constants/status'
+import { commonStatusConfig, programLifecycleStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import dayjs from 'dayjs'
@@ -68,7 +65,10 @@ export function ProgramInfoCard({ program, sponsorName }: ProgramInfoCardProps) 
         </Descriptions.Item>
         <Descriptions.Item label="상태">
           {program.lifecycleStatus ? (
-            <StatusBadge status={program.lifecycleStatus} statusConfig={programLifecycleStatusStatusConfig} />
+            <StatusBadge
+              status={program.lifecycleStatus}
+              statusConfig={programLifecycleStatusStatusConfig}
+            />
           ) : (
             <StatusDisplay
               status={program.status}
@@ -81,6 +81,42 @@ export function ProgramInfoCard({ program, sponsorName }: ProgramInfoCardProps) 
           {dayjs(program.startDate).format('YYYY-MM-DD')} ~{' '}
           {dayjs(program.endDate).format('YYYY-MM-DD')}
         </Descriptions.Item>
+        {program.oneLineIntroduction && (
+          <Descriptions.Item label="한 줄 소개">
+            <Text>{program.oneLineIntroduction}</Text>
+          </Descriptions.Item>
+        )}
+        {program.venue && (
+          <Descriptions.Item label="진행 장소">
+            <Text>{program.venue}</Text>
+          </Descriptions.Item>
+        )}
+        {program.curriculum && (
+          <Descriptions.Item label="커리큘럼">
+            <Paragraph
+              style={{ margin: 0, fontSize: 14, lineHeight: 1.8 }}
+              ellipsis={{ rows: 5, expandable: true, symbol: '더보기' }}
+            >
+              {program.curriculum}
+            </Paragraph>
+          </Descriptions.Item>
+        )}
+        {(program.contactEmail || program.contactPhone) && (
+          <Descriptions.Item label="문의처">
+            <Space direction="vertical" size="small">
+              {program.contactEmail && (
+                <Text>
+                  이메일: <Text copyable>{program.contactEmail}</Text>
+                </Text>
+              )}
+              {program.contactPhone && (
+                <Text>
+                  연락처: <Text copyable>{program.contactPhone}</Text>
+                </Text>
+              )}
+            </Space>
+          </Descriptions.Item>
+        )}
       </Descriptions>
     </Card>
   )

@@ -54,13 +54,20 @@ export const programSchema = z.object({
   educatedTeachers: z.number().min(0, '교육받은교사 수를 입력해주세요').optional(),
   instructors: z.number().min(0, '강사 수를 입력해주세요').optional(),
   managerName: z.string().optional(),
+  // 프로그램 등록 추가 필드 (기획 요구사항)
+  venue: z.string().optional(), // 진행 장소
+  curriculum: z.string().optional(), // 커리큘럼
+  contactEmail: z.string().email('올바른 이메일 형식이 아닙니다').optional().or(z.literal('')),
+  contactPhone: z.string().optional(), // 문의처 연락처
+  oneLineIntroduction: z.string().optional(), // 한 줄 소개
+  keyVisualImage: z.string().url('올바른 URL 형식이 아닙니다').optional().or(z.literal('')),
+  // 프로그램별 폼 업로드 (기획 요구사항)
+  applicationFormTemplateId: z.string().optional(),
+  surveyFormTemplateId: z.string().optional(),
+  satisfactionFormTemplateId: z.string().optional(),
+  lectureReportFormTemplateId: z.string().optional(),
   rounds: z.array(programRoundSchema).min(1, '최소 1개 이상의 회차를 추가해주세요'),
 })
 
 export type ProgramFormData = z.infer<typeof programSchema>
 export type ProgramRoundFormData = z.infer<typeof programRoundSchema>
-
-
-
-
-

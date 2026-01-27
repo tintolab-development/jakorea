@@ -73,11 +73,11 @@ export function ProgramBasicInfoTab({
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       {/* FR-C02: 포스터/키비주얼 이미지 상단 배치 */}
-      {program.posterImage ? (
+      {program.posterImage || program.keyVisualImage ? (
         <Card size="small" style={{ overflow: 'hidden', padding: 0 }}>
           <Image
-            src={program.posterImage}
-            alt={`${program.title} 포스터`}
+            src={program.keyVisualImage || program.posterImage}
+            alt={`${program.title} ${program.keyVisualImage ? '키비주얼' : '포스터'}`}
             style={{ width: '100%', maxHeight: 320, objectFit: 'cover', display: 'block' }}
             preview={{ mask: '확대 보기' }}
           />

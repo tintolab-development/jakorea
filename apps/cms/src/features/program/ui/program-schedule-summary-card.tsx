@@ -22,11 +22,17 @@ export function ProgramScheduleSummaryCard({
   confirmedRounds,
   lifecycleStatus,
 }: ProgramScheduleSummaryCardProps) {
-  // 조건부 렌더링: 매칭 완료 및 진행 대기 / 진행 중 / 진행 완료 단계에서만 노출
+  // 조건부 렌더링: 매칭 완료 ~ 서류 처리 완료 단계에서만 노출 (7단계)
   if (
     confirmedRounds.length === 0 ||
     (lifecycleStatus &&
-      !['matching_completed_waiting', 'in_progress', 'completed'].includes(lifecycleStatus))
+      ![
+        'matching_completed',
+        'education_before_textbook',
+        'education_after_textbook',
+        'education_completed',
+        'document_processing_completed',
+      ].includes(lifecycleStatus))
   ) {
     return null
   }
@@ -34,7 +40,7 @@ export function ProgramScheduleSummaryCard({
   return (
     <Card title="일정 요약">
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
-        {confirmedRounds.slice(0, 3).map((round) => (
+        {confirmedRounds.slice(0, 3).map(round => (
           <div key={round.id}>
             <Text strong>{round.roundNumber}회차</Text>
             {' - '}

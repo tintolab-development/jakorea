@@ -19,6 +19,10 @@ import { useProgramStore } from '@/features/program/model/program-store'
 import { useProgramStatusManager } from '@/features/program/hooks/use-program-status-manager'
 import { ApplicationPathForm } from '@/features/application-path/ui/application-path-form'
 import { DuplicateApplicationAlert } from '@/shared/ui'
+import { ManualAssignmentModal } from '@/features/instructor-application/ui/manual-assignment-modal'
+import { createManualAssignment } from '@/entities/instructor-application/api/instructor-application-service'
+import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { mockApplications } from '@/data/mock'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -55,6 +59,9 @@ export function ProgramDetailDrawer({
   loading,
   hideActions = false,
 }: ProgramDetailDrawerProps) {
+  // open이 false면 미렌더 (모든 hooks 선언 전에 early return)
+  if (!open) return null
+
   const { getByIdSync: getSchoolByIdSync } = useSchoolService()
   const { getByIdSync: getSponsorByIdSync } = useSponsorService()
   const navigate = useNavigate()
@@ -63,6 +70,8 @@ export function ProgramDetailDrawer({
   const { loading: statusChangeLoading, changeStatus, rollbackStatus } = useProgramStatusManager()
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [applicationModalOpen, setApplicationModalOpen] = useState(false)
+  const [manualAssignmentModalOpen, setManualAssignmentModalOpen] = useState(false)
+  const [assignmentLoading, setAssignmentLoading] = useState(false)
 
   // 관리자만 수정/삭제 가능
   const isAdmin = user?.role === 'ADMIN'
@@ -208,8 +217,7 @@ export function ProgramDetailDrawer({
     canWrite,
   ])
 
-  // open이 false면 미렌더. open이 true인데 displayProgram 없으면 Drawer만 열고 로딩 표시
-  if (!open) return null
+  // displayProgram이 없으면 Drawer만 열고 로딩 표시
   if (!displayProgram) return null
 
   // 신청하기 버튼 클릭 핸들러
@@ -242,6 +250,34 @@ export function ProgramDetailDrawer({
     }
   }
 
+  // 모집 종료 여부 확인 (recruiting_students, recruiting_instructors가 아닌 상태)
+  const isRecruitmentEnded = useMemo(() => {
+    if (!displayProgram?.lifecycleStatus) return false
+    const status = displayProgram.lifecycleStatus
+    return (
+      status !== 'recruiting_students' &&
+      status !== 'recruiting_instructors' &&
+      status !== 'planned'
+    )
+  }, [displayProgram?.lifecycleStatus])
+
+  // 강사 직접 배정 핸들러
+  const handleManualAssignment = async (data: Parameters<typeof createManualAssignment>[0]) => {
+    setAssignmentLoading(true)
+    try {
+      await createManualAssignment({ ...data, programId: displayProgram?.id || '' })
+      showSuccessMessage('강사가 성공적으로 배정되었습니다.')
+      setManualAssignmentModalOpen(false)
+      // 프로그램 목록 새로고침
+      const { fetchPrograms } = useProgramStore.getState()
+      await fetchPrograms()
+    } catch (error) {
+      handleError(error, { defaultMessage: '강사 배정에 실패했습니다.' })
+    } finally {
+      setAssignmentLoading(false)
+    }
+  }
+
   // 액션 버튼 구성
   const actions = [
     ...(canFavorite
@@ -252,6 +288,16 @@ export function ProgramDetailDrawer({
             onClick: toggleFavorite,
             icon: isFavorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />,
             loading: favoriteLoading,
+          },
+        ]
+      : []),
+    ...(showActions && isRecruitmentEnded
+      ? [
+          {
+            key: 'assignInstructor',
+            label: '강사 추가',
+            onClick: () => setManualAssignmentModalOpen(true),
+            icon: <EditOutlined />,
           },
         ]
       : []),
@@ -461,6 +507,17 @@ export function ProgramDetailDrawer({
           onCancel={() => {
             setDuplicateAlertOpen(false)
           }}
+        />
+      )}
+
+      {/* 강사 직접 배정 모달 */}
+      {displayProgram && (
+        <ManualAssignmentModal
+          open={manualAssignmentModalOpen}
+          onCancel={() => setManualAssignmentModalOpen(false)}
+          onSuccess={handleManualAssignment}
+          loading={assignmentLoading}
+          fixedProgramId={displayProgram.id}
         />
       )}
     </BaseDetailDrawer>

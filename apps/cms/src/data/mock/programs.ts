@@ -28,16 +28,16 @@ const getDateFromMonth = (month: number): string => {
 const createRounds = (programId: string, classCount: number, startDate: string): ProgramRound[] => {
   const rounds: ProgramRound[] = []
   const start = new Date(startDate)
-  
+
   // 학급수가 있으면 그만큼 회차 생성, 없으면 1회차
   const roundCount = classCount || 1
-  
+
   for (let i = 1; i <= roundCount; i++) {
     const roundStart = new Date(start)
     roundStart.setDate(roundStart.getDate() + (i - 1) * 7)
     const roundEnd = new Date(roundStart)
     roundEnd.setDate(roundEnd.getDate() + 3)
-    
+
     rounds.push({
       id: `${programId}-round-${i}`,
       programId,
@@ -54,9 +54,11 @@ const createRounds = (programId: string, classCount: number, startDate: string):
 
 // 후원사명으로 sponsorId 찾기
 const findSponsorId = (sponsorNameKr: string): string => {
-  const sponsor = mockSponsors.find(s => s.name === sponsorNameKr || s.name.includes(sponsorNameKr.split(' ')[0]))
+  const sponsor = mockSponsors.find(
+    s => s.name === sponsorNameKr || s.name.includes(sponsorNameKr.split(' ')[0])
+  )
   if (sponsor) return sponsor.id
-  
+
   // 없으면 첫 번째 스폰서 사용
   return mockSponsors[0].id
 }
@@ -64,7 +66,9 @@ const findSponsorId = (sponsorNameKr: string): string => {
 // 학교명으로 schoolId 찾기
 const findSchoolId = (schoolName: string): string | undefined => {
   if (!schoolName || schoolName === '해당없음' || schoolName === '전국') return undefined
-  const school = mockSchools.find(s => s.name === schoolName || s.name.includes(schoolName.split(' ')[0]))
+  const school = mockSchools.find(
+    s => s.name === schoolName || s.name.includes(schoolName.split(' ')[0])
+  )
   if (school) return school.id
   return undefined
 }
@@ -255,7 +259,8 @@ const educationRecords = [
   {
     month: 1,
     businessArea: '기업가정신',
-    sponsorNameEn: 'BNY Mellon, Korea Investment Corporation, The Walt Disney Company Korea, SAP Korea',
+    sponsorNameEn:
+      'BNY Mellon, Korea Investment Corporation, The Walt Disney Company Korea, SAP Korea',
     titleEn: 'Company Of the Year',
     sponsorNameKr: '뉴욕멜론은행, 한국투자공사, 월트디즈니컴퍼니코리아, SAP Korea',
     mainTitle: 'Company Of the Year',
@@ -1144,25 +1149,25 @@ const updateSponsors = () => {
     '베어링 자산운용': { name: '베어링 자산운용', nameEn: 'Barings' },
     'BNP 파리바 카디프생명': { name: 'BNP 파리바 카디프생명', nameEn: 'BNP PARIBAS Cardif' },
     'BNP PARIBAS CIB': { name: 'BNP PARIBAS CIB', nameEn: 'BNP PARIBAS CIB' },
-    '뉴욕멜론은행': { name: '뉴욕멜론은행', nameEn: 'BNY Mellon' },
+    뉴욕멜론은행: { name: '뉴욕멜론은행', nameEn: 'BNY Mellon' },
     '한국 씨티은행': { name: '한국 씨티은행', nameEn: 'CITI BANK' },
-    '한국씨티은행': { name: '한국씨티은행', nameEn: 'CITI Foundation' },
-    '델타항공': { name: '델타항공', nameEn: 'Delta AirLines' },
-    'EY한영': { name: 'EY한영', nameEn: 'EY' },
-    '페덱스': { name: '페덱스', nameEn: 'FedEx' },
-    '한국경제인협회': { name: '한국경제인협회', nameEn: 'FKI' },
-    '구글': { name: '구글', nameEn: 'Google' },
-    'Google': { name: '구글', nameEn: 'Google' },
+    한국씨티은행: { name: '한국씨티은행', nameEn: 'CITI Foundation' },
+    델타항공: { name: '델타항공', nameEn: 'Delta AirLines' },
+    EY한영: { name: 'EY한영', nameEn: 'EY' },
+    페덱스: { name: '페덱스', nameEn: 'FedEx' },
+    한국경제인협회: { name: '한국경제인협회', nameEn: 'FKI' },
+    구글: { name: '구글', nameEn: 'Google' },
+    Google: { name: '구글', nameEn: 'Google' },
     '구글 포 에듀케이션': { name: '구글 포 에듀케이션', nameEn: 'Google for Education' },
-    'HSBC은행': { name: 'HSBC은행', nameEn: 'HSBC Bank' },
-    'HSBC': { name: 'HSBC', nameEn: 'HSBC' },
-    '현대캐피탈': { name: '현대캐피탈', nameEn: 'Hyundai Capital' },
-    '한화투자증권': { name: '한화투자증권', nameEn: 'Hanwha Investment & Securities' },
-    '제이에이코리아': { name: '제이에이코리아', nameEn: 'JA Korea' },
-    '교보생명': { name: '교보생명', nameEn: 'KYOBO LIFE INSURANCE' },
-    'KB금융공익재단': { name: 'KB금융공익재단', nameEn: 'KBFOUNDATION' },
+    HSBC은행: { name: 'HSBC은행', nameEn: 'HSBC Bank' },
+    HSBC: { name: 'HSBC', nameEn: 'HSBC' },
+    현대캐피탈: { name: '현대캐피탈', nameEn: 'Hyundai Capital' },
+    한화투자증권: { name: '한화투자증권', nameEn: 'Hanwha Investment & Securities' },
+    제이에이코리아: { name: '제이에이코리아', nameEn: 'JA Korea' },
+    교보생명: { name: '교보생명', nameEn: 'KYOBO LIFE INSURANCE' },
+    KB금융공익재단: { name: 'KB금융공익재단', nameEn: 'KBFOUNDATION' },
   }
-  
+
   // mockSponsors 업데이트
   Object.values(sponsorMap).forEach((data, index) => {
     if (mockSponsors[index]) {
@@ -1180,30 +1185,34 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const startDate = getDateFromMonth(record.month)
   const endDate = new Date(startDate)
   endDate.setMonth(endDate.getMonth() + 1)
-  
+
+  // 신청 기간: 운영 시작일보다 1-2개월 전부터 운영 시작일까지
+  const applicationStartDate = new Date(startDate)
+  applicationStartDate.setMonth(applicationStartDate.getMonth() - Math.floor(Math.random() * 2) - 1)
+  const applicationEndDate = new Date(startDate)
+  applicationEndDate.setDate(applicationEndDate.getDate() - Math.floor(Math.random() * 7)) // 운영 시작일 0-7일 전까지
+
   const programId = `prog-${String(index + 1).padStart(3, '0')}`
   const rounds = createRounds(programId, record.classCount, startDate)
 
-  // 프로그램 진행 워크플로우 상태를 다양하게 분포
+  // 프로그램 진행 워크플로우 상태 (7단계) 분포 — planned 제외, 위젯/필터와 동일
   const lifecycleStatuses: ProgramLifecycleStatus[] = [
-    'planned',
     'recruiting_students',
     'recruiting_instructors',
-    'recruitment_completed_waiting',
-    'matching_completed_waiting',
-    'in_progress',
-    'completed',
+    'matching_completed',
+    'education_before_textbook',
+    'education_after_textbook',
+    'education_completed',
+    'document_processing_completed',
   ]
-  // 첫 번째 프로그램은 신청 가능한 상태로 설정
-  const lifecycleStatus = index === 0 
-    ? 'recruiting_students' 
-    : lifecycleStatuses[index % lifecycleStatuses.length]
+  const lifecycleStatus = lifecycleStatuses[index % lifecycleStatuses.length]
 
-  // 기존 공통 Status와 매핑 (기존 로직과의 호환을 위해 유지)
   const baseStatus =
-    lifecycleStatus === 'completed'
+    lifecycleStatus === 'document_processing_completed'
       ? ('completed' as const)
-      : lifecycleStatus === 'in_progress'
+      : ['education_before_textbook', 'education_after_textbook', 'education_completed'].includes(
+            lifecycleStatus
+          )
         ? ('active' as const)
         : ('pending' as const)
 
@@ -1220,16 +1229,23 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     rounds,
     startDate,
     endDate: endDate.toISOString(),
+    applicationStartDate: applicationStartDate.toISOString(),
+    applicationEndDate: applicationEndDate.toISOString(),
     status: baseStatus,
     lifecycleStatus,
     // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
     businessArea: record.businessArea,
     titleEn: record.titleEn === '해당없음' ? undefined : record.titleEn,
     mainTitle: record.mainTitle === '해당없음' ? undefined : record.mainTitle,
-    textbookName: record.textbookName === '해당없음' || !record.textbookName ? undefined : record.textbookName,
-    textbookNameEn: record.textbookNameEn === '해당없음' || !record.textbookNameEn ? undefined : record.textbookNameEn,
+    textbookName:
+      record.textbookName === '해당없음' || !record.textbookName ? undefined : record.textbookName,
+    textbookNameEn:
+      record.textbookNameEn === '해당없음' || !record.textbookNameEn
+        ? undefined
+        : record.textbookNameEn,
     schoolId,
-    district: record.district === '전국' || record.district === '온라인' ? undefined : record.district,
+    district:
+      record.district === '전국' || record.district === '온라인' ? undefined : record.district,
     ips: convertIPS(record.ips),
     targetLevel: convertTargetLevel(record.targetLevel),
     institutionType: convertInstitutionType(record.institutionType),
@@ -1252,8 +1268,8 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     instructors: record.instructors,
     managerName: record.managerName,
     posterImage: `https://picsum.photos/seed/${programId}/400/300`,
-    createdAt: getDate(365 - (record.month * 30)),
-    updatedAt: getDate(365 - (record.month * 30) + 5),
+    createdAt: getDate(365 - record.month * 30),
+    updatedAt: getDate(365 - record.month * 30 + 5),
   }
 })
 
