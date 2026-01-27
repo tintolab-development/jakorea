@@ -282,6 +282,8 @@ export function useInstructorApplications(): UseInstructorApplicationsResult {
     closeResultModal: () => setResultModalOpen(false),
     closeApprovalModal: () => setApprovalModalOpen(false),
     closeRejectModal: () => setRejectModalOpen(false),
-    refresh: fetchInterviews,
+    refresh: async () => {
+      await fetchInterviews()
+    },
   }
 }

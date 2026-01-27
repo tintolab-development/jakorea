@@ -5,6 +5,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { message } from 'antd'
 import dayjs from 'dayjs'
+import { MESSAGES } from '@/shared/constants'
 import type { PerformanceStats } from '@/types/domain'
 import { performanceService } from '@/entities/performance/api/performance-service'
 
@@ -37,9 +38,9 @@ export function usePerformanceStats(filters: PerformanceStatsFilter) {
   }, [stats])
 
   const availablePeriods = useMemo(() => {
-    return Array.from(
-      new Set(stats.map(item => dayjs(item.period.startDate).format('YYYY-MM')))
-    ).sort().reverse()
+    return Array.from(new Set(stats.map(item => dayjs(item.period.startDate).format('YYYY-MM'))))
+      .sort()
+      .reverse()
   }, [stats])
 
   const filteredStats = useMemo(() => {
