@@ -1,0 +1,45 @@
+/**
+ * 레이블이 있는 검색 인풋 스타일
+ */
+
+.labeled-search-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labeled-search-input__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  margin-bottom: 0;
+}
+
+.labeled-search-input__input {
+  width: 100%;
+}
+
+.labeled-search-input__input .ant-input {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  padding-left: 36px;
+}
+
+.labeled-search-input__input .ant-input:hover {
+  border-color: #40a9ff;
+}
+
+.labeled-search-input__input .ant-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.labeled-search-input__icon {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.labeled-search-input__input .ant-input-prefix {
+  left: 12px;
+}

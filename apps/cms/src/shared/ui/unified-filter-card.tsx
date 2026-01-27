@@ -54,6 +54,8 @@ export interface UnifiedFilterCardProps {
   extra?: React.ReactNode
   /** Card 스타일 */
   cardStyle?: React.CSSProperties
+  /** 초기화 버튼 텍스트 (기본값: "초기화") */
+  resetButtonText?: string
 }
 
 /**
@@ -83,18 +85,41 @@ export function UnifiedFilterCard({
   loading = false,
   extra,
   cardStyle,
+  resetButtonText = '초기화',
 }: UnifiedFilterCardProps) {
-  // 필터가 많을 경우 두 줄로 분할 (6개 이상이면 두 줄로 처리)
-  // 첫 줄: search 필드와 초기 select 필드들 (최대 5개)
+  // 필터를 두 줄로 분할
+  // 첫 줄: search 필드와 처음 4개 select 필드
   // 두 번째 줄: 나머지 select 필드와 dateRange 필드
   const shouldSplitIntoTwoRows = fields.length > 5
   
+  // 첫 줄: search 필드 + 처음 4개 select 필드
   const firstRowFields = shouldSplitIntoTwoRows
-    ? fields.filter((f, index) => f.type === 'search' || (f.type === 'select' && index < 5))
+    ? fields.filter((f, index) => {
+        if (f.type === 'search') return true
+        if (f.type === 'select') {
+          // search 필드를 제외한 select 필드 중 처음 4개
+          const selectFieldsBefore = fields
+            .slice(0, index)
+            .filter(field => field.type === 'select')
+          return selectFieldsBefore.length < 4
+        }
+        return false
+      })
     : fields // 6개 미만이면 모든 필터를 첫 줄에 표시
   
+  // 두 번째 줄: 나머지 select 필드와 dateRange 필드
   const secondRowFields = shouldSplitIntoTwoRows
-    ? fields.filter((f, index) => (f.type === 'select' && index >= 5) || f.type === 'dateRange')
+    ? fields.filter((f, index) => {
+        if (f.type === 'dateRange') return true
+        if (f.type === 'select') {
+          // search 필드를 제외한 select 필드 중 4개 이후
+          const selectFieldsBefore = fields
+            .slice(0, index)
+            .filter(field => field.type === 'select')
+          return selectFieldsBefore.length >= 4
+        }
+        return false
+      })
     : [] // 6개 미만이면 두 번째 줄 없음
 
   // 필터 렌더링 함수
@@ -166,7 +191,7 @@ export function UnifiedFilterCard({
         {secondRowFields.length === 0 && (
           <Col flex="none" style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}>
             <Space>
-              {onReset && <Button onClick={onReset}>초기화</Button>}
+              {onReset && <Button onClick={onReset}>{resetButtonText}</Button>}
               <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} loading={loading}>
                 조회
               </Button>
@@ -183,7 +208,7 @@ export function UnifiedFilterCard({
           {/* 조회 버튼 (두 번째 줄 오른쪽) */}
           <Col flex="none" style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}>
             <Space>
-              {onReset && <Button onClick={onReset}>초기화</Button>}
+              {onReset && <Button onClick={onReset}>{resetButtonText}</Button>}
               <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} loading={loading}>
                 조회
               </Button>
