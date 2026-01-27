@@ -55,7 +55,7 @@ export async function getNotifications(
         'system',
         '시스템 알림',
         '신규 기능이 배포되었습니다.',
-        '/dashboard',
+        '/',
         false,
         1
       ),
@@ -118,7 +118,7 @@ export async function getNotifications(
         'system',
         '시스템 알림',
         '월간 리포트가 생성되었습니다.',
-        '/dashboard',
+        '/',
         true,
         24
       ),

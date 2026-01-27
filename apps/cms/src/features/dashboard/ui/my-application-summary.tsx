@@ -12,24 +12,39 @@ import {
   SyncOutlined,
 } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useMemo, useCallback } from 'react'
-import { mockApplications } from '@/data/mock'
+import { useMemo, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { programService } from '@/entities/program/api/program-service'
+import { applicationService } from '@/entities/application/api/application-service'
+import type { Application } from '@/types/domain'
 import './my-application-summary.css'
 
 export function MyApplicationSummary() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const [myApplications, setMyApplications] = useState<Application[]>([])
 
-  // 본인 신청 데이터 필터링 (수강자의 경우 subjectId로 필터링)
-  const myApplications = useMemo(() => {
-    if (!user) {
-      return []
+  // 본인 신청 데이터 로드 (수강자의 경우)
+  useEffect(() => {
+    const loadMyApplications = async () => {
+      if (!user || (user.role !== 'INDIVIDUAL' && user.role !== 'SCHOOL')) {
+        setMyApplications([])
+        return
+      }
+
+      try {
+        // INDIVIDUAL은 student, volunteer 모두 가능하므로 subjectType 지정하지 않음
+        // SCHOOL은 school subjectType으로 조회
+        const subjectType = user.role === 'SCHOOL' ? 'school' : undefined
+        const applications = await applicationService.getByUserId(user.id, subjectType)
+        setMyApplications(applications)
+      } catch (error) {
+        console.error('신청 목록 조회 실패:', error)
+        setMyApplications([])
+      }
     }
-    // 수강자의 경우 subjectType이 'student'이고 subjectId가 사용자 ID와 매칭되어야 함
-    // 현재는 간단히 모든 신청을 표시 (실제로는 사용자 ID와 매칭 로직 필요)
-    return mockApplications.filter(application => application.subjectType === 'student')
+
+    loadMyApplications()
   }, [user])
 
   type ProgressStatus = 'APPLIED' | 'UPCOMING' | 'IN_PROGRESS' | 'COMPLETED'

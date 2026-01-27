@@ -25,7 +25,7 @@ const getNotificationTypeLabel = (type: NotificationType): string => {
     case 'settlement':
       return '정산 요청'
     case 'system':
-      return '신규 교사'
+      return '시스템'
     default:
       return '알림'
   }
