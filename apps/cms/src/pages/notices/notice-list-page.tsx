@@ -98,7 +98,6 @@ export function NoticeListPage() {
             placeholder="공지사항 제목 또는 내용을 입력하세요"
             value={searchInput}
             onChange={setSearchInput}
-            onSearch={setSearchInput}
             width={300}
           />
         </div>
