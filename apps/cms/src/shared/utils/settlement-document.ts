@@ -4,7 +4,6 @@
  * V3 Phase 4: PDF 생성 기능 추가
  */
 
-// @ts-expect-error - @zurmokeeper/exceljs 타입 선언 문제
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { Settlement, Instructor } from '@/types/domain'
 import { downloadExcel, generateFilename } from './file-download'
@@ -150,7 +149,9 @@ async function generatePaymentStatementExcel(
   // 개인정보 동의 확인
   worksheet.getCell(`A${currentRow}`).value = '개인정보 동의'
   worksheet.getCell(`A${currentRow}`).style = headerStyle
-  worksheet.getCell(`B${currentRow}`).value = paymentInfo?.personalInfoConsent ? '동의함' : '동의 안함'
+  worksheet.getCell(`B${currentRow}`).value = paymentInfo?.personalInfoConsent
+    ? '동의함'
+    : '동의 안함'
   worksheet.getCell(`B${currentRow}`).style = cellStyle
   worksheet.mergeCells(`B${currentRow}:C${currentRow}`)
 
@@ -180,7 +181,7 @@ async function generatePaymentStatementExcel(
     other: '기타',
   }
 
-  settlement.items.forEach((item) => {
+  settlement.items.forEach(item => {
     currentRow++
     worksheet.getCell(currentRow, 1).value = itemTypeLabels[item.type] || item.type
     worksheet.getCell(currentRow, 1).style = cellStyle
@@ -240,7 +241,7 @@ async function generatePaymentStatementPDF(
 ): Promise<void> {
   // TODO: jsPDF 라이브러리 설치 후 실제 PDF 생성 구현
   // 현재는 HTML을 PDF로 변환하는 방식으로 Mock 구현
-  
+
   // PDF 콘텐츠 생성 (HTML 기반)
   const htmlContent = `
     <!DOCTYPE html>
@@ -275,13 +276,17 @@ async function generatePaymentStatementPDF(
           <th>설명</th>
           <th>금액</th>
         </tr>
-        ${settlement.items.map(item => `
+        ${settlement.items
+          .map(
+            item => `
           <tr>
             <td>${getItemTypeLabel(item.type)}</td>
             <td>${item.description}</td>
             <td>${item.amount.toLocaleString('ko-KR')}원</td>
           </tr>
-        `).join('')}
+        `
+          )
+          .join('')}
         <tr class="total">
           <td colspan="2">총액</td>
           <td>${settlement.totalAmount.toLocaleString('ko-KR')}원</td>
@@ -290,7 +295,7 @@ async function generatePaymentStatementPDF(
     </body>
     </html>
   `
-  
+
   // HTML을 Blob으로 변환하여 다운로드
   // 실제로는 jsPDF를 사용하여 PDF를 생성해야 함
   const blob = new Blob([htmlContent], { type: 'text/html' })
@@ -299,7 +304,7 @@ async function generatePaymentStatementPDF(
     'html', // 임시로 HTML로 저장 (실제로는 PDF)
     dayjs(settlement.documentGeneratedAt || settlement.createdAt).toDate()
   )
-  
+
   // TODO: 실제 PDF 생성 시 downloadPDF 사용
   // 현재는 HTML로 다운로드 (개발 중)
   const link = document.createElement('a')
@@ -359,7 +364,7 @@ export async function generateTransferList(
 
     worksheet.getRow(1).font = { bold: true }
     worksheet.getColumn('amount').numFmt = '#,##0'
-    
+
     // 합계 행 추가
     const totalAmount = rows.reduce((sum, row) => sum + row.amount, 0)
     const summaryRow = worksheet.addRow({
@@ -407,7 +412,7 @@ export async function generateTransferList(
     'xlsx',
     dayjs().toDate()
   )
-  
+
   try {
     if (options.passwordProvided && options.password) {
       // Phase 0.4.3: @zurmokeeper/exceljs는 writeBuffer에 password 옵션 지원
@@ -415,33 +420,33 @@ export async function generateTransferList(
       if (options.password.length < 8) {
         throw new Error('암호는 최소 8자 이상이어야 합니다.')
       }
-      
-      const buffer = await workbook.xlsx.writeBuffer({ 
-        password: options.password 
+
+      const buffer = await workbook.xlsx.writeBuffer({
+        password: options.password,
       })
-      
+
       if (!buffer || buffer.byteLength === 0) {
         throw new Error('암호화된 Excel 파일 생성에 실패했습니다.')
       }
-      
+
       downloadExcel(buffer, filename)
     } else {
       const buffer = await workbook.xlsx.writeBuffer()
-      
+
       if (!buffer || buffer.byteLength === 0) {
         throw new Error('Excel 파일 생성에 실패했습니다.')
       }
-      
+
       downloadExcel(buffer, filename)
     }
   } catch (error: any) {
     console.error('Excel 파일 생성 실패:', error)
-    
+
     // Phase 0.4.3: 에러 타입별 메시지 구분
     if (error?.message) {
       throw error
     }
-    
+
     // 일반적인 에러 메시지
     throw new Error(
       options.passwordProvided
@@ -463,7 +468,6 @@ function extractBankName(accountNumber: string): string | null {
     '088': '신한은행',
     '020': '우리은행',
     '011': 'NH농협은행',
-    '088': '신한은행',
     '081': '하나은행',
     '003': '기업은행',
     '027': '한국시티은행',
@@ -477,4 +481,3 @@ function extractBankName(accountNumber: string): string | null {
   const prefix = accountNumber.replace(/-/g, '').substring(0, 3)
   return bankPrefixMap[prefix] || null
 }
-

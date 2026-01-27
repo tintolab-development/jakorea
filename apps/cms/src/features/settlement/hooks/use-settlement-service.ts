@@ -161,7 +161,7 @@ export function useSettlementService(): UseSettlementServiceReturn {
     }
   }, [])
 
-  const reject = useCallback(async (id: string, _reason?: string) => {
+  const reject = useCallback(async (id: string) => {
     setLoading(true)
     setError(null)
     try {

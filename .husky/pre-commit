@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 # TypeScript 타입 체크 (실패 시 커밋 중단)
 pnpm typecheck || exit 1

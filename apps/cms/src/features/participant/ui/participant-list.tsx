@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react'
-import { Table, Button, Space, Tag, Tooltip } from 'antd'
+import { Table, Button, Space, Tooltip } from 'antd'
 import { DownloadOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
@@ -22,7 +22,6 @@ import { PermissionRequestButton } from '@/features/permission-request/ui/permis
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
-// @ts-expect-error - @zurmokeeper/exceljs 타입 선언 문제
 import ExcelJS from '@zurmokeeper/exceljs'
 
 interface ParticipantListItem {
@@ -145,8 +144,8 @@ export function ParticipantList({
       key: 'role',
       width: 100,
       render: (role: string) => (
-        <StatusBadge 
-          status={role as keyof typeof participantRoleStatusConfig} 
+        <StatusBadge
+          status={role as keyof typeof participantRoleStatusConfig}
           statusConfig={participantRoleStatusConfig}
           showIcon={false}
         />

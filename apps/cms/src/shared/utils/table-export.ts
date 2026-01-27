@@ -2,7 +2,6 @@
  * 테이블 데이터 엑셀 다운로드 유틸리티
  */
 
-// @ts-expect-error - @zurmokeeper/exceljs 타입 선언 문제
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
 import { downloadExcel, generateFilename } from './file-download'

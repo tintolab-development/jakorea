@@ -251,7 +251,7 @@ export function useTableWithQuery<TData>({
       // 쿼리 파라미터 매핑 확인 (예: status 쿼리 -> lifecycleStatus 필터)
       // queryParamMapping: { 'status': 'lifecycleStatus' } -> status 쿼리를 lifecycleStatus 필터로 매핑
       const mappedQueryKey = Object.entries(queryParamMapping).find(
-        ([_queryKey, filterKey]) => filterKey === key
+        ([, filterKey]) => filterKey === key
       )?.[0]
       const queryKey = mappedQueryKey || key
 
