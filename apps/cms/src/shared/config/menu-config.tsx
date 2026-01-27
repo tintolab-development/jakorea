@@ -1019,11 +1019,58 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
  * 현재 경로에 해당하는 카테고리명 가져오기
  * @param path 경로
  * @param depth 가져올 뎁스 (1: 1뎁스, 2: 2뎁스, 3: 3뎁스, 기본값: 자동 감지 - 가장 구체적인 뎁스)
+ * @param userRole 사용자 권한 (선택적, 권한별 필터링용)
+ * @param user 사용자 정보 (선택적, 동적 라벨 변경용)
  * @returns 카테고리명 (없으면 null)
  */
-export function getCategoryNameByPath(path: string, depth?: number): string | null {
+export function getCategoryNameByPath(
+  path: string,
+  depth?: number,
+  userRole?: UserRole | null,
+  user?: Omit<import('@/types/user').User, 'password'> | null
+): string | null {
   // 경로 정규화
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
+
+  // 내 학습 관리 리다이렉트 경로 특수 처리 (권한별 렌더링 확실히)
+  // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, 헤더 타이틀은 "내 학습 관리"로 통일
+  // 모든 depth에서 우선적으로 처리하여 권한별 렌더링 확실히 보장
+  if (userRole && userRole !== 'ADMIN') {
+    if (
+      (userRole === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
+      (userRole === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
+      (userRole === 'SCHOOL' && normalizedPath === '/surveys')
+    ) {
+      // depth가 1뎁스로 요청된 경우 또는 depth가 없는 경우 "내 학습 관리" 반환
+      // depth가 2뎁스 이상인 경우도 "내 학습 관리"를 반환하여 일관성 유지
+      if (depth === 1 || depth === undefined) {
+        return '내 학습 관리'
+      }
+      // depth가 2뎁스 이상인 경우도 "내 학습 관리" 반환 (권한별 렌더링 확실히)
+      if (depth === 2 || depth === 3) {
+        return '내 학습 관리'
+      }
+    }
+  }
+
+  // 사용자 권한이 제공된 경우, 권한별로 필터링된 메뉴에서 찾기
+  const itemsToSearch = userRole
+    ? filterMenuByRole(userRole, allMenuItems, user) || []
+    : allMenuItems
+
+  // 필터링된 메뉴 아이템을 MenuItemConfig 형태로 변환
+  const filteredItems: MenuItemConfig[] = itemsToSearch
+    .filter((item): item is MenuItemConfig => item !== null && 'key' in item)
+    .map(item => ({
+      key: item.key,
+      label: item.label,
+      icon: item.icon,
+      children: item.children as MenuItemConfig[] | undefined,
+      type: item.type as 'divider' | undefined,
+      allowedRoles: undefined, // 이미 필터링됨
+      hidden: false, // 이미 필터링됨
+      enabled: true, // 이미 필터링됨
+    }))
 
   // 모든 매칭 항목 찾기 (부모 정보 포함을 위해 로직 직접 구현)
   const matches: Array<{
@@ -1033,7 +1080,8 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
     depth: number
   }> = []
 
-  for (const item of allMenuItems) {
+  // 필터링된 메뉴에서 검색
+  for (const item of filteredItems) {
     if (item.key === normalizedPath) {
       matches.push({ item, depth: 1 })
     }
@@ -1046,6 +1094,29 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
           for (const grandchild of child.children) {
             if (grandchild.key === normalizedPath) {
               matches.push({ item: grandchild, parent: child, grandparent: item, depth: 3 })
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 필터링된 메뉴에서 찾지 못한 경우, 원본 메뉴에서도 검색 (하위 호환성)
+  if (matches.length === 0) {
+    for (const item of allMenuItems) {
+      if (item.key === normalizedPath) {
+        matches.push({ item, depth: 1 })
+      }
+      if (item.children) {
+        for (const child of item.children) {
+          if (child.key === normalizedPath) {
+            matches.push({ item: child, parent: item, depth: 2 })
+          }
+          if (child.children) {
+            for (const grandchild of child.children) {
+              if (grandchild.key === normalizedPath) {
+                matches.push({ item: grandchild, parent: child, grandparent: item, depth: 3 })
+              }
             }
           }
         }
@@ -1075,7 +1146,8 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
       return result.parent.label || null
     } else if (result.depth === 3 && result.parent) {
       // 3뎁스 아이템의 경우, 1뎁스는 부모의 부모를 찾아야 함
-      for (const topLevel of allMenuItems) {
+      const searchItems = filteredItems.length > 0 ? filteredItems : allMenuItems
+      for (const topLevel of searchItems) {
         if (
           topLevel.children?.some(child =>
             child.children?.some(grandchild => grandchild.key === result.item.key)
@@ -1129,9 +1201,15 @@ type MatchResult = {
   depth: 1 | 2 | 3
 }
 
-function findMenuMatch(path: string): MatchResult | null {
+/**
+ * 권한별 필터링된 메뉴에서 경로 매칭 찾기
+ * @param path 경로
+ * @param items 검색할 메뉴 아이템 목록 (권한별 필터링된 메뉴)
+ * @returns 매칭 결과 또는 null
+ */
+function findMenuMatchInItems(path: string, items: MenuItemConfig[]): MatchResult | null {
   const n = path === '/' ? path : path.replace(/\/$/, '')
-  for (const item of allMenuItems) {
+  for (const item of items) {
     if (item.type === 'divider' || !item.label) continue
     if (item.key === n) return { item, depth: 1 }
     if (!item.children) continue
@@ -1149,6 +1227,15 @@ function findMenuMatch(path: string): MatchResult | null {
   return null
 }
 
+/**
+ * 전체 메뉴에서 경로 매칭 찾기 (하위 호환성)
+ * @param path 경로
+ * @returns 매칭 결과 또는 null
+ */
+function findMenuMatch(path: string): MatchResult | null {
+  return findMenuMatchInItems(path, allMenuItems)
+}
+
 function toBreadcrumbItem(menuItem: MenuItemConfig): BreadcrumbItem {
   const label = menuItem.label || ''
   const path =
@@ -1159,8 +1246,18 @@ function toBreadcrumbItem(menuItem: MenuItemConfig): BreadcrumbItem {
 /**
  * 경로·역할에 따른 브레드크럼 체인 반환
  * 사이드바 메뉴 뎁스(1·2·3)를 브레드크럼으로 표현할 때 사용
+ * 권한별 필터링된 메뉴에서 검색하여 올바른 breadcrumb 생성
+ * 
+ * @param pathname 경로
+ * @param userRole 사용자 권한
+ * @param user 사용자 정보 (동적 라벨 변경용, 선택적)
+ * @returns 브레드크럼 아이템 배열
  */
-export function getBreadcrumbByPath(pathname: string, userRole: UserRole | null): BreadcrumbItem[] {
+export function getBreadcrumbByPath(
+  pathname: string,
+  userRole: UserRole | null,
+  user?: Omit<import('@/types/user').User, 'password'> | null
+): BreadcrumbItem[] {
   const n = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
 
   if (n === '/') {
@@ -1168,11 +1265,47 @@ export function getBreadcrumbByPath(pathname: string, userRole: UserRole | null)
     return [{ label }]
   }
 
-  if (userRole === 'ADMIN' && n === '/programs') {
-    return [{ label: '프로그램 관리' }, { label: '프로그램 현황' }]
+  // 내 학습 관리 리다이렉트 경로 특수 처리
+  // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, breadcrumb은 "내 학습 관리"로 통일
+  if (userRole && userRole !== 'ADMIN') {
+    if (
+      (userRole === 'INSTRUCTOR' && n.startsWith('/instructor/schedule')) ||
+      (userRole === 'INDIVIDUAL' && n.startsWith('/schedules/my')) ||
+      (userRole === 'SCHOOL' && n === '/surveys')
+    ) {
+      // 1뎁스 메뉴이므로 breadcrumb은 표시하지 않음 (AppBreadcrumb에서 length <= 1이면 null 반환)
+      // 하지만 명시적으로 "내 학습 관리"만 반환하여 일관성 유지
+      return [{ label: '내 학습 관리' }]
+    }
   }
 
-  const match = findMenuMatch(n)
+  // 권한별로 필터링된 메뉴에서 검색 (권한에 맞는 메뉴 구조 반영)
+  const filteredMenuItems = userRole
+    ? filterMenuByRole(userRole, allMenuItems, user) || []
+    : allMenuItems
+
+  // 필터링된 메뉴 아이템을 MenuItemConfig 형태로 변환
+  const filteredItems: MenuItemConfig[] = filteredMenuItems
+    .filter((item): item is MenuItemConfig => item !== null && 'key' in item)
+    .map(item => ({
+      key: item.key,
+      label: item.label,
+      icon: item.icon,
+      children: item.children as MenuItemConfig[] | undefined,
+      type: item.type as 'divider' | undefined,
+      allowedRoles: undefined, // 이미 필터링됨
+      hidden: false, // 이미 필터링됨
+      enabled: true, // 이미 필터링됨
+    }))
+
+  // 권한별 필터링된 메뉴에서 매칭 찾기
+  let match = findMenuMatchInItems(n, filteredItems)
+
+  // 필터링된 메뉴에서 찾지 못한 경우, 원본 메뉴에서도 검색 (하위 호환성)
+  if (!match) {
+    match = findMenuMatch(n)
+  }
+
   if (!match) return []
 
   const chain: BreadcrumbItem[] = []
