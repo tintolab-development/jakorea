@@ -166,36 +166,21 @@ export function ProgramCalendarView({
 
   // 메인 캘린더 헤더 렌더링
   const headerRender = () => {
-    const headerTitle = calendarMode === 'week'
-      ? `${weekDates[0].format('YYYY년 M월 D일')} - ${weekDates[6].format('M월 D일')}`
-      : currentMonth.format('MMMM YYYY')
+    const headerTitle =
+      calendarMode === 'week'
+        ? `${weekDates[0].format('YYYY년 M월 D일')} - ${weekDates[6].format('M월 D일')}`
+        : currentMonth.format('MMMM YYYY')
 
     return (
       <div className="program-calendar-header">
         <div className="program-calendar-header-left">
-          <span className="program-calendar-header-title">
-            {headerTitle}
-          </span>
-          <Button
-            size="small"
-            className="program-calendar-today-btn"
-            onClick={handleToday}
-          >
+          <span className="program-calendar-header-title">{headerTitle}</span>
+          <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
             오늘
           </Button>
           <div className="program-calendar-nav">
-            <Button
-              type="text"
-              size="small"
-              icon={<LeftOutlined />}
-              onClick={handlePrev}
-            />
-            <Button
-              type="text"
-              size="small"
-              icon={<RightOutlined />}
-              onClick={handleNext}
-            />
+            <Button type="text" size="small" icon={<LeftOutlined />} onClick={handlePrev} />
+            <Button type="text" size="small" icon={<RightOutlined />} onClick={handleNext} />
           </div>
         </div>
         <div className="program-calendar-header-right">
@@ -229,7 +214,7 @@ export function ProgramCalendarView({
         <div className="program-calendar-cell-date">{date.date()}</div>
         {hasPrograms && isCurrentMonth && (
           <div className="program-calendar-cell-events">
-            {dayPrograms.map(program => (
+            {dayPrograms.slice(0, 3).map(program => (
               <div
                 key={program.id}
                 className="program-calendar-event"

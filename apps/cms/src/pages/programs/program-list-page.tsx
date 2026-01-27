@@ -6,15 +6,12 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Modal, Tabs, Button, Input } from 'antd'
-import {
-  CalendarOutlined,
-  SearchOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons'
+import { CalendarOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { useSearchParams } from 'react-router-dom'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { ProgramForm } from '@/features/program/ui/program-form'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
@@ -82,17 +79,19 @@ export function ProgramListPage() {
     isEditing: isEditingMode,
   } = useModalState<Program>()
 
-  // Delete 모달은 handleDeleteClick에서 직접 Modal.confirm 사용
+  // Delete 모달 상태 관리
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [programToDelete, setProgramToDelete] = useState<Program | null>(null)
 
   const [formLoading, setFormLoading] = useState(false)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
-  
+
   // 뷰 모드를 쿼리 파라미터로 관리
   const viewModeFromUrl = searchParams.get('viewMode') as 'list' | 'calendar' | null
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>(
     viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
   )
-  
+
   // URL에서 뷰 모드 읽어오기 (초기화 및 뒤로가기 대응)
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -331,6 +330,15 @@ export function ProgramListPage() {
   }
 
   const handleDeleteClick = (program: Program) => {
+    // 삭제 확인 모달 표시
+    setProgramToDelete(program)
+    setDeleteModalOpen(true)
+  }
+
+  // 삭제 확인 메시지 생성
+  const getDeleteConfirmMessage = (program: Program | null): string => {
+    if (!program) return '정말 이 프로그램을 삭제하시겠습니까?'
+
     // 삭제 전 관련 데이터 확인
     const relatedData = checkProgramRelatedData(program.id)
 
@@ -347,81 +355,87 @@ export function ProgramListPage() {
     }
 
     const hasRelatedData = warnings.length > 0
-    const warningMessage = hasRelatedData
+    return hasRelatedData
       ? `이 프로그램과 연결된 ${warnings.join(', ')}이(가) 있습니다. 삭제하면 관련 데이터도 함께 삭제됩니다. 정말 삭제하시겠습니까?`
       : '정말 이 프로그램을 삭제하시겠습니까?'
+  }
 
-    // 확인 모달 표시
-    Modal.confirm({
-      title: '프로그램 삭제',
-      content: warningMessage,
-      okText: '삭제',
-      okType: 'danger',
-      cancelText: '취소',
-      onOk: async () => {
-        try {
-          // 관련 데이터 삭제 (Cascade Delete)
-          if (relatedData.hasApplications) {
-            // 신청서 삭제는 실제로는 서비스 레이어에서 처리되어야 하지만,
-            // Mock 데이터이므로 여기서 직접 처리
-            const relatedAppIds = mockApplications
-              .filter(app => app.programId === program.id)
-              .map(app => app.id)
-            relatedAppIds.forEach(appId => {
-              const index = mockApplications.findIndex(a => a.id === appId)
-              if (index !== -1) {
-                mockApplications.splice(index, 1)
-              }
-            })
-          }
+  const handleConfirmDelete = async () => {
+    if (!programToDelete) return
 
-          if (relatedData.hasMatchings) {
-            // 매칭 삭제
-            const relatedMatchingIds = mockMatchings
-              .filter(m => m.programId === program.id)
-              .map(m => m.id)
-            relatedMatchingIds.forEach(matchingId => {
-              const index = mockMatchings.findIndex(m => m.id === matchingId)
-              if (index !== -1) {
-                mockMatchings.splice(index, 1)
-              }
-            })
-          }
+    try {
+      // 삭제 전 관련 데이터 확인
+      const relatedData = checkProgramRelatedData(programToDelete.id)
 
-          if (relatedData.hasSchedules) {
-            // 일정 삭제
-            const relatedScheduleIds = mockSchedules
-              .filter(s => s.programId === program.id)
-              .map(s => s.id)
-            relatedScheduleIds.forEach(scheduleId => {
-              const index = mockSchedules.findIndex(s => s.id === scheduleId)
-              if (index !== -1) {
-                mockSchedules.splice(index, 1)
-              }
-            })
+      // 관련 데이터 삭제 (Cascade Delete)
+      if (relatedData.hasApplications) {
+        // 신청서 삭제는 실제로는 서비스 레이어에서 처리되어야 하지만,
+        // Mock 데이터이므로 여기서 직접 처리
+        const relatedAppIds = mockApplications
+          .filter(app => app.programId === programToDelete.id)
+          .map(app => app.id)
+        relatedAppIds.forEach(appId => {
+          const index = mockApplications.findIndex(a => a.id === appId)
+          if (index !== -1) {
+            mockApplications.splice(index, 1)
           }
+        })
+      }
 
-          // 프로그램 삭제
-          await deleteProgram(program.id)
-          showSuccessMessage(MESSAGES.success.deleted)
-          // 선택된 행 키에서 삭제된 프로그램 제거
-          setSelectedRowKeys(prev => prev.filter(key => key !== program.id))
-          // 프로그램 목록 새로고침
-          await fetchPrograms()
-          // 삭제된 프로그램이 상세 Drawer에 열려있으면 닫기
-          if (selectedProgram?.id === program.id) {
-            closeDrawer()
-            setDrawerProgram(null)
-            setSelectedProgram(null)
+      if (relatedData.hasMatchings) {
+        // 매칭 삭제
+        const relatedMatchingIds = mockMatchings
+          .filter(m => m.programId === programToDelete.id)
+          .map(m => m.id)
+        relatedMatchingIds.forEach(matchingId => {
+          const index = mockMatchings.findIndex(m => m.id === matchingId)
+          if (index !== -1) {
+            mockMatchings.splice(index, 1)
           }
-        } catch (error) {
-          handleError(error, {
-            defaultMessage: MESSAGES.error.delete,
-            context: 'ProgramDelete',
-          })
-        }
-      },
-    })
+        })
+      }
+
+      if (relatedData.hasSchedules) {
+        // 일정 삭제
+        const relatedScheduleIds = mockSchedules
+          .filter(s => s.programId === programToDelete.id)
+          .map(s => s.id)
+        relatedScheduleIds.forEach(scheduleId => {
+          const index = mockSchedules.findIndex(s => s.id === scheduleId)
+          if (index !== -1) {
+            mockSchedules.splice(index, 1)
+          }
+        })
+      }
+
+      // 프로그램 삭제
+      await deleteProgram(programToDelete.id)
+      showSuccessMessage(MESSAGES.success.deleted)
+      // 선택된 행 키에서 삭제된 프로그램 제거
+      setSelectedRowKeys(prev => prev.filter(key => key !== programToDelete.id))
+      // 삭제된 프로그램이 상세 Drawer에 열려있으면 닫기
+      const currentDrawerProgram = drawerProgram || selectedProgram
+      if (currentDrawerProgram?.id === programToDelete.id) {
+        closeDrawer()
+        setDrawerProgram(null)
+        setSelectedProgram(null)
+      }
+      // 프로그램 목록 새로고침 (Drawer 닫은 후에 실행)
+      await fetchPrograms()
+      // 모달 닫기
+      setDeleteModalOpen(false)
+      setProgramToDelete(null)
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: MESSAGES.error.delete,
+        context: 'ProgramDelete',
+      })
+    }
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false)
+    setProgramToDelete(null)
   }
 
   const handleBulkDelete = async (programs: Program[]) => {
@@ -602,7 +616,7 @@ export function ProgramListPage() {
         showCalendarView={isAdmin && programType === 'education'}
         onCreateNew={showEducationActions ? handleNewClick : undefined}
         viewMode={viewMode}
-        onViewModeChange={(mode) => {
+        onViewModeChange={mode => {
           setViewMode(mode)
           // URL 쿼리 파라미터 업데이트
           const nextParams = new URLSearchParams(searchParams)
@@ -626,9 +640,46 @@ export function ProgramListPage() {
           }
         }}
         onDelete={() => {
-          if (selectedProgram) {
-            closeDrawer()
-            handleDeleteClick(selectedProgram)
+          // store의 selectedProgram을 우선 사용, 없으면 drawerProgram 또는 selectedProgram 사용
+          const storeSelectedProgram = useProgramStore.getState().selectedProgram
+          const programToDelete = storeSelectedProgram || drawerProgram || selectedProgram
+
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[ProgramListPage] 삭제 버튼 클릭:', {
+              storeSelectedProgram: storeSelectedProgram?.id,
+              drawerProgram: drawerProgram?.id,
+              selectedProgram: selectedProgram?.id,
+              programToDelete: programToDelete?.id,
+            })
+          }
+
+          if (programToDelete) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[ProgramListPage] handleDeleteClick 호출 전:', {
+                programToDelete,
+                programId: programToDelete?.id,
+                isProgram:
+                  programToDelete && typeof programToDelete === 'object' && 'id' in programToDelete,
+                hasHandleDeleteClick: typeof handleDeleteClick === 'function',
+              })
+            }
+
+            // programToDelete가 객체인지 확인
+            if (programToDelete && typeof programToDelete === 'object' && 'id' in programToDelete) {
+              // handleDeleteClick 내부에서 Drawer를 닫으므로 여기서는 닫지 않음
+              handleDeleteClick(programToDelete)
+            } else {
+              console.error(
+                '[ProgramListPage] programToDelete가 유효한 Program 객체가 아닙니다:',
+                programToDelete
+              )
+            }
+          } else {
+            console.warn('삭제할 프로그램을 찾을 수 없습니다.', {
+              storeSelectedProgram,
+              drawerProgram,
+              selectedProgram,
+            })
           }
         }}
         loading={loading}
@@ -652,7 +703,17 @@ export function ProgramListPage() {
         />
       </Modal>
 
-      {/* 삭제 확인은 handleDeleteConfirm 내부의 Modal.confirm으로 처리 */}
+      {/* 삭제 확인 모달 */}
+      <ConfirmModal
+        open={deleteModalOpen}
+        title="프로그램 삭제"
+        content={getDeleteConfirmMessage(programToDelete)}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        confirmText="삭제"
+        cancelText="취소"
+        danger
+      />
     </div>
   )
 }

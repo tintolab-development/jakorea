@@ -6,9 +6,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
+import { Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import type { Dayjs } from 'dayjs'
 import {
   getMyPrograms,
   type MyProgram,
@@ -27,7 +30,6 @@ import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/s
 import { StatusBadge } from '@/shared/ui/status-badge'
 
 const { Option } = Select
-const { Search } = Input
 
 export function MyProgramListPage() {
   const { user } = useAuthStore()
@@ -45,14 +47,26 @@ export function MyProgramListPage() {
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강의 프로그램'
 
-  // 필터 값 (쿼리 파라미터에서 읽기)
-  const filters = useMemo<MyProgramFilters>(() => {
-    return {
-      status: (params.status as MyProgramFilters['status']) || 'all',
-      category: (params.category as MyProgramFilters['category']) || 'all',
-      search: params.search || undefined,
-    }
-  }, [params])
+  // 필터 상태 관리 (조회 버튼 클릭 전까지 임시 저장)
+  const [pendingFilters, setPendingFilters] = useState<{
+    search?: string
+    status?: MyProgramFilters['status']
+    category?: MyProgramFilters['category']
+  }>({
+    search: params.search || undefined,
+    status: (params.status as MyProgramFilters['status']) || 'all',
+    category: (params.category as MyProgramFilters['category']) || 'all',
+  })
+
+  // 활성 필터 (조회 버튼 클릭 시 적용)
+  const [activeFilters, setActiveFilters] = useState<MyProgramFilters>(() => ({
+    status: (params.status as MyProgramFilters['status']) || 'all',
+    category: (params.category as MyProgramFilters['category']) || 'all',
+    search: params.search || undefined,
+  }))
+
+  // 필터 값 (활성 필터 사용)
+  const filters = useMemo<MyProgramFilters>(() => activeFilters, [activeFilters])
 
   // 프로그램 목록에 대한 관심 상태 로드
   const loadFavoritesForPrograms = useCallback(async (programList: MyProgram[], userId: string) => {
@@ -96,23 +110,33 @@ export function MyProgramListPage() {
     }
   }, [user, loadPrograms])
 
-  const handleStatusChange = (value: MyProgramFilters['status']) => {
+  // 조회 버튼 클릭 핸들러
+  const handleSearch = useCallback(() => {
+    setActiveFilters(pendingFilters)
     setParams({
-      status: !value || value === 'all' ? undefined : value,
+      status:
+        pendingFilters.status && pendingFilters.status !== 'all'
+          ? pendingFilters.status
+          : undefined,
+      category:
+        pendingFilters.category && pendingFilters.category !== 'all'
+          ? pendingFilters.category
+          : undefined,
+      search: pendingFilters.search || undefined,
     })
-  }
+  }, [pendingFilters, setParams])
 
-  const handleCategoryChange = (value: MyProgramFilters['category']) => {
-    setParams({
-      category: !value || value === 'all' ? undefined : value,
-    })
-  }
-
-  const handleSearch = (value: string) => {
-    setParams({
-      search: value || undefined,
-    })
-  }
+  // 필터 초기화 핸들러
+  const handleFilterReset = useCallback(() => {
+    const resetFilters = {
+      search: undefined,
+      status: 'all' as const,
+      category: 'all' as const,
+    }
+    setPendingFilters(resetFilters)
+    setActiveFilters(resetFilters)
+    setParams({})
+  }, [setParams])
 
   const handleToggleFavorite = async (programId: string) => {
     const userId = user?.instructorId || user?.id
@@ -299,40 +323,50 @@ export function MyProgramListPage() {
     <div>
       <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 24 }}>{categoryName}</h1>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space size="middle" wrap>
-          <Search
-            placeholder="프로그램명 검색"
-            allowClear
-            style={{ width: 250 }}
-            defaultValue={filters.search}
-            onSearch={handleSearch}
-            enterButton
-          />
-          <Select
-            placeholder="상태 필터"
-            style={{ width: 150 }}
-            value={filters.status}
-            onChange={handleStatusChange}
-          >
-            <Option value="all">전체</Option>
-            <Option value="active">진행중</Option>
-            <Option value="scheduled">진행 예정</Option>
-            <Option value="completed">진행완료</Option>
-          </Select>
-          <Select
-            placeholder="카테고리"
-            style={{ width: 150 }}
-            value={filters.category}
-            onChange={value => handleCategoryChange(value as MyProgramFilters['category'])}
-          >
-            <Option value="all">전체</Option>
-            <Option value="school">학교 프로그램</Option>
-            <Option value="individual">개인 프로그램</Option>
-          </Select>
-          <Button onClick={() => setParams({})}>필터 초기화</Button>
-        </Space>
-      </Card>
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'search',
+            type: 'search',
+            label: '프로그램명',
+            placeholder: '프로그램명을 입력하세요',
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '상태',
+            placeholder: '전체',
+            options: [
+              { value: 'all', label: '전체' },
+              { value: 'active', label: '진행중' },
+              { value: 'scheduled', label: '진행 예정' },
+              { value: 'completed', label: '진행완료' },
+            ],
+          },
+          {
+            key: 'category',
+            type: 'select',
+            label: '카테고리',
+            placeholder: '전체',
+            options: [
+              { value: 'all', label: '전체' },
+              { value: 'school', label: '학교 프로그램' },
+              { value: 'individual', label: '개인 프로그램' },
+            ],
+          },
+        ]}
+        filters={{
+          search: pendingFilters.search || '',
+          status: pendingFilters.status,
+          category: pendingFilters.category,
+        }}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value || undefined }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+        resetButtonText="초기화"
+      />
 
       <Table
         columns={columns}

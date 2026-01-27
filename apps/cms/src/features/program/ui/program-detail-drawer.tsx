@@ -305,7 +305,24 @@ export function ProgramDetailDrawer({
           {
             key: 'delete',
             label: '삭제',
-            onClick: onDelete,
+            onClick: () => {
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[ProgramDetailDrawer] 삭제 버튼 클릭:', {
+                  displayProgram: displayProgram?.id,
+                  hasOnDelete: !!onDelete,
+                  showActions,
+                  canWrite,
+                })
+              }
+              if (displayProgram && onDelete) {
+                onDelete()
+              } else {
+                console.warn('삭제할 수 없습니다:', {
+                  hasDisplayProgram: !!displayProgram,
+                  hasOnDelete: !!onDelete,
+                })
+              }
+            },
             danger: true,
             icon: <DeleteOutlined />,
             loading,

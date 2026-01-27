@@ -220,6 +220,50 @@
   color: #8c8c8c;
   font-size: 13px;
   padding: 8px 0;
+  position: relative;
+}
+
+/* 요일 헤더를 3글자로 변경 (원본 텍스트 숨기고 ::before로 교체) */
+.program-calendar-main .ant-picker-content thead th {
+  font-size: 0;
+}
+
+.program-calendar-main .ant-picker-content thead th::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 500;
+  color: #8c8c8c;
+}
+
+.program-calendar-main .ant-picker-content thead th:nth-child(1)::before {
+  content: 'Sun';
+}
+
+.program-calendar-main .ant-picker-content thead th:nth-child(2)::before {
+  content: 'Mon';
+}
+
+.program-calendar-main .ant-picker-content thead th:nth-child(3)::before {
+  content: 'Tue';
+}
+
+.program-calendar-main .ant-picker-content thead th:nth-child(4)::before {
+  content: 'Wed';
+}
+
+.program-calendar-main .ant-picker-content thead th:nth-child(5)::before {
+  content: 'Thu';
+}
+
+.program-calendar-main .ant-picker-content thead th:nth-child(6)::before {
+  content: 'Fri';
+}
+
+.program-calendar-main .ant-picker-content thead th:nth-child(7)::before {
+  content: 'Sat';
 }
 
 /* ===== 우측: 사이드바 (40%) ===== */

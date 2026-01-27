@@ -3,17 +3,7 @@
  * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
  */
 
-import {
-  Table,
-  Select,
-  Button,
-  Space,
-  Dropdown,
-  DatePicker,
-  Image,
-  Tag,
-  Card,
-} from 'antd'
+import { Table, Select, Button, Space, Dropdown, DatePicker, Image, Tag, Card } from 'antd'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { message } from 'antd'
@@ -176,7 +166,61 @@ export function ProgramList({
   const { user } = useAuthStore()
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
   const [searchParams, setSearchParams] = useSearchParams()
+
+  // 사용자 권한 필터 상태 관리 (조회 버튼 클릭 전까지 임시 저장)
+  const [pendingUserFilters, setPendingUserFilters] = useState<{
+    search?: string
+    dateRange?: [Dayjs | null, Dayjs | null] | null
+    target?: ProgramCategory | 'all'
+    type?: ProgramType | 'all'
+    status?: ProgramLifecycleStatus | 'all'
+  }>(() => {
+    const start = searchParams.get('startDate')
+    const end = searchParams.get('endDate')
+    let dateRange: [Dayjs | null, Dayjs | null] | null = null
+    if (start && end) {
+      const startDate = dayjs(start)
+      const endDate = dayjs(end)
+      if (startDate.isValid() && endDate.isValid()) {
+        dateRange = [startDate, endDate]
+      }
+    }
+    return {
+      search: searchParams.get('search') || '',
+      dateRange,
+      target: (searchParams.get('target') as ProgramCategory) || 'all',
+      type: (searchParams.get('type') as ProgramType) || 'all',
+      status: (searchParams.get('status') as ProgramLifecycleStatus) || 'all',
+    }
+  })
+
+  // 활성 필터 (조회 버튼 클릭 시 적용)
+  const [activeUserFilters, setActiveUserFilters] = useState<typeof pendingUserFilters>(() => {
+    const start = searchParams.get('startDate')
+    const end = searchParams.get('endDate')
+    let dateRange: [Dayjs | null, Dayjs | null] | null = null
+    if (start && end) {
+      const startDate = dayjs(start)
+      const endDate = dayjs(end)
+      if (startDate.isValid() && endDate.isValid()) {
+        dateRange = [startDate, endDate]
+      }
+    }
+    return {
+      search: searchParams.get('search') || '',
+      dateRange,
+      target: (searchParams.get('target') as ProgramCategory) || 'all',
+      type: (searchParams.get('type') as ProgramType) || 'all',
+      status: (searchParams.get('status') as ProgramLifecycleStatus) || 'all',
+    }
+  })
+
   const periodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
+    // activeUserFilters의 dateRange를 우선 사용
+    if (activeUserFilters.dateRange?.[0] && activeUserFilters.dateRange[1]) {
+      return activeUserFilters.dateRange
+    }
+    // 없으면 URL 파라미터에서 읽기
     const start = searchParams.get('startDate')
     const end = searchParams.get('endDate')
     if (!start || !end) return null
@@ -184,21 +228,25 @@ export function ProgramList({
     const endDate = dayjs(end)
     if (!startDate.isValid() || !endDate.isValid()) return null
     return [startDate, endDate]
-  }, [searchParams])
+  }, [activeUserFilters.dateRange, searchParams])
   const targetFilter = useMemo<ProgramCategory | 'all'>(() => {
-    const value = searchParams.get('target')
+    const value = activeUserFilters.target || searchParams.get('target')
     return value === 'individual' || value === 'school' ? value : 'all'
-  }, [searchParams])
+  }, [activeUserFilters.target, searchParams])
   const educationTypeFilter = useMemo<ProgramType | 'all'>(() => {
-    const value = searchParams.get('type')
+    const value = activeUserFilters.type || searchParams.get('type')
     return value === 'online' || value === 'offline' || value === 'hybrid' ? value : 'all'
-  }, [searchParams])
+  }, [activeUserFilters.type, searchParams])
   const progressStatusFilter = useMemo<ProgramLifecycleStatus | 'all'>(() => {
-    const value = searchParams.get('status') as ProgramLifecycleStatus | null
+    const value =
+      activeUserFilters.status || (searchParams.get('status') as ProgramLifecycleStatus | null)
     const validStatuses = new Set(programLifecycleStatusConfig.order)
     return value && validStatuses.has(value) ? value : 'all'
-  }, [searchParams])
-  const searchQuery = useMemo(() => searchParams.get('search') || '', [searchParams])
+  }, [activeUserFilters.status, searchParams])
+  const searchQuery = useMemo(
+    () => activeUserFilters.search || searchParams.get('search') || '',
+    [activeUserFilters.search, searchParams]
+  )
 
   // 관리자용 필터 상태 (운영 기간, 신청 기간)
   const [searchParamsAdmin, setSearchParamsAdmin] = useSearchParams()
@@ -604,116 +652,121 @@ export function ProgramList({
   return (
     <div className="program-list-container">
       {isParticipant && (
-        <div className="program-filter-wrapper">
-          <Space style={{ marginBottom: 16 }} size="middle" wrap={false} align="start">
-            <LabeledSearchInput
-              label="프로그램명"
-              placeholder="프로그램명을 입력하세요"
-              value={searchQuery}
-              onChange={value =>
-                updateSearchParams(next => {
-                  const trimmed = value.trim()
-                  if (trimmed) {
-                    next.set('search', trimmed)
-                  } else {
-                    next.delete('search')
-                  }
-                })
-              }
-              width={300}
-            />
-            <DatePicker.RangePicker
-              value={periodRange || undefined}
-              onChange={value =>
-                updateSearchParams(next => {
-                  if (value?.[0] && value?.[1]) {
-                    next.set('startDate', value[0].format('YYYY-MM-DD'))
-                    next.set('endDate', value[1].format('YYYY-MM-DD'))
-                  } else {
-                    next.delete('startDate')
-                    next.delete('endDate')
-                  }
-                })
-              }
-              allowClear
-              placeholder={['시작일', '종료일']}
-            />
-            <Select
-              placeholder="수강 대상"
-              value={targetFilter === 'all' ? undefined : targetFilter}
-              onChange={value =>
-                updateSearchParams(next => {
-                  if (value) {
-                    next.set('target', value)
-                  } else {
-                    next.delete('target')
-                  }
-                })
-              }
-              allowClear
-              style={{ width: 160 }}
-            >
-              <Option value="individual">개인 학생</Option>
-              <Option value="school">학교(선생님)</Option>
-            </Select>
-            <Select
-              placeholder="교육 유형"
-              value={educationTypeFilter === 'all' ? undefined : educationTypeFilter}
-              onChange={value =>
-                updateSearchParams(next => {
-                  if (value) {
-                    next.set('type', value)
-                  } else {
-                    next.delete('type')
-                  }
-                })
-              }
-              allowClear
-              style={{ width: 160 }}
-            >
-              {programTypes.map(type => (
-                <Option key={type.value} value={type.value}>
-                  {type.label}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="진행 상태"
-              value={progressStatusFilter === 'all' ? undefined : progressStatusFilter}
-              onChange={value =>
-                updateSearchParams(next => {
-                  if (value) {
-                    next.set('status', value)
-                  } else {
-                    next.delete('status')
-                  }
-                })
-              }
-              allowClear
-              style={{ width: 200 }}
-            >
-              {statusOptions.map(status => (
-                <Option key={status.value} value={status.value}>
-                  {status.label}
-                </Option>
-              ))}
-            </Select>
-            <Button
-              onClick={() => {
-                updateSearchParams(next => {
-                  next.delete('startDate')
-                  next.delete('endDate')
-                  next.delete('target')
-                  next.delete('type')
-                  next.delete('status')
-                  next.delete('search')
-                })
-              }}
-            >
-              필터 초기화
-            </Button>
-          </Space>
-        </div>
+        <UnifiedFilterCard
+          fields={[
+            {
+              key: 'search',
+              type: 'search',
+              label: '프로그램명',
+              placeholder: '프로그램명을 입력하세요',
+            },
+            {
+              key: 'dateRange',
+              type: 'dateRange',
+              label: '운영 기간',
+            },
+            {
+              key: 'target',
+              type: 'select',
+              label: '수강 대상',
+              placeholder: '전체',
+              options: [
+                { value: 'all', label: '전체' },
+                { value: 'individual', label: '개인 학생' },
+                { value: 'school', label: '학교(선생님)' },
+              ],
+            },
+            {
+              key: 'type',
+              type: 'select',
+              label: '교육 유형',
+              placeholder: '전체',
+              options: [
+                { value: 'all', label: '전체' },
+                ...programTypes.map(type => ({ value: type.value, label: type.label })),
+              ],
+            },
+            {
+              key: 'status',
+              type: 'select',
+              label: '진행 상태',
+              placeholder: '전체',
+              options: [
+                { value: 'all', label: '전체' },
+                ...statusOptions.map(status => ({ value: status.value, label: status.label })),
+              ],
+            },
+          ]}
+          filters={{
+            search: pendingUserFilters.search || '',
+            dateRange: pendingUserFilters.dateRange || periodRange,
+            target: pendingUserFilters.target || 'all',
+            type: pendingUserFilters.type || 'all',
+            status: pendingUserFilters.status || 'all',
+          }}
+          onFilterChange={(key, value) => {
+            if (key === 'dateRange') {
+              setPendingUserFilters(prev => ({
+                ...prev,
+                dateRange: value as [Dayjs | null, Dayjs | null] | null,
+              }))
+            } else {
+              setPendingUserFilters(prev => ({ ...prev, [key]: value || undefined }))
+            }
+          }}
+          onSearch={() => {
+            setActiveUserFilters(pendingUserFilters)
+            const nextParams = new URLSearchParams(searchParams)
+            if (pendingUserFilters.search?.trim()) {
+              nextParams.set('search', pendingUserFilters.search.trim())
+            } else {
+              nextParams.delete('search')
+            }
+            if (pendingUserFilters.dateRange?.[0] && pendingUserFilters.dateRange[1]) {
+              nextParams.set('startDate', pendingUserFilters.dateRange[0].format('YYYY-MM-DD'))
+              nextParams.set('endDate', pendingUserFilters.dateRange[1].format('YYYY-MM-DD'))
+            } else {
+              nextParams.delete('startDate')
+              nextParams.delete('endDate')
+            }
+            if (pendingUserFilters.target && pendingUserFilters.target !== 'all') {
+              nextParams.set('target', pendingUserFilters.target)
+            } else {
+              nextParams.delete('target')
+            }
+            if (pendingUserFilters.type && pendingUserFilters.type !== 'all') {
+              nextParams.set('type', pendingUserFilters.type)
+            } else {
+              nextParams.delete('type')
+            }
+            if (pendingUserFilters.status && pendingUserFilters.status !== 'all') {
+              nextParams.set('status', pendingUserFilters.status)
+            } else {
+              nextParams.delete('status')
+            }
+            setSearchParams(nextParams, { replace: true })
+          }}
+          onReset={() => {
+            const resetFilters = {
+              search: '',
+              dateRange: null,
+              target: 'all' as const,
+              type: 'all' as const,
+              status: 'all' as const,
+            }
+            setPendingUserFilters(resetFilters)
+            setActiveUserFilters(resetFilters)
+            updateSearchParams(next => {
+              next.delete('startDate')
+              next.delete('endDate')
+              next.delete('target')
+              next.delete('type')
+              next.delete('status')
+              next.delete('search')
+            })
+          }}
+          resetButtonText="초기화"
+        />
       )}
 
       {/* 관리자용 필터 카드 (목록 뷰일 때만 표시) */}

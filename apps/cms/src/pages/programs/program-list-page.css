@@ -14,3 +14,63 @@
   margin: 0;
   font-size: 20px;
 }
+
+/* 위젯 디바이더 아래 버튼 영역 */
+.program-list-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+
+.program-list-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.program-list-header-title-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.program-list-header-title-count {
+  font-size: 14px;
+  color: #8c8c8c;
+}
+
+.program-list-header-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 뷰 전환 버튼 스타일 (기본 상태가 활성화된 스타일) */
+.program-view-mode-button.ant-btn {
+  background-color: #e0f2f2 !important;
+  border-color: #01a1af !important;
+  color: #01a1af !important;
+  transition: all 0.2s !important;
+}
+
+.program-view-mode-button.ant-btn:hover {
+  background-color: #d0e8e8 !important;
+  border-color: #019ba8 !important;
+  color: #019ba8 !important;
+}
+
+.program-view-mode-button.ant-btn:focus {
+  background-color: #d0e8e8 !important;
+  border-color: #019ba8 !important;
+  color: #019ba8 !important;
+}
+
+.program-view-mode-button .anticon {
+  color: #01a1af !important;
+}
+
+.program-view-mode-button:hover .anticon {
+  color: #019ba8 !important;
+}
