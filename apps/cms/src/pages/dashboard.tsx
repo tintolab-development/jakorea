@@ -6,9 +6,9 @@
  * Phase 1 (대시보드 고도화): 즉시 처리 필요 작업, 월별 정산 현황, 통합 활동 피드
  */
 
-import { Card, Row, Col, Statistic, Divider } from 'antd'
+import { Card, Row, Col, Statistic } from 'antd'
 import React, { useMemo, useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
 import { mockInstructors } from '@/data/mock'
@@ -24,7 +24,6 @@ import { MyApplicationSummary } from '@/features/dashboard/ui/my-application-sum
 import { UpcomingSchedulesList } from '@/features/dashboard/ui/upcoming-schedules-list'
 import { PendingTasksList } from '@/features/dashboard/ui/pending-tasks-list'
 import { VolunteerPendingTasksList } from '@/features/dashboard/ui/volunteer-pending-tasks-list'
-import { GlobalSearch } from '@/features/dashboard/ui/global-search'
 import { OverallProgramProgressCard } from '@/features/dashboard/ui/overall-program-progress-card'
 // import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget' // 임시 주석
 import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
@@ -243,14 +242,6 @@ export function Dashboard() {
         return null
     }
   }
-
-  // 검색 및 알림 표시 (관리자, 강사, 개인(참여자), 학교)
-  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
-  const showSearchAndNotification =
-    user?.role === 'ADMIN' ||
-    user?.role === 'INSTRUCTOR' ||
-    user?.role === 'INDIVIDUAL' ||
-    user?.role === 'SCHOOL'
 
   return (
     <div>

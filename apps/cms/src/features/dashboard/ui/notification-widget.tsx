@@ -5,7 +5,6 @@
  */
 
 import { Card, Button, Typography, Space, Empty, Tag } from 'antd'
-import { BellOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
@@ -46,8 +45,8 @@ const getNotificationTypeTagColor = (type: NotificationType): { bg: string; text
   }
 }
 
-const formatTimestamp = (dateString: string): string => {
-  const date = dayjs(dateString)
+const formatTimestamp = (dateValue: string | Date): string => {
+  const date = dayjs(dateValue)
   return `${date.format('YY.MM.DD')} | ${date.format('HH:mm')}`
 }
 

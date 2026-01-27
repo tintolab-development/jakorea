@@ -22,10 +22,16 @@
 
 /* 탭 내부: 라벨 + 배지, 가운데 정렬 */
 .program-progress-tabs-table__tab-inner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   gap: 8px;
+  vertical-align: middle;
+  line-height: 1;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  margin: 0 auto;
 }
 
 .program-progress-tabs-table__tab-text {
@@ -54,19 +60,58 @@
 
 /* 탭 사이 디바이더 (탭 높이 80%) */
 .program-progress-tabs-table__tabs .ant-tabs-tab {
-  margin-right: 0;
-  padding-left: 16px;
-  padding-right: 16px;
+  margin-right: 0 !important;
+  padding: 0 16px !important;
+  /* 좌우 동일한 padding */
   position: relative;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100%;
+  text-align: center;
+  flex: 0 0 auto;
+  /* 자동 너비, flex-grow 방지 */
+}
+
+/* 탭 버튼 영역 수직/수평 중앙 정렬 강화 */
+.program-progress-tabs-table__tabs .ant-tabs-tab-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  width: 100% !important;
+  line-height: 1;
+  text-align: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.program-progress-tabs-table__tabs .ant-tabs-nav-list {
   display: flex;
   align-items: center;
-  justify-content: center;
+  height: 48px;
+  /* 탭 높이 고정 */
+  justify-content: flex-start;
+  /* 탭들이 왼쪽부터 시작하되, 각 탭 내부는 중앙 정렬 */
 }
 
+/* Ant Design 기본 스타일 오버라이드 - 탭 내부 콘텐츠 중앙 정렬 강제 */
+.program-progress-tabs-table__tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 0;
+}
+
+/* 탭 내부 모든 요소의 기본 margin/padding 제거 */
+.program-progress-tabs-table__tabs .ant-tabs-tab * {
+  box-sizing: border-box;
+}
+
+/* 첫 번째 탭은 왼쪽 padding을 0으로 (전체 탭 그룹이 왼쪽 정렬되도록) */
 .program-progress-tabs-table__tabs .ant-tabs-tab:first-child {
-  padding-left: 0;
+  padding-left: 0 !important;
+  padding-right: 16px !important;
 }
 
+/* 탭 사이 디바이더 (마지막 탭 제외) */
 .program-progress-tabs-table__tabs .ant-tabs-tab:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -76,6 +121,11 @@
   width: 1px;
   height: 80%;
   background: #f0f0f0;
+}
+
+/* 마지막 탭의 divider 명시적 제거 */
+.program-progress-tabs-table__tabs .ant-tabs-tab:last-child::after {
+  display: none;
 }
 
 .program-progress-tabs-table__table {
