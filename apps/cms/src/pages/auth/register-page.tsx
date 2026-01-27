@@ -198,7 +198,7 @@ export function RegisterPage() {
       const registerRequest: RegisterRequest = {
         formData,
         consent,
-        socialProvider, // Phase 0.1.3 수정: 소셜 제공자 정보 추가
+        socialProvider: socialProvider || undefined, // Phase 0.1.3 수정: 소셜 제공자 정보 추가 (null을 undefined로 변환)
       }
 
       await register(registerRequest)

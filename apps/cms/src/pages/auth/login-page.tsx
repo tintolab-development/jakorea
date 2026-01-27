@@ -73,7 +73,9 @@ export function LoginPage() {
     // Phase 0.5.5: 잠금 상태 확인
     if (checkLocked()) {
       const remainingMinutes = getRemainingLockMinutes()
-      message.error(MESSAGES.error.accountLocked(remainingMinutes))
+      if (remainingMinutes !== null) {
+        message.error(MESSAGES.error.accountLocked(remainingMinutes))
+      }
       return
     }
 
@@ -105,9 +107,11 @@ export function LoginPage() {
 
       if (isLocked || failedAttempts + 1 >= LOGIN_POLICY.maxFailedAttempts) {
         const remainingMinutes = getRemainingLockMinutes()
-        message.error(
-          `로그인에 실패했습니다. 계정이 ${LOGIN_POLICY.lockoutDurationMinutes}분간 잠겼습니다. ${remainingMinutes}분 후 다시 시도해주세요.`
-        )
+        if (remainingMinutes !== null) {
+          message.error(
+            `로그인에 실패했습니다. 계정이 ${LOGIN_POLICY.lockoutDurationMinutes}분간 잠겼습니다. ${remainingMinutes}분 후 다시 시도해주세요.`
+          )
+        }
       } else {
         message.error(
           error?.message || `로그인에 실패했습니다. (남은 시도 횟수: ${remainingAttempts}회)`

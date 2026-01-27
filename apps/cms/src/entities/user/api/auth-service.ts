@@ -37,22 +37,15 @@ export async function login(
   const token = `mock-jwt-token-${user.id}-${Date.now()}`
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
 
+  // password를 제외한 전체 user 객체 반환 (adminLevel 포함)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, ...userWithoutPassword } = user
+
   return {
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      instructorId: user.instructorId,
-      interviewStatus: user.interviewStatus,
-      interviewScheduledAt: user.interviewScheduledAt,
-      interviewCompletedAt: user.interviewCompletedAt,
-      participationHistory: user.participationHistory,
-      isActive: user.isActive,
+      ...userWithoutPassword,
       lastLoginAt: new Date().toISOString(),
-      createdAt: user.createdAt,
       updatedAt: new Date().toISOString(),
-      phone: user.phone,
     },
     token,
     expiresAt,
@@ -153,22 +146,15 @@ export async function loginWithPhone(
   const token = `mock-jwt-token-${user.id}-${Date.now()}`
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
 
+  // password를 제외한 전체 user 객체 반환 (adminLevel 포함)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, ...userWithoutPassword } = user
+
   return {
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      instructorId: user.instructorId,
-      interviewStatus: user.interviewStatus,
-      interviewScheduledAt: user.interviewScheduledAt,
-      interviewCompletedAt: user.interviewCompletedAt,
-      participationHistory: user.participationHistory,
-      isActive: user.isActive,
+      ...userWithoutPassword,
       lastLoginAt: new Date().toISOString(),
-      createdAt: user.createdAt,
       updatedAt: new Date().toISOString(),
-      phone: user.phone,
     },
     token,
     expiresAt,
@@ -229,22 +215,15 @@ export async function loginWithSocial(
   const token = `mock-jwt-token-${user.id}-${Date.now()}`
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
 
+  // password를 제외한 전체 user 객체 반환 (adminLevel 포함)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, ...userWithoutPassword } = user
+
   return {
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      instructorId: user.instructorId,
-      interviewStatus: user.interviewStatus,
-      interviewScheduledAt: user.interviewScheduledAt,
-      interviewCompletedAt: user.interviewCompletedAt,
-      participationHistory: user.participationHistory,
-      isActive: user.isActive,
+      ...userWithoutPassword,
       lastLoginAt: new Date().toISOString(),
-      createdAt: user.createdAt,
       updatedAt: new Date().toISOString(),
-      phone: user.phone,
     },
     token,
     expiresAt,
