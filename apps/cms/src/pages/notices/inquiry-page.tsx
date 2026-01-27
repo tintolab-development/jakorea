@@ -68,11 +68,6 @@ export function InquiryPage() {
     })
   }
 
-  const handleSearch = (value: string) => {
-    setParams({
-      q: value || undefined,
-    })
-  }
 
   const openDetail = (inquiry: Inquiry) => {
     setSelectedInquiry(inquiry)
@@ -137,7 +132,6 @@ export function InquiryPage() {
               const newParams = { ...params, search: value || undefined }
               setParams(newParams)
             }}
-            onSearch={handleSearch}
             width={300}
           />
         </div>

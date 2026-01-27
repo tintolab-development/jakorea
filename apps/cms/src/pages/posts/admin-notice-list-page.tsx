@@ -3,7 +3,6 @@
  */
 
 import { useState, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
 import {
   Table,
   Tag,
@@ -11,7 +10,6 @@ import {
   Button,
   Input,
   Select,
-  Card,
   Typography,
   message,
   Popconfirm,
@@ -20,6 +18,7 @@ import {
   Form,
   Switch,
   Upload,
+  Descriptions,
 } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import {
@@ -31,10 +30,11 @@ import {
   FileOutlined,
   InboxOutlined,
 } from '@ant-design/icons'
-import { MESSAGES } from '@/shared/constants'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { mockNotices, type Notice } from '@/data/mock/notices'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { useModalState } from '@/shared/hooks/use-modal-state'
 import dayjs from 'dayjs'
 
 const { Text } = Typography
@@ -42,15 +42,22 @@ const { Option } = Select
 const { Dragger } = Upload
 
 export function AdminNoticeListPage() {
-  const location = useLocation()
   const { user } = useAuthStore()
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
 
   const [data, setData] = useState<Notice[]>(mockNotices)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
   const [form] = Form.useForm()
+
+  // 상세 모달 상태
+  const {
+    open: isDetailModalOpen,
+    openModal: openDetailModal,
+    closeModal: closeDetailModal,
+    selectedItem: selectedNotice,
+  } = useModalState<Notice>()
 
   // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
   const [pendingFilters, setPendingFilters] = useState({
@@ -122,8 +129,13 @@ export function AdminNoticeListPage() {
     )
   }
 
+  // 상세 모달 열기
+  const showDetailModal = (notice: Notice) => {
+    openDetailModal(notice)
+  }
+
   // 등록/수정 모달 열기
-  const showModal = (notice?: Notice) => {
+  const showEditModal = (notice?: Notice) => {
     if (notice) {
       setEditingNotice(notice)
       form.setFieldsValue({
@@ -140,7 +152,7 @@ export function AdminNoticeListPage() {
         author: '관리자',
       })
     }
-    setIsModalOpen(true)
+    setIsEditModalOpen(true)
   }
 
   // 등록/수정 저장
@@ -158,11 +170,15 @@ export function AdminNoticeListPage() {
       if (editingNotice) {
         setData(prev => prev.map(item => (item.id === editingNotice.id ? newNotice : item)))
         message.success(MESSAGES.success.noticeUpdated)
+        // 상세 모달이 열려있고 같은 항목이면 업데이트
+        if (isDetailModalOpen && selectedNotice?.id === editingNotice.id) {
+          openDetailModal(newNotice)
+        }
       } else {
         setData(prev => [newNotice, ...prev])
         message.success(MESSAGES.success.noticeCreated)
       }
-      setIsModalOpen(false)
+      setIsEditModalOpen(false)
     } catch (e) {
       console.error('Validate Failed:', e)
     }
@@ -182,7 +198,10 @@ export function AdminNoticeListPage() {
             icon={
               isImportant ? <PushpinFilled style={{ color: '#ff4d4f' }} /> : <PushpinOutlined />
             }
-            onClick={() => handleToggleImportant(record.id)}
+            onClick={e => {
+              e.stopPropagation()
+              handleToggleImportant(record.id)
+            }}
           />
         </Tooltip>
       ),
@@ -202,11 +221,20 @@ export function AdminNoticeListPage() {
       key: 'title',
       ellipsis: true,
       render: (text: string, record: Notice) => (
-        <Space>
-          {record.status === 'draft' && <Tag>초안</Tag>}
-          <Text strong={record.isImportant}>{text}</Text>
-          {record.hasAttachment && <FileOutlined style={{ color: '#8c8c8c' }} />}
-        </Space>
+        <Button
+          type="link"
+          onClick={e => {
+            e.stopPropagation()
+            showDetailModal(record)
+          }}
+          style={{ padding: 0, textAlign: 'left' }}
+        >
+          <Space>
+            {record.status === 'draft' && <Tag>초안</Tag>}
+            <Text strong={record.isImportant}>{text}</Text>
+            {record.hasAttachment && <FileOutlined style={{ color: '#8c8c8c' }} />}
+          </Space>
+        </Button>
       ),
     },
     {
@@ -255,18 +283,33 @@ export function AdminNoticeListPage() {
             render: (_: any, record: Notice) => (
               <Space>
                 <Tooltip title="수정">
-                  <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+                  <Button
+                    type="text"
+                    icon={<EditOutlined />}
+                    onClick={e => {
+                      e.stopPropagation()
+                      showEditModal(record)
+                    }}
+                  />
                 </Tooltip>
                 <Popconfirm
                   title="공지사항 삭제"
                   description="정말로 이 공지사항을 삭제하시겠습니까?"
-                  onConfirm={() => handleDelete(record.id)}
+                  onConfirm={e => {
+                    e?.stopPropagation()
+                    handleDelete(record.id)
+                  }}
                   okText="삭제"
                   cancelText="취소"
                   okButtonProps={{ danger: true }}
                 >
                   <Tooltip title="삭제">
-                    <Button type="text" danger icon={<DeleteOutlined />} />
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={e => e.stopPropagation()}
+                    />
                   </Tooltip>
                 </Popconfirm>
               </Space>
@@ -282,7 +325,7 @@ export function AdminNoticeListPage() {
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
           {canWrite && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditModal()}>
               공지사항 등록
             </Button>
           )}
@@ -342,16 +385,113 @@ export function AdminNoticeListPage() {
             showTotal: total => `총 ${total}건`,
           }}
           scroll={{ x: 1000 }}
+          onRow={record => ({
+            onClick: () => showDetailModal(record),
+            style: { cursor: 'pointer' },
+          })}
         />
       </Space>
+
+      {/* 공지사항 상세 모달 */}
+      <Modal
+        title="공지사항 상세 내용"
+        open={isDetailModalOpen}
+        onCancel={closeDetailModal}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
+        footer={[
+          // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+          ...(canWrite
+            ? [
+                <Button
+                  key="delete"
+                  danger
+                  onClick={() => {
+                    if (selectedNotice) {
+                      handleDelete(selectedNotice.id)
+                      closeDetailModal()
+                    }
+                  }}
+                >
+                  삭제
+                </Button>,
+                <Button
+                  key="edit"
+                  type="primary"
+                  onClick={() => {
+                    if (selectedNotice) {
+                      closeDetailModal()
+                      showEditModal(selectedNotice)
+                    }
+                  }}
+                >
+                  수정
+                </Button>,
+              ]
+            : []),
+          <Button key="close" onClick={closeDetailModal}>
+            닫기
+          </Button>,
+        ]}
+        centered
+      >
+        {selectedNotice && (
+          <div style={{ marginTop: 16 }}>
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label="작성자">{selectedNotice.author}</Descriptions.Item>
+              <Descriptions.Item label="작성일">
+                {dayjs(selectedNotice.createdAt).format('YYYY-MM-DD HH:mm')}
+              </Descriptions.Item>
+              <Descriptions.Item label="카테고리">
+                <Tag color={selectedNotice.category === '정산' ? 'orange' : 'blue'}>
+                  {selectedNotice.category}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="상태">
+                {(() => {
+                  const config = {
+                    published: { color: 'green', label: '게시중' },
+                    draft: { color: 'default', label: '작성중' },
+                    archived: { color: 'red', label: '숨김' },
+                  }[selectedNotice.status] || { color: 'default', label: selectedNotice.status }
+                  return <Tag color={config.color}>{config.label}</Tag>
+                })()}
+              </Descriptions.Item>
+              <Descriptions.Item label="중요 공지">
+                {selectedNotice.isImportant ? (
+                  <Tag color="red">필독</Tag>
+                ) : (
+                  <Text type="secondary">일반</Text>
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="조회수">
+                {selectedNotice.viewCount.toLocaleString()}
+              </Descriptions.Item>
+              <Descriptions.Item label="제목" span={2}>
+                {selectedNotice.title}
+              </Descriptions.Item>
+              <Descriptions.Item label="내용" span={2}>
+                <div style={{ minHeight: 100, whiteSpace: 'pre-wrap' }}>
+                  {selectedNotice.content}
+                </div>
+              </Descriptions.Item>
+              {selectedNotice.hasAttachment && (
+                <Descriptions.Item label="첨부파일" span={2}>
+                  <FileOutlined style={{ marginRight: 8 }} />
+                  <Text type="secondary">첨부파일이 있습니다</Text>
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+          </div>
+        )}
+      </Modal>
 
       {/* 공지사항 등록/수정 모달 */}
       <Modal
         title={editingNotice ? '공지사항 수정' : '공지사항 등록'}
-        open={isModalOpen}
+        open={isEditModalOpen}
         onOk={handleSave}
-        onCancel={() => setIsModalOpen(false)}
-        width={800}
+        onCancel={() => setIsEditModalOpen(false)}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
         okText={editingNotice ? '수정' : '등록'}
         cancelText="취소"
         centered

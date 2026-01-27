@@ -27,6 +27,7 @@ import {
   PhoneOutlined,
   BankOutlined,
   HomeOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -36,6 +37,7 @@ import { PhoneVerificationForm } from '@/features/auth/ui/phone-verification-for
 import { SocialRegisterForm } from '@/features/auth/ui/social-register-form'
 import type { UserRole } from '@/types/user'
 import type { RegisterFormData, RegisterRequest } from '@/types/register'
+import { Select } from 'antd'
 import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { MESSAGES } from '@/shared/constants'
 import './register-page.css'
@@ -69,6 +71,12 @@ const REGISTER_TYPES: Array<{
     label: '강사',
     description: '강의 신청, 정산 관리',
     icon: <BankOutlined />,
+  },
+  {
+    value: 'ADMIN',
+    label: '관리자',
+    description: '프로그램 운영, 회원 관리',
+    icon: <SettingOutlined />,
   },
 ]
 
@@ -179,8 +187,7 @@ export function RegisterPage() {
           schoolAddress: values.schoolAddress,
           position: values.position,
         }
-      } else {
-        // INSTRUCTOR
+      } else if (selectedRole === 'INSTRUCTOR') {
         formData = {
           role: 'INSTRUCTOR',
           email: values.email || socialData?.email || '',
@@ -192,6 +199,17 @@ export function RegisterPage() {
           accountNumber: values.accountNumber,
           accountHolder: values.accountHolder,
           isBusinessIncome: values.isBusinessIncome || false,
+        }
+      } else {
+        // ADMIN
+        formData = {
+          role: 'ADMIN',
+          email: values.email || socialData?.email || '',
+          password: values.password || 'social-password-placeholder',
+          passwordConfirm: values.passwordConfirm || 'social-password-placeholder',
+          name: values.name || socialData?.name || '',
+          phone: values.phone || socialData?.phone || '',
+          adminLevel: values.adminLevel || 'GENERAL',
         }
       }
 
@@ -359,6 +377,7 @@ export function RegisterPage() {
               {selectedRole === 'INDIVIDUAL' && '학생 정보를 입력해주세요.'}
               {selectedRole === 'SCHOOL' && '학교 정보를 입력해주세요.'}
               {selectedRole === 'INSTRUCTOR' && '강사 정보를 입력해주세요.'}
+              {selectedRole === 'ADMIN' && '관리자 정보를 입력해주세요.'}
             </Paragraph>
 
             {/* Phase 0.1.3 수정: OAuth 연동 옵션 */}
@@ -556,6 +575,29 @@ export function RegisterPage() {
                   >
                     <Checkbox>사업소득자입니다 (3.3% vs 8.8%)</Checkbox>
                   </Form.Item>
+                </>
+              )}
+
+              {/* 관리자 추가 필드 */}
+              {selectedRole === 'ADMIN' && (
+                <>
+                  <Form.Item
+                    name="adminLevel"
+                    label="관리자 권한 레벨"
+                    rules={[{ required: true, message: '관리자 권한 레벨을 선택해주세요.' }]}
+                    initialValue="GENERAL"
+                  >
+                    <Select placeholder="권한 레벨 선택">
+                      <Select.Option value="ADMIN">중간 관리자</Select.Option>
+                      <Select.Option value="GENERAL">일반 관리자</Select.Option>
+                    </Select>
+                  </Form.Item>
+                  <Paragraph
+                    type="secondary"
+                    style={{ fontSize: '12px', marginTop: -16, marginBottom: 16 }}
+                  >
+                    * 마스터 관리자는 회원가입 후 마스터 관리자에 의해 승인되어야 합니다.
+                  </Paragraph>
                 </>
               )}
 

@@ -3,7 +3,6 @@
  */
 
 import { useState, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
 import {
   Table,
   Tag,
@@ -61,7 +60,6 @@ const statusOptions = [
 ]
 
 export function AdminInquiryPage() {
-  const location = useLocation()
   const { user } = useAuthStore()
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)

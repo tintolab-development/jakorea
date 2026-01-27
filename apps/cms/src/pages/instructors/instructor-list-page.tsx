@@ -7,8 +7,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Space, Modal, Drawer } from 'antd'
+import { Modal, Drawer } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { InstructorList } from '@/features/instructor/ui/instructor-list'
 import { InstructorForm } from '@/features/instructor/ui/instructor-form'
@@ -48,7 +47,7 @@ export function InstructorListPage() {
     closeModal: closeFormModal,
     selectedItem: editingInstructor,
     isEditing: isEditingMode,
-  } = useModalState<{ id: string; data: InstructorFormData }>()
+  } = useModalState<Instructor>()
 
   // Drawer 상태 관리
   const {
@@ -59,7 +58,11 @@ export function InstructorListPage() {
   } = useModalState<Instructor>()
 
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deletingInstructor, setDeletingInstructor] = useState<
+    Instructor | { id: string; instructorId?: string; name?: string } | null
+  >(null)
 
   useEffect(() => {
     fetchInstructors()
@@ -138,7 +141,7 @@ export function InstructorListPage() {
   const handleFormSubmit = async (data: InstructorFormData) => {
     setFormLoading(true)
     try {
-      if (editingInstructor) {
+      if (editingInstructor && editingInstructor.id) {
         await updateInstructor(editingInstructor.id, data)
         showSuccessMessage(MESSAGES.success.updated)
       } else {
@@ -167,19 +170,36 @@ export function InstructorListPage() {
   }
 
   const handleEdit = (instructor: Instructor) => {
-    openFormModal({ id: instructor.id, data: {} as InstructorFormData })
+    openFormModal(instructor)
     closeDrawer()
   }
 
-  const handleDelete = async (instructor: Instructor) => {
+  const handleDeleteClick = (
+    instructor: Instructor | { id: string; instructorId?: string; name?: string }
+  ) => {
+    setDeletingInstructor(instructor)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingInstructor) return
+
     setDeleteLoading(true)
     try {
-      await deleteInstructor(instructor.id)
+      // InstructorListItem의 경우 instructorId를 사용, Instructor의 경우 id를 사용
+      const instructorId =
+        'instructorId' in deletingInstructor && deletingInstructor.instructorId
+          ? deletingInstructor.instructorId
+          : deletingInstructor.id
+
+      await deleteInstructor(instructorId)
       showSuccessMessage(MESSAGES.success.deleted)
-      if (selectedInstructor?.id === instructor.id) {
+      if (selectedInstructor?.id === instructorId) {
         closeDrawer()
         setSelectedInstructor(null)
       }
+      setDeleteModalOpen(false)
+      setDeletingInstructor(null)
       fetchInstructors()
     } catch (error) {
       handleError(error, {
@@ -189,6 +209,11 @@ export function InstructorListPage() {
     } finally {
       setDeleteLoading(false)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setDeletingInstructor(null)
   }
 
   // prop의 instructor를 우선 사용 (즉시 표시), 없으면 store의 selectedInstructor 사용
@@ -254,7 +279,7 @@ export function InstructorListPage() {
           <InstructorDetail
             instructor={displayInstructor}
             onEdit={() => handleEdit(displayInstructor)}
-            onDelete={() => handleDelete(displayInstructor)}
+            onDelete={() => handleDeleteClick(displayInstructor)}
             loading={deleteLoading}
           />
         )}
@@ -266,16 +291,38 @@ export function InstructorListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnHidden
+        destroyOnClose
       >
         <InstructorForm
-          instructor={
-            editingInstructor ? instructors.find(i => i.id === editingInstructor.id) : undefined
-          }
+          key={editingInstructor?.id || 'new'}
+          instructor={editingInstructor || undefined}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
           loading={formLoading}
         />
+      </Modal>
+
+      <Modal
+        open={deleteModalOpen}
+        title="강사 삭제 확인"
+        onOk={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        confirmLoading={deleteLoading}
+        okText="삭제"
+        cancelText="취소"
+        okButtonProps={{ danger: true }}
+      >
+        {deletingInstructor && (
+          <>
+            <p>정말로 다음 강사를 삭제하시겠습니까?</p>
+            <p style={{ fontWeight: 'bold', margin: '16px 0' }}>
+              {'name' in deletingInstructor && deletingInstructor.name
+                ? deletingInstructor.name
+                : '이 강사'}
+            </p>
+            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 강사는 복구할 수 없습니다.</p>
+          </>
+        )}
       </Modal>
     </div>
   )

@@ -2,7 +2,6 @@
  * 게시글 관리 - FAQ 관리 페이지 (관리자용)
  */
 
-import { useLocation } from 'react-router-dom'
 import {
   Table,
   Tag,
@@ -16,6 +15,7 @@ import {
   Modal,
   Form,
   InputNumber,
+  Descriptions,
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { LAYOUT_CONSTANTS, PAGINATION_CONFIG, MESSAGES } from '@/shared/constants'
@@ -50,7 +50,6 @@ const categoryOptions = [
 ]
 
 export function AdminFAQPage() {
-  const location = useLocation()
   const { user } = useAuthStore()
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
@@ -146,37 +145,52 @@ export function AdminFAQPage() {
     })
   }
 
-  // 모달 상태 관리
-  const { openModal, closeModal: closeModalState } = useModalState<FAQ>({
-    onOpen: faq => {
-      if (faq) {
-        openEdit(faq)
-        form.setFieldsValue({
-          ...faq,
-          tags: faq.tags?.join(', '),
-        })
-      } else {
-        openCreate()
-        form.resetFields()
-        form.setFieldsValue({
-          status: 'published',
-          category: '활동',
-          order: data.length + 1,
-        })
-      }
-    },
-    onClose: () => {
-      closeModal()
+  // 상세 모달 상태
+  const {
+    open: isDetailModalOpen,
+    openModal: openDetailModal,
+    closeModal: closeDetailModal,
+    selectedItem: selectedFAQ,
+  } = useModalState<FAQ>()
+
+  // 상세 모달 열기
+  const showDetailModal = (faq: FAQ) => {
+    openDetailModal(faq)
+  }
+
+  // 수정 모달 열기
+  const showEditModal = (faq?: FAQ) => {
+    if (faq) {
+      openEdit(faq)
+      form.setFieldsValue({
+        ...faq,
+        tags: faq.tags?.join(', '),
+      })
+    } else {
+      openCreate()
       form.resetFields()
-    },
-  })
+      form.setFieldsValue({
+        status: 'published',
+        category: '활동',
+        order: data.length + 1,
+      })
+    }
+  }
 
   // 저장 핸들러
   const handleSave = async () => {
     try {
       const values = await form.validateFields()
       await handleCRUDSubmit(values)
-      closeModalState()
+      closeModal()
+      form.resetFields()
+      // 상세 모달이 열려있고 같은 항목이면 업데이트
+      if (isDetailModalOpen && selectedFAQ && editing?.id === selectedFAQ.id) {
+        const updatedFAQ = data.find(item => item.id === editing.id)
+        if (updatedFAQ) {
+          openDetailModal(updatedFAQ)
+        }
+      }
     } catch (error) {
       console.error('Validate Failed:', error)
     }
@@ -202,7 +216,18 @@ export function AdminFAQPage() {
       dataIndex: 'question',
       key: 'question',
       ellipsis: true,
-      render: (text: string) => <Text strong>{text}</Text>,
+      render: (text: string, record: FAQ) => (
+        <Button
+          type="link"
+          onClick={e => {
+            e.stopPropagation()
+            showDetailModal(record)
+          }}
+          style={{ padding: 0, textAlign: 'left' }}
+        >
+          <Text strong>{text}</Text>
+        </Button>
+      ),
     },
     {
       title: '태그',
@@ -239,18 +264,33 @@ export function AdminFAQPage() {
             render: (_: unknown, record: FAQ) => (
               <Space>
                 <Tooltip title="수정">
-                  <Button type="text" icon={<EditOutlined />} onClick={() => openModal(record)} />
+                  <Button
+                    type="text"
+                    icon={<EditOutlined />}
+                    onClick={e => {
+                      e.stopPropagation()
+                      showEditModal(record)
+                    }}
+                  />
                 </Tooltip>
                 <Popconfirm
                   title="FAQ 삭제"
                   description={MESSAGES.confirm.delete}
-                  onConfirm={() => handleDelete(record.id)}
+                  onConfirm={e => {
+                    e?.stopPropagation()
+                    handleDelete(record.id)
+                  }}
                   okText="삭제"
                   cancelText="취소"
                   okButtonProps={{ danger: true }}
                 >
                   <Tooltip title="삭제">
-                    <Button type="text" danger icon={<DeleteOutlined />} />
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={e => e.stopPropagation()}
+                    />
                   </Tooltip>
                 </Popconfirm>
               </Space>
@@ -266,7 +306,7 @@ export function AdminFAQPage() {
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
           {canWrite && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditModal()}>
               FAQ 등록
             </Button>
           )}
@@ -306,15 +346,98 @@ export function AdminFAQPage() {
             showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
             showTotal: total => `총 ${total}건`,
           }}
+          onRow={record => ({
+            onClick: () => showDetailModal(record),
+            style: { cursor: 'pointer' },
+          })}
         />
       </Space>
+
+      {/* FAQ 상세 모달 */}
+      <Modal
+        title="FAQ 상세 내용"
+        open={isDetailModalOpen}
+        onCancel={closeDetailModal}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
+        footer={[
+          // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+          ...(canWrite
+            ? [
+                <Button
+                  key="delete"
+                  danger
+                  onClick={() => {
+                    if (selectedFAQ) {
+                      handleDelete(selectedFAQ.id)
+                      closeDetailModal()
+                    }
+                  }}
+                >
+                  삭제
+                </Button>,
+                <Button
+                  key="edit"
+                  type="primary"
+                  onClick={() => {
+                    if (selectedFAQ) {
+                      closeDetailModal()
+                      showEditModal(selectedFAQ)
+                    }
+                  }}
+                >
+                  수정
+                </Button>,
+              ]
+            : []),
+          <Button key="close" onClick={closeDetailModal}>
+            닫기
+          </Button>,
+        ]}
+        centered
+      >
+        {selectedFAQ && (
+          <div style={{ marginTop: 16 }}>
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label="카테고리">
+                <Tag color="blue">{selectedFAQ.category}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="상태">
+                <StatusBadge
+                  status={selectedFAQ.status}
+                  statusConfig={faqStatusConfig}
+                  variant="tag"
+                />
+              </Descriptions.Item>
+              <Descriptions.Item label="노출 순서">{selectedFAQ.order}</Descriptions.Item>
+              <Descriptions.Item label="질문" span={2}>
+                <Text strong>{selectedFAQ.question}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="답변" span={2}>
+                <div style={{ minHeight: 100, whiteSpace: 'pre-wrap' }}>{selectedFAQ.answer}</div>
+              </Descriptions.Item>
+              {selectedFAQ.tags && selectedFAQ.tags.length > 0 && (
+                <Descriptions.Item label="태그" span={2}>
+                  <Space wrap>
+                    {selectedFAQ.tags.map(tag => (
+                      <Tag key={tag}>{tag}</Tag>
+                    ))}
+                  </Space>
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+          </div>
+        )}
+      </Modal>
 
       {/* FAQ 등록/수정 모달 */}
       <Modal
         title={editing ? 'FAQ 수정' : 'FAQ 등록'}
         open={modalOpen}
         onOk={handleSave}
-        onCancel={closeModalState}
+        onCancel={() => {
+          closeModal()
+          form.resetFields()
+        }}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
         okText={editing ? '수정' : '등록'}
         cancelText="취소"
