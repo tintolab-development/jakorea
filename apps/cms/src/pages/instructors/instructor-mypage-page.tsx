@@ -9,19 +9,25 @@ import { useNavigate } from 'react-router-dom'
 import { Card, Row, Col, Space, Typography, Button, Spin } from 'antd'
 import { CalendarOutlined, FileTextOutlined, DollarOutlined, UserOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useApplicationStore } from '@/features/application/model/application-store'
-import { getInstructorActivitySummary, type InstructorActivitySummary } from '@/features/dashboard/api/instructor-activity-service'
+import { applicationService } from '@/entities/application/api/application-service'
+import {
+  getInstructorActivitySummary,
+  type InstructorActivitySummary,
+} from '@/features/dashboard/api/instructor-activity-service'
 import { UpcomingSchedulesList } from '@/features/dashboard/ui/upcoming-schedules-list'
 import { PendingTasksList } from '@/features/dashboard/ui/pending-tasks-list'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import type { Application } from '@/types/domain'
 
 const { Title, Paragraph } = Typography
 
 export function InstructorMypagePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { applications, fetchApplications } = useApplicationStore()
-  const [instructorActivity, setInstructorActivity] = useState<InstructorActivitySummary | null>(null)
+  const [instructorApplications, setInstructorApplications] = useState<Application[]>([])
+  const [instructorActivity, setInstructorActivity] = useState<InstructorActivitySummary | null>(
+    null
+  )
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,9 +42,10 @@ export function InstructorMypagePage() {
         // 강사 활동 요약 데이터 로드
         const activityData = await getInstructorActivitySummary(user.instructorId)
         setInstructorActivity(activityData)
-        
-        // 신청 내역 로드
-        await fetchApplications()
+
+        // 강사 신청 내역 로드
+        const applications = await applicationService.getByUserId(user.instructorId, 'instructor')
+        setInstructorApplications(applications)
       } catch (error) {
         console.error('데이터 로드 실패:', error)
       } finally {
@@ -47,12 +54,7 @@ export function InstructorMypagePage() {
     }
 
     loadData()
-  }, [user?.instructorId, fetchApplications])
-
-  // 강사 신청 내역 필터링
-  const instructorApplications = applications.filter(
-    app => app.subjectType === 'instructor' && app.subjectId === user?.instructorId
-  )
+  }, [user?.instructorId])
 
   // 신청 상태별 통계
   const applicationStats = {
@@ -64,7 +66,14 @@ export function InstructorMypagePage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px',
+        }}
+      >
         <Spin size="large" />
       </div>
     )
