@@ -71,7 +71,7 @@ export function ErrorPage() {
   return (
     <div
       style={{
-        minHeight: 'calc(100vh - 48px)',
+        minHeight: '100%', // 레이아웃 콘텐츠 영역의 전체 높이 활용
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -101,11 +101,3 @@ export function ErrorPage() {
     </div>
   )
 }
-
-
-
-
-
-
-
-

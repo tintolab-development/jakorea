@@ -12,9 +12,9 @@ interface ComingSoonPageProps {
   description?: string
 }
 
-export function ComingSoonPage({ 
+export function ComingSoonPage({
   title = '화면 준비중입니다',
-  description = '해당 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다.'
+  description = '해당 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다.',
 }: ComingSoonPageProps) {
   const navigate = useNavigate()
 
@@ -29,7 +29,7 @@ export function ComingSoonPage({
   return (
     <div
       style={{
-        minHeight: 'calc(100vh - 48px)',
+        minHeight: '100%', // 레이아웃 콘텐츠 영역의 전체 높이 활용
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
