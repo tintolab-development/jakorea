@@ -152,6 +152,9 @@ export interface School {
   updatedAt: DateValue
 }
 
+// 강사단 종류
+export type InstructorType = 'JA' | 'SPECIAL' | 'GEMINAI' | 'OTHER'
+
 // 강사
 export interface Instructor {
   id: UUID
@@ -160,6 +163,7 @@ export interface Instructor {
   contactEmail?: string
   region: string // 지역
   specialty: string[] // 전문분야
+  instructorType?: InstructorType // 강사단 종류 (JA강사단/특강 강사/제미나이 강사단)
   availableTime?: string // 가능시간
   experience?: string // 이력
   rating?: number // 평가 (0-5)
@@ -201,6 +205,8 @@ export interface Application {
   waitingListOrder?: number // 대기 목록 순번 (Phase 3)
   /** Phase 0.2.4: 승인 후 진행 단계 (FR-D01 타임라인) */
   progressStatus?: ApplicationProgressStatus
+  /** 알림 발송 상태 (발송 완료/미발송) */
+  notificationSent?: boolean
   submittedAt: DateValue
   reviewedAt?: DateValue
   createdAt: DateValue
@@ -327,6 +333,14 @@ export interface PaymentStatement {
   status: PaymentStatementStatus
   generatedAt: DateValue
   lastDownloadedAt?: DateValue
+  /** 강사 확인 완료 여부 */
+  instructorConfirmed?: boolean
+  /** 강사 확인 완료 일시 */
+  instructorConfirmedAt?: DateValue
+  /** 계좌 지급 완료 여부 */
+  paymentCompleted?: boolean
+  /** 계좌 지급 완료 일시 */
+  paymentCompletedAt?: DateValue
   createdAt: DateValue
   updatedAt: DateValue
 }
@@ -497,6 +511,7 @@ export interface Certificate {
 // 사용자 이력
 export interface UserHistory {
   id: UUID
+  userId: UUID // 사용자 ID (참여이력 동기화용)
   programId: UUID
   role: ParticipationRole
   completedAt: DateValue

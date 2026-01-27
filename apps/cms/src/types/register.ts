@@ -47,12 +47,22 @@ export interface InstructorRegisterFormData extends BaseRegisterFormData {
 }
 
 /**
+ * 관리자 회원가입 폼 데이터
+ * P1: 관리자 회원가입 플로우 추가
+ */
+export interface AdminRegisterFormData extends BaseRegisterFormData {
+  role: 'ADMIN'
+  adminLevel: 'ADMIN' | 'GENERAL' // MASTER는 회원가입 불가, 승인 필요
+}
+
+/**
  * 회원가입 요청 데이터
  */
 export type RegisterFormData =
   | IndividualRegisterFormData
   | SchoolRegisterFormData
   | InstructorRegisterFormData
+  | AdminRegisterFormData
 
 /**
  * 회원가입 요청 (동의 포함)
