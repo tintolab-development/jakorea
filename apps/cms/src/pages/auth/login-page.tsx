@@ -32,6 +32,10 @@ const TEST_ACCOUNTS = {
     email: 'instructor1@example.com',
     password: 'instructor123!',
   },
+  school: {
+    email: 'school1@example.com',
+    password: 'school123!',
+  },
   student: {
     email: 'individual1@example.com',
     password: 'individual123!',
@@ -137,7 +141,7 @@ export function LoginPage() {
         navigate(finalRedirectPath, { replace: true })
       }, 200)
     }
-  }, [isAuthenticated, requiresMfa, mfaModalOpen, navigate, user])
+  }, [isAuthenticated, requiresMfa, mfaModalOpen, navigate, user, redirectPath])
 
   // 추가: 주기적으로 상태 확인 (구독이 제대로 작동하지 않는 경우 대비)
   useEffect(() => {
@@ -154,7 +158,7 @@ export function LoginPage() {
     }, 500) // 0.5초마다 확인
 
     return () => clearInterval(interval)
-  }, [mfaModalOpen, navigate])
+  }, [mfaModalOpen, navigate, redirectPath])
 
   // Phase 0.1.3 수정: 간편인증 탭 추가 (휴대폰 인증은 제외)
   const tabItems = [
@@ -274,12 +278,23 @@ export function LoginPage() {
                 size="small"
                 onClick={() => {
                   form.setFieldsValue({
+                    email: TEST_ACCOUNTS.school.email,
+                    password: TEST_ACCOUNTS.school.password,
+                  })
+                }}
+              >
+                학교
+              </Button>
+              <Button
+                size="small"
+                onClick={() => {
+                  form.setFieldsValue({
                     email: TEST_ACCOUNTS.student.email,
                     password: TEST_ACCOUNTS.student.password,
                   })
                 }}
               >
-                수강자
+                학생
               </Button>
             </Space>
           </div>
