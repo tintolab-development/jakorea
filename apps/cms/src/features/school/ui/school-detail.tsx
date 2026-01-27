@@ -5,16 +5,30 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Descriptions, Tag, Space, Button, Table, Tabs } from 'antd'
-import type { School } from '@/types/domain'
+import {
+  Card,
+  Descriptions,
+  Tag,
+  Space,
+  Button,
+  Table,
+  Tabs,
+  Empty,
+  Statistic,
+  Row,
+  Col,
+} from 'antd'
+import type { School, Application } from '@/types/domain'
 import type { User } from '@/types/user'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useUserStore } from '@/features/user/model/user-store'
-import { mockApplications } from '@/data/mock'
+import { mockApplications, mockSchedules, mockMatchings } from '@/data/mock'
 import { mockProgramsMap } from '@/data/mock'
 import { RoleBadge } from '@/shared/ui'
 import { formatDate } from '@/shared/utils'
 import type { ColumnsType } from 'antd/es/table'
+import { programService } from '@/entities/program/api/program-service'
+import { getApplicationStatusLabel, getApplicationStatusColor } from '@/shared/constants/status'
 
 interface SchoolDetailProps {
   school: School
@@ -67,6 +81,143 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
 
     return teachers
   }, [school.id, usersById, userIds])
+
+  // 학교별 프로그램 신청 이력
+  const schoolProgramApplications = useMemo(() => {
+    // 1. Application에서 subjectType이 'school'이고 subjectId가 학교 ID인 경우
+    const schoolApplications = mockApplications.filter(
+      app => app.subjectType === 'school' && app.subjectId === school.id
+    )
+
+    // 2. Program의 schoolId가 해당 학교 ID인 경우, 그 프로그램에 신청한 모든 Application
+    const schoolProgramIds = Array.from(mockProgramsMap.values())
+      .filter(program => program.schoolId === school.id)
+      .map(program => program.id)
+
+    const programApplications = mockApplications.filter(app =>
+      schoolProgramIds.includes(app.programId)
+    )
+
+    // 중복 제거 (id 기준)
+    const allApplications = [...schoolApplications, ...programApplications]
+    const uniqueApplications = Array.from(
+      new Map(allApplications.map(app => [app.id, app])).values()
+    )
+
+    // 최신순 정렬
+    uniqueApplications.sort((a, b) => {
+      const aTime = new Date(a.submittedAt).getTime()
+      const bTime = new Date(b.submittedAt).getTime()
+      return bTime - aTime
+    })
+
+    return uniqueApplications
+  }, [school.id])
+
+  // 프로그램 진행 횟수 집계
+  const programStats = useMemo(() => {
+    const totalCount = schoolProgramApplications.length
+    const approvedCount = schoolProgramApplications.filter(app => app.status === 'approved').length
+    const completedCount = schoolProgramApplications.filter(
+      app => app.status === 'approved' && app.progressStatus === 'REPORT_SUBMITTED'
+    ).length
+
+    // 프로그램별 집계 (중복 제거)
+    const uniqueProgramIds = new Set(schoolProgramApplications.map(app => app.programId))
+    const programCount = uniqueProgramIds.size
+
+    return {
+      totalCount,
+      approvedCount,
+      completedCount,
+      programCount,
+    }
+  }, [schoolProgramApplications])
+
+  // 학교와 관련된 일정 찾기
+  const schoolSchedules = useMemo(() => {
+    // Program의 schoolId가 해당 학교 ID인 프로그램들의 일정
+    const schoolProgramIds = Array.from(mockProgramsMap.values())
+      .filter(program => program.schoolId === school.id)
+      .map(program => program.id)
+
+    return mockSchedules.filter(schedule => schoolProgramIds.includes(schedule.programId))
+  }, [school.id])
+
+  // 일정 변경 및 취소 횟수 집계
+  const scheduleStats = useMemo(() => {
+    // 일정 변경 횟수: updatedAt과 createdAt이 다르면 변경된 것으로 간주
+    const changedCount = schoolSchedules.filter(
+      schedule => schedule.updatedAt !== schedule.createdAt
+    ).length
+
+    // 일정 취소 횟수: Matching에서 cancelledAt이 있고, 해당 일정이 학교 프로그램과 관련된 경우
+    const schoolProgramIds = Array.from(mockProgramsMap.values())
+      .filter(program => program.schoolId === school.id)
+      .map(program => program.id)
+
+    const cancelledMatchings = mockMatchings.filter(
+      matching =>
+        matching.cancelledAt &&
+        schoolProgramIds.includes(matching.programId) &&
+        (matching.scheduleId ? schoolSchedules.some(s => s.id === matching.scheduleId) : false)
+    )
+
+    const cancelledCount = cancelledMatchings.length
+
+    return {
+      totalSchedules: schoolSchedules.length,
+      changedCount,
+      cancelledCount,
+    }
+  }, [school.id, schoolSchedules])
+
+  // 프로그램 이력 테이블 컬럼
+  const programHistoryColumns: ColumnsType<Application> = [
+    {
+      title: '프로그램명',
+      dataIndex: 'programId',
+      key: 'programId',
+      render: (programId: string) => {
+        const program = programService.getByIdSync(programId)
+        return program ? program.title : programId
+      },
+    },
+    {
+      title: '신청 유형',
+      dataIndex: 'subjectType',
+      key: 'subjectType',
+      render: (type: Application['subjectType']) => {
+        const typeLabels: Record<Application['subjectType'], string> = {
+          school: '학교',
+          student: '학생',
+          instructor: '강사',
+          volunteer: '봉사자',
+        }
+        return typeLabels[type] || type
+      },
+    },
+    {
+      title: '상태',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: Application['status']) => (
+        <Tag color={getApplicationStatusColor(status)}>{getApplicationStatusLabel(status)}</Tag>
+      ),
+    },
+    {
+      title: '진행 상태',
+      dataIndex: 'progressStatus',
+      key: 'progressStatus',
+      render: (status?: string) => (status ? <Tag>{status}</Tag> : '-'),
+    },
+    {
+      title: '신청일',
+      dataIndex: 'submittedAt',
+      key: 'submittedAt',
+      render: (date: string) => formatDate(new Date(date)),
+    },
+  ]
 
   const teacherColumns: ColumnsType<Omit<User, 'password'>> = [
     {
@@ -141,6 +292,50 @@ export function SchoolDetail({ school, onEdit, onDelete, loading }: SchoolDetail
           rowKey="id"
           pagination={{ pageSize: 10 }}
         />
+      ),
+    },
+    {
+      key: 'programs',
+      label: `프로그램 이력 (${programStats.totalCount})`,
+      children: (
+        <div>
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={6}>
+              <Statistic title="총 신청 횟수" value={programStats.totalCount} />
+            </Col>
+            <Col span={6}>
+              <Statistic title="승인 횟수" value={programStats.approvedCount} />
+            </Col>
+            <Col span={6}>
+              <Statistic title="완료 횟수" value={programStats.completedCount} />
+            </Col>
+            <Col span={6}>
+              <Statistic title="참여 프로그램 수" value={programStats.programCount} />
+            </Col>
+          </Row>
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={8}>
+              <Statistic title="일정 변경 횟수" value={scheduleStats.changedCount} />
+            </Col>
+            <Col span={8}>
+              <Statistic title="일정 취소 횟수" value={scheduleStats.cancelledCount} />
+            </Col>
+            <Col span={8}>
+              <Statistic title="총 일정 수" value={scheduleStats.totalSchedules} />
+            </Col>
+          </Row>
+          {schoolProgramApplications.length > 0 ? (
+            <Table
+              columns={programHistoryColumns}
+              dataSource={schoolProgramApplications}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}
+              size="small"
+            />
+          ) : (
+            <Empty description="프로그램 신청 이력이 없습니다." />
+          )}
+        </div>
       ),
     },
   ]
