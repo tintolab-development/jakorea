@@ -6,7 +6,13 @@
 
 import type { UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
-import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
+import {
+  FolderOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+  TeamOutlined,
+  SettingOutlined,
+} from '@ant-design/icons'
 import React from 'react'
 
 // 3뎁스 메뉴용 닷 아이콘
@@ -822,6 +828,14 @@ const allMenuItems: MenuItemConfig[] = [
       { key: '/logs/bug', label: '버그', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/logs/issue', label: '이슈', enabled: true, allowedRoles: ['ADMIN'] },
     ],
+  },
+  {
+    key: '/admin/settings/permissions',
+    label: '시스템 설정',
+    icon: <SettingOutlined />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+    // P2: 마스터 관리자만 접근 가능 (ProtectedRoute에서 체크)
   },
   { key: 'divider-bottom', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 

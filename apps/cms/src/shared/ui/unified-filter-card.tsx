@@ -77,8 +77,8 @@ export interface UnifiedFilterCardProps {
  * ```
  */
 export function UnifiedFilterCard({
-  fields,
-  filters,
+  fields = [],
+  filters = {},
   onFilterChange,
   onSearch,
   onReset,
@@ -91,31 +91,27 @@ export function UnifiedFilterCard({
   // 첫 줄: search 필드와 처음 4개 select 필드
   // 두 번째 줄: 나머지 select 필드와 dateRange 필드
   const shouldSplitIntoTwoRows = fields.length > 5
-  
+
   // 첫 줄: search 필드 + 처음 4개 select 필드
   const firstRowFields = shouldSplitIntoTwoRows
     ? fields.filter((f, index) => {
         if (f.type === 'search') return true
         if (f.type === 'select') {
           // search 필드를 제외한 select 필드 중 처음 4개
-          const selectFieldsBefore = fields
-            .slice(0, index)
-            .filter(field => field.type === 'select')
+          const selectFieldsBefore = fields.slice(0, index).filter(field => field.type === 'select')
           return selectFieldsBefore.length < 4
         }
         return false
       })
     : fields // 6개 미만이면 모든 필터를 첫 줄에 표시
-  
+
   // 두 번째 줄: 나머지 select 필드와 dateRange 필드
   const secondRowFields = shouldSplitIntoTwoRows
     ? fields.filter((f, index) => {
         if (f.type === 'dateRange') return true
         if (f.type === 'select') {
           // search 필드를 제외한 select 필드 중 4개 이후
-          const selectFieldsBefore = fields
-            .slice(0, index)
-            .filter(field => field.type === 'select')
+          const selectFieldsBefore = fields.slice(0, index).filter(field => field.type === 'select')
           return selectFieldsBefore.length >= 4
         }
         return false
@@ -189,7 +185,10 @@ export function UnifiedFilterCard({
         {firstRowFields.map(renderField)}
         {/* 첫 줄에 버튼이 필요한지 확인 (두 번째 줄이 없으면 첫 줄에 버튼 표시) */}
         {secondRowFields.length === 0 && (
-          <Col flex="none" style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}>
+          <Col
+            flex="none"
+            style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}
+          >
             <Space>
               {onReset && <Button onClick={onReset}>{resetButtonText}</Button>}
               <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} loading={loading}>
@@ -203,10 +202,18 @@ export function UnifiedFilterCard({
 
       {/* 두 번째 줄: 나머지 select 필터들과 dateRange */}
       {secondRowFields.length > 0 && (
-        <Row gutter={[12, 16]} className="unified-filter-card__row" align="bottom" style={{ marginTop: 16 }}>
+        <Row
+          gutter={[12, 16]}
+          className="unified-filter-card__row"
+          align="bottom"
+          style={{ marginTop: 16 }}
+        >
           {secondRowFields.map(renderField)}
           {/* 조회 버튼 (두 번째 줄 오른쪽) */}
-          <Col flex="none" style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}>
+          <Col
+            flex="none"
+            style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}
+          >
             <Space>
               {onReset && <Button onClick={onReset}>{resetButtonText}</Button>}
               <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} loading={loading}>
