@@ -46,7 +46,6 @@ import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
-import { Dashboard } from '@/pages/dashboard'
 import { IndexPage } from '@/pages/home/index-page'
 const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
@@ -168,6 +167,9 @@ const ScheduleNegotiationListPage = lazyLoad(
 )
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
+const TemplateProgramFormsPage = lazyLoad(
+  () => import('@/pages/templates/template-program-forms-page')
+)
 const TemplateFilesPage = lazyLoad(() => import('@/pages/templates/template-files-page'))
 const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
 const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
@@ -183,8 +185,10 @@ const PermissionRequestListPage = lazyLoad(
   () => import('@/pages/admin/permission-request-list-page')
 )
 const AuditLogListPage = lazyLoad(() => import('@/pages/admin/audit-log-list-page'))
+const PermissionCustomizationPage = lazyLoad(
+  () => import('@/pages/admin/settings/permission-customization-page')
+)
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
-const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
 
@@ -519,46 +523,15 @@ export const router = createBrowserRouter([
       },
       {
         path: 'templates',
+        element: <TemplateListPage />,
         children: [
           // 프로그램 양식
           {
             path: 'program-forms',
             children: [
               {
-                path: 'application',
-                element: (
-                  <ComingSoonPage
-                    title="신청 기본 폼"
-                    description="신청 기본 폼 관리 기능은 현재 준비 중입니다."
-                  />
-                ),
-              },
-              {
-                path: 'survey',
-                element: (
-                  <ComingSoonPage
-                    title="설문 조사"
-                    description="설문 조사 관리 기능은 현재 준비 중입니다."
-                  />
-                ),
-              },
-              {
-                path: 'satisfaction',
-                element: (
-                  <ComingSoonPage
-                    title="만족도조사"
-                    description="만족도조사 관리 기능은 현재 준비 중입니다."
-                  />
-                ),
-              },
-              {
-                path: 'assignment',
-                element: (
-                  <ComingSoonPage
-                    title="과제 제출 폼"
-                    description="과제 제출 폼 관리 기능은 현재 준비 중입니다."
-                  />
-                ),
+                index: true,
+                element: <TemplateProgramFormsPage />,
               },
             ],
           },
@@ -663,6 +636,19 @@ export const router = createBrowserRouter([
           {
             path: 'logs',
             children: [{ path: 'audit', element: <AuditLogListPage /> }],
+          },
+          {
+            path: 'settings',
+            children: [
+              {
+                path: 'permissions',
+                element: (
+                  <ProtectedRoute requiredRoles={['ADMIN']}>
+                    <PermissionCustomizationPage />
+                  </ProtectedRoute>
+                ),
+              },
+            ],
           },
         ],
       },

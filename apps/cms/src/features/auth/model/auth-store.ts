@@ -33,6 +33,10 @@ interface AuthState {
 const TOKEN_STORAGE_KEY = 'auth_token'
 const TOKEN_EXPIRY_KEY = 'auth_expires_at'
 
+// checkAuth 중복 호출 방지를 위한 플래그
+let isCheckingAuth = false
+let checkAuthPromise: Promise<void> | null = null
+
 // localStorage에서 인증 상태 복원
 const loadAuthFromStorage = (): Partial<AuthState> => {
   // 브라우저 환경 확인
@@ -194,6 +198,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     checkAuth: async () => {
+      // 중복 호출 방지: 이미 체크 중이면 기존 Promise 반환
+      if (isCheckingAuth && checkAuthPromise) {
+        return checkAuthPromise
+      }
+
       // localStorage에서 직접 토큰 확인
       if (typeof window === 'undefined' || !window.localStorage) {
         set({ isAuthenticated: false, user: null })
@@ -209,48 +218,105 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return
       }
 
-      // Phase 0.5: 세션 만료 확인
+      // Phase 0.5: 세션 만료 확인 (약간의 여유 시간 추가: 30초)
       const now = new Date()
       const expiryTime = new Date(expiresAt)
+      const bufferTime = 30 * 1000 // 30초 버퍼
 
-      if (expiryTime <= now) {
+      if (expiryTime.getTime() <= now.getTime() + bufferTime) {
         // 만료된 경우 로그아웃
         get().logout()
         return
       }
 
-      // Phase 0.5: 토큰 갱신 필요 여부 확인 (만료 1시간 전)
-      const timeUntilExpiry = expiryTime.getTime() - now.getTime()
-      const oneHour = 60 * 60 * 1000
+      // checkAuth 실행 중 플래그 설정
+      isCheckingAuth = true
+      checkAuthPromise = (async () => {
+        try {
+          // Phase 0.5: 토큰 갱신 필요 여부 확인 (만료 1시간 전)
+          const timeUntilExpiry = expiryTime.getTime() - now.getTime()
+          const oneHour = 60 * 60 * 1000
 
-      if (timeUntilExpiry < oneHour && timeUntilExpiry > 0) {
-        // 자동 토큰 갱신 시도 (백그라운드)
-        get()
-          .refreshToken()
-          .catch(() => {
-            // 갱신 실패는 조용히 처리 (사용자에게 노출하지 않음)
-          })
-      }
+          if (timeUntilExpiry < oneHour && timeUntilExpiry > 0) {
+            // 자동 토큰 갱신 시도 (백그라운드)
+            get()
+              .refreshToken()
+              .catch(() => {
+                // 갱신 실패는 조용히 처리 (사용자에게 노출하지 않음)
+              })
+          }
 
-      try {
-        const user = await validateToken(token)
-        if (user) {
-          // localStorage 업데이트
-          localStorage.setItem('auth_user', JSON.stringify(user))
+          // localStorage에 저장된 사용자 정보로 먼저 확인
+          let storedUser: Omit<User, 'password'> | null = null
+          try {
+            storedUser = JSON.parse(userStr)
+          } catch {
+            // JSON 파싱 실패 시 validateToken 호출
+          }
 
-          set({
-            user,
-            token,
-            expiresAt,
-            isAuthenticated: true,
-          })
-        } else {
-          // 토큰이 유효하지 않으면 로그아웃
-          get().logout()
+          // validateToken 호출 (네트워크 오류 등에 대비해 재시도 로직 포함)
+          let user: Omit<User, 'password'> | null = null
+          try {
+            user = await validateToken(token)
+          } catch (error) {
+            // validateToken 실패 시 저장된 사용자 정보 사용 (간헐적 네트워크 오류 대응)
+            console.warn('Token validation failed, using stored user:', error)
+            if (storedUser && storedUser.isActive) {
+              user = storedUser
+            }
+          }
+
+          if (user && user.isActive) {
+            // localStorage 업데이트
+            localStorage.setItem('auth_user', JSON.stringify(user))
+
+            set({
+              user,
+              token,
+              expiresAt,
+              isAuthenticated: true,
+            })
+          } else {
+            // 사용자가 없거나 비활성화된 경우에만 로그아웃
+            // 단, 저장된 사용자 정보가 있고 활성화되어 있으면 유지
+            if (!storedUser || !storedUser.isActive) {
+              console.warn('User not found or inactive, logging out')
+              get().logout()
+            } else {
+              // 저장된 사용자 정보로 상태 유지
+              set({
+                user: storedUser,
+                token,
+                expiresAt,
+                isAuthenticated: true,
+              })
+            }
+          }
+        } catch (error) {
+          // 예상치 못한 오류 발생 시에도 저장된 사용자 정보로 복구 시도
+          console.error('Unexpected error in checkAuth:', error)
+          try {
+            const storedUser = JSON.parse(userStr)
+            if (storedUser && storedUser.isActive) {
+              set({
+                user: storedUser,
+                token,
+                expiresAt,
+                isAuthenticated: true,
+              })
+            } else {
+              get().logout()
+            }
+          } catch {
+            get().logout()
+          }
+        } finally {
+          isCheckingAuth = false
+          checkAuthPromise = null
         }
-      } catch {
-        get().logout()
-      }
+      })()
+
+      return checkAuthPromise
     },
 
     updateUser: (userData: Partial<Omit<User, 'password'>>) => {
@@ -334,8 +400,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       const now = new Date()
       const expiryTime = new Date(state.expiresAt)
+      const bufferTime = 30 * 1000 // 30초 버퍼
 
-      if (expiryTime <= now) {
+      if (expiryTime.getTime() <= now.getTime() + bufferTime) {
         // 만료된 경우 로그아웃
         get().logout()
         return true
