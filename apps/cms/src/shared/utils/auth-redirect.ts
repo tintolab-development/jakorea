@@ -17,11 +17,11 @@ export function getRedirectPathByRole(user: Omit<User, 'password'> | null): stri
     case 'ADMIN':
       return '/' // 관리자는 관리자 홈(Dashboard)으로
     case 'INSTRUCTOR':
-      return '/instructor'
-    case 'SCHOOL':
-      return '/school'
+      return '/instructor/schedule' // 강사는 교육 일정 페이지로
     case 'INDIVIDUAL':
-      return '/my'
+      return '/schedules/my' // 학생은 내 일정 페이지로
+    case 'SCHOOL':
+      return '/surveys' // 학교는 만족도설문 페이지로
     default:
       return '/'
   }

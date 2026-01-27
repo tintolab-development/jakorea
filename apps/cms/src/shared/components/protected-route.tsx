@@ -90,7 +90,8 @@ export function ProtectedRoute({
   }
 
   // 메뉴 설정 기반 경로 접근 제어
-  if (user && !canAccessPath(location.pathname, user.role)) {
+  // IndexPage('/')는 예외 처리 - IndexPage에서 역할별로 리다이렉트 처리
+  if (user && location.pathname !== '/' && !canAccessPath(location.pathname, user.role)) {
     return <Navigate to="/forbidden" replace />
   }
 

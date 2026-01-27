@@ -47,6 +47,8 @@ import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { Dashboard } from '@/pages/dashboard'
+import { IndexPage } from '@/pages/home/index-page'
+const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
 const InstructorListPage = lazyLoad(() => import('@/pages/instructors/instructor-list-page'))
@@ -241,7 +243,11 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: <IndexPage />,
+      },
+      {
+        path: 'my-learning',
+        element: <MyLearningPage />,
       },
       {
         path: 'instructors',
@@ -458,12 +464,124 @@ export const router = createBrowserRouter([
       },
       {
         path: 'templates',
-        element: <TemplateListPage />,
         children: [
-          { index: true, element: <Navigate to="files?tab=files" replace /> },
-          { path: 'files', element: <TemplateFilesPage /> },
-          { path: 'sms', element: <TemplateSmsPage /> },
-          { path: 'email', element: <TemplateEmailPage /> },
+          // 프로그램 양식
+          {
+            path: 'program-forms',
+            children: [
+              {
+                path: 'application',
+                element: (
+                  <ComingSoonPage
+                    title="신청 기본 폼"
+                    description="신청 기본 폼 관리 기능은 현재 준비 중입니다."
+                  />
+                ),
+              },
+              {
+                path: 'survey',
+                element: (
+                  <ComingSoonPage
+                    title="설문 조사"
+                    description="설문 조사 관리 기능은 현재 준비 중입니다."
+                  />
+                ),
+              },
+              {
+                path: 'satisfaction',
+                element: (
+                  <ComingSoonPage
+                    title="만족도조사"
+                    description="만족도조사 관리 기능은 현재 준비 중입니다."
+                  />
+                ),
+              },
+              {
+                path: 'assignment',
+                element: (
+                  <ComingSoonPage
+                    title="과제 제출 폼"
+                    description="과제 제출 폼 관리 기능은 현재 준비 중입니다."
+                  />
+                ),
+              },
+            ],
+          },
+          // 파일 양식
+          {
+            path: 'file-forms',
+            children: [
+              {
+                index: true,
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'instructor-resume',
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'lecture-report',
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'education-plan',
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'certificate',
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'activity-confirmation',
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'receipt',
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'payment-statement',
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'employment-certificate',
+                element: <TemplateFilesPage />,
+              },
+            ],
+          },
+          // 카카오 알림톡 관리 (기존 SMS 페이지 연결)
+          {
+            path: 'kakao-alimtalk',
+            element: <TemplateSmsPage />,
+          },
+          // 메일 관리 (기존 email 페이지 연결)
+          {
+            path: 'email',
+            element: <TemplateEmailPage />,
+          },
+          // 배너 관리
+          {
+            path: 'banner',
+            element: (
+              <ComingSoonPage
+                title="배너 관리"
+                description="배너 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+          // 기존 경로 호환성 유지 (리다이렉트)
+          {
+            index: true,
+            element: <Navigate to="file-forms" replace />,
+          },
+          {
+            path: 'files',
+            element: <Navigate to="file-forms" replace />,
+          },
+          {
+            path: 'sms',
+            element: <Navigate to="kakao-alimtalk" replace />,
+          },
         ],
       },
       {
@@ -506,7 +624,24 @@ export const router = createBrowserRouter([
       },
       {
         path: 'logs',
-        children: [{ index: true, element: <LogListPage /> }],
+        children: [
+          {
+            index: true,
+            element: <Navigate to="bug" replace />,
+          },
+          {
+            path: 'bug',
+            element: (
+              <ComingSoonPage title="버그" description="버그 관리 기능은 현재 준비 중입니다." />
+            ),
+          },
+          {
+            path: 'issue',
+            element: (
+              <ComingSoonPage title="이슈" description="이슈 관리 기능은 현재 준비 중입니다." />
+            ),
+          },
+        ],
       },
       {
         path: 'notices',
