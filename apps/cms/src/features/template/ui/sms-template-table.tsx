@@ -5,7 +5,11 @@ import type { MenuProps } from 'antd'
 import dayjs from 'dayjs'
 import { MoreOutlined } from '@ant-design/icons'
 import type { SmsTemplate, TemplateStatus } from '@/types/template'
-import { estimateMessageBytes, getTemplateStatusColor, getTemplateStatusLabel } from '@/data/mock/templates'
+import {
+  estimateMessageBytes,
+  getTemplateStatusColor,
+  getTemplateStatusLabel,
+} from '@/data/mock/templates'
 
 const { Text } = Typography
 
@@ -21,6 +25,7 @@ interface SmsTemplateTableProps {
   onCopyApplied?: (row: SmsTemplate) => void
   onCopyTemplate?: (row: SmsTemplate) => void
   onToggleArchive?: (row: SmsTemplate) => void
+  onBulkSend?: (row: SmsTemplate) => void
   canWrite?: boolean
 }
 
@@ -32,6 +37,7 @@ export function SmsTemplateTable({
   onCopyApplied,
   onCopyTemplate,
   onToggleArchive,
+  onBulkSend,
   canWrite = false,
 }: SmsTemplateTableProps) {
   const getRowMenuItems = (row: SmsTemplate): MenuProps['items'] => {
@@ -40,6 +46,12 @@ export function SmsTemplateTable({
         key: 'preview',
         label: '미리보기',
         onClick: () => onPreview(row),
+      },
+      {
+        key: 'bulk-send',
+        label: '단체 발송',
+        onClick: () => onBulkSend?.(row),
+        disabled: row.status !== 'published',
       },
       { type: 'divider' },
       {
@@ -108,7 +120,7 @@ export function SmsTemplateTable({
             role="button"
             tabIndex={0}
             onClick={() => onPreview(row)}
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               if (e.key === 'Enter' || e.key === ' ') onPreview(row)
             }}
             style={{ cursor: 'pointer' }}
@@ -118,7 +130,8 @@ export function SmsTemplateTable({
                 {preview}
               </Text>
               <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
-                변수: {row.content.variables.join(', ') || '-'} · {bytes} bytes · {getMessageType(bytes)}
+                변수: {row.content.variables.join(', ') || '-'} · {bytes} bytes ·{' '}
+                {getMessageType(bytes)}
               </Text>
               <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
                 클릭하여 미리보기
@@ -133,7 +146,9 @@ export function SmsTemplateTable({
       dataIndex: 'status',
       key: 'status',
       width: TABLE_COLUMN_WIDTHS.status,
-      render: (s: TemplateStatus) => <Tag color={getTemplateStatusColor(s)}>{getTemplateStatusLabel(s)}</Tag>,
+      render: (s: TemplateStatus) => (
+        <Tag color={getTemplateStatusColor(s)}>{getTemplateStatusLabel(s)}</Tag>
+      ),
     },
     {
       title: '수정일',
@@ -149,7 +164,11 @@ export function SmsTemplateTable({
       fixed: 'right' as const,
       render: (_: unknown, row) => (
         <div onClick={e => e.stopPropagation()}>
-          <Dropdown menu={{ items: getRowMenuItems(row) }} trigger={['click']} placement="bottomRight">
+          <Dropdown
+            menu={{ items: getRowMenuItems(row) }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
             <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
           </Dropdown>
         </div>

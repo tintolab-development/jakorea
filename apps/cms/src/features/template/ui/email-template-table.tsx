@@ -17,6 +17,7 @@ interface EmailTemplateTableProps {
   onCopyBody?: (row: EmailTemplate) => void
   onCopyTemplate?: (row: EmailTemplate) => void
   onToggleArchive?: (row: EmailTemplate) => void
+  onBulkSend?: (row: EmailTemplate) => void
   canWrite?: boolean
 }
 
@@ -28,6 +29,7 @@ export function EmailTemplateTable({
   onCopyBody,
   onCopyTemplate,
   onToggleArchive,
+  onBulkSend,
   canWrite = false,
 }: EmailTemplateTableProps) {
   const getRowMenuItems = (row: EmailTemplate): MenuProps['items'] => {
@@ -36,6 +38,12 @@ export function EmailTemplateTable({
         key: 'preview',
         label: '미리보기',
         onClick: () => onPreview(row),
+      },
+      {
+        key: 'bulk-send',
+        label: '단체 발송',
+        onClick: () => onBulkSend?.(row),
+        disabled: row.status !== 'published',
       },
       { type: 'divider' },
       {
@@ -101,7 +109,7 @@ export function EmailTemplateTable({
           role="button"
           tabIndex={0}
           onClick={() => onPreview(row)}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') onPreview(row)
           }}
           style={{ cursor: 'pointer' }}
@@ -122,7 +130,9 @@ export function EmailTemplateTable({
       dataIndex: 'status',
       key: 'status',
       width: TABLE_COLUMN_WIDTHS.status,
-      render: (s: TemplateStatus) => <Tag color={getTemplateStatusColor(s)}>{getTemplateStatusLabel(s)}</Tag>,
+      render: (s: TemplateStatus) => (
+        <Tag color={getTemplateStatusColor(s)}>{getTemplateStatusLabel(s)}</Tag>
+      ),
     },
     {
       title: '수정일',
@@ -138,7 +148,11 @@ export function EmailTemplateTable({
       fixed: 'right' as const,
       render: (_: unknown, row) => (
         <div onClick={e => e.stopPropagation()}>
-          <Dropdown menu={{ items: getRowMenuItems(row) }} trigger={['click']} placement="bottomRight">
+          <Dropdown
+            menu={{ items: getRowMenuItems(row) }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
             <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
           </Dropdown>
         </div>
