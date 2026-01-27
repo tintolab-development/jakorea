@@ -6,21 +6,39 @@
  */
 
 import { Form, Input } from 'antd'
+import { useEffect, useRef } from 'react'
 import { OTP_LENGTH } from '@/shared/constants/mfa-policy'
 
 interface MfaOtpInputProps {
   onChange?: (value: string) => void
   disabled?: boolean
+  autoFocus?: boolean
 }
 
-export function MfaOtpInput({ onChange, disabled }: MfaOtpInputProps) {
+export function MfaOtpInput({ onChange, disabled, autoFocus = true }: MfaOtpInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // 자동 포커스 설정
+  useEffect(() => {
+    if (autoFocus && !disabled && inputRef.current) {
+      // 약간의 지연을 두어 모달이 완전히 렌더링된 후 포커스 설정
+      const timer = setTimeout(() => {
+        const firstInput = inputRef.current?.querySelector('input') as HTMLInputElement | null
+        if (firstInput) {
+          firstInput.focus()
+        }
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [autoFocus, disabled])
+
   return (
     <Form.Item
       name="otpCode"
       rules={[
         { required: true, message: '인증번호를 입력해주세요.' },
-        { 
-          len: OTP_LENGTH, 
+        {
+          len: OTP_LENGTH,
           message: `인증번호는 ${OTP_LENGTH}자리입니다.`,
         },
         {
@@ -36,14 +54,14 @@ export function MfaOtpInput({ onChange, disabled }: MfaOtpInputProps) {
         {({ getFieldValue, setFieldValue, getFieldError }) => {
           const formValue = getFieldValue('otpCode') || ''
           const errors = getFieldError('otpCode')
-          
+
           return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center' }} ref={inputRef}>
                 <Input.OTP
                   length={OTP_LENGTH}
                   value={formValue}
-                  onChange={(newValue) => {
+                  onChange={newValue => {
                     // Form에 값 설정
                     setFieldValue('otpCode', newValue)
                     // 외부 onChange도 호출 (있는 경우)
@@ -57,13 +75,15 @@ export function MfaOtpInput({ onChange, disabled }: MfaOtpInputProps) {
               </div>
               {/* 에러 메시지 중앙 정렬 */}
               {errors && errors.length > 0 && (
-                <div style={{ 
-                  textAlign: 'center', 
-                  color: '#ff4d4f', 
-                  fontSize: '14px',
-                  marginTop: '8px',
-                  width: '100%'
-                }}>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    color: '#ff4d4f',
+                    fontSize: '14px',
+                    marginTop: '8px',
+                    width: '100%',
+                  }}
+                >
                   {errors[0]}
                 </div>
               )}

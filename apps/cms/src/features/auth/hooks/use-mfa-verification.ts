@@ -33,7 +33,7 @@ interface UseMfaVerificationResult {
   lockUntil: string | null
   sending: boolean
   verifying: boolean
-  
+
   // 액션
   handleSendOtp: () => Promise<void>
   handleVerify: () => Promise<void>
@@ -44,14 +44,32 @@ interface UseMfaVerificationResult {
 /**
  * MFA 인증 모달의 비즈니스 로직을 담당하는 Hook
  */
-export function useMfaVerification({ open, messageApi }: UseMfaVerificationOptions): UseMfaVerificationResult {
+export function useMfaVerification({
+  open,
+  messageApi,
+}: UseMfaVerificationOptions): UseMfaVerificationResult {
   const { user, setMfaVerified } = useAuthStore()
   const { mfaState, initializeMfa, completeMfa } = useMfa()
-  const { sending, verifying, failedAttempts, isLocked, lockUntil, sendOtpCode, verifyOtpCode, reset: resetVerification } = useOtpVerification()
-  const { remainingSeconds, isExpired, canResend, resendCooldownSeconds, start: startCountdown } = useOtpCountdown()
+  const {
+    sending,
+    verifying,
+    failedAttempts,
+    isLocked,
+    lockUntil,
+    sendOtpCode,
+    verifyOtpCode,
+    reset: resetVerification,
+  } = useOtpVerification()
+  const {
+    remainingSeconds,
+    isExpired,
+    canResend,
+    resendCooldownSeconds,
+    start: startCountdown,
+  } = useOtpCountdown()
   const [form] = Form.useForm()
   const [otpCode, setOtpCode] = useState('')
-  
+
   // messageApi가 제공되지 않으면 정적 message 사용 (하위 호환성)
   const msg = messageApi || message
 
@@ -134,180 +152,191 @@ export function useMfaVerification({ open, messageApi }: UseMfaVerificationOptio
           }
         }
       })
-      
+
       setOtpCode('')
       resetVerification()
-      
+
       return () => cancelAnimationFrame(frameId)
     }
   }, [open, form, resetVerification])
 
-
   // OTP 검증 및 완료 로직을 별도 함수로 분리
-  const verifyAndComplete = useCallback(async (codeToVerify: string) => {
-    if (!user) {
-      console.error('[MFA Debug] No user in verifyAndComplete')
-      return
-    }
-
-    // 추가 검증: 길이 및 숫자 형식
-    if (codeToVerify.length !== OTP_LENGTH) {
-      console.error('[MFA Debug] OTP length mismatch', { length: codeToVerify.length, expected: OTP_LENGTH })
-      try {
-        form.setFields([
-          {
-            name: 'otpCode',
-            errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`],
-          },
-        ])
-      } catch {
-        msg.error(`인증번호는 ${OTP_LENGTH}자리입니다.`)
+  const verifyAndComplete = useCallback(
+    async (codeToVerify: string) => {
+      if (!user) {
+        console.error('[MFA Debug] No user in verifyAndComplete')
+        return
       }
-      return
-    }
 
-    if (!/^\d+$/.test(codeToVerify)) {
-      console.error('[MFA Debug] OTP format invalid', { codeToVerify })
-      try {
-        form.setFields([
-          {
-            name: 'otpCode',
-            errors: ['인증번호는 숫자만 입력 가능합니다.'],
-          },
-        ])
-      } catch {
-        msg.error('인증번호는 숫자만 입력 가능합니다.')
-      }
-      return
-    }
-
-    console.log('[MFA Debug] Starting OTP verification', { userId: user.id, otpCode: codeToVerify })
-
-    try {
-      const verified = await verifyOtpCode({
-        userId: user.id,
-        otpCode: codeToVerify,
-      })
-
-      console.log('[MFA Debug] OTP verification result', { verified })
-
-      if (verified) {
-        console.log('[MFA Debug] OTP verified, completing MFA')
-        
-        // MFA 완료 처리: 먼저 useMfa의 상태 업데이트
-        completeMfa()
-        console.log('[MFA Debug] completeMfa called')
-        
-        // auth-store의 상태 업데이트 (토큰 생성 및 인증 완료)
-        setMfaVerified()
-        console.log('[MFA Debug] setMfaVerified called')
-        
-        // 상태 업데이트 확인
-        const authState = useAuthStore.getState()
-        console.log('[MFA Debug] Auth state after setMfaVerified', {
-          isAuthenticated: authState.isAuthenticated,
-          requiresMfa: authState.requiresMfa,
-          hasToken: !!authState.token,
-          user: authState.user?.id,
+      // 추가 검증: 길이 및 숫자 형식
+      if (codeToVerify.length !== OTP_LENGTH) {
+        console.error('[MFA Debug] OTP length mismatch', {
+          length: codeToVerify.length,
+          expected: OTP_LENGTH,
         })
-        
-        // 상태 업데이트가 완료될 때까지 약간의 지연
-        await new Promise(resolve => setTimeout(resolve, 200))
-        
-        // 다시 한 번 상태 확인
-        const authStateAfterDelay = useAuthStore.getState()
-        console.log('[MFA Debug] Auth state after delay', {
-          isAuthenticated: authStateAfterDelay.isAuthenticated,
-          requiresMfa: authStateAfterDelay.requiresMfa,
-          hasToken: !!authStateAfterDelay.token,
-        })
-        
-        message.success(MESSAGES.success.authenticated)
-        
-        // form이 연결되어 있을 때만 resetFields 호출
-        try {
-          form.resetFields()
-        } catch {
-          // form이 연결되지 않은 경우 무시
-          console.debug('Form not connected, skipping resetFields')
-        }
-        setOtpCode('')
-      } else {
-        // 검증 실패 시 Form에 에러 설정
-        console.error('[MFA Debug] OTP verification failed')
         try {
           form.setFields([
             {
               name: 'otpCode',
-              errors: ['인증번호가 올바르지 않습니다.'],
+              errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`],
+            },
+          ])
+        } catch {
+          msg.error(`인증번호는 ${OTP_LENGTH}자리입니다.`)
+        }
+        return
+      }
+
+      if (!/^\d+$/.test(codeToVerify)) {
+        console.error('[MFA Debug] OTP format invalid', { codeToVerify })
+        try {
+          form.setFields([
+            {
+              name: 'otpCode',
+              errors: ['인증번호는 숫자만 입력 가능합니다.'],
+            },
+          ])
+        } catch {
+          msg.error('인증번호는 숫자만 입력 가능합니다.')
+        }
+        return
+      }
+
+      console.log('[MFA Debug] Starting OTP verification', {
+        userId: user.id,
+        otpCode: codeToVerify,
+      })
+
+      try {
+        const verified = await verifyOtpCode({
+          userId: user.id,
+          otpCode: codeToVerify,
+        })
+
+        console.log('[MFA Debug] OTP verification result', { verified })
+
+        if (verified) {
+          console.log('[MFA Debug] OTP verified, completing MFA')
+
+          // MFA 완료 처리: 먼저 useMfa의 상태 업데이트
+          completeMfa()
+          console.log('[MFA Debug] completeMfa called')
+
+          // auth-store의 상태 업데이트 (토큰 생성 및 인증 완료)
+          setMfaVerified()
+          console.log('[MFA Debug] setMfaVerified called')
+
+          // 상태 업데이트 확인
+          const authState = useAuthStore.getState()
+          console.log('[MFA Debug] Auth state after setMfaVerified', {
+            isAuthenticated: authState.isAuthenticated,
+            requiresMfa: authState.requiresMfa,
+            hasToken: !!authState.token,
+            user: authState.user?.id,
+          })
+
+          // 상태 업데이트가 완료될 때까지 약간의 지연
+          await new Promise(resolve => setTimeout(resolve, 200))
+
+          // 다시 한 번 상태 확인
+          const authStateAfterDelay = useAuthStore.getState()
+          console.log('[MFA Debug] Auth state after delay', {
+            isAuthenticated: authStateAfterDelay.isAuthenticated,
+            requiresMfa: authStateAfterDelay.requiresMfa,
+            hasToken: !!authStateAfterDelay.token,
+          })
+
+          msg.success(MESSAGES.success.authenticated)
+
+          // form이 연결되어 있을 때만 resetFields 호출
+          try {
+            form.resetFields()
+          } catch {
+            // form이 연결되지 않은 경우 무시
+            console.debug('Form not connected, skipping resetFields')
+          }
+          setOtpCode('')
+        } else {
+          // 검증 실패 시 Form에 에러 설정
+          console.error('[MFA Debug] OTP verification failed')
+          try {
+            form.setFields([
+              {
+                name: 'otpCode',
+                errors: ['인증번호가 올바르지 않습니다.'],
+              },
+            ])
+            form.setFieldsValue({ otpCode: '' })
+          } catch {
+            // form이 연결되지 않은 경우 무시
+            console.debug('Form not connected, skipping setFieldsValue')
+            msg.error('인증번호가 올바르지 않습니다.')
+          }
+          setOtpCode('')
+        }
+      } catch (error: any) {
+        // 에러 메시지를 Form에 설정하여 중앙 정렬된 에러 메시지 표시
+        console.error('[MFA Debug] OTP verification error', error)
+        try {
+          form.setFields([
+            {
+              name: 'otpCode',
+              errors: [error.message || '인증에 실패했습니다.'],
             },
           ])
           form.setFieldsValue({ otpCode: '' })
         } catch {
-          // form이 연결되지 않은 경우 무시
-          console.debug('Form not connected, skipping setFieldsValue')
-          msg.error('인증번호가 올바르지 않습니다.')
+          // form이 연결되지 않은 경우 message로만 표시
+          msg.error(error.message || '인증에 실패했습니다.')
         }
         setOtpCode('')
       }
-    } catch (error: any) {
-      // 에러 메시지를 Form에 설정하여 중앙 정렬된 에러 메시지 표시
-      console.error('[MFA Debug] OTP verification error', error)
-      try {
-        form.setFields([
-          {
-            name: 'otpCode',
-            errors: [error.message || '인증에 실패했습니다.'],
-          },
-        ])
-        form.setFieldsValue({ otpCode: '' })
-      } catch {
-        // form이 연결되지 않은 경우 message로만 표시
-        message.error(error.message || '인증에 실패했습니다.')
-      }
-      setOtpCode('')
-    }
-  }, [user, verifyOtpCode, completeMfa, setMfaVerified, form, msg])
+    },
+    [user, verifyOtpCode, completeMfa, setMfaVerified, form, msg]
+  )
 
   // handleVerify를 verifyAndComplete를 사용하도록 수정
-  const handleVerifyRefactored = useCallback(async (values?: { otpCode?: string }) => {
-    console.log('[MFA Debug] handleVerify called', { 
-      values,
-      otpCode,
-      formValues: form.getFieldsValue(),
-    })
+  const handleVerifyRefactored = useCallback(
+    async (values?: { otpCode?: string }) => {
+      console.log('[MFA Debug] handleVerify called', {
+        values,
+        otpCode,
+        formValues: form.getFieldsValue(),
+      })
 
-    if (!user) {
-      console.error('[MFA Debug] No user found')
-      msg.error('사용자 정보를 찾을 수 없습니다.')
-      return
-    }
-
-    // Form 검증 먼저 수행
-    try {
-      await form.validateFields(['otpCode'])
-      // 검증 성공 시 form에서 최신 값 가져오기
-      const formValues = form.getFieldsValue()
-      const finalCode = formValues.otpCode || values?.otpCode || otpCode
-      
-      console.log('[MFA Debug] Form validation passed', { finalCode, formValues })
-      
-      if (!finalCode) {
-        console.error('[MFA Debug] No OTP code after validation')
+      if (!user) {
+        console.error('[MFA Debug] No user found')
+        msg.error('사용자 정보를 찾을 수 없습니다.')
         return
       }
-      
-      // 최신 코드로 업데이트
-      setOtpCode(finalCode)
-      
-      // 검증 로직 계속 진행
-      await verifyAndComplete(finalCode)
-    } catch (error) {
-      // Form 검증 실패 시 에러 메시지는 Form.Item에서 표시됨
-      console.error('[MFA Debug] Form validation failed', error)
-      return
-    }
-  }, [user, otpCode, form, verifyAndComplete, setOtpCode, msg])
+
+      // Form 검증 먼저 수행
+      try {
+        await form.validateFields(['otpCode'])
+        // 검증 성공 시 form에서 최신 값 가져오기
+        const formValues = form.getFieldsValue()
+        const finalCode = formValues.otpCode || values?.otpCode || otpCode
+
+        console.log('[MFA Debug] Form validation passed', { finalCode, formValues })
+
+        if (!finalCode) {
+          console.error('[MFA Debug] No OTP code after validation')
+          return
+        }
+
+        // 최신 코드로 업데이트
+        setOtpCode(finalCode)
+
+        // 검증 로직 계속 진행
+        await verifyAndComplete(finalCode)
+      } catch (error) {
+        // Form 검증 실패 시 에러 메시지는 Form.Item에서 표시됨
+        console.error('[MFA Debug] Form validation failed', error)
+        return
+      }
+    },
+    [user, otpCode, form, verifyAndComplete, setOtpCode, msg]
+  )
 
   const handleResend = useCallback(async () => {
     if (!canResend) {
@@ -318,9 +347,8 @@ export function useMfaVerification({ open, messageApi }: UseMfaVerificationOptio
   }, [canResend, resendCooldownSeconds, handleSendOtp])
 
   // 잠금 상태 메시지 (lockUntil 기반)
-  const lockMessage = isLocked && lockUntil
-    ? `인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.`
-    : null
+  const lockMessage =
+    isLocked && lockUntil ? `인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.` : null
 
   return {
     form,
