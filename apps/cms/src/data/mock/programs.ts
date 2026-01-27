@@ -19,9 +19,15 @@ const getDate = (daysAgo: number): string => {
   return date.toISOString()
 }
 
-// 교육 월을 날짜로 변환 (2025년 기준)
-const getDateFromMonth = (month: number): string => {
-  const date = new Date(2025, month - 1, 1)
+// 교육 월을 날짜로 변환 (2026년 기준)
+// 1월의 경우 일부는 25일부터 시작하여 27일, 28일 테스트 가능
+const getDateFromMonth = (month: number, index?: number): string => {
+  // 1월이고 짝수 인덱스면 25일부터 시작 (캘린더 뷰 테스트용)
+  if (month === 1 && index !== undefined && index % 2 === 0) {
+    const date = new Date(2026, 0, 25)
+    return date.toISOString()
+  }
+  const date = new Date(2026, month - 1, 1)
   return date.toISOString()
 }
 
@@ -1182,7 +1188,7 @@ updateSponsors()
 export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const sponsorId = findSponsorId(record.sponsorNameKr)
   const schoolId = findSchoolId(record.schoolName)
-  const startDate = getDateFromMonth(record.month)
+  const startDate = getDateFromMonth(record.month, index)
   const endDate = new Date(startDate)
   endDate.setMonth(endDate.getMonth() + 1)
 

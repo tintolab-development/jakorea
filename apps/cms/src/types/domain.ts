@@ -336,6 +336,7 @@ export interface PerformanceStats {
   id: UUID
   programId: UUID
   programName: string
+  sponsorId?: UUID
   period: {
     startDate: DateValue
     endDate: DateValue
@@ -350,6 +351,11 @@ export interface PerformanceStats {
     totalSettlementAmount: number
     satisfactionScore: number
   }
+  businessArea?: string
+  ips?: string
+  targetLevel?: string
+  institutionType?: string
+  region?: string
   createdAt: DateValue
   updatedAt: DateValue
 }
