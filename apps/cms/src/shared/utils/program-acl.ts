@@ -82,9 +82,9 @@ export function canAccessProgram(
     return true
   }
 
-  // PARTNER는 VIEW만 가능
-  if (programRole === 'PARTNER' && action === 'VIEW') {
-    return true
+  // PARTNER는 DOWNLOAD, EDIT 액션에 접근 불가
+  if (programRole === 'PARTNER') {
+    return false
   }
 
   return false

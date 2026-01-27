@@ -61,7 +61,7 @@ export function ApplicationFormModal({
       onSuccess?.()
     } catch (error) {
       handleError(error, {
-        defaultMessage: MESSAGES.error.applicationRegisterFailed,
+        defaultMessage: MESSAGES.error.applicationFailed,
         context: 'ApplicationFormModal -> handleSubmit',
       })
       throw error // ApplicationForm에서 에러 처리

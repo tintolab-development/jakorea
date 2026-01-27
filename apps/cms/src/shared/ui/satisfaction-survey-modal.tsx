@@ -5,6 +5,7 @@
 import { Modal, Form, Rate, Input, Button, message } from 'antd'
 import { FormOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
+import { MESSAGES } from '@/shared/constants'
 import type { MyProgram } from '@/entities/program/api/instructor-program-service'
 import dayjs from 'dayjs'
 
@@ -93,7 +94,8 @@ export function SatisfactionSurveyModal({
     >
       {existingRecord && (
         <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-          이전에 제출한 만족도 조사가 있습니다. ({dayjs(existingRecord.submittedAt).format('YYYY-MM-DD HH:mm')})
+          이전에 제출한 만족도 조사가 있습니다. (
+          {dayjs(existingRecord.submittedAt).format('YYYY-MM-DD HH:mm')})
         </div>
       )}
 
@@ -131,15 +133,30 @@ export function SatisfactionSurveyModal({
         </Form.Item>
 
         <Form.Item label="장점" name="strengths">
-          <TextArea rows={3} placeholder="이 프로그램의 장점을 입력해주세요" maxLength={500} showCount />
+          <TextArea
+            rows={3}
+            placeholder="이 프로그램의 장점을 입력해주세요"
+            maxLength={500}
+            showCount
+          />
         </Form.Item>
 
         <Form.Item label="개선사항" name="improvements">
-          <TextArea rows={3} placeholder="개선이 필요한 부분을 입력해주세요" maxLength={500} showCount />
+          <TextArea
+            rows={3}
+            placeholder="개선이 필요한 부분을 입력해주세요"
+            maxLength={500}
+            showCount
+          />
         </Form.Item>
 
         <Form.Item label="추가 의견" name="additionalComments">
-          <TextArea rows={4} placeholder="기타 의견이나 제안사항을 입력해주세요" maxLength={1000} showCount />
+          <TextArea
+            rows={4}
+            placeholder="기타 의견이나 제안사항을 입력해주세요"
+            maxLength={1000}
+            showCount
+          />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>

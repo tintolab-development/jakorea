@@ -58,7 +58,8 @@ export const MESSAGES = {
     categoryDeleted: '카테고리가 삭제되었습니다.',
     categoryUpdated: '카테고리가 수정되었습니다.',
     categoryCreated: '새 카테고리가 등록되었습니다.',
-    importantNoticeToggled: (enabled: boolean) => `중요 공지 설정이 ${enabled ? '활성화' : '해제'}되었습니다.`,
+    importantNoticeToggled: (enabled: boolean) =>
+      `중요 공지 설정이 ${enabled ? '활성화' : '해제'}되었습니다.`,
     applicationCompleted: '신청이 완료되었습니다.',
     profileUpdated: '개인정보가 수정되었습니다.',
     inquirySubmitted: '문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.',
@@ -185,6 +186,9 @@ export const MESSAGES = {
     participantListLoadFailed: '참여자 목록을 불러오는데 실패했습니다.',
     instructorListLoadFailed: '강사 목록을 불러오는데 실패했습니다.',
     interviewListLoadFailed: '면접 목록을 불러오는데 실패했습니다.',
+    interviewScheduleRegisterFailed: '면접 일정 등록에 실패했습니다.',
+    programNotFound: '프로그램을 찾을 수 없습니다.',
+    programLoadFailed: '프로그램 정보를 불러오는 중 오류가 발생했습니다.',
     manualAssignmentFailed: '추가 배정 중 오류가 발생했습니다.',
   },
   warning: {
@@ -218,6 +222,9 @@ export const MESSAGES = {
     cannotRollbackStatus: '이전 단계로 되돌릴 수 없는 상태입니다.',
     needAtLeastTwoVolunteers: '매칭할 봉사자가 2명 이상 필요합니다.',
     noMatchingCombination: '매칭 가능한 조합이 없습니다. 옵션을 조정해주세요.',
+    transferListDownloadOwnerOnly: '이체리스트 다운로드는 OWNER 권한에서만 가능합니다.',
+    passwordMinLength: '암호는 최소 8자 이상이어야 합니다.',
+    passwordMismatch: '암호 확인이 일치하지 않습니다.',
   },
   confirm: {
     delete: '정말 삭제하시겠습니까?',
@@ -226,7 +233,8 @@ export const MESSAGES = {
     submit: '제출하시겠습니까?',
     approve: '승인하시겠습니까?',
     reject: '거절하시겠습니까?',
-    scheduleConflict: (count: number) => `${count}개의 일정과 시간이 겹칩니다. 계속 진행하시겠습니까?`,
+    scheduleConflict: (count: number) =>
+      `${count}개의 일정과 시간이 겹칩니다. 계속 진행하시겠습니까?`,
   },
   info: {
     noData: '데이터가 없습니다.',
@@ -238,14 +246,19 @@ export const MESSAGES = {
     fileDownloadComingSoon: '파일 다운로드 기능은 준비 중입니다.',
     downloadLinkComingSoon: '다운로드 링크는 추후 실제 파일 스토리지 연동 시 활성화됩니다.',
     detailViewComingSoon: '상세 보기 기능은 추후 구현 예정입니다.',
-    permissionRequestApprovedWithExpiry: (expiresAt: string) => `권한 요청이 승인되었습니다. 임시 권한이 부여되었습니다. (만료: ${expiresAt})`,
-    faqDescription: '자주 묻는 질문들을 모아두었습니다. 원하는 정보를 찾지 못하셨다면 1:1 문의를 이용해주세요.',
+    permissionRequestApprovedWithExpiry: (expiresAt: string) =>
+      `권한 요청이 승인되었습니다. 임시 권한이 부여되었습니다. (만료: ${expiresAt})`,
+    faqDescription:
+      '자주 묻는 질문들을 모아두었습니다. 원하는 정보를 찾지 못하셨다면 1:1 문의를 이용해주세요.',
     faqSearchTitle: '무엇을 도와드릴까요?',
     noSearchResults: '검색 결과가 없습니다.',
+    noTransferListData: '다운로드할 이체리스트 데이터가 없습니다.',
   },
   application: {
-    waitingDescription: '이 신청은 대기 목록에 있습니다. 프로그램 정원에 여유가 생기면 자동으로 확정됩니다.',
-    reviewingDescription: '현재 검토 중인 신청입니다. 검토를 완료하고 확정 또는 거절 처리를 진행해주세요.',
+    waitingDescription:
+      '이 신청은 대기 목록에 있습니다. 프로그램 정원에 여유가 생기면 자동으로 확정됩니다.',
+    reviewingDescription:
+      '현재 검토 중인 신청입니다. 검토를 완료하고 확정 또는 거절 처리를 진행해주세요.',
     submittedDescription: '접수된 신청입니다. 검토를 시작해주세요.',
     finalStatusDescription: '최종 처리된 신청입니다.',
   },
@@ -265,7 +278,8 @@ export const MESSAGES = {
     emailRequired: '이메일을 입력해주세요.',
     passwordRequired: '비밀번호를 입력해주세요.',
     passwordConfirmRequired: '비밀번호 확인을 입력해주세요.',
-    numberRange: (min: number, max: string | number) => `${min} 이상 ${max} 이하의 값을 입력해주세요.`,
+    numberRange: (min: number, max: string | number) =>
+      `${min} 이상 ${max} 이하의 값을 입력해주세요.`,
     programNameRequired: '프로그램명을 입력해주세요.',
     periodRequired: '진행 기간을 선택해주세요.',
     targetRequired: '수강 대상을 선택해주세요.',
