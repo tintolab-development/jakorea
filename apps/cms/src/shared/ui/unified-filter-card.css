@@ -1,0 +1,52 @@
+/**
+ * 통일된 필터 카드 스타일
+ */
+
+.unified-filter-card {
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.unified-filter-card {
+  width: 100%;
+}
+
+.unified-filter-card__row {
+  width: 100%;
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.unified-filter-card .ant-card-body {
+  padding: 16px;
+  width: 100%;
+}
+
+/* 필터 필드들이 화면 너비에 맞게 확장되도록 */
+.unified-filter-card__row .ant-col {
+  min-width: 0;
+}
+
+/* select 필드 최소 너비 */
+.unified-filter-card__row .ant-col .unified-filter-card__field {
+  min-width: 120px;
+}
+
+/* dateRange 필드 최소 너비 */
+.unified-filter-card__row .ant-col .ant-picker-range {
+  min-width: 240px;
+}
+
+.unified-filter-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unified-filter-card__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  margin-bottom: 0;
+}
