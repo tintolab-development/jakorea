@@ -4,9 +4,15 @@
  * 프로그램 등록을 모달로 변경
  */
 
-import { useState, useEffect, useMemo } from 'react'
-import { Modal, Tabs } from 'antd'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Modal, Tabs, Button, Input } from 'antd'
+import {
+  CalendarOutlined,
+  SearchOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
+import { useSearchParams } from 'react-router-dom'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { ProgramForm } from '@/features/program/ui/program-form'
 import { useProgramStore } from '@/features/program/model/program-store'
@@ -45,6 +51,7 @@ export function ProgramListPage() {
   const { user } = authStore
   const location = useLocation()
   const { params, setParam } = useQueryParams<ProgramListQueryParams>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const {
     programs,
     loading,
@@ -79,6 +86,55 @@ export function ProgramListPage() {
 
   const [formLoading, setFormLoading] = useState(false)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  
+  // 뷰 모드를 쿼리 파라미터로 관리
+  const viewModeFromUrl = searchParams.get('viewMode') as 'list' | 'calendar' | null
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(
+    viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
+  )
+  
+  // URL에서 뷰 모드 읽어오기 (초기화 및 뒤로가기 대응)
+  useEffect(() => {
+    const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
+    if (urlViewMode === 'list' || urlViewMode === 'calendar') {
+      setViewMode(urlViewMode)
+    }
+  }, [searchParams])
+
+  // 검색 인풋 로컬 상태 (한글 IME 조합 문제 해결)
+  const [searchInputValue, setSearchInputValue] = useState(() => searchParams.get('title') || '')
+  const isInternalUpdate = useRef(false)
+
+  // 로컬 상태 -> URL 파라미터 동기화 (debounce)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const currentUrlTitle = searchParams.get('title') || ''
+      const trimmedValue = searchInputValue.trim()
+
+      if (trimmedValue !== currentUrlTitle) {
+        isInternalUpdate.current = true
+        const nextParams = new URLSearchParams(searchParams)
+        if (trimmedValue) {
+          nextParams.set('title', trimmedValue)
+        } else {
+          nextParams.delete('title')
+        }
+        setSearchParams(nextParams, { replace: true })
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchInputValue])
+
+  // URL 파라미터 -> 로컬 상태 동기화 (외부 변경만, 예: 뒤로가기)
+  useEffect(() => {
+    if (isInternalUpdate.current) {
+      isInternalUpdate.current = false
+      return
+    }
+    const urlTitle = searchParams.get('title') || ''
+    setSearchInputValue(urlTitle)
+  }, [searchParams])
 
   // 관리자만 프로그램 등록 가능
   const isAdmin = user?.role === 'ADMIN'
@@ -467,6 +523,46 @@ export function ProgramListPage() {
         </div>
       )}
 
+      {/* 위젯 디바이더 아래 버튼 영역 (교육 프로그램만) */}
+      {isAdmin && programType === 'education' && (
+        <div className="program-list-header-actions">
+          <div className="program-list-header-title">
+            <span className="program-list-header-title-text">전체 프로그램</span>
+            <span className="program-list-header-title-count">총 {filteredPrograms.length}건</span>
+          </div>
+          <div className="program-list-header-buttons">
+            <Input
+              placeholder="검색어를 입력하세요"
+              value={searchInputValue}
+              onChange={e => setSearchInputValue(e.target.value)}
+              prefix={<SearchOutlined />}
+              allowClear
+              style={{ width: 300 }}
+            />
+            <Button
+              type="default"
+              icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+              onClick={() => {
+                const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
+                setViewMode(newViewMode)
+                // URL 쿼리 파라미터 업데이트
+                const nextParams = new URLSearchParams(searchParams)
+                nextParams.set('viewMode', newViewMode)
+                setSearchParams(nextParams, { replace: true })
+              }}
+              className="program-view-mode-button"
+            >
+              {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
+            </Button>
+            {showEducationActions && (
+              <Button type="primary" onClick={handleNewClick}>
+                프로그램 신규 등록
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 강사용: 개인/단체 탭 */}
       {isUserRole && !isAdmin && (
         <Tabs
@@ -505,6 +601,14 @@ export function ProgramListPage() {
         onChangeStatus={showEducationActions ? handleStatusChange : undefined}
         showCalendarView={isAdmin && programType === 'education'}
         onCreateNew={showEducationActions ? handleNewClick : undefined}
+        viewMode={viewMode}
+        onViewModeChange={(mode) => {
+          setViewMode(mode)
+          // URL 쿼리 파라미터 업데이트
+          const nextParams = new URLSearchParams(searchParams)
+          nextParams.set('viewMode', mode)
+          setSearchParams(nextParams, { replace: true })
+        }}
       />
 
       <ProgramDetailDrawer

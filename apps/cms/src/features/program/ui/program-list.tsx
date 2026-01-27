@@ -5,7 +5,6 @@
 
 import {
   Table,
-  Input,
   Select,
   Button,
   Space,
@@ -14,12 +13,9 @@ import {
   Image,
   Tag,
   Card,
-  Row,
-  Col,
 } from 'antd'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { message } from 'antd'
 import type { MenuProps } from 'antd'
 import {
@@ -29,9 +25,6 @@ import {
   EyeOutlined,
   HeartOutlined,
   HeartFilled,
-  CalendarOutlined,
-  TableOutlined,
-  SearchOutlined,
 } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -170,10 +163,10 @@ export function ProgramList({
   onChangeStatus,
   showFavorite = false,
   showCalendarView = false,
-  onCreateNew,
-  tableTitle = '전체 프로그램',
+  onCreateNew: _onCreateNew,
+  tableTitle: _tableTitle = '전체 프로그램',
   viewMode: externalViewMode,
-  onViewModeChange,
+  onViewModeChange: _onViewModeChange,
 }: ProgramListProps) {
   const { user } = useAuthStore()
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
@@ -337,9 +330,8 @@ export function ProgramList({
   // 외부에서 selectedRowKeys를 관리하는 경우를 위해 내부 상태도 유지
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
   // 뷰 모드: 외부에서 제어되면 그것을 사용, 아니면 내부 상태 사용
-  const [internalViewMode, setInternalViewMode] = useState<'list' | 'calendar'>('list')
+  const [internalViewMode] = useState<'list' | 'calendar'>('list')
   const viewMode = externalViewMode ?? internalViewMode
-  const setViewMode: (mode: 'list' | 'calendar') => void = onViewModeChange ?? setInternalViewMode
   const studentFiltersInitialized = useRef(false)
 
   // 관리자용: Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)

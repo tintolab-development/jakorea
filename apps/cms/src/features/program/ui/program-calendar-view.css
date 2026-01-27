@@ -50,6 +50,8 @@
   font-size: 20px;
   font-weight: 600;
   color: #262626;
+  min-width: 220px;
+  text-align: left;
 }
 
 .program-calendar-today-btn {

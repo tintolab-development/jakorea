@@ -8,15 +8,13 @@
  * - 필터 조건은 스토어에 저장, 결과는 selector로 계산
  */
 
-import { useMemo, useEffect, useCallback, useRef } from 'react'
-import { Space } from 'antd'
-import { useLocation } from 'react-router-dom'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
-import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { MESSAGES } from '@/shared/constants'
 import {
   useUserStore,
@@ -31,11 +29,9 @@ interface UserListQueryParams extends Record<string, string | undefined> {
   id?: string
 }
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import './user-list-page.css'
 
 export function UserListPage() {
-  const location = useLocation()
   const { params, setParam } = useQueryParams<UserListQueryParams>()
 
   // 스토어에서 필요한 데이터만 선택적으로 구독
@@ -48,9 +44,6 @@ export function UserListPage() {
   const setSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const setFilters = useUserStore(state => state.setFilters)
   const clearSelectedUserId = useUserStore(state => state.setSelectedUserId)
-
-  // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '회원 관리'
 
   // Drawer 상태 관리 (useModalState 사용)
   const {
@@ -70,37 +63,31 @@ export function UserListPage() {
   // 이전 필터 값을 추적하여 불필요한 업데이트 방지
   const prevFiltersRef = useRef<{ role?: UserRole; search?: string }>({})
 
-  // 쿼리 파라미터에서 필터 값 읽기
-  const roleFilter = useMemo(() => {
-    return (params.role || 'ALL') as UserRole | 'ALL'
-  }, [params.role])
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    search: params.search || '',
+    role: (params.role || 'ALL') as UserRole | 'ALL',
+  })
 
-  const searchQuery = useMemo(() => {
-    return params.search || ''
-  }, [params.search])
-
-  // 필터 조건을 스토어에 동기화 (실제 변경이 있을 때만)
+  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
   useEffect(() => {
+    setPendingFilters({
+      search: params.search || '',
+      role: (params.role || 'ALL') as UserRole | 'ALL',
+    })
+  }, [params.search, params.role])
+
+  // 필터 조건을 스토어에 동기화 (조회 버튼 클릭 시)
+  const applyFilters = useCallback(() => {
     const newFilters: { role?: UserRole; search?: string } = {}
-    if (roleFilter !== 'ALL') {
-      newFilters.role = roleFilter
+    if (pendingFilters.role !== 'ALL') {
+      newFilters.role = pendingFilters.role
     }
-    if (searchQuery) {
-      newFilters.search = searchQuery
+    if (pendingFilters.search) {
+      newFilters.search = pendingFilters.search
     }
-
-    // 이전 필터와 비교하여 실제로 변경된 경우에만 업데이트
-    const prevRole = prevFiltersRef.current.role
-    const prevSearch = prevFiltersRef.current.search
-    const newRole = newFilters.role
-    const newSearch = newFilters.search
-
-    // 값이 실제로 다를 때만 업데이트
-    if (prevRole !== newRole || prevSearch !== newSearch) {
-      prevFiltersRef.current = newFilters
-      setFilters(newFilters)
-    }
-  }, [roleFilter, searchQuery, setFilters])
+    setFilters(newFilters)
+  }, [pendingFilters, setFilters])
 
   // 필터된 사용자 ID 목록 (selector로 계산, useMemo로 메모이제이션)
   const filteredUserIds = useMemo(() => {
@@ -119,35 +106,42 @@ export function UserListPage() {
   const loadUsers = useCallback(async () => {
     try {
       const filters: { role?: UserRole; search?: string } = {}
-      if (roleFilter !== 'ALL') {
-        filters.role = roleFilter
+      if (pendingFilters.role !== 'ALL') {
+        filters.role = pendingFilters.role
       }
-      if (searchQuery) {
-        filters.search = searchQuery
+      if (pendingFilters.search) {
+        filters.search = pendingFilters.search
       }
       await fetchUsers(filters)
     } catch (error) {
       handleError(error, { defaultMessage: MESSAGES.error.userListLoadFailed })
     }
-  }, [fetchUsers, roleFilter, searchQuery])
+  }, [fetchUsers, pendingFilters])
 
-  // 페이지 로드 시 및 필터 변경 시 데이터 불러오기
+  // 조회 버튼 클릭 시 필터 적용 및 데이터 로드
+  const handleSearch = () => {
+    setParam('search', pendingFilters.search || null)
+    setParam('role', pendingFilters.role === 'ALL' ? null : pendingFilters.role)
+    applyFilters()
+    loadUsers()
+  }
+
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setPendingFilters({
+      search: '',
+      role: 'ALL',
+    })
+    setParam('search', null)
+    setParam('role', null)
+    setFilters({})
+    loadUsers()
+  }
+
+  // 페이지 로드 시 초기 데이터 불러오기
   useEffect(() => {
     loadUsers()
-  }, [loadUsers])
-
-  // 필터 변경 핸들러
-  const handleRoleFilterChange = (value: UserRole | 'ALL') => {
-    if (value === 'ALL') {
-      setParam('role', null)
-    } else {
-      setParam('role', value)
-    }
-  }
-
-  const handleSearch = (value: string) => {
-    setParam('search', value || null)
-  }
+  }, [])
 
   // 사용자 상세 보기
   const handleView = (user: Omit<User, 'password'>) => {
@@ -181,11 +175,11 @@ export function UserListPage() {
 
       // 목록 새로고침 (필터 조건 유지)
       const currentFilters: { role?: UserRole; search?: string } = {}
-      if (roleFilter !== 'ALL') {
-        currentFilters.role = roleFilter
+      if (filters.role) {
+        currentFilters.role = filters.role
       }
-      if (searchQuery) {
-        currentFilters.search = searchQuery
+      if (filters.search) {
+        currentFilters.search = filters.search
       }
       await fetchUsers(currentFilters)
     } catch (error) {
@@ -199,24 +193,19 @@ export function UserListPage() {
 
   return (
     <div>
-      <Space className="user-list-header">
-        <h1 className="user-list-title">{categoryName}</h1>
-      </Space>
-
-      <ListPageFilters
-        filters={{ role: roleFilter === 'ALL' ? undefined : roleFilter }}
-        onFilterChange={(key, value) => {
-          if (key === 'role') {
-            handleRoleFilterChange(value || 'ALL')
-          }
-        }}
-        searchValue={searchQuery}
-        onSearchChange={handleSearch}
-        searchPlaceholder="이름 또는 이메일 검색"
-        filterConfig={[
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'search',
+            type: 'search',
+            label: '이름/이메일',
+            placeholder: '이름 또는 이메일을 입력하세요',
+          },
           {
             key: 'role',
             type: 'select',
+            label: '권한',
+            placeholder: '전체',
             options: [
               { label: '전체', value: 'ALL' },
               { label: '관리자', value: 'ADMIN' },
@@ -224,10 +213,15 @@ export function UserListPage() {
               { label: '개인(참여자)', value: 'INDIVIDUAL' },
               { label: '학교', value: 'SCHOOL' },
             ],
-            placeholder: '권한 필터',
           },
         ]}
-        extra={<button onClick={loadUsers}>새로고침</button>}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+        loading={loading}
       />
 
       <UserList data={filteredUsers} loading={loading} onView={handleView} onEdit={handleEdit} />
