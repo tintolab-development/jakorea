@@ -21,7 +21,7 @@ export interface Notification {
 /**
  * 알림 목록 조회
  */
- 
+
 export async function getNotifications(
   _userId?: UUID,
   userRole: UserRole = 'INDIVIDUAL'
@@ -74,8 +74,71 @@ export async function getNotifications(
         '정산 승인 대기',
         '정산 승인 대기 건이 있습니다.',
         '/settlements',
+        false,
+        6
+      ),
+      createNotification(
+        'notif-admin-4',
+        'matching',
+        '매칭 완료',
+        '새로운 강사 매칭이 완료되었습니다.',
+        '/instructors',
+        false,
+        8
+      ),
+      createNotification(
+        'notif-admin-5',
+        'system',
+        '시스템 알림',
+        '프로그램 신청 마감일이 다가옵니다.',
+        '/programs',
+        false,
+        12
+      ),
+      createNotification(
+        'notif-admin-6',
+        'settlement',
+        '정산 요청',
+        '새로운 정산 신청이 접수되었습니다.',
+        '/settlements',
+        false,
+        15
+      ),
+      createNotification(
+        'notif-admin-7',
+        'matching',
+        '매칭 요청',
+        '학교 프로그램 매칭 요청이 들어왔습니다.',
+        '/programs',
+        false,
+        18
+      ),
+      createNotification(
+        'notif-admin-8',
+        'system',
+        '시스템 알림',
+        '월간 리포트가 생성되었습니다.',
+        '/dashboard',
         true,
-        20
+        24
+      ),
+      createNotification(
+        'notif-admin-9',
+        'settlement',
+        '정산 완료',
+        '정산 승인이 완료되었습니다.',
+        '/settlements',
+        true,
+        30
+      ),
+      createNotification(
+        'notif-admin-10',
+        'matching',
+        '매칭 알림',
+        '봉사자 매칭 상태가 변경되었습니다.',
+        '/volunteers',
+        true,
+        36
       ),
     ],
     INSTRUCTOR: [
@@ -195,4 +258,3 @@ export async function deleteNotification(_notificationId?: UUID): Promise<void> 
   await new Promise(resolve => setTimeout(resolve, 100))
   // Mock: 실제로는 API 호출
 }
-

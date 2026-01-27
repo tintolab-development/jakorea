@@ -56,6 +56,7 @@ export function CustomerInquiryStatusWidget() {
             {inquiryStats.answered}건
           </Text>
         </div>
+        <div className="customer-inquiry-status-widget__divider" role="separator" />
         <div className="customer-inquiry-status-widget__stat-card customer-inquiry-status-widget__stat-card--total">
           <Text className="customer-inquiry-status-widget__stat-label">전체 Q&A</Text>
           <Text className="customer-inquiry-status-widget__stat-count">{inquiryStats.total}건</Text>

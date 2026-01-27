@@ -1,18 +1,13 @@
 /**
  * 알림 데이터 처리 훅
- * - Mock 기반 데이터 로딩
- * - 읽음/삭제/전체 읽음 처리
+ * - 전역 알림 스토어 사용
+ * - 헤더 모달과 위젯 간 상태 동기화
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  deleteNotification,
-  getNotifications,
-  markAllNotificationsAsRead,
-  markNotificationAsRead,
-  type Notification,
-} from '../api/notification-service'
+import { useNotificationStore } from '../model/notification-store'
+import type { Notification } from '../api/notification-service'
 
 interface UseNotificationsResult {
   notifications: Notification[]
@@ -26,48 +21,25 @@ interface UseNotificationsResult {
 
 export function useNotifications(): UseNotificationsResult {
   const { user } = useAuthStore()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(false)
+  const {
+    notifications,
+    loading,
+    fetchNotifications,
+    markAsRead,
+    removeNotification,
+    markAllAsRead,
+    refresh,
+  } = useNotificationStore()
 
-  const refresh = useCallback(async () => {
-    if (!user?.id) return
-
-    setLoading(true)
-    try {
-      const data = await getNotifications(user.id, user.role)
-      setNotifications(data)
-    } catch (error) {
-      console.error('알림 로드 실패:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [user?.id, user?.role])
-
+  // 사용자 변경 시 알림 로드
   useEffect(() => {
     if (user?.id) {
-      refresh()
+      fetchNotifications()
+    } else {
+      // 사용자가 없으면 알림 초기화
+      useNotificationStore.setState({ notifications: [] })
     }
-  }, [refresh, user?.id])
-
-  const markAsRead = useCallback(async (notificationId: string) => {
-    await markNotificationAsRead(notificationId)
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === notificationId ? { ...notification, read: true } : notification
-      )
-    )
-  }, [])
-
-  const removeNotification = useCallback(async (notificationId: string) => {
-    await deleteNotification(notificationId)
-    setNotifications(prev => prev.filter(notification => notification.id !== notificationId))
-  }, [])
-
-  const markAllAsRead = useCallback(async () => {
-    if (!user?.id) return
-
-    await markAllNotificationsAsRead(user.id)
-    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   const unreadCount = useMemo(

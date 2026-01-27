@@ -96,6 +96,8 @@ export function NotificationWidget() {
   }
 
   const displayNotifications = notifications.filter(n => !n.read).slice(0, 10) // 읽지 않은 알림만 최대 10개 표시
+  const hasMoreNotifications =
+    notifications.length > displayNotifications.length || notifications.some(n => n.read)
 
   return (
     <>
@@ -114,7 +116,7 @@ export function NotificationWidget() {
                 </Text>
               )}
             </Space>
-            {notifications.length > displayNotifications.length && (
+            {hasMoreNotifications && (
               <Button
                 type="link"
                 size="small"

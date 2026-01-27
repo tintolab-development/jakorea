@@ -10,8 +10,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { searchInstructorContent, searchAdminContent } from '../api/search-service'
 
-const { Search } = Input
-
 interface GlobalSearchProps {
   placeholder?: string
   style?: React.CSSProperties
@@ -30,7 +28,7 @@ export function GlobalSearch({ placeholder = '프로그램, 일정 검색...', s
 
     try {
       let results
-      
+
       // 관리자인 경우 전체 검색
       if (user?.role === 'ADMIN') {
         results = await searchAdminContent(value)
@@ -125,10 +123,10 @@ export function GlobalSearch({ placeholder = '프로그램, 일정 검색...', s
       onSearch={handleSearch}
       onSelect={handleSelect}
     >
-      <Search
+      <Input
         placeholder={placeholder}
         allowClear
-        enterButton={<SearchOutlined />}
+        prefix={<SearchOutlined />}
         onPressEnter={handlePressEnter}
         size="middle"
       />

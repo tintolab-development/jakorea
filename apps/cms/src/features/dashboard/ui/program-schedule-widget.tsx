@@ -124,7 +124,17 @@ export function ProgramScheduleWidget() {
   }, [selectedDate, schedulesByDate])
 
   const handleDateSelect = (date: Dayjs) => setSelectedDate(date)
-  const handleViewAll = () => navigate('/programs')
+  const handleViewAll = () => navigate('/schedules')
+
+  const handleEventClick = (event: ScheduleEvent) => {
+    if (event.type === 'education') {
+      // 교육 예정: 일정 상세 페이지로 이동
+      navigate(`/schedules/${event.id}`)
+    } else {
+      // 모집 마감/시작: 일정 캘린더 페이지로 이동 (해당 날짜 필터링 가능하도록)
+      navigate('/schedules')
+    }
+  }
 
   return (
     <Card
@@ -191,7 +201,7 @@ export function ProgramScheduleWidget() {
               renderItem={event => (
                 <List.Item
                   className="program-schedule-widget__event-item"
-                  onClick={() => navigate(`/programs/${event.programId}`)}
+                  onClick={() => handleEventClick(event)}
                 >
                   <div className="program-schedule-widget__event-column">
                     <div className="program-schedule-widget__event-head">
