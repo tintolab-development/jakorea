@@ -9,7 +9,11 @@ import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getMyPrograms, type MyProgram, type MyProgramFilters } from '@/entities/program/api/instructor-program-service'
+import {
+  getMyPrograms,
+  type MyProgram,
+  type MyProgramFilters,
+} from '@/entities/program/api/instructor-program-service'
 import {
   addFavoriteProgram,
   removeFavoriteProgram,
@@ -17,6 +21,7 @@ import {
 } from '@/entities/program/api/favorite-program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { MESSAGES } from '@/shared/constants'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
@@ -28,11 +33,15 @@ export function MyProgramListPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
-  const { params, setParams } = useQueryParams<{ status?: string; category?: string; search?: string }>()
+  const { params, setParams } = useQueryParams<{
+    status?: string
+    category?: string
+    search?: string
+  }>()
   const [programs, setPrograms] = useState<MyProgram[]>([])
   const [loading, setLoading] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set()) // 찜하기 상태
-  
+
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강의 프로그램'
 
@@ -63,19 +72,22 @@ export function MyProgramListPage() {
     }
   }, [])
 
-  const loadPrograms = useCallback(async (userId: string) => {
-    setLoading(true)
-    try {
-      const data = await getMyPrograms(userId, filters)
-      setPrograms(data)
-      // 프로그램 로드 후 관심 상태도 로드
-      await loadFavoritesForPrograms(data, userId)
-    } catch (error) {
-      console.error('프로그램 로드 실패:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [filters, loadFavoritesForPrograms])
+  const loadPrograms = useCallback(
+    async (userId: string) => {
+      setLoading(true)
+      try {
+        const data = await getMyPrograms(userId, filters)
+        setPrograms(data)
+        // 프로그램 로드 후 관심 상태도 로드
+        await loadFavoritesForPrograms(data, userId)
+      } catch (error) {
+        console.error('프로그램 로드 실패:', error)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [filters, loadFavoritesForPrograms]
+  )
 
   useEffect(() => {
     const userId = user?.instructorId || user?.id
@@ -151,7 +163,10 @@ export function MyProgramListPage() {
     if (now.isAfter(startDate) && now.isBefore(endDate)) {
       return { label: '진행중', color: 'green' }
     }
-    return { label: getCommonStatusLabel(program.status), color: getCommonStatusColor(program.status) }
+    return {
+      label: getCommonStatusLabel(program.status),
+      color: getCommonStatusColor(program.status),
+    }
   }
 
   // StatusBadge용 statusConfig 생성
@@ -191,8 +206,8 @@ export function MyProgramListPage() {
       key: 'category',
       width: 120,
       render: (category: string) => (
-        <StatusBadge 
-          status={category as keyof typeof programCategoryStatusConfig} 
+        <StatusBadge
+          status={category as keyof typeof programCategoryStatusConfig}
           statusConfig={programCategoryStatusConfig}
           showIcon={false}
         />
@@ -205,11 +220,22 @@ export function MyProgramListPage() {
       render: (_: any, record: MyProgram) => {
         const status = getProgramStatus(record)
         // 동적 상태는 StatusBadge 대신 Tag 사용 (statusConfig에 없는 경우)
-        const statusKey = record.status === 'completed' ? 'completed' : 
-                         dayjs().isBefore(dayjs(record.startDate)) ? 'planned' : 
-                         dayjs().isAfter(dayjs(record.endDate)) ? 'completed' : 'in_progress'
+        const statusKey =
+          record.status === 'completed'
+            ? 'completed'
+            : dayjs().isBefore(dayjs(record.startDate))
+              ? 'planned'
+              : dayjs().isAfter(dayjs(record.endDate))
+                ? 'completed'
+                : 'in_progress'
         if (statusKey in programStatusStatusConfig) {
-          return <StatusBadge status={statusKey as keyof typeof programStatusStatusConfig} statusConfig={programStatusStatusConfig} showIcon={false} />
+          return (
+            <StatusBadge
+              status={statusKey as keyof typeof programStatusStatusConfig}
+              statusConfig={programStatusStatusConfig}
+              showIcon={false}
+            />
+          )
         }
         return <Tag color={status.color}>{status.label}</Tag>
       },
@@ -219,8 +245,10 @@ export function MyProgramListPage() {
       key: 'period',
       width: 200,
       render: (_: any, record: MyProgram) => {
-        const start = typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
-        const end = typeof record.endDate === 'string' ? dayjs(record.endDate) : dayjs(record.endDate)
+        const start =
+          typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
+        const end =
+          typeof record.endDate === 'string' ? dayjs(record.endDate) : dayjs(record.endDate)
         return `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
       },
     },
@@ -245,7 +273,13 @@ export function MyProgramListPage() {
       render: (_: any, record: MyProgram) => (
         <Button
           type="text"
-          icon={favorites.has(record.id) ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+          icon={
+            favorites.has(record.id) ? (
+              <HeartFilled style={{ color: '#ff4d4f' }} />
+            ) : (
+              <HeartOutlined />
+            )
+          }
           onClick={() => handleToggleFavorite(record.id)}
         />
       ),
@@ -290,13 +324,13 @@ export function MyProgramListPage() {
             placeholder="카테고리"
             style={{ width: 150 }}
             value={filters.category}
-            onChange={(value) => handleCategoryChange(value as MyProgramFilters['category'])}
+            onChange={value => handleCategoryChange(value as MyProgramFilters['category'])}
           >
             <Option value="all">전체</Option>
             <Option value="school">학교 프로그램</Option>
             <Option value="individual">개인 프로그램</Option>
           </Select>
-          <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
+          <Button onClick={() => setParams({})}>필터 초기화</Button>
         </Space>
       </Card>
 
@@ -315,4 +349,3 @@ export function MyProgramListPage() {
     </div>
   )
 }
-

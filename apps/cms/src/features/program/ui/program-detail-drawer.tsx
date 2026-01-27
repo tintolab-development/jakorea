@@ -22,7 +22,6 @@ import { DuplicateApplicationAlert } from '@/shared/ui'
 import { ManualAssignmentModal } from '@/features/instructor-application/ui/manual-assignment-modal'
 import { createManualAssignment } from '@/entities/instructor-application/api/instructor-application-service'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
-import { MESSAGES } from '@/shared/constants'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { mockApplications } from '@/data/mock'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -34,7 +33,6 @@ import { ProgramEducationRecordTab } from './program-education-record-tab'
 import { useProgramApplication } from '../hooks/use-program-application'
 import { useProgramFavorite } from '../hooks/use-program-favorite'
 import { useApplicationPathManagement } from '../hooks/use-application-path-management'
-import { canAccessProgramItem } from '@/shared/utils/program-acl'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 
@@ -109,11 +107,6 @@ export function ProgramDetailDrawer({
 
   // Phase 0.5.2: 프로그램 ACL 접근 제어 (수정/삭제 버튼 노출용, Drawer 열기에는 미적용)
   // 리스트 클릭 시 상세 패널은 항상 표시. ACL은 편집 권한 제어에만 사용.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _canAccessForEdit = useMemo(() => {
-    if (!displayProgram || !user) return false
-    return canAccessProgramItem(user, displayProgram, 'VIEW')
-  }, [displayProgram, user])
 
   // prop으로 program을 받았을 때 store에도 동기화
   useEffect(() => {
