@@ -2,7 +2,8 @@
  * 지급조서 목록 컴포넌트
  */
 
-import { Table, Select, Input, Button, Space, Tag } from 'antd'
+import { Table, Select, Button, Space, Tag } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import type { PaymentStatement } from '@/types/domain'
 import type { User } from '@/types/user'
 import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
@@ -112,12 +113,12 @@ export function PaymentStatementList({
             </Option>
           ))}
         </Select>
-        <Input.Search
-          placeholder="강사/프로그램 검색"
-          value={filters.keyword}
-          onChange={event => onChangeFilters({ ...filters, keyword: event.target.value })}
-          className="payment-statement-list__filter--keyword"
-          allowClear
+        <LabeledSearchInput
+          label="강사/프로그램"
+          placeholder="강사 또는 프로그램을 입력하세요"
+          value={filters.keyword || ''}
+          onChange={value => onChangeFilters({ ...filters, keyword: value || undefined })}
+          width={300}
         />
         <Button onClick={onResetFilters}>필터 초기화</Button>
       </Space>
