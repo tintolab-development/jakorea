@@ -4,24 +4,18 @@
  */
 
 import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Space } from 'antd'
 import { EducationRecordList } from '@/features/education-record/ui/education-record-list'
 import { useEducationRecordStore } from '@/features/education-record/model/education-record-store'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { useState } from 'react'
 import type { Program } from '@/types/domain'
 import { useProgramStore } from '@/features/program/model/program-store'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
 
 export function EducationRecordListPage() {
-  const location = useLocation()
   const { records, loading, fetchRecords } = useEducationRecordStore()
   const { setSelectedProgram } = useProgramStore()
   const [selectedRecord, setSelectedRecord] = useState<Program | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const categoryName = getCategoryNameByPath(location.pathname, 1) || '실적 통계'
 
   useEffect(() => {
     fetchRecords()
@@ -35,15 +29,7 @@ export function EducationRecordListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-      </Space>
-
-      <EducationRecordList
-        data={records}
-        loading={loading}
-        onView={handleView}
-      />
+      <EducationRecordList data={records} loading={loading} onView={handleView} />
 
       <ProgramDetailDrawer
         open={drawerOpen}
@@ -64,4 +50,3 @@ export function EducationRecordListPage() {
     </div>
   )
 }
-
