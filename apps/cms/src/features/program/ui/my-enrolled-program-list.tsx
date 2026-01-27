@@ -4,8 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { Card, Tag, Button, Table, Empty } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -20,7 +19,6 @@ import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import type { Program } from '@/types/domain'
 
-const { Option } = Select
 
 type ProgramStatusFilter = 'all' | 'active' | 'scheduled' | 'completed'
 type ProgramCategoryFilter = 'all' | 'individual' | 'school'

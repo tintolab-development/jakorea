@@ -3,8 +3,7 @@
  * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
  */
 
-import { Table, Select, Button, Space, Dropdown, DatePicker, Image, Tag, Card } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { Table, Button, Dropdown, Image, Tag, Card } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { message } from 'antd'
 import type { MenuProps } from 'antd'
@@ -52,7 +51,6 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
 
-const { Option } = Select
 
 interface ProgramListProps {
   data: Program[]
@@ -241,7 +239,9 @@ export function ProgramList({
     const value =
       activeUserFilters.status || (searchParams.get('status') as ProgramLifecycleStatus | null)
     const validStatuses = new Set(programLifecycleStatusConfig.order)
-    return value && validStatuses.has(value) ? value : 'all'
+    return value && validStatuses.has(value as ProgramLifecycleStatus)
+      ? (value as ProgramLifecycleStatus)
+      : 'all'
   }, [activeUserFilters.status, searchParams])
   const searchQuery = useMemo(
     () => activeUserFilters.search || searchParams.get('search') || '',

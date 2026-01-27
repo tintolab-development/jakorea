@@ -4,10 +4,11 @@
  */
 
 import { useState } from 'react'
-import { Table, Select, Button, Space, Tag, Dropdown, Tooltip } from 'antd'
+import { Table, Button, Space, Tag, Dropdown, Tooltip, message } from 'antd'
 import { MoreOutlined } from '@ant-design/icons'
 import { useApplicationTable } from '../model/use-application-table'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { EditableCell } from '@/shared/ui/editable-cell'
 import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
@@ -22,8 +23,7 @@ import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-
-const { Option } = Select
+import { useApplicationStore } from '../model/application-store'
 
 interface ApplicationListProps {
   data: Application[]
@@ -53,6 +53,7 @@ export function ApplicationList({
   currentUser,
 }: ApplicationListProps) {
   let filteredData = data
+  const updateApplication = useApplicationStore(state => state.updateApplication)
 
   if (!isAdmin && currentUser) {
     switch (currentUser.role) {
@@ -84,8 +85,21 @@ export function ApplicationList({
     }
   }
 
-  const { table, resetFilters } = useApplicationTable(filteredData)
+  const { table, resetFilters } = useApplicationTable(filteredData, isAdmin)
   const { getAllSync, getByIdSync } = useProgramService()
+  const canWrite = currentUser
+    ? canPerformWriteAction(currentUser as Omit<User, 'password'>)
+    : false
+
+  const handleSaveNotes = async (applicationId: string, notes: string) => {
+    try {
+      await updateApplication(applicationId, { notes })
+      message.success('비고가 수정되었습니다')
+    } catch (error) {
+      message.error('비고 수정에 실패했습니다')
+      throw error
+    }
+  }
 
   const programs = getAllSync()
 
@@ -193,14 +207,52 @@ export function ApplicationList({
     ...(isAdmin
       ? [
           {
+            title: '알림 발송',
+            dataIndex: 'notificationSent',
+            key: 'notificationSent',
+            width: 100,
+            render: (notificationSent: boolean | undefined, record: Application) => {
+              // 승인/반려 상태일 때만 표시
+              if (record.status !== 'approved' && record.status !== 'rejected') {
+                return <Tag>-</Tag>
+              }
+              return (
+                <Tag color={notificationSent ? 'green' : 'default'}>
+                  {notificationSent ? '발송 완료' : '미발송'}
+                </Tag>
+              )
+            },
+          },
+        ]
+      : []),
+    ...(isAdmin && canWrite
+      ? [
+          {
+            title: '비고',
+            dataIndex: 'notes',
+            key: 'notes',
+            width: 200,
+            render: (notes: string | undefined, record: Application) => (
+              <EditableCell
+                value={notes}
+                type="textarea"
+                placeholder="비고를 입력하세요"
+                onSave={async value => {
+                  await handleSaveNotes(record.id, value as string)
+                }}
+              />
+            ),
+          },
+        ]
+      : []),
+    ...(isAdmin
+      ? [
+          {
             title: '작업',
             key: 'action',
             fixed: 'right' as const,
             width: 100,
             render: (_: unknown, record: Application) => {
-              const canWrite = currentUser
-                ? canPerformWriteAction(currentUser as Omit<User, 'password'>)
-                : false
               return (
                 <div onClick={e => e.stopPropagation()}>
                   <Dropdown
@@ -241,6 +293,8 @@ export function ApplicationList({
     programId: (table.getColumn('programId')?.getFilterValue() as string) || undefined,
     subjectType: (table.getColumn('subjectType')?.getFilterValue() as string) || undefined,
     status: (table.getColumn('status')?.getFilterValue() as string) || undefined,
+    notificationSent:
+      (table.getColumn('notificationSent')?.getFilterValue() as string) || undefined,
   })
 
   // 조회 버튼 클릭 시 필터 적용
@@ -248,6 +302,9 @@ export function ApplicationList({
     table.getColumn('programId')?.setFilterValue(pendingFilters.programId || null)
     table.getColumn('subjectType')?.setFilterValue(pendingFilters.subjectType || null)
     table.getColumn('status')?.setFilterValue(pendingFilters.status || null)
+    if (isAdmin) {
+      table.getColumn('notificationSent')?.setFilterValue(pendingFilters.notificationSent || null)
+    }
   }
 
   // 필터 초기화
@@ -256,6 +313,7 @@ export function ApplicationList({
       programId: undefined,
       subjectType: undefined,
       status: undefined,
+      notificationSent: undefined,
     })
     resetFilters()
   }
@@ -303,6 +361,21 @@ export function ApplicationList({
               })),
             ],
           },
+          ...(isAdmin
+            ? [
+                {
+                  key: 'notificationSent',
+                  type: 'select' as const,
+                  label: '알림 발송',
+                  placeholder: '전체',
+                  options: [
+                    { label: '전체', value: 'all' },
+                    { label: '발송 완료', value: 'true' },
+                    { label: '미발송', value: 'false' },
+                  ],
+                },
+              ]
+            : []),
         ]}
         filters={pendingFilters}
         onFilterChange={(key, value) => {

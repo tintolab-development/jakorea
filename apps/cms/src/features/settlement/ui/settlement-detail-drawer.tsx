@@ -13,8 +13,16 @@ import {
   message,
   Radio,
   Button,
+  Card,
+  List,
 } from 'antd'
-import { EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons'
+import {
+  EditOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  FileTextOutlined,
+  EyeOutlined,
+} from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
 import { SettlementApprovalWorkflow } from './settlement-approval-workflow'
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
@@ -233,6 +241,142 @@ export function SettlementDetailDrawer({
       />
 
       <Divider />
+
+      {/* 교통비 영수증 확인 섹션 */}
+      {(() => {
+        const transportItem = displaySettlement.items.find(item => item.type === 'transportation')
+        const hasTransportFee = transportItem && transportItem.amount > 0
+        const transportAttachments =
+          displaySettlement.attachments?.filter(
+            att =>
+              att.fileName?.toLowerCase().includes('교통') ||
+              att.fileName?.toLowerCase().includes('주유') ||
+              att.fileName?.toLowerCase().includes('통행') ||
+              att.fileName?.toLowerCase().includes('fuel') ||
+              att.fileName?.toLowerCase().includes('toll')
+          ) || []
+        const calculationBreakdown = displaySettlement.calculationResult?.breakdown
+
+        if (!hasTransportFee) return null
+
+        return (
+          <>
+            <Title level={5}>교통비 영수증 확인</Title>
+            <Card size="small" style={{ marginBottom: 16 }}>
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                {/* 산출 내역 */}
+                <div>
+                  <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                    산출 내역
+                  </Text>
+                  <Descriptions column={2} size="small" bordered>
+                    {calculationBreakdown?.fuelCost !== undefined && (
+                      <Descriptions.Item label="주유비">
+                        {calculationBreakdown.fuelCost.toLocaleString('ko-KR')}원
+                      </Descriptions.Item>
+                    )}
+                    {calculationBreakdown?.tollFee !== undefined && (
+                      <Descriptions.Item label="통행료">
+                        {calculationBreakdown.tollFee.toLocaleString('ko-KR')}원
+                      </Descriptions.Item>
+                    )}
+                    {calculationBreakdown?.distance !== undefined && (
+                      <Descriptions.Item label="거리">
+                        {calculationBreakdown.distance}km
+                      </Descriptions.Item>
+                    )}
+                    <Descriptions.Item label="교통비 합계">
+                      <Text strong>{transportItem.amount.toLocaleString('ko-KR')}원</Text>
+                    </Descriptions.Item>
+                  </Descriptions>
+                </div>
+
+                {/* 첨부된 영수증 */}
+                <div>
+                  <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                    첨부된 영수증
+                  </Text>
+                  {transportAttachments.length > 0 ? (
+                    <List
+                      dataSource={transportAttachments}
+                      renderItem={file => (
+                        <List.Item>
+                          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                            <Space>
+                              <FileTextOutlined style={{ color: '#1890ff' }} />
+                              <Text>{file.fileName}</Text>
+                              {file.fileSize && (
+                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                  ({(file.fileSize / 1024).toFixed(2)} KB)
+                                </Text>
+                              )}
+                            </Space>
+                            <Button
+                              type="link"
+                              size="small"
+                              icon={<EyeOutlined />}
+                              onClick={() => {
+                                // TODO: 파일 미리보기 API 연결
+                                message.info('파일 미리보기 기능은 준비 중입니다.')
+                              }}
+                            >
+                              미리보기
+                            </Button>
+                          </Space>
+                        </List.Item>
+                      )}
+                    />
+                  ) : (
+                    <Text type="secondary">교통비 영수증이 첨부되지 않았습니다.</Text>
+                  )}
+                </div>
+
+                {/* 통행료 증빙 검토 상태 */}
+                {displaySettlement.tollReceiptReview && (
+                  <div>
+                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                      검토 상태
+                    </Text>
+                    {displaySettlement.tollReceiptReview.status === 'pending' && (
+                      <Tag color="processing">검토 대기</Tag>
+                    )}
+                    {displaySettlement.tollReceiptReview.status === 'approved' && (
+                      <Space direction="vertical" size={4}>
+                        <Tag color="success">검토 완료</Tag>
+                        {displaySettlement.tollReceiptReview.reviewedAt && (
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            {new Date(
+                              displaySettlement.tollReceiptReview.reviewedAt
+                            ).toLocaleString('ko-KR')}
+                          </Text>
+                        )}
+                      </Space>
+                    )}
+                    {displaySettlement.tollReceiptReview.status === 'rejected' && (
+                      <Space direction="vertical" size={4}>
+                        <Tag color="error">반려</Tag>
+                        {displaySettlement.tollReceiptReview.comment && (
+                          <Text type="secondary">
+                            {displaySettlement.tollReceiptReview.comment}
+                          </Text>
+                        )}
+                        {displaySettlement.tollReceiptReview.reviewedAt && (
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            {new Date(
+                              displaySettlement.tollReceiptReview.reviewedAt
+                            ).toLocaleString('ko-KR')}
+                          </Text>
+                        )}
+                      </Space>
+                    )}
+                  </div>
+                )}
+              </Space>
+            </Card>
+            <Divider />
+          </>
+        )
+      })()}
 
       {/* 지급정보 섹션 (V3 Phase 4) */}
       {instructor && (

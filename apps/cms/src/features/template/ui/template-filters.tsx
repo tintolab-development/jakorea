@@ -1,4 +1,4 @@
-import { Button, Space } from 'antd'
+import { Button } from 'antd'
 import type { TemplateStatus } from '@/types/template'
 import { statusOptions } from '../constants'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
