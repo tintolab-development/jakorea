@@ -5,14 +5,16 @@
  * 카테고리별 동적 타이틀 표시
  */
 
-import { Layout, Badge, Dropdown, Button, Space, Typography, Avatar } from 'antd'
+import { Layout, Dropdown, Button, Space, Typography, Avatar } from 'antd'
 import { BellOutlined, BellFilled, UserOutlined, ExportOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useMemo } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
 import { getRoleLabel, AppBreadcrumb } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { getAdminLevelLabel } from '@/shared/config/permissions'
 import type { Notification } from '@/features/dashboard/api/notification-service'
 import { timeSince } from '@/shared/utils/date'
 import './main-header.css'
@@ -23,9 +25,24 @@ const { Text } = Typography
 export function MainHeader() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuthStore()
+  const { user, logout, checkAuth } = useAuthStore()
   const { notifications, unreadCount, markAsRead } = useNotifications()
   const { items: breadcrumbItems } = useBreadcrumb()
+
+  // 상태 동기화 확인: user 상태 변경 시 권한 정보 업데이트 확인
+  useEffect(() => {
+    // 컴포넌트 마운트 시 및 주기적으로 인증 상태 확인
+    const interval = setInterval(
+      () => {
+        checkAuth().catch(() => {
+          // 에러는 조용히 처리 (이미 로그아웃 처리됨)
+        })
+      },
+      5 * 60 * 1000
+    ) // 5분마다 확인
+
+    return () => clearInterval(interval)
+  }, [checkAuth])
 
   // 카테고리명 동적 계산
   const categoryName = (() => {
@@ -126,12 +143,23 @@ export function MainHeader() {
           },
         ]
 
+  // 세부 권한 정보 계산 (상태 동기화 확인)
+  const userRoleLabel = useMemo(() => {
+    if (!user) return ''
+
+    // 관리자인 경우 adminLevel에 따른 세부 권한 표시
+    if (user.role === 'ADMIN' && user.adminLevel) {
+      return getAdminLevelLabel(user.adminLevel)
+    }
+
+    // 일반 역할인 경우 기본 라벨 사용
+    return getRoleLabel(user.role, user.adminLevel)
+  }, [user?.role, user?.adminLevel])
 
   if (!user) {
     return null
   }
 
-  const userRoleLabel = getRoleLabel(user.role, user.adminLevel)
   const userName = user.name
 
   return (
@@ -175,17 +203,13 @@ export function MainHeader() {
               <Text className="main-header-user-name" strong>
                 {userName}
               </Text>
-              <Avatar
-                size={32}
-                icon={<UserOutlined />}
-                className="main-header-avatar"
-              />
+              <Avatar size={32} icon={<UserOutlined />} className="main-header-avatar" />
             </div>
 
             {/* 로그아웃 */}
             <Button
               type="text"
-              icon={<ExportOutlined style={{ fontSize: 18 }} />}
+              icon={<ExportOutlined style={{ fontSize: 16 }} />}
               className="main-header-icon-button"
               onClick={handleLogout}
             />

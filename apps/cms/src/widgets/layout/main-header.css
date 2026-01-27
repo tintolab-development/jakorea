@@ -13,7 +13,8 @@
   flex-shrink: 0;
   position: fixed;
   top: 0;
-  left: 220px; /* 사이드바 너비만큼 왼쪽에서 떨어뜨림 */
+  left: 220px;
+  /* 사이드바 너비만큼 왼쪽에서 떨어뜨림 */
   right: 0;
   z-index: 99;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -70,15 +71,24 @@
 }
 
 .main-header-icon-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   padding: 0;
   border: none;
   color: #595959;
   transition: all 0.2s;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.main-header-icon-button .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main-header-icon-button:hover {
