@@ -183,7 +183,7 @@ const PermissionRequestListPage = lazyLoad(
   () => import('@/pages/admin/permission-request-list-page')
 )
 const AuditLogListPage = lazyLoad(() => import('@/pages/admin/audit-log-list-page'))
-const SurveyListPage = lazyLoad(() => import('@/pages/surveys/survey-list-page'))
+const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
@@ -268,10 +268,6 @@ export const router = createBrowserRouter([
         ],
       },
       {
-        path: 'surveys',
-        children: [{ index: true, element: <SurveyListPage /> }],
-      },
-      {
         path: 'schools',
         children: [
           { index: true, element: <SchoolListPage /> },
@@ -320,6 +316,7 @@ export const router = createBrowserRouter([
       {
         path: 'school',
         children: [
+          { path: 'my-learning', element: <SchoolMyLearningPage /> },
           { path: 'applications', element: <MyProgramApplicationsPage /> }, // 학교 신청 내역
           { path: 'applications/:id', element: <ApplicationProgressPage /> }, // Phase 0.2.4: 진행상황 조회
         ],
@@ -453,6 +450,64 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <MyPageMainPage /> },
           { path: 'profile', element: <ProfilePage /> },
+          // 학교(교사) 인증 / 교사 정보 (인증 상태에 따라 동적 처리)
+          {
+            path: 'school-auth',
+            element: (
+              <ComingSoonPage
+                title="학교(교사) 인증"
+                description="학교(교사) 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          {
+            path: 'school-info',
+            element: (
+              <ComingSoonPage
+                title="교사 정보"
+                description="교사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          // 강사 인증 / 강사 정보 (인증 상태에 따라 동적 처리)
+          {
+            path: 'instructor-auth',
+            element: (
+              <ComingSoonPage
+                title="강사 인증"
+                description="강사 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          {
+            path: 'instructor-info',
+            element: (
+              <ComingSoonPage
+                title="강사 정보"
+                description="강사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          // 내 프로그램 일정 (2뎁스)
+          {
+            path: 'program-schedule',
+            element: (
+              <ComingSoonPage
+                title="내 프로그램 일정"
+                description="내 프로그램 일정 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          // 서류 발급 이력 (2뎁스)
+          {
+            path: 'documents',
+            element: (
+              <ComingSoonPage
+                title="서류 발급 이력"
+                description="서류 발급 이력 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
         ],
       },
       {
@@ -648,7 +703,22 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <NoticeListPage /> },
           { path: 'faq', element: <FAQPage /> },
-          { path: 'inquiries', element: <InquiryPage /> },
+          {
+            path: 'inquiries',
+            children: [
+              { index: true, element: <InquiryPage /> },
+              // 내 문의 내역 (2뎁스)
+              {
+                path: 'my',
+                element: (
+                  <ComingSoonPage
+                    title="내 문의 내역"
+                    description="내 문의 내역 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+                  />
+                ),
+              },
+            ],
+          },
         ],
       },
       {
@@ -659,10 +729,16 @@ export const router = createBrowserRouter([
         path: 'unauthorized',
         element: <Navigate to="/forbidden" replace />,
       },
-      // Phase 0.1.5: 404 페이지 개선
+      // Phase 0.1.5: 404 페이지 개선 - 권한별 존재하지 않는 카테고리는 ComingSoonPage로 표시
+      // 실제 404는 ErrorPage로 유지 (권한 체크는 ProtectedRoute에서 처리)
       {
         path: '*',
-        element: <Navigate to="/error?code=404" replace />,
+        element: (
+          <ComingSoonPage
+            title="페이지를 찾을 수 없습니다"
+            description="요청하신 페이지가 존재하지 않거나 이동되었습니다. 해당 기능은 현재 준비 중입니다."
+          />
+        ),
       },
     ],
   },

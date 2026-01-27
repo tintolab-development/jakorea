@@ -183,7 +183,8 @@ export function ApplicationPathListPage() {
         onFilterChange={handleFilterChange}
         searchValue={searchKeyword}
         onSearchChange={handleSearchChange}
-        searchPlaceholder="프로그램 이름으로 검색"
+        searchLabel="프로그램명"
+        searchPlaceholder="프로그램 이름을 입력하세요"
         filterConfig={[
           {
             key: 'programId',

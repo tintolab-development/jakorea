@@ -4,8 +4,7 @@
  */
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Space, Select, Input, Button } from 'antd'
-import { useLocation } from 'react-router-dom'
+import { Space, Select, Button } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { ParticipantList } from '@/features/participant/ui/participant-list'
 import {
@@ -16,7 +15,7 @@ import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import type { Application } from '@/types/domain'
 
 interface ParticipantListQueryParams extends Record<string, string | undefined> {
@@ -28,16 +27,11 @@ interface ParticipantListQueryParams extends Record<string, string | undefined> 
 import './participant-list-page.css'
 
 const { Option } = Select
-const { Search } = Input
 
 export function ParticipantListPage() {
-  const location = useLocation()
   const { params, setParam } = useQueryParams<ParticipantListQueryParams>()
   const { user } = useAuthStore()
   const { getAllSync } = useProgramService()
-
-  // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '참여자 조회'
 
   // 상태 관리
   const [participants, setParticipants] = useState<Awaited<ReturnType<typeof getParticipants>>>([])
@@ -116,20 +110,20 @@ export function ParticipantListPage() {
     setParam('search', value || null)
   }
 
+  const handleSearchChange = (value: string) => {
+    setParam('search', value || null)
+  }
+
   return (
     <div>
-      <Space className="participant-list-header">
-        <h1 className="participant-list-title">{categoryName}</h1>
-      </Space>
-
-      <Space className="participant-list-filters" size="middle" wrap>
-        <Search
-          placeholder="이름 또는 이메일 검색"
-          allowClear
-          className="participant-list-search"
-          defaultValue={searchQuery}
+      <Space className="participant-list-filters" size="middle" wrap align="start">
+        <LabeledSearchInput
+          label="이름/이메일"
+          placeholder="이름 또는 이메일을 입력하세요"
+          value={searchQuery}
+          onChange={handleSearchChange}
           onSearch={handleSearch}
-          style={{ width: 250 }}
+          width={300}
         />
         <Select
           placeholder="프로그램 선택"

@@ -321,7 +321,13 @@ export function ReportListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.xl, width: '100%', justifyContent: 'space-between' }}>
+      <Space
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.xl,
+          width: '100%',
+          justifyContent: 'space-between',
+        }}
+      >
         {/* <h1 style={{ margin: 0 }}>보고서 관리</h1> */}
       </Space>
 
@@ -346,7 +352,8 @@ export function ReportListPage() {
         onFilterChange={handleFilterChange}
         searchValue={searchText}
         onSearchChange={handleSearchChange}
-        searchPlaceholder="작성자명 검색"
+        searchLabel="작성자명"
+        searchPlaceholder="작성자명을 입력하세요"
         filterConfig={[
           {
             key: 'type',

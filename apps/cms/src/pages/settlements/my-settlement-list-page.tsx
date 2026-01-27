@@ -7,7 +7,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Input, Space, Card, Button, Table, Tabs, Select, Segmented } from 'antd'
+import { Space, Card, Button, Table, Tabs, Select, Segmented } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
@@ -20,11 +21,13 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
-const { Search } = Input
 
 // IA 구조에 맞는 정산 상태별 탭 정의
 // 정산 미신청, 정산 신청 완료 및 대기 중, 정산 이슈 확인 필요, 정산 지급 완료, 정산 이력
-const statusTabs: Array<{ key: SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all'; label: string }> = [
+const statusTabs: Array<{
+  key: SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all'
+  label: string
+}> = [
   { key: 'all', label: '정산 이력' },
   { key: 'not-applied', label: '정산 미신청' },
   { key: 'submitted', label: '정산 신청 완료 및 대기 중' },
@@ -37,25 +40,32 @@ type ViewMode = 'list' | 'calendar'
 export function MySettlementListPage() {
   const { user } = useAuthStore()
   const location = useLocation()
-  const { params, setParams, clearParams } = useQueryParams<{ view?: string; period?: string; status?: string; search?: string }>()
+  const { params, setParams, clearParams } = useQueryParams<{
+    view?: string
+    period?: string
+    status?: string
+    search?: string
+  }>()
   const [settlements, setSettlements] = useState<Settlement[]>([])
   const [allSettlements, setAllSettlements] = useState<Settlement[]>([]) // 탭 카운트용
   const [loading, setLoading] = useState(false)
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null)
-  
+
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '정산 이력/현황'
 
   // 뷰 모드와 기간 필터 (쿼리 파라미터에서 읽기)
   const viewMode = (params.view as ViewMode) || 'list'
   const selectedPeriod = params.period || dayjs().format('YYYY-MM')
-  
+
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo(() => {
     return {
-      status: (params.status as SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all') || 'all',
+      status:
+        (params.status as SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all') ||
+        'all',
       search: params.search || undefined,
     }
   }, [params])
@@ -66,7 +76,7 @@ export function MySettlementListPage() {
     setLoading(true)
     try {
       let apiFilters: { status?: SettlementStatus } | undefined
-      
+
       // IA 구조에 맞게 상태 매핑
       if (filters.status === 'not-applied') {
         // 정산 미신청: 아직 신청하지 않은 상태 (pending 중에서 신청 가능한 것들)
@@ -88,7 +98,7 @@ export function MySettlementListPage() {
         ...apiFilters,
         search: filters.search,
       })
-      
+
       // IA 구조에 맞게 필터링 (클라이언트 사이드 추가 필터링)
       let filteredData = data
       if (filters.status === 'not-applied') {
@@ -101,7 +111,7 @@ export function MySettlementListPage() {
         // 정산 이슈 확인 필요: review 상태 중 이슈가 있는 것들
         filteredData = data.filter(s => s.status === 'review')
       }
-      
+
       setSettlements(filteredData)
     } catch (error) {
       console.error('정산 로드 실패:', error)
@@ -128,13 +138,21 @@ export function MySettlementListPage() {
     }
   }, [user?.instructorId, filters, loadSettlements, loadAllSettlements])
 
-  const handleStatusChange = (status: SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all') => {
+  const handleStatusChange = (
+    status: SettlementStatus | 'not-applied' | 'submitted' | 'issues' | 'all'
+  ) => {
     setParams({
       status: status === 'all' ? undefined : status,
     })
   }
 
   const handleSearch = (value: string) => {
+    setParams({
+      search: value || undefined,
+    })
+  }
+
+  const handleSearchChange = (value: string) => {
     setParams({
       search: value || undefined,
     })
@@ -248,7 +266,7 @@ export function MySettlementListPage() {
         <Space>
           <Segmented
             value={viewMode}
-            onChange={(value) => handleViewModeChange(value as ViewMode)}
+            onChange={value => handleViewModeChange(value as ViewMode)}
             options={[
               {
                 label: (
@@ -268,15 +286,12 @@ export function MySettlementListPage() {
                   </span>
                 ),
                 value: 'calendar',
-                title: '정산 일정을 캘린더 형태로 확인합니다. 기간별 정산 현황을 한눈에 파악할 수 있습니다.',
+                title:
+                  '정산 일정을 캘린더 형태로 확인합니다. 기간별 정산 현황을 한눈에 파악할 수 있습니다.',
               },
             ]}
           />
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setSubmitModalOpen(true)}
-          >
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setSubmitModalOpen(true)}>
             정산 제출
           </Button>
         </Space>
@@ -285,7 +300,7 @@ export function MySettlementListPage() {
       {/* 상태별 탭 */}
       <Tabs
         activeKey={activeTabKey}
-        onChange={(key) => handleStatusChange(key as SettlementStatus | 'all')}
+        onChange={key => handleStatusChange(key as SettlementStatus | 'all')}
         items={statusTabs.map(tab => ({
           key: tab.key,
           label: (
@@ -298,7 +313,9 @@ export function MySettlementListPage() {
                     if (tab.key === 'not-applied') {
                       count = allSettlements.filter(s => s.status === 'pending').length
                     } else if (tab.key === 'submitted') {
-                      count = allSettlements.filter(s => s.status === 'calculated' || s.status === 'review').length
+                      count = allSettlements.filter(
+                        s => s.status === 'calculated' || s.status === 'review'
+                      ).length
                     } else if (tab.key === 'issues') {
                       count = allSettlements.filter(s => s.status === 'review').length
                     } else {
@@ -317,14 +334,14 @@ export function MySettlementListPage() {
       {viewMode === 'list' ? (
         <>
           <Card style={{ marginBottom: 16 }}>
-            <Space size="middle" wrap>
-              <Search
-                placeholder="정산 ID 검색"
-                allowClear
-                style={{ width: 250 }}
-                defaultValue={filters.search}
+            <Space size="middle" wrap align="start">
+              <LabeledSearchInput
+                label="정산 ID"
+                placeholder="정산 ID를 입력하세요"
+                value={filters.search || ''}
+                onChange={handleSearchChange}
                 onSearch={handleSearch}
-                enterButton
+                width={300}
               />
               <Space>
                 <span>기간 선택:</span>
@@ -403,4 +420,3 @@ export function MySettlementListPage() {
     </div>
   )
 }
-

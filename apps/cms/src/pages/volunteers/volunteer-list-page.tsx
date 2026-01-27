@@ -4,18 +4,18 @@
  */
 
 import { useState, useMemo } from 'react'
-import { Space, Select, Input, Button } from 'antd'
+import { Space, Select, Button } from 'antd'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { VolunteerList } from '@/features/volunteer/ui/volunteer-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { mockUsers } from '@/data/mock/users'
 import type { User, InterviewStatus } from '@/types/user'
 
 const { Option } = Select
-const { Search } = Input
 
 export function VolunteerListPage() {
   const location = useLocation()
@@ -102,6 +102,12 @@ export function VolunteerListPage() {
     })
   }
 
+  const handleSearchChange = (value: string) => {
+    setParams({
+      search: value || undefined,
+    })
+  }
+
   // 사용자 상세 보기
   const handleView = (user: Omit<User, 'password'>) => {
     setSelectedUser(user)
@@ -126,13 +132,14 @@ export function VolunteerListPage() {
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
 
-      <Space style={{ marginBottom: 16 }} size="middle">
-        <Search
-          placeholder="이름 또는 이메일 검색"
-          allowClear
-          style={{ width: 300 }}
-          defaultValue={searchQuery}
+      <Space style={{ marginBottom: 16 }} size="middle" align="start">
+        <LabeledSearchInput
+          label="이름/이메일"
+          placeholder="이름 또는 이메일을 입력하세요"
+          value={searchQuery}
+          onChange={handleSearchChange}
           onSearch={handleSearch}
+          width={300}
         />
         <Select
           placeholder="면접 상태"

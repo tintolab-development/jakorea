@@ -27,7 +27,7 @@ export function MyLearningPage() {
         navigate('/schedules/my', { replace: true })
         break
       case 'SCHOOL':
-        navigate('/surveys', { replace: true })
+        navigate('/school/my-learning', { replace: true })
         break
       default:
         // 관리자나 기타 역할은 관리자 홈으로
@@ -37,7 +37,14 @@ export function MyLearningPage() {
   }, [user, navigate])
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+      }}
+    >
       <Spin size="large" />
     </div>
   )

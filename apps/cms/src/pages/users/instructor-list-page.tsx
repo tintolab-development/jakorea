@@ -4,8 +4,7 @@
  */
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Space, Select, Input, Button } from 'antd'
-import { useLocation } from 'react-router-dom'
+import { Select, Button } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 
 interface InstructorListQueryParams extends Record<string, string | undefined> {
@@ -14,23 +13,21 @@ interface InstructorListQueryParams extends Record<string, string | undefined> {
   search?: string
 }
 import { InstructorList } from '@/features/instructor-list/ui/instructor-list'
-import { getInstructors, type InstructorListFilters } from '@/entities/instructor/api/instructor-list-service'
+import {
+  getInstructors,
+  type InstructorListFilters,
+} from '@/entities/instructor/api/instructor-list-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import './instructor-list-page.css'
 
 const { Option } = Select
-const { Search } = Input
 
 export function InstructorListPage() {
-  const location = useLocation()
   const { params, setParam } = useQueryParams<InstructorListQueryParams>()
   const { user } = useAuthStore()
-
-  // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사 조회'
 
   // 필라 목록 (동적으로 가져오기)
   const [pillars, setPillars] = useState<string[]>([])
@@ -47,32 +44,39 @@ export function InstructorListPage() {
   }, [])
 
   // 상태 관리
-  const [instructors, setInstructors] = useState<
-    Awaited<ReturnType<typeof getInstructors>>
-  >([])
+  const [instructors, setInstructors] = useState<Awaited<ReturnType<typeof getInstructors>>>([])
   const [loading, setLoading] = useState(false)
 
-  // 쿼리 파라미터에서 필터 값 읽기
-  const pillarFilter = useMemo(() => {
-    return params.pillar || undefined
-  }, [params.pillar])
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    search: params.search || '',
+    pillar: params.pillar || 'ALL',
+    status: (params.status || 'ALL') as 'ACTIVE' | 'INACTIVE' | 'ALL',
+  })
 
-  const statusFilter = useMemo(() => {
-    return (params.status || 'ALL') as 'ACTIVE' | 'INACTIVE' | 'ALL'
-  }, [params.status])
-
-  const searchQuery = useMemo(() => {
-    return params.search || ''
-  }, [params.search])
+  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
+  useEffect(() => {
+    setPendingFilters({
+      search: params.search || '',
+      pillar: params.pillar || 'ALL',
+      status: (params.status || 'ALL') as 'ACTIVE' | 'INACTIVE' | 'ALL',
+    })
+  }, [params.search, params.pillar, params.status])
 
   // 강사 목록 조회
   const loadInstructors = useCallback(async () => {
     setLoading(true)
     try {
       const filters: InstructorListFilters = {}
-      if (pillarFilter) filters.pillar = pillarFilter
-      if (statusFilter !== 'ALL') filters.status = statusFilter
-      if (searchQuery) filters.keyword = searchQuery
+      if (pendingFilters.pillar && pendingFilters.pillar !== 'ALL') {
+        filters.pillar = pendingFilters.pillar
+      }
+      if (pendingFilters.status !== 'ALL') {
+        filters.status = pendingFilters.status
+      }
+      if (pendingFilters.search) {
+        filters.keyword = pendingFilters.search
+      }
 
       const data = await getInstructors(filters)
       setInstructors(data)
@@ -81,83 +85,76 @@ export function InstructorListPage() {
     } finally {
       setLoading(false)
     }
-  }, [pillarFilter, statusFilter, searchQuery])
+  }, [pendingFilters])
 
-  // 페이지 로드 시 및 필터 변경 시 자동으로 데이터 불러오기
+  // 조회 버튼 클릭 시 필터 적용 및 데이터 로드
+  const handleSearch = () => {
+    setParam('search', pendingFilters.search || null)
+    setParam('pillar', pendingFilters.pillar === 'ALL' ? null : pendingFilters.pillar)
+    setParam('status', pendingFilters.status === 'ALL' ? null : pendingFilters.status)
+    loadInstructors()
+  }
+
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setPendingFilters({
+      search: '',
+      pillar: 'ALL',
+      status: 'ALL',
+    })
+    setParam('search', null)
+    setParam('pillar', null)
+    setParam('status', null)
+    loadInstructors()
+  }
+
+  // 페이지 로드 시 초기 데이터 불러오기
   useEffect(() => {
     loadInstructors()
-  }, [loadInstructors])
-
-  // 필터 변경 핸들러
-  const handlePillarFilterChange = (value: string) => {
-    if (value === 'ALL') {
-      setParam('pillar', null)
-    } else {
-      setParam('pillar', value)
-    }
-  }
-
-  const handleStatusFilterChange = (value: 'ACTIVE' | 'INACTIVE' | 'ALL') => {
-    if (value === 'ALL') {
-      setParam('status', null)
-    } else {
-      setParam('status', value)
-    }
-  }
-
-  const handleSearch = (value: string) => {
-    setParam('search', value || null)
-  }
+  }, [])
 
   return (
     <div>
-      <Space className="instructor-list-header">
-        <h1 className="instructor-list-title">{categoryName}</h1>
-      </Space>
-
-      <Space className="instructor-list-filters" size="middle" wrap>
-        <Search
-          placeholder="이름, 이메일 또는 전문분야 검색"
-          allowClear
-          className="instructor-list-search"
-          defaultValue={searchQuery}
-          onSearch={handleSearch}
-          style={{ width: 250 }}
-        />
-        <Select
-          placeholder="필라 선택"
-          className="instructor-list-pillar-filter"
-          value={pillarFilter || 'ALL'}
-          onChange={handlePillarFilterChange}
-          style={{ width: 200 }}
-          loading={pillars.length === 0}
-        >
-          <Option value="ALL">전체 필라</Option>
-          {pillars.map(pillar => (
-            <Option key={pillar} value={pillar}>
-              {pillar}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="상태 필터"
-          className="instructor-list-status-filter"
-          value={statusFilter}
-          onChange={handleStatusFilterChange}
-          style={{ width: 150 }}
-        >
-          <Option value="ALL">전체</Option>
-          <Option value="ACTIVE">활성</Option>
-          <Option value="INACTIVE">비활성</Option>
-        </Select>
-        <Button onClick={loadInstructors}>새로고침</Button>
-      </Space>
-
-      <InstructorList
-        data={instructors}
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'search',
+            type: 'search',
+            label: '이름/이메일/전문분야',
+            placeholder: '이름, 이메일 또는 전문분야를 입력하세요',
+          },
+          {
+            key: 'pillar',
+            type: 'select',
+            label: '필라',
+            placeholder: '전체 필라',
+            options: [
+              { label: '전체 필라', value: 'ALL' },
+              ...pillars.map(pillar => ({ label: pillar, value: pillar })),
+            ],
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '상태',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: 'ALL' },
+              { label: '활성', value: 'ACTIVE' },
+              { label: '비활성', value: 'INACTIVE' },
+            ],
+          },
+        ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
         loading={loading}
-        currentUser={user}
       />
+
+      <InstructorList data={instructors} loading={loading} currentUser={user} />
     </div>
   )
 }

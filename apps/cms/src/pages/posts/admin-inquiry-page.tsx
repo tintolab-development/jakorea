@@ -2,7 +2,7 @@
  * 게시글 관리 - 문의사항 관리 페이지 (관리자용)
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   Table,
@@ -24,15 +24,12 @@ import {
   MessageOutlined,
   DeleteOutlined,
 } from '@ant-design/icons'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { LAYOUT_CONSTANTS, PAGINATION_CONFIG, MESSAGES } from '@/shared/constants'
 import { mockInquiries, type Inquiry } from '@/data/mock/inquiries'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { useListFilters } from '@/shared/hooks/use-list-filters'
 import { useModalState } from '@/shared/hooks/use-modal-state'
-import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import dayjs from 'dayjs'
 
@@ -72,40 +69,58 @@ export function AdminInquiryPage() {
   const [data, setData] = useState<Inquiry[]>(mockInquiries)
   const [form] = Form.useForm()
 
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '문의하기'
-
-  // 필터 로직
-  const {
-    searchText,
-    setSearchText,
-    filters,
-    handleFilterChange,
-    filtered: filteredData,
-    resetFilters,
-  } = useListFilters<Inquiry>({
-    data,
-    filterConfig: {
-      search: { keys: ['title', 'content', 'author'] },
-      selects: {
-        category: {
-          key: 'category',
-          options: categoryOptions.filter((opt) => opt.value !== 'all'),
-        },
-        status: {
-          key: 'status',
-          options: statusOptions.filter((opt) => opt.value !== 'all'),
-        },
-      },
-    },
-    defaultFilters: { category: 'all', status: 'all' },
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    search: '',
+    category: 'all',
+    status: 'all',
   })
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
+    category: 'all',
+    status: 'all',
+  })
+
+  // 필터링된 데이터
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      const matchSearch = appliedFilters.search
+        ? item.title.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
+          item.content.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
+          item.author.toLowerCase().includes(appliedFilters.search.toLowerCase())
+        : true
+      const matchCategory =
+        appliedFilters.category === 'all' || item.category === appliedFilters.category
+      const matchStatus = appliedFilters.status === 'all' || item.status === appliedFilters.status
+      return matchSearch && matchCategory && matchStatus
+    })
+  }, [data, appliedFilters])
 
   // 정렬된 데이터
   const sortedData = [...filteredData].sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
 
+  // 조회 버튼 클릭 시 필터 적용
+  const handleSearch = () => {
+    setAppliedFilters(pendingFilters)
+  }
+
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setPendingFilters({
+      search: '',
+      category: 'all',
+      status: 'all',
+    })
+    setAppliedFilters({
+      search: '',
+      category: 'all',
+      status: 'all',
+    })
+  }
+
   // 삭제 핸들러
   const handleDelete = (id: string) => {
-    setData((prev) => prev.filter((item) => item.id !== id))
+    setData(prev => prev.filter(item => item.id !== id))
   }
 
   // 상세 모달 상태
@@ -124,7 +139,7 @@ export function AdminInquiryPage() {
     selectedItem: answerInquiry,
     setSelectedItem: setAnswerInquiry,
   } = useModalState<Inquiry>({
-    onOpen: (inquiry) => {
+    onOpen: inquiry => {
       if (inquiry) {
         form.setFieldsValue({
           answerContent: inquiry.answer?.content || '',
@@ -160,7 +175,7 @@ export function AdminInquiryPage() {
         },
       }
 
-      setData((prev) => prev.map((item) => (item.id === answerInquiry.id ? updatedInquiry : item)))
+      setData(prev => prev.map(item => (item.id === answerInquiry.id ? updatedInquiry : item)))
       closeAnswerModal()
       if (isDetailModalOpen && selectedInquiry?.id === answerInquiry.id) {
         openDetailModal(updatedInquiry)
@@ -177,12 +192,7 @@ export function AdminInquiryPage() {
       key: 'status',
       width: LAYOUT_CONSTANTS.widths.status,
       render: (status: string) => (
-        <StatusBadge
-          status={status}
-          statusConfig={inquiryStatusConfig}
-          variant="tag"
-          showIcon
-        />
+        <StatusBadge status={status} statusConfig={inquiryStatusConfig} variant="tag" showIcon />
       ),
     },
     {
@@ -217,69 +227,77 @@ export function AdminInquiryPage() {
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
     },
     // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
-    ...(canWrite ? [{
-      title: '관리',
-      key: 'action',
-      width: 120,
-      fixed: 'right' as const,
-      render: (_: unknown, record: Inquiry) => (
-        <Space>
-          <Tooltip title={record.status === 'ANSWERED' ? '답변 수정' : '답변 등록'}>
-            <Button
-              type="primary"
-              ghost
-              size="small"
-              icon={<MessageOutlined />}
-              onClick={() => showAnswerModal(record)}
-            >
-              {record.status === 'ANSWERED' ? '수정' : '답변'}
-            </Button>
-          </Tooltip>
-          <Popconfirm
-            title="문의 삭제"
-            description={MESSAGES.confirm.delete}
-            onConfirm={() => handleDelete(record.id)}
-            okText="삭제"
-            cancelText="취소"
-            okButtonProps={{ danger: true }}
-          >
-            <Tooltip title="삭제">
-              <Button type="text" danger size="small" icon={<DeleteOutlined />} />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
-    }] : []),
+    ...(canWrite
+      ? [
+          {
+            title: '관리',
+            key: 'action',
+            width: 120,
+            fixed: 'right' as const,
+            render: (_: unknown, record: Inquiry) => (
+              <Space>
+                <Tooltip title={record.status === 'ANSWERED' ? '답변 수정' : '답변 등록'}>
+                  <Button
+                    type="primary"
+                    ghost
+                    size="small"
+                    icon={<MessageOutlined />}
+                    onClick={() => showAnswerModal(record)}
+                  >
+                    {record.status === 'ANSWERED' ? '수정' : '답변'}
+                  </Button>
+                </Tooltip>
+                <Popconfirm
+                  title="문의 삭제"
+                  description={MESSAGES.confirm.delete}
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="삭제"
+                  cancelText="취소"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Tooltip title="삭제">
+                    <Button type="text" danger size="small" icon={<DeleteOutlined />} />
+                  </Tooltip>
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (
     <div style={{ padding: LAYOUT_CONSTANTS.margins.xl }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-        </div>
-
-        <ListPageFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          searchValue={searchText}
-          onSearchChange={setSearchText}
-          searchPlaceholder="제목, 내용, 작성자 검색"
-          filterConfig={[
+        <UnifiedFilterCard
+          fields={[
+            {
+              key: 'search',
+              type: 'search',
+              label: '제목/내용/작성자',
+              placeholder: '제목, 내용, 작성자를 입력하세요',
+            },
             {
               key: 'category',
               type: 'select',
+              label: '카테고리',
+              placeholder: '전체 카테고리',
               options: categoryOptions,
-              placeholder: '카테고리',
             },
             {
               key: 'status',
               type: 'select',
+              label: '상태',
+              placeholder: '전체 상태',
               options: statusOptions,
-              placeholder: '상태',
             },
           ]}
-          onReset={resetFilters}
+          filters={pendingFilters}
+          onFilterChange={(key, value) => {
+            setPendingFilters(prev => ({ ...prev, [key]: value }))
+          }}
+          onSearch={handleSearch}
+          onReset={handleFilterReset}
         />
 
         <Table
@@ -290,7 +308,7 @@ export function AdminInquiryPage() {
             defaultPageSize: PAGINATION_CONFIG.defaultPageSize,
             pageSizeOptions: [...PAGINATION_CONFIG.pageSizeOptions],
             showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
-            showTotal: (total) => `총 ${total}건`,
+            showTotal: total => `총 ${total}건`,
           }}
         />
       </Space>
@@ -303,18 +321,34 @@ export function AdminInquiryPage() {
         width={LAYOUT_CONSTANTS.widths.modal.large}
         footer={[
           // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
-          ...(canWrite ? [
-            <Button key="delete" danger onClick={() => {
-              if (selectedInquiry) {
-                handleDelete(selectedInquiry.id)
-                closeDetailModal()
-              }
-            }}>삭제</Button>,
-            <Button key="answer" type="primary" onClick={() => {
-              if (selectedInquiry) showAnswerModal(selectedInquiry)
-            }}>{selectedInquiry?.status === 'ANSWERED' ? '답변 수정' : '답변 등록'}</Button>,
-          ] : []),
-          <Button key="close" onClick={closeDetailModal}>닫기</Button>,
+          ...(canWrite
+            ? [
+                <Button
+                  key="delete"
+                  danger
+                  onClick={() => {
+                    if (selectedInquiry) {
+                      handleDelete(selectedInquiry.id)
+                      closeDetailModal()
+                    }
+                  }}
+                >
+                  삭제
+                </Button>,
+                <Button
+                  key="answer"
+                  type="primary"
+                  onClick={() => {
+                    if (selectedInquiry) showAnswerModal(selectedInquiry)
+                  }}
+                >
+                  {selectedInquiry?.status === 'ANSWERED' ? '답변 수정' : '답변 등록'}
+                </Button>,
+              ]
+            : []),
+          <Button key="close" onClick={closeDetailModal}>
+            닫기
+          </Button>,
         ]}
         centered
       >
@@ -322,7 +356,9 @@ export function AdminInquiryPage() {
           <div style={{ marginTop: 16 }}>
             <Descriptions bordered column={2}>
               <Descriptions.Item label="작성자">{selectedInquiry.author}</Descriptions.Item>
-              <Descriptions.Item label="작성일">{dayjs(selectedInquiry.createdAt).format('YYYY-MM-DD HH:mm')}</Descriptions.Item>
+              <Descriptions.Item label="작성일">
+                {dayjs(selectedInquiry.createdAt).format('YYYY-MM-DD HH:mm')}
+              </Descriptions.Item>
               <Descriptions.Item label="카테고리">{selectedInquiry.category}</Descriptions.Item>
               <Descriptions.Item label="상태">
                 <StatusBadge
@@ -332,19 +368,40 @@ export function AdminInquiryPage() {
                   showIcon
                 />
               </Descriptions.Item>
-              <Descriptions.Item label="제목" span={2}>{selectedInquiry.title}</Descriptions.Item>
+              <Descriptions.Item label="제목" span={2}>
+                {selectedInquiry.title}
+              </Descriptions.Item>
               <Descriptions.Item label="내용" span={2}>
-                <div style={{ minHeight: 100, whiteSpace: 'pre-wrap' }}>{selectedInquiry.content}</div>
+                <div style={{ minHeight: 100, whiteSpace: 'pre-wrap' }}>
+                  {selectedInquiry.content}
+                </div>
               </Descriptions.Item>
             </Descriptions>
 
             {selectedInquiry.answer && (
               <div style={{ marginTop: 24 }}>
                 <Title level={5}>답변 내용</Title>
-                <div style={{ background: '#f6ffed', padding: '16px', borderRadius: 8, border: '1px solid #b7eb8f' }}>
-                  <div style={{ marginBottom: 8, borderBottom: '1px solid #d9f7be', paddingBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                <div
+                  style={{
+                    background: '#f6ffed',
+                    padding: '16px',
+                    borderRadius: 8,
+                    border: '1px solid #b7eb8f',
+                  }}
+                >
+                  <div
+                    style={{
+                      marginBottom: 8,
+                      borderBottom: '1px solid #d9f7be',
+                      paddingBottom: 8,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <Text strong>{selectedInquiry.answer.author}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(selectedInquiry.answer.answeredAt).format('YYYY-MM-DD HH:mm')}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {dayjs(selectedInquiry.answer.answeredAt).format('YYYY-MM-DD HH:mm')}
+                    </Text>
                   </div>
                   <div style={{ whiteSpace: 'pre-wrap' }}>{selectedInquiry.answer.content}</div>
                 </div>
@@ -365,15 +422,19 @@ export function AdminInquiryPage() {
         cancelText="취소"
         centered
       >
-        <Form
-          form={form}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
           {answerInquiry && (
-            <Card size="small" style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, background: '#f5f5f5' }}>
-              <Text strong>[{answerInquiry.category}] {answerInquiry.title}</Text>
-              <Paragraph ellipsis={{ rows: 2 }} style={{ marginTop: LAYOUT_CONSTANTS.spacing.sm, marginBottom: 0 }}>
+            <Card
+              size="small"
+              style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, background: '#f5f5f5' }}
+            >
+              <Text strong>
+                [{answerInquiry.category}] {answerInquiry.title}
+              </Text>
+              <Paragraph
+                ellipsis={{ rows: 2 }}
+                style={{ marginTop: LAYOUT_CONSTANTS.spacing.sm, marginBottom: 0 }}
+              >
                 {answerInquiry.content}
               </Paragraph>
             </Card>

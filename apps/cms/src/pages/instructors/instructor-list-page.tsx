@@ -15,14 +15,12 @@ import { InstructorForm } from '@/features/instructor/ui/instructor-form'
 import { InstructorDetail } from '@/features/instructor/ui/instructor-detail'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import { PermissionButton } from '@/shared/components'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
-import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 
 interface InstructorListQueryParams extends Record<string, string | undefined> {
@@ -31,7 +29,6 @@ interface InstructorListQueryParams extends Record<string, string | undefined> {
 }
 
 export function InstructorListPage() {
-  const location = useLocation()
   const {
     instructors,
     loading,
@@ -64,9 +61,6 @@ export function InstructorListPage() {
   const [formLoading, setFormLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
-  // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
-
   useEffect(() => {
     fetchInstructors()
   }, [fetchInstructors])
@@ -79,6 +73,20 @@ export function InstructorListPage() {
       ...regions.map(region => ({ label: region, value: region })),
     ]
   }, [instructors])
+
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    search: params.search || '',
+    region: params.region || 'all',
+  })
+
+  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
+  useEffect(() => {
+    setPendingFilters({
+      search: params.search || '',
+      region: params.region || 'all',
+    })
+  }, [params.search, params.region])
 
   // 필터링된 데이터
   const filteredInstructors = useMemo(() => {
@@ -103,14 +111,20 @@ export function InstructorListPage() {
     return filtered
   }, [instructors, params.search, params.region])
 
-  // 필터 핸들러
-  const handleFilterChange = (key: keyof InstructorListQueryParams, value: any) => {
+  // 조회 버튼 클릭 시 필터 적용
+  const handleSearch = () => {
     setParams({
-      [key]: value === 'all' || value === '' ? undefined : value,
+      search: pendingFilters.search || undefined,
+      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
     })
   }
 
+  // 필터 초기화
   const handleFilterReset = () => {
+    setPendingFilters({
+      search: '',
+      region: 'all',
+    })
     setParams({
       search: undefined,
       region: undefined,
@@ -182,8 +196,14 @@ export function InstructorListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+      <div
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.lg,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+      >
         <PermissionButton
           type="primary"
           icon={<PlusOutlined />}
@@ -193,25 +213,29 @@ export function InstructorListPage() {
         >
           강사 등록
         </PermissionButton>
-      </Space>
-      <ListPageFilters
-        filters={{
-          region: params.region || 'all',
-        }}
-        onFilterChange={handleFilterChange}
-        searchValue={params.search || ''}
-        onSearchChange={(value) => setParams({ search: value || undefined })}
-        searchPlaceholder="이름, 이메일, 전문분야 검색"
-        filterConfig={[
+      </div>
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'search',
+            type: 'search',
+            label: '이름/이메일/전문분야',
+            placeholder: '이름, 이메일, 전문분야를 입력하세요',
+          },
           {
             key: 'region',
             type: 'select',
+            label: '지역',
+            placeholder: '전체',
             options: regionOptions,
-            placeholder: '지역 선택',
           },
         ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
         onReset={handleFilterReset}
-        showReset={!!(params.search || params.region)}
       />
 
       <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />

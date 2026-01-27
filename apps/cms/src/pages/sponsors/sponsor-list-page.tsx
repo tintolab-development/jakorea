@@ -11,11 +11,9 @@ import { PlusOutlined } from '@ant-design/icons'
 import { SponsorList } from '@/features/sponsor/ui/sponsor-list'
 import { SponsorForm } from '@/features/sponsor/ui/sponsor-form'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import type { SponsorFormData } from '@/entities/sponsor/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 
@@ -27,9 +25,11 @@ export function SponsorListPage() {
 
   const { sponsors, loading, fetchSponsors, createSponsor, updateSponsor } = useSponsorStore()
   const [formModalOpen, setFormModalOpen] = useState(false)
-  const [editingSponsor, setEditingSponsor] = useState<{ id: string; data: SponsorFormData } | null>(null)
+  const [editingSponsor, setEditingSponsor] = useState<{
+    id: string
+    data: SponsorFormData
+  } | null>(null)
   const [formLoading, setFormLoading] = useState(false)
-  const categoryName = getCategoryNameByPath(location.pathname, 1) || '후원사 관리'
 
   useEffect(() => {
     fetchSponsors()
@@ -55,7 +55,9 @@ export function SponsorListPage() {
       fetchSponsors()
     } catch (error) {
       handleError(error, {
-        defaultMessage: editingSponsor ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다',
+        defaultMessage: editingSponsor
+          ? '수정 중 오류가 발생했습니다'
+          : '등록 중 오류가 발생했습니다',
         context: 'SponsorFormSubmit',
       })
     } finally {
@@ -69,9 +71,8 @@ export function SponsorListPage() {
   }
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+    <div style={{ padding: '24px' }}>
+      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
         {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
         {canWrite && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
@@ -99,11 +100,3 @@ export function SponsorListPage() {
     </div>
   )
 }
-
-
-
-
-
-
-
-

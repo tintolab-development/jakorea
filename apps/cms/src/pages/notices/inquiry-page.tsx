@@ -14,13 +14,13 @@ import {
   Tag,
   Space,
   Empty,
-  Input,
   Tabs,
   Button,
   Divider,
   Modal,
   Descriptions,
 } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import {
   PlusOutlined,
   ClockCircleOutlined,
@@ -36,7 +36,6 @@ import dayjs from 'dayjs'
 import { mockInquiries, type Inquiry } from '@/data/mock/inquiries'
 
 const { Text, Title } = Typography
-const { Search } = Input
 
 export function InquiryPage() {
   const location = useLocation()
@@ -51,13 +50,16 @@ export function InquiryPage() {
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '문의하기'
 
   const filteredInquiries = useMemo(() => {
-    return mockInquiries.filter(item => {
-      const matchStatus = activeTab === 'ALL' || item.status === activeTab
-      const matchSearch = !searchQuery || 
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.content.toLowerCase().includes(searchQuery.toLowerCase())
-      return matchStatus && matchSearch
-    }).sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
+    return mockInquiries
+      .filter(item => {
+        const matchStatus = activeTab === 'ALL' || item.status === activeTab
+        const matchSearch =
+          !searchQuery ||
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.content.toLowerCase().includes(searchQuery.toLowerCase())
+        return matchStatus && matchSearch
+      })
+      .sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
   }, [activeTab, searchQuery])
 
   const handleTabChange = (key: string) => {
@@ -84,7 +86,10 @@ export function InquiryPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 8 }}>{categoryName}</h1>
-            <Text type="secondary">궁금하신 사항은 1:1 문의를 남겨주세요. 운영시간(평일 09:00~18:00) 내에 순차적으로 답변드립니다.</Text>
+            <Text type="secondary">
+              궁금하신 사항은 1:1 문의를 남겨주세요. 운영시간(평일 09:00~18:00) 내에 순차적으로
+              답변드립니다.
+            </Text>
           </div>
           <Button
             type="primary"
@@ -97,23 +102,43 @@ export function InquiryPage() {
         </div>
 
         {/* 검색 및 필터 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '16px 24px', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#fff',
+            padding: '16px 24px',
+            borderRadius: 8,
+            border: '1px solid #f0f0f0',
+          }}
+        >
           <Tabs
             activeKey={activeTab}
             onChange={handleTabChange}
             className="inquiry-tabs"
             items={[
               { key: 'ALL', label: `전체 (${mockInquiries.length})` },
-              { key: 'PENDING', label: `답변대기 (${mockInquiries.filter(i => i.status === 'PENDING').length})` },
-              { key: 'ANSWERED', label: `답변완료 (${mockInquiries.filter(i => i.status === 'ANSWERED').length})` },
+              {
+                key: 'PENDING',
+                label: `답변대기 (${mockInquiries.filter(i => i.status === 'PENDING').length})`,
+              },
+              {
+                key: 'ANSWERED',
+                label: `답변완료 (${mockInquiries.filter(i => i.status === 'ANSWERED').length})`,
+              },
             ]}
           />
-          <Search
-            placeholder="문의 제목 또는 내용 검색"
-            allowClear
+          <LabeledSearchInput
+            label="제목/내용"
+            placeholder="문의 제목 또는 내용을 입력하세요"
+            value={searchQuery}
+            onChange={value => {
+              const newParams = { ...params, search: value || undefined }
+              setParams(newParams)
+            }}
             onSearch={handleSearch}
-            defaultValue={searchQuery}
-            style={{ width: 280 }}
+            width={300}
           />
         </div>
 
@@ -142,24 +167,34 @@ export function InquiryPage() {
                           <Tag bordered={false} style={{ fontSize: 11, padding: '0 4px' }}>
                             {inquiry.category}
                           </Tag>
-                          <Tag 
-                            color={inquiry.status === 'ANSWERED' ? 'success' : 'default'} 
+                          <Tag
+                            color={inquiry.status === 'ANSWERED' ? 'success' : 'default'}
                             style={{ fontSize: 11, padding: '0 4px', borderRadius: 2 }}
                           >
                             {inquiry.status === 'ANSWERED' ? '답변완료' : '답변대기'}
                           </Tag>
                         </Space>
-                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>{inquiry.title}</Text>
+                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>
+                          {inquiry.title}
+                        </Text>
                       </div>
                     }
                     description={
                       <Space size="middle" style={{ marginTop: 4 }}>
-                        <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}>
+                        <Text
+                          type="secondary"
+                          style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}
+                        >
                           <CalendarOutlined style={{ marginRight: 4 }} />
                           {dayjs(inquiry.createdAt).format('YYYY-MM-DD HH:mm')}
                         </Text>
                         {inquiry.status === 'ANSWERED' && (
-                          <Text style={{ color: '#52c41a', fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}>
+                          <Text
+                            style={{
+                              color: '#52c41a',
+                              fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1,
+                            }}
+                          >
                             <CheckCircleOutlined style={{ marginRight: 4 }} /> 답변이 등록되었습니다
                           </Text>
                         )}
@@ -178,19 +213,28 @@ export function InquiryPage() {
         title={
           <div>
             <div style={{ marginBottom: 4 }}>
-              <Tag bordered={false} style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>{selectedInquiry?.category}</Tag>
-              <Tag color={selectedInquiry?.status === 'ANSWERED' ? 'success' : 'default'} style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
+              <Tag bordered={false} style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
+                {selectedInquiry?.category}
+              </Tag>
+              <Tag
+                color={selectedInquiry?.status === 'ANSWERED' ? 'success' : 'default'}
+                style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}
+              >
                 {selectedInquiry?.status === 'ANSWERED' ? '답변완료' : '답변대기'}
               </Tag>
             </div>
-            <Title level={4} style={{ margin: 0 }}>{selectedInquiry?.title}</Title>
+            <Title level={4} style={{ margin: 0 }}>
+              {selectedInquiry?.title}
+            </Title>
           </div>
         }
         open={detailModalOpen}
         onCancel={() => setDetailModalOpen(false)}
         width={800}
         footer={[
-          <Button key="close" onClick={() => setDetailModalOpen(false)}>닫기</Button>
+          <Button key="close" onClick={() => setDetailModalOpen(false)}>
+            닫기
+          </Button>,
         ]}
         centered
       >
@@ -198,20 +242,24 @@ export function InquiryPage() {
           <div style={{ padding: '12px 0' }}>
             <Descriptions bordered size="small" column={2} style={{ marginBottom: 24 }}>
               <Descriptions.Item label="문의 유형">{selectedInquiry.category}</Descriptions.Item>
-              <Descriptions.Item label="작성일시">{dayjs(selectedInquiry.createdAt).format('YYYY-MM-DD HH:mm')}</Descriptions.Item>
+              <Descriptions.Item label="작성일시">
+                {dayjs(selectedInquiry.createdAt).format('YYYY-MM-DD HH:mm')}
+              </Descriptions.Item>
             </Descriptions>
 
             <Title level={5} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <QuestionCircleOutlined style={{ color: '#1890ff' }} /> 문의 내용
             </Title>
-            <div style={{ 
-              background: '#f9f9f9', 
-              padding: '20px', 
-              borderRadius: 8, 
-              marginBottom: 32,
-              whiteSpace: 'pre-wrap',
-              lineHeight: 1.6
-            }}>
+            <div
+              style={{
+                background: '#f9f9f9',
+                padding: '20px',
+                borderRadius: 8,
+                marginBottom: 32,
+                whiteSpace: 'pre-wrap',
+                lineHeight: 1.6,
+              }}
+            >
               {selectedInquiry.content}
             </div>
 
@@ -220,28 +268,43 @@ export function InquiryPage() {
                 <Title level={5} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <CheckCircleOutlined style={{ color: '#52c41a' }} /> 답변 내용
                 </Title>
-                <div style={{ 
-                  background: '#f6ffed', 
-                  padding: '20px', 
-                  borderRadius: 8, 
-                  border: '1px solid #b7eb8f',
-                  lineHeight: 1.6
-                }}>
-                  <div style={{ marginBottom: 12, borderBottom: '1px solid #d9f7be', paddingBottom: 8 }}>
+                <div
+                  style={{
+                    background: '#f6ffed',
+                    padding: '20px',
+                    borderRadius: 8,
+                    border: '1px solid #b7eb8f',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <div
+                    style={{
+                      marginBottom: 12,
+                      borderBottom: '1px solid #d9f7be',
+                      paddingBottom: 8,
+                    }}
+                  >
                     <Space split={<Divider type="vertical" />}>
                       <Text strong>{selectedInquiry.answer.author}</Text>
                       <Text type="secondary" style={{ fontSize: 13 }}>
-                        <CalendarOutlined style={{ marginRight: 4 }} /> {dayjs(selectedInquiry.answer.answeredAt).format('YYYY-MM-DD HH:mm')}
+                        <CalendarOutlined style={{ marginRight: 4 }} />{' '}
+                        {dayjs(selectedInquiry.answer.answeredAt).format('YYYY-MM-DD HH:mm')}
                       </Text>
                     </Space>
                   </div>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>
-                    {selectedInquiry.answer.content}
-                  </div>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{selectedInquiry.answer.content}</div>
                 </div>
               </>
             ) : (
-              <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c', background: '#fff7e6', borderRadius: 8 }}>
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '40px 0',
+                  color: '#8c8c8c',
+                  background: '#fff7e6',
+                  borderRadius: 8,
+                }}
+              >
                 <ClockCircleOutlined style={{ fontSize: 24, marginBottom: 8, color: '#faad14' }} />
                 <p>답변을 준비 중입니다. 잠시만 기다려주세요.</p>
               </div>

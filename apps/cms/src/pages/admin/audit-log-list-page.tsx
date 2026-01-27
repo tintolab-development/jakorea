@@ -4,7 +4,8 @@
  */
 
 import { useMemo } from 'react'
-import { Table, Form, Select, Input, DatePicker, Button, Space, Tag, Card } from 'antd'
+import { Table, Form, Select, DatePicker, Button, Space, Tag, Card } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useAuditLogs } from '@/features/audit-log/hooks/use-audit-logs'
 import { AUDIT_EVENT_OPTIONS, AUDIT_EVENT_COLORS } from '@/shared/constants/audit-events'
@@ -200,13 +201,13 @@ export function AuditLogListPage() {
             />
           </Form.Item>
 
-          <Form.Item label="사용자">
-            <Input
-              value={filters.userName}
-              onChange={e => handleFilterChange('userName', e.target.value)}
-              placeholder="사용자 이름"
-              style={{ width: LAYOUT_CONSTANTS.widths.filter }}
-              allowClear
+          <Form.Item>
+            <LabeledSearchInput
+              label="사용자"
+              placeholder="사용자 이름을 입력하세요"
+              value={filters.userName || ''}
+              onChange={value => handleFilterChange('userName', value || undefined)}
+              width={LAYOUT_CONSTANTS.widths.filter}
             />
           </Form.Item>
 

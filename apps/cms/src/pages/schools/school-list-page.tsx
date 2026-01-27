@@ -6,14 +6,11 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Button, Space, Modal } from 'antd'
+import { Button, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { SchoolList } from '@/features/school/ui/school-list'
 import { SchoolForm } from '@/features/school/ui/school-form'
 import { useSchoolStore } from '@/features/school/model/school-store'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useListFilters } from '@/shared/hooks/use-list-filters'
@@ -21,7 +18,7 @@ import type { SchoolFormData } from '@/entities/school/model/schema'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import type { School } from '@/types/domain'
 
@@ -31,7 +28,6 @@ interface SchoolListQueryParams extends Record<string, string | undefined> {
 }
 
 export function SchoolListPage() {
-  const location = useLocation()
   const { user } = useAuthStore()
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
@@ -50,9 +46,6 @@ export function SchoolListPage() {
 
   const [formLoading, setFormLoading] = useState(false)
 
-  // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '회원 관리'
-
   useEffect(() => {
     fetchSchools()
   }, [fetchSchools])
@@ -66,73 +59,61 @@ export function SchoolListPage() {
     ]
   }, [schools])
 
-  // useListFilters로 필터링 로직 개선
-  const {
-    searchText,
-    setSearchText,
-    filters,
-    handleFilterChange: handleListFilterChange,
-    filtered: filteredByListFilters,
-    resetFilters,
-  } = useListFilters<School>({
-    data: schools,
-    filterConfig: {
-      search: { keys: ['name', 'contactPerson', 'contactEmail'] },
-      selects: {
-        region: {
-          key: 'region',
-          options: regionOptions,
-        },
-      },
-    },
-    defaultFilters: { region: 'all' },
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    search: params.search || '',
+    region: params.region || 'all',
   })
 
-  // useQueryParams와 useListFilters 동기화 (초기 로드 시)
+  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
   useEffect(() => {
-    if (params.search && params.search !== searchText) {
-      setSearchText(params.search)
-    }
-    if (params.region && params.region !== filters.region) {
-      handleListFilterChange('region', params.region)
-    } else if (!params.region && filters.region !== 'all') {
-      handleListFilterChange('region', 'all')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // 초기 로드 시에만 실행
-
-  // 필터링된 데이터 (useListFilters 결과 사용)
-  const filteredSchools = useMemo(() => {
-    // useListFilters의 결과를 사용하되, 'all' 값 필터링
-    return filteredByListFilters.filter(school => {
-      if (filters.region && filters.region !== 'all') {
-        return school.region === filters.region
-      }
-      return true
+    setPendingFilters({
+      search: params.search || '',
+      region: params.region || 'all',
     })
-  }, [filteredByListFilters, filters.region])
+  }, [params.search, params.region])
 
-  // 필터 핸들러 (useQueryParams와 연동)
-  const handleFilterChange = (key: string, value: any) => {
-    if (key === 'region') {
-      handleListFilterChange(key, value)
-      setParams({
-        region: value === 'all' || value === '' ? undefined : value,
-      })
+  // 필터링된 데이터
+  const filteredSchools = useMemo(() => {
+    let filtered = schools
+
+    // 검색어 필터
+    if (params.search) {
+      const searchLower = params.search.toLowerCase()
+      filtered = filtered.filter(
+        school =>
+          school.name.toLowerCase().includes(searchLower) ||
+          school.contactPerson?.toLowerCase().includes(searchLower) ||
+          school.contactEmail?.toLowerCase().includes(searchLower)
+      )
     }
+
+    // 지역 필터
+    if (params.region && params.region !== 'all') {
+      filtered = filtered.filter(school => school.region === params.region)
+    }
+
+    return filtered
+  }, [schools, params.search, params.region])
+
+  // 조회 버튼 클릭 시 필터 적용
+  const handleSearch = () => {
+    setParams({
+      search: pendingFilters.search || undefined,
+      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
+    })
   }
 
+  // 필터 초기화
   const handleFilterReset = () => {
-    resetFilters()
+    setPendingFilters({
+      search: '',
+      region: 'all',
+    })
     setParams({
       search: undefined,
       region: undefined,
     })
-  }
-
-  const handleSearchChange = (value: string) => {
-    setSearchText(value)
-    setParams({ search: value || undefined })
   }
 
   const handleNewClick = () => {
@@ -167,39 +148,43 @@ export function SchoolListPage() {
 
   return (
     <div>
-      <Space
+      <div
         style={{
           marginBottom: LAYOUT_CONSTANTS.margins.lg,
           width: '100%',
-          justifyContent: 'space-between',
+          display: 'flex',
+          justifyContent: 'flex-end',
         }}
       >
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
         {canWrite && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
             학교 등록
           </Button>
         )}
-      </Space>
-      <ListPageFilters
-        filters={{
-          region: filters.region || 'all',
-        }}
-        onFilterChange={handleFilterChange}
-        searchValue={searchText}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="학교명, 담당자, 이메일 검색"
-        filterConfig={[
+      </div>
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'search',
+            type: 'search',
+            label: '학교명/담당자/이메일',
+            placeholder: '학교명, 담당자, 이메일을 입력하세요',
+          },
           {
             key: 'region',
             type: 'select',
+            label: '지역',
+            placeholder: '전체',
             options: regionOptions,
-            placeholder: '지역 선택',
           },
         ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
         onReset={handleFilterReset}
-        showReset={!!(searchText || (filters.region && filters.region !== 'all'))}
       />
 
       <SchoolList data={filteredSchools} loading={loading} />

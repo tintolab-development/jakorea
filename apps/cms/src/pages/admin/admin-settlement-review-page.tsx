@@ -5,7 +5,8 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Space, Table, Button, Tag, message, Input, Select } from 'antd'
+import { Card, Space, Table, Button, Tag, message, Select } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { EyeOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
@@ -21,8 +22,6 @@ import { domainColorsHex } from '@/shared/constants/colors'
 import { useSettlementReviewList } from '@/features/settlement/hooks/use-settlement-review-list'
 import type { Settlement } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
-
-const { Search } = Input
 
 export function AdminSettlementReviewPage() {
   const location = useLocation()
@@ -191,15 +190,15 @@ export function AdminSettlementReviewPage() {
 
       <Card>
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Space style={{ width: '100%', justifyContent: 'space-between' }} align="start">
             <Space>
-              <Search
-                placeholder="프로그램명, 강사명, 기간 검색"
-                allowClear
-                style={{ width: 300 }}
+              <LabeledSearchInput
+                label="프로그램명/강사명/기간"
+                placeholder="프로그램명, 강사명, 기간을 입력하세요"
                 value={searchText}
-                onChange={e => setSearchText(e.target.value)}
-                onSearch={value => setSearchText(value)}
+                onChange={setSearchText}
+                onSearch={setSearchText}
+                width={350}
               />
               <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 150 }}>
                 <Select.Option value="all">전체 상태</Select.Option>

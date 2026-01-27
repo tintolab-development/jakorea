@@ -29,7 +29,7 @@ export function IndexPage() {
           navigate('/schedules/my', { replace: true })
           break
         case 'SCHOOL':
-          navigate('/surveys', { replace: true })
+          navigate('/school/my-learning', { replace: true })
           break
         default:
           navigate('/login', { replace: true })
@@ -45,7 +45,14 @@ export function IndexPage() {
 
   // 일반 사용자는 리다이렉트 중이므로 로딩 표시
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+      }}
+    >
       <Spin size="large" />
     </div>
   )

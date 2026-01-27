@@ -8,11 +8,10 @@ import '@toast-ui/editor/dist/toastui-editor-viewer.css'
 
 import { useMemo, useState } from 'react'
 import { message } from 'antd'
-import type { EmailTemplate } from '@/types/template'
+import type { EmailTemplate, TemplateStatus } from '@/types/template'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { mockEmailTemplates, extractTemplateVariables } from '@/data/mock/templates'
-import { useTemplateFilters } from '@/features/template/hooks/use-template-filters'
 import { useTemplateCRUD } from '@/features/template/hooks/use-template-crud'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import { TemplateFilters } from '@/features/template/ui/template-filters'
@@ -20,29 +19,73 @@ import { MESSAGES } from '@/shared/constants'
 import { EmailTemplateTable } from '@/features/template/ui/email-template-table'
 import { EmailTemplateFormModal } from '@/features/template/ui/email-template-form-modal'
 import { EmailTemplatePreviewModal } from '@/features/template/ui/email-template-preview-modal'
+import dayjs from 'dayjs'
 
 export default function TemplateEmailPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
 
   const [rows, setRows] = useState<EmailTemplate[]>(mockEmailTemplates)
-  const { query, setQuery, status, setStatus, filtered } = useTemplateFilters(rows)
-  const { editing, open, openCreate, openEdit, closeModal, handleArchiveToggle, handleCopyTemplate } =
-    useTemplateCRUD(rows, setRows, () => `tpl-email-${String(rows.length + 1).padStart(3, '0')}`)
+  const {
+    editing,
+    open,
+    openCreate,
+    openEdit,
+    closeModal,
+    handleArchiveToggle,
+    handleCopyTemplate,
+  } = useTemplateCRUD(rows, setRows, () => `tpl-email-${String(rows.length + 1).padStart(3, '0')}`)
   const { copyText } = useClipboard()
 
   const [previewTarget, setPreviewTarget] = useState<EmailTemplate | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
 
+  // 필터 상태 (임시)
+  const [pendingFilters, setPendingFilters] = useState({
+    query: '',
+    status: 'all' as TemplateStatus | 'all',
+  })
+
+  // 적용된 필터 상태
+  const [appliedFilters, setAppliedFilters] = useState({
+    query: '',
+    status: 'all' as TemplateStatus | 'all',
+  })
+
   // Email 전용 필터링 (subject, markdown 포함)
   const emailFiltered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return filtered
-    return filtered.filter(r => 
-      r.content.subject.toLowerCase().includes(q) ||
-      r.content.markdown.toLowerCase().includes(q)
-    )
-  }, [filtered, query])
+    const q = appliedFilters.query.trim().toLowerCase()
+    return rows
+      .filter(r => (appliedFilters.status === 'all' ? true : r.status === appliedFilters.status))
+      .filter(r => {
+        if (!q) return true
+        return (
+          r.title.toLowerCase().includes(q) ||
+          r.description?.toLowerCase().includes(q) ||
+          r.tags.some(t => t.toLowerCase().includes(q)) ||
+          r.content.subject.toLowerCase().includes(q) ||
+          r.content.markdown.toLowerCase().includes(q)
+        )
+      })
+      .sort((a, b) => dayjs(b.updatedAt).valueOf() - dayjs(a.updatedAt).valueOf())
+  }, [appliedFilters, rows])
+
+  // 조회 버튼 클릭 핸들러
+  const handleSearch = () => {
+    setAppliedFilters(pendingFilters)
+  }
+
+  // 필터 초기화 핸들러
+  const handleFilterReset = () => {
+    setPendingFilters({
+      query: '',
+      status: 'all',
+    })
+    setAppliedFilters({
+      query: '',
+      status: 'all',
+    })
+  }
 
   const handleCreate = () => {
     openCreate()
@@ -101,7 +144,9 @@ export default function TemplateEmailPage() {
       return [next, ...prev]
     })
 
-    message.success(editing ? MESSAGES.success.templateEmailUpdated : MESSAGES.success.templateEmailCreated)
+    message.success(
+      editing ? MESSAGES.success.templateEmailUpdated : MESSAGES.success.templateEmailCreated
+    )
     closeModal()
   }
 
@@ -118,10 +163,12 @@ export default function TemplateEmailPage() {
   return (
     <div>
       <TemplateFilters
-        query={query}
-        onQueryChange={setQuery}
-        status={status}
-        onStatusChange={setStatus}
+        query={pendingFilters.query}
+        onQueryChange={value => setPendingFilters(prev => ({ ...prev, query: value }))}
+        status={pendingFilters.status}
+        onStatusChange={value => setPendingFilters(prev => ({ ...prev, status: value }))}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
         onCreateClick={canWrite ? handleCreate : undefined}
         createButtonText="메일 양식 등록"
         searchPlaceholder="제목/설명/태그/subject/본문 검색"
@@ -131,8 +178,8 @@ export default function TemplateEmailPage() {
         dataSource={emailFiltered}
         onPreview={openPreview}
         onEdit={canWrite ? openEdit : undefined}
-        onCopySubject={(row) => copyText(row.content.subject)}
-        onCopyBody={(row) => copyText(row.content.markdown)}
+        onCopySubject={row => copyText(row.content.subject)}
+        onCopyBody={row => copyText(row.content.markdown)}
         onCopyTemplate={canWrite ? handleCopyTemplate : undefined}
         onToggleArchive={canWrite ? handleArchiveToggle : undefined}
         canWrite={canWrite}
@@ -153,4 +200,3 @@ export default function TemplateEmailPage() {
     </div>
   )
 }
-

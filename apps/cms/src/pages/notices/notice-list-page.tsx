@@ -7,25 +7,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import {
-  Card,
-  List,
-  Typography,
-  Tag,
-  Space,
-  Empty,
-  Input,
-  Tabs,
-  Button,
-  Divider,
-  Modal,
-} from 'antd'
-import {
-  CalendarOutlined,
-  PushpinFilled,
-  EyeOutlined,
-  FileOutlined,
-} from '@ant-design/icons'
+import { Card, List, Typography, Tag, Space, Empty, Tabs, Button, Divider, Modal } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { CalendarOutlined, PushpinFilled, EyeOutlined, FileOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -33,7 +17,6 @@ import dayjs from 'dayjs'
 import { mockNotices, type Notice } from '@/data/mock/notices'
 
 const { Text, Title } = Typography
-const { Search } = Input
 
 export function NoticeListPage() {
   const location = useLocation()
@@ -73,9 +56,8 @@ export function NoticeListPage() {
     // 검색 필터
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      result = result.filter(n => 
-        n.title.toLowerCase().includes(q) || 
-        n.content.toLowerCase().includes(q)
+      result = result.filter(
+        n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)
       )
     }
 
@@ -102,15 +84,22 @@ export function NoticeListPage() {
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 및 검색 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 16,
+          }}
+        >
           <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-          <Search
-            placeholder="공지사항 제목 또는 내용 검색"
-            allowClear
+          <LabeledSearchInput
+            label="제목/내용"
+            placeholder="공지사항 제목 또는 내용을 입력하세요"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onSearch={(value) => setSearchInput(value)}
-            style={{ width: 300 }}
+            onChange={setSearchInput}
+            onSearch={setSearchInput}
+            width={300}
           />
         </div>
 
@@ -149,21 +138,27 @@ export function NoticeListPage() {
                   className="notice-list-item"
                   actions={[
                     <Space key="meta" size="middle" style={{ color: '#8c8c8c', fontSize: 13 }}>
-                      <Space size={4}><EyeOutlined /> {notice.viewCount.toLocaleString()}</Space>
+                      <Space size={4}>
+                        <EyeOutlined /> {notice.viewCount.toLocaleString()}
+                      </Space>
                       {notice.hasAttachment && <FileOutlined />}
-                    </Space>
+                    </Space>,
                   ]}
                 >
                   <List.Item.Meta
                     title={
                       <Space size="small">
                         {notice.isImportant && (
-                          <Tag color="red" icon={<PushpinFilled />}>중요</Tag>
+                          <Tag color="red" icon={<PushpinFilled />}>
+                            중요
+                          </Tag>
                         )}
                         <Tag color={notice.category === '정산' ? 'orange' : 'default'}>
                           {notice.category}
                         </Tag>
-                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>{notice.title}</Text>
+                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>
+                          {notice.title}
+                        </Text>
                       </Space>
                     }
                     description={
@@ -194,7 +189,9 @@ export function NoticeListPage() {
               <Tag color="blue">{selectedNotice?.category}</Tag>
               {selectedNotice?.isImportant && <Tag color="red">필독</Tag>}
             </Space>
-            <Title level={4} style={{ margin: 0 }}>{selectedNotice?.title}</Title>
+            <Title level={4} style={{ margin: 0 }}>
+              {selectedNotice?.title}
+            </Title>
           </div>
         }
         open={modalOpen}
@@ -203,28 +200,49 @@ export function NoticeListPage() {
         footer={[
           <Button key="close" type="primary" onClick={() => setModalOpen(false)}>
             확인
-          </Button>
+          </Button>,
         ]}
         centered
       >
         {selectedNotice && (
           <div style={{ padding: '12px 0' }}>
-            <Space split={<Divider type="vertical" />} style={{ color: '#8c8c8c', marginBottom: 16 }}>
+            <Space
+              split={<Divider type="vertical" />}
+              style={{ color: '#8c8c8c', marginBottom: 16 }}
+            >
               <Text type="secondary">{selectedNotice.author}</Text>
-              <Text type="secondary">{dayjs(selectedNotice.createdAt).format('YYYY-MM-DD HH:mm')}</Text>
+              <Text type="secondary">
+                {dayjs(selectedNotice.createdAt).format('YYYY-MM-DD HH:mm')}
+              </Text>
               <Text type="secondary">조회수 {selectedNotice.viewCount.toLocaleString()}</Text>
             </Space>
-            
+
             <Divider style={{ margin: '0 0 24px 0' }} />
-            
-            <div style={{ minHeight: 200, whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: 15, color: '#262626' }}>
+
+            <div
+              style={{
+                minHeight: 200,
+                whiteSpace: 'pre-wrap',
+                lineHeight: 1.8,
+                fontSize: 15,
+                color: '#262626',
+              }}
+            >
               {selectedNotice.content}
             </div>
 
             {selectedNotice.hasAttachment && (
               <>
                 <Divider style={{ margin: '24px 0' }} />
-                <Card size="small" title={<Space><FileOutlined /> 첨부파일</Space>} styles={{ body: { padding: '8px 12px' } }}>
+                <Card
+                  size="small"
+                  title={
+                    <Space>
+                      <FileOutlined /> 첨부파일
+                    </Space>
+                  }
+                  styles={{ body: { padding: '8px 12px' } }}
+                >
                   <Button type="link" icon={<FileOutlined />} style={{ padding: 0 }}>
                     [공지] {selectedNotice.category}_관련_서식.pdf (1.2MB)
                   </Button>

@@ -13,14 +13,18 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 
 /**
  * 학교 권한 내 학습 관리 페이지
- * SCHOOL 권한에서 /surveys 경로로 접근 시 표시
+ * SCHOOL 권한에서 /school/my-learning 경로로 접근 시 표시
+ *
+ * 네이밍 참고:
+ * - 경로는 /school/my-learning으로 변경 (라우팅 네이밍 일관성)
+ * - 컴포넌트명은 SchoolMyLearningPage로 명확화
  */
-export function SurveyListPage() {
+export function SchoolMyLearningPage() {
   const location = useLocation()
   const { user } = useAuthStore()
 
   // 카테고리명 가져오기 (헤더와 동일한 로직 사용)
-  // SCHOOL 권한에서 /surveys 경로는 "내 학습 관리"로 매핑됨
+  // SCHOOL 권한에서 /school/my-learning 경로는 "내 학습 관리"로 매핑됨
   const categoryName =
     getCategoryNameByPath(location.pathname, 1, user?.role, user) || '내 학습 관리'
 
@@ -32,4 +36,4 @@ export function SurveyListPage() {
   )
 }
 
-export default SurveyListPage
+export default SchoolMyLearningPage
