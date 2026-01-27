@@ -5,8 +5,9 @@
  */
 
 import { useState } from 'react'
-import { Table, Button, Space, Tag, Tooltip } from 'antd'
-import { DownloadOutlined, EyeOutlined } from '@ant-design/icons'
+import { Table, Button, Space, Tag, Tooltip, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
+import { DownloadOutlined, EyeOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { User } from '@/types/user'
 import { canDownloadInstructors } from '@/shared/utils/download-permission'
@@ -35,6 +36,7 @@ interface InstructorListProps {
   data: InstructorListItem[]
   loading?: boolean
   onView?: (instructor: InstructorListItem) => void
+  onDelete?: (instructor: InstructorListItem) => void
   currentUser?: Omit<User, 'password'> | null
 }
 
@@ -42,6 +44,7 @@ export function InstructorList({
   data,
   loading = false,
   onView,
+  onDelete,
   currentUser,
 }: InstructorListProps) {
   const { user } = useAuthStore()
@@ -135,6 +138,27 @@ export function InstructorList({
       render: (phone?: string) => phone || '-',
     },
     {
+      title: '강사단 종류',
+      dataIndex: 'instructorType',
+      key: 'instructorType',
+      width: 120,
+      render: (type: string) => {
+        const typeLabels: Record<string, string> = {
+          JA: 'JA강사단',
+          SPECIAL: '특강 강사',
+          GEMINAI: '제미나이 강사단',
+          OTHER: '기타',
+        }
+        const typeColors: Record<string, string> = {
+          JA: 'blue',
+          SPECIAL: 'orange',
+          GEMINAI: 'purple',
+          OTHER: 'default',
+        }
+        return <Tag color={typeColors[type] || 'default'}>{typeLabels[type] || type}</Tag>
+      },
+    },
+    {
       title: '필라',
       dataIndex: 'pillar',
       key: 'pillar',
@@ -175,17 +199,45 @@ export function InstructorList({
     {
       title: '액션',
       key: 'action',
-      width: 100,
+      width: 120,
       fixed: 'right',
-      render: (_: unknown, record: InstructorListItem) => (
-        <Space>
-          {onView && (
-            <Button type="link" icon={<EyeOutlined />} onClick={() => onView(record)} size="small">
-              조회
-            </Button>
-          )}
-        </Space>
-      ),
+      render: (_: unknown, record: InstructorListItem) => {
+        const menuItems: MenuProps['items'] = [
+          ...(onView
+            ? [
+                {
+                  key: 'view',
+                  label: '상세 보기',
+                  icon: <EyeOutlined />,
+                  onClick: () => onView(record),
+                },
+              ]
+            : []),
+          ...(onDelete
+            ? [
+                {
+                  key: 'delete',
+                  label: '삭제',
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                  onClick: () => onDelete(record),
+                },
+              ]
+            : []),
+        ]
+
+        if (menuItems.length === 0) {
+          return null
+        }
+
+        return (
+          <div onClick={e => e.stopPropagation()}>
+            <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+              <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
+            </Dropdown>
+          </div>
+        )
+      },
     },
   ]
 

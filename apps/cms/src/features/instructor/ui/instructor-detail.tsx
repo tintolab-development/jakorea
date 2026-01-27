@@ -5,16 +5,36 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Descriptions, Tag, Space, Button, Table, Tabs, Badge } from 'antd'
+import {
+  Card,
+  Descriptions,
+  Tag,
+  Space,
+  Button,
+  Table,
+  Tabs,
+  Badge,
+  Select,
+  Collapse,
+  Statistic,
+  Radio,
+  Row,
+  Col,
+} from 'antd'
+import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
 import type { Settlement, Matching, Program } from '@/types/domain'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
+import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { programService } from '@/entities/program/api/program-service'
-import { mockMatchings } from '@/data/mock'
+import { mockMatchings, mockSchedules } from '@/data/mock'
 import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
 import { domainColorsHex } from '@/shared/constants/colors'
+import dayjs, { type Dayjs } from 'dayjs'
 import type { ColumnsType } from 'antd/es/table'
+
+const { Panel } = Collapse
 
 interface InstructorDetailProps {
   instructor: Instructor
@@ -23,11 +43,15 @@ interface InstructorDetailProps {
   loading?: boolean
 }
 
+type ViewMode = 'list' | 'calendar'
+
 export function InstructorDetail({ instructor, onEdit, onDelete, loading }: InstructorDetailProps) {
   const { settlements, fetchSettlements, selectedSettlement, setSelectedSettlement } =
     useSettlementStore()
   const [activeTab, setActiveTab] = useState('info')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(dayjs().format('YYYY-MM'))
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
   useEffect(() => {
     fetchSettlements()
@@ -49,6 +73,118 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
       })
       .filter((m): m is Matching & { program: Program } => m.program !== null)
   }, [instructor.id])
+
+  // 강사별 스케줄 목록 (매칭과 연계)
+  const instructorSchedules = useMemo(() => {
+    return mockSchedules
+      .filter(schedule => schedule.instructorId === instructor.id)
+      .map(schedule => {
+        const matching = instructorMatchings.find(m => m.scheduleId === schedule.id)
+        const program = programService.getByIdSync(schedule.programId)
+        return { ...schedule, matching, program }
+      })
+  }, [instructor.id, instructorMatchings])
+
+  // 일정 변경 및 취소 횟수 집계
+  const scheduleStats = useMemo(() => {
+    // 일정 변경 횟수: updatedAt과 createdAt이 다르면 변경된 것으로 간주
+    const changedCount = instructorSchedules.filter(
+      schedule => schedule.updatedAt !== schedule.createdAt
+    ).length
+
+    // 일정 취소 횟수: Matching에서 cancelledAt이 있고, 해당 일정이 강사와 관련된 경우
+    const cancelledMatchings = instructorMatchings.filter(
+      matching => matching.cancelledAt && matching.scheduleId
+    )
+
+    const cancelledCount = cancelledMatchings.length
+
+    return {
+      totalSchedules: instructorSchedules.length,
+      changedCount,
+      cancelledCount,
+    }
+  }, [instructorSchedules, instructorMatchings])
+
+  // 월별로 그룹화된 데이터
+  const monthlyData = useMemo(() => {
+    const grouped: Record<
+      string,
+      {
+        period: string
+        periodLabel: string
+        settlements: Settlement[]
+        matchings: Array<Matching & { program: Program }>
+        schedules: typeof instructorSchedules
+        totalAmount: number
+      }
+    > = {}
+
+    // 정산을 월별로 그룹화
+    instructorSettlements.forEach(settlement => {
+      const period = settlement.period || dayjs(settlement.createdAt).format('YYYY-MM')
+      if (!grouped[period]) {
+        grouped[period] = {
+          period,
+          periodLabel: dayjs(period).format('YYYY년 MM월'),
+          settlements: [],
+          matchings: [],
+          schedules: [],
+          totalAmount: 0,
+        }
+      }
+      grouped[period].settlements.push(settlement)
+      grouped[period].totalAmount += settlement.totalAmount
+    })
+
+    // 매칭을 월별로 그룹화 (매칭일 기준)
+    instructorMatchings.forEach(matching => {
+      const period = dayjs(matching.matchedAt).format('YYYY-MM')
+      if (!grouped[period]) {
+        grouped[period] = {
+          period,
+          periodLabel: dayjs(period).format('YYYY년 MM월'),
+          settlements: [],
+          matchings: [],
+          schedules: [],
+          totalAmount: 0,
+        }
+      }
+      grouped[period].matchings.push(matching)
+    })
+
+    // 스케줄을 월별로 그룹화
+    instructorSchedules.forEach(schedule => {
+      const period = dayjs(schedule.date).format('YYYY-MM')
+      if (!grouped[period]) {
+        grouped[period] = {
+          period,
+          periodLabel: dayjs(period).format('YYYY년 MM월'),
+          settlements: [],
+          matchings: [],
+          schedules: [],
+          totalAmount: 0,
+        }
+      }
+      grouped[period].schedules.push(schedule)
+    })
+
+    // 월별로 정렬 (최신순)
+    return Object.values(grouped).sort((a, b) => b.period.localeCompare(a.period))
+  }, [instructorSettlements, instructorMatchings, instructorSchedules])
+
+  // 선택된 월의 데이터
+  const currentMonthData = useMemo(() => {
+    return monthlyData.find(m => m.period === selectedPeriod) || null
+  }, [monthlyData, selectedPeriod])
+
+  // 사용 가능한 월 목록
+  const availablePeriods = useMemo(() => {
+    return monthlyData.map(m => ({
+      label: m.periodLabel,
+      value: m.period,
+    }))
+  }, [monthlyData])
 
   const handleViewSettlement = (settlement: Settlement) => {
     // 정산 상세 Drawer 열기 (정산 > 강사 상세와 동일한 화면)
@@ -104,6 +240,44 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
     },
   ]
 
+  // 프로그램별 매칭 횟수 집계
+  const programMatchingStats = useMemo(() => {
+    const stats: Record<
+      string,
+      {
+        program: Program
+        totalCount: number
+        activeCount: number
+        completedCount: number
+        cancelledCount: number
+      }
+    > = {}
+
+    instructorMatchings.forEach(matching => {
+      const programId = matching.programId
+      if (!stats[programId]) {
+        stats[programId] = {
+          program: matching.program,
+          totalCount: 0,
+          activeCount: 0,
+          completedCount: 0,
+          cancelledCount: 0,
+        }
+      }
+
+      stats[programId].totalCount++
+      if (matching.status === 'active') {
+        stats[programId].activeCount++
+      } else if (matching.status === 'completed') {
+        stats[programId].completedCount++
+      } else if (matching.status === 'cancelled') {
+        stats[programId].cancelledCount++
+      }
+    })
+
+    return Object.values(stats).sort((a, b) => b.totalCount - a.totalCount)
+  }, [instructorMatchings])
+
   const matchingColumns: ColumnsType<Matching & { program: Program }> = [
     {
       title: '프로그램',
@@ -132,70 +306,282 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
       key: 'info',
       label: '기본 정보',
       children: (
-        <Descriptions column={1} bordered>
-          <Descriptions.Item label="연락처">{instructor.contactPhone}</Descriptions.Item>
-          <Descriptions.Item label="이메일">{instructor.contactEmail || '-'}</Descriptions.Item>
-          <Descriptions.Item label="지역">{instructor.region}</Descriptions.Item>
-          <Descriptions.Item label="전문분야">
-            <Space wrap>
-              {instructor.specialty.map(s => (
-                <Tag key={s}>{s}</Tag>
-              ))}
-            </Space>
-          </Descriptions.Item>
-          {instructor.availableTime && (
-            <Descriptions.Item label="가능 시간">{instructor.availableTime}</Descriptions.Item>
-          )}
-          {instructor.experience && (
-            <Descriptions.Item label="이력">{instructor.experience}</Descriptions.Item>
-          )}
-          {instructor.rating && (
-            <Descriptions.Item label="평점">{instructor.rating.toFixed(1)}/5.0</Descriptions.Item>
-          )}
-          {(instructor.bankName || instructor.bankAccount) && (
-            <Descriptions.Item label="정산 계좌">
-              {instructor.bankName && <span>{instructor.bankName} </span>}
-              {instructor.bankAccount && (
-                <span>{instructor.bankAccount.replace(/(\d{4})(\d{4})(\d+)/, '$1-****-****')}</span>
-              )}
-              {instructor.accountHolder && <span> ({instructor.accountHolder})</span>}
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Descriptions column={1} bordered>
+            <Descriptions.Item label="연락처">{instructor.contactPhone}</Descriptions.Item>
+            <Descriptions.Item label="이메일">{instructor.contactEmail || '-'}</Descriptions.Item>
+            <Descriptions.Item label="지역">{instructor.region}</Descriptions.Item>
+            <Descriptions.Item label="전문분야">
+              <Space wrap>
+                {instructor.specialty.map(s => (
+                  <Tag key={s}>{s}</Tag>
+                ))}
+              </Space>
             </Descriptions.Item>
-          )}
-          <Descriptions.Item label="등록일">
-            {new Date(instructor.createdAt).toLocaleDateString('ko-KR')}
-          </Descriptions.Item>
-          <Descriptions.Item label="수정일">
-            {new Date(instructor.updatedAt).toLocaleDateString('ko-KR')}
-          </Descriptions.Item>
-        </Descriptions>
+            {instructor.availableTime && (
+              <Descriptions.Item label="가능 시간">{instructor.availableTime}</Descriptions.Item>
+            )}
+            {instructor.experience && (
+              <Descriptions.Item label="이력">{instructor.experience}</Descriptions.Item>
+            )}
+            {instructor.rating && (
+              <Descriptions.Item label="평점">{instructor.rating.toFixed(1)}/5.0</Descriptions.Item>
+            )}
+            {(instructor.bankName || instructor.bankAccount) && (
+              <Descriptions.Item label="정산 계좌">
+                {instructor.bankName && <span>{instructor.bankName} </span>}
+                {instructor.bankAccount && (
+                  <span>
+                    {instructor.bankAccount.replace(/(\d{4})(\d{4})(\d+)/, '$1-****-****')}
+                  </span>
+                )}
+                {instructor.accountHolder && <span> ({instructor.accountHolder})</span>}
+              </Descriptions.Item>
+            )}
+            <Descriptions.Item label="등록일">
+              {new Date(instructor.createdAt).toLocaleDateString('ko-KR')}
+            </Descriptions.Item>
+            <Descriptions.Item label="수정일">
+              {new Date(instructor.updatedAt).toLocaleDateString('ko-KR')}
+            </Descriptions.Item>
+          </Descriptions>
+
+          {/* 일정 통계 정보 */}
+          <Card size="small" title="일정 통계">
+            <Row gutter={16}>
+              <Col span={8}>
+                <Statistic title="총 일정 수" value={scheduleStats.totalSchedules} suffix="건" />
+              </Col>
+              <Col span={8}>
+                <Statistic title="일정 변경 횟수" value={scheduleStats.changedCount} suffix="건" />
+              </Col>
+              <Col span={8}>
+                <Statistic
+                  title="일정 취소 횟수"
+                  value={scheduleStats.cancelledCount}
+                  suffix="건"
+                />
+              </Col>
+            </Row>
+          </Card>
+        </Space>
       ),
     },
     {
       key: 'programs',
       label: `강의 진행 (${instructorMatchings.length})`,
       children: (
-        <Table
-          dataSource={instructorMatchings}
-          columns={matchingColumns}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-        />
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* 프로그램별 집계 통계 */}
+          <Card size="small" title="프로그램별 진행 횟수">
+            <Row gutter={16} align="stretch">
+              {programMatchingStats.map(stat => (
+                <Col span={8} key={stat.program.id} style={{ marginBottom: 16 }}>
+                  <Card
+                    size="small"
+                    style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                  >
+                    <Space direction="vertical" size="small" style={{ width: '100%', flex: 1 }}>
+                      <div
+                        style={{
+                          fontWeight: 'bold',
+                          marginBottom: 8,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          width: '100%',
+                        }}
+                        title={stat.program.title}
+                      >
+                        {stat.program.title}
+                      </div>
+                      <Statistic title="총 진행 횟수" value={stat.totalCount} suffix="건" />
+                      <Space size="small" wrap>
+                        <Tag color="blue">진행중 {stat.activeCount}</Tag>
+                        <Tag color="green">완료 {stat.completedCount}</Tag>
+                        {stat.cancelledCount > 0 && (
+                          <Tag color="red">취소 {stat.cancelledCount}</Tag>
+                        )}
+                      </Space>
+                    </Space>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+            {programMatchingStats.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(0, 0, 0, 0.45)' }}>
+                프로그램 진행 이력이 없습니다.
+              </div>
+            )}
+          </Card>
+
+          {/* 전체 매칭 목록 */}
+          <Card size="small" title="전체 매칭 목록">
+            <Table
+              dataSource={instructorMatchings}
+              columns={matchingColumns}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}
+            />
+          </Card>
+        </Space>
       ),
     },
     {
       key: 'settlements',
       label: `정산 현황 (${instructorSettlements.length})`,
       children: (
-        <Table
-          dataSource={instructorSettlements}
-          columns={settlementColumns}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-          onRow={record => ({
-            onClick: () => handleViewSettlement(record),
-            style: { cursor: 'pointer' },
-          })}
-        />
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* 월 선택 및 뷰 모드 */}
+          <Card size="small">
+            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+              <Space>
+                <span>기간 선택:</span>
+                <Select
+                  value={selectedPeriod}
+                  onChange={setSelectedPeriod}
+                  style={{ width: 150 }}
+                  options={availablePeriods}
+                />
+              </Space>
+              <Radio.Group
+                value={viewMode}
+                onChange={e => setViewMode(e.target.value)}
+                buttonStyle="solid"
+                size="small"
+              >
+                <Radio.Button value="list">
+                  <UnorderedListOutlined /> 목록
+                </Radio.Button>
+                <Radio.Button value="calendar">
+                  <CalendarOutlined /> 캘린더
+                </Radio.Button>
+              </Radio.Group>
+            </Space>
+          </Card>
+
+          {/* 선택된 월의 통계 */}
+          {currentMonthData && (
+            <Card size="small">
+              <Space size="large" wrap>
+                <Statistic
+                  title="강의 진행"
+                  value={currentMonthData.matchings.length}
+                  suffix="건"
+                />
+                <Statistic
+                  title="정산 건수"
+                  value={currentMonthData.settlements.length}
+                  suffix="건"
+                />
+                <Statistic
+                  title="총 정산 금액"
+                  value={currentMonthData.totalAmount}
+                  suffix="원"
+                  formatter={value => `${Number(value).toLocaleString('ko-KR')}`}
+                />
+              </Space>
+            </Card>
+          )}
+
+          {/* 목록 뷰 */}
+          {viewMode === 'list' && (
+            <Collapse defaultActiveKey={selectedPeriod}>
+              {monthlyData.map(month => (
+                <Panel
+                  key={month.period}
+                  header={
+                    <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                      <span>
+                        <strong>{month.periodLabel}</strong>
+                        <Tag color="blue" style={{ marginLeft: 8 }}>
+                          강의 {month.matchings.length}건
+                        </Tag>
+                        <Tag color="green" style={{ marginLeft: 4 }}>
+                          정산 {month.settlements.length}건
+                        </Tag>
+                        {month.totalAmount > 0 && (
+                          <Tag color="orange" style={{ marginLeft: 4 }}>
+                            {month.totalAmount.toLocaleString('ko-KR')}원
+                          </Tag>
+                        )}
+                      </span>
+                    </Space>
+                  }
+                >
+                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    {/* 강의 진행 내역 */}
+                    {month.matchings.length > 0 && (
+                      <div>
+                        <h4 style={{ marginBottom: 8 }}>강의 진행 내역</h4>
+                        <Table
+                          dataSource={month.matchings}
+                          columns={matchingColumns}
+                          rowKey="id"
+                          pagination={false}
+                          size="small"
+                        />
+                      </div>
+                    )}
+
+                    {/* 정산 내역 */}
+                    {month.settlements.length > 0 && (
+                      <div>
+                        <h4 style={{ marginBottom: 8 }}>정산 내역</h4>
+                        <Table
+                          dataSource={month.settlements}
+                          columns={settlementColumns}
+                          rowKey="id"
+                          pagination={false}
+                          size="small"
+                          onRow={record => ({
+                            onClick: () => handleViewSettlement(record),
+                            style: { cursor: 'pointer' },
+                          })}
+                        />
+                      </div>
+                    )}
+
+                    {month.matchings.length === 0 && month.settlements.length === 0 && (
+                      <div
+                        style={{
+                          textAlign: 'center',
+                          padding: '20px',
+                          color: 'rgba(0, 0, 0, 0.45)',
+                        }}
+                      >
+                        해당 월의 강의 진행 내역 및 정산 내역이 없습니다.
+                      </div>
+                    )}
+                  </Space>
+                </Panel>
+              ))}
+            </Collapse>
+          )}
+
+          {/* 캘린더 뷰 */}
+          {viewMode === 'calendar' && currentMonthData && (
+            <Card title={`${currentMonthData.periodLabel} 정산 캘린더`}>
+              <SettlementCalendar
+                settlements={currentMonthData.settlements}
+                onDateSelect={(_date: Dayjs, settlement?: Settlement) => {
+                  if (settlement) {
+                    handleViewSettlement(settlement)
+                  }
+                }}
+                selectedPeriod={selectedPeriod}
+              />
+            </Card>
+          )}
+
+          {viewMode === 'calendar' && !currentMonthData && (
+            <Card>
+              <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(0, 0, 0, 0.45)' }}>
+                선택한 월의 데이터가 없습니다.
+              </div>
+            </Card>
+          )}
+        </Space>
       ),
     },
   ]
