@@ -54,7 +54,7 @@ const REGISTER_TYPES: Array<{
 }> = [
   {
     value: 'INDIVIDUAL',
-    label: '개인(참여자)',
+    label: '학생',
     description: '프로그램 신청, 수료증 발급',
     icon: <UserOutlined />,
   },
@@ -356,7 +356,7 @@ export function RegisterPage() {
           <div className="register-step-content">
             <Title level={4}>정보 입력</Title>
             <Paragraph type="secondary" style={{ marginBottom: 24 }}>
-              {selectedRole === 'INDIVIDUAL' && '개인(참여자) 정보를 입력해주세요.'}
+              {selectedRole === 'INDIVIDUAL' && '학생 정보를 입력해주세요.'}
               {selectedRole === 'SCHOOL' && '학교 정보를 입력해주세요.'}
               {selectedRole === 'INSTRUCTOR' && '강사 정보를 입력해주세요.'}
             </Paragraph>

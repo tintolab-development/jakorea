@@ -42,7 +42,7 @@ const roleConfig: Record<
     icon: <TeamOutlined />,
   },
   INDIVIDUAL: {
-    label: '개인(참여자)',
+    label: '학생',
     color: 'orange',
     icon: <UserOutlined />,
   },
@@ -55,8 +55,8 @@ const roleConfig: Record<
 
 const adminLevelLabels: Record<AdminLevel, string> = {
   MASTER: '마스터 관리자',
-  ADMIN: '관리자',
-  GENERAL: '일반',
+  ADMIN: '중간 관리자',
+  GENERAL: '일반 관리자',
 }
 
 const programRoleLabels: Record<ProgramRole, string> = {

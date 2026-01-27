@@ -91,7 +91,7 @@ export function InterviewListPage() {
             type: 'select',
             options: [
               { label: '강사', value: 'INSTRUCTOR' },
-              { label: '개인(참여자)', value: 'INDIVIDUAL' },
+              { label: '학생', value: 'INDIVIDUAL' },
               { label: '학교', value: 'SCHOOL' },
             ],
             placeholder: '신청 유형',

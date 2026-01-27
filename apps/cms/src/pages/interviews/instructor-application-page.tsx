@@ -153,7 +153,7 @@ export function InstructorApplicationPage() {
                     disabled={fixedRole}
                   >
                     <Option value="INSTRUCTOR">강사</Option>
-                    <Option value="INDIVIDUAL">개인(참여자)</Option>
+                    <Option value="INDIVIDUAL">학생</Option>
                     <Option value="SCHOOL">학교</Option>
                   </Select>
                 )}

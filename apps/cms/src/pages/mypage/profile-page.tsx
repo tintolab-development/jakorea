@@ -51,7 +51,7 @@ export function ProfilePage() {
                   {user?.role === 'INSTRUCTOR'
                     ? '강사'
                     : user?.role === 'INDIVIDUAL'
-                      ? '개인(참여자)'
+                      ? '학생'
                       : user?.role === 'SCHOOL'
                         ? '학교'
                         : '관리자'}

@@ -29,7 +29,7 @@ export const ADMIN_PERMISSIONS: Record<AdminLevel, AdminPermission> = {
     canApprovePermissionRequests: true,
   },
   ADMIN: {
-    label: '관리자',
+    label: '중간 관리자',
     description: '프로그램 운영 전반, 신청 승인/반려, 강사 매칭, 정산',
     canManageUsers: false,
     canManageSystemSettings: false,
@@ -38,7 +38,7 @@ export const ADMIN_PERMISSIONS: Record<AdminLevel, AdminPermission> = {
     canApprovePermissionRequests: false,
   },
   GENERAL: {
-    label: '일반',
+    label: '일반 관리자',
     description: '조회 기능만 (기본값, 권한부여 0)',
     canManageUsers: false,
     canManageSystemSettings: false,

@@ -4,7 +4,7 @@ export const audienceOptions: Array<{ value: TemplateAudience; label: string }> 
   { value: 'ADMIN_INTERNAL', label: '운영(내부)' },
   { value: 'SCHOOL', label: '학교' },
   { value: 'INSTRUCTOR', label: '강사' },
-  { value: 'INDIVIDUAL', label: '개인(참여자)' },
+  { value: 'INDIVIDUAL', label: '학생' },
 ]
 
 export const statusOptions: Array<{ value: TemplateStatus; label: string }> = [

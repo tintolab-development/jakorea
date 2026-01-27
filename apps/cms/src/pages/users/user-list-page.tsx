@@ -210,7 +210,7 @@ export function UserListPage() {
               { label: '전체', value: 'ALL' },
               { label: '관리자', value: 'ADMIN' },
               { label: '강사', value: 'INSTRUCTOR' },
-              { label: '개인(참여자)', value: 'INDIVIDUAL' },
+              { label: '학생', value: 'INDIVIDUAL' },
               { label: '학교', value: 'SCHOOL' },
             ],
           },

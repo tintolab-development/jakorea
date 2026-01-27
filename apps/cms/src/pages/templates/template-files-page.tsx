@@ -18,6 +18,7 @@ import {
   Typography,
   message,
 } from 'antd'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import type { MenuProps } from 'antd'
 import dayjs from 'dayjs'
@@ -25,17 +26,20 @@ import { MoreOutlined } from '@ant-design/icons'
 import type { FileTemplate, TemplateAudience, TemplateStatus } from '@/types/template'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { mockFileTemplates, getTemplateStatusColor, getTemplateStatusLabel } from '@/data/mock/templates'
+import {
+  mockFileTemplates,
+  getTemplateStatusColor,
+  getTemplateStatusLabel,
+} from '@/data/mock/templates'
 import { MESSAGES } from '@/shared/constants'
 
 const { Text } = Typography
-const { Search } = Input
 
 const audienceOptions: Array<{ value: TemplateAudience; label: string }> = [
   { value: 'ADMIN_INTERNAL', label: '운영(내부)' },
   { value: 'SCHOOL', label: '학교' },
   { value: 'INSTRUCTOR', label: '강사' },
-  { value: 'INDIVIDUAL', label: '개인(참여자)' },
+  { value: 'INDIVIDUAL', label: '학생' },
 ]
 
 function statusLabel(status: TemplateStatus) {
@@ -48,16 +52,22 @@ export default function TemplateFilesPage() {
   const canWrite = canPerformWriteAction(user)
 
   const [rows, setRows] = useState<FileTemplate[]>(mockFileTemplates)
-  const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<TemplateStatus | 'all'>('all')
+  const [pendingFilters, setPendingFilters] = useState({
+    query: '',
+    status: 'all' as TemplateStatus | 'all',
+  })
+  const [appliedFilters, setAppliedFilters] = useState({
+    query: '',
+    status: 'all' as TemplateStatus | 'all',
+  })
   const [editing, setEditing] = useState<FileTemplate | null>(null)
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = appliedFilters.query.trim().toLowerCase()
     return rows
-      .filter(r => (status === 'all' ? true : r.status === status))
+      .filter(r => (appliedFilters.status === 'all' ? true : r.status === appliedFilters.status))
       .filter(r => {
         if (!q) return true
         return (
@@ -68,7 +78,24 @@ export default function TemplateFilesPage() {
         )
       })
       .sort((a, b) => dayjs(b.updatedAt).valueOf() - dayjs(a.updatedAt).valueOf())
-  }, [query, rows, status])
+  }, [appliedFilters, rows])
+
+  // 조회 버튼 클릭 시 필터 적용
+  const handleSearch = () => {
+    setAppliedFilters(pendingFilters)
+  }
+
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setPendingFilters({
+      query: '',
+      status: 'all',
+    })
+    setAppliedFilters({
+      query: '',
+      status: 'all',
+    })
+  }
 
   const openCreate = () => {
     setEditing(null)
@@ -145,7 +172,9 @@ export default function TemplateFilesPage() {
       return [next, ...prev]
     })
 
-    message.success(editing ? MESSAGES.success.templateFileUpdated : MESSAGES.success.templateFileCreated)
+    message.success(
+      editing ? MESSAGES.success.templateFileUpdated : MESSAGES.success.templateFileCreated
+    )
     setOpen(false)
     setEditing(null)
   }
@@ -154,7 +183,11 @@ export default function TemplateFilesPage() {
     setRows(prev =>
       prev.map(r =>
         r.id === row.id
-          ? { ...r, status: r.status === 'archived' ? 'published' : 'archived', updatedAt: new Date().toISOString() }
+          ? {
+              ...r,
+              status: r.status === 'archived' ? 'published' : 'archived',
+              updatedAt: new Date().toISOString(),
+            }
           : r
       )
     )
@@ -282,7 +315,11 @@ export default function TemplateFilesPage() {
       fixed: 'right' as const,
       render: (_: unknown, row) => (
         <div onClick={e => e.stopPropagation()}>
-          <Dropdown menu={{ items: getRowMenuItems(row) }} trigger={['click']} placement="bottomRight">
+          <Dropdown
+            menu={{ items: getRowMenuItems(row) }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
             <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
           </Dropdown>
         </div>
@@ -292,36 +329,42 @@ export default function TemplateFilesPage() {
 
   return (
     <div>
-      <Card style={{ marginBottom: 12 }}>
-        <Space wrap>
-          <Search
-            placeholder="제목/설명/태그/파일명 검색"
-            allowClear
-            onSearch={setQuery}
-            onChange={e => setQuery(e.target.value)}
-            value={query}
-            style={{ width: 320 }}
-          />
-          <Select
-            value={status}
-            onChange={setStatus}
-            style={{ width: 160 }}
-            options={[
-              { value: 'all', label: '전체 상태' },
-              { value: 'draft', label: '초안' },
-              { value: 'review', label: '검토' },
-              { value: 'published', label: '게시' },
-              { value: 'archived', label: '아카이브' },
-            ]}
-          />
-          {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
-          {canWrite && (
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'query',
+            type: 'search',
+            label: '검색',
+            placeholder: '제목/설명/태그/파일명 검색',
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '상태',
+            placeholder: '전체 상태',
+            options: [
+              { label: '전체 상태', value: 'all' },
+              { label: '초안', value: 'draft' },
+              { label: '검토', value: 'review' },
+              { label: '게시', value: 'published' },
+              { label: '아카이브', value: 'archived' },
+            ],
+          },
+        ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+        extra={
+          canWrite ? (
             <Button type="primary" onClick={openCreate}>
               파일 양식 등록
             </Button>
-          )}
-        </Space>
-      </Card>
+          ) : undefined
+        }
+      />
 
       <Table
         columns={columns}
@@ -348,7 +391,11 @@ export default function TemplateFilesPage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="title" label="제목" rules={[{ required: true, message: '제목을 입력해주세요' }]}>
+          <Form.Item
+            name="title"
+            label="제목"
+            rules={[{ required: true, message: '제목을 입력해주세요' }]}
+          >
             <Input placeholder="예) 봉사활동 안내문(기본)" />
           </Form.Item>
           <Form.Item name="description" label="설명">
@@ -371,7 +418,12 @@ export default function TemplateFilesPage() {
                 ]}
               />
             </Form.Item>
-            <Form.Item name="version" label="버전" rules={[{ required: true, message: '버전을 입력해주세요' }]} style={{ flex: 1 }}>
+            <Form.Item
+              name="version"
+              label="버전"
+              rules={[{ required: true, message: '버전을 입력해주세요' }]}
+              style={{ flex: 1 }}
+            >
               <Input placeholder="v1.0" />
             </Form.Item>
           </Space>
@@ -389,15 +441,29 @@ export default function TemplateFilesPage() {
           </Form.Item>
 
           <Space size={12} style={{ display: 'flex' }}>
-            <Form.Item name="fileName" label="파일명" rules={[{ required: true, message: '파일명을 입력해주세요' }]} style={{ flex: 1 }}>
+            <Form.Item
+              name="fileName"
+              label="파일명"
+              rules={[{ required: true, message: '파일명을 입력해주세요' }]}
+              style={{ flex: 1 }}
+            >
               <Input placeholder="예) 안내문_v1.pdf" />
             </Form.Item>
-            <Form.Item name="mimeType" label="MIME Type" rules={[{ required: true, message: 'MIME Type을 입력해주세요' }]} style={{ flex: 1 }}>
+            <Form.Item
+              name="mimeType"
+              label="MIME Type"
+              rules={[{ required: true, message: 'MIME Type을 입력해주세요' }]}
+              style={{ flex: 1 }}
+            >
               <Input placeholder="application/pdf" />
             </Form.Item>
           </Space>
 
-          <Form.Item name="downloadUrl" label="다운로드 URL(임시)" rules={[{ required: true, message: 'URL을 입력해주세요' }]}>
+          <Form.Item
+            name="downloadUrl"
+            label="다운로드 URL(임시)"
+            rules={[{ required: true, message: 'URL을 입력해주세요' }]}
+          >
             <Input placeholder="초기에는 # 사용, 추후 스토리지 연동" />
           </Form.Item>
         </Form>
@@ -405,4 +471,3 @@ export default function TemplateFilesPage() {
     </div>
   )
 }
-
