@@ -1,9 +1,13 @@
 /**
- * 사이드바 컴포넌트
+ * 사이드바 컴포넌트 (LNB - Left Navigation Bar)
  * Phase 1.1: Ant Design Menu를 활용한 네비게이션
  * Phase 4.2.1: 권한별 메뉴 구성 적용
  * Phase 0.1.5: 역할별 메뉴 필터링 강화 (hidden 처리, 권한별 필터링)
  * 타이틀을 사이드바 최상단에 배치
+ * 
+ * 참고사항:
+ * - 각 권한(INSTRUCTOR/INDIVIDUAL/SCHOOL)별로 완전히 분리된 메뉴 구조
+ * - 공통 메뉴 없이 권한별로 독립적으로 관리됨
  */
 
 import { Layout, Menu } from 'antd'
@@ -21,10 +25,10 @@ export function Sidebar() {
   const location = useLocation()
   const { user } = useAuthStore()
 
-  // 권한별 메뉴 필터링
+  // 권한별 메뉴 필터링 (사용자 정보 포함하여 인증 상태 확인)
   const menuItems = useMemo(() => {
-    return getMenuItemsByRole(user?.role || null)
-  }, [user?.role])
+    return getMenuItemsByRole(user?.role || null, user)
+  }, [user?.role, user])
 
   // 현재 경로에 따라 열린 서브메뉴 결정
   const openKeys = useMemo(() => {
@@ -55,60 +59,91 @@ export function Sidebar() {
       keys.push('settlements-group')
     }
 
-    // 마이페이지 관련
+    // 사용자(INSTRUCTOR, INDIVIDUAL, SCHOOL) 공통 메뉴
+    // 내 학습 관리
+    if (
+      path.startsWith('/instructor/schedule') ||
+      path.startsWith('/schedules/my') ||
+      path.startsWith('/surveys')
+    ) {
+      keys.push('my-learning-group')
+    }
+
+    // 교육 프로그램
+    if (
+      path.startsWith('/programs') &&
+      !path.startsWith('/programs/my') &&
+      !path.startsWith('/programs/favorites') &&
+      !path.startsWith('/programs/volunteer') &&
+      !path.startsWith('/programs/education')
+    ) {
+      keys.push('education-programs-group')
+    }
+
+    // 봉사 프로그램
+    if (path.startsWith('/programs/volunteer')) {
+      keys.push('volunteer-programs-group')
+    }
+
+    // 마이페이지 (권한별로 다른 그룹 키 사용)
     if (
       path.startsWith('/mypage') ||
-      path.startsWith('/histories') ||
-      path.startsWith('/programs/my') ||
-      path.startsWith('/programs/favorites') ||
-      path.startsWith('/settlements/my')
+      path.startsWith('/settlements/my') ||
+      path.startsWith('/notices/inquiries/my')
     ) {
-      keys.push('mypage-group')
-
-      // 개인정보 관리 (개인정보 + 강사 이력)
-      if (path.startsWith('/mypage/profile') || path.startsWith('/histories')) {
-        keys.push('personal-info-group')
-      }
-
-      // 프로그램 관리
-      if (path.startsWith('/programs/my') || path.startsWith('/programs/favorites')) {
-        keys.push('program-management-group')
-      }
-
-      // 정산 이력/현황 관리
-      if (path.startsWith('/settlements/my')) {
-        keys.push('settlement-history-group')
-      }
-    }
-
-    // 사용자 봉사단 관련 메뉴 (INDIVIDUAL 역할일 때)
-    if (user?.role === 'INDIVIDUAL') {
-      if (
-        path.startsWith('/mypage') ||
-        path.startsWith('/volunteers/my') ||
-        path.startsWith('/programs/favorites')
-      ) {
-        keys.push('volunteer-mypage-group')
-
-        // 프로그램관리
-        if (path.startsWith('/volunteers/my/programs') || path.startsWith('/programs/favorites')) {
-          keys.push('volunteer-program-mgmt')
-        }
-
-        // 봉사단 활동 관리
+      if (user?.role === 'INSTRUCTOR') {
+        keys.push('instructor-mypage-group')
         if (
-          path.startsWith('/volunteers/my/schedules') ||
-          path.startsWith('/volunteers/my/histories')
+          path.startsWith('/mypage/profile') ||
+          path.startsWith('/mypage/school-auth') ||
+          path.startsWith('/mypage/school-info') ||
+          path.startsWith('/mypage/instructor-auth') ||
+          path.startsWith('/mypage/instructor-info')
         ) {
-          keys.push('volunteer-activity-mgmt')
+          keys.push('instructor-personal-info-group')
+        }
+      } else if (user?.role === 'INDIVIDUAL') {
+        keys.push('individual-mypage-group')
+        if (
+          path.startsWith('/mypage/profile') ||
+          path.startsWith('/mypage/instructor-auth') ||
+          path.startsWith('/mypage/instructor-info')
+        ) {
+          keys.push('individual-personal-info-group')
+        }
+      } else if (user?.role === 'SCHOOL') {
+        keys.push('school-mypage-group')
+        if (
+          path.startsWith('/mypage/profile') ||
+          path.startsWith('/mypage/school-auth') ||
+          path.startsWith('/mypage/school-info')
+        ) {
+          keys.push('school-personal-info-group')
         }
       }
     }
+
 
     return keys
   }, [location.pathname, user?.role])
 
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
+
+  // 선택된 메뉴 키 결정 (역할별 내 학습 관리 페이지일 때 /my-learning 활성화)
+  const selectedKeys = useMemo(() => {
+    const path = location.pathname
+    
+    // 역할별 내 학습 관리 페이지일 때 /my-learning 활성화
+    if (
+      (user?.role === 'INSTRUCTOR' && path.startsWith('/instructor/schedule')) ||
+      (user?.role === 'INDIVIDUAL' && path.startsWith('/schedules/my')) ||
+      (user?.role === 'SCHOOL' && path.startsWith('/surveys'))
+    ) {
+      return ['/my-learning']
+    }
+    
+    return [path]
+  }, [location.pathname, user?.role])
 
   return (
     <Sider width={220} className="sidebar-container">
@@ -116,7 +151,7 @@ export function Sidebar() {
       <div className="sidebar-menu-wrapper">
         <Menu
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={selectedKeys}
           openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : openKeys}
           onOpenChange={setControlledOpenKeys}
           className="sidebar-menu"

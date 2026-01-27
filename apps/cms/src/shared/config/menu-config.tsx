@@ -11,12 +11,6 @@ import {
   FileTextOutlined,
   CalendarOutlined,
   TeamOutlined,
-  UserSwitchOutlined,
-  HeartOutlined,
-  FileOutlined,
-  InfoCircleOutlined,
-  QuestionCircleOutlined,
-  FileSearchOutlined,
 } from '@ant-design/icons'
 
 /**
@@ -39,8 +33,9 @@ export interface MenuItemConfig {
  * IA 순서에 맞게 정리됨
  */
 const allMenuItems: MenuItemConfig[] = [
-  // 사용자 영역
-  { key: '/', label: '메인 홈', icon: <FolderOutlined />, enabled: true },
+  // 관리자 전용 홈
+  { key: '/', label: '관리자 홈', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+  
   /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 교육/봉사, 3뎁스 교육 하위 [목록, 일정, 수강 신청 현황, 강의 신청 현황] */
   {
     key: 'programs-group',
@@ -62,12 +57,6 @@ const allMenuItems: MenuItemConfig[] = [
             enabled: true,
             allowedRoles: ['ADMIN'],
           },
-          {
-            key: '/programs/education/schedule',
-            label: '프로그램 일정',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
           { key: '/applications', label: '수강 신청 현황', enabled: true, allowedRoles: ['ADMIN'] },
           {
             key: '/instructor-applications',
@@ -86,42 +75,220 @@ const allMenuItems: MenuItemConfig[] = [
       },
     ],
   },
-  /* 사용자용 프로그램 메뉴 (INDIVIDUAL, SCHOOL) */
+
+  { key: 'divider-user', type: 'divider', enabled: true },
+
+  // ============================================
+  // 사용자(INSTRUCTOR, INDIVIDUAL, SCHOOL) 공통 1뎁스 메뉴
+  // ============================================
+  
+  // 1. 내 학습 관리 (1뎁스)
   {
-    key: 'programs-user-group',
-    label: '프로그램',
+    key: '/my-learning',
+    label: '내 학습 관리',
     icon: <FolderOutlined />,
     enabled: true,
-    allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+  
+  // 2. 교육 프로그램 (1뎁스)
+  {
+    key: '/programs',
+    label: '교육 프로그램',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+  
+  // 3. 봉사 프로그램 (1뎁스)
+  {
+    key: '/programs/volunteer',
+    label: '봉사 프로그램',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+  
+  // 4. 마이페이지 (1뎁스)
+  {
+    key: '/mypage',
+    label: '마이페이지',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+  
+  // 5. 공지사항 (1뎁스)
+  {
+    key: '/notices',
+    label: '공지사항',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+  
+  // 6. FAQ (1뎁스)
+  {
+    key: '/notices/faq',
+    label: 'FAQ',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+  
+  // 7. 문의하기 (1뎁스)
+  {
+    key: '/notices/inquiries',
+    label: '문의하기',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+  },
+
+  // ============================================
+  // 주석 처리된 메뉴 (일반 사용자용)
+  // ============================================
+  
+  /* 
+  // 1. 내 학습 관리 (권한별로 다른 페이지로 연결) - 주석 처리
+  {
+    key: 'my-learning-group',
+    label: '내 학습 관리',
+    icon: <FileTextOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+    children: [
+      {
+        key: '/instructor/schedule',
+        label: '교육 일정',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+      {
+        key: '/schedules/my',
+        label: '내 일정',
+        enabled: true,
+        allowedRoles: ['INDIVIDUAL'],
+      },
+      {
+        key: '/surveys',
+        label: '만족도설문',
+        enabled: true,
+        allowedRoles: ['SCHOOL'],
+      },
+    ],
+  },
+  
+  // 2. 교육 프로그램 (하위 메뉴) - 주석 처리
+  {
+    key: 'education-programs-group',
+    label: '교육 프로그램',
+    icon: <FolderOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
     children: [
       {
         key: '/programs',
         label: '프로그램 리스트',
         enabled: true,
-        allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
       },
     ],
   },
+  
+  // 3. 봉사 프로그램 (하위 메뉴) - 주석 처리
   {
-    key: 'applications-group-user',
-    label: '신청내역',
-    icon: <FileTextOutlined />,
-    enabled: true,
-    allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
-    children: [
-      {
-        key: '/programs/my',
-        label: '내 신청내역',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL', 'SCHOOL'],
-      },
-    ],
-  },
-  {
-    key: 'volunteers-group',
-    label: '봉사단',
+    key: 'volunteer-programs-group',
+    label: '봉사 프로그램',
     icon: <HeartOutlined />,
     enabled: true,
+    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+    children: [
+      {
+        key: '/programs/volunteer',
+        label: '봉사 프로그램',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
+    ],
+  },
+  
+  // 강사 마이페이지 (하위 메뉴) - 주석 처리
+  {
+    key: 'instructor-mypage-group',
+    label: '마이페이지',
+    icon: <UserSwitchOutlined />,
+    enabled: true,
+    allowedRoles: ['INSTRUCTOR'],
+    children: [
+      {
+        key: 'instructor-personal-info-group',
+        label: '개인정보 관리',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+        children: [
+          {
+            key: '/mypage/profile',
+            label: '내 정보',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+          {
+            key: '/mypage/school-auth',
+            label: '학교(교사) 인증',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+          {
+            key: '/mypage/instructor-auth',
+            label: '강사 인증',
+            enabled: true,
+            allowedRoles: ['INSTRUCTOR'],
+          },
+        ],
+      },
+      {
+        key: '/mypage/program-schedule',
+        label: '내 프로그램 일정',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+      {
+        key: '/settlements/my',
+        label: '강의료 정산',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+      {
+        key: '/mypage/documents',
+        label: '서류 발급 이력',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+      {
+        key: '/notices/inquiries/my',
+        label: '내 문의 내역',
+        enabled: true,
+        allowedRoles: ['INSTRUCTOR'],
+      },
+    ],
+  },
+  */
+
+  // ============================================
+  // 주석 처리된 메뉴 (역할별 전용 메뉴)
+  // ============================================
+  
+  /* 
+  { key: 'divider-mypage', type: 'divider', enabled: true },
+  
+  // 학생(INDIVIDUAL) 전용 - 봉사단
+  {
+    key: 'individual-volunteers-group',
+    label: '봉사단',
+    icon: <HeartOutlined />,
+    enabled: false,
+    hidden: true,
     allowedRoles: ['INDIVIDUAL'],
     children: [
       {
@@ -152,157 +319,121 @@ const allMenuItems: MenuItemConfig[] = [
       },
     ],
   },
-
-  // 강사(INSTRUCTOR), 개인(참여자)(INDIVIDUAL), 학교(SCHOOL) 마이페이지
+  
+  // 학생(INDIVIDUAL) 전용 - 마이페이지 (하위 메뉴)
   {
-    key: 'mypage-group',
+    key: 'individual-mypage-group',
     label: '마이페이지',
     icon: <UserSwitchOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      {
-        key: 'personal-info-group',
-        label: '개인정보 관리',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-        children: [
-          {
-            key: '/mypage/profile',
-            label: '개인정보 관리',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-          },
-          {
-            key: '/histories',
-            label: '강사 이력 관리',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-        ],
-      },
-      {
-        key: 'program-management-group',
-        label: '프로그램 관리',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-        children: [
-          {
-            key: '/volunteers/my/programs',
-            label: '수강 프로그램',
-            enabled: true,
-            allowedRoles: ['INDIVIDUAL'],
-          },
-          {
-            key: '/programs/my',
-            label: '내가 신청한 프로그램',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-          {
-            key: '/programs/my/active',
-            label: '강의 프로그램',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-          {
-            key: '/programs/favorites',
-            label: '관심 프로그램 관리',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-          },
-          {
-            key: '/programs/satisfaction',
-            label: '만족도 조사',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-        ],
-      },
-      {
-        key: 'volunteer-activity-mgmt',
-        label: '봉사단 활동 관리',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-        children: [
-          {
-            key: '/volunteers/my/schedules',
-            label: '내 봉사 일정',
-            enabled: true,
-            allowedRoles: ['INDIVIDUAL'],
-          },
-          {
-            key: '/volunteers/my/histories',
-            label: '봉사단 참여 이력',
-            enabled: true,
-            allowedRoles: ['INDIVIDUAL'],
-          },
-        ],
-      },
-      {
-        key: 'settlement-history-group',
-        label: '정산 이력/현황 관리',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-        children: [
-          {
-            key: '/settlements/my',
-            label: '정산 이력/현황',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-        ],
-      },
-    ],
-  },
-
-  { key: 'divider-user', type: 'divider', enabled: true },
-
-  // Phase 0.1.5: 역할별 메뉴 완전 분리
-  // 개인(INDIVIDUAL) 전용 메뉴
-  {
-    key: 'schedules-group-individual',
-    label: '일정',
-    icon: <CalendarOutlined />,
     enabled: true,
     allowedRoles: ['INDIVIDUAL'],
     children: [
       {
-        key: '/schedules/my',
-        label: '내 일정',
+        key: 'individual-personal-info-group',
+        label: '개인정보 관리',
+        enabled: true,
+        allowedRoles: ['INDIVIDUAL'],
+        children: [
+          {
+            key: '/mypage/profile',
+            label: '내 정보',
+            enabled: true,
+            allowedRoles: ['INDIVIDUAL'],
+          },
+          {
+            key: '/mypage/instructor-auth',
+            label: '강사 인증',
+            enabled: true,
+            allowedRoles: ['INDIVIDUAL'],
+          },
+        ],
+      },
+      {
+        key: '/mypage/program-schedule',
+        label: '내 프로그램 일정',
         enabled: true,
         allowedRoles: ['INDIVIDUAL'],
       },
       {
-        key: '/schedules/my/calendar',
-        label: '일정 캘린더',
+        key: '/mypage/documents',
+        label: '서류 발급 이력',
+        enabled: true,
+        allowedRoles: ['INDIVIDUAL'],
+      },
+      {
+        key: '/notices/inquiries/my',
+        label: '내 문의 내역',
         enabled: true,
         allowedRoles: ['INDIVIDUAL'],
       },
     ],
   },
+  
+  // 학생(INDIVIDUAL) 전용 - 추가 메뉴
   {
     key: '/assignments',
     label: '과제',
     icon: <FileTextOutlined />,
-    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    enabled: false,
+    hidden: true,
     allowedRoles: ['INDIVIDUAL'],
   },
   {
     key: '/certificates',
     label: '수료증',
     icon: <FileOutlined />,
-    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    enabled: false,
+    hidden: true,
     allowedRoles: ['INDIVIDUAL'],
   },
-
-  // 학교(SCHOOL) 전용 메뉴
+  
+  // 학교(SCHOOL) 전용 - 마이페이지 (하위 메뉴)
   {
-    key: '/community',
-    label: '커뮤니티',
-    icon: <TeamOutlined />,
-    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    key: 'school-mypage-group',
+    label: '마이페이지',
+    icon: <UserSwitchOutlined />,
+    enabled: true,
     allowedRoles: ['SCHOOL'],
+    children: [
+      {
+        key: 'school-personal-info-group',
+        label: '개인정보 관리',
+        enabled: true,
+        allowedRoles: ['SCHOOL'],
+        children: [
+          {
+            key: '/mypage/profile',
+            label: '내 정보',
+            enabled: true,
+            allowedRoles: ['SCHOOL'],
+          },
+          {
+            key: '/mypage/school-auth',
+            label: '학교(교사) 인증',
+            enabled: true,
+            allowedRoles: ['SCHOOL'],
+          },
+        ],
+      },
+      {
+        key: '/mypage/program-schedule',
+        label: '내 프로그램 일정',
+        enabled: true,
+        allowedRoles: ['SCHOOL'],
+      },
+      {
+        key: '/mypage/documents',
+        label: '서류 발급 이력',
+        enabled: true,
+        allowedRoles: ['SCHOOL'],
+      },
+      {
+        key: '/notices/inquiries/my',
+        label: '내 문의 내역',
+        enabled: true,
+        allowedRoles: ['SCHOOL'],
+      },
+    ],
   },
   {
     key: '/surveys',
@@ -311,49 +442,40 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['SCHOOL'],
   },
+  
+  // 교사(SCHOOL) 전용 - 추가 메뉴
+  {
+    key: '/community',
+    label: '커뮤니티',
+    icon: <TeamOutlined />,
+    enabled: false,
+    hidden: true,
+    allowedRoles: ['SCHOOL'],
+  },
   {
     key: '/certificates-school',
     label: '수료증',
     icon: <FileOutlined />,
-    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    enabled: false,
+    hidden: true,
     allowedRoles: ['SCHOOL'],
   },
-
-  // 강사(INSTRUCTOR) 전용 메뉴
-  {
-    key: 'instructor-schedule-group',
-    label: '교육일정',
-    icon: <CalendarOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR'],
-    children: [
-      {
-        key: '/instructor/schedule',
-        label: '교육 일정',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-    ],
-  },
-  {
-    key: '/community-instructor',
-    label: '커뮤니티',
-    icon: <TeamOutlined />,
-    enabled: false, // Phase 0.1.5: 향후 구현 예정
-    allowedRoles: ['INSTRUCTOR'],
-  },
+  
+  // 강사(INSTRUCTOR) 전용 - 추가 메뉴
   {
     key: '/instructor/reports',
     label: '강의보고서',
     icon: <FileTextOutlined />,
-    enabled: true,
+    enabled: false,
+    hidden: true,
     allowedRoles: ['INSTRUCTOR'],
   },
   {
     key: '/instructor/settlements',
     label: '강사비신청',
     icon: <FileTextOutlined />,
-    enabled: true,
+    enabled: false,
+    hidden: true,
     allowedRoles: ['INSTRUCTOR'],
     children: [
       {
@@ -365,34 +487,22 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
+    key: '/community-instructor',
+    label: '커뮤니티',
+    icon: <TeamOutlined />,
+    enabled: false,
+    hidden: true,
+    allowedRoles: ['INSTRUCTOR'],
+  },
+  {
     key: '/instructor/certificates',
     label: '경력증명서',
     icon: <FileOutlined />,
-    enabled: false, // Phase 0.1.5: 향후 구현 예정
+    enabled: false,
+    hidden: true,
     allowedRoles: ['INSTRUCTOR'],
   },
-
-  {
-    key: '/notices',
-    label: '공지사항',
-    icon: <InfoCircleOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-  {
-    key: '/notices/faq',
-    label: 'FAQ',
-    icon: <QuestionCircleOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-  {
-    key: '/notices/inquiries',
-    label: '문의하기',
-    icon: <FileSearchOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
+  */
 
   // legacy support paths (호환/리다이렉트 용도 - 메뉴에는 노출하지 않음)
   { key: '/posts', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
@@ -419,9 +529,8 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       { key: '/users', label: '전체 회원', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/users/participants', label: '참여자 조회', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/users/instructors', label: '강사 조회', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/schools', label: '학교(교사)', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/schools', label: '학교(교사) 회원', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/instructors', label: '강사단 관리', enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   // {
@@ -476,9 +585,114 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/templates/files', label: '파일 양식', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/templates/sms', label: '문자 양식', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/templates/email', label: '메일 양식', enabled: true, allowedRoles: ['ADMIN'] },
+      {
+        key: 'program-forms-group',
+        label: '프로그램 양식',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+        children: [
+          {
+            key: '/templates/program-forms/application',
+            label: '신청 기본 폼',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/program-forms/survey',
+            label: '설문 조사',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/program-forms/satisfaction',
+            label: '만족도조사',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/program-forms/assignment',
+            label: '과제 제출 폼',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+        ],
+      },
+      {
+        key: 'file-forms-group',
+        label: '파일 양식',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+        children: [
+          {
+            key: '/templates/file-forms/instructor-resume',
+            label: '강사 이력서',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/file-forms/lecture-report',
+            label: '강의 보고서',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/file-forms/education-plan',
+            label: '교육계획서',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/file-forms/certificate',
+            label: '수료증',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/file-forms/activity-confirmation',
+            label: '활동확인서',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/file-forms/receipt',
+            label: '영수증',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/file-forms/payment-statement',
+            label: '지급조서',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/templates/file-forms/employment-certificate',
+            label: '경력증명서',
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+        ],
+      },
+      {
+        key: '/templates/kakao-alimtalk',
+        label: '카카오 알림톡 관리',
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/templates/email',
+        label: '메일 관리',
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/templates/banner',
+        label: '배너 관리',
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
     ],
   },
   {
@@ -488,7 +702,6 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/admin/posts/categories', label: '카테고리', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/admin/posts/notices', label: '공지사항', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/admin/posts/faq', label: 'FAQ', enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/admin/posts/inquiries', label: '문의하기', enabled: true, allowedRoles: ['ADMIN'] },
@@ -512,11 +725,15 @@ const allMenuItems: MenuItemConfig[] = [
   // { key: '/education-records-v2', label: '실적 통계 (v2)', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   // { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   {
-    key: '/logs',
+    key: 'logs-group',
     label: '로그 관리',
     icon: <FolderOutlined />,
     enabled: true,
     allowedRoles: ['ADMIN'],
+    children: [
+      { key: '/logs/bug', label: '버그', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/logs/issue', label: '이슈', enabled: true, allowedRoles: ['ADMIN'] },
+    ],
   },
   { key: 'divider-bottom', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
@@ -597,13 +814,22 @@ const allMenuItems: MenuItemConfig[] = [
 
 /**
  * 권한별 메뉴 필터링
+ * 
+ * 참고사항:
+ * - 각 권한(INSTRUCTOR/INDIVIDUAL/SCHOOL)별로 완전히 분리된 메뉴 구조
+ * - 공통 메뉴 없이 권한별로 독립적으로 관리
+ * - allowedRoles로 접근 가능한 메뉴만 필터링하여 표시
+ * - 인증 상태에 따라 메뉴 라벨이 동적으로 변경됨
+ * 
  * @param userRole 사용자 권한
  * @param items 메뉴 아이템 목록
+ * @param user 사용자 정보 (인증 상태 확인용, 선택적)
  * @returns 필터링된 메뉴 아이템 목록
  */
 export function filterMenuByRole(
   userRole: UserRole | null,
-  items: MenuItemConfig[] = allMenuItems
+  items: MenuItemConfig[] = allMenuItems,
+  user?: Omit<import('@/types/user').User, 'password'> | null
 ): MenuProps['items'] {
   if (!userRole) {
     // 로그인하지 않은 경우 빈 메뉴 반환
@@ -641,13 +867,34 @@ export function filterMenuByRole(
         icon: item.icon,
       }
 
-      if (userRole === 'ADMIN' && item.key === '/') {
-        menuItem.label = '관리자 홈'
+      // 인증 상태에 따른 동적 메뉴 라벨 변경
+      if (user) {
+        // 학교(교사) 인증 / 교사 정보
+        if (item.key === '/mypage/school-auth') {
+          if (user.schoolInfo) {
+            menuItem.label = '교사 정보'
+            menuItem.key = '/mypage/school-info'
+          } else {
+            menuItem.label = '학교(교사) 인증'
+            menuItem.key = '/mypage/school-auth'
+          }
+        }
+        
+        // 강사 인증 / 강사 정보
+        if (item.key === '/mypage/instructor-auth') {
+          if (user.instructorId) {
+            menuItem.label = '강사 정보'
+            menuItem.key = '/mypage/instructor-info'
+          } else {
+            menuItem.label = '강사 인증'
+            menuItem.key = '/mypage/instructor-auth'
+          }
+        }
       }
 
       // Phase 0.1.5: 자식 메뉴가 있는 경우 재귀적으로 필터링 (강화)
       if (item.children && item.children.length > 0) {
-        const filteredChildren = filterMenuByRole(userRole, item.children)
+        const filteredChildren = filterMenuByRole(userRole, item.children, user)
         if (filteredChildren && filteredChildren.length > 0) {
           menuItem.children = filteredChildren
         } else {
@@ -664,10 +911,14 @@ export function filterMenuByRole(
 /**
  * 사용자 권한에 따라 필터링된 메뉴 아이템 반환
  * @param userRole 사용자 권한
+ * @param user 사용자 정보 (인증 상태 확인용, 선택적)
  * @returns 필터링된 메뉴 아이템 목록
  */
-export function getMenuItemsByRole(userRole: UserRole | null): MenuProps['items'] {
-  return filterMenuByRole(userRole, allMenuItems)
+export function getMenuItemsByRole(
+  userRole: UserRole | null,
+  user?: Omit<import('@/types/user').User, 'password'> | null
+): MenuProps['items'] {
+  return filterMenuByRole(userRole, allMenuItems, user)
 }
 
 /**
@@ -721,6 +972,15 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     return true
   }
 
+  // 역할별 내 학습 관리 경로는 항상 허용 (index 라우팅용)
+  if (
+    (userRole === 'INSTRUCTOR' && normalizedPath.startsWith('/instructor/schedule')) ||
+    (userRole === 'INDIVIDUAL' && normalizedPath.startsWith('/schedules/my')) ||
+    (userRole === 'SCHOOL' && normalizedPath === '/surveys')
+  ) {
+    return true
+  }
+
   // Phase 0.1.5: 개인(참여자) 및 학교는 정산 관련 경로 접근 불가
   if (
     (userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') &&
@@ -758,7 +1018,7 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
 /**
  * 현재 경로에 해당하는 카테고리명 가져오기
  * @param path 경로
- * @param depth 가져올 뎁스 (1: 1뎁스, 2: 2뎁스, 3: 3뎁스, 기본값: 자동 감지)
+ * @param depth 가져올 뎁스 (1: 1뎁스, 2: 2뎁스, 3: 3뎁스, 기본값: 자동 감지 - 가장 구체적인 뎁스)
  * @returns 카테고리명 (없으면 null)
  */
 export function getCategoryNameByPath(path: string, depth?: number): string | null {
@@ -766,7 +1026,12 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
 
   // 모든 매칭 항목 찾기 (부모 정보 포함을 위해 로직 직접 구현)
-  const matches: Array<{ item: MenuItemConfig; parent?: MenuItemConfig; depth: number }> = []
+  const matches: Array<{
+    item: MenuItemConfig
+    parent?: MenuItemConfig
+    grandparent?: MenuItemConfig
+    depth: number
+  }> = []
 
   for (const item of allMenuItems) {
     if (item.key === normalizedPath) {
@@ -780,7 +1045,7 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
         if (child.children) {
           for (const grandchild of child.children) {
             if (grandchild.key === normalizedPath) {
-              matches.push({ item: grandchild, parent: child, depth: 3 })
+              matches.push({ item: grandchild, parent: child, grandparent: item, depth: 3 })
             }
           }
         }
@@ -792,10 +1057,10 @@ export function getCategoryNameByPath(path: string, depth?: number): string | nu
     return null
   }
 
-  // 첫 번째 매칭 항목 사용 (향후 현재 사용자 권한에 따른 필터링 추가 가능)
-  const result = matches[0]
+  // 가장 구체적인 뎁스의 매칭 항목 사용 (3뎁스 > 2뎁스 > 1뎁스 순)
+  const result = matches.sort((a, b) => b.depth - a.depth)[0]
 
-  // depth가 지정되지 않았으면 해당 뎁스의 카테고리명 반환
+  // depth가 지정되지 않았으면 해당 뎁스의 카테고리명 반환 (가장 구체적인 뎁스)
   if (depth === undefined) {
     return result.item.label || null
   }
