@@ -11,6 +11,7 @@ import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { MESSAGES } from '@/shared/constants'
 import type { Settlement } from '@/types/domain'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
+import { mockMatchings } from '@/data/mock'
 
 export type SettlementTabKey = 'all' | 'pending' | 'review' | 'paid' | 'overview'
 export type SettlementViewMode = 'list' | 'calendar'
@@ -31,9 +32,11 @@ interface UseSettlementManagementResult {
   editingSettlement: Settlement | null
   settlementToDelete: Settlement | null
   selectedSettlement: Settlement | null
+  onlyWithHistory: boolean
   setViewMode: (mode: SettlementViewMode) => void
   setTab: (key: SettlementTabKey) => void
   setPeriod: (period: string) => void
+  setOnlyWithHistory: (value: boolean) => void
   openDrawer: (settlement: Settlement) => void
   closeDrawer: () => void
   openForm: (settlement?: Settlement) => void
@@ -50,6 +53,7 @@ interface SettlementQueryParams extends Record<string, string | undefined> {
   tab?: SettlementTabKey
   view?: SettlementViewMode
   period?: string
+  onlyWithHistory?: string
 }
 
 export function useSettlementManagement(): UseSettlementManagementResult {
@@ -90,10 +94,22 @@ export function useSettlementManagement(): UseSettlementManagementResult {
   const viewMode = (params.view as SettlementViewMode) || 'list'
   const selectedPeriod = params.period || dayjs().format('YYYY-MM')
   const activeTab = (params.tab as SettlementTabKey) || 'all'
+  const onlyWithHistory = params.onlyWithHistory === 'true'
 
   useEffect(() => {
     fetchSettlements()
   }, [fetchSettlements])
+
+  // 강의 진행 이력이 있는 강사 ID 집합 (매칭이 있는 강사)
+  const instructorsWithHistory = useMemo(() => {
+    const instructorIds = new Set<string>()
+    mockMatchings.forEach(matching => {
+      if (matching.instructorId) {
+        instructorIds.add(matching.instructorId)
+      }
+    })
+    return instructorIds
+  }, [])
 
   const availablePeriods = useMemo(() => {
     const periods = new Set<string>()
@@ -106,6 +122,13 @@ export function useSettlementManagement(): UseSettlementManagementResult {
 
   const filteredSettlements = useMemo(() => {
     let filtered = settlements
+
+    // 강의 진행 이력이 있는 강사만 필터링
+    if (onlyWithHistory) {
+      filtered = filtered.filter(s => instructorsWithHistory.has(s.instructorId))
+    }
+
+    // 상태별 필터링
     if (activeTab === 'pending') {
       filtered = filtered.filter(s => s.status === 'pending')
     } else if (activeTab === 'review') {
@@ -114,7 +137,7 @@ export function useSettlementManagement(): UseSettlementManagementResult {
       filtered = filtered.filter(s => s.status === 'paid')
     }
     return filtered
-  }, [settlements, activeTab])
+  }, [settlements, activeTab, onlyWithHistory, instructorsWithHistory])
 
   const monthlySettlements = useMemo(() => {
     return filteredSettlements.filter(s => {
@@ -150,6 +173,13 @@ export function useSettlementManagement(): UseSettlementManagementResult {
   const setPeriod = useCallback(
     (period: string) => {
       setParam('period', period)
+    },
+    [setParam]
+  )
+
+  const setOnlyWithHistory = useCallback(
+    (value: boolean) => {
+      setParam('onlyWithHistory', value ? 'true' : undefined)
     },
     [setParam]
   )
@@ -273,9 +303,11 @@ export function useSettlementManagement(): UseSettlementManagementResult {
     editingSettlement,
     settlementToDelete,
     selectedSettlement,
+    onlyWithHistory,
     setViewMode,
     setTab,
     setPeriod,
+    setOnlyWithHistory,
     openDrawer,
     closeDrawer,
     openForm,
