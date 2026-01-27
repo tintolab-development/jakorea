@@ -19,6 +19,7 @@ import { MESSAGES } from '@/shared/constants'
 import { EmailTemplateTable } from '@/features/template/ui/email-template-table'
 import { EmailTemplateFormModal } from '@/features/template/ui/email-template-form-modal'
 import { EmailTemplatePreviewModal } from '@/features/template/ui/email-template-preview-modal'
+import { BulkSendEmailModal } from '@/features/template/ui/bulk-send-email-modal'
 import dayjs from 'dayjs'
 
 export default function TemplateEmailPage() {
@@ -39,6 +40,8 @@ export default function TemplateEmailPage() {
 
   const [previewTarget, setPreviewTarget] = useState<EmailTemplate | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [bulkSendTarget, setBulkSendTarget] = useState<EmailTemplate | null>(null)
+  const [bulkSendOpen, setBulkSendOpen] = useState(false)
 
   // 필터 상태 (임시)
   const [pendingFilters, setPendingFilters] = useState({
@@ -160,6 +163,16 @@ export default function TemplateEmailPage() {
     setPreviewTarget(null)
   }
 
+  const openBulkSend = (row: EmailTemplate) => {
+    setBulkSendTarget(row)
+    setBulkSendOpen(true)
+  }
+
+  const closeBulkSend = () => {
+    setBulkSendOpen(false)
+    setBulkSendTarget(null)
+  }
+
   return (
     <div>
       <TemplateFilters
@@ -182,6 +195,7 @@ export default function TemplateEmailPage() {
         onCopyBody={row => copyText(row.content.markdown)}
         onCopyTemplate={canWrite ? handleCopyTemplate : undefined}
         onToggleArchive={canWrite ? handleArchiveToggle : undefined}
+        onBulkSend={openBulkSend}
         canWrite={canWrite}
       />
 
@@ -196,6 +210,15 @@ export default function TemplateEmailPage() {
         open={previewOpen}
         previewTarget={previewTarget}
         onClose={closePreview}
+      />
+
+      <BulkSendEmailModal
+        open={bulkSendOpen}
+        template={bulkSendTarget}
+        onCancel={closeBulkSend}
+        onSuccess={() => {
+          message.success('단체 발송이 완료되었습니다')
+        }}
       />
     </div>
   )

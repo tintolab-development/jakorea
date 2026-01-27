@@ -21,6 +21,7 @@ import { MESSAGES } from '@/shared/constants'
 import { SmsTemplateTable } from '@/features/template/ui/sms-template-table'
 import { SmsTemplateFormModal } from '@/features/template/ui/sms-template-form-modal'
 import { SmsTemplatePreviewModal } from '@/features/template/ui/sms-template-preview-modal'
+import { BulkSendSmsModal } from '@/features/template/ui/bulk-send-sms-modal'
 import dayjs from 'dayjs'
 
 export default function TemplateSmsPage() {
@@ -41,6 +42,8 @@ export default function TemplateSmsPage() {
 
   const [previewTarget, setPreviewTarget] = useState<SmsTemplate | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [bulkSendTarget, setBulkSendTarget] = useState<SmsTemplate | null>(null)
+  const [bulkSendOpen, setBulkSendOpen] = useState(false)
 
   // 필터 상태 (임시)
   const [pendingFilters, setPendingFilters] = useState({
@@ -155,6 +158,16 @@ export default function TemplateSmsPage() {
     setPreviewTarget(null)
   }
 
+  const openBulkSend = (row: SmsTemplate) => {
+    setBulkSendTarget(row)
+    setBulkSendOpen(true)
+  }
+
+  const closeBulkSend = () => {
+    setBulkSendOpen(false)
+    setBulkSendTarget(null)
+  }
+
   return (
     <div>
       <TemplateFilters
@@ -179,6 +192,7 @@ export default function TemplateSmsPage() {
         }
         onCopyTemplate={canWrite ? handleCopyTemplate : undefined}
         onToggleArchive={canWrite ? handleArchiveToggle : undefined}
+        onBulkSend={openBulkSend}
         canWrite={canWrite}
       />
 
@@ -193,6 +207,15 @@ export default function TemplateSmsPage() {
         open={previewOpen}
         previewTarget={previewTarget}
         onClose={closePreview}
+      />
+
+      <BulkSendSmsModal
+        open={bulkSendOpen}
+        template={bulkSendTarget}
+        onCancel={closeBulkSend}
+        onSuccess={() => {
+          message.success('단체 발송이 완료되었습니다')
+        }}
       />
     </div>
   )
