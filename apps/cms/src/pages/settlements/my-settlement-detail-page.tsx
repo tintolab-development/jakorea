@@ -5,8 +5,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Space, Spin, message } from 'antd'
-import { ArrowLeftOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons'
+import { Card, Descriptions, Tag, Button, Space, Spin, message, Modal } from 'antd'
+import {
+  ArrowLeftOutlined,
+  DownloadOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+} from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
@@ -14,6 +19,7 @@ import { StatusBadge } from '@/shared/ui/status-badge'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { MESSAGES } from '@/shared/constants'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
+import { paymentStatementService } from '@/entities/settlement/api/payment-statement-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
 
@@ -24,6 +30,7 @@ export function MySettlementDetailPage() {
   const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [settlement, setSettlement] = useState<Settlement | null>(null)
   const [loading, setLoading] = useState(false)
+  const [confirming, setConfirming] = useState(false)
 
   const loadSettlement = useCallback(async () => {
     if (!id || !user?.instructorId) return
@@ -39,7 +46,7 @@ export function MySettlementDetailPage() {
       }
     } catch (error) {
       console.error('정산 로드 실패:', error)
-        message.error(MESSAGES.error.settlementLoadFailed)
+      message.error(MESSAGES.error.settlementLoadFailed)
       navigate('/settlements/my')
     } finally {
       setLoading(false)
@@ -51,6 +58,41 @@ export function MySettlementDetailPage() {
       loadSettlement()
     }
   }, [id, user?.instructorId, loadSettlement])
+
+  // 지급조서 확인 완료 처리
+  const handleConfirmPaymentStatement = useCallback(async () => {
+    if (!settlement || !user?.instructorId) return
+
+    Modal.confirm({
+      title: '지급조서 확인 완료',
+      content: '지급조서 내용을 확인하셨습니까? 확인 완료 시 계좌로 지급이 진행됩니다.',
+      okText: '확인 완료',
+      cancelText: '취소',
+      onOk: async () => {
+        setConfirming(true)
+        try {
+          // 정산 ID로 지급조서 찾기
+          const paymentStatement = await paymentStatementService.getBySettlementId(settlement.id)
+          if (!paymentStatement) {
+            message.warning('지급조서를 찾을 수 없습니다.')
+            return
+          }
+
+          // 강사 확인 완료 처리
+          await paymentStatementService.confirmByInstructor(paymentStatement.id)
+          message.success('지급조서 확인이 완료되었습니다. 계좌로 지급이 진행됩니다.')
+
+          // 정산 정보 다시 로드
+          await loadSettlement()
+        } catch (error: any) {
+          console.error('지급조서 확인 실패:', error)
+          message.error(error.message || '지급조서 확인 처리 중 오류가 발생했습니다.')
+        } finally {
+          setConfirming(false)
+        }
+      },
+    })
+  }, [settlement, user?.instructorId, loadSettlement])
 
   if (!user?.instructorId) {
     return (
@@ -88,6 +130,25 @@ export function MySettlementDetailPage() {
 
   const program = getProgramByIdSync(settlement.programId)
 
+  // 지급조서 확인 가능 여부 (승인된 정산이고 아직 확인하지 않은 경우)
+  const canConfirmPaymentStatement =
+    settlement.status === 'approved' && user?.instructorId === settlement.instructorId
+
+  // 지급조서 확인 상태 확인
+  const [paymentStatement, setPaymentStatement] = useState<any>(null)
+  useEffect(() => {
+    if (settlement) {
+      paymentStatementService
+        .getBySettlementId(settlement.id)
+        .then(ps => {
+          setPaymentStatement(ps)
+        })
+        .catch(() => {
+          setPaymentStatement(null)
+        })
+    }
+  }, [settlement])
+
   return (
     <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -97,6 +158,65 @@ export function MySettlementDetailPage() {
             목록으로
           </Button>
         </Space>
+
+        {/* 지급조서 확인 섹션 */}
+        {canConfirmPaymentStatement &&
+          paymentStatement &&
+          !paymentStatement.instructorConfirmed && (
+            <Card
+              title="지급조서 확인"
+              style={{ border: '2px solid #1890ff', background: '#f0f9ff' }}
+              extra={
+                <Button
+                  type="primary"
+                  icon={<CheckCircleOutlined />}
+                  onClick={handleConfirmPaymentStatement}
+                  loading={confirming}
+                  size="large"
+                >
+                  지급조서 확인 완료
+                </Button>
+              }
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <p style={{ margin: 0, color: 'rgba(0, 0, 0, 0.65)' }}>
+                  지급조서 내용을 확인하신 후, 아래 버튼을 클릭하여 확인 완료를 진행해주세요. 확인
+                  완료 시 계좌로 지급이 진행됩니다.
+                </p>
+                <Descriptions column={2} size="small" bordered>
+                  <Descriptions.Item label="지급 금액">
+                    <strong style={{ fontSize: 16, color: '#1890ff' }}>
+                      {paymentStatement.totalAmount.toLocaleString('ko-KR')}원
+                    </strong>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="지급조서 생성일">
+                    {dayjs(paymentStatement.generatedAt).format('YYYY-MM-DD HH:mm')}
+                  </Descriptions.Item>
+                </Descriptions>
+              </Space>
+            </Card>
+          )}
+
+        {/* 지급조서 확인 완료 상태 표시 */}
+        {paymentStatement?.instructorConfirmed && (
+          <Card
+            title="지급조서 확인 완료"
+            style={{ border: '2px solid #52c41a', background: '#f6ffed' }}
+          >
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Tag color="success" icon={<CheckCircleOutlined />}>
+                확인 완료
+              </Tag>
+              {paymentStatement.instructorConfirmedAt && (
+                <p style={{ margin: 0, color: 'rgba(0, 0, 0, 0.65)' }}>
+                  확인 완료일:{' '}
+                  {dayjs(paymentStatement.instructorConfirmedAt).format('YYYY-MM-DD HH:mm')}
+                </p>
+              )}
+              {paymentStatement.paymentCompleted && <Tag color="success">계좌 지급 완료</Tag>}
+            </Space>
+          </Card>
+        )}
 
         <Card>
           <Descriptions title="정산 정보" bordered column={2}>
@@ -145,8 +265,7 @@ export function MySettlementDetailPage() {
             <Descriptions bordered column={1}>
               {settlement.items.map((item, index) => (
                 <Descriptions.Item key={index} label={item.type}>
-                  {item.amount.toLocaleString()}원
-                  {item.description && ` (${item.description})`}
+                  {item.amount.toLocaleString()}원{item.description && ` (${item.description})`}
                 </Descriptions.Item>
               ))}
             </Descriptions>
@@ -162,7 +281,9 @@ export function MySettlementDetailPage() {
                     <Space direction="vertical" size="small" style={{ flex: 1 }}>
                       <div style={{ fontWeight: 500 }}>{file.fileName}</div>
                       <div style={{ fontSize: 12, color: 'rgba(0, 0, 0, 0.45)' }}>
-                        {file.fileSize != null ? `${(file.fileSize / 1024).toFixed(1)} KB` : '크기 정보 없음'}
+                        {file.fileSize != null
+                          ? `${(file.fileSize / 1024).toFixed(1)} KB`
+                          : '크기 정보 없음'}
                       </div>
                     </Space>
                     <Space>
@@ -224,4 +345,3 @@ export function MySettlementDetailPage() {
     </div>
   )
 }
-

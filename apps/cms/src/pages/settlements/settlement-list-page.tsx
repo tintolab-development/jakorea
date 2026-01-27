@@ -4,7 +4,7 @@
  * - 관리자 화면에서 리스트/캘린더 두 가지 형태로 보기 제공
  */
 
-import { Button, Space, Modal, Card, Select, Tabs, Segmented, Typography } from 'antd'
+import { Button, Space, Modal, Card, Select, Tabs, Segmented, Typography, Checkbox } from 'antd'
 import { PlusOutlined, CalendarOutlined, SettingOutlined, TableOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { SettlementList } from '@/features/settlement/ui/settlement-list'
@@ -15,13 +15,17 @@ import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import type { Settlement } from '@/types/domain'
 import dayjs from 'dayjs'
-import { useSettlementManagement, type SettlementTabKey, type SettlementViewMode } from '@/features/settlement/hooks/use-settlement-management'
+import {
+  useSettlementManagement,
+  type SettlementTabKey,
+  type SettlementViewMode,
+} from '@/features/settlement/hooks/use-settlement-management'
 import './settlement-list-page.css'
 
 export function SettlementListPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  
+
   // 2뎁스 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
   const {
@@ -39,9 +43,11 @@ export function SettlementListPage() {
     deleteModalOpen,
     editingSettlement,
     selectedSettlement,
+    onlyWithHistory,
     setViewMode,
     setTab,
     setPeriod,
+    setOnlyWithHistory,
     openDrawer,
     closeDrawer,
     openForm,
@@ -66,7 +72,7 @@ export function SettlementListPage() {
         <Space className="settlement-list-actions">
           <Segmented
             value={viewMode}
-            onChange={(value) => setViewMode(value as SettlementViewMode)}
+            onChange={value => setViewMode(value as SettlementViewMode)}
             options={[
               {
                 label: (
@@ -86,14 +92,18 @@ export function SettlementListPage() {
                   </span>
                 ),
                 value: 'calendar',
-                title: '정산 일정을 캘린더 형태로 확인합니다. 기간별 정산 현황을 한눈에 파악할 수 있습니다.',
+                title:
+                  '정산 일정을 캘린더 형태로 확인합니다. 기간별 정산 현황을 한눈에 파악할 수 있습니다.',
               },
             ]}
           />
           <Button icon={<CalendarOutlined />} onClick={() => navigate('/settlements/monthly')}>
             월별 정산 관리
           </Button>
-          <Button icon={<SettingOutlined />} onClick={() => navigate('/settlements/calculation-settings')}>
+          <Button
+            icon={<SettingOutlined />}
+            onClick={() => navigate('/settlements/calculation-settings')}
+          >
             산출 로직 설정
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm()}>
@@ -102,10 +112,22 @@ export function SettlementListPage() {
         </Space>
       </Space>
 
+      {/* 필터 영역 */}
+      <Card style={{ marginBottom: 16 }}>
+        <Space>
+          <Checkbox checked={onlyWithHistory} onChange={e => setOnlyWithHistory(e.target.checked)}>
+            강의 진행 이력이 있는 강사만 표시
+          </Checkbox>
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            매칭된 강의 이력이 있는 강사의 정산만 필터링합니다.
+          </Typography.Text>
+        </Space>
+      </Card>
+
       {/* 상태별 탭 */}
       <Tabs
         activeKey={activeTab}
-        onChange={(key) => setTab(key as SettlementTabKey)}
+        onChange={key => setTab(key as SettlementTabKey)}
         items={[
           {
             key: 'all',
@@ -243,4 +265,3 @@ export function SettlementListPage() {
     </div>
   )
 }
-
