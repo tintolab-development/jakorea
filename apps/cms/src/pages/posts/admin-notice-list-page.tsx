@@ -281,7 +281,7 @@ export function AdminNoticeListPage() {
             key: 'action',
             width: 120,
             fixed: 'right' as const,
-            render: (_, record) => (
+            render: (_: unknown, record: Notice) => (
               <Space>
                 <Tooltip title="수정">
                   <Button

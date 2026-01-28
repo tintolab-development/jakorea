@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Space, Table, Button, Tag, message, Select } from 'antd'
+import { Card, Space, Table, Button, Tag, Select } from 'antd'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { EyeOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
