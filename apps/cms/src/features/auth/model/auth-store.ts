@@ -17,6 +17,9 @@ interface AuthState {
   isAuthenticated: boolean
   mfaState: MfaState | null // Phase 0.5.1: MFA 상태
   requiresMfa: boolean // Phase 0.5.1: MFA 필요 여부
+  // Phase 2: checkAuth 중복 호출 방지를 위한 내부 상태
+  _isCheckingAuth: boolean
+  _checkAuthPromise: Promise<void> | null
 
   // Actions
   login: (request: LoginRequest) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
@@ -32,10 +35,6 @@ interface AuthState {
 
 const TOKEN_STORAGE_KEY = 'auth_token'
 const TOKEN_EXPIRY_KEY = 'auth_expires_at'
-
-// checkAuth 중복 호출 방지를 위한 플래그
-let isCheckingAuth = false
-let checkAuthPromise: Promise<void> | null = null
 
 // localStorage에서 인증 상태 복원
 const loadAuthFromStorage = (): Partial<AuthState> => {
@@ -97,6 +96,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     error: null,
     mfaState: null, // Phase 0.5.1: MFA 상태
     requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
+    _isCheckingAuth: false, // Phase 2: checkAuth 중복 호출 방지
+    _checkAuthPromise: null, // Phase 2: checkAuth Promise 저장
 
     login: async (request: LoginRequest) => {
       set({ loading: true, error: null })
@@ -194,13 +195,16 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         error: null,
         mfaState: null, // Phase 0.5.1: MFA 상태 초기화
         requiresMfa: false, // Phase 0.5.1: MFA 필요 여부 초기화
+        _isCheckingAuth: false, // Phase 2: checkAuth 상태 초기화
+        _checkAuthPromise: null, // Phase 2: checkAuth Promise 초기화
       })
     },
 
     checkAuth: async () => {
+      const state = get()
       // 중복 호출 방지: 이미 체크 중이면 기존 Promise 반환
-      if (isCheckingAuth && checkAuthPromise) {
-        return checkAuthPromise
+      if (state._isCheckingAuth && state._checkAuthPromise) {
+        return state._checkAuthPromise
       }
 
       // localStorage에서 직접 토큰 확인
@@ -230,8 +234,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
 
       // checkAuth 실행 중 플래그 설정
-      isCheckingAuth = true
-      checkAuthPromise = (async () => {
+      const checkAuthPromise = (async () => {
         try {
           // Phase 0.5: 토큰 갱신 필요 여부 확인 (만료 1시간 전)
           const timeUntilExpiry = expiryTime.getTime() - now.getTime()
@@ -311,11 +314,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             get().logout()
           }
         } finally {
-          isCheckingAuth = false
-          checkAuthPromise = null
+          set({ _isCheckingAuth: false, _checkAuthPromise: null })
         }
       })()
 
+      set({ _isCheckingAuth: true, _checkAuthPromise: checkAuthPromise })
       return checkAuthPromise
     },
 
