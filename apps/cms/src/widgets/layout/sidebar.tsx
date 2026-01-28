@@ -12,7 +12,7 @@
 
 import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
 import './sidebar.css'
@@ -104,10 +104,46 @@ export function Sidebar() {
       }
     }
 
+    // 관리자용 템플릿 관리 (1뎁스 템플릿 관리 > 2뎁스 프로그램 양식/파일 양식 > 3뎁스 각 카테고리)
+    if (user?.role === 'ADMIN' && path.startsWith('/templates')) {
+      keys.push('templates-group')
+      // 프로그램 양식 하위 메뉴
+      if (path.startsWith('/templates/program-forms')) {
+        keys.push('program-forms-group')
+      }
+      // 파일 양식 하위 메뉴
+      if (path.startsWith('/templates/file-forms')) {
+        keys.push('file-forms-group')
+      }
+    }
+
+    // 관리자용 회원 관리
+    if (
+      user?.role === 'ADMIN' &&
+      (path.startsWith('/users') || path.startsWith('/schools') || path.startsWith('/instructors'))
+    ) {
+      keys.push('members-group')
+    }
+
+    // 관리자용 게시글 관리
+    if (user?.role === 'ADMIN' && (path.startsWith('/admin/posts') || path.startsWith('/posts'))) {
+      keys.push('posts-group')
+    }
+
+    // 관리자용 로그 관리
+    if (user?.role === 'ADMIN' && path.startsWith('/logs')) {
+      keys.push('logs-group')
+    }
+
     return keys
   }, [location.pathname, user?.role])
 
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
+
+  // 경로가 변경될 때 openKeys를 controlledOpenKeys에 동기화
+  useEffect(() => {
+    setControlledOpenKeys(openKeys)
+  }, [openKeys])
 
   // 선택된 메뉴 키 결정 (역할별 내 학습 관리 페이지일 때 /my-learning 활성화)
   const selectedKeys = useMemo(() => {

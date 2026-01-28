@@ -182,12 +182,12 @@
 
 .sidebar-menu .ant-menu-submenu-title:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: #fff !important;
 }
 
 .sidebar-menu .ant-menu-submenu-open > .ant-menu-submenu-title {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: #fff !important;
 }
 
 .sidebar-menu .ant-menu-submenu-arrow {
@@ -198,6 +198,42 @@
 .sidebar-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow,
 .sidebar-menu .ant-menu-submenu-open > .ant-menu-submenu-title .ant-menu-submenu-arrow {
   color: #fff;
+}
+
+/* 2뎁스 서브메뉴 (카테고리) */
+.sidebar-menu .ant-menu-sub .ant-menu-submenu-title {
+  color: rgba(255, 255, 255, 0.75);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-submenu-title:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-submenu-open > .ant-menu-submenu-title {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 3뎁스 서브메뉴 (카테고리) */
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-submenu-title {
+  color: rgba(255, 255, 255, 0.7);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-submenu-title:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-submenu-open > .ant-menu-submenu-title {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 /* 서브메뉴 내부 */
@@ -216,7 +252,7 @@
 
 .sidebar-menu .ant-menu-sub .ant-menu-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .sidebar-menu .ant-menu-sub .ant-menu-item-selected {
@@ -235,7 +271,7 @@
 
 .sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 .sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item-selected {
