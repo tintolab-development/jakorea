@@ -301,7 +301,7 @@ export function AdminFAQPage() {
   ]
 
   return (
-    <div style={{ padding: LAYOUT_CONSTANTS.margins.xl }}>
+    <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}

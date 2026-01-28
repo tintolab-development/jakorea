@@ -21,12 +21,8 @@ import {
   InputNumber,
   Switch,
 } from 'antd'
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  BarsOutlined,
-} from '@ant-design/icons'
+import type { ColumnsType } from 'antd/es/table'
+import { PlusOutlined, EditOutlined, DeleteOutlined, BarsOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { MESSAGES } from '@/shared/constants'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
@@ -45,12 +41,52 @@ interface PostCategory {
 }
 
 const mockCategories: PostCategory[] = [
-  { id: '1', type: 'NOTICE', name: '필독', slug: 'important', order: 1, isActive: true, postCount: 2 },
-  { id: '2', type: 'NOTICE', name: '안내', slug: 'notice', order: 2, isActive: true, postCount: 15 },
-  { id: '3', type: 'NOTICE', name: '정산', slug: 'settlement', order: 3, isActive: true, postCount: 8 },
+  {
+    id: '1',
+    type: 'NOTICE',
+    name: '필독',
+    slug: 'important',
+    order: 1,
+    isActive: true,
+    postCount: 2,
+  },
+  {
+    id: '2',
+    type: 'NOTICE',
+    name: '안내',
+    slug: 'notice',
+    order: 2,
+    isActive: true,
+    postCount: 15,
+  },
+  {
+    id: '3',
+    type: 'NOTICE',
+    name: '정산',
+    slug: 'settlement',
+    order: 3,
+    isActive: true,
+    postCount: 8,
+  },
   { id: '4', type: 'FAQ', name: '활동', slug: 'activity', order: 1, isActive: true, postCount: 12 },
-  { id: '5', type: 'FAQ', name: '봉사시간', slug: 'volunteer-hours', order: 2, isActive: true, postCount: 5 },
-  { id: '6', type: 'INQUIRY', name: '시스템', slug: 'system', order: 1, isActive: true, postCount: 20 },
+  {
+    id: '5',
+    type: 'FAQ',
+    name: '봉사시간',
+    slug: 'volunteer-hours',
+    order: 2,
+    isActive: true,
+    postCount: 5,
+  },
+  {
+    id: '6',
+    type: 'INQUIRY',
+    name: '시스템',
+    slug: 'system',
+    order: 1,
+    isActive: true,
+    postCount: 20,
+  },
   { id: '7', type: 'INQUIRY', name: '기타', slug: 'etc', order: 2, isActive: true, postCount: 10 },
 ]
 
@@ -68,13 +104,15 @@ export function AdminCategoryPage() {
 
   // 필터링된 데이터
   const filteredData = useMemo(() => {
-    return data.filter(item => {
-      const matchType = typeFilter === 'all' || item.type === typeFilter
-      return matchType
-    }).sort((a, b) => {
-      if (a.type !== b.type) return a.type.localeCompare(b.type)
-      return a.order - b.order
-    })
+    return data
+      .filter(item => {
+        const matchType = typeFilter === 'all' || item.type === typeFilter
+        return matchType
+      })
+      .sort((a, b) => {
+        if (a.type !== b.type) return a.type.localeCompare(b.type)
+        return a.order - b.order
+      })
   }, [data, typeFilter])
 
   // 삭제 핸들러
@@ -111,7 +149,7 @@ export function AdminCategoryPage() {
       }
 
       if (editingCategory) {
-        setData(prev => prev.map(item => item.id === editingCategory.id ? newCategory : item))
+        setData(prev => prev.map(item => (item.id === editingCategory.id ? newCategory : item)))
         message.success(MESSAGES.success.categoryUpdated)
       } else {
         setData(prev => [...prev, newCategory])
@@ -123,7 +161,7 @@ export function AdminCategoryPage() {
     }
   }
 
-  const columns = [
+  const columns: ColumnsType<PostCategory> = [
     {
       title: '구분',
       dataIndex: 'type',
@@ -180,14 +218,10 @@ export function AdminCategoryPage() {
       key: 'action',
       width: 120,
       fixed: 'right' as const,
-      render: (_: any, record: PostCategory) => (
+      render: (_, record) => (
         <Space>
           <Tooltip title="수정">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => showModal(record)} 
-            />
+            <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
           </Tooltip>
           <Popconfirm
             title="카테고리 삭제"
@@ -211,11 +245,7 @@ export function AdminCategoryPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={() => showModal()}
-          >
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
             카테고리 추가
           </Button>
         </div>
@@ -223,11 +253,7 @@ export function AdminCategoryPage() {
         <Card size="small">
           <Space>
             <BarsOutlined /> <Text strong>게시판 구분 필터:</Text>
-            <Select 
-              defaultValue="all" 
-              style={{ width: 150 }} 
-              onChange={setTypeFilter}
-            >
+            <Select defaultValue="all" style={{ width: 150 }} onChange={setTypeFilter}>
               <Option value="all">전체 게시판</Option>
               <Option value="NOTICE">공지사항</Option>
               <Option value="FAQ">FAQ</Option>
@@ -236,17 +262,12 @@ export function AdminCategoryPage() {
           </Space>
         </Card>
 
-        <Table
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="id"
-          pagination={false}
-        />
+        <Table columns={columns} dataSource={filteredData} rowKey="id" pagination={false} />
       </Space>
 
       {/* 카테고리 등록/수정 모달 */}
       <Modal
-        title={editingCategory ? "카테고리 수정" : "카테고리 등록"}
+        title={editingCategory ? '카테고리 수정' : '카테고리 등록'}
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
@@ -255,11 +276,7 @@ export function AdminCategoryPage() {
         cancelText="취소"
         centered
       >
-        <Form
-          form={form}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
           <Form.Item
             name="type"
             label="게시판 구분"
@@ -296,11 +313,7 @@ export function AdminCategoryPage() {
             >
               <InputNumber min={1} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item
-              name="isActive"
-              label="사용 여부"
-              valuePropName="checked"
-            >
+            <Form.Item name="isActive" label="사용 여부" valuePropName="checked">
               <Switch checkedChildren="사용" unCheckedChildren="미사용" />
             </Form.Item>
           </div>

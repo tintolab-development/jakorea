@@ -20,6 +20,7 @@ import {
   Upload,
   Descriptions,
 } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import {
   PlusOutlined,
@@ -184,7 +185,7 @@ export function AdminNoticeListPage() {
     }
   }
 
-  const columns = [
+  const columns: ColumnsType<Notice> = [
     {
       title: '고정',
       dataIndex: 'isImportant',
@@ -280,7 +281,7 @@ export function AdminNoticeListPage() {
             key: 'action',
             width: 120,
             fixed: 'right' as const,
-            render: (_: any, record: Notice) => (
+            render: (_, record) => (
               <Space>
                 <Tooltip title="수정">
                   <Button
@@ -320,7 +321,7 @@ export function AdminNoticeListPage() {
   ]
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}

@@ -3,19 +3,9 @@
  * P2: 마스터 관리자 권한 커스터마이징
  */
 
-import { useState, useEffect } from 'react'
-import {
-  Card,
-  Tabs,
-  Table,
-  Switch,
-  Button,
-  message,
-  Space,
-  Typography,
-  Alert,
-  Modal,
-} from 'antd'
+import { useState, useEffect, useMemo } from 'react'
+import { Card, Tabs, Table, Switch, Button, message, Space, Typography, Alert, Modal } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMasterAdmin } from '@/shared/utils/permissions'
@@ -33,7 +23,12 @@ import type {
 import type { AdminLevel, ProgramRole } from '@/types/user'
 
 const { Title, Text, Paragraph } = Typography
-const { TabPane } = Tabs
+
+// 테이블 데이터 타입
+interface PermissionTableItem {
+  key: string
+  label: string
+}
 
 // 권한 항목 정의
 const ADMIN_PERMISSION_ITEMS = [
@@ -149,11 +144,13 @@ export function PermissionCustomizationPage() {
 
     setSaving(true)
     try {
+      // 원본 설정을 한 번만 조회
+      const original = await fetchPermissionCustomization()
+
       // 변경된 관리자 권한 저장
       const adminLevels: AdminLevel[] = ['MASTER', 'ADMIN', 'GENERAL']
       for (const adminLevel of adminLevels) {
         const current = config.adminPermissions[adminLevel]
-        const original = await fetchPermissionCustomization()
         const originalPerms = original.adminPermissions[adminLevel].permissions
 
         // 변경사항 확인
@@ -172,7 +169,6 @@ export function PermissionCustomizationPage() {
       const programRoles: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
       for (const programRole of programRoles) {
         const current = config.programRolePermissions[programRole]
-        const original = await fetchPermissionCustomization()
         const originalPerms = original.programRolePermissions[programRole].permissions
 
         // 변경사항 확인
@@ -219,121 +215,129 @@ export function PermissionCustomizationPage() {
     return <div style={{ padding: 24 }}>로딩 중...</div>
   }
 
-  // 관리자 권한 테이블 컬럼
-  const adminPermissionColumns = [
-    {
-      title: '권한 항목',
-      dataIndex: 'label',
-      key: 'label',
-      width: 200,
-    },
-    {
-      title: '마스터 관리자',
-      key: 'MASTER',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: { key: string }) => (
-        <Switch
-          checked={
-            config.adminPermissions.MASTER.permissions[
-              record.key as keyof CustomizedAdminPermission['permissions']
-            ]
-          }
-          onChange={checked => handleAdminPermissionChange('MASTER', record.key, checked)}
-        />
-      ),
-    },
-    {
-      title: '중간 관리자',
-      key: 'ADMIN',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: { key: string }) => (
-        <Switch
-          checked={
-            config.adminPermissions.ADMIN.permissions[
-              record.key as keyof CustomizedAdminPermission['permissions']
-            ]
-          }
-          onChange={checked => handleAdminPermissionChange('ADMIN', record.key, checked)}
-        />
-      ),
-    },
-    {
-      title: '일반 관리자',
-      key: 'GENERAL',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: { key: string }) => (
-        <Switch
-          checked={
-            config.adminPermissions.GENERAL.permissions[
-              record.key as keyof CustomizedAdminPermission['permissions']
-            ]
-          }
-          onChange={checked => handleAdminPermissionChange('GENERAL', record.key, checked)}
-        />
-      ),
-    },
-  ]
+  // 관리자 권한 테이블 컬럼 (useMemo로 최적화)
+  const adminPermissionColumns: ColumnsType<PermissionTableItem> = useMemo(
+    () => [
+      {
+        title: '권한 항목',
+        dataIndex: 'label',
+        key: 'label',
+        width: 200,
+      },
+      {
+        title: '마스터 관리자',
+        key: 'MASTER',
+        width: 150,
+        align: 'center',
+        render: (_, record) => (
+          <Switch
+            checked={
+              config.adminPermissions.MASTER.permissions[
+                record.key as keyof CustomizedAdminPermission['permissions']
+              ]
+            }
+            onChange={checked => handleAdminPermissionChange('MASTER', record.key, checked)}
+          />
+        ),
+      },
+      {
+        title: '중간 관리자',
+        key: 'ADMIN',
+        width: 150,
+        align: 'center',
+        render: (_, record) => (
+          <Switch
+            checked={
+              config.adminPermissions.ADMIN.permissions[
+                record.key as keyof CustomizedAdminPermission['permissions']
+              ]
+            }
+            onChange={checked => handleAdminPermissionChange('ADMIN', record.key, checked)}
+          />
+        ),
+      },
+      {
+        title: '일반 관리자',
+        key: 'GENERAL',
+        width: 150,
+        align: 'center',
+        render: (_, record) => (
+          <Switch
+            checked={
+              config.adminPermissions.GENERAL.permissions[
+                record.key as keyof CustomizedAdminPermission['permissions']
+              ]
+            }
+            onChange={checked => handleAdminPermissionChange('GENERAL', record.key, checked)}
+          />
+        ),
+      },
+    ],
+    [config, handleAdminPermissionChange]
+  )
 
-  // 프로그램 역할 권한 테이블 컬럼
-  const programRolePermissionColumns = [
-    {
-      title: '권한 항목',
-      dataIndex: 'label',
-      key: 'label',
-      width: 200,
-    },
-    {
-      title: '담당자 (OWNER)',
-      key: 'OWNER',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: { key: string }) => (
-        <Switch
-          checked={
-            config.programRolePermissions.OWNER.permissions[
-              record.key as keyof CustomizedProgramRolePermission['permissions']
-            ]
-          }
-          onChange={checked => handleProgramRolePermissionChange('OWNER', record.key, checked)}
-        />
-      ),
-    },
-    {
-      title: '파트너 (PARTNER)',
-      key: 'PARTNER',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: { key: string }) => (
-        <Switch
-          checked={
-            config.programRolePermissions.PARTNER.permissions[
-              record.key as keyof CustomizedProgramRolePermission['permissions']
-            ]
-          }
-          onChange={checked => handleProgramRolePermissionChange('PARTNER', record.key, checked)}
-        />
-      ),
-    },
-    {
-      title: '보조 (ASSISTANT)',
-      key: 'ASSISTANT',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: { key: string }) => (
-        <Switch
-          checked={
-            config.programRolePermissions.ASSISTANT.permissions[
-              record.key as keyof CustomizedProgramRolePermission['permissions']
-            ]
-          }
-          onChange={checked => handleProgramRolePermissionChange('ASSISTANT', record.key, checked)}
-        />
-      ),
-    },
-  ]
+  // 프로그램 역할 권한 테이블 컬럼 (useMemo로 최적화)
+  const programRolePermissionColumns: ColumnsType<PermissionTableItem> = useMemo(
+    () => [
+      {
+        title: '권한 항목',
+        dataIndex: 'label',
+        key: 'label',
+        width: 200,
+      },
+      {
+        title: '담당자 (OWNER)',
+        key: 'OWNER',
+        width: 150,
+        align: 'center',
+        render: (_, record) => (
+          <Switch
+            checked={
+              config.programRolePermissions.OWNER.permissions[
+                record.key as keyof CustomizedProgramRolePermission['permissions']
+              ]
+            }
+            onChange={checked => handleProgramRolePermissionChange('OWNER', record.key, checked)}
+          />
+        ),
+      },
+      {
+        title: '파트너 (PARTNER)',
+        key: 'PARTNER',
+        width: 150,
+        align: 'center',
+        render: (_, record) => (
+          <Switch
+            checked={
+              config.programRolePermissions.PARTNER.permissions[
+                record.key as keyof CustomizedProgramRolePermission['permissions']
+              ]
+            }
+            onChange={checked => handleProgramRolePermissionChange('PARTNER', record.key, checked)}
+          />
+        ),
+      },
+      {
+        title: '보조 (ASSISTANT)',
+        key: 'ASSISTANT',
+        width: 150,
+        align: 'center',
+        render: (_, record) => (
+          <Switch
+            checked={
+              config.programRolePermissions.ASSISTANT.permissions[
+                record.key as keyof CustomizedProgramRolePermission['permissions']
+              ]
+            }
+            onChange={checked =>
+              handleProgramRolePermissionChange('ASSISTANT', record.key, checked)
+            }
+          />
+        ),
+      },
+    ],
+    [config, handleProgramRolePermissionChange]
+  )
 
   return (
     <div style={{ padding: 24 }}>
@@ -374,32 +378,44 @@ export function PermissionCustomizationPage() {
             </Space>
           }
         >
-          <Tabs activeKey={activeTab} onChange={key => setActiveTab(key as 'admin' | 'program')}>
-            <TabPane tab="관리자 권한" key="admin">
-              <Table
-                columns={adminPermissionColumns}
-                dataSource={ADMIN_PERMISSION_ITEMS.map(item => ({
-                  key: item.key,
-                  label: item.label,
-                }))}
-                rowKey="key"
-                pagination={false}
-                size="middle"
-              />
-            </TabPane>
-            <TabPane tab="프로그램 역할 권한" key="program">
-              <Table
-                columns={programRolePermissionColumns}
-                dataSource={PROGRAM_ROLE_PERMISSION_ITEMS.map(item => ({
-                  key: item.key,
-                  label: item.label,
-                }))}
-                rowKey="key"
-                pagination={false}
-                size="middle"
-              />
-            </TabPane>
-          </Tabs>
+          <Tabs
+            activeKey={activeTab}
+            onChange={key => setActiveTab(key as 'admin' | 'program')}
+            items={[
+              {
+                key: 'admin',
+                label: '관리자 권한',
+                children: (
+                  <Table
+                    columns={adminPermissionColumns}
+                    dataSource={ADMIN_PERMISSION_ITEMS.map(item => ({
+                      key: item.key,
+                      label: item.label,
+                    }))}
+                    rowKey="key"
+                    pagination={false}
+                    size="middle"
+                  />
+                ),
+              },
+              {
+                key: 'program',
+                label: '프로그램 역할 권한',
+                children: (
+                  <Table
+                    columns={programRolePermissionColumns}
+                    dataSource={PROGRAM_ROLE_PERMISSION_ITEMS.map(item => ({
+                      key: item.key,
+                      label: item.label,
+                    }))}
+                    rowKey="key"
+                    pagination={false}
+                    size="middle"
+                  />
+                ),
+              },
+            ]}
+          />
 
           <div style={{ marginTop: 24, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
             <Text type="secondary">

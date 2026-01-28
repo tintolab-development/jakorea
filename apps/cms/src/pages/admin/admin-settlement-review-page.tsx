@@ -20,6 +20,7 @@ import { MESSAGES } from '@/shared/constants'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { useSettlementReviewList } from '@/features/settlement/hooks/use-settlement-review-list'
+import { withErrorHandling } from '@/shared/utils/error-handler'
 import type { Settlement } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -46,26 +47,26 @@ export function AdminSettlementReviewPage() {
       setDrawerOpen(true)
     },
     onApprove: async settlement => {
-      try {
-        await approveSettlement(settlement)
-        message.success(MESSAGES.success.settlementApproved)
-        await fetchSettlements()
-        setDrawerOpen(false)
-      } catch (e) {
-        console.error('Failed to approve settlement:', e)
-        message.error(MESSAGES.error.approvalProcessFailed)
-      }
+      await withErrorHandling(() => approveSettlement(settlement), {
+        successMessage: MESSAGES.success.settlementApproved,
+        errorMessage: MESSAGES.error.approvalProcessFailed,
+        context: 'AdminSettlementReviewPage.onApprove',
+        onSuccess: async () => {
+          await fetchSettlements()
+          setDrawerOpen(false)
+        },
+      })
     },
     onReject: async settlement => {
-      try {
-        await rejectSettlement(settlement)
-        message.success(MESSAGES.success.settlementRejected)
-        await fetchSettlements()
-        setDrawerOpen(false)
-      } catch (e) {
-        console.error('Failed to reject settlement:', e)
-        message.error(MESSAGES.error.rejectionProcessFailed)
-      }
+      await withErrorHandling(() => rejectSettlement(settlement), {
+        successMessage: MESSAGES.success.settlementRejected,
+        errorMessage: MESSAGES.error.rejectionProcessFailed,
+        context: 'AdminSettlementReviewPage.onReject',
+        onSuccess: async () => {
+          await fetchSettlements()
+          setDrawerOpen(false)
+        },
+      })
     },
   })
 
@@ -239,26 +240,26 @@ export function AdminSettlementReviewPage() {
           setSelectedSettlement(null)
         }}
         onApprove={async settlement => {
-          try {
-            await approveSettlement(settlement)
-            message.success(MESSAGES.success.settlementApproved)
-            await fetchSettlements()
-            setDrawerOpen(false)
-          } catch (e) {
-            console.error('Failed to approve settlement:', e)
-            message.error(MESSAGES.error.approvalProcessFailed)
-          }
+          await withErrorHandling(() => approveSettlement(settlement), {
+            successMessage: MESSAGES.success.settlementApproved,
+            errorMessage: MESSAGES.error.approvalProcessFailed,
+            context: 'AdminSettlementReviewPage.drawer.onApprove',
+            onSuccess: async () => {
+              await fetchSettlements()
+              setDrawerOpen(false)
+            },
+          })
         }}
         onReject={async settlement => {
-          try {
-            await rejectSettlement(settlement)
-            message.success(MESSAGES.success.settlementRejected)
-            await fetchSettlements()
-            setDrawerOpen(false)
-          } catch (e) {
-            console.error('Failed to reject settlement:', e)
-            message.error(MESSAGES.error.rejectionProcessFailed)
-          }
+          await withErrorHandling(() => rejectSettlement(settlement), {
+            successMessage: MESSAGES.success.settlementRejected,
+            errorMessage: MESSAGES.error.rejectionProcessFailed,
+            context: 'AdminSettlementReviewPage.drawer.onReject',
+            onSuccess: async () => {
+              await fetchSettlements()
+              setDrawerOpen(false)
+            },
+          })
         }}
         onUpdate={async updatedSettlement => {
           // Phase 0.4.2: 금액 조정 후 목록 새로고침
