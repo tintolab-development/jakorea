@@ -40,17 +40,17 @@ export interface ExtendedCrudService<T> extends CrudService<T> {
   /**
    * ID로 항목 이름 조회 (동기)
    */
-  getNameById?: (id: string) => string
+  getNameById: (id: string) => string
 
   /**
    * ID로 항목 전체 조회 (동기)
    */
-  getByIdSync?: (id: string) => T | undefined
+  getByIdSync: (id: string) => T | undefined
 
   /**
    * 모든 항목 조회 (동기)
    */
-  getAllSync?: () => T[]
+  getAllSync: () => T[]
 }
 
 /**
@@ -88,7 +88,7 @@ function defaultGenerateId(prefix: string): string {
  * ```
  */
 export function createCrudService<
-  T extends { id: string; createdAt: string; updatedAt: string },
+  T extends { id: string; createdAt: string | Date; updatedAt: string | Date },
 >(options: {
   prefix: string
   mockData: T[]
