@@ -183,7 +183,7 @@ export function CertificatePreview({
                 borderRadius: 4,
                 objectFit: 'contain',
               }}
-              onError={(e) => {
+              onError={() => {
                 console.error('이미지 로드 실패:', backgroundImageUrl)
                 message.error('이미지를 표시할 수 없습니다')
               }}

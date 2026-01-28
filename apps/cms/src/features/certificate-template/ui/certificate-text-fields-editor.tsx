@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import { Form, Input, InputNumber, Button, Space, ColorPicker, Select, message } from 'antd'
+import { Input, InputNumber, Button, Space, ColorPicker, Select } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { CertificateTextField } from '@/types/template'
 

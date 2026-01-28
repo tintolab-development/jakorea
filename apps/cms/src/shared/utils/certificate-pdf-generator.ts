@@ -88,14 +88,8 @@ function renderTextOnCanvas(
 export async function generateCertificatePdf(
   backgroundImageUrl: string,
   textFields: CertificateTextField[],
-  fieldValues: Record<string, string>,
-  options?: {
-    width?: number // PDF 너비 (mm) - 사용하지 않음 (배경 이미지 크기 기준)
-    height?: number // PDF 높이 (mm) - 사용하지 않음 (배경 이미지 크기 기준)
-    dpi?: number // 해상도 - 사용하지 않음 (배경 이미지 해상도 기준)
-  }
+  fieldValues: Record<string, string>
 ): Promise<Blob> {
-  // 옵션은 현재 사용하지 않음 (배경 이미지 크기에 맞춰 PDF 생성)
 
   try {
     // 배경 이미지 로드
@@ -192,8 +186,7 @@ export async function generateCertificatePdf(
  * @returns PDF Blob
  */
 export async function generatePdfFromElement(
-  elementId: string,
-  filename: string = 'certificate.pdf'
+  elementId: string
 ): Promise<Blob> {
   const element = document.getElementById(elementId)
   if (!element) {
