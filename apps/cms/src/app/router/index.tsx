@@ -545,35 +545,35 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'instructor-resume',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="instructor-resume" />,
               },
               {
                 path: 'lecture-report',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="lecture-report" />,
               },
               {
                 path: 'education-plan',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="education-plan" />,
               },
               {
                 path: 'certificate',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="certificate" />,
               },
               {
                 path: 'activity-confirmation',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="activity-confirmation" />,
               },
               {
                 path: 'receipt',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="receipt" />,
               },
               {
                 path: 'payment-statement',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="payment-statement" />,
               },
               {
                 path: 'employment-certificate',
-                element: <TemplateFilesPage />,
+                element: <TemplateFilesPage defaultCategory="employment-certificate" />,
               },
             ],
           },
