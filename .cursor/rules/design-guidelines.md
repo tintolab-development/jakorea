@@ -246,6 +246,16 @@
 
 ## 📱 반응형 디자인
 
+### Responsive Design Requirement
+
+**All components and screens must be designed and implemented with three responsive breakpoint classifications:**
+
+1. **Mobile**: 767px and below
+2. **Tablet**: 768px - 1199px
+3. **Desktop**: 1200px and above
+
+Every component, page, and screen must consider and implement appropriate layouts, spacing, and interactions for each of these three breakpoint categories. This ensures consistent user experience across all device types.
+
 ### 브레이크포인트 (데스크톱 우선)
 
 - 데스크톱: 1200px 이상
