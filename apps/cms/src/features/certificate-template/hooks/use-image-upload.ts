@@ -74,7 +74,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
   const [fileName, setFileName] = useState<string | undefined>(undefined)
 
   const handleUpload: UploadProps['customRequest'] = useCallback(
-    async (options) => {
+    async (options: Parameters<NonNullable<UploadProps['customRequest']>>[0]) => {
       const { file, onSuccess: onUploadSuccess, onError: onUploadError } = options
       const fileObj = file as File
 
