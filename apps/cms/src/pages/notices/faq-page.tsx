@@ -87,7 +87,7 @@ export function FAQPage() {
   const categories = ['전체', '활동', '봉사시간', '시스템', '정산', '안내']
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 섹션 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

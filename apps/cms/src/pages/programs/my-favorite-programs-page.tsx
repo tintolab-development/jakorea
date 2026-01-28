@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -131,7 +132,7 @@ export function MyFavoriteProgramsPage() {
     }
   }
 
-  const columns = [
+  const columns: ColumnsType<FavoriteProgram> = [
     {
       title: '프로그램명',
       dataIndex: 'title',
@@ -155,7 +156,7 @@ export function MyFavoriteProgramsPage() {
       title: '상태',
       key: 'status',
       width: 120,
-      render: (_: any, record: FavoriteProgram) => {
+      render: (_, record) => {
         const status = getProgramStatus(record)
         return <Tag color={status.color}>{status.label}</Tag>
       },
@@ -164,7 +165,7 @@ export function MyFavoriteProgramsPage() {
       title: '진행 기간',
       key: 'period',
       width: 200,
-      render: (_: any, record: FavoriteProgram) => {
+      render: (_, record) => {
         const start =
           typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
         const end =
@@ -184,7 +185,7 @@ export function MyFavoriteProgramsPage() {
       key: 'remove',
       width: 100,
       fixed: 'right' as const,
-      render: (_: any, record: FavoriteProgram) => (
+      render: (_, record) => (
         <Button
           type="text"
           danger

@@ -81,7 +81,7 @@ export function NoticeListPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 및 검색 */}
         <div

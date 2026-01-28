@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tag, Button, Table, Empty, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -26,7 +27,6 @@ import { MESSAGES } from '@/shared/constants'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-
 
 export function MyProgramListPage() {
   const { user } = useAuthStore()
@@ -202,7 +202,7 @@ export function MyProgramListPage() {
     in_progress: { label: '진행중', color: 'green' },
   } as const
 
-  const columns = [
+  const columns: ColumnsType<MyProgram> = [
     {
       title: '프로그램명',
       dataIndex: 'title',
@@ -238,7 +238,7 @@ export function MyProgramListPage() {
       title: '상태',
       key: 'status',
       width: 120,
-      render: (_: any, record: MyProgram) => {
+      render: (_, record) => {
         const status = getProgramStatus(record)
         // 동적 상태는 StatusBadge 대신 Tag 사용 (statusConfig에 없는 경우)
         const statusKey =
@@ -265,7 +265,7 @@ export function MyProgramListPage() {
       title: '진행 기간',
       key: 'period',
       width: 200,
-      render: (_: any, record: MyProgram) => {
+      render: (_, record) => {
         const start =
           typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
         const end =
@@ -284,14 +284,14 @@ export function MyProgramListPage() {
       title: '일정 수',
       key: 'scheduleCount',
       width: 100,
-      render: (_: any, record: MyProgram) => record.schedules.length,
+      render: (_, record) => record.schedules.length,
     },
     {
       title: '찜하기',
       key: 'favorite',
       width: 100,
       fixed: 'right' as const,
-      render: (_: any, record: MyProgram) => (
+      render: (_, record) => (
         <Button
           type="text"
           icon={

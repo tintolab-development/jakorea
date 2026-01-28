@@ -69,7 +69,7 @@ export function SponsorListPage() {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
         {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
         {canWrite && (
