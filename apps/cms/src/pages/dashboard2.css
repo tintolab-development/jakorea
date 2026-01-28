@@ -1,0 +1,13 @@
+/**
+ * Dashboard2 페이지 스타일
+ */
+
+.dashboard2-container {
+  width: 100%;
+}
+
+.dashboard2-toolbar {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+}

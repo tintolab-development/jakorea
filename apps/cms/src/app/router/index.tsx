@@ -47,6 +47,7 @@ import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
+import { Dashboard2 } from '@/pages/dashboard2'
 const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
@@ -248,6 +249,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <IndexPage />,
+      },
+      {
+        path: 'index2',
+        element: <Dashboard2 />,
       },
       {
         path: 'my-learning',
