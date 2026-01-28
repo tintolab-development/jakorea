@@ -3,7 +3,8 @@
  * P0: 목록/검색/등록/수정/상태변경(아카이브)까지 mock 기반
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   Button,
   Dropdown,
@@ -65,25 +66,54 @@ function statusLabel(status: TemplateStatus) {
   return getTemplateStatusLabel(status)
 }
 
-export default function TemplateFilesPage() {
+interface TemplateFilesPageProps {
+  defaultCategory?: FileTemplateCategory
+}
+
+export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPageProps = {}) {
   const { user } = useAuthStore()
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
 
+  const location = useLocation()
+  
+  // URL 경로에서 카테고리 추출
+  const pathCategory = location.pathname.split('/').pop()
+  const categoryFromPath = pathCategory && pathCategory !== 'file-forms' 
+    ? pathCategory as FileTemplateCategory 
+    : undefined
+  
+  const activeCategory = defaultCategory || categoryFromPath || 'all'
+
+  // 현재 카테고리 이름 가져오기
+  const currentCategoryName = useMemo(() => {
+    if (activeCategory === 'all') return '파일 양식'
+    const categoryOption = categoryOptions.find(opt => opt.value === activeCategory)
+    return categoryOption?.label || '파일 양식'
+  }, [activeCategory])
+
   const [rows, setRows] = useState<FileTemplate[]>(mockFileTemplates)
+
   const [pendingFilters, setPendingFilters] = useState({
     query: '',
     status: 'all' as TemplateStatus | 'all',
-    category: 'all' as FileTemplateCategory | 'all',
+    category: activeCategory as FileTemplateCategory | 'all',
   })
   const [appliedFilters, setAppliedFilters] = useState({
     query: '',
     status: 'all' as TemplateStatus | 'all',
-    category: 'all' as FileTemplateCategory | 'all',
+    category: activeCategory as FileTemplateCategory | 'all',
   })
   const [editing, setEditing] = useState<FileTemplate | null>(null)
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
+
+  // URL 경로 변경 시 필터 동기화
+  useEffect(() => {
+    const category = activeCategory
+    setPendingFilters(prev => ({ ...prev, category: category as FileTemplateCategory | 'all' }))
+    setAppliedFilters(prev => ({ ...prev, category: category as FileTemplateCategory | 'all' }))
+  }, [activeCategory])
 
   const filtered = useMemo(() => {
     const q = appliedFilters.query.trim().toLowerCase()
@@ -412,11 +442,11 @@ export default function TemplateFilesPage() {
   return (
     <div>
       <PageHeader
-        title="파일 양식"
+        title={currentCategoryName}
         actions={
           canWrite ? (
             <Button type="primary" onClick={openCreate}>
-              파일 양식 등록
+              {activeCategory === 'all' ? '파일 양식 등록' : `${currentCategoryName} 양식 등록`}
             </Button>
           ) : undefined
         }
@@ -472,7 +502,15 @@ export default function TemplateFilesPage() {
       />
 
       <Modal
-        title={editing ? '파일 양식 수정' : '파일 양식 등록'}
+        title={
+          editing
+            ? activeCategory === 'all'
+              ? '파일 양식 수정'
+              : `${currentCategoryName} 양식 수정`
+            : activeCategory === 'all'
+              ? '파일 양식 등록'
+              : `${currentCategoryName} 양식 등록`
+        }
         open={open}
         onCancel={() => {
           setOpen(false)

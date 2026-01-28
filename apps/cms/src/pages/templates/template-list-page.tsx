@@ -26,6 +26,12 @@ export function TemplateListPage() {
     []
   )
 
+  // 파일 양식 하위 페이지인지 확인
+  const isFileFormsPage = useMemo(() => {
+    const p = location.pathname
+    return p.includes('/templates/file-forms') || p.includes('/templates/files')
+  }, [location.pathname])
+
   // path 기반 활성 탭 계산
   const activeFromPath = useMemo(() => {
     const p = location.pathname
@@ -41,6 +47,9 @@ export function TemplateListPage() {
   const activeKey = tabParam || activeFromPath
 
   useEffect(() => {
+    // 파일 양식 페이지에서는 탭 관련 로직 스킵
+    if (isFileFormsPage) return
+    
     // query가 없거나 잘못된 값이면, 현재 path 기반 탭으로 정규화
     const validKeys = new Set(tabItems.map(t => t.key))
     const next = tabParam && validKeys.has(tabParam) ? tabParam : activeFromPath
@@ -49,7 +58,7 @@ export function TemplateListPage() {
         tab: next,
       })
     }
-  }, [activeFromPath, params.tab, setParams, tabItems, tabParam])
+  }, [activeFromPath, params.tab, setParams, tabItems, tabParam, isFileFormsPage])
 
   const handleTabChange = (key: string) => {
     setParams({
@@ -64,15 +73,19 @@ export function TemplateListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-      </Space>
-      <Tabs
-        activeKey={activeKey}
-        onChange={handleTabChange}
-        items={tabItems.map(t => ({ key: t.key, label: t.label }))}
-        style={{ marginBottom: 12 }}
-      />
+      {!isFileFormsPage && (
+        <>
+          <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+            <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+          </Space>
+          <Tabs
+            activeKey={activeKey}
+            onChange={handleTabChange}
+            items={tabItems.map(t => ({ key: t.key, label: t.label }))}
+            style={{ marginBottom: 12 }}
+          />
+        </>
+      )}
       <Outlet />
     </div>
   )
