@@ -36,6 +36,19 @@ export interface BaseTemplate {
   updatedBy: string
 }
 
+/** 수료증 텍스트 필드 정의 */
+export interface CertificateTextField {
+  id: string
+  label: string // 필드 라벨 (예: "수료자 이름")
+  key: string // 변수 키 (예: "recipientName")
+  x: number // X 좌표 (픽셀)
+  y: number // Y 좌표 (픽셀)
+  fontSize: number // 폰트 크기
+  color: string // 텍스트 색상 (hex)
+  align: 'left' | 'center' | 'right' // 정렬
+  fontFamily?: string // 폰트 패밀리
+}
+
 export interface FileTemplateContent {
   fileName: string
   mimeType: string
@@ -44,6 +57,10 @@ export interface FileTemplateContent {
   sizeBytes?: number
   /** 파일 양식 카테고리 (선택사항) */
   category?: FileTemplateCategory
+  /** 배경 이미지 URL (수료증 전용) */
+  backgroundImageUrl?: string
+  /** 텍스트 필드 정의 (수료증 전용) */
+  textFields?: CertificateTextField[]
 }
 
 export interface SmsTemplateContent {

@@ -17,6 +17,9 @@ import {
   Tag,
   Typography,
   message,
+  Row,
+  Col,
+  Divider,
 } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { PageHeader } from '@/shared/ui/page-header'
@@ -29,6 +32,7 @@ import type {
   FileTemplateCategory,
   TemplateAudience,
   TemplateStatus,
+  CertificateTextField,
 } from '@/types/template'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -39,6 +43,12 @@ import {
 } from '@/data/mock/templates'
 import { MESSAGES } from '@/shared/constants'
 import { downloadBlob } from '@/shared/utils/file-download'
+import { CertificateBackgroundUpload } from '@/features/certificate-template/ui/certificate-background-upload'
+import { CertificateTextFieldsEditor } from '@/features/certificate-template/ui/certificate-text-fields-editor'
+import { CertificatePreview } from '@/features/certificate-template/ui/certificate-preview'
+import { generateCertificatePdf } from '@/shared/utils/certificate-pdf-generator'
+import ExcelJS from '@zurmokeeper/exceljs'
+import jsPDF from 'jspdf'
 
 const { Text } = Typography
 
@@ -59,7 +69,6 @@ const categoryOptions: Array<{ value: FileTemplateCategory | 'all'; label: strin
   { value: 'receipt', label: '영수증' },
   { value: 'payment-statement', label: '지급조서' },
   { value: 'employment-certificate', label: '경력증명서' },
-  { value: 'other', label: '기타' },
 ]
 
 function statusLabel(status: TemplateStatus) {
@@ -107,6 +116,13 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
   const [editing, setEditing] = useState<FileTemplate | null>(null)
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | undefined>()
+  const [textFields, setTextFields] = useState<CertificateTextField[]>([])
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({})
+  
+  // activeCategory가 'certificate'일 때만 수료증 디자인 설정 표시
+  // 사이드바에서 카테고리별 접근 가능하므로 모달 내 카테고리 필드 제거
+  const isCertificate = activeCategory === 'certificate'
 
   // URL 경로 변경 시 필터 동기화
   useEffect(() => {
@@ -156,6 +172,9 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
   const openCreate = () => {
     setEditing(null)
     setOpen(true)
+    setBackgroundImageUrl(undefined)
+    setTextFields([])
+    setFieldValues({})
     form.resetFields()
     form.setFieldsValue({
       status: 'draft',
@@ -164,13 +183,16 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
       mimeType: 'application/pdf',
       version: 'v1.0',
       downloadUrl: '#',
-      category: undefined,
+      // 카테고리는 activeCategory에서 자동으로 설정됨 (모달 필드 제거)
     })
   }
 
   const openEdit = (row: FileTemplate) => {
     setEditing(row)
     setOpen(true)
+    setBackgroundImageUrl(row.content.backgroundImageUrl)
+    setTextFields(row.content.textFields || [])
+    setFieldValues({})
     form.setFieldsValue({
       title: row.title,
       description: row.description,
@@ -181,13 +203,18 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
       mimeType: row.content.mimeType,
       version: row.content.version,
       downloadUrl: row.content.downloadUrl,
-      category: row.content.category,
+      // 카테고리는 activeCategory에서 자동으로 설정됨 (모달 필드 제거)
     })
   }
 
   const handleSubmit = async () => {
     const values = await form.validateFields()
     const now = new Date().toISOString()
+    // 카테고리는 activeCategory에서 가져옴 (모달 필드 제거)
+    // activeCategory가 'all'인 경우 editing의 category를 사용하거나, 없으면 undefined
+    const category = activeCategory !== 'all' 
+      ? activeCategory 
+      : editing?.content.category || undefined
 
     const next: FileTemplate = editing
       ? {
@@ -205,7 +232,11 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
             mimeType: values.mimeType,
             version: values.version,
             downloadUrl: values.downloadUrl,
-            category: values.category,
+            category,
+            ...(isCertificate && {
+              backgroundImageUrl,
+              textFields: textFields.length > 0 ? textFields : undefined,
+            }),
           },
         }
       : {
@@ -223,7 +254,11 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
             mimeType: values.mimeType,
             version: values.version,
             downloadUrl: values.downloadUrl,
-            category: values.category,
+            category: category || undefined,
+            ...(isCertificate && {
+              backgroundImageUrl,
+              textFields: textFields.length > 0 ? textFields : undefined,
+            }),
           },
         }
 
@@ -272,10 +307,38 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
 
   const handleDownload = async (row: FileTemplate) => {
     const downloadUrl = row.content.downloadUrl
-    const fileName = row.content.fileName
+    const originalFileName = row.content.fileName
     const mimeType = row.content.mimeType
+    const isCertificateTemplate = row.content.category === 'certificate'
+    const isLectureReport = row.content.category === 'lecture-report'
+    const isEducationPlan = row.content.category === 'education-plan'
+    const isInstructorResume = row.content.category === 'instructor-resume'
+    
+    // PDF로 변환해야 하는 카테고리인 경우 파일명을 PDF로 변경
+    const shouldConvertToPdf = isLectureReport || isEducationPlan || isInstructorResume
+    const fileName = shouldConvertToPdf 
+      ? originalFileName.replace(/\.(xlsx?|xls|docx?|doc)$/i, '.pdf')
+      : originalFileName
 
     try {
+      // 수료증 템플릿이고 배경 이미지가 있는 경우: 실제 PDF 생성
+      if (isCertificateTemplate && row.content.backgroundImageUrl) {
+        try {
+          const pdfBlob = await generateCertificatePdf(
+            row.content.backgroundImageUrl,
+            row.content.textFields || [],
+            {} // 템플릿 다운로드 시에는 빈 값 사용 (실제 값은 발급 시 입력)
+          )
+          downloadBlob(pdfBlob, fileName)
+          message.success(`${fileName} 다운로드를 완료했습니다`)
+          return
+        } catch (error) {
+          console.error('PDF 생성 실패:', error)
+          message.error('PDF 생성 중 오류가 발생했습니다')
+          return
+        }
+      }
+
       // URL이 유효한지 확인 (# 또는 빈 문자열이 아닌 경우)
       if (downloadUrl && downloadUrl !== '#' && downloadUrl.trim() !== '') {
         // 실제 URL인 경우: 서버에서 파일 다운로드
@@ -300,12 +363,349 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
           message.success(`${fileName} 다운로드를 시작합니다`)
         }
       } else {
-        // Mock 데이터인 경우: 파일명과 MIME 타입 기반으로 빈 파일 생성하여 다운로드
-        // 실제 구현 시에는 서버에서 파일을 가져와서 다운로드해야 함
-        const mockContent = `이 파일은 ${row.title}의 템플릿 파일입니다.\n파일명: ${fileName}\n버전: ${row.content.version}\n\n실제 파일은 서버에서 제공됩니다.`
-        const blob = new Blob([mockContent], { type: mimeType || 'application/octet-stream' })
-        downloadBlob(blob, fileName)
-        message.success(`${fileName} 다운로드를 완료했습니다 (Mock 데이터)`)
+        // Mock 데이터인 경우: 파일 타입에 따라 실제 형식의 파일 생성
+        if (mimeType === 'application/pdf') {
+          // 수료증이 아닌 PDF 템플릿인 경우
+          if (!isCertificateTemplate) {
+            message.warning('PDF 파일을 생성할 수 없습니다. 배경 이미지가 등록된 수료증 템플릿만 다운로드 가능합니다.')
+            return
+          }
+          // 수료증이지만 배경 이미지가 없는 경우
+          message.warning('배경 이미지가 등록되지 않은 수료증 템플릿은 다운로드할 수 없습니다.')
+          return
+        }
+        
+        // Excel 파일 (.xlsx, .xls)인 경우
+        if (
+          mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+          mimeType === 'application/vnd.ms-excel'
+        ) {
+          // 강의보고서는 PDF로 변환
+          if (isLectureReport) {
+            try {
+              // Excel 내용을 생성하여 PDF로 변환
+              const workbook = new ExcelJS.Workbook()
+              const worksheet = workbook.addWorksheet('강의보고서')
+              
+              // 강의보고서 양식 구조 생성
+              worksheet.addRow(['강의보고서'])
+              worksheet.addRow([''])
+              worksheet.addRow(['프로그램명', ''])
+              worksheet.addRow(['강의일자', ''])
+              worksheet.addRow(['강의시간', ''])
+              worksheet.addRow(['강사명', ''])
+              worksheet.addRow([''])
+              worksheet.addRow(['강의 내용'])
+              worksheet.addRow([''])
+              worksheet.addRow(['주제', ''])
+              worksheet.addRow(['내용', ''])
+              worksheet.addRow([''])
+              worksheet.addRow(['참여자 현황'])
+              worksheet.addRow([''])
+              worksheet.addRow(['총 인원', ''])
+              worksheet.addRow(['실제 참여', ''])
+              worksheet.addRow([''])
+              worksheet.addRow(['특이사항', ''])
+              worksheet.addRow([''])
+              worksheet.addRow(['비고', ''])
+              
+              // 헤더 스타일
+              worksheet.getRow(1).font = { bold: true, size: 16 }
+              worksheet.getRow(1).alignment = { horizontal: 'center' }
+              worksheet.mergeCells('A1:B1')
+              
+              // 섹션 헤더 스타일
+              worksheet.getRow(8).font = { bold: true, size: 12 }
+              worksheet.getRow(13).font = { bold: true, size: 12 }
+              
+              // 컬럼 너비 설정
+              worksheet.getColumn(1).width = 20
+              worksheet.getColumn(2).width = 50
+              
+              // Excel을 이미지로 변환하기 위해 HTML로 렌더링 후 PDF 생성
+              // 대신 Excel 내용을 직접 PDF로 작성
+              const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+              })
+              
+              // PDF에 강의보고서 양식 작성
+              pdf.setFontSize(18)
+              pdf.text('강의보고서', 105, 20, { align: 'center' })
+              
+              pdf.setFontSize(12)
+              let yPos = 35
+              const lineHeight = 8
+              
+              pdf.text('프로그램명: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('강의일자: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('강의시간: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('강사명: ___________________', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(14)
+              pdf.text('강의 내용', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.text('주제: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('내용:', 20, yPos)
+              yPos += lineHeight
+              // 내용 입력 영역 (여러 줄)
+              pdf.rect(20, yPos - 3, 170, 40)
+              yPos += 45
+              
+              pdf.setFontSize(14)
+              pdf.text('참여자 현황', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.text('총 인원: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('실제 참여: ___________________', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.text('특이사항:', 20, yPos)
+              yPos += lineHeight
+              pdf.rect(20, yPos - 3, 170, 20)
+              yPos += 25
+              
+              pdf.text('비고:', 20, yPos)
+              yPos += lineHeight
+              pdf.rect(20, yPos - 3, 170, 15)
+              
+              // 파일명을 PDF 확장자로 변경
+              const pdfFileName = fileName.replace(/\.(xlsx?|xls)$/i, '.pdf')
+              
+              const blob = pdf.output('blob')
+              downloadBlob(blob, pdfFileName)
+              message.success(`${pdfFileName} 다운로드를 완료했습니다`)
+              return
+            } catch (error) {
+              console.error('PDF 생성 실패:', error)
+              message.error('PDF 생성 중 오류가 발생했습니다')
+              return
+            }
+          }
+          
+          // 강의보고서가 아닌 Excel 파일은 기존대로 Excel 생성
+          try {
+            const workbook = new ExcelJS.Workbook()
+            const worksheet = workbook.addWorksheet('Sheet1')
+            
+            // 템플릿 정보를 Excel에 추가
+            worksheet.addRow(['템플릿 정보'])
+            worksheet.addRow(['제목', row.title])
+            worksheet.addRow(['설명', row.description || ''])
+            worksheet.addRow(['파일명', fileName])
+            worksheet.addRow(['버전', row.content.version])
+            worksheet.addRow(['카테고리', categoryOptions.find(opt => opt.value === row.content.category)?.label || ''])
+            worksheet.addRow([''])
+            worksheet.addRow(['참고', '이 파일은 템플릿 파일입니다. 실제 파일은 서버에서 제공됩니다.'])
+            
+            // 헤더 행 스타일 적용
+            worksheet.getRow(1).font = { bold: true, size: 14 }
+            worksheet.getRow(1).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFE0E0E0' },
+            }
+            
+            // 컬럼 너비 자동 조정
+            worksheet.columns.forEach((column) => {
+              column.width = 30
+            })
+            
+            const buffer = await workbook.xlsx.writeBuffer()
+            const blob = new Blob([buffer], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            })
+            downloadBlob(blob, fileName)
+            message.success(`${fileName} 다운로드를 완료했습니다`)
+            return
+          } catch (error) {
+            console.error('Excel 파일 생성 실패:', error)
+            message.error('Excel 파일 생성 중 오류가 발생했습니다')
+            return
+          }
+        }
+        
+        // Word 파일 (.docx, .doc)인 경우 PDF로 변환하여 다운로드
+        if (
+          mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          mimeType === 'application/msword'
+        ) {
+          try {
+            // PDF 생성
+            const pdf = new jsPDF({
+              orientation: 'portrait',
+              unit: 'mm',
+              format: 'a4',
+            })
+            
+            // 강사 이력서인 경우 특별한 양식 제공
+            if (isInstructorResume) {
+              pdf.setFontSize(18)
+              pdf.text('강사 이력서', 105, 20, { align: 'center' })
+              
+              pdf.setFontSize(12)
+              let yPos = 35
+              const lineHeight = 8
+              
+              pdf.text('성명: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('생년월일: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('연락처: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('이메일: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('주소: ___________________', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(14)
+              pdf.text('학력 사항', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 30)
+              yPos += 35
+              
+              pdf.setFontSize(14)
+              pdf.text('경력 사항', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 50)
+              yPos += 55
+              
+              pdf.setFontSize(14)
+              pdf.text('자격 사항', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 30)
+              yPos += 35
+              
+              pdf.setFontSize(14)
+              pdf.text('특기 사항', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 25)
+            }
+            // 교육계획서인 경우 특별한 양식 제공
+            else if (isEducationPlan) {
+              pdf.setFontSize(18)
+              pdf.text('교육계획서', 105, 20, { align: 'center' })
+              
+              pdf.setFontSize(12)
+              let yPos = 35
+              const lineHeight = 8
+              
+              pdf.text('프로그램명: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('교육기간: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('교육대상: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('교육장소: ___________________', 20, yPos)
+              yPos += lineHeight
+              pdf.text('담당강사: ___________________', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(14)
+              pdf.text('교육 목표', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 30)
+              yPos += 35
+              
+              pdf.setFontSize(14)
+              pdf.text('교육 내용', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 50)
+              yPos += 55
+              
+              pdf.setFontSize(14)
+              pdf.text('교육 일정', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 40)
+              yPos += 45
+              
+              pdf.setFontSize(14)
+              pdf.text('평가 방법', 20, yPos)
+              yPos += lineHeight * 1.5
+              
+              pdf.setFontSize(12)
+              pdf.rect(20, yPos - 3, 170, 25)
+              yPos += 30
+              
+              pdf.text('비고:', 20, yPos)
+              yPos += lineHeight
+              pdf.rect(20, yPos - 3, 170, 15)
+            } else {
+              // 일반 Word 파일인 경우 템플릿 정보만 표시
+              pdf.setFontSize(16)
+              pdf.text('템플릿 정보', 20, 20)
+              
+              pdf.setFontSize(12)
+              let yPosition = 35
+              const lineHeight = 10
+              
+              pdf.text(`제목: ${row.title}`, 20, yPosition)
+              yPosition += lineHeight
+              
+              if (row.description) {
+                // 설명이 길 경우 여러 줄로 나누기
+                const descriptionLines = pdf.splitTextToSize(`설명: ${row.description}`, 170)
+                pdf.text(descriptionLines, 20, yPosition)
+                yPosition += descriptionLines.length * lineHeight
+              }
+              
+              pdf.text(`파일명: ${fileName}`, 20, yPosition)
+              yPosition += lineHeight
+              
+              pdf.text(`버전: ${row.content.version}`, 20, yPosition)
+              yPosition += lineHeight
+              
+              const categoryLabel = categoryOptions.find(opt => opt.value === row.content.category)?.label || ''
+              if (categoryLabel) {
+                pdf.text(`카테고리: ${categoryLabel}`, 20, yPosition)
+                yPosition += lineHeight
+              }
+              
+              yPosition += lineHeight
+              pdf.setFontSize(10)
+              pdf.text('참고: 이 파일은 템플릿 파일입니다. 실제 파일은 서버에서 제공됩니다.', 20, yPosition)
+            }
+            
+            // 파일명을 PDF 확장자로 변경
+            const pdfFileName = fileName.replace(/\.(docx?|doc)$/i, '.pdf')
+            
+            const blob = pdf.output('blob')
+            downloadBlob(blob, pdfFileName)
+            message.success(`${pdfFileName} 다운로드를 완료했습니다`)
+            return
+          } catch (error) {
+            console.error('PDF 생성 실패:', error)
+            message.error('PDF 생성 중 오류가 발생했습니다')
+            return
+          }
+        }
+        
+        // 기타 파일 타입의 경우 경고 메시지
+        message.warning(`${fileName} 파일은 현재 생성할 수 없습니다. 실제 파일은 서버에서 제공됩니다.`)
       }
     } catch (error) {
       console.error('Download failed:', error)
@@ -383,14 +783,30 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
       title: '파일',
       key: 'file',
       width: 260,
-      render: (_: unknown, row) => (
-        <Space direction="vertical" size={0}>
-          <Text>{row.content.fileName}</Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {row.content.mimeType} · {row.content.version}
-          </Text>
-        </Space>
-      ),
+      render: (_: unknown, row) => {
+        // PDF로 변환해야 하는 카테고리인 경우 파일명 확장자를 PDF로 표시
+        const isLectureReport = row.content.category === 'lecture-report'
+        const isEducationPlan = row.content.category === 'education-plan'
+        const isInstructorResume = row.content.category === 'instructor-resume'
+        const shouldShowPdf = isLectureReport || isEducationPlan || isInstructorResume
+        
+        const displayFileName = shouldShowPdf
+          ? row.content.fileName.replace(/\.(xlsx?|xls|docx?|doc)$/i, '.pdf')
+          : row.content.fileName
+        
+        const displayMimeType = shouldShowPdf
+          ? 'application/pdf'
+          : row.content.mimeType
+        
+        return (
+          <Space direction="vertical" size={0}>
+            <Text>{displayFileName}</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {displayMimeType} · {row.content.version}
+            </Text>
+          </Space>
+        )
+      },
     },
     {
       title: '대상',
@@ -515,10 +931,25 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
         onCancel={() => {
           setOpen(false)
           setEditing(null)
+          setBackgroundImageUrl(undefined)
+          setTextFields([])
+          setFieldValues({})
+          form.resetFields()
         }}
         onOk={handleSubmit}
         okText={editing ? '수정' : '등록'}
-        width={720}
+        width={isCertificate ? '95%' : 720}
+        centered
+        styles={{
+          body: {
+            maxHeight: 'calc(100vh - 200px)',
+            overflowY: 'auto',
+            padding: isCertificate ? '24px' : undefined,
+          },
+        }}
+        style={{
+          maxWidth: isCertificate ? '1400px' : undefined,
+        }}
         destroyOnHidden
       >
         <Form form={form} layout="vertical">
@@ -560,18 +991,6 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
           </Space>
 
           <Form.Item
-            name="category"
-            label="카테고리"
-            tooltip="파일 양식의 카테고리를 선택하세요 (선택사항)"
-          >
-            <Select
-              placeholder="카테고리 선택 (선택사항)"
-              allowClear
-              options={categoryOptions.filter(o => o.value !== 'all')}
-            />
-          </Form.Item>
-
-          <Form.Item
             name="audience"
             label="대상"
             rules={[{ required: true, message: '대상을 선택해주세요' }]}
@@ -609,6 +1028,45 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
           >
             <Input placeholder="초기에는 # 사용, 추후 스토리지 연동" />
           </Form.Item>
+
+          {/* 수료증 카테고리 전용 섹션 - 카테고리가 'certificate'일 때만 표시 */}
+          {isCertificate ? (
+            <>
+              <Divider>수료증 디자인 설정</Divider>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12}>
+                  <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                    <Form.Item label="배경 이미지" required>
+                      <CertificateBackgroundUpload
+                        value={backgroundImageUrl}
+                        onChange={(url) => {
+                          console.log('배경 이미지 URL 변경:', url)
+                          setBackgroundImageUrl(url)
+                        }}
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="텍스트 필드 설정">
+                      <CertificateTextFieldsEditor
+                        value={textFields}
+                        onChange={setTextFields}
+                      />
+                    </Form.Item>
+                  </Space>
+                </Col>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12}>
+                  <CertificatePreview
+                    backgroundImageUrl={backgroundImageUrl}
+                    textFields={textFields}
+                    fieldValues={fieldValues}
+                    onFieldValueChange={(key, value) => {
+                      setFieldValues(prev => ({ ...prev, [key]: value }))
+                    }}
+                  />
+                </Col>
+              </Row>
+            </>
+          ) : null}
         </Form>
       </Modal>
     </div>

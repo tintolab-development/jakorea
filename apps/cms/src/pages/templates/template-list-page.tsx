@@ -49,7 +49,7 @@ export function TemplateListPage() {
   useEffect(() => {
     // 파일 양식 페이지에서는 탭 관련 로직 스킵
     if (isFileFormsPage) return
-    
+
     // query가 없거나 잘못된 값이면, 현재 path 기반 탭으로 정규화
     const validKeys = new Set(tabItems.map(t => t.key))
     const next = tabParam && validKeys.has(tabParam) ? tabParam : activeFromPath
