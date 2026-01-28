@@ -15,6 +15,11 @@ function randomPastDate(daysAgo: number = 365): Date {
   return new Date(randomTime)
 }
 
+const banks = [
+  '국민은행', '신한은행', '우리은행', '하나은행', 'SC제일은행',
+  '기업은행', '농협은행', '카카오뱅크', '토스뱅크', '케이뱅크',
+]
+
 const regions = [
   '서울',
   '경기',
@@ -137,7 +142,9 @@ const instructor1Data: Instructor = {
   availableTime: '평일 오전, 주말 가능',
   experience: '10년 경력, 25개 프로젝트 완료',
   rating: 4.8,
-  bankAccount: '110-123-456789',
+  bankName: '국민은행',
+  bankAccount: '110123456789',
+  accountHolder: '최강사',
   createdAt: new Date('2024-01-15').toISOString(),
   updatedAt: new Date().toISOString(),
 }
@@ -168,8 +175,12 @@ export const mockInstructors: Instructor[] = [
           ? `${Math.floor(Math.random() * 15) + 2}년 경력, ${Math.floor(Math.random() * 20) + 5}개 프로젝트 완료`
           : undefined,
       rating: Math.random() > 0.25 ? randomRating() : undefined,
-      bankAccount:
-        Math.random() > 0.3 ? `110-***-${Math.floor(Math.random() * 900000) + 100000}` : undefined,
+      // 계좌 정보 (70% 확률로 존재)
+      ...(Math.random() > 0.3 ? {
+        bankName: banks[Math.floor(Math.random() * banks.length)],
+        bankAccount: `${Math.floor(Math.random() * 900000000000) + 100000000000}`,
+        accountHolder: fullName,
+      } : {}),
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
     }

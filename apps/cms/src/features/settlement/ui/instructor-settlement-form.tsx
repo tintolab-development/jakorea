@@ -4,7 +4,7 @@
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
-import { Form, Input, Select, Button, Space, Table, InputNumber, Upload, Alert } from 'antd'
+import { Form, Input, Select, Button, Space, Table, InputNumber, Upload, Alert, DatePicker } from 'antd'
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -14,6 +14,8 @@ import { mockPrograms, mockMatchings } from '@/data/mock'
 import { calculateSettlementTotal } from '../lib/settlement-helpers'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMemo } from 'react'
+import dayjs, { type Dayjs } from 'dayjs'
+import locale from 'antd/es/date-picker/locale/ko_KR'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -194,16 +196,31 @@ export function InstructorSettlementForm({
       <Form.Item
         label="기간"
         validateStatus={errors.period ? 'error' : ''}
-        help={errors.period?.message || '예: 2025-01'}
+        help={errors.period?.message || '기간을 선택하세요'}
         required
       >
-        <Input {...register('period')} placeholder="YYYY-MM 형식으로 입력" />
+        <DatePicker
+          style={{ width: '100%' }}
+          format="YYYY-MM-DD"
+          locale={locale}
+          placeholder="기간을 선택하세요"
+          value={watch('period') ? (watch('period').includes('-') && watch('period').split('-').length === 2 ? dayjs(watch('period') + '-01') : dayjs(watch('period'))) : null}
+          onChange={(date: Dayjs | null) => {
+            if (date) {
+              setValue('period', date.format('YYYY-MM-DD'))
+            } else {
+              setValue('period', '')
+            }
+          }}
+        />
       </Form.Item>
 
       <Form.Item label="정산 항목" required>
         <div>
           <Table
             dataSource={fields}
+            scroll={fields.length > 4 ? { y: 300 } : undefined}
+            pagination={false}
             columns={[
               {
                 title: '항목 타입',
@@ -285,7 +302,6 @@ export function InstructorSettlementForm({
               },
             ]}
             rowKey={(_record, index) => `item-${index}`}
-            pagination={false}
             summary={() => (
               <Table.Summary>
                 <Table.Summary.Row>

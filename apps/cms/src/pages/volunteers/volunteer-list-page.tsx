@@ -4,25 +4,31 @@
  */
 
 import { useState, useMemo } from 'react'
-import { Space, Select, Input, Button } from 'antd'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { Space, Select, Button } from 'antd'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { VolunteerList } from '@/features/volunteer/ui/volunteer-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { mockUsers } from '@/data/mock/users'
 import type { User, InterviewStatus } from '@/types/user'
 
 const { Option } = Select
-const { Search } = Input
 
 export function VolunteerListPage() {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
-  
+  const { params, setParams } = useQueryParams<{
+    interviewStatus?: string
+    isActive?: string
+    search?: string
+    id?: string
+  }>()
+
   // 2뎁스 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '봉사자'
-  
+
   // 상태 관리
   const [selectedUser, setSelectedUser] = useState<Omit<User, 'password'> | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -30,24 +36,24 @@ export function VolunteerListPage() {
 
   // 쿼리 파라미터에서 필터 값 읽기
   const interviewStatusFilter = useMemo(() => {
-    return (searchParams.get('interviewStatus') || 'ALL') as InterviewStatus | 'ALL'
-  }, [searchParams])
+    return (params.interviewStatus || 'ALL') as InterviewStatus | 'ALL'
+  }, [params.interviewStatus])
 
   const isActiveFilter = useMemo(() => {
-    const value = searchParams.get('isActive')
+    const value = params.isActive
     if (value === 'true') return true
     if (value === 'false') return false
     return 'ALL' as const
-  }, [searchParams])
+  }, [params.isActive])
 
   const searchQuery = useMemo(() => {
-    return searchParams.get('search') || ''
-  }, [searchParams])
+    return params.search || ''
+  }, [params.search])
 
   // 봉사자 목록 필터링
   const filteredVolunteers = useMemo(() => {
     let volunteers = mockUsers
-      .filter(user => user.role === 'VOLUNTEER')
+      .filter(user => user.role === 'INDIVIDUAL')
       .map(user => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = user
@@ -79,51 +85,40 @@ export function VolunteerListPage() {
 
   // 필터 변경 핸들러
   const handleInterviewStatusFilterChange = (value: InterviewStatus | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value === 'ALL') {
-      newParams.delete('interviewStatus')
-    } else {
-      newParams.set('interviewStatus', value)
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      interviewStatus: value === 'ALL' ? undefined : value,
+    })
   }
 
   const handleIsActiveFilterChange = (value: boolean | 'ALL') => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value === 'ALL') {
-      newParams.delete('isActive')
-    } else {
-      newParams.set('isActive', String(value))
-    }
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      isActive: value === 'ALL' ? undefined : String(value),
+    })
   }
 
-  const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (value) {
-      newParams.set('search', value)
-    } else {
-      newParams.delete('search')
-    }
-    setSearchParams(newParams, { replace: true })
+
+  const handleSearchChange = (value: string) => {
+    setParams({
+      search: value || undefined,
+    })
   }
 
   // 사용자 상세 보기
   const handleView = (user: Omit<User, 'password'>) => {
     setSelectedUser(user)
     setDrawerOpen(true)
-    const newParams = new URLSearchParams(searchParams)
-    newParams.set('id', user.id)
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      id: user.id,
+    })
   }
 
   // Drawer 닫기
   const handleDrawerClose = () => {
     setDrawerOpen(false)
     setSelectedUser(null)
-    const newParams = new URLSearchParams(searchParams)
-    newParams.delete('id')
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      id: undefined,
+    })
   }
 
   return (
@@ -132,13 +127,13 @@ export function VolunteerListPage() {
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
       </Space>
 
-      <Space style={{ marginBottom: 16 }} size="middle">
-        <Search
-          placeholder="이름 또는 이메일 검색"
-          allowClear
-          style={{ width: 300 }}
-          defaultValue={searchQuery}
-          onSearch={handleSearch}
+      <Space style={{ marginBottom: 16 }} size="middle" align="start">
+        <LabeledSearchInput
+          label="이름/이메일"
+          placeholder="이름 또는 이메일을 입력하세요"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          width={300}
         />
         <Select
           placeholder="면접 상태"
@@ -164,20 +159,12 @@ export function VolunteerListPage() {
           <Option value={true}>활성</Option>
           <Option value={false}>비활성</Option>
         </Select>
-        <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
+        <Button onClick={() => setParams({})}>필터 초기화</Button>
       </Space>
 
-      <VolunteerList
-        data={filteredVolunteers}
-        loading={loading}
-        onView={handleView}
-      />
+      <VolunteerList data={filteredVolunteers} loading={loading} onView={handleView} />
 
-      <UserDetailDrawer
-        open={drawerOpen}
-        user={selectedUser}
-        onClose={handleDrawerClose}
-      />
+      <UserDetailDrawer open={drawerOpen} user={selectedUser} onClose={handleDrawerClose} />
     </div>
   )
 }

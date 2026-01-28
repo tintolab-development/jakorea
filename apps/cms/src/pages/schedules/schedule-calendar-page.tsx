@@ -1,10 +1,11 @@
 /**
  * 일정 캘린더 페이지
  * Phase 3.1: 캘린더 뷰 + 일정 관리
+ * Phase 2: 리팩토링 패턴 적용
  */
 
 import { useState, useEffect } from 'react'
-import { Button, Space, Modal, message } from 'antd'
+import { Button, Space, Modal } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import { ScheduleCalendar } from '@/features/schedule/ui/schedule-calendar'
@@ -12,18 +13,51 @@ import { ScheduleForm } from '@/features/schedule/ui/schedule-form'
 import { ScheduleDetailDrawer } from '@/features/schedule/ui/schedule-detail-drawer'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { useScheduleStore } from '@/features/schedule/model/schedule-store'
+import { useModalState } from '@/shared/hooks/use-modal-state'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import type { Schedule } from '@/types/domain'
 import type { ScheduleFormData } from '@/entities/schedule/model/schema'
 
 export function ScheduleCalendarPage() {
-  const { schedules, loading, fetchSchedules, createSchedule, updateSchedule, deleteSchedule, checkConflict } =
-    useScheduleStore()
-  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [formModalOpen, setFormModalOpen] = useState(false)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(null)
-  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null)
+  const {
+    schedules,
+    loading,
+    fetchSchedules,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    checkConflict,
+    selectedSchedule: storeSelectedSchedule,
+    setSelectedSchedule: setStoreSelectedSchedule,
+    clearSelectedSchedule,
+  } = useScheduleStore()
+  // Drawer 상태 관리
+  const {
+    open: drawerOpen,
+    openModal: openDrawer,
+    closeModal: closeDrawer,
+    selectedItem: selectedSchedule,
+    setSelectedItem: setSelectedSchedule,
+  } = useModalState<Schedule>()
+
+  // Form 모달 상태 관리
+  const {
+    open: formModalOpen,
+    openModal: openFormModal,
+    closeModal: closeFormModal,
+    selectedItem: editingSchedule,
+    isEditing: isEditingMode,
+  } = useModalState<Schedule>()
+
+  // Delete 모달 상태 관리
+  const {
+    open: deleteModalOpen,
+    openModal: openDeleteModal,
+    closeModal: closeDeleteModal,
+    selectedItem: scheduleToDelete,
+  } = useModalState<Schedule>()
+
   const [conflicts, setConflicts] = useState<Schedule[]>([])
   const [initialDate, setInitialDate] = useState<string | undefined>(undefined)
 
@@ -35,13 +69,13 @@ export function ScheduleCalendarPage() {
     // schedule이 있는 경우: 일정 상세 drawer 열기
     if (schedule) {
       setSelectedSchedule(schedule)
-      setDrawerOpen(true)
+      setStoreSelectedSchedule(schedule) // store에도 동기화
+      openDrawer(schedule)
     } else {
       // schedule이 없는 경우 (빈 날짜 셀 클릭): 일정 등록 모달 열기
       // 해당 날짜를 초기값으로 설정
       setInitialDate(date.format('YYYY-MM-DD'))
-      setEditingSchedule(null)
-      setFormModalOpen(true)
+      openFormModal()
     }
   }
 
@@ -58,18 +92,21 @@ export function ScheduleCalendarPage() {
       if (detectedConflicts.length > 0) {
         setConflicts(detectedConflicts)
         Modal.confirm({
-          title: '일정 중복 경고',
-          content: `${detectedConflicts.length}개의 일정과 시간이 겹칩니다. 계속 진행하시겠습니까?`,
+          title: MESSAGES.title.scheduleConflict,
+          content: MESSAGES.confirm.scheduleConflict(detectedConflicts.length),
           onOk: async () => {
             if (editingSchedule) {
               await updateSchedule(editingSchedule.id, data)
-              message.success('일정이 수정되었습니다')
+              showSuccessMessage(MESSAGES.success.updated)
+              // store의 updateSchedule이 이미 selectedSchedule을 업데이트하므로 로컬 상태도 동기화
+              if (storeSelectedSchedule && selectedSchedule?.id === storeSelectedSchedule.id) {
+                setSelectedSchedule(storeSelectedSchedule)
+              }
             } else {
               await createSchedule(scheduleData)
-              message.success('일정이 등록되었습니다')
+              showSuccessMessage(MESSAGES.success.created)
             }
-            setFormModalOpen(false)
-            setEditingSchedule(null)
+            closeFormModal()
             setInitialDate(undefined)
             setConflicts([])
             fetchSchedules()
@@ -80,32 +117,36 @@ export function ScheduleCalendarPage() {
 
       if (editingSchedule) {
         await updateSchedule(editingSchedule.id, data)
-        message.success('일정이 수정되었습니다')
+        showSuccessMessage(MESSAGES.success.updated)
+        // store의 updateSchedule이 이미 selectedSchedule을 업데이트하므로 로컬 상태도 동기화
+        if (storeSelectedSchedule && selectedSchedule?.id === storeSelectedSchedule.id) {
+          setSelectedSchedule(storeSelectedSchedule)
+        }
       } else {
         await createSchedule(scheduleData)
-        message.success('일정이 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.created)
       }
-      setFormModalOpen(false)
-      setEditingSchedule(null)
+      closeFormModal()
       setConflicts([])
       fetchSchedules()
-    } catch {
-      message.error(editingSchedule ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: editingSchedule ? MESSAGES.error.update : MESSAGES.error.create,
+        context: 'ScheduleFormSubmit',
+      })
     }
   }
 
   const handleEdit = () => {
     if (selectedSchedule) {
-      setEditingSchedule(selectedSchedule)
-      setDrawerOpen(false)
-      setFormModalOpen(true)
+      openFormModal(selectedSchedule)
+      closeDrawer()
     }
   }
 
   const handleDeleteClick = () => {
     if (selectedSchedule) {
-      setScheduleToDelete(selectedSchedule)
-      setDeleteModalOpen(true)
+      openDeleteModal(selectedSchedule)
     }
   }
 
@@ -114,16 +155,19 @@ export function ScheduleCalendarPage() {
 
     try {
       await deleteSchedule(scheduleToDelete.id)
-      message.success('일정이 삭제되었습니다')
-      setDeleteModalOpen(false)
-      setScheduleToDelete(null)
+      showSuccessMessage(MESSAGES.success.deleted)
+      closeDeleteModal()
       if (selectedSchedule?.id === scheduleToDelete.id) {
-        setDrawerOpen(false)
+        closeDrawer()
         setSelectedSchedule(null)
+        clearSelectedSchedule() // store도 초기화
       }
       fetchSchedules()
-    } catch {
-      message.error('삭제 중 오류가 발생했습니다')
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: MESSAGES.error.delete,
+        context: 'ScheduleDelete',
+      })
     }
   }
 
@@ -140,15 +184,14 @@ export function ScheduleCalendarPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
+      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'flex-end' }}>
         {/* <h1 style={{ margin: 0 }}>일정 관리</h1> */}
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => {
             setInitialDate(undefined) // 버튼 클릭 시에는 오늘 날짜 사용
-            setEditingSchedule(null)
-            setFormModalOpen(true)
+            openFormModal()
           }}
         >
           일정 등록
@@ -163,10 +206,11 @@ export function ScheduleCalendarPage() {
 
       <ScheduleDetailDrawer
         open={drawerOpen}
-        schedule={selectedSchedule}
+        schedule={selectedSchedule || undefined}
         onClose={() => {
-          setDrawerOpen(false)
+          closeDrawer()
           setSelectedSchedule(null)
+          clearSelectedSchedule() // store도 초기화
         }}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
@@ -175,24 +219,22 @@ export function ScheduleCalendarPage() {
       />
 
       <Modal
-        title={editingSchedule ? '일정 수정' : '일정 등록'}
+        title={isEditingMode ? MESSAGES.title.scheduleEdit : MESSAGES.title.scheduleCreate}
         open={formModalOpen}
         onCancel={() => {
-          setFormModalOpen(false)
-          setEditingSchedule(null)
+          closeFormModal()
           setInitialDate(undefined)
           setConflicts([])
         }}
         footer={null}
-        width={800}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
       >
         <ScheduleForm
           schedule={editingSchedule || undefined}
           initialDate={initialDate}
           onSubmit={handleFormSubmit}
           onCancel={() => {
-            setFormModalOpen(false)
-            setEditingSchedule(null)
+            closeFormModal()
             setInitialDate(undefined)
             setConflicts([])
           }}
@@ -203,17 +245,13 @@ export function ScheduleCalendarPage() {
 
       <ConfirmModal
         open={deleteModalOpen}
-        title="일정 삭제"
-        content="정말 이 일정을 삭제하시겠습니까?"
+        title={MESSAGES.title.scheduleDelete}
+        content={MESSAGES.confirm.deleteSchedule}
         onConfirm={handleDeleteConfirm}
-        onCancel={() => {
-          setDeleteModalOpen(false)
-          setScheduleToDelete(null)
-        }}
+        onCancel={closeDeleteModal}
         confirmText="삭제"
         danger
       />
     </div>
   )
 }
-

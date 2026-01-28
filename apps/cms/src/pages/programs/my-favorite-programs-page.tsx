@@ -4,8 +4,11 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
-import { Input, Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
+import { useLocation } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -19,6 +22,7 @@ import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { MESSAGES } from '@/shared/constants'
 import type { Program } from '@/types/domain'
 
 const { Option } = Select
@@ -26,36 +30,43 @@ const { Option } = Select
 export function MyFavoriteProgramsPage() {
   const { user } = useAuthStore()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{
+    status?: string
+    category?: string
+    search?: string
+  }>()
   const [programs, setPrograms] = useState<FavoriteProgram[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  
+
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 3) || '관심 프로그램 관리'
 
   // 필터 값 (쿼리 파라미터에서 읽기)
   const filters = useMemo<FavoriteProgramFilters>(() => {
     return {
-      status: (searchParams.get('status') as FavoriteProgramFilters['status']) || 'all',
-      category: (searchParams.get('category') as FavoriteProgramFilters['category']) || 'all',
-      search: searchParams.get('search') || '',
+      status: (params.status as FavoriteProgramFilters['status']) || 'all',
+      category: (params.category as FavoriteProgramFilters['category']) || 'all',
+      search: params.search || '',
     }
-  }, [searchParams])
+  }, [params])
 
-  const loadPrograms = useCallback(async (userId: string) => {
-    setLoading(true)
-    try {
-      const data = await getFavoritePrograms(userId, filters)
-      setPrograms(data)
-    } catch (error) {
-      console.error('관심 프로그램 로드 실패:', error)
-      message.error('관심 프로그램을 불러오는 중 오류가 발생했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }, [filters])
+  const loadPrograms = useCallback(
+    async (userId: string) => {
+      setLoading(true)
+      try {
+        const data = await getFavoritePrograms(userId, filters)
+        setPrograms(data)
+      } catch (error) {
+        console.error('관심 프로그램 로드 실패:', error)
+        message.error(MESSAGES.error.favoriteProgramsLoadFailed)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [filters]
+  )
 
   useEffect(() => {
     const userId = user?.instructorId || user?.id
@@ -64,42 +75,21 @@ export function MyFavoriteProgramsPage() {
     }
   }, [user, loadPrograms])
 
-  const updateSearchParams = (updater: (next: URLSearchParams) => void) => {
-    const nextParams = new URLSearchParams(searchParams)
-    updater(nextParams)
-    if (nextParams.toString() !== searchParams.toString()) {
-      setSearchParams(nextParams, { replace: true })
-    }
-  }
-
   const handleStatusChange = (value: FavoriteProgramFilters['status']) => {
-    updateSearchParams(next => {
-      if (!value || value === 'all') {
-        next.delete('status')
-      } else {
-        next.set('status', value)
-      }
+    setParams({
+      status: !value || value === 'all' ? undefined : value,
     })
   }
 
   const handleCategoryChange = (value: FavoriteProgramFilters['category']) => {
-    updateSearchParams(next => {
-      if (!value || value === 'all') {
-        next.delete('category')
-      } else {
-        next.set('category', value)
-      }
+    setParams({
+      category: !value || value === 'all' ? undefined : value,
     })
   }
 
   const handleSearchChange = (value: string) => {
-    updateSearchParams(next => {
-      const trimmed = value.trim()
-      if (!trimmed) {
-        next.delete('search')
-      } else {
-        next.set('search', trimmed)
-      }
+    setParams({
+      search: value.trim() || undefined,
     })
   }
 
@@ -109,11 +99,11 @@ export function MyFavoriteProgramsPage() {
 
     try {
       await removeFavoriteProgram(userId, programId)
-      message.success('관심 프로그램에서 제거되었습니다.')
+      message.success(MESSAGES.success.removedFromFavorites)
       await loadPrograms(userId) // 목록 새로고침
     } catch (error) {
       console.error('관심 프로그램 해제 실패:', error)
-      message.error('관심 프로그램 해제 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.favoriteProgramRemoveFailed)
     }
   }
 
@@ -136,10 +126,13 @@ export function MyFavoriteProgramsPage() {
     if (now.isAfter(startDate) && now.isBefore(endDate)) {
       return { label: '진행중', color: 'green' }
     }
-    return { label: getCommonStatusLabel(program.status), color: getCommonStatusColor(program.status) }
+    return {
+      label: getCommonStatusLabel(program.status),
+      color: getCommonStatusColor(program.status),
+    }
   }
 
-  const columns = [
+  const columns: ColumnsType<FavoriteProgram> = [
     {
       title: '프로그램명',
       dataIndex: 'title',
@@ -163,7 +156,7 @@ export function MyFavoriteProgramsPage() {
       title: '상태',
       key: 'status',
       width: 120,
-      render: (_: any, record: FavoriteProgram) => {
+      render: (_, record) => {
         const status = getProgramStatus(record)
         return <Tag color={status.color}>{status.label}</Tag>
       },
@@ -172,9 +165,11 @@ export function MyFavoriteProgramsPage() {
       title: '진행 기간',
       key: 'period',
       width: 200,
-      render: (_: any, record: FavoriteProgram) => {
-        const start = typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
-        const end = typeof record.endDate === 'string' ? dayjs(record.endDate) : dayjs(record.endDate)
+      render: (_, record) => {
+        const start =
+          typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
+        const end =
+          typeof record.endDate === 'string' ? dayjs(record.endDate) : dayjs(record.endDate)
         return `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
       },
     },
@@ -190,12 +185,12 @@ export function MyFavoriteProgramsPage() {
       key: 'remove',
       width: 100,
       fixed: 'right' as const,
-      render: (_: any, record: FavoriteProgram) => (
+      render: (_, record) => (
         <Button
           type="text"
           danger
           icon={<HeartFilled style={{ color: '#ff4d4f' }} />}
-          onClick={(event) => {
+          onClick={event => {
             event.stopPropagation()
             handleRemoveFavorite(record.id)
           }}
@@ -222,13 +217,13 @@ export function MyFavoriteProgramsPage() {
       </Space>
 
       <Card style={{ marginBottom: 16 }}>
-        <Space size="middle" wrap>
-          <Input
-            placeholder="프로그램명 검색"
-            allowClear
-            style={{ width: 250 }}
-            value={filters.search}
-            onChange={event => handleSearchChange(event.target.value)}
+        <Space size="middle" wrap align="start">
+          <LabeledSearchInput
+            label="프로그램명"
+            placeholder="프로그램명을 입력하세요"
+            value={filters.search || ''}
+            onChange={handleSearchChange}
+            width={300}
           />
           <Select
             placeholder="상태 필터"
@@ -245,13 +240,17 @@ export function MyFavoriteProgramsPage() {
             placeholder="카테고리"
             style={{ width: 150 }}
             value={filters.category}
-            onChange={(value) => handleCategoryChange(value as FavoriteProgramFilters['category'])}
+            onChange={value => handleCategoryChange(value as FavoriteProgramFilters['category'])}
           >
             <Option value="all">전체</Option>
             <Option value="school">학교 프로그램</Option>
             <Option value="individual">개인 프로그램</Option>
           </Select>
-          <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
+          <Button
+            onClick={() => setParams({ status: undefined, category: undefined, search: undefined })}
+          >
+            필터 초기화
+          </Button>
         </Space>
       </Card>
 
@@ -292,4 +291,3 @@ export function MyFavoriteProgramsPage() {
 }
 
 export default MyFavoriteProgramsPage
-

@@ -6,7 +6,8 @@
 
 import { Form, Input, Select, Button, Card, message, Space, Typography, InputNumber } from 'antd'
 import { UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -14,6 +15,7 @@ import type { InstructorApplicationFormData } from '@/types/interview'
 import { submitInstructorApplication } from '@/entities/interview/api/interview-service'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -29,7 +31,7 @@ const applicationSchema = z.object({
   participationHistory: z.number().min(0, '참여이력은 0 이상이어야 합니다'),
   experience: z.string().optional(),
   availableTime: z.string().optional(),
-  role: z.enum(['INSTRUCTOR', 'STUDENT']),
+  role: z.enum(['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL']),
 })
 
 type ApplicationFormData = z.infer<typeof applicationSchema>
@@ -72,13 +74,16 @@ const specialtyOptions = [
 
 export function InstructorApplicationPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const { params } = useQueryParams<{ programId?: string; role?: string; fixedRole?: string }>()
   const { user } = useAuthStore()
 
-  const roleParam = searchParams.get('role')
-  const fixedRole = searchParams.get('fixedRole') === '1'
+  const roleParam = params.role
+  const fixedRole = params.fixedRole === '1'
 
-  const defaultRole: ApplicationFormData['role'] = roleParam === 'STUDENT' ? 'STUDENT' : 'INSTRUCTOR'
+  const defaultRole: ApplicationFormData['role'] =
+    roleParam === 'INDIVIDUAL' || roleParam === 'SCHOOL'
+      ? (roleParam as ApplicationFormData['role'])
+      : 'INSTRUCTOR'
 
   const {
     control,
@@ -101,7 +106,7 @@ export function InstructorApplicationPage() {
 
   const onSubmit = async (data: ApplicationFormData) => {
     if (!user?.id) {
-      message.error('로그인이 필요합니다.')
+      message.error(MESSAGES.error.loginRequired)
       navigate('/login')
       return
     }
@@ -120,7 +125,7 @@ export function InstructorApplicationPage() {
       navigate('/interviews/my')
     } catch (error) {
       handleError(error)
-      message.error(`${selectedRole === 'INSTRUCTOR' ? '강사' : '수강자'} 신청에 실패했습니다.`)
+      message.error(MESSAGES.error.applicationSubmitFailed(selectedRole === 'INSTRUCTOR' ? '강사' : '수강자'))
     }
   }
 
@@ -148,12 +153,13 @@ export function InstructorApplicationPage() {
                     disabled={fixedRole}
                   >
                     <Option value="INSTRUCTOR">강사</Option>
-                    <Option value="STUDENT">수강자</Option>
+                    <Option value="INDIVIDUAL">학생</Option>
+                    <Option value="SCHOOL">학교</Option>
                   </Select>
                 )}
               />
               {fixedRole && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
                   * 수강자 신청 플로우에서는 신청 유형이 수강자로 고정됩니다.
                 </Text>
               )}

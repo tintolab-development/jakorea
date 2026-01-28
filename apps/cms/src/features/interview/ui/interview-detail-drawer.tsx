@@ -3,9 +3,10 @@
  * Phase 4.3.2: 면접 관리
  */
 
-import { Drawer, Descriptions, Tag } from 'antd'
+import { Descriptions, Tag } from 'antd'
 import type { Interview } from '@/types/interview'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
+import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 
 interface InterviewDetailDrawerProps {
   open: boolean
@@ -17,7 +18,13 @@ export function InterviewDetailDrawer({ open, interview, onClose }: InterviewDet
   if (!interview) return null
 
   return (
-    <Drawer title="면접 상세 정보" open={open} onClose={onClose} width={660}>
+    <BaseDetailDrawer
+      open={open}
+      onClose={onClose}
+      title="면접 상세 정보"
+      width={660}
+      hideActions
+    >
       <Descriptions column={1} bordered>
         <Descriptions.Item label="신청 유형">
           <Tag color={interview.userRole === 'INSTRUCTOR' ? 'blue' : 'green'}>
@@ -61,7 +68,7 @@ export function InterviewDetailDrawer({ open, interview, onClose }: InterviewDet
           {new Date(interview.createdAt).toLocaleString('ko-KR')}
         </Descriptions.Item>
       </Descriptions>
-    </Drawer>
+    </BaseDetailDrawer>
   )
 }
 

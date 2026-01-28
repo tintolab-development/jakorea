@@ -10,34 +10,18 @@ import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/shared/components/protected-route'
 import { Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import './router.css'
 
 // 로딩 컴포넌트 - 화면 중앙 정렬
 const LoadingFallback = () => (
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-      zIndex: 9999,
-    }}
-  >
+  <div className="router-loading-fallback">
     <Spin size="large" />
   </div>
 )
 
 // Lazy loading wrapper - named export를 default export로 변환
 // 타입 복잡도를 줄이기 위해 import 함수는 느슨하게 any로 처리
-const lazyLoad = <T extends React.ComponentType<any>>(
-  importFunc: () => Promise<any>
-) => {
+const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<any>) => {
   const LazyComponent = lazy(async () => {
     const module = await importFunc()
     // default export를 우선 사용, 없으면 첫 번째 named export 사용
@@ -56,15 +40,27 @@ const lazyLoad = <T extends React.ComponentType<any>>(
 
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
+import { RegisterPage } from '@/pages/auth/register-page'
+import { MfaPage } from '@/pages/auth/mfa-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
+import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
-import { Dashboard } from '@/pages/dashboard'
+import { IndexPage } from '@/pages/home/index-page'
+const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
 const InstructorListPage = lazyLoad(() => import('@/pages/instructors/instructor-list-page'))
 const InstructorDetailPage = lazyLoad(() => import('@/pages/instructors/instructor-detail-page'))
 const InstructorFormPage = lazyLoad(() => import('@/pages/instructors/instructor-form-page'))
+const InstructorMypagePage = lazyLoad(() => import('@/pages/instructors/instructor-mypage-page'))
+const InstructorDocumentsPage = lazyLoad(
+  () => import('@/pages/instructors/instructor-documents-page')
+)
+const InstructorSchedulePage = lazyLoad(
+  () => import('@/pages/instructors/instructor-schedule-page')
+)
+const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
 const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
 const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
 const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-page'))
@@ -73,11 +69,20 @@ const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-pa
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
+const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
+const ProgramApplicationCompletePage = lazyLoad(
+  () => import('@/pages/programs/program-application-complete-page')
+)
 const MyProgramListPage = lazyLoad(() => import('@/pages/programs/my-program-list-page'))
 const MyProgramDetailPage = lazyLoad(() => import('@/pages/programs/my-program-detail-page'))
 const MyProgramHistoryPage = lazyLoad(() => import('@/pages/programs/my-program-history-page'))
 const ProgramSatisfactionPage = lazyLoad(() => import('@/pages/programs/program-satisfaction-page'))
-const MyProgramApplicationsPage = lazyLoad(() => import('@/pages/programs/my-program-applications-page'))
+const MyProgramApplicationsPage = lazyLoad(
+  () => import('@/pages/programs/my-program-applications-page')
+)
+const ApplicationProgressPage = lazyLoad(
+  () => import('@/pages/applications/application-progress-page')
+)
 const MyFavoriteProgramsPage = lazyLoad(() => import('@/pages/programs/my-favorite-programs-page'))
 const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
 const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
@@ -89,37 +94,82 @@ const MyScheduleDetailPage = lazyLoad(() => import('@/pages/schedules/my-schedul
 const MatchingListPage = lazyLoad(() => import('@/pages/matchings/matching-list-page'))
 const SettlementListPage = lazyLoad(() => import('@/pages/settlements/settlement-list-page'))
 const MySettlementListPage = lazyLoad(() => import('@/pages/settlements/my-settlement-list-page'))
-const MySettlementDetailPage = lazyLoad(() => import('@/pages/settlements/my-settlement-detail-page'))
-const MyMonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/my-monthly-settlement-page'))
+const MySettlementDetailPage = lazyLoad(
+  () => import('@/pages/settlements/my-settlement-detail-page')
+)
+const MyMonthlySettlementPage = lazyLoad(
+  () => import('@/pages/settlements/my-monthly-settlement-page')
+)
+const MySettlementSubmissionPage = lazyLoad(
+  () => import('@/pages/settlements/my-settlement-submission-page')
+)
 const MonthlySettlementPage = lazyLoad(() => import('@/pages/settlements/monthly-settlement-page'))
-const SettlementCalculationSettingsPage = lazyLoad(() => import('@/pages/settlements/settlement-calculation-settings-page'))
+const SettlementCalculationSettingsPage = lazyLoad(
+  () => import('@/pages/settlements/settlement-calculation-settings-page')
+)
+const PaymentStatementListPage = lazyLoad(
+  () => import('@/pages/settlements/payment-statement-list-page')
+)
+const SettlementOverviewPage = lazyLoad(
+  () => import('@/pages/settlements/settlement-overview-page')
+)
 const InterviewListPage = lazyLoad(() => import('@/pages/interviews/interview-list-page'))
 const MyInterviewPage = lazyLoad(() => import('@/pages/interviews/my-interview-page'))
-const InstructorApplicationPage = lazyLoad(() => import('@/pages/interviews/instructor-application-page'))
+const InstructorApplicationPage = lazyLoad(
+  () => import('@/pages/interviews/instructor-application-page')
+)
 const TodoDetailPage = lazyLoad(() => import('@/pages/todos/todo-detail-page'))
 const ReportFormPage = lazyLoad(() => import('@/pages/reports/report-form-page'))
 const ReportListPage = lazyLoad(() => import('@/pages/reports/report-list-page'))
 const LectureDetailPage = lazyLoad(() => import('@/pages/lectures/lecture-detail-page'))
 const VolunteerDetailPage = lazyLoad(() => import('@/pages/volunteers/volunteer-detail-page'))
 const VolunteerListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-list-page'))
-const VolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/volunteer-program-list-page'))
-const MyVolunteerProgramListPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-program-list-page'))
-const MyVolunteerHistoryPage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-history-page'))
-const MyVolunteerSchedulePage = lazyLoad(() => import('@/pages/volunteers/my-volunteer-schedule-page'))
-const VolunteerEducationPlanPage = lazyLoad(() => import('@/pages/volunteers/volunteer-education-plan-page'))
+const VolunteerProgramListPage = lazyLoad(
+  () => import('@/pages/volunteers/volunteer-program-list-page')
+)
+const MyVolunteerProgramListPage = lazyLoad(
+  () => import('@/pages/volunteers/my-volunteer-program-list-page')
+)
+const MyVolunteerHistoryPage = lazyLoad(
+  () => import('@/pages/volunteers/my-volunteer-history-page')
+)
+const MyVolunteerSchedulePage = lazyLoad(
+  () => import('@/pages/volunteers/my-volunteer-schedule-page')
+)
+const VolunteerEducationPlanPage = lazyLoad(
+  () => import('@/pages/volunteers/volunteer-education-plan-page')
+)
 const MyPageMainPage = lazyLoad(() => import('@/pages/mypage/mypage-main-page'))
 const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const HistoryListPage = lazyLoad(() => import('@/pages/histories/history-list-page'))
 const NoticeListPage = lazyLoad(() => import('@/pages/notices/notice-list-page'))
 const HistoryDetailPage = lazyLoad(() => import('@/pages/histories/history-detail-page'))
-const ApplicationPathListPage = lazyLoad(() => import('@/pages/application-paths/application-path-list-page'))
-const EducationRecordListPage = lazyLoad(() => import('@/pages/education-records/education-record-list-page'))
-const EducationRecordListPageV2 = lazyLoad(() => import('@/pages/education-records/education-record-list-page-v2'))
+const ApplicationPathListPage = lazyLoad(
+  () => import('@/pages/application-paths/application-path-list-page')
+)
+const EducationRecordListPage = lazyLoad(
+  () => import('@/pages/education-records/education-record-list-page')
+)
+const EducationRecordListPageV2 = lazyLoad(
+  () => import('@/pages/education-records/education-record-list-page-v2')
+)
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
-const PerformanceDashboardPage = lazyLoad(() => import('@/pages/performance/performance-dashboard-page'))
-const ScheduleNegotiationListPage = lazyLoad(() => import('@/pages/schedule-negotiations/schedule-negotiation-list-page'))
+const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
+const AdminInstructorListPage = lazyLoad(() => import('@/pages/users/instructor-list-page'))
+const InstructorApplicationListPage = lazyLoad(
+  () => import('@/pages/instructor-applications/instructor-application-list-page')
+)
+const PerformanceDashboardPage = lazyLoad(
+  () => import('@/pages/performance/performance-dashboard-page')
+)
+const ScheduleNegotiationListPage = lazyLoad(
+  () => import('@/pages/schedule-negotiations/schedule-negotiation-list-page')
+)
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
+const TemplateProgramFormsPage = lazyLoad(
+  () => import('@/pages/templates/template-program-forms-page')
+)
 const TemplateFilesPage = lazyLoad(() => import('@/pages/templates/template-files-page'))
 const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
 const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
@@ -128,11 +178,25 @@ const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-pa
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
-const LogListPage = lazyLoad(() => import('@/pages/logs/log-list-page'))
+const AdminSettlementReviewPage = lazyLoad(
+  () => import('@/pages/admin/admin-settlement-review-page')
+)
+const PermissionRequestListPage = lazyLoad(
+  () => import('@/pages/admin/permission-request-list-page')
+)
+const AuditLogListPage = lazyLoad(() => import('@/pages/admin/audit-log-list-page'))
+const PermissionCustomizationPage = lazyLoad(
+  () => import('@/pages/admin/settings/permission-customization-page')
+)
+const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
 
-function LegacyPostsRedirect({ kind }: { kind: 'root' | 'faq' | 'inquiries' | 'notices' | 'categories' }) {
+function LegacyPostsRedirect({
+  kind,
+}: {
+  kind: 'root' | 'faq' | 'inquiries' | 'notices' | 'categories'
+}) {
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'ADMIN'
 
@@ -158,8 +222,16 @@ function LegacyPostsRedirect({ kind }: { kind: 'root' | 'faq' | 'inquiries' | 'n
 
 export const router = createBrowserRouter([
   {
+    path: '/register',
+    element: <RegisterPage />,
+  },
+  {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/auth/mfa',
+    element: <MfaPage />,
   },
   {
     path: '/forbidden',
@@ -175,7 +247,11 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: <IndexPage />,
+      },
+      {
+        path: 'my-learning',
+        element: <MyLearningPage />,
       },
       {
         path: 'instructors',
@@ -208,6 +284,11 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
+          { path: 'education/schedule', element: <ComingSoonPage title="페이지 준비중" /> }, // 교육 프로그램 > 프로그램 일정
+          { path: 'education', element: <ProgramListPage /> }, // 교육 프로그램 > 프로그램 목록
+          { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램
+          { path: ':id/apply', element: <ProgramApplicationPage /> }, // Phase 0.2.2: 신청서 작성 페이지
+          { path: ':id/apply/complete', element: <ProgramApplicationCompletePage /> }, // Phase 0.2.3: 신청 완료 페이지
           { path: 'my', element: <MyProgramApplicationsPage /> },
           { path: 'my/active', element: <MyProgramListPage /> },
           { path: 'my/active/:id', element: <MyProgramDetailPage /> },
@@ -227,6 +308,37 @@ export const router = createBrowserRouter([
           { path: ':id/edit', element: <ApplicationFormPage /> },
           { path: ':id/result', element: <ApplicationResultPage /> },
         ],
+      },
+      // Phase 0.2.3: 역할별 신청 내역 페이지 (FR-C04)
+      {
+        path: 'my',
+        children: [
+          { path: 'applications', element: <MyProgramApplicationsPage /> }, // 개인(참여자) 신청 내역
+          { path: 'applications/:id', element: <ApplicationProgressPage /> }, // Phase 0.2.4: 진행상황 조회
+        ],
+      },
+      {
+        path: 'school',
+        children: [
+          { path: 'my-learning', element: <SchoolMyLearningPage /> },
+          { path: 'applications', element: <MyProgramApplicationsPage /> }, // 학교 신청 내역
+          { path: 'applications/:id', element: <ApplicationProgressPage /> }, // Phase 0.2.4: 진행상황 조회
+        ],
+      },
+      {
+        path: 'instructor',
+        children: [
+          { index: true, element: <InstructorMypagePage /> }, // Phase 0.2.5: 강사 마이페이지
+          { path: 'applications', element: <MyProgramApplicationsPage /> }, // 강사 신청 내역
+          { path: 'applications/:id', element: <ApplicationProgressPage /> }, // Phase 0.2.4: 진행상황 조회
+          { path: 'documents', element: <InstructorDocumentsPage /> }, // Phase 0.2.5: 제출 서류 관리
+          { path: 'schedule', element: <InstructorSchedulePage /> }, // Phase 0.2.6: 교육 일정 (캘린더/목록)
+          { path: 'reports', element: <InstructorReportsPage /> }, // Phase 0.2.7: 강의보고서 목록
+        ],
+      },
+      {
+        path: 'instructor-applications',
+        children: [{ index: true, element: <InstructorApplicationListPage /> }],
       },
       {
         path: 'application-paths',
@@ -275,11 +387,14 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <MySettlementListPage /> },
               { path: 'monthly', element: <MyMonthlySettlementPage /> },
+              { path: 'submit', element: <MySettlementSubmissionPage /> },
               { path: ':id', element: <MySettlementDetailPage /> },
             ],
           },
+          { path: 'overview', element: <SettlementOverviewPage /> },
           { path: 'monthly', element: <MonthlySettlementPage /> },
           { path: 'calculation-settings', element: <SettlementCalculationSettingsPage /> },
+          { path: 'payment-statements', element: <PaymentStatementListPage /> },
           // Alias: 일정 협의 관리 (정착 경로는 /schedule-negotiations)
           { path: 'schedule-negotiations', element: <ScheduleNegotiationListPage /> },
         ],
@@ -296,7 +411,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'users',
-        children: [{ index: true, element: <UserListPage /> }],
+        children: [
+          { index: true, element: <UserListPage /> },
+          { path: 'participants', element: <ParticipantListPage /> },
+          { path: 'instructors', element: <AdminInstructorListPage /> },
+        ],
       },
       {
         path: 'todos',
@@ -335,6 +454,64 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <MyPageMainPage /> },
           { path: 'profile', element: <ProfilePage /> },
+          // 학교(교사) 인증 / 교사 정보 (인증 상태에 따라 동적 처리)
+          {
+            path: 'school-auth',
+            element: (
+              <ComingSoonPage
+                title="학교(교사) 인증"
+                description="학교(교사) 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          {
+            path: 'school-info',
+            element: (
+              <ComingSoonPage
+                title="교사 정보"
+                description="교사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          // 강사 인증 / 강사 정보 (인증 상태에 따라 동적 처리)
+          {
+            path: 'instructor-auth',
+            element: (
+              <ComingSoonPage
+                title="강사 인증"
+                description="강사 인증 프로세스는 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          {
+            path: 'instructor-info',
+            element: (
+              <ComingSoonPage
+                title="강사 정보"
+                description="강사 정보 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          // 내 프로그램 일정 (2뎁스)
+          {
+            path: 'program-schedule',
+            element: (
+              <ComingSoonPage
+                title="내 프로그램 일정"
+                description="내 프로그램 일정 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
+          // 서류 발급 이력 (2뎁스)
+          {
+            path: 'documents',
+            element: (
+              <ComingSoonPage
+                title="서류 발급 이력"
+                description="서류 발급 이력 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+              />
+            ),
+          },
         ],
       },
       {
@@ -348,10 +525,91 @@ export const router = createBrowserRouter([
         path: 'templates',
         element: <TemplateListPage />,
         children: [
-          { index: true, element: <Navigate to="files?tab=files" replace /> },
-          { path: 'files', element: <TemplateFilesPage /> },
-          { path: 'sms', element: <TemplateSmsPage /> },
-          { path: 'email', element: <TemplateEmailPage /> },
+          // 프로그램 양식
+          {
+            path: 'program-forms',
+            children: [
+              {
+                index: true,
+                element: <TemplateProgramFormsPage />,
+              },
+            ],
+          },
+          // 파일 양식
+          {
+            path: 'file-forms',
+            children: [
+              {
+                index: true,
+                element: <TemplateFilesPage />,
+              },
+              {
+                path: 'instructor-resume',
+                element: <TemplateFilesPage defaultCategory="instructor-resume" />,
+              },
+              {
+                path: 'lecture-report',
+                element: <TemplateFilesPage defaultCategory="lecture-report" />,
+              },
+              {
+                path: 'education-plan',
+                element: <TemplateFilesPage defaultCategory="education-plan" />,
+              },
+              {
+                path: 'certificate',
+                element: <TemplateFilesPage defaultCategory="certificate" />,
+              },
+              {
+                path: 'activity-confirmation',
+                element: <TemplateFilesPage defaultCategory="activity-confirmation" />,
+              },
+              {
+                path: 'receipt',
+                element: <TemplateFilesPage defaultCategory="receipt" />,
+              },
+              {
+                path: 'payment-statement',
+                element: <TemplateFilesPage defaultCategory="payment-statement" />,
+              },
+              {
+                path: 'employment-certificate',
+                element: <TemplateFilesPage defaultCategory="employment-certificate" />,
+              },
+            ],
+          },
+          // 카카오 알림톡 관리 (기존 SMS 페이지 연결)
+          {
+            path: 'kakao-alimtalk',
+            element: <TemplateSmsPage />,
+          },
+          // 메일 관리 (기존 email 페이지 연결)
+          {
+            path: 'email',
+            element: <TemplateEmailPage />,
+          },
+          // 배너 관리
+          {
+            path: 'banner',
+            element: (
+              <ComingSoonPage
+                title="배너 관리"
+                description="배너 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+          // 기존 경로 호환성 유지 (리다이렉트)
+          {
+            index: true,
+            element: <Navigate to="file-forms" replace />,
+          },
+          {
+            path: 'files',
+            element: <Navigate to="file-forms" replace />,
+          },
+          {
+            path: 'sms',
+            element: <Navigate to="kakao-alimtalk" replace />,
+          },
         ],
       },
       {
@@ -365,6 +623,31 @@ export const router = createBrowserRouter([
               { path: 'notices', element: <AdminNoticeListPage /> },
               { path: 'faq', element: <AdminFAQPage /> },
               { path: 'inquiries', element: <AdminInquiryPage /> },
+            ],
+          },
+          {
+            path: 'settlements',
+            children: [{ index: true, element: <AdminSettlementReviewPage /> }],
+          },
+          {
+            path: 'permission-requests',
+            children: [{ index: true, element: <PermissionRequestListPage /> }],
+          },
+          {
+            path: 'logs',
+            children: [{ path: 'audit', element: <AuditLogListPage /> }],
+          },
+          {
+            path: 'settings',
+            children: [
+              {
+                path: 'permissions',
+                element: (
+                  <ProtectedRoute requiredRoles={['ADMIN']}>
+                    <PermissionCustomizationPage />
+                  </ProtectedRoute>
+                ),
+              },
             ],
           },
         ],
@@ -383,7 +666,22 @@ export const router = createBrowserRouter([
       {
         path: 'logs',
         children: [
-          { index: true, element: <LogListPage /> },
+          {
+            index: true,
+            element: <Navigate to="bug" replace />,
+          },
+          {
+            path: 'bug',
+            element: (
+              <ComingSoonPage title="버그" description="버그 관리 기능은 현재 준비 중입니다." />
+            ),
+          },
+          {
+            path: 'issue',
+            element: (
+              <ComingSoonPage title="이슈" description="이슈 관리 기능은 현재 준비 중입니다." />
+            ),
+          },
         ],
       },
       {
@@ -391,7 +689,22 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <NoticeListPage /> },
           { path: 'faq', element: <FAQPage /> },
-          { path: 'inquiries', element: <InquiryPage /> },
+          {
+            path: 'inquiries',
+            children: [
+              { index: true, element: <InquiryPage /> },
+              // 내 문의 내역 (2뎁스)
+              {
+                path: 'my',
+                element: (
+                  <ComingSoonPage
+                    title="내 문의 내역"
+                    description="내 문의 내역 조회 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+                  />
+                ),
+              },
+            ],
+          },
         ],
       },
       {
@@ -399,8 +712,19 @@ export const router = createBrowserRouter([
         element: <ErrorPage />,
       },
       {
+        path: 'unauthorized',
+        element: <Navigate to="/forbidden" replace />,
+      },
+      // Phase 0.1.5: 404 페이지 개선 - 권한별 존재하지 않는 카테고리는 ComingSoonPage로 표시
+      // 실제 404는 ErrorPage로 유지 (권한 체크는 ProtectedRoute에서 처리)
+      {
         path: '*',
-        element: <ErrorPage />,
+        element: (
+          <ComingSoonPage
+            title="페이지를 찾을 수 없습니다"
+            description="요청하신 페이지가 존재하지 않거나 이동되었습니다. 해당 기능은 현재 준비 중입니다."
+          />
+        ),
       },
     ],
   },

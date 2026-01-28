@@ -218,6 +218,166 @@ export function InstructorList.tsx() { ... }
    - `.mdc` 형식 도입 검토
    - 자동 검증 규칙 추가
 
+---
+
+## 📂 프로젝트 문서 디렉토리 관리 (`apps/cms/docs`)
+
+### 디렉토리 구조
+
+`apps/cms/docs` 디렉토리는 프로젝트 문서를 카테고리별로 관리합니다.
+
+```
+apps/cms/docs/
+├── admin/                    # 관리자 관련 문서
+│   ├── home-screen-implementation.md
+│   └── migration-guide.md
+├── api/                      # API 명세서
+│   ├── api-spec-mock-detailed.md
+│   └── api-spec-mock-extended.md
+├── check/                    # 검증/체크리스트 문서
+│   └── INSTRUCTOR_SETTLEMENT_DATA_CHECK.md
+├── claude-prompt/            # Claude 프롬프트 관련
+│   ├── CURSOR-PROMPT-PHASE-0.1.1.md
+│   └── QA-STATUS.md
+├── design/                   # 디자인 관련 문서
+│   └── JA코리아 사용자화면 프롬프트_1219.md
+├── instructor/               # 강사 관련 문서
+│   ├── migration-guide.md
+│   └── satisfaction-survey-flow.md
+├── interview/                # 클라이언트 인터뷰 문서
+│   ├── CLIENT_INTERVIEW_2024-12-19.md
+│   └── initial_interview.md
+├── memebrs/                  # 멤버 관련 문서 및 이미지
+│   ├── ia-members.md
+│   └── [이미지 파일들]
+├── migration/                # 마이그레이션 관련 문서
+│   ├── ANT_DESIGN_MIGRATION_ESTIMATE.md
+│   └── REFACTORING_LOG.md
+├── requirements-specification/  # 요구사항 명세서
+│   ├── comparison/
+│   │   └── current-vs-requirements.md
+│   ├── MVP/
+│   │   ├── phases-frontend-mock.md
+│   │   ├── README.md
+│   │   └── v0.*-*.md
+│   └── requirements.md
+├── roadmap/                  # 로드맵 및 단계별 계획
+│   ├── MVP_ROADMAP*.md
+│   ├── PHASE_*.md
+│   ├── NEXT_STEPS.md
+│   └── IMMEDIATE_ACTIONS.md
+├── status/                   # 현재 상태 문서
+│   └── CURRENT_STATUS.md
+├── strategy/                 # 전략 및 개선 계획
+│   ├── STRATEGY_DECISION.md
+│   ├── EXCEL_INTEGRATION_STRATEGY.md
+│   ├── DASHBOARD_IMPROVEMENT_SIMPLIFIED.md
+│   └── settlement-menu-improvement.md
+└── volunteer/                # 봉사 관련 문서
+    ├── BRANCH_GUIDELINES.md
+    ├── category-structure.md
+    ├── ia-structure.md
+    ├── migration-guide.md
+    ├── README.md
+    └── volunteer-operations.md
+```
+
+### 카테고리별 분류 규칙
+
+#### 1. **admin/** - 관리자 관련
+- 관리자 화면 구현 가이드
+- 관리자 기능 마이그레이션 가이드
+
+#### 2. **api/** - API 명세서
+- API 스펙 문서 (상세, 확장)
+- Mock 데이터 구조
+
+#### 3. **check/** - 검증/체크리스트
+- 기능 완료 체크리스트
+- 데이터 검증 문서
+
+#### 4. **claude-prompt/** - AI 프롬프트
+- Cursor 프롬프트 문서
+- QA 상태 문서
+
+#### 5. **design/** - 디자인 관련
+- UI/UX 프롬프트
+- 디자인 가이드라인
+
+#### 6. **instructor/** - 강사 관련
+- 강사 기능 가이드
+- 강사 만족도 설문 플로우
+
+#### 7. **interview/** - 클라이언트 인터뷰
+- 클라이언트 인터뷰 기록
+- 초기 인터뷰 문서
+
+#### 8. **memebrs/** - 멤버 관련
+- 멤버 IA 문서
+- 멤버 관련 이미지
+
+#### 9. **migration/** - 마이그레이션
+- 라이브러리 마이그레이션 계획
+- 리팩토링 로그
+
+#### 10. **requirements-specification/** - 요구사항 명세
+- MVP 단계별 요구사항
+- 현재 상태 vs 요구사항 비교
+
+#### 11. **roadmap/** - 로드맵
+- MVP 로드맵 (다양한 버전)
+- Phase별 계획 및 체크리스트
+- 다음 단계 및 즉시 실행 사항
+
+#### 12. **status/** - 현재 상태
+- 프로젝트 현재 상태 문서
+
+#### 13. **strategy/** - 전략 및 개선
+- 전략 결정 문서
+- 기능별 개선 전략
+
+#### 14. **volunteer/** - 봉사 관련
+- 봉사 기능 가이드
+- 브랜치 가이드라인
+- 카테고리/IA 구조
+
+### 문서 추가 규칙
+
+1. **새 문서 추가 시**
+   - 적절한 카테고리 디렉토리에 배치
+   - 기존 카테고리에 맞지 않으면 새로운 카테고리 생성 고려
+   - 파일명은 케밥케이스 권장 (예: `api-spec-detailed.md`)
+
+2. **루트 디렉토리 사용 금지**
+   - `apps/cms/docs/` 루트에 직접 파일 배치 금지
+   - 모든 문서는 카테고리 디렉토리 내에 배치
+
+3. **카테고리 추가 시**
+   - 명확한 목적과 범위 정의
+   - 기존 카테고리와 중복되지 않도록 확인
+   - 필요시 `README.md`로 카테고리 설명 추가
+
+4. **파일명 규칙**
+   - 케밥케이스 권장: `api-spec-detailed.md`
+   - 대문자 사용 가능: `MVP_ROADMAP.md` (로드맵 등 중요 문서)
+   - 날짜 포함 가능: `CLIENT_INTERVIEW_2024-12-19.md`
+
+### 문서 참조 규칙
+
+1. **Cursor Rules에서 참조 시**
+   - 상대 경로 사용: `../../docs/api/api-spec-mock-detailed.md`
+   - 절대 경로 사용 금지
+
+2. **문서 간 참조 시**
+   - 상대 경로 사용 권장
+   - 카테고리 변경 시 링크 업데이트 필요
+
+### 유지보수
+
+- 정기적으로 루트 디렉토리 확인하여 미분류 문서 처리
+- 카테고리별 문서 수가 많아지면 하위 카테고리 고려
+- 각 카테고리 디렉토리에 `README.md` 추가 권장 (선택사항)
+
 
 
 

@@ -160,38 +160,40 @@
 ## 📋 Phase 7 구현 체크리스트
 
 ### 1단계: 데이터 구조 설계 및 Mock 데이터 준비
-- [ ] `ApplicationPath` 타입 정의
-- [ ] `Program` 타입에 `applicationPathId` 필드 추가
-- [ ] `Application` 타입에 `applicationPathId` 필드 추가
-- [ ] 신청 경로 Mock 데이터 생성
-- [ ] 프로그램 Mock 데이터 업데이트
-- [ ] 신청 Mock 데이터 업데이트
+- [x] `ApplicationPath` 타입 정의 ✅
+- [x] `Program` 타입에 `applicationPathId` 필드 추가 ✅
+- [x] `Application` 타입에 `applicationPathId` 필드 추가 ✅
+- [x] 신청 경로 Mock 데이터 생성 ✅
+- [x] 프로그램 Mock 데이터 업데이트 ✅ (프로그램 ID로 신청 경로 조회 방식 사용)
+- [x] 신청 Mock 데이터 업데이트 ✅
 
 ### 2단계: 서비스 및 스토어 구현
-- [ ] `entities/application-path/api/application-path-service.ts` 생성
-- [ ] `features/application-path/model/application-path-store.ts` 생성
-- [ ] `features/application-path/model/schema.ts` 생성
+- [x] `entities/application-path/api/application-path-service.ts` 생성 ✅
+- [x] `features/application-path/model/application-path-store.ts` 생성 ✅
+- [x] `features/application-path/model/schema.ts` 생성 ✅
 
 ### 3단계: UI 컴포넌트 구현
-- [ ] 신청 경로 목록 페이지 (`/application-paths`) 구현
-- [ ] 신청 경로 등록/수정 폼 구현
-- [ ] 프로그램 상세에 신청 경로 설정 섹션 추가
-- [ ] 신청 경로별 안내 문구 설정 UI 구현
+- [x] 신청 경로 목록 페이지 (`/application-paths`) 구현 ✅
+- [x] 신청 경로 등록/수정 폼 구현 ✅
+- [x] 프로그램 상세에 신청 경로 설정 섹션 추가 ✅
+- [x] 신청 경로별 안내 문구 설정 UI 구현 ✅
 
 ### 4단계: 통합 및 테스트
-- [ ] 신청 등록 폼에 신청 경로 정보 연동
-- [ ] 신청 상세에 신청 경로 정보 표시
-- [ ] 프로그램 상세에 신청 경로 정보 표시
-- [ ] 라우팅 확인 및 메뉴 연결
+- [x] 신청 등록 폼에 신청 경로 정보 연동 ✅
+- [x] 신청 상세에 신청 경로 정보 표시 ✅
+- [x] 프로그램 상세에 신청 경로 정보 표시 ✅
+- [x] 라우팅 확인 및 메뉴 연결 ✅
 
 ---
 
-## 🔍 Phase 7 이후 예상 단계
+## 🔍 Phase 8 완료 및 Phase 9 예상 단계
 
-### Phase 8: 일정 협의 관리
-- 학교별 일정 협의 프로세스 관리
-- 학사일정 고려한 일정 제안
-- 여러 학교 동시 진행 관리
+### Phase 8: 일정 협의 관리 (완료) ✅
+- ✅ 학교별 일정 협의 프로세스 관리
+- ✅ 학사일정 고려한 일정 제안
+- ✅ 여러 학교 동시 진행 관리
+- ✅ 일정 협의 상세 Drawer 구현
+- ✅ 여러 제안 관리 기능
 
 ### Phase 9: 예산 및 실적 관리
 - 프로그램별 예산 설정/관리

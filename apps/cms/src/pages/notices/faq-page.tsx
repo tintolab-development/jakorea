@@ -5,12 +5,12 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
   Card,
   Collapse,
   Typography,
-  Input,
   Space,
   Empty,
   Button,
@@ -22,6 +22,7 @@ import {
   Col,
   Tooltip,
 } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import {
   FileSearchOutlined,
   LikeOutlined,
@@ -31,71 +32,70 @@ import {
 } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { mockFAQs } from '@/data/mock/faqs'
 
 const { Text, Title, Paragraph } = Typography
 const { Panel } = Collapse
-const { Search } = Input
 
 export function FAQPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  
+  const { params, setParams } = useQueryParams<{ category?: string; q?: string }>()
+
   // 검색어 로컬 상태
-  const [searchInput, setSearchInput] = useState(searchParams.get('q') || '')
+  const [searchInput, setSearchInput] = useState(params.q || '')
 
   // 필터 상태
-  const activeCategory = searchParams.get('category') || '전체'
+  const activeCategory = params.category || '전체'
 
   const categoryName = getCategoryNameByPath(location.pathname, 2) || 'FAQ'
 
   // Debounce 검색어 처리
   useEffect(() => {
     const handler = setTimeout(() => {
-      setSearchParams(prev => {
-        if (!searchInput) prev.delete('q')
-        else prev.set('q', searchInput)
-        return prev
-      }, { replace: true })
+      setParams({
+        q: searchInput || undefined,
+      })
     }, 500)
     return () => clearTimeout(handler)
-  }, [searchInput, setSearchParams])
+  }, [searchInput, setParams])
 
   // 필터링된 FAQ 목록
   const filteredFaqs = useMemo(() => {
-    const q = searchParams.get('q')?.toLowerCase() || ''
+    const q = params.q?.toLowerCase() || ''
     return mockFAQs
       .filter(faq => faq.status === 'published')
       .filter(faq => {
         const matchCategory = activeCategory === '전체' || faq.category === activeCategory
-        const matchSearch = !q || 
-          faq.question.toLowerCase().includes(q) || 
+        const matchSearch =
+          !q ||
+          faq.question.toLowerCase().includes(q) ||
           faq.answer.toLowerCase().includes(q) ||
           faq.tags?.some(tag => tag.toLowerCase().includes(q))
-        
+
         return matchCategory && matchSearch
       })
-  }, [activeCategory, searchParams])
+  }, [activeCategory, params.q])
 
   const handleCategoryChange = (key: string) => {
-    setSearchParams(prev => {
-      if (key === '전체') prev.delete('category')
-      else prev.set('category', key)
-      return prev
+    setParams({
+      category: key === '전체' ? undefined : key,
     })
   }
 
   const categories = ['전체', '활동', '봉사시간', '시스템', '정산', '안내']
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 헤더 섹션 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 8 }}>{categoryName}</h1>
-            <Text type="secondary">자주 묻는 질문들을 모아두었습니다. 원하는 정보를 찾지 못하셨다면 1:1 문의를 이용해주세요.</Text>
+            <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: LAYOUT_CONSTANTS.spacing.sm }}>
+              {categoryName}
+            </h1>
+            <Text type="secondary">{MESSAGES.info.faqDescription}</Text>
           </div>
           <Button
             type="primary"
@@ -108,18 +108,22 @@ export function FAQPage() {
         </div>
 
         {/* 검색 섹션 */}
-        <Card styles={{ body: { padding: '32px' } }} style={{ background: '#f9f9f9', border: 'none' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <Title level={3}>무엇을 도와드릴까요?</Title>
+        <Card
+          styles={{ body: { padding: '32px' } }}
+          style={{ background: '#f9f9f9', border: 'none' }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: LAYOUT_CONSTANTS.margins.xl }}>
+            <Title level={3}>{MESSAGES.info.faqSearchTitle}</Title>
           </div>
-          <Search
-            placeholder="궁금한 내용을 입력해보세요 (예: 봉사시간, 1365, 파트너...)"
-            allowClear
-            size="large"
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            style={{ maxWidth: 600, margin: '0 auto', display: 'flex' }}
-          />
+          <div style={{ maxWidth: 600, margin: '0 auto' }}>
+            <LabeledSearchInput
+              label="검색"
+              placeholder="궁금한 내용을 입력해보세요 (예: 봉사시간, 1365, 파트너...)"
+              value={searchInput}
+              onChange={setSearchInput}
+              width="100%"
+            />
+          </div>
         </Card>
 
         {/* 카테고리 탭 */}
@@ -131,23 +135,39 @@ export function FAQPage() {
             key: cat,
             label: (
               <span style={{ padding: '0 12px' }}>
-                {cat} {cat !== '전체' && <Badge count={mockFAQs.filter(f => f.category === cat).length} offset={[8, -4]} size="small" style={{ backgroundColor: '#bfbfbf' }} />}
+                {cat}{' '}
+                {cat !== '전체' && (
+                  <Badge
+                    count={mockFAQs.filter(f => f.category === cat).length}
+                    offset={[8, -4]}
+                    size="small"
+                    style={{ backgroundColor: '#bfbfbf' }}
+                  />
+                )}
               </span>
-            )
+            ),
           }))}
         />
 
         {/* FAQ 리스트 */}
         <div style={{ minHeight: 400 }}>
           {filteredFaqs.length === 0 ? (
-            <Empty 
-              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 <Space direction="vertical">
-                  <Text type="secondary">검색 결과가 없습니다.</Text>
-                  <Button type="link" onClick={() => { setSearchInput(''); handleCategoryChange('전체'); }}>전체 보기</Button>
+                  <Text type="secondary">{MESSAGES.info.noSearchResults}</Text>
+                  <Button
+                    type="link"
+                    onClick={() => {
+                      setSearchInput('')
+                      handleCategoryChange('전체')
+                    }}
+                  >
+                    전체 보기
+                  </Button>
                 </Space>
-              } 
+              }
               style={{ marginTop: 60 }}
             />
           ) : (
@@ -163,43 +183,77 @@ export function FAQPage() {
                   header={
                     <div style={{ padding: '4px 0' }}>
                       <Space size="middle">
-                        <Tag color="blue" bordered={false}>{faq.category}</Tag>
-                        <Text strong style={{ fontSize: 16 }}>{faq.question}</Text>
+                        <Tag color="blue" bordered={false}>
+                          {faq.category}
+                        </Tag>
+                        <Text strong style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.lg }}>
+                          {faq.question}
+                        </Text>
                       </Space>
                       {faq.tags && (
                         <div style={{ marginTop: 8, paddingLeft: 60 }}>
                           {faq.tags.map(tag => (
-                            <Text key={tag} type="secondary" style={{ fontSize: 12, marginRight: 8 }}>#{tag}</Text>
+                            <Text
+                              key={tag}
+                              type="secondary"
+                              style={{
+                                fontSize: LAYOUT_CONSTANTS.fontSizes.sm,
+                                marginRight: LAYOUT_CONSTANTS.spacing.sm,
+                              }}
+                            >
+                              #{tag}
+                            </Text>
                           ))}
                         </div>
                       )}
                     </div>
                   }
-                  style={{ 
-                    marginBottom: 16, 
-                    background: '#fff', 
-                    border: '1px solid #f0f0f0', 
+                  style={{
+                    marginBottom: LAYOUT_CONSTANTS.margins.lg,
+                    background: '#fff',
+                    border: '1px solid #f0f0f0',
                     borderRadius: 8,
-                    overflow: 'hidden'
+                    overflow: 'hidden',
                   }}
                 >
                   <div style={{ padding: '8px 12px 12px 60px' }}>
-                    <Paragraph style={{ fontSize: 15, lineHeight: 1.8, color: '#434343', whiteSpace: 'pre-wrap' }}>
+                    <Paragraph
+                      style={{
+                        fontSize: LAYOUT_CONSTANTS.fontSizes.md + 1,
+                        lineHeight: 1.8,
+                        color: '#434343',
+                        whiteSpace: 'pre-wrap',
+                      }}
+                    >
                       {faq.answer}
                     </Paragraph>
-                    
+
                     <Divider style={{ margin: '16px 0' }} />
-                    
+
                     <Row justify="space-between" align="middle">
                       <Col>
-                        <Space style={{ color: '#8c8c8c', fontSize: 13 }}>
-                          <InfoCircleOutlined /> 추가 질문이 있으신가요? 
-                          <Button type="link" size="small" onClick={() => navigate('/notices/inquiries')} style={{ padding: 0 }}>상세 문의하기</Button>
+                        <Space
+                          style={{ color: '#8c8c8c', fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}
+                        >
+                          <InfoCircleOutlined /> 추가 질문이 있으신가요?
+                          <Button
+                            type="link"
+                            size="small"
+                            onClick={() => navigate('/notices/inquiries')}
+                            style={{ padding: 0 }}
+                          >
+                            상세 문의하기
+                          </Button>
                         </Space>
                       </Col>
                       <Col>
                         <Space>
-                          <Text type="secondary" style={{ fontSize: 12 }}>도움이 되었나요?</Text>
+                          <Text
+                            type="secondary"
+                            style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}
+                          >
+                            도움이 되었나요?
+                          </Text>
                           <Tooltip title="도움됨">
                             <Button size="small" icon={<LikeOutlined />} />
                           </Tooltip>
@@ -221,10 +275,10 @@ export function FAQPage() {
           <Space direction="vertical" size="small">
             <Title level={5}>찾으시는 내용이 없나요?</Title>
             <Text type="secondary">JAKorea 운영팀에서 친절하게 답변해 드리겠습니다.</Text>
-            <Button 
-              type="primary" 
-              ghost 
-              icon={<FileSearchOutlined />} 
+            <Button
+              type="primary"
+              ghost
+              icon={<FileSearchOutlined />}
               style={{ marginTop: 12 }}
               onClick={() => navigate('/notices/inquiries')}
             >

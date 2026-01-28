@@ -1,10 +1,12 @@
 /**
  * Matching API 서비스 (Mock)
- * Phase 3.2: 강사 매칭 관리
+ * Phase 2: API 서비스 레이어 패턴 통일 (기본 CRUD 통일, 추가 메서드 유지)
  */
 
 import type { Matching } from '@/types/domain'
 import type { UUID } from '@/types'
+import { mockMatchings, mockMatchingsMap } from '@/data/mock'
+import { createCrudService } from '@/shared/utils/create-service'
 
 export interface MatchingFormData {
   programId: string
@@ -13,7 +15,13 @@ export interface MatchingFormData {
   scheduleId?: string
   status: Matching['status']
 }
-import { mockMatchings, mockMatchingsMap } from '@/data/mock'
+
+// 기본 CRUD 서비스 생성
+const baseService = createCrudService<Matching>({
+  prefix: 'matching',
+  mockData: mockMatchings,
+  mockDataMap: mockMatchingsMap,
+})
 
 export const matchingService = {
   /**
@@ -22,7 +30,7 @@ export const matchingService = {
   async getAll(): Promise<Matching[]> {
     // Mock: 약간의 지연 시뮬레이션
     await new Promise(resolve => setTimeout(resolve, 100))
-    return Promise.resolve([...mockMatchings])
+    return baseService.getAll()
   },
 
   /**
@@ -30,11 +38,7 @@ export const matchingService = {
    */
   async getById(id: UUID): Promise<Matching> {
     await new Promise(resolve => setTimeout(resolve, 50))
-    const matching = mockMatchingsMap.get(id)
-    if (!matching) {
-      throw new Error(`Matching with id ${id} not found`)
-    }
-    return Promise.resolve(matching)
+    return baseService.getById(id)
   },
 
   /**
@@ -133,12 +137,7 @@ export const matchingService = {
    */
   async delete(id: UUID): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 200))
-    const index = mockMatchings.findIndex(m => m.id === id)
-    if (index !== -1) {
-      mockMatchings.splice(index, 1)
-    }
-    mockMatchingsMap.delete(id)
-    return Promise.resolve()
+    return baseService.delete(id)
   },
 
   /**
@@ -181,7 +180,6 @@ export const matchingService = {
    * @returns 매칭 또는 undefined
    */
   getByIdSync: (id: UUID): Matching | undefined => {
-    return mockMatchingsMap.get(id)
+    return baseService.getByIdSync?.(id)
   },
 }
-

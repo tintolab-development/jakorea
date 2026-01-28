@@ -4,11 +4,12 @@
  */
 
 import { Tag } from 'antd'
-import { UserOutlined, BookOutlined, CrownOutlined, HeartOutlined } from '@ant-design/icons'
-import type { UserRole } from '@/types/user'
+import { UserOutlined, BookOutlined, CrownOutlined } from '@ant-design/icons'
+import type { AdminLevel, UserRole } from '@/types/user'
 
 interface RoleBadgeProps {
   role: UserRole
+  adminLevel?: AdminLevel
   showIcon?: boolean
 }
 
@@ -26,24 +27,31 @@ const roleConfig: Record<
     color: 'blue',
     icon: <UserOutlined />,
   },
-  STUDENT: {
-    label: '수강자',
-    color: 'default',
-    icon: <BookOutlined />,
+  INDIVIDUAL: {
+    label: '학생',
+    color: 'orange',
+    icon: <UserOutlined />,
   },
-  VOLUNTEER: {
-    label: '봉사자',
-    color: 'green',
-    icon: <HeartOutlined />,
+  SCHOOL: {
+    label: '학교',
+    color: 'purple',
+    icon: <BookOutlined />,
   },
 }
 
-export function RoleBadge({ role, showIcon = true }: RoleBadgeProps) {
+const adminLevelLabels: Record<AdminLevel, string> = {
+  MASTER: '마스터 관리자',
+  ADMIN: '중간 관리자',
+  GENERAL: '일반 관리자',
+}
+
+export function RoleBadge({ role, adminLevel, showIcon = true }: RoleBadgeProps) {
   const config = roleConfig[role]
+  const label = role === 'ADMIN' && adminLevel ? adminLevelLabels[adminLevel] : config.label
 
   return (
     <Tag color={config.color} icon={showIcon ? config.icon : undefined} style={{ margin: 0 }}>
-      {config.label}
+      {label}
     </Tag>
   )
 }

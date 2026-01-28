@@ -1,0 +1,24 @@
+.matching-list__filters {
+  margin-bottom: 16px;
+}
+
+.matching-list__filter-label {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.matching-list__program-select {
+  width: 300px;
+}
+
+.matching-list__program-title {
+  font-weight: 500;
+}
+
+.matching-list__schedule-meta {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.matching-list__row {
+  cursor: pointer;
+}

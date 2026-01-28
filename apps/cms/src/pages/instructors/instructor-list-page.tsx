@@ -2,57 +2,157 @@
  * 강사 목록 페이지
  * Phase 1.2: 목록 페이지
  * Phase 4.2.3: 권한별 UI 컴포넌트 적용
+ * Phase 2: 리팩토링 패턴 적용
  * 강사 등록을 모달로 변경
  */
 
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Space, Modal } from 'antd'
+import { useEffect, useState, useMemo } from 'react'
+import { Modal, Drawer } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { InstructorList } from '@/features/instructor/ui/instructor-list'
 import { InstructorForm } from '@/features/instructor/ui/instructor-form'
+import { InstructorDetail } from '@/features/instructor/ui/instructor-detail'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import { PermissionButton } from '@/shared/components'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { useModalState } from '@/shared/hooks/use-modal-state'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
+import type { Instructor } from '@/types/domain'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+
+interface InstructorListQueryParams extends Record<string, string | undefined> {
+  search?: string
+  region?: string
+}
 
 export function InstructorListPage() {
-  const location = useLocation()
-  const { instructors, loading, fetchInstructors, createInstructor, updateInstructor } = useInstructorStore()
-  const [formModalOpen, setFormModalOpen] = useState(false)
-  const [editingInstructor, setEditingInstructor] = useState<{ id: string; data: InstructorFormData } | null>(null)
+  const {
+    instructors,
+    loading,
+    fetchInstructors,
+    createInstructor,
+    updateInstructor,
+    deleteInstructor,
+    selectedInstructor,
+    setSelectedInstructor,
+  } = useInstructorStore()
+  const { params, setParams } = useQueryParams<InstructorListQueryParams>()
+
+  // Form 모달 상태 관리
+  const {
+    open: formModalOpen,
+    openModal: openFormModal,
+    closeModal: closeFormModal,
+    selectedItem: editingInstructor,
+    isEditing: isEditingMode,
+  } = useModalState<Instructor>()
+
+  // Drawer 상태 관리
+  const {
+    open: drawerOpen,
+    openModal: openDrawer,
+    closeModal: closeDrawer,
+    selectedItem: drawerInstructor,
+  } = useModalState<Instructor>()
+
   const [formLoading, setFormLoading] = useState(false)
-  
-  // 2뎁스 카테고리명 가져오기
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deletingInstructor, setDeletingInstructor] = useState<
+    Instructor | { id: string; instructorId?: string; name?: string } | null
+  >(null)
 
   useEffect(() => {
     fetchInstructors()
   }, [fetchInstructors])
 
+  // 지역 옵션 생성
+  const regionOptions = useMemo(() => {
+    const regions = Array.from(new Set(instructors.map(i => i.region))).sort()
+    return [
+      { label: '전체', value: 'all' },
+      ...regions.map(region => ({ label: region, value: region })),
+    ]
+  }, [instructors])
+
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    search: params.search || '',
+    region: params.region || 'all',
+  })
+
+  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
+  useEffect(() => {
+    setPendingFilters({
+      search: params.search || '',
+      region: params.region || 'all',
+    })
+  }, [params.search, params.region])
+
+  // 필터링된 데이터
+  const filteredInstructors = useMemo(() => {
+    let filtered = instructors
+
+    // 검색어 필터
+    if (params.search) {
+      const searchLower = params.search.toLowerCase()
+      filtered = filtered.filter(
+        instructor =>
+          instructor.name.toLowerCase().includes(searchLower) ||
+          instructor.contactEmail?.toLowerCase().includes(searchLower) ||
+          instructor.specialty?.some(s => s.toLowerCase().includes(searchLower))
+      )
+    }
+
+    // 지역 필터
+    if (params.region && params.region !== 'all') {
+      filtered = filtered.filter(instructor => instructor.region === params.region)
+    }
+
+    return filtered
+  }, [instructors, params.search, params.region])
+
+  // 조회 버튼 클릭 시 필터 적용
+  const handleSearch = () => {
+    setParams({
+      search: pendingFilters.search || undefined,
+      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
+    })
+  }
+
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setPendingFilters({
+      search: '',
+      region: 'all',
+    })
+    setParams({
+      search: undefined,
+      region: undefined,
+    })
+  }
+
   const handleNewClick = () => {
-    setEditingInstructor(null)
-    setFormModalOpen(true)
+    openFormModal()
   }
 
   const handleFormSubmit = async (data: InstructorFormData) => {
     setFormLoading(true)
     try {
-      if (editingInstructor) {
+      if (editingInstructor && editingInstructor.id) {
         await updateInstructor(editingInstructor.id, data)
-        showSuccessMessage('강사 정보가 수정되었습니다')
+        showSuccessMessage(MESSAGES.success.updated)
       } else {
         await createInstructor(data)
-        showSuccessMessage('강사가 등록되었습니다')
+        showSuccessMessage(MESSAGES.success.created)
       }
-      setFormModalOpen(false)
-      setEditingInstructor(null)
+      closeFormModal()
       fetchInstructors()
     } catch (error) {
       handleError(error, {
-        defaultMessage: editingInstructor ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다',
+        defaultMessage: editingInstructor ? MESSAGES.error.update : MESSAGES.error.create,
         context: 'InstructorFormSubmit',
       })
     } finally {
@@ -61,48 +161,169 @@ export function InstructorListPage() {
   }
 
   const handleFormCancel = () => {
-    setFormModalOpen(false)
-    setEditingInstructor(null)
+    closeFormModal()
   }
+
+  const handleView = (instructor: Instructor) => {
+    setSelectedInstructor(instructor)
+    openDrawer(instructor)
+  }
+
+  const handleEdit = (instructor: Instructor) => {
+    openFormModal(instructor)
+    closeDrawer()
+  }
+
+  const handleDeleteClick = (
+    instructor: Instructor | { id: string; instructorId?: string; name?: string }
+  ) => {
+    setDeletingInstructor(instructor)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingInstructor) return
+
+    setDeleteLoading(true)
+    try {
+      // InstructorListItem의 경우 instructorId를 사용, Instructor의 경우 id를 사용
+      const instructorId =
+        'instructorId' in deletingInstructor && deletingInstructor.instructorId
+          ? deletingInstructor.instructorId
+          : deletingInstructor.id
+
+      await deleteInstructor(instructorId)
+      showSuccessMessage(MESSAGES.success.deleted)
+      if (selectedInstructor?.id === instructorId) {
+        closeDrawer()
+        setSelectedInstructor(null)
+      }
+      setDeleteModalOpen(false)
+      setDeletingInstructor(null)
+      fetchInstructors()
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: MESSAGES.error.delete,
+        context: 'InstructorDelete',
+      })
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setDeletingInstructor(null)
+  }
+
+  // prop의 instructor를 우선 사용 (즉시 표시), 없으면 store의 selectedInstructor 사용
+  const displayInstructor = drawerInstructor || selectedInstructor || null
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+      <div
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.lg,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+      >
         <PermissionButton
           type="primary"
           icon={<PlusOutlined />}
           onClick={handleNewClick}
           allowedRoles={['ADMIN']}
+          isWriteAction={true}
         >
           강사 등록
         </PermissionButton>
-      </Space>
-      <InstructorList data={instructors} loading={loading} />
+      </div>
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'search',
+            type: 'search',
+            label: '이름/이메일/전문분야',
+            placeholder: '이름, 이메일, 전문분야를 입력하세요',
+          },
+          {
+            key: 'region',
+            type: 'select',
+            label: '지역',
+            placeholder: '전체',
+            options: regionOptions,
+          },
+        ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+      />
+
+      <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />
+
+      <Drawer
+        title="강사 상세"
+        placement="right"
+        width={LAYOUT_CONSTANTS.widths.modal.large}
+        open={drawerOpen}
+        onClose={() => {
+          closeDrawer()
+          setSelectedInstructor(null)
+        }}
+      >
+        {displayInstructor && (
+          <InstructorDetail
+            instructor={displayInstructor}
+            onEdit={() => handleEdit(displayInstructor)}
+            onDelete={() => handleDeleteClick(displayInstructor)}
+            loading={deleteLoading}
+          />
+        )}
+      </Drawer>
 
       <Modal
         open={formModalOpen}
-        title={editingInstructor ? '강사 수정' : '강사 등록'}
+        title={isEditingMode ? '강사 수정' : '강사 등록'}
         onCancel={handleFormCancel}
         footer={null}
-        width={600}
+        width={LAYOUT_CONSTANTS.widths.modal.medium}
         destroyOnClose
       >
         <InstructorForm
-          instructor={editingInstructor ? instructors.find(i => i.id === editingInstructor.id) : undefined}
+          key={editingInstructor?.id || 'new'}
+          instructor={editingInstructor || undefined}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
           loading={formLoading}
         />
       </Modal>
+
+      <Modal
+        open={deleteModalOpen}
+        title="강사 삭제 확인"
+        onOk={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        confirmLoading={deleteLoading}
+        okText="삭제"
+        cancelText="취소"
+        okButtonProps={{ danger: true }}
+      >
+        {deletingInstructor && (
+          <>
+            <p>정말로 다음 강사를 삭제하시겠습니까?</p>
+            <p style={{ fontWeight: 'bold', margin: '16px 0' }}>
+              {'name' in deletingInstructor && deletingInstructor.name
+                ? deletingInstructor.name
+                : '이 강사'}
+            </p>
+            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 강사는 복구할 수 없습니다.</p>
+          </>
+        )}
+      </Modal>
     </div>
   )
 }
-
-
-
-
-
-
-
-

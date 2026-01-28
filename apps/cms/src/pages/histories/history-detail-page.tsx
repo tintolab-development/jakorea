@@ -6,9 +6,22 @@
 
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Button, Result, Spin, Alert, List, message } from 'antd'
+import {
+  Card,
+  Space,
+  Typography,
+  Descriptions,
+  Tag,
+  Button,
+  Result,
+  Spin,
+  Alert,
+  List,
+  message,
+} from 'antd'
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons'
 import { StatusDisplay } from '@/shared/ui'
+import { MESSAGES } from '@/shared/constants'
 import { mockUserHistoriesMap, mockProgramsMap } from '@/data/mock/mypage'
 import { downloadCertificate } from '@/shared/utils/certificate-download'
 import dayjs from 'dayjs'
@@ -81,7 +94,14 @@ export function HistoryDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px',
+        }}
+      >
         <Spin size="large" />
       </div>
     )
@@ -104,13 +124,18 @@ export function HistoryDetailPage() {
 
   const program = mockProgramsMap.get(history.programId)
 
-  const handleDownload = async (certificate: { id: string; title: string; downloadUrl: string; issuedAt: Date | string }) => {
+  const handleDownload = async (certificate: {
+    id: string
+    title: string
+    downloadUrl: string
+    issuedAt: Date | string
+  }) => {
     try {
       await downloadCertificate(certificate)
-      message.success('증빙 문서가 다운로드되었습니다')
+      message.success(MESSAGES.success.certificateDownloaded)
     } catch (error) {
       console.error('Failed to download certificate:', error)
-      message.error('증빙 문서 다운로드 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.certificateDownloadFailed)
     }
   }
 
@@ -196,7 +221,7 @@ export function HistoryDetailPage() {
           <Card title="증빙 문서">
             <List
               dataSource={history.certificates}
-              renderItem={(certificate) => (
+              renderItem={certificate => (
                 <List.Item
                   actions={[
                     <Button
@@ -239,4 +264,3 @@ export function HistoryDetailPage() {
     </div>
   )
 }
-

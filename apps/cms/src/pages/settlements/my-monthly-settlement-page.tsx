@@ -4,14 +4,16 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Card, Space, Button, Radio, Table, Tag, Select, Statistic, Empty } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
@@ -21,15 +23,16 @@ type ViewMode = 'list' | 'calendar'
 export function MyMonthlySettlementPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
+  const { params, setParams } = useQueryParams<{ view?: string; period?: string }>()
   const [settlements, setSettlements] = useState<Settlement[]>([])
   const [loading, setLoading] = useState(false)
 
   // 뷰 모드 (리스트/캘린더)
-  const viewMode = (searchParams.get('view') as ViewMode) || 'list'
+  const viewMode = (params.view as ViewMode) || 'list'
   
   // 선택된 월 (YYYY-MM 형식)
-  const selectedPeriod = searchParams.get('period') || dayjs().format('YYYY-MM')
+  const selectedPeriod = params.period || dayjs().format('YYYY-MM')
 
   const loadSettlements = useCallback(async () => {
     if (!user?.instructorId) return
@@ -57,15 +60,15 @@ export function MyMonthlySettlementPage() {
   }, [loadSettlements, user?.instructorId])
 
   const handleViewModeChange = (mode: ViewMode) => {
-    const newParams = new URLSearchParams(searchParams)
-    newParams.set('view', mode)
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      view: mode,
+    })
   }
 
   const handlePeriodChange = (period: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    newParams.set('period', period)
-    setSearchParams(newParams, { replace: true })
+    setParams({
+      period: period,
+    })
   }
 
   const handleDateSelect = (_date: Dayjs, settlement?: Settlement) => {
@@ -119,7 +122,7 @@ export function MyMonthlySettlementPage() {
       key: 'programId',
       width: 200,
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Tag color="cyan">{program.title}</Tag>
         ) : (
@@ -133,7 +136,7 @@ export function MyMonthlySettlementPage() {
       key: 'status',
       width: 120,
       render: (status: SettlementStatus) => (
-        <Tag color={getSettlementStatusColor(status)}>{getSettlementStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
       ),
     },
     {

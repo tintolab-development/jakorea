@@ -10,6 +10,7 @@ import { useProgramStore } from '@/features/program/model/program-store'
 import type { ProgramFormData } from '@/entities/program/model/schema'
 import type { Program } from '@/types/domain'
 import { message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 
 export function ProgramFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -40,14 +41,14 @@ export function ProgramFormPage() {
 
       if (isEdit && id) {
         await updateProgram(id, programData)
-        message.success('프로그램 정보가 수정되었습니다')
+        message.success(MESSAGES.success.programUpdated)
       } else {
         await createProgram(programData as Omit<Program, 'id' | 'createdAt' | 'updatedAt'>)
-        message.success('프로그램이 등록되었습니다')
+        message.success(MESSAGES.success.programCreated)
       }
       navigate('/programs')
     } catch {
-      message.error(isEdit ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+      message.error(isEdit ? MESSAGES.error.update : MESSAGES.error.create)
     }
   }
 

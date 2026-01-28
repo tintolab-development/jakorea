@@ -34,7 +34,7 @@ export const mockInterviews: Interview[] = [
   {
     id: generateUUID(),
     userId: 'user-3',
-    userRole: 'STUDENT',
+    userRole: 'INDIVIDUAL',
     status: 'NOT_REQUIRED',
     participationHistory: 3,
     createdAt: new Date('2024-01-17').toISOString(),
@@ -67,7 +67,7 @@ export const mockInterviews: Interview[] = [
   {
     id: generateUUID(),
     userId: 'user-6',
-    userRole: 'STUDENT',
+    userRole: 'INDIVIDUAL',
     status: 'REJECTED',
     rejectedAt: new Date('2024-01-12').toISOString(),
     rejectedBy: 'admin-1',

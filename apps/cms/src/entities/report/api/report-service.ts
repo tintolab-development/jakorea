@@ -14,6 +14,8 @@ export interface SubmitReportRequest {
   type: ReportType
   activityId?: string
   programId?: string
+  /** Phase 0.2.7: 강의보고서 일정 ID */
+  scheduleId?: string
   fields: Record<string, string | number | Date>
 }
 
@@ -32,13 +34,14 @@ export const reportService = {
       type: data.type,
       activityId: data.activityId,
       programId: data.programId,
+      scheduleId: data.scheduleId,
       fields: Object.fromEntries(
         Object.entries(data.fields).map(([key, value]) => [
           key,
           value instanceof Date ? value.toISOString() : value,
         ])
       ),
-      status: 'submitted', // 제출 시 기본 상태
+      status: 'submitted',
       submittedAt: now,
       createdAt: now,
       updatedAt: now,

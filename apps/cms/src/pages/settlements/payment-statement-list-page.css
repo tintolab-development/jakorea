@@ -1,0 +1,17 @@
+.payment-statement-list-header {
+  margin-bottom: 16px;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.payment-statement-list-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.payment-statement-list-modal__note {
+  display: block;
+  margin-top: 8px;
+}

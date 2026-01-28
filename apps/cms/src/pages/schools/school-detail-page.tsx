@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { SchoolDetail } from '@/features/school/ui/school-detail'
 import { useSchoolStore } from '@/features/school/model/school-store'
+import { MESSAGES } from '@/shared/constants'
 import { message } from 'antd'
 
 export function SchoolDetailPage() {
@@ -29,13 +30,13 @@ export function SchoolDetailPage() {
   const handleDelete = async () => {
     if (!id || !selectedSchool) return
 
-    if (window.confirm('정말 삭제하시겠습니까?')) {
+    if (window.confirm(MESSAGES.confirm.delete)) {
       try {
         await deleteSchool(id)
-        message.success('학교가 삭제되었습니다')
+        message.success(MESSAGES.success.schoolDeleted)
         navigate('/schools')
       } catch {
-        message.error('삭제 중 오류가 발생했습니다')
+        message.error(MESSAGES.error.delete)
       }
     }
   }

@@ -7,13 +7,16 @@ import { Badge, Tag } from 'antd'
 import {
   TeamOutlined,
   SafetyOutlined,
-  BookOutlined,
-  HeartOutlined,
+  UserOutlined,
+  BankOutlined,
 } from '@ant-design/icons'
-import type { UserRole } from '@/types/user'
+import type { AdminLevel, ProgramRole, UserRole } from '@/types/user'
+import './role-badge.css'
 
 interface RoleBadgeProps {
   role: UserRole
+  adminLevel?: AdminLevel
+  programRole?: ProgramRole
   showIcon?: boolean
   size?: 'default' | 'small' | 'large'
   variant?: 'badge' | 'tag'
@@ -38,17 +41,30 @@ const roleConfig: Record<
     color: 'blue',
     icon: <TeamOutlined />,
   },
-  STUDENT: {
-    label: '수강자',
+  INDIVIDUAL: {
+    label: '학생',
     color: 'orange',
-    icon: <BookOutlined />,
+    icon: <UserOutlined />,
   },
-  VOLUNTEER: {
-    label: '봉사자',
-    color: 'green',
-    icon: <HeartOutlined />,
+  SCHOOL: {
+    label: '학교',
+    color: 'purple',
+    icon: <BankOutlined />,
   },
 }
+
+const adminLevelLabels: Record<AdminLevel, string> = {
+  MASTER: '마스터 관리자',
+  ADMIN: '중간 관리자',
+  GENERAL: '일반 관리자',
+}
+
+const programRoleLabels: Record<ProgramRole, string> = {
+  OWNER: '담당자',
+  PARTNER: '파트너',
+  ASSISTANT: '보조',
+}
+
 
 /**
  * 권한 배지 컴포넌트
@@ -56,17 +72,25 @@ const roleConfig: Record<
  */
 export function RoleBadge({
   role,
+  adminLevel,
+  programRole,
   showIcon = true,
   size = 'default',
   variant = 'tag',
 }: RoleBadgeProps) {
+  // programRole은 향후 사용 예정
+  void programRole
   const config = roleConfig[role]
+  const label =
+    role === 'ADMIN' && adminLevel
+      ? adminLevelLabels[adminLevel]
+      : config.label
 
   if (variant === 'badge') {
     return (
       <Badge
         status={config.color as any}
-        text={config.label}
+        text={label}
         style={{ fontSize: size === 'small' ? '12px' : size === 'large' ? '16px' : '14px' }}
       />
     )
@@ -94,7 +118,7 @@ export function RoleBadge({
       icon={showIcon ? config.icon : undefined}
       style={tagStyle}
     >
-      {config.label}
+      {label}
     </Tag>
   )
 }
@@ -102,22 +126,40 @@ export function RoleBadge({
 /**
  * 권한 아이콘만 표시하는 컴포넌트
  */
-export function RoleIcon({ role, size = 16 }: { role: UserRole; size?: number }) {
+export function RoleIcon({ role, size = 'default' }: { role: UserRole; size?: 'small' | 'default' | 'large' }) {
   const config = roleConfig[role]
-  return <span style={{ fontSize: `${size}px` }}>{config.icon}</span>
+  return <span className={`role-icon role-icon--${size}`}>{config.icon}</span>
 }
 
 /**
  * 권한 레이블만 반환하는 함수
  */
-export function getRoleLabel(role: UserRole): string {
-  return roleConfig[role].label
+export function getRoleLabel(role: UserRole, adminLevel?: AdminLevel): string {
+  if (role === 'ADMIN' && adminLevel) {
+    return adminLevelLabels[adminLevel]
+  }
+  return roleConfig[role]?.label || role
 }
 
 /**
  * 권한 색상만 반환하는 함수
  */
 export function getRoleColor(role: UserRole): string {
-  return roleConfig[role].color
+  return roleConfig[role]?.color || 'default'
 }
+
+/**
+ * 관리자 권한 레벨 라벨 반환
+ */
+export function getAdminLevelLabel(level: AdminLevel): string {
+  return adminLevelLabels[level] || level
+}
+
+/**
+ * 프로그램 역할 라벨 반환
+ */
+export function getProgramRoleLabel(role: ProgramRole): string {
+  return programRoleLabels[role] || role
+}
+
 

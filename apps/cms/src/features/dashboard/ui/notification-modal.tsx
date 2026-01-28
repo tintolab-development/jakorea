@@ -4,7 +4,13 @@
  */
 
 import { Modal, Typography, Button, Empty, Space, Card } from 'antd'
-import { BellOutlined, DollarOutlined, FileTextOutlined, CalendarOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import {
+  BellOutlined,
+  DollarOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+} from '@ant-design/icons'
 import type { Notification, NotificationType } from '../api/notification-service'
 
 const { Text, Title } = Typography
@@ -76,9 +82,11 @@ export function NotificationModal({
   onRefresh,
 }: NotificationModalProps) {
   // prop으로 전달된 unreadCount를 우선 사용, 없으면 notifications에서 계산
-  const unreadCount = propUnreadCount !== undefined 
-    ? propUnreadCount 
-    : notifications.filter(n => !n.read).length
+  const unreadCount =
+    propUnreadCount !== undefined ? propUnreadCount : notifications.filter(n => !n.read).length
+
+  // 읽지 않은 알림만 필터링 (위젯과 동일한 로직)
+  const unreadNotifications = notifications.filter(n => !n.read)
 
   return (
     <Modal
@@ -112,8 +120,15 @@ export function NotificationModal({
       ].filter(Boolean)}
       width={900}
       style={{ top: 20 }}
+      styles={{
+        body: {
+          maxHeight: 'calc(100vh - 200px)',
+          overflowY: 'auto',
+          padding: '24px',
+        },
+      }}
     >
-      {notifications.length === 0 ? (
+      {unreadNotifications.length === 0 ? (
         <Empty
           description="알림이 없습니다"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -121,7 +136,7 @@ export function NotificationModal({
         />
       ) : (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          {notifications.map(notification => (
+          {unreadNotifications.map(notification => (
             <Card
               key={notification.id}
               size="small"
@@ -134,7 +149,9 @@ export function NotificationModal({
               bodyStyle={{ padding: '16px 20px' }}
               onClick={() => onNotificationClick(notification)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 16 }}>
                   <div
                     style={{
@@ -155,7 +172,7 @@ export function NotificationModal({
                     </Text>
                   </div>
                 </div>
-                <div onClick={(e) => e.stopPropagation()}>
+                <div onClick={e => e.stopPropagation()}>
                   {onConfirm && (
                     <Button
                       size="small"

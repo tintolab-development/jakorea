@@ -9,6 +9,7 @@ import { useApplicationStore } from '@/features/application/model/application-st
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { MESSAGES } from '@/shared/constants'
 
 interface ApplicationFormModalProps {
   programId: string
@@ -40,8 +41,8 @@ export function ApplicationFormModal({
       if (user?.role === 'INSTRUCTOR' && user?.instructorId) {
         applicationData.subjectType = 'instructor'
         applicationData.subjectId = user.instructorId
-      } else if (user?.role === 'STUDENT' && user?.id) {
-        applicationData.subjectType = 'student'
+      } else if ((user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL') && user?.id) {
+        applicationData.subjectType = user.role === 'SCHOOL' ? 'school' : 'student'
         applicationData.subjectId = user.id
       }
 
@@ -56,11 +57,11 @@ export function ApplicationFormModal({
         notes: applicationData.notes,
       })
 
-      showSuccessMessage('신청이 완료되었습니다.')
+      showSuccessMessage(MESSAGES.success.applicationCompletedModal)
       onSuccess?.()
     } catch (error) {
       handleError(error, {
-        defaultMessage: '신청 등록 중 오류가 발생했습니다',
+        defaultMessage: MESSAGES.error.applicationFailed,
         context: 'ApplicationFormModal -> handleSubmit',
       })
       throw error // ApplicationForm에서 에러 처리
@@ -74,7 +75,8 @@ export function ApplicationFormModal({
       onCancel={onClose}
       footer={null}
       width={700}
-      destroyOnClose
+      destroyOnHidden
+      zIndex={1001}
     >
       <ApplicationForm
         programId={programId} // 프로그램 ID 전달

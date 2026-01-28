@@ -4,7 +4,8 @@
  * 테이블 / 차트 탭 전환 지원
  */
 
-import { Table, Input, Select, Button, Space, Tag, Tooltip, Tabs, Card, Segmented } from 'antd'
+import { Table, Select, Button, Space, Tag, Tooltip, Tabs, Card, Segmented } from 'antd'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { DownloadOutlined } from '@ant-design/icons'
 import { useEducationRecordTable } from '../model/use-education-record-table'
 import type { Program } from '@/types/domain'
@@ -12,7 +13,8 @@ import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { mockApplications } from '@/data/mock'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import { commonStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { useMemo, useState } from 'react'
 import { MOCK_SIDO_SIGUNGU } from '@/shared/constants/sido-sigungu'
 import dayjs from 'dayjs'
@@ -345,7 +347,7 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
         width: 80,
         align: 'center' as const,
         render: (status: string) => (
-          <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+          <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
         ),
       },
     ],
@@ -491,13 +493,13 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} size="middle" wrap>
-        <Input
-          placeholder="프로그램명 검색"
+      <Space style={{ marginBottom: 16 }} size="middle" wrap align="start">
+        <LabeledSearchInput
+          label="프로그램명"
+          placeholder="프로그램명을 입력하세요"
           value={getFilterValue('title') || ''}
-          onChange={e => handleFilterChange('title', e.target.value || undefined)}
-          style={{ width: 200 }}
-          allowClear
+          onChange={value => handleFilterChange('title', value || undefined)}
+          width={300}
         />
         <Select
           placeholder="교육 월"
@@ -625,11 +627,7 @@ export function EducationRecordListV2({ data, loading, onView }: EducationRecord
           ))}
         </Select>
         <Button onClick={handleResetFilters}>필터 초기화</Button>
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          onClick={handleExportExcel}
-        >
+        <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel}>
           엑셀 다운로드
         </Button>
       </Space>

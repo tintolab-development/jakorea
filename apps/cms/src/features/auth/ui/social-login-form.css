@@ -1,0 +1,16 @@
+/**
+ * 간편인증 로그인 폼 스타일
+ * Phase 0.1.3: 간편인증 로그인
+ */
+
+.social-login-form {
+  width: 100%;
+}
+
+.social-login-form .ant-btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.social-login-form .ant-btn-primary:active:not(:disabled) {
+  opacity: 0.8;
+}

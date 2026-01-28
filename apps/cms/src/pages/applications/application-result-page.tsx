@@ -175,8 +175,7 @@ interface ApplicationRejectedResultProps {
 }
 
 function ApplicationRejectedResult({ application, programName, navigate }: ApplicationRejectedResultProps) {
-  // reason_public은 Application 타입에 없으므로 notes를 사용 (실제로는 reason_public 필드가 필요)
-  const rejectionReason = application.notes || '반려 사유가 제공되지 않았습니다.'
+  const rejectionReason = application.rejectionReason || application.notes || '반려 사유가 제공되지 않았습니다.'
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px' }}>

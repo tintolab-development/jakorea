@@ -10,7 +10,8 @@ import dayjs from 'dayjs'
 import type { CalendarMode } from 'antd/es/calendar/generateCalendar'
 import type { Settlement } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig, getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import './settlement-calendar.css'
 
@@ -84,9 +85,7 @@ export function SettlementCalendar({
                 </div>
                 <div className="settlement-popover-item">
                   <span className="settlement-popover-label">상태:</span>
-                  <Tag color={getSettlementStatusColor(settlement.status)}>
-                    {getSettlementStatusLabel(settlement.status)}
-                  </Tag>
+                  <StatusBadge status={settlement.status} statusConfig={settlementStatusStatusConfig} />
                 </div>
                 <div className="settlement-popover-item">
                   <span className="settlement-popover-label">금액:</span>

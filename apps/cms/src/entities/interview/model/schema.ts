@@ -17,7 +17,7 @@ export const instructorApplicationFormSchema = z.object({
   participationHistory: z.number().int().min(0, '참여이력은 0 이상이어야 합니다'),
   experience: z.string().optional(),
   availableTime: z.string().optional(),
-  role: z.enum(['INSTRUCTOR', 'STUDENT']),
+  role: z.enum(['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL']),
 })
 
 export type InstructorApplicationFormData = z.infer<typeof instructorApplicationFormSchema>

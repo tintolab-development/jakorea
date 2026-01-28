@@ -14,8 +14,23 @@ export const instructorSchema = z.object({
   availableTime: z.string().optional(),
   experience: z.string().optional(),
   rating: z.number().min(0).max(5).optional(),
+  // 정산 계좌 정보 (은행명이 있으면 계좌번호 필수)
+  bankName: z.string().optional(),
   bankAccount: z.string().optional(),
-})
+  accountHolder: z.string().optional(),
+}).refine(
+  (data) => {
+    // 계좌번호가 있으면 은행명도 필수
+    if (data.bankAccount && !data.bankName) {
+      return false
+    }
+    return true
+  },
+  {
+    message: '계좌번호 입력 시 은행명도 입력해주세요',
+    path: ['bankName'],
+  }
+)
 
 export type InstructorFormData = z.infer<typeof instructorSchema>
 

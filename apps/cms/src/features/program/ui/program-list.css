@@ -1,0 +1,566 @@
+/**
+ * 프로그램 리스트 스타일
+ */
+
+/* 캘린더 날짜 셀에 보더 추가 - 구분 명확화 (정산 캘린더 참고) */
+.ant-picker-calendar-date {
+  border: 1px solid #f0f0f0;
+}
+
+/* 호버 시 보더 강조 */
+.ant-picker-calendar-date:hover {
+  border-color: #d9d9d9;
+}
+
+/* 선택된 날짜 보더 강조 */
+.ant-picker-calendar-date-selected {
+  border-color: #1890ff;
+}
+
+/* 오늘 날짜 보더 강조 */
+.ant-picker-calendar-date-today {
+  border-color: #01a1af;
+}
+
+/* 캘린더 셀 스타일 */
+.program-calendar-cell {
+  height: 100%;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.program-calendar-cell-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.program-calendar-cell-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.program-calendar-cell-item {
+  font-size: 12px;
+  padding: 2px 4px;
+  margin: 1px 0;
+  background: #1890ff;
+  color: #fff;
+  border-radius: 2px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.program-calendar-cell-item:hover {
+  background: #40a9ff;
+  transform: translateX(2px);
+}
+
+.program-calendar-cell-more {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+  text-align: center;
+}
+
+/* 뷰 전환 탭 스타일 (정산 캘린더 참고) */
+.program-view-toggle {
+  display: inline-flex;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.program-view-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #8c8c8c;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.program-view-toggle-button:hover {
+  color: #262626;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.program-view-toggle-button--active {
+  background-color: #ffffff;
+  color: #262626;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+.program-view-toggle-button--active:hover {
+  background-color: #ffffff;
+  color: #262626;
+}
+
+/* 프로그램 목록 컨테이너 */
+.program-list-container {
+  width: 100%;
+}
+
+.program-filter-wrapper {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* 필터 카드 스타일 */
+.program-filter-card {
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.program-filter-card.ant-card {
+  width: 100%;
+}
+
+.program-filter-card .ant-card-body {
+  padding: 24px;
+}
+
+.program-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.program-filter-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #595959;
+}
+
+/* 필터 입력 필드 통일 스타일 (Ant Design 기본값 32px로 통일) */
+.program-filter-card .ant-input,
+.program-filter-card .ant-select .ant-select-selector,
+.program-filter-card .ant-picker,
+.program-filter-card .ant-input-affix-wrapper {
+  height: 32px !important;
+  border-radius: 6px !important;
+}
+
+/* affix wrapper 내부 input은 높이 auto */
+.program-filter-card .ant-input-affix-wrapper .ant-input {
+  height: auto !important;
+  line-height: 1.5715; /* Ant Design 기본 line-height */
+}
+
+.program-filter-card .ant-select .ant-select-selector {
+  display: flex !important;
+  align-items: center !important;
+  height: 32px !important;
+}
+
+.program-filter-card .ant-select .ant-select-selection-item,
+.program-filter-card .ant-select .ant-select-selection-placeholder {
+  line-height: 30px !important; /* selector 높이 - border */
+  display: flex;
+  align-items: center;
+}
+
+.program-filter-card .ant-input::placeholder,
+.program-filter-card .ant-input-affix-wrapper .ant-input::placeholder {
+  color: #bfbfbf;
+}
+
+/* 필터 내 아이콘 센터링 */
+/* Input prefix 아이콘 (검색 아이콘) */
+.program-filter-card .ant-input-affix-wrapper .ant-input-prefix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
+}
+
+.program-filter-card .ant-input-affix-wrapper .ant-input-prefix .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Input clear 버튼 (X 아이콘) */
+.program-filter-card .ant-input-affix-wrapper .ant-input-clear-icon,
+.program-filter-card .ant-input-clear-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.program-filter-card .ant-input-affix-wrapper .ant-input-clear-icon .anticon,
+.program-filter-card .ant-input-clear-icon .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Select 화살표 아이콘 */
+.program-filter-card .ant-select .ant-select-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: 11px;
+  width: 12px;
+  height: 12px;
+}
+
+.program-filter-card .ant-select .ant-select-arrow .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Select clear 버튼 (X 아이콘) */
+.program-filter-card .ant-select .ant-select-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+}
+
+.program-filter-card .ant-select .ant-select-clear .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* DatePicker 아이콘 */
+.program-filter-card .ant-picker .ant-picker-suffix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
+}
+
+.program-filter-card .ant-picker .ant-picker-suffix .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* DatePicker clear 버튼 (X 아이콘) */
+.program-filter-card .ant-picker .ant-picker-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+}
+
+.program-filter-card .ant-picker .ant-picker-clear .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* 참가자용 필터 입력 필드 통일 스타일 (Ant Design 기본값 32px로 통일) */
+.program-filter-wrapper .ant-input,
+.program-filter-wrapper .ant-select .ant-select-selector,
+.program-filter-wrapper .ant-picker,
+.program-filter-wrapper .ant-input-affix-wrapper {
+  height: 32px !important;
+}
+
+.program-filter-wrapper .ant-select .ant-select-selector {
+  display: flex !important;
+  align-items: center !important;
+  height: 32px !important;
+}
+
+.program-filter-wrapper .ant-select .ant-select-selection-item,
+.program-filter-wrapper .ant-select .ant-select-selection-placeholder {
+  line-height: 30px !important;
+  display: flex;
+  align-items: center;
+}
+
+/* 참가자용 필터 아이콘 센터링 (필터 카드 외부) */
+.program-filter-wrapper .ant-input-affix-wrapper .ant-input-prefix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
+}
+
+.program-filter-wrapper .ant-input-affix-wrapper .ant-input-prefix .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.program-filter-wrapper .ant-input-affix-wrapper .ant-input-clear-icon,
+.program-filter-wrapper .ant-input-clear-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.program-filter-wrapper .ant-input-affix-wrapper .ant-input-clear-icon .anticon,
+.program-filter-wrapper .ant-input-clear-icon .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.program-filter-wrapper .ant-select .ant-select-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: 11px;
+  width: 12px;
+  height: 12px;
+}
+
+.program-filter-wrapper .ant-select .ant-select-arrow .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.program-filter-wrapper .ant-select .ant-select-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+}
+
+.program-filter-wrapper .ant-select .ant-select-clear .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.program-filter-wrapper .ant-picker .ant-picker-suffix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
+}
+
+.program-filter-wrapper .ant-picker .ant-picker-suffix .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.program-filter-wrapper .ant-picker .ant-picker-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+}
+
+.program-filter-wrapper .ant-picker .ant-picker-clear .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.program-filter-date-separator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  color: #8c8c8c;
+  font-size: 14px;
+  height: 32px;
+}
+
+.program-filter-search-button {
+  height: 32px;
+  min-width: 120px;
+  background-color: #01a1af;
+  border-color: #01a1af;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.program-filter-search-button:hover {
+  background-color: #019ba8 !important;
+  border-color: #019ba8 !important;
+}
+
+/* 테이블 헤더 스타일 */
+.program-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 16px 0;
+}
+
+.program-table-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.program-table-header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.program-table-header-count {
+  font-size: 14px;
+  font-weight: 400;
+  color: #8c8c8c;
+}
+
+.program-table-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* 뷰 전환 버튼이 왼쪽, 프로그램 신규 등록 버튼이 오른쪽에 위치 */
+}
+
+.program-table-header-button {
+  background-color: #01a1af;
+  border-color: #01a1af;
+}
+
+.program-table-header-button:hover {
+  background-color: #019ba8 !important;
+  border-color: #019ba8 !important;
+}
+
+/* 프로그램 목록 카드 스타일 (위젯 스타일) */
+.program-list-card {
+  margin-bottom: 24px;
+  margin-top: 24px; /* 상단 여백 추가 */
+}
+
+.program-list-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+  min-height: 56px; /* 헤더 최소 높이 */
+  display: flex;
+  align-items: center; /* 수직 정렬 */
+}
+
+.program-list-card .ant-card-head-title {
+  padding: 0;
+  display: flex;
+  align-items: center; /* title 수직 정렬 */
+  line-height: 1.5;
+}
+
+.program-list-card .ant-card-extra {
+  padding: 0;
+  display: flex;
+  align-items: center; /* extra 수직 정렬 */
+  line-height: 1.5;
+}
+
+.program-list-card .ant-card-body {
+  padding: 24px;
+}
+
+/* 테이블 헤더 내 뷰 전환 단일 버튼 스타일 */
+.program-view-toggle-single-button {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  background-color: #ffffff;
+  color: #262626;
+  transition: all 0.2s;
+}
+
+.program-view-toggle-single-button:hover {
+  border-color: #01a1af;
+  color: #01a1af;
+  background-color: #ffffff;
+}
+
+.program-view-toggle-single-button:active {
+  border-color: #019ba8;
+  color: #019ba8;
+}

@@ -3,35 +3,29 @@
  * Phase 7.1.1: 보고서 검토 및 승인
  */
 
-import { Drawer, Descriptions, Tag, Space, Button, Modal, Input, message } from 'antd'
+import { Descriptions, Tag, Space, Modal, Input, message } from 'antd'
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import type { Report } from '@/types/domain'
-import { getReportStatusLabel, getReportStatusColor } from '@/shared/constants/status'
-import { reportService } from '@/entities/report/api/report-service'
+import { reportStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { getReportTypeLabel, getReportTypeColor } from '@/shared/constants/domain-status'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
+import { useReportService } from '@/features/report/hooks/use-report-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useState } from 'react'
-import { programService } from '@/entities/program/api/program-service'
+import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 import dayjs from 'dayjs'
 
 const { TextArea } = Input
-
-const reportTypeLabels: Record<Report['type'], string> = {
-  lecture: '강의보고서',
-  volunteer: '교육봉사 활동보고서',
-  program: '프로그램 종료 보고서',
-}
-
-const reportTypeColors: Record<Report['type'], string> = {
-  lecture: 'blue',
-  volunteer: 'purple',
-  program: 'cyan',
-}
 
 interface ReportDetailDrawerProps {
   open: boolean
   report: Report | null
   onClose: () => void
   onReviewComplete?: () => void
+  /** Phase 0.2.7: 강사 보기 시 검토/승인/반려 버튼 숨김 */
+  showReviewActions?: boolean
 }
 
 export function ReportDetailDrawer({
@@ -39,119 +33,116 @@ export function ReportDetailDrawer({
   report,
   onClose,
   onReviewComplete,
+  showReviewActions = true,
 }: ReportDetailDrawerProps) {
   const { user } = useAuthStore()
+  const { review, approve, reject, loading: serviceLoading } = useReportService()
+  const { getByIdSync } = useProgramService()
   const [reviewNotes, setReviewNotes] = useState('')
   const [approveModalOpen, setApproveModalOpen] = useState(false)
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
 
   if (!report) return null
 
-  const program = report.programId ? programService.getByIdSync(report.programId) : undefined
+  const program = report.programId ? getByIdSync(report.programId) : undefined
+  const loading = serviceLoading
 
   const handleReview = async () => {
     if (!user?.id) return
-    setLoading(true)
     try {
-      await reportService.review(report.id, user.id)
-      message.success('보고서가 검토 상태로 변경되었습니다')
+      await review(report.id, user.id)
+      message.success(MESSAGES.success.reviewed)
       onReviewComplete?.()
     } catch {
-      message.error('검토 처리 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
+      message.error(MESSAGES.error.unknown)
     }
   }
 
   const handleApprove = async () => {
     if (!user?.id) return
-    setLoading(true)
     try {
-      await reportService.approve(report.id, user.id, reviewNotes || undefined)
-      message.success('보고서가 승인되었습니다')
+      await approve(report.id, user.id, reviewNotes || undefined)
+      message.success(MESSAGES.success.approved)
       setApproveModalOpen(false)
       setReviewNotes('')
       onReviewComplete?.()
     } catch {
-      message.error('승인 처리 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
+      message.error(MESSAGES.error.approve)
     }
   }
 
   const handleReject = async () => {
     if (!user?.id) return
     if (!reviewNotes.trim()) {
-      message.warning('반려 사유를 입력해주세요')
+      message.warning(MESSAGES.warning.enterRejectionReason)
       return
     }
-    setLoading(true)
     try {
-      await reportService.reject(report.id, user.id, reviewNotes)
-      message.success('보고서가 반려되었습니다')
+      await reject(report.id, user.id, reviewNotes)
+      message.success(MESSAGES.success.rejected)
       setRejectModalOpen(false)
       setReviewNotes('')
       onReviewComplete?.()
     } catch {
-      message.error('반려 처리 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
+      message.error(MESSAGES.error.reject)
     }
   }
 
+  // 액션 버튼 구성
+  const actions = showReviewActions
+    ? [
+        ...(report.status === 'submitted'
+          ? [
+              {
+                key: 'review',
+                label: '검토 시작',
+                onClick: handleReview,
+                loading,
+              },
+            ]
+          : []),
+        ...(report.status === 'reviewing'
+          ? [
+              {
+                key: 'approve',
+                label: '승인',
+                onClick: () => setApproveModalOpen(true),
+                icon: <CheckOutlined />,
+              },
+              {
+                key: 'reject',
+                label: '반려',
+                onClick: () => setRejectModalOpen(true),
+                danger: true,
+                icon: <CloseOutlined />,
+              },
+            ]
+          : []),
+      ]
+    : []
+
   return (
     <>
-      <Drawer
-        title="보고서 상세"
-        width={792}
+      <BaseDetailDrawer
         open={open}
         onClose={onClose}
-        extra={
-          <Space>
-            {report.status === 'submitted' && (
-              <Button onClick={handleReview} loading={loading}>
-                검토 시작
-              </Button>
-            )}
-            {report.status === 'reviewing' && (
-              <>
-                <Button
-                  type="primary"
-                  icon={<CheckOutlined />}
-                  onClick={() => setApproveModalOpen(true)}
-                >
-                  승인
-                </Button>
-                <Button
-                  danger
-                  icon={<CloseOutlined />}
-                  onClick={() => setRejectModalOpen(true)}
-                >
-                  반려
-                </Button>
-              </>
-            )}
-          </Space>
-        }
+        title="보고서 상세"
+        width={LAYOUT_CONSTANTS.widths.modal.large}
+        loading={loading}
+        actions={actions}
+        hideActions={!showReviewActions || actions.length === 0}
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {/* 기본 정보 */}
           <Descriptions title="기본 정보" bordered column={1}>
             <Descriptions.Item label="보고서 ID">{report.id}</Descriptions.Item>
             <Descriptions.Item label="타입">
-              <Tag color={reportTypeColors[report.type]}>{reportTypeLabels[report.type]}</Tag>
+              <Tag color={getReportTypeColor(report.type)}>{getReportTypeLabel(report.type)}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="상태">
-              <Tag color={getReportStatusColor(report.status)}>
-                {getReportStatusLabel(report.status)}
-              </Tag>
+              <StatusBadge status={report.status} statusConfig={reportStatusStatusConfig} />
             </Descriptions.Item>
-            {program && (
-              <Descriptions.Item label="프로그램">
-                {program.title}
-              </Descriptions.Item>
-            )}
+            {program && <Descriptions.Item label="프로그램">{program.title}</Descriptions.Item>}
             <Descriptions.Item label="제출일">
               {dayjs(report.submittedAt).format('YYYY-MM-DD HH:mm')}
             </Descriptions.Item>
@@ -161,9 +152,7 @@ export function ReportDetailDrawer({
               </Descriptions.Item>
             )}
             {report.reviewNotes && (
-              <Descriptions.Item label="검토 사유">
-                {report.reviewNotes}
-              </Descriptions.Item>
+              <Descriptions.Item label="검토 사유">{report.reviewNotes}</Descriptions.Item>
             )}
           </Descriptions>
 
@@ -176,7 +165,7 @@ export function ReportDetailDrawer({
             ))}
           </Descriptions>
         </Space>
-      </Drawer>
+      </BaseDetailDrawer>
 
       {/* 승인 모달 */}
       <Modal
@@ -188,6 +177,7 @@ export function ReportDetailDrawer({
           setReviewNotes('')
         }}
         confirmLoading={loading}
+        zIndex={1001}
       >
         <Space direction="vertical" style={{ width: '100%' }}>
           <div>이 보고서를 승인하시겠습니까?</div>
@@ -211,6 +201,7 @@ export function ReportDetailDrawer({
         }}
         confirmLoading={loading}
         okButtonProps={{ danger: true }}
+        zIndex={1001}
       >
         <Space direction="vertical" style={{ width: '100%' }}>
           <div>이 보고서를 반려하시겠습니까?</div>
@@ -226,4 +217,3 @@ export function ReportDetailDrawer({
     </>
   )
 }
-

@@ -123,6 +123,14 @@ export const bgColors = {
   hover: 'var(--color-bg-hover)', // #F0F0F0
 } as const
 
+// UI 컴포넌트 색상 (CSS 변수)
+export const uiColors = {
+  moreButton: 'var(--color-ui-more-button)', // #3D3D3D
+  moreButtonHover: 'var(--color-ui-more-button-hover)', // #595959
+} as const
 
-
-
+// UI 컴포넌트 색상 (Hex 값 - 인라인 스타일용)
+export const uiColorsHex = {
+  moreButton: '#3d3d3d',
+  moreButtonHover: '#595959',
+} as const

@@ -12,24 +12,39 @@ import {
   SyncOutlined,
 } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useMemo, useCallback } from 'react'
-import { mockApplications } from '@/data/mock'
+import { useMemo, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { programService } from '@/entities/program/api/program-service'
+import { applicationService } from '@/entities/application/api/application-service'
+import type { Application } from '@/types/domain'
 import './my-application-summary.css'
 
 export function MyApplicationSummary() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const [myApplications, setMyApplications] = useState<Application[]>([])
 
-  // 본인 신청 데이터 필터링 (수강자의 경우 subjectId로 필터링)
-  const myApplications = useMemo(() => {
-    if (!user) {
-      return []
+  // 본인 신청 데이터 로드 (수강자의 경우)
+  useEffect(() => {
+    const loadMyApplications = async () => {
+      if (!user || (user.role !== 'INDIVIDUAL' && user.role !== 'SCHOOL')) {
+        setMyApplications([])
+        return
+      }
+
+      try {
+        // INDIVIDUAL은 student, volunteer 모두 가능하므로 subjectType 지정하지 않음
+        // SCHOOL은 school subjectType으로 조회
+        const subjectType = user.role === 'SCHOOL' ? 'school' : undefined
+        const applications = await applicationService.getByUserId(user.id, subjectType)
+        setMyApplications(applications)
+      } catch (error) {
+        console.error('신청 목록 조회 실패:', error)
+        setMyApplications([])
+      }
     }
-    // 수강자의 경우 subjectType이 'student'이고 subjectId가 사용자 ID와 매칭되어야 함
-    // 현재는 간단히 모든 신청을 표시 (실제로는 사용자 ID와 매칭 로직 필요)
-    return mockApplications.filter(application => application.subjectType === 'student')
+
+    loadMyApplications()
   }, [user])
 
   type ProgressStatus = 'APPLIED' | 'UPCOMING' | 'IN_PROGRESS' | 'COMPLETED'
@@ -40,13 +55,17 @@ export function MyApplicationSummary() {
     }
 
     const program = programService.getByIdSync(programId)
-    const lifecycleStatus = program?.lifecycleStatus
+    const s = program?.lifecycleStatus
 
-    if (lifecycleStatus === 'in_progress') {
+    if (
+      s === 'education_before_textbook' ||
+      s === 'education_after_textbook' ||
+      s === 'education_completed'
+    ) {
       return 'IN_PROGRESS'
     }
 
-    if (lifecycleStatus === 'completed') {
+    if (s === 'document_processing_completed') {
       return 'COMPLETED'
     }
 
@@ -85,15 +104,35 @@ export function MyApplicationSummary() {
     const progressStatus = getProgressStatus(status, programId)
     switch (progressStatus) {
       case 'APPLIED':
-        return <Tag color="default" className="my-application-summary__status-tag">신청 완료</Tag>
+        return (
+          <Tag color="default" className="my-application-summary__status-tag">
+            신청 완료
+          </Tag>
+        )
       case 'UPCOMING':
-        return <Tag color="default" className="my-application-summary__status-tag">진행 예정</Tag>
+        return (
+          <Tag color="default" className="my-application-summary__status-tag">
+            진행 예정
+          </Tag>
+        )
       case 'IN_PROGRESS':
-        return <Tag color="default" className="my-application-summary__status-tag">진행 중</Tag>
+        return (
+          <Tag color="default" className="my-application-summary__status-tag">
+            진행 중
+          </Tag>
+        )
       case 'COMPLETED':
-        return <Tag color="default" className="my-application-summary__status-tag">진행 완료</Tag>
+        return (
+          <Tag color="default" className="my-application-summary__status-tag">
+            진행 완료
+          </Tag>
+        )
       default:
-        return <Tag color="default" className="my-application-summary__status-tag">신청 완료</Tag>
+        return (
+          <Tag color="default" className="my-application-summary__status-tag">
+            신청 완료
+          </Tag>
+        )
     }
   }
 
@@ -113,7 +152,11 @@ export function MyApplicationSummary() {
             className="my-application-summary__statistic"
             title={<span className="my-application-summary__statistic-title">신청 완료</span>}
             value={statusCounts.applied}
-            prefix={<span className="my-application-summary__statistic-icon"><FileTextOutlined /></span>}
+            prefix={
+              <span className="my-application-summary__statistic-icon">
+                <FileTextOutlined />
+              </span>
+            }
           />
         </Col>
         <Col span={6}>
@@ -121,7 +164,11 @@ export function MyApplicationSummary() {
             className="my-application-summary__statistic"
             title={<span className="my-application-summary__statistic-title">진행 예정</span>}
             value={statusCounts.upcoming}
-            prefix={<span className="my-application-summary__statistic-icon"><ClockCircleOutlined /></span>}
+            prefix={
+              <span className="my-application-summary__statistic-icon">
+                <ClockCircleOutlined />
+              </span>
+            }
           />
         </Col>
         <Col span={6}>
@@ -129,7 +176,11 @@ export function MyApplicationSummary() {
             className="my-application-summary__statistic"
             title={<span className="my-application-summary__statistic-title">진행 중</span>}
             value={statusCounts.inProgress}
-            prefix={<span className="my-application-summary__statistic-icon"><SyncOutlined /></span>}
+            prefix={
+              <span className="my-application-summary__statistic-icon">
+                <SyncOutlined />
+              </span>
+            }
           />
         </Col>
         <Col span={6}>
@@ -137,7 +188,11 @@ export function MyApplicationSummary() {
             className="my-application-summary__statistic"
             title={<span className="my-application-summary__statistic-title">진행 완료</span>}
             value={statusCounts.completed}
-            prefix={<span className="my-application-summary__statistic-icon"><CheckCircleOutlined /></span>}
+            prefix={
+              <span className="my-application-summary__statistic-icon">
+                <CheckCircleOutlined />
+              </span>
+            }
           />
         </Col>
       </Row>
@@ -146,10 +201,7 @@ export function MyApplicationSummary() {
         <div className="my-application-summary__recent">
           <div className="my-application-summary__recent-title">최근 신청</div>
           {recentApplications.map(application => (
-            <div
-              key={application.id}
-              className="my-application-summary__recent-item"
-            >
+            <div key={application.id} className="my-application-summary__recent-item">
               <div className="my-application-summary__recent-info">
                 <div className="my-application-summary__recent-name">
                   {programService.getNameById(application.programId) || '프로그램 정보 없음'}

@@ -57,6 +57,7 @@ export function ApprovalModal({
       onCancel={handleCancel}
       footer={null}
       width={500}
+      zIndex={1001}
     >
       <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)}>
         <Controller
@@ -67,7 +68,9 @@ export function ApprovalModal({
               <TextArea
                 {...field}
                 rows={4}
-                placeholder={isReject ? '반려 사유를 입력해주세요' : '승인 메모를 입력해주세요 (선택사항)'}
+                placeholder={
+                  isReject ? '반려 사유를 입력해주세요' : '승인 메모를 입력해주세요 (선택사항)'
+                }
               />
             </Form.Item>
           )}
@@ -78,12 +81,7 @@ export function ApprovalModal({
             <Button onClick={handleCancel} disabled={isSubmitting}>
               취소
             </Button>
-            <Button
-              type="primary"
-              danger={isReject}
-              htmlType="submit"
-              loading={isSubmitting}
-            >
+            <Button type="primary" danger={isReject} htmlType="submit" loading={isSubmitting}>
               {isReject ? '반려' : '승인'}
             </Button>
           </Space>
@@ -92,4 +90,3 @@ export function ApprovalModal({
     </Modal>
   )
 }
-

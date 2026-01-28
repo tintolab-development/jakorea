@@ -18,8 +18,12 @@ interface ScheduleState {
   createSchedule: (data: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   updateSchedule: (id: string, data: Partial<Omit<Schedule, 'id' | 'createdAt'>>) => Promise<void>
   deleteSchedule: (id: string) => Promise<void>
-  checkConflict: (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>, excludeId?: string) => Schedule[]
+  checkConflict: (
+    schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>,
+    excludeId?: string
+  ) => Schedule[]
   setSelectedSchedule: (schedule: Schedule | null) => void
+  clearSelectedSchedule: () => void
   clearError: () => void
 }
 
@@ -59,7 +63,7 @@ export const useScheduleStore = create<ScheduleState>(set => ({
     }
   },
 
-  createSchedule: async (data) => {
+  createSchedule: async data => {
     set({ loading: true, error: null })
     try {
       const newSchedule = await scheduleService.create(data)
@@ -79,7 +83,8 @@ export const useScheduleStore = create<ScheduleState>(set => ({
       const updatedSchedule = await scheduleService.update(id, data)
       set(state => ({
         schedules: state.schedules.map(s => (s.id === id ? updatedSchedule : s)),
-        selectedSchedule: state.selectedSchedule?.id === id ? updatedSchedule : state.selectedSchedule,
+        selectedSchedule:
+          state.selectedSchedule?.id === id ? updatedSchedule : state.selectedSchedule,
         loading: false,
       }))
     } catch (error) {
@@ -88,7 +93,7 @@ export const useScheduleStore = create<ScheduleState>(set => ({
     }
   },
 
-  deleteSchedule: async (id) => {
+  deleteSchedule: async id => {
     set({ loading: true, error: null })
     try {
       await scheduleService.delete(id)
@@ -107,15 +112,9 @@ export const useScheduleStore = create<ScheduleState>(set => ({
     return scheduleService.checkConflict(schedule, excludeId)
   },
 
-  setSelectedSchedule: (schedule) => set({ selectedSchedule: schedule }),
+  setSelectedSchedule: schedule => set({ selectedSchedule: schedule }),
+
+  clearSelectedSchedule: () => set({ selectedSchedule: null }),
 
   clearError: () => set({ error: null }),
 }))
-
-
-
-
-
-
-
-

@@ -3,14 +3,15 @@
  * Phase 4: 프로그램 상태 전환 워크플로우 UI
  */
 
-import { Card, Space, Typography, Timeline, Tag, Button } from 'antd'
+import { Card, Space, Typography, Timeline, Button } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import {
-  getProgramLifecycleLabel,
-  getProgramLifecycleColor,
+  programLifecycleStatusStatusConfig,
   programLifecycleStatusConfig,
+  getProgramLifecycleLabel,
 } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import {
   canTransitionProgramLifecycleStatus,
   getNextProgramLifecycleStatus,
@@ -24,6 +25,7 @@ interface ProgramLifecycleWorkflowProps {
   onStatusChange: (status: ProgramLifecycleStatus) => void
   onRollback?: () => void
   loading?: boolean
+  canWrite?: boolean // Phase 0.5.2: 쓰기 권한이 있는 관리자인지 여부
 }
 
 export function ProgramLifecycleWorkflow({
@@ -31,6 +33,7 @@ export function ProgramLifecycleWorkflow({
   onStatusChange,
   onRollback,
   loading,
+  canWrite = false, // 기본값은 false (권한이 없으면 변경 불가)
 }: ProgramLifecycleWorkflowProps) {
   const currentStatus = program.lifecycleStatus || 'planned'
   const currentStepIndex = programLifecycleStatusConfig.order.findIndex(
@@ -40,8 +43,28 @@ export function ProgramLifecycleWorkflow({
   const nextStatus = getNextProgramLifecycleStatus(currentStatus)
   const previousStatus = getPreviousProgramLifecycleStatus(currentStatus)
 
-  const canGoNext = nextStatus !== null && canTransitionProgramLifecycleStatus(currentStatus, nextStatus)
-  const canGoPrevious = previousStatus !== null && canTransitionProgramLifecycleStatus(currentStatus, previousStatus)
+  const canGoNext =
+    canWrite &&
+    nextStatus !== null &&
+    canTransitionProgramLifecycleStatus(currentStatus, nextStatus)
+  const canGoPrevious =
+    canWrite &&
+    previousStatus !== null &&
+    canTransitionProgramLifecycleStatus(currentStatus, previousStatus)
+
+  // 디버깅: 상태 전환 가능 여부 확인
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[ProgramLifecycleWorkflow] 상태 전환 가능 여부:', {
+      currentStatus,
+      nextStatus,
+      previousStatus,
+      canGoNext,
+      canGoPrevious,
+      hasOnStatusChange: !!onStatusChange,
+      hasOnRollback: !!onRollback,
+      loading,
+    })
+  }
 
   return (
     <Card title="프로그램 상태 워크플로우">
@@ -49,9 +72,7 @@ export function ProgramLifecycleWorkflow({
         {/* 현재 상태 표시 */}
         <div>
           <Text strong>현재 상태: </Text>
-          <Tag color={getProgramLifecycleColor(currentStatus)}>
-            {getProgramLifecycleLabel(currentStatus)}
-          </Tag>
+          <StatusBadge status={currentStatus} statusConfig={programLifecycleStatusStatusConfig} />
         </div>
 
         {/* 상태 단계 Timeline */}
@@ -88,8 +109,20 @@ export function ProgramLifecycleWorkflow({
           {canGoNext && nextStatus && (
             <Button
               type="primary"
-              onClick={() => onStatusChange(nextStatus)}
+              onClick={() => {
+                console.log('[ProgramLifecycleWorkflow] 다음 단계 클릭:', {
+                  currentStatus,
+                  nextStatus,
+                  hasOnStatusChange: !!onStatusChange,
+                })
+                if (onStatusChange) {
+                  onStatusChange(nextStatus)
+                } else {
+                  console.error('[ProgramLifecycleWorkflow] onStatusChange 핸들러가 없습니다!')
+                }
+              }}
               loading={loading}
+              disabled={!canWrite || !onStatusChange}
             >
               다음 단계로 ({getProgramLifecycleLabel(nextStatus)})
             </Button>
@@ -97,13 +130,22 @@ export function ProgramLifecycleWorkflow({
           {canGoPrevious && previousStatus && (
             <Button
               onClick={() => {
+                console.log('[ProgramLifecycleWorkflow] 이전 단계 클릭:', {
+                  currentStatus,
+                  previousStatus,
+                  hasOnRollback: !!onRollback,
+                  hasOnStatusChange: !!onStatusChange,
+                })
                 if (onRollback && previousStatus) {
                   onRollback()
-                } else if (previousStatus) {
+                } else if (previousStatus && onStatusChange) {
                   onStatusChange(previousStatus)
+                } else {
+                  console.error('[ProgramLifecycleWorkflow] 상태 변경 핸들러가 없습니다!')
                 }
               }}
               loading={loading}
+              disabled={!canWrite || (!onStatusChange && !onRollback)}
             >
               이전 단계로 ({getProgramLifecycleLabel(previousStatus)})
             </Button>
@@ -113,4 +155,3 @@ export function ProgramLifecycleWorkflow({
     </Card>
   )
 }
-

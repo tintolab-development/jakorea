@@ -1,38 +1,39 @@
 /**
  * 관리자 보고서 관리 페이지
  * Phase 7.1.1: 관리자 보고서 관리
+ * Phase 2: 리팩토링 패턴 적용
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Input, Space, Card, Tag, Button, Table, Select, Statistic } from 'antd'
-import { SearchOutlined } from '@ant-design/icons'
-import { reportService } from '@/entities/report/api/report-service'
-import { getReportStatusLabel, getReportStatusColor } from '@/shared/constants/status'
+import { Space, Card, Table, Statistic } from 'antd'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { useReportService } from '@/features/report/hooks/use-report-service'
+import { reportStatusConfig } from '@/shared/constants/status'
+import { REPORT_TYPE_CONFIG } from '@/shared/constants/domain-status'
+import { PAGINATION_CONFIG, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { useModalState } from '@/shared/hooks/use-modal-state'
+import { ListPageFilters } from '@/shared/ui/list-page-filters'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import type { Report, ReportType, ReportStatus } from '@/types/domain'
+
+interface ReportListQueryParams extends Record<string, string | undefined> {
+  type?: ReportType | 'all'
+  status?: ReportStatus | 'all'
+  search?: string
+}
 import { ReportDetailDrawer } from '@/features/report/ui/report-detail-drawer'
-import { mockInstructorsMap, mockLectureActivitiesMap, mockVolunteerActivitiesMap } from '@/data/mock'
+import {
+  mockInstructorsMap,
+  mockLectureActivitiesMap,
+  mockVolunteerActivitiesMap,
+} from '@/data/mock'
 import dayjs from 'dayjs'
 import type { ColumnsType } from 'antd/es/table'
-
-const { Option } = Select
-
-const reportTypeLabels: Record<ReportType, string> = {
-  lecture: '강의보고서',
-  volunteer: '교육봉사 활동보고서',
-  program: '프로그램 종료 보고서',
-}
-
-const reportTypeColors: Record<ReportType, string> = {
-  lecture: 'blue',
-  volunteer: 'purple',
-  program: 'cyan',
-}
 
 // 보고서 작성자 찾기 헬퍼 함수
 const getReportAuthor = (report: Report): string => {
   const instructors = Array.from(mockInstructorsMap.values())
-  
+
   if (report.type === 'lecture' && report.activityId) {
     const activity = mockLectureActivitiesMap.get(report.activityId)
     if (activity?.instructorId) {
@@ -73,24 +74,75 @@ const getReportAuthor = (report: Report): string => {
   return selectedInstructor?.name || '작성자명 없음'
 }
 
-const reportStatusOptions: Array<{ value: ReportStatus | 'all'; label: string }> = [
-  { value: 'all', label: '전체' },
-  { value: 'submitted', label: '제출' },
-  { value: 'reviewing', label: '검토 중' },
-  { value: 'approved', label: '승인' },
-  { value: 'rejected', label: '반려' },
+// 보고서 타입 옵션
+const reportTypeOptions = [
+  { label: '전체 타입', value: 'all' },
+  { label: REPORT_TYPE_CONFIG.labels.lecture, value: 'lecture' },
+  { label: REPORT_TYPE_CONFIG.labels.volunteer, value: 'volunteer' },
+  { label: REPORT_TYPE_CONFIG.labels.program, value: 'program' },
 ]
 
+// 보고서 상태 옵션
+const reportStatusOptions = [
+  { label: '전체', value: 'all' },
+  { label: reportStatusConfig.labels.submitted, value: 'submitted' },
+  { label: reportStatusConfig.labels.reviewing, value: 'reviewing' },
+  { label: reportStatusConfig.labels.approved, value: 'approved' },
+  { label: reportStatusConfig.labels.rejected, value: 'rejected' },
+]
+
+// 보고서 타입 상태 설정 (StatusBadge용)
+const reportTypeStatusConfig = {
+  lecture: { label: REPORT_TYPE_CONFIG.labels.lecture, color: REPORT_TYPE_CONFIG.colors.lecture },
+  volunteer: {
+    label: REPORT_TYPE_CONFIG.labels.volunteer,
+    color: REPORT_TYPE_CONFIG.colors.volunteer,
+  },
+  program: { label: REPORT_TYPE_CONFIG.labels.program, color: REPORT_TYPE_CONFIG.colors.program },
+}
+
+// 보고서 상태 설정 (StatusBadge용)
+const reportStatusStatusConfig = {
+  submitted: {
+    label: reportStatusConfig.labels.submitted,
+    color: reportStatusConfig.colors.submitted,
+    icon: reportStatusConfig.icons.submitted,
+  },
+  reviewing: {
+    label: reportStatusConfig.labels.reviewing,
+    color: reportStatusConfig.colors.reviewing,
+    icon: reportStatusConfig.icons.reviewing,
+  },
+  approved: {
+    label: reportStatusConfig.labels.approved,
+    color: reportStatusConfig.colors.approved,
+    icon: reportStatusConfig.icons.approved,
+  },
+  rejected: {
+    label: reportStatusConfig.labels.rejected,
+    color: reportStatusConfig.colors.rejected,
+    icon: reportStatusConfig.icons.rejected,
+  },
+}
+
 export function ReportListPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams, clearParams } = useQueryParams<ReportListQueryParams>()
+  const { getAll: getAllReports } = useReportService()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const typeFilter = (searchParams.get('type') as ReportType | 'all') || 'all'
-  const statusFilter = (searchParams.get('status') as ReportStatus | 'all') || 'all'
-  const searchTerm = searchParams.get('search') || ''
+  // Drawer 상태 관리
+  const {
+    open: drawerOpen,
+    openModal: openDrawer,
+    closeModal: closeDrawer,
+    selectedItem: selectedReport,
+  } = useModalState<Report>()
+
+  // URL 쿼리 파라미터에서 필터 값 읽기
+  const typeFilter = (params.type as ReportType | 'all') || 'all'
+  const statusFilter = (params.status as ReportStatus | 'all') || 'all'
+  const searchTerm = params.search || ''
 
   useEffect(() => {
     loadReports()
@@ -99,13 +151,48 @@ export function ReportListPage() {
   const loadReports = async () => {
     setLoading(true)
     try {
-      const data = await reportService.getAll()
+      const data = await getAllReports()
       setReports(data)
+      return data // 업데이트된 데이터 반환
     } catch (error) {
       console.error('보고서 로드 실패:', error)
+      return []
     } finally {
       setLoading(false)
     }
+  }
+
+  // 필터 상태 관리
+  const [filters, setFilters] = useState<{
+    type: ReportType | 'all'
+    status: ReportStatus | 'all'
+  }>({
+    type: typeFilter,
+    status: statusFilter,
+  })
+  const [searchText, setSearchText] = useState(searchTerm)
+
+  // URL 쿼리 파라미터와 필터 동기화
+  useEffect(() => {
+    setFilters({ type: typeFilter, status: statusFilter })
+    setSearchText(searchTerm)
+  }, [typeFilter, statusFilter, searchTerm])
+
+  // 필터 변경 핸들러
+  const handleFilterChange = (key: 'type' | 'status', value: any) => {
+    const newFilters = { ...filters, [key]: value }
+    setFilters(newFilters)
+    setParams({
+      type: newFilters.type === 'all' ? undefined : newFilters.type,
+      status: newFilters.status === 'all' ? undefined : newFilters.status,
+    })
+  }
+
+  const handleSearchChange = (value: string) => {
+    setSearchText(value)
+    setParams({
+      search: value || undefined,
+    })
   }
 
   // 필터링된 보고서
@@ -113,33 +200,45 @@ export function ReportListPage() {
     let filtered = [...reports]
 
     // 타입 필터링
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(r => r.type === typeFilter)
+    if (filters.type !== 'all') {
+      filtered = filtered.filter(r => r.type === filters.type)
     }
 
     // 상태 필터링
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(r => r.status === statusFilter)
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(r => r.status === filters.status)
     }
 
     // 검색 필터링 (작성자명 검색)
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase()
+    if (searchText) {
+      const term = searchText.toLowerCase()
       filtered = filtered.filter(r => {
         const author = getReportAuthor(r)
         return (
           author?.toLowerCase().includes(term) ||
-          reportTypeLabels[r.type].toLowerCase().includes(term)
+          REPORT_TYPE_CONFIG.labels[r.type].toLowerCase().includes(term)
         )
       })
     }
 
-    return filtered.sort((a, b) => {
+    return filtered
+  }, [reports, filters, searchText])
+
+  // 정렬된 데이터
+  const sortedReports = useMemo(() => {
+    return [...filteredReports].sort((a, b) => {
       const dateA = typeof a.submittedAt === 'string' ? new Date(a.submittedAt) : a.submittedAt
       const dateB = typeof b.submittedAt === 'string' ? new Date(b.submittedAt) : b.submittedAt
       return dateB.getTime() - dateA.getTime()
     })
-  }, [reports, typeFilter, statusFilter, searchTerm])
+  }, [filteredReports])
+
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setFilters({ type: 'all', status: 'all' })
+    setSearchText('')
+    clearParams()
+  }
 
   // 통계 계산
   const statistics = useMemo(() => {
@@ -152,44 +251,19 @@ export function ReportListPage() {
     }
   }, [reports])
 
-  const handleTypeChange = (type: ReportType | 'all') => {
-    const newParams = new URLSearchParams(searchParams)
-    if (type === 'all') {
-      newParams.delete('type')
-    } else {
-      newParams.set('type', type)
-    }
-    setSearchParams(newParams, { replace: true })
-  }
-
-  const handleStatusChange = (status: ReportStatus | 'all') => {
-    const newParams = new URLSearchParams(searchParams)
-    if (status === 'all') {
-      newParams.delete('status')
-    } else {
-      newParams.set('status', status)
-    }
-    setSearchParams(newParams, { replace: true })
-  }
-
-  const handleSearch = (value: string) => {
-    const newParams = new URLSearchParams(searchParams)
-    if (!value) {
-      newParams.delete('search')
-    } else {
-      newParams.set('search', value)
-    }
-    setSearchParams(newParams, { replace: true })
-  }
-
   const handleView = (report: Report) => {
-    setSelectedReport(report)
-    setDrawerOpen(true)
+    openDrawer(report)
   }
 
-  const handleReviewComplete = () => {
-    loadReports()
-    setDrawerOpen(false)
+  const handleReviewComplete = async () => {
+    const updatedReports = await loadReports()
+    // 상태 변경 후 업데이트된 report로 selectedReport 갱신
+    if (selectedReport && updatedReports) {
+      const updatedReport = updatedReports.find(r => r.id === selectedReport.id)
+      if (updatedReport) {
+        openDrawer(updatedReport)
+      }
+    }
   }
 
   const columns: ColumnsType<Report> = [
@@ -208,16 +282,16 @@ export function ReportListPage() {
       key: 'type',
       width: 150,
       render: (type: ReportType) => (
-        <Tag color={reportTypeColors[type]}>{reportTypeLabels[type]}</Tag>
+        <StatusBadge status={type} statusConfig={reportTypeStatusConfig} showIcon={false} />
       ),
     },
     {
       title: '상태',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: LAYOUT_CONSTANTS.widths.status,
       render: (status: ReportStatus) => (
-        <Tag color={getReportStatusColor(status)}>{getReportStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={reportStatusStatusConfig} />
       ),
       filters: reportStatusOptions
         .filter(opt => opt.value !== 'all')
@@ -247,64 +321,62 @@ export function ReportListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
+      <Space
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.xl,
+          width: '100%',
+          justifyContent: 'space-between',
+        }}
+      >
         {/* <h1 style={{ margin: 0 }}>보고서 관리</h1> */}
       </Space>
 
       {/* 통계 카드 - 간결한 한 줄 배치 */}
-      <Card style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}>
         <Space size="large" wrap>
           <Statistic title="전체" value={statistics.total} />
           <Statistic title="제출" value={statistics.submitted} valueStyle={{ color: '#1890ff' }} />
-          <Statistic title="검토 중" value={statistics.reviewing} valueStyle={{ color: '#faad14' }} />
+          <Statistic
+            title="검토 중"
+            value={statistics.reviewing}
+            valueStyle={{ color: '#faad14' }}
+          />
           <Statistic title="승인" value={statistics.approved} valueStyle={{ color: '#52c41a' }} />
           <Statistic title="반려" value={statistics.rejected} valueStyle={{ color: '#ff4d4f' }} />
         </Space>
       </Card>
 
-      {/* 필터 영역 - Card 없이 간결하게 */}
-      <Space size="middle" wrap style={{ marginBottom: 16 }}>
-        <Select
-          value={typeFilter}
-          onChange={handleTypeChange}
-          style={{ width: 200 }}
-          placeholder="보고서 타입"
-        >
-          <Option value="all">전체 타입</Option>
-          <Option value="lecture">강의보고서</Option>
-          <Option value="volunteer">교육봉사 활동보고서</Option>
-          <Option value="program">프로그램 종료 보고서</Option>
-        </Select>
+      {/* 필터 영역 */}
+      <ListPageFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        searchValue={searchText}
+        onSearchChange={handleSearchChange}
+        searchLabel="작성자명"
+        searchPlaceholder="작성자명을 입력하세요"
+        filterConfig={[
+          {
+            key: 'type',
+            type: 'select',
+            options: reportTypeOptions,
+            placeholder: '보고서 타입',
+            style: { width: 200 },
+          },
+          {
+            key: 'status',
+            type: 'select',
+            options: reportStatusOptions,
+            placeholder: '상태',
+            style: { width: LAYOUT_CONSTANTS.widths.filter },
+          },
+        ]}
+        onReset={handleFilterReset}
+      />
 
-        <Select
-          value={statusFilter}
-          onChange={handleStatusChange}
-          style={{ width: 150 }}
-          placeholder="상태"
-        >
-          {reportStatusOptions.map(opt => (
-            <Option key={opt.value} value={opt.value}>
-              {opt.label}
-            </Option>
-          ))}
-        </Select>
-
-        <Input.Search
-          placeholder="작성자명 검색"
-          allowClear
-          style={{ width: 250 }}
-          defaultValue={searchTerm}
-          onSearch={handleSearch}
-          enterButton={<SearchOutlined />}
-        />
-
-        <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
-      </Space>
-
-      {/* 보고서 목록 테이블 - Card 없이 */}
+      {/* 보고서 목록 테이블 */}
       <Table
         columns={columns}
-        dataSource={filteredReports}
+        dataSource={sortedReports}
         rowKey="id"
         loading={loading}
         onRow={record => ({
@@ -312,9 +384,7 @@ export function ReportListPage() {
           style: { cursor: 'pointer' },
         })}
         pagination={{
-          defaultPageSize: 20,
-          showSizeChanger: true,
-          showTotal: total => `총 ${total}개`,
+          ...PAGINATION_CONFIG,
         }}
         scroll={{ x: 1000 }}
       />
@@ -322,14 +392,10 @@ export function ReportListPage() {
       {/* 보고서 상세 Drawer */}
       <ReportDetailDrawer
         open={drawerOpen}
-        report={selectedReport}
-        onClose={() => {
-          setDrawerOpen(false)
-          setSelectedReport(null)
-        }}
+        report={selectedReport || null}
+        onClose={closeDrawer}
         onReviewComplete={handleReviewComplete}
       />
     </div>
   )
 }
-

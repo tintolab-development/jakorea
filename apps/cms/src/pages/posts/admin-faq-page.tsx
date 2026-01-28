@@ -2,8 +2,6 @@
  * 게시글 관리 - FAQ 관리 페이지 (관리자용)
  */
 
-import { useState, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
 import {
   Table,
   Tag,
@@ -11,68 +9,165 @@ import {
   Button,
   Input,
   Select,
-  Card,
   Typography,
-  message,
   Popconfirm,
   Tooltip,
   Modal,
   Form,
   InputNumber,
+  Descriptions,
 } from 'antd'
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons'
-import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { LAYOUT_CONSTANTS, PAGINATION_CONFIG, MESSAGES } from '@/shared/constants'
 import { mockFAQs, type FAQ } from '@/data/mock/faqs'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { useState, useMemo } from 'react'
+import { useListCRUD } from '@/shared/hooks/use-list-crud'
+import { useModalState } from '@/shared/hooks/use-modal-state'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { StatusBadge } from '@/shared/ui/status-badge'
 
 const { Text } = Typography
-const { Search } = Input
 const { Option } = Select
 const { TextArea } = Input
 
+// FAQ 상태 설정
+const faqStatusConfig = {
+  published: { label: '게시중', color: 'green' },
+  draft: { label: '작성중', color: 'default' },
+  archived: { label: '숨김', color: 'red' },
+}
+
+// 카테고리 옵션
+const categoryOptions = [
+  { label: '전체 카테고리', value: 'all' },
+  { label: '활동', value: '활동' },
+  { label: '봉사시간', value: '봉사시간' },
+  { label: '시스템', value: '시스템' },
+  { label: '정산', value: '정산' },
+  { label: '안내', value: '안내' },
+]
+
 export function AdminFAQPage() {
-  const location = useLocation()
-  const [data, setData] = useState<FAQ[]>(mockFAQs)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingFaq, setEditingFaq] = useState<FAQ | null>(null)
+  const { user } = useAuthStore()
+  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+  const canWrite = canPerformWriteAction(user)
   const [form] = Form.useForm()
 
-  const categoryName = getCategoryNameByPath(location.pathname, 2) || 'FAQ 관리'
+  // CRUD 로직
+  const {
+    data,
+    editing,
+    open: modalOpen,
+    openCreate,
+    openEdit,
+    closeModal,
+    handleSubmit: handleCRUDSubmit,
+    handleDelete,
+  } = useListCRUD<FAQ>({
+    initialData: mockFAQs,
+    onCreate: (values): FAQ => {
+      const tagsArray = values.tags
+        ? String(values.tags)
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t !== '')
+        : []
+      return {
+        ...values,
+        id: `faq-${Date.now()}`,
+        tags: tagsArray,
+      } as FAQ
+    },
+    onUpdate: (id, values): FAQ => {
+      const currentEditing = editing
+      const tagsArray = values.tags
+        ? String(values.tags)
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t !== '')
+        : currentEditing?.tags || []
+      return {
+        ...currentEditing!,
+        ...values,
+        id,
+        tags: tagsArray,
+      } as FAQ
+    },
+    messages: {
+      created: '새 FAQ가 등록되었습니다.',
+      updated: 'FAQ가 수정되었습니다.',
+      deleted: 'FAQ가 삭제되었습니다.',
+    },
+  })
 
-  // 필터 상태
-  const [searchText, setSearchText] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  const [pendingFilters, setPendingFilters] = useState({
+    search: '',
+    category: 'all',
+  })
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
+    category: 'all',
+  })
 
   // 필터링된 데이터
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      const matchSearch = item.question.toLowerCase().includes(searchText.toLowerCase()) || 
-                          item.answer.toLowerCase().includes(searchText.toLowerCase())
-      const matchCategory = categoryFilter === 'all' || item.category === categoryFilter
+      const matchSearch = appliedFilters.search
+        ? item.question.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
+          item.answer.toLowerCase().includes(appliedFilters.search.toLowerCase())
+        : true
+      const matchCategory =
+        appliedFilters.category === 'all' || item.category === appliedFilters.category
       return matchSearch && matchCategory
-    }).sort((a, b) => a.order - b.order)
-  }, [data, searchText, categoryFilter])
+    })
+  }, [data, appliedFilters])
 
-  // 삭제 핸들러
-  const handleDelete = (id: string) => {
-    setData(prev => prev.filter(item => item.id !== id))
-    message.success('FAQ가 삭제되었습니다.')
+  // 정렬된 데이터
+  const sortedData = [...filteredData].sort((a, b) => a.order - b.order)
+
+  // 조회 버튼 클릭 시 필터 적용
+  const handleSearch = () => {
+    setAppliedFilters(pendingFilters)
   }
 
-  // 등록/수정 모달 열기
-  const showModal = (faq?: FAQ) => {
+  // 필터 초기화
+  const handleFilterReset = () => {
+    setPendingFilters({
+      search: '',
+      category: 'all',
+    })
+    setAppliedFilters({
+      search: '',
+      category: 'all',
+    })
+  }
+
+  // 상세 모달 상태
+  const {
+    open: isDetailModalOpen,
+    openModal: openDetailModal,
+    closeModal: closeDetailModal,
+    selectedItem: selectedFAQ,
+  } = useModalState<FAQ>()
+
+  // 상세 모달 열기
+  const showDetailModal = (faq: FAQ) => {
+    openDetailModal(faq)
+  }
+
+  // 수정 모달 열기
+  const showEditModal = (faq?: FAQ) => {
     if (faq) {
-      setEditingFaq(faq)
+      openEdit(faq)
       form.setFieldsValue({
         ...faq,
         tags: faq.tags?.join(', '),
       })
     } else {
-      setEditingFaq(null)
+      openCreate()
       form.resetFields()
       form.setFieldsValue({
         status: 'published',
@@ -80,29 +175,22 @@ export function AdminFAQPage() {
         order: data.length + 1,
       })
     }
-    setIsModalOpen(true)
   }
 
-  // 등록/수정 저장
+  // 저장 핸들러
   const handleSave = async () => {
     try {
       const values = await form.validateFields()
-      const tagsArray = values.tags ? values.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== '') : []
-      
-      const newFaq: FAQ = {
-        id: editingFaq?.id || `faq-${Date.now()}`,
-        ...values,
-        tags: tagsArray,
+      await handleCRUDSubmit(values)
+      closeModal()
+      form.resetFields()
+      // 상세 모달이 열려있고 같은 항목이면 업데이트
+      if (isDetailModalOpen && selectedFAQ && editing?.id === selectedFAQ.id) {
+        const updatedFAQ = data.find(item => item.id === editing.id)
+        if (updatedFAQ) {
+          openDetailModal(updatedFAQ)
+        }
       }
-
-      if (editingFaq) {
-        setData(prev => prev.map(item => item.id === editingFaq.id ? newFaq : item))
-        message.success('FAQ가 수정되었습니다.')
-      } else {
-        setData(prev => [...prev, newFaq])
-        message.success('새 FAQ가 등록되었습니다.')
-      }
-      setIsModalOpen(false)
     } catch (error) {
       console.error('Validate Failed:', error)
     }
@@ -121,16 +209,25 @@ export function AdminFAQPage() {
       dataIndex: 'category',
       key: 'category',
       width: 100,
-      render: (category: string) => (
-        <Tag color="blue">{category}</Tag>
-      ),
+      render: (category: string) => <Tag color="blue">{category}</Tag>,
     },
     {
       title: '질문',
       dataIndex: 'question',
       key: 'question',
       ellipsis: true,
-      render: (text: string) => <Text strong>{text}</Text>,
+      render: (text: string, record: FAQ) => (
+        <Button
+          type="link"
+          onClick={e => {
+            e.stopPropagation()
+            showDetailModal(record)
+          }}
+          style={{ padding: 0, textAlign: 'left' }}
+        >
+          <Text strong>{text}</Text>
+        </Button>
+      ),
     },
     {
       title: '태그',
@@ -140,7 +237,9 @@ export function AdminFAQPage() {
       render: (tags: string[]) => (
         <>
           {tags?.map(tag => (
-            <Tag key={tag} style={{ marginBottom: 4 }}>{tag}</Tag>
+            <Tag key={tag} style={{ marginBottom: LAYOUT_CONSTANTS.spacing.xs }}>
+              {tag}
+            </Tag>
           ))}
         </>
       ),
@@ -149,116 +248,202 @@ export function AdminFAQPage() {
       title: '상태',
       dataIndex: 'status',
       key: 'status',
-      width: 90,
-      render: (status: string) => {
-        const config = {
-          published: { color: 'green', label: '게시중' },
-          draft: { color: 'default', label: '작성중' },
-          archived: { color: 'red', label: '숨김' },
-        }[status as 'published' | 'draft' | 'archived'] || { color: 'default', label: status }
-        return <Tag color={config.color}>{config.label}</Tag>
-      }
-    },
-    {
-      title: '관리',
-      key: 'action',
-      width: 120,
-      fixed: 'right' as const,
-      render: (_: any, record: FAQ) => (
-        <Space>
-          <Tooltip title="수정">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => showModal(record)} 
-            />
-          </Tooltip>
-          <Popconfirm
-            title="FAQ 삭제"
-            description="정말로 이 FAQ를 삭제하시겠습니까?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="삭제"
-            cancelText="취소"
-            okButtonProps={{ danger: true }}
-          >
-            <Tooltip title="삭제">
-              <Button type="text" danger icon={<DeleteOutlined />} />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
+      width: LAYOUT_CONSTANTS.widths.status,
+      render: (status: string) => (
+        <StatusBadge status={status} statusConfig={faqStatusConfig} variant="tag" />
       ),
     },
+    // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+    ...(canWrite
+      ? [
+          {
+            title: '관리',
+            key: 'action',
+            width: 120,
+            fixed: 'right' as const,
+            render: (_: unknown, record: FAQ) => (
+              <Space>
+                <Tooltip title="수정">
+                  <Button
+                    type="text"
+                    icon={<EditOutlined />}
+                    onClick={e => {
+                      e.stopPropagation()
+                      showEditModal(record)
+                    }}
+                  />
+                </Tooltip>
+                <Popconfirm
+                  title="FAQ 삭제"
+                  description={MESSAGES.confirm.delete}
+                  onConfirm={e => {
+                    e?.stopPropagation()
+                    handleDelete(record.id)
+                  }}
+                  okText="삭제"
+                  cancelText="취소"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Tooltip title="삭제">
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={e => e.stopPropagation()}
+                    />
+                  </Tooltip>
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={() => showModal()}
-          >
-            FAQ 등록
-          </Button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
+          {canWrite && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditModal()}>
+              FAQ 등록
+            </Button>
+          )}
         </div>
 
-        <Card size="small">
-          <Space wrap>
-            <Search
-              placeholder="질문, 답변 검색"
-              onSearch={setSearchText}
-              style={{ width: 250 }}
-              allowClear
-            />
-            <Select 
-              defaultValue="all" 
-              style={{ width: 150 }} 
-              onChange={setCategoryFilter}
-            >
-              <Option value="all">전체 카테고리</Option>
-              <Option value="활동">활동</Option>
-              <Option value="봉사시간">봉사시간</Option>
-              <Option value="시스템">시스템</Option>
-              <Option value="정산">정산</Option>
-              <Option value="안내">안내</Option>
-            </Select>
-            <Button onClick={() => {
-              setSearchText('')
-              setCategoryFilter('all')
-            }}>초기화</Button>
-          </Space>
-        </Card>
+        <UnifiedFilterCard
+          fields={[
+            {
+              key: 'search',
+              type: 'search',
+              label: '질문/답변',
+              placeholder: '질문, 답변을 입력하세요',
+            },
+            {
+              key: 'category',
+              type: 'select',
+              label: '카테고리',
+              placeholder: '전체 카테고리',
+              options: categoryOptions,
+            },
+          ]}
+          filters={pendingFilters}
+          onFilterChange={(key, value) => {
+            setPendingFilters(prev => ({ ...prev, [key]: value }))
+          }}
+          onSearch={handleSearch}
+          onReset={handleFilterReset}
+        />
 
         <Table
           columns={columns}
-          dataSource={filteredData}
+          dataSource={sortedData}
           rowKey="id"
           pagination={{
-            defaultPageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `총 ${total}건`,
+            defaultPageSize: PAGINATION_CONFIG.defaultPageSize,
+            pageSizeOptions: [...PAGINATION_CONFIG.pageSizeOptions],
+            showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
+            showTotal: total => `총 ${total}건`,
           }}
+          onRow={record => ({
+            onClick: () => showDetailModal(record),
+            style: { cursor: 'pointer' },
+          })}
         />
       </Space>
 
+      {/* FAQ 상세 모달 */}
+      <Modal
+        title="FAQ 상세 내용"
+        open={isDetailModalOpen}
+        onCancel={closeDetailModal}
+        width={LAYOUT_CONSTANTS.widths.modal.large}
+        footer={[
+          // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
+          ...(canWrite
+            ? [
+                <Button
+                  key="delete"
+                  danger
+                  onClick={() => {
+                    if (selectedFAQ) {
+                      handleDelete(selectedFAQ.id)
+                      closeDetailModal()
+                    }
+                  }}
+                >
+                  삭제
+                </Button>,
+                <Button
+                  key="edit"
+                  type="primary"
+                  onClick={() => {
+                    if (selectedFAQ) {
+                      closeDetailModal()
+                      showEditModal(selectedFAQ)
+                    }
+                  }}
+                >
+                  수정
+                </Button>,
+              ]
+            : []),
+          <Button key="close" onClick={closeDetailModal}>
+            닫기
+          </Button>,
+        ]}
+        centered
+      >
+        {selectedFAQ && (
+          <div style={{ marginTop: 16 }}>
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label="카테고리">
+                <Tag color="blue">{selectedFAQ.category}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="상태">
+                <StatusBadge
+                  status={selectedFAQ.status}
+                  statusConfig={faqStatusConfig}
+                  variant="tag"
+                />
+              </Descriptions.Item>
+              <Descriptions.Item label="노출 순서">{selectedFAQ.order}</Descriptions.Item>
+              <Descriptions.Item label="질문" span={2}>
+                <Text strong>{selectedFAQ.question}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="답변" span={2}>
+                <div style={{ minHeight: 100, whiteSpace: 'pre-wrap' }}>{selectedFAQ.answer}</div>
+              </Descriptions.Item>
+              {selectedFAQ.tags && selectedFAQ.tags.length > 0 && (
+                <Descriptions.Item label="태그" span={2}>
+                  <Space wrap>
+                    {selectedFAQ.tags.map(tag => (
+                      <Tag key={tag}>{tag}</Tag>
+                    ))}
+                  </Space>
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+          </div>
+        )}
+      </Modal>
+
       {/* FAQ 등록/수정 모달 */}
       <Modal
-        title={editingFaq ? "FAQ 수정" : "FAQ 등록"}
-        open={isModalOpen}
+        title={editing ? 'FAQ 수정' : 'FAQ 등록'}
+        open={modalOpen}
         onOk={handleSave}
-        onCancel={() => setIsModalOpen(false)}
-        width={700}
-        okText={editingFaq ? "수정" : "등록"}
+        onCancel={() => {
+          closeModal()
+          form.resetFields()
+        }}
+        width={LAYOUT_CONSTANTS.widths.modal.medium}
+        okText={editing ? '수정' : '등록'}
         cancelText="취소"
         centered
       >
-        <Form
-          form={form}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             <Form.Item
               name="category"
@@ -309,10 +494,7 @@ export function AdminFAQPage() {
             <TextArea rows={6} placeholder="상세 답변 내용을 입력하세요" />
           </Form.Item>
 
-          <Form.Item
-            name="tags"
-            label="태그 (쉼표로 구분)"
-          >
+          <Form.Item name="tags" label="태그 (쉼표로 구분)">
             <Input placeholder="예: 1365, 봉사시간, 확인방법" />
           </Form.Item>
         </Form>

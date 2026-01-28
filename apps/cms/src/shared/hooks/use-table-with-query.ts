@@ -36,6 +36,11 @@ export interface UseTableWithQueryOptions<TData> {
    * @default 10
    */
   defaultPageSize?: number
+  /**
+   * 쿼리 파라미터 매핑 (다른 쿼리 키를 필터 키로 매핑)
+   * 예: { 'status': 'lifecycleStatus' } - status 쿼리를 lifecycleStatus 필터로 매핑
+   */
+  queryParamMapping?: Record<string, string>
   tableOptions?: Omit<
     TableOptions<TData>,
     | 'data'
@@ -65,6 +70,7 @@ export function useTableWithQuery<TData>({
   columns,
   filterKeys = [],
   defaultPageSize = 10,
+  queryParamMapping = {},
   tableOptions = {},
 }: UseTableWithQueryOptions<TData>): UseTableWithQueryReturn<TData> {
   type QueryParams = Record<string, string | undefined> & {
@@ -93,30 +99,44 @@ export function useTableWithQuery<TData>({
    * "비교용" 문자열 키 생성: 항상 동일한 키 순서(filterKeys -> page -> pageSize)로 생성
    * - undefined 값은 제외되므로 URL에서 빠진 상태와 동일하게 취급됨
    */
-  const makeKey = useCallback((obj: Partial<QueryParams>) => {
-    const normalized: Record<string, string> = {}
+  const makeKey = useCallback(
+    (obj: Partial<QueryParams>) => {
+      const normalized: Record<string, string> = {}
 
-    // filterKeys 순서 고정
-    for (const k of filterKeys) {
-      const v = obj[k]
-      if (typeof v === 'string' && v.length > 0) normalized[k] = v
-    }
+      // filterKeys 순서 고정
+      for (const k of filterKeys) {
+        const v = obj[k]
+        if (typeof v === 'string' && v.length > 0) normalized[k] = v
+      }
 
-    if (typeof obj.page === 'string' && obj.page.length > 0) normalized.page = obj.page
-    if (typeof obj.pageSize === 'string' && obj.pageSize.length > 0)
-      normalized.pageSize = obj.pageSize
+      if (typeof obj.page === 'string' && obj.page.length > 0) normalized.page = obj.page
+      if (typeof obj.pageSize === 'string' && obj.pageSize.length > 0)
+        normalized.pageSize = obj.pageSize
 
-    return JSON.stringify(normalized)
-  }, [filterKeys])
+      return JSON.stringify(normalized)
+    },
+    [filterKeys]
+  )
 
-  // 초기 필터 상태
+  // 초기 필터 상태 (쿼리 파라미터 매핑 적용)
   const initialFilters = useMemo<ColumnFiltersState>(() => {
     const filters: ColumnFiltersState = []
     for (const key of filterKeys) {
-      if (params[key]) filters.push({ id: key, value: params[key] })
+      // 직접 쿼리 파라미터 확인
+      if (params[key]) {
+        filters.push({ id: key, value: params[key] })
+      } else {
+        // 쿼리 파라미터 매핑 확인 (예: status -> lifecycleStatus)
+        const mappedKey = Object.keys(queryParamMapping).find(
+          queryKey => queryParamMapping[queryKey] === key
+        )
+        if (mappedKey && params[mappedKey]) {
+          filters.push({ id: key, value: params[mappedKey] })
+        }
+      }
     }
     return filters
-  }, [filterKeys, params])
+  }, [filterKeys, params, queryParamMapping])
 
   // 초기 페이지네이션 상태
   const initialPagination = useMemo<PaginationState>(
@@ -135,14 +155,27 @@ export function useTableWithQuery<TData>({
   const isUpdatingFromParamsRef = useRef(false) // URL -> state 동기화 중
   const isUpdatingFromStateRef = useRef(false) // state -> URL 동기화 중
 
-  // 현재 URL 기반 비교 키
+  // 현재 URL 기반 비교 키 (쿼리 파라미터 매핑 적용)
   const paramsKey = useMemo(() => {
     const relevant: Partial<QueryParams> = {}
-    for (const k of filterKeys) relevant[k] = params[k]
+    for (const k of filterKeys) {
+      // 직접 쿼리 파라미터 확인
+      if (params[k]) {
+        relevant[k] = params[k]
+      } else {
+        // 쿼리 파라미터 매핑 확인
+        const mappedKey = Object.keys(queryParamMapping).find(
+          queryKey => queryParamMapping[queryKey] === k
+        )
+        if (mappedKey && params[mappedKey]) {
+          relevant[k] = params[mappedKey]
+        }
+      }
+    }
     relevant.page = params.page
     relevant.pageSize = params.pageSize
     return makeKey(relevant)
-  }, [filterKeys, params, makeKey])
+  }, [filterKeys, params, makeKey, queryParamMapping])
 
   /**
    * URL 파라미터 변경 시 필터/페이지네이션 동기화
@@ -168,7 +201,18 @@ export function useTableWithQuery<TData>({
 
     const newFilters: ColumnFiltersState = []
     for (const key of filterKeys) {
-      if (params[key]) newFilters.push({ id: key, value: params[key] })
+      // 직접 쿼리 파라미터 확인
+      if (params[key]) {
+        newFilters.push({ id: key, value: params[key] })
+      } else {
+        // 쿼리 파라미터 매핑 확인
+        const mappedKey = Object.keys(queryParamMapping).find(
+          queryKey => queryParamMapping[queryKey] === key
+        )
+        if (mappedKey && params[mappedKey]) {
+          newFilters.push({ id: key, value: params[mappedKey] })
+        }
+      }
     }
 
     const page = params.page ? safeParseInt(params.page, 1) : 1
@@ -183,7 +227,7 @@ export function useTableWithQuery<TData>({
     })
 
     prevParamsRef.current = paramsKey
-  }, [paramsKey, filterKeys, params, defaultPageSize])
+  }, [paramsKey, filterKeys, params, defaultPageSize, queryParamMapping])
 
   /**
    * 필터/페이지네이션 변경 시 URL 파라미터 동기화
@@ -203,8 +247,26 @@ export function useTableWithQuery<TData>({
     for (const key of filterKeys) {
       const found = columnFilters.find(f => f.id === key)
       const v = found?.value
-      if (typeof v === 'string' && v.length > 0) updates[key] = v
-      else updates[key] = undefined
+
+      // 쿼리 파라미터 매핑 확인 (예: status 쿼리 -> lifecycleStatus 필터)
+      // queryParamMapping: { 'status': 'lifecycleStatus' } -> status 쿼리를 lifecycleStatus 필터로 매핑
+      const mappedQueryKey = Object.entries(queryParamMapping).find(
+        ([, filterKey]) => filterKey === key
+      )?.[0]
+      const queryKey = mappedQueryKey || key
+
+      if (typeof v === 'string' && v.length > 0) {
+        updates[queryKey] = v
+        // 매핑된 경우 원래 필터 키는 undefined로 설정 (쿼리 키만 사용)
+        if (mappedQueryKey && queryKey !== key) {
+          updates[key] = undefined
+        }
+      } else {
+        updates[queryKey] = undefined
+        if (mappedQueryKey && queryKey !== key) {
+          updates[key] = undefined
+        }
+      }
     }
 
     // 페이지네이션 파라미터 (기본값이 아닌 경우에만 추가)
@@ -220,7 +282,15 @@ export function useTableWithQuery<TData>({
       prevParamsRef.current = nextKey
       setParams(updates)
     }
-  }, [columnFilters, pagination, setParams, filterKeys, defaultPageSize, makeKey])
+  }, [
+    columnFilters,
+    pagination,
+    setParams,
+    filterKeys,
+    defaultPageSize,
+    makeKey,
+    queryParamMapping,
+  ])
 
   // 테이블 인스턴스
   const table = useReactTable({

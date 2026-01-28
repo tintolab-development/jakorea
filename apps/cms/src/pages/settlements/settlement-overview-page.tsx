@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Space, Table, Radio, Badge, Tag, Select } from 'antd'
+import { Card, Space, Table, Radio, Tag, Select } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
@@ -13,8 +13,9 @@ import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-deta
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
-import { programService } from '@/entities/program/api/program-service'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { domainColorsHex } from '@/shared/constants/colors'
 import type { Settlement } from '@/types/domain'
@@ -26,6 +27,7 @@ type ViewMode = 'table' | 'calendar'
 export function SettlementOverviewPage() {
   const location = useLocation()
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '강사단 관리'
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   
   const { settlements, loading, fetchSettlements, selectedSettlement, setSelectedSettlement } = useSettlementStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -77,7 +79,7 @@ export function SettlementOverviewPage() {
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Tag color={domainColorsHex.program.primary}>{program.title}</Tag>
         ) : (
@@ -98,7 +100,7 @@ export function SettlementOverviewPage() {
       dataIndex: 'status',
       key: 'status',
       render: (status: Settlement['status']) => (
-        <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} variant="badge" />
       ),
     },
     {
@@ -174,7 +176,7 @@ export function SettlementOverviewPage() {
         }}
         onEdit={() => {}}
         onDelete={() => {}}
-        onStatusChange={() => {}}
+        onStatusChange={async () => {}}
         loading={loading}
       />
     </div>

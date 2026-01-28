@@ -1,0 +1,20 @@
+/**
+ * 페이지 헤더 공통 스타일
+ */
+
+.page-header {
+  margin-bottom: 16px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.page-header-actions {
+  align-items: center;
+}

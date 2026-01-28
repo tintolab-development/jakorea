@@ -9,6 +9,7 @@ import { SchoolForm } from '@/features/school/ui/school-form'
 import { useSchoolStore } from '@/features/school/model/school-store'
 import type { SchoolFormData } from '@/entities/school/model/schema'
 import { message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 
 export function SchoolFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -27,14 +28,14 @@ export function SchoolFormPage() {
     try {
       if (isEdit && id) {
         await updateSchool(id, data)
-        message.success('학교 정보가 수정되었습니다')
+        message.success(MESSAGES.success.schoolUpdated)
       } else {
         await createSchool(data)
-        message.success('학교가 등록되었습니다')
+        message.success(MESSAGES.success.schoolCreated)
       }
       navigate('/schools')
     } catch {
-      message.error(isEdit ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+      message.error(isEdit ? MESSAGES.error.update : MESSAGES.error.create)
     }
   }
 

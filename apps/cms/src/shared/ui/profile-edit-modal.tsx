@@ -6,6 +6,8 @@ import { Modal, Form, Input, Button, message, Divider, Typography, Row, Col, Spa
 import { SaveOutlined, HomeOutlined, BankOutlined, InfoCircleOutlined, ReadOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import type { User } from '@/types/user'
+import { MESSAGES } from '@/shared/constants'
 
 const { Text } = Typography
 
@@ -15,13 +17,13 @@ interface ProfileFormData {
   phone?: string
   bio?: string
   zipCode?: string
-  address?: string
   detailAddress?: string
-  schoolName?: string
-  grade?: string
-  bankName?: string
-  accountHolder?: string
-  accountNumber?: string
+  schoolName?: string // 학교 역할일 때만 사용
+  schoolAddress?: string // 학교 역할일 때만 사용
+  position?: string // 학교 역할일 때만 사용
+  bankName?: string // 강사 역할일 때만 사용
+  accountHolder?: string // 강사 역할일 때만 사용
+  accountNumber?: string // 강사 역할일 때만 사용
 }
 
 interface ProfileEditModalProps {
@@ -43,13 +45,13 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
         phone: user.phone || '',
         bio: user.bio || '',
         zipCode: user.zipCode || '',
-        address: user.address || '',
         detailAddress: user.detailAddress || '',
-        schoolName: user.schoolName || '',
-        grade: user.grade || '',
-        bankName: user.bankInfo?.bankName || '',
-        accountHolder: user.bankInfo?.accountHolder || '',
-        accountNumber: user.bankInfo?.accountNumber || '',
+        schoolName: user.schoolInfo?.schoolName || '',
+        schoolAddress: user.schoolInfo?.address || '',
+        position: user.schoolInfo?.position || '',
+        bankName: user.instructorInfo?.bankName || '',
+        accountHolder: user.instructorInfo?.accountHolder || '',
+        accountNumber: user.instructorInfo?.accountNumber || '',
       })
     }
   }, [open, user, form])
@@ -58,28 +60,43 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
     setSaving(true)
     try {
       // API 연동 전 Mock 업데이트
-      updateUser({
+      const updateData: Partial<Omit<User, 'password'>> = {
         name: values.name,
         phone: values.phone,
         bio: values.bio,
         zipCode: values.zipCode,
-        address: values.address,
         detailAddress: values.detailAddress,
-        schoolName: values.schoolName,
-        grade: values.grade,
-        bankInfo: {
+      }
+
+      // 학교 정보 업데이트
+      if (user && user.role === 'SCHOOL') {
+        updateData.schoolInfo = {
+          ...user.schoolInfo,
+          schoolName: values.schoolName || '',
+          address: values.schoolAddress || '',
+          position: values.position,
+        }
+      }
+
+      // 강사 정보 업데이트
+      if (user && user.role === 'INSTRUCTOR') {
+        updateData.instructorInfo = {
+          ...user.instructorInfo,
           bankName: values.bankName || '',
           accountHolder: values.accountHolder || '',
           accountNumber: values.accountNumber || '',
+          isBusinessIncome: user.instructorInfo?.isBusinessIncome || false,
         }
-      })
+      }
+
+      updateUser(updateData)
       
-      message.success('개인정보가 수정되었습니다')
+      message.success(MESSAGES.success.profileUpdated)
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to update profile:', e)
-      message.error('개인정보 수정 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.profileUpdateFailed)
     } finally {
       setSaving(false)
     }
@@ -101,7 +118,7 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
       onCancel={handleCancel}
       footer={null}
       width={600}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}
@@ -146,22 +163,31 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
           <Input.TextArea rows={2} placeholder="자기소개를 입력하세요" />
         </Form.Item>
 
-        {/* 학교 정보 (봉사자만 표시) */}
-        {user?.role === 'VOLUNTEER' && (
+        {/* 학교 정보 (학교 역할만 표시) */}
+        {user?.role === 'SCHOOL' && (
           <>
             <Divider orientation="left" style={{ margin: '32px 0 16px' }}>
               <Space><ReadOutlined /> 학교 정보</Space>
             </Divider>
 
             <Row gutter={16}>
-              <Col span={14}>
+              <Col span={24}>
                 <Form.Item label="학교명" name="schoolName">
-                  <Input placeholder="재학 중인 학교명을 입력하세요" />
+                  <Input placeholder="학교명을 입력하세요" />
                 </Form.Item>
               </Col>
-              <Col span={10}>
-                <Form.Item label="학년" name="grade">
-                  <Input placeholder="학년 (예: 3학년)" />
+            </Row>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item label="학교 주소" name="schoolAddress">
+                  <Input placeholder="학교 주소를 입력하세요" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item label="담당자 직책" name="position">
+                  <Input placeholder="담당자 직책을 입력하세요" />
                 </Form.Item>
               </Col>
             </Row>
@@ -184,9 +210,6 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
           </Col>
         </Row>
         
-        <Form.Item label="주소" name="address">
-          <Input placeholder="기본 주소를 입력하세요" />
-        </Form.Item>
         
         <Form.Item label="상세주소" name="detailAddress">
           <Input placeholder="상세 주소를 입력하세요" />

@@ -5,18 +5,17 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Card, Table, Tag, Space, Empty, Tabs, Button } from 'antd'
+import { Card, Table, Space, Empty, Tabs, Button } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import { ApplicationDetailDrawer } from '@/features/application/ui/application-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { programService } from '@/entities/program/api/program-service'
-import {
-  getApplicationStatusLabel,
-  getApplicationStatusColor,
-} from '@/shared/constants/status'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { applicationStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { applicationService } from '@/entities/application/api/application-service'
 import dayjs from 'dayjs'
 import type { Application, ApplicationStatus } from '@/types/domain'
 
@@ -33,40 +32,53 @@ export function MyProgramApplicationsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
-  const { applications, loading, fetchApplications, selectedApplication, setSelectedApplication, updateStatus } = useApplicationStore()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
+  const { selectedApplication, setSelectedApplication, updateStatus } = useApplicationStore()
+  const [myApplications, setMyApplications] = useState<Application[]>([])
+  const [loading, setLoading] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<ApplicationStatus | 'all'>('all')
-  
+
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '내가 신청한 프로그램'
 
   useEffect(() => {
-    // 신청 주체 권한일 때만 신청 목록 조회
-    if (user?.role === 'INSTRUCTOR' || user?.role === 'STUDENT') {
-      fetchApplications()
-    }
-  }, [user?.role, fetchApplications])
+    const loadMyApplications = async () => {
+      if (!user) return
 
-  // 로그인한 사용자가 신청한 프로그램만 필터링
-  const myApplications = useMemo(() => {
-    if (!user) return []
-    
-    if (user.role === 'INSTRUCTOR' && user.instructorId) {
-      return applications.filter(
-        app => app.subjectType === 'instructor' && app.subjectId === user.instructorId
-      )
+      // 신청 주체 권한일 때만 신청 목록 조회
+      if (user.role !== 'INSTRUCTOR' && user.role !== 'INDIVIDUAL' && user.role !== 'SCHOOL') {
+        return
+      }
+
+      setLoading(true)
+      try {
+        // 사용자 역할에 따라 subjectType 결정
+        let subjectType: Application['subjectType'] | undefined
+        let userId = user.id
+
+        if (user.role === 'INSTRUCTOR' && user.instructorId) {
+          subjectType = 'instructor'
+          userId = user.instructorId
+        } else if (user.role === 'SCHOOL') {
+          subjectType = 'school'
+        } else if (user.role === 'INDIVIDUAL') {
+          // INDIVIDUAL은 student, volunteer 모두 가능하므로 subjectType 지정하지 않음
+          subjectType = undefined
+        }
+
+        const applications = await applicationService.getByUserId(userId, subjectType)
+        setMyApplications(applications)
+      } catch (error) {
+        console.error('신청 목록 조회 실패:', error)
+        setMyApplications([])
+      } finally {
+        setLoading(false)
+      }
     }
 
-    if (user.role === 'STUDENT' && user.id) {
-      return applications.filter(
-        app =>
-          (app.subjectType === 'student' || app.subjectType === 'volunteer') &&
-          app.subjectId === user.id
-      )
-    }
-    
-    return []
-  }, [applications, user])
+    loadMyApplications()
+  }, [user])
 
   // 탭별 필터링
   const filteredApplications = useMemo(() => {
@@ -90,8 +102,16 @@ export function MyProgramApplicationsPage() {
   }, [myApplications])
 
   const handleView = (application: Application) => {
-    setSelectedApplication(application)
-    setDrawerOpen(true)
+    // Phase 0.2.4: 진행상황 조회 페이지로 이동
+    if (application.status === 'approved') {
+      navigate(
+        `/${user?.role === 'SCHOOL' ? 'school' : user?.role === 'INSTRUCTOR' ? 'instructor' : 'my'}/applications/${application.id}`
+      )
+    } else {
+      // 승인되지 않은 경우 기존 drawer 사용
+      setSelectedApplication(application)
+      setDrawerOpen(true)
+    }
   }
 
   const handleViewProgram = (programId: string) => {
@@ -105,7 +125,7 @@ export function MyProgramApplicationsPage() {
       key: 'programId',
       width: 300,
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getProgramByIdSync(programId)
         return program ? (
           <Button
             type="link"
@@ -132,9 +152,7 @@ export function MyProgramApplicationsPage() {
       key: 'status',
       width: 120,
       render: (status: ApplicationStatus) => (
-        <Tag color={getApplicationStatusColor(status)}>
-          {getApplicationStatusLabel(status)}
-        </Tag>
+        <StatusBadge status={status} statusConfig={applicationStatusStatusConfig} />
       ),
     },
     {
@@ -142,25 +160,25 @@ export function MyProgramApplicationsPage() {
       dataIndex: 'reviewedAt',
       key: 'reviewedAt',
       width: 150,
-      render: (date: string | undefined) => date ? dayjs(date).format('YYYY-MM-DD') : '-',
+      render: (date: string | undefined) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
     },
     {
       title: '작업',
       key: 'action',
       width: 100,
       render: (_: unknown, record: Application) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => handleView(record)}
-        >
+        <Button type="link" icon={<EyeOutlined />} onClick={() => handleView(record)}>
           상세
         </Button>
       ),
     },
   ]
 
-  if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'STUDENT')) {
+  // Phase 0.1.1: INDIVIDUAL, SCHOOL 추가
+  if (
+    !user ||
+    (user.role !== 'INSTRUCTOR' && user.role !== 'INDIVIDUAL' && user.role !== 'SCHOOL')
+  ) {
     return (
       <div>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
@@ -180,7 +198,7 @@ export function MyProgramApplicationsPage() {
       <Card>
         <Tabs
           activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as ApplicationStatus | 'all')}
+          onChange={key => setActiveTab(key as ApplicationStatus | 'all')}
           items={statusTabs.map(tab => ({
             key: tab.key,
             label: (
@@ -193,7 +211,7 @@ export function MyProgramApplicationsPage() {
                 )}
               </span>
             ),
-            children: (
+            children:
               filteredApplications.length === 0 ? (
                 <Empty description="신청한 프로그램이 없습니다." />
               ) : (
@@ -208,8 +226,7 @@ export function MyProgramApplicationsPage() {
                     showTotal: total => `총 ${total}개`,
                   }}
                 />
-              )
-            ),
+              ),
           }))}
         />
       </Card>
@@ -223,11 +240,23 @@ export function MyProgramApplicationsPage() {
         }}
         onEdit={() => {}}
         onDelete={() => {}}
-        onStatusChange={async (status) => {
+        onStatusChange={async status => {
           if (selectedApplication) {
             try {
               await updateStatus(selectedApplication.id, status)
-              await fetchApplications() // 목록 새로고침
+              // 목록 새로고침
+              if (user) {
+                let subjectType: Application['subjectType'] | undefined
+                let userId = user.id
+                if (user.role === 'INSTRUCTOR' && user.instructorId) {
+                  subjectType = 'instructor'
+                  userId = user.instructorId
+                } else if (user.role === 'SCHOOL') {
+                  subjectType = 'school'
+                }
+                const applications = await applicationService.getByUserId(userId, subjectType)
+                setMyApplications(applications)
+              }
             } catch (error) {
               console.error('신청 상태 변경 실패:', error)
             }

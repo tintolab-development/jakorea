@@ -5,17 +5,24 @@
 
 import { Table, Tag, Space, Button, Select, Tooltip, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
-import { EyeOutlined, CheckOutlined, CloseOutlined, MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import {
+  EyeOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  MoreOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons'
 import type { Matching } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { scheduleService } from '@/entities/schedule/api/schedule-service'
 import dayjs from 'dayjs'
-import {
-  getCommonStatusLabel,
-  getCommonStatusColor,
-} from '@/shared/constants/status'
+import { commonStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
+import './matching-list.css'
 
 const { Option } = Select
 
@@ -42,7 +49,9 @@ export function MatchingList({
   onConfirm,
   onCancel,
 }: MatchingListProps) {
-  const programs = programService.getAllSync()
+  const { getAllSync, getByIdSync } = useProgramService()
+  const { getByIdSync: getInstructorByIdSync } = useInstructorService()
+  const programs = getAllSync()
 
   const getMenuItems = (matching: Matching): MenuProps['items'] => {
     const items: MenuProps['items'] = [
@@ -108,10 +117,10 @@ export function MatchingList({
       dataIndex: 'programId',
       key: 'programId',
       render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
+        const program = getByIdSync(programId)
         return program ? (
           <Tooltip title={program.description}>
-            <span style={{ fontWeight: 500 }}>{program.title}</span>
+            <span className="matching-list__program-title">{program.title}</span>
           </Tooltip>
         ) : (
           '-'
@@ -123,7 +132,7 @@ export function MatchingList({
       dataIndex: 'instructorId',
       key: 'instructorId',
       render: (instructorId: string) => {
-        const instructor = instructorService.getByIdSync(instructorId)
+        const instructor = getInstructorByIdSync(instructorId)
         return instructor ? (
           <Space>
             <span>{instructor.name}</span>
@@ -144,8 +153,11 @@ export function MatchingList({
         return schedule ? (
           <Space direction="vertical" size="small">
             <span>{schedule.title}</span>
-            <span style={{ fontSize: 12, color: '#8c8c8c' }}>
-              {typeof schedule.date === 'string' ? schedule.date : dayjs(schedule.date).format('YYYY-MM-DD')} {schedule.startTime} - {schedule.endTime}
+            <span className="matching-list__schedule-meta">
+              {typeof schedule.date === 'string'
+                ? schedule.date
+                : dayjs(schedule.date).format('YYYY-MM-DD')}{' '}
+              {schedule.startTime} - {schedule.endTime}
             </span>
           </Space>
         ) : (
@@ -158,7 +170,7 @@ export function MatchingList({
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={commonStatusStatusConfig} showIcon={false} />
       ),
     },
     {
@@ -174,13 +186,9 @@ export function MatchingList({
       key: 'action',
       width: 100,
       render: (_: unknown, record: Matching) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={e => e.stopPropagation()}>
           <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
-            <Button
-              type="text"
-              icon={<MoreOutlined />}
-              onClick={(e) => e.stopPropagation()}
-            />
+            <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
           </Dropdown>
         </div>
       ),
@@ -193,14 +201,14 @@ export function MatchingList({
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
-        <span>프로그램 필터:</span>
+      <Space className="matching-list__filters">
+        <span className="matching-list__filter-label">프로그램 필터:</span>
         <Select
           value={selectedProgramId || undefined}
           onChange={onProgramChange}
           allowClear
           placeholder="전체 프로그램"
-          style={{ width: 300 }}
+          className="matching-list__program-select"
         >
           {programs.map(program => (
             <Option key={program.id} value={program.id}>
@@ -215,17 +223,15 @@ export function MatchingList({
         columns={columns}
         rowKey="id"
         loading={loading}
+        rowClassName={() => 'matching-list__row'}
         pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
+          ...PAGINATION_CONFIG,
           showTotal: total => `총 ${total}개`,
         }}
         onRow={record => ({
           onClick: () => onView(record),
-          style: { cursor: 'pointer' },
         })}
       />
     </div>
   )
 }
-

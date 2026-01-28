@@ -8,7 +8,7 @@
 import { Card, Statistic, Space, Tag, Typography } from 'antd'
 import { DollarOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { useDashboardData } from '../model/use-dashboard-data'
 
 const { Text } = Typography
@@ -50,22 +50,22 @@ export function MonthlySettlementCard() {
       )}
       <Space size="small" style={{ marginTop: 16, flexWrap: 'wrap' }}>
         {statusCounts.pending > 0 && (
-          <Tag color={getSettlementStatusColor('pending')}>
+          <Tag color={settlementStatusStatusConfig.pending.color}>
             대기: {statusCounts.pending}건
           </Tag>
         )}
         {statusCounts.calculated > 0 && (
-          <Tag color={getSettlementStatusColor('calculated')}>
+          <Tag color={settlementStatusStatusConfig.calculated.color}>
             산출완료: {statusCounts.calculated}건
           </Tag>
         )}
         {statusCounts.approved > 0 && (
-          <Tag color={getSettlementStatusColor('approved')}>
+          <Tag color={settlementStatusStatusConfig.approved.color}>
             승인: {statusCounts.approved}건
           </Tag>
         )}
         {statusCounts.paid > 0 && (
-          <Tag color={getSettlementStatusColor('paid')}>
+          <Tag color={settlementStatusStatusConfig.paid.color}>
             지급완료: {statusCounts.paid}건
           </Tag>
         )}

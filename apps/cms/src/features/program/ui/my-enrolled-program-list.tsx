@@ -4,7 +4,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Input, Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
+import { Card, Tag, Button, Table, Empty } from 'antd'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -18,7 +19,6 @@ import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import type { Program } from '@/types/domain'
 
-const { Option } = Select
 
 type ProgramStatusFilter = 'all' | 'active' | 'scheduled' | 'completed'
 type ProgramCategoryFilter = 'all' | 'individual' | 'school'
@@ -32,13 +32,29 @@ export function MyEnrolledProgramList() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const filters = useMemo(() => {
-    return {
-      status: (searchParams.get('status') as ProgramStatusFilter) || 'all',
-      category: (searchParams.get('category') as ProgramCategoryFilter) || 'all',
-      search: searchParams.get('search') || '',
-    }
-  }, [searchParams])
+  // 필터 상태 관리 (조회 버튼 클릭 전까지 임시 저장)
+  const [pendingFilters, setPendingFilters] = useState<{
+    search?: string
+    status?: ProgramStatusFilter
+    category?: ProgramCategoryFilter
+  }>({
+    search: searchParams.get('search') || '',
+    status: (searchParams.get('status') as ProgramStatusFilter) || 'all',
+    category: (searchParams.get('category') as ProgramCategoryFilter) || 'all',
+  })
+
+  // 활성 필터 (조회 버튼 클릭 시 적용)
+  const [activeFilters, setActiveFilters] = useState<{
+    status: ProgramStatusFilter
+    category: ProgramCategoryFilter
+    search: string
+  }>(() => ({
+    status: (searchParams.get('status') as ProgramStatusFilter) || 'all',
+    category: (searchParams.get('category') as ProgramCategoryFilter) || 'all',
+    search: searchParams.get('search') || '',
+  }))
+
+  const filters = useMemo(() => activeFilters, [activeFilters])
 
   const loadPrograms = useCallback(async () => {
     if (!user?.id) return
@@ -84,22 +100,27 @@ export function MyEnrolledProgramList() {
     }
   }, [filters, user?.id])
 
-  const loadFavorites = useCallback(async (userId: string) => {
-    if (programs.length === 0) return
+  const loadFavorites = useCallback(
+    async (userId: string) => {
+      if (programs.length === 0) return
 
-    try {
-      const favoriteStatuses = await Promise.all(programs.map(p => isFavoriteProgram(userId, p.id)))
-      const favoriteSet = new Set<string>()
-      programs.forEach((p, index) => {
-        if (favoriteStatuses[index]) {
-          favoriteSet.add(p.id)
-        }
-      })
-      setFavorites(favoriteSet)
-    } catch (error) {
-      console.error('관심 프로그램 로드 실패:', error)
-    }
-  }, [programs])
+      try {
+        const favoriteStatuses = await Promise.all(
+          programs.map(p => isFavoriteProgram(userId, p.id))
+        )
+        const favoriteSet = new Set<string>()
+        programs.forEach((p, index) => {
+          if (favoriteStatuses[index]) {
+            favoriteSet.add(p.id)
+          }
+        })
+        setFavorites(favoriteSet)
+      } catch (error) {
+        console.error('관심 프로그램 로드 실패:', error)
+      }
+    },
+    [programs]
+  )
 
   useEffect(() => {
     if (user?.id) {
@@ -113,44 +134,33 @@ export function MyEnrolledProgramList() {
     }
   }, [user?.id, programs, loadFavorites])
 
-  const updateSearchParams = (updater: (next: URLSearchParams) => void) => {
-    const nextParams = new URLSearchParams(searchParams)
-    updater(nextParams)
-    if (nextParams.toString() !== searchParams.toString()) {
-      setSearchParams(nextParams, { replace: true })
+  // 조회 버튼 클릭 핸들러
+  const handleSearch = useCallback(() => {
+    setActiveFilters(pendingFilters as typeof activeFilters)
+    const nextParams = new URLSearchParams()
+    if (pendingFilters.status && pendingFilters.status !== 'all') {
+      nextParams.set('status', pendingFilters.status)
     }
-  }
+    if (pendingFilters.category && pendingFilters.category !== 'all') {
+      nextParams.set('category', pendingFilters.category)
+    }
+    if (pendingFilters.search?.trim()) {
+      nextParams.set('search', pendingFilters.search.trim())
+    }
+    setSearchParams(nextParams, { replace: true })
+  }, [pendingFilters, setSearchParams])
 
-  const handleStatusChange = (status: ProgramStatusFilter) => {
-    updateSearchParams(next => {
-      if (status === 'all') {
-        next.delete('status')
-      } else {
-        next.set('status', status)
-      }
-    })
-  }
-
-  const handleCategoryChange = (category: ProgramCategoryFilter) => {
-    updateSearchParams(next => {
-      if (category === 'all') {
-        next.delete('category')
-      } else {
-        next.set('category', category)
-      }
-    })
-  }
-
-  const handleSearchChange = (value: string) => {
-    updateSearchParams(next => {
-      const trimmed = value.trim()
-      if (!trimmed) {
-        next.delete('search')
-      } else {
-        next.set('search', trimmed)
-      }
-    })
-  }
+  // 필터 초기화 핸들러
+  const handleFilterReset = useCallback(() => {
+    const resetFilters = {
+      search: '',
+      status: 'all' as ProgramStatusFilter,
+      category: 'all' as ProgramCategoryFilter,
+    }
+    setPendingFilters(resetFilters)
+    setActiveFilters(resetFilters)
+    setSearchParams({}, { replace: true })
+  }, [setSearchParams])
 
   const handleToggleFavorite = async (programId: string) => {
     const userId = user?.id
@@ -198,7 +208,10 @@ export function MyEnrolledProgramList() {
     if (now.isAfter(startDate) && now.isBefore(endDate)) {
       return { label: '진행중', color: 'green' }
     }
-    return { label: getCommonStatusLabel(program.status), color: getCommonStatusColor(program.status) }
+    return {
+      label: getCommonStatusLabel(program.status),
+      color: getCommonStatusColor(program.status),
+    }
   }
 
   const columns = [
@@ -248,8 +261,14 @@ export function MyEnrolledProgramList() {
       render: (_: unknown, record: Program) => (
         <Button
           type="text"
-          icon={favorites.has(record.id) ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-          onClick={(event) => {
+          icon={
+            favorites.has(record.id) ? (
+              <HeartFilled style={{ color: '#ff4d4f' }} />
+            ) : (
+              <HeartOutlined />
+            )
+          }
+          onClick={event => {
             event.stopPropagation()
             handleToggleFavorite(record.id)
           }}
@@ -268,37 +287,50 @@ export function MyEnrolledProgramList() {
 
   return (
     <>
-      <Card style={{ marginBottom: 16 }}>
-        <Space size="middle" wrap>
-          <Input
-            placeholder="프로그램명 검색"
-            allowClear
-            style={{ width: 250 }}
-            value={filters.search}
-            onChange={event => handleSearchChange(event.target.value)}
-          />
-          <Select
-            value={filters.status}
-            onChange={handleStatusChange}
-            style={{ width: 150 }}
-          >
-            <Option value="all">전체 상태</Option>
-            <Option value="scheduled">진행 예정</Option>
-            <Option value="active">진행중</Option>
-            <Option value="completed">진행완료</Option>
-          </Select>
-          <Select
-            value={filters.category}
-            onChange={handleCategoryChange}
-            style={{ width: 150 }}
-          >
-            <Option value="all">전체 카테고리</Option>
-            <Option value="individual">개인 프로그램</Option>
-            <Option value="school">학교 프로그램</Option>
-          </Select>
-          <Button onClick={() => setSearchParams({}, { replace: true })}>필터 초기화</Button>
-        </Space>
-      </Card>
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'search',
+            type: 'search',
+            label: '프로그램명',
+            placeholder: '프로그램명을 입력하세요',
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '상태',
+            placeholder: '전체',
+            options: [
+              { value: 'all', label: '전체' },
+              { value: 'scheduled', label: '진행 예정' },
+              { value: 'active', label: '진행중' },
+              { value: 'completed', label: '진행완료' },
+            ],
+          },
+          {
+            key: 'category',
+            type: 'select',
+            label: '카테고리',
+            placeholder: '전체',
+            options: [
+              { value: 'all', label: '전체' },
+              { value: 'individual', label: '개인 프로그램' },
+              { value: 'school', label: '학교 프로그램' },
+            ],
+          },
+        ]}
+        filters={{
+          search: pendingFilters.search || '',
+          status: pendingFilters.status,
+          category: pendingFilters.category,
+        }}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value || undefined }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+        resetButtonText="초기화"
+      />
 
       <Card>
         {programs.length === 0 ? (

@@ -1,15 +1,22 @@
 /**
  * 사용자 계정 및 권한 타입 정의
- * MVP_ROADMAP_V4 기반
+ * Phase 0.1.1: 역할/권한 체계 재정의
+ * requirements.md §2 역할 및 권한 기준
  */
 
 import type { UUID, DateValue } from './index'
 
-// 사용자 권한 타입
-export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT' | 'VOLUNTEER'
+// ===== 역할 정의 =====
 
-// 수강자 하위 타입
-export type StudentType = 'INDIVIDUAL' | 'SCHOOL_TEACHER'
+// 프론트 사용자 역할 (§2.1)
+export type UserRole = 'INDIVIDUAL' | 'SCHOOL' | 'INSTRUCTOR' | 'ADMIN'
+
+// 관리자 권한 레벨 (§2.2)
+export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
+
+// 프로그램 단위 역할 (§백오피스 권한 구조)
+export type ProgramRole = 'OWNER' | 'PARTNER' | 'ASSISTANT'
+
 
 // 강사/봉사자 면접 상태
 export type InterviewStatus =
@@ -20,39 +27,66 @@ export type InterviewStatus =
   | 'APPROVED' // 승인 완료
   | 'REJECTED' // 반려
 
-// 사용자 계정
+// ===== 사용자 인터페이스 =====
+
 export interface User {
   id: UUID
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
+  phone?: string
   role: UserRole
-  // 수강자 하위 타입 (수강자일 경우)
-  studentType?: StudentType
-  // 강사/봉사자 관련 필드
-  instructorId?: UUID // 강사 DB와 연결 (강사/봉사자일 경우)
-  interviewStatus?: InterviewStatus // 면접 상태 (강사/봉사자일 경우)
-  interviewScheduledAt?: DateValue // 면접 일정 (면접 필요 시)
-  interviewCompletedAt?: DateValue // 면접 완료 일자
-  participationHistory?: number // 참여이력 개수 (면접 필요 여부 판단)
+
+  // 관리자 전용 (§2.2)
+  adminLevel?: AdminLevel
+  // 프로그램별 역할 (관리자용, §백오피스 권한 구조)
+  programRoles?: Record<string, ProgramRole>
+
+  // 개인(참여자) 전용 (§2.1)
+  // - 프로그램 신청(개인)
+  // - 신청내역/진행상황 확인
+  // - 일정 확인, 과제 제출
+  // - 수료증/활동 확인서 발급
+
+  // 학교 전용 (§2.1)
+  schoolInfo?: {
+    schoolName: string
+    address: string
+    position?: string // 담당자 직책
+    // 학생명단 업로드
+    // 학교단위 수료증 다운로드
+    // 강사 대기실, 급식 가능 여부 등
+  }
+
+  // 강사 전용 (§2.1)
+  instructorInfo?: {
+    bankName: string
+    accountNumber: string
+    accountHolder: string
+    isBusinessIncome: boolean // 사업소득자 여부 (3.3% vs 8.8%)
+    // 강의 신청, 매칭/일정 확인
+    // 강의보고서 제출
+    // 강사비/교통비 산출내역 확인
+  }
+
+  // 강사 면접 관련 (기존 유지)
+  instructorId?: UUID // 강사 DB와 연결
+  interviewStatus?: InterviewStatus
+  interviewScheduledAt?: DateValue
+  interviewCompletedAt?: DateValue
+  participationHistory?: number
+
   // 계정 상태
   isActive: boolean
   lastLoginAt?: DateValue
   createdAt: DateValue
   updatedAt: DateValue
+
   // 추가 프로필 정보
-  phone?: string
   bio?: string
-  address?: string
   detailAddress?: string
   zipCode?: string
-  schoolName?: string // 봉사자용: 학교명
-  grade?: string // 봉사자용: 학년
-  bankInfo?: {
-    bankName: string
-    accountHolder: string
-    accountNumber: string // 민감정보, 실제로는 암호화/마스킹 필요
-  }
+
 }
 
 // 로그인 요청

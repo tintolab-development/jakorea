@@ -6,7 +6,8 @@
 import { Card, Space, Typography, Timeline, Tag, Button, Popconfirm } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import type { Settlement } from '@/types/domain'
-import { getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import dayjs from 'dayjs'
 
 const { Text } = Typography
@@ -71,9 +72,7 @@ export function SettlementApprovalWorkflow({
         {/* 현재 상태 표시 */}
         <div>
           <Text strong>현재 상태: </Text>
-          <Tag color={getSettlementStatusColor(settlement.status)}>
-            {getSettlementStatusLabel(settlement.status)}
-          </Tag>
+          <StatusBadge status={settlement.status} statusConfig={settlementStatusStatusConfig} />
         </div>
 
         {/* 승인 단계 Timeline */}

@@ -4,9 +4,9 @@
  * 참고 화면: U-04-02 봉사 상세
  */
 
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert, Button } from 'antd'
+import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert } from 'antd'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
 import { mockSchedulesMap, mockProgramsMap } from '@/data/mock'
 import { mockVolunteerActivitiesMap } from '@/data/mock/activities'
@@ -30,7 +30,6 @@ const volunteerStatusColors: Record<VolunteerActivity['status'], string> = {
 }
 
 export function VolunteerDetailPage() {
-  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [activity, setActivity] = useState<VolunteerActivity | null>(null)
   const [loading, setLoading] = useState(true)
@@ -108,20 +107,14 @@ export function VolunteerDetailPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        {/* 페이지 헤더 영역 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* 페이지 헤더 영역 - Phase 5.8: FORBIDDEN 원칙 준수 (복수 주요 CTA 제거) */}
+        <div>
           <Title level={2} style={{ margin: 0 }}>
             봉사 상세
           </Title>
-          <Button
-            type="primary"
-            onClick={() => navigate('/interviews/apply/form?role=STUDENT&fixedRole=1')}
-          >
-            봉사단 신청하기
-          </Button>
         </div>
 
-        {/* 봉사 상태 요약 영역 (최상단, 가장 강조) */}
+        {/* 봉사 상태 요약 영역 (최상단, 가장 강조) - Phase 5.8 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <StatusDisplay
@@ -129,9 +122,10 @@ export function VolunteerDetailPage() {
               statusLabels={volunteerStatusLabels}
               statusColors={volunteerStatusColors}
             />
+            {/* VOL_01 상태일 때 필수 추가 문구 - Phase 5.8 */}
             {activity.status === 'VOL_01' && (
-              <Paragraph style={{ margin: 0, color: '#8c8c8c' }}>
-                봉사 일정이 확정되었습니다. 준비해주세요.
+              <Paragraph style={{ margin: 0, color: '#8c8c8c', fontSize: 14 }}>
+                현재 활동은 아직 시작되지 않았습니다. 활동이 시작되면 이 화면에서 안내드립니다.
               </Paragraph>
             )}
           </Space>
@@ -188,11 +182,11 @@ export function VolunteerDetailPage() {
           )}
         </Card>
 
-        {/* 다음 행동 안내 영역 (핵심) */}
+        {/* 다음 행동 안내 영역 (핵심) - Phase 5.8: 조건부 CTA 표시 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%', textAlign: 'center' }}>
             {activity.nextRequiredAction.type === 'NONE' && (
-              <Paragraph style={{ margin: 0, color: '#8c8c8c' }}>
+              <Paragraph style={{ margin: 0, color: '#8c8c8c', fontSize: 15 }}>
                 현재 추가로 하실 일은 없습니다.
               </Paragraph>
             )}
@@ -205,6 +199,8 @@ export function VolunteerDetailPage() {
                   label="봉사 완료 처리"
                   targetUrl={activity.nextRequiredAction.targetUrl}
                   type="primary"
+                  block
+                  size="large"
                 />
               </>
             )}
@@ -217,6 +213,8 @@ export function VolunteerDetailPage() {
                   label="보고서 작성하기"
                   targetUrl={activity.nextRequiredAction.targetUrl}
                   type="primary"
+                  block
+                  size="large"
                 />
               </>
             )}

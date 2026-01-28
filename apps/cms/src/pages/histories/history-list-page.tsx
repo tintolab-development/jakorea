@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Card, Space, Typography, List, Tag, Button } from 'antd'
 import { HistoryOutlined, EyeOutlined } from '@ant-design/icons'
-import { EmptyState, GuideMessage } from '@/shared/ui'
+import { EmptyState, GuideMessage, StatusDisplay } from '@/shared/ui'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -44,23 +44,19 @@ export function HistoryListPage() {
   const location = useLocation()
   const [histories, setHistories] = useState<UserHistory[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // 카테고리명 가져오기 (권한에 따라 다르게 표시)
   const { user } = useAuthStore()
-  const defaultCategoryName = user?.role === 'VOLUNTEER' ? '봉사 이력 관리' : '강사 이력 관리'
+  const defaultCategoryName = user?.role === 'INDIVIDUAL' ? '봉사 이력 관리' : '강사 이력 관리'
   const categoryName = getCategoryNameByPath(location.pathname, 3) || defaultCategoryName
 
   useEffect(() => {
     const loadHistories = () => {
       try {
         // 완료된 이력만 필터링 (CANCELLED 제외)
-        const completedHistories = mockUserHistories.filter(
-          h => h.finalStatus !== 'CANCELLED'
-        )
+        const completedHistories = mockUserHistories.filter(h => h.finalStatus !== 'CANCELLED')
         // 완료 일시 기준 내림차순 정렬
-        completedHistories.sort((a, b) =>
-          dayjs(b.completedAt).diff(dayjs(a.completedAt))
-        )
+        completedHistories.sort((a, b) => dayjs(b.completedAt).diff(dayjs(a.completedAt)))
         setHistories(completedHistories)
       } catch (error) {
         console.error('Failed to load histories:', error)
@@ -110,26 +106,22 @@ export function HistoryListPage() {
                     marginBottom: '16px',
                   }}
                 >
-                  <Card
-                    style={{ width: '100%' }}
-                    styles={{ body: { padding: '16px' } }}
-                  >
-                    <Space
-                      direction="vertical"
-                      size="middle"
-                      style={{ width: '100%' }}
-                    >
+                  <Card style={{ width: '100%' }} styles={{ body: { padding: '16px' } }}>
+                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                       {/* 프로그램명 및 상태 */}
-                      <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                      <Space direction="vertical" size="small" style={{ width: '100%' }}>
                         <Space>
                           <HistoryOutlined style={{ color: '#1890ff' }} />
                           <Text strong style={{ fontSize: 16 }}>
                             {program?.title || '알 수 없는 프로그램'}
                           </Text>
                         </Space>
-                        <Tag color={finalStatusColors[history.finalStatus]}>
-                          {finalStatusLabels[history.finalStatus]}
-                        </Tag>
+                        {/* Phase 5.10: StatusDisplay로 상태를 문장으로 명확히 표시 */}
+                        <StatusDisplay
+                          status={history.finalStatus}
+                          statusLabels={finalStatusLabels}
+                          statusColors={finalStatusColors}
+                        />
                       </Space>
 
                       {/* 이력 정보 */}
@@ -140,9 +132,7 @@ export function HistoryListPage() {
                         </div>
                         <div>
                           <Text type="secondary">완료 일시: </Text>
-                          <Text>
-                            {dayjs(history.completedAt).format('YYYY년 MM월 DD일')}
-                          </Text>
+                          <Text>{dayjs(history.completedAt).format('YYYY년 MM월 DD일')}</Text>
                         </div>
                       </Space>
 
@@ -166,13 +156,9 @@ export function HistoryListPage() {
 
         {/* 보조 안내 영역 */}
         <Card>
-          <GuideMessage
-            message="이력 및 증빙 문서는 공식 기록으로 보관됩니다."
-            type="info"
-          />
+          <GuideMessage message="이력 및 증빙 문서는 공식 기록으로 보관됩니다." type="info" />
         </Card>
       </Space>
     </div>
   )
 }
-

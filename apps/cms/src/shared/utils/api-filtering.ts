@@ -26,14 +26,13 @@ export function buildQueryParamsByRole(
     return params
   }
 
-  // 강사/봉사자/수강자는 본인 데이터만 조회
-  if (userRole === 'INSTRUCTOR' || userRole === 'VOLUNTEER') {
-    // 강사/봉사자는 instructorId로 필터링
+  // 강사는 instructorId로 필터링
+  if (userRole === 'INSTRUCTOR') {
     if (userId) {
       params.instructorId = userId
     }
-  } else if (userRole === 'STUDENT') {
-    // 수강자는 userId로 필터링
+  } else if (userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') {
+    // 개인(참여자), 학교는 userId로 필터링
     if (userId) {
       params.userId = userId
     }
@@ -90,7 +89,7 @@ export function filterByInstructorId<T extends { instructorId?: string }>(
     return true
   }
 
-  if (userRole === 'INSTRUCTOR' || userRole === 'VOLUNTEER') {
+  if (userRole === 'INSTRUCTOR') {
     return item.instructorId === userId
   }
 
@@ -98,7 +97,7 @@ export function filterByInstructorId<T extends { instructorId?: string }>(
 }
 
 /**
- * 수강자 데이터 필터링 함수
+ * 개인(참여자)/학교 데이터 필터링 함수
  * @param item 데이터 아이템
  * @param userRole 사용자 권한
  * @param userId 사용자 ID
@@ -113,7 +112,7 @@ export function filterByUserId<T extends { userId?: string }>(
     return true
   }
 
-  if (userRole === 'STUDENT') {
+  if (userRole === 'INDIVIDUAL' || userRole === 'SCHOOL') {
     return item.userId === userId
   }
 

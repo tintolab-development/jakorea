@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useMemo } from 'react'
-import { useLocation, useNavigate, useSearchParams, Outlet } from 'react-router-dom'
+import { useLocation, useNavigate, Outlet } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Space, Tabs } from 'antd'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
@@ -12,47 +13,59 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 export function TemplateListPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { params, setParams } = useQueryParams<{ tab?: string }>()
   const categoryName = getCategoryNameByPath(location.pathname, 1) || '템플릿 관리'
 
   const tabItems = useMemo(
     () => [
-      { key: 'files', label: '파일 양식', path: '/templates/files' },
-      { key: 'sms', label: '문자 양식', path: '/templates/sms' },
+      { key: 'program-forms', label: '프로그램 양식', path: '/templates/program-forms' },
+      { key: 'files', label: '파일 양식', path: '/templates/file-forms' },
+      { key: 'sms', label: '문자 양식', path: '/templates/kakao-alimtalk' },
       { key: 'email', label: '메일 양식', path: '/templates/email' },
     ],
     []
   )
 
+  // 파일 양식 하위 페이지인지 확인
+  const isFileFormsPage = useMemo(() => {
+    const p = location.pathname
+    return p.includes('/templates/file-forms') || p.includes('/templates/files')
+  }, [location.pathname])
+
   // path 기반 활성 탭 계산
   const activeFromPath = useMemo(() => {
     const p = location.pathname
-    if (p.includes('/templates/sms')) return 'sms'
+    if (p.includes('/templates/program-forms')) return 'program-forms'
+    if (p.includes('/templates/kakao-alimtalk') || p.includes('/templates/sms')) return 'sms'
     if (p.includes('/templates/email')) return 'email'
+    if (p.includes('/templates/file-forms') || p.includes('/templates/files')) return 'files'
     return 'files'
   }, [location.pathname])
 
   // query 기반 활성 탭 (우선순위: query -> path)
-  const tabParam = searchParams.get('tab')
+  const tabParam = params.tab
   const activeKey = tabParam || activeFromPath
 
   useEffect(() => {
+    // 파일 양식 페이지에서는 탭 관련 로직 스킵
+    if (isFileFormsPage) return
+
     // query가 없거나 잘못된 값이면, 현재 path 기반 탭으로 정규화
     const validKeys = new Set(tabItems.map(t => t.key))
     const next = tabParam && validKeys.has(tabParam) ? tabParam : activeFromPath
     if (tabParam !== next) {
-      const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('tab', next)
-      setSearchParams(nextParams, { replace: true })
+      setParams({
+        tab: next,
+      })
     }
-  }, [activeFromPath, searchParams, setSearchParams, tabItems, tabParam])
+  }, [activeFromPath, params.tab, setParams, tabItems, tabParam, isFileFormsPage])
 
   const handleTabChange = (key: string) => {
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.set('tab', key)
-    setSearchParams(nextParams, { replace: true })
+    setParams({
+      tab: key,
+    })
 
-    const target = tabItems.find(t => t.key === key)?.path || '/templates/files'
+    const target = tabItems.find(t => t.key === key)?.path || '/templates/file-forms'
     if (location.pathname !== target) {
       navigate(target, { replace: true })
     }
@@ -60,15 +73,19 @@ export function TemplateListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-      </Space>
-      <Tabs
-        activeKey={activeKey}
-        onChange={handleTabChange}
-        items={tabItems.map(t => ({ key: t.key, label: t.label }))}
-        style={{ marginBottom: 12 }}
-      />
+      {!isFileFormsPage && (
+        <>
+          <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+            <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
+          </Space>
+          <Tabs
+            activeKey={activeKey}
+            onChange={handleTabChange}
+            items={tabItems.map(t => ({ key: t.key, label: t.label }))}
+            style={{ marginBottom: 12 }}
+          />
+        </>
+      )}
       <Outlet />
     </div>
   )

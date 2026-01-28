@@ -229,3 +229,56 @@ export function showWarningMessage(messageText: string) {
   message.warning(messageText)
 }
 
+/**
+ * Phase 2: 에러 핸들링 래퍼 함수
+ * 성공/실패 메시지와 콜백을 포함한 통합 에러 핸들링
+ *
+ * @example
+ * ```typescript
+ * await withErrorHandling(
+ *   () => approveSettlement(settlement),
+ *   {
+ *     successMessage: '정산이 승인되었습니다.',
+ *     errorMessage: '정산 승인에 실패했습니다.',
+ *     onSuccess: () => fetchSettlements(),
+ *   }
+ * )
+ * ```
+ */
+export async function withErrorHandling<T>(
+  operation: () => Promise<T>,
+  options?: {
+    successMessage?: string
+    errorMessage?: string
+    onSuccess?: (result: T) => void | Promise<void>
+    onError?: (error: Error) => void
+    context?: string
+  }
+): Promise<T | undefined> {
+  try {
+    const result = await operation()
+
+    if (options?.successMessage) {
+      message.success(options.successMessage)
+    }
+
+    if (options?.onSuccess) {
+      await options.onSuccess(result)
+    }
+
+    return result
+  } catch (error) {
+    const errorInfo = handleError(error, {
+      defaultMessage: options?.errorMessage,
+      context: options?.context,
+      showMessage: !!options?.errorMessage,
+    })
+
+    if (options?.onError) {
+      const err = error instanceof Error ? error : new Error(errorInfo.message)
+      options.onError(err)
+    }
+
+    return undefined
+  }
+}

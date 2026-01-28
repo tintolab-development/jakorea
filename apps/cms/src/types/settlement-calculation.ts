@@ -43,6 +43,8 @@ export interface SettlementCalculationRule {
   instructorFee: InstructorFeeRule
   transportation: TransportationRule
   accommodation: AccommodationRule
+  /** FR-G01: 일사일교 사업 특수성 (거리 기준 60km, 숙박비 실비 등) */
+  isSpecialProgram?: boolean
   programId?: UUID // 프로그램별 규칙 (없으면 전역 규칙)
   enabled: boolean
   createdAt: DateValue

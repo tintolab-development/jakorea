@@ -10,6 +10,7 @@ import { Calendar, Badge } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES } from '@/shared/constants'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
 import type { Schedule } from '@/types/domain'
 
@@ -28,7 +29,7 @@ export function MyScheduleCalendarPage() {
       setSchedules(data)
     } catch (error) {
       console.error('일정 로드 실패:', error)
-      message.error('일정 정보를 불러오는 중 오류가 발생했습니다.')
+      message.error(MESSAGES.error.scheduleLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -133,4 +134,3 @@ export function MyScheduleCalendarPage() {
     </div>
   )
 }
-

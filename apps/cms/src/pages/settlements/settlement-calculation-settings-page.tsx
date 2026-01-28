@@ -1,9 +1,10 @@
 /**
  * 정산 산출 로직 설정 페이지
  * V3 Phase 4: 정산 산출 로직 설정
+ * Phase 0.4.1: 프로젝트별 규칙 설정 UI ↔ rule service 연동
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Card,
   Space,
@@ -15,69 +16,111 @@ import {
   message,
   Typography,
   Alert,
+  Spin,
 } from 'antd'
 import { SaveOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { SettlementCalculationRule } from '@/types/settlement-calculation'
+import { settlementCalculationRuleService } from '@/entities/settlement/api/settlement-calculation-rule-service'
+import { ACCOMMODATION_FEE } from '@/shared/constants/settlement-rules'
+import { MESSAGES } from '@/shared/constants'
 
 const { Title, Paragraph } = Typography
 
-// Mock 데이터 (실제로는 API에서 가져와야 함)
-const defaultRule: Partial<SettlementCalculationRule> = {
-  name: '기본 정산 규칙',
-  description: '전역 정산 산출 규칙',
-  instructorFee: {
-    defaultAmount: 200000,
-  },
-  transportation: {
-    type: 'distance',
-    distanceThreshold: 60,
-    ratePerKm: 100,
-    enabled: true,
-  },
-  accommodation: {
-    type: 'fixed',
-    fixedAmount: 80000,
-    enabled: true,
-  },
-  enabled: true,
+/** 규칙 → 폼 초기값 */
+function ruleToFormValues(rule: SettlementCalculationRule) {
+  return {
+    name: rule.name,
+    description: rule.description,
+    isSpecialProgram: rule.isSpecialProgram ?? false,
+    instructorFee: {
+      defaultAmount: rule.instructorFee?.defaultAmount ?? 200000,
+    },
+    transportation: {
+      type: rule.transportation?.type ?? 'distance',
+      distanceThreshold: rule.transportation?.distanceThreshold ?? 60,
+      ratePerKm: rule.transportation?.ratePerKm ?? 100,
+      fixedAmount: rule.transportation?.fixedAmount,
+      enabled: rule.transportation?.enabled ?? true,
+    },
+    accommodation: {
+      type: rule.accommodation?.type ?? 'fixed',
+      fixedAmount: rule.accommodation?.fixedAmount ?? ACCOMMODATION_FEE,
+      maxAmount: rule.accommodation?.maxAmount,
+      enabled: rule.accommodation?.enabled ?? true,
+    },
+    enabled: rule.enabled ?? true,
+  }
 }
 
 export function SettlementCalculationSettingsPage() {
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const fetchRule = useCallback(async () => {
+    setLoading(true)
+    try {
+      const rule = await settlementCalculationRuleService.getGlobalRule()
+      form.setFieldsValue(ruleToFormValues(rule))
+    } catch (e) {
+      console.error('Failed to fetch calculation rule:', e)
+      message.error(MESSAGES.error.calculationRuleLoadFailed)
+    } finally {
+      setLoading(false)
+    }
+  }, [form])
 
   useEffect(() => {
-    // Mock: 실제로는 API에서 가져와야 함
-    form.setFieldsValue(defaultRule)
-  }, [form])
+    fetchRule()
+  }, [fetchRule])
 
   const handleSave = async () => {
     try {
-      await form.validateFields()
+      const values = await form.validateFields()
       setSaving(true)
 
-      // TODO: 실제 API 호출
-      // const values = form.getFieldsValue()
-      // await settlementCalculationService.updateRule(values)
+      await settlementCalculationRuleService.updateGlobalRule({
+        name: values.name ?? '기본 정산 규칙',
+        description: values.description ?? '전역 정산 산출 규칙',
+        isSpecialProgram: values.isSpecialProgram ?? false,
+        instructorFee: values.instructorFee,
+        transportation: values.transportation,
+        accommodation: values.accommodation,
+        enabled: values.enabled ?? true,
+      })
 
-      // Mock: 저장 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      message.success('정산 산출 규칙이 저장되었습니다')
+      message.success(MESSAGES.success.calculationRulesSaved)
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
       console.error('Failed to save calculation rule:', error)
-      message.error('저장 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.calculationRuleSaveFailed)
     } finally {
       setSaving(false)
     }
   }
 
-  const handleReset = () => {
-    form.setFieldsValue(defaultRule)
-    message.info('기본값으로 초기화되었습니다')
+  const handleReset = async () => {
+    try {
+      setSaving(true)
+      const rule = await settlementCalculationRuleService.resetGlobalRule()
+      form.setFieldsValue(ruleToFormValues(rule))
+      message.info(MESSAGES.success.resetToDefault)
+    } catch (e) {
+      console.error('Failed to reset rule:', e)
+      message.error(MESSAGES.error.calculationRuleResetFailed)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px', textAlign: 'center' }}>
+        <Spin size="large" tip="규칙 불러오는 중…" />
+      </div>
+    )
   }
 
   return (
@@ -112,6 +155,24 @@ export function SettlementCalculationSettingsPage() {
             >
               <InputNumber style={{ width: '100%' }} min={0} suffix="원" />
             </Form.Item>
+          </Card>
+
+          {/* 일사일교 사업 특수성 (FR-G01) */}
+          <Card title="일사일교 사업 특수성" style={{ marginBottom: 16 }}>
+            <Form.Item
+              name="isSpecialProgram"
+              valuePropName="checked"
+              label="일사일교 사업 적용"
+              tooltip="거리 기준 60km 초과 시 교통비 지급, 타지역 이동 시 숙박비 실비 등"
+            >
+              <Switch checkedChildren="적용" unCheckedChildren="미적용" />
+            </Form.Item>
+            <Alert
+              message="적용 시 거주지 기준 60km 초과 교통비, 숙박비 실비(타지역) 등이 반영됩니다."
+              type="info"
+              showIcon
+              style={{ marginTop: 8 }}
+            />
           </Card>
 
           {/* 교통비 계산 규칙 */}

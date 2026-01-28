@@ -231,6 +231,6 @@ export function randomMatchVolunteers(
  */
 export function getVolunteerIds(): UUID[] {
   return mockUsers
-    .filter(user => user.role === 'VOLUNTEER' && user.isActive)
+    .filter(user => user.role === 'INDIVIDUAL' && user.isActive)
     .map(user => user.id)
 }

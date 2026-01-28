@@ -246,6 +246,16 @@
 
 ## 📱 반응형 디자인
 
+### Responsive Design Requirement
+
+**All components and screens must be designed and implemented with three responsive breakpoint classifications:**
+
+1. **Mobile**: 767px and below
+2. **Tablet**: 768px - 1199px
+3. **Desktop**: 1200px and above
+
+Every component, page, and screen must consider and implement appropriate layouts, spacing, and interactions for each of these three breakpoint categories. This ensures consistent user experience across all device types.
+
 ### 브레이크포인트 (데스크톱 우선)
 
 - 데스크톱: 1200px 이상
@@ -287,6 +297,96 @@
 
 ---
 
+## 🗑️ 삭제 기능 규칙
+
+### 필수 사항
+
+**모든 삭제 기능은 반드시 2단계 확인 모달을 거쳐야 합니다.**
+
+1. **직접 삭제 금지**: 삭제 버튼/액션을 클릭했을 때 즉시 삭제하지 않고, 반드시 확인 모달을 표시해야 합니다.
+
+2. **모달 컴포넌트 사용**: `ConfirmModal` 컴포넌트를 사용하여 삭제 확인을 받아야 합니다.
+
+3. **모달 구성 요소**:
+   - `title`: "{항목명} 삭제" 형식 (예: "학교 삭제", "프로그램 삭제")
+   - `content`: "정말로 이 {항목명}을(를) 삭제하시겠습니까?" 형식의 확인 질문
+   - `warningMessage`: "삭제된 {항목명}은(는) 복구할 수 없습니다." 형식의 경고 메시지
+   - `danger={true}`: 필수 (빨간색 강조)
+   - `confirmText="삭제"`: 삭제 버튼 텍스트
+   - `cancelText="취소"`: 취소 버튼 텍스트
+
+### 구현 패턴
+
+```tsx
+// 1. 상태 관리
+const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+const [itemToDelete, setItemToDelete] = useState<ItemType | null>(null)
+
+// 2. 삭제 버튼 클릭 핸들러 (모달 열기만)
+const handleDeleteClick = (item: ItemType) => {
+  setItemToDelete(item)
+  setDeleteModalOpen(true)
+}
+
+// 3. 모달에서 확인 클릭 시 실제 삭제 수행
+const handleDeleteConfirm = async () => {
+  if (!itemToDelete) return
+
+  try {
+    await deleteItem(itemToDelete.id)
+    showSuccessMessage('삭제되었습니다.')
+    setDeleteModalOpen(false)
+    setItemToDelete(null)
+    // 목록 새로고침 등
+  } catch (error) {
+    handleError(error)
+  }
+}
+
+// 4. 모달에서 취소 클릭
+const handleDeleteCancel = () => {
+  setDeleteModalOpen(false)
+  setItemToDelete(null)
+}
+
+// 5. JSX에서 모달 사용
+;<ConfirmModal
+  open={deleteModalOpen}
+  title={`${itemName} 삭제`}
+  content={`정말로 이 ${itemName}을(를) 삭제하시겠습니까?`}
+  warningMessage={`삭제된 ${itemName}은(는) 복구할 수 없습니다.`}
+  onConfirm={handleDeleteConfirm}
+  onCancel={handleDeleteCancel}
+  confirmText="삭제"
+  cancelText="취소"
+  danger
+/>
+```
+
+### 예외 사항
+
+- **일괄 삭제**: 여러 항목을 선택하여 삭제하는 경우에도 동일한 모달 패턴을 사용하되, `content`에 선택된 항목 수를 표시합니다.
+  - 예: "선택한 3개의 항목을 삭제하시겠습니까?"
+
+### 기존 코드 수정 필요
+
+다음과 같은 패턴은 수정이 필요합니다:
+
+```tsx
+// ❌ 잘못된 패턴: 직접 삭제
+const handleDelete = async (item: ItemType) => {
+  await deleteItem(item.id) // 즉시 삭제
+}
+
+// ✅ 올바른 패턴: 모달을 통한 2단계 확인
+const handleDeleteClick = (item: ItemType) => {
+  setItemToDelete(item)
+  setDeleteModalOpen(true)
+}
+```
+
+---
+
 ## 📝 체크리스트
 
 새 페이지 구현 시 확인:
@@ -300,3 +400,4 @@
 - [ ] 에러 상태 처리
 - [ ] 페이지네이션 중앙 정렬
 - [ ] 접근성 고려 (ARIA, 키보드)
+- [ ] **삭제 기능은 2단계 확인 모달 사용**

@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useMemo, type CSSProperties } from 'react'
-import { Card, Space, Statistic, Table, Tag, Badge, Button, Select } from 'antd'
+import { Card, Space, Statistic, Table, Tag, Badge, Button, Select, message } from 'antd'
 import { CalendarOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useLocation } from 'react-router-dom'
 import {
@@ -15,6 +15,7 @@ import { useSettlementStore } from '@/features/settlement/model/settlement-store
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { MESSAGES } from '@/shared/constants'
 import { mockProgramsMap, mockInstructorsMap } from '@/data/mock'
 import type { Settlement } from '@/types/domain'
 import dayjs from 'dayjs'
@@ -189,9 +190,29 @@ export function MonthlySettlementPage() {
             {currentPeriod && (
               <Button
                 icon={<DownloadOutlined />}
-                onClick={() => {
-                  // TODO: 월별 정산 일괄 다운로드
-                  console.log('Download monthly settlements:', currentPeriod)
+                onClick={async () => {
+                  try {
+                    // 월별 정산 일괄 다운로드 (Excel)
+                    const { generateTransferList } = await import('@/shared/utils/settlement-document')
+                    const transferRows = currentSettlements
+                      .filter(s => s.status !== 'cancelled')
+                      .map(s => {
+                        const program = mockProgramsMap.get(s.programId)
+                        const instructor = mockInstructorsMap.get(s.instructorId)
+                        return {
+                          period: s.period,
+                          programTitle: program?.title || '프로그램 정보 없음',
+                          instructorName: instructor?.name || '강사 정보 없음',
+                          bankAccount: instructor?.bankAccount || '-',
+                          amount: s.totalAmount,
+                        }
+                      })
+                    await generateTransferList(transferRows, { passwordProvided: false })
+                    message.success(MESSAGES.success.monthlyPaymentStatementDownloaded)
+                  } catch (error) {
+                    console.error('Failed to download monthly settlements:', error)
+                    message.error(MESSAGES.error.monthlyPaymentStatementDownloadFailed)
+                  }
                 }}
               >
                 월별 지급조서 일괄 다운로드

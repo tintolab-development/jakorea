@@ -3,10 +3,12 @@
  * Phase 1.3: 테이블 + 필터
  */
 
-import { Table, Input, Button, Space, Tag } from 'antd'
+import { useState, useMemo, useCallback } from 'react'
+import { Table, Tag } from 'antd'
 import { useSponsorTable } from '../model/use-sponsor-table'
 import type { Sponsor } from '@/types/domain'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 
 interface SponsorListProps {
   data: Sponsor[]
@@ -16,28 +18,71 @@ interface SponsorListProps {
 export function SponsorList({ data, loading }: SponsorListProps) {
   const { table } = useSponsorTable(data)
 
+  // 필터 상태 분리 (pendingFilters: 입력 중, appliedFilters: 적용된 필터)
+  // 초기 로드 시에는 필터를 적용하지 않음 (조회 버튼을 눌러야만 필터링)
+  const [pendingFilters, setPendingFilters] = useState({
+    name: '',
+  })
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: '',
+  })
+
+  // 조회 버튼 클릭 핸들러
+  const handleSearch = useCallback(() => {
+    setAppliedFilters(pendingFilters)
+    // 테이블 필터 적용
+    table.getColumn('name')?.setFilterValue(pendingFilters.name || undefined)
+  }, [pendingFilters, table])
+
+  // 필터 초기화 핸들러
+  const handleFilterReset = useCallback(() => {
+    const resetFilters = { name: '' }
+    setPendingFilters(resetFilters)
+    setAppliedFilters(resetFilters)
+    table.resetColumnFilters()
+  }, [table])
+
+  // 필터링된 데이터
+  const filteredData = useMemo(() => {
+    if (!appliedFilters.name.trim()) {
+      return data
+    }
+    const query = appliedFilters.name.trim().toLowerCase()
+    return data.filter(item => item.name.toLowerCase().includes(query))
+  }, [data, appliedFilters.name])
+
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} size="middle">
-        <Input
-          placeholder="스폰서명 검색"
-          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-          onChange={e => table.getColumn('name')?.setFilterValue(e.target.value)}
-          style={{ width: 200 }}
-        />
-        <Button onClick={() => table.resetColumnFilters()}>필터 초기화</Button>
-      </Space>
+      {/* 필터 위젯 */}
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'name',
+            type: 'search',
+            label: '스폰서명',
+            placeholder: '스폰서명을 입력하세요',
+          },
+        ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+        loading={loading}
+        resetButtonText="초기화"
+      />
 
+      {/* 테이블 */}
       <Table
-        dataSource={table.getRowModel().rows.map(row => row.original)}
+        dataSource={filteredData}
         columns={[
           {
             title: '스폰서명',
             dataIndex: 'name',
             key: 'name',
-            render: (text: string) => (
-              <Tag color={domainColorsHex.sponsor.primary}>{text}</Tag>
-            ),
+            render: (text: string) => <Tag color={domainColorsHex.sponsor.primary}>{text}</Tag>,
           },
           {
             title: '설명',
@@ -55,21 +100,11 @@ export function SponsorList({ data, loading }: SponsorListProps) {
         rowKey="id"
         loading={loading}
         pagination={{
-          current: table.getState().pagination.pageIndex + 1,
-          pageSize: table.getState().pagination.pageSize,
-          total: table.getFilteredRowModel().rows.length,
+          defaultPageSize: 10,
           showSizeChanger: true,
-          showTotal: (total) => `총 ${total}개`,
-          onChange: (page, pageSize) => {
-            table.setPageIndex(page - 1)
-            table.setPageSize(pageSize)
-          },
+          showTotal: total => `총 ${total}개`,
         }}
       />
     </div>
   )
 }
-
-
-
-

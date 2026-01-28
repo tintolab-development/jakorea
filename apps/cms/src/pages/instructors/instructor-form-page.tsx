@@ -9,6 +9,7 @@ import { InstructorForm } from '@/features/instructor/ui/instructor-form'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import { message } from 'antd'
+import { MESSAGES } from '@/shared/constants'
 
 export function InstructorFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -28,14 +29,14 @@ export function InstructorFormPage() {
     try {
       if (isEdit && id) {
         await updateInstructor(id, data)
-        message.success('강사 정보가 수정되었습니다')
+        message.success(MESSAGES.success.instructorUpdated)
       } else {
         await createInstructor(data)
-        message.success('강사가 등록되었습니다')
+        message.success(MESSAGES.success.instructorCreated)
       }
       navigate('/instructors')
     } catch {
-      message.error(isEdit ? '수정 중 오류가 발생했습니다' : '등록 중 오류가 발생했습니다')
+      message.error(isEdit ? MESSAGES.error.update : MESSAGES.error.create)
     }
   }
 

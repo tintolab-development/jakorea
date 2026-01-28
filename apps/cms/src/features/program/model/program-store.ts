@@ -20,7 +20,11 @@ interface ProgramState {
   createProgram: (data: Omit<Program, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   updateProgram: (id: string, data: Partial<Omit<Program, 'id' | 'createdAt'>>) => Promise<void>
   deleteProgram: (id: string) => Promise<void>
-  updateRound: (programId: string, roundId: string, data: Partial<Omit<ProgramRound, 'id' | 'programId'>>) => Promise<void>
+  updateRound: (
+    programId: string,
+    roundId: string,
+    data: Partial<Omit<ProgramRound, 'id' | 'programId'>>
+  ) => Promise<void>
   setSelectedProgram: (program: Program | null) => void
   clearError: () => void
 }
@@ -38,7 +42,7 @@ export const useProgramStore = create<ProgramState>(set => ({
       const { user } = useAuthStore.getState()
       const userRole: UserRole | null = user?.role || null
       const userId = user?.instructorId || user?.id
-      
+
       const programs = await programService.getAll(userRole, userId)
       set({ programs, loading: false })
     } catch (error) {
@@ -56,10 +60,14 @@ export const useProgramStore = create<ProgramState>(set => ({
     }
   },
 
-  createProgram: async (data) => {
+  createProgram: async data => {
     set({ loading: true, error: null })
     try {
-      const newProgram = await programService.create(data)
+      // P0: 현재 사용자 정보 가져오기 (프로그램 생성 시 자동 OWNER 권한 부여용)
+      const { user } = useAuthStore.getState()
+      const creatorUserId = user?.id
+
+      const newProgram = await programService.create(data, creatorUserId)
       set(state => ({
         programs: [...state.programs, newProgram],
         loading: false,
@@ -85,7 +93,7 @@ export const useProgramStore = create<ProgramState>(set => ({
     }
   },
 
-  deleteProgram: async (id) => {
+  deleteProgram: async id => {
     set({ loading: true, error: null })
     try {
       await programService.delete(id)
@@ -107,7 +115,8 @@ export const useProgramStore = create<ProgramState>(set => ({
       const updatedProgram = await programService.getById(programId)
       set(state => ({
         programs: state.programs.map(p => (p.id === programId ? updatedProgram : p)),
-        selectedProgram: state.selectedProgram?.id === programId ? updatedProgram : state.selectedProgram,
+        selectedProgram:
+          state.selectedProgram?.id === programId ? updatedProgram : state.selectedProgram,
         loading: false,
       }))
     } catch (error) {
@@ -116,15 +125,7 @@ export const useProgramStore = create<ProgramState>(set => ({
     }
   },
 
-  setSelectedProgram: (program) => set({ selectedProgram: program }),
+  setSelectedProgram: program => set({ selectedProgram: program }),
 
   clearError: () => set({ error: null }),
 }))
-
-
-
-
-
-
-
-

@@ -10,6 +10,7 @@ import { scheduleNegotiationService } from '@/entities/schedule-negotiation/api/
 
 interface ScheduleNegotiationStore {
   items: ScheduleNegotiation[]
+  selectedNegotiation: ScheduleNegotiation | null
   loading: boolean
   error: string | null
   fetchAll: () => Promise<void>
@@ -21,10 +22,13 @@ interface ScheduleNegotiationStore {
     data: Partial<Omit<ScheduleNegotiation, 'id' | 'createdAt'>>
   ) => Promise<ScheduleNegotiation>
   delete: (id: UUID) => Promise<void>
+  setSelectedNegotiation: (negotiation: ScheduleNegotiation | null) => void
+  clearSelectedNegotiation: () => void
 }
 
 export const useScheduleNegotiationStore = create<ScheduleNegotiationStore>(set => ({
   items: [],
+  selectedNegotiation: null,
   loading: false,
   error: null,
 
@@ -62,6 +66,8 @@ export const useScheduleNegotiationStore = create<ScheduleNegotiationStore>(set 
       const updated = await scheduleNegotiationService.update(id, data)
       set(state => ({
         items: state.items.map(item => (item.id === id ? updated : item)),
+        selectedNegotiation:
+          state.selectedNegotiation?.id === id ? updated : state.selectedNegotiation,
         loading: false,
       }))
       return updated
@@ -80,6 +86,8 @@ export const useScheduleNegotiationStore = create<ScheduleNegotiationStore>(set 
       await scheduleNegotiationService.delete(id)
       set(state => ({
         items: state.items.filter(item => item.id !== id),
+        selectedNegotiation:
+          state.selectedNegotiation?.id === id ? null : state.selectedNegotiation,
         loading: false,
       }))
     } catch (error) {
@@ -90,6 +98,8 @@ export const useScheduleNegotiationStore = create<ScheduleNegotiationStore>(set 
       throw error
     }
   },
+
+  setSelectedNegotiation: negotiation => set({ selectedNegotiation: negotiation }),
+
+  clearSelectedNegotiation: () => set({ selectedNegotiation: null }),
 }))
-
-

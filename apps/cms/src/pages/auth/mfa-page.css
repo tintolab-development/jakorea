@@ -1,0 +1,28 @@
+/**
+ * MFA 페이지 스타일
+ * Phase 0.5.1: MFA/OTP UX
+ */
+
+.mfa-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.mfa-card {
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mfa-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.mfa-header .ant-typography {
+  margin-bottom: 8px;
+}

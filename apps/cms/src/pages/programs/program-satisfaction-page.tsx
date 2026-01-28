@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Card, Button, Space, Table, Tag, Empty, Spin } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { CheckCircleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMyPrograms, type MyProgram } from '@/entities/program/api/instructor-program-service'
@@ -126,6 +127,88 @@ export function ProgramSatisfactionPage() {
     )
   }
 
+  const columns: ColumnsType<MyProgram> = [
+    {
+      title: '프로그램명',
+      dataIndex: 'title',
+      key: 'title',
+      width: 300,
+      render: (title: string, record: MyProgram) => (
+        <Button
+          type="link"
+          onClick={() => handleOpenModal(record)}
+          style={{ padding: 0, fontWeight: 500 }}
+        >
+          {title}
+        </Button>
+      ),
+    },
+    {
+      title: '카테고리',
+      dataIndex: 'category',
+      key: 'category',
+      width: 150,
+      render: (category: string) => (
+        <Tag color={category === 'school' ? 'blue' : 'purple'}>
+          {category === 'school' ? '학교 프로그램' : '개인 프로그램'}
+        </Tag>
+      ),
+    },
+    {
+      title: '진행 기간',
+      key: 'period',
+      width: 200,
+      render: (_, record) =>
+        `${dayjs(record.startDate).format('YYYY-MM-DD')} ~ ${dayjs(record.endDate).format('YYYY-MM-DD')}`,
+    },
+    {
+      title: '만족도 조사 상태',
+      key: 'satisfactionStatus',
+      width: 150,
+      render: (_, record) => {
+        const submitted = submittedRecords.find(r => r.programId === record.id)
+        return submitted ? (
+          <Tag color="success" icon={<CheckCircleOutlined />}>
+            제출 완료
+          </Tag>
+        ) : (
+          <Tag color="default">미제출</Tag>
+        )
+      },
+    },
+    {
+      title: '평균점수',
+      key: 'averageRating',
+      width: 120,
+      render: (_, record) => {
+        const submitted = submittedRecords.find(r => r.programId === record.id)
+        if (!submitted || !submitted.ratings) {
+          return <span style={{ color: 'rgba(0, 0, 0, 0.25)' }}>-</span>
+        }
+        const { programRating, contentRating, instructorRating, overallRating } = submitted.ratings
+        const average = (programRating + contentRating + instructorRating + overallRating) / 4
+        return (
+          <span style={{ fontWeight: 500 }}>
+            {average.toFixed(1)}
+          </span>
+        )
+      },
+    },
+    {
+      title: '작업',
+      key: 'action',
+      width: 100,
+      render: (_, record) => (
+        <Button
+          type="link"
+          onClick={() => handleOpenModal(record)}
+        >
+          {submittedRecords.find(r => r.programId === record.id) ? '수정' : '작성'}
+        </Button>
+      ),
+    },
+  ]
+
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
@@ -137,87 +220,7 @@ export function ProgramSatisfactionPage() {
           <Empty description="만족도 조사를 작성할 수 있는 완료된 프로그램이 없습니다." />
         ) : (
           <Table
-            columns={[
-              {
-                title: '프로그램명',
-                dataIndex: 'title',
-                key: 'title',
-                width: 300,
-                render: (title: string, record: MyProgram) => (
-                  <Button
-                    type="link"
-                    onClick={() => handleOpenModal(record)}
-                    style={{ padding: 0, fontWeight: 500 }}
-                  >
-                    {title}
-                  </Button>
-                ),
-              },
-              {
-                title: '카테고리',
-                dataIndex: 'category',
-                key: 'category',
-                width: 150,
-                render: (category: string) => (
-                  <Tag color={category === 'school' ? 'blue' : 'purple'}>
-                    {category === 'school' ? '학교 프로그램' : '개인 프로그램'}
-                  </Tag>
-                ),
-              },
-              {
-                title: '진행 기간',
-                key: 'period',
-                width: 200,
-                render: (_: any, record: MyProgram) =>
-                  `${dayjs(record.startDate).format('YYYY-MM-DD')} ~ ${dayjs(record.endDate).format('YYYY-MM-DD')}`,
-              },
-              {
-                title: '만족도 조사 상태',
-                key: 'satisfactionStatus',
-                width: 150,
-                render: (_: any, record: MyProgram) => {
-                  const submitted = submittedRecords.find(r => r.programId === record.id)
-                  return submitted ? (
-                    <Tag color="success" icon={<CheckCircleOutlined />}>
-                      제출 완료
-                    </Tag>
-                  ) : (
-                    <Tag color="default">미제출</Tag>
-                  )
-                },
-              },
-              {
-                title: '평균점수',
-                key: 'averageRating',
-                width: 120,
-                render: (_: any, record: MyProgram) => {
-                  const submitted = submittedRecords.find(r => r.programId === record.id)
-                  if (!submitted || !submitted.ratings) {
-                    return <span style={{ color: 'rgba(0, 0, 0, 0.25)' }}>-</span>
-                  }
-                  const { programRating, contentRating, instructorRating, overallRating } = submitted.ratings
-                  const average = (programRating + contentRating + instructorRating + overallRating) / 4
-                  return (
-                    <span style={{ fontWeight: 500 }}>
-                      {average.toFixed(1)}
-                    </span>
-                  )
-                },
-              },
-              {
-                title: '작업',
-                key: 'action',
-                width: 100,
-                render: (_: any, record: MyProgram) => (
-                  <Button
-                    type="link"
-                    onClick={() => handleOpenModal(record)}
-                  >
-                    {submittedRecords.find(r => r.programId === record.id) ? '수정' : '작성'}
-                  </Button>
-                ),
-              },
-            ]}
+            columns={columns}
             dataSource={programs}
             rowKey="id"
             pagination={{

@@ -11,9 +11,11 @@ import { ArrowLeftOutlined, CalendarOutlined, DollarOutlined, FileTextOutlined }
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMyProgramDetail, type MyProgram } from '@/entities/program/api/instructor-program-service'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { getCommonStatusLabel, getCommonStatusColor, getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
+import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { MESSAGES } from '@/shared/constants'
 import { mockApplications, mockMatchings } from '@/data/mock'
-import { programService } from '@/entities/program/api/program-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
@@ -22,6 +24,7 @@ export function MyProgramHistoryPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [program, setProgram] = useState<MyProgram | null>(null)
   const [settlements, setSettlements] = useState<Settlement[]>([])
   const [loading, setLoading] = useState(false)
@@ -33,14 +36,14 @@ export function MyProgramHistoryPage() {
     try {
       const data = await getMyProgramDetail(user.instructorId, id)
       if (!data) {
-        message.error('프로그램을 찾을 수 없습니다.')
+        message.error(MESSAGES.error.programNotFound)
         navigate('/programs/my/active')
         return
       }
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      message.error('프로그램 정보를 불러오는 중 오류가 발생했습니다.')
+        message.error(MESSAGES.error.programLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -85,7 +88,7 @@ export function MyProgramHistoryPage() {
     )
   }
 
-  const fullProgram = programService.getByIdSync(program.id)
+  const fullProgram = getProgramByIdSync(program.id)
   const matching = mockMatchings.find(m => m.programId === program.id && m.instructorId === user?.instructorId)
   const applications = mockApplications.filter(app => app.programId === program.id)
 
@@ -149,7 +152,7 @@ export function MyProgramHistoryPage() {
       key: 'status',
       width: 120,
       render: (status: Settlement['status']) => (
-        <Tag color={getSettlementStatusColor(status)}>{getSettlementStatusLabel(status)}</Tag>
+        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
       ),
     },
     {
@@ -255,7 +258,7 @@ export function MyProgramHistoryPage() {
                   dataIndex: 'status',
                   key: 'status',
                   render: (status: string) => (
-                    <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+                    <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
                   ),
                 },
               ]}

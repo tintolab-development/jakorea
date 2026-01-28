@@ -4,10 +4,11 @@
  * 참고 화면: U-04-04 보고서 작성
  */
 
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { Card, Space, Typography, Form, Input, InputNumber, Button, Alert, message } from 'antd'
-import { GuideMessage } from '@/shared/ui'
+import { useNavigate } from 'react-router-dom'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { Card, Space, Typography, Form, Input, InputNumber, Alert, message } from 'antd'
+import { GuideMessage, SingleCTA } from '@/shared/ui'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   lectureReportFields,
   volunteerReportFields,
@@ -15,18 +16,26 @@ import {
   reportSubmissionGuides,
 } from '@/data/mock/reports'
 import type { ReportType, ReportField } from '@/types/domain'
-import { reportService } from '@/entities/report/api/report-service'
+import { useReportService } from '@/features/report/hooks/use-report-service'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 
 const { Title, Paragraph } = Typography
 const { TextArea } = Input
 
 export function ReportFormPage() {
-  const [searchParams] = useSearchParams()
+  const { params } = useQueryParams<{
+    type?: string
+    activityId?: string
+    scheduleId?: string
+    programId?: string
+  }>()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const { submit: submitReport, loading: serviceLoading } = useReportService()
   const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
+  const loading = serviceLoading
 
-  const reportType = (searchParams.get('type') || 'lecture') as ReportType
+  const reportType = (params.type || 'lecture') as ReportType
 
   // 보고서 타입에 따른 필드 선택
   const reportFields: ReportField[] =
@@ -59,7 +68,7 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 입력해주세요.`,
+                message: MESSAGES.validation.fieldRequired(field.label),
               },
             ]}
           >
@@ -80,13 +89,13 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 입력해주세요.`,
+                message: MESSAGES.validation.fieldRequired(field.label),
               },
               {
                 type: 'number',
                 min: field.validation?.min,
                 max: field.validation?.max,
-                message: `${field.validation?.min || 0} 이상 ${field.validation?.max || '무제한'} 이하의 값을 입력해주세요.`,
+                message: MESSAGES.validation.numberRange(field.validation?.min || 0, field.validation?.max || '무제한'),
               },
             ]}
           >
@@ -107,7 +116,7 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 입력해주세요.`,
+                message: MESSAGES.validation.fieldRequired(field.label),
               },
             ]}
           >
@@ -123,7 +132,7 @@ export function ReportFormPage() {
             rules={[
               {
                 required: field.required,
-                message: `${field.label}을(를) 선택해주세요.`,
+                message: MESSAGES.validation.selectRequired(field.label),
               },
             ]}
           >
@@ -138,52 +147,56 @@ export function ReportFormPage() {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
-      setLoading(true)
 
-      // activityId와 programId는 URL 파라미터에서 가져올 수 있음 (현재는 Mock)
-      const activityId = searchParams.get('activityId') || undefined
-      const programId = searchParams.get('programId') || undefined
+      const activityId = params.activityId || undefined
+      const programId = params.programId || undefined
+      const scheduleId = params.scheduleId || undefined
 
-      await reportService.submit({
+      await submitReport({
         type: reportType,
         activityId,
         programId,
+        scheduleId,
         fields: values,
       })
 
-      message.success('보고서가 제출되었습니다.')
-      navigate('/')
+      message.success(MESSAGES.success.reportSubmitted)
+      // Phase 0.2.7: 강사인 경우 강사 보고서 목록으로 리다이렉트
+      if (user?.role === 'INSTRUCTOR' && reportType === 'lecture') {
+        navigate('/instructor/reports')
+      } else {
+        navigate('/')
+      }
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error) {
         // Form validation error
         return
       }
       console.error('Failed to submit report:', error)
-      message.error('보고서 제출 중 오류가 발생했습니다.')
-    } finally {
-      setLoading(false)
+      message.error(MESSAGES.error.reportSubmitFailed)
     }
   }
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px' }}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        {/* 보고서 안내 영역 (상단) */}
+        {/* 보고서 안내 영역 (상단) - Phase 5.9: 보고서 제출의 의미와 중요성 강조 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <Title level={2} style={{ margin: 0 }}>
               {reportTitle}
             </Title>
             {submissionGuide && (
-              <Paragraph style={{ margin: 0, fontSize: 16 }}>
+              <Paragraph style={{ margin: 0, fontSize: LAYOUT_CONSTANTS.fontSizes.lg, lineHeight: 1.8 }}>
                 {submissionGuide}
               </Paragraph>
             )}
             <Alert
               message="보고서 제출은 필수 절차입니다"
-              description="보고서를 제출하지 않으면 다음 단계로 진행할 수 없습니다."
-              type="info"
+              description="보고서를 제출하지 않으면 다음 단계로 진행할 수 없습니다. 제출 후에는 수정할 수 없으니 내용을 신중히 작성해 주세요."
+              type="warning"
               showIcon
+              style={{ marginTop: 8 }}
             />
           </Space>
         </Card>
@@ -200,28 +213,28 @@ export function ReportFormPage() {
           </Form>
         </Card>
 
-        {/* 제출 전 주의 안내 영역 */}
+        {/* 제출 전 주의 안내 영역 - Phase 5.9: 제출 후 수정 불가 안내 강화 */}
         <Card>
           <Alert
-            message="제출 전 확인"
-            description="보고서 제출 후에는 수정할 수 없습니다. 내용을 다시 한 번 확인해 주세요."
-            type="warning"
+            message="제출 전 반드시 확인해 주세요"
+            description="보고서 제출 후에는 수정할 수 없습니다. 모든 내용을 다시 한 번 확인한 후 제출해 주세요."
+            type="error"
             showIcon
+            style={{ margin: 0 }}
           />
         </Card>
 
-        {/* 제출 CTA 영역 (단일) */}
+        {/* 제출 CTA 영역 (단일) - Phase 5.9: 공통 UI 원칙 적용 (SingleCTA 사용) */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%', textAlign: 'center' }}>
-            <Button
-              type="primary"
-              size="large"
+            <SingleCTA
+              label="보고서 제출하기"
               onClick={() => form.submit()}
+              type="primary"
               loading={loading}
-              style={{ minWidth: 200 }}
-            >
-              보고서 제출하기
-            </Button>
+              block
+              size="large"
+            />
           </Space>
         </Card>
 

@@ -50,7 +50,10 @@ export default function MyVolunteerHistoryPage() {
       try {
         // 봉사자 이력만 필터링하고 완료된 것만 표시
         const volunteerHistories = mockUserHistories.filter(
-          h => h.role === 'VOLUNTEER' && h.finalStatus !== 'CANCELLED'
+          // Phase 0.1.1: INDIVIDUAL 추가 (봉사 이력은 개인 참여자도 포함)
+          // UserHistory.role은 ParticipationRole 타입이므로 UserRole과 직접 비교 불가
+          // role 필드가 'VOLUNTEER'이거나 'PARTICIPANT'인 경우 필터링
+          h => (h.role === 'VOLUNTEER' || h.role === 'PARTICIPANT') && h.finalStatus !== 'CANCELLED'
         )
         // 완료 일시 기준 내림차순 정렬
         volunteerHistories.sort((a, b) =>

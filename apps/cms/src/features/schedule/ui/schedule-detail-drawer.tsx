@@ -3,16 +3,19 @@
  * Phase 3.1: 사이드 패널로 상세 정보 표시
  */
 
-import { Drawer, Descriptions, Tag, Space, Button, Badge, Alert } from 'antd'
+import { Descriptions, Tag, Space, Badge, Alert } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { Schedule } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
-import { instructorService } from '@/entities/instructor/api/instructor-service'
+import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { useInstructorService } from '@/features/instructor/hooks/use-instructor-service'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
+import { useScheduleStore } from '@/features/schedule/model/schedule-store'
+import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 
 interface ScheduleDetailDrawerProps {
   open: boolean
-  schedule: Schedule | null
+  schedule?: Schedule | null // optional로 변경하여 store의 selectedSchedule 우선 사용
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
@@ -29,32 +32,51 @@ export function ScheduleDetailDrawer({
   loading,
   isConflict = false,
 }: ScheduleDetailDrawerProps) {
-  if (!schedule) return null
+  const { selectedSchedule: storeSelectedSchedule } = useScheduleStore()
 
-  const program = programService.getByIdSync(schedule.programId)
-  const instructor = schedule.instructorId ? instructorService.getByIdSync(schedule.instructorId) : null
+  // prop의 schedule을 우선 사용 (즉시 표시), 없으면 store의 selectedSchedule 사용
+  const displaySchedule = schedule || storeSelectedSchedule || null
+
+  if (!displaySchedule) return null
+
+  const { getByIdSync } = useProgramService()
+  const { getByIdSync: getInstructorByIdSync } = useInstructorService()
+  const program = getByIdSync(displaySchedule.programId)
+  const instructor = displaySchedule.instructorId
+    ? getInstructorByIdSync(displaySchedule.instructorId)
+    : null
+
+  // 액션 버튼 구성
+  const actions = [
+    {
+      key: 'edit',
+      label: '수정',
+      onClick: onEdit,
+      icon: <EditOutlined />,
+    },
+    {
+      key: 'delete',
+      label: '삭제',
+      onClick: onDelete,
+      danger: true,
+      icon: <DeleteOutlined />,
+      loading,
+    },
+  ]
 
   return (
-    <Drawer
+    <BaseDetailDrawer
+      open={open}
+      onClose={onClose}
       title={
         <Space>
-          <Tag color="lime">{schedule.title}</Tag>
+          <Tag color="lime">{displaySchedule.title}</Tag>
           {isConflict && <Badge status="error" text="중복 일정" />}
         </Space>
       }
-      width={792}
-      open={open}
-      onClose={onClose}
-      extra={
-        <Space>
-          <Button icon={<EditOutlined />} onClick={onEdit}>
-            수정
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={onDelete} loading={loading}>
-            삭제
-          </Button>
-        </Space>
-      }
+      width={LAYOUT_CONSTANTS.widths.modal.large}
+      loading={loading}
+      actions={actions}
     >
       {isConflict && (
         <Alert
@@ -62,7 +84,7 @@ export function ScheduleDetailDrawer({
           description="이 일정은 동일 강사의 다른 일정과 시간이 겹칩니다."
           type="warning"
           showIcon
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}
         />
       )}
 
@@ -70,43 +92,42 @@ export function ScheduleDetailDrawer({
         <Descriptions.Item label="프로그램">
           <Tag color={domainColorsHex.program.primary}>{program?.title || '-'}</Tag>
         </Descriptions.Item>
-        <Descriptions.Item label="일정 제목">{schedule.title}</Descriptions.Item>
+        <Descriptions.Item label="일정 제목">{displaySchedule.title}</Descriptions.Item>
         <Descriptions.Item label="날짜">
-          {typeof schedule.date === 'string'
-            ? new Date(schedule.date).toLocaleDateString('ko-KR')
-            : schedule.date.toLocaleDateString('ko-KR')}
+          {typeof displaySchedule.date === 'string'
+            ? new Date(displaySchedule.date).toLocaleDateString('ko-KR')
+            : displaySchedule.date.toLocaleDateString('ko-KR')}
         </Descriptions.Item>
         <Descriptions.Item label="시간">
-          {schedule.startTime} - {schedule.endTime}
+          {displaySchedule.startTime} - {displaySchedule.endTime}
         </Descriptions.Item>
-        {schedule.location && <Descriptions.Item label="장소">{schedule.location}</Descriptions.Item>}
-        {schedule.onlineLink && (
+        {displaySchedule.location && (
+          <Descriptions.Item label="장소">{displaySchedule.location}</Descriptions.Item>
+        )}
+        {displaySchedule.onlineLink && (
           <Descriptions.Item label="온라인 링크">
-            <a href={schedule.onlineLink} target="_blank" rel="noopener noreferrer">
-              {schedule.onlineLink}
+            <a href={displaySchedule.onlineLink} target="_blank" rel="noopener noreferrer">
+              {displaySchedule.onlineLink}
             </a>
           </Descriptions.Item>
         )}
         {instructor && (
           <Descriptions.Item label="강사">
-            <Tag color={domainColorsHex.instructor.primary}>{instructor.name}</Tag> ({instructor.region})
+            <Tag color={domainColorsHex.instructor.primary}>{instructor.name}</Tag> (
+            {instructor.region})
           </Descriptions.Item>
         )}
         <Descriptions.Item label="등록일">
-          {typeof schedule.createdAt === 'string'
-            ? new Date(schedule.createdAt).toLocaleDateString('ko-KR')
-            : schedule.createdAt.toLocaleDateString('ko-KR')}
+          {typeof displaySchedule.createdAt === 'string'
+            ? new Date(displaySchedule.createdAt).toLocaleDateString('ko-KR')
+            : displaySchedule.createdAt.toLocaleDateString('ko-KR')}
         </Descriptions.Item>
         <Descriptions.Item label="수정일">
-          {typeof schedule.updatedAt === 'string'
-            ? new Date(schedule.updatedAt).toLocaleDateString('ko-KR')
-            : schedule.updatedAt.toLocaleDateString('ko-KR')}
+          {typeof displaySchedule.updatedAt === 'string'
+            ? new Date(displaySchedule.updatedAt).toLocaleDateString('ko-KR')
+            : displaySchedule.updatedAt.toLocaleDateString('ko-KR')}
         </Descriptions.Item>
       </Descriptions>
-    </Drawer>
+    </BaseDetailDrawer>
   )
 }
-
-
-
-

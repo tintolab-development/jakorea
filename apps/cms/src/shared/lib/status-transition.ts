@@ -10,10 +10,7 @@ import type { ApplicationStatus, SettlementStatus, ProgramLifecycleStatus } from
  * submitted -> reviewing -> approved/rejected/waiting
  * (일부 상태는 이전 단계로도 되돌릴 수 있도록 허용)
  */
-export const APPLICATION_STATUS_TRANSITIONS: Record<
-  ApplicationStatus,
-  ApplicationStatus[]
-> = {
+export const APPLICATION_STATUS_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
   submitted: ['reviewing', 'waiting', 'cancelled'],
   reviewing: ['submitted', 'approved', 'rejected', 'waiting', 'cancelled'], // submitted로 되돌리기 가능
   waiting: ['submitted', 'reviewing', 'approved', 'rejected', 'cancelled'], // 원래 상태로 되돌리기 가능
@@ -27,10 +24,7 @@ export const APPLICATION_STATUS_TRANSITIONS: Record<
  * pending -> calculated -> review -> approved -> paid
  * (cancelled는 언제든 전환 가능, 일부 상태는 이전 단계로도 되돌릴 수 있도록 허용)
  */
-export const SETTLEMENT_STATUS_TRANSITIONS: Record<
-  SettlementStatus,
-  SettlementStatus[]
-> = {
+export const SETTLEMENT_STATUS_TRANSITIONS: Record<SettlementStatus, SettlementStatus[]> = {
   pending: ['calculated', 'cancelled'],
   calculated: ['pending', 'review', 'approved', 'cancelled'],
   review: ['calculated', 'approved', 'cancelled'],
@@ -68,9 +62,7 @@ export function canTransitionApplicationStatus(
  * @param currentStatus 현재 상태
  * @returns 다음 가능한 상태 배열
  */
-export function getNextApplicationStatuses(
-  currentStatus: ApplicationStatus
-): ApplicationStatus[] {
+export function getNextApplicationStatuses(currentStatus: ApplicationStatus): ApplicationStatus[] {
   return APPLICATION_STATUS_TRANSITIONS[currentStatus] || []
 }
 
@@ -155,9 +147,7 @@ export function canTransitionSettlementStatus(
  * @param currentStatus 현재 상태
  * @returns 다음 가능한 상태 배열
  */
-export function getNextSettlementStatuses(
-  currentStatus: SettlementStatus
-): SettlementStatus[] {
+export function getNextSettlementStatuses(currentStatus: SettlementStatus): SettlementStatus[] {
   return SETTLEMENT_STATUS_TRANSITIONS[currentStatus] || []
 }
 
@@ -167,9 +157,7 @@ export function getNextSettlementStatuses(
  * @param currentStatus 현재 상태
  * @returns 다음 상태 또는 null (자동 전환 불가)
  */
-export function getNextSettlementStatus(
-  currentStatus: SettlementStatus
-): SettlementStatus | null {
+export function getNextSettlementStatus(currentStatus: SettlementStatus): SettlementStatus | null {
   const transitions: Record<SettlementStatus, SettlementStatus | null> = {
     pending: 'calculated',
     calculated: 'review',
@@ -212,8 +200,8 @@ export function isSettlementFinalStatus(status: SettlementStatus): boolean {
 }
 
 /**
- * Program Lifecycle 상태 전환 규칙
- * planned -> recruiting_students -> recruiting_instructors -> recruitment_completed_waiting -> matching_completed_waiting -> in_progress -> completed
+ * Program Lifecycle 상태 전환 규칙 (7단계)
+ * planned -> recruiting_students -> recruiting_instructors -> matching_completed -> education_before_textbook -> education_after_textbook -> education_completed -> document_processing_completed
  */
 export const PROGRAM_LIFECYCLE_STATUS_TRANSITIONS: Record<
   ProgramLifecycleStatus,
@@ -221,11 +209,12 @@ export const PROGRAM_LIFECYCLE_STATUS_TRANSITIONS: Record<
 > = {
   planned: ['recruiting_students'],
   recruiting_students: ['planned', 'recruiting_instructors'],
-  recruiting_instructors: ['recruiting_students', 'recruitment_completed_waiting'],
-  recruitment_completed_waiting: ['recruiting_instructors', 'matching_completed_waiting'],
-  matching_completed_waiting: ['recruitment_completed_waiting', 'in_progress'],
-  in_progress: ['matching_completed_waiting', 'completed'],
-  completed: ['in_progress'], // 완료 후에도 다시 진행 중으로 되돌릴 수 있음 (이력 관리 등)
+  recruiting_instructors: ['recruiting_students', 'matching_completed'],
+  matching_completed: ['recruiting_instructors', 'education_before_textbook'],
+  education_before_textbook: ['matching_completed', 'education_after_textbook'],
+  education_after_textbook: ['education_before_textbook', 'education_completed'],
+  education_completed: ['education_after_textbook', 'document_processing_completed'],
+  document_processing_completed: ['education_completed'],
 }
 
 /**
@@ -267,8 +256,7 @@ export function getNextProgramLifecycleStatuses(
 }
 
 /**
- * Program Lifecycle 자동 다음 상태 계산 (워크플로우 기반)
- * planned -> recruiting_students -> recruiting_instructors -> recruitment_completed_waiting -> matching_completed_waiting -> in_progress -> completed
+ * Program Lifecycle 자동 다음 상태 계산 (7단계)
  * @param currentStatus 현재 상태
  * @returns 다음 상태 또는 null (자동 전환 불가)
  */
@@ -281,17 +269,18 @@ export function getNextProgramLifecycleStatus(
   const transitions: Record<ProgramLifecycleStatus, ProgramLifecycleStatus | null> = {
     planned: 'recruiting_students',
     recruiting_students: 'recruiting_instructors',
-    recruiting_instructors: 'recruitment_completed_waiting',
-    recruitment_completed_waiting: 'matching_completed_waiting',
-    matching_completed_waiting: 'in_progress',
-    in_progress: 'completed',
-    completed: null, // 완료는 최종 상태
+    recruiting_instructors: 'matching_completed',
+    matching_completed: 'education_before_textbook',
+    education_before_textbook: 'education_after_textbook',
+    education_after_textbook: 'education_completed',
+    education_completed: 'document_processing_completed',
+    document_processing_completed: null,
   }
   return transitions[currentStatus] || null
 }
 
 /**
- * Program Lifecycle 이전 상태 계산 (워크플로우 기준)
+ * Program Lifecycle 이전 상태 계산 (7단계)
  * @param currentStatus 현재 상태
  * @returns 이전 상태 또는 null
  */
@@ -305,24 +294,20 @@ export function getPreviousProgramLifecycleStatus(
     planned: null,
     recruiting_students: 'planned',
     recruiting_instructors: 'recruiting_students',
-    recruitment_completed_waiting: 'recruiting_instructors',
-    matching_completed_waiting: 'recruitment_completed_waiting',
-    in_progress: 'matching_completed_waiting',
-    completed: 'in_progress',
+    matching_completed: 'recruiting_instructors',
+    education_before_textbook: 'matching_completed',
+    education_after_textbook: 'education_before_textbook',
+    education_completed: 'education_after_textbook',
+    document_processing_completed: 'education_completed',
   }
   return transitions[currentStatus] || null
 }
 
 /**
- * Program Lifecycle 상태가 최종 상태인지 확인
+ * Program Lifecycle 상태가 최종 상태인지 확인 (7단계)
  * @param status 상태
  * @returns 최종 상태 여부
  */
 export function isProgramLifecycleFinalStatus(status: ProgramLifecycleStatus | undefined): boolean {
-  return status === 'completed'
+  return status === 'document_processing_completed'
 }
-
-
-
-
-

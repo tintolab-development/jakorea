@@ -12,11 +12,15 @@ export type DashboardWidgetType =
   | 'pending-actions-alert' // 즉시 처리 필요 작업
   | 'overall-statistics-cards' // 전체 통계 카드 (프로그램, 신청, 매칭, 정산)
   | 'overall-program-progress-card' // 전체 강의 진행 현황 (신청 완료, 진행 예정, 진행 중, 진행 완료)
+  | 'program-progress-widget' // Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계) — 임시 주석 처리됨
+  | 'program-progress-tabs-table' // 전체 프로그램 진행 현황 (탭+테이블)
   | 'monthly-settlement-card' // 월별 정산 현황
   | 'monthly-application-card' // 월별 신청 현황
   | 'active-program-card' // 활성 프로그램
   | 'instructor-count-card' // 등록된 강사 수
   | 'notification-widget' // 알림 위젯
+  | 'customer-inquiry-status-widget' // 고객 문의 현황 위젯
+  | 'program-schedule-widget' // 프로그램 일정 위젯 (캘린더 + 이벤트 리스트)
   | 'unified-activity-feed' // 통합 활동 피드
   | 'my-activity-summary' // 본인 활동 요약 (강사/봉사자)
   | 'my-application-summary' // 본인 신청 현황 (수강자)
@@ -24,6 +28,10 @@ export type DashboardWidgetType =
   | 'pending-tasks-list' // 대기 중인 작업 목록
   | 'my-volunteer-activity-summary' // 본인 활동 요약 (봉사자)
   | 'volunteer-pending-tasks-list' // 대기 중인 작업 목록 (봉사자)
+  | 'pending-applications-card' // Phase 4.5: 대기 중인 신청 카드
+  | 'pending-matchings-card' // Phase 4.5: 대기 중인 매칭 카드
+  | 'pending-settlements-card' // Phase 4.5: 대기 중인 정산 카드
+  | 'pending-actions-row' // 대기 중인 작업 Row (신청, 매칭, 정산을 한 레이어에)
 
 /**
  * 대시보드 위젯 설정
@@ -41,14 +49,21 @@ export interface DashboardWidgetConfig {
 const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 관리자: 전체 통계 및 현황
   ADMIN: [
-    { type: 'notification-widget', colSpan: 24, order: 1 },
-    { type: 'overall-program-progress-card', colSpan: 6, order: 2 },
-    { type: 'overall-statistics-cards', colSpan: 24, order: 3 },
-    { type: 'monthly-settlement-card', colSpan: 6, order: 4 },
-    { type: 'monthly-application-card', colSpan: 6, order: 5 },
-    { type: 'active-program-card', colSpan: 6, order: 6 },
-    { type: 'instructor-count-card', colSpan: 6, order: 7 },
-    { type: 'unified-activity-feed', colSpan: 24, order: 8 },
+    // 첫 번째 행: 2열 구조 (왼쪽: 알림+고객문의, 오른쪽: 프로그램일정)
+    { type: 'notification-widget', colSpan: 12, order: 1 },
+    { type: 'customer-inquiry-status-widget', colSpan: 12, order: 2 },
+    { type: 'program-schedule-widget', colSpan: 12, order: 3 },
+    // 나머지 위젯들 (전체 프로그램 진행현황 위젯 → 탭+테이블로 교체)
+    // { type: 'program-progress-widget', colSpan: 24, order: 4 },
+    { type: 'program-progress-tabs-table', colSpan: 24, order: 4 },
+    // 테이블 하위 위젯들 임시 주석 처리
+    // { type: 'pending-actions-row', colSpan: 24, order: 5 },
+    // { type: 'overall-statistics-cards', colSpan: 24, order: 6 },
+    // { type: 'monthly-settlement-card', colSpan: 6, order: 7 },
+    // { type: 'monthly-application-card', colSpan: 6, order: 8 },
+    // { type: 'active-program-card', colSpan: 6, order: 9 },
+    // { type: 'instructor-count-card', colSpan: 6, order: 10 },
+    // { type: 'unified-activity-feed', colSpan: 24, order: 11 },
   ],
   // 강사: 본인 활동 요약
   INSTRUCTOR: [
@@ -58,8 +73,8 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
     { type: 'pending-tasks-list', colSpan: 12, order: 4 },
     { type: 'unified-activity-feed', colSpan: 24, order: 5 },
   ],
-  // 수강자: 본인 신청 + 봉사단 활동 요약
-  STUDENT: [
+  // 개인(참여자): 본인 신청 + 봉사단 활동 요약
+  INDIVIDUAL: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
     { type: 'my-volunteer-activity-summary', colSpan: 24, order: 2 },
     { type: 'my-application-summary', colSpan: 24, order: 3 },
@@ -67,11 +82,12 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
     { type: 'volunteer-pending-tasks-list', colSpan: 12, order: 5 },
     { type: 'unified-activity-feed', colSpan: 24, order: 6 },
   ],
-  VOLUNTEER: [
+  // 학교: 학교 단위 신청 및 진행 상황
+  SCHOOL: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
-    { type: 'my-volunteer-activity-summary', colSpan: 24, order: 2 },
+    { type: 'my-application-summary', colSpan: 24, order: 2 },
     { type: 'upcoming-schedules-list', colSpan: 12, order: 3 },
-    { type: 'volunteer-pending-tasks-list', colSpan: 12, order: 4 },
+    { type: 'pending-tasks-list', colSpan: 12, order: 4 },
     { type: 'unified-activity-feed', colSpan: 24, order: 5 },
   ],
 }
@@ -81,9 +97,7 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
  * @param userRole 사용자 권한
  * @returns 대시보드 위젯 설정 목록 (정렬됨)
  */
-export function getDashboardWidgetsByRole(
-  userRole: UserRole | null
-): DashboardWidgetConfig[] {
+export function getDashboardWidgetsByRole(userRole: UserRole | null): DashboardWidgetConfig[] {
   if (!userRole) {
     return []
   }
@@ -110,6 +124,3 @@ export function isWidgetAllowed(
   const widgets = getDashboardWidgetsByRole(userRole)
   return widgets.some(widget => widget.type === widgetType)
 }
-
-
-

@@ -10,6 +10,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons'
 import { InstructorSettlementForm } from '@/features/settlement/ui/instructor-settlement-form'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { MESSAGES } from '@/shared/constants'
 import { message } from 'antd'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 
@@ -21,7 +22,7 @@ export function MySettlementSubmissionPage() {
 
   const handleSubmit = async (data: SettlementFormData) => {
     if (!user?.instructorId && !user?.id) {
-      message.error('로그인이 필요합니다')
+      message.error(MESSAGES.error.loginRequired)
       return
     }
 
@@ -31,10 +32,10 @@ export function MySettlementSubmissionPage() {
         ...data,
         instructorId: user.instructorId || user.id,
       })
-      message.success('정산이 제출되었습니다')
+      message.success(MESSAGES.success.settlementSubmitted)
       navigate('/settlements/my')
     } catch (error) {
-      message.error('정산 제출 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.settlementSubmitFailed)
       console.error(error)
     } finally {
       setSubmitting(false)
@@ -66,4 +67,3 @@ export function MySettlementSubmissionPage() {
     </div>
   )
 }
-

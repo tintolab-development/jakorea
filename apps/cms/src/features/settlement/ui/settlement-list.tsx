@@ -3,7 +3,7 @@
  * Phase 4: 테이블 + 필터
  */
 
-import { Table, Select, Button, Space, Tag, Dropdown, Badge, message } from 'antd'
+import { Table, Select, Button, Space, Tag, Dropdown, message } from 'antd'
 import type { MenuProps } from 'antd'
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useSettlementTable } from '../model/use-settlement-table'
@@ -11,12 +11,12 @@ import type { Settlement } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { instructorService } from '@/entities/instructor/api/instructor-service'
 import { generatePaymentStatement } from '@/shared/utils/settlement-document'
-import {
-  getSettlementStatusLabel,
-  getSettlementStatusColor,
-} from '@/shared/constants/status'
+import { settlementStatusStatusConfig, getSettlementStatusLabel } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import { canTransitionSettlementStatus } from '@/shared/lib/status-transition'
 import { domainColorsHex } from '@/shared/constants/colors'
+import { MESSAGES } from '@/shared/constants'
+import './settlement-list.css'
 
 const { Option } = Select
 
@@ -48,16 +48,16 @@ export function SettlementList({
     const instructor = instructorService.getByIdSync(settlement.instructorId)
 
     if (!program || !instructor) {
-      message.error('프로그램 또는 강사 정보를 찾을 수 없습니다')
+      message.error(MESSAGES.error.programOrInstructorNotFound)
       return
     }
 
     try {
       await generatePaymentStatement(settlement, instructor, program.title)
-      message.success('지급조서가 다운로드되었습니다')
+      message.success(MESSAGES.success.paymentStatementDownloaded)
     } catch (error) {
       console.error('Failed to generate payment statement:', error)
-      message.error('지급조서 생성 중 오류가 발생했습니다')
+      message.error(MESSAGES.error.paymentStatementGenerationFailed)
     }
   }
 
@@ -138,13 +138,13 @@ export function SettlementList({
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} size="middle" wrap>
+      <Space className="settlement-list__filters" size="middle" wrap>
         <Select
           placeholder="상태 선택"
           value={(table.getColumn('status')?.getFilterValue() as string) || undefined}
           onChange={value => table.getColumn('status')?.setFilterValue(value || null)}
           allowClear
-          style={{ width: 150 }}
+          className="settlement-list__filter--status"
         >
           {statuses.map(status => (
             <Option key={status} value={status}>
@@ -157,7 +157,7 @@ export function SettlementList({
           value={(table.getColumn('programId')?.getFilterValue() as string) || undefined}
           onChange={value => table.getColumn('programId')?.setFilterValue(value || null)}
           allowClear
-          style={{ width: 200 }}
+          className="settlement-list__filter--program"
           showSearch
           filterOption={(input, option) => {
             const children = option?.children as string | string[] | undefined
@@ -183,7 +183,7 @@ export function SettlementList({
           value={(table.getColumn('period')?.getFilterValue() as string) || undefined}
           onChange={value => table.getColumn('period')?.setFilterValue(value || null)}
           allowClear
-          style={{ width: 150 }}
+          className="settlement-list__filter--period"
         >
           {periods.map(period => (
             <Option key={period} value={period}>
@@ -234,7 +234,7 @@ export function SettlementList({
               return order.indexOf(a.status) - order.indexOf(b.status)
             },
             render: (status: Settlement['status']) => (
-              <Badge status={getSettlementStatusColor(status) as any} text={getSettlementStatusLabel(status)} />
+              <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} variant="badge" />
             ),
           },
           {
@@ -276,8 +276,8 @@ export function SettlementList({
         }}
         onRow={(record) => ({
           onClick: () => onView(record),
-          style: { cursor: 'pointer' },
         })}
+        rowClassName={() => 'settlement-list__row'}
       />
     </div>
   )

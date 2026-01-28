@@ -5,21 +5,23 @@
 
 import { Table, Tag, Dropdown, Button } from 'antd'
 import type { MenuProps } from 'antd'
-import { MoreOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons'
+import { MoreOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { User, UserRole } from '@/types/user'
-import { RoleBadge } from '@/shared/ui'
+import { RoleBadge, getRoleLabel, getProgramRoleLabel } from '@/shared/ui'
 import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
 import { formatDate } from '@/shared/utils'
+import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 
 interface UserListProps {
   data: Omit<User, 'password'>[]
   loading?: boolean
   onView?: (user: Omit<User, 'password'>) => void
   onEdit?: (user: Omit<User, 'password'>) => void
+  onDelete?: (user: Omit<User, 'password'>) => void
 }
 
-export function UserList({ data, loading = false, onView, onEdit }: UserListProps) {
+export function UserList({ data, loading = false, onView, onEdit, onDelete }: UserListProps) {
   const columns: ColumnsType<Omit<User, 'password'>> = [
     {
       title: '이름',
@@ -39,7 +41,35 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       dataIndex: 'role',
       key: 'role',
       width: 120,
-      render: (role: UserRole) => <RoleBadge role={role} size="small" variant="tag" />,
+      render: (role: UserRole, record) => (
+        <RoleBadge role={role} adminLevel={record.adminLevel} size="small" variant="tag" />
+      ),
+    },
+    {
+      title: '관리자 구분',
+      dataIndex: 'adminLevel',
+      key: 'adminLevel',
+      width: 140,
+      render: (adminLevel, record) => {
+        if (record.role !== 'ADMIN' || !adminLevel) {
+          return <Tag>-</Tag>
+        }
+        return <Tag>{getRoleLabel('ADMIN', adminLevel)}</Tag>
+      },
+    },
+    {
+      title: '프로그램 범위',
+      dataIndex: 'programRoles',
+      key: 'programRoles',
+      width: 140,
+      render: (programRoles, record) => {
+        if (record.role !== 'ADMIN' || !programRoles) {
+          return <Tag>-</Tag>
+        }
+        // 첫 번째 프로그램 역할 표시
+        const firstRole = Object.values(programRoles)[0]
+        return firstRole ? <Tag>{getProgramRoleLabel(firstRole as any)}</Tag> : <Tag>-</Tag>
+      },
     },
     {
       title: '면접 상태',
@@ -47,8 +77,12 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       key: 'interviewStatus',
       width: 140,
       render: (status, record) => {
-        // 강사/수강자만 면접 상태 표시
-        if (record.role === 'INSTRUCTOR' || record.role === 'STUDENT') {
+        // 강사/개인(참여자)/학교만 면접 상태 표시
+        if (
+          record.role === 'INSTRUCTOR' ||
+          record.role === 'INDIVIDUAL' ||
+          record.role === 'SCHOOL'
+        ) {
           return status ? <InterviewStatusBadge status={status} /> : <Tag>-</Tag>
         }
         return <Tag>-</Tag>
@@ -61,8 +95,12 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       width: 100,
       align: 'center',
       render: (history, record) => {
-        // 강사/수강자만 참여이력 표시
-        if (record.role === 'INSTRUCTOR' || record.role === 'STUDENT') {
+        // 강사/개인(참여자)/학교만 참여이력 표시
+        if (
+          record.role === 'INSTRUCTOR' ||
+          record.role === 'INDIVIDUAL' ||
+          record.role === 'SCHOOL'
+        ) {
           return history ?? 0
         }
         return <span>-</span>
@@ -74,9 +112,7 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       key: 'isActive',
       width: 100,
       render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'default'}>
-          {isActive ? '활성' : '비활성'}
-        </Tag>
+        <Tag color={isActive ? 'green' : 'default'}>{isActive ? '활성' : '비활성'}</Tag>
       ),
     },
     {
@@ -112,6 +148,17 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
             icon: <EditOutlined />,
             onClick: () => onEdit?.(record),
           },
+          ...(onDelete
+            ? [
+                {
+                  key: 'delete',
+                  label: '삭제',
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                  onClick: () => onDelete(record),
+                },
+              ]
+            : []),
         ]
         return (
           <div onClick={e => e.stopPropagation()}>
@@ -132,11 +179,9 @@ export function UserList({ data, loading = false, onView, onEdit }: UserListProp
       rowKey="id"
       scroll={{ x: 1400 }}
       pagination={{
-        defaultPageSize: 20,
-        showSizeChanger: true,
-        showTotal: (total) => `총 ${total}명`,
+        ...PAGINATION_CONFIG,
+        showTotal: total => `총 ${total}명`,
       }}
     />
   )
 }
-

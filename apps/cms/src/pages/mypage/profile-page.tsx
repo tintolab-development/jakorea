@@ -50,9 +50,11 @@ export function ProfilePage() {
                 <Tag color="blue">
                   {user?.role === 'INSTRUCTOR'
                     ? '강사'
-                    : user?.role === 'STUDENT'
-                      ? (user?.studentType === 'SCHOOL_TEACHER' ? '학교(선생님)' : '개인 학생')
-                      : '수강자'}
+                    : user?.role === 'INDIVIDUAL'
+                      ? '학생'
+                      : user?.role === 'SCHOOL'
+                        ? '학교'
+                        : '관리자'}
                 </Tag>
               </Space>
               <div style={{ marginTop: 8 }}>
@@ -84,16 +86,18 @@ export function ProfilePage() {
                   </Descriptions>
                 </section>
 
-                {/* 학교 정보 (수강자 중 학교/학년 정보가 있는 경우 표시) */}
-                {user?.role === 'STUDENT' && (user?.schoolName || user?.grade) && (
+                {/* 학교 정보 (학교 역할인 경우 표시) */}
+                {/* Phase 0.1.1: SCHOOL 추가 */}
+                {user?.role === 'SCHOOL' && user?.schoolInfo && (
                   <section style={{ marginTop: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                       <ReadOutlined style={{ color: '#1890ff' }} />
                       <Title level={5} style={{ margin: 0 }}>학교 정보</Title>
                     </div>
                     <Descriptions bordered column={1} size="small">
-                      <Descriptions.Item label="학교명">{user?.schoolName || '-'}</Descriptions.Item>
-                      <Descriptions.Item label="학년">{user?.grade || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="학교명">{user.schoolInfo.schoolName || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="주소">{user.schoolInfo.address || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="직책">{user.schoolInfo.position || '-'}</Descriptions.Item>
                     </Descriptions>
                   </section>
                 )}
@@ -106,7 +110,6 @@ export function ProfilePage() {
                   </div>
                   <Descriptions bordered column={1} size="small">
                     <Descriptions.Item label="우편번호">{user?.zipCode || '-'}</Descriptions.Item>
-                    <Descriptions.Item label="주소">{user?.address || '-'}</Descriptions.Item>
                     <Descriptions.Item label="상세주소">{user?.detailAddress || '-'}</Descriptions.Item>
                   </Descriptions>
                 </section>
@@ -120,12 +123,12 @@ export function ProfilePage() {
                     </div>
                     <Card size="small" style={{ background: '#f0f5ff', border: '1px dashed #adc6ff' }}>
                       <Descriptions column={1} size="small" colon={false}>
-                        <Descriptions.Item label={<Text strong>은행명</Text>}>{user?.bankInfo?.bankName || '-'}</Descriptions.Item>
-                        <Descriptions.Item label={<Text strong>예금주</Text>}>{user?.bankInfo?.accountHolder || '-'}</Descriptions.Item>
+                        <Descriptions.Item label={<Text strong>은행명</Text>}>{user?.instructorInfo?.bankName || '-'}</Descriptions.Item>
+                        <Descriptions.Item label={<Text strong>예금주</Text>}>{user?.instructorInfo?.accountHolder || '-'}</Descriptions.Item>
                         <Descriptions.Item label={<Text strong>계좌번호</Text>}>
-                          {user?.bankInfo?.accountNumber ? (
-                            <Text copyable={{ text: user.bankInfo.accountNumber }}>
-                              {user.bankInfo.accountNumber.replace(/(\d{3})(\d{3,})(\d{4})/, '$1-****-$3')}
+                          {user?.instructorInfo?.accountNumber ? (
+                            <Text copyable={{ text: user.instructorInfo.accountNumber }}>
+                              {user.instructorInfo.accountNumber.replace(/(\d{3})(\d{3,})(\d{4})/, '$1-****-$3')}
                             </Text>
                           ) : '-'}
                         </Descriptions.Item>

@@ -14,9 +14,10 @@ import {
 import { useState } from 'react'
 import type { Application } from '@/types/domain'
 import {
+  applicationStatusStatusConfig,
   getApplicationStatusLabel,
-  getApplicationStatusColor,
 } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
 import {
   canTransitionApplicationStatus,
   getPreviousApplicationStatus,
@@ -109,9 +110,7 @@ export function ApplicationWorkflow({
           {/* 현재 상태 표시 */}
           <div>
             <Text strong>현재 상태: </Text>
-            <Tag color={getApplicationStatusColor(application.status)}>
-              {getApplicationStatusLabel(application.status)}
-            </Tag>
+            <StatusBadge status={application.status} statusConfig={applicationStatusStatusConfig} />
             {isWaiting && (
               <Tag color="orange" style={{ marginLeft: 8 }}>
                 대기 목록

@@ -3,7 +3,7 @@
  * 엑셀 데이터 기반 통합 테이블 - 모든 컬럼 포함
  */
 
-import { Table, Input, Select, Button, Space, Tag, Tooltip } from 'antd'
+import { Table, Button, Tag, Tooltip } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { useEducationRecordTable } from '../model/use-education-record-table'
 import type { Program } from '@/types/domain'
@@ -11,12 +11,12 @@ import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import { mockApplications } from '@/data/mock'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
-import { useMemo } from 'react'
+import { commonStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { MOCK_SIDO_SIGUNGU } from '@/shared/constants/sido-sigungu'
 import { exportTableToExcel } from '@/shared/utils/table-export'
-
-const { Option } = Select
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 
 interface EducationRecordListProps {
   data: Program[]
@@ -69,6 +69,33 @@ const educationMonths = Array.from({ length: 12 }, (_, i) => ({
 export function EducationRecordList({ data, loading, onView }: EducationRecordListProps) {
   const { params, setParams } = useQueryParams<EducationRecordQueryParams>()
 
+  // 필터 상태 분리 (pendingFilters: 입력 중, appliedFilters: 적용된 필터)
+  const [pendingFilters, setPendingFilters] = useState({
+    title: '',
+    educationMonth: '',
+    businessArea: '',
+    sponsorId: '',
+    ips: '',
+    targetLevel: '',
+    institutionType: '',
+    sido: params.sido || '',
+    gun: params.gun || '',
+    gu: params.gu || '',
+  })
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    title: '',
+    educationMonth: '',
+    businessArea: '',
+    sponsorId: '',
+    ips: '',
+    targetLevel: '',
+    institutionType: '',
+    sido: params.sido || '',
+    gun: params.gun || '',
+    gu: params.gu || '',
+  })
+
   // helper: region/address 문자열에서 시/군/구 단위 추출 (접미사 기준)
   const parseRegion = (region?: string) => {
     if (!region) return { si: '', gun: '', gu: '' }
@@ -86,9 +113,9 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
 
   // 시/도 + 시/군/구 필터를 적용한 데이터 (컴포넌트 레벨 필터링)
   const filteredDataByRegion = useMemo(() => {
-    const sidoFilter = params.sido
-    const gunFilter = params.gun
-    const guFilter = params.gu
+    const sidoFilter = appliedFilters.sido
+    const gunFilter = appliedFilters.gun
+    const guFilter = appliedFilters.gu
 
     // Program별 학교 정보 매핑 (Application을 통해)
     const map = new Map<
@@ -136,7 +163,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
       if (guFilter && parsed.gu !== guFilter) return false
       return true
     })
-  }, [data, params.sido, params.gun, params.gu])
+  }, [data, appliedFilters.sido, appliedFilters.gun, appliedFilters.gu])
 
   const { table, resetFilters } = useEducationRecordTable(filteredDataByRegion)
 
@@ -185,7 +212,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
 
   // 시/도, 군, 구 옵션 (Mock SIDO/SIGUNGU 기준)
   const sidoList = MOCK_SIDO_SIGUNGU.map(s => s.name)
-  const currentSido = params.sido
+  const currentSido = pendingFilters.sido
   const currentSidoConfig = MOCK_SIDO_SIGUNGU.find(s => s.name === currentSido)
   const baseSigungu = currentSidoConfig
     ? currentSidoConfig.sigungu
@@ -197,37 +224,58 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
     new Set(baseSigungu.filter(sg => sg.type === '구').map(sg => sg.name))
   ).sort()
 
-  const handleFilterChange = (key: string, value: string | undefined) => {
-    if (key === 'sido') {
-      // 시/도 변경 시 하위 시/군/구 필터 초기화
-      setParams({ sido: value || undefined, si: undefined, gun: undefined, gu: undefined })
-    } else if (key === 'gun') {
-      setParams({ gun: value || undefined })
-    } else if (key === 'gu') {
-      setParams({ gu: value || undefined })
-    } else {
-      const column = table.getColumn(key)
-      if (column) {
-        column.setFilterValue(value || null)
+  // 후원사 옵션
+  const sponsorOptions = useMemo(() => {
+    return [
+      { label: '전체', value: '' },
+      ...sponsors.map(sponsor => ({ label: sponsor.name, value: sponsor.id })),
+    ]
+  }, [sponsors])
+
+  // 조회 버튼 클릭 핸들러
+  const handleSearch = useCallback(() => {
+    setAppliedFilters(pendingFilters)
+    // 쿼리 파라미터 업데이트 (시/도/군/구)
+    setParams({
+      sido: pendingFilters.sido || undefined,
+      gun: pendingFilters.gun || undefined,
+      gu: pendingFilters.gu || undefined,
+    })
+    // 테이블 필터 적용
+    Object.keys(pendingFilters).forEach(key => {
+      if (key !== 'sido' && key !== 'gun' && key !== 'gu') {
+        const column = table.getColumn(key)
+        if (column) {
+          column.setFilterValue(pendingFilters[key as keyof typeof pendingFilters] || null)
+        }
       }
+    })
+  }, [pendingFilters, setParams, table])
+
+  // 필터 초기화 핸들러
+  const handleFilterReset = useCallback(() => {
+    const resetFiltersValue = {
+      title: '',
+      educationMonth: '',
+      businessArea: '',
+      sponsorId: '',
+      ips: '',
+      targetLevel: '',
+      institutionType: '',
+      sido: '',
+      gun: '',
+      gu: '',
     }
-  }
-
-  const handleResetFilters = () => {
-    // 공통 훅에서 필터 + 페이지네이션 + 쿼리파라미터 전체 초기화
-    // (useTableWithQuery.resetFilters가 clearParams까지 처리)
+    setPendingFilters(resetFiltersValue)
+    setAppliedFilters(resetFiltersValue)
+    setParams({
+      sido: undefined,
+      gun: undefined,
+      gu: undefined,
+    })
+    // 테이블 필터도 초기화
     resetFilters()
-  }
-
-  // 필터 값 읽기
-  // - sido: URL 쿼리와 연동
-  // - 그 외: 테이블 필터 상태 사용 (다른 카테고리와 동일)
-  const getFilterValue = (key: string) => {
-    if (key === 'sido') return params.sido
-    if (key === 'gun') return params.gun
-    if (key === 'gu') return params.gu
-    return (table.getColumn(key)?.getFilterValue() as string | undefined) || undefined
-  }
+  }, [setParams, resetFilters])
 
   // 테이블 columns 정의
   const tableColumns = useMemo(
@@ -572,7 +620,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
         width: 80,
         align: 'center' as const,
         render: (status: string) => (
-          <Tag color={getCommonStatusColor(status)}>{getCommonStatusLabel(status)}</Tag>
+          <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
         ),
       },
     ],
@@ -584,146 +632,139 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
     await exportTableToExcel(tableColumns, filteredData, '실적통계')
   }
 
+  // appliedFilters 변경 시 테이블 필터 동기화
+  useEffect(() => {
+    Object.keys(appliedFilters).forEach(key => {
+      if (key === 'sido' || key === 'gun' || key === 'gu') return
+      const filterValue = appliedFilters[key as keyof typeof appliedFilters]
+      const column = table.getColumn(key)
+      if (column) {
+        column.setFilterValue(filterValue || null)
+      }
+    })
+  }, [appliedFilters, table])
+
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} size="middle" wrap>
-        <Input
-          placeholder="프로그램명 검색"
-          value={getFilterValue('title') || ''}
-          onChange={e => handleFilterChange('title', e.target.value || undefined)}
-          style={{ width: 200 }}
-          allowClear
-        />
-        <Select
-          placeholder="교육 월"
-          value={getFilterValue('educationMonth')}
-          onChange={value => handleFilterChange('educationMonth', value)}
-          allowClear
-          style={{ width: 120 }}
-        >
-          {educationMonths.map(month => (
-            <Option key={month.value} value={month.value}>
-              {month.label}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="사업분야"
-          value={getFilterValue('businessArea')}
-          onChange={value => handleFilterChange('businessArea', value)}
-          allowClear
-          style={{ width: 120 }}
-        >
-          {businessAreas.map(area => (
-            <Option key={area.value} value={area.value}>
-              {area.label}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="후원사 선택"
-          value={getFilterValue('sponsorId')}
-          onChange={value => handleFilterChange('sponsorId', value)}
-          allowClear
-          style={{ width: 150 }}
-          showSearch
-          filterOption={(input, option) => {
-            const label = option?.label as string | undefined
-            return label ? label.toLowerCase().includes(input.toLowerCase()) : false
-          }}
-        >
-          {sponsors.map(sponsor => (
-            <Option key={sponsor.id} value={sponsor.id}>
-              {sponsor.name}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="IPS 분류"
-          value={getFilterValue('ips')}
-          onChange={value => handleFilterChange('ips', value)}
-          allowClear
-          style={{ width: 120 }}
-        >
-          {ipsOptions.map(ips => (
-            <Option key={ips.value} value={ips.value}>
-              {ips.label}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="대상 구분"
-          value={getFilterValue('targetLevel')}
-          onChange={value => handleFilterChange('targetLevel', value)}
-          allowClear
-          style={{ width: 100 }}
-        >
-          {targetLevelOptions.map(level => (
-            <Option key={level.value} value={level.value}>
-              {level.label}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="기관 구분"
-          value={getFilterValue('institutionType')}
-          onChange={value => handleFilterChange('institutionType', value)}
-          allowClear
-          style={{ width: 120 }}
-        >
-          {institutionTypeOptions.map(type => (
-            <Option key={type.value} value={type.value}>
-              {type.label}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="시/도"
-          value={getFilterValue('sido')}
-          onChange={value => handleFilterChange('sido', value)}
-          allowClear
-          style={{ width: 130 }}
-          showSearch
-        >
-          {sidoList.map(sido => (
-            <Option key={sido} value={sido}>
-              {sido}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="군"
-          value={getFilterValue('gun')}
-          onChange={value => handleFilterChange('gun', value)}
-          allowClear
-          style={{ width: 130 }}
-          showSearch
-        >
-          {gunList.map(gun => (
-            <Option key={gun} value={gun}>
-              {gun}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          placeholder="구"
-          value={getFilterValue('gu')}
-          onChange={value => handleFilterChange('gu', value)}
-          allowClear
-          style={{ width: 150 }}
-          showSearch
-        >
-          {guList.map(gu => (
-            <Option key={gu} value={gu}>
-              {gu}
-            </Option>
-          ))}
-        </Select>
-        <Button onClick={handleResetFilters}>필터 초기화</Button>
-        <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel}>
-          엑셀 다운로드
-        </Button>
-      </Space>
+      {/* 필터 위젯 */}
+      <UnifiedFilterCard
+        fields={[
+          {
+            key: 'title',
+            type: 'search',
+            label: '프로그램명',
+            placeholder: '프로그램명을 입력하세요',
+          },
+          {
+            key: 'educationMonth',
+            type: 'select',
+            label: '교육 월',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...educationMonths.map(month => ({ label: month.label, value: month.value })),
+            ],
+          },
+          {
+            key: 'businessArea',
+            type: 'select',
+            label: '사업분야',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...businessAreas.map(area => ({ label: area.label, value: area.value })),
+            ],
+          },
+          {
+            key: 'sponsorId',
+            type: 'select',
+            label: '후원사 선택',
+            placeholder: '전체',
+            options: sponsorOptions,
+          },
+          {
+            key: 'ips',
+            type: 'select',
+            label: 'IPS 분류',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...ipsOptions.map(ips => ({ label: ips.label, value: ips.value })),
+            ],
+          },
+          {
+            key: 'targetLevel',
+            type: 'select',
+            label: '대상 구분',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...targetLevelOptions.map(level => ({ label: level.label, value: level.value })),
+            ],
+          },
+          {
+            key: 'institutionType',
+            type: 'select',
+            label: '기관 구분',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...institutionTypeOptions.map(type => ({ label: type.label, value: type.value })),
+            ],
+          },
+          {
+            key: 'sido',
+            type: 'select',
+            label: '시/도',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...sidoList.map(sido => ({ label: sido, value: sido })),
+            ],
+          },
+          {
+            key: 'gun',
+            type: 'select',
+            label: '군',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...gunList.map(gun => ({ label: gun, value: gun })),
+            ],
+          },
+          {
+            key: 'gu',
+            type: 'select',
+            label: '구',
+            placeholder: '전체',
+            options: [
+              { label: '전체', value: '' },
+              ...guList.map(gu => ({ label: gu, value: gu })),
+            ],
+          },
+        ]}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          setPendingFilters(prev => {
+            const updated = { ...prev, [key]: value || '' }
+            // 시/도가 변경되면 군/구 초기화
+            if (key === 'sido') {
+              updated.gun = ''
+              updated.gu = ''
+            }
+            return updated
+          })
+        }}
+        onSearch={handleSearch}
+        onReset={handleFilterReset}
+        loading={loading}
+        resetButtonText="초기화"
+        extra={
+          <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel}>
+            엑셀 다운로드
+          </Button>
+        }
+      />
 
       <Table
         dataSource={table.getRowModel().rows.map(row => row.original)}
