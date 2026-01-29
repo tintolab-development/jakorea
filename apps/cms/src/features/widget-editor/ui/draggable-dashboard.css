@@ -1,0 +1,60 @@
+/**
+ * DraggableDashboard 스타일 (2열 그리드, 밀집 레이아웃)
+ */
+
+/* 그리드 컨테이너: 전체 너비, 패딩 없음 (중앙 정렬 금지 → x=0|6 시각적 정렬 유지) */
+/* 그리드 위 글로벌 딤 없음: 배경 흰색으로 레이아웃 회색(#f5f5f5)이 비치지 않도록 함 */
+.draggable-dashboard {
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  box-sizing: border-box;
+  position: relative;
+  background: #fff;
+}
+
+.draggable-dashboard-grid {
+  position: relative;
+  width: 100%;
+}
+
+.draggable-dashboard .react-grid-layout {
+  position: relative;
+}
+
+.draggable-dashboard .react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.draggable-dashboard .react-grid-item > div {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.draggable-dashboard .react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.draggable-dashboard .react-grid-item.react-draggable-dragging,
+.draggable-dashboard .react-grid-item.dragging {
+  transition: none;
+  z-index: 3;
+  will-change: transform;
+  opacity: 0.9;
+}
+
+/* 그리드 라인 비표시 (격자 무늬 눈에 안 보이게) */
+.draggable-dashboard .react-grid-layout {
+  background-image: none;
+}
+
+/* 드래그 시 따라오는 placeholder(딤): 회색 alpha 0.1, 둥근 모서리 20px (RGL 기본 .react-grid-placeholder) */
+.draggable-dashboard .react-grid-item.react-grid-placeholder {
+  background: rgba(80, 80, 80, 0.1) !important;
+  border-radius: 10px;
+  opacity: 1;
+  z-index: 2;
+}
