@@ -1,0 +1,83 @@
+/**
+ * 파일 선택 필드 공통 스타일
+ * - 숨겨진 input + 파일명 목록 + 버튼(120×40) + 가이드 텍스트
+ */
+
+.file-select-field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 숨겨진 file input */
+.file-select-field__input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  pointer-events: none;
+}
+
+/* 파일명 목록 */
+.file-select-field__names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-select-field__name {
+  font-size: 14px;
+  color: #333;
+}
+
+/* 버튼 + 가이드 텍스트 가로 배치 */
+.file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 파일 선택 버튼 — 120×40, 연한회색 */
+.file-select-field__btn {
+  flex-shrink: 0;
+  width: 120px;
+  min-width: 120px;
+  height: 40px;
+  padding: 0 16px;
+  background: #e0e0e0 !important;
+  color: #333 !important;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.file-select-field__btn:hover {
+  background: #d5d5d5 !important;
+  border-color: #d0d0d0 !important;
+  color: #333 !important;
+}
+
+/* 가이드 텍스트 */
+.file-select-field__guide {
+  font-size: 12px;
+  color: #999;
+  line-height: 1.5;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-select-field__guide-line {
+  display: block;
+}
+.file-select-field__guide-line + .file-select-field__guide-line {
+  margin-top: 4px;
+}
