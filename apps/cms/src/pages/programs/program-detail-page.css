@@ -1,0 +1,53 @@
+/**
+ * 프로그램 상세 페이지
+ */
+
+.program-detail-page {
+    padding: 0;
+}
+
+.program-detail-page--loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+}
+
+.program-detail-page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.program-detail-page__title {
+    margin: 0 !important;
+    flex: 1;
+    min-width: 0;
+}
+
+/* 탭 바와 같은 줄 오른쪽 (정보 수정, 프로그램 상세 미리보기) */
+.program-detail-page__tab-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* 위젯과 디바이더 사이 갭 축소 */
+.program-detail-page .program-progress-widget-container {
+    margin-bottom: 12px;
+}
+
+/* 디바이더 갭 축소, 구분선 진하게 */
+.program-detail-page__divider {
+    margin: 12px 0 16px;
+    border-top-width: 1px;
+    border-top-color: #bfbfbf;
+}
+
+/* 탭 영역 빈 화면 (최소 높이만 유지) */
+.program-detail-page__tab-content {
+    min-height: 200px;
+}
