@@ -35,6 +35,7 @@ import {
   getProgramLifecycleLabel,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
+import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
@@ -51,6 +52,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
 
+export type ProgramListTableVariant = 'education' | 'volunteer' | 'all'
 
 interface ProgramListProps {
   data: Program[]
@@ -70,6 +72,8 @@ interface ProgramListProps {
   tableTitle?: string // 테이블 타이틀 (기본값: '전체 프로그램')
   viewMode?: 'list' | 'calendar' // 뷰 모드 (외부에서 제어)
   onViewModeChange?: (mode: 'list' | 'calendar') => void // 뷰 모드 변경 핸들러
+  /** 테이블 컬럼 구분: education 경로일 때 No., 프로그램명, 모집 상태, 교육 분야, 수강 유형 구분, 교육 대상, 진행 방식, 공란 */
+  tableVariant?: ProgramListTableVariant
 }
 
 const programTypes = [
@@ -160,6 +164,7 @@ export function ProgramList({
   tableTitle: _tableTitle = '전체 프로그램', // eslint-disable-line @typescript-eslint/no-unused-vars
   viewMode: externalViewMode,
   onViewModeChange: _onViewModeChange, // eslint-disable-line @typescript-eslint/no-unused-vars
+  tableVariant = 'all',
 }: ProgramListProps) {
   const { user } = useAuthStore()
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
@@ -872,444 +877,634 @@ export function ProgramList({
       {/* 목록 뷰 (필터와 테이블만 표시) */}
       {!isParticipant && viewMode === 'list' && (
         <Card loading={loading} className="program-list-card">
-          <Table
-            rowSelection={
-              showRowSelection && onBulkDelete
-                ? {
-                    selectedRowKeys: effectiveSelectedRowKeys,
-                    onChange: handleSelectionChange,
-                  }
-                : undefined
-            }
-            dataSource={table.getRowModel().rows.map(row => row.original)}
-            columns={[
-              {
-                title: '포스터',
-                dataIndex: 'posterImage',
-                key: 'posterImage',
-                width: 100,
-                render: (_: unknown, record: Program) => {
-                  const src = record.posterImage
-                  if (!src) {
-                    return (
-                      <div
-                        style={{
-                          width: 72,
-                          height: 54,
-                          background: '#f0f0f0',
-                          borderRadius: 4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 10,
-                          color: '#bfbfbf',
-                        }}
-                      >
-                        이미지 없음
-                      </div>
-                    )
-                  }
-                  return (
-                    <div onClick={e => e.stopPropagation()}>
-                      <Image
-                        src={src}
-                        alt=""
-                        width={72}
-                        height={54}
-                        style={{ objectFit: 'cover', borderRadius: 4 }}
-                        preview={{ mask: '확대' }}
-                      />
-                    </div>
-                  )
-                },
-              },
-              {
-                title: '프로그램명',
-                dataIndex: 'title',
-                key: 'title',
-                width: 260,
-                ellipsis: true,
-                render: (text: string) => (
-                  <Tag
-                    color={domainColorsHex.program.primary}
-                    style={{
-                      maxWidth: 230,
-                      display: 'inline-block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {text}
-                  </Tag>
-                ),
-              },
-              {
-                title: '스폰서',
-                dataIndex: 'sponsorId',
-                key: 'sponsorId',
-                render: (sponsorId: string | undefined) => {
-                  if (!sponsorId) {
-                    return '-'
-                  }
-                  return sponsorService.getNameById(sponsorId)
-                },
-              },
-              {
-                title: '유형',
-                dataIndex: 'type',
-                key: 'type',
-                render: (type: string) => {
-                  const typeLabel = programTypes.find(t => t.value === type)?.label || type
-                  return <Tag>{typeLabel}</Tag>
-                },
-              },
-              {
-                title: '형태',
-                dataIndex: 'format',
-                key: 'format',
-                render: (format: string) => {
-                  const formatLabel = programFormats.find(f => f.value === format)?.label || format
-                  return formatLabel
-                },
-              },
-              {
-                title: '회차',
-                dataIndex: 'rounds',
-                key: 'rounds',
-                render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
-              },
-              {
-                title: '상태',
-                dataIndex: 'status',
-                key: 'status',
-                render: (_status: string, record: Program) => {
-                  const lifecycle = record.lifecycleStatus
-
-                  const badge = lifecycle ? (
-                    <StatusBadge
-                      status={lifecycle}
-                      statusConfig={programLifecycleStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  ) : (
-                    <StatusBadge
-                      status={record.status}
-                      statusConfig={commonStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  )
-
-                  // 상태 변경 핸들러가 없으면 단순 뱃지로 표시
-                  if (!onChangeStatus) {
-                    return badge
-                  }
-
-                  const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
-                    status => {
-                      return {
-                        key: status,
-                        label: (
-                          <StatusBadge
-                            status={status}
-                            statusConfig={programLifecycleStatusStatusConfig}
-                            showIcon={false}
-                          />
-                        ),
-                        onClick: e => {
-                          e?.domEvent?.stopPropagation()
-                          onChangeStatus(record, status)
-                        },
-                      }
+          <div className="program-list-table-wrapper">
+            <Table
+              rowSelection={
+                tableVariant !== 'education' && showRowSelection && onBulkDelete
+                  ? {
+                      selectedRowKeys: effectiveSelectedRowKeys,
+                      onChange: handleSelectionChange,
                     }
-                  )
+                  : undefined
+              }
+              dataSource={table.getRowModel().rows.map(row => row.original)}
+              columns={
+                tableVariant === 'education'
+                  ? [
+                      {
+                        title: 'No.',
+                        key: 'no',
+                        width: 56,
+                        align: 'center' as const,
+                        render: (_: unknown, __: Program, index: number) => {
+                          const pageIndex = table.getState().pagination.pageIndex
+                          const pageSize = table.getState().pagination.pageSize
+                          return pageIndex * pageSize + index + 1
+                        },
+                      },
+                      {
+                        title: '프로그램명',
+                        dataIndex: 'title',
+                        key: 'title',
+                        width: 260,
+                        ellipsis: true,
+                        align: 'center' as const,
+                        render: (text: string) => text ?? '-',
+                      },
+                      {
+                        title: '모집 상태',
+                        key: 'recruitmentStatus',
+                        width: 100,
+                        align: 'center' as const,
+                        render: (_: unknown, record: Program) => (
+                          <RecruitmentStatusBadge status={getRecruitmentStatus(record)} />
+                        ),
+                      },
+                      {
+                        title: '교육 분야',
+                        dataIndex: 'businessArea',
+                        key: 'businessArea',
+                        width: 100,
+                        ellipsis: true,
+                        align: 'center' as const,
+                        render: (value: string | undefined) =>
+                          value
+                            ? (businessAreaOptions.find(o => o.value === value)?.label ?? value)
+                            : '-',
+                      },
+                      {
+                        title: '수강 유형 구분',
+                        dataIndex: 'category',
+                        key: 'category',
+                        width: 120,
+                        align: 'center' as const,
+                        render: (value: ProgramCategory | undefined) => {
+                          const option = categoryOptions.find(o => o.value === value)
+                          return option?.label ?? value ?? '-'
+                        },
+                      },
+                      {
+                        title: '교육 대상',
+                        dataIndex: 'targetLevel',
+                        key: 'targetLevel',
+                        width: 90,
+                        align: 'center' as const,
+                        render: (value: TargetLevel | undefined) => {
+                          const option = targetLevelOptions.find(o => o.value === value)
+                          return option?.label ?? value ?? '-'
+                        },
+                      },
+                      {
+                        title: '진행 방식',
+                        dataIndex: 'type',
+                        key: 'type',
+                        width: 100,
+                        align: 'center' as const,
+                        render: (type: string) => {
+                          const typeLabel =
+                            programTypes.find(t => t.value === type)?.label ||
+                            (type === 'hybrid' ? '온/오프라인' : type)
+                          return typeLabel
+                        },
+                      },
+                      {
+                        title: '신청자 모집 기간',
+                        key: 'applicationPeriod',
+                        width: 160,
+                        align: 'center' as const,
+                        ellipsis: true,
+                        render: (_: unknown, record: Program) => {
+                          const start = record.applicationStartDate
+                          const end = record.applicationEndDate
+                          if (!start || !end) return '-'
+                          const s = dayjs(start).format('YY.MM.DD')
+                          const e = dayjs(end).format('YY.MM.DD')
+                          return `${s} ~ ${e}`
+                        },
+                      },
+                      {
+                        title: '프로그램 운영기간',
+                        key: 'operationPeriod',
+                        width: 160,
+                        align: 'center' as const,
+                        ellipsis: true,
+                        render: (_: unknown, record: Program) => {
+                          const start = record.startDate
+                          const end = record.endDate
+                          if (!start || !end) return '-'
+                          const s = dayjs(start).format('YY.MM.DD')
+                          const e = dayjs(end).format('YY.MM.DD')
+                          return `${s} ~ ${e}`
+                        },
+                      },
+                      {
+                        title: '후원사',
+                        dataIndex: 'sponsorId',
+                        key: 'sponsorId',
+                        width: 120,
+                        align: 'center' as const,
+                        ellipsis: true,
+                        render: (sponsorId: string | undefined) =>
+                          sponsorId ? sponsorService.getNameById(sponsorId) : '-',
+                      },
+                      {
+                        title: '담당자',
+                        dataIndex: 'managerName',
+                        key: 'managerName',
+                        width: 100,
+                        align: 'center' as const,
+                        ellipsis: true,
+                        render: (value: string | undefined) => value ?? '-',
+                      },
+                      ...(showFavorite
+                        ? [
+                            {
+                              title: '찜하기',
+                              key: 'favorite',
+                              width: 100,
+                              align: 'center' as const,
+                              fixed: showActions ? undefined : ('right' as const),
+                              render: (_: unknown, record: Program) => (
+                                <div onClick={e => e.stopPropagation()}>
+                                  <Button
+                                    type="text"
+                                    icon={
+                                      favorites.has(record.id) ? (
+                                        <HeartFilled style={{ color: '#ff4d4f' }} />
+                                      ) : (
+                                        <HeartOutlined />
+                                      )
+                                    }
+                                    onClick={() => handleToggleFavorite(record.id)}
+                                  />
+                                </div>
+                              ),
+                            },
+                          ]
+                        : []),
+                      // 작업 컬럼 (교육 프로그램 테이블에서는 비표시)
+                      // ...(showActions
+                      //   ? [
+                      //       {
+                      //         title: '작업',
+                      //         key: 'action',
+                      //         fixed: 'right' as const,
+                      //         width: 80,
+                      //         align: 'center' as const,
+                      //         render: (_: unknown, record: Program) => (
+                      //           <div onClick={e => e.stopPropagation()}>
+                      //             <Dropdown
+                      //               menu={{ items: getMenuItems(record) }}
+                      //               trigger={['click']}
+                      //             >
+                      //               <Button
+                      //                 type="text"
+                      //                 icon={<MoreOutlined />}
+                      //                 onClick={e => e.stopPropagation()}
+                      //               />
+                      //             </Dropdown>
+                      //           </div>
+                      //         ),
+                      //       },
+                      //     ]
+                      //   : []),
+                    ]
+                  : [
+                      {
+                        title: '포스터',
+                        dataIndex: 'posterImage',
+                        key: 'posterImage',
+                        width: 100,
+                        render: (_: unknown, record: Program) => {
+                          const src = record.posterImage
+                          if (!src) {
+                            return (
+                              <div
+                                style={{
+                                  width: 72,
+                                  height: 54,
+                                  background: '#f0f0f0',
+                                  borderRadius: 4,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: 10,
+                                  color: '#bfbfbf',
+                                }}
+                              >
+                                이미지 없음
+                              </div>
+                            )
+                          }
+                          return (
+                            <div onClick={e => e.stopPropagation()}>
+                              <Image
+                                src={src}
+                                alt=""
+                                width={72}
+                                height={54}
+                                style={{ objectFit: 'cover', borderRadius: 4 }}
+                                preview={{ mask: '확대' }}
+                              />
+                            </div>
+                          )
+                        },
+                      },
+                      {
+                        title: '프로그램명',
+                        dataIndex: 'title',
+                        key: 'title',
+                        width: 260,
+                        ellipsis: true,
+                        render: (text: string) => (
+                          <Tag
+                            color={domainColorsHex.program.primary}
+                            style={{
+                              maxWidth: 230,
+                              display: 'inline-block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            {text}
+                          </Tag>
+                        ),
+                      },
+                      {
+                        title: '스폰서',
+                        dataIndex: 'sponsorId',
+                        key: 'sponsorId',
+                        render: (sponsorId: string | undefined) => {
+                          if (!sponsorId) {
+                            return '-'
+                          }
+                          return sponsorService.getNameById(sponsorId)
+                        },
+                      },
+                      {
+                        title: '유형',
+                        dataIndex: 'type',
+                        key: 'type',
+                        render: (type: string) => {
+                          const typeLabel = programTypes.find(t => t.value === type)?.label || type
+                          return <Tag>{typeLabel}</Tag>
+                        },
+                      },
+                      {
+                        title: '형태',
+                        dataIndex: 'format',
+                        key: 'format',
+                        render: (format: string) => {
+                          const formatLabel =
+                            programFormats.find(f => f.value === format)?.label || format
+                          return formatLabel
+                        },
+                      },
+                      {
+                        title: '회차',
+                        dataIndex: 'rounds',
+                        key: 'rounds',
+                        render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
+                      },
+                      {
+                        title: '상태',
+                        dataIndex: 'status',
+                        key: 'status',
+                        render: (_status: string, record: Program) => {
+                          const lifecycle = record.lifecycleStatus
 
-                  return (
-                    <div onClick={e => e.stopPropagation()}>
-                      <Dropdown
-                        menu={{ items }}
-                        trigger={['click']}
-                        getPopupContainer={triggerNode =>
-                          triggerNode.parentElement || document.body
-                        }
-                      >
-                        <span
-                          className="program-status-dropdown-trigger"
-                          onClick={e => e.stopPropagation()}
-                          style={{ cursor: 'pointer', display: 'inline-block' }}
-                        >
-                          {badge}
-                        </span>
-                      </Dropdown>
-                    </div>
-                  )
-                },
-              },
-              // 찜하기 컬럼 (강사/봉사자/학생용)
-              ...(showFavorite
-                ? [
-                    {
-                      title: '찜하기',
-                      key: 'favorite',
-                      width: 100,
-                      fixed: showActions ? undefined : ('right' as const),
-                      render: (_: unknown, record: Program) => (
-                        <div onClick={e => e.stopPropagation()}>
-                          <Button
-                            type="text"
-                            icon={
-                              favorites.has(record.id) ? (
-                                <HeartFilled style={{ color: '#ff4d4f' }} />
-                              ) : (
-                                <HeartOutlined />
-                              )
-                            }
-                            onClick={() => handleToggleFavorite(record.id)}
-                          />
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-              // 관리자만 작업 컬럼 표시
-              ...(showActions
-                ? [
-                    {
-                      title: '작업',
-                      key: 'action',
-                      fixed: 'right' as const,
-                      width: 80,
-                      render: (_: unknown, record: Program) => (
-                        <div onClick={e => e.stopPropagation()}>
-                          <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
-                            <Button
-                              type="text"
-                              icon={<MoreOutlined />}
-                              onClick={e => e.stopPropagation()}
+                          const badge = lifecycle ? (
+                            <StatusBadge
+                              status={lifecycle}
+                              statusConfig={programLifecycleStatusStatusConfig}
+                              showIcon={false}
                             />
-                          </Dropdown>
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-            rowKey="id"
-            loading={loading}
-            tableLayout="fixed"
-            onRow={record => ({
-              onClick: event => {
-                const target = event.target as HTMLElement
-                // 상태 드롭다운 클릭 시 무시
-                if (target.closest('.program-status-dropdown-trigger')) {
-                  return
-                }
-                // 이미지 preview 영역 클릭 시 무시 (이벤트 버블링 방지)
-                if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
-                  return
-                }
-                // 이미지 mask (확대 버튼) 클릭 시 무시
-                if (target.closest('.ant-image-mask')) {
-                  return
-                }
-                onView(record)
-              },
-              style: { cursor: 'pointer' },
-            })}
-            pagination={{
-              ...PAGINATION_CONFIG,
-              current: table.getState().pagination.pageIndex + 1,
-              pageSize: table.getState().pagination.pageSize,
-              total: table.getFilteredRowModel().rows.length,
-              onChange: (page, pageSize) => {
-                table.setPageIndex(page - 1)
-                table.setPageSize(pageSize)
-              },
-            }}
-          />
+                          ) : (
+                            <StatusBadge
+                              status={record.status}
+                              statusConfig={commonStatusStatusConfig}
+                              showIcon={false}
+                            />
+                          )
+
+                          if (!onChangeStatus) {
+                            return badge
+                          }
+
+                          const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                            status => {
+                              return {
+                                key: status,
+                                label: (
+                                  <StatusBadge
+                                    status={status}
+                                    statusConfig={programLifecycleStatusStatusConfig}
+                                    showIcon={false}
+                                  />
+                                ),
+                                onClick: e => {
+                                  e?.domEvent?.stopPropagation()
+                                  onChangeStatus(record, status)
+                                },
+                              }
+                            }
+                          )
+
+                          return (
+                            <div onClick={e => e.stopPropagation()}>
+                              <Dropdown
+                                menu={{ items }}
+                                trigger={['click']}
+                                getPopupContainer={triggerNode =>
+                                  triggerNode.parentElement || document.body
+                                }
+                              >
+                                <span
+                                  className="program-status-dropdown-trigger"
+                                  onClick={e => e.stopPropagation()}
+                                  style={{ cursor: 'pointer', display: 'inline-block' }}
+                                >
+                                  {badge}
+                                </span>
+                              </Dropdown>
+                            </div>
+                          )
+                        },
+                      },
+                      ...(showFavorite
+                        ? [
+                            {
+                              title: '찜하기',
+                              key: 'favorite',
+                              width: 100,
+                              fixed: showActions ? undefined : ('right' as const),
+                              render: (_: unknown, record: Program) => (
+                                <div onClick={e => e.stopPropagation()}>
+                                  <Button
+                                    type="text"
+                                    icon={
+                                      favorites.has(record.id) ? (
+                                        <HeartFilled style={{ color: '#ff4d4f' }} />
+                                      ) : (
+                                        <HeartOutlined />
+                                      )
+                                    }
+                                    onClick={() => handleToggleFavorite(record.id)}
+                                  />
+                                </div>
+                              ),
+                            },
+                          ]
+                        : []),
+                      ...(showActions
+                        ? [
+                            {
+                              title: '작업',
+                              key: 'action',
+                              fixed: 'right' as const,
+                              width: 80,
+                              render: (_: unknown, record: Program) => (
+                                <div onClick={e => e.stopPropagation()}>
+                                  <Dropdown
+                                    menu={{ items: getMenuItems(record) }}
+                                    trigger={['click']}
+                                  >
+                                    <Button
+                                      type="text"
+                                      icon={<MoreOutlined />}
+                                      onClick={e => e.stopPropagation()}
+                                    />
+                                  </Dropdown>
+                                </div>
+                              ),
+                            },
+                          ]
+                        : []),
+                    ]
+              }
+              rowKey="id"
+              loading={loading}
+              tableLayout="fixed"
+              scroll={{ x: 2000 }}
+              onRow={record => ({
+                onClick: event => {
+                  const target = event.target as HTMLElement
+                  // 상태 드롭다운 클릭 시 무시
+                  if (target.closest('.program-status-dropdown-trigger')) {
+                    return
+                  }
+                  // 이미지 preview 영역 클릭 시 무시 (이벤트 버블링 방지)
+                  if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
+                    return
+                  }
+                  // 이미지 mask (확대 버튼) 클릭 시 무시
+                  if (target.closest('.ant-image-mask')) {
+                    return
+                  }
+                  onView(record)
+                },
+                style: { cursor: 'pointer' },
+              })}
+              pagination={{
+                ...PAGINATION_CONFIG,
+                current: table.getState().pagination.pageIndex + 1,
+                pageSize: table.getState().pagination.pageSize,
+                total: table.getFilteredRowModel().rows.length,
+                onChange: (page, pageSize) => {
+                  table.setPageIndex(page - 1)
+                  table.setPageSize(pageSize)
+                },
+              }}
+            />
+          </div>
         </Card>
       )}
 
       {/* 참가자용 목록 뷰 (카드로 감싸기) */}
       {isParticipant && (
         <Card loading={loading} className="program-list-card">
-          <Table
-            dataSource={table.getRowModel().rows.map(row => row.original)}
-            columns={[
-              {
-                title: '포스터',
-                dataIndex: 'posterImage',
-                key: 'posterImage',
-                width: 100,
-                render: (_: unknown, record: Program) => {
-                  const src = record.posterImage
-                  if (!src) {
+          <div className="program-list-table-wrapper">
+            <Table
+              dataSource={table.getRowModel().rows.map(row => row.original)}
+              columns={[
+                {
+                  title: '포스터',
+                  dataIndex: 'posterImage',
+                  key: 'posterImage',
+                  width: 100,
+                  render: (_: unknown, record: Program) => {
+                    const src = record.posterImage
+                    if (!src) {
+                      return (
+                        <div
+                          style={{
+                            width: 72,
+                            height: 54,
+                            background: '#f0f0f0',
+                            borderRadius: 4,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 10,
+                            color: '#bfbfbf',
+                          }}
+                        >
+                          이미지 없음
+                        </div>
+                      )
+                    }
                     return (
-                      <div
-                        style={{
-                          width: 72,
-                          height: 54,
-                          background: '#f0f0f0',
-                          borderRadius: 4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 10,
-                          color: '#bfbfbf',
-                        }}
-                      >
-                        이미지 없음
+                      <div onClick={e => e.stopPropagation()}>
+                        <Image
+                          src={src}
+                          alt=""
+                          width={72}
+                          height={54}
+                          style={{ objectFit: 'cover', borderRadius: 4 }}
+                          preview={{ mask: '확대' }}
+                        />
                       </div>
                     )
-                  }
-                  return (
-                    <div onClick={e => e.stopPropagation()}>
-                      <Image
-                        src={src}
-                        alt=""
-                        width={72}
-                        height={54}
-                        style={{ objectFit: 'cover', borderRadius: 4 }}
-                        preview={{ mask: '확대' }}
+                  },
+                },
+                {
+                  title: '프로그램명',
+                  dataIndex: 'title',
+                  key: 'title',
+                  width: 260,
+                  ellipsis: true,
+                  render: (text: string) => (
+                    <Tag
+                      color={domainColorsHex.program.primary}
+                      style={{
+                        maxWidth: 230,
+                        display: 'inline-block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      {text}
+                    </Tag>
+                  ),
+                },
+                {
+                  title: '스폰서',
+                  dataIndex: 'sponsorId',
+                  key: 'sponsorId',
+                  render: (sponsorId: string | undefined) => {
+                    if (!sponsorId) {
+                      return '-'
+                    }
+                    return sponsorService.getNameById(sponsorId)
+                  },
+                },
+                {
+                  title: '유형',
+                  dataIndex: 'type',
+                  key: 'type',
+                  render: (type: string) => {
+                    const typeLabel = programTypes.find(t => t.value === type)?.label || type
+                    return <Tag>{typeLabel}</Tag>
+                  },
+                },
+                {
+                  title: '형태',
+                  dataIndex: 'format',
+                  key: 'format',
+                  render: (format: string) => {
+                    const formatLabel =
+                      programFormats.find(f => f.value === format)?.label || format
+                    return formatLabel
+                  },
+                },
+                {
+                  title: '회차',
+                  dataIndex: 'rounds',
+                  key: 'rounds',
+                  render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
+                },
+                {
+                  title: '상태',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (_status: string, record: Program) => {
+                    const lifecycle = record.lifecycleStatus
+
+                    const badge = lifecycle ? (
+                      <StatusBadge
+                        status={lifecycle}
+                        statusConfig={programLifecycleStatusStatusConfig}
+                        showIcon={false}
                       />
-                    </div>
-                  )
+                    ) : (
+                      <StatusBadge
+                        status={record.status}
+                        statusConfig={commonStatusStatusConfig}
+                        showIcon={false}
+                      />
+                    )
+
+                    return badge
+                  },
                 },
-              },
-              {
-                title: '프로그램명',
-                dataIndex: 'title',
-                key: 'title',
-                width: 260,
-                ellipsis: true,
-                render: (text: string) => (
-                  <Tag
-                    color={domainColorsHex.program.primary}
-                    style={{
-                      maxWidth: 230,
-                      display: 'inline-block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {text}
-                  </Tag>
-                ),
-              },
-              {
-                title: '스폰서',
-                dataIndex: 'sponsorId',
-                key: 'sponsorId',
-                render: (sponsorId: string | undefined) => {
-                  if (!sponsorId) {
-                    return '-'
+                ...(showFavorite
+                  ? [
+                      {
+                        title: '찜하기',
+                        key: 'favorite',
+                        width: 100,
+                        fixed: 'right' as const,
+                        render: (_: unknown, record: Program) => (
+                          <div onClick={e => e.stopPropagation()}>
+                            <Button
+                              type="text"
+                              icon={
+                                favorites.has(record.id) ? (
+                                  <HeartFilled style={{ color: '#ff4d4f' }} />
+                                ) : (
+                                  <HeartOutlined />
+                                )
+                              }
+                              onClick={() => handleToggleFavorite(record.id)}
+                            />
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+              rowKey="id"
+              tableLayout="fixed"
+              scroll={{ x: 2000 }}
+              onRow={record => ({
+                onClick: event => {
+                  const target = event.target as HTMLElement
+                  if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
+                    return
                   }
-                  return sponsorService.getNameById(sponsorId)
+                  if (target.closest('.ant-image-mask')) {
+                    return
+                  }
+                  onView(record)
                 },
-              },
-              {
-                title: '유형',
-                dataIndex: 'type',
-                key: 'type',
-                render: (type: string) => {
-                  const typeLabel = programTypes.find(t => t.value === type)?.label || type
-                  return <Tag>{typeLabel}</Tag>
+                style: { cursor: 'pointer' },
+              })}
+              pagination={{
+                ...PAGINATION_CONFIG,
+                current: table.getState().pagination.pageIndex + 1,
+                pageSize: table.getState().pagination.pageSize,
+                total: table.getFilteredRowModel().rows.length,
+                onChange: (page, pageSize) => {
+                  table.setPageIndex(page - 1)
+                  table.setPageSize(pageSize)
                 },
-              },
-              {
-                title: '형태',
-                dataIndex: 'format',
-                key: 'format',
-                render: (format: string) => {
-                  const formatLabel = programFormats.find(f => f.value === format)?.label || format
-                  return formatLabel
-                },
-              },
-              {
-                title: '회차',
-                dataIndex: 'rounds',
-                key: 'rounds',
-                render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
-              },
-              {
-                title: '상태',
-                dataIndex: 'status',
-                key: 'status',
-                render: (_status: string, record: Program) => {
-                  const lifecycle = record.lifecycleStatus
-
-                  const badge = lifecycle ? (
-                    <StatusBadge
-                      status={lifecycle}
-                      statusConfig={programLifecycleStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  ) : (
-                    <StatusBadge
-                      status={record.status}
-                      statusConfig={commonStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  )
-
-                  return badge
-                },
-              },
-              ...(showFavorite
-                ? [
-                    {
-                      title: '찜하기',
-                      key: 'favorite',
-                      width: 100,
-                      fixed: 'right' as const,
-                      render: (_: unknown, record: Program) => (
-                        <div onClick={e => e.stopPropagation()}>
-                          <Button
-                            type="text"
-                            icon={
-                              favorites.has(record.id) ? (
-                                <HeartFilled style={{ color: '#ff4d4f' }} />
-                              ) : (
-                                <HeartOutlined />
-                              )
-                            }
-                            onClick={() => handleToggleFavorite(record.id)}
-                          />
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-            rowKey="id"
-            tableLayout="fixed"
-            onRow={record => ({
-              onClick: event => {
-                const target = event.target as HTMLElement
-                if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
-                  return
-                }
-                if (target.closest('.ant-image-mask')) {
-                  return
-                }
-                onView(record)
-              },
-              style: { cursor: 'pointer' },
-            })}
-            pagination={{
-              ...PAGINATION_CONFIG,
-              current: table.getState().pagination.pageIndex + 1,
-              pageSize: table.getState().pagination.pageSize,
-              total: table.getFilteredRowModel().rows.length,
-              onChange: (page, pageSize) => {
-                table.setPageIndex(page - 1)
-                table.setPageSize(pageSize)
-              },
-            }}
-          />
+              }}
+            />
+          </div>
         </Card>
       )}
     </div>

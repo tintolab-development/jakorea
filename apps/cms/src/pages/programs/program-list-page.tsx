@@ -64,7 +64,6 @@ export function ProgramListPage() {
   // Drawer 상태 관리
   const {
     open: drawerOpen,
-    openModal: openDrawer,
     closeModal: closeDrawer,
     selectedItem: drawerProgram,
     setSelectedItem: setDrawerProgram,
@@ -168,20 +167,17 @@ export function ProgramListPage() {
     fetchPrograms()
   }, [fetchPrograms])
 
-  // Phase 0.2.1: 로그인 후 redirect 파라미터로 프로그램 상세 열기
+  // Phase 0.2.1: 로그인 후 redirect 파라미터로 프로그램 상세 페이지로 이동
   useEffect(() => {
     const programId = params.programId
     if (programId && user && authStore.isAuthenticated) {
       const program = programs.find(p => p.id === programId)
       if (program) {
-        setSelectedProgram(program)
-        setDrawerProgram(program)
-        openDrawer(program)
-        // URL에서 programId 제거
         setParam('programId', null)
+        navigate(`/programs/${programId}`)
       }
     }
-  }, [params.programId, user, authStore.isAuthenticated, programs, setParam])
+  }, [params.programId, user, authStore.isAuthenticated, programs, setParam, navigate])
 
   const statusFilter = useMemo<ProgramLifecycleStatus | null>(() => {
     const value = params.status as ProgramLifecycleStatus | null
@@ -251,19 +247,17 @@ export function ProgramListPage() {
     return filtered
   }, [programs, isUserRole, isAdmin, categoryTab, user, statusFilter, programType])
 
-  // Phase 0.2.1: 비로그인 사용자 로그인 유도
+  // 테이블 행 클릭 시 해당 프로그램 상세 페이지로 라우팅
   const handleView = (program: Program) => {
     // 비로그인 사용자는 로그인 페이지로 리다이렉트 (redirect 파라미터 포함)
     if (!user || !authStore.isAuthenticated) {
-      const redirectPath = `/programs?programId=${program.id}`
+      const redirectPath = `/programs/${program.id}`
       navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`)
       return
     }
 
-    // store에 동기화하고 Drawer 열기 (즉시 표시를 위해 drawerProgram도 설정)
-    setSelectedProgram(program)
-    setDrawerProgram(program)
-    openDrawer(program)
+    // 프로그램 상세 페이지로 이동
+    navigate(`/programs/${program.id}`)
   }
 
   const handleEdit = (program: Program) => {
@@ -623,6 +617,7 @@ export function ProgramListPage() {
           nextParams.set('viewMode', mode)
           setSearchParams(nextParams, { replace: true })
         }}
+        tableVariant={programType}
       />
 
       <ProgramDetailDrawer

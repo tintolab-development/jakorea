@@ -198,23 +198,23 @@ export function ProgramCalendarView({
     )
   }
 
-  // 메인 캘린더 셀 렌더링
+  // 메인 캘린더 셀 렌더링 (이전/다음 달 일자도 표기, other-month 스타일로 구분)
   const dateFullCellRender = (date: Dayjs) => {
+    const isCurrentMonth = date.isSame(currentMonth, 'month')
     const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
-    const isCurrentMonth = date.isSame(currentMonth, 'month')
     const dayPrograms = getProgramsForDate(date)
     const hasPrograms = dayPrograms.length > 0
 
     return (
       <div
-        className={`program-calendar-cell ${isSelected ? 'program-calendar-cell--selected' : ''} ${isToday ? 'program-calendar-cell--today' : ''} ${!isCurrentMonth ? 'program-calendar-cell--other-month' : ''}`}
+        className={`program-calendar-cell ${!isCurrentMonth ? 'program-calendar-cell--other-month' : ''} ${isSelected ? 'program-calendar-cell--selected' : ''} ${isToday ? 'program-calendar-cell--today' : ''}`}
         onClick={() => handleDateSelect(date)}
       >
         <div className="program-calendar-cell-date">{date.date()}</div>
-        {hasPrograms && isCurrentMonth && (
+        {hasPrograms && (
           <div className="program-calendar-cell-events">
-            {dayPrograms.slice(0, 3).map(program => (
+            {dayPrograms.slice(0, 2).map(program => (
               <div
                 key={program.id}
                 className="program-calendar-event"
@@ -230,6 +230,11 @@ export function ProgramCalendarView({
                 <span className="program-calendar-event-title">{program.title}</span>
               </div>
             ))}
+            {dayPrograms.length > 2 && (
+              <div className="program-calendar-event-more">
+                외 {dayPrograms.length - 2}개의 일정
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -275,7 +280,7 @@ export function ProgramCalendarView({
                 <div className="program-calendar-week-cell-date">{date.date()}</div>
                 {hasPrograms && (
                   <div className="program-calendar-week-cell-events">
-                    {dayPrograms.slice(0, 6).map(program => (
+                    {dayPrograms.slice(0, 2).map(program => (
                       <div
                         key={program.id}
                         className="program-calendar-event"
@@ -291,9 +296,9 @@ export function ProgramCalendarView({
                         <span className="program-calendar-event-title">{program.title}</span>
                       </div>
                     ))}
-                    {dayPrograms.length > 6 && (
+                    {dayPrograms.length > 2 && (
                       <div className="program-calendar-event-more">
-                        +{dayPrograms.length - 6}개 더
+                        외 {dayPrograms.length - 2}개의 일정
                       </div>
                     )}
                   </div>
