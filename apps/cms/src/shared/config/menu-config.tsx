@@ -1412,6 +1412,29 @@ export function getBreadcrumbByPath(
     match = findMenuMatch(n)
   }
 
+  // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시 브레드크럼 연동
+  const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+  if (!match && userRole === 'ADMIN' && n.startsWith('/programs/')) {
+    const rest = n.slice('/programs/'.length)
+    const segments = rest.split('/').filter(Boolean)
+    const firstSegment = segments[0]
+    if (firstSegment && !programsReserved.includes(firstSegment)) {
+      const listMatch =
+        findMenuMatchInItems('/programs/education', filteredItems) ||
+        findMenuMatch('/programs/education')
+      if (listMatch && listMatch.depth === 3 && listMatch.parent && listMatch.grandparent) {
+        const detailChain: BreadcrumbItem[] = [
+          toBreadcrumbItem(listMatch.grandparent),
+          toBreadcrumbItem(listMatch.parent),
+          toBreadcrumbItem(listMatch.item),
+        ]
+        const isEdit = segments[1] === 'edit'
+        detailChain.push({ label: isEdit ? '프로그램 수정' : '프로그램 상세' })
+        return detailChain
+      }
+    }
+  }
+
   if (!match) return []
 
   const chain: BreadcrumbItem[] = []

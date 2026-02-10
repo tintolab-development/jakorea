@@ -53,6 +53,17 @@ export function MainHeader() {
       return '관리자 홈'
     }
 
+    // 관리자: 프로그램 상세/수정 페이지 타이틀
+    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+    if (user?.role === 'ADMIN' && location.pathname.startsWith('/programs/')) {
+      const rest = location.pathname.slice('/programs/'.length)
+      const segments = rest.split('/').filter(Boolean)
+      const first = segments[0]
+      if (first && !programsReserved.includes(first)) {
+        return segments[1] === 'edit' ? '프로그램 수정' : '프로그램 상세'
+      }
+    }
+
     // 내 학습 관리 리다이렉트 경로 우선 확인 (권한별 렌더링 확실히)
     // /my-learning은 역할별로 다른 경로로 리다이렉트되지만, 헤더 타이틀은 "내 학습 관리"로 통일
     if (user?.role && user.role !== 'ADMIN') {

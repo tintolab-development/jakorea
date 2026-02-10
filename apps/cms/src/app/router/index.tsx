@@ -69,6 +69,7 @@ const SchoolListPage = lazyLoad(() => import('@/pages/schools/school-list-page')
 const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
+const ProgramDetailPage = lazyLoad(() => import('@/pages/programs/program-detail-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
@@ -303,6 +304,7 @@ export const router = createBrowserRouter([
           { path: 'favorites', element: <MyFavoriteProgramsPage /> },
           { path: 'new', element: <ProgramFormPage /> },
           { path: ':id/edit', element: <ProgramFormPage /> },
+          { path: ':id', element: <ProgramDetailPage /> }, // 프로그램 상세 (관리자)
         ],
       },
       {

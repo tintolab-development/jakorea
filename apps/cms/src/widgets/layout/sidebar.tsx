@@ -158,6 +158,17 @@ export function Sidebar() {
       return ['/my-learning']
     }
 
+    // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시에도 '프로그램 목록' 카테고리 활성화
+    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+    if (user?.role === 'ADMIN' && path.startsWith('/programs/')) {
+      const rest = path.slice('/programs/'.length)
+      const segments = rest.split('/').filter(Boolean)
+      const firstSegment = segments[0]
+      if (firstSegment && !programsReserved.includes(firstSegment)) {
+        return ['/programs/education']
+      }
+    }
+
     return [path]
   }, [location.pathname, user?.role])
 
