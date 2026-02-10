@@ -60,6 +60,18 @@ export const CATEGORY_LABEL: Record<string, string> = {
   individual: '개인',
 }
 
+export const CATEGORY_OPTIONS = [
+  { value: 'school', label: '학교/기관' },
+  { value: 'individual', label: '개인' },
+]
+
+export const BUSINESS_AREA_OPTIONS = [
+  { value: '기업가정신', label: '기업가정신' },
+  { value: '경제', label: '경제' },
+  { value: '진로', label: '진로' },
+  { value: '기타', label: '기타' },
+]
+
 export const TYPE_LABEL: Record<string, string> = {
   online: '온라인',
   offline: '오프라인',
@@ -109,11 +121,6 @@ export const DEFAULT_ADDITIONAL_HTML = `<p><strong>프로그램 운영 협조사
 </ul>
 </li>
 </ol>`
-
-export const DEFAULT_ATTACHMENT_NAMES = [
-  '2026년JAKorea대학생경제교육봉사단초등경제교육모집안내문.pdf',
-  '2026년JAKorea대학생경제교육봉사단초등경제교육대상학교모집의건.pdf',
-]
 
 // ─── 썸네일 유틸 ──────────────────────────────────────────
 

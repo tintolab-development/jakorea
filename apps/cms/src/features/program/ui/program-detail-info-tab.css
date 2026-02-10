@@ -4,316 +4,429 @@
  */
 
 .program-detail-info-tab {
-  width: 100%;
+    width: 100%;
 }
 
 .program-detail-info-tab__card {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #f0f0f0;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
 }
 
 .program-detail-info-tab__section {
-  padding: 20px 24px;
+    padding: 20px 24px;
 }
 
-.program-detail-info-tab__section + .program-detail-info-tab__section {
-  border-top: 1px solid #f0f0f0;
+.program-detail-info-tab__section+.program-detail-info-tab__section {
+    border-top: 1px solid #f0f0f0;
 }
 
 /* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬 */
 .program-detail-info-tab__section-header-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .program-detail-info-tab__section-header-row .program-detail-info-tab__section-title {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .program-detail-info-tab__section-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 16px;
 }
 
 .program-detail-info-tab__detail-note {
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
-  margin-bottom: 0;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.45);
+    margin-bottom: 0;
 }
 
 /* 테이블 래퍼: radius 적용(테이블 모서리 둥글게), 하위 테이블 영역 고정 */
 .program-detail-info-tab__table-wrapper {
-  border-radius: 8px;
-  overflow: hidden;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .program-detail-info-tab__table-wrapper--sub {
-  margin-top: 24px;
+    margin-top: 24px;
 }
 
 /* 기본 정보 테이블 — 라벨: #F9F9F9·가운데정렬·굵게, 값: 흰색·좌정렬, 구분선 #E0E0E0 */
 .program-detail-info-tab__table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .program-detail-info-tab__table th,
 .program-detail-info-tab__table td {
-  padding: 12px 16px;
-  vertical-align: middle;
-  border: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    vertical-align: middle;
+    border: 1px solid #e0e0e0;
 }
 
 .program-detail-info-tab__table th {
-  text-align: center;
+    text-align: center;
 }
 
 .program-detail-info-tab__table td {
-  text-align: left;
+    text-align: left;
 }
 
 /* 라벨 셀: 연한 회색 배경 #F9F9F9, 굵은 검정/다크그레이 #333, 가운데 정렬 */
 .program-detail-info-tab__table th {
-  width: 16%;
-  font-weight: 700;
-  color: #333;
-  background: #f9f9f9;
+    width: 16%;
+    font-weight: 700;
+    color: #333;
+    background: #f9f9f9;
+}
+
+/* 필수 항목 * 표시: E4223F, 텍스트와 2px 간격 */
+.program-detail-info-tab__table th .program-detail-info-tab__required {
+    color: #e4223f;
+    margin-left: 2px;
 }
 
 /* 값 셀: 흰색 배경, 검정 텍스트 */
 .program-detail-info-tab__table td {
-  width: 34%;
-  color: #333;
-  background: #fff;
+    width: 34%;
+    color: #333;
+    background: #fff;
 }
 
 /* 기본 정보 상단·하위 테이블 헤더(라벨) 열 너비 공통화 — 동일 px 고정 */
 .program-detail-info-tab__table--basic th {
-  width: 200px;
-  min-width: 200px;
-}
-.program-detail-info-tab__table--basic td {
-  width: auto;
+    width: 200px;
+    min-width: 200px;
 }
 
+.program-detail-info-tab__table--basic td {
+    width: auto;
+}
 
 /* 교육 커리큘럼 테이블 — 기본 정보와 동일 스타일(라벨 200px, #F9F9F9, 구분선 #E0E0E0) */
 .program-detail-info-tab__curriculum-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .program-detail-info-tab__curriculum-table th,
 .program-detail-info-tab__curriculum-table td {
-  padding: 12px 16px;
-  vertical-align: middle;
-  border: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    vertical-align: middle;
+    border: 1px solid #e0e0e0;
 }
 
 .program-detail-info-tab__curriculum-table th {
-  width: 200px;
-  min-width: 200px;
-  text-align: center;
-  font-weight: 700;
-  color: #333;
-  background: #f9f9f9;
+    width: 200px;
+    min-width: 200px;
+    text-align: center;
+    font-weight: 700;
+    color: #333;
+    background: #f9f9f9;
 }
 
 .program-detail-info-tab__curriculum-table td {
-  width: auto;
-  text-align: left;
-  color: #333;
-  background: #fff;
+    width: auto;
+    text-align: left;
+    color: #333;
+    background: #fff;
 }
 
 /* 썸네일 — 86×86 이미지, 오른쪽에 파일명·버튼·안내 2줄(#999, "- " 접두사) */
 .program-detail-info-tab__thumbnail-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .program-detail-info-tab__thumbnail-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 /* 썸네일 이미지 86×86 고정 (Ant Design Image 래퍼 + 내부 img 모두 제한) */
 .program-detail-info-tab__thumbnail-img {
-  width: 86px !important;
-  height: 86px !important;
-  min-width: 86px;
-  min-height: 86px;
-  max-width: 86px;
-  max-height: 86px;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  flex-shrink: 0;
-  overflow: hidden;
-  display: block;
+    width: 86px !important;
+    height: 86px !important;
+    min-width: 86px;
+    min-height: 86px;
+    max-width: 86px;
+    max-height: 86px;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    flex-shrink: 0;
+    overflow: hidden;
+    display: block;
 }
+
 .program-detail-info-tab__thumbnail-img img,
 .program-detail-info-tab__thumbnail-img .ant-image-img {
-  width: 86px !important;
-  height: 86px !important;
-  min-width: 86px !important;
-  min-height: 86px !important;
-  max-width: 86px !important;
-  max-height: 86px !important;
-  object-fit: cover;
-  display: block;
+    width: 86px !important;
+    height: 86px !important;
+    min-width: 86px !important;
+    min-height: 86px !important;
+    max-width: 86px !important;
+    max-height: 86px !important;
+    object-fit: cover;
+    display: block;
 }
 
 /* 썸네일 오른쪽: 1행 = 파일명, 2행 = 파일선택버튼 + 안내 텍스트 */
 .program-detail-info-tab__thumbnail-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
 }
 
 .program-detail-info-tab__thumbnail-filename-row {
-  display: block;
+    display: block;
 }
 
 .program-detail-info-tab__thumbnail-filename {
-  font-size: 13px;
-  color: #333;
-  line-height: 1.4;
-  word-break: break-all;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.4;
+    word-break: break-all;
 }
 
 .program-detail-info-tab__contact-cell {
-  word-break: break-word;
+    word-break: break-word;
 }
 
+/* 조회/수정 공통: 테이블 박스 사이즈 유지 (인풋 전환 시에도 동일 높이) */
 .program-detail-info-tab__content-block {
-  white-space: pre-wrap;
-  word-break: break-word;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 160px;
+    padding: 8px 0;
+    box-sizing: border-box;
+}
+
+.program-detail-info-tab__content-block.program-detail-info-tab__content-block--sm {
+    min-height: 120px;
 }
 
 .program-detail-info-tab__content-block ul {
-  margin: 0.5em 0;
-  padding-left: 1.2em;
+    margin: 0.5em 0;
+    padding-left: 1.2em;
 }
 
 .program-detail-info-tab__content-block ol {
-  margin: 0.5em 0;
-  padding-left: 1.2em;
+    margin: 0.5em 0;
+    padding-left: 1.2em;
 }
 
 /* 추가 내용: 임시 이미지 + Toast UI Editor 출력 영역 */
 .program-detail-info-tab__additional-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.program-detail-info-tab__additional-content--edit {
+    min-height: 320px;
+}
+
+.program-detail-info-tab__editor-host {
+    width: 100%;
+    min-height: 320px;
+}
+
+/* 추가 내용 에디터: 테이블/텍스트필드와 동일한 옅은 회색 테두리·라운드 */
+.program-detail-info-tab__editor-host .toast-ui-editor-defaultUI {
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+}
+
+.program-detail-info-tab__editor-host .toast-ui-editor-main-container {
+    border-radius: 0 0 6px 6px;
+}
+
+/* 수정 모드 텍스트 필드: 테이블 박스 높이 유지 + 필요시 확장 가능 */
+.program-detail-info-tab__content-textarea {
+    width: 100%;
+    min-height: 160px;
+    border-radius: 6px;
+    resize: vertical;
+    border: 1px solid #d9d9d9;
+}
+
+.program-detail-info-tab__content-textarea.ant-input {
+    min-height: 160px;
+}
+
+.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm {
+    min-height: 120px;
+}
+
+.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm.ant-input {
+    min-height: 120px;
 }
 
 .program-detail-info-tab__additional-image-wrap {
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #e0e0e0;
-  max-width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+    max-width: 100%;
 }
 
 .program-detail-info-tab__additional-image {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
+    display: block;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
 /* Toast UI Editor getHTML() 출력용 — 뷰어와 동일 스펙(제목/문단/리스트/이미지 등) */
 .program-detail-info-tab__editor-content {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #333;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
 }
 
 .program-detail-info-tab__editor-content .toastui-editor-contents,
 .program-detail-info-tab__editor-content:global(.toastui-editor-contents) {
-  padding: 0;
+    padding: 0;
 }
 
 .program-detail-info-tab__editor-content h1,
 .program-detail-info-tab__editor-content h2,
 .program-detail-info-tab__editor-content h3,
 .program-detail-info-tab__editor-content h4 {
-  margin: 1em 0 0.5em;
-  font-weight: 600;
-  color: #333;
+    margin: 1em 0 0.5em;
+    font-weight: 600;
+    color: #333;
 }
 
 .program-detail-info-tab__editor-content p {
-  margin: 0.5em 0;
+    margin: 0.5em 0;
 }
 
 .program-detail-info-tab__editor-content ul,
 .program-detail-info-tab__editor-content ol {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
+    margin: 0.5em 0;
+    padding-left: 1.5em;
 }
 
 .program-detail-info-tab__editor-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
 }
 
 .program-detail-info-tab__editor-placeholder {
-  color: rgba(0, 0, 0, 0.45);
+    color: rgba(0, 0, 0, 0.45);
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .program-detail-info-tab__thumbnail-placeholder {
-  color: rgba(0, 0, 0, 0.45);
+    color: rgba(0, 0, 0, 0.45);
 }
 
 .program-detail-info-tab__thumbnail-placeholder-box {
-  width: 86px;
-  height: 86px;
-  flex-shrink: 0;
-  background: #f5f5f5;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: #999;
+    width: 86px;
+    height: 86px;
+    flex-shrink: 0;
+    background: #f5f5f5;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #999;
 }
 
 .program-detail-info-tab__curriculum-empty {
-  color: rgba(0, 0, 0, 0.45);
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.program-detail-info-tab__curriculum-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.program-detail-info-tab__curriculum-inputs .ant-input {
+    border-radius: 6px;
 }
 
 /* 기본 정보 테이블 내 라디오/셀렉트 */
 .program-detail-info-tab__table--basic .ant-radio-group {
-  width: 100%;
+    width: 100%;
 }
+
 .program-detail-info-tab__table--basic .program-detail-info-tab__lifecycle-select {
-  width: 100%;
-  max-width: 240px;
+    width: 100%;
+    max-width: 240px;
 }
+
 .program-detail-info-tab__table .ant-radio-group,
 .program-detail-info-tab__table .ant-select {
-  width: 100%;
-  max-width: 320px;
+    width: 100%;
+    max-width: 320px;
 }
 
 /* 셀렉트·입력 요소 radius 유지 */
 .program-detail-info-tab__table--basic .ant-select-selector {
-  border-radius: 6px !important;
+    border-radius: 6px !important;
 }
+
 .program-detail-info-tab__table--basic .ant-select .ant-select-selector {
-  border-radius: 6px !important;
+    border-radius: 6px !important;
+}
+
+/* 수정 모드: 날짜 범위·입력 행 */
+.program-detail-info-tab__date-range {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.program-detail-info-tab__date-picker {
+    width: 160px;
+}
+
+.program-detail-info-tab__date-picker .ant-picker {
+    border-radius: 6px;
+}
+
+.program-detail-info-tab__result-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.program-detail-info-tab__education-target {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.program-detail-info-tab__contact-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.program-detail-info-tab__contact-inputs .ant-input {
+    border-radius: 6px;
 }
