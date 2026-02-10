@@ -246,4 +246,3 @@ export function useInstructorTable(data: Instructor[]) {
 
 - [라우팅](../architecture/routing.md)
 - [Custom Hooks](../coding/custom-hooks.md)
-
