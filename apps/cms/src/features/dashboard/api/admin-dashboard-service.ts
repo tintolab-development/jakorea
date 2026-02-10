@@ -147,6 +147,58 @@ export async function getProgramProgress7Stage(): Promise<ProgramProgress7Stage>
 }
 
 /**
+ * 특정 프로그램의 7단계 진행 현황 (상세 페이지 위젯용)
+ * 해당 프로그램의 lifecycle 1건 + 동일 프로그램 신청/매칭 등 단계별 건수
+ */
+export async function getProgramProgress7StageByProgramId(
+  programId: string
+): Promise<ProgramProgress7Stage> {
+  await new Promise(resolve => setTimeout(resolve, 150))
+
+  const program = mockPrograms.find(p => p.id === programId)
+  const stages = {
+    studentRecruitment: 0,
+    instructorRecruitment: 0,
+    matchingCompleted: 0,
+    educationBeforeTextbook: 0,
+    educationAfterTextbook: 0,
+    educationCompleted: 0,
+    documentProcessingCompleted: 0,
+  }
+
+  if (program) {
+    switch (program.lifecycleStatus) {
+      case 'recruiting_students':
+        stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 1
+        break
+      case 'recruiting_instructors':
+        stages.instructorRecruitment = mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor').length || 1
+        break
+      case 'matching_completed':
+      case 'education_before_textbook':
+        stages.matchingCompleted = mockMatchings.filter(m => m.programId === programId).length || 1
+        break
+      case 'education_after_textbook':
+        stages.educationAfterTextbook = 1
+        break
+      case 'education_completed':
+        stages.educationCompleted = 1
+        break
+      case 'document_processing_completed':
+        stages.documentProcessingCompleted = 1
+        break
+      default:
+        stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 0
+        break
+    }
+  }
+
+  // 전체 건수는 해당 프로그램이 현재 속한 단계에 1건으로 집계
+  const total = Math.max(1, Object.values(stages).reduce((sum, c) => sum + c, 0))
+  return { ...stages, total }
+}
+
+/**
  * 대기 중인 작업 카운트
  */
 export async function getPendingActionCounts(): Promise<PendingActionCounts> {
