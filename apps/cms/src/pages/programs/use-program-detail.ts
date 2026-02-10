@@ -48,5 +48,6 @@ export function useProgramDetail(id: string | undefined) {
     canWrite,
     sponsorName,
     handleLifecycleStatusChange,
+    updateProgram,
   }
 }
