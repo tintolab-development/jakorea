@@ -2,7 +2,7 @@
  * 위젯 편집기 타입 정의
  */
 
-import type { Layout } from 'react-grid-layout'
+import type { LayoutItem } from 'react-grid-layout'
 import type { UserRole } from '@/types/user'
 
 /**
@@ -51,9 +51,9 @@ export interface WidgetInstance {
 export interface DashboardLayout {
   version: number // 스키마 버전 (마이그레이션용)
   breakpoints?: {
-    lg?: Layout // react-grid-layout의 Layout
-    md?: Layout
-    sm?: Layout
+    lg?: LayoutItem[]
+    md?: LayoutItem[]
+    sm?: LayoutItem[]
   }
   widgets: WidgetInstance[] // 활성화된 위젯 목록
 }

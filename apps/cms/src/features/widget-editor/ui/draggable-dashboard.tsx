@@ -46,7 +46,7 @@ export function DraggableDashboard() {
 
   const handleLayoutChange = (_newLayout: Layout, allLayouts: Partial<Record<string, Layout>>) => {
     if (allLayouts.lg && Array.isArray(allLayouts.lg)) {
-      updateLayout(allLayouts.lg, 'lg')
+      updateLayout([...allLayouts.lg], 'lg')
     }
   }
 
@@ -57,23 +57,29 @@ export function DraggableDashboard() {
 
   const handleDragStop = (
     newLayout: Layout,
-    _oldItem: LayoutItem,
-    newItem: LayoutItem,
-    _placeholder: LayoutItem,
-    e: MouseEvent | TouchEvent | undefined,
-    node: HTMLElement | undefined
+    _oldItem: LayoutItem | null,
+    newItem: LayoutItem | null,
+    _placeholder: LayoutItem | null,
+    event: Event,
+    node?: HTMLElement
   ) => {
+    if (!newItem) {
+      stopPointerTracking()
+      setDragging(false)
+      return
+    }
+
     // 1) 그리드 컨테이너 중앙선 (포인터가 왼쪽/오른쪽 판단 기준)
     const rect = gridContainerRef.current?.getBoundingClientRect()
     const midX = rect ? rect.left + rect.width / 2 : 0
 
     // 2) 포인터 X: 이벤트 → 드래그된 노드 중심 → 윈도우 pointermove 추적값 → 중앙선 폴백
     let pointerX: number | null = null
-    if (e) {
-      if ('clientX' in e && typeof e.clientX === 'number') {
-        pointerX = e.clientX
-      } else if ('changedTouches' in e && e.changedTouches?.length) {
-        pointerX = e.changedTouches[0].clientX
+    if (event) {
+      if ('clientX' in event && typeof (event as MouseEvent).clientX === 'number') {
+        pointerX = (event as MouseEvent).clientX
+      } else if ('changedTouches' in event && (event as TouchEvent).changedTouches?.length) {
+        pointerX = (event as TouchEvent).changedTouches[0].clientX
       }
     }
     if (pointerX == null && node) {
@@ -128,6 +134,7 @@ export function DraggableDashboard() {
     margin: MARGIN,
     containerPadding: CONTAINER_PADDING,
     useCSSTransforms: true,
+    dragConfig: { handle: '.widget-card-header[data-drag-handle]' },
   }
 
   if (widgets.length === 0) {
@@ -148,8 +155,6 @@ export function DraggableDashboard() {
         onDragStop={handleDragStop}
         onResizeStart={handleResizeStart}
         onResizeStop={handleResizeStop}
-        // @ts-expect-error - draggableHandle은 Responsive에서 지원하나 타입에 없음
-        draggableHandle=".widget-card-header[data-drag-handle]"
       >
         {widgets.map(widget => {
           const widgetDef = getWidgetDefinition(widget.widgetKey)

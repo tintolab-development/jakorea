@@ -4,7 +4,7 @@
  * - 저장되는 레이아웃은 항상 sanitize 후에만 저장
  */
 
-import type { Layout } from 'react-grid-layout'
+import type { LayoutItem } from 'react-grid-layout'
 import { getDndSizeForWidget } from './dnd-layout-constants'
 
 const COLS_DEFAULT = 12
@@ -22,7 +22,7 @@ export function normalizeWidth(w: number): 6 | 12 {
  * - w === 6  → x <= 2 → x = 0, else → x = 6
  * - x ∈ [0, cols - w], y >= 0
  */
-export function sanitizeToTwoColumns(item: Layout, cols: number = COLS_DEFAULT): Layout {
+export function sanitizeToTwoColumns(item: LayoutItem, cols: number = COLS_DEFAULT): LayoutItem {
   const w = item.w >= cols ? 12 : 6
   let x: number
   if (w === 12) {
@@ -46,19 +46,19 @@ export function sanitizeToTwoColumns(item: Layout, cols: number = COLS_DEFAULT):
  * 레이아웃 배열 전체를 2열로 정리 (저장 전 항상 사용)
  */
 export function sanitizeLayoutToTwoColumns(
-  layout: Layout[],
+  layout: LayoutItem[],
   cols: number = COLS_DEFAULT
-): Layout[] {
+): LayoutItem[] {
   return layout.map(item => sanitizeToTwoColumns(item, cols))
 }
 
 /** @deprecated use sanitizeToTwoColumns */
-export function snapToColumns(item: Layout): Layout {
+export function snapToColumns(item: LayoutItem): LayoutItem {
   return sanitizeToTwoColumns(item, COLS_DEFAULT)
 }
 
 /** @deprecated use sanitizeLayoutToTwoColumns */
-export function snapLayoutToColumns(layout: Layout[]): Layout[] {
+export function snapLayoutToColumns(layout: LayoutItem[]): LayoutItem[] {
   return sanitizeLayoutToTwoColumns(layout, COLS_DEFAULT)
 }
 
@@ -80,20 +80,20 @@ export type PreferredColumnMap = Record<string, 0 | 6>
  * - 출력은 마지막에 sanitize로 한 번 더 보정
  */
 export function repackLayout(
-  layout: Layout[],
+  layout: LayoutItem[],
   widgetOrder: WidgetOrderItem[],
   cols: number = COLS_DEFAULT,
   preferredColumn?: PreferredColumnMap
-): Layout[] {
+): LayoutItem[] {
   const sanitizedInput = sanitizeLayoutToTwoColumns(layout, cols)
-  const byId = new Map<string, Layout>()
+  const byId = new Map<string, LayoutItem>()
   for (const item of sanitizedInput) {
     byId.set(item.i, { ...item })
   }
 
   let leftY = 0
   let rightY = 0
-  const result: Layout[] = []
+  const result: LayoutItem[] = []
 
   for (const widget of widgetOrder) {
     const item = byId.get(widget.id)
@@ -101,7 +101,7 @@ export function repackLayout(
 
     const { w, h } = getDndSizeForWidget(widget.widgetKey)
 
-    const packed: Layout = {
+    const packed: LayoutItem = {
       ...item,
       w,
       h,

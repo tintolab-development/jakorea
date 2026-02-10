@@ -3,14 +3,14 @@
  */
 
 /* 그리드 컨테이너: 전체 너비, 패딩 없음 (중앙 정렬 금지 → x=0|6 시각적 정렬 유지) */
-/* 그리드 위 글로벌 딤 없음: 배경 흰색으로 레이아웃 회색(#f5f5f5)이 비치지 않도록 함 */
+/* 그리드 배경 투명 */
 .draggable-dashboard {
   width: 100%;
   min-height: 100vh;
   padding: 0;
   box-sizing: border-box;
   position: relative;
-  background: #fff;
+  background: transparent;
 }
 
 .draggable-dashboard-grid {

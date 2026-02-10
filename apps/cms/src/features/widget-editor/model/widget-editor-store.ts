@@ -13,7 +13,7 @@ import {
   sanitizeToTwoColumns,
 } from '../lib/repack-layout'
 import { getDndSizeForWidget } from '../lib/dnd-layout-constants'
-import type { Layout } from 'react-grid-layout'
+import type { LayoutItem } from 'react-grid-layout'
 
 interface WidgetEditorStore extends WidgetEditorState {
   /** 드래그 중일 때 true (위젯 내부 포인터 비활성화용) */
@@ -26,7 +26,7 @@ interface WidgetEditorStore extends WidgetEditorState {
   setResizing: (value: boolean) => void
   addWidget: (widgetKey: string, instanceId: string) => void
   removeWidget: (instanceId: string) => void
-  updateLayout: (layout: Layout[], breakpoint?: 'lg' | 'md' | 'sm') => void
+  updateLayout: (layout: LayoutItem[], breakpoint?: 'lg' | 'md' | 'sm') => void
   /** 2열 밀집 리팩. 드롭 시 preferredColumn으로 해당 위젯 열 고정 가능 */
   repackLayout: (preferredColumn?: { instanceId: string; x: 0 | 6 }) => void
   toggleWidgetSize: (instanceId: string) => void
@@ -201,7 +201,7 @@ export const useWidgetEditorStore = create<WidgetEditorStore>()(
        * 레이아웃 업데이트 (드래그/리사이즈 시)
        * RGL 원본은 저장하지 않고, 항상 2열 정리(sanitize) 후에만 저장
        */
-      updateLayout: (layout: Layout[], breakpoint: 'lg' | 'md' | 'sm' = 'lg') => {
+      updateLayout: (layout: LayoutItem[], breakpoint: 'lg' | 'md' | 'sm' = 'lg') => {
         const { draftState } = get()
         const sanitized = breakpoint === 'lg' ? sanitizeLayoutToTwoColumns(layout) : layout
         set({
