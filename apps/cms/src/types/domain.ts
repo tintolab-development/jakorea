@@ -118,6 +118,14 @@ export interface Program {
   contactPhone?: string // 문의처 연락처
   oneLineIntroduction?: string // 한 줄 소개
   keyVisualImage?: string // 키비주얼 이미지 URL
+  /** 추가 내용 (Toast UI Editor getHTML() 출력 HTML) */
+  additionalContentHtml?: string
+  /** 모집 안내 (텍스트 또는 HTML) */
+  recruitmentGuide?: string
+  /** 학습 지원 내용 (텍스트 또는 HTML) */
+  learningSupportContent?: string
+  /** 첨부 파일명 목록 (표시용) */
+  attachmentFileNames?: string[]
   // 프로그램별 폼 업로드 (기획 요구사항)
   applicationFormTemplateId?: UUID // 신청서 폼 템플릿 ID
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID
@@ -137,6 +145,8 @@ export interface ProgramRound {
   capacity?: number // 정원
   classCount?: number // 학급수
   status: Status
+  /** 회차별 강의 분량 및 내용 (예: "1시간 | '개인', '근로자', '소비자' 개념 정의 및 설명") */
+  curriculum?: string
 }
 
 // 학교
