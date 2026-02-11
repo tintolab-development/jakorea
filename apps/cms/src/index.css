@@ -1,107 +1,112 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
 }
+
 a:hover {
-  color: #535bf2;
+    color: #535bf2;
 }
 
 body {
-  margin: 0;
-  min-width: 1920px;
-  min-height: 100vh;
-  background-color: #f0f2f5;
+    margin: 0;
+    min-width: 1920px;
+    min-height: 100vh;
+    background-color: var(--color-bg-tertiary);
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+    font-size: 3.2em;
+    line-height: 1.1;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.25s;
 }
+
 button:hover {
-  border-color: #646cff;
+    border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+    outline: 4px auto -webkit-focus-ring-color;
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+    :root {
+        color: #213547;
+        background-color: #ffffff;
+    }
+
+    a:hover {
+        color: #747bff;
+    }
+
+    button {
+        background-color: #f9f9f9;
+    }
 }
 
 /* Alert 컴포넌트 버튼 정렬 */
 .pending-actions-alert {
-  display: flex !important;
-  align-items: center !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
 .pending-actions-alert .ant-alert-content {
-  flex: 1;
+    flex: 1;
 }
 
 .pending-actions-alert .ant-alert-action {
-  display: flex !important;
-  align-items: center !important;
-  margin-right: 8px;
+    display: flex !important;
+    align-items: center !important;
+    margin-right: var(--spacing-8);
 }
 
 .pending-actions-alert .ant-alert-close-icon {
-  display: flex !important;
-  align-items: center !important;
-  line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    line-height: 1 !important;
 }
 
 /* 필수 필드 * 표시: 라벨 텍스트 우측에 위치 (Ant Design 5 기본 ::before/::after보다 우선) */
-body .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
-  display: none !important;
-  content: none !important;
-}
-body .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::after {
-  display: inline-block !important;
-  margin-left: 4px;
-  margin-inline-start: 4px;
-  margin-inline-end: 0;
-  color: #ff4d4f !important;
-  font-size: 14px;
-  font-family: SimSun, sans-serif;
-  line-height: 1;
-  content: '*' !important;
+body .ant-form-item-label>label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
+    display: none !important;
+    content: none !important;
 }
 
+body .ant-form-item-label>label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::after {
+    display: inline-block !important;
+    margin-left: var(--spacing-4);
+    margin-inline-start: var(--spacing-4);
+    margin-inline-end: 0;
+    color: var(--color-required-mark) !important;
+    font-size: var(--font-size-14);
+    font-family: SimSun, sans-serif;
+    line-height: 1;
+    content: '*' !important;
+}
