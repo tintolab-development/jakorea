@@ -6,7 +6,7 @@
 .file-select-field {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-12);
 }
 
 /* 숨겨진 file input */
@@ -24,18 +24,18 @@
 .file-select-field__names {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--spacing-4);
 }
 
 .file-select-field__name-row {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-8);
 }
 
 .file-select-field__name {
-    font-size: 14px;
-    color: #333;
+    font-size: var(--font-size-14);
+    color: var(--color-text-primary);
 }
 
 /* 업로드 취소(X) 버튼 — 회색 원형 배경, 흰색 X */
@@ -48,16 +48,16 @@
     padding: 0;
     border: none;
     border-radius: 50%;
-    background: #d9d9d9;
-    color: #666;
+    background: var(--color-border-input);
+    color: var(--color-text-body);
     cursor: pointer;
-    font-size: 12px;
+    font-size: var(--font-size-12);
     flex-shrink: 0;
 }
 
 .file-select-field__remove:hover {
-    background: #ba444d;
-    color: #fff;
+    background: var(--color-danger-hover);
+    color: var(--color-bg-base);
 }
 
 .file-select-field__remove:focus {
@@ -65,7 +65,7 @@
 }
 
 .file-select-field__remove:focus-visible {
-    outline: 2px solid #40a8a6;
+    outline: 2px solid var(--color-focus-teal);
     outline-offset: 1px;
 }
 
@@ -74,7 +74,7 @@
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--spacing-12);
     flex-wrap: wrap;
 }
 
@@ -84,13 +84,13 @@
     width: 120px;
     min-width: 120px;
     height: 40px;
-    padding: 0 16px;
-    background: #e0e0e0 !important;
-    color: #333 !important;
-    border: 1px solid #d9d9d9 !important;
+    padding: 0 var(--spacing-16);
+    background: var(--color-bg-button-secondary) !important;
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border-input) !important;
     border-radius: 6px;
-    font-size: 14px;
-    font-weight: 400;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-regular);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -98,28 +98,28 @@
 }
 
 .file-select-field__btn:hover {
-    background: #d5d5d5 !important;
-    border-color: #d0d0d0 !important;
-    color: #333 !important;
+    background: var(--color-bg-button-secondary-hover) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-primary) !important;
 }
 
 /* 수정 모드 활성화 시: 연한 청록 테두리·텍스트 (디자이너 시안) */
 .file-select-field--edit .file-select-field__btn:not(:disabled) {
-    background: #fff !important;
-    border: 1px solid #40a8a6 !important;
-    color: #40a8a6 !important;
+    background: var(--color-bg-base) !important;
+    border: 1px solid var(--color-focus-teal) !important;
+    color: var(--color-focus-teal) !important;
 }
 
 .file-select-field--edit .file-select-field__btn:not(:disabled):hover {
-    background: #f0fafa !important;
-    border-color: #389592 !important;
-    color: #389592 !important;
+    background: var(--color-bg-input-teal) !important;
+    border-color: var(--color-focus-teal-hover) !important;
+    color: var(--color-focus-teal-hover) !important;
 }
 
 /* 가이드 텍스트 */
 .file-select-field__guide {
-    font-size: 12px;
-    color: #999;
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
     line-height: 1.5;
     text-align: left;
     flex: 1;
@@ -131,5 +131,5 @@
 }
 
 .file-select-field__guide-line+.file-select-field__guide-line {
-    margin-top: 4px;
+    margin-top: var(--spacing-4);
 }

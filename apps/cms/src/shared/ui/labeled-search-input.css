@@ -5,14 +5,14 @@
 .labeled-search-input {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--spacing-8);
 }
 
 .labeled-search-input__label {
     display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #262626;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-label);
     margin-bottom: 0;
 }
 
@@ -21,27 +21,27 @@
 }
 
 .labeled-search-input__input .ant-input {
-    border-radius: 8px;
-    border: 1px solid #d9d9d9;
+    border-radius: var(--radius-8);
+    border: 1px solid var(--color-border-input);
     padding-left: 36px;
 }
 
 .labeled-search-input__input .ant-input:hover {
-    border-color: #40a9ff;
+    border-color: var(--color-input-hover);
 }
 
 .labeled-search-input__input .ant-input:focus {
-    border-color: #1890ff;
-    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    border-color: var(--color-input-focus);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .labeled-search-input__icon {
-    color: #8c8c8c;
-    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-14);
 }
 
 .labeled-search-input__input .ant-input-prefix {
-    left: 12px;
+    left: var(--spacing-12);
 }
 
 /* 아이콘 없을 때: 왼쪽 패딩 셀렉트 기본값 */

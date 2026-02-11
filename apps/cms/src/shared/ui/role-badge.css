@@ -1,16 +1,16 @@
 .role-icon {
-  display: inline-flex;
-  align-items: center;
+    display: inline-flex;
+    align-items: center;
 }
 
 .role-icon--small {
-  font-size: 12px;
+    font-size: var(--font-size-12);
 }
 
 .role-icon--default {
-  font-size: 16px;
+    font-size: var(--font-size-16);
 }
 
 .role-icon--large {
-  font-size: 20px;
+    font-size: var(--font-size-20);
 }
