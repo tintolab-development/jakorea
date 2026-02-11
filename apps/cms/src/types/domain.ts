@@ -126,6 +126,27 @@ export interface Program {
   learningSupportContent?: string
   /** 첨부 파일명 목록 (표시용) */
   attachmentFileNames?: string[]
+  /** 결과 발표일 (미설정 시 applicationEndDate 사용) */
+  resultAnnouncementDate?: DateValue
+  /** 결과 발표 방법 */
+  resultAnnouncementMethod?: string
+  /** 승인된 수강자 수 (표시: approvedStudentCount / capacity 건) */
+  approvedStudentCount?: number
+  /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
+  instructorCapacity?: number
+  /** 강사 모집 기간 */
+  instructorApplicationStartDate?: DateValue
+  instructorApplicationEndDate?: DateValue
+  /** 1차 서류 합격자 발표 */
+  documentPassAnnouncementDate?: DateValue
+  documentPassAnnouncementMethod?: string
+  /** 2차 면접 심사 */
+  interviewStartDate?: DateValue
+  interviewEndDate?: DateValue
+  interviewMethod?: string
+  /** 최종 합격자 발표 */
+  finalPassAnnouncementDate?: DateValue
+  finalPassAnnouncementMethod?: string
   // 프로그램별 폼 업로드 (기획 요구사항)
   applicationFormTemplateId?: UUID // 신청서 폼 템플릿 ID
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID

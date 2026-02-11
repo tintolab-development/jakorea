@@ -3,43 +3,54 @@
  */
 
 .labeled-search-input {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .labeled-search-input__label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: #262626;
-  margin-bottom: 0;
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #262626;
+    margin-bottom: 0;
 }
 
 .labeled-search-input__input {
-  width: 100%;
+    width: 100%;
 }
 
 .labeled-search-input__input .ant-input {
-  border-radius: 8px;
-  border: 1px solid #d9d9d9;
-  padding-left: 36px;
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    padding-left: 36px;
 }
 
 .labeled-search-input__input .ant-input:hover {
-  border-color: #40a9ff;
+    border-color: #40a9ff;
 }
 
 .labeled-search-input__input .ant-input:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 .labeled-search-input__icon {
-  color: #8c8c8c;
-  font-size: 14px;
+    color: #8c8c8c;
+    font-size: 14px;
 }
 
 .labeled-search-input__input .ant-input-prefix {
-  left: 12px;
+    left: 12px;
+}
+
+/* 아이콘 없을 때: 왼쪽 패딩 셀렉트 기본값 */
+.labeled-search-input--no-icon .labeled-search-input__input .ant-input {
+    padding-left: 11px;
+}
+
+/* 필터 등에서 래퍼만 테두리 쓰는 경우: 내부 input 기본 테두리 제거 (상위에서 래퍼에만 테두리 줄 때) */
+.labeled-search-input--no-icon .labeled-search-input__input.ant-input-affix-wrapper .ant-input {
+    border: none;
+    box-shadow: none;
 }

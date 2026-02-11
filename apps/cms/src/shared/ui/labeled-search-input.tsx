@@ -26,6 +26,8 @@ export interface LabeledSearchInputProps {
   allowClear?: boolean
   /** disabled 상태 */
   disabled?: boolean
+  /** 검색(돋보기) 아이콘 표시 여부. false면 prefix 아이콘 없음 */
+  showPrefixIcon?: boolean
 }
 
 /**
@@ -51,9 +53,13 @@ export function LabeledSearchInput({
   style,
   allowClear = true,
   disabled = false,
+  showPrefixIcon = true,
 }: LabeledSearchInputProps) {
   return (
-    <div className="labeled-search-input" style={style}>
+    <div
+      className={`labeled-search-input ${showPrefixIcon ? '' : 'labeled-search-input--no-icon'}`}
+      style={style}
+    >
       <Text className="labeled-search-input__label">{label}</Text>
       <Input
         placeholder={placeholder}
@@ -62,7 +68,9 @@ export function LabeledSearchInput({
         allowClear={allowClear}
         disabled={disabled}
         style={{ width }}
-        prefix={<SearchOutlined className="labeled-search-input__icon" />}
+        prefix={
+          showPrefixIcon ? <SearchOutlined className="labeled-search-input__icon" /> : undefined
+        }
         className="labeled-search-input__input"
       />
     </div>
