@@ -3,124 +3,122 @@
  */
 
 .customer-inquiry-status-widget {
-  height: auto;
+    height: auto;
 }
 
 .customer-inquiry-status-widget .ant-card {
-  height: auto;
+    height: auto;
 }
 
 .customer-inquiry-status-widget .ant-card-head-title {
-  color: #333333;
-  font-weight: 500;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-500);
 }
 
 .customer-inquiry-status-widget .ant-card-body {
-  padding: 24px;
+    padding: var(--spacing-24);
 }
 
 .customer-inquiry-status-widget__cards {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  align-items: stretch;
-  box-sizing: border-box;
+    display: flex;
+    gap: var(--spacing-12);
+    width: 100%;
+    align-items: stretch;
+    box-sizing: border-box;
 }
 
 .customer-inquiry-status-widget__stat-card {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 108px;
-  padding: 16px 20px;
-  border-radius: 8px;
-  border: none;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  box-sizing: border-box;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 108px;
+    padding: var(--spacing-16) var(--spacing-20);
+    border-radius: var(--radius-8);
+    border: none;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    box-sizing: border-box;
 }
 
 .customer-inquiry-status-widget__stat-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-hover);
 }
 
 .customer-inquiry-status-widget__stat-card--pending {
-  background: #f8f2f3;
+    background: var(--color-bg-pending-light);
 }
 
 .customer-inquiry-status-widget__stat-card--answered {
-  background: #e3f4f9;
+    background: var(--color-bg-answered-light);
 }
 
 .customer-inquiry-status-widget__stat-card--total {
-  background: #f7f7f7;
+    background: var(--color-bg-neutral);
 }
 
 .customer-inquiry-status-widget__divider {
-  width: 1px;
-  height: 108px;
-  background: #e8e8e8;
-  margin: 0;
-  flex-shrink: 0;
-  align-self: center;
+    width: 1px;
+    height: 108px;
+    background: var(--color-border-skeleton);
+    margin: 0;
+    flex-shrink: 0;
+    align-self: center;
 }
 
 .customer-inquiry-status-widget__stat-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 400;
-  text-align: left;
-  margin: 0;
+    display: block;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-regular);
+    text-align: left;
+    margin: 0;
 }
 
 .customer-inquiry-status-widget__stat-count {
-  display: block;
-  font-size: 24px;
-  font-weight: 600;
-  text-align: right;
-  margin-top: auto;
-  margin-left: auto;
+    display: block;
+    font-size: var(--font-size-24);
+    font-weight: var(--font-weight-600);
+    text-align: right;
+    margin-top: auto;
+    margin-left: auto;
 }
 
 .customer-inquiry-status-widget__stat-card--pending .customer-inquiry-status-widget__stat-label,
 .customer-inquiry-status-widget__stat-card--pending .customer-inquiry-status-widget__stat-count {
-  color: #c94f5e;
+    color: var(--color-status-pending);
 }
 
 .customer-inquiry-status-widget__stat-card--answered .customer-inquiry-status-widget__stat-label,
 .customer-inquiry-status-widget__stat-card--answered .customer-inquiry-status-widget__stat-count {
-  color: #3592be;
+    color: var(--color-status-answered);
 }
 
 .customer-inquiry-status-widget__stat-card--total .customer-inquiry-status-widget__stat-label,
 .customer-inquiry-status-widget__stat-card--total .customer-inquiry-status-widget__stat-count {
-  color: #333333;
+    color: var(--color-text-primary);
 }
 
-/* 더보기 버튼 스타일 */
 .customer-inquiry-status-widget .widget-more-button {
-  color: #333333 !important;
+    color: var(--color-text-primary) !important;
 }
 
 .customer-inquiry-status-widget .widget-more-button:hover {
-  color: #333333 !important;
-  opacity: 0.8;
+    color: var(--color-text-primary) !important;
+    opacity: 0.8;
 }
 
-/* 반응형 대응 */
 @media (max-width: 768px) {
-  .customer-inquiry-status-widget__cards {
-    flex-wrap: wrap;
-  }
+    .customer-inquiry-status-widget__cards {
+        flex-wrap: wrap;
+    }
 
-  .customer-inquiry-status-widget__stat-card {
-    flex: 1 1 calc(50% - 12px);
-    min-width: 0;
-  }
+    .customer-inquiry-status-widget__stat-card {
+        flex: 1 1 calc(50% - var(--spacing-12));
+        min-width: 0;
+    }
 
-  .customer-inquiry-status-widget__divider {
-    display: none;
-  }
+    .customer-inquiry-status-widget__divider {
+        display: none;
+    }
 }
