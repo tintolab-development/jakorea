@@ -8,17 +8,17 @@
 }
 
 .program-detail-info-tab__card {
-    background: #fff;
-    border-radius: 8px;
-    border: 1px solid #f0f0f0;
+    background: var(--color-bg-base);
+    border-radius: var(--radius-8);
+    border: 1px solid var(--color-border-light);
 }
 
 .program-detail-info-tab__section {
-    padding: 20px 24px;
+    padding: var(--spacing-20) var(--spacing-24);
 }
 
 .program-detail-info-tab__section+.program-detail-info-tab__section {
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--color-border-light);
 }
 
 /* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬, 수직 중앙 맞춤 */
@@ -26,8 +26,8 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: var(--spacing-12);
+    margin-bottom: var(--spacing-16);
 }
 
 .program-detail-info-tab__section-header-row .program-detail-info-tab__section-title {
@@ -43,26 +43,26 @@
 }
 
 .program-detail-info-tab__section-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 16px;
+    font-size: var(--font-size-15);
+    font-weight: var(--font-weight-700);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-16);
 }
 
 .program-detail-info-tab__detail-note {
-    font-size: 13px;
-    color: rgba(0, 0, 0, 0.45);
+    font-size: var(--font-size-13);
+    color: var(--color-text-45);
     margin-bottom: 0;
 }
 
 /* 테이블 래퍼: radius 적용(테이블 모서리 둥글게), 하위 테이블 영역 고정 */
 .program-detail-info-tab__table-wrapper {
-    border-radius: 8px;
+    border-radius: var(--radius-8);
     overflow: hidden;
 }
 
 .program-detail-info-tab__table-wrapper--sub {
-    margin-top: 24px;
+    margin-top: var(--spacing-24);
 }
 
 /* 기본 정보 테이블 — 라벨: #F9F9F9·가운데정렬·굵게, 값: 흰색·좌정렬, 구분선 #E0E0E0 */
@@ -74,9 +74,9 @@
 
 .program-detail-info-tab__table th,
 .program-detail-info-tab__table td {
-    padding: 12px 16px;
+    padding: var(--spacing-12) var(--spacing-16);
     vertical-align: middle;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border);
 }
 
 .program-detail-info-tab__table th {
@@ -87,27 +87,27 @@
     text-align: left;
 }
 
-/* 라벨 셀: 연한 회색 배경 #F9F9F9, 굵은 검정/다크그레이 #333, 가운데 정렬, 헤더 200px 고정 */
+/* 라벨 셀: 연한 회색 배경 #F9F9F9, 굵은 검정/다크그레이 var(--color-text-primary), 가운데 정렬, 헤더 200px 고정 */
 .program-detail-info-tab__table th {
     width: 200px !important;
     min-width: 200px !important;
     max-width: 200px !important;
-    font-weight: 700;
-    color: #333;
-    background: #f9f9f9;
+    font-weight: var(--font-weight-700);
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary);
 }
 
 /* 필수 항목 * 표시: E4223F, 텍스트와 2px 간격 */
 .program-detail-info-tab__table th .program-detail-info-tab__required {
-    color: #e4223f;
+    color: var(--color-required-mark);
     margin-left: 2px;
 }
 
 /* 값 셀: 흰색 배경, 검정 텍스트 */
 .program-detail-info-tab__table td {
     width: 34%;
-    color: #333;
-    background: #fff;
+    color: var(--color-text-primary);
+    background: var(--color-bg-base);
 }
 
 /* 기본 정보 상단·하위 테이블 헤더(라벨) 200px 고정 (공통 규칙과 동일, 명시용) */
@@ -130,9 +130,9 @@
 
 .program-detail-info-tab__curriculum-table th,
 .program-detail-info-tab__curriculum-table td {
-    padding: 12px 16px;
+    padding: var(--spacing-12) var(--spacing-16);
     vertical-align: middle;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border);
 }
 
 .program-detail-info-tab__curriculum-table th {
@@ -140,16 +140,16 @@
     min-width: 200px !important;
     max-width: 200px !important;
     text-align: center;
-    font-weight: 700;
-    color: #333;
-    background: #f9f9f9;
+    font-weight: var(--font-weight-700);
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary);
 }
 
 .program-detail-info-tab__curriculum-table td {
     width: auto;
     text-align: left;
-    color: #333;
-    background: #fff;
+    color: var(--color-text-primary);
+    background: var(--color-bg-base);
 }
 
 /* 썸네일 — 86×86 이미지, 오른쪽에 파일명·삭제(X)·버튼·안내 (디자이너 시안: 패딩·수직 정렬·버튼 스타일) */
@@ -175,7 +175,7 @@
     max-width: 86px;
     max-height: 86px;
     border-radius: 4px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border);
     flex-shrink: 0;
     overflow: hidden;
     display: block;
@@ -209,8 +209,8 @@
 }
 
 .program-detail-info-tab__thumbnail-filename {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--font-size-13);
+    color: var(--color-text-primary);
     line-height: 1.4;
     word-break: break-all;
 }
@@ -234,7 +234,7 @@
 
 .program-detail-info-tab__thumbnail-remove:hover {
     background: #ba444d;
-    color: #fff;
+    color: var(--color-bg-base);
 }
 
 .program-detail-info-tab__thumbnail-remove:focus-visible {
@@ -248,7 +248,7 @@
 }
 
 .program-detail-info-tab__file-select .file-select-field__actions {
-    gap: 12px;
+    gap: var(--spacing-12);
     align-items: center;
 }
 
@@ -258,7 +258,7 @@
     height: 32px;
     padding: 0 12px;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: var(--font-size-13);
 }
 
 .program-detail-info-tab__file-select .file-select-field__guide {
@@ -348,7 +348,7 @@
 .program-detail-info-tab__additional-image-wrap {
     border-radius: 6px;
     overflow: hidden;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border);
     max-width: 100%;
 }
 
@@ -363,7 +363,7 @@
 .program-detail-info-tab__editor-content {
     font-size: 14px;
     line-height: 1.6;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .program-detail-info-tab__editor-content .toastui-editor-contents,
@@ -377,7 +377,7 @@
 .program-detail-info-tab__editor-content h4 {
     margin: 1em 0 0.5em;
     font-weight: 600;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .program-detail-info-tab__editor-content p {
@@ -397,7 +397,7 @@
 }
 
 .program-detail-info-tab__editor-placeholder {
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--color-text-45);
     min-height: 320px;
     display: flex;
     align-items: center;
@@ -405,7 +405,7 @@
 }
 
 .program-detail-info-tab__thumbnail-placeholder {
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--color-text-45);
 }
 
 .program-detail-info-tab__thumbnail-placeholder-box {
@@ -414,7 +414,7 @@
     flex-shrink: 0;
     background: #f5f5f5;
     border-radius: 4px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -423,7 +423,7 @@
 }
 
 .program-detail-info-tab__curriculum-empty {
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--color-text-45);
 }
 
 .program-detail-info-tab__curriculum-inputs {
@@ -471,7 +471,7 @@
 }
 
 .program-detail-info-tab__date-separator {
-    color: #333;
+    color: var(--color-text-primary);
     font-weight: 400;
     user-select: none;
     padding: 0 4px;
@@ -508,11 +508,11 @@
 
 .program-detail-info-tab__capacity-approved {
     font-size: 14px;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .program-detail-info-tab__capacity-divider {
-    color: #333;
+    color: var(--color-text-primary);
     padding: 0 2px;
 }
 
@@ -566,7 +566,7 @@
 }
 
 .program-detail-info-tab__contact-divider {
-    color: #e0e0e0;
+    color: var(--color-border);
     font-weight: 400;
     user-select: none;
     padding: 0 4px;
@@ -574,7 +574,7 @@
 
 .program-detail-info-tab__contact-phone-readonly {
     font-size: 14px;
-    color: #333;
+    color: var(--color-text-primary);
     min-width: 100px;
 }
 
@@ -595,8 +595,8 @@
 }
 
 .program-detail-info-tab__contact-label {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--font-size-13);
+    color: var(--color-text-primary);
     font-weight: 500;
     margin-right: 2px;
 }

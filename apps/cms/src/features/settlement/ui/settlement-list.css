@@ -1,19 +1,19 @@
 .settlement-list__filters {
-  margin-bottom: 16px;
+    margin-bottom: var(--spacing-16);
 }
 
 .settlement-list__filter--status {
-  width: 150px;
+    width: 150px;
 }
 
 .settlement-list__filter--program {
-  width: 200px;
+    width: 200px;
 }
 
 .settlement-list__filter--period {
-  width: 150px;
+    width: 150px;
 }
 
 .settlement-list__row {
-  cursor: pointer;
+    cursor: pointer;
 }

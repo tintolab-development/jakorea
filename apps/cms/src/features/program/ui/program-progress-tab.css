@@ -8,15 +8,15 @@
     width: 100%;
 }
 
-/* 전체(탭·필터·테이블) 카드 래퍼: 배경 #fff. 탭/필터는 카드가 아닌 카드 내부 상단 */
+/* 전체(탭·필터·테이블) 카드 래퍼: 배경 var(--color-bg-base). 탭/필터는 카드가 아닌 카드 내부 상단 */
 .program-progress-tab__card {
-    background: #fff;
-    border-radius: 8px;
-    border: 1px solid #f0f0f0;
+    background: var(--color-bg-base);
+    border-radius: var(--radius-8);
+    border: 1px solid var(--color-border-light);
 }
 
 .program-progress-tab__card .ant-card-body {
-    padding: 16px 24px 24px;
+    padding: var(--spacing-16) var(--spacing-24) var(--spacing-24);
 }
 
 /* 탭 + 필터 영역(카드 아님, 카드 내부 첫 블록) */
@@ -29,7 +29,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--spacing-16);
     flex-wrap: wrap;
 }
 
@@ -37,25 +37,25 @@
 .program-progress-tab__tabs {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--spacing-4);
     width: 217px;
     height: 50px;
-    padding: 4px;
-    border-radius: 8px;
+    padding: var(--spacing-4);
+    border-radius: var(--radius-8);
     box-sizing: border-box;
-    background: #efefef;
+    background: var(--color-bg-tab);
 }
 
 /* 참여 학교 정보 117×42, 강사 정보 88×42. 공통 border-radius 8, padding horizontal 16 */
 .program-progress-tab__tab-btn {
     height: 42px;
-    padding: 0 16px;
+    padding: 0 var(--spacing-16);
     border: 1px solid transparent;
-    border-radius: 8px;
-    background: #efefef;
-    color: #808080;
-    font-size: 14px;
-    font-weight: 500;
+    border-radius: var(--radius-8);
+    background: var(--color-bg-tab);
+    color: var(--color-text-tab);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
     cursor: pointer;
     line-height: 1.4;
     transition:
@@ -80,14 +80,14 @@
 }
 
 .program-progress-tab__tab-btn:hover {
-    color: #4ad4cc;
+    color: var(--color-tab-active);
 }
 
 .program-progress-tab__tab-btn--active {
-    border: 1.5px solid #4ad4cc;
-    background: #fff;
-    color: #4ad4cc;
-    font-weight: 600;
+    border: 1.5px solid var(--color-tab-active);
+    background: var(--color-bg-base);
+    color: var(--color-tab-active);
+    font-weight: var(--font-weight-600);
 }
 
 /* 오른쪽: 필터 영역 (space-between으로 탭과 분리) */
@@ -305,12 +305,12 @@
 
 .program-progress-tab__filters .ant-input:focus,
 .program-progress-tab__filters .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
-    border-color: #4ad4cc !important;
+    border-color: var(--color-tab-active) !important;
     box-shadow: 0 0 0 1px rgba(74, 212, 204, 0.2) !important;
 }
 
 .program-progress-tab__filters .labeled-search-input__input:focus-within {
-    border-color: #4ad4cc !important;
+    border-color: var(--color-tab-active) !important;
     box-shadow: 0 0 0 1px rgba(74, 212, 204, 0.2) !important;
 }
 
@@ -318,12 +318,12 @@
 .program-progress-tab__filters .program-progress-tab__btn-search {
     width: 120px !important;
     height: 40px !important;
-    padding: 0 16px !important;
-    border-radius: 8px !important;
+    padding: 0 var(--spacing-16) !important;
+    border-radius: var(--radius-8) !important;
     border: none !important;
     background: #01a1af !important;
-    color: #fff !important;
-    font-weight: 600;
+    color: var(--color-bg-base) !important;
+    font-weight: var(--font-weight-600);
     margin: 0;
     display: inline-flex;
     align-items: center;
@@ -333,7 +333,7 @@
 
 .program-progress-tab__filters .program-progress-tab__btn-search:hover {
     background: #018d99 !important;
-    color: #fff !important;
+    color: var(--color-bg-base) !important;
     border: none !important;
 }
 
@@ -350,8 +350,8 @@
 }
 
 .program-progress-tab__filter-field .program-progress-tab__filter-label {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
     color: #262626;
 }
 
@@ -398,9 +398,9 @@
 .program-progress-tab__table-description {
     color: var(--default-BK, #3d3d3d);
     font-family: Pretendard, sans-serif;
-    font-size: 14px;
+    font-size: var(--font-size-14);
     font-style: normal;
-    font-weight: 500;
+    font-weight: var(--font-weight-500);
     line-height: 150%;
     opacity: 0.6;
 }
@@ -414,7 +414,7 @@
     color: #c32f4a;
     background: rgba(195, 47, 74, 0.06);
     border-radius: 4px;
-    font-weight: 600;
+    font-weight: var(--font-weight-600);
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -424,7 +424,7 @@
 .program-progress-tab__table-header .program-progress-tab__btn-delete-school:hover,
 .program-progress-tab__table-header .program-progress-tab__btn-delete-school.ant-btn-dangerous:hover {
     border-color: #c32f4a;
-    color: #fff;
+    color: var(--color-bg-base);
     background: #c32f4a;
 }
 
@@ -443,7 +443,7 @@
     color: #c32f4a;
     background: rgba(195, 47, 74, 0.06);
     border-radius: 4px;
-    font-weight: 600;
+    font-weight: var(--font-weight-600);
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -453,7 +453,7 @@
 .program-progress-tab__table-header .program-progress-tab__btn-delete-instructor:hover,
 .program-progress-tab__table-header .program-progress-tab__btn-delete-instructor.ant-btn-dangerous:hover {
     border-color: #c32f4a;
-    color: #fff;
+    color: var(--color-bg-base);
     background: #c32f4a;
 }
 
@@ -461,7 +461,7 @@
     width: 120px;
     height: 40px;
     border-radius: 4px;
-    font-weight: 600;
+    font-weight: var(--font-weight-600);
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -483,8 +483,8 @@
     padding: 6px 10px;
     border: 4px solid transparent;
     border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-600);
     line-height: 1.4;
 }
 
@@ -528,7 +528,7 @@
 .program-progress-tab__table .ant-table-tbody>tr>td {
     text-align: center;
     vertical-align: middle;
-    border-right: 1px solid #f0f0f0;
+    border-right: 1px solid var(--color-border-light);
 }
 
 .program-progress-tab__table .ant-table-thead>tr>th:last-child,
@@ -538,7 +538,7 @@
 
 .program-progress-tab__table .ant-table-thead>tr>th {
     background: #fafafa;
-    font-weight: 600;
+    font-weight: var(--font-weight-600);
     color: #262626;
 }
 
@@ -566,8 +566,8 @@
     padding: 6px 10px;
     border: 4px solid transparent;
     border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-600);
     line-height: 1.4;
 }
 

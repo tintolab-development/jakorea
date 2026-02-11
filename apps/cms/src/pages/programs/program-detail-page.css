@@ -13,19 +13,9 @@
     min-height: 240px;
 }
 
-.program-detail-page__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.program-detail-page__title {
-    margin: 0 !important;
-    flex: 1;
-    min-width: 0;
+/* 상세 페이지에서 PageHeader 타이틀 크기 (기존 Title level={4}와 동일) */
+.program-detail-page .page-header-title {
+    font-size: var(--font-size-18);
 }
 
 /* 탭 바와 같은 줄 오른쪽 (정보 수정, 프로그램 상세 미리보기) */
@@ -37,30 +27,30 @@
 
 /* 수정 취소: 연한 핑크 배경 + 붉은 갈색 텍스트·테두리 (디자이너 시안) */
 .program-detail-page__btn-cancel {
-    background: #fdf2f3 !important;
-    color: #ba444d !important;
-    border: 1px solid #ba444d !important;
+    background: var(--color-danger-secondary-bg) !important;
+    color: var(--color-danger-secondary) !important;
+    border: 1px solid var(--color-danger-secondary) !important;
     border-radius: 6px;
 }
 
 .program-detail-page__btn-cancel:hover {
-    background: #fce8ea !important;
-    color: #a33c44 !important;
-    border-color: #a33c44 !important;
+    background: var(--color-danger-secondary-bg-hover) !important;
+    color: var(--color-danger-secondary-hover) !important;
+    border-color: var(--color-danger-secondary-hover) !important;
 }
 
 /* 수정사항 저장 / 프로그램 상세 미리보기: 청록색 단색 (디자이너 시안) */
 .program-detail-page__btn-primary-teal {
-    background: #40a8a6 !important;
+    background: var(--color-focus-teal) !important;
     color: #fff !important;
-    border: 1px solid #40a8a6 !important;
+    border: 1px solid var(--color-focus-teal) !important;
     border-radius: 6px;
 }
 
 .program-detail-page__btn-primary-teal:hover {
-    background: #389592 !important;
+    background: var(--color-focus-teal-hover) !important;
     color: #fff !important;
-    border-color: #389592 !important;
+    border-color: var(--color-focus-teal-hover) !important;
 }
 
 .program-detail-page__btn-primary-teal:disabled {

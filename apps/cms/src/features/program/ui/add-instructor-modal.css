@@ -1,7 +1,7 @@
 /**
  * 강사진 추가 모달 (폼 전용)
  * 레이아웃은 TealHeaderModal에서 처리, 여기서는 필드 그리드·버튼 색상만
- * Colors: 청록 #47A9AD (시안)
+ * Colors: 청록 --color-modal-header
  */
 
 .add-instructor-modal__form {
@@ -13,14 +13,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: var(--spacing-30);
     width: 100%;
 }
 
 .add-instructor-modal__row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    gap: var(--spacing-30);
     width: 100%;
     max-width: 100%;
 }
@@ -30,66 +30,71 @@
 }
 
 .add-instructor-modal__field .ant-form-item-label>label {
-    font-size: 14px;
-    font-weight: 500;
-    color: #262626;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-label);
 }
 
 /* 필수 필드 * 표시 (requiredMark로 직접 렌더, 라벨 우측) */
-.add-instructor-modal__form .ant-form-item-label > label.ant-form-item-required::before {
+.add-instructor-modal__form .ant-form-item-label>label.ant-form-item-required::before {
     display: none !important;
     content: none !important;
 }
+
 .add-instructor-modal__required-asterisk {
-    color: #ff4d4f;
-    margin-left: 4px;
+    color: var(--color-required-mark);
+    margin-left: var(--spacing-4);
 }
 
 .add-instructor-modal__form .ant-input,
 .add-instructor-modal__form .ant-select-selector {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-4);
 }
 
 .add-instructor-modal__form .ant-input:hover,
 .add-instructor-modal__form .ant-select:hover .ant-select-selector {
-    border-color: #47a9ad;
+    border-color: var(--color-modal-header);
 }
 
 .add-instructor-modal__form .ant-input:focus,
 .add-instructor-modal__form .ant-input-focused,
 .add-instructor-modal__form .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
-    border-color: #47a9ad;
-    box-shadow: 0 0 0 1px rgba(71, 169, 173, 0.2);
+    border-color: var(--color-modal-header);
+    box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
 }
 
-/* 푸터 버튼: TealHeaderModal footer에 넣을 때 사용, 크기 120×40 */
+/* 푸터 버튼: TealHeaderModal footer에 넣을 때 사용, 크기 120×40 — Ant 오버라이드 예외(linear-gradient) */
 .add-instructor-modal__btn-cancel {
     min-width: 120px;
-    border: 1px solid #47a9ad;
-    color: #47a9ad;
-    background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
-    border-radius: 4px;
-    font-weight: 600;
+    border: 1px solid var(--color-modal-header);
+    color: var(--color-modal-header);
+    background:
+        linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+        var(--color-bg-base);
+    border-radius: var(--radius-4);
+    font-weight: var(--font-weight-600);
 }
 
 .add-instructor-modal__btn-cancel:hover {
-    border-color: #3d9599;
-    color: #3d9599;
-    background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
+    border-color: var(--color-modal-header-hover);
+    color: var(--color-modal-header-hover);
+    background:
+        linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+        var(--color-bg-base);
 }
 
 .add-instructor-modal__btn-submit {
     min-width: 120px;
-    background: #47a9ad;
-    border-color: #47a9ad;
-    color: #fff;
-    border-radius: 4px;
-    font-weight: 600;
+    background: var(--color-modal-header);
+    border-color: var(--color-modal-header);
+    color: var(--color-bg-base);
+    border-radius: var(--radius-4);
+    font-weight: var(--font-weight-600);
 }
 
 .add-instructor-modal__btn-submit:hover {
-    background: #3d9599;
-    border-color: #3d9599;
-    color: #fff;
+    background: var(--color-modal-header-hover);
+    border-color: var(--color-modal-header-hover);
+    color: var(--color-bg-base);
 }
