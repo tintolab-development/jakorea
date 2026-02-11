@@ -3,97 +3,98 @@
  */
 
 .widget-card {
-  height: 100%;
-  min-height: 0; /* flex 자식이 그리드 셀 높이를 넘지 않도록 */
-  display: flex;
-  flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    /* flex 자식이 그리드 셀 높이를 넘지 않도록 */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Ant Design Card body: 높이 제한 후 넘치는 부분은 내부 스크롤로 */
 .widget-card .ant-card-body {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .widget-card-editing {
-  border: 1px dashed #d9d9d9;
-  transition: border-color 0.2s;
+    border: 1px dashed var(--color-border-input);
+    transition: border-color 0.2s;
 }
 
 .widget-card-editing:hover {
-  border-color: #1890ff;
+    border-color: var(--color-input-focus);
 }
 
 .widget-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: move;
-  user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    user-select: none;
 }
 
 .widget-card-header[data-drag-handle] {
-  cursor: grab;
+    cursor: grab;
 }
 
 .widget-card-header[data-drag-handle]:active {
-  cursor: grabbing;
+    cursor: grabbing;
 }
 
 .widget-card-title {
-  font-weight: 500;
-  color: #262626;
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-label);
 }
 
 .widget-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
 }
 
 .widget-menu-button {
-  opacity: 0;
-  transition: opacity 0.2s;
+    opacity: 0;
+    transition: opacity 0.2s;
 }
 
 .widget-card:hover .widget-menu-button,
 .widget-card-editing .widget-menu-button {
-  opacity: 1;
+    opacity: 1;
 }
 
 /* 키보드 접근성 */
 .widget-card-header:focus {
-  outline: 2px solid #1890ff;
-  outline-offset: 2px;
+    outline: 2px solid var(--color-input-focus);
+    outline-offset: 2px;
 }
 
 .widget-menu-button:focus {
-  outline: 2px solid #1890ff;
-  outline-offset: 2px;
+    outline: 2px solid var(--color-input-focus);
+    outline-offset: 2px;
 }
 
 /* 위젯 본문 영역 (헤더 제외): 넘치면 카드 안에서만 세로 스크롤 */
 .widget-card-body {
-  position: relative;
-  min-height: 0;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+    position: relative;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* 드래그/리사이즈 중: 본문만 포인터 비활성화, 텍스트 선택 방지 */
 .widget-card-body-disabled {
-  pointer-events: none;
-  user-select: none;
+    pointer-events: none;
+    user-select: none;
 }
 
 /* 드래그/리사이즈 중 본문 위 투명 오버레이 (클릭/스크롤 완전 차단) */
 .widget-card-body-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  cursor: grabbing;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    cursor: grabbing;
 }

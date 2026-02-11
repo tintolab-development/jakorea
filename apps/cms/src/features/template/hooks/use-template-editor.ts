@@ -52,26 +52,6 @@ export function useTemplateEditor(
 
     editorRef.current = instance
     const editorCore = instance as unknown as { blur(): void }
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/17f6fbd2-a727-4bc2-b32f-9b76dc9e6837', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'use-template-editor.ts:Editor-created',
-        message: 'editor-created',
-        data: {
-          scrollY: typeof window !== 'undefined' ? window.scrollY : null,
-          activeTag: typeof document !== 'undefined' ? document.activeElement?.tagName : null,
-          activeClass:
-            typeof document !== 'undefined'
-              ? (document.activeElement as HTMLElement)?.className?.slice(0, 80) || null
-              : null,
-        },
-        timestamp: Date.now(),
-        hypothesisId: 'A',
-      }),
-    }).catch(() => {})
-    // #endregion
     const inst = instance as unknown as {
       setHTML?: (html: string) => void
       setMarkdown?: (md: string) => void
@@ -149,28 +129,6 @@ export function useTemplateEditor(
     const t4 = setTimeout(blurAgain, 300)
     const t5 = setTimeout(blurAgain, 450)
     const t6 = setTimeout(blurAgain, 600)
-    const tLog = setTimeout(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/17f6fbd2-a727-4bc2-b32f-9b76dc9e6837', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'use-template-editor.ts:after-blur-timeouts',
-          message: 'editor-after-600ms',
-          data: {
-            scrollY: typeof window !== 'undefined' ? window.scrollY : null,
-            activeTag: typeof document !== 'undefined' ? document.activeElement?.tagName : null,
-            activeClass:
-              typeof document !== 'undefined'
-                ? (document.activeElement as HTMLElement)?.className?.slice(0, 80) || null
-                : null,
-          },
-          timestamp: Date.now(),
-          hypothesisId: 'A',
-        }),
-      }).catch(() => {})
-      // #endregion
-    }, 650)
     return () => {
       cleanupMo?.()
       removeProseFocusListener?.()
@@ -181,7 +139,6 @@ export function useTemplateEditor(
       clearTimeout(t4)
       clearTimeout(t5)
       clearTimeout(t6)
-      clearTimeout(tLog)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialHtml])
