@@ -5,8 +5,10 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Modal, Tabs, Button, Input } from 'antd'
-import { CalendarOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { Modal, Tabs, Button } from 'antd'
+import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { PageHeader } from '@/shared/ui/page-header'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { useSearchParams } from 'react-router-dom'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
@@ -140,15 +142,6 @@ export function ProgramListPage() {
   // MASTER, ADMIN은 쓰기 작업 가능
   const canWrite = canPerformWriteAction(user)
 
-  // 디버깅용 (개발 환경에서만)
-  if (process.env.NODE_ENV === 'development' && isAdmin) {
-    console.log('[ProgramListPage] 권한 체크:', {
-      role: user?.role,
-      adminLevel: user?.adminLevel,
-      isAdmin,
-      canWrite,
-    })
-  }
   // 강사용
   const isInstructor = user?.role === 'INSTRUCTOR'
   const isUserRole = isInstructor || user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
@@ -520,7 +513,7 @@ export function ProgramListPage() {
       {/* 관리자용: 프로그램 진행 현황 위젯 (교육 프로그램) */}
       {isAdmin && programType === 'education' && (
         <div className="program-progress-widget-container">
-            <ProgramProgressWidget title={null} />
+          <ProgramProgressWidget title={null} />
         </div>
       )}
 
@@ -533,42 +526,41 @@ export function ProgramListPage() {
 
       {/* 위젯 디바이더 아래 버튼 영역 (교육 프로그램만) */}
       {isAdmin && programType === 'education' && (
-        <div className="program-list-header-actions">
-          <div className="program-list-header-title">
-            <span className="program-list-header-title-text">전체 프로그램</span>
-            <span className="program-list-header-title-count">총 {filteredPrograms.length}건</span>
-          </div>
-          <div className="program-list-header-buttons">
-            <Input
-              placeholder="검색어를 입력하세요"
-              value={searchInputValue}
-              onChange={e => setSearchInputValue(e.target.value)}
-              prefix={<SearchOutlined />}
-              allowClear
-              style={{ width: 300 }}
-            />
-            <Button
-              type="default"
-              icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
-              onClick={() => {
-                const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
-                setViewMode(newViewMode)
-                // URL 쿼리 파라미터 업데이트
-                const nextParams = new URLSearchParams(searchParams)
-                nextParams.set('viewMode', newViewMode)
-                setSearchParams(nextParams, { replace: true })
-              }}
-              className="program-view-mode-button"
-            >
-              {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-            </Button>
-            {showEducationActions && (
-              <Button type="primary" onClick={handleNewClick}>
-                프로그램 신규 등록
+        <PageHeader
+          title="전체 프로그램"
+          description={`총 ${filteredPrograms.length}건`}
+          actions={
+            <>
+              <LabeledSearchInput
+                label="검색"
+                placeholder="검색어를 입력하세요"
+                value={searchInputValue}
+                onChange={setSearchInputValue}
+                allowClear
+                width={300}
+              />
+              <Button
+                type="default"
+                icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+                onClick={() => {
+                  const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
+                  setViewMode(newViewMode)
+                  const nextParams = new URLSearchParams(searchParams)
+                  nextParams.set('viewMode', newViewMode)
+                  setSearchParams(nextParams, { replace: true })
+                }}
+                className="program-view-mode-button"
+              >
+                {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
               </Button>
-            )}
-          </div>
-        </div>
+              {showEducationActions && (
+                <Button type="primary" onClick={handleNewClick}>
+                  프로그램 신규 등록
+                </Button>
+              )}
+            </>
+          }
+        />
       )}
 
       {/* 강사용: 개인/단체 탭 */}
@@ -639,26 +631,7 @@ export function ProgramListPage() {
           const storeSelectedProgram = useProgramStore.getState().selectedProgram
           const programToDelete = storeSelectedProgram || drawerProgram || selectedProgram
 
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[ProgramListPage] 삭제 버튼 클릭:', {
-              storeSelectedProgram: storeSelectedProgram?.id,
-              drawerProgram: drawerProgram?.id,
-              selectedProgram: selectedProgram?.id,
-              programToDelete: programToDelete?.id,
-            })
-          }
-
           if (programToDelete) {
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[ProgramListPage] handleDeleteClick 호출 전:', {
-                programToDelete,
-                programId: programToDelete?.id,
-                isProgram:
-                  programToDelete && typeof programToDelete === 'object' && 'id' in programToDelete,
-                hasHandleDeleteClick: typeof handleDeleteClick === 'function',
-              })
-            }
-
             // programToDelete가 객체인지 확인
             if (programToDelete && typeof programToDelete === 'object' && 'id' in programToDelete) {
               // handleDeleteClick 내부에서 Drawer를 닫으므로 여기서는 닫지 않음

@@ -32,8 +32,17 @@ import {
   programLifecycleStatusConfig,
   programLifecycleStatusStatusConfig,
   commonStatusStatusConfig,
-  getProgramLifecycleLabel,
 } from '@/shared/constants/status'
+import {
+  programTypes,
+  programFormats,
+  statusOptions,
+  recruitmentStatusOptions,
+  getRecruitmentStatus,
+  businessAreaOptions,
+  targetLevelOptions,
+  categoryOptions,
+} from './program-list-constants'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -75,76 +84,6 @@ interface ProgramListProps {
   /** 테이블 컬럼 구분: education 경로일 때 No., 프로그램명, 모집 상태, 교육 분야, 수강 유형 구분, 교육 대상, 진행 방식, 공란 */
   tableVariant?: ProgramListTableVariant
 }
-
-const programTypes = [
-  { value: 'online', label: '온라인' },
-  { value: 'offline', label: '오프라인' },
-  { value: 'hybrid', label: '하이브리드' },
-]
-
-const programFormats = [
-  { value: 'workshop', label: '워크샵' },
-  { value: 'seminar', label: '세미나' },
-  { value: 'course', label: '과정' },
-  { value: 'lecture', label: '강의' },
-  { value: 'other', label: '기타' },
-]
-
-const statusOptions = programLifecycleStatusConfig.order.map(status => ({
-  value: status,
-  label: getProgramLifecycleLabel(status),
-}))
-
-// 모집 상태 옵션 (모집 기간 기준)
-const recruitmentStatusOptions = [
-  { value: 'scheduled', label: '모집 예정' },
-  { value: 'recruiting', label: '모집 중' },
-  { value: 'closed', label: '모집 마감' },
-]
-
-// 모집 상태 계산 함수 (모집 기간 기준)
-const getRecruitmentStatus = (program: Program): 'scheduled' | 'recruiting' | 'closed' | null => {
-  if (!program.applicationStartDate || !program.applicationEndDate) {
-    return null
-  }
-  const now = dayjs()
-  const startDate = dayjs(program.applicationStartDate)
-  const endDate = dayjs(program.applicationEndDate)
-
-  // 날짜 유효성 검사
-  if (!startDate.isValid() || !endDate.isValid()) {
-    return null
-  }
-
-  if (now.isBefore(startDate, 'day')) {
-    return 'scheduled' // 모집 예정
-  } else if (now.isSameOrAfter(startDate, 'day') && now.isSameOrBefore(endDate, 'day')) {
-    return 'recruiting' // 모집 중
-  } else {
-    return 'closed' // 모집 마감
-  }
-}
-
-// 교육 분야 옵션 (mock 데이터 기반)
-const businessAreaOptions = [
-  { value: '경제금융', label: '경제금융' },
-  { value: '기업가정신', label: '기업가정신' },
-  { value: '진로취업', label: '진로취업' },
-  { value: '디지털리터러시', label: '디지털리터러시' },
-]
-
-// 교육 대상 옵션
-const targetLevelOptions: { value: TargetLevel; label: string }[] = [
-  { value: 'elementary', label: '초등' },
-  { value: 'middle', label: '중등' },
-  { value: 'high', label: '고등' },
-]
-
-// 수강 대상 옵션
-const categoryOptions: { value: ProgramCategory; label: string }[] = [
-  { value: 'school', label: '학교(단체)' },
-  { value: 'individual', label: '개인 학생' },
-]
 
 export function ProgramList({
   data,

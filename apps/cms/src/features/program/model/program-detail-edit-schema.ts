@@ -1,6 +1,8 @@
 /**
- * 프로그램 상세 정보 수정 폼 스키마 (Zod)
- * - 정보수정 시 사용, 기본값으로 기존 프로그램 값 채움
+ * 프로그램 상세 정보 수정 폼 전용 스키마·도메인 변환
+ * - 비즈니스 규칙: 필수/선택 필드, 검증(Zod), Program ↔ 폼 값 변환
+ * - programToDetailEditValues: Program → 폼 기본값 (정보 수정 시 기존 값 채움)
+ * - detailEditValuesToProgramPatch: 폼 값 → 저장용 패치 (optional 필드는 existing fallback)
  */
 
 import { z } from 'zod'
