@@ -88,3 +88,20 @@ button:focus-visible {
   line-height: 1 !important;
 }
 
+/* 필수 필드 * 표시: 라벨 텍스트 우측에 위치 (Ant Design 5 기본 ::before/::after보다 우선) */
+body .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
+  display: none !important;
+  content: none !important;
+}
+body .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::after {
+  display: inline-block !important;
+  margin-left: 4px;
+  margin-inline-start: 4px;
+  margin-inline-end: 0;
+  color: #ff4d4f !important;
+  font-size: 14px;
+  font-family: SimSun, sans-serif;
+  line-height: 1;
+  content: '*' !important;
+}
+
