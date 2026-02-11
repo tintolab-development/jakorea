@@ -30,6 +30,8 @@ export function useProgramDetailEditForm({
       category: 'school',
       type: 'offline',
       rounds: [],
+      sponsorId: '',
+      managerName: '',
     }
   }, [program])
 
@@ -51,6 +53,24 @@ export function useProgramDetailEditForm({
   // 수정 모드 진입 직후 폼을 프로그램 값으로 채움 (페인트 전 실행해 빈 값 노출 방지)
   useLayoutEffect(() => {
     if (isEditMode && program) {
+      // #region agent log
+      const activeEl = typeof document !== 'undefined' ? document.activeElement : null
+      fetch('http://127.0.0.1:7242/ingest/17f6fbd2-a727-4bc2-b32f-9b76dc9e6837', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'use-program-detail-edit-form.ts:reset-before',
+          message: 'form-reset-edit-mode',
+          data: {
+            activeTag: (activeEl as HTMLElement)?.tagName ?? null,
+            activeClass: (activeEl as HTMLElement)?.className?.slice(0, 60) ?? null,
+            scrollY: typeof window !== 'undefined' ? window.scrollY : null,
+          },
+          timestamp: Date.now(),
+          hypothesisId: 'C',
+        }),
+      }).catch(() => {})
+      // #endregion
       reset(programToDetailEditValues(program))
     }
   }, [isEditMode, program, reset])

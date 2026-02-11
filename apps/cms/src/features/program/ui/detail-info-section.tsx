@@ -42,7 +42,8 @@ export function DetailInfoSection({
       setEditorOpen(false)
       return
     }
-    const t = setTimeout(() => setEditorOpen(true), 180)
+    // 에디터 마운트 지연 → 상단 버튼 포커스 유지 후 마운트해 스크롤 방지
+    const t = setTimeout(() => setEditorOpen(true), 500)
     return () => clearTimeout(t)
   }, [isEditMode])
 
@@ -54,8 +55,7 @@ export function DetailInfoSection({
   const getterRef = useRef<() => string>(() => '')
 
   useEffect(() => {
-    getterRef.current = () =>
-      editorOpen ? getHTML() : (program.additionalContentHtml ?? '')
+    getterRef.current = () => (editorOpen ? getHTML() : (program.additionalContentHtml ?? ''))
   }, [editorOpen, getHTML, program.additionalContentHtml])
 
   useEffect(() => {
@@ -81,9 +81,15 @@ export function DetailInfoSection({
       </div>
       <div className="program-detail-info-tab__table-wrapper">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
+          <colgroup>
+            <col style={{ width: '200px' }} />
+            <col />
+          </colgroup>
           <tbody>
             <tr>
-              <th>프로그램 설명<span className="program-detail-info-tab__required">*</span></th>
+              <th>
+                프로그램 설명<span className="program-detail-info-tab__required">*</span>
+              </th>
               <td>
                 {isFormEdit ? (
                   <Controller
@@ -107,7 +113,9 @@ export function DetailInfoSection({
               </td>
             </tr>
             <tr>
-              <th>모집 안내<span className="program-detail-info-tab__required">*</span></th>
+              <th>
+                모집 안내<span className="program-detail-info-tab__required">*</span>
+              </th>
               <td>
                 {isFormEdit ? (
                   <Controller
@@ -131,7 +139,9 @@ export function DetailInfoSection({
               </td>
             </tr>
             <tr>
-              <th>학습 지원 내용<span className="program-detail-info-tab__required">*</span></th>
+              <th>
+                학습 지원 내용<span className="program-detail-info-tab__required">*</span>
+              </th>
               <td>
                 {isFormEdit ? (
                   <Controller
@@ -162,16 +172,18 @@ export function DetailInfoSection({
                     {editorOpen ? (
                       <div ref={editorHostRef} className="program-detail-info-tab__editor-host" />
                     ) : (
-                      <div className="program-detail-info-tab__editor-placeholder">
-                        로딩 중…
-                      </div>
+                      <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
                     )}
                   </div>
                 ) : (
                   <div className="program-detail-info-tab__additional-content">
                     <div className="program-detail-info-tab__additional-image-wrap">
                       <Image
-                        src={program.keyVisualImage || program.posterImage || 'https://via.placeholder.com/600x200/f0f0f0/999?text=추가+내용+이미지'}
+                        src={
+                          program.keyVisualImage ||
+                          program.posterImage ||
+                          'https://via.placeholder.com/600x200/f0f0f0/999?text=추가+내용+이미지'
+                        }
                         alt="추가 내용"
                         className="program-detail-info-tab__additional-image"
                         fallback="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
@@ -202,18 +214,18 @@ export function DetailInfoSection({
                   ]}
                   onFilesChange={
                     isFormEdit
-                      ? (files) => {
+                      ? files => {
                           const current = form.getValues('attachmentFileNames') ?? []
                           form.setValue('attachmentFileNames', [
                             ...current,
-                            ...files.map((f) => f.name),
+                            ...files.map(f => f.name),
                           ])
                         }
                       : undefined
                   }
                   onRemoveFile={
                     isFormEdit
-                      ? (index) => {
+                      ? index => {
                           const list = form.getValues('attachmentFileNames') ?? []
                           form.setValue(
                             'attachmentFileNames',

@@ -54,13 +54,9 @@ export interface CurriculumSectionProps {
   form?: UseFormReturn<ProgramDetailEditFormValues>
 }
 
-export function CurriculumSection({
-  program,
-  isEditMode = false,
-  form,
-}: CurriculumSectionProps) {
+export function CurriculumSection({ program, isEditMode = false, form }: CurriculumSectionProps) {
   const isFormEdit = isEditMode && form
-  const roundsFromForm = isFormEdit ? form.watch('rounds') ?? [] : []
+  const roundsFromForm = isFormEdit ? (form.watch('rounds') ?? []) : []
   const sortedRounds = (isFormEdit ? roundsFromForm : program.rounds)?.length
     ? [...(isFormEdit ? roundsFromForm : program.rounds!)].sort(
         (a, b) => a.roundNumber - b.roundNumber
@@ -71,9 +67,7 @@ export function CurriculumSection({
     if (!form) return
     const current = form.getValues('rounds') ?? []
     const value = [duration || '1시간', description].filter(Boolean).join(' | ')
-    const nextRounds = current.map((r, i) =>
-      i === roundIndex ? { ...r, curriculum: value } : r
-    )
+    const nextRounds = current.map((r, i) => (i === roundIndex ? { ...r, curriculum: value } : r))
     form.setValue('rounds', nextRounds)
   }
 
@@ -82,6 +76,10 @@ export function CurriculumSection({
       <h3 className="program-detail-info-tab__section-title">교육 커리큘럼</h3>
       <div className="program-detail-info-tab__table-wrapper">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__curriculum-table">
+          <colgroup>
+            <col style={{ width: '200px' }} />
+            <col />
+          </colgroup>
           <tbody>
             {sortedRounds.length > 0 ? (
               sortedRounds.map((round, sortedIndex) => {
@@ -91,9 +89,10 @@ export function CurriculumSection({
                   program.curriculum
                 )
                 const { duration, description } = parseCurriculumContent(round.curriculum)
-                const roundIndex = (isFormEdit ? roundsFromForm : program.rounds)?.findIndex(
-                  (r: { id: string }) => r.id === round.id
-                ) ?? sortedIndex
+                const roundIndex =
+                  (isFormEdit ? roundsFromForm : program.rounds)?.findIndex(
+                    (r: { id: string }) => r.id === round.id
+                  ) ?? sortedIndex
 
                 return (
                   <tr key={round.id}>

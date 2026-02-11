@@ -21,7 +21,7 @@
     border-top: 1px solid #f0f0f0;
 }
 
-/* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬 */
+/* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬, 수직 중앙 맞춤 */
 .program-detail-info-tab__section-header-row {
     display: flex;
     flex-direction: row;
@@ -31,7 +31,15 @@
 }
 
 .program-detail-info-tab__section-header-row .program-detail-info-tab__section-title {
-    margin-bottom: 0;
+    margin: 0;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+.program-detail-info-tab__section-header-row .program-detail-info-tab__detail-note {
+    margin: 0;
+    line-height: 1.4;
+    vertical-align: middle;
 }
 
 .program-detail-info-tab__section-title {
@@ -79,9 +87,11 @@
     text-align: left;
 }
 
-/* 라벨 셀: 연한 회색 배경 #F9F9F9, 굵은 검정/다크그레이 #333, 가운데 정렬 */
+/* 라벨 셀: 연한 회색 배경 #F9F9F9, 굵은 검정/다크그레이 #333, 가운데 정렬, 헤더 200px 고정 */
 .program-detail-info-tab__table th {
-    width: 16%;
+    width: 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
     font-weight: 700;
     color: #333;
     background: #f9f9f9;
@@ -100,10 +110,11 @@
     background: #fff;
 }
 
-/* 기본 정보 상단·하위 테이블 헤더(라벨) 열 너비 공통화 — 동일 px 고정 */
+/* 기본 정보 상단·하위 테이블 헤더(라벨) 200px 고정 (공통 규칙과 동일, 명시용) */
 .program-detail-info-tab__table--basic th {
-    width: 200px;
-    min-width: 200px;
+    width: 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
 }
 
 .program-detail-info-tab__table--basic td {
@@ -125,8 +136,9 @@
 }
 
 .program-detail-info-tab__curriculum-table th {
-    width: 200px;
-    min-width: 200px;
+    width: 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
     text-align: center;
     font-weight: 700;
     color: #333;
@@ -140,17 +152,18 @@
     background: #fff;
 }
 
-/* 썸네일 — 86×86 이미지, 오른쪽에 파일명·버튼·안내 2줄(#999, "- " 접두사) */
+/* 썸네일 — 86×86 이미지, 오른쪽에 파일명·삭제(X)·버튼·안내 (디자이너 시안: 패딩·수직 정렬·버튼 스타일) */
 .program-detail-info-tab__thumbnail-wrap {
     display: flex;
     flex-direction: column;
     gap: 0;
+    padding: 8px 0;
 }
 
 .program-detail-info-tab__thumbnail-row {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    gap: 16px;
 }
 
 /* 썸네일 이미지 86×86 고정 (Ant Design Image 래퍼 + 내부 img 모두 제한) */
@@ -180,17 +193,19 @@
     display: block;
 }
 
-/* 썸네일 오른쪽: 1행 = 파일명, 2행 = 파일선택버튼 + 안내 텍스트 */
+/* 썸네일 오른쪽: 1행 = 파일명 + 삭제(X), 2행 = 파일선택버튼 + 안내 텍스트 */
 .program-detail-info-tab__thumbnail-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 10px;
     min-width: 0;
 }
 
 .program-detail-info-tab__thumbnail-filename-row {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .program-detail-info-tab__thumbnail-filename {
@@ -198,6 +213,62 @@
     color: #333;
     line-height: 1.4;
     word-break: break-all;
+}
+
+/* 썸네일 파일 삭제(X) 버튼 — 원형, 시안 스타일 */
+.program-detail-info-tab__thumbnail-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #d9d9d9;
+    color: #666;
+    cursor: pointer;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.program-detail-info-tab__thumbnail-remove:hover {
+    background: #ba444d;
+    color: #fff;
+}
+
+.program-detail-info-tab__thumbnail-remove:focus-visible {
+    outline: 2px solid #40a8a6;
+    outline-offset: 1px;
+}
+
+/* 썸네일 영역 내 파일 선택 필드: 버튼 크기·간격 (시안 80~100px × 30~35px, 연한 청록) */
+.program-detail-info-tab__file-select.file-select-field {
+    gap: 10px;
+}
+
+.program-detail-info-tab__file-select .file-select-field__actions {
+    gap: 12px;
+    align-items: center;
+}
+
+.program-detail-info-tab__file-select .file-select-field__btn {
+    width: 100px;
+    min-width: 100px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.program-detail-info-tab__file-select .file-select-field__guide {
+    font-size: 12px;
+    color: #999;
+    line-height: 1.5;
+}
+
+.program-detail-info-tab__file-select .file-select-field__guide-line+.file-select-field__guide-line {
+    margin-top: 6px;
 }
 
 .program-detail-info-tab__contact-cell {
@@ -399,6 +470,13 @@
     align-items: center;
 }
 
+.program-detail-info-tab__date-separator {
+    color: #333;
+    font-weight: 400;
+    user-select: none;
+    padding: 0 4px;
+}
+
 .program-detail-info-tab__date-picker {
     width: 160px;
 }
@@ -414,19 +492,119 @@
     align-items: center;
 }
 
+.program-detail-info-tab__result-method-input {
+    flex: 1;
+    min-width: 180px;
+    border-radius: 6px;
+}
+
+/* 수강자/강사 모집 인원: 승인수 / 정원 입력 (시안: "30 / 30") */
+.program-detail-info-tab__capacity-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+}
+
+.program-detail-info-tab__capacity-approved {
+    font-size: 14px;
+    color: #333;
+}
+
+.program-detail-info-tab__capacity-divider {
+    color: #333;
+    padding: 0 2px;
+}
+
+.program-detail-info-tab__capacity-input {
+    width: 80px;
+    border-radius: 6px;
+}
+
+.program-detail-info-tab__capacity-input.ant-input {
+    border-radius: 6px;
+}
+
+/* 수강자/강사 모집 현황 라디오 (시안: 모집 예정 | 모집 중 | 모집 마감) */
+.program-detail-info-tab__recruitment-radio.ant-radio-group {
+    width: 100%;
+}
+
 .program-detail-info-tab__education-target {
     display: flex;
     flex-direction: column;
     gap: 0;
 }
 
+/* 후원사 Select — 테이블 내 너비·radius */
+.program-detail-info-tab__sponsor-select {
+    width: 100%;
+    max-width: 320px;
+}
+
+.program-detail-info-tab__sponsor-select.ant-select .ant-select-selector {
+    border-radius: 6px;
+}
+
+/* 후원사 담당자 셀: 담당자명 입력 + 구분선 + 전화번호(읽기 전용) */
+.program-detail-info-tab__sponsor-manager-cell {
+    vertical-align: middle;
+}
+
+.program-detail-info-tab__sponsor-manager-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.program-detail-info-tab__manager-name-input {
+    flex: 1;
+    min-width: 180px;
+    max-width: 280px;
+    border-radius: 6px;
+}
+
+.program-detail-info-tab__contact-divider {
+    color: #e0e0e0;
+    font-weight: 400;
+    user-select: none;
+    padding: 0 4px;
+}
+
+.program-detail-info-tab__contact-phone-readonly {
+    font-size: 14px;
+    color: #333;
+    min-width: 100px;
+}
+
+/* 문의처 행: 문의처명 | Tel 입력 | E-mail 입력 (레이블·구분선 디자인 시안) */
 .program-detail-info-tab__contact-inputs {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px 8px;
     align-items: center;
 }
 
 .program-detail-info-tab__contact-inputs .ant-input {
     border-radius: 6px;
+}
+
+.program-detail-info-tab__contact-name-readonly {
+    max-width: 140px;
+}
+
+.program-detail-info-tab__contact-label {
+    font-size: 13px;
+    color: #333;
+    font-weight: 500;
+    margin-right: 2px;
+}
+
+.program-detail-info-tab__contact-phone-input {
+    max-width: 160px;
+}
+
+.program-detail-info-tab__contact-email-input {
+    max-width: 240px;
 }

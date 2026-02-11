@@ -5,10 +5,7 @@
 import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import {
-  getProgramLifecycleLabel,
-  programLifecycleStatusConfig,
-} from '@/shared/constants/status'
+import { getProgramLifecycleLabel, programLifecycleStatusConfig } from '@/shared/constants/status'
 
 // ─── 요일/날짜 포맷 ────────────────────────────────────────
 
@@ -35,16 +32,26 @@ export function formatDateRange(start: DateValue | undefined, end: DateValue | u
 
 // ─── 모집 상태 ─────────────────────────────────────────────
 
-export function getRecruitmentStatusValue(
-  program: Program,
-): 'scheduled' | 'recruiting' | 'closed' {
+/** 모집 기간 기준 상태 (날짜 없으면 null, 목록·상세 공통) */
+export function getRecruitmentStatus(
+  program: Program
+): 'scheduled' | 'recruiting' | 'closed' | null {
   const start = program.applicationStartDate
   const end = program.applicationEndDate
-  if (!start || !end) return 'scheduled'
+  if (!start || !end) return null
   const now = dayjs()
-  if (now.isBefore(dayjs(start))) return 'scheduled'
-  if (now.isAfter(dayjs(end))) return 'closed'
-  return 'recruiting'
+  const startDate = dayjs(start)
+  const endDate = dayjs(end)
+  if (!startDate.isValid() || !endDate.isValid()) return null
+  if (now.isBefore(startDate, 'day')) return 'scheduled'
+  if (!now.isBefore(startDate, 'day') && !now.isAfter(endDate, 'day')) return 'recruiting'
+  return 'closed'
+}
+
+/** @deprecated getRecruitmentStatus 사용 (null 처리 통일) */
+export function getRecruitmentStatusValue(program: Program): 'scheduled' | 'recruiting' | 'closed' {
+  const v = getRecruitmentStatus(program)
+  return v ?? 'scheduled'
 }
 
 export const RECRUITMENT_RADIO_OPTIONS = [
@@ -52,6 +59,23 @@ export const RECRUITMENT_RADIO_OPTIONS = [
   { value: 'recruiting', label: '모집 중' },
   { value: 'closed', label: '모집 마감' },
 ]
+
+export function getRecruitmentStatusLabel(program: Program): string {
+  const v = getRecruitmentStatusValue(program)
+  const opt = RECRUITMENT_RADIO_OPTIONS.find(o => o.value === v)
+  return opt?.label ?? '-'
+}
+
+/** 강사 모집 현황: lifecycleStatus를 모집 예정/모집 중/모집 마감 세 가지로 매핑 (RecruitmentStatusBadge 공통) */
+export function getInstructorRecruitmentStatus(
+  program: Program
+): 'scheduled' | 'recruiting' | 'closed' | null {
+  const status = program.lifecycleStatus
+  if (!status) return null
+  if (status === 'recruiting_instructors') return 'recruiting'
+  if (status === 'planned' || status === 'recruiting_students') return 'scheduled'
+  return 'closed'
+}
 
 // ─── 라벨 맵 ──────────────────────────────────────────────
 
@@ -88,7 +112,7 @@ export const LIFECYCLE_OPTIONS = programLifecycleStatusConfig.order.map(
   (status: ProgramLifecycleStatus) => ({
     value: status,
     label: getProgramLifecycleLabel(status),
-  }),
+  })
 )
 
 // ─── 기본 콘텐츠 (시안 placeholder) ────────────────────────

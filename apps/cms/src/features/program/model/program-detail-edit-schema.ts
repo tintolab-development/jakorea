@@ -30,6 +30,8 @@ export const programDetailEditSchema = z.object({
   applicationStartDate: z.string().optional(),
   applicationEndDate: z.string().optional(),
   businessArea: z.string().optional(),
+  sponsorId: z.string().min(1, '후원사를 선택해주세요'),
+  managerName: z.string().min(1, '후원사 담당자를 입력해주세요'),
   contactPhone: z.string().optional(),
   contactEmail: z.string().optional(),
   oneLineIntroduction: z.string().optional(),
@@ -40,6 +42,20 @@ export const programDetailEditSchema = z.object({
   learningSupportContent: z.string().optional(),
   attachmentFileNames: z.array(z.string()).optional(),
   rounds: z.array(roundEditSchema),
+  // 수강자 모집
+  resultAnnouncementDate: z.string().optional(),
+  resultAnnouncementMethod: z.string().optional(),
+  // 강사 모집
+  instructorCapacity: z.number().min(0).optional(),
+  instructorApplicationStartDate: z.string().optional(),
+  instructorApplicationEndDate: z.string().optional(),
+  documentPassAnnouncementDate: z.string().optional(),
+  documentPassAnnouncementMethod: z.string().optional(),
+  interviewStartDate: z.string().optional(),
+  interviewEndDate: z.string().optional(),
+  interviewMethod: z.string().optional(),
+  finalPassAnnouncementDate: z.string().optional(),
+  finalPassAnnouncementMethod: z.string().optional(),
 })
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
@@ -50,7 +66,7 @@ export function programToDetailEditValues(
 ): ProgramDetailEditFormValues {
   type DateValue = string | Date
   const toStr = (d: DateValue | undefined): string =>
-    d == null ? '' : typeof d === 'string' ? d : (d as Date).toISOString?.() ?? String(d)
+    d == null ? '' : typeof d === 'string' ? d : ((d as Date).toISOString?.() ?? String(d))
   return {
     title: program.title ?? '',
     startDate: toStr(program.startDate),
@@ -62,6 +78,8 @@ export function programToDetailEditValues(
     applicationStartDate: toStr(program.applicationStartDate),
     applicationEndDate: toStr(program.applicationEndDate),
     businessArea: program.businessArea ?? undefined,
+    sponsorId: program.sponsorId ?? '',
+    managerName: program.managerName ?? '',
     contactPhone: program.contactPhone ?? undefined,
     contactEmail: program.contactEmail ?? undefined,
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
@@ -71,7 +89,29 @@ export function programToDetailEditValues(
     recruitmentGuide: program.recruitmentGuide ?? undefined,
     learningSupportContent: program.learningSupportContent ?? undefined,
     attachmentFileNames: program.attachmentFileNames ?? [],
-    rounds: (program.rounds ?? []).map((r) => ({
+    resultAnnouncementDate: program.resultAnnouncementDate
+      ? toStr(program.resultAnnouncementDate)
+      : undefined,
+    resultAnnouncementMethod: program.resultAnnouncementMethod ?? undefined,
+    instructorCapacity: program.instructorCapacity ?? undefined,
+    instructorApplicationStartDate: program.instructorApplicationStartDate
+      ? toStr(program.instructorApplicationStartDate)
+      : undefined,
+    instructorApplicationEndDate: program.instructorApplicationEndDate
+      ? toStr(program.instructorApplicationEndDate)
+      : undefined,
+    documentPassAnnouncementDate: program.documentPassAnnouncementDate
+      ? toStr(program.documentPassAnnouncementDate)
+      : undefined,
+    documentPassAnnouncementMethod: program.documentPassAnnouncementMethod ?? undefined,
+    interviewStartDate: program.interviewStartDate ? toStr(program.interviewStartDate) : undefined,
+    interviewEndDate: program.interviewEndDate ? toStr(program.interviewEndDate) : undefined,
+    interviewMethod: program.interviewMethod ?? undefined,
+    finalPassAnnouncementDate: program.finalPassAnnouncementDate
+      ? toStr(program.finalPassAnnouncementDate)
+      : undefined,
+    finalPassAnnouncementMethod: program.finalPassAnnouncementMethod ?? undefined,
+    rounds: (program.rounds ?? []).map(r => ({
       id: r.id,
       programId: r.programId,
       roundNumber: r.roundNumber,
@@ -102,6 +142,8 @@ export function detailEditValuesToProgramPatch(
     applicationStartDate: values.applicationStartDate,
     applicationEndDate: values.applicationEndDate,
     businessArea: values.businessArea,
+    sponsorId: values.sponsorId || existing.sponsorId,
+    managerName: values.managerName,
     contactPhone: values.contactPhone,
     contactEmail: values.contactEmail,
     oneLineIntroduction: values.oneLineIntroduction,
@@ -112,5 +154,23 @@ export function detailEditValuesToProgramPatch(
     learningSupportContent: values.learningSupportContent,
     attachmentFileNames: values.attachmentFileNames,
     rounds: values.rounds as ProgramRound[],
+    resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
+    resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
+    instructorCapacity: values.instructorCapacity ?? existing.instructorCapacity,
+    instructorApplicationStartDate:
+      values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
+    instructorApplicationEndDate:
+      values.instructorApplicationEndDate ?? existing.instructorApplicationEndDate,
+    documentPassAnnouncementDate:
+      values.documentPassAnnouncementDate ?? existing.documentPassAnnouncementDate,
+    documentPassAnnouncementMethod:
+      values.documentPassAnnouncementMethod ?? existing.documentPassAnnouncementMethod,
+    interviewStartDate: values.interviewStartDate ?? existing.interviewStartDate,
+    interviewEndDate: values.interviewEndDate ?? existing.interviewEndDate,
+    interviewMethod: values.interviewMethod ?? existing.interviewMethod,
+    finalPassAnnouncementDate:
+      values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
+    finalPassAnnouncementMethod:
+      values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod,
   }
 }
