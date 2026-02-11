@@ -142,8 +142,8 @@
 
 ```markdown
 다음 Phase를 진행하기 전에:
-1. `apps/cms/PROGRESS.md` 파일을 확인하여 완료된 작업 확인
-2. `apps/cms/NEXT_PHASE_CHECKLIST.md` 파일을 확인하여 다음 작업 확인
+1. `apps/cms/docs/status/PROGRESS.md` 파일을 확인하여 완료된 작업 확인
+2. `apps/cms/docs/status/NEXT_PHASE_CHECKLIST.md` 파일을 확인하여 다음 작업 확인
 3. 해당 Phase의 상세 요구사항 문서 확인
 ```
 
@@ -267,8 +267,8 @@ apps/cms/src/
 ## 📚 주요 참고 문서 위치
 
 ### 진행 상황 및 로드맵
-- `apps/cms/PROGRESS.md` - 전체 진행 상황
-- `apps/cms/NEXT_PHASE_CHECKLIST.md` - 다음 Phase 체크리스트
+- `apps/cms/docs/status/PROGRESS.md` - 전체 진행 상황
+- `apps/cms/docs/status/NEXT_PHASE_CHECKLIST.md` - 다음 Phase 체크리스트
 - `apps/cms/docs/roadmap/MVP_ROADMAP_V3.md` - V3 로드맵 상세
 - `apps/cms/docs/interview/CLIENT_INTERVIEW_2024-12-19.md` - 클라이언트 인터뷰 정리
 
@@ -328,7 +328,7 @@ apps/cms/src/
 5. **통합 및 테스트**
    - [ ] 라우팅 확인
    - [ ] 쿼리 파라미터 동기화
-   - [ ] 문서 업데이트 (PROGRESS.md)
+   - [ ] 문서 업데이트 (docs/status/PROGRESS.md)
 
 ---
 

@@ -110,7 +110,7 @@ JAKorea CMS 프로젝트에서 사용되는 각 역할(시니어 PM, 기획자, 
 - MVP 로드맵 (MVP_ROADMAP_V3.md)
 - 기능 명세서
 - 사용자 시나리오 문서
-- PLANNING_REQUESTS.md
+- [PLANNING_REQUESTS.md](../../../docs/planning/PLANNING_REQUESTS.md)
 
 ### 커뮤니케이션 스타일 (표현 방식)
 
