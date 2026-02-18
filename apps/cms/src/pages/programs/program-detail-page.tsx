@@ -3,7 +3,7 @@
  * - 헤더: 프로그램 타이틀
  * - 해당 프로그램 진행 상태 위젯
  * - 구분선
- * - 4개 탭 (쿼리 파라미터 tab=키 연동, 기본 tab=info): URL에 어떤 탭인지 의미 전달
+ * - 5개 탭 (쿼리 파라미터 tab=키 연동, 기본 tab=info): 알림 발송 탭은 비활성
  * - 정보수정 클릭 시 같은 페이지에서 수정 모드 전환 (수정 취소 / 수정사항 저장)
  */
 
@@ -164,6 +164,12 @@ export function ProgramDetailPage() {
                 {id && <ProgramManagersTab programId={id} />}
               </div>
             ),
+          },
+          {
+            key: 'notification',
+            label: '알림 발송',
+            disabled: true,
+            children: <div className="program-detail-page__tab-content" />,
           },
         ]}
       />
