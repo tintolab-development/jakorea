@@ -4,7 +4,7 @@
  * FR-C01: 7단계 위젯 — 범용 ProgressStagesWidget 사용, 첫 카드 청록(전체 프로그램)
  */
 
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
 import {
   getProgramProgress7Stage,
@@ -36,8 +36,8 @@ export function ProgramProgressWidget({
   title: _title = '전체 프로그램 진행 현황',
   showDetailLink: _showDetailLink = true,
 }: ProgramProgressWidgetProps) {
-  const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -46,11 +46,20 @@ export function ProgramProgressWidget({
     return (searchParams.get('status') as ProgramLifecycleStatus | null) || null
   }, [location.search])
 
+  // 목록 페이지(교육 프로그램)와 동기화: 교육 탭에서는 교육 프로그램만 집계
+  const programType = useMemo<'education' | 'volunteer' | 'all'>(() => {
+    if (location.pathname === '/programs/education') return 'education'
+    if (location.pathname === '/programs/volunteer') return 'volunteer'
+    return 'all'
+  }, [location.pathname])
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
       try {
-        const data = await getProgramProgress7Stage()
+        const data = await getProgramProgress7Stage({
+          programType: programType === 'all' ? undefined : programType,
+        })
         setProgress(data)
       } catch (error) {
         handleError(error, { defaultMessage: MESSAGES.error.programProgressLoadFailed })
@@ -59,7 +68,7 @@ export function ProgramProgressWidget({
       }
     }
     loadData()
-  }, [])
+  }, [programType])
 
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
@@ -72,36 +81,33 @@ export function ProgramProgressWidget({
       isSelected: !selectedStatus,
     }
 
-    const stageItems: ProgressStageItem[] = PROGRAM_PROGRESS_STAGE_ORDER.flatMap(
+    const stageItems: ProgressStageItem[] = PROGRAM_PROGRESS_STAGE_ORDER.map(
       (stageKey: ProgramProgressStageKey) => {
-        if (stageKey === 'educationBeforeTextbook') return []
-
-        let count = progress[stageKey]
-        let label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
-        const showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
-        const lifecycleStatus = STAGE_TO_LIFECYCLE[stageKey]
-
+        let count: number
         if (stageKey === 'matchingCompleted') {
           count = progress.matchingCompleted + progress.educationBeforeTextbook
-          label = '매칭 완료 / 교재 준비 중'
+        } else if (stageKey === 'educationAfterTextbook') {
+          count = progress.educationAfterTextbook
+        } else {
+          count = progress[stageKey]
         }
+        const label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
+        const showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
+        const lifecycleStatus = STAGE_TO_LIFECYCLE[stageKey]
 
         const isSelected =
           selectedStatus === lifecycleStatus ||
           (stageKey === 'matchingCompleted' &&
-            (selectedStatus === 'matching_completed' ||
-              selectedStatus === 'education_before_textbook'))
+            selectedStatus === 'education_before_textbook')
 
-        return [
-          {
-            key: stageKey,
-            label,
-            count,
-            showArrowAfter,
-            isMatchingStyle: false /* 매칭 완료 / 교재 준비 중도 기본 텍스트 스타일 */,
-            isSelected,
-          },
-        ]
+        return {
+          key: stageKey,
+          label,
+          count,
+          showArrowAfter,
+          isMatchingStyle: false,
+          isSelected,
+        }
       }
     )
 
@@ -109,25 +115,24 @@ export function ProgramProgressWidget({
   }, [progress, selectedStatus])
 
   const handleStageClick = (key: string) => {
-    const searchParams = new URLSearchParams(location.search)
+    const nextParams = new URLSearchParams(searchParams)
     if (key === 'total') {
-      searchParams.delete('status')
-      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: false })
+      nextParams.delete('status')
+      setSearchParams(nextParams, { replace: false })
       return
     }
     const stageKey = key as ProgramProgressStageKey
-    const current = searchParams.get('status')
+    const current = nextParams.get('status') as ProgramLifecycleStatus | null
     const isSelected =
       current === (STAGE_TO_LIFECYCLE[stageKey] ?? null) ||
-      (stageKey === 'matchingCompleted' &&
-        (current === 'matching_completed' || current === 'education_before_textbook'))
+      (stageKey === 'matchingCompleted' && current === 'education_before_textbook')
     if (isSelected) {
-      searchParams.delete('status')
+      nextParams.delete('status')
     } else {
       const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
-      if (value) searchParams.set('status', value)
+      if (value) nextParams.set('status', value)
     }
-    navigate(`${location.pathname}?${searchParams.toString()}`, { replace: false })
+    setSearchParams(nextParams, { replace: false })
   }
 
   return (
@@ -138,7 +143,7 @@ export function ProgramProgressWidget({
       showBottomDivider
       onStageClick={handleStageClick}
       loading={loading}
-      loadingCardCount={7}
+      loadingCardCount={6}
     />
   )
 }

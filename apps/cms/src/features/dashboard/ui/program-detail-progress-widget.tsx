@@ -62,18 +62,20 @@ export function ProgramDetailProgressWidget({
 
     const isMatchingStatus = (s: ProgramLifecycleStatus) =>
       s === 'matching_completed' || s === 'education_before_textbook'
+    const isEducationInProgress = (s: ProgramLifecycleStatus) =>
+      s === 'education_before_textbook' || s === 'education_after_textbook'
 
-    return PROGRAM_PROGRESS_STAGE_ORDER.flatMap((stageKey: ProgramProgressStageKey) => {
-      if (stageKey === 'educationBeforeTextbook') return []
-
-      let count = progress[stageKey]
-      let label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
-      const showArrowAfter = DETAIL_STAGE_HAS_ARROW_AFTER.has(stageKey)
-
+    return PROGRAM_PROGRESS_STAGE_ORDER.map((stageKey: ProgramProgressStageKey) => {
+      let count: number
       if (stageKey === 'matchingCompleted') {
         count = progress.matchingCompleted + progress.educationBeforeTextbook
-        label = '매칭 완료 / 교재 준비 중'
+      } else if (stageKey === 'educationAfterTextbook') {
+        count = progress.educationBeforeTextbook + progress.educationAfterTextbook
+      } else {
+        count = progress[stageKey]
       }
+      const label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
+      const showArrowAfter = DETAIL_STAGE_HAS_ARROW_AFTER.has(stageKey)
 
       const isSelected = currentLifecycleStatus
         ? currentLifecycleStatus === 'recruiting_students'
@@ -82,24 +84,22 @@ export function ProgramDetailProgressWidget({
             ? stageKey === 'instructorRecruitment'
             : isMatchingStatus(currentLifecycleStatus)
               ? stageKey === 'matchingCompleted'
-              : (currentLifecycleStatus === 'education_after_textbook' &&
-                  stageKey === 'educationAfterTextbook') ||
-                (currentLifecycleStatus === 'education_completed' &&
-                  stageKey === 'educationCompleted') ||
-                (currentLifecycleStatus === 'document_processing_completed' &&
-                  stageKey === 'documentProcessingCompleted')
+              : isEducationInProgress(currentLifecycleStatus)
+                ? stageKey === 'educationAfterTextbook'
+                : (currentLifecycleStatus === 'education_completed' &&
+                    stageKey === 'educationCompleted') ||
+                  (currentLifecycleStatus === 'document_processing_completed' &&
+                    stageKey === 'documentProcessingCompleted')
         : false
 
-      return [
-        {
-          key: stageKey,
-          label,
-          count,
-          showArrowAfter,
-          isMatchingStyle: false /* 매칭 완료 / 교재 준비 중도 기본 텍스트 스타일 */,
-          isSelected,
-        },
-      ]
+      return {
+        key: stageKey,
+        label,
+        count,
+        showArrowAfter,
+        isMatchingStyle: false,
+        isSelected,
+      }
     })
   }, [progress, currentLifecycleStatus])
 

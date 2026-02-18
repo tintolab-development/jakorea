@@ -4,11 +4,8 @@
  * - firstCardVariant: 'teal' = 첫 카드 청록 배경(목록용), 'white' = 첫 카드 흰색(상세용)
  */
 
-import { Typography } from 'antd'
 import { RightOutlined } from '@ant-design/icons'
 import './program-progress-widget.css'
-
-const { Text } = Typography
 
 export interface ProgressStageItem {
   key: string
@@ -106,14 +103,14 @@ export function ProgressStagesWidget({
         className={`${cardClass} ${onStageClick ? 'program-progress-widget__stage--clickable' : ''}`.trim()}
         onClick={onStageClick ? () => onStageClick(item.key) : undefined}
       >
-        <Text className="program-progress-widget__stage-label">{item.label}</Text>
+        <span className="program-progress-widget__stage-label">{item.label}</span>
         <div className="program-progress-widget__stage-count-wrapper">
-          <Text
+          <span
             className={`program-progress-widget__stage-count ${item.isMatchingStyle ? 'program-progress-widget__stage-count--teal' : ''}`}
           >
             {item.count}
-          </Text>
-          <Text className="program-progress-widget__stage-count-unit">건</Text>
+          </span>
+          <span className="program-progress-widget__stage-count-unit">건</span>
         </div>
       </div>
     )

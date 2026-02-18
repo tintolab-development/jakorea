@@ -182,8 +182,45 @@
     box-sizing: border-box;
 }
 
-.program-progress-widget__stage--clickable {
+.program-progress-widget__stage--clickable,
+.program-progress-widget__stage--clickable * {
     cursor: pointer;
+    user-select: none;
+}
+
+/* 카드 전체를 빈틈 없는 클릭/호버 영역으로 만드는 투명 오버레이 */
+.program-progress-widget__stage--clickable::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.program-progress-widget__stage--clickable:hover {
+    border-color: #01A1AF;
+    box-shadow: 0 2px 8px rgba(1, 161, 175, 0.12);
+}
+
+.program-progress-widget__stage--clickable:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 4px rgba(1, 161, 175, 0.10);
+}
+
+/* 전체 프로그램 카드 hover */
+.program-progress-widget__stage--total.program-progress-widget__stage--clickable:hover {
+    border-color: transparent !important;
+    box-shadow: 0 2px 8px rgba(1, 161, 175, 0.25);
+    filter: brightness(1.08);
+}
+
+.program-progress-widget__stage--total.program-progress-widget__stage--clickable:active {
+    filter: brightness(0.95);
+}
+
+/* 선택 상태 hover */
+.program-progress-widget__stage--selected.program-progress-widget__stage--clickable:hover {
+    border-color: #01A1AF;
+    box-shadow: 0 2px 8px rgba(1, 161, 175, 0.18);
 }
 
 /* 매칭 완료 / 교재 준비 중 카드 특수 스타일 - 텍스트만 청록 */
@@ -199,24 +236,17 @@
     color: var(--color-brand-primary);
 }
 
-/* 선택된 상태 (목록 페이지 필터 등): 연한 배경, 기본 텍스트 */
+/* 선택된 상태 (목록 페이지 필터 등): 배경 #fff 유지, 청록 텍스트 */
 .program-progress-widget__stage--selected {
     border: 1px solid var(--color-border-skeleton);
-    background-color: var(--color-bg-tertiary);
+    background-color: #fff;
 }
 
+/* 클릭된 위젯: 색상만 청록으로 변경 (폰트 사이즈·굵기 등은 기존 유지) */
 .program-progress-widget__stage--selected .program-progress-widget__stage-label,
 .program-progress-widget__stage--selected .program-progress-widget__stage-count,
 .program-progress-widget__stage--selected .program-progress-widget__stage-count-unit {
-    color: var(--color-text-strong);
-    font-weight: var(--font-weight-600);
-}
-
-/* 선택된 상태에서도 매칭완료는 텍스트 색상 유지 */
-.program-progress-widget__stage--selected.program-progress-widget__stage--matching .program-progress-widget__stage-label,
-.program-progress-widget__stage--selected.program-progress-widget__stage--matching .program-progress-widget__stage-count,
-.program-progress-widget__stage--selected.program-progress-widget__stage--matching .program-progress-widget__stage-count-unit {
-    color: var(--color-brand-primary);
+    color: #01A1AF;
 }
 
 .program-progress-widget__stage-label {

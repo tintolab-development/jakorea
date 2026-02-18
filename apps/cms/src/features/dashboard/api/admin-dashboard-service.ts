@@ -5,6 +5,7 @@
  */
 
 import { mockPrograms } from '@/data/mock/programs'
+import { getEducationPrograms } from '@/data/mock/education-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
 import { mockSettlements } from '@/data/mock/settlements'
@@ -99,10 +100,15 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
 
 /**
  * FR-C01: 7단계 프로그램 진행 현황 집계 (ProgramLifecycleStatus와 동기화)
- * - 수강자 모집 / 강사 모집 / 매칭 완료 / 교육 진행 중 (교재 발송 전·후) / 교육 진행 완료 / 서류 처리 완료
+ * - programType 'education' 시 교육 프로그램만 집계 (목록 페이지 테이블과 동기화)
  */
-export async function getProgramProgress7Stage(): Promise<ProgramProgress7Stage> {
+export async function getProgramProgress7Stage(options?: {
+  programType?: 'education' | 'volunteer' | 'all'
+}): Promise<ProgramProgress7Stage> {
   await new Promise(resolve => setTimeout(resolve, 300))
+
+  const programs =
+    options?.programType === 'education' ? getEducationPrograms() : mockPrograms
 
   const stages = {
     studentRecruitment: 0,
@@ -114,7 +120,7 @@ export async function getProgramProgress7Stage(): Promise<ProgramProgress7Stage>
     documentProcessingCompleted: 0,
   }
 
-  mockPrograms.forEach(program => {
+  programs.forEach(program => {
     switch (program.lifecycleStatus) {
       case 'recruiting_students':
         stages.studentRecruitment++
