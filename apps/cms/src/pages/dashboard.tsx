@@ -62,6 +62,10 @@ import { PendingActionsRow } from '@/features/dashboard/ui/pending-actions-row'
 import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
 import { CustomerInquiryStatusWidget } from '@/features/dashboard/ui/customer-inquiry-status-widget'
 import { ProgramScheduleWidget } from '@/features/dashboard/ui/program-schedule-widget'
+import { MenuShortcutWidget } from '@/features/dashboard/ui/menu-shortcut-widget'
+import { RecruitmentStatusWidget } from '@/features/dashboard/ui/recruitment-status-widget'
+import { KpiAchievementWidget } from '@/features/dashboard/ui/kpi-achievement-widget'
+import { DashboardSettingsModal } from '@/features/dashboard/ui/dashboard-settings-modal'
 import {
   getOverallStatistics,
   type OverallStatistics,
@@ -112,6 +116,11 @@ export function Dashboard() {
     s.getOrderedIds(user?.role ?? null, defaultIds)
   )
   const setOrderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setOrderedIds)
+  const widthByRole = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.widthByRole)
+  const setWidgetWidth = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setWidgetWidth)
+  const roleWidths = widthByRole[user?.role ?? ''] ?? {}
+
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
 
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -319,6 +328,12 @@ export function Dashboard() {
         return <CustomerInquiryStatusWidget />
       case 'program-schedule-widget':
         return <ProgramScheduleWidget />
+      case 'menu-shortcut-widget':
+        return <MenuShortcutWidget />
+      case 'recruitment-status-widget':
+        return <RecruitmentStatusWidget />
+      case 'kpi-achievement-widget':
+        return <KpiAchievementWidget />
       default:
         return null
     }
@@ -336,11 +351,20 @@ export function Dashboard() {
           </span>
         </div>
         <div className="dashboard-toolbar-right">
-          <Button type="primary" icon={<EditOutlined />} onClick={() => navigate('/index2')}>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => setSettingsModalOpen(true)}
+          >
             대시보드 설정
           </Button>
         </div>
       </div>
+
+      <DashboardSettingsModal
+        open={settingsModalOpen}
+        onCancel={() => setSettingsModalOpen(false)}
+      />
 
       {/* 권한별 위젯 렌더링 (DnD: 햄버거 핸들에서만 드래그) */}
       <DndContext
@@ -359,12 +383,19 @@ export function Dashboard() {
               const widgetComponent = renderWidget(id)
               if (!widgetComponent) return null
 
+              const effectiveColSpan = (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
+              const resizable = id !== 'kpi-achievement-widget'
+
               return (
                 <SortableWidgetSlot
                   key={id}
                   id={id}
-                  colSpan={meta.colSpan}
+                  colSpan={effectiveColSpan}
                   hasBuiltInHandle={meta.hasBuiltInHandle}
+                  height={meta.height}
+                  onResizeWidth={resizable ? newColSpan => {
+                    if (user?.role) setWidgetWidth(user.role, id, newColSpan)
+                  } : undefined}
                 >
                   {widgetComponent}
                 </SortableWidgetSlot>
