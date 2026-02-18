@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
+import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import type { ColumnsType } from 'antd/es/table'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { HeartFilled } from '@ant-design/icons'
@@ -146,11 +147,7 @@ export function MyFavoriteProgramsPage() {
       dataIndex: 'category',
       key: 'category',
       width: 120,
-      render: (category: string) => (
-        <Tag color={category === 'school' ? 'blue' : 'purple'}>
-          {category === 'school' ? '학교 프로그램' : '개인 프로그램'}
-        </Tag>
-      ),
+      render: (category: string) => <ProgramCategoryBadge category={category} />,
     },
     {
       title: '상태',

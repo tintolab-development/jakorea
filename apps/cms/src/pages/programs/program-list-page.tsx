@@ -174,8 +174,10 @@ export function ProgramListPage() {
 
   const statusFilter = useMemo<ProgramLifecycleStatus | null>(() => {
     const value = params.status as ProgramLifecycleStatus | null
+    if (!value) return null
     const validStatuses = new Set(programLifecycleStatusConfig.order)
-    return value && validStatuses.has(value) ? value : null
+    if (value === 'education_before_textbook') return 'matching_completed'
+    return validStatuses.has(value) ? value : null
   }, [params.status])
 
   // 강사용: 신청 가능한 프로그램 및 수강자 모집 완료 프로그램 필터링 + 카테고리 필터
@@ -209,9 +211,21 @@ export function ProgramListPage() {
       }
     }
 
-    // status 쿼리 파라미터 필터링 (대시보드 7단계·프로그램 관리와 동일)
+    // status 쿼리 파라미터 필터링 (6단계: 교재 준비 중 = matching+before, 교육 진행 중 = before+after)
     if (statusFilter) {
-      filtered = filtered.filter(program => program.lifecycleStatus === statusFilter)
+      if (statusFilter === 'matching_completed') {
+        filtered = filtered.filter(
+          program =>
+            program.lifecycleStatus === 'matching_completed' ||
+            program.lifecycleStatus === 'education_before_textbook'
+        )
+      } else if (statusFilter === 'education_after_textbook') {
+        filtered = filtered.filter(
+          program => program.lifecycleStatus === 'education_after_textbook'
+        )
+      } else {
+        filtered = filtered.filter(program => program.lifecycleStatus === statusFilter)
+      }
     }
 
     // 강사용일 경우 신청 가능한 프로그램 및 진행 단계 프로그램 표시 (7단계)
@@ -538,6 +552,7 @@ export function ProgramListPage() {
                 onChange={setSearchInputValue}
                 allowClear
                 width={300}
+                showLabel={false}
               />
               <Button
                 type="default"

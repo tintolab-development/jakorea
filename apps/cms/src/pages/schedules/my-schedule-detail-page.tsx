@@ -7,6 +7,7 @@
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert } from 'antd'
+import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { StatusDisplay, SingleCTA } from '@/shared/ui'
 import { mockSchedulesMap, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
@@ -60,7 +61,14 @@ export function MyScheduleDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px',
+        }}
+      >
         <Spin size="large" />
       </div>
     )
@@ -72,13 +80,7 @@ export function MyScheduleDetailPage() {
         status="404"
         title="일정을 찾을 수 없습니다"
         subTitle="요청하신 일정 정보가 존재하지 않거나 삭제되었습니다."
-        extra={
-          <SingleCTA
-            label="홈으로 이동"
-            targetUrl="/"
-            type="primary"
-          />
-        }
+        extra={<SingleCTA label="홈으로 이동" targetUrl="/" type="primary" />}
       />
     )
   }
@@ -138,9 +140,7 @@ export function MyScheduleDetailPage() {
             {(status as string) === 'SCH_04' && (
               <Alert
                 message="일정이 취소되었습니다"
-                description={
-                  (schedule as any).reasonPublic || '사유를 확인할 수 없습니다.'
-                }
+                description={(schedule as any).reasonPublic || '사유를 확인할 수 없습니다.'}
                 type="error"
                 showIcon
                 style={{ marginTop: 12 }}
@@ -158,9 +158,7 @@ export function MyScheduleDetailPage() {
             <Descriptions.Item label="참여 역할">
               <Tag color="blue">{role}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="일정 제목">
-              {schedule.title}
-            </Descriptions.Item>
+            <Descriptions.Item label="일정 제목">{schedule.title}</Descriptions.Item>
             <Descriptions.Item label="일자">
               {scheduleDate.format('YYYY년 MM월 DD일')}
             </Descriptions.Item>
@@ -174,7 +172,7 @@ export function MyScheduleDetailPage() {
             )}
             {schedule.onlineLink && (
               <Descriptions.Item label="진행 방식">
-                <Tag color="green">온라인</Tag>
+                <SessionFormatBadge isOnline />
                 {canJoinOnline && (
                   <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
                     (온라인 참여 링크는 아래 버튼을 통해 접속하실 수 있습니다)
@@ -225,4 +223,3 @@ export function MyScheduleDetailPage() {
     </div>
   )
 }
-

@@ -11,10 +11,13 @@ import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Typography, Tabs, Button, Divider, Spin, message } from 'antd'
 import { PageHeader } from '@/shared/ui/page-header'
+import { AppButton } from '@/shared/ui/app-button'
 import { MESSAGES } from '@/shared/constants'
 import { ProgramDetailProgressWidget } from '@/features/dashboard/ui/program-detail-progress-widget'
 import { ProgramDetailInfoTab } from '@/features/program/ui/program-detail-info-tab'
 import { ProgramProgressTab } from '@/features/program/ui/program-progress-tab'
+import { ProgramManagersTab } from '@/features/program/ui/program-managers-tab'
+import { ProgramApplicantsTab } from '@/features/program/ui/program-applicants-tab'
 import { useProgramDetail } from './use-program-detail'
 import { useProgramDetailTab, TAB_LABELS } from './use-program-detail-tab'
 import { useEditModeFocusRestore } from './use-edit-mode-focus-restore'
@@ -74,17 +77,14 @@ export function ProgramDetailPage() {
           activeTabKey === 'info' ? (
             <div className="program-detail-page__tab-actions">
               {isEditMode && (
-                <Button
-                  className="program-detail-page__btn-cancel"
-                  onClick={() => setIsEditMode(false)}
-                >
+                <AppButton variant="danger" size="large" onClick={() => setIsEditMode(false)}>
                   수정 취소
-                </Button>
+                </AppButton>
               )}
-              <Button
+              <AppButton
                 ref={editModeButtonRef}
-                type="primary"
-                className="program-detail-page__btn-primary-teal"
+                variant="primary"
+                size="large"
                 onClick={
                   isEditMode
                     ? async () => {
@@ -98,13 +98,14 @@ export function ProgramDetailPage() {
                 disabled={!isEditMode && !canWrite}
               >
                 {isEditMode ? '수정사항 저장' : '정보 수정'}
-              </Button>
-              <Button
-                className="program-detail-page__btn-primary-teal"
+              </AppButton>
+              <AppButton
+                variant="primary"
+                size="large"
                 onClick={() => window.open(`/programs/${id}`, '_blank')}
               >
                 프로그램 상세 미리보기
-              </Button>
+              </AppButton>
             </div>
           ) : null
         }
@@ -149,12 +150,20 @@ export function ProgramDetailPage() {
           {
             key: 'applicants',
             label: TAB_LABELS.applicants,
-            children: <div className="program-detail-page__tab-content" />,
+            children: (
+              <div className="program-detail-page__tab-content">
+                {id && <ProgramApplicantsTab programId={id} />}
+              </div>
+            ),
           },
           {
             key: 'managers',
             label: TAB_LABELS.managers,
-            children: <div className="program-detail-page__tab-content" />,
+            children: (
+              <div className="program-detail-page__tab-content">
+                {id && <ProgramManagersTab programId={id} />}
+              </div>
+            ),
           },
         ]}
       />

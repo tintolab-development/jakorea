@@ -6,10 +6,30 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Table, Space, Tabs, Empty, Spin, message, Timeline } from 'antd'
-import { ArrowLeftOutlined, CalendarOutlined, DollarOutlined, FileTextOutlined } from '@ant-design/icons'
+import {
+  Card,
+  Descriptions,
+  Button,
+  Table,
+  Space,
+  Tabs,
+  Empty,
+  Spin,
+  message,
+  Timeline,
+} from 'antd'
+import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
+import {
+  ArrowLeftOutlined,
+  CalendarOutlined,
+  DollarOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getMyProgramDetail, type MyProgram } from '@/entities/program/api/instructor-program-service'
+import {
+  getMyProgramDetail,
+  type MyProgram,
+} from '@/entities/program/api/instructor-program-service'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
 import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
@@ -43,7 +63,7 @@ export function MyProgramHistoryPage() {
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-        message.error(MESSAGES.error.programLoadFailed)
+      message.error(MESSAGES.error.programLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -80,7 +100,11 @@ export function MyProgramHistoryPage() {
   if (!program) {
     return (
       <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/programs/my/active/${id}`)} style={{ marginBottom: 16 }}>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(`/programs/my/active/${id}`)}
+          style={{ marginBottom: 16 }}
+        >
           목록으로
         </Button>
         <Empty description="프로그램 정보를 찾을 수 없습니다." />
@@ -89,7 +113,9 @@ export function MyProgramHistoryPage() {
   }
 
   const fullProgram = getProgramByIdSync(program.id)
-  const matching = mockMatchings.find(m => m.programId === program.id && m.instructorId === user?.instructorId)
+  const matching = mockMatchings.find(
+    m => m.programId === program.id && m.instructorId === user?.instructorId
+  )
   const applications = mockApplications.filter(app => app.programId === program.id)
 
   // 타임라인 이벤트 생성
@@ -141,7 +167,11 @@ export function MyProgramHistoryPage() {
       key: 'id',
       width: 200,
       render: (id: string) => (
-        <Button type="link" onClick={() => navigate(`/settlements/my/${id}`)} style={{ padding: 0 }}>
+        <Button
+          type="link"
+          onClick={() => navigate(`/settlements/my/${id}`)}
+          style={{ padding: 0 }}
+        >
           {id}
         </Button>
       ),
@@ -193,7 +223,9 @@ export function MyProgramHistoryPage() {
               children: (
                 <div>
                   <div style={{ fontWeight: 500, marginBottom: 4 }}>{event.label}</div>
-                  <div style={{ color: '#666', fontSize: 14, marginBottom: 4 }}>{event.description}</div>
+                  <div style={{ color: '#666', fontSize: 14, marginBottom: 4 }}>
+                    {event.description}
+                  </div>
                   <div style={{ color: '#999', fontSize: 12 }}>{event.time}</div>
                 </div>
               ),
@@ -285,15 +317,14 @@ export function MyProgramHistoryPage() {
       <Card title={program.title} style={{ marginBottom: 16 }}>
         <Descriptions bordered column={{ xs: 1, sm: 2, lg: 3 }}>
           <Descriptions.Item label="상태">
-            <Tag color={program.category === 'school' ? 'blue' : 'purple'}>
-              {program.category === 'school' ? '학교 프로그램' : '개인 프로그램'}
-            </Tag>
+            <ProgramCategoryBadge category={program.category} />
           </Descriptions.Item>
           <Descriptions.Item label="매칭일">
             {dayjs(program.matchedAt).format('YYYY-MM-DD')}
           </Descriptions.Item>
           <Descriptions.Item label="진행 기간">
-            {dayjs(program.startDate).format('YYYY-MM-DD')} ~ {dayjs(program.endDate).format('YYYY-MM-DD')}
+            {dayjs(program.startDate).format('YYYY-MM-DD')} ~{' '}
+            {dayjs(program.endDate).format('YYYY-MM-DD')}
           </Descriptions.Item>
           {fullProgram?.schoolId && (
             <Descriptions.Item label="학교명">

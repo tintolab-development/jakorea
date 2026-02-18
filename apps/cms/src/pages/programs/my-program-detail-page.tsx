@@ -6,16 +6,30 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, Descriptions, Tag, Button, Table, Space, Empty, Spin, message } from 'antd'
-import { HeartOutlined, HeartFilled, ArrowLeftOutlined, CalendarOutlined, FormOutlined } from '@ant-design/icons'
+import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
+import {
+  HeartOutlined,
+  HeartFilled,
+  ArrowLeftOutlined,
+  CalendarOutlined,
+  FormOutlined,
+} from '@ant-design/icons'
 import { SatisfactionSurveyModal } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getMyProgramDetail, type MyProgram } from '@/entities/program/api/instructor-program-service'
+import {
+  getMyProgramDetail,
+  type MyProgram,
+} from '@/entities/program/api/instructor-program-service'
 import {
   addFavoriteProgram,
   removeFavoriteProgram,
   isFavoriteProgram,
 } from '@/entities/program/api/favorite-program-service'
-import { commonStatusStatusConfig, getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
+import {
+  commonStatusStatusConfig,
+  getCommonStatusLabel,
+  getCommonStatusColor,
+} from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import dayjs from 'dayjs'
@@ -50,16 +64,19 @@ export function MyProgramDetailPage() {
     }
   }, [id, navigate, user?.id, user?.instructorId])
 
-  const loadFavoriteStatus = useCallback(async (userId: string) => {
-    if (!id) return
+  const loadFavoriteStatus = useCallback(
+    async (userId: string) => {
+      if (!id) return
 
-    try {
-      const isFavorite = await isFavoriteProgram(userId, id)
-      setFavorite(isFavorite)
-    } catch (error) {
-      console.error('관심 프로그램 상태 로드 실패:', error)
-    }
-  }, [id])
+      try {
+        const isFavorite = await isFavoriteProgram(userId, id)
+        setFavorite(isFavorite)
+      } catch (error) {
+        console.error('관심 프로그램 상태 로드 실패:', error)
+      }
+    },
+    [id]
+  )
 
   useEffect(() => {
     if (id && user?.instructorId) {
@@ -73,7 +90,6 @@ export function MyProgramDetailPage() {
       loadFavoriteStatus(userId)
     }
   }, [id, user, loadFavoriteStatus])
-
 
   const handleToggleFavorite = async () => {
     const userId = user?.instructorId || user?.id
@@ -108,13 +124,16 @@ export function MyProgramDetailPage() {
     if (now.isAfter(startDate) && now.isBefore(endDate)) {
       return { label: '진행중', color: 'green' }
     }
-    return { label: getCommonStatusLabel(program.status), color: getCommonStatusColor(program.status) }
+    return {
+      label: getCommonStatusLabel(program.status),
+      color: getCommonStatusColor(program.status),
+    }
   }
 
   // 만족도 조사 가능 여부 (완료된 프로그램)
   // status가 'completed'이거나 종료일이 지난 경우
-  const canSubmitSatisfaction = 
-    program?.status === 'completed' || 
+  const canSubmitSatisfaction =
+    program?.status === 'completed' ||
     (program?.endDate && dayjs(program.endDate).isBefore(dayjs()))
 
   if (loading) {
@@ -128,7 +147,11 @@ export function MyProgramDetailPage() {
   if (!program) {
     return (
       <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')} style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/programs/my/active')}
+          style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}
+        >
           목록으로
         </Button>
         <Empty description="프로그램 정보를 찾을 수 없습니다." />
@@ -167,7 +190,13 @@ export function MyProgramDetailPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, width: '100%', justifyContent: 'space-between' }}>
+      <Space
+        style={{
+          marginBottom: LAYOUT_CONSTANTS.margins.lg,
+          width: '100%',
+          justifyContent: 'space-between',
+        }}
+      >
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')}>
           목록으로
         </Button>
@@ -199,22 +228,17 @@ export function MyProgramDetailPage() {
             <Tag color={status.color}>{status.label}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="카테고리">
-            <Tag color={program.category === 'school' ? 'blue' : 'purple'}>
-              {program.category === 'school' ? '학교 프로그램' : '개인 프로그램'}
-            </Tag>
+            <ProgramCategoryBadge category={program.category} />
           </Descriptions.Item>
           <Descriptions.Item label="진행 기간">
-            {dayjs(program.startDate).format('YYYY-MM-DD')} ~ {dayjs(program.endDate).format('YYYY-MM-DD')}
+            {dayjs(program.startDate).format('YYYY-MM-DD')} ~{' '}
+            {dayjs(program.endDate).format('YYYY-MM-DD')}
           </Descriptions.Item>
           <Descriptions.Item label="매칭일">
             {dayjs(program.matchedAt).format('YYYY-MM-DD')}
           </Descriptions.Item>
-          <Descriptions.Item label="매칭 ID">
-            {program.matchingId}
-          </Descriptions.Item>
-          <Descriptions.Item label="일정 수">
-            {program.schedules.length}개
-          </Descriptions.Item>
+          <Descriptions.Item label="매칭 ID">{program.matchingId}</Descriptions.Item>
+          <Descriptions.Item label="일정 수">{program.schedules.length}개</Descriptions.Item>
           {program.description && (
             <Descriptions.Item label="설명" span={3}>
               {program.description}
@@ -259,4 +283,3 @@ export function MyProgramDetailPage() {
     </div>
   )
 }
-
