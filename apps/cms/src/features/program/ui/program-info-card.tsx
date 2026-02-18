@@ -5,8 +5,8 @@
 import { Card, Descriptions, Tag, Space, Typography } from 'antd'
 import type { Program } from '@/types/domain'
 import { StatusDisplay } from '@/shared/ui'
-import { commonStatusConfig, programLifecycleStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { commonStatusConfig } from '@/shared/constants/status'
+import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import dayjs from 'dayjs'
 
@@ -65,10 +65,7 @@ export function ProgramInfoCard({ program, sponsorName }: ProgramInfoCardProps) 
         </Descriptions.Item>
         <Descriptions.Item label="상태">
           {program.lifecycleStatus ? (
-            <StatusBadge
-              status={program.lifecycleStatus}
-              statusConfig={programLifecycleStatusStatusConfig}
-            />
+            <ProgramLifecycleStatusBadge status={program.lifecycleStatus} />
           ) : (
             <StatusDisplay
               status={program.status}

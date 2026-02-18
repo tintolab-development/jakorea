@@ -53,8 +53,8 @@ const columns: ColumnDef<Program>[] = [
 ]
 
 export function useProgramTable(data: Program[]) {
-  // status 쿼리 파라미터를 lifecycleStatus 필터로 매핑 (대시보드 위젯 클릭 시)
-  // 'status' 컬럼(active/pending/completed)은 URL과 무관; 필터는 lifecycleStatus만 사용
+  // lifecycleStatus 필터는 페이지 레벨(ProgramListPage)에서 URL status 파라미터로 처리
+  // 테이블 컬럼 필터에서 제외하여 이중 필터링 방지
   return useTableWithQuery({
     data,
     columns,
@@ -62,15 +62,11 @@ export function useProgramTable(data: Program[]) {
       'title',
       'sponsorId',
       'type',
-      'lifecycleStatus',
       'category',
       'businessArea',
       'targetLevel',
       'institutionType',
     ],
     defaultPageSize: 10,
-    queryParamMapping: {
-      status: 'lifecycleStatus', // status 쿼리를 lifecycleStatus 필터로 매핑
-    },
   })
 }

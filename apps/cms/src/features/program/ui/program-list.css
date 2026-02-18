@@ -532,6 +532,29 @@
     overflow-x: auto !important;
 }
 
+/* 프로그램 목록 테이블 셀별 구분선 */
+.program-list-card .ant-table-thead > tr > th {
+    border-right: 1px solid #fff;
+    border-bottom: 1px solid #fff;
+}
+
+.program-list-card .ant-table-thead > tr > th:last-child {
+    border-right: none;
+}
+
+.program-list-card .ant-table-tbody > tr > td {
+    border-right: 1px solid var(--color-border-light);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.program-list-card .ant-table-tbody > tr > td:last-child {
+    border-right: none;
+}
+
+.program-list-card .ant-table-tbody > tr:last-child > td {
+    border-bottom: none;
+}
+
 .program-list-card .ant-card-head {
     border-bottom: 1px solid var(--color-border-light);
     padding: var(--spacing-16) var(--spacing-24);

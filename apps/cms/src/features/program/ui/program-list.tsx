@@ -28,26 +28,20 @@ import type {
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
-import {
-  programLifecycleStatusConfig,
-  programLifecycleStatusStatusConfig,
-  commonStatusStatusConfig,
-} from '@/shared/constants/status'
+import { programLifecycleStatusConfig, commonStatusStatusConfig } from '@/shared/constants/status'
 import {
   programTypes,
   programFormats,
   statusOptions,
-  recruitmentStatusOptions,
-  getRecruitmentStatus,
   businessAreaOptions,
   targetLevelOptions,
   categoryOptions,
 } from './program-list-constants'
+import { getCapacity } from '../lib/program-helpers'
+import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
 import { domainColorsHex } from '@/shared/constants/colors'
-import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   addFavoriteProgram,
@@ -157,6 +151,18 @@ export function ProgramList({
     }
   })
 
+  // 위젯 클릭 등으로 URL의 status가 바뀌면 필터 상태 동기화 (다른 위젯 클릭 시 올바르게 전환되도록)
+  const urlStatus = searchParams.get('status') as ProgramLifecycleStatus | 'all' | null
+  useEffect(() => {
+    const statusFromUrl = urlStatus && urlStatus !== 'all' ? urlStatus : 'all'
+    setActiveUserFilters(prev =>
+      prev.status !== statusFromUrl ? { ...prev, status: statusFromUrl } : prev
+    )
+    setPendingUserFilters(prev =>
+      prev.status !== statusFromUrl ? { ...prev, status: statusFromUrl } : prev
+    )
+  }, [urlStatus])
+
   const periodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
     // activeUserFilters의 dateRange를 우선 사용
     if (activeUserFilters.dateRange?.[0] && activeUserFilters.dateRange[1]) {
@@ -179,11 +185,14 @@ export function ProgramList({
     const value = activeUserFilters.type || searchParams.get('type')
     return value === 'online' || value === 'offline' || value === 'hybrid' ? value : 'all'
   }, [activeUserFilters.type, searchParams])
+  // 위젯 클릭 시 URL이 곧바로 반영되도록 URL 우선 (activeUserFilters는 필터 패널 '조회'용)
   const progressStatusFilter = useMemo<ProgramLifecycleStatus | 'all'>(() => {
-    const value =
-      activeUserFilters.status || (searchParams.get('status') as ProgramLifecycleStatus | null)
+    const fromUrl = searchParams.get('status') as ProgramLifecycleStatus | null
+    const value = fromUrl || activeUserFilters.status
+    if (!value || value === 'all') return 'all'
+    if (value === 'education_before_textbook') return 'matching_completed'
     const validStatuses = new Set(programLifecycleStatusConfig.order)
-    return value && validStatuses.has(value as ProgramLifecycleStatus)
+    return validStatuses.has(value as ProgramLifecycleStatus)
       ? (value as ProgramLifecycleStatus)
       : 'all'
   }, [activeUserFilters.status, searchParams])
@@ -214,30 +223,10 @@ export function ProgramList({
     return [startDate, endDate]
   }, [searchParamsAdmin])
 
-  // 적용된 모집 상태 필터 (URL에서 읽어옴)
-  const appliedRecruitmentStatus = useMemo<
-    'scheduled' | 'recruiting' | 'closed' | undefined
-  >(() => {
-    const status = searchParamsAdmin.get('recruitmentStatus') as
-      | 'scheduled'
-      | 'recruiting'
-      | 'closed'
-      | null
-    return status || undefined
-  }, [searchParamsAdmin])
-
   const filteredData = useMemo(() => {
     if (!isParticipant) {
-      // 관리자용: 운영 기간 및 신청 기간 필터링 추가
+      // 관리자용: 운영 기간·신청 기간 필터링 (진행현황·진행방식은 테이블 컬럼 필터로 처리)
       let filtered = data
-
-      // 모집 상태 필터링 (모집 기간 기준)
-      if (appliedRecruitmentStatus) {
-        filtered = filtered.filter(program => {
-          const recruitmentStatus = getRecruitmentStatus(program)
-          return recruitmentStatus === appliedRecruitmentStatus
-        })
-      }
 
       // 운영 기간 필터링
       if (operationPeriodRange?.[0] && operationPeriodRange?.[1]) {
@@ -315,12 +304,14 @@ export function ProgramList({
 
     if (progressStatusFilter !== 'all') {
       filtered = filtered.filter(program => {
-        // matching_completed와 education_before_textbook을 하나로 처리
         if (progressStatusFilter === 'matching_completed') {
           return (
             program.lifecycleStatus === 'matching_completed' ||
             program.lifecycleStatus === 'education_before_textbook'
           )
+        }
+        if (progressStatusFilter === 'education_after_textbook') {
+          return program.lifecycleStatus === 'education_after_textbook'
         }
         return program.lifecycleStatus === progressStatusFilter
       })
@@ -337,7 +328,6 @@ export function ProgramList({
     targetFilter,
     operationPeriodRange,
     applicationPeriodRange,
-    appliedRecruitmentStatus,
   ])
 
   const { table, resetFilters, columnFilters } = useProgramTable(filteredData)
@@ -352,10 +342,11 @@ export function ProgramList({
   // 관리자용: Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
   const [pendingFilters, setPendingFilters] = useState({
     title: '',
-    recruitmentStatus: undefined as 'scheduled' | 'recruiting' | 'closed' | undefined,
+    lifecycleStatus: undefined as ProgramLifecycleStatus | undefined,
     category: undefined as string | undefined,
     businessArea: undefined as string | undefined,
     targetLevel: undefined as string | undefined,
+    type: undefined as string | undefined,
     applicationStartDate: null as Dayjs | null,
     applicationEndDate: null as Dayjs | null,
     operationStartDate: null as Dayjs | null,
@@ -385,12 +376,9 @@ export function ProgramList({
         | string
         | undefined
 
-      // 모집 상태 필터는 URL에서 직접 읽어오기
-      const recruitmentStatusFilter = searchParamsAdmin.get('recruitmentStatus') as
-        | 'scheduled'
-        | 'recruiting'
-        | 'closed'
-        | null
+      // 프로그램 진행현황·진행방식 필터는 URL에서 직접 읽어오기
+      const statusFilter = searchParamsAdmin.get('status') as ProgramLifecycleStatus | null
+      const typeFilter = searchParamsAdmin.get('type') || null
 
       // 날짜 필터는 URL에서 직접 읽어오기
       const operationStartDateStr = searchParamsAdmin.get('operationStartDate')
@@ -403,7 +391,8 @@ export function ProgramList({
         // 값이 변경된 경우에만 업데이트 (무한 루프 방지)
         const hasChanges =
           prev.title !== currentTitle ||
-          prev.recruitmentStatus !== (recruitmentStatusFilter || undefined) ||
+          prev.lifecycleStatus !== (statusFilter || undefined) ||
+          prev.type !== (typeFilter || undefined) ||
           prev.category !== categoryFilter ||
           prev.businessArea !== businessAreaFilter ||
           prev.targetLevel !== targetLevelFilter ||
@@ -414,10 +403,11 @@ export function ProgramList({
 
         return {
           title: currentTitle,
-          recruitmentStatus: recruitmentStatusFilter || undefined,
+          lifecycleStatus: statusFilter || undefined,
           category: categoryFilter,
           businessArea: businessAreaFilter,
           targetLevel: targetLevelFilter,
+          type: typeFilter || undefined,
           applicationStartDate: null,
           applicationEndDate: null,
           operationStartDate: operationStartDateStr
@@ -437,17 +427,27 @@ export function ProgramList({
 
   // 조회 버튼 클릭 시 필터 적용
   const handleSearch = useCallback(() => {
-    // 테이블 컬럼 필터 적용
+    // 테이블 컬럼 필터 적용 (lifecycleStatus는 페이지 레벨에서 URL status로 처리)
     table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
     table.getColumn('businessArea')?.setFilterValue(pendingFilters.businessArea || null)
     table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
+    table
+      .getColumn('type')
+      ?.setFilterValue(
+        pendingFilters.type && pendingFilters.type !== 'all' ? pendingFilters.type : null
+      )
 
-    // URL 파라미터 필터 적용 (모집 상태, 날짜)
+    // URL 파라미터 필터 적용 (진행현황, 진행방식, 운영 기간)
     const nextParams = new URLSearchParams(searchParamsAdmin)
-    if (pendingFilters.recruitmentStatus) {
-      nextParams.set('recruitmentStatus', pendingFilters.recruitmentStatus)
+    if (pendingFilters.lifecycleStatus) {
+      nextParams.set('status', pendingFilters.lifecycleStatus)
     } else {
-      nextParams.delete('recruitmentStatus')
+      nextParams.delete('status')
+    }
+    if (pendingFilters.type && pendingFilters.type !== 'all') {
+      nextParams.set('type', pendingFilters.type)
+    } else {
+      nextParams.delete('type')
     }
     if (pendingFilters.operationStartDate && pendingFilters.operationEndDate) {
       nextParams.set('operationStartDate', pendingFilters.operationStartDate.format('YYYY-MM-DD'))
@@ -718,16 +718,16 @@ export function ProgramList({
         <UnifiedFilterCard
           fields={[
             {
-              key: 'recruitmentStatus',
+              key: 'lifecycleStatus',
               type: 'select',
-              label: '모집 상태',
+              label: '프로그램 진행현황',
               placeholder: '전체',
-              options: recruitmentStatusOptions,
+              options: statusOptions,
             },
             {
               key: 'category',
               type: 'select',
-              label: '수강 대상',
+              label: '수강자 유형',
               placeholder: '전체',
               options: categoryOptions,
             },
@@ -746,16 +746,27 @@ export function ProgramList({
               options: targetLevelOptions,
             },
             {
+              key: 'type',
+              type: 'select',
+              label: '진행방식',
+              placeholder: '전체',
+              options: [
+                { value: 'all', label: '전체' },
+                ...programTypes.map(t => ({ value: t.value, label: t.label })),
+              ],
+            },
+            {
               key: 'operationPeriod',
               type: 'dateRange',
-              label: '운영 기간',
+              label: '운영기간',
             },
           ]}
           filters={{
-            recruitmentStatus: pendingFilters.recruitmentStatus,
+            lifecycleStatus: pendingFilters.lifecycleStatus,
             category: pendingFilters.category,
             businessArea: pendingFilters.businessArea,
             targetLevel: pendingFilters.targetLevel,
+            type: pendingFilters.type,
             operationPeriod:
               pendingFilters.operationStartDate && pendingFilters.operationEndDate
                 ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
@@ -777,23 +788,26 @@ export function ProgramList({
           onReset={() => {
             setPendingFilters({
               title: '',
-              recruitmentStatus: undefined,
+              lifecycleStatus: undefined,
               category: undefined,
               businessArea: undefined,
               targetLevel: undefined,
+              type: undefined,
               applicationStartDate: null,
               applicationEndDate: null,
               operationStartDate: null,
               operationEndDate: null,
             })
-            // 테이블 필터 초기화
+            // 테이블 필터 초기화 (lifecycleStatus는 페이지 레벨에서 URL status로 처리)
             table.getColumn('title')?.setFilterValue(null)
             table.getColumn('category')?.setFilterValue(null)
             table.getColumn('businessArea')?.setFilterValue(null)
             table.getColumn('targetLevel')?.setFilterValue(null)
+            table.getColumn('type')?.setFilterValue(null)
             // URL 파라미터 초기화
             const nextParams = new URLSearchParams(searchParamsAdmin)
-            nextParams.delete('recruitmentStatus')
+            nextParams.delete('status')
+            nextParams.delete('type')
             nextParams.delete('applicationStartDate')
             nextParams.delete('applicationEndDate')
             nextParams.delete('operationStartDate')
@@ -801,6 +815,7 @@ export function ProgramList({
             nextParams.delete('title')
             setSearchParamsAdmin(nextParams, { replace: true })
           }}
+          showResetButton={false}
         />
       )}
 
@@ -826,7 +841,7 @@ export function ProgramList({
                     }
                   : undefined
               }
-              dataSource={table.getRowModel().rows.map(row => row.original)}
+              dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
               columns={
                 tableVariant === 'education'
                   ? [
@@ -835,11 +850,7 @@ export function ProgramList({
                         key: 'no',
                         width: 56,
                         align: 'center' as const,
-                        render: (_: unknown, __: Program, index: number) => {
-                          const pageIndex = table.getState().pagination.pageIndex
-                          const pageSize = table.getState().pagination.pageSize
-                          return pageIndex * pageSize + index + 1
-                        },
+                        render: (_: unknown, __: Program, index: number) => index + 1,
                       },
                       {
                         title: '프로그램명',
@@ -851,13 +862,58 @@ export function ProgramList({
                         render: (text: string) => text ?? '-',
                       },
                       {
-                        title: '모집 상태',
-                        key: 'recruitmentStatus',
-                        width: 100,
+                        title: '프로그램 진행 현황',
+                        key: 'lifecycleStatus',
+                        width: 140,
                         align: 'center' as const,
-                        render: (_: unknown, record: Program) => (
-                          <RecruitmentStatusBadge status={getRecruitmentStatus(record)} />
-                        ),
+                        render: (_: unknown, record: Program) => {
+                          const lifecycle = record.lifecycleStatus
+                          if (lifecycle) {
+                            return <ProgramLifecycleStatusBadge status={lifecycle} />
+                          }
+                          return (
+                            <StatusBadge
+                              status={record.status}
+                              statusConfig={commonStatusStatusConfig}
+                              showIcon={false}
+                            />
+                          )
+                        },
+                      },
+                      {
+                        title: '수강자 모집 인원',
+                        key: 'studentRecruitment',
+                        width: 120,
+                        align: 'center' as const,
+                        render: (_: unknown, record: Program) => {
+                          const approved = record.approvedStudentCount ?? 0
+                          const capacity = getCapacity(record)
+                          if (capacity !== undefined) return `${approved} / ${capacity}건`
+                          return `${approved}건`
+                        },
+                      },
+                      {
+                        title: '강사 모집 인원',
+                        key: 'instructorRecruitment',
+                        width: 120,
+                        align: 'center' as const,
+                        render: (_: unknown, record: Program) => {
+                          const current = record.instructors ?? 0
+                          const cap = record.instructorCapacity
+                          if (cap !== undefined && cap !== null) return `${current} / ${cap}건`
+                          return `${current}건`
+                        },
+                      },
+                      {
+                        title: '수강자 유형',
+                        dataIndex: 'category',
+                        key: 'category',
+                        width: 120,
+                        align: 'center' as const,
+                        render: (value: ProgramCategory | undefined) => {
+                          const option = categoryOptions.find(o => o.value === value)
+                          return option?.label ?? value ?? '-'
+                        },
                       },
                       {
                         title: '교육 분야',
@@ -870,17 +926,6 @@ export function ProgramList({
                           value
                             ? (businessAreaOptions.find(o => o.value === value)?.label ?? value)
                             : '-',
-                      },
-                      {
-                        title: '수강 유형 구분',
-                        dataIndex: 'category',
-                        key: 'category',
-                        width: 120,
-                        align: 'center' as const,
-                        render: (value: ProgramCategory | undefined) => {
-                          const option = categoryOptions.find(o => o.value === value)
-                          return option?.label ?? value ?? '-'
-                        },
                       },
                       {
                         title: '교육 대상',
@@ -907,21 +952,6 @@ export function ProgramList({
                         },
                       },
                       {
-                        title: '신청자 모집 기간',
-                        key: 'applicationPeriod',
-                        width: 160,
-                        align: 'center' as const,
-                        ellipsis: true,
-                        render: (_: unknown, record: Program) => {
-                          const start = record.applicationStartDate
-                          const end = record.applicationEndDate
-                          if (!start || !end) return '-'
-                          const s = dayjs(start).format('YY.MM.DD')
-                          const e = dayjs(end).format('YY.MM.DD')
-                          return `${s} ~ ${e}`
-                        },
-                      },
-                      {
                         title: '프로그램 운영기간',
                         key: 'operationPeriod',
                         width: 160,
@@ -931,9 +961,14 @@ export function ProgramList({
                           const start = record.startDate
                           const end = record.endDate
                           if (!start || !end) return '-'
-                          const s = dayjs(start).format('YY.MM.DD')
-                          const e = dayjs(end).format('YY.MM.DD')
-                          return `${s} ~ ${e}`
+                          const startDayjs = dayjs(start)
+                          const endDayjs = dayjs(end)
+                          const dayShort = ['일', '월', '화', '수', '목', '금', '토']
+                          const s = startDayjs.format('YY.MM.DD')
+                          const e = endDayjs.format('YY.MM.DD')
+                          const wStart = dayShort[startDayjs.day()]
+                          const wEnd = dayShort[endDayjs.day()]
+                          return `${s}(${wStart}) ~ ${e}(${wEnd})`
                         },
                       },
                       {
@@ -1115,11 +1150,7 @@ export function ProgramList({
                           const lifecycle = record.lifecycleStatus
 
                           const badge = lifecycle ? (
-                            <StatusBadge
-                              status={lifecycle}
-                              statusConfig={programLifecycleStatusStatusConfig}
-                              showIcon={false}
-                            />
+                            <ProgramLifecycleStatusBadge status={lifecycle} />
                           ) : (
                             <StatusBadge
                               status={record.status}
@@ -1136,13 +1167,7 @@ export function ProgramList({
                             status => {
                               return {
                                 key: status,
-                                label: (
-                                  <StatusBadge
-                                    status={status}
-                                    statusConfig={programLifecycleStatusStatusConfig}
-                                    showIcon={false}
-                                  />
-                                ),
+                                label: <ProgramLifecycleStatusBadge status={status} />,
                                 onClick: e => {
                                   e?.domEvent?.stopPropagation()
                                   onChangeStatus(record, status)
@@ -1226,7 +1251,7 @@ export function ProgramList({
               rowKey="id"
               loading={loading}
               tableLayout="fixed"
-              scroll={{ x: 2000 }}
+              scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
               onRow={record => ({
                 onClick: event => {
                   const target = event.target as HTMLElement
@@ -1246,16 +1271,7 @@ export function ProgramList({
                 },
                 style: { cursor: 'pointer' },
               })}
-              pagination={{
-                ...PAGINATION_CONFIG,
-                current: table.getState().pagination.pageIndex + 1,
-                pageSize: table.getState().pagination.pageSize,
-                total: table.getFilteredRowModel().rows.length,
-                onChange: (page, pageSize) => {
-                  table.setPageIndex(page - 1)
-                  table.setPageSize(pageSize)
-                },
-              }}
+              pagination={false}
             />
           </div>
         </Card>
@@ -1266,7 +1282,7 @@ export function ProgramList({
         <Card loading={loading} className="program-list-card">
           <div className="program-list-table-wrapper">
             <Table
-              dataSource={table.getRowModel().rows.map(row => row.original)}
+              dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
               columns={[
                 {
                   title: '포스터',
@@ -1374,11 +1390,7 @@ export function ProgramList({
                     const lifecycle = record.lifecycleStatus
 
                     const badge = lifecycle ? (
-                      <StatusBadge
-                        status={lifecycle}
-                        statusConfig={programLifecycleStatusStatusConfig}
-                        showIcon={false}
-                      />
+                      <ProgramLifecycleStatusBadge status={lifecycle} />
                     ) : (
                       <StatusBadge
                         status={record.status}
@@ -1418,7 +1430,7 @@ export function ProgramList({
               ]}
               rowKey="id"
               tableLayout="fixed"
-              scroll={{ x: 2000 }}
+              scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
               onRow={record => ({
                 onClick: event => {
                   const target = event.target as HTMLElement
@@ -1432,16 +1444,7 @@ export function ProgramList({
                 },
                 style: { cursor: 'pointer' },
               })}
-              pagination={{
-                ...PAGINATION_CONFIG,
-                current: table.getState().pagination.pageIndex + 1,
-                pageSize: table.getState().pagination.pageSize,
-                total: table.getFilteredRowModel().rows.length,
-                onChange: (page, pageSize) => {
-                  table.setPageIndex(page - 1)
-                  table.setPageSize(pageSize)
-                },
-              }}
+              pagination={false}
             />
           </div>
         </Card>

@@ -4,7 +4,8 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Card, Table, Button, Tag, Row, Col, Select, message } from 'antd'
+import { Card, Table, Row, Col, Select, message } from 'antd'
+import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import {
   useProgramProgressParams,
@@ -22,12 +23,27 @@ import {
   type ParticipatingInstructorRow,
   type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
+import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
+import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import {
   AddInstructorModal,
   buildInstructorRowFromForm,
   type AddInstructorFormValues,
 } from './add-instructor-modal'
+import { SchoolDetailModal } from './school-detail-modal'
+import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
+import {
+  DeleteGuideModal,
+  buildSchoolMessageLines,
+  buildInstructorMessageLines,
+} from './manager-delete-guide-modal'
+import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import { getSchoolDetailByRow } from '../lib/school-detail-mock'
+import type {
+  SchoolDetailForModal,
+  InstructorListFormInstructor,
+} from '../model/school-detail-types'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
@@ -93,17 +109,38 @@ interface ProgramProgressTabProps {
 
 export function ProgramProgressTab({ programId: _programId }: ProgramProgressTabProps) {
   const { subTab, filters, setSubTab, setFilter } = useProgramProgressParams()
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
+  const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
+  const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
+  const [selectedInstructorForDetail, setSelectedInstructorForDetail] =
+    useState<ParticipatingInstructorRow | null>(null)
   /** 조회 버튼 클릭 시에만 반영되는 필터 (테이블 필터링에 사용) */
   const [appliedFilters, setAppliedFilters] = useState<ProgressFilters>(filters)
+  /** 참여 학교 목록 (초기 mock, 삭제 반영) */
+  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() => [
+    ...MOCK_PARTICIPATING_SCHOOLS,
+  ])
   /** 강사 목록 (초기 mock, 추가/삭제 반영) */
-  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(
-    () => MOCK_PARTICIPATING_INSTRUCTORS
-  )
+  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => [
+    ...MOCK_PARTICIPATING_INSTRUCTORS,
+  ])
   const [addInstructorModalOpen, setAddInstructorModalOpen] = useState(false)
+  const [schoolDeleteGuideOpen, setSchoolDeleteGuideOpen] = useState(false)
+  const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
+  const [schoolDetailModalOpen, setSchoolDetailModalOpen] = useState(false)
+  const [selectedSchoolForDetail, setSelectedSchoolForDetail] =
+    useState<ParticipatingSchoolRow | null>(null)
+  /** 기본 정보 수정 저장 시 반영 (목록 행 + 모달 상세) */
+  const [savedBasicPatches, setSavedBasicPatches] = useState<
+    Record<string, Partial<SchoolDetailForModal>>
+  >({})
+  /** 강사진 추가/수정 저장 시 반영 (학교별 강사 목록) */
+  const [savedInstructorPatches, setSavedInstructorPatches] = useState<
+    Record<string, InstructorListFormInstructor[]>
+  >({})
 
   const filteredSchools = useMemo(() => {
-    return MOCK_PARTICIPATING_SCHOOLS.filter(row => {
+    return schoolList.filter(row => {
       if (
         appliedFilters.region &&
         appliedFilters.region !== 'all' &&
@@ -139,7 +176,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
       }
       return true
     })
-  }, [appliedFilters])
+  }, [schoolList, appliedFilters])
 
   const filteredInstructors = useMemo(() => {
     return instructorList.filter(row => {
@@ -186,16 +223,66 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     setAppliedFilters(filters)
   }
 
-  const handleSchoolDelete = () => {
-    if (selectedRowKeys.length === 0) return
-    setSelectedRowKeys([])
+  const handleSchoolDeleteClick = () => {
+    if (selectedSchoolRowKeys.length === 0) {
+      message.warning('삭제할 학교를 선택해 주세요.')
+      return
+    }
+    setSchoolDeleteGuideOpen(true)
   }
 
-  const handleInstructorDelete = () => {
-    if (selectedRowKeys.length === 0) return
-    setInstructorList(prev => prev.filter(row => !selectedRowKeys.includes(row.id)))
-    setSelectedRowKeys([])
+  const schoolNamesToDelete = useMemo(() => {
+    const keysSet = new Set(selectedSchoolRowKeys.map(String))
+    return schoolList.filter(row => keysSet.has(row.id)).map(row => row.schoolName)
+  }, [selectedSchoolRowKeys, schoolList])
+
+  const handleSchoolDeleteConfirm = () => {
+    const keysToDelete = new Set(selectedSchoolRowKeys.map(String))
+    const count = keysToDelete.size
+    setSchoolList(prev => prev.filter(row => !keysToDelete.has(row.id)))
+    setSelectedSchoolRowKeys([])
+    setSchoolDeleteGuideOpen(false)
+    message.success(`${count}건의 학교가 삭제되었습니다.`)
   }
+
+  const handleInstructorDeleteClick = () => {
+    if (selectedInstructorRowKeys.length === 0) {
+      message.warning('삭제할 강사를 선택해 주세요.')
+      return
+    }
+    setInstructorDeleteGuideOpen(true)
+  }
+
+  const instructorNamesToDelete = useMemo(() => {
+    const keysSet = new Set(selectedInstructorRowKeys.map(String))
+    return instructorList.filter(row => keysSet.has(row.id)).map(row => row.instructorName)
+  }, [selectedInstructorRowKeys, instructorList])
+
+  const handleInstructorDeleteConfirm = () => {
+    const keysToDelete = new Set(selectedInstructorRowKeys.map(String))
+    const count = keysToDelete.size
+    setInstructorList(prev => prev.filter(row => !keysToDelete.has(row.id)))
+    setSelectedInstructorRowKeys([])
+    setInstructorDeleteGuideOpen(false)
+    message.success(`${count}명의 강사가 삭제되었습니다.`)
+  }
+
+  /** 진행현황 참여 강사 → 모달용 ApplicantInstructorRow 형태로 변환 */
+  const participatingToApplicantRow = (
+    row: ParticipatingInstructorRow
+  ): ApplicantInstructorRow => ({
+    id: row.id,
+    no: row.no,
+    instructorName: row.instructorName,
+    schoolName: row.schoolName,
+    contact: '-',
+    email: '-',
+    address: '-',
+    approvalStatus: 'approved',
+    lectureExperienceYears: 0,
+    educationLevel: '-',
+    educationSchoolName: '-',
+  })
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
@@ -252,14 +339,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'textbookStatus',
         width: 140,
         align: 'center',
-        render: (status: TextbookStatusKey) => (
-          <Tag
-            className={`program-progress-tab__textbook-tag program-progress-tab__textbook-tag--${status}`}
-            style={{ margin: 0 }}
-          >
-            {TEXTBOOK_STATUS_LABELS[status]}
-          </Tag>
-        ),
+        render: (status: TextbookStatusKey) => <TextbookStatusBadge status={status} />,
       },
       {
         title: '담당 교사',
@@ -334,14 +414,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'settlementStatus',
         width: 160,
         align: 'center',
-        render: (status: SettlementStatusKey) => (
-          <Tag
-            className={`program-progress-tab__settlement-tag program-progress-tab__settlement-tag--${status}`}
-            style={{ margin: 0 }}
-          >
-            {SETTLEMENT_STATUS_LABELS[status]}
-          </Tag>
-        ),
+        render: (status: SettlementStatusKey) => <SettlementStatusBadge status={status} />,
       },
       {
         title: '담당 교사',
@@ -468,13 +541,9 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   />
                 </Col>
                 <Col flex="none" className="program-progress-tab__filter-col--btn">
-                  <Button
-                    type="default"
-                    className="program-progress-tab__btn-search"
-                    onClick={handleSearch}
-                  >
+                  <AppButton variant="primary" size="large" onClick={handleSearch}>
                     조회
-                  </Button>
+                  </AppButton>
                 </Col>
               </Row>
             </div>
@@ -492,14 +561,15 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                     총 {filteredSchools.length}건
                   </span>
                 </div>
-                <Button
-                  danger
-                  onClick={handleSchoolDelete}
-                  disabled={selectedRowKeys.length === 0}
-                  className="program-progress-tab__btn-delete-school"
+                <AppButton
+                  variant="danger"
+                  size="large"
+                  dangerFillOnHover
+                  disabled={selectedSchoolRowKeys.length === 0}
+                  onClick={handleSchoolDeleteClick}
                 >
                   학교 삭제
-                </Button>
+                </AppButton>
               </div>
               <Table<ParticipatingSchoolRow>
                 className="program-progress-tab__table"
@@ -507,11 +577,19 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                 size="middle"
                 pagination={false}
                 rowSelection={{
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys as string[]),
+                  selectedRowKeys: selectedSchoolRowKeys,
+                  onChange: keys => setSelectedSchoolRowKeys(keys as string[]),
                 }}
                 columns={columns}
                 dataSource={filteredSchools}
+                onRow={record => ({
+                  onClick: e => {
+                    if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                    setSelectedSchoolForDetail(record)
+                    setSchoolDetailModalOpen(true)
+                  },
+                  style: { cursor: 'pointer' },
+                })}
               />
             </div>
           </>
@@ -529,34 +607,43 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   </span>
                 </div>
                 <div className="program-progress-tab__table-actions">
-                  <Button
-                    danger
-                    onClick={handleInstructorDelete}
-                    disabled={selectedRowKeys.length === 0}
-                    className="program-progress-tab__btn-delete-instructor"
+                  <AppButton
+                    variant="danger"
+                    size="large"
+                    dangerFillOnHover
+                    disabled={selectedInstructorRowKeys.length === 0}
+                    onClick={handleInstructorDeleteClick}
                   >
                     강사 삭제
-                  </Button>
-                  <Button
-                    type="primary"
-                    className="program-progress-tab__btn-add-instructor"
+                  </AppButton>
+                  <AppButton
+                    variant="primary"
+                    size="large"
                     onClick={() => setAddInstructorModalOpen(true)}
                   >
                     강사 추가
-                  </Button>
+                  </AppButton>
                 </div>
               </div>
               <Table<ParticipatingInstructorRow>
-                className="program-progress-tab__table"
+                className="program-progress-tab__table program-progress-tab__table--clickable"
                 rowKey="id"
                 size="middle"
                 pagination={false}
                 rowSelection={{
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys as string[]),
+                  selectedRowKeys: selectedInstructorRowKeys,
+                  onChange: keys => setSelectedInstructorRowKeys(keys as string[]),
                 }}
                 columns={instructorColumns}
                 dataSource={filteredInstructors}
+                onRow={record => ({
+                  onClick: e => {
+                    if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                    setSelectedInstructorForDetail(record)
+                    setInstructorDetailModalOpen(true)
+                  },
+                  style: { cursor: 'pointer' },
+                })}
               />
             </div>
           </>
@@ -567,6 +654,72 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         open={addInstructorModalOpen}
         onCancel={() => setAddInstructorModalOpen(false)}
         onAdd={handleAddInstructor}
+      />
+
+      <DeleteGuideModal
+        open={schoolDeleteGuideOpen}
+        onCancel={() => setSchoolDeleteGuideOpen(false)}
+        onConfirm={handleSchoolDeleteConfirm}
+        title="학교 삭제 안내"
+        lines={buildSchoolMessageLines(schoolNamesToDelete)}
+      />
+
+      <DeleteGuideModal
+        open={instructorDeleteGuideOpen}
+        onCancel={() => setInstructorDeleteGuideOpen(false)}
+        onConfirm={handleInstructorDeleteConfirm}
+        title="강사 삭제 안내"
+        lines={buildInstructorMessageLines(instructorNamesToDelete)}
+      />
+
+      <ApplicantInstructorDetailModal
+        open={instructorDetailModalOpen}
+        onCancel={() => {
+          setInstructorDetailModalOpen(false)
+          setSelectedInstructorForDetail(null)
+        }}
+        instructor={
+          selectedInstructorForDetail
+            ? participatingToApplicantRow(selectedInstructorForDetail)
+            : null
+        }
+        title="참여 강사 상세 정보"
+        showApprovalButtons={false}
+      />
+
+      <SchoolDetailModal
+        open={schoolDetailModalOpen}
+        onCancel={() => {
+          setSchoolDetailModalOpen(false)
+          setSelectedSchoolForDetail(null)
+        }}
+        detail={
+          selectedSchoolForDetail
+            ? (() => {
+                const base = getSchoolDetailByRow(selectedSchoolForDetail)
+                const schoolId = selectedSchoolForDetail.id
+                const savedInstructors = savedInstructorPatches[schoolId]
+                const instructors =
+                  savedInstructors !== undefined
+                    ? savedInstructors.map(inv => ({
+                        ...inv,
+                        settlementStatus: 'pending' as SettlementStatusKey,
+                      }))
+                    : base.instructors
+                return {
+                  ...base,
+                  ...savedBasicPatches[schoolId],
+                  instructors,
+                }
+              })()
+            : null
+        }
+        onSaveBasicInfo={patch => {
+          setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))
+        }}
+        onSaveInstructorInfo={(schoolId, instructors) => {
+          setSavedInstructorPatches(prev => ({ ...prev, [schoolId]: instructors }))
+        }}
       />
     </div>
   )

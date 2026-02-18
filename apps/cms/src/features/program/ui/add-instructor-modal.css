@@ -64,37 +64,4 @@
     box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
 }
 
-/* 푸터 버튼: TealHeaderModal footer에 넣을 때 사용, 크기 120×40 — Ant 오버라이드 예외(linear-gradient) */
-.add-instructor-modal__btn-cancel {
-    min-width: 120px;
-    border: 1px solid var(--color-modal-header);
-    color: var(--color-modal-header);
-    background:
-        linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
-        var(--color-bg-base);
-    border-radius: var(--radius-4);
-    font-weight: var(--font-weight-600);
-}
-
-.add-instructor-modal__btn-cancel:hover {
-    border-color: var(--color-modal-header-hover);
-    color: var(--color-modal-header-hover);
-    background:
-        linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
-        var(--color-bg-base);
-}
-
-.add-instructor-modal__btn-submit {
-    min-width: 120px;
-    background: var(--color-modal-header);
-    border-color: var(--color-modal-header);
-    color: var(--color-bg-base);
-    border-radius: var(--radius-4);
-    font-weight: var(--font-weight-600);
-}
-
-.add-instructor-modal__btn-submit:hover {
-    background: var(--color-modal-header-hover);
-    border-color: var(--color-modal-header-hover);
-    color: var(--color-bg-base);
-}
+/* 푸터 버튼: AppButton 사용 (variant cancel / primary + modalTeal) */

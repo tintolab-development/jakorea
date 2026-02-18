@@ -5,8 +5,9 @@
  */
 
 import { useEffect } from 'react'
-import { Form, Input, Select, Button } from 'antd'
+import { Form, Input, Select } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { AppButton } from '@/shared/ui/app-button'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
@@ -56,22 +57,12 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
 
   const footer = (
     <>
-      <Button
-        type="default"
-        size="large"
-        className="add-instructor-modal__btn-cancel"
-        onClick={handleCancel}
-      >
+      <AppButton variant="cancel" size="large" onClick={handleCancel}>
         취소
-      </Button>
-      <Button
-        type="primary"
-        size="large"
-        className="add-instructor-modal__btn-submit"
-        onClick={() => form.submit()}
-      >
+      </AppButton>
+      <AppButton variant="primary" size="large" modalTeal onClick={() => form.submit()}>
         추가
-      </Button>
+      </AppButton>
     </>
   )
 
@@ -93,7 +84,10 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
           required ? (
             <>
               {labelNode}
-              <span className="add-instructor-modal__required-asterisk" aria-hidden> *</span>
+              <span className="add-instructor-modal__required-asterisk" aria-hidden>
+                {' '}
+                *
+              </span>
             </>
           ) : (
             labelNode
