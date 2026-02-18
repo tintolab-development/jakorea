@@ -99,7 +99,7 @@ export const BUSINESS_AREA_OPTIONS = [
 export const TYPE_LABEL: Record<string, string> = {
   online: '온라인',
   offline: '오프라인',
-  hybrid: '혼합',
+  hybrid: '온/오프라인',
 }
 
 export const TARGET_LEVEL_LABEL: Record<string, string> = {

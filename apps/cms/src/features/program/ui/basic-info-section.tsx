@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Image, Input, Radio, Select, DatePicker } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import { Controller } from 'react-hook-form'
@@ -130,7 +131,7 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                프로그램 진행 방식<span className="program-detail-info-tab__required">*</span>
+                프로그램 진행 방식{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -143,6 +144,7 @@ export function BasicInfoSection({
                         options={[
                           { value: 'online', label: '온라인' },
                           { value: 'offline', label: '오프라인' },
+                          { value: 'hybrid', label: '온/오프라인' },
                         ]}
                         onChange={e => field.onChange(e.target.value)}
                       />
@@ -153,7 +155,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                프로그램 진행 상태<span className="program-detail-info-tab__required">*</span>
+                프로그램 진행 상태{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 <Select<ProgramLifecycleStatus>
@@ -181,7 +183,7 @@ export function BasicInfoSection({
           <tbody>
             <tr>
               <th>
-                썸네일 이미지<span className="program-detail-info-tab__required">*</span>
+                썸네일 이미지{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td colSpan={3}>
                 <div className="program-detail-info-tab__thumbnail-wrap">
@@ -249,7 +251,7 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                프로그램 명<span className="program-detail-info-tab__required">*</span>
+                프로그램 명{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -263,7 +265,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                프로그램 운영 기간<span className="program-detail-info-tab__required">*</span>
+                프로그램 운영 기간{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -300,7 +302,7 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                수강자 유형<span className="program-detail-info-tab__required">*</span>
+                수강자 유형{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -321,7 +323,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                교육 분야<span className="program-detail-info-tab__required">*</span>
+                교육 분야{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -391,7 +393,7 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                후원사<span className="program-detail-info-tab__required">*</span>
+                후원사{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -411,12 +413,19 @@ export function BasicInfoSection({
                       />
                     )}
                   />
+                ) : program.sponsorId ? (
+                  <Link
+                    to={`/sponsors/${program.sponsorId}`}
+                    className="program-detail-info-tab__sponsor-link"
+                  >
+                    {sponsorName ?? '-'}
+                  </Link>
                 ) : (
                   (sponsorName ?? '-')
                 )}
               </td>
               <th>
-                후원사 담당자<span className="program-detail-info-tab__required">*</span>
+                후원사 담당자{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td className="program-detail-info-tab__sponsor-manager-cell">
                 {isFormEdit ? (
@@ -447,7 +456,7 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                문의처<span className="program-detail-info-tab__required">*</span>
+                문의처{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td colSpan={3} className="program-detail-info-tab__contact-cell">
                 {isFormEdit ? (
@@ -529,7 +538,7 @@ export function BasicInfoSection({
           <tbody>
             <tr>
               <th>
-                수강자 모집 인원<span className="program-detail-info-tab__required">*</span>
+                수강자 모집 인원{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -571,7 +580,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                수강자 모집 현황<span className="program-detail-info-tab__required">*</span>
+                수강자 모집 현황{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -587,13 +596,13 @@ export function BasicInfoSection({
                     className="program-detail-info-tab__recruitment-radio"
                   />
                 ) : (
-                  <RecruitmentStatusBadge status={getRecruitmentStatus(program)} />
+                  <RecruitmentStatusBadge status={getRecruitmentStatus(program)} size="fixed" />
                 )}
               </td>
             </tr>
             <tr>
               <th>
-                수강자 모집 기간<span className="program-detail-info-tab__required">*</span>
+                수강자 모집 기간{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -631,7 +640,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                결과 발표일 및 방법<span className="program-detail-info-tab__required">*</span>
+                결과 발표일 및 방법{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -685,7 +694,7 @@ export function BasicInfoSection({
           <tbody>
             <tr>
               <th>
-                강사 모집 인원<span className="program-detail-info-tab__required">*</span>
+                강사 모집 인원{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -721,7 +730,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                강사 모집 현황<span className="program-detail-info-tab__required">*</span>
+                강사 모집 현황{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -731,13 +740,13 @@ export function BasicInfoSection({
                     className="program-detail-info-tab__recruitment-radio"
                   />
                 ) : (
-                  <RecruitmentStatusBadge status={getInstructorRecruitmentStatus(program)} />
+                  <RecruitmentStatusBadge status={getInstructorRecruitmentStatus(program)} size="fixed" />
                 )}
               </td>
             </tr>
             <tr>
               <th>
-                강사 모집 기간<span className="program-detail-info-tab__required">*</span>
+                강사 모집 기간{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -779,7 +788,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                1차 서류 합격자 발표<span className="program-detail-info-tab__required">*</span>
+                1차 서류 합격자 발표{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -818,7 +827,7 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                2차 면접 심사<span className="program-detail-info-tab__required">*</span>
+                2차 면접 심사{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -856,7 +865,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                최종 합격자 발표<span className="program-detail-info-tab__required">*</span>
+                최종 합격자 발표{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (

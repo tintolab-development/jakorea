@@ -88,7 +88,7 @@ export function DetailInfoSection({
           <tbody>
             <tr>
               <th>
-                프로그램 설명<span className="program-detail-info-tab__required">*</span>
+                프로그램 설명{isEditMode ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -114,7 +114,7 @@ export function DetailInfoSection({
             </tr>
             <tr>
               <th>
-                모집 안내<span className="program-detail-info-tab__required">*</span>
+                모집 안내{isEditMode ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -140,7 +140,7 @@ export function DetailInfoSection({
             </tr>
             <tr>
               <th>
-                학습 지원 내용<span className="program-detail-info-tab__required">*</span>
+                학습 지원 내용{isEditMode ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (

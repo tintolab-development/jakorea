@@ -1,13 +1,19 @@
 /**
  * 교육 커리큘럼 섹션 (프로그램 상세 정보 탭)
- * 시안: 행별 라벨 "N회차 강의 분량 및 내용" | 값 "1시간 | 상세 설명"
+ * 시안: 행별 라벨 "N회차 강의 분량 및 내용" | 값 [온라인/오프라인/온·오프라인] | 시간 | 비고, 디바이더로 구분
  * 수정 모드: react-hook-form 연동, 기존 회차·커리큘럼 값이 default로 채워짐
  */
 
-import { Input } from 'antd'
-import type { Program } from '@/types/domain'
+import { Input, Radio } from 'antd'
+import type { Program, RoundDeliveryType } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
+
+const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
+  { value: 'online', label: '온라인' },
+  { value: 'offline', label: '오프라인' },
+  { value: 'hybrid', label: '온/오프라인' },
+]
 
 const DEFAULT_CURRICULUM_BY_ROUND: string[] = [
   "'개인', '근로자', '소비자' 개념 정의 및 설명",
@@ -71,6 +77,23 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
     form.setValue('rounds', nextRounds)
   }
 
+  const updateRoundDeliveryType = (roundIndex: number, deliveryType: RoundDeliveryType) => {
+    if (!form) return
+    const current = form.getValues('rounds') ?? []
+    const nextRounds = current.map((r, i) =>
+      i === roundIndex ? { ...r, deliveryType } : r
+    )
+    form.setValue('rounds', nextRounds)
+  }
+
+  const CurriculumDivider = () => (
+    <span
+      className="program-detail-info-tab__curriculum-divider"
+      role="presentation"
+      aria-hidden
+    />
+  )
+
   return (
     <section className="program-detail-info-tab__section">
       <h3 className="program-detail-info-tab__section-title">교육 커리큘럼</h3>
@@ -105,21 +128,31 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                     <td>
                       {isFormEdit ? (
                         <div className="program-detail-info-tab__curriculum-inputs">
+                          <Radio.Group
+                            value={round.deliveryType ?? 'offline'}
+                            options={ROUND_DELIVERY_OPTIONS}
+                            onChange={e =>
+                              updateRoundDeliveryType(roundIndex, e.target.value)
+                            }
+                            className="program-detail-info-tab__curriculum-radio"
+                          />
+                          <CurriculumDivider />
                           <Input
                             value={duration}
                             onChange={e =>
                               updateRoundCurriculum(roundIndex, e.target.value, description)
                             }
                             placeholder="1시간"
-                            style={{ width: 80, flexShrink: 0 }}
+                            className="program-detail-info-tab__curriculum-time-input"
                           />
+                          <CurriculumDivider />
                           <Input
                             value={description}
                             onChange={e =>
                               updateRoundCurriculum(roundIndex, duration, e.target.value)
                             }
-                            placeholder="강의 내용"
-                            style={{ flex: 1, minWidth: 0 }}
+                            placeholder="비고"
+                            className="program-detail-info-tab__curriculum-remarks-input"
                           />
                         </div>
                       ) : (
