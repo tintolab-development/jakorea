@@ -31,46 +31,6 @@ const MOCK_PROGRAM_INQUIRIES: ProgramInquiryRow[] = [
   { key: '5', programName: '2026 SAP-함께 성장하는AI 참여 고등학생 모집 안내 (IT, SW 멘토링)', pending: 0, answered: 2, total: 2 },
 ]
 
-const columns: ColumnsType<ProgramInquiryRow> = [
-  {
-    title: '프로그램명',
-    dataIndex: 'programName',
-    key: 'programName',
-    ellipsis: true,
-    width: '50%',
-    align: 'center',
-  },
-  {
-    title: '답변 대기',
-    dataIndex: 'pending',
-    key: 'pending',
-    width: '17%',
-    align: 'center',
-    render: (value: number) =>
-      value > 0 ? (
-        <span className="inquiry-table__pending--active">● {value}건</span>
-      ) : (
-        <span className="inquiry-table__count--muted">0건</span>
-      ),
-  },
-  {
-    title: '답변 완료',
-    dataIndex: 'answered',
-    key: 'answered',
-    width: '17%',
-    align: 'center',
-    render: (value: number) => <span className="inquiry-table__count--muted">{value}건</span>,
-  },
-  {
-    title: '전체',
-    dataIndex: 'total',
-    key: 'total',
-    width: '16%',
-    align: 'center',
-    render: (value: number) => <span className="inquiry-table__count--muted">{value}건</span>,
-  },
-]
-
 export function CustomerInquiryStatusWidget() {
   const navigate = useNavigate()
   const allowedProgramIds =
@@ -80,6 +40,59 @@ export function CustomerInquiryStatusWidget() {
     if (allowedProgramIds.length === 0) return MOCK_PROGRAM_INQUIRIES
     return MOCK_PROGRAM_INQUIRIES
   }, [allowedProgramIds])
+
+  const handlePendingClick = () => {
+    navigate('/admin/posts/inquiries?status=PENDING')
+  }
+
+  const columns: ColumnsType<ProgramInquiryRow> = useMemo(
+    () => [
+      {
+        title: '프로그램명',
+        dataIndex: 'programName',
+        key: 'programName',
+        ellipsis: true,
+        width: '50%',
+        align: 'center',
+      },
+      {
+        title: '답변 대기',
+        dataIndex: 'pending',
+        key: 'pending',
+        width: '17%',
+        align: 'center',
+        render: (value: number) =>
+          value > 0 ? (
+            <button
+              type="button"
+              className="inquiry-table__pending-cell"
+              onClick={handlePendingClick}
+            >
+              {value}건
+            </button>
+          ) : (
+            <span className="inquiry-table__count--muted">0건</span>
+          ),
+      },
+      {
+        title: '답변 완료',
+        dataIndex: 'answered',
+        key: 'answered',
+        width: '17%',
+        align: 'center',
+        render: (value: number) => <span className="inquiry-table__count--muted">{value}건</span>,
+      },
+      {
+        title: '전체',
+        dataIndex: 'total',
+        key: 'total',
+        width: '16%',
+        align: 'center',
+        render: (value: number) => <span className="inquiry-table__count--muted">{value}건</span>,
+      },
+    ],
+    [navigate]
+  )
 
   return (
     <Card

@@ -1,32 +1,22 @@
 /**
- * 프로그램 상세 페이지용 진행 위젯
- * - 디폴트: 연한 회색 보더, 검정 텍스트
- * - 동기화(프로그램 진행상태 일치): 청록 보더·청록 텍스트·흰 배경·그림자
+ * 프로그램 상세 페이지용 진행 위젯 (스텝바형)
+ * 컨테이너: 배경 #E8ECEF, 둥근 모서리, 스텝바 가운데 정렬
  */
 
-.program-detail-progress-widget .program-progress-widget-container {
-    background-color: var(--color-bg-tertiary);
-    padding: var(--spacing-16);
-    border-radius: var(--radius-8);
-    margin-bottom: var(--spacing-24);
+.program-detail-progress-widget__container {
+  background-color: #E8ECEF;
+  padding: var(--spacing-16) 24px;
+  border-radius: var(--radius-8);
+  margin-bottom: var(--spacing-24);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 140px;
+  min-height: 140px;
+  box-sizing: border-box;
 }
 
-/* 상세 페이지 디폴트 카드: 보더·텍스트 기본값 유지 (공통 스타일 상속) */
-.program-detail-progress-widget .program-progress-widget__stage {
-    border: 1px solid var(--color-border-light);
-    background-color: var(--color-bg-base);
-}
-
-/* 프로그램 진행상태와 동기화된 카드: 청록 보더·청록 텍스트·흰 배경·은은한 그림자 */
-.program-detail-progress-widget .program-progress-widget__stage--selected {
-    border: 2px solid var(--color-brand-primary) !important;
-    background-color: var(--color-bg-base) !important;
-    box-shadow: var(--shadow-card-selected);
-}
-
-.program-detail-progress-widget .program-progress-widget__stage--selected .program-progress-widget__stage-label,
-.program-detail-progress-widget .program-progress-widget__stage--selected .program-progress-widget__stage-count,
-.program-detail-progress-widget .program-progress-widget__stage--selected .program-progress-widget__stage-count-unit {
-    color: var(--color-brand-primary) !important;
-    font-weight: var(--font-weight-600);
+.program-detail-progress-widget .progress-step-bar {
+  width: 100%;
+  max-width: 100%;
 }

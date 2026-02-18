@@ -51,6 +51,24 @@ export interface PendingActionCounts {
   pendingSettlements: number
 }
 
+/** 사업별 KPI 대비 달성률 위젯: KPI 한 항목 */
+export type KpiMetricKey = 'finalParticipants' | 'finalSchools' | 'finalClasses'
+
+export interface KpiMetric {
+  key: KpiMetricKey
+  label: string
+  description: string
+  achieved: number
+  target: number
+}
+
+/** 사업별 KPI 대비 달성률 위젯: 프로그램 한 건 */
+export interface ProgramKpiItem {
+  programId: string
+  programTitle: string
+  kpis: KpiMetric[]
+}
+
 /**
  * 프로그램 진행 현황 집계 (레거시 8단계 byStatus)
  * 7단계 lifecycle → RECEIVED, MATCHING_*, MATERIAL_*, IN_PROGRESS, REPORT_SUBMITTED 매핑
@@ -245,4 +263,65 @@ export async function getPendingActionCounts(): Promise<PendingActionCounts> {
     pendingMatchings,
     pendingSettlements,
   }
+}
+
+const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> = {
+  finalParticipants: { label: '최종 달성 인원', description: '명' },
+  finalSchools: { label: '최종 파견 학교 수', description: '개' },
+  finalClasses: { label: '최종 파견 학급 수', description: '개' },
+}
+
+/**
+ * 사업 별 KPI 대비 달성률 위젯용 목록
+ * programIds 있으면 해당 프로그램만, 없으면 전체(교육 프로그램)
+ */
+export async function getKpiAchievementList(options?: {
+  programIds?: string[]
+}): Promise<ProgramKpiItem[]> {
+  await new Promise(resolve => setTimeout(resolve, 200))
+  const programs = getEducationPrograms()
+  const idSet =
+    options?.programIds && options.programIds.length > 0
+      ? new Set(options.programIds)
+      : null
+  const filtered = idSet ? programs.filter(p => idSet.has(p.id)) : programs
+
+  return filtered.map((program, index) => {
+    // 스크린샷과 유사하게 일부 달성/일부 미달 혼합 (인덱스 기반으로 패턴)
+    const achievedParticipants = index % 3 === 0 ? 100 : 80
+    const targetParticipants = 100
+    const achievedSchools = 100
+    const targetSchools = 100
+    const achievedClasses = index % 2 === 0 ? 100 : 80
+    const targetClasses = 100
+
+    const kpis: KpiMetric[] = [
+      {
+        key: 'finalParticipants',
+        label: KPI_LABELS.finalParticipants.label,
+        description: KPI_LABELS.finalParticipants.description,
+        achieved: achievedParticipants,
+        target: targetParticipants,
+      },
+      {
+        key: 'finalSchools',
+        label: KPI_LABELS.finalSchools.label,
+        description: KPI_LABELS.finalSchools.description,
+        achieved: achievedSchools,
+        target: targetSchools,
+      },
+      {
+        key: 'finalClasses',
+        label: KPI_LABELS.finalClasses.label,
+        description: KPI_LABELS.finalClasses.description,
+        achieved: achievedClasses,
+        target: targetClasses,
+      },
+    ]
+    return {
+      programId: program.id,
+      programTitle: program.title,
+      kpis,
+    }
+  })
 }

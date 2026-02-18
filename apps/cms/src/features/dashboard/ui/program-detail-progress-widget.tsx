@@ -1,6 +1,6 @@
 /**
  * 프로그램 상세 페이지용 진행 현황 위젯 (단일 프로그램)
- * 범용 ProgressStagesWidget 사용, 첫 카드 흰색 배경
+ * 가로형 스텝바(원 42px + 막대 4px), lifecycleStatus와 동기화
  */
 
 import { useState, useEffect, useMemo } from 'react'
@@ -15,18 +15,33 @@ import {
 } from '@/shared/config/program-progress-stages'
 import type { ProgramLifecycleStatus } from '@/types/domain'
 import {
-  ProgressStagesWidget,
-  type ProgressStageItem,
-} from '@/features/dashboard/ui/progress-stages-widget'
-import './program-progress-widget.css'
+  ProgressStepBar,
+  type ProgressStepBarItem,
+  type StepStatus,
+} from '@/features/dashboard/ui/progress-step-bar'
 import './program-detail-progress-widget.css'
 
-const DETAIL_STAGE_HAS_ARROW_AFTER = new Set<ProgramProgressStageKey>([
-  'instructorRecruitment',
-  'matchingCompleted',
-  'educationAfterTextbook',
-  'educationCompleted',
-])
+/** lifecycleStatus → 6단계 인덱스 (0~5). 없으면 -1 (전부 대기) */
+function getCurrentStageIndex(status: ProgramLifecycleStatus | null | undefined): number {
+  if (!status) return -1
+  switch (status) {
+    case 'recruiting_students':
+      return 0
+    case 'recruiting_instructors':
+      return 1
+    case 'matching_completed':
+    case 'education_before_textbook':
+      return 2
+    case 'education_after_textbook':
+      return 3
+    case 'education_completed':
+      return 4
+    case 'document_processing_completed':
+      return 5
+    default:
+      return -1
+  }
+}
 
 interface ProgramDetailProgressWidgetProps {
   programId: string
@@ -37,7 +52,7 @@ export function ProgramDetailProgressWidget({
   programId,
   currentLifecycleStatus,
 }: ProgramDetailProgressWidgetProps) {
-  const [progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
+  const [_progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -57,61 +72,32 @@ export function ProgramDetailProgressWidget({
     }
   }, [programId])
 
-  const stages = useMemo((): ProgressStageItem[] => {
-    if (!progress) return []
+  const stepBarStages = useMemo((): ProgressStepBarItem[] => {
+    const currentIndex = getCurrentStageIndex(currentLifecycleStatus ?? null)
+    const lastIndex = PROGRAM_PROGRESS_STAGE_ORDER.length - 1
 
-    const isMatchingStatus = (s: ProgramLifecycleStatus) =>
-      s === 'matching_completed' || s === 'education_before_textbook'
-    const isEducationInProgress = (s: ProgramLifecycleStatus) =>
-      s === 'education_before_textbook' || s === 'education_after_textbook'
-
-    return PROGRAM_PROGRESS_STAGE_ORDER.map((stageKey: ProgramProgressStageKey) => {
-      let count: number
-      if (stageKey === 'matchingCompleted') {
-        count = progress.matchingCompleted + progress.educationBeforeTextbook
-      } else if (stageKey === 'educationAfterTextbook') {
-        count = progress.educationBeforeTextbook + progress.educationAfterTextbook
-      } else {
-        count = progress[stageKey]
+    return PROGRAM_PROGRESS_STAGE_ORDER.map((stageKey: ProgramProgressStageKey, index) => {
+      let status: StepStatus = 'pending'
+      if (currentIndex >= 0) {
+        if (index < currentIndex) status = 'completed'
+        else if (index === currentIndex) {
+          /* 서류 처리 완료(마지막 단계)일 때는 해당 단계도 체크(completed)로 표시 */
+          status = currentIndex === lastIndex ? 'completed' : 'current'
+        }
       }
-      const label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
-      const showArrowAfter = DETAIL_STAGE_HAS_ARROW_AFTER.has(stageKey)
-
-      const isSelected = currentLifecycleStatus
-        ? currentLifecycleStatus === 'recruiting_students'
-          ? stageKey === 'studentRecruitment'
-          : currentLifecycleStatus === 'recruiting_instructors'
-            ? stageKey === 'instructorRecruitment'
-            : isMatchingStatus(currentLifecycleStatus)
-              ? stageKey === 'matchingCompleted'
-              : isEducationInProgress(currentLifecycleStatus)
-                ? stageKey === 'educationAfterTextbook'
-                : (currentLifecycleStatus === 'education_completed' &&
-                    stageKey === 'educationCompleted') ||
-                  (currentLifecycleStatus === 'document_processing_completed' &&
-                    stageKey === 'documentProcessingCompleted')
-        : false
-
       return {
         key: stageKey,
-        label,
-        count,
-        showArrowAfter,
-        isMatchingStyle: false,
-        isSelected,
+        label: PROGRAM_PROGRESS_STAGE_LABELS[stageKey],
+        status,
       }
     })
-  }, [progress, currentLifecycleStatus])
+  }, [currentLifecycleStatus])
 
   return (
-    <ProgressStagesWidget
-      stages={stages}
-      firstCardVariant="white"
-      showDividerAfterFirstCard={false}
-      showBottomDivider={false}
-      loading={loading}
-      loadingCardCount={6}
-      className="program-detail-progress-widget"
-    />
+    <div className="program-detail-progress-widget">
+      <div className="program-detail-progress-widget__container">
+        <ProgressStepBar stages={stepBarStages} loading={loading} />
+      </div>
+    </div>
   )
 }

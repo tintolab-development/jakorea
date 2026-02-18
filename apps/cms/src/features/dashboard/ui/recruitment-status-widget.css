@@ -28,11 +28,21 @@
     text-align: center !important;
 }
 
+/* 헤더 컬럼 구분선: 흰색 */
+.recruitment-status-widget__table .ant-table-thead > tr > th:not(:last-child) {
+    border-right: 1px solid #fff;
+}
+
 .recruitment-status-widget__table .ant-table-tbody > tr > td {
     font-size: var(--font-size-13);
     color: var(--color-text-primary);
     padding: var(--spacing-10) var(--spacing-12);
     text-align: center !important;
+}
+
+/* 본문 컬럼 구분선: 연한 회색 */
+.recruitment-status-widget__table .ant-table-tbody > tr > td:not(:last-child) {
+    border-right: 1px solid #EEF0F0;
 }
 
 .recruitment-status-widget__table .ant-table-tbody > tr:nth-child(even) > td {

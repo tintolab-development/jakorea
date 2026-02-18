@@ -384,7 +384,19 @@ export function Dashboard() {
               if (!widgetComponent) return null
 
               const effectiveColSpan = (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
-              const resizable = id !== 'kpi-achievement-widget'
+              const resizable = true
+              // 메뉴 바로가기: 50% → 338px, 100% → 202px
+              // 프로그램 일정: 50% → 338px, 100% → config height(360)
+              const slotHeight =
+                id === 'menu-shortcut-widget'
+                  ? effectiveColSpan === 12
+                    ? 338
+                    : 202
+                  : id === 'program-schedule-widget'
+                    ? effectiveColSpan === 12
+                      ? 338
+                      : (meta.height ?? 360)
+                    : meta.height
 
               return (
                 <SortableWidgetSlot
@@ -392,7 +404,7 @@ export function Dashboard() {
                   id={id}
                   colSpan={effectiveColSpan}
                   hasBuiltInHandle={meta.hasBuiltInHandle}
-                  height={meta.height}
+                  height={slotHeight}
                   onResizeWidth={resizable ? newColSpan => {
                     if (user?.role) setWidgetWidth(user.role, id, newColSpan)
                   } : undefined}

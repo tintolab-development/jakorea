@@ -120,10 +120,7 @@
   flex-direction: column;
 }
 
-.dashboard-widgets-right .program-schedule-widget__events {
-  flex: 1;
-  min-height: 0;
-}
+/* 프로그램 일정 위젯: 캘린더/일정 비율은 program-schedule-widget.css 반응형 규칙 사용 */
 
 /* DnD 슬롯: 위젯 바깥 래퍼, 기존 위젯 레이아웃 변경 없음. 높이는 인라인 스타일로 제어(기본 338px) */
 .dashboard-widget-slot {
@@ -132,6 +129,12 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* 사업 별 KPI 대비 달성률 위젯: 가로 스크롤이 보이도록 슬롯에서 가로 overflow 해제 */
+.dashboard-widget-slot:has(.kpi-achievement-widget) {
+  overflow-x: visible;
+  overflow-y: hidden;
 }
 
 .dashboard-widget-slot > .ant-card {

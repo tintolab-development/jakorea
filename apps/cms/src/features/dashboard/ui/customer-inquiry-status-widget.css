@@ -27,6 +27,11 @@
   text-align: center !important;
 }
 
+/* 헤더 컬럼 구분선: 흰색 */
+.inquiry-table .ant-table-thead > tr > th:not(:last-child) {
+  border-right: 1px solid #fff;
+}
+
 /* 테이블 바디 셀 */
 .inquiry-table .ant-table-tbody > tr > td {
   font-size: var(--font-size-13);
@@ -35,14 +40,32 @@
   text-align: center !important;
 }
 
+/* 본문 컬럼 구분선: 연한 회색 */
+.inquiry-table .ant-table-tbody > tr > td:not(:last-child) {
+  border-right: 1px solid #EEF0F0;
+}
+
 .inquiry-table .ant-table-tbody > tr:hover > td {
   background: var(--color-bg-hover, #fafafa);
 }
 
-/* 답변 대기 > 0: 빨간 도트 인라인 + 빨간 텍스트 */
-.inquiry-table__pending--active {
-  color: var(--color-status-error, #ff4d4f);
-  font-weight: var(--font-weight-600);
+/* 답변 대기 컬럼 td 텍스트 스펙: 클릭 시 문의 화면으로 라우팅, 점 UI 없음 */
+.inquiry-table__pending-cell {
+  color: #017EAF;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.inquiry-table__pending-cell:hover {
+  text-decoration: underline;
 }
 
 /* 0건 또는 일반 수치 컬럼: secondary 색상 */

@@ -1,0 +1,195 @@
+/**
+ * 가로형 스텝 진행 바
+ * 원 42px, 연결 막대 4px, 반응형
+ */
+
+.progress-step-bar {
+  width: 100%;
+}
+
+.progress-step-bar__track {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+  gap: 8px; /* 막대 끝과 동그라미 사이 갭 */
+}
+
+.progress-step-bar__cell {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* 진행현황(원)과 텍스트 사이 갭 */
+}
+
+/* 연결 막대: 트랙 내 셀 사이에 위치, 4px 높이, 가변 너비, 원과 수직 정렬 */
+.progress-step-bar__track > .progress-step-bar__bar {
+  flex: 1 1 0;
+  min-width: 12px;
+  height: 4px;
+  align-self: flex-start;
+  margin-top: 19px; /* (42 - 4) / 2: 원 중심과 막대 수직 정렬 */
+}
+
+.progress-step-bar__bar--active {
+  background-color: var(--JA-mint-01, #01A1AF);
+}
+
+.progress-step-bar__bar--inactive {
+  background: var(--default-BK, #3D3D3D);
+  opacity: 0.1;
+}
+
+.progress-step-bar__bar--skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 25%,
+    var(--color-border-skeleton) 50%,
+    var(--color-bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: progress-step-bar-skeleton 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-step-bar-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 원형 노드: 기본 42px */
+.progress-step-bar__node {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.progress-step-bar__node--completed {
+  background-color: var(--JA-mint-01, #01A1AF);
+  border: none;
+}
+
+.progress-step-bar__node--completed .progress-step-bar__check {
+  color: #fff;
+  font-size: 20px;
+}
+
+.progress-step-bar__node--current {
+  background-color: transparent;
+  border: 2px solid var(--JA-mint-01, #01A1AF);
+}
+
+.progress-step-bar__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--JA-mint-01, #01A1AF);
+}
+
+.progress-step-bar__node--pending {
+  background-color: transparent;
+  border: 3px solid var(--default-BK, #3D3D3D);
+  opacity: 0.2;
+}
+
+.progress-step-bar__node--skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 25%,
+    var(--color-border-skeleton) 50%,
+    var(--color-bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: progress-step-bar-skeleton 1.5s ease-in-out infinite;
+}
+
+/* 라벨: 스펙 18px, Pretendard, 150%, 완료/진행 700 / 미진행 500, 색상 default-BK */
+.progress-step-bar__label {
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  line-height: 150%;
+  text-align: center;
+  word-break: keep-all;
+  max-width: 100%;
+}
+
+.progress-step-bar__label--completed,
+.progress-step-bar__label--current {
+  color: var(--default-BK, #3D3D3D);
+  font-weight: 700;
+}
+
+.progress-step-bar__label--pending {
+  color: var(--default-BK, #3D3D3D);
+  font-weight: 500;
+}
+
+.progress-step-bar__label--skeleton {
+  color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 반응형: 작은 화면에서 원·막대 비율 및 갭 유지 */
+@media (max-width: 768px) {
+  .progress-step-bar__track {
+    gap: 6px;
+  }
+
+  .progress-step-bar__node {
+    width: 32px;
+    height: 32px;
+  }
+
+  .progress-step-bar__node--completed .progress-step-bar__check {
+    font-size: 16px;
+  }
+
+  .progress-step-bar__dot {
+    width: 12px;
+    height: 12px;
+  }
+
+  .progress-step-bar__track > .progress-step-bar__bar {
+    height: 4px;
+    margin-top: 14px; /* (32 - 4) / 2 */
+  }
+
+  .progress-step-bar__cell {
+    gap: 10px;
+  }
+
+  .progress-step-bar__label {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-step-bar__track {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    gap: 5px;
+  }
+
+  .progress-step-bar__cell {
+    flex: 0 0 auto;
+    min-width: 64px;
+  }
+
+  .progress-step-bar__track > .progress-step-bar__bar {
+    min-width: 8px;
+  }
+}
