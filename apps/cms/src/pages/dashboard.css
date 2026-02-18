@@ -1,7 +1,53 @@
 /**
  * 대시보드 페이지 스타일
  * 알림 리스트 / 고객 문의 현황 / 프로그램 일정 높이 동일화
+ * index2와 동일한 툴바(타이틀, 설명, 대시보드 설정 버튼) 영역
  */
+
+.dashboard-container {
+  width: 100%;
+}
+
+/* 위젯 카드: 햄버거 아이콘 하단 디바이더 제거 */
+.dashboard-container .ant-card .ant-card-head {
+  border-bottom: none;
+}
+
+.dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+  margin-top: -24px; /* ~님 반갑습니다 헤더를 상단으로 24px 올림 */
+  padding: var(--spacing-16) 0 0;
+}
+
+.dashboard-toolbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-12);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.dashboard-toolbar-title {
+  margin: 0;
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-600);
+  line-height: 1.4;
+  color: var(--color-text-label);
+}
+
+.dashboard-toolbar-description {
+  font-size: var(--font-size-13);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.dashboard-toolbar-right {
+  flex-shrink: 0;
+}
 
 .dashboard-widgets-left,
 .dashboard-widgets-right {

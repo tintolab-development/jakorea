@@ -6,11 +6,15 @@
  * Phase 1 (대시보드 고도화): 즉시 처리 필요 작업, 월별 정산 현황, 통합 활동 피드
  */
 
-import { Card, Row, Col, Statistic } from 'antd'
+import { Card, Row, Col, Statistic, Button } from 'antd'
+import { EditOutlined } from '@ant-design/icons'
 import React, { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
+import { getAdminLevelLabel } from '@/shared/config/permissions'
+import { getRoleLabel } from '@/shared/ui'
+import { useDashboardData } from '@/features/dashboard/model/use-dashboard-data'
 import { mockInstructors } from '@/data/mock'
 import { PendingActionsAlert } from '@/features/dashboard/ui/pending-actions-alert'
 import { OverallStatisticsCards } from '@/features/dashboard/ui/overall-statistics-cards'
@@ -43,11 +47,21 @@ import {
   type InstructorActivitySummary,
 } from '@/features/dashboard/api/instructor-activity-service'
 import './dashboard.css'
+import '@/features/widget-editor/ui/widget-card.css'
 
 export function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const { activePrograms } = useDashboardData()
   const instructorCount = mockInstructors.length
+
+  const userRoleLabel = useMemo(() => {
+    if (!user) return ''
+    if (user.role === 'ADMIN' && user.adminLevel) {
+      return getAdminLevelLabel(user.adminLevel)
+    }
+    return getRoleLabel(user.role, user.adminLevel)
+  }, [user?.role, user?.adminLevel])
   const [overallStatistics, setOverallStatistics] = useState<OverallStatistics | null>(null)
   const [statisticsLoading, setStatisticsLoading] = useState(false)
   const [instructorActivity, setInstructorActivity] = useState<InstructorActivitySummary | null>(
@@ -244,7 +258,23 @@ export function Dashboard() {
   }
 
   return (
-    <div>
+    <div className="dashboard-container">
+      <div className="dashboard-toolbar">
+        <div className="dashboard-toolbar-left">
+          <h2 className="dashboard-toolbar-title">
+            {user?.name} {userRoleLabel}님, 반갑습니다!
+          </h2>
+          <span className="dashboard-toolbar-description">
+            진행 프로젝트 {activePrograms.count}건
+          </span>
+        </div>
+        <div className="dashboard-toolbar-right">
+          <Button type="primary" icon={<EditOutlined />} onClick={() => navigate('/index2')}>
+            대시보드 설정
+          </Button>
+        </div>
+      </div>
+
       {/* 권한별 위젯 렌더링 */}
       <Row gutter={[16, 16]} align="stretch">
         {widgets.map((widget, index) => {
