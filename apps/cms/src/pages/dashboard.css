@@ -110,10 +110,11 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
 
 .dashboard-widgets-right .program-schedule-widget__content {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -124,13 +125,18 @@
   min-height: 0;
 }
 
-/* DnD 슬롯: 위젯 바깥 래퍼, 기존 위젯 레이아웃 변경 없음 */
+/* DnD 슬롯: 위젯 바깥 래퍼, 기존 위젯 레이아웃 변경 없음. 높이는 인라인 스타일로 제어(기본 338px) */
 .dashboard-widget-slot {
   position: relative;
-  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.dashboard-widget-slot > .ant-card {
+  flex: 1;
+  min-height: 0;
 }
 
 .dashboard-widget-slot__handle {
@@ -143,6 +149,40 @@
 
 .dashboard-widget-slot__handle-overlay:active {
   cursor: grabbing;
+}
+
+/* 너비 드래그 리사이즈 핸들: 우측 엣지, 호버 시 노출 */
+.dashboard-widget-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  width: 12px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.dashboard-widget-slot:hover .dashboard-widget-resize-handle,
+.dashboard-widget-resize-handle--active {
+  opacity: 1;
+}
+
+.dashboard-widget-resize-handle__bar {
+  width: 3px;
+  height: 48px;
+  border-radius: 2px;
+  background: var(--color-border-subtle, #d9d9d9);
+  transition: background 0.15s;
+}
+
+.dashboard-widget-resize-handle:hover .dashboard-widget-resize-handle__bar,
+.dashboard-widget-resize-handle--active .dashboard-widget-resize-handle__bar {
+  background: var(--color-primary, #47a9ad);
 }
 
 /* DragOverlay: 드래그 중 cursor를 따라다니는 위젯 복제본 */
