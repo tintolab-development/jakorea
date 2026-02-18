@@ -12,12 +12,8 @@ import { EyeOutlined } from '@ant-design/icons'
 import type { Sponsor, Program, ProgramLifecycleStatus } from '@/types/domain'
 import { domainColorsHex } from '@/shared/constants/colors'
 import { programService } from '@/entities/program/api/program-service'
-import { StatusBadge } from '@/shared/ui/status-badge'
-import {
-  programLifecycleStatusConfig,
-  programLifecycleStatusStatusConfig,
-  getProgramLifecycleLabel,
-} from '@/shared/constants/status'
+import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
+import { programLifecycleStatusConfig, getProgramLifecycleLabel } from '@/shared/constants/status'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -137,7 +133,9 @@ export function SponsorDetail({ sponsor, onEdit, onDelete, loading }: SponsorDet
       },
       render: (status: string | undefined) => {
         if (!status) return '-'
-        return <StatusBadge status={status} statusConfig={programLifecycleStatusStatusConfig} />
+        return (
+          <ProgramLifecycleStatusBadge status={status as ProgramLifecycleStatus} />
+        )
       },
     },
     {

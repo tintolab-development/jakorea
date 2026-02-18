@@ -72,23 +72,35 @@ export function useTemplateEditor(
       hostEl.setAttribute('tabindex', '-1')
     }
     editorCore.blur()
+    // 수정 모드 진입 시 에디터로 포커스가 가지 않도록: 사용자가 직접 클릭할 때만 포커스 허용 (스크롤은 페이지 쪽 useEditModeFocusRestore에서만 처리)
     let removeProseFocusListener: (() => void) | null = null
-    let tRemoveProse = 0
+    let userClickedInEditor = false
+    let tResetUserClick = 0
+    const USER_CLICK_GRACE_MS = 300
     const attachProseBlur = (el: HTMLElement) => {
       if (!el || (el as unknown as { _proseBlurAttached?: boolean })._proseBlurAttached) return
       ;(el as unknown as { _proseBlurAttached?: boolean })._proseBlurAttached = true
-      const onProseFocus = () => {
-        editorCore.blur()
+      const onUserInteraction = () => {
+        userClickedInEditor = true
+        if (tResetUserClick) clearTimeout(tResetUserClick)
+        tResetUserClick = window.setTimeout(() => {
+          userClickedInEditor = false
+          tResetUserClick = 0
+        }, USER_CLICK_GRACE_MS)
       }
+      const onProseFocus = () => {
+        if (!userClickedInEditor) editorCore.blur()
+      }
+      el.addEventListener('mousedown', onUserInteraction, true)
+      el.addEventListener('pointerdown', onUserInteraction, true)
       el.addEventListener('focus', onProseFocus, true)
       removeProseFocusListener = () => {
+        clearTimeout(tResetUserClick)
+        el.removeEventListener('mousedown', onUserInteraction, true)
+        el.removeEventListener('pointerdown', onUserInteraction, true)
         el.removeEventListener('focus', onProseFocus, true)
         removeProseFocusListener = null
       }
-      tRemoveProse = window.setTimeout(() => {
-        removeProseFocusListener?.()
-        removeProseFocusListener = null
-      }, 2000)
     }
     const tryAttach = () => {
       const found = hostEl?.querySelector?.(
@@ -132,7 +144,6 @@ export function useTemplateEditor(
     return () => {
       cleanupMo?.()
       removeProseFocusListener?.()
-      if (tRemoveProse) clearTimeout(tRemoveProse)
       clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
