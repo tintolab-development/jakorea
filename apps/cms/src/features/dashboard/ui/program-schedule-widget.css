@@ -1,8 +1,7 @@
 /**
  * 프로그램 일정 위젯 스타일
- * - 현재 주차 7일 캘린더
- * - 구분선으로 캘린더와 일정 리스트 분리
- * - 일정 column 형식
+ * - 헤더 한 줄: [타이틀] [날짜 네비] [월간/주간 탭 + 더보기] (더보기 레벨에 얼라인)
+ * - 월간: 월 그리드 + 구분선 + 일정 리스트 / 주간: 주간 그리드 (캘린더 잘림 방지)
  */
 
 .program-schedule-widget {
@@ -11,28 +10,268 @@
     flex-direction: column;
 }
 
+/* 카드 헤더 영역 전체를 한 줄로 사용 */
+.program-schedule-widget .ant-card-head {
+    min-height: 56px;
+}
+
+.program-schedule-widget .ant-card-head-title {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+}
+
+.program-schedule-widget .ant-card-extra {
+    display: none;
+}
+
+/* 헤더 한 줄: 좌(타이틀) | 중(날짜 네비, 진짜 센터) | 우(탭 + 더보기) */
+.program-schedule-widget__head-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+}
+
+.program-schedule-widget__head-left {
+    flex: 1;
+    min-width: 0;
+    z-index: 1;
+}
+
+/* 날짜 네비: 헤더 가운데 고정(좌/우 너비와 무관) */
+.program-schedule-widget__head-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-8);
+    flex-shrink: 0;
+}
+
+.program-schedule-widget__head-date {
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-600);
+    color: var(--color-text-label);
+    min-width: 6em;
+    text-align: center;
+    letter-spacing: 0.02em;
+}
+
+.program-schedule-widget__head-nav-btn {
+    color: var(--color-text-secondary);
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.program-schedule-widget__head-nav-btn:hover {
+    color: var(--color-brand-primary);
+}
+
+.program-schedule-widget__head-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--spacing-12);
+    min-width: 0;
+    z-index: 1;
+}
+
+.program-schedule-widget__head-more {
+    flex-shrink: 0;
+}
+
+/* 헤더와 캘린더 사이 갭 없음 (캘린더 한 번에 보이도록) */
 .program-schedule-widget .ant-card-body {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: var(--spacing-24);
+    padding: 0 var(--spacing-24) var(--spacing-24);
+    overflow: auto;
 }
 
-.program-schedule-widget__date-ref {
-    font-size: var(--font-size-12);
-    font-weight: normal;
-}
-
+/* 콘텐츠: 캘린더 한 번에 보이도록 높이만 필요 최소로 (스크롤 없이) */
 .program-schedule-widget__content {
     display: flex;
     flex-direction: column;
     gap: 0;
-    height: 100%;
+    flex: 1;
     min-height: 0;
 }
 
-/* 현재 주차 캘린더 */
+/* 하위 영역: 월간은 캘린더+구분선+리스트, 주간은 주간 그리드만 */
+.program-schedule-widget__body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 캘린더 + 일정상세 전체 높이 254px, 갭 16px, 디바이더 없음 */
+.program-schedule-widget__body--month {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 16px;
+    max-height: 254px;
+    height: 254px;
+}
+
+/* 월간 캘린더 래퍼: 전체 높이 254px 내 정렬 */
+.program-schedule-widget__body--month .program-schedule-widget__calendar-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    max-height: 254px;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+}
+
+/* 월간 35셀(5×7) 그리드: 래퍼 254px 맞춤, 테이블이 전체 채워 하단 여백 없음 */
+.program-schedule-widget__month-grid-wrap {
+    flex: 1;
+    min-height: 0;
+    height: 254px;
+}
+
+.program-schedule-widget__body--month .program-schedule-widget__month-grid {
+    table-layout: fixed;
+    width: 420px;
+    height: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.program-schedule-widget__body--month .program-schedule-widget__month-grid thead th {
+    width: 60px;
+    padding: 6px 0;
+    height: 32px;
+    box-sizing: border-box;
+    font-size: var(--font-size-12);
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+/* 5행이 254px 전체를 채우도록: (254 - 32) / 5 ≈ 44.4px */
+.program-schedule-widget__body--month .program-schedule-widget__month-grid tbody td {
+    width: 60px;
+    height: calc((254px - 32px) / 5);
+    vertical-align: top;
+    padding: 0;
+    box-sizing: border-box;
+    border: none;
+}
+
+/* 위젯 내 월간 셀: 셀 높이 = tbody 행 높이로 하단 여백 없음 */
+.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell {
+    width: 60px;
+    min-width: 60px;
+    height: calc((254px - 32px) / 5);
+    min-height: 0;
+    padding: 2px 6px;
+    box-sizing: border-box;
+    border: none;
+    border-right: 1px solid var(--color-border-light);
+    border-bottom: 1px solid var(--color-border-light);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.program-schedule-widget__body--month .program-schedule-widget__month-grid tbody td:first-child .program-calendar-cell {
+    border-left: 1px solid var(--color-border-light);
+}
+
+.program-schedule-widget__body--month .program-schedule-widget__month-grid tbody tr:first-child .program-calendar-cell {
+    border-top: 1px solid var(--color-border-light);
+}
+
+.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell--selected {
+    border: 2px solid var(--color-brand-primary) !important;
+}
+
+/* 현재 날짜 셀: 보더 없음, 텍스트 색상만 변경 */
+.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell--today {
+    border: none !important;
+}
+
+/* 날짜 숫자: 일반 날짜는 검은색 텍스트 */
+.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell .program-calendar-cell-date {
+    align-self: flex-start;
+    text-align: left;
+    margin-bottom: 2px;
+    color: var(--default-BK, #3D3D3D);
+    font-size: var(--font-size-12);
+    font-weight: var(--font-weight-500);
+    line-height: 130%;
+}
+
+/* 현재 일자만: 민트 컬러 + Outfit 12px/500/130% */
+.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell--today .program-calendar-cell-date {
+    background: none;
+    border: none;
+    border-radius: 0;
+    width: auto;
+    height: auto;
+    display: block;
+    color: var(--JA-mint-01, #01A1AF);
+    font-family: Outfit, sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 130%;
+}
+
+/* 우측 일정 박스: 367px 너비, 높이 254px 맞춤, padding 16px, 스크롤 가능·스크롤바 숨김 */
+.program-schedule-widget__body--month .program-schedule-widget__events {
+    flex: 0 0 367px;
+    width: 367px;
+    height: 100%;
+    min-height: 0;
+    max-height: 254px;
+    padding: 16px;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-8);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.program-schedule-widget__body--month .program-schedule-widget__events::-webkit-scrollbar {
+    display: none;
+}
+
+.program-schedule-widget__body--week .program-schedule-widget__calendar-main {
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 주간 뷰: 셀 내 이벤트에 시간 표기 (00:00 제목) */
+.program-schedule-widget__week-event .program-calendar-event-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 레거시: 이전 주차 스트립용 클래스 (주간 뷰는 program-calendar-week 사용) */
 .program-schedule-widget__calendar {
     padding: 0 0 var(--spacing-12);
 }
@@ -100,9 +339,11 @@
     font-size: var(--font-size-12);
 }
 
+/* 현재 날짜: 동그란 보더 없음, 텍스트 색상만 변경 */
 .program-schedule-widget__week-date--today:not(.program-schedule-widget__week-date--selected) {
-    border-color: var(--color-brand-primary);
-    border-width: 2px;
+    border: none;
+    background: transparent;
+    color: var(--JA-mint-01, #01A1AF);
 }
 
 /* 구분선 */
@@ -116,8 +357,6 @@
 .program-schedule-widget__events {
     flex: 1;
     min-height: 0;
-    max-height: 490px;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
 }
