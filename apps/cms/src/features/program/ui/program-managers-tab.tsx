@@ -210,7 +210,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         <div className="program-managers-tab__top">
           <div className="program-managers-tab__filters">
             <Row
-              gutter={[16, 16]}
+              gutter={[12, 12]}
               align="middle"
               wrap={false}
               className="program-managers-tab__filter-row"
@@ -242,7 +242,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
                 </div>
               </Col>
               <Col flex="none" className="program-managers-tab__filter-col--btn">
-                <AppButton variant="primary" size="large" onClick={handleSearch}>
+                <AppButton variant="primary" size="filter" onClick={handleSearch}>
                   조회
                 </AppButton>
               </Col>

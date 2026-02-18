@@ -340,7 +340,7 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
             </div>
             <div className="program-applicants-tab__filters">
               <Row
-                gutter={[16, 16]}
+                gutter={[12, 12]}
                 align="middle"
                 wrap={false}
                 className="program-applicants-tab__filter-row"
@@ -466,8 +466,8 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                   </>
                 )}
                 <Col flex="none" className="program-applicants-tab__filter-col--btn">
-                  <AppButton variant="primary" size="large" onClick={handleSearch}>
-                    조회
+<AppButton variant="primary" size="filter" onClick={handleSearch}>
+                  조회
                   </AppButton>
                 </Col>
               </Row>

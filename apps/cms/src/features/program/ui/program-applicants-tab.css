@@ -92,16 +92,16 @@
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    height: 40px;
-    min-height: 40px;
+    height: var(--filter-control-height, 44px);
+    min-height: var(--filter-control-height, 44px);
     overflow: visible;
 }
 
 .program-applicants-tab__filter-label {
     flex: 0 0 auto;
     white-space: nowrap;
-    height: 40px;
-    line-height: 40px !important;
+    height: var(--filter-control-height, 44px);
+    line-height: var(--filter-control-height, 44px) !important;
     margin: 0;
     padding: 0;
     font-size: var(--font-size-14);
@@ -114,12 +114,21 @@
 }
 
 .program-applicants-tab__filter-col .ant-select {
-    width: 140px !important;
-    min-width: 140px;
+    width: var(--filter-control-width, 180px) !important;
+    min-width: 120px;
+    height: var(--filter-control-height, 44px) !important;
+}
+
+.program-applicants-tab__filter-col .ant-select .ant-select-selector {
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
 }
 
 .program-applicants-tab__filter-col--btn {
-    padding-inline-start: 16px !important;
+    padding-inline-start: 12px !important;
 }
 
 .program-applicants-tab__divider {

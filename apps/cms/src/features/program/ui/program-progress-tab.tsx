@@ -3,8 +3,9 @@
  * 탭(참여 학교 정보 | 강사 정보)과 필터가 같은 레벨 한 줄 배치, 쿼리 파라미터 연동
  */
 
-import { useMemo, useState } from 'react'
-import { Card, Table, Row, Col, Select, message } from 'antd'
+import { useMemo, useState, useCallback } from 'react'
+import { Card, Table, Row, Col, Select, message, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -284,6 +285,20 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     educationSchoolName: '-',
   })
 
+  const handleTextbookStatusChange = useCallback(
+    (recordId: string, status: TextbookStatusKey) => {
+      setSchoolList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
+      )
+    },
+    []
+  )
+
+  const textbookStatusKeys: TextbookStatusKey[] = useMemo(
+    () => Object.keys(TEXTBOOK_STATUS_LABELS) as TextbookStatusKey[],
+    []
+  )
+
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
@@ -339,7 +354,36 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'textbookStatus',
         width: 140,
         align: 'center',
-        render: (status: TextbookStatusKey) => <TextbookStatusBadge status={status} />,
+        render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
+          const badge = <TextbookStatusBadge status={status} />
+          const items: MenuProps['items'] = textbookStatusKeys.map(key => ({
+            key,
+            label: <TextbookStatusBadge status={key} />,
+            onClick: e => {
+              e?.domEvent?.stopPropagation()
+              handleTextbookStatusChange(record.id, key)
+            },
+          }))
+          return (
+            <div
+              className="textbook-status-dropdown-cell"
+              onClick={e => e.stopPropagation()}
+            >
+              <Dropdown
+                menu={{ items }}
+                trigger={['click']}
+                getPopupContainer={() => document.body}
+              >
+                <span
+                  className="textbook-status-dropdown-trigger"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {badge}
+                </span>
+              </Dropdown>
+            </div>
+          )
+        },
       },
       {
         title: '담당 교사',
@@ -357,7 +401,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         ellipsis: true,
       },
     ],
-    []
+    [handleTextbookStatusChange, textbookStatusKeys]
   )
 
   const instructorColumns: ColumnsType<ParticipatingInstructorRow> = useMemo(
@@ -451,7 +495,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
             </div>
             <div className="program-progress-tab__filters">
               <Row
-                gutter={[16, 16]}
+                gutter={[12, 12]}
                 align="middle"
                 wrap={false}
                 className="program-progress-tab__filter-row"
@@ -541,7 +585,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   />
                 </Col>
                 <Col flex="none" className="program-progress-tab__filter-col--btn">
-                  <AppButton variant="primary" size="large" onClick={handleSearch}>
+                  <AppButton variant="primary" size="filter" onClick={handleSearch}>
                     조회
                   </AppButton>
                 </Col>
@@ -584,7 +628,13 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                 dataSource={filteredSchools}
                 onRow={record => ({
                   onClick: e => {
-                    if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                    const target = e.target as HTMLElement
+                    if (target.closest('.ant-table-selection-column')) return
+                    if (
+                      target.closest('.textbook-status-dropdown-cell') ||
+                      target.closest('.textbook-status-dropdown-trigger')
+                    )
+                      return
                     setSelectedSchoolForDetail(record)
                     setSchoolDetailModalOpen(true)
                   },
