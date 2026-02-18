@@ -64,7 +64,10 @@ export function LectureAttendanceModal({
                     참석률
                   </td>
                   <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--value">
-                    {detail.attendanceRatePercent}% (강의 진행 회차 기준)
+                    {detail.attendanceRatePercent}%{' '}
+                    <span className="lecture-attendance-modal__attendance-rate-note">
+                      (강의 진행 회차 기준)
+                    </span>
                   </td>
                 </tr>
                 {(() => {

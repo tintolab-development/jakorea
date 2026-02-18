@@ -1,5 +1,40 @@
 /* 강의 출석 내역 모달 (명세: lecture-attendance-modal-table-prompt.md)
-   TealHeaderModal body는 align-items: center 이므로, 자식이 full width 쓰려면 stretch + width 100% */
+   모달 높이: 테이블(144px)+헤더+푸터(닫기 버튼)가 잘리지 않도록 여유 있게 설정 */
+
+/* 모달 높이: 헤더 50 + 바디(테이블 144+패딩) + 푸터(닫기) 모두 보이도록 350px */
+.lecture-attendance-modal.ant-modal .ant-modal-content {
+    height: 350px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ant-modal-body가 플렉스 컨테이너가 되어 헤더·바디·푸터가 세로로 배치되고 푸터(닫기)가 보이도록 */
+.lecture-attendance-modal.ant-modal .ant-modal-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+}
+
+.lecture-attendance-modal .teal-header-modal__header {
+    flex-shrink: 0;
+}
+
+.lecture-attendance-modal .teal-header-modal__footer {
+    flex-shrink: 0;
+}
+
+/* 바디 래퍼: 남은 높이 채우고 자식(테이블) 가로·세로 중앙 */
+.lecture-attendance-modal .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 /* 타이틀 텍스트 가운데 정렬 */
 .lecture-attendance-modal .teal-header-modal__title {
@@ -7,15 +42,16 @@
     text-align: center;
 }
 
+/* 바디: 남은 높이 채우며 테이블을 가로·세로 중앙 배치 */
 .lecture-attendance-modal__body {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
-    align-self: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
     box-sizing: border-box;
-    min-height: 200px;
 }
 
 /* 테이블 래퍼: 모서리 둥글게 */
@@ -67,4 +103,14 @@
 .lecture-attendance-modal__table .lecture-attendance-modal__cell--value {
     background: #fff;
     user-select: none;
+}
+
+/* 참석률 값 중 '(강의 진행 회차 기준)' 텍스트만 폰트 스펙 적용 */
+.lecture-attendance-modal__attendance-rate-note {
+    color: var(--default-BK, #3d3d3d);
+    font-family: Pretendard, sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
 }
