@@ -4,6 +4,7 @@
  * FR-C01: 전체 프로그램 진행 현황 7단계 세분화
  */
 
+import type { Program } from '@/types/domain'
 import { mockPrograms } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { mockApplications } from '@/data/mock/applications'
@@ -202,6 +203,22 @@ export async function getProgramProgress7StageByProgramId(
   // 전체 건수는 해당 프로그램이 현재 속한 단계에 1건으로 집계
   const total = Math.max(1, Object.values(stages).reduce((sum, c) => sum + c, 0))
   return { ...stages, total }
+}
+
+/**
+ * 모집 신청 현황 위젯용 프로그램 목록
+ * 프로그램 리스트 + lifecycleStatus, approvedStudentCount, instructors, instructorCapacity 등
+ */
+export async function getRecruitmentStatusList(options?: {
+  programIds?: string[]
+}): Promise<Program[]> {
+  await new Promise(resolve => setTimeout(resolve, 200))
+  const programs = getEducationPrograms()
+  if (options?.programIds && options.programIds.length > 0) {
+    const idSet = new Set(options.programIds)
+    return programs.filter(p => idSet.has(p.id))
+  }
+  return programs
 }
 
 /**
