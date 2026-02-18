@@ -9,6 +9,8 @@ import { z } from 'zod'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
 
+const roundDeliveryTypeEnum = z.enum(['online', 'offline', 'hybrid'])
+
 const roundEditSchema = z.object({
   id: z.string(),
   programId: z.string(),
@@ -19,6 +21,7 @@ const roundEditSchema = z.object({
   classCount: z.number().optional(),
   status: roundStatusEnum,
   curriculum: z.string().optional(),
+  deliveryType: roundDeliveryTypeEnum.optional(),
 })
 
 export const programDetailEditSchema = z.object({
@@ -123,6 +126,7 @@ export function programToDetailEditValues(
       classCount: r.classCount,
       status: r.status,
       curriculum: r.curriculum ?? undefined,
+      deliveryType: r.deliveryType ?? 'offline',
     })),
   }
 }

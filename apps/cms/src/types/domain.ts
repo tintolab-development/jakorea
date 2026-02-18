@@ -156,6 +156,9 @@ export interface Program {
   updatedAt: DateValue
 }
 
+// 회차별 진행 방식 (교육 커리큘럼 수정용)
+export type RoundDeliveryType = 'online' | 'offline' | 'hybrid'
+
 // 프로그램 회차
 export interface ProgramRound {
   id: UUID
@@ -168,6 +171,8 @@ export interface ProgramRound {
   status: Status
   /** 회차별 강의 분량 및 내용 (예: "1시간 | '개인', '근로자', '소비자' 개념 정의 및 설명") */
   curriculum?: string
+  /** 회차별 진행 방식 (온라인/오프라인/온·오프라인) */
+  deliveryType?: RoundDeliveryType
 }
 
 // 학교

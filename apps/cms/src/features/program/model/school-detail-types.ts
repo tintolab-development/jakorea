@@ -107,3 +107,26 @@ export const LECTURE_ATTENDANCE_STATUS_LABELS: Record<LectureAttendanceStatusKey
   absent: '결석',
   not_held: '강의 미진행',
 }
+
+/** 과제 제출 내역 모달: 회차별 제출 상태 */
+export type AssignmentSubmissionStatusKey = 'submitted' | 'not_submitted' | 'not_started'
+
+export interface AssignmentSubmissionSession {
+  roundNumber: number
+  status: AssignmentSubmissionStatusKey
+}
+
+export interface AssignmentSubmissionDetail {
+  studentName: string
+  submissionRatePercent: number
+  sessions: AssignmentSubmissionSession[]
+}
+
+export const ASSIGNMENT_SUBMISSION_STATUS_LABELS: Record<
+  AssignmentSubmissionStatusKey,
+  string
+> = {
+  submitted: '제출완료',
+  not_submitted: '미제출',
+  not_started: '강의 미진행',
+}
