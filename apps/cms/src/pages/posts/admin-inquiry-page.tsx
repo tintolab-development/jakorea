@@ -2,7 +2,8 @@
  * 게시글 관리 - 문의사항 관리 페이지 (관리자용)
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Table,
   Tag,
@@ -64,20 +65,34 @@ export function AdminInquiryPage() {
   // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
 
+  const [searchParams] = useSearchParams()
   const [data, setData] = useState<Inquiry[]>(mockInquiries)
   const [form] = Form.useForm()
+
+  const initialStatus = searchParams.get('status') === 'PENDING' || searchParams.get('status') === 'ANSWERED'
+    ? searchParams.get('status')!
+    : 'all'
 
   // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
   const [pendingFilters, setPendingFilters] = useState({
     search: '',
     category: 'all',
-    status: 'all',
+    status: initialStatus,
   })
   const [appliedFilters, setAppliedFilters] = useState({
     search: '',
     category: 'all',
-    status: 'all',
+    status: initialStatus,
   })
+
+  // URL 쿼리 status 반영 (대시보드 등에서 문의 화면으로 진입 시)
+  useEffect(() => {
+    const status = searchParams.get('status')
+    if (status === 'PENDING' || status === 'ANSWERED') {
+      setPendingFilters(prev => ({ ...prev, status }))
+      setAppliedFilters(prev => ({ ...prev, status }))
+    }
+  }, [searchParams])
 
   // 필터링된 데이터
   const filteredData = useMemo(() => {
