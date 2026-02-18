@@ -6,6 +6,11 @@ category: forms
 
 # 폼 검증
 
+## 프로젝트 규칙: 모든 폼은 React Hook Form으로 관리
+
+- 새로 작성하는 **모든 폼**은 **react-hook-form** 라이브러리로 상태를 관리한다.
+- Ant Design `Form`을 레이아웃용으로 쓸 수 있으나, 값·제출·검증은 `useForm`(react-hook-form)으로 처리한다.
+
 ## React Hook Form + Zod
 
 폼 관리는 **React Hook Form**을 사용합니다.
@@ -55,4 +60,3 @@ function InstructorForm() {
 
 - [컴포넌트 패턴](../coding/component-patterns.md)
 - [이벤트 처리](../design/event-handling.md)
-
