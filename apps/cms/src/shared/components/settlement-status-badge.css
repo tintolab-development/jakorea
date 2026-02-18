@@ -1,0 +1,46 @@
+/**
+ * 정산 현황 배지 스타일
+ * 시안: 고정 120×33, border-radius 6px, 텍스트 14px 600
+ */
+
+.settlement-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+    height: 33px;
+    margin: 0;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-600);
+    line-height: 1.4;
+}
+
+/* 정산 대기: 연한 녹색 */
+.settlement-status-badge--pending {
+    background: #e8f5e9;
+    color: #1e8c29;
+}
+
+/* 일부 정산 완료: 연한 보라 */
+.settlement-status-badge--partial {
+    background: #f0e6fa;
+    color: #8457ce;
+}
+
+/* 정산 완료: 파란 */
+.settlement-status-badge--completed {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+/* 해당 없음: 회색 */
+.settlement-status-badge--na {
+    background: #f2f3f5;
+    color: #464646;
+}
