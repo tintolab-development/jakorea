@@ -13,9 +13,14 @@
     min-height: 240px;
 }
 
-/* 상세 페이지에서 PageHeader 타이틀 크기 (기존 Title level={4}와 동일) */
+/* 상세 페이지에서 PageHeader 타이틀 폰트 스펙 */
 .program-detail-page .page-header-title {
-    font-size: var(--font-size-18);
+    color: var(--default-BK, #3D3D3D);
+    font-family: Pretendard, sans-serif;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
 }
 
 /* 탭 바와 같은 줄 오른쪽 (정보 수정, 프로그램 상세 미리보기) */

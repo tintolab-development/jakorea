@@ -5,10 +5,11 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Modal, Tabs, Button } from 'antd'
+import { Modal, Tabs } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { PageHeader } from '@/shared/ui/page-header'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { AppButton } from '@/shared/ui/app-button'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { useSearchParams } from 'react-router-dom'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
@@ -544,18 +545,21 @@ export function ProgramListPage() {
           title="전체 프로그램"
           description={`총 ${filteredPrograms.length}건`}
           actions={
-            <>
-              <LabeledSearchInput
-                label="검색"
-                placeholder="검색어를 입력하세요"
-                value={searchInputValue}
-                onChange={setSearchInputValue}
-                allowClear
-                width={300}
-                showLabel={false}
-              />
-              <Button
-                type="default"
+            <div className="program-list-page__widget-header-actions">
+              {viewMode === 'list' && (
+                <LabeledSearchInput
+                  label="검색"
+                  placeholder="검색어를 입력하세요"
+                  value={searchInputValue}
+                  onChange={setSearchInputValue}
+                  allowClear
+                  width={300}
+                  showLabel={false}
+                />
+              )}
+              <AppButton
+                variant="cancel"
+                size="filter"
                 icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
                 onClick={() => {
                   const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
@@ -567,13 +571,13 @@ export function ProgramListPage() {
                 className="program-view-mode-button"
               >
                 {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-              </Button>
+              </AppButton>
               {showEducationActions && (
-                <Button type="primary" onClick={handleNewClick}>
+                <AppButton variant="primary" size="filter" onClick={handleNewClick}>
                   프로그램 신규 등록
-                </Button>
+                </AppButton>
               )}
-            </>
+            </div>
           }
         />
       )}

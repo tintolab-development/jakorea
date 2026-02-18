@@ -868,15 +868,44 @@ export function ProgramList({
                         align: 'center' as const,
                         render: (_: unknown, record: Program) => {
                           const lifecycle = record.lifecycleStatus
-                          if (lifecycle) {
-                            return <ProgramLifecycleStatusBadge status={lifecycle} />
-                          }
-                          return (
+                          const badge = lifecycle ? (
+                            <ProgramLifecycleStatusBadge status={lifecycle} />
+                          ) : (
                             <StatusBadge
                               status={record.status}
                               statusConfig={commonStatusStatusConfig}
                               showIcon={false}
                             />
+                          )
+                          if (!onChangeStatus) return badge
+                          const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                            (status: ProgramLifecycleStatus) => ({
+                              key: status,
+                              label: <ProgramLifecycleStatusBadge status={status} />,
+                              onClick: e => {
+                                e?.domEvent?.stopPropagation()
+                                onChangeStatus(record, status)
+                              },
+                            })
+                          )
+                          return (
+                            <div
+                              className="program-status-dropdown-cell"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Dropdown
+                                menu={{ items }}
+                                trigger={['click']}
+                                getPopupContainer={() => document.body}
+                              >
+                                <span
+                                  className="program-status-dropdown-trigger"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  {badge}
+                                </span>
+                              </Dropdown>
+                            </div>
                           )
                         },
                       },
@@ -1177,18 +1206,18 @@ export function ProgramList({
                           )
 
                           return (
-                            <div onClick={e => e.stopPropagation()}>
+                            <div
+                              className="program-status-dropdown-cell"
+                              onClick={e => e.stopPropagation()}
+                            >
                               <Dropdown
                                 menu={{ items }}
                                 trigger={['click']}
-                                getPopupContainer={triggerNode =>
-                                  triggerNode.parentElement || document.body
-                                }
+                                getPopupContainer={() => document.body}
                               >
                                 <span
                                   className="program-status-dropdown-trigger"
                                   onClick={e => e.stopPropagation()}
-                                  style={{ cursor: 'pointer', display: 'inline-block' }}
                                 >
                                   {badge}
                                 </span>
@@ -1255,8 +1284,11 @@ export function ProgramList({
               onRow={record => ({
                 onClick: event => {
                   const target = event.target as HTMLElement
-                  // 상태 드롭다운 클릭 시 무시
-                  if (target.closest('.program-status-dropdown-trigger')) {
+                  // 프로그램 진행 현황 셀(배지/드롭다운) 클릭 시 상세 이동하지 않음
+                  if (
+                    target.closest('.program-status-dropdown-cell') ||
+                    target.closest('.program-status-dropdown-trigger')
+                  ) {
                     return
                   }
                   // 이미지 preview 영역 클릭 시 무시 (이벤트 버블링 방지)

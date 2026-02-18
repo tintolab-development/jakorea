@@ -152,12 +152,13 @@
     color: var(--color-text-body);
 }
 
-/* 필터 입력 필드 통일 스타일 (Ant Design 기본값 32px로 통일) */
+/* 필터 입력 필드 통일 스타일 (공통 높이 44px, 반응형) */
 .program-filter-card .ant-input,
 .program-filter-card .ant-select .ant-select-selector,
 .program-filter-card .ant-picker,
 .program-filter-card .ant-input-affix-wrapper {
-    height: 32px !important;
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
     border-radius: var(--radius-6) !important;
 }
 
@@ -171,13 +172,13 @@
 .program-filter-card .ant-select .ant-select-selector {
     display: flex !important;
     align-items: center !important;
-    height: 32px !important;
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
 }
 
 .program-filter-card .ant-select .ant-select-selection-item,
 .program-filter-card .ant-select .ant-select-selection-placeholder {
-    line-height: 30px !important;
-    /* selector 높이 - border */
+    line-height: 1 !important;
     display: flex;
     align-items: center;
 }
@@ -306,23 +307,25 @@
     line-height: 1;
 }
 
-/* 참가자용 필터 입력 필드 통일 스타일 (Ant Design 기본값 32px로 통일) */
+/* 참가자용 필터 입력 필드 통일 스타일 (공통 높이 44px, 반응형) */
 .program-filter-wrapper .ant-input,
 .program-filter-wrapper .ant-select .ant-select-selector,
 .program-filter-wrapper .ant-picker,
 .program-filter-wrapper .ant-input-affix-wrapper {
-    height: 32px !important;
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
 }
 
 .program-filter-wrapper .ant-select .ant-select-selector {
     display: flex !important;
     align-items: center !important;
-    height: 32px !important;
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
 }
 
 .program-filter-wrapper .ant-select .ant-select-selection-item,
 .program-filter-wrapper .ant-select .ant-select-selection-placeholder {
-    line-height: 30px !important;
+    line-height: 1 !important;
     display: flex;
     align-items: center;
 }
@@ -583,6 +586,17 @@
 
 .program-list-card .ant-card-body {
     padding: var(--spacing-24);
+}
+
+/* 프로그램 진행 현황 드롭다운: 셀/트리거 클릭 시 행 클릭 이벤트 버블링 방지 */
+.program-status-dropdown-cell {
+    position: relative;
+    z-index: 1;
+}
+
+.program-status-dropdown-trigger {
+    cursor: pointer;
+    display: inline-block;
 }
 
 /* 테이블 헤더 내 뷰 전환 단일 버튼 스타일 */

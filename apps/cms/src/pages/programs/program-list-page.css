@@ -4,6 +4,59 @@
     width: 100%;
 }
 
+/* 위젯 상단 액션 영역: 검색바 300×44 반응형, 버튼 160×44 (AppButton size=filter) */
+.program-list-page__widget-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    flex-wrap: wrap;
+}
+
+.program-list-page__widget-header-actions .labeled-search-input {
+    margin: 0;
+    min-width: 200px;
+    width: 300px;
+}
+
+.program-list-page__widget-header-actions .labeled-search-input .ant-input-affix-wrapper,
+.program-list-page__widget-header-actions .labeled-search-input .labeled-search-input__input {
+    width: 100% !important;
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
+    box-sizing: border-box;
+}
+
+.program-list-page__widget-header-actions .labeled-search-input .ant-input {
+    height: 100% !important;
+    min-height: 0 !important;
+    line-height: 1 !important;
+}
+
+@media (max-width: 1200px) {
+    .program-list-page__widget-header-actions .labeled-search-input {
+        width: 280px;
+    }
+}
+
+@media (max-width: 992px) {
+    .program-list-page__widget-header-actions .labeled-search-input {
+        width: 260px;
+    }
+}
+
+@media (max-width: 768px) {
+    .program-list-page__widget-header-actions .labeled-search-input {
+        width: 100%;
+        min-width: 200px;
+    }
+
+    .program-list-page__widget-header-actions .labeled-search-input .ant-input-affix-wrapper,
+    .program-list-page__widget-header-actions .labeled-search-input .labeled-search-input__input {
+        height: var(--filter-control-height, 40px) !important;
+        min-height: var(--filter-control-height, 40px) !important;
+    }
+}
+
 /* 뷰 전환 버튼 스타일 (기본 상태가 활성화된 스타일) */
 .program-view-mode-button.ant-btn {
     background-color: var(--color-program-light) !important;
