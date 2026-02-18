@@ -15,12 +15,12 @@ export type AppButtonVariant =
   | 'viewDetails' // 연청 아웃라인 (내역 보기 등 테이블 내 액션)
   | 'default' // Ant 기본
 
-export type AppButtonSize = 'small' | 'middle' | 'large' | 'tableAction'
+export type AppButtonSize = 'small' | 'middle' | 'large' | 'tableAction' | 'filter'
 
 export interface AppButtonProps extends Omit<ButtonProps, 'size' | 'variant'> {
   /** 스타일 변형 */
   variant?: AppButtonVariant
-  /** 크기: large = 120×40, tableAction = 160×40 (테이블 관리 컬럼용) */
+  /** 크기: large = 120×40, tableAction = 160×40 (테이블용), filter = 160×44 (필터 박스 조회 버튼) */
   size?: AppButtonSize
   /** danger variant에서만: hover 시 배경 채움 (삭제 버튼 등) */
   dangerFillOnHover?: boolean
@@ -53,7 +53,11 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
   ) => {
     const isVariantDanger = variant === 'danger'
     const antSize =
-      size === 'large' || size === 'tableAction' ? 'large' : size === 'small' ? 'small' : 'middle'
+      size === 'large' || size === 'tableAction' || size === 'filter'
+        ? 'large'
+        : size === 'small'
+          ? 'small'
+          : 'middle'
     const type = antType ?? (isVariantDanger ? undefined : variantToAntType[variant])
     const cn = [
       'app-button',

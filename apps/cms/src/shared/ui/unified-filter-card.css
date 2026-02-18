@@ -50,7 +50,7 @@
 }
 
 .unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-picker-range {
-    min-width: 200px;
+    min-width: var(--filter-control-width, 180px);
 }
 
 .unified-filter-card--single-row .labeled-search-input__input {

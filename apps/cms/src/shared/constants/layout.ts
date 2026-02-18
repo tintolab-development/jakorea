@@ -14,7 +14,7 @@ export const LAYOUT_CONSTANTS = {
   },
   widths: {
     search: 250,
-    filter: 150,
+    filter: 180,
     status: 110,
     action: 72,
     date: 120,

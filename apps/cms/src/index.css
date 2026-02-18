@@ -1,3 +1,6 @@
+/* 필터 Select·검색바 공통 크기 180×44px 및 반응형 */
+@import './shared/ui/filter-controls-common.css';
+
 :root {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;

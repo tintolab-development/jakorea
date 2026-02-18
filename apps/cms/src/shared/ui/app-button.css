@@ -35,6 +35,16 @@
     font-size: var(--font-size-14);
 }
 
+/* ----- size: filter (필터 박스 조회 버튼 160×44, 필터 컨트롤 높이와 동일) ----- */
+.app-button--filter {
+    min-width: 160px;
+    width: 160px;
+    height: var(--filter-control-height, 44px);
+    min-height: var(--filter-control-height, 44px);
+    padding: 0 var(--spacing-16);
+    font-size: var(--font-size-14);
+}
+
 /* viewDetails + tableAction 조합: 160×40, 폰트 14px */
 .app-button--viewDetails.app-button--tableAction.ant-btn-default {
     width: 160px !important;

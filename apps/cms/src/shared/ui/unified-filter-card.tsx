@@ -159,7 +159,7 @@ export function UnifiedFilterCard({
           {resetButtonText}
         </AppButton>
       )}
-      <AppButton variant="primary" size="small" onClick={onSearch} loading={loading}>
+      <AppButton variant="primary" size="filter" onClick={onSearch} loading={loading}>
         조회
       </AppButton>
       {extra}
