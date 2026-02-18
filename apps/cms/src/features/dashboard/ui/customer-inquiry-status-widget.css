@@ -1,124 +1,60 @@
 /**
- * 고객 문의 현황 위젯 스타일
+ * 프로그램 별 문의 현황 위젯 스타일
  */
 
 .customer-inquiry-status-widget {
-    height: auto;
-}
-
-.customer-inquiry-status-widget .ant-card {
-    height: auto;
-}
-
-.customer-inquiry-status-widget .ant-card-head-title {
-    color: var(--color-text-primary);
-    font-weight: var(--font-weight-500);
+  height: 100%;
 }
 
 .customer-inquiry-status-widget .ant-card-body {
-    padding: var(--spacing-24);
+  padding: 0 var(--spacing-16) var(--spacing-16);
 }
 
-.customer-inquiry-status-widget__cards {
-    display: flex;
-    gap: var(--spacing-12);
-    width: 100%;
-    align-items: stretch;
-    box-sizing: border-box;
+/* 테이블 100% 확장 시 컬럼 비율 유지 */
+.customer-inquiry-status-widget .inquiry-table.ant-table-wrapper .ant-table {
+  table-layout: fixed;
+  width: 100%;
 }
 
-.customer-inquiry-status-widget__stat-card {
-    flex: 1 1 0;
-    min-width: 0;
-    height: 108px;
-    padding: var(--spacing-16) var(--spacing-20);
-    border-radius: var(--radius-8);
-    border: none;
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    box-sizing: border-box;
+/* 테이블 헤더 */
+.inquiry-table .ant-table-thead > tr > th {
+  background: var(--color-bg-neutral, #fafafa);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-500, 500);
+  color: var(--color-text-secondary);
+  padding: var(--spacing-10) var(--spacing-12);
+  border-bottom: 1px solid var(--color-border-skeleton, #f0f0f0);
+  text-align: center !important;
 }
 
-.customer-inquiry-status-widget__stat-card:hover {
-    box-shadow: var(--shadow-hover);
+/* 테이블 바디 셀 */
+.inquiry-table .ant-table-tbody > tr > td {
+  font-size: var(--font-size-13);
+  color: var(--color-text-primary);
+  padding: var(--spacing-10) var(--spacing-12);
+  text-align: center !important;
 }
 
-.customer-inquiry-status-widget__stat-card--pending {
-    background: var(--color-bg-pending-light);
+.inquiry-table .ant-table-tbody > tr:hover > td {
+  background: var(--color-bg-hover, #fafafa);
 }
 
-.customer-inquiry-status-widget__stat-card--answered {
-    background: var(--color-bg-answered-light);
+/* 답변 대기 > 0: 빨간 도트 인라인 + 빨간 텍스트 */
+.inquiry-table__pending--active {
+  color: var(--color-status-error, #ff4d4f);
+  font-weight: var(--font-weight-600);
 }
 
-.customer-inquiry-status-widget__stat-card--total {
-    background: var(--color-bg-neutral);
-}
-
-.customer-inquiry-status-widget__divider {
-    width: 1px;
-    height: 108px;
-    background: var(--color-border-skeleton);
-    margin: 0;
-    flex-shrink: 0;
-    align-self: center;
-}
-
-.customer-inquiry-status-widget__stat-label {
-    display: block;
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-regular);
-    text-align: left;
-    margin: 0;
-}
-
-.customer-inquiry-status-widget__stat-count {
-    display: block;
-    font-size: var(--font-size-24);
-    font-weight: var(--font-weight-600);
-    text-align: right;
-    margin-top: auto;
-    margin-left: auto;
-}
-
-.customer-inquiry-status-widget__stat-card--pending .customer-inquiry-status-widget__stat-label,
-.customer-inquiry-status-widget__stat-card--pending .customer-inquiry-status-widget__stat-count {
-    color: var(--color-status-pending);
-}
-
-.customer-inquiry-status-widget__stat-card--answered .customer-inquiry-status-widget__stat-label,
-.customer-inquiry-status-widget__stat-card--answered .customer-inquiry-status-widget__stat-count {
-    color: var(--color-status-answered);
-}
-
-.customer-inquiry-status-widget__stat-card--total .customer-inquiry-status-widget__stat-label,
-.customer-inquiry-status-widget__stat-card--total .customer-inquiry-status-widget__stat-count {
-    color: var(--color-text-primary);
+/* 0건 또는 일반 수치 컬럼: secondary 색상 */
+.inquiry-table__count--muted {
+  color: var(--color-text-secondary, #8c8c8c);
 }
 
 .customer-inquiry-status-widget .widget-more-button {
-    color: var(--color-text-primary) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .customer-inquiry-status-widget .widget-more-button:hover {
-    color: var(--color-text-primary) !important;
-    opacity: 0.8;
-}
-
-@media (max-width: 768px) {
-    .customer-inquiry-status-widget__cards {
-        flex-wrap: wrap;
-    }
-
-    .customer-inquiry-status-widget__stat-card {
-        flex: 1 1 calc(50% - var(--spacing-12));
-        min-width: 0;
-    }
-
-    .customer-inquiry-status-widget__divider {
-        display: none;
-    }
+  color: var(--color-text-primary) !important;
+  opacity: 0.8;
 }
