@@ -41,6 +41,7 @@ import {
   type AddInstructorAssignOption,
 } from './school-detail-add-instructor-assign-modal'
 import { LectureAttendanceModal } from './lecture-attendance-modal'
+import { AssignmentSubmissionModal } from './assignment-submission-modal'
 import './school-detail-modal.css'
 
 const { TextArea } = Input
@@ -112,6 +113,9 @@ export function SchoolDetailModal({
   const [lectureAttendanceModalOpen, setLectureAttendanceModalOpen] = useState(false)
   const [lectureAttendanceStudent, setLectureAttendanceStudent] =
     useState<SchoolDetailStudentRow | null>(null)
+  const [assignmentSubmissionModalOpen, setAssignmentSubmissionModalOpen] = useState(false)
+  const [assignmentSubmissionStudent, setAssignmentSubmissionStudent] =
+    useState<SchoolDetailStudentRow | null>(null)
   /* 필터 입력값(조회 클릭 전까지 반영 안 함) */
   const [studentNameFilter, setStudentNameFilter] = useState('')
   const [studentClassFilter, setStudentClassFilter] = useState<string>('all')
@@ -179,6 +183,8 @@ export function SchoolDetailModal({
       setAddInstructorAssignModalOpen(false)
       setLectureAttendanceModalOpen(false)
       setLectureAttendanceStudent(null)
+      setAssignmentSubmissionModalOpen(false)
+      setAssignmentSubmissionStudent(null)
     }
   }, [open])
 
@@ -421,6 +427,11 @@ export function SchoolDetailModal({
     setLectureAttendanceModalOpen(true)
   }, [])
 
+  const openAssignmentSubmission = useCallback((record: SchoolDetailStudentRow) => {
+    setAssignmentSubmissionStudent(record)
+    setAssignmentSubmissionModalOpen(true)
+  }, [])
+
   const studentColumnsView: ColumnsType<SchoolDetailStudentRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
@@ -464,14 +475,18 @@ export function SchoolDetailModal({
         key: 'assignment',
         width: 120,
         align: 'center',
-        render: () => (
-          <AppButton variant="viewDetails" size="small" onClick={() => {}}>
+        render: (_: unknown, record: SchoolDetailStudentRow) => (
+          <AppButton
+            variant="viewDetails"
+            size="small"
+            onClick={() => openAssignmentSubmission(record)}
+          >
             내역 보기
           </AppButton>
         ),
       },
     ],
-    [openLectureAttendance]
+    [openLectureAttendance, openAssignmentSubmission]
   )
 
   const studentColumnsEdit: ColumnsType<StudentListFormStudent> = useMemo(
@@ -585,7 +600,7 @@ export function SchoolDetailModal({
       ? `있음 | ${detail.waitingRoomLocation}`
       : '없음'
 
-  /* 디자이너 시안 순서: 참여 학교명(배지) | 대상 학년 | 진행 장소 | 식사 | 담당 교사 | 지역 | 학급 수 및 전체 인원 | 대기실 */
+  /* 기획 시안 순서(school-detail-modal-view-edit-comparison.md): 1행 참여학교명|지역, 2행 대상학년|학급수, 3행 진행장소|대기실, 풀폭 식사·담당교사 */
   const schoolNameCell =
     detail.scheduleChangeCancelCount != null && detail.scheduleChangeCancelCount > 0 ? (
       <>
@@ -597,13 +612,13 @@ export function SchoolDetailModal({
     )
   const basicInfoItems = [
     { key: 'schoolName', label: '참여 학교명', children: schoolNameCell },
+    { key: 'region', label: '지역', children: detail.region },
     { key: 'educationGrade', label: '대상 학년', children: detail.educationGrade },
+    { key: 'classCount', label: '학급 수 및 전체 인원', children: classDisplay },
     { key: 'venue', label: '진행 장소', children: detail.venue ?? '-' },
+    { key: 'waitingRoom', label: '대기실 여부 및 위치', children: waitingDisplay },
     { key: 'meal', label: '식사 제공 여부 및 안내', children: mealDisplay, span: 2 },
     { key: 'teacher', label: '담당 교사', children: teacherDisplay || '-', span: 2 },
-    { key: 'region', label: '지역', children: detail.region },
-    { key: 'classCount', label: '학급 수 및 전체 인원', children: classDisplay },
-    { key: 'waitingRoom', label: '대기실 여부 및 위치', children: waitingDisplay },
   ]
 
   /* 디자이너 시안 순서: 강의 진행 회차·교재 현황 | 교재명·교재 준비 수량 */
@@ -622,13 +637,23 @@ export function SchoolDetailModal({
     },
   ]
 
-  /** 수정 모드에서도 읽기 전용으로 표시할 행 (참여 학교명, 지역, 대상 학년, 학급 수 및 전체 인원) */
-  const basicInfoReadOnlyItems = [
-    { key: 'schoolName', label: '참여 학교명', children: detail.schoolName },
-    { key: 'region', label: '지역', children: detail.region },
-    { key: 'educationGrade', label: '대상 학년', children: detail.educationGrade },
-    { key: 'classCount', label: '학급 수 및 전체 인원', children: classDisplay },
-  ]
+  /**
+   * 수정 모드 기본 정보: 기획 시안과 동일한 필드 순서 (1행 참여학교명|지역, 2행 대상학년|학급수, 3행 진행장소|대기실, 풀폭 식사·담당교사)
+   */
+  function getBasicInfoEditModeItems(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
+    const editableItems = basicInfoEditableItems(form)
+    const byKey = (key: string) => editableItems.find(item => item.key === key)!
+    return [
+      { key: 'schoolName', label: '참여 학교명', children: schoolNameCell },
+      { key: 'region', label: '지역', children: detail?.region },
+      { key: 'educationGrade', label: '대상 학년', children: detail?.educationGrade },
+      { key: 'classCount', label: '학급 수 및 전체 인원', children: classDisplay },
+      byKey('venue'),
+      byKey('waitingRoom'),
+      byKey('meal'),
+      byKey('teacher'),
+    ]
+  }
 
   /** 수정 가능 필드만: 진행 장소, 대기실 여부 및 위치, 식사 제공 여부 및 안내, 담당 교사 */
   function basicInfoEditableItems(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
@@ -861,7 +886,7 @@ export function SchoolDetailModal({
                   size="middle"
                   className="school-detail-modal__descriptions"
                   labelStyle={{ background: '#EDF0F2' }}
-                  items={[...basicInfoReadOnlyItems, ...basicInfoEditableItems(basicInfoForm)]}
+                  items={getBasicInfoEditModeItems(basicInfoForm)}
                 />
                 {!isApplicant && (
                   <Descriptions
@@ -1129,6 +1154,15 @@ export function SchoolDetailModal({
           setLectureAttendanceStudent(null)
         }}
         student={lectureAttendanceStudent}
+        schoolId={detail?.id ?? ''}
+      />
+      <AssignmentSubmissionModal
+        open={assignmentSubmissionModalOpen}
+        onCancel={() => {
+          setAssignmentSubmissionModalOpen(false)
+          setAssignmentSubmissionStudent(null)
+        }}
+        student={assignmentSubmissionStudent}
         schoolId={detail?.id ?? ''}
       />
     </>

@@ -167,44 +167,44 @@
     border-bottom: none;
 }
 
-/* 한 열에 테이블 두 개: 헤더 180×57, 바디 490×57 고정 */
+/* 한 열에 테이블 두 개: 헤더(라벨) 180×48, 바디 490×48 고정 */
 .school-detail-modal__descriptions .ant-descriptions-view table tbody tr:first-child td:nth-child(1) {
     width: 180px !important;
     min-width: 180px !important;
     max-width: 180px !important;
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
 }
 
 .school-detail-modal__descriptions .ant-descriptions-view table tbody tr:first-child td:nth-child(2) {
     width: 490px !important;
     min-width: 490px !important;
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
 }
 
 .school-detail-modal__descriptions .ant-descriptions-view table tbody tr:first-child td:nth-child(3) {
     width: 180px !important;
     min-width: 180px !important;
     max-width: 180px !important;
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
 }
 
 .school-detail-modal__descriptions .ant-descriptions-view table tbody tr:first-child td:nth-child(4) {
     width: 490px !important;
     min-width: 490px !important;
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
 }
 
-/* 테이블 헤더(라벨): 180×57 고정, 14px, 볼드, 가운데 정렬 + 세로 디바이더(라벨↔값 구분) */
+/* 테이블 헤더(라벨, th): 180×48 고정, 14px, 볼드, 가운데 정렬 + 세로 디바이더(라벨↔값 구분) */
 .school-detail-modal__descriptions .ant-descriptions-item-label {
     width: 180px !important;
     min-width: 180px !important;
     max-width: 180px !important;
-    height: 57px !important;
-    min-height: 57px !important;
+    height: 48px !important;
+    min-height: 48px !important;
     font-size: 14px;
     font-weight: 700;
     text-align: center;
@@ -214,19 +214,22 @@
     vertical-align: middle;
 }
 
-/* 테이블 바디(한 열에 테이블 두 개 케이스): 490×57 고정, 행 정렬 vertical-align middle */
+/* 테이블 바디(한 열에 테이블 두 개 케이스): 490×48 고정, 행 정렬 vertical-align middle */
 .school-detail-modal__descriptions .ant-descriptions-item-content {
     width: 490px !important;
     min-width: 490px !important;
-    height: 57px !important;
-    min-height: 57px !important;
+    height: 48px !important;
+    min-height: 48px !important;
     box-sizing: border-box;
     vertical-align: middle;
 }
 
-/* 수정 모드: 텍스트에어리어가 있는 행만 세로 상단 정렬, 나머지는 middle로 row 정렬 */
+/* 수정 모드: 텍스트에어리어가 있는 행도 라벨·값 세로 중앙 정렬 */
+.school-detail-modal__descriptions .ant-descriptions-view table tbody tr:has(td.ant-descriptions-item-content:has(.school-detail-modal__form-row-with-divider--textarea)) td.ant-descriptions-item-label {
+    vertical-align: middle;
+}
 .school-detail-modal__descriptions .ant-descriptions-view table tbody tr td.ant-descriptions-item-content:has(.school-detail-modal__form-row-with-divider--textarea) {
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .school-detail-modal__descriptions .ant-descriptions-item-content {
@@ -243,10 +246,10 @@
     gap: var(--spacing-8);
 }
 
-/* 강사진 정보 테이블: 헤더 57px, 열 비율 고정 */
+/* 강사진 정보 테이블: 헤더(th) 48px, 열 비율 고정 */
 .school-detail-modal__instructor-table .ant-table-thead>tr>th {
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
     padding: 12px 16px;
     background: #edf0f2;
     font-size: 14px;
@@ -257,8 +260,8 @@
 }
 
 .school-detail-modal__instructor-table .ant-table-tbody>tr>td {
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
     padding: 12px 16px;
     vertical-align: middle;
 }
@@ -320,6 +323,21 @@
     color: var(--color-link, #01a1af);
     text-decoration: underline;
     cursor: pointer;
+    /* 클릭/포커스 시 남는 흔적(아웃라인·배경·탭 하이라이트) 제거 */
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.school-detail-modal__link-button:hover {
+    color: var(--color-link, #01a1af);
+}
+
+.school-detail-modal__link-button:focus,
+.school-detail-modal__link-button:active {
+    outline: none;
+    box-shadow: none;
+    background: transparent;
 }
 
 .school-detail-modal__link-button--disabled {
@@ -333,8 +351,8 @@
 }
 
 .school-detail-modal__student-table .ant-table-thead>tr>th {
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
     padding: 12px 16px;
     background: #edf0f2;
     font-size: 14px;
@@ -345,8 +363,8 @@
 }
 
 .school-detail-modal__student-table .ant-table-tbody>tr>td {
-    height: 57px;
-    min-height: 57px;
+    height: 48px;
+    min-height: 48px;
     padding: 12px 16px;
     vertical-align: middle;
 }

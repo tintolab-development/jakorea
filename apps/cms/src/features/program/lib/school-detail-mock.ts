@@ -15,6 +15,9 @@ import type {
   LectureAttendanceDetail,
   LectureAttendanceSession,
   LectureAttendanceStatusKey,
+  AssignmentSubmissionDetail,
+  AssignmentSubmissionSession,
+  AssignmentSubmissionStatusKey,
 } from '../model/school-detail-types'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 
@@ -151,6 +154,38 @@ export function getLectureAttendanceDetail(
   return {
     studentName: student.name,
     attendanceRatePercent,
+    sessions,
+  }
+}
+
+/**
+ * 과제 제출 내역 모달용 데이터
+ * 학생명·제출률·회차별 상태(제출완료/미제출/강의 미진행) 목업 생성
+ */
+export function getAssignmentSubmissionDetail(
+  student: SchoolDetailStudentRow,
+  _schoolId: string
+): AssignmentSubmissionDetail {
+  const seed = hash(student.id)
+  const totalRounds = 4
+  const statuses: AssignmentSubmissionStatusKey[] = []
+  for (let i = 0; i < totalRounds; i++) {
+    const r = (seed + i * 7) % 3
+    if (r === 0) statuses.push('submitted')
+    else if (r === 1) statuses.push('not_submitted')
+    else statuses.push('not_started')
+  }
+  const sessions: AssignmentSubmissionSession[] = statuses.map((status, i) => ({
+    roundNumber: i + 1,
+    status,
+  }))
+  const submittedCount = statuses.filter(s => s === 'submitted').length
+  const heldCount = statuses.filter(s => s !== 'not_started').length
+  const submissionRatePercent =
+    heldCount === 0 ? 0 : Math.round((submittedCount / heldCount) * 100)
+  return {
+    studentName: student.name,
+    submissionRatePercent,
     sessions,
   }
 }
