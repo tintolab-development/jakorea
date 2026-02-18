@@ -61,6 +61,36 @@
     flex-shrink: 0;
 }
 
+/* 대시보드 설정: 최대 높이 720px, 바디만 스크롤 */
+.teal-header-modal--dashboard-settings .ant-modal-content {
+    max-height: 720px;
+    display: flex;
+    flex-direction: column;
+}
+
+.teal-header-modal--dashboard-settings .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.teal-header-modal--dashboard-settings .teal-header-modal__header {
+    flex-shrink: 0;
+}
+
+.teal-header-modal--dashboard-settings .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: none;
+}
+
+.teal-header-modal--dashboard-settings .teal-header-modal__footer {
+    flex-shrink: 0;
+}
+
 /* 헤더 */
 .teal-header-modal__header {
     display: flex;
