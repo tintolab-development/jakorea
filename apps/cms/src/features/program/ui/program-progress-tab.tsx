@@ -3,7 +3,7 @@
  * 탭(참여 학교 정보 | 강사 정보)과 필터가 같은 레벨 한 줄 배치, 쿼리 파라미터 연동
  */
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Card, Table, Row, Col, Select, message, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
@@ -110,6 +110,8 @@ interface ProgramProgressTabProps {
 
 export function ProgramProgressTab({ programId: _programId }: ProgramProgressTabProps) {
   const { subTab, filters, setSubTab, setFilter } = useProgramProgressParams()
+  /** 교사/강사명은 로컬 state로 두고 blur/조회 시에만 URL 동기화 (한글 IME 조합 깨짐 방지) */
+  const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName ?? '')
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
   const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
@@ -117,6 +119,10 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     useState<ParticipatingInstructorRow | null>(null)
   /** 조회 버튼 클릭 시에만 반영되는 필터 (테이블 필터링에 사용) */
   const [appliedFilters, setAppliedFilters] = useState<ProgressFilters>(filters)
+
+  useEffect(() => {
+    setLocalTeacherName(filters.teacherName ?? '')
+  }, [filters.teacherName])
   /** 참여 학교 목록 (초기 mock, 삭제 반영) */
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() => [
     ...MOCK_PARTICIPATING_SCHOOLS,
@@ -221,7 +227,8 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   }
 
   const handleSearch = () => {
-    setAppliedFilters(filters)
+    setFilter('teacherName', localTeacherName)
+    setAppliedFilters({ ...filters, teacherName: localTeacherName })
   }
 
   const handleSchoolDeleteClick = () => {
@@ -294,8 +301,23 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     []
   )
 
+  const handleSettlementStatusChange = useCallback(
+    (recordId: string, status: SettlementStatusKey) => {
+      setInstructorList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, settlementStatus: status } : row))
+      )
+      message.success('정산 현황이 변경되었습니다.')
+    },
+    []
+  )
+
   const textbookStatusKeys: TextbookStatusKey[] = useMemo(
     () => Object.keys(TEXTBOOK_STATUS_LABELS) as TextbookStatusKey[],
+    []
+  )
+
+  const settlementStatusKeys: SettlementStatusKey[] = useMemo(
+    () => Object.keys(SETTLEMENT_STATUS_LABELS) as SettlementStatusKey[],
     []
   )
 
@@ -458,7 +480,36 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'settlementStatus',
         width: 160,
         align: 'center',
-        render: (status: SettlementStatusKey) => <SettlementStatusBadge status={status} />,
+        render: (status: SettlementStatusKey, record: ParticipatingInstructorRow) => {
+          const badge = <SettlementStatusBadge status={status} />
+          const items: MenuProps['items'] = settlementStatusKeys.map(key => ({
+            key,
+            label: <SettlementStatusBadge status={key} />,
+            onClick: e => {
+              e?.domEvent?.stopPropagation()
+              handleSettlementStatusChange(record.id, key)
+            },
+          }))
+          return (
+            <div
+              className="settlement-status-dropdown-cell"
+              onClick={e => e.stopPropagation()}
+            >
+              <Dropdown
+                menu={{ items }}
+                trigger={['click']}
+                getPopupContainer={() => document.body}
+              >
+                <span
+                  className="settlement-status-dropdown-trigger"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {badge}
+                </span>
+              </Dropdown>
+            </div>
+          )
+        },
       },
       {
         title: '담당 교사',
@@ -468,7 +519,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         align: 'center',
       },
     ],
-    []
+    [handleSettlementStatusChange, settlementStatusKeys]
   )
 
   return (
@@ -578,8 +629,9 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   <LabeledSearchInput
                     label="교사/강사명"
                     placeholder="전체"
-                    value={filters.teacherName ?? ''}
-                    onChange={v => setFilter('teacherName', v)}
+                    value={localTeacherName}
+                    onChange={setLocalTeacherName}
+                    onBlur={() => setFilter('teacherName', localTeacherName)}
                     width="100%"
                     showPrefixIcon={false}
                   />
@@ -688,7 +740,13 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                 dataSource={filteredInstructors}
                 onRow={record => ({
                   onClick: e => {
-                    if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                    const target = e.target as HTMLElement
+                    if (target.closest('.ant-table-selection-column')) return
+                    if (
+                      target.closest('.settlement-status-dropdown-cell') ||
+                      target.closest('.settlement-status-dropdown-trigger')
+                    )
+                      return
                     setSelectedInstructorForDetail(record)
                     setInstructorDetailModalOpen(true)
                   },
