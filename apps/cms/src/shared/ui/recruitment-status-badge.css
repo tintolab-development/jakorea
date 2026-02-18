@@ -17,6 +17,17 @@
     margin: 0;
 }
 
+/* 120×33 고정 크기 variant (프로그램 상세 정보 탭 등) */
+.recruitment-status-badge--fixed {
+    width: 120px;
+    height: 33px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
 .recruitment-status-badge--recruiting {
     background-color: var(--color-badge-recruiting-bg);
     color: var(--color-badge-recruiting-text);

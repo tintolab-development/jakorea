@@ -22,6 +22,8 @@ export interface RecruitmentStatusBadgeProps {
   fallback?: ReactNode
   /** 추가 클래스명 */
   className?: string
+  /** 배지 크기: default(자동) | fixed(120×33 고정) */
+  size?: 'default' | 'fixed'
 }
 
 /**
@@ -34,6 +36,7 @@ export function RecruitmentStatusBadge({
   status,
   fallback = '-',
   className = '',
+  size = 'default',
 }: RecruitmentStatusBadgeProps) {
   if (status === null) {
     return <>{fallback}</>
@@ -41,10 +44,11 @@ export function RecruitmentStatusBadge({
 
   const label = LABELS[status]
   const modifier = `recruitment-status-badge--${status}`
+  const sizeModifier = size === 'fixed' ? 'recruitment-status-badge--fixed' : ''
 
   return (
     <span
-      className={`recruitment-status-badge ${modifier} ${className}`.trim()}
+      className={`recruitment-status-badge ${modifier} ${sizeModifier} ${className}`.trim()}
       role="status"
       aria-label={label}
     >

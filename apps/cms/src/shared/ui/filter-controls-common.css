@@ -65,6 +65,13 @@
 .unified-filter-card .labeled-search-input__input .ant-input {
   height: 100% !important;
   min-height: 0 !important;
+  line-height: 1 !important;
+  padding: 0 11px !important;
+}
+
+.unified-filter-card .labeled-search-input__input.ant-input-affix-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
 /* 통일 필터 카드 - 운영기간 등 DatePicker / RangePicker */
@@ -202,11 +209,15 @@
   min-width: 120px;
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
 .program-progress-tab__filters .labeled-search-input__input .ant-input {
   height: 100% !important;
   min-height: 0 !important;
+  line-height: 1 !important;
+  padding: 0 11px !important;
 }
 
 /* 신청자 탭 / 담당자 탭 필터 */
@@ -225,6 +236,17 @@
   display: flex !important;
   align-items: center !important;
   box-sizing: border-box !important;
+}
+
+/* 담당자 탭 필터: 검색 인풋 플레이스홀더 수직 중앙 */
+.program-managers-tab__filters .labeled-search-input__input {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.program-managers-tab__filters .labeled-search-input__input .ant-input {
+  line-height: 1 !important;
+  padding: 0 11px !important;
 }
 
 /* List 페이지 필터 (ListPageFilters) */
@@ -246,6 +268,15 @@
   min-width: 120px;
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.list-page-filters .labeled-search-input__input .ant-input {
+  height: 100% !important;
+  min-height: 0 !important;
+  line-height: 1 !important;
+  padding: 0 11px !important;
 }
 
 /* 768px 이하: 너비 100%일 때 컨테이너 min-width */

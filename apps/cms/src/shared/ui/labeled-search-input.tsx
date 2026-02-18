@@ -30,6 +30,8 @@ export interface LabeledSearchInputProps {
   showPrefixIcon?: boolean
   /** 레이블 표시 여부. false면 레이블 미표시(인풋만, 헤더 액션 등과 정렬 시 사용) */
   showLabel?: boolean
+  /** 포커스 해제 시 콜백 (한글 IME 등 입력 완료 후 URL 동기화용) */
+  onBlur?: () => void
 }
 
 /**
@@ -51,6 +53,7 @@ export function LabeledSearchInput({
   placeholder,
   value,
   onChange,
+  onBlur,
   width = 300,
   style,
   allowClear = true,
@@ -68,6 +71,7 @@ export function LabeledSearchInput({
         placeholder={placeholder}
         value={value}
         onChange={e => onChange?.(e.target.value)}
+        onBlur={onBlur}
         allowClear={allowClear}
         disabled={disabled}
         style={{ width }}
