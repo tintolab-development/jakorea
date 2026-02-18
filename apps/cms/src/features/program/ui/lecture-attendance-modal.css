@@ -1,0 +1,70 @@
+/* 강의 출석 내역 모달 (명세: lecture-attendance-modal-table-prompt.md)
+   TealHeaderModal body는 align-items: center 이므로, 자식이 full width 쓰려면 stretch + width 100% */
+
+/* 타이틀 텍스트 가운데 정렬 */
+.lecture-attendance-modal .teal-header-modal__title {
+    flex: 1;
+    text-align: center;
+}
+
+.lecture-attendance-modal__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    align-self: stretch;
+    box-sizing: border-box;
+    min-height: 200px;
+}
+
+/* 테이블 래퍼: 모서리 둥글게 */
+.lecture-attendance-modal__table-wrap {
+    width: 700px;
+    max-width: 100%;
+    height: 144px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+}
+
+/* 테이블: 700×144px, 행 48px, 라벨열 144px, 값열 가변 */
+.lecture-attendance-modal__table {
+    width: 100%;
+    height: 144px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.lecture-attendance-modal__table tbody tr {
+    height: 48px;
+}
+
+.lecture-attendance-modal__table tbody tr>td {
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+    padding: 0 16px;
+    text-align: left;
+    vertical-align: middle;
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    box-sizing: border-box;
+}
+
+/* 1·3열: 라벨 144px, 연한 회색, 굵게, 가로·세로 가운데 정렬 */
+.lecture-attendance-modal__table .lecture-attendance-modal__cell--label {
+    width: 144px;
+    min-width: 144px;
+    max-width: 144px;
+    background: #fafafa;
+    font-weight: 700;
+    color: var(--color-text-label, #262626);
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* 2·4열: 값, 흰 배경, 텍스트만·선택 불가 */
+.lecture-attendance-modal__table .lecture-attendance-modal__cell--value {
+    background: #fff;
+    user-select: none;
+}

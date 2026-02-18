@@ -1,0 +1,91 @@
+/**
+ * 담당자 권한 수정 모달
+ * 크기: 800×307, 담당자명(회색 배경 읽기 전용), 권한 설정(라디오 row), 담당자 삭제 링크
+ */
+
+/* 모달 크기 800×307 */
+.edit-manager-role-modal__root.ant-modal .ant-modal-content {
+    max-height: 307px;
+    height: 307px;
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-manager-role-modal__root.ant-modal .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.edit-manager-role-modal__form {
+    width: 100%;
+    max-width: 100%;
+}
+
+.edit-manager-role-modal__field {
+    margin-bottom: var(--spacing-20);
+}
+
+.edit-manager-role-modal__field:last-of-type {
+    margin-bottom: 0;
+}
+
+.edit-manager-role-modal__field .ant-form-item-label>label {
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-label);
+}
+
+/* 담당자명: 읽기 전용, 회색 배경 */
+.edit-manager-role-modal__name-input {
+    background: var(--color-bg-secondary) !important;
+    cursor: default;
+}
+
+.edit-manager-role-modal__name-input.ant-input[readonly] {
+    color: var(--color-text-primary);
+}
+
+/* 권한 설정: 라디오(원형) row 정렬 */
+.edit-manager-role-modal__role-radios {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-16);
+}
+
+.edit-manager-role-modal__role-radios .ant-radio-wrapper {
+    font-size: var(--font-size-14);
+    color: var(--color-text-primary);
+}
+
+.edit-manager-role-modal__role-radios .ant-radio-checked .ant-radio-inner {
+    border-color: var(--color-modal-header);
+    background: var(--color-modal-header);
+}
+
+.edit-manager-role-modal__role-radios .ant-radio-inner::after {
+    background: var(--color-bg-base);
+}
+
+/* 담당자 삭제 링크: 빨간색, 밑줄, 클릭 가능 */
+.edit-manager-role-modal__delete-wrap {
+    margin-top: var(--spacing-16);
+    padding-top: var(--spacing-16);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.edit-manager-role-modal__delete-link {
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    color: var(--color-danger-secondary);
+    text-decoration: underline;
+    cursor: pointer;
+    line-height: 1.5;
+}
+
+.edit-manager-role-modal__delete-link:hover {
+    color: var(--color-danger-secondary-hover);
+}
