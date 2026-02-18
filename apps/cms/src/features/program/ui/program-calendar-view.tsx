@@ -1,19 +1,28 @@
 /**
  * 프로그램 캘린더 뷰 컴포넌트
- * 좌측: 메인 월간 캘린더, 우측: 미니 캘린더 + 일정 리스트
+ * 3단: 좌측(미니 캘린더 + 검색 + 유형 필터) | 중앙(메인 캘린더) | 우측(선택일 일정 리스트)
  */
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Calendar, Button, Segmented, Spin } from 'antd'
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { Calendar, Button, Spin, Input, Checkbox } from 'antd'
+import { LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import type { Program } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { ProgramMiniCalendar } from './program-mini-calendar'
 import { ProgramScheduleList } from './program-schedule-list'
+import { businessAreaOptions } from './program-list-constants'
+import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import './program-calendar-view.css'
+
+const businessAreaColorClasses: Record<string, string> = {
+  경제금융: 'program-calendar-left__filter-item--cyan',
+  기업가정신: 'program-calendar-left__filter-item--red',
+  진로취업: 'program-calendar-left__filter-item--purple',
+  디지털리터러시: 'program-calendar-left__filter-item--green',
+}
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -24,11 +33,60 @@ interface ProgramCalendarViewProps {
   onProgramClick: (program: Program) => void
 }
 
-// 이벤트 바 색상 (상태별)
-const eventColors = {
-  recruiting: '#52c41a', // 모집 중 - green
-  education: '#1890ff', // 교육 기간 - blue
-  completed: '#8c8c8c', // 완료 - gray
+/** 프로그램 진행 현황 배지 배경색 (program-schedule-widget·program-lifecycle-status-badge와 동기화) */
+const LIFECYCLE_STATUS_BG: Record<ProgramLifecycleStatus, string> = {
+  planned: '#f5f5f5',
+  recruiting_students: '#eaf7ec',
+  recruiting_instructors: '#f4f0f9',
+  matching_completed: '#fff5e9',
+  education_before_textbook: '#e9f6fa',
+  education_after_textbook: '#e9f6fa',
+  education_completed: '#fdeef1',
+  document_processing_completed: '#f5f5f5',
+}
+
+const DEFAULT_LIFECYCLE_STATUS: ProgramLifecycleStatus = 'education_before_textbook'
+
+function getLifecycleBg(status: ProgramLifecycleStatus | undefined): string {
+  return LIFECYCLE_STATUS_BG[status ?? DEFAULT_LIFECYCLE_STATUS] ?? '#f0f0f0'
+}
+
+type SpanRole = 'start' | 'middle' | 'end' | 'single'
+
+/** 해당 날짜가 프로그램 구간(교육/신청) 내에서 첫날·중간·마지막·단일인지 반환 (다일자 연결 배지용) */
+function getProgramSpanRole(program: Program, date: Dayjs): SpanRole {
+  const start = dayjs(program.startDate)
+  const end = dayjs(program.endDate)
+  const isInEducation =
+    date.isSameOrAfter(start, 'day') && date.isSameOrBefore(end, 'day')
+  let rangeStart: Dayjs
+  let rangeEnd: Dayjs
+
+  if (program.applicationStartDate && program.applicationEndDate) {
+    const appStart = dayjs(program.applicationStartDate)
+    const appEnd = dayjs(program.applicationEndDate)
+    const isInApp =
+      date.isSameOrAfter(appStart, 'day') && date.isSameOrBefore(appEnd, 'day')
+    if (isInApp) {
+      rangeStart = appStart
+      rangeEnd = appEnd
+    } else if (isInEducation) {
+      rangeStart = start
+      rangeEnd = end
+    } else {
+      return 'single'
+    }
+  } else if (isInEducation) {
+    rangeStart = start
+    rangeEnd = end
+  } else {
+    return 'single'
+  }
+
+  if (rangeStart.isSame(rangeEnd, 'day')) return 'single'
+  if (date.isSame(rangeStart, 'day')) return 'start'
+  if (date.isSame(rangeEnd, 'day')) return 'end'
+  return 'middle'
 }
 
 export function ProgramCalendarView({
@@ -39,10 +97,27 @@ export function ProgramCalendarView({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  const [calendarSearchKeyword, setCalendarSearchKeyword] = useState('')
+  const [calendarBusinessAreaKeys, setCalendarBusinessAreaKeys] = useState<string[]>([])
   const [sidebarHeight, setSidebarHeight] = useState<number | null>(null)
   const mainCalendarRef = useRef<HTMLDivElement>(null)
 
-  // 메인 캘린더 높이 측정하여 사이드바에 적용
+  // 좌측 검색 + 사업분야 필터 적용 목록
+  const filteredByCalendar = useMemo(() => {
+    let list = programs
+    const keyword = calendarSearchKeyword.trim().toLowerCase()
+    if (keyword) {
+      list = list.filter(p => (p.title ?? '').toLowerCase().includes(keyword))
+    }
+    if (calendarBusinessAreaKeys.length > 0) {
+      list = list.filter(
+        p => p.businessArea && calendarBusinessAreaKeys.includes(p.businessArea)
+      )
+    }
+    return list
+  }, [programs, calendarSearchKeyword, calendarBusinessAreaKeys])
+
+  // 메인 캘린더 높이 측정하여 우측 패널에 적용
   useEffect(() => {
     const updateHeight = () => {
       if (mainCalendarRef.current) {
@@ -54,10 +129,10 @@ export function ProgramCalendarView({
     return () => window.removeEventListener('resize', updateHeight)
   }, [calendarMode])
 
-  // 일정이 있는 날짜들 (미니 캘린더용)
+  // 일정이 있는 날짜들 (미니 캘린더용) — 필터된 목록 기준
   const programDates = useMemo(() => {
     const dates = new Set<string>()
-    programs.forEach(program => {
+    filteredByCalendar.forEach(program => {
       const start = dayjs(program.startDate)
       const end = dayjs(program.endDate)
       let current = start
@@ -80,11 +155,11 @@ export function ProgramCalendarView({
       }
     })
     return dates
-  }, [programs])
+  }, [filteredByCalendar])
 
-  // 특정 날짜의 프로그램 가져오기
+  // 특정 날짜의 프로그램 가져오기 (필터된 목록 기준)
   const getProgramsForDate = (date: Dayjs): Program[] => {
-    return programs.filter(program => {
+    return filteredByCalendar.filter(program => {
       const start = dayjs(program.startDate)
       const end = dayjs(program.endDate)
       const isInEducationPeriod =
@@ -100,28 +175,6 @@ export function ProgramCalendarView({
 
       return isInEducationPeriod || isInApplicationPeriod
     })
-  }
-
-  // 이벤트 바 색상 결정
-  const getEventColor = (program: Program, date: Dayjs): string => {
-    const now = dayjs()
-
-    // 신청 기간 체크
-    if (program.applicationStartDate && program.applicationEndDate) {
-      const appStart = dayjs(program.applicationStartDate)
-      const appEnd = dayjs(program.applicationEndDate)
-      if (date.isSameOrAfter(appStart, 'day') && date.isSameOrBefore(appEnd, 'day')) {
-        return eventColors.recruiting
-      }
-    }
-
-    // 완료 여부
-    const end = dayjs(program.endDate)
-    if (end.isBefore(now, 'day')) {
-      return eventColors.completed
-    }
-
-    return eventColors.education
   }
 
   const handleDateSelect = (date: Dayjs) => {
@@ -164,12 +217,12 @@ export function ProgramCalendarView({
     setCurrentMonth(today.startOf('month'))
   }
 
-  // 메인 캘린더 헤더 렌더링
+  // 메인 캘린더 헤더 렌더링 (스크린샷: 2026.01 형식)
   const headerRender = () => {
     const headerTitle =
       calendarMode === 'week'
-        ? `${weekDates[0].format('YYYY년 M월 D일')} - ${weekDates[6].format('M월 D일')}`
-        : currentMonth.format('MMMM YYYY')
+        ? `${weekDates[0].format('YYYY.MM')} ${weekDates[0].format('D')} - ${weekDates[6].format('D')}`
+        : currentMonth.format('YYYY.MM')
 
     return (
       <div className="program-calendar-header">
@@ -179,13 +232,25 @@ export function ProgramCalendarView({
             오늘
           </Button>
           <div className="program-calendar-nav">
-            <Button type="text" size="small" icon={<LeftOutlined />} onClick={handlePrev} />
-            <Button type="text" size="small" icon={<RightOutlined />} onClick={handleNext} />
+            <Button
+              type="text"
+              size="small"
+              icon={<LeftOutlined />}
+              className="program-calendar-nav-btn"
+              onClick={handlePrev}
+            />
+            <Button
+              type="text"
+              size="small"
+              icon={<RightOutlined />}
+              className="program-calendar-nav-btn"
+              onClick={handleNext}
+            />
           </div>
         </div>
         <div className="program-calendar-header-right">
-          <Segmented
-            size="small"
+          <SegmentedTab
+            size="medium"
             value={calendarMode}
             onChange={value => setCalendarMode(value as 'month' | 'week')}
             options={[
@@ -204,7 +269,10 @@ export function ProgramCalendarView({
     const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
     const dayPrograms = getProgramsForDate(date)
-    const hasPrograms = dayPrograms.length > 0
+    const sortedDayPrograms = [...dayPrograms].sort((a, b) =>
+      String(a.id).localeCompare(String(b.id))
+    )
+    const hasPrograms = sortedDayPrograms.length > 0
 
     return (
       <div
@@ -214,25 +282,25 @@ export function ProgramCalendarView({
         <div className="program-calendar-cell-date">{date.date()}</div>
         {hasPrograms && (
           <div className="program-calendar-cell-events">
-            {dayPrograms.slice(0, 2).map(program => (
-              <div
-                key={program.id}
-                className="program-calendar-event"
-                onClick={e => {
-                  e.stopPropagation()
-                  onProgramClick(program)
-                }}
-              >
-                <span
-                  className="program-calendar-event-bar"
-                  style={{ backgroundColor: getEventColor(program, date) }}
-                />
-                <span className="program-calendar-event-title">{program.title}</span>
-              </div>
-            ))}
-            {dayPrograms.length > 2 && (
+            {sortedDayPrograms.slice(0, 2).map(program => {
+              const spanRole = getProgramSpanRole(program, date)
+              return (
+                <div
+                  key={program.id}
+                  className={`program-calendar-event program-calendar-event--span-${spanRole}`}
+                  style={{ backgroundColor: getLifecycleBg(program.lifecycleStatus) }}
+                  onClick={e => {
+                    e.stopPropagation()
+                    onProgramClick(program)
+                  }}
+                >
+                  <span className="program-calendar-event-title">{program.title}</span>
+                </div>
+              )
+            })}
+            {sortedDayPrograms.length > 2 && (
               <div className="program-calendar-event-more">
-                외 {dayPrograms.length - 2}개의 일정
+                외 {sortedDayPrograms.length - 2}개의 일정
               </div>
             )}
           </div>
@@ -269,7 +337,10 @@ export function ProgramCalendarView({
             const isToday = date.isSame(dayjs(), 'day')
             const isSelected = date.isSame(selectedDate, 'day')
             const dayPrograms = getProgramsForDate(date)
-            const hasPrograms = dayPrograms.length > 0
+            const sortedDayPrograms = [...dayPrograms].sort((a, b) =>
+              String(a.id).localeCompare(String(b.id))
+            )
+            const hasPrograms = sortedDayPrograms.length > 0
 
             return (
               <div
@@ -280,25 +351,25 @@ export function ProgramCalendarView({
                 <div className="program-calendar-week-cell-date">{date.date()}</div>
                 {hasPrograms && (
                   <div className="program-calendar-week-cell-events">
-                    {dayPrograms.slice(0, 2).map(program => (
-                      <div
-                        key={program.id}
-                        className="program-calendar-event"
-                        onClick={e => {
-                          e.stopPropagation()
-                          onProgramClick(program)
-                        }}
-                      >
-                        <span
-                          className="program-calendar-event-bar"
-                          style={{ backgroundColor: getEventColor(program, date) }}
-                        />
-                        <span className="program-calendar-event-title">{program.title}</span>
-                      </div>
-                    ))}
-                    {dayPrograms.length > 2 && (
+                    {sortedDayPrograms.slice(0, 2).map(program => {
+                      const spanRole = getProgramSpanRole(program, date)
+                      return (
+                        <div
+                          key={program.id}
+                          className={`program-calendar-event program-calendar-event--span-${spanRole}`}
+                          style={{ backgroundColor: getLifecycleBg(program.lifecycleStatus) }}
+                          onClick={e => {
+                            e.stopPropagation()
+                            onProgramClick(program)
+                          }}
+                        >
+                          <span className="program-calendar-event-title">{program.title}</span>
+                        </div>
+                      )
+                    })}
+                    {sortedDayPrograms.length > 2 && (
                       <div className="program-calendar-event-more">
-                        외 {dayPrograms.length - 2}개의 일정
+                        외 {sortedDayPrograms.length - 2}개의 일정
                       </div>
                     )}
                   </div>
@@ -311,9 +382,49 @@ export function ProgramCalendarView({
     )
   }
 
+  const handleBusinessAreaChange = (value: string, checked: boolean) => {
+    setCalendarBusinessAreaKeys(prev =>
+      checked ? [...prev, value] : prev.filter(k => k !== value)
+    )
+  }
+
   return (
     <div className="program-calendar-view">
-      {/* 좌측: 메인 캘린더 */}
+      {/* 좌측: 미니 캘린더 + 검색 + 프로그램 유형 필터 */}
+      <div className="program-calendar-left">
+        <ProgramMiniCalendar
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onDateSelect={handleDateSelect}
+          onMonthChange={handleMonthChange}
+          programDates={programDates}
+        />
+        <div className="program-calendar-left__search-widget">
+          <div className="program-calendar-left__search">
+            <Input
+              placeholder="프로그램명을 입력하세요"
+              prefix={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
+              value={calendarSearchKeyword}
+              onChange={e => setCalendarSearchKeyword(e.target.value)}
+              allowClear
+            />
+          </div>
+          <div className="program-calendar-left__filters">
+            {businessAreaOptions.map(opt => (
+              <Checkbox
+                key={opt.value}
+                className={`program-calendar-left__filter-item ${businessAreaColorClasses[opt.value] ?? ''}`}
+                checked={calendarBusinessAreaKeys.includes(opt.value)}
+                onChange={e => handleBusinessAreaChange(opt.value, e.target.checked)}
+              >
+                {opt.label}
+              </Checkbox>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 중앙: 메인 캘린더 */}
       <div className="program-calendar-main" ref={mainCalendarRef}>
         {headerRender()}
         {calendarMode === 'week' ? (
@@ -327,21 +438,14 @@ export function ProgramCalendarView({
         )}
       </div>
 
-      {/* 우측: 미니 캘린더 + 일정 리스트 */}
+      {/* 우측: 선택일 일정 리스트 */}
       <div
-        className="program-calendar-sidebar"
+        className="program-calendar-right"
         style={sidebarHeight ? { height: sidebarHeight } : undefined}
       >
-        <ProgramMiniCalendar
-          currentMonth={currentMonth}
-          selectedDate={selectedDate}
-          onDateSelect={handleDateSelect}
-          onMonthChange={handleMonthChange}
-          programDates={programDates}
-        />
         <ProgramScheduleList
           selectedDate={selectedDate}
-          programs={programs}
+          programs={filteredByCalendar}
           onProgramClick={onProgramClick}
         />
       </div>

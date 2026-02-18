@@ -4,7 +4,7 @@
  */
 
 import { useMemo } from 'react'
-import { Tag, Empty } from 'antd'
+import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
@@ -129,9 +129,6 @@ export function ProgramScheduleList({
 
   return (
     <div className="program-schedule-list">
-      <div className="program-schedule-list-header">
-        {selectedDate.format('M월 D일')} 일정
-      </div>
       <div className="program-schedule-list-content">
         {dayPrograms.length === 0 ? (
           <Empty
@@ -150,11 +147,20 @@ export function ProgramScheduleList({
                 className="program-schedule-item"
                 onClick={() => onProgramClick(program)}
               >
-                <Tag color={config.tagColor} className="program-schedule-item-status">
-                  {config.label}
-                </Tag>
-                <span className="program-schedule-item-time">{time}</span>
-                <span className="program-schedule-item-title">{program.title}</span>
+                <div className="program-schedule-list__event-column">
+                  <div className="program-schedule-list__event-head">
+                    <span className="program-schedule-list__event-type">
+                      {config.label}
+                    </span>
+                    <span className="program-schedule-list__event-time">| {time}</span>
+                  </div>
+                  <div
+                    className="program-schedule-list__event-desc"
+                    title={program.title ?? ''}
+                  >
+                    {program.title ?? ''}
+                  </div>
+                </div>
               </div>
             )
           })
