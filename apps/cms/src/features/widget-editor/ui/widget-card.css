@@ -28,20 +28,63 @@
     border-color: var(--color-input-focus);
 }
 
-.widget-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: move;
-    user-select: none;
+/* 헤더(햄버거 아이콘 포함)를 본문·내부 위젯과 같은 레이어에 유지, 햄버거 하단 디바이더 제거 */
+.widget-card .ant-card-head {
+    position: relative;
+    z-index: 1;
+    border-bottom: none;
 }
 
-.widget-card-header[data-drag-handle] {
+/* 햄버거 + 타이틀 + 디스크립션을 한 줄에 같이 위치 (참고 UI) */
+.widget-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-8);
+    user-select: none;
+    min-width: 0;
+}
+
+.widget-card-header .widget-drag-handle + * {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+/* 좌상단 두 줄 햄버거: 항상 노출, 편집 모드에서만 드래그 가능 */
+.widget-drag-handle {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px;
+    cursor: default;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.widget-drag-handle:hover {
+    cursor: pointer;
+}
+
+.widget-drag-handle--active {
+    cursor: grab;
+    opacity: 1;
+}
+
+.widget-drag-handle--active:hover {
     cursor: grab;
 }
 
-.widget-card-header[data-drag-handle]:active {
+.widget-drag-handle--active:active {
     cursor: grabbing;
+}
+
+.widget-drag-handle-bar {
+    display: block;
+    width: 14px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: currentColor;
 }
 
 .widget-card-title {
@@ -66,7 +109,7 @@
 }
 
 /* 키보드 접근성 */
-.widget-card-header:focus {
+.widget-drag-handle:focus {
     outline: 2px solid var(--color-input-focus);
     outline-offset: 2px;
 }
