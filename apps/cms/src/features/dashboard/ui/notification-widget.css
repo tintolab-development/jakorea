@@ -7,10 +7,10 @@
     width: 100%;
 }
 
-.notification-widget__title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* 타이틀+디스크립션: 햄버거와 한 줄에 (더보기는 Card extra로) */
+.notification-widget__title-inline {
+    display: inline-flex;
+    align-items: baseline;
 }
 
 .notification-widget__title-text {

@@ -7,9 +7,9 @@
  */
 
 import { Card, List, Typography, Button, Space, Empty } from 'antd'
-import { CalendarOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useState, useMemo } from 'react'
+import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import { mockSchedules, mockPrograms } from '@/data/mock'
 import { programService } from '@/entities/program/api/program-service'
@@ -139,13 +139,14 @@ export function ProgramScheduleWidget() {
   return (
     <Card
       title={
-        <Space>
-          <CalendarOutlined />
-          <span>프로그램 일정</span>
-          <Text type="secondary" className="program-schedule-widget__date-ref">
-            {selectedDate.format('YYYY.MM.DD')} 기준
-          </Text>
-        </Space>
+        <WidgetTitleWithHandle>
+          <Space>
+            <span>프로그램 일정</span>
+            <Text type="secondary" className="program-schedule-widget__date-ref">
+              {selectedDate.format('YYYY.MM.DD')} 기준
+            </Text>
+          </Space>
+        </WidgetTitleWithHandle>
       }
       extra={
         <Button type="link" size="small" onClick={handleViewAll} className="widget-more-button">

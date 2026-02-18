@@ -11,6 +11,7 @@ import dayjs from 'dayjs'
 import { type Notification, type NotificationType } from '../api/notification-service'
 import { NotificationModal } from './notification-modal'
 import { useNotifications } from '../hooks/use-notifications'
+import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import '@/shared/ui/widget-more-button.css'
 import './notification-widget.css'
 
@@ -105,8 +106,8 @@ export function NotificationWidget() {
         className="notification-widget"
         loading={loading}
         title={
-          <div className="notification-widget__title">
-            <Space>
+          <WidgetTitleWithHandle>
+            <Space size={4} className="notification-widget__title-inline">
               <Text strong className="notification-widget__title-text">
                 알림 리스트
               </Text>
@@ -116,17 +117,19 @@ export function NotificationWidget() {
                 </Text>
               )}
             </Space>
-            {hasMoreNotifications && (
-              <Button
-                type="link"
-                size="small"
-                onClick={() => setModalOpen(true)}
-                className="widget-more-button"
-              >
-                더보기
-              </Button>
-            )}
-          </div>
+          </WidgetTitleWithHandle>
+        }
+        extra={
+          hasMoreNotifications ? (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => setModalOpen(true)}
+              className="widget-more-button"
+            >
+              더보기
+            </Button>
+          ) : null
         }
       >
         {displayNotifications.length === 0 ? (

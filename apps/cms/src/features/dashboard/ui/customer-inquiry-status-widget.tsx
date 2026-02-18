@@ -4,10 +4,10 @@
  */
 
 import { Card, Typography, Button } from 'antd'
-import { QuestionCircleOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import { mockInquiries } from '@/data/mock/inquiries'
+import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import '@/shared/ui/widget-more-button.css'
 import './customer-inquiry-status-widget.css'
 
@@ -31,10 +31,9 @@ export function CustomerInquiryStatusWidget() {
   return (
     <Card
       title={
-        <>
-          <QuestionCircleOutlined style={{ marginRight: 8 }} />
+        <WidgetTitleWithHandle>
           <span>고객 문의 현황</span>
-        </>
+        </WidgetTitleWithHandle>
       }
       extra={
         <Button type="link" size="small" onClick={handleViewAll} className="widget-more-button">
