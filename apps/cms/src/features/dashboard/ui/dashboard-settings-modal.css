@@ -1,0 +1,86 @@
+/**
+ * 대시보드 설정 모달 스타일
+ * 스크린샷: 섹션 제목 굵게, 바로가기 그리드, 테이블 좌측 열 연한 회색
+ * 폰트: Pretendard 15px/500, line-height 150%, color --default-BK
+ */
+
+.dashboard-settings-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  width: 100%;
+  align-items: stretch;
+  color: var(--default-BK, #3D3D3D);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.dashboard-settings-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.dashboard-settings-modal__section-title {
+  margin: 0;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-700);
+  line-height: 1.4;
+  color: var(--color-text-label);
+}
+
+.dashboard-settings-modal__shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-8) var(--spacing-16);
+  align-content: start;
+}
+
+.dashboard-settings-modal__shortcuts .ant-checkbox-wrapper {
+  margin-inline-start: 0;
+}
+
+/* 셀렉트(체크박스) 영역 18×18 */
+.dashboard-settings-modal__content .ant-checkbox-inner {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+.dashboard-settings-modal__content .ant-checkbox .ant-checkbox-inner::after {
+  inset-inline-start: 6px;
+}
+
+/* 테이블 헤더: 텍스트 수평·수직 가운데 정렬 */
+.dashboard-settings-modal__table .ant-table-thead > tr > th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.dashboard-settings-modal__table .ant-table-cell {
+  vertical-align: top;
+}
+
+.dashboard-settings-modal__table .ant-table-cell:first-child {
+  background: var(--color-bg-subtle, #fafafa);
+  font-weight: 500;
+  width: 180px;
+}
+
+.dashboard-settings-modal__widget-label {
+  display: block;
+  padding: var(--spacing-4) 0;
+}
+
+.dashboard-settings-modal__program-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-8) 0;
+}
+
+.dashboard-settings-modal__program-checks .ant-checkbox-wrapper {
+  margin-inline-start: 0;
+}
