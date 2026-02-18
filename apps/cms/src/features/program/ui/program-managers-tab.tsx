@@ -3,7 +3,7 @@
  * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/권한 수정
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Card, Table, Row, Col, Select, message } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
@@ -40,8 +40,14 @@ interface ProgramManagersTabProps {
 
 export function ProgramManagersTab({ programId: _programId }: ProgramManagersTabProps) {
   const { filters, setFilter } = useProgramManagersParams()
+  /** 담당자명은 로컬 state로 두고 blur/조회 시에만 URL 동기화 (한글 IME 조합 깨짐 방지) */
+  const [localManagerName, setLocalManagerName] = useState(() => filters.managerName ?? '')
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
+
+  useEffect(() => {
+    setLocalManagerName(filters.managerName ?? '')
+  }, [filters.managerName])
   const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() => [
     ...MOCK_PROGRAM_MANAGERS,
   ])
@@ -68,7 +74,8 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   }, [managerList, appliedFilters])
 
   const handleSearch = () => {
-    setAppliedFilters(filters)
+    setFilter('managerName', localManagerName)
+    setAppliedFilters({ ...filters, managerName: localManagerName })
   }
 
   const handleDeleteClick = () => {
@@ -222,8 +229,9 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
                 <LabeledSearchInput
                   label="담당자명"
                   placeholder="전체"
-                  value={filters.managerName ?? ''}
-                  onChange={v => setFilter('managerName', v)}
+                  value={localManagerName}
+                  onChange={setLocalManagerName}
+                  onBlur={() => setFilter('managerName', localManagerName)}
                   width="100%"
                   showPrefixIcon={false}
                 />

@@ -51,7 +51,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: var(--spacing-8);
+    gap: 12px;
     height: var(--filter-control-height, 44px);
     min-height: var(--filter-control-height, 44px);
     overflow: visible;
@@ -86,19 +86,32 @@
     display: flex !important;
     align-items: center !important;
     box-sizing: border-box !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
 }
 
+.program-managers-tab__filters .labeled-search-input__input {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+}
+
+.program-managers-tab__filters .labeled-search-input__input:focus-within,
+.program-managers-tab__filter-col .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+    border-color: var(--color-tab-active) !important;
+    box-shadow: 0 0 0 1px rgba(74, 212, 204, 0.2) !important;
+}
+
+/* 담당자명 검색: 다른 필터와 동일 너비(180px) */
 .program-managers-tab__filter-col--search {
-    min-width: 200px;
-    width: 220px;
-    max-width: 220px;
+    min-width: 0;
 }
 
 .program-managers-tab__filters .labeled-search-input {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: var(--spacing-8);
+    gap: 12px;
     height: var(--filter-control-height, 44px);
 }
 
@@ -111,13 +124,23 @@
     display: block;
 }
 
-.program-managers-tab__filters .labeled-search-input__input,
-.program-managers-tab__filters .labeled-search-input .ant-input {
+.program-managers-tab__filters .labeled-search-input__input {
     flex: 0 0 auto;
     width: var(--filter-control-width, 180px) !important;
     min-width: 120px;
     height: var(--filter-control-height, 44px) !important;
     min-height: var(--filter-control-height, 44px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+.program-managers-tab__filters .labeled-search-input__input .ant-input {
+    height: 100% !important;
+    min-height: 0 !important;
+    line-height: var(--filter-control-height, 44px) !important;
+    padding: 0 11px !important;
+    box-sizing: border-box !important;
 }
 
 .program-managers-tab__filter-col--btn .app-button {
