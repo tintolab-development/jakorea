@@ -3,11 +3,14 @@
  * 네이버웍스 스타일의 위젯 드래그앤드롭 및 편집 기능 제공
  */
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DraggableDashboard } from '@/features/widget-editor/ui/draggable-dashboard'
 import { EditToolbar } from '@/features/widget-editor/ui/edit-toolbar'
 import { useWidgetEditorStore } from '@/features/widget-editor/model/widget-editor-store'
+import { useDashboardData } from '@/features/dashboard/model/use-dashboard-data'
+import { getAdminLevelLabel } from '@/shared/config/permissions'
+import { getRoleLabel } from '@/shared/ui'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
 import { getWidgetDefinition } from '@/features/widget-editor/lib/widget-registry'
 import { getDndSizeForWidget } from '@/features/widget-editor/lib/dnd-layout-constants'
@@ -22,6 +25,15 @@ function generateId(): string {
 export function Dashboard2() {
   const { user } = useAuthStore()
   const { draftState, initializeFromDefault } = useWidgetEditorStore()
+  const { activePrograms } = useDashboardData()
+
+  const userRoleLabel = useMemo(() => {
+    if (!user) return ''
+    if (user.role === 'ADMIN' && user.adminLevel) {
+      return getAdminLevelLabel(user.adminLevel)
+    }
+    return getRoleLabel(user.role, user.adminLevel)
+  }, [user?.role, user?.adminLevel])
 
   // 초기 위젯 로드 (기존 대시보드 설정 기반)
   useEffect(() => {
@@ -100,7 +112,17 @@ export function Dashboard2() {
   return (
     <div className="dashboard2-container">
       <div className="dashboard2-toolbar">
-        <EditToolbar />
+        <div className="dashboard2-toolbar-left">
+          <h2 className="dashboard2-toolbar-title">
+            {user?.name} {userRoleLabel}님, 반갑습니다!
+          </h2>
+          <span className="dashboard2-toolbar-description">
+            진행 프로젝트 {activePrograms.count}건
+          </span>
+        </div>
+        <div className="dashboard2-toolbar-right">
+          <EditToolbar />
+        </div>
       </div>
       <DraggableDashboard />
     </div>
