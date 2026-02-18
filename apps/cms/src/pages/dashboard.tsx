@@ -6,12 +6,36 @@
  * Phase 1 (대시보드 고도화): 즉시 처리 필요 작업, 월별 정산 현황, 통합 활동 피드
  */
 
-import { Card, Row, Col, Statistic, Button } from 'antd'
+import { Card, Row, Statistic, Button } from 'antd'
 import { EditOutlined } from '@ant-design/icons'
-import React, { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  type SortingStrategy,
+} from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
+import {
+  useDashboardWidgetOrderStore,
+  buildDefaultDisplayItemIds,
+  buildDisplayItemsMeta,
+  type DisplayItemMeta,
+  type DashboardWidgetOrderState,
+} from '@/features/dashboard/model/dashboard-widget-order-store'
+import { SortableWidgetSlot } from '@/features/dashboard/ui/sortable-widget-slot'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
 import { getRoleLabel } from '@/shared/ui'
 import { useDashboardData } from '@/features/dashboard/model/use-dashboard-data'
@@ -49,6 +73,13 @@ import {
 import './dashboard.css'
 import '@/features/widget-editor/ui/widget-card.css'
 
+/** rectSortingStrategy에서 scaleX/scaleY를 항상 1로 고정 — 위젯 크기 변형 없이 위치만 이동 */
+const noScaleRectSortingStrategy: SortingStrategy = args => {
+  const result = rectSortingStrategy(args)
+  if (!result) return null
+  return { ...result, scaleX: 1, scaleY: 1 }
+}
+
 export function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -73,6 +104,42 @@ export function Dashboard() {
   const widgets = useMemo(() => {
     return getDashboardWidgetsByRole(user?.role || null)
   }, [user?.role])
+
+  // DnD: 정렬 단위 id 목록 및 메타
+  const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
+  const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
+  const orderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) =>
+    s.getOrderedIds(user?.role ?? null, defaultIds)
+  )
+  const setOrderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setOrderedIds)
+
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      setActiveId(null)
+      if (!over || active.id === over.id || !user?.role) return
+      const oldIndex = orderedIds.indexOf(active.id as string)
+      const newIndex = orderedIds.indexOf(over.id as string)
+      if (oldIndex === -1 || newIndex === -1) return
+      const next = arrayMove(orderedIds, oldIndex, newIndex)
+      setOrderedIds(user.role, next)
+    },
+    [orderedIds, setOrderedIds, user?.role]
+  )
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null)
+  }, [])
 
   // 관리자일 경우 전체 통계 데이터 로드
   useEffect(() => {
@@ -275,57 +342,50 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* 권한별 위젯 렌더링 */}
-      <Row gutter={[16, 16]} align="stretch">
-        {widgets.map((widget, index) => {
-          const widgetComponent = renderWidget(widget.type)
-          if (!widgetComponent) return null
+      {/* 권한별 위젯 렌더링 (DnD: 햄버거 핸들에서만 드래그) */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <SortableContext items={orderedIds} strategy={noScaleRectSortingStrategy}>
+          <Row gutter={[16, 16]} align="stretch">
+            {orderedIds.map((id: string) => {
+              const meta = displayItemsMeta.find((m: DisplayItemMeta) => m.id === id)
+              if (!meta) return null
 
-          const isNotificationWidget = widget.type === 'notification-widget'
-          const isCustomerInquiryWidget = widget.type === 'customer-inquiry-status-widget'
-          const isProgramScheduleWidget = widget.type === 'program-schedule-widget'
+              const widgetComponent = renderWidget(id)
+              if (!widgetComponent) return null
 
-          // 상단 블록: 알림 + 고객문의 (왼쪽) | 프로그램 일정 (오른쪽) — 높이 동일
-          if (isNotificationWidget) {
-            const hasCustomerInquiry = widgets.some(
-              w => w.type === 'customer-inquiry-status-widget'
-            )
-            const hasProgramSchedule = widgets.some(w => w.type === 'program-schedule-widget')
-            const programScheduleComponent = hasProgramSchedule
-              ? renderWidget('program-schedule-widget')
-              : null
-            const customerInquiryComponent = hasCustomerInquiry
-              ? renderWidget('customer-inquiry-status-widget')
-              : null
-
-            return (
-              <React.Fragment key={`dashboard-top-${index}`}>
-                <Col span={12}>
-                  <div className="dashboard-widgets-left">
-                    {widgetComponent}
-                    {customerInquiryComponent}
-                  </div>
-                </Col>
-                {programScheduleComponent && (
-                  <Col span={12}>
-                    <div className="dashboard-widgets-right">{programScheduleComponent}</div>
-                  </Col>
-                )}
-              </React.Fragment>
-            )
-          }
-
-          if (isProgramScheduleWidget || isCustomerInquiryWidget) {
-            return null
-          }
-
-          return (
-            <Col key={`${widget.type}-${index}`} span={widget.colSpan || 6}>
-              {widgetComponent}
-            </Col>
-          )
-        })}
-      </Row>
+              return (
+                <SortableWidgetSlot
+                  key={id}
+                  id={id}
+                  colSpan={meta.colSpan}
+                  hasBuiltInHandle={meta.hasBuiltInHandle}
+                >
+                  {widgetComponent}
+                </SortableWidgetSlot>
+              )
+            })}
+          </Row>
+        </SortableContext>
+        <DragOverlay
+          adjustScale={false}
+          dropAnimation={{
+            duration: 300,
+            easing: 'cubic-bezier(0.2, 0, 0, 1)',
+          }}
+        >
+          {activeId ? (
+            <div className="dashboard-widget-drag-overlay">
+              {renderWidget(activeId)}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   )
 }

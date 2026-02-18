@@ -192,7 +192,7 @@ export const applicationService = {
   ): Promise<Application[]> => {
     await new Promise(resolve => setTimeout(resolve, 200))
 
-    let filtered = mockApplications.filter(app => {
+    const filtered = mockApplications.filter(app => {
       // subjectId가 사용자 ID와 일치하는 경우
       if (app.subjectId === userId) {
         // subjectType 필터가 있으면 추가 필터링

@@ -49,10 +49,10 @@ export interface DashboardWidgetConfig {
 const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 관리자: 전체 통계 및 현황
   ADMIN: [
-    // 첫 번째 행: 2열 구조 (왼쪽: 알림+고객문의, 오른쪽: 프로그램일정)
+    // 첫 번째 행: 알림(12) + 고객문의(12), 두 번째 행: 프로그램일정(24) — 각 위젯 개별 DnD
     { type: 'notification-widget', colSpan: 12, order: 1 },
     { type: 'customer-inquiry-status-widget', colSpan: 12, order: 2 },
-    { type: 'program-schedule-widget', colSpan: 12, order: 3 },
+    { type: 'program-schedule-widget', colSpan: 24, order: 3 },
     // 나머지 위젯들 (전체 프로그램 진행현황 위젯 → 탭+테이블로 교체)
     // { type: 'program-progress-widget', colSpan: 24, order: 4 },
     { type: 'program-progress-tabs-table', colSpan: 24, order: 4 },
