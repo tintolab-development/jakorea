@@ -97,7 +97,7 @@ export function WidgetEditorDashboard() {
         onResizeStart={handleResizeStart}
         onResizeStop={handleResizeStop}
         // @ts-expect-error - draggableHandle은 Responsive에서도 지원하지만 타입 정의에 없음
-        draggableHandle=".widget-card-header[data-drag-handle]"
+        draggableHandle=".widget-drag-handle"
       >
         {widgets.map(widget => {
           const widgetDef = getWidgetDefinition(widget.widgetKey)

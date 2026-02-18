@@ -10,6 +10,7 @@ import type { Layout, LayoutItem } from 'react-grid-layout'
 import { useWidgetEditorStore } from '../model/widget-editor-store'
 import { getWidgetDefinition } from '../lib/widget-registry'
 import { getDndSizeForWidget } from '../lib/dnd-layout-constants'
+import { isKpiWidgetKey } from '../lib/dnd-widget-type-map'
 import { sanitizeLayoutToTwoColumns } from '../lib/repack-layout'
 import { startPointerTracking, stopPointerTracking, getLastPointerX } from '../lib/pointer-tracker'
 import { DraggableWidgetCard } from './draggable-widget-card'
@@ -114,8 +115,21 @@ export function DraggableDashboard() {
   }
 
   const handleResizeStart = () => setResizing(true)
-  const handleResizeStop = () => {
+  const handleResizeStop = (
+    newLayout: Layout,
+    _oldItem: LayoutItem | null,
+    newItem: LayoutItem | null
+  ) => {
     setResizing(false)
+    if (newItem && newLayout.length > 0) {
+      // 너비는 50%(w=6) / 100%(w=12)만 허용: 리사이즈 후 스냅
+      const snappedW = newItem.w <= 9 ? 6 : 12
+      const layoutSnapped = newLayout.map(item =>
+        item.i === newItem.i ? { ...item, w: snappedW } : item
+      )
+      const sanitized = sanitizeLayoutToTwoColumns([...layoutSnapped])
+      updateLayout(sanitized, 'lg')
+    }
     repackLayout()
   }
 
@@ -126,7 +140,8 @@ export function DraggableDashboard() {
     cols: COLS,
     rowHeight: ROW_HEIGHT,
     isDraggable: editMode,
-    isResizable: false,
+    isResizable: editMode,
+    resizeHandles: ['e' as const], // 동쪽(오른쪽) 핸들만 → 너비만 변경
     compactType: 'vertical' as const,
     preventCollision: false,
     allowOverlap: false,
@@ -134,8 +149,17 @@ export function DraggableDashboard() {
     margin: MARGIN,
     containerPadding: CONTAINER_PADDING,
     useCSSTransforms: true,
-    dragConfig: { handle: '.widget-card-header[data-drag-handle]' },
+    dragConfig: { handle: '.widget-drag-handle' },
   }
+
+  // RGL이 높이 변경을 막으려면 layout 항목에 minH/maxH가 있어야 함 (상태 레이아웃에 제약 병합)
+  const layoutWithHeightLock = layout.map(item => ({
+    ...item,
+    minW: 6,
+    maxW: 12,
+    minH: item.h,
+    maxH: item.h,
+  }))
 
   if (widgets.length === 0) {
     return (
@@ -149,7 +173,7 @@ export function DraggableDashboard() {
     <div className="draggable-dashboard" ref={gridContainerRef}>
       <Responsive
         {...gridProps}
-        layouts={{ lg: layout }}
+        layouts={{ lg: layoutWithHeightLock }}
         onLayoutChange={handleLayoutChange}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
@@ -162,8 +186,22 @@ export function DraggableDashboard() {
           const layoutItem = layout.find(item => item.i === widget.id)
           const { w, h } = getDndSizeForWidget(widget.widgetKey)
           const grid = layoutItem ?? { x: 0, y: 0, w, h }
+          // 높이 변경 불가, 너비는 6(50%) / 12(100%)만 허용
+          const gridWithConstraints = {
+            ...grid,
+            minW: 6,
+            maxW: 12,
+            minH: grid.h,
+            maxH: grid.h,
+          }
+          const isHalfWidth = grid.w === 6
+          const applyFixedHeight = isHalfWidth && !isKpiWidgetKey(widget.widgetKey)
           return (
-            <div key={widget.id} data-grid={grid}>
+            <div
+              key={widget.id}
+              data-grid={gridWithConstraints}
+              className={applyFixedHeight ? 'widget-grid-item-half' : undefined}
+            >
               <DraggableWidgetCard widgetInstance={widget} />
             </div>
           )

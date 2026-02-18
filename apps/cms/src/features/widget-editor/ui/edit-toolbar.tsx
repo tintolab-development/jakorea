@@ -54,7 +54,7 @@ export function EditToolbar() {
 
   return (
     <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
-      홈 위젯 편집
+      대시보드 설정
     </Button>
   )
 }

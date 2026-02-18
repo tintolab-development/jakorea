@@ -35,6 +35,13 @@ export const DND_WIDGET_TYPE_BY_KEY: Record<string, DndWidgetType> = {
 
 const DEFAULT_TYPE: DndWidgetType = 'NORMAL'
 
+/** 2단 사용 시 338px 고정 높이 적용 제외 (사업 별 KPI 대비 달성률 등) */
+export const KPI_WIDGET_KEYS: Set<string> = new Set(['overall-statistics-cards'])
+
+export function isKpiWidgetKey(widgetKey: string): boolean {
+  return KPI_WIDGET_KEYS.has(widgetKey)
+}
+
 /**
  * 위젯 키에 해당하는 DnD 타입 반환. 없으면 NORMAL.
  */

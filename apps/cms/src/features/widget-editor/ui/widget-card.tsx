@@ -30,7 +30,15 @@ export function WidgetCard({ widgetInstance, children }: WidgetCardProps) {
     <Card
       className={`widget-card${editMode ? ' widget-card-editing' : ''}${isInteracting ? ' widget-card-interacting' : ''}`}
       title={
-        <div className="widget-card-header" data-drag-handle>
+        <div className="widget-card-header">
+          <div
+            className={`widget-drag-handle${editMode ? ' widget-drag-handle--active' : ''}`}
+            data-drag-handle
+            aria-label="위젯 이동"
+          >
+            <span className="widget-drag-handle-bar" />
+            <span className="widget-drag-handle-bar" />
+          </div>
           <span className="widget-card-title">{widgetDef.title}</span>
           {editMode && (
             <div className="widget-card-actions" onClick={e => e.stopPropagation()}>

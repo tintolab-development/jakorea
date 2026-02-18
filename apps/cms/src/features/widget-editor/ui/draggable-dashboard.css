@@ -58,3 +58,8 @@
     opacity: 1;
     z-index: 2;
 }
+
+/* 2단(w=6) 비-KPI 위젯: 높이 338px 고정 (KPI 항목 제외) */
+.draggable-dashboard .react-grid-item:has(> div.widget-grid-item-half) {
+    min-height: 338px;
+}
