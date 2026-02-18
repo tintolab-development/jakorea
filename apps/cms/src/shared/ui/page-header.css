@@ -2,10 +2,24 @@
  * 페이지 헤더 공통 스타일
  */
 
+/* 좌(제목·설명)와 우(검색·버튼) 수직 중앙 정렬 */
+.page-header.ant-space {
+    align-items: center;
+}
+
 .page-header {
     margin-bottom: var(--spacing-16);
     width: 100%;
     justify-content: space-between;
+}
+
+/* 제목·설명 한 줄(row) 정렬 */
+.page-header__title-row {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--spacing-8);
+    flex-wrap: wrap;
 }
 
 .page-header-title {
@@ -15,6 +29,16 @@
     color: var(--color-text-label);
 }
 
+.page-header-description {
+    font-size: var(--font-size-14);
+}
+
 .page-header-actions {
+    align-items: center;
+}
+
+/* Ant Design Space 아이템 래퍼도 수직 중앙 정렬 (검색 필드·버튼 한 줄 정렬) */
+.page-header-actions.ant-space .ant-space-item {
+    display: flex;
     align-items: center;
 }

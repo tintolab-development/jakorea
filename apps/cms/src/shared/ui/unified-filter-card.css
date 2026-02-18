@@ -5,9 +5,6 @@
 .unified-filter-card {
     background: var(--color-bg-base);
     border-radius: var(--radius-8);
-}
-
-.unified-filter-card {
     width: 100%;
 }
 
@@ -15,38 +12,54 @@
     width: 100%;
     display: flex;
     flex-wrap: nowrap;
+    align-items: flex-end;
 }
 
 .unified-filter-card .ant-card-body {
-    padding: var(--spacing-16);
+    padding: var(--spacing-12) var(--spacing-16);
     width: 100%;
 }
 
-/* 필터 필드들이 화면 너비에 맞게 확장되도록 */
+/* 필터 필드들이 한 줄에서 균등 분할되도록 */
 .unified-filter-card__row .ant-col {
     min-width: 0;
-}
-
-/* select 필드 최소 너비 */
-.unified-filter-card__row .ant-col .unified-filter-card__field {
-    min-width: 120px;
-}
-
-/* dateRange 필드 최소 너비 */
-.unified-filter-card__row .ant-col .ant-picker-range {
-    min-width: 240px;
 }
 
 .unified-filter-card__field {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-8);
+    gap: var(--spacing-6);
 }
 
 .unified-filter-card__label {
     display: block;
-    font-size: var(--font-size-14);
+    font-size: var(--font-size-13);
     font-weight: var(--font-weight-500);
     color: var(--color-text-label);
     margin-bottom: 0;
+    white-space: nowrap;
+}
+
+/* 한 줄 모드: 필드 최소 너비 축소 */
+.unified-filter-card--single-row .unified-filter-card__row .ant-col .unified-filter-card__field {
+    min-width: 0;
+}
+
+.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-select {
+    min-width: 90px;
+}
+
+.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-picker-range {
+    min-width: 200px;
+}
+
+.unified-filter-card--single-row .labeled-search-input__input {
+    min-width: 100px;
+}
+
+.unified-filter-card__actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: var(--spacing-8);
 }

@@ -54,3 +54,14 @@
     border: none;
     box-shadow: none;
 }
+
+/* 레이블 없음: 헤더 액션에서 검색 인풋만 표시, 버튼과 수직 정렬 */
+.labeled-search-input--no-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.labeled-search-input--no-label .labeled-search-input__input {
+    margin: 0;
+}

@@ -7,11 +7,11 @@
  * - 쿼리 파라미터 연동 지원
  */
 
-import { Card, Row, Col, Select, Button, Space, DatePicker } from 'antd'
-import { SearchOutlined } from '@ant-design/icons'
+import { Card, Row, Col, Select, Space, DatePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { LAYOUT_CONSTANTS } from '@/shared/constants/layout'
 import { LabeledSearchInput } from './labeled-search-input'
+import { AppButton } from './app-button'
 import './unified-filter-card.css'
 
 const { RangePicker } = DatePicker
@@ -56,6 +56,8 @@ export interface UnifiedFilterCardProps {
   cardStyle?: React.CSSProperties
   /** 초기화 버튼 텍스트 (기본값: "초기화") */
   resetButtonText?: string
+  /** 초기화 버튼 표시 여부 (기본값: true) */
+  showResetButton?: boolean
 }
 
 /**
@@ -86,43 +88,16 @@ export function UnifiedFilterCard({
   extra,
   cardStyle,
   resetButtonText = '초기화',
+  showResetButton = true,
 }: UnifiedFilterCardProps) {
-  // 필터를 두 줄로 분할
-  // 첫 줄: search 필드와 처음 4개 select 필드
-  // 두 번째 줄: 나머지 select 필드와 dateRange 필드
-  const shouldSplitIntoTwoRows = fields.length > 5
-
-  // 첫 줄: search 필드 + 처음 4개 select 필드
-  const firstRowFields = shouldSplitIntoTwoRows
-    ? fields.filter((f, index) => {
-        if (f.type === 'search') return true
-        if (f.type === 'select') {
-          // search 필드를 제외한 select 필드 중 처음 4개
-          const selectFieldsBefore = fields.slice(0, index).filter(field => field.type === 'select')
-          return selectFieldsBefore.length < 4
-        }
-        return false
-      })
-    : fields // 6개 미만이면 모든 필터를 첫 줄에 표시
-
-  // 두 번째 줄: 나머지 select 필드와 dateRange 필드
-  const secondRowFields = shouldSplitIntoTwoRows
-    ? fields.filter((f, index) => {
-        if (f.type === 'dateRange') return true
-        if (f.type === 'select') {
-          // search 필드를 제외한 select 필드 중 4개 이후
-          const selectFieldsBefore = fields.slice(0, index).filter(field => field.type === 'select')
-          return selectFieldsBefore.length >= 4
-        }
-        return false
-      })
-    : [] // 6개 미만이면 두 번째 줄 없음
+  // 필터 한 줄 배치 (사이즈 조정으로 단일 행 표현)
+  const filterRowFields = fields
 
   // 필터 렌더링 함수
   const renderField = (field: FilterFieldConfig) => {
     if (field.type === 'search') {
       return (
-        <Col key={field.key} flex={field.flex || '1'}>
+        <Col key={field.key} flex={field.flex ?? '1 1 0'}>
           <LabeledSearchInput
             label={field.label}
             placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
@@ -137,10 +112,11 @@ export function UnifiedFilterCard({
 
     if (field.type === 'select') {
       return (
-        <Col key={field.key} flex={field.flex || '1'}>
+        <Col key={field.key} flex={field.flex ?? '1 1 0'}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
             <Select
+              size="small"
               placeholder={field.placeholder || '전체'}
               value={filters[field.key]}
               onChange={value => onFilterChange(field.key, value)}
@@ -158,10 +134,11 @@ export function UnifiedFilterCard({
 
     if (field.type === 'dateRange') {
       return (
-        <Col key={field.key} flex={field.flex || '1.5'}>
+        <Col key={field.key} flex={field.flex ?? '1 1 0'}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
             <RangePicker
+              size="small"
               style={{ width: '100%', ...field.style }}
               value={filters[field.key]}
               onChange={dates => onFilterChange(field.key, dates)}
@@ -175,55 +152,31 @@ export function UnifiedFilterCard({
     return null
   }
 
+  const actionButtons = (
+    <Space size="small">
+      {showResetButton && onReset && (
+        <AppButton variant="default" size="small" onClick={onReset}>
+          {resetButtonText}
+        </AppButton>
+      )}
+      <AppButton variant="primary" size="small" onClick={onSearch} loading={loading}>
+        조회
+      </AppButton>
+      {extra}
+    </Space>
+  )
+
   return (
     <Card
-      className="unified-filter-card"
+      className="unified-filter-card unified-filter-card--single-row"
       style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}
     >
-      {/* 첫 번째 줄: search와 초기 select 필터들 */}
-      <Row gutter={[12, 16]} className="unified-filter-card__row" align="bottom">
-        {firstRowFields.map(renderField)}
-        {/* 첫 줄에 버튼이 필요한지 확인 (두 번째 줄이 없으면 첫 줄에 버튼 표시) */}
-        {secondRowFields.length === 0 && (
-          <Col
-            flex="none"
-            style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}
-          >
-            <Space>
-              {onReset && <Button onClick={onReset}>{resetButtonText}</Button>}
-              <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} loading={loading}>
-                조회
-              </Button>
-              {extra}
-            </Space>
-          </Col>
-        )}
+      <Row gutter={[8, 0]} className="unified-filter-card__row" align="bottom">
+        {filterRowFields.map(renderField)}
+        <Col flex="none" className="unified-filter-card__actions">
+          {actionButtons}
+        </Col>
       </Row>
-
-      {/* 두 번째 줄: 나머지 select 필터들과 dateRange */}
-      {secondRowFields.length > 0 && (
-        <Row
-          gutter={[12, 16]}
-          className="unified-filter-card__row"
-          align="bottom"
-          style={{ marginTop: 16 }}
-        >
-          {secondRowFields.map(renderField)}
-          {/* 조회 버튼 (두 번째 줄 오른쪽) */}
-          <Col
-            flex="none"
-            style={{ display: 'flex', justifyContent: 'flex-end', minWidth: 'fit-content' }}
-          >
-            <Space>
-              {onReset && <Button onClick={onReset}>{resetButtonText}</Button>}
-              <Button type="primary" icon={<SearchOutlined />} onClick={onSearch} loading={loading}>
-                조회
-              </Button>
-              {extra}
-            </Space>
-          </Col>
-        </Row>
-      )}
     </Card>
   )
 }

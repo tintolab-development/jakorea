@@ -131,25 +131,24 @@ export function getApplicationStatusIcon(status: ApplicationStatus): React.Compo
 }
 
 // 프로그램 진행 워크플로우 상태 (7단계, 대시보드·프로그램 관리 공통)
+/** 프로그램 진행 현황 필터/위젯용 6단계 (planned 제외, 교육 진행 중 = before+after 통합) */
 export const programLifecycleStatusConfig = {
   order: [
-    'planned',
     'recruiting_students',
     'recruiting_instructors',
     'matching_completed',
-    'education_before_textbook',
-    'education_after_textbook',
+    'education_after_textbook', // 쿼리값: '교육 진행 중' = before + after 모두 표시
     'education_completed',
     'document_processing_completed',
   ] as ProgramLifecycleStatus[],
   labels: {
     planned: '모집 예정',
-    recruiting_students: '수강자 모집',
-    recruiting_instructors: '강사 모집',
-    matching_completed: '매칭 완료',
-    education_before_textbook: '교육 진행 중 (교재 발송 전)',
-    education_after_textbook: '교육 진행 중 (교재 발송 후)',
-    education_completed: '교육 진행 완료',
+    recruiting_students: '수강자 모집 중',
+    recruiting_instructors: '강사 모집 중',
+    matching_completed: '교재 준비 중',
+    education_before_textbook: '교육 진행 중',
+    education_after_textbook: '교육 진행 중',
+    education_completed: '교육 완료',
     document_processing_completed: '서류 처리 완료',
   } as Record<ProgramLifecycleStatus, string>,
   colors: {
