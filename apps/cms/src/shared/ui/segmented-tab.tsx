@@ -15,8 +15,8 @@ interface SegmentedTabProps {
   options: SegmentedTabOption[]
   value: string
   onChange: (value: string) => void
-  /** small: 116×34 / medium: 217×50 */
-  size?: 'small' | 'medium'
+  /** small: 116×34 / medium: 217×50 / mediumCompact: 214×50 (진행현황 탭용) */
+  size?: 'small' | 'medium' | 'mediumCompact'
 }
 
 export function SegmentedTab({

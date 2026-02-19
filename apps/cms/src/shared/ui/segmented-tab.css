@@ -27,7 +27,7 @@
   font-size: var(--font-size-13);
 }
 
-/* medium: 프로그램 진행현황 하위 탭용 217×50 */
+/* medium: 217×50 */
 .segmented-tab--medium {
   width: 217px;
   height: 50px;
@@ -45,6 +45,28 @@
 }
 
 .segmented-tab--medium .segmented-tab__btn:last-child {
+  width: 88px;
+  flex: 0 0 88px;
+}
+
+/* mediumCompact: 프로그램 진행현황 하위 탭용 214×50 */
+.segmented-tab--mediumCompact {
+  width: 214px;
+  height: 50px;
+}
+
+.segmented-tab--mediumCompact .segmented-tab__btn {
+  height: 42px;
+  padding: 0 var(--spacing-16);
+  font-size: var(--font-size-14);
+}
+
+.segmented-tab--mediumCompact .segmented-tab__btn:first-child {
+  width: 117px;
+  flex: 0 0 117px;
+}
+
+.segmented-tab--mediumCompact .segmented-tab__btn:last-child {
   width: 88px;
   flex: 0 0 88px;
 }

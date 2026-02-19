@@ -61,6 +61,26 @@
     flex-shrink: 0;
 }
 
+/* 강사진 추가 모달: 헤더+바디(스크롤)+푸터가 뷰포트 안에 들어가도록, 푸터 항상 노출 */
+.teal-header-modal--instructor-add.teal-header-modal--large .ant-modal-content {
+    max-height: min(960px, 100vh);
+    display: flex;
+    flex-direction: column;
+}
+
+.teal-header-modal--instructor-add .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* 강사진 추가: 푸터는 스크롤과 무관하게 최하단에 고정, 닫기 버튼 중앙 정렬 */
+.teal-header-modal--instructor-add .teal-header-modal__footer {
+    flex-shrink: 0;
+    position: relative;
+    justify-content: center;
+}
+
 /* 대시보드 설정: 최대 높이 720px, 바디만 스크롤 */
 .teal-header-modal--dashboard-settings .ant-modal-content {
     max-height: 720px;
