@@ -80,15 +80,15 @@ export function AssignmentSubmissionModal({
                   for (let i = 0; i < sessions.length; i += 2) {
                     const s1 = sessions[i]
                     const s2 = sessions[i + 1]
-                    const canView1 = s1.status !== 'not_started'
-                    const canView2 = s2 && s2.status !== 'not_started'
+                    const canView1 = s1.status === 'submitted'
+                    const canView2 = s2 ? s2.status === 'submitted' : false
                     rows.push(
                       <tr key={i}>
                         <td className="assignment-submission-modal__cell assignment-submission-modal__cell--label">
                           {s1.roundNumber}회차
                         </td>
                         <td className="assignment-submission-modal__cell assignment-submission-modal__cell--value">
-                          <div className="assignment-submission-modal__cell-row">
+                          <div className="assignment-submission-modal__cell-row assignment-submission-modal__cell-row--between">
                             <span className="assignment-submission-modal__status">
                               {ASSIGNMENT_SUBMISSION_STATUS_LABELS[s1.status]}
                             </span>
@@ -107,7 +107,7 @@ export function AssignmentSubmissionModal({
                         </td>
                         <td className="assignment-submission-modal__cell assignment-submission-modal__cell--value">
                           {s2 ? (
-                            <div className="assignment-submission-modal__cell-row">
+                            <div className="assignment-submission-modal__cell-row assignment-submission-modal__cell-row--between">
                               <span className="assignment-submission-modal__status">
                                 {ASSIGNMENT_SUBMISSION_STATUS_LABELS[s2.status]}
                               </span>

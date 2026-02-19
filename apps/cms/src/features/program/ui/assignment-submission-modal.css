@@ -112,6 +112,11 @@
     box-sizing: border-box;
 }
 
+/* 회차 td: 상태 텍스트(왼쪽)와 과제 보기 버튼(오른쪽) space-between */
+.assignment-submission-modal__cell-row--between {
+    justify-content: space-between;
+}
+
 .assignment-submission-modal__status {
     flex-shrink: 0;
 }

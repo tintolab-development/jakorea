@@ -3,8 +3,9 @@
  * 서브 탭(신청 학교 | 신청 강사) + 필터 + 조회 + 테이블 (진행 현황 탭 패턴 재사용)
  */
 
-import { useMemo, useState } from 'react'
-import { Card, Table, Row, Col, Select } from 'antd'
+import { useMemo, useState, useCallback } from 'react'
+import { Card, Table, Row, Col, Select, Dropdown, message } from 'antd'
+import type { MenuProps } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
@@ -96,8 +97,10 @@ interface ProgramApplicantsTabProps {
 export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicantsTabProps) {
   const { subTab, filters, setSubTab, setFilter } = useApplicantsTabParams()
   const [appliedFilters, setAppliedFilters] = useState<ApplicantsFilters>(filters)
-  const [schoolList] = useState<ApplicantSchoolRow[]>(() => [...MOCK_APPLICANT_SCHOOLS])
-  const [instructorList] = useState<ApplicantInstructorRow[]>(() => [...MOCK_APPLICANT_INSTRUCTORS])
+  const [schoolList, setSchoolList] = useState<ApplicantSchoolRow[]>(() => [...MOCK_APPLICANT_SCHOOLS])
+  const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [
+    ...MOCK_APPLICANT_INSTRUCTORS,
+  ])
   const [schoolDetailModalOpen, setSchoolDetailModalOpen] = useState(false)
   const [selectedApplicantSchool, setSelectedApplicantSchool] = useState<ApplicantSchoolRow | null>(
     null
@@ -112,6 +115,31 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
       { label: APPROVAL_STATUS_LABELS.rejected, value: 'rejected' },
       { label: APPROVAL_STATUS_LABELS.approved, value: 'approved' },
     ],
+    []
+  )
+
+  const approvalStatusKeys = useMemo<ApprovalStatusKey[]>(
+    () => (Object.keys(APPROVAL_STATUS_LABELS) as ApprovalStatusKey[]),
+    []
+  )
+
+  const handleSchoolApprovalStatusChange = useCallback(
+    (recordId: string, status: ApprovalStatusKey) => {
+      setSchoolList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
+      )
+      message.success('결재 현황이 변경되었습니다.')
+    },
+    []
+  )
+
+  const handleInstructorApprovalStatusChange = useCallback(
+    (recordId: string, status: ApprovalStatusKey) => {
+      setInstructorList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
+      )
+      message.success('결재 현황이 변경되었습니다.')
+    },
     []
   )
 
@@ -249,10 +277,39 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
         key: 'approvalStatus',
         width: 120,
         align: 'center',
-        render: (status: ApprovalStatusKey) => <ApprovalStatusBadge status={status} />,
+        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => {
+          const badge = <ApprovalStatusBadge status={status} />
+          const items: MenuProps['items'] = approvalStatusKeys.map(key => ({
+            key,
+            label: <ApprovalStatusBadge status={key} />,
+            onClick: e => {
+              e?.domEvent?.stopPropagation()
+              handleSchoolApprovalStatusChange(record.id, key)
+            },
+          }))
+          return (
+            <div
+              className="program-applicants-tab__approval-dropdown-cell"
+              onClick={e => e.stopPropagation()}
+            >
+              <Dropdown
+                menu={{ items }}
+                trigger={['click']}
+                getPopupContainer={() => document.body}
+              >
+                <span
+                  className="program-applicants-tab__approval-dropdown-trigger"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {badge}
+                </span>
+              </Dropdown>
+            </div>
+          )
+        },
       },
     ],
-    []
+    [approvalStatusKeys, handleSchoolApprovalStatusChange]
   )
 
   const instructorColumns: ColumnsType<ApplicantInstructorRow> = useMemo(
@@ -311,10 +368,39 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
         key: 'approvalStatus',
         width: 120,
         align: 'center',
-        render: (status: ApprovalStatusKey) => <ApprovalStatusBadge status={status} />,
+        render: (status: ApprovalStatusKey, record: ApplicantInstructorRow) => {
+          const badge = <ApprovalStatusBadge status={status} />
+          const items: MenuProps['items'] = approvalStatusKeys.map(key => ({
+            key,
+            label: <ApprovalStatusBadge status={key} />,
+            onClick: e => {
+              e?.domEvent?.stopPropagation()
+              handleInstructorApprovalStatusChange(record.id, key)
+            },
+          }))
+          return (
+            <div
+              className="program-applicants-tab__approval-dropdown-cell"
+              onClick={e => e.stopPropagation()}
+            >
+              <Dropdown
+                menu={{ items }}
+                trigger={['click']}
+                getPopupContainer={() => document.body}
+              >
+                <span
+                  className="program-applicants-tab__approval-dropdown-trigger"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {badge}
+                </span>
+              </Dropdown>
+            </div>
+          )
+        },
       },
     ],
-    []
+    [approvalStatusKeys, handleInstructorApprovalStatusChange]
   )
 
   return (
@@ -495,7 +581,15 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                 columns={columns}
                 dataSource={filteredSchools}
                 onRow={record => ({
-                  onClick: () => openSchoolDetail(record),
+                  onClick: e => {
+                    const target = e.target as HTMLElement
+                    if (
+                      target.closest('.program-applicants-tab__approval-dropdown-cell') ||
+                      target.closest('.program-applicants-tab__approval-dropdown-trigger')
+                    )
+                      return
+                    openSchoolDetail(record)
+                  },
                   style: { cursor: 'pointer' },
                 })}
               />
@@ -524,7 +618,13 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                 dataSource={filteredInstructors}
                 locale={{ emptyText: '신청 강사 데이터가 없습니다.' }}
                 onRow={record => ({
-                  onClick: () => {
+                  onClick: e => {
+                    const target = e.target as HTMLElement
+                    if (
+                      target.closest('.program-applicants-tab__approval-dropdown-cell') ||
+                      target.closest('.program-applicants-tab__approval-dropdown-trigger')
+                    )
+                      return
                     setSelectedInstructor(record)
                     setInstructorDetailModalOpen(true)
                   },

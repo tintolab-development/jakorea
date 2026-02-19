@@ -203,6 +203,17 @@
     background: #f0f0f0 !important;
 }
 
+/* 결재 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(상세 모달) 방지 */
+.program-applicants-tab__approval-dropdown-cell {
+    position: relative;
+    z-index: 1;
+}
+
+.program-applicants-tab__approval-dropdown-trigger {
+    cursor: pointer;
+    display: inline-block;
+}
+
 @media (max-width: 1200px) {
     .program-applicants-tab__filters .ant-row.program-applicants-tab__filter-row {
         flex-wrap: wrap;
