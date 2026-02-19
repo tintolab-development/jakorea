@@ -53,7 +53,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 교육/봉사, 3뎁스 교육 하위 [목록, 일정, 수강 신청 현황, 강의 신청 현황] */
+  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 [교육 프로그램(→프로그램 목록), 수강 신청 현황, 강의 신청 현황, 봉사 프로그램] */
   {
     key: 'programs-group',
     label: '프로그램 관리',
@@ -62,35 +62,26 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       {
-        key: 'education-programs-group',
+        key: '/programs/education',
         label: '교육 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
-        children: [
-          {
-            key: '/programs/education',
-            label: '프로그램 목록',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/applications',
-            label: '수강 신청 현황',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/instructor-applications',
-            label: '강의 신청 현황',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-        ],
       },
+      // {
+      //   key: '/applications',
+      //   label: '수강 신청 현황',
+      //   icon: <DotIcon />,
+      //   enabled: true,
+      //   allowedRoles: ['ADMIN'],
+      // },
+      // {
+      //   key: '/instructor-applications',
+      //   label: '강의 신청 현황',
+      //   icon: <DotIcon />,
+      //   enabled: true,
+      //   allowedRoles: ['ADMIN'],
+      // },
       {
         key: '/programs/volunteer',
         label: '봉사 프로그램',
