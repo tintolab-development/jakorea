@@ -38,7 +38,10 @@ const INSTRUCTOR_NAMES = [
   '임강사',
 ]
 
-/** 모달 등에서 학교 배정 선택용 옵션 */
+/**
+ * 모달 등에서 학교 배정 선택용 옵션.
+ * 참여 학교 mock(participating-schools)의 SCHOOL_NAMES와 동일 목록 유지 → 담당 강사진·학교 상세 강사진 연동.
+ */
 export const INSTRUCTOR_SCHOOL_OPTIONS = [
   '강서초등학교',
   '마포초등학교',
@@ -50,6 +53,7 @@ export const INSTRUCTOR_SCHOOL_OPTIONS = [
   '광주광산초등학교',
   '대전유성초등학교',
   '울산중구초등학교',
+  '세종반곡초등학교',
   '수원영덕초등학교',
   '성남분당초등학교',
   '고양일산초등학교',
@@ -59,7 +63,16 @@ export const INSTRUCTOR_SCHOOL_OPTIONS = [
   '전주완산초등학교',
   '천안서북구초등학교',
   '안양만안초등학교',
+  '안산상록초등학교',
   '김해율하초등학교',
+  '포항남구초등학교',
+  '진주초등학교',
+  '춘천초등학교',
+  '원주초등학교',
+  '제주초등학교',
+  '목포초등학교',
+  '여수초등학교',
+  '순천초등학교',
 ] as const
 
 const SCHOOL_NAMES = [...INSTRUCTOR_SCHOOL_OPTIONS]

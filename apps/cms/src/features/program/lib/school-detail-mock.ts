@@ -43,7 +43,10 @@ function pick<T>(arr: T[], seed: number): T {
   return arr[seed % arr.length]
 }
 
-function toDetailInstructor(
+/**
+ * 참여 강사 행 → 학교 상세 모달용 강사 행 (모달·테이블 연동 시 재사용)
+ */
+export function toDetailInstructor(
   row: ParticipatingInstructorRow,
   index: number
 ): SchoolDetailInstructorRow {
@@ -56,6 +59,18 @@ function toDetailInstructor(
     email: pick(INSTRUCTOR_EMAILS, seed + index),
     settlementStatus: row.settlementStatus as SettlementStatusKey,
   }
+}
+
+/**
+ * 참여 강사 목록에서 특정 학교 배정 강사만 추출해 모달용 강사 행 배열로 변환
+ * (프로그램 진행현황 탭에서 학교 상세 모달·참여 학교 테이블 "담당 강사진" 연동용)
+ */
+export function getInstructorRowsForSchool(
+  schoolName: string,
+  instructorRows: ParticipatingInstructorRow[]
+): SchoolDetailInstructorRow[] {
+  const forSchool = instructorRows.filter(r => r.schoolName === schoolName)
+  return forSchool.map((r, i) => toDetailInstructor(r, i))
 }
 
 /**

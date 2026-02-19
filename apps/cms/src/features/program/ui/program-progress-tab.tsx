@@ -27,6 +27,7 @@ import {
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import {
   AddInstructorModal,
   buildInstructorRowFromForm,
@@ -40,7 +41,10 @@ import {
   buildInstructorMessageLines,
 } from './manager-delete-guide-modal'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import { getSchoolDetailByRow } from '../lib/school-detail-mock'
+import {
+  getSchoolDetailByRow,
+  getInstructorRowsForSchool,
+} from '../lib/school-detail-mock'
 import type {
   SchoolDetailForModal,
   InstructorListFormInstructor,
@@ -49,6 +53,35 @@ import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
 const INSTRUCTOR_TAB = 'instructors'
+
+const INSTRUCTOR_LIST_STORAGE_KEY = 'cms-program-progress-instructors'
+
+function loadInstructorListFromStorage(): ParticipatingInstructorRow[] | null {
+  try {
+    const raw = localStorage.getItem(INSTRUCTOR_LIST_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return null
+    const valid = parsed.every(
+      (r: unknown) =>
+        r != null &&
+        typeof r === 'object' &&
+        typeof (r as ParticipatingInstructorRow).id === 'string' &&
+        typeof (r as ParticipatingInstructorRow).instructorName === 'string'
+    )
+    return valid ? (parsed as ParticipatingInstructorRow[]) : null
+  } catch {
+    return null
+  }
+}
+
+function saveInstructorListToStorage(list: ParticipatingInstructorRow[]) {
+  try {
+    localStorage.setItem(INSTRUCTOR_LIST_STORAGE_KEY, JSON.stringify(list))
+  } catch {
+    // ignore
+  }
+}
 
 const REGION_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -127,10 +160,15 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() => [
     ...MOCK_PARTICIPATING_SCHOOLS,
   ])
-  /** 강사 목록 (초기 mock, 추가/삭제 반영) */
-  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => [
-    ...MOCK_PARTICIPATING_INSTRUCTORS,
-  ])
+  /** 강사 목록 (localStorage 우선, 없으면 mock; 추가/삭제 시 저장) */
+  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => {
+    const stored = loadInstructorListFromStorage()
+    return stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
+  })
+
+  useEffect(() => {
+    saveInstructorListToStorage(instructorList)
+  }, [instructorList])
   const [addInstructorModalOpen, setAddInstructorModalOpen] = useState(false)
   const [schoolDeleteGuideOpen, setSchoolDeleteGuideOpen] = useState(false)
   const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
@@ -145,6 +183,23 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   const [savedInstructorPatches, setSavedInstructorPatches] = useState<
     Record<string, InstructorListFormInstructor[]>
   >({})
+
+  /** 학교별 담당 강사진 표시 문자열 (저장 패치 우선, 없으면 참여 강사 목록에서 schoolName 기준) */
+  const getInstructorDisplayForSchool = useCallback(
+    (schoolId: string, schoolName: string): string => {
+      const saved = savedInstructorPatches[schoolId]
+      const names =
+        saved !== undefined
+          ? saved.map(i => i.instructorName)
+          : instructorList
+              .filter(r => r.schoolName === schoolName)
+              .map(r => r.instructorName)
+      if (names.length === 0) return '-'
+      if (names.length <= 2) return names.join(', ')
+      return `${names[0]} 외 ${names.length - 1}명`
+    },
+    [instructorList, savedInstructorPatches]
+  )
 
   const filteredSchools = useMemo(() => {
     return schoolList.filter(row => {
@@ -416,14 +471,15 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
       },
       {
         title: '담당 강사진',
-        dataIndex: 'instructors',
         key: 'instructors',
         width: 160,
         align: 'center',
         ellipsis: true,
+        render: (_: unknown, record: ParticipatingSchoolRow) =>
+          getInstructorDisplayForSchool(record.id, record.schoolName),
       },
     ],
-    [handleTextbookStatusChange, textbookStatusKeys]
+    [handleTextbookStatusChange, textbookStatusKeys, getInstructorDisplayForSchool]
   )
 
   const instructorColumns: ColumnsType<ParticipatingInstructorRow> = useMemo(
@@ -528,22 +584,15 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
       <Card className="program-progress-tab__card" bordered={false}>
         <div className="program-progress-tab__top">
           <div className="program-progress-tab__bar-inner">
-            <div className="program-progress-tab__tabs">
-              <button
-                type="button"
-                className={`program-progress-tab__tab-btn ${subTab === PARTICIPATING_SCHOOL_TAB ? 'program-progress-tab__tab-btn--active' : ''}`}
-                onClick={() => setSubTab(PARTICIPATING_SCHOOL_TAB)}
-              >
-                참여 학교 정보
-              </button>
-              <button
-                type="button"
-                className={`program-progress-tab__tab-btn ${subTab === INSTRUCTOR_TAB ? 'program-progress-tab__tab-btn--active' : ''}`}
-                onClick={() => setSubTab(INSTRUCTOR_TAB)}
-              >
-                강사 정보
-              </button>
-            </div>
+            <SegmentedTab
+              options={[
+                { label: '참여 학교 정보', value: PARTICIPATING_SCHOOL_TAB },
+                { label: '강사 정보', value: INSTRUCTOR_TAB },
+              ]}
+              value={subTab}
+              onChange={v => setSubTab(v as typeof PARTICIPATING_SCHOOL_TAB | typeof INSTRUCTOR_TAB)}
+              size="mediumCompact"
+            />
             <div className="program-progress-tab__filters">
               <Row
                 gutter={[12, 12]}
@@ -806,6 +855,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
             ? (() => {
                 const base = getSchoolDetailByRow(selectedSchoolForDetail)
                 const schoolId = selectedSchoolForDetail.id
+                const schoolName = selectedSchoolForDetail.schoolName
                 const savedInstructors = savedInstructorPatches[schoolId]
                 const instructors =
                   savedInstructors !== undefined
@@ -813,7 +863,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                         ...inv,
                         settlementStatus: 'pending' as SettlementStatusKey,
                       }))
-                    : base.instructors
+                    : getInstructorRowsForSchool(schoolName, instructorList)
                 return {
                   ...base,
                   ...savedBasicPatches[schoolId],
