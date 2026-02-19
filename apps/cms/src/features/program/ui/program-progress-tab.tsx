@@ -3,9 +3,8 @@
  * 탭(참여 학교 정보 | 강사 정보)과 필터가 같은 레벨 한 줄 배치, 쿼리 파라미터 연동
  */
 
-import { useMemo, useState, useCallback, useEffect } from 'react'
-import { Card, Table, Row, Col, Select, message, Dropdown } from 'antd'
-import type { MenuProps } from 'antd'
+import { useMemo, useState, useEffect } from 'react'
+import { Card, Table, Row, Col, Select } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -13,13 +12,11 @@ import {
   type ProgressFilters,
 } from '../hooks/use-program-progress-params'
 import {
-  MOCK_PARTICIPATING_SCHOOLS,
   TEXTBOOK_STATUS_LABELS,
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import {
-  MOCK_PARTICIPATING_INSTRUCTORS,
   SETTLEMENT_STATUS_LABELS,
   type ParticipatingInstructorRow,
   type SettlementStatusKey,
@@ -28,11 +25,7 @@ import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
-import {
-  AddInstructorModal,
-  buildInstructorRowFromForm,
-  type AddInstructorFormValues,
-} from './add-instructor-modal'
+import { AddInstructorModal } from './add-instructor-modal'
 import { SchoolDetailModal } from './school-detail-modal'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import {
@@ -41,47 +34,14 @@ import {
   buildInstructorMessageLines,
 } from './manager-delete-guide-modal'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import {
-  getSchoolDetailByRow,
-  getInstructorRowsForSchool,
-} from '../lib/school-detail-mock'
-import type {
-  SchoolDetailForModal,
-  InstructorListFormInstructor,
-} from '../model/school-detail-types'
+import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../lib/school-detail-mock'
+import { useProgressSchoolList } from '../hooks/use-progress-school-list'
+import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
+import { StatusDropdownCell } from './status-dropdown-cell'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
 const INSTRUCTOR_TAB = 'instructors'
-
-const INSTRUCTOR_LIST_STORAGE_KEY = 'cms-program-progress-instructors'
-
-function loadInstructorListFromStorage(): ParticipatingInstructorRow[] | null {
-  try {
-    const raw = localStorage.getItem(INSTRUCTOR_LIST_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return null
-    const valid = parsed.every(
-      (r: unknown) =>
-        r != null &&
-        typeof r === 'object' &&
-        typeof (r as ParticipatingInstructorRow).id === 'string' &&
-        typeof (r as ParticipatingInstructorRow).instructorName === 'string'
-    )
-    return valid ? (parsed as ParticipatingInstructorRow[]) : null
-  } catch {
-    return null
-  }
-}
-
-function saveInstructorListToStorage(list: ParticipatingInstructorRow[]) {
-  try {
-    localStorage.setItem(INSTRUCTOR_LIST_STORAGE_KEY, JSON.stringify(list))
-  } catch {
-    // ignore
-  }
-}
 
 const REGION_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -145,189 +105,64 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   const { subTab, filters, setSubTab, setFilter } = useProgramProgressParams()
   /** 교사/강사명은 로컬 state로 두고 blur/조회 시에만 URL 동기화 (한글 IME 조합 깨짐 방지) */
   const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName ?? '')
-  const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
-  const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
-  const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
-  const [selectedInstructorForDetail, setSelectedInstructorForDetail] =
-    useState<ParticipatingInstructorRow | null>(null)
   /** 조회 버튼 클릭 시에만 반영되는 필터 (테이블 필터링에 사용) */
   const [appliedFilters, setAppliedFilters] = useState<ProgressFilters>(filters)
 
   useEffect(() => {
     setLocalTeacherName(filters.teacherName ?? '')
   }, [filters.teacherName])
-  /** 참여 학교 목록 (초기 mock, 삭제 반영) */
-  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() => [
-    ...MOCK_PARTICIPATING_SCHOOLS,
-  ])
-  /** 강사 목록 (localStorage 우선, 없으면 mock; 추가/삭제 시 저장) */
-  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => {
-    const stored = loadInstructorListFromStorage()
-    return stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
+
+  const instructorHook = useProgressInstructorList({ appliedFilters })
+  const schoolHook = useProgressSchoolList({
+    appliedFilters,
+    instructorList: instructorHook.instructorList,
   })
 
-  useEffect(() => {
-    saveInstructorListToStorage(instructorList)
-  }, [instructorList])
-  const [addInstructorModalOpen, setAddInstructorModalOpen] = useState(false)
-  const [schoolDeleteGuideOpen, setSchoolDeleteGuideOpen] = useState(false)
-  const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
-  const [schoolDetailModalOpen, setSchoolDetailModalOpen] = useState(false)
-  const [selectedSchoolForDetail, setSelectedSchoolForDetail] =
-    useState<ParticipatingSchoolRow | null>(null)
-  /** 기본 정보 수정 저장 시 반영 (목록 행 + 모달 상세) */
-  const [savedBasicPatches, setSavedBasicPatches] = useState<
-    Record<string, Partial<SchoolDetailForModal>>
-  >({})
-  /** 강사진 추가/수정 저장 시 반영 (학교별 강사 목록) */
-  const [savedInstructorPatches, setSavedInstructorPatches] = useState<
-    Record<string, InstructorListFormInstructor[]>
-  >({})
+  const {
+    schoolList: _schoolList,
+    selectedSchoolRowKeys,
+    setSelectedSchoolRowKeys,
+    selectedSchoolForDetail,
+    setSelectedSchoolForDetail,
+    schoolDetailModalOpen,
+    setSchoolDetailModalOpen,
+    schoolDeleteGuideOpen,
+    setSchoolDeleteGuideOpen,
+    savedBasicPatches,
+    setSavedBasicPatches,
+    savedInstructorPatches,
+    setSavedInstructorPatches,
+    filteredSchools,
+    schoolNamesToDelete,
+    handleTextbookStatusChange,
+    handleSchoolDeleteClick,
+    handleSchoolDeleteConfirm,
+    getInstructorDisplayForSchool,
+  } = schoolHook
 
-  /** 학교별 담당 강사진 표시 문자열 (저장 패치 우선, 없으면 참여 강사 목록에서 schoolName 기준) */
-  const getInstructorDisplayForSchool = useCallback(
-    (schoolId: string, schoolName: string): string => {
-      const saved = savedInstructorPatches[schoolId]
-      const names =
-        saved !== undefined
-          ? saved.map(i => i.instructorName)
-          : instructorList
-              .filter(r => r.schoolName === schoolName)
-              .map(r => r.instructorName)
-      if (names.length === 0) return '-'
-      if (names.length <= 2) return names.join(', ')
-      return `${names[0]} 외 ${names.length - 1}명`
-    },
-    [instructorList, savedInstructorPatches]
-  )
-
-  const filteredSchools = useMemo(() => {
-    return schoolList.filter(row => {
-      if (
-        appliedFilters.region &&
-        appliedFilters.region !== 'all' &&
-        !row.region.includes(appliedFilters.region)
-      )
-        return false
-      if (
-        appliedFilters.educationGrade &&
-        appliedFilters.educationGrade !== 'all' &&
-        row.educationGrade !== appliedFilters.educationGrade
-      )
-        return false
-      if (
-        appliedFilters.lectureRound &&
-        appliedFilters.lectureRound !== 'all' &&
-        row.lectureRound !== appliedFilters.lectureRound
-      )
-        return false
-      if (
-        appliedFilters.textbookStatus &&
-        appliedFilters.textbookStatus !== 'all' &&
-        row.textbookStatus !== appliedFilters.textbookStatus
-      )
-        return false
-      const keyword = (appliedFilters.teacherName || '').trim()
-      if (keyword) {
-        const lower = keyword.toLowerCase()
-        if (
-          !row.teacherName.toLowerCase().includes(lower) &&
-          !row.instructors.toLowerCase().includes(lower)
-        )
-          return false
-      }
-      return true
-    })
-  }, [schoolList, appliedFilters])
-
-  const filteredInstructors = useMemo(() => {
-    return instructorList.filter(row => {
-      if (
-        appliedFilters.educationGrade &&
-        appliedFilters.educationGrade !== 'all' &&
-        row.educationGrade !== appliedFilters.educationGrade
-      )
-        return false
-      if (
-        appliedFilters.lectureRound &&
-        appliedFilters.lectureRound !== 'all' &&
-        row.lectureRound !== appliedFilters.lectureRound
-      )
-        return false
-      if (
-        appliedFilters.settlementStatus &&
-        appliedFilters.settlementStatus !== 'all' &&
-        row.settlementStatus !== appliedFilters.settlementStatus
-      )
-        return false
-      const keyword = (appliedFilters.teacherName || '').trim()
-      if (keyword) {
-        const lower = keyword.toLowerCase()
-        if (
-          !row.instructorName.toLowerCase().includes(lower) &&
-          !row.teacherName.toLowerCase().includes(lower)
-        )
-          return false
-      }
-      return true
-    })
-  }, [instructorList, appliedFilters])
-
-  const handleAddInstructor = (values: AddInstructorFormValues) => {
-    const nextNo = instructorList.length > 0 ? Math.max(...instructorList.map(r => r.no)) + 1 : 1
-    const nextId = `instructor-new-${Date.now()}`
-    const newRow = buildInstructorRowFromForm(values, nextNo, nextId)
-    setInstructorList(prev => [newRow, ...prev])
-    message.success('강사가 추가되었습니다.')
-  }
+  const {
+    instructorList,
+    selectedInstructorRowKeys,
+    setSelectedInstructorRowKeys,
+    selectedInstructorForDetail,
+    setSelectedInstructorForDetail,
+    instructorDetailModalOpen,
+    setInstructorDetailModalOpen,
+    addInstructorModalOpen,
+    setAddInstructorModalOpen,
+    instructorDeleteGuideOpen,
+    setInstructorDeleteGuideOpen,
+    filteredInstructors,
+    instructorNamesToDelete,
+    handleAddInstructor,
+    handleSettlementStatusChange,
+    handleInstructorDeleteClick,
+    handleInstructorDeleteConfirm,
+  } = instructorHook
 
   const handleSearch = () => {
     setFilter('teacherName', localTeacherName)
     setAppliedFilters({ ...filters, teacherName: localTeacherName })
-  }
-
-  const handleSchoolDeleteClick = () => {
-    if (selectedSchoolRowKeys.length === 0) {
-      message.warning('삭제할 학교를 선택해 주세요.')
-      return
-    }
-    setSchoolDeleteGuideOpen(true)
-  }
-
-  const schoolNamesToDelete = useMemo(() => {
-    const keysSet = new Set(selectedSchoolRowKeys.map(String))
-    return schoolList.filter(row => keysSet.has(row.id)).map(row => row.schoolName)
-  }, [selectedSchoolRowKeys, schoolList])
-
-  const handleSchoolDeleteConfirm = () => {
-    const keysToDelete = new Set(selectedSchoolRowKeys.map(String))
-    const count = keysToDelete.size
-    setSchoolList(prev => prev.filter(row => !keysToDelete.has(row.id)))
-    setSelectedSchoolRowKeys([])
-    setSchoolDeleteGuideOpen(false)
-    message.success(`${count}건의 학교가 삭제되었습니다.`)
-  }
-
-  const handleInstructorDeleteClick = () => {
-    if (selectedInstructorRowKeys.length === 0) {
-      message.warning('삭제할 강사를 선택해 주세요.')
-      return
-    }
-    setInstructorDeleteGuideOpen(true)
-  }
-
-  const instructorNamesToDelete = useMemo(() => {
-    const keysSet = new Set(selectedInstructorRowKeys.map(String))
-    return instructorList.filter(row => keysSet.has(row.id)).map(row => row.instructorName)
-  }, [selectedInstructorRowKeys, instructorList])
-
-  const handleInstructorDeleteConfirm = () => {
-    const keysToDelete = new Set(selectedInstructorRowKeys.map(String))
-    const count = keysToDelete.size
-    setInstructorList(prev => prev.filter(row => !keysToDelete.has(row.id)))
-    setSelectedInstructorRowKeys([])
-    setInstructorDeleteGuideOpen(false)
-    message.success(`${count}명의 강사가 삭제되었습니다.`)
   }
 
   /** 진행현황 참여 강사 → 모달용 ApplicantInstructorRow 형태로 변환 */
@@ -346,25 +181,6 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     educationLevel: '-',
     educationSchoolName: '-',
   })
-
-  const handleTextbookStatusChange = useCallback(
-    (recordId: string, status: TextbookStatusKey) => {
-      setSchoolList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
-      )
-    },
-    []
-  )
-
-  const handleSettlementStatusChange = useCallback(
-    (recordId: string, status: SettlementStatusKey) => {
-      setInstructorList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, settlementStatus: status } : row))
-      )
-      message.success('정산 현황이 변경되었습니다.')
-    },
-    []
-  )
 
   const textbookStatusKeys: TextbookStatusKey[] = useMemo(
     () => Object.keys(TEXTBOOK_STATUS_LABELS) as TextbookStatusKey[],
@@ -431,36 +247,16 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'textbookStatus',
         width: 140,
         align: 'center',
-        render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
-          const badge = <TextbookStatusBadge status={status} />
-          const items: MenuProps['items'] = textbookStatusKeys.map(key => ({
-            key,
-            label: <TextbookStatusBadge status={key} />,
-            onClick: e => {
-              e?.domEvent?.stopPropagation()
-              handleTextbookStatusChange(record.id, key)
-            },
-          }))
-          return (
-            <div
-              className="textbook-status-dropdown-cell"
-              onClick={e => e.stopPropagation()}
-            >
-              <Dropdown
-                menu={{ items }}
-                trigger={['click']}
-                getPopupContainer={() => document.body}
-              >
-                <span
-                  className="textbook-status-dropdown-trigger"
-                  onClick={e => e.stopPropagation()}
-                >
-                  {badge}
-                </span>
-              </Dropdown>
-            </div>
-          )
-        },
+        render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
+          <StatusDropdownCell
+            status={status}
+            statusKeys={textbookStatusKeys}
+            renderBadge={s => <TextbookStatusBadge status={s} />}
+            onChange={key => handleTextbookStatusChange(record.id, key)}
+            cellClassName="textbook-status-dropdown-cell"
+            triggerClassName="textbook-status-dropdown-trigger"
+          />
+        ),
       },
       {
         title: '담당 교사',
@@ -536,36 +332,16 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'settlementStatus',
         width: 160,
         align: 'center',
-        render: (status: SettlementStatusKey, record: ParticipatingInstructorRow) => {
-          const badge = <SettlementStatusBadge status={status} />
-          const items: MenuProps['items'] = settlementStatusKeys.map(key => ({
-            key,
-            label: <SettlementStatusBadge status={key} />,
-            onClick: e => {
-              e?.domEvent?.stopPropagation()
-              handleSettlementStatusChange(record.id, key)
-            },
-          }))
-          return (
-            <div
-              className="settlement-status-dropdown-cell"
-              onClick={e => e.stopPropagation()}
-            >
-              <Dropdown
-                menu={{ items }}
-                trigger={['click']}
-                getPopupContainer={() => document.body}
-              >
-                <span
-                  className="settlement-status-dropdown-trigger"
-                  onClick={e => e.stopPropagation()}
-                >
-                  {badge}
-                </span>
-              </Dropdown>
-            </div>
-          )
-        },
+        render: (status: SettlementStatusKey, record: ParticipatingInstructorRow) => (
+          <StatusDropdownCell
+            status={status}
+            statusKeys={settlementStatusKeys}
+            renderBadge={s => <SettlementStatusBadge status={s} />}
+            onChange={key => handleSettlementStatusChange(record.id, key)}
+            cellClassName="settlement-status-dropdown-cell"
+            triggerClassName="settlement-status-dropdown-trigger"
+          />
+        ),
       },
       {
         title: '담당 교사',

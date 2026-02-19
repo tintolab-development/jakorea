@@ -5,8 +5,8 @@
  * 섹션: 기본 정보(프로필 사진 + 2열 필드), 최종 학력, 경력 상세, 자격 및 면허, 수상 및 수료 내역
  */
 
-import { useEffect, useRef, useState } from 'react'
-import { Form, Input, Select, Radio, Checkbox, DatePicker, Upload } from 'antd'
+import { useEffect, useState } from 'react'
+import { Form, Input, Select, DatePicker, Upload } from 'antd'
 import { CameraOutlined, SearchOutlined } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -16,9 +16,11 @@ import type {
   SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
 import { INSTRUCTOR_SCHOOL_OPTIONS } from '@/data/mock/participating-instructors'
+import { EducationSection } from './add-instructor-education-section'
+import { CareerDetailSection } from './add-instructor-career-section'
 import './add-instructor-modal.css'
 
-/** 삭제용 X 아이콘 24×24 */
+/** 삭제용 X 아이콘 24×24 (자격·수상 섹션 삭제 버튼) */
 function CloseXIcon({ maskId }: { maskId: string }) {
   return (
     <svg
@@ -78,21 +80,6 @@ const EDUCATION_LEVEL_OPTIONS = [
   { label: '학교', value: 'school' },
   { label: '대학 4년제', value: 'bachelor' },
 ]
-/** 최종 학력 섹션: 학교 유형 선택 옵션 (선택에 따라 2행 라벨·전공 노출 여부 변경) */
-const EDUCATION_SCHOOL_TYPE_OPTIONS = [
-  { label: '고등학교', value: '고등학교' },
-  { label: '중학교', value: '중학교' },
-  { label: '대학 2・3년제', value: '대학 2・3년제' },
-  { label: '대학 4년제', value: '대학 4년제' },
-]
-/** 중/고등학교 선택 시 전공 입력란 비노출 */
-const SCHOOL_TYPES_WITHOUT_MAJOR = ['고등학교', '중학교']
-const EDUCATION_STATUS_OPTIONS = [
-  { label: '상태', value: '' },
-  { label: '재학', value: 'enrolled' },
-  { label: '졸업', value: 'graduated' },
-]
-
 export interface EducationItem {
   schoolType?: string
   status?: string
@@ -166,13 +153,7 @@ const requiredMark = (labelNode: React.ReactNode, { required }: { required?: boo
 
 export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModalProps) {
   const [form] = Form.useForm<AddInstructorFormValues>()
-  const [careerType, setCareerType] = useState<'new' | 'experienced'>('new')
   const [profilePreviewUrl, setProfilePreviewUrl] = useState<string | null>(null)
-  const addCareerRef = useRef<((defaultValue?: unknown) => void) | null>(null)
-  const educationSchoolType = Form.useWatch(['educations', 0, 'schoolType'], form)
-  const showMajorInput =
-    !educationSchoolType || !SCHOOL_TYPES_WITHOUT_MAJOR.includes(educationSchoolType)
-  const educationRowLabel = educationSchoolType || '학교'
 
   useEffect(() => {
     if (open) {
@@ -184,7 +165,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
         qualifications: [{}],
         awards: [{}],
       })
-      setCareerType('new')
       setProfilePreviewUrl(prev => {
         if (prev) URL.revokeObjectURL(prev)
         return null
@@ -621,314 +601,12 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
 
         <div className="add-instructor-modal__divider" aria-hidden />
 
-        {/* 최종 학력: 기본정보와 동일한 테이블 스타일 */}
-        <section className="add-instructor-modal__section">
-          <h3 className="add-instructor-modal__section-title">최종 학력</h3>
-          <Form.List name="educations">
-            {(fields, { remove }) => (
-              <>
-                <div className="add-instructor-modal__education-table-wrap">
-                  <table className="add-instructor-modal__education-table add-instructor-modal__basic-table">
-                    <colgroup>
-                      <col className="add-instructor-modal__education-table-col-label" />
-                      <col className="add-instructor-modal__education-table-col-input" />
-                    </colgroup>
-                    <tbody>
-                      {/* 1행: 최종 학력 * | 학교(220px) | 상태 */}
-                      <tr>
-                        <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
-                          <span className="add-instructor-modal__basic-table-label">최종 학력</span>
-                          <span className="add-instructor-modal__required-asterisk" aria-hidden>
-                            {' '}
-                            *
-                          </span>
-                        </td>
-                        <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                          <div className="add-instructor-modal__basic-table-inline">
-                            {fields.length > 0 ? (
-                              <>
-                                <Form.Item name={[fields[0].name, 'schoolType']} noStyle>
-                                  <Select
-                                    placeholder="학교"
-                                    size="large"
-                                    options={EDUCATION_SCHOOL_TYPE_OPTIONS}
-                                    className="add-instructor-modal__table-input"
-                                    style={{ width: 220 }}
-                                  />
-                                </Form.Item>
-                                <Form.Item name={[fields[0].name, 'status']} noStyle>
-                                  <Select
-                                    placeholder="상태"
-                                    size="large"
-                                    options={EDUCATION_STATUS_OPTIONS}
-                                    className="add-instructor-modal__table-input"
-                                    style={{ width: 120 }}
-                                  />
-                                </Form.Item>
-                              </>
-                            ) : (
-                              <>
-                                <Select
-                                  placeholder="학교"
-                                  size="large"
-                                  options={EDUCATION_SCHOOL_TYPE_OPTIONS}
-                                  style={{ width: 220 }}
-                                  disabled
-                                />
-                                <Select
-                                  placeholder="상태"
-                                  size="large"
-                                  options={EDUCATION_STATUS_OPTIONS}
-                                  style={{ width: 120 }}
-                                  disabled
-                                />
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                      {/* 2행~: 선택한 최종 학력에 따라 라벨 표시(고등학교/대학 2・3년제 등), 중·고등학교 선택 시 전공 비노출 */}
-                      {fields.map(field => (
-                        <tr key={field.key}>
-                          <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
-                            <span className="add-instructor-modal__basic-table-label">
-                              {educationRowLabel}
-                            </span>
-                            <span className="add-instructor-modal__required-asterisk" aria-hidden>
-                              {' '}
-                              *
-                            </span>
-                          </td>
-                          <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                            <div className="add-instructor-modal__basic-table-inline add-instructor-modal__education-row-inputs">
-                              <Form.Item name={[field.name, 'schoolName']} noStyle>
-                                <Input
-                                  placeholder="학교명"
-                                  size="large"
-                                  allowClear
-                                  className="add-instructor-modal__table-input add-instructor-modal__education-school-input"
-                                />
-                              </Form.Item>
-                              {showMajorInput && (
-                                <Form.Item name={[field.name, 'major']} noStyle>
-                                  <Input
-                                    placeholder="전공"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input"
-                                    style={{ width: 140 }}
-                                  />
-                                </Form.Item>
-                              )}
-                              <Form.Item name={[field.name, 'enrollmentYear']} noStyle>
-                                <DatePicker
-                                  picker="year"
-                                  placeholder="입학년도"
-                                  size="large"
-                                  className="add-instructor-modal__table-input"
-                                  style={{ width: 120 }}
-                                />
-                              </Form.Item>
-                              <Form.Item name={[field.name, 'graduationYear']} noStyle>
-                                <DatePicker
-                                  picker="year"
-                                  placeholder="졸업년도"
-                                  size="large"
-                                  className="add-instructor-modal__table-input"
-                                  style={{ width: 120 }}
-                                />
-                              </Form.Item>
-                              {fields.length > 1 ? (
-                                <button
-                                  type="button"
-                                  className="add-instructor-modal__remove-row add-instructor-modal__remove-row--table"
-                                  onClick={() => remove(field.name)}
-                                  aria-label="삭제"
-                                >
-                                  ×
-                                </button>
-                              ) : null}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </Form.List>
-        </section>
+        <EducationSection />
 
         <div className="add-instructor-modal__divider" aria-hidden />
 
-        {/* 경력 상세: careerType은 Form.List 밖에 두어 항목 추가 시 라디오 선택이 풀리지 않음 */}
-        <section className="add-instructor-modal__section">
-          <div className="add-instructor-modal__section-head add-instructor-modal__section-head--with-btn">
-            <h3 className="add-instructor-modal__section-title">경력 상세</h3>
-            {careerType === 'experienced' && (
-              <AppButton
-                htmlType="button"
-                variant="primary"
-                size="middle"
-                modalTeal
-                className="add-instructor-modal__add-btn"
-                onClick={() => {
-                  addCareerRef.current?.({})
-                  form.setFieldValue('careerType', 'experienced')
-                  setCareerType('experienced')
-                }}
-              >
-                항목 추가
-              </AppButton>
-            )}
-          </div>
-          <div className="add-instructor-modal__career-table-wrap">
-            <table className="add-instructor-modal__career-table add-instructor-modal__basic-table">
-              <colgroup>
-                <col className="add-instructor-modal__career-table-col-label" />
-                <col className="add-instructor-modal__career-table-col-input" />
-              </colgroup>
-              <tbody>
-                {/* 1행: 경력 구분 | 신입/경력 라디오 (Form.List 밖 → add 시 리셋 방지) */}
-                <tr>
-                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
-                    <span className="add-instructor-modal__basic-table-label">경력 구분</span>
-                  </td>
-                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                    <Form.Item name="careerType" noStyle initialValue="new">
-                      <Radio.Group
-                        size="large"
-                        onChange={e => setCareerType(e.target.value)}
-                      >
-                        <Radio value="new">신입</Radio>
-                        <Radio value="experienced">경력</Radio>
-                      </Radio.Group>
-                    </Form.Item>
-                  </td>
-                </tr>
-                {/* 2행~: Form.List는 경력 행만 렌더, add는 ref로 바깥 버튼에서 호출 */}
-                <Form.List name="careers">
-                  {(fields, ops) => {
-                    addCareerRef.current = ops.add
-                    const { remove } = ops
-                    const isExperienced = careerType === 'experienced'
-                    if (!isExperienced) return null
-                    return (
-                      <>
-                        {fields.map((field, idx) => {
-                        const isFirstItem = idx === 0
-                        const showDelete = fields.length > 1 && !isFirstItem
-                        const careerRequired = isExperienced
-                        return (
-                          <tr key={field.key}>
-                            <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
-                              <span className="add-instructor-modal__basic-table-label">
-                                경력 {String(idx + 1).padStart(2, '0')}
-                              </span>
-                            </td>
-                            <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                              <div className="add-instructor-modal__career-row-inputs">
-                                <Form.Item
-                                  name={[field.name, 'companyName']}
-                                  noStyle
-                                  rules={
-                                    careerRequired
-                                      ? [{ required: true, message: '회사명을 입력해주세요' }]
-                                      : undefined
-                                  }
-                                  className="add-instructor-modal__career-input-wrap"
-                                >
-                                  <Input
-                                    placeholder="회사명"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__career-input"
-                                  />
-                                </Form.Item>
-                                <Form.Item
-                                  name={[field.name, 'role']}
-                                  noStyle
-                                  rules={
-                                    careerRequired
-                                      ? [{ required: true, message: '담당 업무를 입력해주세요' }]
-                                      : undefined
-                                  }
-                                  className="add-instructor-modal__career-input-wrap"
-                                >
-                                  <Input
-                                    placeholder="담당 업무"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__career-input"
-                                  />
-                                </Form.Item>
-                                <Form.Item
-                                  name={[field.name, 'startDate']}
-                                  noStyle
-                                  rules={
-                                    careerRequired
-                                      ? [{ required: true, message: '입사연월을 선택해주세요' }]
-                                      : undefined
-                                  }
-                                  className="add-instructor-modal__career-input-wrap"
-                                >
-                                  <DatePicker
-                                    picker="month"
-                                    placeholder="입사연월"
-                                    size="large"
-                                    className="add-instructor-modal__table-input add-instructor-modal__career-input"
-                                  />
-                                </Form.Item>
-                                <Form.Item
-                                  name={[field.name, 'endDate']}
-                                  noStyle
-                                  rules={
-                                    careerRequired
-                                      ? [{ required: true, message: '퇴사연월을 선택해주세요' }]
-                                      : undefined
-                                  }
-                                  className="add-instructor-modal__career-input-wrap"
-                                >
-                                  <DatePicker
-                                    picker="month"
-                                    placeholder="퇴사연월"
-                                    size="large"
-                                    className="add-instructor-modal__table-input add-instructor-modal__career-input"
-                                  />
-                                </Form.Item>
-                                <Form.Item
-                                  name={[field.name, 'isCurrent']}
-                                  noStyle
-                                  valuePropName="checked"
-                                  className="add-instructor-modal__career-check-wrap"
-                                >
-                                  <Checkbox>재직중</Checkbox>
-                                </Form.Item>
-                                {showDelete && (
-                                  <button
-                                    type="button"
-                                    className="add-instructor-modal__remove-row add-instructor-modal__remove-row--table add-instructor-modal__remove-row--icon"
-                                    onClick={() => remove(field.name)}
-                                    aria-label="삭제"
-                                    title="삭제"
-                                  >
-                                    <CloseXIcon maskId={`career-delete-mask-${field.key}`} />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                          )
-                        })}
-                      </>
-                    )
-                  }}
-                </Form.List>
-              </tbody>
-            </table>
-          </div>
-        </section>
+        {/* 경력 상세: careerType은 Form.useWatch로 구독, 항목 추가 버튼은 CareerDetailSection 내부에서 관리 */}
+        <CareerDetailSection />
 
         <div className="add-instructor-modal__divider" aria-hidden />
 

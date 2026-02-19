@@ -4,8 +4,7 @@
  */
 
 import { useMemo, useState, useCallback } from 'react'
-import { Card, Table, Row, Col, Select, Dropdown, message } from 'antd'
-import type { MenuProps } from 'antd'
+import { Card, Table, Row, Col, Select, message } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
@@ -22,6 +21,7 @@ import {
   APPROVAL_STATUS_LABELS,
   type ApprovalStatusKey,
 } from '@/shared/components/approval-status-badge'
+import { StatusDropdownCell } from './status-dropdown-cell'
 import './program-applicants-tab.css'
 
 const SUB_TAB_SCHOOLS = 'schools'
@@ -277,36 +277,16 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
         key: 'approvalStatus',
         width: 120,
         align: 'center',
-        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => {
-          const badge = <ApprovalStatusBadge status={status} />
-          const items: MenuProps['items'] = approvalStatusKeys.map(key => ({
-            key,
-            label: <ApprovalStatusBadge status={key} />,
-            onClick: e => {
-              e?.domEvent?.stopPropagation()
-              handleSchoolApprovalStatusChange(record.id, key)
-            },
-          }))
-          return (
-            <div
-              className="program-applicants-tab__approval-dropdown-cell"
-              onClick={e => e.stopPropagation()}
-            >
-              <Dropdown
-                menu={{ items }}
-                trigger={['click']}
-                getPopupContainer={() => document.body}
-              >
-                <span
-                  className="program-applicants-tab__approval-dropdown-trigger"
-                  onClick={e => e.stopPropagation()}
-                >
-                  {badge}
-                </span>
-              </Dropdown>
-            </div>
-          )
-        },
+        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
+          <StatusDropdownCell
+            status={status}
+            statusKeys={approvalStatusKeys}
+            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            onChange={key => handleSchoolApprovalStatusChange(record.id, key)}
+            cellClassName="program-applicants-tab__approval-dropdown-cell"
+            triggerClassName="program-applicants-tab__approval-dropdown-trigger"
+          />
+        ),
       },
     ],
     [approvalStatusKeys, handleSchoolApprovalStatusChange]
@@ -368,36 +348,16 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
         key: 'approvalStatus',
         width: 120,
         align: 'center',
-        render: (status: ApprovalStatusKey, record: ApplicantInstructorRow) => {
-          const badge = <ApprovalStatusBadge status={status} />
-          const items: MenuProps['items'] = approvalStatusKeys.map(key => ({
-            key,
-            label: <ApprovalStatusBadge status={key} />,
-            onClick: e => {
-              e?.domEvent?.stopPropagation()
-              handleInstructorApprovalStatusChange(record.id, key)
-            },
-          }))
-          return (
-            <div
-              className="program-applicants-tab__approval-dropdown-cell"
-              onClick={e => e.stopPropagation()}
-            >
-              <Dropdown
-                menu={{ items }}
-                trigger={['click']}
-                getPopupContainer={() => document.body}
-              >
-                <span
-                  className="program-applicants-tab__approval-dropdown-trigger"
-                  onClick={e => e.stopPropagation()}
-                >
-                  {badge}
-                </span>
-              </Dropdown>
-            </div>
-          )
-        },
+        render: (status: ApprovalStatusKey, record: ApplicantInstructorRow) => (
+          <StatusDropdownCell
+            status={status}
+            statusKeys={approvalStatusKeys}
+            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            onChange={key => handleInstructorApprovalStatusChange(record.id, key)}
+            cellClassName="program-applicants-tab__approval-dropdown-cell"
+            triggerClassName="program-applicants-tab__approval-dropdown-trigger"
+          />
+        ),
       },
     ],
     [approvalStatusKeys, handleInstructorApprovalStatusChange]
