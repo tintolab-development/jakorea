@@ -1,67 +1,969 @@
 /**
  * 강사진 추가 모달 (폼 전용)
- * 레이아웃은 TealHeaderModal에서 처리, 여기서는 필드 그리드·버튼 색상만
+ * 스펙: 모달 width 1400px, 바디 height 830px, 항목 추가 버튼 100×32px, 디바이더 1×13px
  * Colors: 청록 --color-modal-header
  */
 
+/* 푸터 버튼 영역: 닫기 / 저장 갭 */
+.add-instructor-modal__footer-actions {
+  display: flex;
+  gap: var(--spacing-12);
+  justify-content: flex-end;
+}
+
+/* 기본정보·최종학력·경력상세·자격및면허·수상및수료내역 항목 간 간격 32px */
 .add-instructor-modal__form {
-    width: 100%;
-    max-width: 100%;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-.add-instructor-modal__fields {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-30);
-    width: 100%;
-}
-
-.add-instructor-modal__row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-30);
-    width: 100%;
-    max-width: 100%;
-}
-
-.add-instructor-modal__field {
-    margin-bottom: 0;
-}
-
-.add-instructor-modal__field .ant-form-item-label>label {
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-label);
-}
-
-/* 필수 필드 * 표시 (requiredMark로 직접 렌더, 라벨 우측) */
-.add-instructor-modal__form .ant-form-item-label>label.ant-form-item-required::before {
-    display: none !important;
-    content: none !important;
+.add-instructor-modal__form .ant-form-item-label > label.ant-form-item-required::before {
+  display: none !important;
+  content: none !important;
 }
 
 .add-instructor-modal__required-asterisk {
-    color: var(--color-required-mark);
-    margin-left: var(--spacing-4);
+  color: var(--color-required-mark);
+  margin-left: var(--spacing-4);
 }
 
 .add-instructor-modal__form .ant-input,
 .add-instructor-modal__form .ant-select-selector {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
 }
 
 .add-instructor-modal__form .ant-input:hover,
 .add-instructor-modal__form .ant-select:hover .ant-select-selector {
-    border-color: var(--color-modal-header);
+  border-color: var(--color-modal-header);
 }
 
 .add-instructor-modal__form .ant-input:focus,
 .add-instructor-modal__form .ant-input-focused,
 .add-instructor-modal__form .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
-    border-color: var(--color-modal-header);
-    box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
+  border-color: var(--color-modal-header);
+  box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
 }
 
-/* 푸터 버튼: AppButton 사용 (variant cancel / primary + modalTeal) */
+/* 섹션 */
+.add-instructor-modal__section {
+  width: 100%;
+}
+
+.add-instructor-modal__section-title {
+  margin: 0 0 var(--spacing-12);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-600);
+  color: var(--color-text-primary);
+}
+
+.add-instructor-modal__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  width: 100%;
+}
+
+.add-instructor-modal__section-head .add-instructor-modal__section-title {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.add-instructor-modal__section-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  flex: 1;
+  min-width: 0;
+}
+
+/* 디바이더 1×13 */
+.add-instructor-modal__divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* 기본 정보: 1340×384, 프로필 192×256, 우측 테이블 */
+.add-instructor-modal__section--basic .add-instructor-modal__section-title {
+  margin-bottom: var(--spacing-12);
+}
+
+.add-instructor-modal__basic-info {
+  display: flex;
+  gap: var(--spacing-16);
+  width: 1340px;
+  height: 384px;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__profile-area {
+  flex-shrink: 0;
+}
+
+.add-instructor-modal__profile-area .ant-upload {
+  margin: 0;
+}
+
+/* 실제 클릭 가능한 영역(Upload 트리거) 전체를 192×256으로 고정, 전체 영역 클릭 가능 */
+.add-instructor-modal__profile-area .ant-upload-wrapper,
+.add-instructor-modal__profile-area .ant-upload.ant-upload-select {
+  display: block;
+  width: 192px !important;
+  height: 256px !important;
+  min-width: 192px !important;
+  min-height: 256px !important;
+  max-width: 192px !important;
+  max-height: 256px !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer;
+}
+
+.add-instructor-modal__profile-area .ant-upload.ant-upload-select .ant-upload {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer;
+}
+
+.add-instructor-modal__profile-area .ant-upload.ant-upload-select .ant-upload .ant-upload-drag {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer;
+}
+
+/* 프로필 사진 추가 영역: 192×256 전체가 클릭 가능, 아이콘만이 아님 */
+.add-instructor-modal__profile-placeholder {
+  width: 100%;
+  height: 100%;
+  min-width: 192px;
+  min-height: 256px;
+  aspect-ratio: 3 / 4;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.add-instructor-modal__profile-placeholder:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.add-instructor-modal__profile-icon {
+  font-size: 32px;
+  color: var(--color-text-tertiary);
+}
+
+/* 프로필 미리보기: 업로드한 이미지 192×256 영역에 맞춤 */
+.add-instructor-modal__profile-preview-wrap {
+  width: 100%;
+  height: 100%;
+  min-width: 192px;
+  min-height: 256px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: block;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__profile-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 우측 테이블 영역: 1128×384, 행 기준 레이아웃(성명 3행 | 주소/성별·병역 | 정산 계좌 | 최종 학력) */
+.add-instructor-modal__basic-table-wrap {
+  width: 1128px;
+  height: 384px;
+  min-width: 1128px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__basic-table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.add-instructor-modal__basic-table tbody tr {
+  height: 64px;
+  min-height: 64px;
+  display: table-row;
+}
+
+.add-instructor-modal__basic-table tbody tr > td {
+  padding: 4px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  box-sizing: border-box;
+  display: table-cell;
+  height: 64px;
+  min-height: 64px;
+}
+
+.add-instructor-modal__basic-table tbody tr > td.add-instructor-modal__basic-table-cell--label {
+  text-align: center;
+}
+
+.add-instructor-modal__basic-table-col-label-left {
+  width: 100px;
+  min-width: 100px;
+}
+
+.add-instructor-modal__basic-table-col-name-sub {
+  width: 80px;
+  min-width: 80px;
+}
+
+/* 성명 셀: 100×192 (rowspan 3) */
+.add-instructor-modal__basic-table-cell--name {
+  width: 100px;
+  min-width: 100px;
+  height: 192px;
+  vertical-align: middle;
+}
+
+/* 한글/한자/영문 라벨 셀: 80×64 */
+.add-instructor-modal__basic-table-cell--name-sub {
+  width: 80px;
+  min-width: 80px;
+  height: 64px;
+}
+
+/* 나머지 행 라벨(주소, 정산 계좌 정보, 최종 학력): 180×64 (colspan 2) */
+.add-instructor-modal__basic-table-cell--row-label {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  height: 64px;
+}
+
+.add-instructor-modal__basic-table-col-input-left {
+  width: calc((100% - 360px) / 2);
+  min-width: 160px;
+}
+
+.add-instructor-modal__basic-table-col-label-right {
+  width: 180px;
+  min-width: 180px;
+}
+
+.add-instructor-modal__basic-table-col-input-right {
+  width: calc((100% - 360px) / 2);
+  min-width: 160px;
+}
+
+/* 라벨 셀: 연한 회색 배경·굵게·가운데 정렬 (lecture-attendance-modal, assignment-submission-modal 스펙) */
+.add-instructor-modal__basic-table-cell--label {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  padding: 0 16px;
+  background: #fafafa;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-label, #262626);
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* 생년월일·연락처·이메일·성별 및 병역사항 라벨 셀: 180×64 (--label보다 뒤에 두어 180px 적용) */
+.add-instructor-modal__basic-table-cell--label-right {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  height: 64px;
+}
+
+.add-instructor-modal__basic-table-label {
+  white-space: nowrap;
+}
+
+.add-instructor-modal__basic-table-label--inline {
+  display: block;
+  margin-bottom: var(--spacing-4);
+  text-align: left;
+}
+
+
+/* 값/입력 셀: 흰 배경 (assignment-submission-modal, applicant-instructor-detail-modal 스펙) */
+.add-instructor-modal__basic-table-cell--input {
+  background: #fff;
+  padding: 4px 16px;
+}
+
+.add-instructor-modal__basic-table-cell--input .ant-form-item {
+  margin-bottom: 0;
+}
+
+/* 성별 및 병역사항: 성별 120px, 병역 215px 고정(래퍼로 강제), 중간 디바이더 1×13, 양옆 갭 12px */
+.add-instructor-modal__basic-table-cell--input .add-instructor-modal__gender-military-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__gender-military-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.add-instructor-modal__gender-military-wrap--gender {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.add-instructor-modal__gender-military-wrap--military {
+  width: 215px;
+  min-width: 215px;
+  max-width: 215px;
+}
+
+.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap.ant-form-item {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap .ant-form-item-control-input-content {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: flex !important;
+}
+
+.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap .ant-select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__gender-military-row .add-instructor-modal__gender-military-input-wrap .ant-select .ant-select-selector {
+  width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__gender-military-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 12px;
+}
+
+/* 정산 계좌 정보: 계좌번호·예금주명 사이 디바이더 1×13, 양옆 갭 12px */
+.add-instructor-modal__bank-account-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.add-instructor-modal__bank-account-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* 기본정보 최종 학력: Select·검색 인풋 사이 디바이더 1×13, 양옆 갭 12px */
+.add-instructor-modal__education-level-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.add-instructor-modal__education-level-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.add-instructor-modal__table-input.ant-input,
+.add-instructor-modal__table-input.ant-select-selector,
+.add-instructor-modal__table-input.ant-picker {
+  border-radius: var(--radius-4);
+}
+
+/* 최종 학력: 학교명으로 검색 인풋 348×40 */
+.add-instructor-modal__education-search-input {
+  width: 348px !important;
+  min-width: 348px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+/* 최종 학력 섹션: 기본정보와 동일한 테이블 스타일 (border #e8e8e8, radius 6px, 라벨 #fafafa) */
+.add-instructor-modal__education-table-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+  margin-bottom: var(--spacing-12);
+}
+
+.add-instructor-modal__education-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.add-instructor-modal__education-table tbody tr {
+  height: 64px;
+  min-height: 64px;
+}
+
+.add-instructor-modal__education-table tbody tr > td {
+  height: 64px;
+  min-height: 64px;
+}
+
+.add-instructor-modal__education-table-col-label {
+  width: 180px;
+  min-width: 180px;
+}
+
+.add-instructor-modal__education-table-col-input {
+  width: auto;
+}
+
+/* 최종 학력 테이블 내 학교명 인풋 348×40 */
+.add-instructor-modal__education-school-input {
+  width: 348px !important;
+  min-width: 348px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__education-row-inputs {
+  flex-wrap: nowrap;
+}
+
+.add-instructor-modal__remove-row--table {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* 경력 상세: 제목 + 항목 추가 버튼 한 줄 */
+.add-instructor-modal__section-head--with-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-12);
+}
+
+.add-instructor-modal__section-head--with-btn .add-instructor-modal__section-title {
+  margin-bottom: 0;
+  width: auto;
+  flex-shrink: 0;
+}
+
+/* 경력 상세 테이블: 최종 학력과 동일 스타일 */
+.add-instructor-modal__career-table-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__career-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.add-instructor-modal__career-table tbody tr {
+  height: 64px;
+  min-height: 64px;
+}
+
+.add-instructor-modal__career-table tbody tr > td {
+  height: 64px;
+  min-height: 64px;
+}
+
+/* 경력 테이블: row 기준 td 영역 분배 (라벨 180px, 입력 영역 나머지) */
+.add-instructor-modal__career-table-col-label {
+  width: 180px;
+  min-width: 180px;
+}
+
+.add-instructor-modal__career-table-col-input {
+  width: auto;
+  min-width: 0;
+}
+
+.add-instructor-modal__career-table tbody tr > td {
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__career-table tbody tr > td:last-child {
+  min-width: 0;
+}
+
+/* 경력 n 행: 인풋들 균등 분배, 삭제 아이콘 */
+/* 경력 row: 인풋 220px, 1×13 디바이더(양옆 12px), 재직중·삭제 아이콘 유지 */
+.add-instructor-modal__career-row-inputs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.add-instructor-modal__career-row-inputs .ant-form-item {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+/* 회사명·담당 업무·입사연월·퇴사연월 Form.Item 220px 고정, 오른쪽 여백 제거 → 퇴사연월과 재직중 사이 12px만 */
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap {
+  flex: 0 0 220px;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  margin-right: 0 !important;
+  padding-right: 0;
+  box-sizing: border-box;
+}
+
+/* 퇴사연월 인풋과 재직중 체크박스 사이 12px 갭 */
+/* 재직중 영역: 체크박스+텍스트 포함 127px 고정 (Form.Item 래퍼에 적용) */
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-check-wrap.ant-form-item {
+  flex: 0 0 127px !important;
+  width: 127px !important;
+  min-width: 127px !important;
+  max-width: 127px !important;
+  margin-left: 12px !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-check-wrap .ant-form-item-control-input {
+  min-width: 0;
+}
+
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-check-wrap .ant-checkbox-wrapper {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 경력 인풋 220px 고정 */
+.add-instructor-modal__career-input {
+  width: 220px !important;
+  min-width: 220px !important;
+}
+
+/* 경력 row 디바이더: 1×13, 양옆 갭 12px */
+.add-instructor-modal__career-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 var(--spacing-12);
+}
+
+/* 삭제 아이콘: 재직중과 12px 갭, 래퍼 패딩 제외한 가장 오른쪽 끝에 위치 (margin-left: auto) */
+.add-instructor-modal__career-row-inputs .add-instructor-modal__remove-row--icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  margin-right: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.add-instructor-modal__remove-row--icon:hover {
+  color: var(--color-error, #ff4d4f);
+}
+
+/* 자격 및 면허 테이블: 경력 상세와 동일 스타일(테이블 래퍼·행 높이·라벨/입력 열) */
+.add-instructor-modal__qualification-table-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__qualification-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.add-instructor-modal__qualification-table tbody tr {
+  height: 64px;
+  min-height: 64px;
+}
+
+.add-instructor-modal__qualification-table tbody tr > td {
+  height: 64px;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__qualification-table-col-label {
+  width: 180px;
+  min-width: 180px;
+}
+
+.add-instructor-modal__qualification-table-col-input {
+  width: auto;
+  min-width: 0;
+}
+
+.add-instructor-modal__qualification-table tbody tr > td:last-child {
+  min-width: 0;
+}
+
+.add-instructor-modal__qualification-row-inputs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.add-instructor-modal__qualification-row-inputs .ant-form-item {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap {
+  flex: 0 0 220px;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}
+
+/* 자격 및 면허 인풋 220×40 고정 */
+.add-instructor-modal__qualification-input {
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker {
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker .ant-picker-input > input,
+.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-input {
+  height: 40px !important;
+  min-height: 40px !important;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__qualification-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 var(--spacing-12);
+}
+
+.add-instructor-modal__qualification-row-inputs .add-instructor-modal__remove-row--icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  margin-right: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* 수상 및 수료 내역 테이블: 자격 및 면허와 동일 스타일(220×40 인풋, 구분선, 맨 끝 삭제) */
+.add-instructor-modal__award-table-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__award-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.add-instructor-modal__award-table tbody tr {
+  height: 64px;
+  min-height: 64px;
+}
+
+.add-instructor-modal__award-table tbody tr > td {
+  height: 64px;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__award-table-col-label {
+  width: 180px;
+  min-width: 180px;
+}
+
+.add-instructor-modal__award-table-col-input {
+  width: auto;
+  min-width: 0;
+}
+
+.add-instructor-modal__award-table tbody tr > td:last-child {
+  min-width: 0;
+}
+
+.add-instructor-modal__award-row-inputs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.add-instructor-modal__award-row-inputs .ant-form-item {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap {
+  flex: 0 0 220px;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__award-input {
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker {
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker .ant-picker-input > input,
+.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-input {
+  height: 40px !important;
+  min-height: 40px !important;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__award-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 var(--spacing-12);
+}
+
+.add-instructor-modal__award-row-inputs .add-instructor-modal__remove-row--icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  margin-right: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.add-instructor-modal__close-x-mask {
+  mask-type: alpha;
+}
+
+.add-instructor-modal__basic-table-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.add-instructor-modal__basic-table-inline .ant-form-item {
+  margin-bottom: 0;
+}
+
+.add-instructor-modal__field {
+  margin-bottom: var(--spacing-16);
+}
+
+.add-instructor-modal__field .ant-form-item-label > label {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-label);
+}
+
+.add-instructor-modal__inline-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+  align-items: center;
+}
+
+.add-instructor-modal__inline-group .ant-form-item {
+  margin-bottom: 0;
+}
+
+/* 반복 행 (학력/경력/자격/수상) */
+.add-instructor-modal__list-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-8) 0;
+}
+
+.add-instructor-modal__list-row--career {
+  align-items: center;
+}
+
+.add-instructor-modal__list-label {
+  font-size: var(--font-size-14);
+  color: var(--color-text-secondary);
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.add-instructor-modal__list-row .ant-form-item {
+  margin-bottom: 0;
+}
+
+.add-instructor-modal__remove-row {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-4);
+  flex-shrink: 0;
+}
+
+.add-instructor-modal__remove-row:hover {
+  color: var(--color-text-primary);
+  background: var(--color-fill-tertiary);
+}
+
+/* 항목 추가 버튼 100×32 */
+.add-instructor-modal__add-btn {
+  width: 100px !important;
+  min-width: 100px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.add-instructor-modal__row-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
+  margin-bottom: var(--spacing-8);
+}
+
+.add-instructor-modal__row-inline .ant-form-item {
+  margin-bottom: 0;
+}
