@@ -30,20 +30,140 @@
   margin-left: var(--spacing-4);
 }
 
+/* 모달 내 전반 Input·Select·DatePicker 공통 텍스트 스펙 (동일 적용) */
 .add-instructor-modal__form .ant-input,
-.add-instructor-modal__form .ant-select-selector {
+.add-instructor-modal__form .ant-select-selector,
+.add-instructor-modal__form .ant-picker,
+.add-instructor-modal__form .ant-picker .ant-picker-input > input {
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  color: #85969d !important;
+}
+
+.add-instructor-modal__form .ant-input,
+.add-instructor-modal__form .ant-select-selector,
+.add-instructor-modal__form .ant-picker {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-4);
 }
 
+/* Select 깨짐 방지: Ant Design 기본 box-shadow·아웃라인 제거 (래퍼·열림 상태 포함) */
+.add-instructor-modal__form .ant-select,
+.add-instructor-modal__form .ant-select.ant-select-open {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.add-instructor-modal__form .ant-select .ant-select-selector {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* DatePicker: display·정렬 복원 + 깨짐 방지 (add-instructor-modal__table-input의 display:block 무력화) */
+.add-instructor-modal__form .ant-picker {
+  display: inline-flex !important;
+  align-items: center !important;
+  outline: none;
+  box-shadow: none !important;
+}
+
+.add-instructor-modal__form .ant-picker .ant-picker-input {
+  outline: none;
+}
+
+/* allowClear·prefix 포함 Input(affix-wrapper): display 복원 */
+.add-instructor-modal__form .ant-input-affix-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
 .add-instructor-modal__form .ant-input:hover,
-.add-instructor-modal__form .ant-select:hover .ant-select-selector {
+.add-instructor-modal__form .ant-select:hover .ant-select-selector,
+.add-instructor-modal__form .ant-picker:hover {
   border-color: var(--color-modal-header);
 }
 
 .add-instructor-modal__form .ant-input:focus,
-.add-instructor-modal__form .ant-input-focused,
+.add-instructor-modal__form .ant-input-focused {
+  border-color: var(--color-modal-header);
+  box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
+}
+
+/* Select 포커스: box-shadow 제거(깨짐 방지), 테두리 색만 변경 */
 .add-instructor-modal__form .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+  border-color: var(--color-modal-header) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.add-instructor-modal__form .ant-picker-focused,
+.add-instructor-modal__form .ant-picker.ant-picker-focused {
+  border-color: var(--color-modal-header) !important;
+  box-shadow: 0 0 0 1px var(--color-focus-teal-ring) !important;
+}
+
+.add-instructor-modal__form .ant-select-selection-placeholder,
+.add-instructor-modal__form .ant-picker .ant-picker-input::placeholder {
+  color: #85969d !important;
+}
+
+/* 테이블용 네이티브 input 전용: 220×40, span 없이 input만 스타일링 */
+.add-instructor-modal__table-input {
+  display: block;
+  width: 220px;
+  height: 40px;
+  padding: 4px 11px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: #85969d;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 기본정보 섹션 input 전용 스타일 */
+.add-instructor-modal__section--basic .add-instructor-modal__table-input {
+  width: 220px;
+  height: 40px;
+  padding: 0 14px 0 16px;
+  border-radius: 6px;
+  border: 1px solid #c4cdd1;
+  background: #fff;
+  box-sizing: border-box;
+  display: block;
+}
+
+/* 기본정보: 주민등록번호 인풋만 164.5px */
+.add-instructor-modal__section--basic .add-instructor-modal__resident-registration-row .ant-form-item {
+  flex: 0 0 164.5px;
+  width: 164.5px;
+  min-width: 164.5px;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__resident-registration-row .add-instructor-modal__table-input {
+  width: 164.5px !important;
+  min-width: 164.5px !important;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__table-input::placeholder {
+  color: #85969d;
+}
+
+.add-instructor-modal__table-input:hover {
+  border-color: var(--color-modal-header);
+}
+
+.add-instructor-modal__table-input:focus {
   border-color: var(--color-modal-header);
   box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
 }
@@ -55,7 +175,7 @@
 
 .add-instructor-modal__section-title {
   margin: 0 0 var(--spacing-12);
-  font-size: var(--font-size-14);
+  font-size: 16px;
   font-weight: var(--font-weight-600);
   color: var(--color-text-primary);
 }
@@ -308,6 +428,7 @@
 
 .add-instructor-modal__basic-table-label {
   white-space: nowrap;
+  font-size: 16px;
 }
 
 .add-instructor-modal__basic-table-label--inline {
@@ -397,7 +518,7 @@
   margin: 0 12px;
 }
 
-/* 정산 계좌 정보: 계좌번호·예금주명 사이 디바이더 1×13, 양옆 갭 12px */
+/* 정산 계좌 정보: Select·input 세로 정렬 통일 (높이 40px, baseline 맞춤) */
 .add-instructor-modal__bank-account-row {
   display: flex;
   flex-direction: row;
@@ -407,12 +528,91 @@
   min-width: 0;
 }
 
+.add-instructor-modal__bank-account-row .ant-form-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.add-instructor-modal__bank-account-row .ant-form-item .ant-form-item-control-input-content {
+  display: flex;
+  align-items: center;
+}
+
+.add-instructor-modal__bank-account-row .ant-select {
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center;
+}
+
+.add-instructor-modal__bank-account-row .ant-select .ant-select-selector {
+  height: 40px !important;
+  min-height: 40px !important;
+  align-items: center;
+}
+
+.add-instructor-modal__bank-account-row .add-instructor-modal__table-input {
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__bank-account-row .ant-select,
+.add-instructor-modal__bank-account-row .ant-select .ant-select-selector {
+  box-shadow: none !important;
+}
+
 .add-instructor-modal__bank-account-divider {
   width: 1px;
   height: 13px;
   background: var(--color-border);
   flex-shrink: 0;
   margin: 0;
+}
+
+/* 주민등록번호: 두 인풋 합쳐서 td 영역에 꽉 차게, 높이 40px */
+.add-instructor-modal__resident-registration-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__resident-registration-row .ant-form-item {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.add-instructor-modal__resident-registration-row .ant-form-item-control-input-content {
+  width: 100%;
+  min-width: 0;
+}
+
+.add-instructor-modal__resident-registration-row .add-instructor-modal__table-input {
+  text-align: center;
+}
+
+.add-instructor-modal__resident-registration-divider {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+/* 병역사항 라디오: 미필 / 군필 / 해당없음 가로 배치, 영역 간 갭 12px */
+.add-instructor-modal__military-radio-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+}
+
+.add-instructor-modal__military-radio-group .ant-radio-wrapper {
+  margin-inline-end: 0;
 }
 
 /* 기본정보 최종 학력: Select·검색 인풋 사이 디바이더 1×13, 양옆 갭 12px */
@@ -433,10 +633,180 @@
   margin: 0;
 }
 
-.add-instructor-modal__table-input.ant-input,
-.add-instructor-modal__table-input.ant-select-selector,
-.add-instructor-modal__table-input.ant-picker {
+/* 테이블 내 Select·DatePicker 220×40, input과 동일 폰트 스펙, 깨짐 방지 box-shadow 제거 */
+.add-instructor-modal__basic-table-cell--input .ant-select,
+.add-instructor-modal__basic-table-cell--input .ant-picker {
+  box-shadow: none !important;
+  outline: none;
+}
+
+.add-instructor-modal__basic-table-cell--input .ant-select .ant-select-selector {
+  outline: none;
+  box-shadow: none !important;
+}
+
+.add-instructor-modal__basic-table-cell--input .ant-select-selector,
+.add-instructor-modal__basic-table-cell--input .ant-picker {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  color: #85969d !important;
   border-radius: var(--radius-4);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__basic-table-cell--input .ant-picker .ant-picker-input > input {
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  color: #85969d !important;
+}
+
+.add-instructor-modal__basic-table-cell--input .ant-select .ant-select-selector {
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__basic-table-cell--input .ant-select-selection-placeholder {
+  color: #85969d !important;
+}
+
+/* 기본정보 섹션 Select·DatePicker도 input과 동일 테두리 (6px, #c4cdd1) */
+.add-instructor-modal__section--basic .ant-select-selector,
+.add-instructor-modal__section--basic .ant-picker {
+  border-radius: 6px !important;
+  border-color: #c4cdd1 !important;
+}
+
+/* 주소 검색: 아이콘 + input 한 묶음 220×40 */
+.add-instructor-modal__table-input-wrap--with-prefix {
+  display: flex;
+  align-items: center;
+  width: 220px;
+  height: 40px;
+  padding: 0 11px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__table-input-wrap--with-prefix {
+  padding: 0 14px 0 16px;
+  gap: 8px;
+  border-radius: 6px;
+  border-color: #c4cdd1;
+}
+
+.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input-prefix {
+  flex-shrink: 0;
+  margin-right: 8px;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+}
+
+.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input {
+  flex: 1;
+  min-width: 0;
+  width: auto !important;
+  height: 100%;
+  padding-left: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input:hover,
+.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.add-instructor-modal__table-input-wrap--with-prefix:hover {
+  border-color: var(--color-modal-header);
+}
+
+.add-instructor-modal__table-input-wrap--with-prefix:focus-within {
+  border-color: var(--color-modal-header);
+  box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
+}
+
+/* 정산 계좌: 계좌번호 160px, 예금주명 120px */
+.add-instructor-modal__bank-account-row .add-instructor-modal__table-input.add-instructor-modal__bank-account-input--number {
+  width: 160px !important;
+  min-width: 160px;
+}
+
+.add-instructor-modal__bank-account-row .add-instructor-modal__table-input.add-instructor-modal__bank-account-input--holder {
+  width: 120px !important;
+  min-width: 120px;
+}
+
+/* 정산 계좌: 은행명 Select 140px (네이티브 select 포함) */
+.add-instructor-modal__bank-account-row .add-instructor-modal__bank-account-select.ant-select,
+.add-instructor-modal__bank-account-row .add-instructor-modal__bank-account-select .ant-select-selector,
+.add-instructor-modal__bank-account-row .add-instructor-modal__native-select.add-instructor-modal__bank-account-select {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+/* 강사진 등록 모달 전용 네이티브 select 공통 스타일 (Ant Design Select 대체) */
+.add-instructor-modal__native-select {
+  display: block;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 32px 0 16px;
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  color: #85969d !important;
+  background: #fff !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2385969d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.add-instructor-modal__native-select:hover:not(:disabled) {
+  border-color: var(--color-modal-header);
+}
+
+.add-instructor-modal__native-select:focus {
+  border-color: var(--color-modal-header);
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__native-select {
+  border-radius: 6px;
+  border-color: #c4cdd1;
+}
+
+/* 네이티브 select 너비 클래스 (학력사항 등) */
+.add-instructor-modal__native-select.add-instructor-modal__education-school-type {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+}
+
+.add-instructor-modal__native-select.add-instructor-modal__education-status {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
 }
 
 /* 최종 학력: 학교명으로 검색 인풋 348×40 */
@@ -494,6 +864,56 @@
 
 .add-instructor-modal__education-row-inputs {
   flex-wrap: nowrap;
+}
+
+/* 학력사항: 인라인 width 제거 후 CSS로 통일 (학교 220px, 상태 120px, 전공 140px, 연도 120px) */
+.add-instructor-modal__education-school-type.ant-select,
+.add-instructor-modal__education-school-type .ant-select-selector {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+}
+
+.add-instructor-modal__education-status.ant-select,
+.add-instructor-modal__education-status .ant-select-selector {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+/* 학력사항 최종 학력 행: 학교/상태 Select 간격 12px, 겹침·shadow 제거 */
+.add-instructor-modal__education-first-row {
+  gap: 12px !important;
+  flex-wrap: nowrap;
+}
+
+.add-instructor-modal__education-first-row .ant-form-item {
+  flex: 0 0 auto;
+  margin-right: 0;
+}
+
+.add-instructor-modal__education-first-row .ant-select {
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+.add-instructor-modal__education-first-row .ant-select .ant-select-selector {
+  box-shadow: none !important;
+}
+
+.add-instructor-modal__education-major {
+  width: 140px !important;
+  min-width: 140px !important;
+}
+
+.add-instructor-modal__education-year.ant-picker {
+  /* ant-picker는 내부적으로 inline-flex — display 명시해서 레이아웃 유지 */
+  display: inline-flex !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  box-shadow: none !important;
 }
 
 .add-instructor-modal__remove-row--table {
@@ -616,10 +1036,28 @@
   box-sizing: border-box;
 }
 
-/* 경력 인풋 220px 고정 */
+/* 경력 인풋 220px 고정, Select·DatePicker·Input 텍스트 스펙 통일 */
 .add-instructor-modal__career-input {
   width: 220px !important;
   min-width: 220px !important;
+}
+
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-picker {
+  box-shadow: none !important;
+}
+
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-input,
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-picker .ant-picker-input > input {
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  color: #85969d !important;
+}
+
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-input::placeholder,
+.add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-picker .ant-picker-input::placeholder {
+  color: #85969d !important;
 }
 
 /* 경력 row 디바이더: 1×13, 양옆 갭 12px */
@@ -715,7 +1153,7 @@
   box-sizing: border-box;
 }
 
-/* 자격 및 면허 인풋 220×40 고정 */
+/* 자격 및 면허 인풋 220×40 고정, Select·DatePicker·Input 텍스트 스펙 통일 */
 .add-instructor-modal__qualification-input {
   width: 220px !important;
   min-width: 220px !important;
@@ -728,13 +1166,21 @@
   min-width: 220px !important;
   height: 40px !important;
   min-height: 40px !important;
+  box-shadow: none !important;
 }
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker .ant-picker-input > input,
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-input {
-  height: 40px !important;
-  min-height: 40px !important;
-  box-sizing: border-box;
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  color: #85969d !important;
+}
+
+.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-input::placeholder,
+.add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker .ant-picker-input::placeholder {
+  color: #85969d !important;
 }
 
 .add-instructor-modal__qualification-divider {
@@ -746,6 +1192,124 @@
 }
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__remove-row--icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  margin-right: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* JA Korea 활동 경험 테이블: 자격 및 면허와 동일 스타일 */
+.add-instructor-modal__ja-activity-table-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__ja-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.add-instructor-modal__ja-activity-table tbody tr {
+  height: 64px;
+  min-height: 64px;
+}
+
+.add-instructor-modal__ja-activity-table tbody tr > td {
+  height: 64px;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__ja-activity-table-col-label {
+  width: 180px;
+  min-width: 180px;
+}
+
+.add-instructor-modal__ja-activity-table-col-input {
+  width: auto;
+  min-width: 0;
+}
+
+.add-instructor-modal__ja-activity-row-inputs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.add-instructor-modal__ja-activity-row-inputs .ant-form-item {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap {
+  flex: 0 0 220px;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__ja-activity-input {
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker {
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  box-shadow: none !important;
+}
+
+.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker .ant-picker-input > input,
+.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-input {
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  color: #85969d !important;
+}
+
+.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-input::placeholder,
+.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker .ant-picker-input::placeholder {
+  color: #85969d !important;
+}
+
+.add-instructor-modal__ja-activity-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.add-instructor-modal__ja-activity-date-sep {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__remove-row--icon {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
@@ -836,13 +1400,21 @@
   min-width: 220px !important;
   height: 40px !important;
   min-height: 40px !important;
+  box-shadow: none !important;
 }
 
 .add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker .ant-picker-input > input,
 .add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-input {
-  height: 40px !important;
-  min-height: 40px !important;
-  box-sizing: border-box;
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  color: #85969d !important;
+}
+
+.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-input::placeholder,
+.add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker .ant-picker-input::placeholder {
+  color: #85969d !important;
 }
 
 .add-instructor-modal__award-divider {
@@ -965,5 +1537,118 @@
 }
 
 .add-instructor-modal__row-inline .ant-form-item {
+  margin-bottom: 0;
+}
+
+/* 자유 작성 항목: 타이틀·설명 row 정렬 */
+.add-instructor-modal__free-writing-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-16);
+  width: 100%;
+}
+
+.add-instructor-modal__free-writing-head .add-instructor-modal__free-writing-title {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.add-instructor-modal__free-writing-description {
+  margin: 0;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #666666;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-instructor-modal__free-writing-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  width: 100%;
+}
+
+.add-instructor-modal__free-writing-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.add-instructor-modal__free-writing-question-bar {
+  padding: 12px 16px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: #333333;
+  background: #f5f7f8;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid #c4cdd1;
+  border-bottom: none;
+  box-sizing: border-box;
+}
+
+/* 텍스트박스 기본 높이 124px, placeholder 세로 중앙 (padding 49px 16px) */
+.add-instructor-modal__free-writing-textarea {
+  width: 100% !important;
+  height: 124px !important;
+  min-height: 124px !important;
+  padding: 49px 16px !important;
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  color: #85969d !important;
+  background: #fff !important;
+  border: 1px solid #c4cdd1 !important;
+  border-radius: 0 0 6px 6px !important;
+  box-sizing: border-box !important;
+  resize: vertical;
+}
+
+/* Ant Design TextArea가 래퍼일 때 내부 textarea에도 동일 스타일 + 기본 높이 124px */
+.add-instructor-modal__free-writing-textarea.ant-input,
+.add-instructor-modal__free-writing-textarea .ant-input {
+  height: 124px !important;
+  min-height: 124px !important;
+  padding: 49px 16px !important;
+  font-family: 'Pretendard', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  color: #85969d !important;
+  background: #fff !important;
+  border: 1px solid #c4cdd1 !important;
+  border-radius: 0 0 6px 6px !important;
+}
+
+.add-instructor-modal__free-writing-textarea::placeholder,
+.add-instructor-modal__free-writing-textarea .ant-input::placeholder {
+  color: #85969d !important;
+}
+
+.add-instructor-modal__free-writing-textarea:hover,
+.add-instructor-modal__free-writing-textarea:hover .ant-input {
+  border-color: var(--color-modal-header) !important;
+}
+
+.add-instructor-modal__free-writing-textarea:focus .ant-input,
+.add-instructor-modal__free-writing-textarea.ant-input-focused .ant-input,
+.add-instructor-modal__free-writing-textarea .ant-input:focus {
+  border-color: var(--color-modal-header) !important;
+  box-shadow: 0 0 0 1px var(--color-focus-teal-ring) !important;
+}
+
+.add-instructor-modal__section--free-writing .ant-form-item {
   margin-bottom: 0;
 }

@@ -1,11 +1,12 @@
 /**
- * 강사 추가 모달 - 최종 학력 섹션
+ * 강사 추가 모달 - 학력사항 섹션
  * Form.useFormInstance()로 부모 Form 컨텍스트 공유 (props 불필요)
  */
 
-import { Form, Input, Select, DatePicker } from 'antd'
+import { Form, Input, DatePicker } from 'antd'
+import { NativeSelect } from './add-instructor-native-select'
 
-/** 최종 학력 섹션: 학교 유형 선택 옵션 */
+/** 학력사항 섹션: 학교 유형 선택 옵션 */
 const EDUCATION_SCHOOL_TYPE_OPTIONS = [
   { label: '고등학교', value: '고등학교' },
   { label: '중학교', value: '중학교' },
@@ -17,7 +18,6 @@ const EDUCATION_SCHOOL_TYPE_OPTIONS = [
 const SCHOOL_TYPES_WITHOUT_MAJOR = ['고등학교', '중학교']
 
 const EDUCATION_STATUS_OPTIONS = [
-  { label: '상태', value: '' },
   { label: '재학', value: 'enrolled' },
   { label: '졸업', value: 'graduated' },
 ]
@@ -31,7 +31,10 @@ export function EducationSection() {
 
   return (
     <section className="add-instructor-modal__section">
-      <h3 className="add-instructor-modal__section-title">최종 학력</h3>
+      <h3 className="add-instructor-modal__section-title">
+        학력사항
+        <span className="add-instructor-modal__required-asterisk" aria-hidden> *</span>
+      </h3>
       <Form.List name="educations">
         {(fields, { remove }) => (
           <>
@@ -46,48 +49,38 @@ export function EducationSection() {
                   <tr>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
                       <span className="add-instructor-modal__basic-table-label">최종 학력</span>
-                      <span className="add-instructor-modal__required-asterisk" aria-hidden>
-                        {' '}
-                        *
-                      </span>
                     </td>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                      <div className="add-instructor-modal__basic-table-inline">
+                      <div className="add-instructor-modal__basic-table-inline add-instructor-modal__education-first-row">
                         {fields.length > 0 ? (
                           <>
                             <Form.Item name={[fields[0].name, 'schoolType']} noStyle>
-                              <Select
+                              <NativeSelect
                                 placeholder="학교"
-                                size="large"
                                 options={EDUCATION_SCHOOL_TYPE_OPTIONS}
-                                className="add-instructor-modal__table-input"
-                                style={{ width: 220 }}
+                                className="add-instructor-modal__table-input add-instructor-modal__education-school-type"
                               />
                             </Form.Item>
                             <Form.Item name={[fields[0].name, 'status']} noStyle>
-                              <Select
+                              <NativeSelect
                                 placeholder="상태"
-                                size="large"
                                 options={EDUCATION_STATUS_OPTIONS}
-                                className="add-instructor-modal__table-input"
-                                style={{ width: 120 }}
+                                className="add-instructor-modal__table-input add-instructor-modal__education-status"
                               />
                             </Form.Item>
                           </>
                         ) : (
                           <>
-                            <Select
+                            <NativeSelect
                               placeholder="학교"
-                              size="large"
                               options={EDUCATION_SCHOOL_TYPE_OPTIONS}
-                              style={{ width: 220 }}
+                              className="add-instructor-modal__table-input add-instructor-modal__education-school-type"
                               disabled
                             />
-                            <Select
+                            <NativeSelect
                               placeholder="상태"
-                              size="large"
                               options={EDUCATION_STATUS_OPTIONS}
-                              style={{ width: 120 }}
+                              className="add-instructor-modal__table-input add-instructor-modal__education-status"
                               disabled
                             />
                           </>
@@ -101,10 +94,6 @@ export function EducationSection() {
                       <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
                         <span className="add-instructor-modal__basic-table-label">
                           {educationRowLabel}
-                        </span>
-                        <span className="add-instructor-modal__required-asterisk" aria-hidden>
-                          {' '}
-                          *
                         </span>
                       </td>
                       <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
@@ -123,8 +112,7 @@ export function EducationSection() {
                                 placeholder="전공"
                                 size="large"
                                 allowClear
-                                className="add-instructor-modal__table-input"
-                                style={{ width: 140 }}
+                                className="add-instructor-modal__table-input add-instructor-modal__education-major"
                               />
                             </Form.Item>
                           )}
@@ -133,8 +121,7 @@ export function EducationSection() {
                               picker="year"
                               placeholder="입학년도"
                               size="large"
-                              className="add-instructor-modal__table-input"
-                              style={{ width: 120 }}
+                              className="add-instructor-modal__education-year"
                             />
                           </Form.Item>
                           <Form.Item name={[field.name, 'graduationYear']} noStyle>
@@ -142,8 +129,7 @@ export function EducationSection() {
                               picker="year"
                               placeholder="졸업년도"
                               size="large"
-                              className="add-instructor-modal__table-input"
-                              style={{ width: 120 }}
+                              className="add-instructor-modal__education-year"
                             />
                           </Form.Item>
                           {fields.length > 1 ? (

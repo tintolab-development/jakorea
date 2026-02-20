@@ -1,5 +1,5 @@
 /**
- * 강사 추가 모달 - 경력 상세 섹션
+ * 강사 추가 모달 - 경력사항 섹션
  * - careerType: Form.useWatch로 Form 필드 값 구독 (외부 state 불필요)
  * - addCareerRef: Form.List 외부 버튼에서 항목 추가 트리거용 (add 함수가 Form.List 안에 있으므로 ref로 연결)
  * - Form.useFormInstance()로 부모 Form 컨텍스트 공유
@@ -51,7 +51,7 @@ export function CareerDetailSection() {
   return (
     <section className="add-instructor-modal__section">
       <div className="add-instructor-modal__section-head add-instructor-modal__section-head--with-btn">
-        <h3 className="add-instructor-modal__section-title">경력 상세</h3>
+        <h3 className="add-instructor-modal__section-title">경력사항</h3>
         {careerType === 'experienced' && (
           <AppButton
             htmlType="button"
