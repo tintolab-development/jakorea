@@ -20,7 +20,6 @@ export interface ProgramDetailInfoTabProps {
   createdByName?: string
   updatedByName?: string
   lifecycleStatus?: ProgramLifecycleStatus | null
-  onLifecycleStatusChange?: (status: ProgramLifecycleStatus) => void
   isEditMode?: boolean
   onCancelEdit?: () => void
   onSaveEdit?: (draft: Program) => Promise<void>
@@ -36,7 +35,6 @@ export const ProgramDetailInfoTab = forwardRef<
     createdByName,
     updatedByName,
     lifecycleStatus: lifecycleStatusProp,
-    onLifecycleStatusChange,
     isEditMode = false,
     onCancelEdit: _onCancelEdit,
     onSaveEdit,
@@ -59,7 +57,6 @@ export const ProgramDetailInfoTab = forwardRef<
           createdByName={createdByName}
           updatedByName={updatedByName}
           lifecycleStatus={lifecycleStatus}
-          onLifecycleStatusChange={onLifecycleStatusChange}
           isEditMode={isEditMode}
           form={isEditMode ? form : undefined}
         />

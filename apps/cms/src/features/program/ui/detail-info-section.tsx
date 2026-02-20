@@ -206,6 +206,7 @@ export function DetailInfoSection({
                   accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                   multiple
                   disabled={!isEditMode}
+                  buttonLabel={isEditMode ? '파일 선택' : '조회'}
                   className={isEditMode ? 'file-select-field--edit' : ''}
                   fileNames={displayFileNames}
                   guideLines={[

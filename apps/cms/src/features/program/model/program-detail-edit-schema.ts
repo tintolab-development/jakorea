@@ -11,6 +11,17 @@ const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'c
 
 const roundDeliveryTypeEnum = z.enum(['online', 'offline', 'hybrid'])
 
+const programLifecycleStatusEnum = z.enum([
+  'planned',
+  'recruiting_students',
+  'recruiting_instructors',
+  'matching_completed',
+  'education_before_textbook',
+  'education_after_textbook',
+  'education_completed',
+  'document_processing_completed',
+])
+
 const roundEditSchema = z.object({
   id: z.string(),
   programId: z.string(),
@@ -32,6 +43,7 @@ export const programDetailEditSchema = z.object({
   targetLevel: z.enum(['elementary', 'middle', 'high']).optional(),
   district: z.string().optional(),
   type: z.enum(['online', 'offline', 'hybrid']),
+  lifecycleStatus: programLifecycleStatusEnum.optional(),
   applicationStartDate: z.string().optional(),
   applicationEndDate: z.string().optional(),
   businessArea: z.string().optional(),
@@ -80,6 +92,7 @@ export function programToDetailEditValues(
     targetLevel: program.targetLevel ?? undefined,
     district: program.district ?? undefined,
     type: program.type ?? 'offline',
+    lifecycleStatus: program.lifecycleStatus ?? undefined,
     applicationStartDate: toStr(program.applicationStartDate),
     applicationEndDate: toStr(program.applicationEndDate),
     businessArea: program.businessArea ?? undefined,
@@ -145,6 +158,7 @@ export function detailEditValuesToProgramPatch(
     targetLevel: values.targetLevel,
     district: values.district,
     type: values.type,
+    lifecycleStatus: values.lifecycleStatus ?? existing.lifecycleStatus,
     applicationStartDate: values.applicationStartDate,
     applicationEndDate: values.applicationEndDate,
     businessArea: values.businessArea,

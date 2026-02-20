@@ -33,6 +33,7 @@ import {
   BUSINESS_AREA_OPTIONS,
 } from './program-detail-info-constants'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
+import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 
@@ -44,7 +45,6 @@ export interface BasicInfoSectionProps {
   createdByName?: string
   updatedByName?: string
   lifecycleStatus?: ProgramLifecycleStatus
-  onLifecycleStatusChange?: (status: ProgramLifecycleStatus) => void
   isEditMode?: boolean
   /** 수정 모드일 때만 전달, react-hook-form 인스턴스 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
@@ -59,7 +59,6 @@ export function BasicInfoSection({
   createdByName,
   updatedByName,
   lifecycleStatus,
-  onLifecycleStatusChange,
   isEditMode = false,
   form,
 }: BasicInfoSectionProps) {
@@ -158,14 +157,26 @@ export function BasicInfoSection({
                 프로그램 진행 상태{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
-                <Select<ProgramLifecycleStatus>
-                  value={lifecycleStatus}
-                  options={LIFECYCLE_OPTIONS}
-                  placeholder="진행 상태 선택"
-                  className="program-detail-info-tab__lifecycle-select"
-                  disabled={!onLifecycleStatusChange}
-                  onChange={value => value != null && onLifecycleStatusChange?.(value)}
-                />
+                {isFormEdit ? (
+                  <Controller
+                    name="lifecycleStatus"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select<ProgramLifecycleStatus>
+                        {...field}
+                        value={field.value ?? undefined}
+                        options={LIFECYCLE_OPTIONS}
+                        placeholder="진행 상태 선택"
+                        className="program-detail-info-tab__lifecycle-select"
+                        onChange={value => field.onChange(value ?? undefined)}
+                      />
+                    )}
+                  />
+                ) : lifecycleStatus ? (
+                  <ProgramLifecycleStatusBadge status={lifecycleStatus} />
+                ) : (
+                  '-'
+                )}
               </td>
             </tr>
           </tbody>
@@ -251,7 +262,7 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                프로그램 명{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                프로그램명{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -574,7 +585,11 @@ export function BasicInfoSection({
                     </span>
                   </div>
                 ) : totalCapacity > 0 ? (
-                  `${program.approvedStudentCount != null ? `${program.approvedStudentCount} / ` : ''}${totalCapacity}건 (신청자가 아닌 승인된 수강자 기준)`
+                  <>
+                    {program.approvedStudentCount != null ? `${program.approvedStudentCount} / ` : null}
+                    <strong>{totalCapacity}건</strong>
+                    {' (신청자가 아닌 승인된 수강자 기준)'}
+                  </>
                 ) : (
                   '-'
                 )}
@@ -724,7 +739,11 @@ export function BasicInfoSection({
                     </span>
                   </div>
                 ) : program.instructors != null ? (
-                  `${program.instructorCapacity != null ? `${program.instructors} / ${program.instructorCapacity}건` : `${program.instructors}건`} (신청자가 아닌 승인된 강사 기준)`
+                  <>
+                    {program.instructorCapacity != null ? `${program.instructors} / ` : null}
+                    <strong>{program.instructorCapacity != null ? `${program.instructorCapacity}건` : `${program.instructors}건`}</strong>
+                    {' (신청자가 아닌 승인된 강사 기준)'}
+                  </>
                 ) : (
                   '-'
                 )}

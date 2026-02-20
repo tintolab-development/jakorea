@@ -1,11 +1,13 @@
 /**
  * 학교 상세 기본 정보 수정 폼 스키마 (수정 가능 필드만)
- * 수정 가능: 진행 장소, 대기실 여부 및 위치, 식사 제공 여부 및 안내, 담당 교사
+ * 수정 가능: 진행 장소, 대기실 여부 및 위치, 식사 제공 여부 및 안내, 담당 교사, 교재 현황
  * 명세: docs/design/school-detail-basic-edit-mode-spec.md
  */
 
 import { z } from 'zod'
 import type { SchoolDetailForModal } from './school-detail-types'
+
+const textbookStatusEnum = z.enum(['preparing', 'shipping', 'delivered'])
 
 export const schoolDetailBasicFormSchema = z
   .object({
@@ -17,6 +19,7 @@ export const schoolDetailBasicFormSchema = z
     teacherName: z.string().optional(),
     teacherPhone: z.string().optional(),
     teacherEmail: z.string().optional(),
+    textbookStatus: textbookStatusEnum,
   })
   .refine(
     data => !data.waitingRoomAvailable || (data.waitingRoomLocation ?? '').trim().length > 0,
@@ -34,6 +37,7 @@ export const EMPTY_BASIC_FORM_VALUES: SchoolDetailBasicFormValues = {
   teacherName: '',
   teacherPhone: '',
   teacherEmail: '',
+  textbookStatus: 'preparing',
 }
 
 export function detailToBasicFormValues(detail: SchoolDetailForModal): SchoolDetailBasicFormValues {
@@ -46,6 +50,7 @@ export function detailToBasicFormValues(detail: SchoolDetailForModal): SchoolDet
     teacherName: detail.teacherName ?? '',
     teacherPhone: detail.teacherPhone ?? '',
     teacherEmail: detail.teacherEmail ?? '',
+    textbookStatus: detail.textbookStatus ?? 'preparing',
   }
 }
 
@@ -63,5 +68,6 @@ export function basicFormValuesToDetailPatch(
     teacherName: values.teacherName?.trim() || undefined,
     teacherPhone: values.teacherPhone?.trim() || undefined,
     teacherEmail: values.teacherEmail?.trim() || undefined,
+    textbookStatus: values.textbookStatus,
   }
 }

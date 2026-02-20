@@ -272,7 +272,7 @@
     outline-offset: 1px;
 }
 
-/* 썸네일 영역 내 파일 선택 필드: 버튼 크기·간격 (시안 80~100px × 30~35px, 연한 청록) */
+/* 썸네일 영역 내 파일 선택 필드: 버튼 120×40, 연한 청록 */
 .program-detail-info-tab__file-select.file-select-field {
     gap: 10px;
 }
@@ -283,9 +283,9 @@
 }
 
 .program-detail-info-tab__file-select .file-select-field__btn {
-    width: 100px;
-    min-width: 100px;
-    height: 32px;
+    width: 120px;
+    min-width: 120px;
+    height: 40px;
     padding: 0 12px;
     border-radius: 6px;
     font-size: var(--font-size-13);
