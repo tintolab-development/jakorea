@@ -217,7 +217,6 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         <div className="program-managers-tab__top">
           <div className="program-managers-tab__filters">
             <Row
-              gutter={[12, 12]}
               align="middle"
               wrap={false}
               className="program-managers-tab__filter-row"
@@ -299,6 +298,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
       <AddManagerModal
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
+        currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
         onAdd={handleAdd}
       />
 
@@ -309,6 +309,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
           setManagerForEditRole(null)
         }}
         manager={managerForEditRole}
+        managerList={managerList}
         onSave={handleSaveRole}
         onDeleteRequest={manager => {
           setDeleteFromEditManager(manager)

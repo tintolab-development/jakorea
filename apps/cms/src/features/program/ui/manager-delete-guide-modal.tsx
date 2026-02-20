@@ -8,13 +8,17 @@ import { CloseOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import './manager-delete-guide-modal.css'
 
-/** 공통 삭제 안내 모달: title + lines만 지정 */
+/** 공통 삭제 안내 모달: title + lines + 확인 버튼 문구/스타일 */
 export interface DeleteGuideModalProps {
   open: boolean
   onCancel: () => void
   onConfirm: () => void
   title: string
   lines: string[]
+  /** 확인 버튼 문구 (기본: 삭제) */
+  confirmText?: string
+  /** 확인 버튼 스타일 (기본: danger) */
+  confirmVariant?: 'danger' | 'primary'
 }
 
 /** 담당자 삭제 전용 props (기존 호환) */
@@ -66,6 +70,26 @@ export function buildSchoolMessageLines(names: string[]): string[] {
   ]
 }
 
+/** 학교 신청 선택 반려 문구 생성 (신청자 목록 탭 - 수강 신청 학교) */
+export function buildSchoolRejectMessageLines(count: number): string[] {
+  if (count <= 0) return []
+  return [
+    `선택한 ${count}건의 학교 신청을 반려하시겠습니까?`,
+    '반려 시 해당 학교들의 신청 상태가 [신청 반려]로 변경됩니다.',
+    '정말로 반려하시겠습니까?',
+  ]
+}
+
+/** 학교 신청 선택 승인 문구 생성 (신청자 목록 탭 - 수강 신청 학교) */
+export function buildSchoolApproveMessageLines(count: number): string[] {
+  if (count <= 0) return []
+  return [
+    `선택한 ${count}건의 학교 신청을 승인하시겠습니까?`,
+    '승인 시 해당 학교들의 신청 상태가 [승인 완료]로 변경됩니다.',
+    '정말로 승인하시겠습니까?',
+  ]
+}
+
 /** 강사 삭제 문구 생성 */
 export function buildInstructorMessageLines(names: string[]): string[] {
   if (names.length === 0) return []
@@ -86,6 +110,26 @@ export function buildInstructorMessageLines(names: string[]): string[] {
   ]
 }
 
+/** 강사 신청 선택 반려 문구 생성 (신청자 목록 탭) */
+export function buildInstructorRejectMessageLines(count: number): string[] {
+  if (count <= 0) return []
+  return [
+    `선택한 ${count}건의 강사 신청을 반려하시겠습니까?`,
+    '반려 시 해당 강사들의 신청 상태가 [신청 반려]로 변경됩니다.',
+    '정말로 반려하시겠습니까?',
+  ]
+}
+
+/** 강사 신청 선택 승인 문구 생성 (신청자 목록 탭) */
+export function buildInstructorApproveMessageLines(count: number): string[] {
+  if (count <= 0) return []
+  return [
+    `선택한 ${count}건의 강사 신청을 승인하시겠습니까?`,
+    '승인 시 해당 강사들의 신청 상태가 [승인 완료]로 변경됩니다.',
+    '정말로 승인하시겠습니까?',
+  ]
+}
+
 /** 문장에서 [xxx] 부분을 볼드(700)로 감싸서 React 노드로 반환 */
 function renderLineWithBoldBrackets(line: string) {
   const parts = line.split(/(\[[^\]]+\])/g)
@@ -100,13 +144,15 @@ function renderLineWithBoldBrackets(line: string) {
   )
 }
 
-/** 공통 삭제 안내 모달 (제목·본문 라인만 전달) */
+/** 공통 삭제 안내 모달 (제목·본문 라인·확인 버튼 문구/스타일) */
 export function DeleteGuideModal({
   open,
   onCancel,
   onConfirm,
   title,
   lines,
+  confirmText = '삭제',
+  confirmVariant = 'danger',
 }: DeleteGuideModalProps) {
   return (
     <Modal
@@ -144,8 +190,13 @@ export function DeleteGuideModal({
           <AppButton variant="cancel" size="large" onClick={onCancel}>
             취소
           </AppButton>
-          <AppButton variant="danger" size="large" dangerFillOnHover onClick={onConfirm}>
-            삭제
+          <AppButton
+            variant={confirmVariant}
+            size="large"
+            {...(confirmVariant === 'danger' ? { dangerFillOnHover: true } : {})}
+            onClick={onConfirm}
+          >
+            {confirmText}
           </AppButton>
         </div>
       </div>

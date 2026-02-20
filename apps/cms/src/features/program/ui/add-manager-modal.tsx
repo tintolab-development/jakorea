@@ -3,12 +3,12 @@
  * 프로그램 상세 > 담당자 정보 탭 > 등록 버튼 클릭 시
  */
 
-import { useEffect } from 'react'
-import { Form, Input, Select } from 'antd'
+import { useEffect, useState } from 'react'
+import { Form, Input, Select, Modal, Button } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ProgramRole } from '@/types/user'
-import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
+import { PROGRAM_ROLE_LABELS, MAX_OWNER_COUNT } from '@/data/mock/program-managers'
 import type { ProgramManagerRow } from '@/data/mock/program-managers'
 import './add-manager-modal.css'
 
@@ -28,11 +28,19 @@ export interface AddManagerFormValues {
 interface AddManagerModalProps {
   open: boolean
   onCancel: () => void
+  /** PM(담당자) 3명 제한 검증용 — 현재 OWNER 수 */
+  currentOwnerCount: number
   onAdd: (values: AddManagerFormValues) => void
 }
 
-export function AddManagerModal({ open, onCancel, onAdd }: AddManagerModalProps) {
+export function AddManagerModal({
+  open,
+  onCancel,
+  currentOwnerCount,
+  onAdd,
+}: AddManagerModalProps) {
   const [form] = Form.useForm<AddManagerFormValues>()
+  const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -40,7 +48,15 @@ export function AddManagerModal({ open, onCancel, onAdd }: AddManagerModalProps)
     }
   }, [open, form])
 
+  useEffect(() => {
+    if (!open) setShowOwnerLimitModal(false)
+  }, [open])
+
   const handleSubmit = (values: AddManagerFormValues) => {
+    if (values.role === 'OWNER' && currentOwnerCount >= MAX_OWNER_COUNT) {
+      setShowOwnerLimitModal(true)
+      return
+    }
     onAdd({
       name: values.name.trim(),
       email: values.email.trim(),
@@ -142,6 +158,22 @@ export function AddManagerModal({ open, onCancel, onAdd }: AddManagerModalProps)
           </div>
         </div>
       </Form>
+
+      <Modal
+        title="설정 불가"
+        open={showOwnerLimitModal}
+        onCancel={() => setShowOwnerLimitModal(false)}
+        footer={
+          <Button type="primary" onClick={() => setShowOwnerLimitModal(false)}>
+            확인
+          </Button>
+        }
+        zIndex={2010}
+        centered
+        width={400}
+      >
+        PM(담당자)는 총 {MAX_OWNER_COUNT}명까지만 지정할 수 있습니다.
+      </Modal>
     </TealHeaderModal>
   )
 }
