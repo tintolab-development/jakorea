@@ -1,12 +1,12 @@
 /**
  * 강의 신청 강사 상세 정보 모달 (참여 강사 상세 정보 동일 컴포넌트)
  * 명세: docs/design/applicant-instructor-detail-modal-spec.md
- * 크기: 1400 × 520 (바디 스크롤 없이 기본 정보·탭이 다 보이도록)
+ * 크기: width 1400px, height 704px
  */
 
 .applicant-instructor-detail-modal__root.ant-modal .ant-modal-content {
-    max-height: 520px;
-    height: 520px;
+    max-height: 704px;
+    height: 704px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -77,7 +77,7 @@
 .applicant-instructor-detail-modal__tabs .ant-tabs-tabpane {
     height: 100%;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 /* 탭: 활성 탭 청록 밑줄, 텍스트 색상 */
@@ -105,9 +105,10 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    overflow: hidden;
+    overflow: auto;
     height: 100%;
 }
+
 
 .applicant-instructor-detail-modal__basic-top {
     display: flex;
@@ -115,6 +116,419 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
+    flex-shrink: 0;
+}
+
+/* 기본 정보: 프로필 221×288 + 우측 테이블 */
+.applicant-instructor-detail-modal__basic-info {
+    display: flex;
+    gap: var(--spacing-16, 16px);
+    align-items: flex-start;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.applicant-instructor-detail-modal__profile-area {
+    flex-shrink: 0;
+    width: 221px;
+    height: 288px;
+    min-width: 221px;
+    min-height: 288px;
+    max-width: 221px;
+    max-height: 288px;
+}
+
+.applicant-instructor-detail-modal__profile-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__profile-icon {
+    font-size: 48px;
+    color: var(--color-text-tertiary, #bfbfbf);
+}
+
+.applicant-instructor-detail-modal__profile-preview-wrap {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    display: block;
+    box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__profile-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 우측 테이블: 성명 rowSpan 3 + 한글/한자/영문 3행 등 */
+.applicant-instructor-detail-modal__basic-table-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border-radius: 6px;
+    background: var(--color-bg-base, #fff);
+    box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__basic-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: fixed;
+}
+
+.applicant-instructor-detail-modal__basic-table tbody tr {
+    height: 48px;
+    min-height: 48px;
+    display: table-row;
+}
+
+.applicant-instructor-detail-modal__basic-table tbody tr > td {
+    padding: 4px 16px;
+    text-align: left;
+    vertical-align: middle;
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    box-sizing: border-box;
+    display: table-cell;
+    height: 48px;
+    min-height: 48px;
+}
+
+.applicant-instructor-detail-modal__basic-table tbody tr > td.applicant-instructor-detail-modal__basic-table-cell--label {
+    text-align: center;
+}
+
+.applicant-instructor-detail-modal__basic-table-col-label-left {
+    width: 100px;
+    min-width: 100px;
+}
+
+.applicant-instructor-detail-modal__basic-table-col-name-sub {
+    width: 80px;
+    min-width: 80px;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--name {
+    width: 100px;
+    min-width: 100px;
+    height: 96px; /* 48px × 2 (rowSpan) */
+    vertical-align: middle;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--name-sub {
+    width: 80px;
+    min-width: 80px;
+    height: 48px;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--row-label {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    height: 48px;
+}
+
+/* 한줄소개 제외 td 영역: 353×48 (값 열 너비 353px, 행 높이 48px) */
+.applicant-instructor-detail-modal__basic-table-col-input-left {
+    width: 353px;
+    min-width: 353px;
+}
+
+.applicant-instructor-detail-modal__basic-table-col-label-right {
+    width: 180px;
+    min-width: 180px;
+}
+
+.applicant-instructor-detail-modal__basic-table-col-input-right {
+    width: 353px;
+    min-width: 353px;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--label {
+    padding: 0 16px;
+    background: #fafafa;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-label, #262626);
+    text-align: center;
+    vertical-align: middle;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--label-right {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    height: 48px;
+}
+
+.applicant-instructor-detail-modal__basic-table-label {
+    white-space: nowrap;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--input {
+    background: #fff;
+    padding: 4px 16px;
+}
+
+/* 디바이더 양옆 갭 12px: 좌측 값 셀 padding-right, 우측 라벨 셀 border-left + padding-left */
+.applicant-instructor-detail-modal__basic-table-cell--before-divider {
+    padding-right: 12px;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--divider-left {
+    border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+    padding-left: 12px;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--one-line {
+    vertical-align: top;
+}
+
+.applicant-instructor-detail-modal__basic-table-cell--one-line .applicant-instructor-detail-modal__one-line-intro {
+    display: block;
+    max-height: 72px;
+    overflow-y: auto;
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+/* 결재 내역: 승인 완료 / 승인 반려 케이스 */
+.applicant-instructor-detail-modal__approval-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-top: 32px;
+}
+
+.applicant-instructor-detail-modal__approval-history .applicant-instructor-detail-modal__section-title {
+  margin-bottom: 0;
+}
+
+.applicant-instructor-detail-modal__approval-history-block {
+  background: var(--color-bg-tertiary, #f5f5f5);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  overflow: hidden;
+}
+
+.applicant-instructor-detail-modal__approval-history-row {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  min-height: 60px;
+  height: 60px;
+}
+
+.applicant-instructor-detail-modal__approval-history-cell {
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* td 기본 영역: 490×60 (결재 현황 값 + 디바이더 + 알림 발송) */
+.applicant-instructor-detail-modal__approval-history-td-content {
+  width: 490px;
+  min-width: 490px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: #fff;
+  border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+}
+
+.applicant-instructor-detail-modal__approval-history-td-content > .applicant-instructor-detail-modal__approval-history-cell--value {
+  border-left: none;
+}
+
+.applicant-instructor-detail-modal__approval-history-cell--label {
+  background: #edf0f2;
+  font-weight: 700;
+  color: var(--color-text-label, #262626);
+  width: 180px;
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+/* td 기본 영역: 490×60 (배정 학교/반려 사유 값 셀) - flex 고정으로 영역 유지 */
+.applicant-instructor-detail-modal__approval-history-cell--td-default {
+  flex: 0 0 auto;
+  width: 490px;
+  min-width: 490px;
+  height: 60px;
+  box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__approval-history-cell--value {
+  background: #fff;
+  color: var(--color-text-primary, #333);
+  flex: 1 1 auto;
+  min-width: 0;
+  border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* 결재 현황 값 셀: 디바이더와 12px 갭, 넓어지지 않도록 고정 (승인[상태] | 디바이더 | 알림 발송 구조 유지) */
+.applicant-instructor-detail-modal__approval-history-cell--value.applicant-instructor-detail-modal__approval-history-cell--before-divider {
+  flex: 0 0 auto;
+  padding-right: 12px;
+}
+
+.applicant-instructor-detail-modal__approval-history-cell--action {
+  background: #fff;
+  border-left: none;
+  padding-left: 12px;
+  padding-right: 16px;
+  flex-shrink: 0;
+  justify-content: flex-start;
+}
+
+.applicant-instructor-detail-modal__approval-history-divider {
+  width: 1px;
+  min-width: 1px;
+  height: 13px;
+  min-height: 13px;
+  background: var(--color-border-secondary, #e8e8e8);
+  flex-shrink: 0;
+  margin: 0;
+  align-self: center;
+}
+
+.applicant-instructor-detail-modal__approval-history-cell--select {
+  padding: 4px 16px;
+}
+
+.applicant-instructor-detail-modal__approval-school-select {
+  width: 100%;
+  min-width: 180px;
+  max-width: 320px;
+}
+
+/* 희망 배정 학교: 기본정보와 32px 갭, 테이블 표현 */
+.applicant-instructor-detail-modal__preferred-schools {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-top: 32px;
+}
+
+.applicant-instructor-detail-modal__preferred-schools .applicant-instructor-detail-modal__section-title {
+    margin-bottom: 0;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-radio-group {
+    display: block;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-table-wrap {
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fafafa;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-col-rank {
+    width: 180px;
+    min-width: 180px;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-col-school {
+    width: 353px;
+    min-width: 353px;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-table tbody tr {
+    height: 48px;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-table tbody th,
+.applicant-instructor-detail-modal__preferred-schools-table tbody td {
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+/* th(순위): 180×48 */
+.applicant-instructor-detail-modal__preferred-schools-cell--rank {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    height: 48px;
+    min-height: 48px;
+    background: #fafafa;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-label, #262626);
+    text-align: center;
+    padding-right: 12px;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-cell--school {
+    width: 353px;
+    min-width: 353px;
+    background: #fff;
+    border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+    padding-left: 12px;
+}
+
+/* td: 희망 학교 | 희망 학년 | 희망 진행 일자, 디바이더 양옆 12px 갭 */
+.applicant-instructor-detail-modal__preferred-school-td-content {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+}
+
+.applicant-instructor-detail-modal__preferred-school-td-segment {
+    padding: 0 12px;
+}
+
+.applicant-instructor-detail-modal__preferred-school-td-segment:first-child {
+    padding-left: 0;
+}
+
+.applicant-instructor-detail-modal__preferred-school-td-segment:last-child {
+    padding-right: 0;
+}
+
+.applicant-instructor-detail-modal__preferred-school-td-divider {
+    width: 1px;
+    height: 1em;
+    background: var(--color-border-secondary, #e8e8e8);
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.applicant-instructor-detail-modal__preferred-schools-cell--school .applicant-instructor-detail-modal__preferred-school-radio {
+    margin-right: 8px;
+}
+
+.applicant-instructor-detail-modal__preferred-school-radio {
+    margin-right: 0;
 }
 
 .applicant-instructor-detail-modal__section-title {
@@ -185,8 +599,17 @@
     line-height: 1.5;
 }
 
+/* 일정 변경&취소 이력 배지: 폰트·배경 스펙 */
 .applicant-instructor-detail-modal__name-badge {
     margin-left: 8px;
+    color: #1E8C29;
+    text-align: center;
+    font-family: Pretendard, sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 150%;
+    background-color: #E9F3EA;
 }
 
 .applicant-instructor-detail-modal__resume {
@@ -197,8 +620,166 @@
     padding: 24px;
 }
 
+.applicant-instructor-detail-modal__resume--has-content {
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .applicant-instructor-detail-modal__resume-placeholder {
     margin: 0;
     font-size: 14px;
     color: var(--color-text-secondary);
+}
+
+.applicant-instructor-detail-modal__resume-empty {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 140%;
+}
+
+/* 강사 이력서 탭: 섹션 간·제목-카드 간 gap 20px */
+.applicant-instructor-detail-modal__resume-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.applicant-instructor-detail-modal__resume-section-title {
+    margin: 0;
+    font-family: Pretendard, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 140%;
+    color: var(--default-BK, #3D3D3D);
+}
+
+.applicant-instructor-detail-modal__resume-section-count {
+    font-family: Pretendard, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 140%;
+    color: var(--JA-mint-01, #01A1AF);
+    margin-left: 8px;
+}
+
+.applicant-instructor-detail-modal__resume-card {
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border-radius: 6px;
+    background: var(--color-bg-base, #fff);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__resume-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 0;
+}
+
+.applicant-instructor-detail-modal__resume-row-left {
+    flex-shrink: 0;
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 140%;
+    color: var(--color-text-secondary, #8c8c8c);
+    min-width: 0;
+}
+
+/* 경력: 년도 표시 170*21, 단일년도 40*21 */
+.applicant-instructor-detail-modal__resume-row--career .applicant-instructor-detail-modal__resume-row-left {
+    min-width: 170px;
+    height: 21px;
+    box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__resume-row-left--single-year {
+    min-width: 40px !important;
+}
+
+.applicant-instructor-detail-modal__resume-row-right {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    word-break: break-word;
+    font-family: Pretendard, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 140%;
+    color: var(--JA-mint-01, #01A1AF);
+}
+
+.applicant-instructor-detail-modal__resume-row-right .applicant-instructor-detail-modal__resume-emphasis {
+    font-weight: 700;
+}
+
+/* 디바이더(|)가 붙는 경우: 왼쪽 텍스트만 볼드 + 검정 */
+.applicant-instructor-detail-modal__resume-row-right--with-divider {
+    color: var(--color-text-primary, #262626);
+}
+
+.applicant-instructor-detail-modal__resume-emphasis--left {
+    font-weight: 700;
+    color: var(--color-text-primary, #262626);
+}
+
+/* 파이프(|) 우측 텍스트(담당 업무) */
+.applicant-instructor-detail-modal__resume-role {
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+    color: var(--default-BK, #3D3D3D);
+}
+
+/* 자격 및 면허·수상 및 수료 내역: 면허/수료 표시는 모두 검은색 */
+.applicant-instructor-detail-modal__resume-row-right--black {
+    color: var(--default-BK, #3D3D3D);
+}
+
+/* 강사 이력서 탭: 자유 작성 항목 1~4 (1·2번 동일 스타일) */
+.applicant-instructor-detail-modal__resume-section--free-writing {
+    gap: 12px;
+}
+
+.applicant-instructor-detail-modal__resume-section-title--free-writing {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--default-BK, #3D3D3D);
+}
+
+.applicant-instructor-detail-modal__resume-free-writing-card {
+    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border-radius: 6px;
+    background: var(--color-bg-base, #fff);
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__resume-free-writing-text {
+    margin: 0;
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+    color: var(--color-text-primary, #262626);
+    white-space: pre-wrap;
+    word-break: break-word;
 }

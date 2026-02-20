@@ -156,6 +156,20 @@
     gap: 6px;
 }
 
+.program-applicants-tab__table-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-8, 8px);
+    flex-shrink: 0;
+}
+
+/* 선택 반려 / 선택 승인 버튼: 120×40 고정 */
+.program-applicants-tab__table-actions .app-button {
+    width: 120px;
+    min-width: 120px;
+    height: 40px;
+}
+
 .program-applicants-tab__table-title {
     color: var(--default-BK, #3d3d3d);
     font-size: 18px;

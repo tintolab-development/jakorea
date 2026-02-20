@@ -13,6 +13,13 @@ import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
 import { SchoolDetailModal } from './school-detail-modal'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import {
+  DeleteGuideModal,
+  buildSchoolRejectMessageLines,
+  buildSchoolApproveMessageLines,
+  buildInstructorRejectMessageLines,
+  buildInstructorApproveMessageLines,
+} from './manager-delete-guide-modal'
+import {
   MOCK_APPLICANT_INSTRUCTORS,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
@@ -107,6 +114,12 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
   )
   const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
   const [selectedInstructor, setSelectedInstructor] = useState<ApplicantInstructorRow | null>(null)
+  const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
+  const [schoolConfirmModal, setSchoolConfirmModal] = useState<'reject' | 'approve' | null>(null)
+  const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
+  const [instructorConfirmModal, setInstructorConfirmModal] = useState<'reject' | 'approve' | null>(
+    null
+  )
 
   const approvalOptions = useMemo<{ label: string; value: string }[]>(
     () => [
@@ -133,12 +146,124 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
     []
   )
 
+  const handleSchoolBulkRejectClick = useCallback(() => {
+    if (selectedSchoolRowKeys.length === 0) {
+      message.warning('반려할 항목을 선택해 주세요.')
+      return
+    }
+    setSchoolConfirmModal('reject')
+  }, [selectedSchoolRowKeys.length])
+
+  const handleSchoolBulkApproveClick = useCallback(() => {
+    if (selectedSchoolRowKeys.length === 0) {
+      message.warning('승인할 항목을 선택해 주세요.')
+      return
+    }
+    setSchoolConfirmModal('approve')
+  }, [selectedSchoolRowKeys.length])
+
+  const handleSchoolRejectConfirm = useCallback(() => {
+    setSchoolList(prev =>
+      prev.map(row =>
+        selectedSchoolRowKeys.includes(row.id)
+          ? { ...row, approvalStatus: 'rejected' as ApprovalStatusKey }
+          : row
+      )
+    )
+    setSelectedSchoolRowKeys([])
+    setSchoolConfirmModal(null)
+    message.success('선택한 학교 신청이 반려되었습니다.')
+  }, [selectedSchoolRowKeys])
+
+  const handleSchoolApproveConfirm = useCallback(() => {
+    setSchoolList(prev =>
+      prev.map(row =>
+        selectedSchoolRowKeys.includes(row.id)
+          ? { ...row, approvalStatus: 'approved' as ApprovalStatusKey }
+          : row
+      )
+    )
+    setSelectedSchoolRowKeys([])
+    setSchoolConfirmModal(null)
+    message.success('선택한 학교 신청이 승인되었습니다.')
+  }, [selectedSchoolRowKeys])
+
   const handleInstructorApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
       setInstructorList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
       )
       message.success('결재 현황이 변경되었습니다.')
+    },
+    []
+  )
+
+  const handleInstructorBulkRejectClick = useCallback(() => {
+    if (selectedInstructorRowKeys.length === 0) {
+      message.warning('반려할 항목을 선택해 주세요.')
+      return
+    }
+    setInstructorConfirmModal('reject')
+  }, [selectedInstructorRowKeys.length])
+
+  const handleInstructorBulkApproveClick = useCallback(() => {
+    if (selectedInstructorRowKeys.length === 0) {
+      message.warning('승인할 항목을 선택해 주세요.')
+      return
+    }
+    setInstructorConfirmModal('approve')
+  }, [selectedInstructorRowKeys.length])
+
+  const handleInstructorRejectConfirm = useCallback(() => {
+    setInstructorList(prev =>
+      prev.map(row =>
+        selectedInstructorRowKeys.includes(row.id)
+          ? { ...row, approvalStatus: 'rejected' as ApprovalStatusKey }
+          : row
+      )
+    )
+    setSelectedInstructorRowKeys([])
+    setInstructorConfirmModal(null)
+    message.success('선택한 강사 신청이 반려되었습니다.')
+  }, [selectedInstructorRowKeys])
+
+  const handleInstructorApproveConfirm = useCallback(() => {
+    setInstructorList(prev =>
+      prev.map(row =>
+        selectedInstructorRowKeys.includes(row.id)
+          ? { ...row, approvalStatus: 'approved' as ApprovalStatusKey }
+          : row
+      )
+    )
+    setSelectedInstructorRowKeys([])
+    setInstructorConfirmModal(null)
+    message.success('선택한 강사 신청이 승인되었습니다.')
+  }, [selectedInstructorRowKeys])
+
+  const handleInstructorDetailReject = useCallback(
+    (instructor: ApplicantInstructorRow) => {
+      setInstructorList(prev =>
+        prev.map(row =>
+          row.id === instructor.id ? { ...row, approvalStatus: 'rejected' as ApprovalStatusKey } : row
+        )
+      )
+      setInstructorDetailModalOpen(false)
+      setSelectedInstructor(null)
+      message.success('강사 신청이 반려되었습니다.')
+    },
+    []
+  )
+
+  const handleInstructorDetailApprove = useCallback(
+    (instructor: ApplicantInstructorRow, _selectedSchoolId: string) => {
+      setInstructorList(prev =>
+        prev.map(row =>
+          row.id === instructor.id ? { ...row, approvalStatus: 'approved' as ApprovalStatusKey } : row
+        )
+      )
+      setInstructorDetailModalOpen(false)
+      setSelectedInstructor(null)
+      message.success('강사 신청이 승인되었습니다.')
     },
     []
   )
@@ -532,6 +657,22 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                     총 {filteredSchools.length}건
                   </span>
                 </div>
+                <div className="program-applicants-tab__table-actions">
+                  <AppButton
+                    variant="danger"
+                    size="large"
+                    onClick={handleSchoolBulkRejectClick}
+                  >
+                    선택 반려
+                  </AppButton>
+                  <AppButton
+                    variant="primary"
+                    size="large"
+                    onClick={handleSchoolBulkApproveClick}
+                  >
+                    선택 승인
+                  </AppButton>
+                </div>
               </div>
               <Table<ApplicantSchoolRow>
                 className="program-applicants-tab__table program-applicants-tab__table--clickable"
@@ -540,12 +681,18 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                 pagination={false}
                 columns={columns}
                 dataSource={filteredSchools}
+                rowSelection={{
+                  selectedRowKeys: selectedSchoolRowKeys,
+                  onChange: keys => setSelectedSchoolRowKeys(keys),
+                }}
                 onRow={record => ({
                   onClick: e => {
                     const target = e.target as HTMLElement
                     if (
                       target.closest('.program-applicants-tab__approval-dropdown-cell') ||
-                      target.closest('.program-applicants-tab__approval-dropdown-trigger')
+                      target.closest('.program-applicants-tab__approval-dropdown-trigger') ||
+                      target.closest('.ant-table-selection-column') ||
+                      target.closest('.ant-checkbox-wrapper')
                     )
                       return
                     openSchoolDetail(record)
@@ -568,6 +715,22 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                     총 {filteredInstructors.length}건
                   </span>
                 </div>
+                <div className="program-applicants-tab__table-actions">
+                  <AppButton
+                    variant="danger"
+                    size="large"
+                    onClick={handleInstructorBulkRejectClick}
+                  >
+                    선택 반려
+                  </AppButton>
+                  <AppButton
+                    variant="primary"
+                    size="large"
+                    onClick={handleInstructorBulkApproveClick}
+                  >
+                    선택 승인
+                  </AppButton>
+                </div>
               </div>
               <Table<ApplicantInstructorRow>
                 className="program-applicants-tab__table program-applicants-tab__table--clickable"
@@ -576,13 +739,19 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                 pagination={false}
                 columns={instructorColumns}
                 dataSource={filteredInstructors}
+                rowSelection={{
+                  selectedRowKeys: selectedInstructorRowKeys,
+                  onChange: keys => setSelectedInstructorRowKeys(keys),
+                }}
                 locale={{ emptyText: '신청 강사 데이터가 없습니다.' }}
                 onRow={record => ({
                   onClick: e => {
                     const target = e.target as HTMLElement
                     if (
                       target.closest('.program-applicants-tab__approval-dropdown-cell') ||
-                      target.closest('.program-applicants-tab__approval-dropdown-trigger')
+                      target.closest('.program-applicants-tab__approval-dropdown-trigger') ||
+                      target.closest('.ant-table-selection-column') ||
+                      target.closest('.ant-checkbox-wrapper')
                     )
                       return
                     setSelectedInstructor(record)
@@ -609,7 +778,55 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
             setSelectedInstructor(null)
           }}
           instructor={selectedInstructor}
+          onReject={handleInstructorDetailReject}
+          onApprove={handleInstructorDetailApprove}
         />
+
+        {schoolConfirmModal === 'reject' && (
+          <DeleteGuideModal
+            open
+            onCancel={() => setSchoolConfirmModal(null)}
+            onConfirm={handleSchoolRejectConfirm}
+            title="선택 반려 안내"
+            lines={buildSchoolRejectMessageLines(selectedSchoolRowKeys.length)}
+            confirmText="반려"
+            confirmVariant="danger"
+          />
+        )}
+        {schoolConfirmModal === 'approve' && (
+          <DeleteGuideModal
+            open
+            onCancel={() => setSchoolConfirmModal(null)}
+            onConfirm={handleSchoolApproveConfirm}
+            title="선택 승인 안내"
+            lines={buildSchoolApproveMessageLines(selectedSchoolRowKeys.length)}
+            confirmText="승인"
+            confirmVariant="primary"
+          />
+        )}
+
+        {instructorConfirmModal === 'reject' && (
+          <DeleteGuideModal
+            open
+            onCancel={() => setInstructorConfirmModal(null)}
+            onConfirm={handleInstructorRejectConfirm}
+            title="선택 반려 안내"
+            lines={buildInstructorRejectMessageLines(selectedInstructorRowKeys.length)}
+            confirmText="반려"
+            confirmVariant="danger"
+          />
+        )}
+        {instructorConfirmModal === 'approve' && (
+          <DeleteGuideModal
+            open
+            onCancel={() => setInstructorConfirmModal(null)}
+            onConfirm={handleInstructorApproveConfirm}
+            title="선택 승인 안내"
+            lines={buildInstructorApproveMessageLines(selectedInstructorRowKeys.length)}
+            confirmText="승인"
+            confirmVariant="primary"
+          />
+        )}
       </Card>
     </div>
   )
