@@ -27,8 +27,7 @@ import './program-detail-page.css'
 export function ProgramDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { program, loading, canWrite, sponsorName, handleLifecycleStatusChange, updateProgram } =
-    useProgramDetail(id)
+  const { program, loading, canWrite, sponsorName, updateProgram } = useProgramDetail(id)
   const { activeTabKey, onTabChange } = useProgramDetailTab()
   const [isEditMode, setIsEditMode] = useState(false)
   const detailTabSaveRef = useRef<{
@@ -120,7 +119,6 @@ export function ProgramDetailPage() {
                   program={program}
                   sponsorName={sponsorName}
                   lifecycleStatus={program.lifecycleStatus ?? null}
-                  onLifecycleStatusChange={handleLifecycleStatusChange}
                   isEditMode={isEditMode}
                   onCancelEdit={() => setIsEditMode(false)}
                   onSaveEdit={async draft => {

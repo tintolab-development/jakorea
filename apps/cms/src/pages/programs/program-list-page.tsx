@@ -37,6 +37,8 @@ import {
 } from '@/data/mock'
 import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget'
 import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
+import { EnrollmentStatusDetailModal } from '@/features/program/ui/enrollment-status-detail-modal'
+import { InstructorRecruitmentDetailModal } from '@/features/program/ui/instructor-recruitment-detail-modal'
 // import { filterProgramsByACL } from '@/shared/utils/program-acl' // 개발 환경에서는 ACL 필터링 비활성화
 
 interface ProgramListQueryParams extends Record<string, string | undefined> {
@@ -85,8 +87,17 @@ export function ProgramListPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null)
 
+  // 수강자 모집 페이지: 테이블 행 클릭 시 수강 신청 학교 목록 상세 모달
+  const [selectedProgramForModal, setSelectedProgramForModal] = useState<Program | null>(null)
+  const [selectedProgramForInstructorModal, setSelectedProgramForInstructorModal] =
+    useState<Program | null>(null)
+
   const [formLoading, setFormLoading] = useState(false)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+
+  // 테이블 표시 건수·필터 적용 여부 (필터 없을 땐 전체 건수 표시 → 상단 위젯과 일치)
+  const [displayCount, setDisplayCount] = useState<number | null>(null)
+  const [hasListFilters, setHasListFilters] = useState(false)
 
   // 뷰 모드를 쿼리 파라미터로 관리
   const viewModeFromUrl = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -101,6 +112,19 @@ export function ProgramListPage() {
       setViewMode(urlViewMode)
     }
   }, [searchParams])
+
+  // 수강자/강사 모집 경로에서는 항상 리스트(테이블) 뷰 적용 — 위젯 클릭 시 테이블이 보이도록
+  useEffect(() => {
+    const isRecruitmentRoute =
+      location.pathname === '/programs/education/student-recruitment' ||
+      location.pathname === '/programs/education/instructor-recruitment'
+    if (isRecruitmentRoute && viewMode !== 'list') {
+      setViewMode('list')
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.set('viewMode', 'list')
+      setSearchParams(nextParams, { replace: true })
+    }
+  }, [location.pathname])
 
   // 검색 인풋 로컬 상태 (한글 IME 조합 문제 해결)
   const [searchInputValue, setSearchInputValue] = useState(() => searchParams.get('title') || '')
@@ -147,9 +171,13 @@ export function ProgramListPage() {
   const isInstructor = user?.role === 'INSTRUCTOR'
   const isUserRole = isInstructor || user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
 
-  // 프로그램 타입 구분 (교육/봉사)
+  // 프로그램 타입 구분 (교육/봉사). 교육 프로그램 레이아웃 하위 경로 포함
   const programType = useMemo<'education' | 'volunteer' | 'all'>(() => {
-    if (location.pathname === '/programs/education') return 'education'
+    if (
+      location.pathname === '/programs/education' ||
+      location.pathname.startsWith('/programs/education/')
+    )
+      return 'education'
     if (location.pathname === '/programs/volunteer') return 'volunteer'
     return 'all'
   }, [location.pathname])
@@ -173,18 +201,32 @@ export function ProgramListPage() {
     }
   }, [params.programId, user, authStore.isAuthenticated, programs, setParam, navigate])
 
+  // 수강자/강사 모집 전용 경로면 status 고정, 아니면 쿼리 파라미터 사용
+  const isStudentRecruitmentRoute = location.pathname === '/programs/education/student-recruitment'
+  const isInstructorRecruitmentRoute =
+    location.pathname === '/programs/education/instructor-recruitment'
   const statusFilter = useMemo<ProgramLifecycleStatus | null>(() => {
+    if (isStudentRecruitmentRoute) return 'recruiting_students'
+    if (isInstructorRecruitmentRoute) return 'recruiting_instructors'
     const value = params.status as ProgramLifecycleStatus | null
     if (!value) return null
     const validStatuses = new Set(programLifecycleStatusConfig.order)
     if (value === 'education_before_textbook') return 'matching_completed'
     return validStatuses.has(value) ? value : null
-  }, [params.status])
+  }, [params.status, isStudentRecruitmentRoute, isInstructorRecruitmentRoute])
 
   // 강사용: 신청 가능한 프로그램 및 수강자 모집 완료 프로그램 필터링 + 카테고리 필터
   // Phase 0.5.2: 프로그램 단위 ACL 필터링 추가
+  // 교육 탭에서는 상단 요약(ProgramProgressWidget)과 동일한 소스(getEducationPrograms) 사용 → 건수 일치
   const filteredPrograms = useMemo(() => {
-    let filtered = programs
+    let filtered: Program[]
+
+    if (isAdmin && programType === 'education') {
+      // 교육 프로그램: 상단 요약과 동일한 목록 사용 (요약 건수와 테이블 "총 N건" 일치)
+      filtered = getEducationPrograms()
+    } else {
+      filtered = programs
+    }
 
     // 개발/테스트 환경: 모든 관리자가 모든 프로그램을 볼 수 있도록 ACL 필터링 비활성화
     // 프로덕션 환경에서는 아래 주석을 해제하여 ACL 필터링 활성화
@@ -193,23 +235,11 @@ export function ProgramListPage() {
     //   filtered = filterProgramsByACL(filtered, user, 'VIEW')
     // }
 
-    // 관리자용: 교육 프로그램 / 봉사 프로그램 필터링
-    if (isAdmin && programType !== 'all') {
-      if (programType === 'volunteer') {
-        // 봉사 프로그램만 표시
-        const volunteerPrograms = getVolunteerPrograms()
-        const volunteerProgramIds = new Set(volunteerPrograms.map(p => p.id))
-        filtered = filtered.filter(program => volunteerProgramIds.has(program.id))
-      } else if (programType === 'education') {
-        // 교육 프로그램만 표시 (getEducationPrograms 결과를 직접 사용)
-        const educationPrograms = getEducationPrograms()
-        const educationProgramIds = new Set(educationPrograms.map(p => p.id))
-        // store의 programs와 매칭하되, 추가 생성된 프로그램도 포함
-        filtered = filtered.filter(program => educationProgramIds.has(program.id))
-        // store에 없는 추가 생성된 프로그램도 포함
-        const missingPrograms = educationPrograms.filter(ep => !filtered.some(p => p.id === ep.id))
-        filtered = [...filtered, ...missingPrograms]
-      }
+    // 관리자용: 봉사 프로그램 필터링 (교육은 위에서 이미 getEducationPrograms 사용)
+    if (isAdmin && programType === 'volunteer') {
+      const volunteerPrograms = getVolunteerPrograms()
+      const volunteerProgramIds = new Set(volunteerPrograms.map(p => p.id))
+      filtered = filtered.filter(program => volunteerProgramIds.has(program.id))
     }
 
     // status 쿼리 파라미터 필터링 (6단계: 교재 준비 중 = matching+before, 교육 진행 중 = before+after)
@@ -255,12 +285,24 @@ export function ProgramListPage() {
     return filtered
   }, [programs, isUserRole, isAdmin, categoryTab, user, statusFilter, programType])
 
-  // 테이블 행 클릭 시 해당 프로그램 상세 페이지로 라우팅
+  // 테이블 행 클릭 시 해당 프로그램 상세 페이지로 라우팅 (수강자 모집 경로는 모달만 오픈)
   const handleView = (program: Program) => {
     // 비로그인 사용자는 로그인 페이지로 리다이렉트 (redirect 파라미터 포함)
     if (!user || !authStore.isAuthenticated) {
       const redirectPath = `/programs/${program.id}`
       navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`)
+      return
+    }
+
+    // 수강자 모집 페이지: 행 클릭 시 수강 신청 학교 목록 상세 모달만 오픈
+    if (location.pathname === '/programs/education/student-recruitment') {
+      setSelectedProgramForModal(program)
+      return
+    }
+
+    // 강사 모집 페이지: 행 클릭 시 강의 신청 강사 목록 상세 모달만 오픈
+    if (location.pathname === '/programs/education/instructor-recruitment') {
+      setSelectedProgramForInstructorModal(program)
       return
     }
 
@@ -525,8 +567,8 @@ export function ProgramListPage() {
 
   return (
     <div>
-      {/* 관리자용: 프로그램 진행 현황 위젯 (교육 프로그램) */}
-      {isAdmin && programType === 'education' && (
+      {/* 관리자용: 프로그램 진행 현황 위젯 — 교육 프로그램 레이아웃 하위에서는 레이아웃에서 렌더하므로 중복 미표시 */}
+      {isAdmin && programType === 'education' && !location.pathname.startsWith('/programs/education') && (
         <div className="program-progress-widget-container">
           <ProgramProgressWidget title={null} />
         </div>
@@ -539,45 +581,53 @@ export function ProgramListPage() {
         </div>
       )}
 
-      {/* 위젯 디바이더 아래 버튼 영역 (교육 프로그램만) */}
+      {/* 위젯 디바이더 아래 버튼 영역 (교육 프로그램만, 수강자 모집 페이지에서는 검색/뷰 전환/신규 등록 제거) */}
       {isAdmin && programType === 'education' && (
         <PageHeader
-          title="전체 프로그램"
-          description={`총 ${filteredPrograms.length}건`}
+          title={
+            isInstructorRecruitmentRoute
+              ? '강사 모집 중인 프로그램'
+              : isStudentRecruitmentRoute
+                ? '수강자 모집 중인 프로그램'
+                : '전체 프로그램'
+          }
+          description={`총 ${hasListFilters && displayCount !== null ? displayCount : filteredPrograms.length}건`}
           actions={
-            <div className="program-list-page__widget-header-actions">
-              {viewMode === 'list' && (
-                <LabeledSearchInput
-                  label="검색"
-                  placeholder="검색어를 입력하세요"
-                  value={searchInputValue}
-                  onChange={setSearchInputValue}
-                  allowClear
-                  width={300}
-                  showLabel={false}
-                />
-              )}
-              <AppButton
-                variant="cancel"
-                size="filter"
-                icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
-                onClick={() => {
-                  const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
-                  setViewMode(newViewMode)
-                  const nextParams = new URLSearchParams(searchParams)
-                  nextParams.set('viewMode', newViewMode)
-                  setSearchParams(nextParams, { replace: true })
-                }}
-                className="program-view-mode-button"
-              >
-                {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-              </AppButton>
-              {showEducationActions && (
-                <AppButton variant="primary" size="filter" onClick={handleNewClick}>
-                  프로그램 신규 등록
+            isStudentRecruitmentRoute || isInstructorRecruitmentRoute ? undefined : (
+              <div className="program-list-page__widget-header-actions">
+                {viewMode === 'list' && (
+                  <LabeledSearchInput
+                    label="검색"
+                    placeholder="검색어를 입력하세요"
+                    value={searchInputValue}
+                    onChange={setSearchInputValue}
+                    allowClear
+                    width={300}
+                    showLabel={false}
+                  />
+                )}
+                <AppButton
+                  variant="cancel"
+                  size="filter"
+                  icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+                  onClick={() => {
+                    const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
+                    setViewMode(newViewMode)
+                    const nextParams = new URLSearchParams(searchParams)
+                    nextParams.set('viewMode', newViewMode)
+                    setSearchParams(nextParams, { replace: true })
+                  }}
+                  className="program-view-mode-button"
+                >
+                  {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
                 </AppButton>
-              )}
-            </div>
+                {showEducationActions && (
+                  <AppButton variant="primary" size="filter" onClick={handleNewClick}>
+                    프로그램 신규 등록
+                  </AppButton>
+                )}
+              </div>
+            )
           }
         />
       )}
@@ -629,6 +679,23 @@ export function ProgramListPage() {
           setSearchParams(nextParams, { replace: true })
         }}
         tableVariant={programType}
+        studentRecruitmentTable={isStudentRecruitmentRoute}
+        instructorRecruitmentTable={isInstructorRecruitmentRoute}
+        onDisplayCountChange={(count, hasActiveFilters) => {
+          setDisplayCount(count)
+          setHasListFilters(hasActiveFilters)
+        }}
+      />
+
+      <EnrollmentStatusDetailModal
+        open={!!selectedProgramForModal}
+        program={selectedProgramForModal}
+        onCancel={() => setSelectedProgramForModal(null)}
+      />
+      <InstructorRecruitmentDetailModal
+        open={!!selectedProgramForInstructorModal}
+        program={selectedProgramForInstructorModal}
+        onCancel={() => setSelectedProgramForInstructorModal(null)}
       />
 
       <ProgramDetailDrawer

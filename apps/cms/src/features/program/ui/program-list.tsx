@@ -37,7 +37,7 @@ import {
   targetLevelOptions,
   categoryOptions,
 } from './program-list-constants'
-import { getCapacity } from '../lib/program-helpers'
+import { getCapacity, getApplicationCountByProgram } from '../lib/program-helpers'
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -77,6 +77,12 @@ interface ProgramListProps {
   onViewModeChange?: (mode: 'list' | 'calendar') => void // 뷰 모드 변경 핸들러
   /** 테이블 컬럼 구분: education 경로일 때 No., 프로그램명, 모집 상태, 교육 분야, 수강 유형 구분, 교육 대상, 진행 방식, 공란 */
   tableVariant?: ProgramListTableVariant
+  /** 수강자 모집 전용 테이블 컬럼 사용 (No., 프로그램명, 지원자 수, 수강자 모집 인원, 교육 분야, …) */
+  studentRecruitmentTable?: boolean
+  /** 강사 모집 전용 테이블 컬럼 사용 (No., 프로그램명, 지원자 수, 강사 모집 인원, 교육 분야, …) */
+  instructorRecruitmentTable?: boolean
+  /** 테이블에 실제 표시되는 건수·필터 적용 여부 전달 (헤더 "총 N건"과 위젯 동기화: 필터 없을 땐 전체 건수, 있을 땐 표시 건수) */
+  onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
 }
 
 export function ProgramList({
@@ -95,9 +101,12 @@ export function ProgramList({
   showCalendarView = false,
   onCreateNew: _onCreateNew, // eslint-disable-line @typescript-eslint/no-unused-vars
   tableTitle: _tableTitle = '전체 프로그램', // eslint-disable-line @typescript-eslint/no-unused-vars
+  studentRecruitmentTable = false,
+  instructorRecruitmentTable = false,
   viewMode: externalViewMode,
   onViewModeChange: _onViewModeChange, // eslint-disable-line @typescript-eslint/no-unused-vars
   tableVariant = 'all',
+  onDisplayCountChange,
 }: ProgramListProps) {
   const { user } = useAuthStore()
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
@@ -331,6 +340,42 @@ export function ProgramList({
   ])
 
   const { table, resetFilters, columnFilters } = useProgramTable(filteredData)
+
+  // 목록에 필터가 적용됐는지 (관리자: 운영/신청 기간 + 테이블 컬럼 필터(검색·진행현황 등), 강사 등: 검색·기간·대상·진행상태)
+  const hasActiveFilters = useMemo(() => {
+    if (!isParticipant) {
+      const hasColumnFilter = columnFilters.some(f => f.value != null && String(f.value).trim() !== '')
+      return Boolean(
+        hasColumnFilter ||
+          (operationPeriodRange?.[0] && operationPeriodRange?.[1]) ||
+          (applicationPeriodRange?.[0] && applicationPeriodRange?.[1])
+      )
+    }
+    return Boolean(
+      searchQuery.trim() ||
+        (periodRange?.[0] && periodRange?.[1]) ||
+        targetFilter !== 'all' ||
+        educationTypeFilter !== 'all' ||
+        progressStatusFilter !== 'all'
+    )
+  }, [
+    isParticipant,
+    columnFilters,
+    operationPeriodRange,
+    applicationPeriodRange,
+    searchQuery,
+    periodRange,
+    targetFilter,
+    educationTypeFilter,
+    progressStatusFilter,
+  ])
+
+  // 표시 건수·필터 여부를 부모로 전달 (필터 없을 땐 페이지에서 전체 건수 표시 → 위젯과 일치)
+  const displayedCount = hasActiveFilters ? table.getFilteredRowModel().rows.length : filteredData.length
+  useEffect(() => {
+    onDisplayCountChange?.(displayedCount, hasActiveFilters)
+  }, [displayedCount, hasActiveFilters, onDisplayCountChange])
+
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   // 외부에서 selectedRowKeys를 관리하는 경우를 위해 내부 상태도 유지
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
@@ -828,10 +873,12 @@ export function ProgramList({
         />
       ) : null}
 
-      {/* 목록 뷰 (필터와 테이블만 표시) */}
+      {/* 목록 뷰 (필터와 테이블만 표시) — 교육 프로그램/수강자 모집 시 전체 프로그램과 동일한 테이블·가로 스크롤 */}
       {!isParticipant && viewMode === 'list' && (
         <Card loading={loading} className="program-list-card">
-          <div className="program-list-table-wrapper">
+          <div
+            className={`program-list-table-wrapper${tableVariant === 'education' ? ' program-list-table-wrapper--scroll-x' : ''}`}
+          >
             <Table
               rowSelection={
                 tableVariant !== 'education' && showRowSelection && onBulkDelete
@@ -844,7 +891,278 @@ export function ProgramList({
               dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
               columns={
                 tableVariant === 'education'
-                  ? [
+                  ? studentRecruitmentTable
+                    ? (() => {
+                        const dayShort = ['일', '월', '화', '수', '목', '금', '토']
+                        const formatDateRange = (
+                          start?: string | Date,
+                          end?: string | Date
+                        ) => {
+                          if (start == null || end == null) return '-'
+                          const s = dayjs(start)
+                          const e = dayjs(end)
+                          if (!s.isValid() || !e.isValid()) return '-'
+                          return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
+                        }
+                        return [
+                          {
+                            title: 'No.',
+                            key: 'no',
+                            width: 64,
+                            align: 'center' as const,
+                            render: (_: unknown, __: Program, index: number) => index + 1,
+                          },
+                          {
+                            title: '프로그램명',
+                            dataIndex: 'title',
+                            key: 'title',
+                            width: 260,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (text: string) => text ?? '-',
+                          },
+                          {
+                            title: '지원자 수',
+                            key: 'applicantCount',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              `${getApplicationCountByProgram(record.id)}건`,
+                          },
+                          {
+                            title: '수강자 모집 인원',
+                            key: 'capacity',
+                            width: 120,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) => {
+                              const cap = getCapacity(record)
+                              return cap !== undefined ? `${cap}건` : '-'
+                            },
+                          },
+                          {
+                            title: '교육 분야',
+                            dataIndex: 'businessArea',
+                            key: 'businessArea',
+                            width: 110,
+                            align: 'center' as const,
+                            render: (value: string | undefined) =>
+                              value
+                                ? (businessAreaOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '수강자 유형',
+                            dataIndex: 'category',
+                            key: 'category',
+                            width: 120,
+                            align: 'center' as const,
+                            render: (value: ProgramCategory | undefined) =>
+                              value
+                                ? (categoryOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '교육 대상',
+                            dataIndex: 'targetLevel',
+                            key: 'targetLevel',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (value: TargetLevel | undefined) =>
+                              value
+                                ? (targetLevelOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '진행 방식',
+                            dataIndex: 'type',
+                            key: 'type',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (type: string | undefined) =>
+                              type
+                                ? (programTypes.find(t => t.value === type)?.label ?? type)
+                                : '-',
+                          },
+                          {
+                            title: '신청자 모집 기간',
+                            key: 'applicationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(
+                                record.applicationStartDate,
+                                record.applicationEndDate
+                              ),
+                          },
+                          {
+                            title: '프로그램 운영 기간',
+                            key: 'operationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(record.startDate, record.endDate),
+                          },
+                          {
+                            title: '후원사',
+                            dataIndex: 'sponsorId',
+                            key: 'sponsorId',
+                            width: 140,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (sponsorId: string | undefined) =>
+                              sponsorId
+                                ? sponsorService.getNameById(sponsorId)
+                                : '-',
+                          },
+                          {
+                            title: '담당자',
+                            dataIndex: 'managerName',
+                            key: 'managerName',
+                            width: 120,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (value: string | undefined) => value ?? '-',
+                          },
+                        ]
+                      })()
+                    : instructorRecruitmentTable
+                      ? (() => {
+                          const dayShort = ['일', '월', '화', '수', '목', '금', '토']
+                          const formatDateRange = (
+                            start?: string | Date,
+                            end?: string | Date
+                          ) => {
+                            if (start == null || end == null) return '-'
+                            const s = dayjs(start)
+                            const e = dayjs(end)
+                            if (!s.isValid() || !e.isValid()) return '-'
+                            return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
+                          }
+                          return [
+                            {
+                              title: 'No.',
+                              key: 'no',
+                              width: 64,
+                              align: 'center' as const,
+                              render: (_: unknown, __: Program, index: number) => index + 1,
+                            },
+                            {
+                              title: '프로그램명',
+                              dataIndex: 'title',
+                              key: 'title',
+                              width: 260,
+                              ellipsis: true,
+                              align: 'center' as const,
+                              render: (text: string) => text ?? '-',
+                            },
+                            {
+                              title: '지원자 수',
+                              key: 'applicantCount',
+                              width: 100,
+                              align: 'center' as const,
+                              render: (_: unknown, record: Program) =>
+                                `${getApplicationCountByProgram(record.id)}건`,
+                            },
+                            {
+                              title: '강사 모집 인원',
+                              key: 'instructorCapacity',
+                              width: 120,
+                              align: 'center' as const,
+                              render: (_: unknown, record: Program) => {
+                                const current = record.instructors ?? 0
+                                const cap = record.instructorCapacity
+                                if (cap !== undefined && cap !== null)
+                                  return `${current} / ${cap}건`
+                                return `${current}건`
+                              },
+                            },
+                          {
+                            title: '교육 분야',
+                            dataIndex: 'businessArea',
+                            key: 'businessArea',
+                            width: 110,
+                            align: 'center' as const,
+                            render: (value: string | undefined) =>
+                              value
+                                ? (businessAreaOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '수강자 유형',
+                            dataIndex: 'category',
+                            key: 'category',
+                            width: 120,
+                            align: 'center' as const,
+                            render: (value: ProgramCategory | undefined) =>
+                              value
+                                ? (categoryOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '교육 대상',
+                            dataIndex: 'targetLevel',
+                            key: 'targetLevel',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (value: TargetLevel | undefined) =>
+                              value
+                                ? (targetLevelOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '진행 방식',
+                            dataIndex: 'type',
+                            key: 'type',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (type: string | undefined) =>
+                              type
+                                ? (programTypes.find(t => t.value === type)?.label ?? type)
+                                : '-',
+                          },
+                          {
+                            title: '신청자 모집 기간',
+                            key: 'applicationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(
+                                record.applicationStartDate,
+                                record.applicationEndDate
+                              ),
+                          },
+                          {
+                            title: '프로그램 운영 기간',
+                            key: 'operationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(record.startDate, record.endDate),
+                          },
+                          {
+                            title: '후원사',
+                            dataIndex: 'sponsorId',
+                            key: 'sponsorId',
+                            width: 140,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (sponsorId: string | undefined) =>
+                              sponsorId
+                                ? sponsorService.getNameById(sponsorId)
+                                : '-',
+                          },
+                          {
+                            title: '담당자',
+                            dataIndex: 'managerName',
+                            key: 'managerName',
+                            width: 120,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (value: string | undefined) => value ?? '-',
+                          },
+                        ]
+                      })()
+                    : [
                       {
                         title: 'No.',
                         key: 'no',

@@ -36,18 +36,11 @@ export function useProgramDetail(id: string | undefined) {
     return () => setSelectedProgram(null)
   }, [id, fetchProgramById, setSelectedProgram])
 
-  const handleLifecycleStatusChange = canWrite
-    ? (status: import('@/types/domain').ProgramLifecycleStatus) => {
-        if (program) updateProgram(program.id, { lifecycleStatus: status })
-      }
-    : undefined
-
   return {
     program,
     loading,
     canWrite,
     sponsorName,
-    handleLifecycleStatusChange,
     updateProgram,
   }
 }

@@ -535,6 +535,12 @@
     overflow-x: auto !important;
 }
 
+/* 교육 프로그램/수강자 모집: 전체 프로그램과 동일하게 가로 스크롤 적용 */
+.program-list-table-wrapper--scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 /* 프로그램 목록 테이블 셀별 구분선 */
 .program-list-card .ant-table-thead > tr > th {
     border-right: 1px solid #fff;
