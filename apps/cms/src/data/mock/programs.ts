@@ -1202,17 +1202,23 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const isDetailMock = index === 0
   const rounds = createRounds(programId, isDetailMock ? 1 : record.classCount, startDate)
 
-  // 프로그램 진행 워크플로우 상태 (7단계) 분포 — planned 제외, 위젯/필터와 동일
-  const lifecycleStatuses: ProgramLifecycleStatus[] = [
-    'recruiting_students',
-    'recruiting_instructors',
+  // 프로그램 진행 워크플로우 상태 — 수강자 모집중/강사 모집중 각 5개 보장, 나머지는 5단계 순환
+  const recruitingStudentsIndices = [2, 7, 14, 21, 28] // 수강자 모집중 5개
+  const recruitingInstructorsIndices = [0, 1, 8, 15, 22] // 강사 모집중 5개 (0은 상세 mock)
+  const otherLifecycleStatuses: ProgramLifecycleStatus[] = [
     'matching_completed',
     'education_before_textbook',
     'education_after_textbook',
     'education_completed',
     'document_processing_completed',
   ]
-  const lifecycleStatus = lifecycleStatuses[index % lifecycleStatuses.length]
+  const otherIndices = [3, 4, 5, 6, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 29]
+  const otherPos = otherIndices.indexOf(index)
+  const lifecycleStatus: ProgramLifecycleStatus = recruitingStudentsIndices.includes(index)
+    ? 'recruiting_students'
+    : recruitingInstructorsIndices.includes(index)
+      ? 'recruiting_instructors'
+      : otherLifecycleStatuses[otherPos % otherLifecycleStatuses.length]
 
   const baseStatus =
     lifecycleStatus === 'document_processing_completed'
