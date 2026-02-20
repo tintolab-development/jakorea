@@ -22,13 +22,16 @@ export const PROGRAM_ROLE_LABELS: Record<ProgramRole, string> = {
   ASSISTANT: '보조',
 }
 
+/** PM(담당자) 권한 부여 가능 최대 인원 */
+export const MAX_OWNER_COUNT = 3
+
 export const MOCK_PROGRAM_MANAGERS: ProgramManagerRow[] = [
   {
     id: 'manager-1',
     no: 1,
     name: '강제이',
     role: 'ASSISTANT',
-    phone: '010-1234-5678',
+    phone: '010-3927-5140',
     email: 'ja.kang@jakorea.org',
     registeredAt: '2026.02.10 09:15',
   },
@@ -37,17 +40,17 @@ export const MOCK_PROGRAM_MANAGERS: ProgramManagerRow[] = [
     no: 2,
     name: '박제이',
     role: 'PARTNER',
-    phone: '010-1234-5678',
+    phone: '010-5218-3674',
     email: 'ja.park@jakorea.org',
-    registeredAt: '2026.02.10 09:15',
+    registeredAt: '2026.02.10 10:30',
   },
   {
     id: 'manager-3',
     no: 3,
     name: '김제이',
     role: 'OWNER',
-    phone: '010-1234-5678',
+    phone: '010-7483-2915',
     email: 'ja.kim@jakorea.org',
-    registeredAt: '2026.02.10 09:15',
+    registeredAt: '2026.02.09 14:45',
   },
 ]

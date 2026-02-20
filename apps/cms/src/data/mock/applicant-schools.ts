@@ -10,6 +10,8 @@ export interface ApplicantSchoolRow {
   no: number
   schoolName: string
   region: string
+  /** 희망 교육 진행 기간 (예: 26.01.09(금)~26.01.30(금)) */
+  desiredEducationPeriod?: string
   educationGrade: string
   classCount: number
   studentCount: number
@@ -17,6 +19,8 @@ export interface ApplicantSchoolRow {
   approvalStatus: ApplicantApprovalStatusKey
   /** 일정 변경&취소 이력 횟수 (참여 학교명 옆 배지용) */
   scheduleChangeCancelCount?: number
+  /** 프로그램 ID (수강 신청 학교 목록 모달에서 프로그램별 필터용) */
+  programId?: string
 }
 
 const SCHOOL_NAMES = [
@@ -80,30 +84,36 @@ const REGIONS = [
 const GRADES = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년']
 
 const TEACHER_NAMES = [
-  '홍길동',
-  '김길동',
-  '박길동',
-  '이길동',
-  '최길동',
-  '정길동',
-  '강길동',
-  '조길동',
+  '홍채원',
+  '김민지',
+  '박지훈',
+  '이수진',
+  '최현아',
+  '정다은',
+  '강태양',
+  '조아람',
 ]
 
 const APPROVAL_STATUSES: ApplicantApprovalStatusKey[] = ['pending', 'rejected', 'approved']
 
-function buildMockList(count: number): ApplicantSchoolRow[] {
+const DESIRED_PERIODS = [
+  '26.01.09(금)~26.01.30(금)',
+  '26.02.01(월)~26.02.28(금)',
+  '26.03.01(일)~26.03.31(월)',
+]
+
+function buildMockList(count: number, programIds?: string[]): ApplicantSchoolRow[] {
   const rows: ApplicantSchoolRow[] = []
   for (let i = 0; i < count; i++) {
     const idx = i % SCHOOL_NAMES.length
     const statusIdx = i % APPROVAL_STATUSES.length
-    /* 일부 학교에만 일정 변경&취소 이력 있음 (0, 1, 2회) */
     const scheduleChangeCancelCount = i % 5 === 0 ? 0 : i % 5 === 1 ? 1 : 2
     rows.push({
       id: `applicant-school-${i + 1}`,
       no: count - i,
       schoolName: SCHOOL_NAMES[idx],
       region: REGIONS[idx % REGIONS.length],
+      desiredEducationPeriod: DESIRED_PERIODS[i % DESIRED_PERIODS.length],
       educationGrade: GRADES[i % GRADES.length],
       classCount: 5 + (i % 4),
       studentCount: 130 + (i % 50),
@@ -111,9 +121,36 @@ function buildMockList(count: number): ApplicantSchoolRow[] {
       approvalStatus: APPROVAL_STATUSES[statusIdx],
       scheduleChangeCancelCount:
         scheduleChangeCancelCount > 0 ? scheduleChangeCancelCount : undefined,
+      programId: programIds?.[i % programIds.length],
     })
   }
   return rows
 }
 
 export const MOCK_APPLICANT_SCHOOLS: ApplicantSchoolRow[] = buildMockList(30)
+
+/**
+ * 프로그램별 수강 신청 학교 목록 (모달용).
+ * programId가 있으면 해당 프로그램에 연결된 행만 반환, 없으면 전체 목록 반환.
+ */
+export function getApplicantSchoolsByProgramId(programId: string): ApplicantSchoolRow[] {
+  const withProgramId = MOCK_APPLICANT_SCHOOLS.some(s => s.programId != null)
+  if (withProgramId) {
+    return MOCK_APPLICANT_SCHOOLS.filter(s => s.programId === programId)
+  }
+  return [...MOCK_APPLICANT_SCHOOLS]
+}
+
+/**
+ * 수강 신청 학교 결재 현황 변경 (mock 동기화).
+ * 모달/탭에서 상태 변경 시 호출하면 MOCK_APPLICANT_SCHOOLS에 반영됨.
+ */
+export function updateApplicantSchoolApprovalStatus(
+  schoolId: string,
+  approvalStatus: ApplicantApprovalStatusKey
+): void {
+  const row = MOCK_APPLICANT_SCHOOLS.find(s => s.id === schoolId)
+  if (row) {
+    row.approvalStatus = approvalStatus
+  }
+}

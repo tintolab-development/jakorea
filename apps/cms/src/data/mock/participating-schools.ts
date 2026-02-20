@@ -89,23 +89,23 @@ const GRADES = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년'
 const LECTURE_ROUND_LABEL = '진행 전'
 
 const TEACHER_NAMES = [
-  '홍길동',
-  '김길동',
-  '박길동',
-  '이길동',
-  '최길동',
-  '정길동',
-  '강길동',
-  '조길동',
+  '홍채원',
+  '김민지',
+  '박지훈',
+  '이수진',
+  '최현아',
+  '정다은',
+  '강태양',
+  '조아람',
 ]
 
 const INSTRUCTOR_SAMPLES = [
-  '김틴토 외 2명',
-  '이강사 외 1명',
-  '박멘토 외 3명',
-  '최강사',
-  '정틴토 외 2명',
-  '강멘토 외 1명',
+  '김서연 외 2명',
+  '이준혁 외 1명',
+  '최지원 외 3명',
+  '박민준',
+  '정수아 외 2명',
+  '강현우 외 1명',
 ]
 
 const textbookStatuses: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
