@@ -111,6 +111,36 @@
     flex-shrink: 0;
 }
 
+/* 수강 신청 학교 목록 상세 모달: 바디 고정 높이 830px, 바디만 스크롤 */
+.teal-header-modal--enrollment-detail.teal-header-modal--large .ant-modal-content {
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+.teal-header-modal--enrollment-detail .teal-header-modal__body {
+    height: 830px;
+    min-height: 830px;
+    max-height: 830px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex: none;
+}
+
+.teal-header-modal--enrollment-detail .teal-header-modal__footer {
+    flex-shrink: 0;
+}
+
+/* 강의 신청 강사 목록 상세 모달: 가로 스크롤 방지 */
+.teal-header-modal--instructor-recruitment-detail.teal-header-modal--large .ant-modal-content {
+    overflow-x: hidden;
+}
+
+.teal-header-modal--instructor-recruitment-detail .teal-header-modal__body {
+    overflow-x: hidden;
+}
+
 /* 헤더 */
 .teal-header-modal__header {
     display: flex;

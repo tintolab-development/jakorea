@@ -24,6 +24,8 @@ export interface FileSelectFieldProps {
   onFilesChange?: (files: File[]) => void
   /** 특정 인덱스 파일 업로드 취소(삭제) 시 콜백 — 전달 시 해당 파일 옆에 X 버튼 표시 */
   onRemoveFile?: (index: number) => void
+  /** 버튼에 표시할 텍스트 (기본: "파일 선택") */
+  buttonLabel?: string
   /** 추가 클래스명 */
   className?: string
 }
@@ -36,6 +38,7 @@ export function FileSelectField({
   guideLines,
   onFilesChange,
   onRemoveFile,
+  buttonLabel = '파일 선택',
   className = '',
 }: FileSelectFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -59,7 +62,7 @@ export function FileSelectField({
           multiple={multiple}
           accept={accept}
           className="file-select-field__input"
-          aria-label="파일 선택"
+          aria-label={buttonLabel}
           onChange={handleChange}
         />
       )}
@@ -91,7 +94,7 @@ export function FileSelectField({
           className="file-select-field__btn"
           onClick={() => inputRef.current?.click()}
         >
-          파일 선택
+          {buttonLabel}
         </Button>
         {guideLines && guideLines.length > 0 && (
           <div className="file-select-field__guide">

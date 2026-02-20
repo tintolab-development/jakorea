@@ -1403,6 +1403,34 @@ export function getBreadcrumbByPath(
     match = findMenuMatch(n)
   }
 
+  // 관리자: 교육 프로그램 하위 경로 (전체 프로그램 / 수강자 모집 / 수강 신청 현황) 브레드크럼
+  if (!match && userRole === 'ADMIN' && (n === '/programs/education' || n.startsWith('/programs/education/'))) {
+    const listMatch =
+      findMenuMatchInItems('/programs/education', filteredItems) ||
+      findMenuMatch('/programs/education')
+    if (listMatch && listMatch.parent) {
+      let thirdLabel: string
+      if (n === '/programs/education' || n === '/programs/education/') {
+        thirdLabel = '전체 프로그램'
+      } else if (n === '/programs/education/student-recruitment') {
+        thirdLabel = '수강자 모집'
+      } else if (n === '/programs/education/instructor-recruitment') {
+        thirdLabel = '강의 신청 현황'
+      } else if (n === '/programs/education/enrollment') {
+        thirdLabel = '수강 신청 현황'
+      } else if (n === '/programs/education/schedule') {
+        thirdLabel = '프로그램 일정'
+      } else {
+        thirdLabel = typeof listMatch.item.label === 'string' ? listMatch.item.label : '교육 프로그램'
+      }
+      return [
+        toBreadcrumbItem(listMatch.parent),
+        toBreadcrumbItem(listMatch.item),
+        { label: thirdLabel },
+      ]
+    }
+  }
+
   // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시 브레드크럼 연동
   const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
   if (!match && userRole === 'ADMIN' && n.startsWith('/programs/')) {

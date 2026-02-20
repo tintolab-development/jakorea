@@ -53,6 +53,23 @@ export function MainHeader() {
       return '관리자 홈'
     }
 
+    // 관리자: 강사 모집 경로 — 레이아웃 타이틀 '강의 신청 현황'
+    if (
+      user?.role === 'ADMIN' &&
+      location.pathname === '/programs/education/instructor-recruitment'
+    ) {
+      return '강의 신청 현황'
+    }
+
+    // 관리자: 교육 프로그램 하위(수강자 모집/수강 신청 현황) — 레이아웃 타이틀 '수강 신청 현황'
+    if (
+      user?.role === 'ADMIN' &&
+      (location.pathname === '/programs/education/student-recruitment' ||
+        location.pathname === '/programs/education/enrollment')
+    ) {
+      return '수강 신청 현황'
+    }
+
     // 관리자: 프로그램 상세/수정 페이지 타이틀
     const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
     if (user?.role === 'ADMIN' && location.pathname.startsWith('/programs/')) {
