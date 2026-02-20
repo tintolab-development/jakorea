@@ -1,7 +1,53 @@
 /**
  * 대시보드 페이지 스타일
  * 알림 리스트 / 고객 문의 현황 / 프로그램 일정 높이 동일화
+ * index2와 동일한 툴바(타이틀, 설명, 대시보드 설정 버튼) 영역
  */
+
+.dashboard-container {
+  width: 100%;
+}
+
+/* 위젯 카드: 햄버거 아이콘 하단 디바이더 제거 */
+.dashboard-container .ant-card .ant-card-head {
+  border-bottom: none;
+}
+
+.dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+  margin-top: -24px; /* ~님 반갑습니다 헤더를 상단으로 24px 올림 */
+  padding: var(--spacing-16) 0 0;
+}
+
+.dashboard-toolbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-12);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.dashboard-toolbar-title {
+  margin: 0;
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-600);
+  line-height: 1.4;
+  color: var(--color-text-label);
+}
+
+.dashboard-toolbar-description {
+  font-size: var(--font-size-13);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.dashboard-toolbar-right {
+  flex-shrink: 0;
+}
 
 .dashboard-widgets-left,
 .dashboard-widgets-right {
@@ -64,16 +110,92 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
 
 .dashboard-widgets-right .program-schedule-widget__content {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-.dashboard-widgets-right .program-schedule-widget__events {
+/* 프로그램 일정 위젯: 캘린더/일정 비율은 program-schedule-widget.css 반응형 규칙 사용 */
+
+/* DnD 슬롯: 위젯 바깥 래퍼, 기존 위젯 레이아웃 변경 없음. 높이는 인라인 스타일로 제어(기본 338px) */
+.dashboard-widget-slot {
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 사업 별 KPI 대비 달성률 위젯: 가로 스크롤이 보이도록 슬롯에서 가로 overflow 해제 */
+.dashboard-widget-slot:has(.kpi-achievement-widget) {
+  overflow-x: visible;
+  overflow-y: hidden;
+}
+
+.dashboard-widget-slot > .ant-card {
   flex: 1;
   min-height: 0;
+}
+
+.dashboard-widget-slot__handle {
+  flex-shrink: 0;
+}
+
+.dashboard-widget-slot__handle-overlay {
+  cursor: grab;
+}
+
+.dashboard-widget-slot__handle-overlay:active {
+  cursor: grabbing;
+}
+
+/* 너비 드래그 리사이즈 핸들: 우측 엣지, 호버 시 노출 */
+.dashboard-widget-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  width: 12px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.dashboard-widget-slot:hover .dashboard-widget-resize-handle,
+.dashboard-widget-resize-handle--active {
+  opacity: 1;
+}
+
+.dashboard-widget-resize-handle__bar {
+  width: 3px;
+  height: 48px;
+  border-radius: 2px;
+  background: var(--color-border-subtle, #d9d9d9);
+  transition: background 0.15s;
+}
+
+.dashboard-widget-resize-handle:hover .dashboard-widget-resize-handle__bar,
+.dashboard-widget-resize-handle--active .dashboard-widget-resize-handle__bar {
+  background: var(--color-primary, #47a9ad);
+}
+
+/* DragOverlay: 드래그 중 cursor를 따라다니는 위젯 복제본 */
+.dashboard-widget-drag-overlay {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  opacity: 0.95;
+  cursor: grabbing;
+  overflow: hidden;
+  pointer-events: none;
 }

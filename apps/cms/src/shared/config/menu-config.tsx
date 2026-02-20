@@ -53,7 +53,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 교육/봉사, 3뎁스 교육 하위 [목록, 일정, 수강 신청 현황, 강의 신청 현황] */
+  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 [교육 프로그램(→프로그램 목록), 수강 신청 현황, 강의 신청 현황, 봉사 프로그램] */
   {
     key: 'programs-group',
     label: '프로그램 관리',
@@ -62,35 +62,26 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       {
-        key: 'education-programs-group',
+        key: '/programs/education',
         label: '교육 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
-        children: [
-          {
-            key: '/programs/education',
-            label: '프로그램 목록',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/applications',
-            label: '수강 신청 현황',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/instructor-applications',
-            label: '강의 신청 현황',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-        ],
       },
+      // {
+      //   key: '/applications',
+      //   label: '수강 신청 현황',
+      //   icon: <DotIcon />,
+      //   enabled: true,
+      //   allowedRoles: ['ADMIN'],
+      // },
+      // {
+      //   key: '/instructor-applications',
+      //   label: '강의 신청 현황',
+      //   icon: <DotIcon />,
+      //   enabled: true,
+      //   allowedRoles: ['ADMIN'],
+      // },
       {
         key: '/programs/volunteer',
         label: '봉사 프로그램',
@@ -1410,6 +1401,57 @@ export function getBreadcrumbByPath(
   // 필터링된 메뉴에서 찾지 못한 경우, 원본 메뉴에서도 검색 (하위 호환성)
   if (!match) {
     match = findMenuMatch(n)
+  }
+
+  // 관리자: 교육 프로그램 하위 경로 (전체 프로그램 / 수강자 모집 / 수강 신청 현황) 브레드크럼
+  if (!match && userRole === 'ADMIN' && (n === '/programs/education' || n.startsWith('/programs/education/'))) {
+    const listMatch =
+      findMenuMatchInItems('/programs/education', filteredItems) ||
+      findMenuMatch('/programs/education')
+    if (listMatch && listMatch.parent) {
+      let thirdLabel: string
+      if (n === '/programs/education' || n === '/programs/education/') {
+        thirdLabel = '전체 프로그램'
+      } else if (n === '/programs/education/student-recruitment') {
+        thirdLabel = '수강자 모집'
+      } else if (n === '/programs/education/instructor-recruitment') {
+        thirdLabel = '강의 신청 현황'
+      } else if (n === '/programs/education/enrollment') {
+        thirdLabel = '수강 신청 현황'
+      } else if (n === '/programs/education/schedule') {
+        thirdLabel = '프로그램 일정'
+      } else {
+        thirdLabel = typeof listMatch.item.label === 'string' ? listMatch.item.label : '교육 프로그램'
+      }
+      return [
+        toBreadcrumbItem(listMatch.parent),
+        toBreadcrumbItem(listMatch.item),
+        { label: thirdLabel },
+      ]
+    }
+  }
+
+  // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시 브레드크럼 연동
+  const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+  if (!match && userRole === 'ADMIN' && n.startsWith('/programs/')) {
+    const rest = n.slice('/programs/'.length)
+    const segments = rest.split('/').filter(Boolean)
+    const firstSegment = segments[0]
+    if (firstSegment && !programsReserved.includes(firstSegment)) {
+      const listMatch =
+        findMenuMatchInItems('/programs/education', filteredItems) ||
+        findMenuMatch('/programs/education')
+      if (listMatch && listMatch.depth === 3 && listMatch.parent && listMatch.grandparent) {
+        const detailChain: BreadcrumbItem[] = [
+          toBreadcrumbItem(listMatch.grandparent),
+          toBreadcrumbItem(listMatch.parent),
+          toBreadcrumbItem(listMatch.item),
+        ]
+        const isEdit = segments[1] === 'edit'
+        detailChain.push({ label: isEdit ? '프로그램 수정' : '프로그램 상세' })
+        return detailChain
+      }
+    }
   }
 
   if (!match) return []

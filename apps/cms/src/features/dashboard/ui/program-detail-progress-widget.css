@@ -1,0 +1,22 @@
+/**
+ * 프로그램 상세 페이지용 진행 위젯 (스텝바형)
+ * 컨테이너: 배경 #E8ECEF, 둥근 모서리, 스텝바 가운데 정렬
+ */
+
+.program-detail-progress-widget__container {
+  background-color: #E8ECEF;
+  padding: var(--spacing-16) 24px;
+  border-radius: var(--radius-8);
+  margin-bottom: var(--spacing-24);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 140px;
+  min-height: 140px;
+  box-sizing: border-box;
+}
+
+.program-detail-progress-widget .progress-step-bar {
+  width: 100%;
+  max-width: 100%;
+}

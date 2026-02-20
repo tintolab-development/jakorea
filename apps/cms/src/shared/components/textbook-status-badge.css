@@ -1,0 +1,40 @@
+/**
+ * 교재 현황 배지 색상 모디파이어 (레이아웃은 app-status-badge.css)
+ */
+
+/* 교재 준비 중: 연한 녹색 배경 #E8F5E9, 텍스트 #1E8C29 */
+.app-status-badge.textbook-status-badge--preparing {
+    background: #e8f5e9;
+    color: #1e8c29;
+}
+
+/* 교재 배송 중: 연한 보라 배경 #F0E6FA, 텍스트 #8457CE */
+.app-status-badge.textbook-status-badge--shipping {
+    background: #f0e6fa;
+    color: #8457ce;
+}
+
+/* 교재 배송 완료: 배경 #F2F3F5, 텍스트 #464646 */
+.app-status-badge.textbook-status-badge--delivered {
+    background: #f2f3f5;
+    color: #464646;
+}
+
+/* ===== 결재 현황 (동일 배지, 배경/텍스트색만 다름) ===== */
+/* 승인 대기 */
+.app-status-badge.textbook-status-badge--pending {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+/* 신청 반려 */
+.app-status-badge.textbook-status-badge--rejected {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* 승인 완료 */
+.app-status-badge.textbook-status-badge--approved {
+    background: #f2f3f5;
+    color: #464646;
+}

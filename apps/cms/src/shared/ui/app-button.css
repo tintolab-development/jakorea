@@ -1,0 +1,184 @@
+/**
+ * 앱 공통 버튼 (AppButton)
+ * variant: primary | cancel | danger | default
+ * size: small | middle | large (large = 120×40)
+ */
+
+.app-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    font-weight: var(--font-weight-600);
+    border-radius: var(--radius-4);
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s;
+}
+
+/* ----- size: large (모달/페이지 액션 120×40) ----- */
+.app-button--large {
+    min-width: 120px;
+    width: auto;
+    height: 40px;
+    padding: 0 var(--spacing-16);
+    font-size: var(--font-size-14);
+}
+
+/* ----- size: tableAction (테이블 관리 컬럼 액션 160×40, 예: 권한 수정) ----- */
+.app-button--tableAction {
+    min-width: 160px;
+    width: 160px;
+    height: 40px;
+    padding: 0 var(--spacing-16);
+    font-size: var(--font-size-14);
+}
+
+/* ----- size: filter (필터 박스 조회 버튼 160×44, 필터 컨트롤 높이와 동일) ----- */
+.app-button--filter {
+    min-width: 160px;
+    width: 160px;
+    height: var(--filter-control-height, 44px);
+    min-height: var(--filter-control-height, 44px);
+    padding: 0 var(--spacing-16);
+    font-size: var(--font-size-14);
+}
+
+/* viewDetails + tableAction 조합: 160×40, 폰트 14px */
+.app-button--viewDetails.app-button--tableAction.ant-btn-default {
+    width: 160px !important;
+    min-width: 160px !important;
+    height: 40px !important;
+    font-size: var(--font-size-14) !important;
+}
+
+.app-button--middle {
+    /* Ant default */
+}
+
+.app-button--small {
+    /* Ant small */
+}
+
+/* ----- variant: primary (청록 채움) ----- */
+.app-button--primary.ant-btn-primary {
+    background: var(--color-focus-teal) !important;
+    border-color: var(--color-focus-teal) !important;
+    color: #fff !important;
+}
+
+.app-button--primary.ant-btn-primary:hover:not(:disabled) {
+    background: var(--color-focus-teal-hover) !important;
+    border-color: var(--color-focus-teal-hover) !important;
+    color: #fff !important;
+}
+
+.app-button--primary.ant-btn-primary:disabled {
+    background: #d9d9d9 !important;
+    border-color: #d9d9d9 !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 모달 헤더 청록과 동일한 색 쓰는 경우 (add-instructor 등) */
+.app-button--primary.app-button--modal-teal.ant-btn-primary {
+    background: var(--color-modal-header) !important;
+    border-color: var(--color-modal-header) !important;
+}
+
+.app-button--primary.app-button--modal-teal.ant-btn-primary:hover:not(:disabled) {
+    background: var(--color-modal-header-hover) !important;
+    border-color: var(--color-modal-header-hover) !important;
+}
+
+/* ----- variant: cancel (청록 아웃라인, 모달 취소/닫기) ----- */
+.app-button--cancel.ant-btn-default {
+    background:
+        linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+        var(--color-bg-base) !important;
+    border: 1px solid var(--color-modal-header) !important;
+    color: var(--color-modal-header) !important;
+}
+
+.app-button--cancel.ant-btn-default:hover:not(:disabled) {
+    border-color: var(--color-modal-header-hover) !important;
+    color: var(--color-modal-header-hover) !important;
+    background:
+        linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+        var(--color-bg-base) !important;
+}
+
+/* ----- variant: danger (붉은 아웃라인, 수정 취소 / 삭제) ----- */
+.app-button--danger.ant-btn-dangerous {
+    background: var(--color-danger-secondary-bg) !important;
+    border: 1px solid var(--color-danger-secondary) !important;
+    color: var(--color-danger-secondary) !important;
+}
+
+.app-button--danger.ant-btn-dangerous:hover:not(:disabled) {
+    background: var(--color-danger-secondary-bg-hover) !important;
+    border-color: var(--color-danger-secondary-hover) !important;
+    color: var(--color-danger-secondary-hover) !important;
+}
+
+/* 삭제 버튼 호버 시 채움 (테이블 헤더 삭제 등) — 시안 #c32f4a */
+.app-button--danger.app-button--fill-on-hover.ant-btn-dangerous:hover:not(:disabled) {
+    background: #c32f4a !important;
+    border-color: #c32f4a !important;
+    color: var(--color-bg-base) !important;
+}
+
+/* ----- variant: viewDetails (내역 보기 등 테이블 내 액션) ----- */
+.app-button--viewDetails.ant-btn-default {
+    width: 100px !important;
+    height: 32px !important;
+    min-width: 100px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    background: #fff !important;
+    color: var(--default-BK, #3d3d3d) !important;
+    text-align: center !important;
+    font-family: Pretendard, sans-serif !important;
+    font-size: 12px !important;
+    font-style: normal !important;
+    font-weight: 600 !important;
+}
+
+.app-button--viewDetails.ant-btn-default:hover:not(:disabled) {
+    border-color: rgba(0, 0, 0, 0.25) !important;
+    color: var(--default-BK, #3d3d3d) !important;
+    background: #fff !important;
+}
+
+.app-button--viewDetails.ant-btn-default:disabled {
+    border-color: var(--color-border-light, #d9d9d9) !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+    background: var(--color-bg-disabled, #f5f5f5) !important;
+    cursor: not-allowed !important;
+}
+
+.app-button--cancel.ant-btn-default:disabled {
+    border-color: var(--color-border-light, #d9d9d9) !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+    background: var(--color-bg-disabled, #f5f5f5) !important;
+    cursor: not-allowed !important;
+}
+
+.app-button--danger.ant-btn-dangerous:disabled {
+    border-color: var(--color-border-light, #d9d9d9) !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+    background: var(--color-bg-disabled, #f5f5f5) !important;
+    cursor: not-allowed !important;
+}
+
+.app-button--default.ant-btn-default:disabled {
+    cursor: not-allowed !important;
+}
+
+/* ----- variant: default — Ant 기본 유지, size만 적용 ----- */
+.app-button--default {
+    /* 추가 오버라이드 없음 */
+}

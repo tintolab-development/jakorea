@@ -28,16 +28,20 @@ import type {
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { programLifecycleStatusConfig, commonStatusStatusConfig } from '@/shared/constants/status'
 import {
-  programLifecycleStatusConfig,
-  programLifecycleStatusStatusConfig,
-  commonStatusStatusConfig,
-  getProgramLifecycleLabel,
-} from '@/shared/constants/status'
+  programTypes,
+  programFormats,
+  statusOptions,
+  businessAreaOptions,
+  targetLevelOptions,
+  categoryOptions,
+} from './program-list-constants'
+import { getCapacity, getApplicationCountByProgram } from '../lib/program-helpers'
+import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
 import { domainColorsHex } from '@/shared/constants/colors'
-import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   addFavoriteProgram,
@@ -51,6 +55,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
 
+export type ProgramListTableVariant = 'education' | 'volunteer' | 'all'
 
 interface ProgramListProps {
   data: Program[]
@@ -70,77 +75,17 @@ interface ProgramListProps {
   tableTitle?: string // 테이블 타이틀 (기본값: '전체 프로그램')
   viewMode?: 'list' | 'calendar' // 뷰 모드 (외부에서 제어)
   onViewModeChange?: (mode: 'list' | 'calendar') => void // 뷰 모드 변경 핸들러
+  /** 테이블 컬럼 구분: education 경로일 때 No., 프로그램명, 모집 상태, 교육 분야, 수강 유형 구분, 교육 대상, 진행 방식, 공란 */
+  tableVariant?: ProgramListTableVariant
+  /** 수강자 모집 전용 테이블 컬럼 사용 (No., 프로그램명, 지원자 수, 수강자 모집 인원, 교육 분야, …) */
+  studentRecruitmentTable?: boolean
+  /** 강사 모집 전용 테이블 컬럼 사용 (No., 프로그램명, 지원자 수, 강사 모집 인원, 교육 분야, …) */
+  instructorRecruitmentTable?: boolean
+  /** 테이블에 실제 표시되는 건수·필터 적용 여부 전달 (헤더 "총 N건"과 위젯 동기화: 필터 없을 땐 전체 건수, 있을 땐 표시 건수) */
+  onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
+  /** 페이지에서 적용한 진행현황(URL 또는 경로 기본값). 필터 카드 표시와 동기화용, URL에 status 없을 때 사용 */
+  effectiveLifecycleStatus?: ProgramLifecycleStatus | null
 }
-
-const programTypes = [
-  { value: 'online', label: '온라인' },
-  { value: 'offline', label: '오프라인' },
-  { value: 'hybrid', label: '하이브리드' },
-]
-
-const programFormats = [
-  { value: 'workshop', label: '워크샵' },
-  { value: 'seminar', label: '세미나' },
-  { value: 'course', label: '과정' },
-  { value: 'lecture', label: '강의' },
-  { value: 'other', label: '기타' },
-]
-
-const statusOptions = programLifecycleStatusConfig.order.map(status => ({
-  value: status,
-  label: getProgramLifecycleLabel(status),
-}))
-
-// 모집 상태 옵션 (모집 기간 기준)
-const recruitmentStatusOptions = [
-  { value: 'scheduled', label: '모집 예정' },
-  { value: 'recruiting', label: '모집 중' },
-  { value: 'closed', label: '모집 마감' },
-]
-
-// 모집 상태 계산 함수 (모집 기간 기준)
-const getRecruitmentStatus = (program: Program): 'scheduled' | 'recruiting' | 'closed' | null => {
-  if (!program.applicationStartDate || !program.applicationEndDate) {
-    return null
-  }
-  const now = dayjs()
-  const startDate = dayjs(program.applicationStartDate)
-  const endDate = dayjs(program.applicationEndDate)
-
-  // 날짜 유효성 검사
-  if (!startDate.isValid() || !endDate.isValid()) {
-    return null
-  }
-
-  if (now.isBefore(startDate, 'day')) {
-    return 'scheduled' // 모집 예정
-  } else if (now.isSameOrAfter(startDate, 'day') && now.isSameOrBefore(endDate, 'day')) {
-    return 'recruiting' // 모집 중
-  } else {
-    return 'closed' // 모집 마감
-  }
-}
-
-// 교육 분야 옵션 (mock 데이터 기반)
-const businessAreaOptions = [
-  { value: '경제금융', label: '경제금융' },
-  { value: '기업가정신', label: '기업가정신' },
-  { value: '진로취업', label: '진로취업' },
-  { value: '디지털리터러시', label: '디지털리터러시' },
-]
-
-// 교육 대상 옵션
-const targetLevelOptions: { value: TargetLevel; label: string }[] = [
-  { value: 'elementary', label: '초등' },
-  { value: 'middle', label: '중등' },
-  { value: 'high', label: '고등' },
-]
-
-// 수강 대상 옵션
-const categoryOptions: { value: ProgramCategory; label: string }[] = [
-  { value: 'school', label: '학교(단체)' },
-  { value: 'individual', label: '개인 학생' },
-]
 
 export function ProgramList({
   data,
@@ -158,8 +103,13 @@ export function ProgramList({
   showCalendarView = false,
   onCreateNew: _onCreateNew, // eslint-disable-line @typescript-eslint/no-unused-vars
   tableTitle: _tableTitle = '전체 프로그램', // eslint-disable-line @typescript-eslint/no-unused-vars
+  studentRecruitmentTable = false,
+  instructorRecruitmentTable = false,
   viewMode: externalViewMode,
   onViewModeChange: _onViewModeChange, // eslint-disable-line @typescript-eslint/no-unused-vars
+  tableVariant = 'all',
+  onDisplayCountChange,
+  effectiveLifecycleStatus,
 }: ProgramListProps) {
   const { user } = useAuthStore()
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
@@ -213,6 +163,18 @@ export function ProgramList({
     }
   })
 
+  // 위젯 클릭 등으로 URL의 status가 바뀌면 필터 상태 동기화 (다른 위젯 클릭 시 올바르게 전환되도록)
+  const urlStatus = searchParams.get('status') as ProgramLifecycleStatus | 'all' | null
+  useEffect(() => {
+    const statusFromUrl = urlStatus && urlStatus !== 'all' ? urlStatus : 'all'
+    setActiveUserFilters(prev =>
+      prev.status !== statusFromUrl ? { ...prev, status: statusFromUrl } : prev
+    )
+    setPendingUserFilters(prev =>
+      prev.status !== statusFromUrl ? { ...prev, status: statusFromUrl } : prev
+    )
+  }, [urlStatus])
+
   const periodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
     // activeUserFilters의 dateRange를 우선 사용
     if (activeUserFilters.dateRange?.[0] && activeUserFilters.dateRange[1]) {
@@ -235,11 +197,14 @@ export function ProgramList({
     const value = activeUserFilters.type || searchParams.get('type')
     return value === 'online' || value === 'offline' || value === 'hybrid' ? value : 'all'
   }, [activeUserFilters.type, searchParams])
+  // 위젯 클릭 시 URL이 곧바로 반영되도록 URL 우선 (activeUserFilters는 필터 패널 '조회'용)
   const progressStatusFilter = useMemo<ProgramLifecycleStatus | 'all'>(() => {
-    const value =
-      activeUserFilters.status || (searchParams.get('status') as ProgramLifecycleStatus | null)
+    const fromUrl = searchParams.get('status') as ProgramLifecycleStatus | null
+    const value = fromUrl || activeUserFilters.status
+    if (!value || value === 'all') return 'all'
+    if (value === 'education_before_textbook') return 'matching_completed'
     const validStatuses = new Set(programLifecycleStatusConfig.order)
-    return value && validStatuses.has(value as ProgramLifecycleStatus)
+    return validStatuses.has(value as ProgramLifecycleStatus)
       ? (value as ProgramLifecycleStatus)
       : 'all'
   }, [activeUserFilters.status, searchParams])
@@ -270,30 +235,10 @@ export function ProgramList({
     return [startDate, endDate]
   }, [searchParamsAdmin])
 
-  // 적용된 모집 상태 필터 (URL에서 읽어옴)
-  const appliedRecruitmentStatus = useMemo<
-    'scheduled' | 'recruiting' | 'closed' | undefined
-  >(() => {
-    const status = searchParamsAdmin.get('recruitmentStatus') as
-      | 'scheduled'
-      | 'recruiting'
-      | 'closed'
-      | null
-    return status || undefined
-  }, [searchParamsAdmin])
-
   const filteredData = useMemo(() => {
     if (!isParticipant) {
-      // 관리자용: 운영 기간 및 신청 기간 필터링 추가
+      // 관리자용: 운영 기간·신청 기간 필터링 (진행현황·진행방식은 테이블 컬럼 필터로 처리)
       let filtered = data
-
-      // 모집 상태 필터링 (모집 기간 기준)
-      if (appliedRecruitmentStatus) {
-        filtered = filtered.filter(program => {
-          const recruitmentStatus = getRecruitmentStatus(program)
-          return recruitmentStatus === appliedRecruitmentStatus
-        })
-      }
 
       // 운영 기간 필터링
       if (operationPeriodRange?.[0] && operationPeriodRange?.[1]) {
@@ -371,12 +316,14 @@ export function ProgramList({
 
     if (progressStatusFilter !== 'all') {
       filtered = filtered.filter(program => {
-        // matching_completed와 education_before_textbook을 하나로 처리
         if (progressStatusFilter === 'matching_completed') {
           return (
             program.lifecycleStatus === 'matching_completed' ||
             program.lifecycleStatus === 'education_before_textbook'
           )
+        }
+        if (progressStatusFilter === 'education_after_textbook') {
+          return program.lifecycleStatus === 'education_after_textbook'
         }
         return program.lifecycleStatus === progressStatusFilter
       })
@@ -393,10 +340,45 @@ export function ProgramList({
     targetFilter,
     operationPeriodRange,
     applicationPeriodRange,
-    appliedRecruitmentStatus,
   ])
 
   const { table, resetFilters, columnFilters } = useProgramTable(filteredData)
+
+  // 목록에 필터가 적용됐는지 (관리자: 운영/신청 기간 + 테이블 컬럼 필터(검색·진행현황 등), 강사 등: 검색·기간·대상·진행상태)
+  const hasActiveFilters = useMemo(() => {
+    if (!isParticipant) {
+      const hasColumnFilter = columnFilters.some(f => f.value != null && String(f.value).trim() !== '')
+      return Boolean(
+        hasColumnFilter ||
+          (operationPeriodRange?.[0] && operationPeriodRange?.[1]) ||
+          (applicationPeriodRange?.[0] && applicationPeriodRange?.[1])
+      )
+    }
+    return Boolean(
+      searchQuery.trim() ||
+        (periodRange?.[0] && periodRange?.[1]) ||
+        targetFilter !== 'all' ||
+        educationTypeFilter !== 'all' ||
+        progressStatusFilter !== 'all'
+    )
+  }, [
+    isParticipant,
+    columnFilters,
+    operationPeriodRange,
+    applicationPeriodRange,
+    searchQuery,
+    periodRange,
+    targetFilter,
+    educationTypeFilter,
+    progressStatusFilter,
+  ])
+
+  // 표시 건수·필터 여부를 부모로 전달 (필터 없을 땐 페이지에서 전체 건수 표시 → 위젯과 일치)
+  const displayedCount = hasActiveFilters ? table.getFilteredRowModel().rows.length : filteredData.length
+  useEffect(() => {
+    onDisplayCountChange?.(displayedCount, hasActiveFilters)
+  }, [displayedCount, hasActiveFilters, onDisplayCountChange])
+
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   // 외부에서 selectedRowKeys를 관리하는 경우를 위해 내부 상태도 유지
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
@@ -408,10 +390,11 @@ export function ProgramList({
   // 관리자용: Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
   const [pendingFilters, setPendingFilters] = useState({
     title: '',
-    recruitmentStatus: undefined as 'scheduled' | 'recruiting' | 'closed' | undefined,
+    lifecycleStatus: undefined as ProgramLifecycleStatus | undefined,
     category: undefined as string | undefined,
     businessArea: undefined as string | undefined,
     targetLevel: undefined as string | undefined,
+    type: undefined as string | undefined,
     applicationStartDate: null as Dayjs | null,
     applicationEndDate: null as Dayjs | null,
     operationStartDate: null as Dayjs | null,
@@ -441,12 +424,10 @@ export function ProgramList({
         | string
         | undefined
 
-      // 모집 상태 필터는 URL에서 직접 읽어오기
-      const recruitmentStatusFilter = searchParamsAdmin.get('recruitmentStatus') as
-        | 'scheduled'
-        | 'recruiting'
-        | 'closed'
-        | null
+      // 프로그램 진행현황: URL 단일 소스. 경로 기본값(수강자/강사 모집)은 페이지에서 effectiveLifecycleStatus로 전달
+      const statusFromUrl = searchParamsAdmin.get('status') as ProgramLifecycleStatus | null
+      const statusFilter = statusFromUrl ?? effectiveLifecycleStatus ?? null
+      const typeFilter = searchParamsAdmin.get('type') || null
 
       // 날짜 필터는 URL에서 직접 읽어오기
       const operationStartDateStr = searchParamsAdmin.get('operationStartDate')
@@ -459,7 +440,8 @@ export function ProgramList({
         // 값이 변경된 경우에만 업데이트 (무한 루프 방지)
         const hasChanges =
           prev.title !== currentTitle ||
-          prev.recruitmentStatus !== (recruitmentStatusFilter || undefined) ||
+          prev.lifecycleStatus !== (statusFilter || undefined) ||
+          prev.type !== (typeFilter || undefined) ||
           prev.category !== categoryFilter ||
           prev.businessArea !== businessAreaFilter ||
           prev.targetLevel !== targetLevelFilter ||
@@ -470,10 +452,11 @@ export function ProgramList({
 
         return {
           title: currentTitle,
-          recruitmentStatus: recruitmentStatusFilter || undefined,
+          lifecycleStatus: statusFilter || undefined,
           category: categoryFilter,
           businessArea: businessAreaFilter,
           targetLevel: targetLevelFilter,
+          type: typeFilter || undefined,
           applicationStartDate: null,
           applicationEndDate: null,
           operationStartDate: operationStartDateStr
@@ -489,21 +472,31 @@ export function ProgramList({
         }
       })
     }
-  }, [columnFilters, searchParamsAdmin, isParticipant, table])
+  }, [columnFilters, searchParamsAdmin, isParticipant, table, effectiveLifecycleStatus])
 
   // 조회 버튼 클릭 시 필터 적용
   const handleSearch = useCallback(() => {
-    // 테이블 컬럼 필터 적용
+    // 테이블 컬럼 필터 적용 (lifecycleStatus는 페이지 레벨에서 URL status로 처리)
     table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
     table.getColumn('businessArea')?.setFilterValue(pendingFilters.businessArea || null)
     table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
+    table
+      .getColumn('type')
+      ?.setFilterValue(
+        pendingFilters.type && pendingFilters.type !== 'all' ? pendingFilters.type : null
+      )
 
-    // URL 파라미터 필터 적용 (모집 상태, 날짜)
+    // URL 파라미터 필터 적용 (진행현황, 진행방식, 운영 기간)
     const nextParams = new URLSearchParams(searchParamsAdmin)
-    if (pendingFilters.recruitmentStatus) {
-      nextParams.set('recruitmentStatus', pendingFilters.recruitmentStatus)
+    if (pendingFilters.lifecycleStatus) {
+      nextParams.set('status', pendingFilters.lifecycleStatus)
     } else {
-      nextParams.delete('recruitmentStatus')
+      nextParams.delete('status')
+    }
+    if (pendingFilters.type && pendingFilters.type !== 'all') {
+      nextParams.set('type', pendingFilters.type)
+    } else {
+      nextParams.delete('type')
     }
     if (pendingFilters.operationStartDate && pendingFilters.operationEndDate) {
       nextParams.set('operationStartDate', pendingFilters.operationStartDate.format('YYYY-MM-DD'))
@@ -774,16 +767,16 @@ export function ProgramList({
         <UnifiedFilterCard
           fields={[
             {
-              key: 'recruitmentStatus',
+              key: 'lifecycleStatus',
               type: 'select',
-              label: '모집 상태',
+              label: '프로그램 진행현황',
               placeholder: '전체',
-              options: recruitmentStatusOptions,
+              options: statusOptions,
             },
             {
               key: 'category',
               type: 'select',
-              label: '수강 대상',
+              label: '수강자 유형',
               placeholder: '전체',
               options: categoryOptions,
             },
@@ -802,16 +795,27 @@ export function ProgramList({
               options: targetLevelOptions,
             },
             {
+              key: 'type',
+              type: 'select',
+              label: '진행방식',
+              placeholder: '전체',
+              options: [
+                { value: 'all', label: '전체' },
+                ...programTypes.map(t => ({ value: t.value, label: t.label })),
+              ],
+            },
+            {
               key: 'operationPeriod',
               type: 'dateRange',
-              label: '운영 기간',
+              label: '운영기간',
             },
           ]}
           filters={{
-            recruitmentStatus: pendingFilters.recruitmentStatus,
+            lifecycleStatus: pendingFilters.lifecycleStatus,
             category: pendingFilters.category,
             businessArea: pendingFilters.businessArea,
             targetLevel: pendingFilters.targetLevel,
+            type: pendingFilters.type,
             operationPeriod:
               pendingFilters.operationStartDate && pendingFilters.operationEndDate
                 ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
@@ -833,23 +837,26 @@ export function ProgramList({
           onReset={() => {
             setPendingFilters({
               title: '',
-              recruitmentStatus: undefined,
+              lifecycleStatus: undefined,
               category: undefined,
               businessArea: undefined,
               targetLevel: undefined,
+              type: undefined,
               applicationStartDate: null,
               applicationEndDate: null,
               operationStartDate: null,
               operationEndDate: null,
             })
-            // 테이블 필터 초기화
+            // 테이블 필터 초기화 (lifecycleStatus는 페이지 레벨에서 URL status로 처리)
             table.getColumn('title')?.setFilterValue(null)
             table.getColumn('category')?.setFilterValue(null)
             table.getColumn('businessArea')?.setFilterValue(null)
             table.getColumn('targetLevel')?.setFilterValue(null)
+            table.getColumn('type')?.setFilterValue(null)
             // URL 파라미터 초기화
             const nextParams = new URLSearchParams(searchParamsAdmin)
-            nextParams.delete('recruitmentStatus')
+            nextParams.delete('status')
+            nextParams.delete('type')
             nextParams.delete('applicationStartDate')
             nextParams.delete('applicationEndDate')
             nextParams.delete('operationStartDate')
@@ -857,6 +864,7 @@ export function ProgramList({
             nextParams.delete('title')
             setSearchParamsAdmin(nextParams, { replace: true })
           }}
+          showResetButton={false}
         />
       )}
 
@@ -869,447 +877,1026 @@ export function ProgramList({
         />
       ) : null}
 
-      {/* 목록 뷰 (필터와 테이블만 표시) */}
+      {/* 목록 뷰 (필터와 테이블만 표시) — 교육 프로그램/수강자 모집 시 전체 프로그램과 동일한 테이블·가로 스크롤 */}
       {!isParticipant && viewMode === 'list' && (
         <Card loading={loading} className="program-list-card">
-          <Table
-            rowSelection={
-              showRowSelection && onBulkDelete
-                ? {
-                    selectedRowKeys: effectiveSelectedRowKeys,
-                    onChange: handleSelectionChange,
-                  }
-                : undefined
-            }
-            dataSource={table.getRowModel().rows.map(row => row.original)}
-            columns={[
-              {
-                title: '포스터',
-                dataIndex: 'posterImage',
-                key: 'posterImage',
-                width: 100,
-                render: (_: unknown, record: Program) => {
-                  const src = record.posterImage
-                  if (!src) {
-                    return (
-                      <div
-                        style={{
-                          width: 72,
-                          height: 54,
-                          background: '#f0f0f0',
-                          borderRadius: 4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 10,
-                          color: '#bfbfbf',
-                        }}
-                      >
-                        이미지 없음
-                      </div>
-                    )
-                  }
-                  return (
-                    <div onClick={e => e.stopPropagation()}>
-                      <Image
-                        src={src}
-                        alt=""
-                        width={72}
-                        height={54}
-                        style={{ objectFit: 'cover', borderRadius: 4 }}
-                        preview={{ mask: '확대' }}
-                      />
-                    </div>
-                  )
-                },
-              },
-              {
-                title: '프로그램명',
-                dataIndex: 'title',
-                key: 'title',
-                width: 260,
-                ellipsis: true,
-                render: (text: string) => (
-                  <Tag
-                    color={domainColorsHex.program.primary}
-                    style={{
-                      maxWidth: 230,
-                      display: 'inline-block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {text}
-                  </Tag>
-                ),
-              },
-              {
-                title: '스폰서',
-                dataIndex: 'sponsorId',
-                key: 'sponsorId',
-                render: (sponsorId: string | undefined) => {
-                  if (!sponsorId) {
-                    return '-'
-                  }
-                  return sponsorService.getNameById(sponsorId)
-                },
-              },
-              {
-                title: '유형',
-                dataIndex: 'type',
-                key: 'type',
-                render: (type: string) => {
-                  const typeLabel = programTypes.find(t => t.value === type)?.label || type
-                  return <Tag>{typeLabel}</Tag>
-                },
-              },
-              {
-                title: '형태',
-                dataIndex: 'format',
-                key: 'format',
-                render: (format: string) => {
-                  const formatLabel = programFormats.find(f => f.value === format)?.label || format
-                  return formatLabel
-                },
-              },
-              {
-                title: '회차',
-                dataIndex: 'rounds',
-                key: 'rounds',
-                render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
-              },
-              {
-                title: '상태',
-                dataIndex: 'status',
-                key: 'status',
-                render: (_status: string, record: Program) => {
-                  const lifecycle = record.lifecycleStatus
-
-                  const badge = lifecycle ? (
-                    <StatusBadge
-                      status={lifecycle}
-                      statusConfig={programLifecycleStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  ) : (
-                    <StatusBadge
-                      status={record.status}
-                      statusConfig={commonStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  )
-
-                  // 상태 변경 핸들러가 없으면 단순 뱃지로 표시
-                  if (!onChangeStatus) {
-                    return badge
-                  }
-
-                  const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
-                    status => {
-                      return {
-                        key: status,
-                        label: (
-                          <StatusBadge
-                            status={status}
-                            statusConfig={programLifecycleStatusStatusConfig}
-                            showIcon={false}
-                          />
-                        ),
-                        onClick: e => {
-                          e?.domEvent?.stopPropagation()
-                          onChangeStatus(record, status)
-                        },
-                      }
+          <div
+            className={`program-list-table-wrapper${tableVariant === 'education' ? ' program-list-table-wrapper--scroll-x' : ''}`}
+          >
+            <Table
+              rowSelection={
+                tableVariant !== 'education' && showRowSelection && onBulkDelete
+                  ? {
+                      selectedRowKeys: effectiveSelectedRowKeys,
+                      onChange: handleSelectionChange,
                     }
-                  )
-
-                  return (
-                    <div onClick={e => e.stopPropagation()}>
-                      <Dropdown
-                        menu={{ items }}
-                        trigger={['click']}
-                        getPopupContainer={triggerNode =>
-                          triggerNode.parentElement || document.body
+                  : undefined
+              }
+              dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
+              columns={
+                tableVariant === 'education'
+                  ? studentRecruitmentTable
+                    ? (() => {
+                        const dayShort = ['일', '월', '화', '수', '목', '금', '토']
+                        const formatDateRange = (
+                          start?: string | Date,
+                          end?: string | Date
+                        ) => {
+                          if (start == null || end == null) return '-'
+                          const s = dayjs(start)
+                          const e = dayjs(end)
+                          if (!s.isValid() || !e.isValid()) return '-'
+                          return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
                         }
-                      >
-                        <span
-                          className="program-status-dropdown-trigger"
-                          onClick={e => e.stopPropagation()}
-                          style={{ cursor: 'pointer', display: 'inline-block' }}
-                        >
-                          {badge}
-                        </span>
-                      </Dropdown>
-                    </div>
-                  )
-                },
-              },
-              // 찜하기 컬럼 (강사/봉사자/학생용)
-              ...(showFavorite
-                ? [
-                    {
-                      title: '찜하기',
-                      key: 'favorite',
-                      width: 100,
-                      fixed: showActions ? undefined : ('right' as const),
-                      render: (_: unknown, record: Program) => (
-                        <div onClick={e => e.stopPropagation()}>
-                          <Button
-                            type="text"
-                            icon={
-                              favorites.has(record.id) ? (
-                                <HeartFilled style={{ color: '#ff4d4f' }} />
+                        return [
+                          {
+                            title: 'No.',
+                            key: 'no',
+                            width: 64,
+                            align: 'center' as const,
+                            render: (_: unknown, __: Program, index: number) => index + 1,
+                          },
+                          {
+                            title: '프로그램명',
+                            dataIndex: 'title',
+                            key: 'title',
+                            width: 260,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (text: string) => text ?? '-',
+                          },
+                          {
+                            title: '프로그램 진행 현황',
+                            key: 'lifecycleStatus',
+                            width: 140,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) => {
+                              const lifecycle = record.lifecycleStatus
+                              const badge = lifecycle ? (
+                                <ProgramLifecycleStatusBadge status={lifecycle} />
                               ) : (
-                                <HeartOutlined />
+                                <StatusBadge
+                                  status={record.status}
+                                  statusConfig={commonStatusStatusConfig}
+                                  showIcon={false}
+                                />
                               )
-                            }
-                            onClick={() => handleToggleFavorite(record.id)}
-                          />
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-              // 관리자만 작업 컬럼 표시
-              ...(showActions
-                ? [
-                    {
-                      title: '작업',
-                      key: 'action',
-                      fixed: 'right' as const,
-                      width: 80,
-                      render: (_: unknown, record: Program) => (
-                        <div onClick={e => e.stopPropagation()}>
-                          <Dropdown menu={{ items: getMenuItems(record) }} trigger={['click']}>
-                            <Button
-                              type="text"
-                              icon={<MoreOutlined />}
-                              onClick={e => e.stopPropagation()}
+                              if (!onChangeStatus) return badge
+                              const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                                (status: ProgramLifecycleStatus) => ({
+                                  key: status,
+                                  label: <ProgramLifecycleStatusBadge status={status} />,
+                                  onClick: e => {
+                                    e?.domEvent?.stopPropagation()
+                                    onChangeStatus(record, status)
+                                  },
+                                })
+                              )
+                              return (
+                                <div
+                                  className="program-status-dropdown-cell"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <Dropdown
+                                    menu={{ items }}
+                                    trigger={['click']}
+                                    getPopupContainer={() => document.body}
+                                  >
+                                    <span
+                                      className="program-status-dropdown-trigger"
+                                      onClick={e => e.stopPropagation()}
+                                    >
+                                      {badge}
+                                    </span>
+                                  </Dropdown>
+                                </div>
+                              )
+                            },
+                          },
+                          {
+                            title: '지원자 수',
+                            key: 'applicantCount',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              `${getApplicationCountByProgram(record.id)}건`,
+                          },
+                          {
+                            title: '수강자 모집 인원',
+                            key: 'capacity',
+                            width: 120,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) => {
+                              const cap = getCapacity(record)
+                              return cap !== undefined ? `${cap}건` : '-'
+                            },
+                          },
+                          {
+                            title: '교육 분야',
+                            dataIndex: 'businessArea',
+                            key: 'businessArea',
+                            width: 110,
+                            align: 'center' as const,
+                            render: (value: string | undefined) =>
+                              value
+                                ? (businessAreaOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '수강자 유형',
+                            dataIndex: 'category',
+                            key: 'category',
+                            width: 120,
+                            align: 'center' as const,
+                            render: (value: ProgramCategory | undefined) =>
+                              value
+                                ? (categoryOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '교육 대상',
+                            dataIndex: 'targetLevel',
+                            key: 'targetLevel',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (value: TargetLevel | undefined) =>
+                              value
+                                ? (targetLevelOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '진행 방식',
+                            dataIndex: 'type',
+                            key: 'type',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (type: string | undefined) =>
+                              type
+                                ? (programTypes.find(t => t.value === type)?.label ?? type)
+                                : '-',
+                          },
+                          {
+                            title: '신청자 모집 기간',
+                            key: 'applicationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(
+                                record.applicationStartDate,
+                                record.applicationEndDate
+                              ),
+                          },
+                          {
+                            title: '프로그램 운영 기간',
+                            key: 'operationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(record.startDate, record.endDate),
+                          },
+                          {
+                            title: '후원사',
+                            dataIndex: 'sponsorId',
+                            key: 'sponsorId',
+                            width: 140,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (sponsorId: string | undefined) =>
+                              sponsorId
+                                ? sponsorService.getNameById(sponsorId)
+                                : '-',
+                          },
+                          {
+                            title: '담당자',
+                            dataIndex: 'managerName',
+                            key: 'managerName',
+                            width: 120,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (value: string | undefined) => value ?? '-',
+                          },
+                        ]
+                      })()
+                    : instructorRecruitmentTable
+                      ? (() => {
+                          const dayShort = ['일', '월', '화', '수', '목', '금', '토']
+                          const formatDateRange = (
+                            start?: string | Date,
+                            end?: string | Date
+                          ) => {
+                            if (start == null || end == null) return '-'
+                            const s = dayjs(start)
+                            const e = dayjs(end)
+                            if (!s.isValid() || !e.isValid()) return '-'
+                            return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
+                          }
+                          return [
+                            {
+                              title: 'No.',
+                              key: 'no',
+                              width: 64,
+                              align: 'center' as const,
+                              render: (_: unknown, __: Program, index: number) => index + 1,
+                            },
+                            {
+                              title: '프로그램명',
+                              dataIndex: 'title',
+                              key: 'title',
+                              width: 260,
+                              ellipsis: true,
+                              align: 'center' as const,
+                              render: (text: string) => text ?? '-',
+                            },
+                            {
+                              title: '프로그램 진행 현황',
+                              key: 'lifecycleStatus',
+                              width: 140,
+                              align: 'center' as const,
+                              render: (_: unknown, record: Program) => {
+                                const lifecycle = record.lifecycleStatus
+                                const badge = lifecycle ? (
+                                  <ProgramLifecycleStatusBadge status={lifecycle} />
+                                ) : (
+                                  <StatusBadge
+                                    status={record.status}
+                                    statusConfig={commonStatusStatusConfig}
+                                    showIcon={false}
+                                  />
+                                )
+                                if (!onChangeStatus) return badge
+                                const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                                  (status: ProgramLifecycleStatus) => ({
+                                    key: status,
+                                    label: <ProgramLifecycleStatusBadge status={status} />,
+                                    onClick: e => {
+                                      e?.domEvent?.stopPropagation()
+                                      onChangeStatus(record, status)
+                                    },
+                                  })
+                                )
+                                return (
+                                  <div
+                                    className="program-status-dropdown-cell"
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <Dropdown
+                                      menu={{ items }}
+                                      trigger={['click']}
+                                      getPopupContainer={() => document.body}
+                                    >
+                                      <span
+                                        className="program-status-dropdown-trigger"
+                                        onClick={e => e.stopPropagation()}
+                                      >
+                                        {badge}
+                                      </span>
+                                    </Dropdown>
+                                  </div>
+                                )
+                              },
+                            },
+                            {
+                              title: '지원자 수',
+                              key: 'applicantCount',
+                              width: 100,
+                              align: 'center' as const,
+                              render: (_: unknown, record: Program) =>
+                                `${getApplicationCountByProgram(record.id)}건`,
+                            },
+                            {
+                              title: '강사 모집 인원',
+                              key: 'instructorCapacity',
+                              width: 120,
+                              align: 'center' as const,
+                              render: (_: unknown, record: Program) => {
+                                const current = record.instructors ?? 0
+                                const cap = record.instructorCapacity
+                                if (cap !== undefined && cap !== null)
+                                  return `${current} / ${cap}건`
+                                return `${current}건`
+                              },
+                            },
+                          {
+                            title: '교육 분야',
+                            dataIndex: 'businessArea',
+                            key: 'businessArea',
+                            width: 110,
+                            align: 'center' as const,
+                            render: (value: string | undefined) =>
+                              value
+                                ? (businessAreaOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '수강자 유형',
+                            dataIndex: 'category',
+                            key: 'category',
+                            width: 120,
+                            align: 'center' as const,
+                            render: (value: ProgramCategory | undefined) =>
+                              value
+                                ? (categoryOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '교육 대상',
+                            dataIndex: 'targetLevel',
+                            key: 'targetLevel',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (value: TargetLevel | undefined) =>
+                              value
+                                ? (targetLevelOptions.find(o => o.value === value)?.label ?? value)
+                                : '-',
+                          },
+                          {
+                            title: '진행 방식',
+                            dataIndex: 'type',
+                            key: 'type',
+                            width: 100,
+                            align: 'center' as const,
+                            render: (type: string | undefined) =>
+                              type
+                                ? (programTypes.find(t => t.value === type)?.label ?? type)
+                                : '-',
+                          },
+                          {
+                            title: '신청자 모집 기간',
+                            key: 'applicationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(
+                                record.applicationStartDate,
+                                record.applicationEndDate
+                              ),
+                          },
+                          {
+                            title: '프로그램 운영 기간',
+                            key: 'operationPeriod',
+                            width: 180,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) =>
+                              formatDateRange(record.startDate, record.endDate),
+                          },
+                          {
+                            title: '후원사',
+                            dataIndex: 'sponsorId',
+                            key: 'sponsorId',
+                            width: 140,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (sponsorId: string | undefined) =>
+                              sponsorId
+                                ? sponsorService.getNameById(sponsorId)
+                                : '-',
+                          },
+                          {
+                            title: '담당자',
+                            dataIndex: 'managerName',
+                            key: 'managerName',
+                            width: 120,
+                            ellipsis: true,
+                            align: 'center' as const,
+                            render: (value: string | undefined) => value ?? '-',
+                          },
+                        ]
+                      })()
+                    : [
+                      {
+                        title: 'No.',
+                        key: 'no',
+                        width: 56,
+                        align: 'center' as const,
+                        render: (_: unknown, __: Program, index: number) => index + 1,
+                      },
+                      {
+                        title: '프로그램명',
+                        dataIndex: 'title',
+                        key: 'title',
+                        width: 260,
+                        ellipsis: true,
+                        align: 'center' as const,
+                        render: (text: string) => text ?? '-',
+                      },
+                      {
+                        title: '프로그램 진행 현황',
+                        key: 'lifecycleStatus',
+                        width: 140,
+                        align: 'center' as const,
+                        render: (_: unknown, record: Program) => {
+                          const lifecycle = record.lifecycleStatus
+                          const badge = lifecycle ? (
+                            <ProgramLifecycleStatusBadge status={lifecycle} />
+                          ) : (
+                            <StatusBadge
+                              status={record.status}
+                              statusConfig={commonStatusStatusConfig}
+                              showIcon={false}
                             />
-                          </Dropdown>
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-            rowKey="id"
-            loading={loading}
-            tableLayout="fixed"
-            onRow={record => ({
-              onClick: event => {
-                const target = event.target as HTMLElement
-                // 상태 드롭다운 클릭 시 무시
-                if (target.closest('.program-status-dropdown-trigger')) {
-                  return
-                }
-                // 이미지 preview 영역 클릭 시 무시 (이벤트 버블링 방지)
-                if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
-                  return
-                }
-                // 이미지 mask (확대 버튼) 클릭 시 무시
-                if (target.closest('.ant-image-mask')) {
-                  return
-                }
-                onView(record)
-              },
-              style: { cursor: 'pointer' },
-            })}
-            pagination={{
-              ...PAGINATION_CONFIG,
-              current: table.getState().pagination.pageIndex + 1,
-              pageSize: table.getState().pagination.pageSize,
-              total: table.getFilteredRowModel().rows.length,
-              onChange: (page, pageSize) => {
-                table.setPageIndex(page - 1)
-                table.setPageSize(pageSize)
-              },
-            }}
-          />
+                          )
+                          if (!onChangeStatus) return badge
+                          const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                            (status: ProgramLifecycleStatus) => ({
+                              key: status,
+                              label: <ProgramLifecycleStatusBadge status={status} />,
+                              onClick: e => {
+                                e?.domEvent?.stopPropagation()
+                                onChangeStatus(record, status)
+                              },
+                            })
+                          )
+                          return (
+                            <div
+                              className="program-status-dropdown-cell"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Dropdown
+                                menu={{ items }}
+                                trigger={['click']}
+                                getPopupContainer={() => document.body}
+                              >
+                                <span
+                                  className="program-status-dropdown-trigger"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  {badge}
+                                </span>
+                              </Dropdown>
+                            </div>
+                          )
+                        },
+                      },
+                      {
+                        title: '수강자 모집 인원',
+                        key: 'studentRecruitment',
+                        width: 120,
+                        align: 'center' as const,
+                        render: (_: unknown, record: Program) => {
+                          const approved = record.approvedStudentCount ?? 0
+                          const capacity = getCapacity(record)
+                          if (capacity !== undefined) return `${approved} / ${capacity}건`
+                          return `${approved}건`
+                        },
+                      },
+                      {
+                        title: '강사 모집 인원',
+                        key: 'instructorRecruitment',
+                        width: 120,
+                        align: 'center' as const,
+                        render: (_: unknown, record: Program) => {
+                          const current = record.instructors ?? 0
+                          const cap = record.instructorCapacity
+                          if (cap !== undefined && cap !== null) return `${current} / ${cap}건`
+                          return `${current}건`
+                        },
+                      },
+                      {
+                        title: '수강자 유형',
+                        dataIndex: 'category',
+                        key: 'category',
+                        width: 120,
+                        align: 'center' as const,
+                        render: (value: ProgramCategory | undefined) => {
+                          const option = categoryOptions.find(o => o.value === value)
+                          return option?.label ?? value ?? '-'
+                        },
+                      },
+                      {
+                        title: '교육 분야',
+                        dataIndex: 'businessArea',
+                        key: 'businessArea',
+                        width: 100,
+                        ellipsis: true,
+                        align: 'center' as const,
+                        render: (value: string | undefined) =>
+                          value
+                            ? (businessAreaOptions.find(o => o.value === value)?.label ?? value)
+                            : '-',
+                      },
+                      {
+                        title: '교육 대상',
+                        dataIndex: 'targetLevel',
+                        key: 'targetLevel',
+                        width: 90,
+                        align: 'center' as const,
+                        render: (value: TargetLevel | undefined) => {
+                          const option = targetLevelOptions.find(o => o.value === value)
+                          return option?.label ?? value ?? '-'
+                        },
+                      },
+                      {
+                        title: '진행 방식',
+                        dataIndex: 'type',
+                        key: 'type',
+                        width: 100,
+                        align: 'center' as const,
+                        render: (type: string) => {
+                          const typeLabel =
+                            programTypes.find(t => t.value === type)?.label ||
+                            (type === 'hybrid' ? '온/오프라인' : type)
+                          return typeLabel
+                        },
+                      },
+                      {
+                        title: '프로그램 운영기간',
+                        key: 'operationPeriod',
+                        width: 160,
+                        align: 'center' as const,
+                        ellipsis: true,
+                        render: (_: unknown, record: Program) => {
+                          const start = record.startDate
+                          const end = record.endDate
+                          if (!start || !end) return '-'
+                          const startDayjs = dayjs(start)
+                          const endDayjs = dayjs(end)
+                          const dayShort = ['일', '월', '화', '수', '목', '금', '토']
+                          const s = startDayjs.format('YY.MM.DD')
+                          const e = endDayjs.format('YY.MM.DD')
+                          const wStart = dayShort[startDayjs.day()]
+                          const wEnd = dayShort[endDayjs.day()]
+                          return `${s}(${wStart}) ~ ${e}(${wEnd})`
+                        },
+                      },
+                      {
+                        title: '후원사',
+                        dataIndex: 'sponsorId',
+                        key: 'sponsorId',
+                        width: 120,
+                        align: 'center' as const,
+                        ellipsis: true,
+                        render: (sponsorId: string | undefined) =>
+                          sponsorId ? sponsorService.getNameById(sponsorId) : '-',
+                      },
+                      {
+                        title: '담당자',
+                        dataIndex: 'managerName',
+                        key: 'managerName',
+                        width: 100,
+                        align: 'center' as const,
+                        ellipsis: true,
+                        render: (value: string | undefined) => value ?? '-',
+                      },
+                      ...(showFavorite
+                        ? [
+                            {
+                              title: '찜하기',
+                              key: 'favorite',
+                              width: 100,
+                              align: 'center' as const,
+                              fixed: showActions ? undefined : ('right' as const),
+                              render: (_: unknown, record: Program) => (
+                                <div onClick={e => e.stopPropagation()}>
+                                  <Button
+                                    type="text"
+                                    icon={
+                                      favorites.has(record.id) ? (
+                                        <HeartFilled style={{ color: '#ff4d4f' }} />
+                                      ) : (
+                                        <HeartOutlined />
+                                      )
+                                    }
+                                    onClick={() => handleToggleFavorite(record.id)}
+                                  />
+                                </div>
+                              ),
+                            },
+                          ]
+                        : []),
+                      // 작업 컬럼 (교육 프로그램 테이블에서는 비표시)
+                      // ...(showActions
+                      //   ? [
+                      //       {
+                      //         title: '작업',
+                      //         key: 'action',
+                      //         fixed: 'right' as const,
+                      //         width: 80,
+                      //         align: 'center' as const,
+                      //         render: (_: unknown, record: Program) => (
+                      //           <div onClick={e => e.stopPropagation()}>
+                      //             <Dropdown
+                      //               menu={{ items: getMenuItems(record) }}
+                      //               trigger={['click']}
+                      //             >
+                      //               <Button
+                      //                 type="text"
+                      //                 icon={<MoreOutlined />}
+                      //                 onClick={e => e.stopPropagation()}
+                      //               />
+                      //             </Dropdown>
+                      //           </div>
+                      //         ),
+                      //       },
+                      //     ]
+                      //   : []),
+                    ]
+                  : [
+                      {
+                        title: '포스터',
+                        dataIndex: 'posterImage',
+                        key: 'posterImage',
+                        width: 100,
+                        render: (_: unknown, record: Program) => {
+                          const src = record.posterImage
+                          if (!src) {
+                            return (
+                              <div
+                                style={{
+                                  width: 72,
+                                  height: 54,
+                                  background: '#f0f0f0',
+                                  borderRadius: 4,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: 10,
+                                  color: '#bfbfbf',
+                                }}
+                              >
+                                이미지 없음
+                              </div>
+                            )
+                          }
+                          return (
+                            <div onClick={e => e.stopPropagation()}>
+                              <Image
+                                src={src}
+                                alt=""
+                                width={72}
+                                height={54}
+                                style={{ objectFit: 'cover', borderRadius: 4 }}
+                                preview={{ mask: '확대' }}
+                              />
+                            </div>
+                          )
+                        },
+                      },
+                      {
+                        title: '프로그램명',
+                        dataIndex: 'title',
+                        key: 'title',
+                        width: 260,
+                        ellipsis: true,
+                        render: (text: string) => (
+                          <Tag
+                            color={domainColorsHex.program.primary}
+                            style={{
+                              maxWidth: 230,
+                              display: 'inline-block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            {text}
+                          </Tag>
+                        ),
+                      },
+                      {
+                        title: '스폰서',
+                        dataIndex: 'sponsorId',
+                        key: 'sponsorId',
+                        render: (sponsorId: string | undefined) => {
+                          if (!sponsorId) {
+                            return '-'
+                          }
+                          return sponsorService.getNameById(sponsorId)
+                        },
+                      },
+                      {
+                        title: '유형',
+                        dataIndex: 'type',
+                        key: 'type',
+                        render: (type: string) => {
+                          const typeLabel = programTypes.find(t => t.value === type)?.label || type
+                          return <Tag>{typeLabel}</Tag>
+                        },
+                      },
+                      {
+                        title: '형태',
+                        dataIndex: 'format',
+                        key: 'format',
+                        render: (format: string) => {
+                          const formatLabel =
+                            programFormats.find(f => f.value === format)?.label || format
+                          return formatLabel
+                        },
+                      },
+                      {
+                        title: '회차',
+                        dataIndex: 'rounds',
+                        key: 'rounds',
+                        render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
+                      },
+                      {
+                        title: '상태',
+                        dataIndex: 'status',
+                        key: 'status',
+                        render: (_status: string, record: Program) => {
+                          const lifecycle = record.lifecycleStatus
+
+                          const badge = lifecycle ? (
+                            <ProgramLifecycleStatusBadge status={lifecycle} />
+                          ) : (
+                            <StatusBadge
+                              status={record.status}
+                              statusConfig={commonStatusStatusConfig}
+                              showIcon={false}
+                            />
+                          )
+
+                          if (!onChangeStatus) {
+                            return badge
+                          }
+
+                          const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                            status => {
+                              return {
+                                key: status,
+                                label: <ProgramLifecycleStatusBadge status={status} />,
+                                onClick: e => {
+                                  e?.domEvent?.stopPropagation()
+                                  onChangeStatus(record, status)
+                                },
+                              }
+                            }
+                          )
+
+                          return (
+                            <div
+                              className="program-status-dropdown-cell"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Dropdown
+                                menu={{ items }}
+                                trigger={['click']}
+                                getPopupContainer={() => document.body}
+                              >
+                                <span
+                                  className="program-status-dropdown-trigger"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  {badge}
+                                </span>
+                              </Dropdown>
+                            </div>
+                          )
+                        },
+                      },
+                      ...(showFavorite
+                        ? [
+                            {
+                              title: '찜하기',
+                              key: 'favorite',
+                              width: 100,
+                              fixed: showActions ? undefined : ('right' as const),
+                              render: (_: unknown, record: Program) => (
+                                <div onClick={e => e.stopPropagation()}>
+                                  <Button
+                                    type="text"
+                                    icon={
+                                      favorites.has(record.id) ? (
+                                        <HeartFilled style={{ color: '#ff4d4f' }} />
+                                      ) : (
+                                        <HeartOutlined />
+                                      )
+                                    }
+                                    onClick={() => handleToggleFavorite(record.id)}
+                                  />
+                                </div>
+                              ),
+                            },
+                          ]
+                        : []),
+                      ...(showActions
+                        ? [
+                            {
+                              title: '작업',
+                              key: 'action',
+                              fixed: 'right' as const,
+                              width: 80,
+                              render: (_: unknown, record: Program) => (
+                                <div onClick={e => e.stopPropagation()}>
+                                  <Dropdown
+                                    menu={{ items: getMenuItems(record) }}
+                                    trigger={['click']}
+                                  >
+                                    <Button
+                                      type="text"
+                                      icon={<MoreOutlined />}
+                                      onClick={e => e.stopPropagation()}
+                                    />
+                                  </Dropdown>
+                                </div>
+                              ),
+                            },
+                          ]
+                        : []),
+                    ]
+              }
+              rowKey="id"
+              loading={loading}
+              tableLayout="fixed"
+              scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
+              onRow={record => ({
+                onClick: event => {
+                  const target = event.target as HTMLElement
+                  // 프로그램 진행 현황 셀(배지/드롭다운) 클릭 시 상세 이동하지 않음
+                  if (
+                    target.closest('.program-status-dropdown-cell') ||
+                    target.closest('.program-status-dropdown-trigger')
+                  ) {
+                    return
+                  }
+                  // 이미지 preview 영역 클릭 시 무시 (이벤트 버블링 방지)
+                  if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
+                    return
+                  }
+                  // 이미지 mask (확대 버튼) 클릭 시 무시
+                  if (target.closest('.ant-image-mask')) {
+                    return
+                  }
+                  onView(record)
+                },
+                style: { cursor: 'pointer' },
+              })}
+              pagination={false}
+            />
+          </div>
         </Card>
       )}
 
       {/* 참가자용 목록 뷰 (카드로 감싸기) */}
       {isParticipant && (
         <Card loading={loading} className="program-list-card">
-          <Table
-            dataSource={table.getRowModel().rows.map(row => row.original)}
-            columns={[
-              {
-                title: '포스터',
-                dataIndex: 'posterImage',
-                key: 'posterImage',
-                width: 100,
-                render: (_: unknown, record: Program) => {
-                  const src = record.posterImage
-                  if (!src) {
+          <div className="program-list-table-wrapper">
+            <Table
+              dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
+              columns={[
+                {
+                  title: '포스터',
+                  dataIndex: 'posterImage',
+                  key: 'posterImage',
+                  width: 100,
+                  render: (_: unknown, record: Program) => {
+                    const src = record.posterImage
+                    if (!src) {
+                      return (
+                        <div
+                          style={{
+                            width: 72,
+                            height: 54,
+                            background: '#f0f0f0',
+                            borderRadius: 4,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 10,
+                            color: '#bfbfbf',
+                          }}
+                        >
+                          이미지 없음
+                        </div>
+                      )
+                    }
                     return (
-                      <div
-                        style={{
-                          width: 72,
-                          height: 54,
-                          background: '#f0f0f0',
-                          borderRadius: 4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 10,
-                          color: '#bfbfbf',
-                        }}
-                      >
-                        이미지 없음
+                      <div onClick={e => e.stopPropagation()}>
+                        <Image
+                          src={src}
+                          alt=""
+                          width={72}
+                          height={54}
+                          style={{ objectFit: 'cover', borderRadius: 4 }}
+                          preview={{ mask: '확대' }}
+                        />
                       </div>
                     )
-                  }
-                  return (
-                    <div onClick={e => e.stopPropagation()}>
-                      <Image
-                        src={src}
-                        alt=""
-                        width={72}
-                        height={54}
-                        style={{ objectFit: 'cover', borderRadius: 4 }}
-                        preview={{ mask: '확대' }}
+                  },
+                },
+                {
+                  title: '프로그램명',
+                  dataIndex: 'title',
+                  key: 'title',
+                  width: 260,
+                  ellipsis: true,
+                  render: (text: string) => (
+                    <Tag
+                      color={domainColorsHex.program.primary}
+                      style={{
+                        maxWidth: 230,
+                        display: 'inline-block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      {text}
+                    </Tag>
+                  ),
+                },
+                {
+                  title: '스폰서',
+                  dataIndex: 'sponsorId',
+                  key: 'sponsorId',
+                  render: (sponsorId: string | undefined) => {
+                    if (!sponsorId) {
+                      return '-'
+                    }
+                    return sponsorService.getNameById(sponsorId)
+                  },
+                },
+                {
+                  title: '유형',
+                  dataIndex: 'type',
+                  key: 'type',
+                  render: (type: string) => {
+                    const typeLabel = programTypes.find(t => t.value === type)?.label || type
+                    return <Tag>{typeLabel}</Tag>
+                  },
+                },
+                {
+                  title: '형태',
+                  dataIndex: 'format',
+                  key: 'format',
+                  render: (format: string) => {
+                    const formatLabel =
+                      programFormats.find(f => f.value === format)?.label || format
+                    return formatLabel
+                  },
+                },
+                {
+                  title: '회차',
+                  dataIndex: 'rounds',
+                  key: 'rounds',
+                  render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
+                },
+                {
+                  title: '상태',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (_status: string, record: Program) => {
+                    const lifecycle = record.lifecycleStatus
+
+                    const badge = lifecycle ? (
+                      <ProgramLifecycleStatusBadge status={lifecycle} />
+                    ) : (
+                      <StatusBadge
+                        status={record.status}
+                        statusConfig={commonStatusStatusConfig}
+                        showIcon={false}
                       />
-                    </div>
-                  )
+                    )
+
+                    return badge
+                  },
                 },
-              },
-              {
-                title: '프로그램명',
-                dataIndex: 'title',
-                key: 'title',
-                width: 260,
-                ellipsis: true,
-                render: (text: string) => (
-                  <Tag
-                    color={domainColorsHex.program.primary}
-                    style={{
-                      maxWidth: 230,
-                      display: 'inline-block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {text}
-                  </Tag>
-                ),
-              },
-              {
-                title: '스폰서',
-                dataIndex: 'sponsorId',
-                key: 'sponsorId',
-                render: (sponsorId: string | undefined) => {
-                  if (!sponsorId) {
-                    return '-'
+                ...(showFavorite
+                  ? [
+                      {
+                        title: '찜하기',
+                        key: 'favorite',
+                        width: 100,
+                        fixed: 'right' as const,
+                        render: (_: unknown, record: Program) => (
+                          <div onClick={e => e.stopPropagation()}>
+                            <Button
+                              type="text"
+                              icon={
+                                favorites.has(record.id) ? (
+                                  <HeartFilled style={{ color: '#ff4d4f' }} />
+                                ) : (
+                                  <HeartOutlined />
+                                )
+                              }
+                              onClick={() => handleToggleFavorite(record.id)}
+                            />
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+              rowKey="id"
+              tableLayout="fixed"
+              scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
+              onRow={record => ({
+                onClick: event => {
+                  const target = event.target as HTMLElement
+                  if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
+                    return
                   }
-                  return sponsorService.getNameById(sponsorId)
+                  if (target.closest('.ant-image-mask')) {
+                    return
+                  }
+                  onView(record)
                 },
-              },
-              {
-                title: '유형',
-                dataIndex: 'type',
-                key: 'type',
-                render: (type: string) => {
-                  const typeLabel = programTypes.find(t => t.value === type)?.label || type
-                  return <Tag>{typeLabel}</Tag>
-                },
-              },
-              {
-                title: '형태',
-                dataIndex: 'format',
-                key: 'format',
-                render: (format: string) => {
-                  const formatLabel = programFormats.find(f => f.value === format)?.label || format
-                  return formatLabel
-                },
-              },
-              {
-                title: '회차',
-                dataIndex: 'rounds',
-                key: 'rounds',
-                render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
-              },
-              {
-                title: '상태',
-                dataIndex: 'status',
-                key: 'status',
-                render: (_status: string, record: Program) => {
-                  const lifecycle = record.lifecycleStatus
-
-                  const badge = lifecycle ? (
-                    <StatusBadge
-                      status={lifecycle}
-                      statusConfig={programLifecycleStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  ) : (
-                    <StatusBadge
-                      status={record.status}
-                      statusConfig={commonStatusStatusConfig}
-                      showIcon={false}
-                    />
-                  )
-
-                  return badge
-                },
-              },
-              ...(showFavorite
-                ? [
-                    {
-                      title: '찜하기',
-                      key: 'favorite',
-                      width: 100,
-                      fixed: 'right' as const,
-                      render: (_: unknown, record: Program) => (
-                        <div onClick={e => e.stopPropagation()}>
-                          <Button
-                            type="text"
-                            icon={
-                              favorites.has(record.id) ? (
-                                <HeartFilled style={{ color: '#ff4d4f' }} />
-                              ) : (
-                                <HeartOutlined />
-                              )
-                            }
-                            onClick={() => handleToggleFavorite(record.id)}
-                          />
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-            rowKey="id"
-            tableLayout="fixed"
-            onRow={record => ({
-              onClick: event => {
-                const target = event.target as HTMLElement
-                if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
-                  return
-                }
-                if (target.closest('.ant-image-mask')) {
-                  return
-                }
-                onView(record)
-              },
-              style: { cursor: 'pointer' },
-            })}
-            pagination={{
-              ...PAGINATION_CONFIG,
-              current: table.getState().pagination.pageIndex + 1,
-              pageSize: table.getState().pagination.pageSize,
-              total: table.getFilteredRowModel().rows.length,
-              onChange: (page, pageSize) => {
-                table.setPageIndex(page - 1)
-                table.setPageSize(pageSize)
-              },
-            }}
-          />
+                style: { cursor: 'pointer' },
+              })}
+              pagination={false}
+            />
+          </div>
         </Card>
       )}
     </div>

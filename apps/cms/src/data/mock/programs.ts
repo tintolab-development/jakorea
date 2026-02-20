@@ -1199,19 +1199,26 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   applicationEndDate.setDate(applicationEndDate.getDate() - Math.floor(Math.random() * 7)) // 운영 시작일 0-7일 전까지
 
   const programId = `prog-${String(index + 1).padStart(3, '0')}`
-  const rounds = createRounds(programId, record.classCount, startDate)
+  const isDetailMock = index === 0
+  const rounds = createRounds(programId, isDetailMock ? 1 : record.classCount, startDate)
 
-  // 프로그램 진행 워크플로우 상태 (7단계) 분포 — planned 제외, 위젯/필터와 동일
-  const lifecycleStatuses: ProgramLifecycleStatus[] = [
-    'recruiting_students',
-    'recruiting_instructors',
+  // 프로그램 진행 워크플로우 상태 — 수강자 모집중/강사 모집중 각 5개 보장, 나머지는 5단계 순환
+  const recruitingStudentsIndices = [2, 7, 14, 21, 28] // 수강자 모집중 5개
+  const recruitingInstructorsIndices = [0, 1, 8, 15, 22] // 강사 모집중 5개 (0은 상세 mock)
+  const otherLifecycleStatuses: ProgramLifecycleStatus[] = [
     'matching_completed',
     'education_before_textbook',
     'education_after_textbook',
     'education_completed',
     'document_processing_completed',
   ]
-  const lifecycleStatus = lifecycleStatuses[index % lifecycleStatuses.length]
+  const otherIndices = [3, 4, 5, 6, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 29]
+  const otherPos = otherIndices.indexOf(index)
+  const lifecycleStatus: ProgramLifecycleStatus = recruitingStudentsIndices.includes(index)
+    ? 'recruiting_students'
+    : recruitingInstructorsIndices.includes(index)
+      ? 'recruiting_instructors'
+      : otherLifecycleStatuses[otherPos % otherLifecycleStatuses.length]
 
   const baseStatus =
     lifecycleStatus === 'document_processing_completed'
@@ -1224,7 +1231,13 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
 
   const category: ProgramCategory = record.schoolName === '해당없음' ? 'individual' : 'school'
 
-  return {
+  // 스크린샷 기준 상세 mock: 첫 번째 프로그램 (수강자 모집 마감, 강사 모집 중)
+  const applicationStart = isDetailMock
+    ? new Date('2025-12-08T00:00:00.000Z')
+    : applicationStartDate
+  const applicationEnd = isDetailMock ? new Date('2026-01-16T00:00:00.000Z') : applicationEndDate
+
+  const base: Program = {
     id: programId,
     sponsorId,
     title: record.title === '해당없음' ? record.mainTitle : record.title,
@@ -1235,10 +1248,10 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     rounds,
     startDate,
     endDate: endDate.toISOString(),
-    applicationStartDate: applicationStartDate.toISOString(),
-    applicationEndDate: applicationEndDate.toISOString(),
+    applicationStartDate: applicationStart.toISOString(),
+    applicationEndDate: applicationEnd.toISOString(),
     status: baseStatus,
-    lifecycleStatus,
+    lifecycleStatus: isDetailMock ? 'recruiting_instructors' : lifecycleStatus,
     // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
     businessArea: record.businessArea,
     titleEn: record.titleEn === '해당없음' ? undefined : record.titleEn,
@@ -1277,6 +1290,48 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     createdAt: getDate(365 - record.month * 30),
     updatedAt: getDate(365 - record.month * 30 + 5),
   }
+
+  if (isDetailMock) {
+    return {
+      ...base,
+      resultAnnouncementDate: new Date('2026-01-26T00:00:00.000Z').toISOString(),
+      resultAnnouncementMethod: '홈페이지 공지 및 담당교사 개별 안내',
+      approvedStudentCount: 30,
+      instructors: 30,
+      instructorCapacity: 80,
+      instructorApplicationStartDate: new Date('2026-01-15T00:00:00.000Z').toISOString(),
+      instructorApplicationEndDate: new Date('2026-02-01T00:00:00.000Z').toISOString(),
+      documentPassAnnouncementDate: new Date('2026-02-11T00:00:00.000Z').toISOString(),
+      documentPassAnnouncementMethod: '합격자 개별 안내',
+      interviewStartDate: new Date('2026-02-24T00:00:00.000Z').toISOString(),
+      interviewEndDate: new Date('2026-02-25T00:00:00.000Z').toISOString(),
+      interviewMethod: '온라인',
+      finalPassAnnouncementDate: new Date('2026-02-26T00:00:00.000Z').toISOString(),
+      finalPassAnnouncementMethod: '합격자 개별 안내',
+      description:
+        '제이에이코리아(JA Korea)는 매년 지역별 대학생 봉사단과 함께 초등학생들을 위한 무료 경제교육 보급 사업을 진행하고 있습니다. 2026년 경제교육 진행을 희망하는 초등학교에 대학생경제교육봉사단 파견 및 학급당 경제교육 교재·교구를 무상으로 지원하고자 하니 많은 관심과 신청 부탁드립니다.',
+      recruitmentGuide: `1. 금요일 오전 교육이 가능한 학교, (1~4교시, 총 4차시 진행)
+2. 2026년 4월~6월(1학기) 혹은 9월~11월(2학기) 中 지정된 금요일 중 교육이 가능한 학교
+3. 학교 당 최소 4학급 이상 신청 필수(학년무관)
+4. JA Korea 소속 대학생 경제교육봉사단이 학교에 방문하여 학급당 2인 1조로 대면 경제교육 진행
+5. 1개 학교에서 여러 학년 신청할 경우, 대표 담당교사를 지정하여 1개의 신청서만 제출`,
+      learningSupportContent: `선정된 학교에 한하여 다음과 같이 지원 예정
+- 초등학생 대상 학급별 대면 교육
+- 경제교육 교재·교구 제공
+- 대학생경제교육봉사단 파견`,
+      additionalContentHtml: `<h3>프로그램 운영 협조사항</h3>
+<h4>1. 프로그램 일정확인 및 소통안내</h4>
+<p>- 대표 담당교사와 소통이 진행 되오니 꼭 지정하여 신청해주시기 바랍니다.</p>
+<h4>2. JA Korea 대학생경제교육봉사단 운영관련</h4>
+<ul>
+<li>공문필요 시 사전요청 필요</li>
+<li>봉사단 개인정보동의서 및 성범죄경력조회 수신확인</li>
+<li>교육진행 시 학급정보(학생 수, 대기실 위치 등) 사전공지</li>
+<li>특이사항 사전공지</li>
+</ul>`,
+    }
+  }
+  return base
 })
 
 export const mockProgramsMap = new Map(mockPrograms.map(program => [program.id, program]))

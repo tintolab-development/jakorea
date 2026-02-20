@@ -1,0 +1,213 @@
+/**
+ * 사업 별 KPI 대비 달성률 위젯 스타일
+ * 가로 스크롤 카드, 바 차트, 달성=민트/미달=그레이
+ */
+
+.kpi-achievement-widget {
+  height: 100%;
+}
+
+.kpi-achievement-widget__total-count {
+  margin-left: var(--spacing-8);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.kpi-achievement-widget .ant-card-body {
+  padding: var(--spacing-16);
+}
+
+/* 가로 스크롤 영역: 1단/2단에 따라 슬롯 너비에 맞춤 */
+.kpi-achievement-widget__scroll {
+  display: flex;
+  gap: var(--spacing-16);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--spacing-8);
+  min-height: 0;
+}
+
+.kpi-achievement-widget__scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.kpi-achievement-widget__scroll::-webkit-scrollbar-track {
+  background: var(--color-bg-neutral, #fafafa);
+  border-radius: 3px;
+}
+
+.kpi-achievement-widget__scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border-skeleton, #d9d9d9);
+  border-radius: 3px;
+}
+
+/* 프로그램 카드: 기본 441×236, 배경 #fff, 반응형 */
+.kpi-achievement-widget__card {
+  flex-shrink: 0;
+  width: 441px;
+  max-width: 100%;
+  min-width: 280px;
+  height: 236px;
+  padding: 18px var(--spacing-16);
+  padding-bottom: 22px;
+  background: #fff;
+  border: 1px solid var(--color-border-skeleton, #f0f0f0);
+  border-radius: 8px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 프로그램명 타이틀: 한 줄, 초과 시 말줄임(...) */
+.kpi-achievement-widget__card-title {
+  color: var(--default-BK, #3D3D3D);
+  text-align: center;
+  overflow: hidden;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  margin-bottom: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.kpi-achievement-widget__kpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* KPI 한 줄 */
+.kpi-achievement-widget__kpi-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.kpi-achievement-widget__kpi-label {
+  font-size: var(--font-size-12);
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+}
+
+.kpi-achievement-widget__bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+/* 바 차트: 배경(회색) = 100%, 채움 = 달성률(%)만큼 색상 */
+.kpi-achievement-widget__bar-bg {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  background: var(--color-border-skeleton, #e8e8e8);
+  border-radius: 4px;
+  overflow: hidden;
+  display: block;
+}
+
+/* 진행률(%)만큼 민트 색상으로 표시 */
+.kpi-achievement-widget__bar-fill {
+  display: block;
+  height: 100%;
+  width: var(--kpi-bar-percent, 0);
+  max-width: 100%;
+  border-radius: 4px;
+  transition: width 0.2s ease;
+  background: var(--JA-mint-01, #01A1AF);
+}
+
+.kpi-achievement-widget__bar-fill--achieved {
+  background: var(--JA-mint-01, #01A1AF);
+}
+
+.kpi-achievement-widget__bar-fill--under {
+  background: var(--JA-mint-01, #01A1AF);
+}
+
+/* 달성/KPI 수치 + 달성률 뱃지 */
+.kpi-achievement-widget__values {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  flex-shrink: 0;
+}
+
+.kpi-achievement-widget__achieved-kpi {
+  font-size: var(--font-size-12);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* 퍼센트 배지: 기본 46×20, radius 30px, 반응형 */
+.kpi-achievement-widget__rate-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  min-width: 46px;
+  height: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-600);
+  border-radius: 30px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .kpi-achievement-widget__rate-badge {
+    width: 40px;
+    min-width: 40px;
+    height: 18px;
+    font-size: 11px;
+  }
+}
+
+.kpi-achievement-widget__rate-badge--achieved {
+  background: var(--JA-mint-01, #01A1AF);
+  color: #fff;
+}
+
+.kpi-achievement-widget__rate-badge--under {
+  background: #777;
+  color: #fff;
+}
+
+/* 로딩 */
+.kpi-achievement-widget__loading {
+  min-height: 120px;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-neutral, #fafafa) 25%,
+    var(--color-border-skeleton, #f0f0f0) 50%,
+    var(--color-bg-neutral, #fafafa) 75%
+  );
+  background-size: 200% 100%;
+  animation: kpi-achievement-widget__shimmer 1.2s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes kpi-achievement-widget__shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.kpi-achievement-widget .widget-more-button {
+  color: var(--color-text-primary) !important;
+}
+
+.kpi-achievement-widget .widget-more-button:hover {
+  color: var(--color-text-primary) !important;
+  opacity: 0.8;
+}

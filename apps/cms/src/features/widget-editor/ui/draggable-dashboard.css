@@ -1,0 +1,65 @@
+/**
+ * DraggableDashboard 스타일 (2열 그리드, 밀집 레이아웃)
+ */
+
+/* 그리드 컨테이너: 전체 너비, 패딩 없음 (중앙 정렬 금지 → x=0|6 시각적 정렬 유지) */
+/* 그리드 배경 투명 */
+.draggable-dashboard {
+    width: 100%;
+    min-height: 100vh;
+    padding: 0;
+    box-sizing: border-box;
+    position: relative;
+    background: transparent;
+}
+
+.draggable-dashboard-grid {
+    position: relative;
+    width: 100%;
+}
+
+.draggable-dashboard .react-grid-layout {
+    position: relative;
+}
+
+.draggable-dashboard .react-grid-item {
+    transition: all 200ms ease;
+    transition-property: left, top, width, height;
+}
+
+.draggable-dashboard .react-grid-item>div {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.draggable-dashboard .react-grid-item.cssTransforms {
+    transition-property: transform, width, height;
+}
+
+.draggable-dashboard .react-grid-item.react-draggable-dragging,
+.draggable-dashboard .react-grid-item.dragging {
+    transition: none;
+    z-index: 3;
+    will-change: transform;
+    opacity: 0.9;
+}
+
+/* 그리드 라인 비표시 (격자 무늬 눈에 안 보이게) */
+.draggable-dashboard .react-grid-layout {
+    background-image: none;
+}
+
+/* 드래그 시 따라오는 placeholder(딤): 회색 alpha 0.1, 둥근 모서리 — 값 고정 예외 */
+.draggable-dashboard .react-grid-item.react-grid-placeholder {
+    background: rgba(80, 80, 80, 0.1) !important;
+    border-radius: 10px;
+    opacity: 1;
+    z-index: 2;
+}
+
+/* 2단(w=6) 비-KPI 위젯: 높이 338px 고정 (KPI 항목 제외) */
+.draggable-dashboard .react-grid-item:has(> div.widget-grid-item-half) {
+    min-height: 338px;
+}

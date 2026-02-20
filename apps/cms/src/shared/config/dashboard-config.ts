@@ -32,6 +32,9 @@ export type DashboardWidgetType =
   | 'pending-matchings-card' // Phase 4.5: 대기 중인 매칭 카드
   | 'pending-settlements-card' // Phase 4.5: 대기 중인 정산 카드
   | 'pending-actions-row' // 대기 중인 작업 Row (신청, 매칭, 정산을 한 레이어에)
+  | 'menu-shortcut-widget' // 메뉴 바로가기 위젯
+  | 'recruitment-status-widget' // 모집 신청 현황 위젯
+  | 'kpi-achievement-widget' // 사업 별 KPI 대비 달성률 위젯
 
 /**
  * 대시보드 위젯 설정
@@ -39,8 +42,10 @@ export type DashboardWidgetType =
 export interface DashboardWidgetConfig {
   type: DashboardWidgetType
   allowedRoles?: UserRole[] // 허용된 권한 목록 (없으면 모든 권한 허용)
-  colSpan?: number // Ant Design Col span (기본값: 6)
+  colSpan?: number // Ant Design Col span (기본값: 24)
   order?: number // 표시 순서 (낮을수록 먼저 표시)
+  /** 위젯 고정 높이(px). 미지정 시 기본값 338px */
+  height?: number
 }
 
 /**
@@ -49,21 +54,11 @@ export interface DashboardWidgetConfig {
 const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 관리자: 전체 통계 및 현황
   ADMIN: [
-    // 첫 번째 행: 2열 구조 (왼쪽: 알림+고객문의, 오른쪽: 프로그램일정)
-    { type: 'notification-widget', colSpan: 12, order: 1 },
-    { type: 'customer-inquiry-status-widget', colSpan: 12, order: 2 },
-    { type: 'program-schedule-widget', colSpan: 12, order: 3 },
-    // 나머지 위젯들 (전체 프로그램 진행현황 위젯 → 탭+테이블로 교체)
-    // { type: 'program-progress-widget', colSpan: 24, order: 4 },
-    { type: 'program-progress-tabs-table', colSpan: 24, order: 4 },
-    // 테이블 하위 위젯들 임시 주석 처리
-    // { type: 'pending-actions-row', colSpan: 24, order: 5 },
-    // { type: 'overall-statistics-cards', colSpan: 24, order: 6 },
-    // { type: 'monthly-settlement-card', colSpan: 6, order: 7 },
-    // { type: 'monthly-application-card', colSpan: 6, order: 8 },
-    // { type: 'active-program-card', colSpan: 6, order: 9 },
-    // { type: 'instructor-count-card', colSpan: 6, order: 10 },
-    // { type: 'unified-activity-feed', colSpan: 24, order: 11 },
+    { type: 'menu-shortcut-widget', colSpan: 24, order: 0, height: 202 },
+    { type: 'program-schedule-widget', colSpan: 24, order: 1, height: 360 },
+    { type: 'recruitment-status-widget', colSpan: 24, order: 2, height: 338 },
+    { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3 },
+    { type: 'kpi-achievement-widget', colSpan: 24, order: 4, height: 314 },
   ],
   // 강사: 본인 활동 요약
   INSTRUCTOR: [

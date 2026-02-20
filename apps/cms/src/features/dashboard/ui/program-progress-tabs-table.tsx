@@ -12,6 +12,7 @@ import {
   PROGRAM_PROGRESS_TAB_ORDER,
   type ProgramProgressTabRow,
 } from '@/data/mock/program-progress-tabs'
+import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import './program-progress-tabs-table.css'
 
 export function ProgramProgressTabsTable() {
@@ -40,7 +41,14 @@ export function ProgramProgressTabsTable() {
   })
 
   return (
-    <Card className="program-progress-tabs-table">
+    <Card
+      className="program-progress-tabs-table"
+      title={
+        <WidgetTitleWithHandle>
+          <span>전체 프로그램 진행 현황</span>
+        </WidgetTitleWithHandle>
+      }
+    >
       <Tabs
         defaultActiveKey="planned"
         items={tabItems}

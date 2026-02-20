@@ -1,0 +1,100 @@
+/**
+ * SegmentedTab: 프로그램 진행현황 탭과 동일 UI (배경·테두리·활성 색)
+ * variant: small 116×34, medium 217×50
+ */
+
+.segmented-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-8);
+  box-sizing: border-box;
+  background: var(--color-bg-tab);
+}
+
+/* small: 위젯 헤더용 116×34 */
+.segmented-tab--small {
+  width: 116px;
+  height: 34px;
+}
+
+.segmented-tab--small .segmented-tab__btn {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 var(--spacing-8);
+  font-size: var(--font-size-13);
+}
+
+/* medium: 217×50 */
+.segmented-tab--medium {
+  width: 217px;
+  height: 50px;
+}
+
+.segmented-tab--medium .segmented-tab__btn {
+  height: 42px;
+  padding: 0 var(--spacing-16);
+  font-size: var(--font-size-14);
+}
+
+.segmented-tab--medium .segmented-tab__btn:first-child {
+  width: 117px;
+  flex: 0 0 117px;
+}
+
+.segmented-tab--medium .segmented-tab__btn:last-child {
+  width: 88px;
+  flex: 0 0 88px;
+}
+
+/* mediumCompact: 프로그램 진행현황 하위 탭용 214×50 */
+.segmented-tab--mediumCompact {
+  width: 214px;
+  height: 50px;
+}
+
+.segmented-tab--mediumCompact .segmented-tab__btn {
+  height: 42px;
+  padding: 0 var(--spacing-16);
+  font-size: var(--font-size-14);
+}
+
+.segmented-tab--mediumCompact .segmented-tab__btn:first-child {
+  width: 117px;
+  flex: 0 0 117px;
+}
+
+.segmented-tab--mediumCompact .segmented-tab__btn:last-child {
+  width: 88px;
+  flex: 0 0 88px;
+}
+
+/* 공통 버튼 스타일 (진행현황 탭과 동일) */
+.segmented-tab__btn {
+  border: 1px solid transparent;
+  border-radius: var(--radius-8);
+  background: var(--color-bg-tab);
+  color: var(--color-text-tab);
+  font-weight: var(--font-weight-500);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  text-align: center;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.segmented-tab__btn:hover {
+  color: var(--color-tab-active);
+}
+
+.segmented-tab__btn--active {
+  border: 1.5px solid var(--color-tab-active);
+  background: var(--color-bg-base);
+  color: var(--color-tab-active);
+  font-weight: var(--font-weight-600);
+}

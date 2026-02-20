@@ -26,6 +26,12 @@ export interface LabeledSearchInputProps {
   allowClear?: boolean
   /** disabled 상태 */
   disabled?: boolean
+  /** 검색(돋보기) 아이콘 표시 여부. false면 prefix 아이콘 없음 */
+  showPrefixIcon?: boolean
+  /** 레이블 표시 여부. false면 레이블 미표시(인풋만, 헤더 액션 등과 정렬 시 사용) */
+  showLabel?: boolean
+  /** 포커스 해제 시 콜백 (한글 IME 등 입력 완료 후 URL 동기화용) */
+  onBlur?: () => void
 }
 
 /**
@@ -47,22 +53,31 @@ export function LabeledSearchInput({
   placeholder,
   value,
   onChange,
+  onBlur,
   width = 300,
   style,
   allowClear = true,
   disabled = false,
+  showPrefixIcon = true,
+  showLabel = true,
 }: LabeledSearchInputProps) {
   return (
-    <div className="labeled-search-input" style={style}>
-      <Text className="labeled-search-input__label">{label}</Text>
+    <div
+      className={`labeled-search-input ${showPrefixIcon ? '' : 'labeled-search-input--no-icon'} ${!showLabel ? 'labeled-search-input--no-label' : ''}`}
+      style={style}
+    >
+      {showLabel && <Text className="labeled-search-input__label">{label}</Text>}
       <Input
         placeholder={placeholder}
         value={value}
         onChange={e => onChange?.(e.target.value)}
+        onBlur={onBlur}
         allowClear={allowClear}
         disabled={disabled}
         style={{ width }}
-        prefix={<SearchOutlined className="labeled-search-input__icon" />}
+        prefix={
+          showPrefixIcon ? <SearchOutlined className="labeled-search-input__icon" /> : undefined
+        }
         className="labeled-search-input__input"
       />
     </div>

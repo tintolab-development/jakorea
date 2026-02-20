@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Card, Tag, Button, Table, Empty } from 'antd'
+import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -18,7 +19,6 @@ import {
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import type { Program } from '@/types/domain'
-
 
 type ProgramStatusFilter = 'all' | 'active' | 'scheduled' | 'completed'
 type ProgramCategoryFilter = 'all' | 'individual' | 'school'
@@ -228,11 +228,7 @@ export function MyEnrolledProgramList() {
       dataIndex: 'category',
       key: 'category',
       width: 150,
-      render: (category: string) => (
-        <Tag color={category === 'school' ? 'blue' : 'purple'}>
-          {category === 'school' ? '학교 프로그램' : '개인 프로그램'}
-        </Tag>
-      ),
+      render: (category: string) => <ProgramCategoryBadge category={category} />,
     },
     {
       title: '진행 기간',

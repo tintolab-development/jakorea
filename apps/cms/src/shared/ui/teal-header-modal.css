@@ -1,0 +1,235 @@
+/**
+ * 재사용 청록 헤더 모달
+ * 패딩은 모달 루트에 없고, 헤더/바디에만 적용
+ * Colors: 헤더/버튼 청록 --color-modal-header, 바디 배경 --color-bg-base
+ * 모달: 화면 정중앙 고정
+ */
+
+/* 모달 래퍼: 화면 정중앙 (Ant Design centered + CSS 보강) */
+.ant-modal-wrap:has(.teal-header-modal) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
+.teal-header-modal.ant-modal {
+    padding-bottom: 0;
+    top: 0;
+    max-width: calc(100vw - var(--spacing-32));
+    margin: 0 auto;
+}
+
+.teal-header-modal .ant-modal-content {
+    border-radius: var(--radius-8);
+    overflow: hidden;
+    box-shadow: var(--shadow-modal);
+    padding: 0;
+}
+
+.teal-header-modal .ant-modal-body {
+    padding: 0;
+}
+
+/* large: 모달 전체(헤더+바디+푸터) 최대 높이 840px, 바디만 스크롤 */
+.teal-header-modal--large .ant-modal-content {
+    max-height: 840px;
+    display: flex;
+    flex-direction: column;
+}
+
+.teal-header-modal--large .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.teal-header-modal--large .teal-header-modal__header {
+    flex-shrink: 0;
+}
+
+.teal-header-modal--large .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: none;
+}
+
+.teal-header-modal--large .teal-header-modal__footer {
+    flex-shrink: 0;
+}
+
+/* 강사진 추가 모달: 헤더+바디(스크롤)+푸터가 뷰포트 안에 들어가도록, 푸터 항상 노출 */
+.teal-header-modal--instructor-add.teal-header-modal--large .ant-modal-content {
+    max-height: min(960px, 100vh);
+    display: flex;
+    flex-direction: column;
+}
+
+.teal-header-modal--instructor-add .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* 강사진 추가: 푸터는 스크롤과 무관하게 최하단에 고정, 닫기 버튼 중앙 정렬 */
+.teal-header-modal--instructor-add .teal-header-modal__footer {
+    flex-shrink: 0;
+    position: relative;
+    justify-content: center;
+}
+
+/* 대시보드 설정: 최대 높이 720px, 바디만 스크롤 */
+.teal-header-modal--dashboard-settings .ant-modal-content {
+    max-height: 720px;
+    display: flex;
+    flex-direction: column;
+}
+
+.teal-header-modal--dashboard-settings .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.teal-header-modal--dashboard-settings .teal-header-modal__header {
+    flex-shrink: 0;
+}
+
+.teal-header-modal--dashboard-settings .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: none;
+}
+
+.teal-header-modal--dashboard-settings .teal-header-modal__footer {
+    flex-shrink: 0;
+}
+
+/* 수강 신청 학교 목록 상세 모달: 바디 고정 높이 830px, 바디만 스크롤 */
+.teal-header-modal--enrollment-detail.teal-header-modal--large .ant-modal-content {
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+.teal-header-modal--enrollment-detail .teal-header-modal__body {
+    height: 830px;
+    min-height: 830px;
+    max-height: 830px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex: none;
+}
+
+.teal-header-modal--enrollment-detail .teal-header-modal__footer {
+    flex-shrink: 0;
+}
+
+/* 강의 신청 강사 목록 상세 모달: 가로 스크롤 방지 */
+.teal-header-modal--instructor-recruitment-detail.teal-header-modal--large .ant-modal-content {
+    overflow-x: hidden;
+}
+
+.teal-header-modal--instructor-recruitment-detail .teal-header-modal__body {
+    overflow-x: hidden;
+}
+
+/* 헤더 */
+.teal-header-modal__header {
+    display: flex;
+    height: var(--spacing-50);
+    padding: 0 var(--spacing-30);
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    background: var(--color-modal-header);
+}
+
+/* 헤더 타이틀: 디자이너 스펙 */
+.teal-header-modal__title {
+    margin: 0;
+    color: var(--color-bg-base);
+    font-family: Pretendard, sans-serif;
+    font-size: var(--font-size-18);
+    font-style: normal;
+    font-weight: var(--font-weight-700);
+    line-height: var(--line-height-tight);
+}
+
+.teal-header-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--spacing-32);
+    height: var(--spacing-32);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-bg-base);
+    font-size: var(--font-size-16);
+    cursor: pointer;
+    border-radius: var(--radius-4);
+    transition:
+        background 0.2s,
+        color 0.2s;
+}
+
+.teal-header-modal__close:hover {
+    background: var(--color-overlay-light);
+    color: var(--color-bg-base);
+}
+
+/* 바디 */
+.teal-header-modal__body {
+    display: flex;
+    padding: var(--spacing-20) var(--spacing-30) var(--spacing-30);
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-30);
+    align-self: stretch;
+    background: var(--color-bg-base);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.teal-header-modal__body--scrollable {
+    overflow-y: auto;
+    max-height: var(--max-height-modal-scroll);
+}
+
+/* 푸터(선택): 버튼 위 30px 여백(테이블 겹침 방지), 버튼 justify center, 버튼 스펙 120×40, 버튼 사이 갭 8px */
+.teal-header-modal__footer {
+    padding: 30px var(--spacing-30) var(--spacing-30);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-8);
+    background: var(--color-bg-base);
+}
+
+.teal-header-modal__footer .ant-btn,
+.teal-header-modal__footer button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    min-width: 120px;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+/* 푸터 취소(기본) 버튼 배경: 연한 청록 + #FFF — Ant Design 오버라이드 예외 */
+.teal-header-modal__footer .ant-btn-default,
+.teal-header-modal__footer button:not([class*='primary']) {
+    background:
+        linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+        var(--color-bg-base);
+}

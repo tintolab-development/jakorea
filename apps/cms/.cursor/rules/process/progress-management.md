@@ -8,7 +8,7 @@ category: process
 
 ## PROGRESS.md 기록 규칙
 
-프로젝트 진행 상황은 `apps/cms/PROGRESS.md`에 롤별로 기록합니다.
+프로젝트 진행 상황은 `apps/cms/docs/status/PROGRESS.md`에 롤별로 기록합니다.
 
 ## 기록 형식
 
@@ -94,8 +94,8 @@ category: process
 
 ## 브리핑 문서 위치
 
-- Phase별 브리핑: `apps/cms/PHASE_X_BRIEFING.md`
-- 진행 상황: `apps/cms/PROGRESS.md`
+- Phase별 브리핑: `apps/cms/docs/status/PHASE_X_BRIEFING.md`
+- 진행 상황: `apps/cms/docs/status/PROGRESS.md`
 
 ## 관련 규칙
 

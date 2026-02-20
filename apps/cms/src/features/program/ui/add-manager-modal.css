@@ -1,0 +1,63 @@
+/**
+ * 담당자 등록 모달 (폼 전용)
+ * add-instructor-modal.css 패턴 재사용
+ */
+
+.add-manager-modal__form {
+    width: 100%;
+    max-width: 100%;
+}
+
+.add-manager-modal__fields {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-30);
+    width: 100%;
+}
+
+.add-manager-modal__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-30);
+    width: 100%;
+    max-width: 100%;
+}
+
+.add-manager-modal__field {
+    margin-bottom: 0;
+}
+
+.add-manager-modal__field .ant-form-item-label>label {
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-label);
+}
+
+.add-manager-modal__form .ant-form-item-label>label.ant-form-item-required::before {
+    display: none !important;
+    content: none !important;
+}
+
+.add-manager-modal__required-asterisk {
+    color: var(--color-required-mark);
+    margin-left: var(--spacing-4);
+}
+
+.add-manager-modal__form .ant-input,
+.add-manager-modal__form .ant-select-selector {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-4);
+}
+
+.add-manager-modal__form .ant-input:hover,
+.add-manager-modal__form .ant-select:hover .ant-select-selector {
+    border-color: var(--color-modal-header);
+}
+
+.add-manager-modal__form .ant-input:focus,
+.add-manager-modal__form .ant-input-focused,
+.add-manager-modal__form .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+    border-color: var(--color-modal-header);
+    box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
+}

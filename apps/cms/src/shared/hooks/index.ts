@@ -20,3 +20,17 @@ export { useModalState } from './use-modal-state'
 export type { UseModalStateOptions, UseModalStateReturn } from './use-modal-state'
 export { useBreadcrumb } from './use-breadcrumb'
 export type { UseBreadcrumbReturn } from './use-breadcrumb'
+export { useNeisSchoolSearch } from './use-neis-school-search'
+export type {
+  UseNeisSchoolSearchOptions,
+  UseNeisSchoolSearchReturn,
+  NeisSchoolItem,
+  NeisSchoolRow,
+} from './use-neis-school-search'
+export { useJusoAddressSearch } from './use-juso-address-search'
+export type {
+  UseJusoAddressSearchOptions,
+  UseJusoAddressSearchReturn,
+  JusoAddressItem,
+  JusoAddressRow,
+} from './use-juso-address-search'

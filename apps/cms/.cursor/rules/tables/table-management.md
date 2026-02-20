@@ -244,6 +244,6 @@ export function useInstructorTable(data: Instructor[]) {
 
 ## 관련 규칙
 
+- [테이블 구현 컨텍스트](./table-implementation.md) - Ant Design Table 컬럼·CSS·필터 패턴
 - [라우팅](../architecture/routing.md)
 - [Custom Hooks](../coding/custom-hooks.md)
-

@@ -1,0 +1,247 @@
+/**
+ * 프로그램 상세 - 담당자 정보 탭
+ * program-progress-tab 패턴 재사용: 카드, 필터 한 줄, 구분선, 테이블 헤더(N건 + 삭제/등록), 테이블
+ */
+
+.program-managers-tab {
+    width: 100%;
+}
+
+.program-managers-tab__card {
+    background: var(--color-bg-base);
+    border-radius: var(--radius-8);
+    border: 1px solid var(--color-border-light);
+}
+
+.program-managers-tab__card .ant-card-body {
+    padding: var(--spacing-16) var(--spacing-24) var(--spacing-24);
+}
+
+.program-managers-tab__top {
+    margin-bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.program-managers-tab__filters {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* 필터 그룹(담당자명 | 권한 | 조회) 간 갭 16px */
+.program-managers-tab__filter-row {
+    width: 100%;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 0;
+    gap: 16px;
+}
+
+.program-managers-tab__filter-row>.ant-col {
+    display: flex;
+    align-items: center;
+}
+
+.program-managers-tab__filter-row>.ant-col.program-managers-tab__filter-col--btn {
+    flex-shrink: 0;
+}
+
+.program-managers-tab__filter-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    height: var(--filter-control-height, 44px);
+    min-height: var(--filter-control-height, 44px);
+    overflow: visible;
+}
+
+.program-managers-tab__filter-label {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    height: var(--filter-control-height, 44px);
+    line-height: var(--filter-control-height, 44px) !important;
+    margin: 0;
+    padding: 0;
+    display: block;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-heading);
+}
+
+.program-managers-tab__filter-col {
+    min-width: 160px;
+}
+
+.program-managers-tab__filter-col .ant-select {
+    width: var(--filter-control-width, 180px) !important;
+    min-width: 120px;
+    height: var(--filter-control-height, 44px) !important;
+}
+
+.program-managers-tab__filter-col .ant-select .ant-select-selector {
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
+}
+
+.program-managers-tab__filters .labeled-search-input__input {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+}
+
+.program-managers-tab__filters .labeled-search-input__input:focus-within,
+.program-managers-tab__filter-col .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+    border-color: var(--color-tab-active) !important;
+    box-shadow: 0 0 0 1px rgba(74, 212, 204, 0.2) !important;
+}
+
+/* 담당자명 검색: 다른 필터와 동일 너비(180px) */
+.program-managers-tab__filter-col--search {
+    min-width: 0;
+}
+
+.program-managers-tab__filters .labeled-search-input {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    height: var(--filter-control-height, 44px);
+}
+
+.program-managers-tab__filters .labeled-search-input__label {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin: 0;
+    height: var(--filter-control-height, 44px);
+    line-height: var(--filter-control-height, 44px) !important;
+    display: block;
+}
+
+.program-managers-tab__filters .labeled-search-input__input {
+    flex: 0 0 auto;
+    width: var(--filter-control-width, 180px) !important;
+    min-width: 120px;
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+.program-managers-tab__filters .labeled-search-input__input .ant-input {
+    height: 100% !important;
+    min-height: 0 !important;
+    line-height: var(--filter-control-height, 44px) !important;
+    padding: 0 11px !important;
+    box-sizing: border-box !important;
+}
+
+.program-managers-tab__filter-col--btn .app-button {
+    border-radius: var(--radius-8);
+}
+
+.program-managers-tab__divider {
+    height: 0;
+    border: none;
+    border-top: 1px solid var(--color-border-light);
+    margin: var(--spacing-16) 0 0;
+}
+
+.program-managers-tab__below-divider {
+    padding-top: var(--spacing-16);
+    margin-top: 0;
+}
+
+.program-managers-tab__table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-12);
+}
+
+.program-managers-tab__table-heading {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--spacing-8);
+}
+
+.program-managers-tab__table-title {
+    color: var(--color-text-heading);
+    font-size: var(--font-size-18);
+    font-weight: var(--font-weight-700);
+    line-height: 1.4;
+}
+
+.program-managers-tab__table-description {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    line-height: 1.5;
+}
+
+.program-managers-tab__table-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-8);
+}
+
+/* PM(최상위 권한) 볼드 */
+.program-managers-tab__role-pm {
+    font-weight: var(--font-weight-700);
+}
+
+.program-managers-tab__table {
+    margin-top: 0;
+}
+
+.program-managers-tab__table .ant-table-thead>tr>th:first-child,
+.program-managers-tab__table .ant-table-tbody>tr>td:first-child {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    padding-left: var(--spacing-8);
+    padding-right: var(--spacing-8);
+}
+
+.program-managers-tab__table .ant-table-thead>tr>th,
+.program-managers-tab__table .ant-table-tbody>tr>td {
+    text-align: center;
+    vertical-align: middle;
+    border-right: 1px solid var(--color-border-light);
+}
+
+.program-managers-tab__table .ant-table-thead>tr>th:last-child,
+.program-managers-tab__table .ant-table-tbody>tr>td:last-child {
+    border-right: none;
+}
+
+.program-managers-tab__table .ant-table-thead>tr>th {
+    background: var(--color-bg-secondary);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-700);
+    color: var(--color-text-heading);
+    text-align: center;
+}
+
+.program-managers-tab__table .ant-table-tbody>tr.ant-table-row-selected>td {
+    background: var(--color-bg-accent) !important;
+}
+
+@media (max-width: 1200px) {
+    .program-managers-tab__filter-row {
+        flex-wrap: wrap;
+    }
+
+    .program-managers-tab__filter-col,
+    .program-managers-tab__filter-col--search {
+        flex: 1 1 120px !important;
+        max-width: none;
+    }
+}

@@ -1,0 +1,379 @@
+/**
+ * 수강 신청 학교 목록 상세 모달
+ * 바디 1400×830, 3섹션 gap 32px, 포스터 336×336, 테이블 규칙 준수
+ */
+
+.enrollment-status-detail-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    height: 100%;
+    min-height: 0;
+    min-width: 0; /* flex 자식이 콘텐츠보다 줄어들 수 있게 */
+    box-sizing: border-box;
+    padding: var(--teal-header-modal-body-padding, 20px 30px 30px);
+    overflow-x: hidden; /* 가로 스크롤 방지 */
+}
+
+.enrollment-status-detail-modal__section {
+    flex-shrink: 0;
+    min-width: 0; /* 가로 스크롤 방지: flex 자식이 콘텐츠 최소폭보다 줄어들 수 있게 */
+}
+
+/* 섹션 타이틀 공통 폰트 스펙 */
+.enrollment-status-detail-modal__section-title {
+    margin: 0 0 10px;
+    color: var(--default-BK, #3D3D3D);
+    font-family: Pretendard, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 140%;
+}
+
+/* 프로그램 정보: 타이틀과 내용(포스터·테이블) 갭 16px */
+.enrollment-status-detail-modal__section--program .enrollment-status-detail-modal__section-title {
+    margin-bottom: 16px;
+}
+
+.enrollment-status-detail-modal__program-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+/* 프로그램 상세 바로가기: 140×32 고정 */
+.enrollment-status-detail-modal__detail-link {
+    flex-shrink: 0;
+    width: 140px;
+    min-width: 140px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.enrollment-status-detail-modal__program-inner {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    min-width: 0; /* 테이블 영역이 부모보다 줄어들 수 있게 */
+}
+
+.enrollment-status-detail-modal__poster-wrap {
+    flex-shrink: 0;
+    width: 336px;
+    height: 336px;
+    border-radius: var(--radius-8);
+    overflow: hidden;
+    background: var(--color-bg-tab, #f5f5f5);
+}
+
+.enrollment-status-detail-modal__poster-wrap .ant-image {
+    display: block;
+    width: 336px;
+    height: 336px;
+}
+
+.enrollment-status-detail-modal__poster-wrap .ant-image-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+}
+
+.enrollment-status-detail-modal__poster-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-14);
+}
+
+.enrollment-status-detail-modal__program-fields {
+    flex: 1;
+    min-width: 0;
+    max-height: 337px; /* 1px 여유로 스크롤 방지 */
+    overflow-y: auto;
+}
+
+/* 프로그램 정보 테이블: 외곽 보더(상하좌우), box-sizing으로 레이아웃 증가 없음, 스크롤 방지 */
+.enrollment-status-detail-modal__info-table-wrap {
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    max-height: 337px; /* program-fields와 동일해 보더 포함 시 스크롤 안 생김 */
+    box-sizing: border-box;
+    border: 1px solid #D9D9D9;
+    border-radius: var(--radius-8);
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* 프로그램 정보 키-값 테이블: 100% 너비로 가로 스크롤 방지 */
+.enrollment-status-detail-modal__info-table {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: var(--font-size-14);
+}
+
+.enrollment-status-detail-modal__info-table th,
+.enrollment-status-detail-modal__info-table td {
+    padding: 0 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--color-border-light);
+    border-right: 1px solid var(--color-border-light);
+    box-sizing: border-box;
+}
+
+.enrollment-status-detail-modal__info-table th:last-child,
+.enrollment-status-detail-modal__info-table td:last-child {
+    border-right: none;
+}
+
+/* 테이블 최상단 보더 */
+.enrollment-status-detail-modal__info-table tr:first-child th,
+.enrollment-status-detail-modal__info-table tr:first-child td {
+    border-top: 1px solid #D9D9D9;
+}
+
+/* 테이블 최하단 보더 (마지막 행에도 구분선 유지) */
+.enrollment-status-detail-modal__info-table tr:last-child th,
+.enrollment-status-detail-modal__info-table tr:last-child td {
+    border-bottom: 1px solid #D9D9D9;
+}
+
+/* th(라벨): 비율 유지(약 16%), 48px 높이, 텍스트 가운데 정렬 */
+.enrollment-status-detail-modal__info-table th {
+    width: 16%;
+    height: 48px;
+    min-height: 48px;
+    background: #EDF0F2;
+    color: var(--default-BK, #3D3D3D);
+    text-align: center;
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    border-right: 1px solid #D9D9D9;
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__info-table td {
+    color: var(--color-text-primary, #262626);
+    background: var(--color-bg-base, #fff);
+    text-align: left;
+}
+
+/* 문의처·비고 제외 td: 비율(약 34%), 48px 높이 */
+.enrollment-status-detail-modal__info-table tr:not(.enrollment-status-detail-modal__info-table-row-full) td {
+    width: 34%;
+    height: 48px;
+    min-height: 48px;
+}
+
+/* 문의처·비고: 라벨 16%, 값은 나머지 */
+.enrollment-status-detail-modal__info-table-row-full th {
+    width: 16%;
+    height: 48px;
+    min-height: 48px;
+}
+
+.enrollment-status-detail-modal__info-table-row-full td {
+    min-width: 0;
+}
+
+/* 섹션 2: 수강자 모집 (테이블, 타이틀-내용 갭 10px) */
+.enrollment-status-detail-modal__section:not(.enrollment-status-detail-modal__section--program) .enrollment-status-detail-modal__section-title {
+    margin-bottom: 10px;
+}
+
+.enrollment-status-detail-modal__recruitment-wrap {
+    min-width: 0;
+    max-width: 100%;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-8);
+    overflow: hidden;
+}
+
+.enrollment-status-detail-modal__recruitment-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: var(--font-size-14);
+}
+
+.enrollment-status-detail-modal__recruitment-table th,
+.enrollment-status-detail-modal__recruitment-table td {
+    height: 54px;
+    min-height: 54px;
+    padding: 0 12px;
+    vertical-align: middle;
+    border-right: 1px solid #D9D9D9;
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__recruitment-table tr:first-child th,
+.enrollment-status-detail-modal__recruitment-table tr:first-child td {
+    border-top: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__recruitment-table tr:last-child th,
+.enrollment-status-detail-modal__recruitment-table tr:last-child td {
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__recruitment-table td:nth-child(4) {
+    border-right: none;
+}
+
+/* th: 25% (4열 중 2개), 54px 높이, th 영역 구분선 */
+.enrollment-status-detail-modal__recruitment-table th {
+    width: 25%;
+    box-sizing: border-box;
+    background: #EDF0F2;
+    color: var(--default-BK, #3D3D3D);
+    text-align: center;
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 140%;
+    border-top: 1px solid #D9D9D9;
+    border-right: 1px solid #D9D9D9;
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__recruitment-table th:last-of-type {
+    border-right: none;
+}
+
+.enrollment-status-detail-modal__recruitment-table td {
+    width: 25%;
+    box-sizing: border-box;
+    color: var(--color-text-primary, #262626);
+    background: var(--color-bg-base, #fff);
+    text-align: left;
+}
+
+/* 수강자 모집 인원: "N / N건"만 볼드 */
+.enrollment-status-detail-modal__recruitment-count {
+    font-weight: 700;
+}
+
+/* 섹션 3: 수강 신청 학교 목록 테이블 (가로 스크롤 방지) */
+.enrollment-status-detail-modal__section--table {
+    flex-shrink: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.enrollment-status-detail-modal__table-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.enrollment-status-detail-modal__table-title {
+    color: var(--default-BK, #3D3D3D);
+    font-family: Pretendard, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 140%;
+}
+
+.enrollment-status-detail-modal__table-description {
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+}
+
+.enrollment-status-detail-modal__table-wrap {
+    min-width: 0;
+    max-width: 100%;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-8);
+    overflow: hidden;
+}
+
+.enrollment-status-detail-modal__table .ant-table {
+    font-size: var(--font-size-14);
+}
+
+.enrollment-status-detail-modal__table .ant-table-wrapper {
+    max-width: 100%;
+}
+
+.enrollment-status-detail-modal__table .ant-table {
+    width: 100% !important;
+    table-layout: fixed;
+}
+
+/* 수강 신청 학교 목록: thead th 보더(상·하·좌우 구분선) */
+.enrollment-status-detail-modal__table .ant-table-thead > tr > th {
+    height: 57px;
+    min-height: 57px;
+    padding: 12px 16px;
+    background: #EDF0F2;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-label, #262626);
+    text-align: center;
+    vertical-align: middle;
+    border-top: 1px solid #D9D9D9;
+    border-right: 1px solid #D9D9D9;
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__table .ant-table-thead > tr > th:first-child {
+    border-left: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__table .ant-table-thead > tr > th:last-child {
+    border-right: none;
+}
+
+.enrollment-status-detail-modal__table .ant-table-tbody > tr > td {
+    height: 57px;
+    min-height: 57px;
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-right: 1px solid #D9D9D9;
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.enrollment-status-detail-modal__table .ant-table-tbody > tr > td:last-child {
+    border-right: none;
+}
+
+.enrollment-status-detail-modal__table .ant-table-tbody > tr:last-child > td {
+    border-bottom: none;
+}
+
+/* program-applicants-tab과 동일: 짝수 행 배경 */
+.enrollment-status-detail-modal__table .ant-table-tbody > tr:nth-child(even) > td {
+    background: #fafafa;
+}
+
+.enrollment-status-detail-modal__table .ant-table-tbody > tr:nth-child(even):hover > td {
+    background: #f0f0f0 !important;
+}
+
+/* 결재 현황 드롭다운: 배지 클릭 시 드롭다운 표시 */
+.enrollment-status-detail-modal__approval-dropdown-cell {
+    position: relative;
+    z-index: 1;
+}
+
+.enrollment-status-detail-modal__approval-dropdown-trigger {
+    cursor: pointer;
+    display: inline-block;
+}

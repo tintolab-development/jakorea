@@ -6,11 +6,39 @@
  * Phase 1 (대시보드 고도화): 즉시 처리 필요 작업, 월별 정산 현황, 통합 활동 피드
  */
 
-import { Card, Row, Col, Statistic } from 'antd'
-import React, { useMemo, useState, useEffect } from 'react'
+import { Card, Row, Statistic, Button } from 'antd'
+import { EditOutlined } from '@ant-design/icons'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  type SortingStrategy,
+} from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
+import {
+  useDashboardWidgetOrderStore,
+  buildDefaultDisplayItemIds,
+  buildDisplayItemsMeta,
+  type DisplayItemMeta,
+  type DashboardWidgetOrderState,
+} from '@/features/dashboard/model/dashboard-widget-order-store'
+import { SortableWidgetSlot } from '@/features/dashboard/ui/sortable-widget-slot'
+import { getAdminLevelLabel } from '@/shared/config/permissions'
+import { getRoleLabel } from '@/shared/ui'
+import { useDashboardData } from '@/features/dashboard/model/use-dashboard-data'
 import { mockInstructors } from '@/data/mock'
 import { PendingActionsAlert } from '@/features/dashboard/ui/pending-actions-alert'
 import { OverallStatisticsCards } from '@/features/dashboard/ui/overall-statistics-cards'
@@ -34,6 +62,10 @@ import { PendingActionsRow } from '@/features/dashboard/ui/pending-actions-row'
 import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
 import { CustomerInquiryStatusWidget } from '@/features/dashboard/ui/customer-inquiry-status-widget'
 import { ProgramScheduleWidget } from '@/features/dashboard/ui/program-schedule-widget'
+import { MenuShortcutWidget } from '@/features/dashboard/ui/menu-shortcut-widget'
+import { RecruitmentStatusWidget } from '@/features/dashboard/ui/recruitment-status-widget'
+import { KpiAchievementWidget } from '@/features/dashboard/ui/kpi-achievement-widget'
+import { DashboardSettingsModal } from '@/features/dashboard/ui/dashboard-settings-modal'
 import {
   getOverallStatistics,
   type OverallStatistics,
@@ -43,11 +75,28 @@ import {
   type InstructorActivitySummary,
 } from '@/features/dashboard/api/instructor-activity-service'
 import './dashboard.css'
+import '@/features/widget-editor/ui/widget-card.css'
+
+/** rectSortingStrategy에서 scaleX/scaleY를 항상 1로 고정 — 위젯 크기 변형 없이 위치만 이동 */
+const noScaleRectSortingStrategy: SortingStrategy = args => {
+  const result = rectSortingStrategy(args)
+  if (!result) return null
+  return { ...result, scaleX: 1, scaleY: 1 }
+}
 
 export function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const { activePrograms } = useDashboardData()
   const instructorCount = mockInstructors.length
+
+  const userRoleLabel = useMemo(() => {
+    if (!user) return ''
+    if (user.role === 'ADMIN' && user.adminLevel) {
+      return getAdminLevelLabel(user.adminLevel)
+    }
+    return getRoleLabel(user.role, user.adminLevel)
+  }, [user?.role, user?.adminLevel])
   const [overallStatistics, setOverallStatistics] = useState<OverallStatistics | null>(null)
   const [statisticsLoading, setStatisticsLoading] = useState(false)
   const [instructorActivity, setInstructorActivity] = useState<InstructorActivitySummary | null>(
@@ -59,6 +108,47 @@ export function Dashboard() {
   const widgets = useMemo(() => {
     return getDashboardWidgetsByRole(user?.role || null)
   }, [user?.role])
+
+  // DnD: 정렬 단위 id 목록 및 메타
+  const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
+  const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
+  const orderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) =>
+    s.getOrderedIds(user?.role ?? null, defaultIds)
+  )
+  const setOrderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setOrderedIds)
+  const widthByRole = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.widthByRole)
+  const setWidgetWidth = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setWidgetWidth)
+  const roleWidths = widthByRole[user?.role ?? ''] ?? {}
+
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      setActiveId(null)
+      if (!over || active.id === over.id || !user?.role) return
+      const oldIndex = orderedIds.indexOf(active.id as string)
+      const newIndex = orderedIds.indexOf(over.id as string)
+      if (oldIndex === -1 || newIndex === -1) return
+      const next = arrayMove(orderedIds, oldIndex, newIndex)
+      setOrderedIds(user.role, next)
+    },
+    [orderedIds, setOrderedIds, user?.role]
+  )
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null)
+  }, [])
 
   // 관리자일 경우 전체 통계 데이터 로드
   useEffect(() => {
@@ -238,64 +328,107 @@ export function Dashboard() {
         return <CustomerInquiryStatusWidget />
       case 'program-schedule-widget':
         return <ProgramScheduleWidget />
+      case 'menu-shortcut-widget':
+        return <MenuShortcutWidget />
+      case 'recruitment-status-widget':
+        return <RecruitmentStatusWidget />
+      case 'kpi-achievement-widget':
+        return <KpiAchievementWidget />
       default:
         return null
     }
   }
 
   return (
-    <div>
-      {/* 권한별 위젯 렌더링 */}
-      <Row gutter={[16, 16]} align="stretch">
-        {widgets.map((widget, index) => {
-          const widgetComponent = renderWidget(widget.type)
-          if (!widgetComponent) return null
+    <div className="dashboard-container">
+      <div className="dashboard-toolbar">
+        <div className="dashboard-toolbar-left">
+          <h2 className="dashboard-toolbar-title">
+            {user?.name} {userRoleLabel}님, 반갑습니다!
+          </h2>
+          <span className="dashboard-toolbar-description">
+            진행 프로젝트 {activePrograms.count}건
+          </span>
+        </div>
+        <div className="dashboard-toolbar-right">
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => setSettingsModalOpen(true)}
+          >
+            대시보드 설정
+          </Button>
+        </div>
+      </div>
 
-          const isNotificationWidget = widget.type === 'notification-widget'
-          const isCustomerInquiryWidget = widget.type === 'customer-inquiry-status-widget'
-          const isProgramScheduleWidget = widget.type === 'program-schedule-widget'
+      <DashboardSettingsModal
+        open={settingsModalOpen}
+        onCancel={() => setSettingsModalOpen(false)}
+      />
 
-          // 상단 블록: 알림 + 고객문의 (왼쪽) | 프로그램 일정 (오른쪽) — 높이 동일
-          if (isNotificationWidget) {
-            const hasCustomerInquiry = widgets.some(
-              w => w.type === 'customer-inquiry-status-widget'
-            )
-            const hasProgramSchedule = widgets.some(w => w.type === 'program-schedule-widget')
-            const programScheduleComponent = hasProgramSchedule
-              ? renderWidget('program-schedule-widget')
-              : null
-            const customerInquiryComponent = hasCustomerInquiry
-              ? renderWidget('customer-inquiry-status-widget')
-              : null
+      {/* 권한별 위젯 렌더링 (DnD: 햄버거 핸들에서만 드래그) */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <SortableContext items={orderedIds} strategy={noScaleRectSortingStrategy}>
+          <Row gutter={[16, 16]} align="stretch">
+            {orderedIds.map((id: string) => {
+              const meta = displayItemsMeta.find((m: DisplayItemMeta) => m.id === id)
+              if (!meta) return null
 
-            return (
-              <React.Fragment key={`dashboard-top-${index}`}>
-                <Col span={12}>
-                  <div className="dashboard-widgets-left">
-                    {widgetComponent}
-                    {customerInquiryComponent}
-                  </div>
-                </Col>
-                {programScheduleComponent && (
-                  <Col span={12}>
-                    <div className="dashboard-widgets-right">{programScheduleComponent}</div>
-                  </Col>
-                )}
-              </React.Fragment>
-            )
-          }
+              const widgetComponent = renderWidget(id)
+              if (!widgetComponent) return null
 
-          if (isProgramScheduleWidget || isCustomerInquiryWidget) {
-            return null
-          }
+              const effectiveColSpan = (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
+              const resizable = true
+              // 메뉴 바로가기: 50% → 338px, 100% → 202px
+              // 프로그램 일정: 50% → 338px, 100% → config height(360)
+              const slotHeight =
+                id === 'menu-shortcut-widget'
+                  ? effectiveColSpan === 12
+                    ? 338
+                    : 202
+                  : id === 'program-schedule-widget'
+                    ? effectiveColSpan === 12
+                      ? 338
+                      : (meta.height ?? 360)
+                    : meta.height
 
-          return (
-            <Col key={`${widget.type}-${index}`} span={widget.colSpan || 6}>
-              {widgetComponent}
-            </Col>
-          )
-        })}
-      </Row>
+              return (
+                <SortableWidgetSlot
+                  key={id}
+                  id={id}
+                  colSpan={effectiveColSpan}
+                  hasBuiltInHandle={meta.hasBuiltInHandle}
+                  height={slotHeight}
+                  onResizeWidth={resizable ? newColSpan => {
+                    if (user?.role) setWidgetWidth(user.role, id, newColSpan)
+                  } : undefined}
+                >
+                  {widgetComponent}
+                </SortableWidgetSlot>
+              )
+            })}
+          </Row>
+        </SortableContext>
+        <DragOverlay
+          adjustScale={false}
+          dropAnimation={{
+            duration: 300,
+            easing: 'cubic-bezier(0.2, 0, 0, 1)',
+          }}
+        >
+          {activeId ? (
+            <div className="dashboard-widget-drag-overlay">
+              {renderWidget(activeId)}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   )
 }

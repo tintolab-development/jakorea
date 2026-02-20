@@ -1,0 +1,54 @@
+/**
+ * 프로그램 목록 테이블/필터용 상수 및 헬퍼
+ * 컬럼 정의와 필터 옵션에서 공통 사용
+ * getRecruitmentStatus는 program-detail-info-constants 단일 소스에서 re-export
+ */
+
+import type { ProgramCategory, TargetLevel } from '@/types/domain'
+import { programLifecycleStatusConfig, getProgramLifecycleLabel } from '@/shared/constants/status'
+import { getRecruitmentStatus } from './program-detail-info-constants'
+
+export { getRecruitmentStatus }
+
+export const programTypes = [
+  { value: 'online', label: '온라인' },
+  { value: 'offline', label: '오프라인' },
+  { value: 'hybrid', label: '하이브리드' },
+]
+
+export const programFormats = [
+  { value: 'workshop', label: '워크샵' },
+  { value: 'seminar', label: '세미나' },
+  { value: 'course', label: '과정' },
+  { value: 'lecture', label: '강의' },
+  { value: 'other', label: '기타' },
+]
+
+export const statusOptions = programLifecycleStatusConfig.order.map(status => ({
+  value: status,
+  label: getProgramLifecycleLabel(status),
+}))
+
+export const recruitmentStatusOptions = [
+  { value: 'scheduled', label: '모집 예정' },
+  { value: 'recruiting', label: '모집 중' },
+  { value: 'closed', label: '모집 마감' },
+]
+
+export const businessAreaOptions = [
+  { value: '경제금융', label: '경제금융' },
+  { value: '기업가정신', label: '기업가정신' },
+  { value: '진로취업', label: '진로취업' },
+  { value: '디지털리터러시', label: '디지털리터러시' },
+]
+
+export const targetLevelOptions: { value: TargetLevel; label: string }[] = [
+  { value: 'elementary', label: '초등' },
+  { value: 'middle', label: '중등' },
+  { value: 'high', label: '고등' },
+]
+
+export const categoryOptions: { value: ProgramCategory; label: string }[] = [
+  { value: 'school', label: '학교(단체)' },
+  { value: 'individual', label: '개인 학생' },
+]

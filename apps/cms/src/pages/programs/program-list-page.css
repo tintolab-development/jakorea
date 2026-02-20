@@ -1,76 +1,86 @@
 .program-list-widget-container,
 .program-progress-widget-container {
-  margin-bottom: 24px;
-  width: 100%;
+    margin-bottom: 24px;
+    width: 100%;
 }
 
-.program-list-header {
-  margin-bottom: 16px;
-  width: 100%;
-  justify-content: space-between;
+/* 위젯 상단 액션 영역: 검색바 300×44 반응형, 버튼 160×44 (AppButton size=filter) */
+.program-list-page__widget-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    flex-wrap: wrap;
 }
 
-.program-list-title {
-  margin: 0;
-  font-size: 20px;
+.program-list-page__widget-header-actions .labeled-search-input {
+    margin: 0;
+    min-width: 200px;
+    width: 300px;
 }
 
-/* 위젯 디바이더 아래 버튼 영역 */
-.program-list-header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  margin-top: 0;
+.program-list-page__widget-header-actions .labeled-search-input .ant-input-affix-wrapper,
+.program-list-page__widget-header-actions .labeled-search-input .labeled-search-input__input {
+    width: 100% !important;
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
+    box-sizing: border-box;
 }
 
-.program-list-header-title {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+.program-list-page__widget-header-actions .labeled-search-input .ant-input {
+    height: 100% !important;
+    min-height: 0 !important;
+    line-height: 1 !important;
 }
 
-.program-list-header-title-text {
-  font-size: 20px;
-  font-weight: 600;
-  color: #262626;
+@media (max-width: 1200px) {
+    .program-list-page__widget-header-actions .labeled-search-input {
+        width: 280px;
+    }
 }
 
-.program-list-header-title-count {
-  font-size: 14px;
-  color: #8c8c8c;
+@media (max-width: 992px) {
+    .program-list-page__widget-header-actions .labeled-search-input {
+        width: 260px;
+    }
 }
 
-.program-list-header-buttons {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+@media (max-width: 768px) {
+    .program-list-page__widget-header-actions .labeled-search-input {
+        width: 100%;
+        min-width: 200px;
+    }
+
+    .program-list-page__widget-header-actions .labeled-search-input .ant-input-affix-wrapper,
+    .program-list-page__widget-header-actions .labeled-search-input .labeled-search-input__input {
+        height: var(--filter-control-height, 40px) !important;
+        min-height: var(--filter-control-height, 40px) !important;
+    }
 }
 
 /* 뷰 전환 버튼 스타일 (기본 상태가 활성화된 스타일) */
 .program-view-mode-button.ant-btn {
-  background-color: #e0f2f2 !important;
-  border-color: #01a1af !important;
-  color: #01a1af !important;
-  transition: all 0.2s !important;
+    background-color: var(--color-program-light) !important;
+    border-color: var(--color-brand-primary) !important;
+    color: var(--color-brand-primary) !important;
+    transition: all 0.2s !important;
 }
 
 .program-view-mode-button.ant-btn:hover {
-  background-color: #d0e8e8 !important;
-  border-color: #019ba8 !important;
-  color: #019ba8 !important;
+    background-color: #d0e8e8 !important;
+    border-color: var(--color-brand-primary-hover) !important;
+    color: var(--color-brand-primary-hover) !important;
 }
 
 .program-view-mode-button.ant-btn:focus {
-  background-color: #d0e8e8 !important;
-  border-color: #019ba8 !important;
-  color: #019ba8 !important;
+    background-color: #d0e8e8 !important;
+    border-color: var(--color-brand-primary-hover) !important;
+    color: var(--color-brand-primary-hover) !important;
 }
 
 .program-view-mode-button .anticon {
-  color: #01a1af !important;
+    color: var(--color-brand-primary) !important;
 }
 
 .program-view-mode-button:hover .anticon {
-  color: #019ba8 !important;
+    color: var(--color-brand-primary-hover) !important;
 }

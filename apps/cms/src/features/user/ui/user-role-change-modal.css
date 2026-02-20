@@ -1,3 +1,3 @@
 .user-role-change-modal__summary {
-  margin-bottom: 16px;
+    margin-bottom: var(--spacing-16);
 }

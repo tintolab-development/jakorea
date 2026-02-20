@@ -1,12 +1,12 @@
 .overall-program-progress-card {
-  cursor: pointer;
-  height: 100%;
+    cursor: pointer;
+    height: 100%;
 }
 
 .overall-program-progress-card__placeholder {
-  height: 150px;
+    height: 150px;
 }
 
 .overall-program-progress-card__status-row {
-  margin-top: 16px;
+    margin-top: var(--spacing-16);
 }

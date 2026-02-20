@@ -149,9 +149,12 @@ const statuses: Settlement['status'][] = ['pending', 'calculated', 'review', 'ap
 function createInstructor1Settlements2026(): Settlement[] {
   const settlements: Settlement[] = []
   const period = '2026-01'
-  
+
   if (mockPrograms.length === 0) return []
   const baseProgram = mockPrograms[0]
+
+  // instructor1의 실제 매칭 목록 (matchings.ts의 match-test-instructor1-XXX)
+  const instructor1Matchings = mockMatchings.filter(m => m.instructorId === INSTRUCTOR1_ID)
 
   // 각 상태별로 데이터 분배
   const janStatuses: Settlement['status'][] = [
@@ -209,7 +212,7 @@ function createInstructor1Settlements2026(): Settlement[] {
       id: `settle-202601-${String(i + 1).padStart(3, '0')}`,
       programId: baseProgram.id,
       instructorId: INSTRUCTOR1_ID,
-      matchingId: `match-202601-${String(i + 1).padStart(3, '0')}`,
+      matchingId: instructor1Matchings[i % instructor1Matchings.length]?.id ?? `match-test-instructor1-001`,
       period,
       items,
       totalAmount,
@@ -266,12 +269,14 @@ function createInstructor1Settlements(): Settlement[] {
     return []
   }
   
-  const baseMatching = mockMatchings[0]
-  if (!baseMatching) {
-    console.warn('baseMatching is undefined')
+  // instructor1의 실제 매칭 목록 (matchings.ts의 match-test-instructor1-XXX)
+  const instructor1Matchings = mockMatchings.filter(m => m.instructorId === INSTRUCTOR1_ID)
+  if (instructor1Matchings.length === 0) {
+    console.warn('instructor1 matchings not found')
     return []
   }
-  
+
+  const baseMatching = instructor1Matchings[0]
   const baseProgram = mockPrograms.find(p => p.id === baseMatching.programId) || mockPrograms[0]
   if (!baseProgram) {
     console.warn('baseProgram is undefined')
@@ -339,14 +344,13 @@ function createInstructor1Settlements(): Settlement[] {
         })()
       : undefined
 
-    // 테스트용 매칭 ID는 사용하지 않고, 다른 매칭 ID 사용 (실제 매칭과 연결되지 않도록)
-    const testMatchingId = `match-instructor1-${String(i + 1).padStart(3, '0')}`
+    const matchingForThisSettlement = instructor1Matchings[i % instructor1Matchings.length]
 
     instructor1Settlements.push({
       id: `settle-instructor1-${String(i + 1).padStart(3, '0')}`,
-      programId: baseProgram.id,
+      programId: matchingForThisSettlement.programId,
       instructorId: INSTRUCTOR1_ID,
-      matchingId: testMatchingId,
+      matchingId: matchingForThisSettlement.id,
       period,
       items,
       totalAmount,

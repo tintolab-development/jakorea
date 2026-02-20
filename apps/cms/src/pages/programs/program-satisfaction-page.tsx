@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Card, Button, Space, Table, Tag, Empty, Spin } from 'antd'
+import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import type { ColumnsType } from 'antd/es/table'
 import { CheckCircleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -61,10 +62,11 @@ export function ProgramSatisfactionPage() {
   const location = useLocation()
   const [programs, setPrograms] = useState<MyProgram[]>([])
   const [loading, setLoading] = useState(false)
-  const [submittedRecords, setSubmittedRecords] = useState<SatisfactionRecord[]>(mockSatisfactionRecords)
+  const [submittedRecords, setSubmittedRecords] =
+    useState<SatisfactionRecord[]>(mockSatisfactionRecords)
   const [selectedProgram, setSelectedProgram] = useState<MyProgram | null>(null)
   const [satisfactionModalOpen, setSatisfactionModalOpen] = useState(false)
-  
+
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '만족도 조사'
 
@@ -148,11 +150,7 @@ export function ProgramSatisfactionPage() {
       dataIndex: 'category',
       key: 'category',
       width: 150,
-      render: (category: string) => (
-        <Tag color={category === 'school' ? 'blue' : 'purple'}>
-          {category === 'school' ? '학교 프로그램' : '개인 프로그램'}
-        </Tag>
-      ),
+      render: (category: string) => <ProgramCategoryBadge category={category} />,
     },
     {
       title: '진행 기간',
@@ -187,11 +185,7 @@ export function ProgramSatisfactionPage() {
         }
         const { programRating, contentRating, instructorRating, overallRating } = submitted.ratings
         const average = (programRating + contentRating + instructorRating + overallRating) / 4
-        return (
-          <span style={{ fontWeight: 500 }}>
-            {average.toFixed(1)}
-          </span>
-        )
+        return <span style={{ fontWeight: 500 }}>{average.toFixed(1)}</span>
       },
     },
     {
@@ -199,10 +193,7 @@ export function ProgramSatisfactionPage() {
       key: 'action',
       width: 100,
       render: (_, record) => (
-        <Button
-          type="link"
-          onClick={() => handleOpenModal(record)}
-        >
+        <Button type="link" onClick={() => handleOpenModal(record)}>
           {submittedRecords.find(r => r.programId === record.id) ? '수정' : '작성'}
         </Button>
       ),
@@ -235,7 +226,11 @@ export function ProgramSatisfactionPage() {
       <SatisfactionSurveyModal
         open={satisfactionModalOpen}
         program={selectedProgram}
-        existingRecord={selectedProgram ? submittedRecords.find(r => r.programId === selectedProgram.id) : undefined}
+        existingRecord={
+          selectedProgram
+            ? submittedRecords.find(r => r.programId === selectedProgram.id)
+            : undefined
+        }
         onCancel={() => {
           setSatisfactionModalOpen(false)
           setSelectedProgram(null)

@@ -6,12 +6,8 @@
 import { Card, Space, Typography, Timeline, Button } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import {
-  programLifecycleStatusStatusConfig,
-  programLifecycleStatusConfig,
-  getProgramLifecycleLabel,
-} from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { programLifecycleStatusConfig, getProgramLifecycleLabel } from '@/shared/constants/status'
+import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import {
   canTransitionProgramLifecycleStatus,
   getNextProgramLifecycleStatus,
@@ -72,7 +68,7 @@ export function ProgramLifecycleWorkflow({
         {/* 현재 상태 표시 */}
         <div>
           <Text strong>현재 상태: </Text>
-          <StatusBadge status={currentStatus} statusConfig={programLifecycleStatusStatusConfig} />
+          <ProgramLifecycleStatusBadge status={currentStatus} />
         </div>
 
         {/* 상태 단계 Timeline */}

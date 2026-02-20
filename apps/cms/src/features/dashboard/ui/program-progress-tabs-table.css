@@ -4,171 +4,160 @@
  */
 
 .program-progress-tabs-table {
-  width: 100%;
+    width: 100%;
 }
 
 .program-progress-tabs-table .ant-card-body {
-  padding-top: 16px;
+    padding-top: var(--spacing-16);
 }
 
 .program-progress-tabs-table__tabs .ant-tabs-nav {
-  margin-bottom: 12px;
+    margin-bottom: var(--spacing-12);
 }
 
 /* 탭–테이블 사이 디바이더 제거 */
 .program-progress-tabs-table__tabs .ant-tabs-nav::before {
-  display: none;
+    display: none;
 }
 
 /* 탭 내부: 라벨 + 배지, 가운데 정렬 */
 .program-progress-tabs-table__tab-inner {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px;
-  vertical-align: middle;
-  line-height: 1;
-  height: 100%;
-  width: 100%;
-  text-align: center;
-  margin: 0 auto;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: var(--spacing-8);
+    vertical-align: middle;
+    line-height: 1;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    margin: 0 auto;
 }
 
 .program-progress-tabs-table__tab-text {
-  font-size: 14px;
-  color: #595959;
+    font-size: var(--font-size-14);
+    color: var(--color-text-body);
 }
 
 .program-progress-tabs-table__tab-badge {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  background: #f5f5f5;
-  color: #8c8c8c;
+    padding: 2px var(--spacing-8);
+    border-radius: 10px;
+    font-size: var(--font-size-13);
+    font-weight: var(--font-weight-500);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
 }
 
 /* active: teal */
 .program-progress-tabs-table__tabs .ant-tabs-tab-active .program-progress-tabs-table__tab-text {
-  color: #01a1af;
+    color: var(--color-brand-primary);
 }
 
 .program-progress-tabs-table__tabs .ant-tabs-tab-active .program-progress-tabs-table__tab-badge {
-  background: #e6f7f9;
-  color: #01a1af;
+    background: var(--color-bg-accent);
+    color: var(--color-brand-primary);
 }
 
 /* 탭 사이 디바이더 (탭 높이 80%) */
 .program-progress-tabs-table__tabs .ant-tabs-tab {
-  margin-right: 0 !important;
-  padding: 0 16px !important;
-  /* 좌우 동일한 padding */
-  position: relative;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  height: 100%;
-  text-align: center;
-  flex: 0 0 auto;
-  /* 자동 너비, flex-grow 방지 */
+    margin-right: 0 !important;
+    padding: 0 var(--spacing-16) !important;
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100%;
+    text-align: center;
+    flex: 0 0 auto;
 }
 
-/* 탭 버튼 영역 수직/수평 중앙 정렬 강화 */
 .program-progress-tabs-table__tabs .ant-tabs-tab-btn {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  height: 100% !important;
-  width: 100% !important;
-  line-height: 1;
-  text-align: center !important;
-  margin: 0 !important;
-  padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    width: 100% !important;
+    line-height: 1;
+    text-align: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .program-progress-tabs-table__tabs .ant-tabs-nav-list {
-  display: flex;
-  align-items: center;
-  height: 48px;
-  /* 탭 높이 고정 */
-  justify-content: flex-start;
-  /* 탭들이 왼쪽부터 시작하되, 각 탭 내부는 중앙 정렬 */
+    display: flex;
+    align-items: center;
+    height: 48px;
+    justify-content: flex-start;
 }
 
-/* Ant Design 기본 스타일 오버라이드 - 탭 내부 콘텐츠 중앙 정렬 강제 */
-.program-progress-tabs-table__tabs .ant-tabs-tab + .ant-tabs-tab {
-  margin-left: 0;
+.program-progress-tabs-table__tabs .ant-tabs-tab+.ant-tabs-tab {
+    margin-left: 0;
 }
 
-/* 탭 내부 모든 요소의 기본 margin/padding 제거 */
 .program-progress-tabs-table__tabs .ant-tabs-tab * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
-/* 첫 번째 탭은 왼쪽 padding을 0으로 (전체 탭 그룹이 왼쪽 정렬되도록) */
 .program-progress-tabs-table__tabs .ant-tabs-tab:first-child {
-  padding-left: 0 !important;
-  padding-right: 16px !important;
+    padding-left: 0 !important;
+    padding-right: var(--spacing-16) !important;
 }
 
 /* 탭 사이 디바이더 (마지막 탭 제외) */
 .program-progress-tabs-table__tabs .ant-tabs-tab:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 30%;
-  background: #f0f0f0;
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 30%;
+    background: var(--color-border-light);
 }
 
-/* 마지막 탭의 divider 명시적 제거 */
 .program-progress-tabs-table__tabs .ant-tabs-tab:last-child::after {
-  display: none;
+    display: none;
 }
 
 .program-progress-tabs-table__table {
-  margin-top: 0;
+    margin-top: 0;
 }
 
 .program-progress-tabs-table__table .ant-table {
-  table-layout: fixed;
+    table-layout: fixed;
 }
 
 .program-progress-tabs-table__table .ant-table-cell {
-  vertical-align: middle;
-  text-align: center;
+    vertical-align: middle;
+    text-align: center;
 }
 
-.program-progress-tabs-table__table .ant-table-thead > tr > th {
-  text-align: center;
+.program-progress-tabs-table__table .ant-table-tbody>tr>td {
+    text-align: center;
 }
 
-.program-progress-tabs-table__table .ant-table-tbody > tr > td {
-  text-align: center;
+.program-progress-tabs-table__table .ant-table-thead>tr>th,
+.program-progress-tabs-table__table .ant-table-tbody>tr>td {
+    border-right: 1px solid var(--color-border-light);
 }
 
-/* 테이블 컬럼 구분선 (가독성) */
-.program-progress-tabs-table__table .ant-table-thead > tr > th,
-.program-progress-tabs-table__table .ant-table-tbody > tr > td {
-  border-right: 1px solid #f0f0f0;
+.program-progress-tabs-table__table .ant-table-thead>tr>th:last-child,
+.program-progress-tabs-table__table .ant-table-tbody>tr>td:last-child {
+    border-right: none;
 }
 
-.program-progress-tabs-table__table .ant-table-thead > tr > th:last-child,
-.program-progress-tabs-table__table .ant-table-tbody > tr > td:last-child {
-  border-right: none;
+.program-progress-tabs-table__table .ant-table-thead>tr>th {
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    border-bottom: 1px solid var(--color-border-light);
+    background: #edf0f2;
 }
 
-.program-progress-tabs-table__table .ant-table-thead > tr > th {
-  border-bottom: 1px solid #f0f0f0;
-  background: #fafafa;
+.program-progress-tabs-table__table .ant-table-tbody>tr>td {
+    border-bottom: 1px solid var(--color-border-light);
 }
 
-.program-progress-tabs-table__table .ant-table-tbody > tr > td {
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.program-progress-tabs-table__table .ant-table-tbody > tr:last-child > td {
-  border-bottom: none;
+.program-progress-tabs-table__table .ant-table-tbody>tr:last-child>td {
+    border-bottom: none;
 }

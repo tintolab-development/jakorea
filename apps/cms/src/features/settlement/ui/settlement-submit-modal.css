@@ -4,111 +4,112 @@
 
 /* 모달 스크롤 & 높이 설정 */
 .settlement-submit-modal .ant-modal-content {
-  display: flex;
-  flex-direction: column;
-  min-height: 650px; /* 요구사항: 최소 높이 650px */
-  max-height: calc(100vh - 40px); /* 뷰포트 밖으로 나가지 않도록 제한 */
+    display: flex;
+    flex-direction: column;
+    min-height: 650px;
+    max-height: calc(100vh - 40px);
 }
 
 .settlement-submit-modal .ant-modal-body {
-  overflow-y: auto; /* 내용만 스크롤 */
-  flex: 1;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .settlement-cost-items-card {
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  padding: 20px;
-  margin-bottom: 16px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-6);
+    padding: var(--spacing-20);
+    margin-bottom: var(--spacing-16);
 }
 
 .settlement-cost-item {
-  margin-bottom: 20px;
+    margin-bottom: var(--spacing-20);
 }
 
 .settlement-cost-item:last-child {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .settlement-total-card {
-  background: linear-gradient(135deg, #e6f7ff 0%, #f0f7ff 100%);
-  border: 1px solid #91d5ff;
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin: 16px 0;
+    background: linear-gradient(135deg,
+            var(--color-bg-info-light) 0%,
+            var(--color-bg-info-lighter) 100%);
+    border: 1px solid var(--color-border-info);
+    border-radius: var(--radius-8);
+    padding: var(--spacing-16) var(--spacing-20);
+    margin: var(--spacing-16) 0;
 }
 
 .settlement-total-label {
-  font-size: 16px;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+    font-size: var(--font-size-16);
+    font-weight: var(--font-weight-600);
+    color: var(--color-text-85);
 }
 
 .settlement-total-amount {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1890ff;
-  letter-spacing: -0.5px;
+    font-size: var(--font-size-24);
+    font-weight: var(--font-weight-700);
+    color: var(--color-input-focus);
+    letter-spacing: -0.5px;
 }
 
 .settlement-actions {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+    margin-top: var(--spacing-24);
+    padding-top: var(--spacing-16);
+    border-top: 1px solid var(--color-border-light);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-12);
 }
 
 .settlement-help-text {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
-  margin-top: 4px;
-  line-height: 1.5;
+    font-size: var(--font-size-12);
+    color: var(--color-text-45);
+    margin-top: var(--spacing-4);
+    line-height: 1.5;
 }
 
 .settlement-switch-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    padding: var(--spacing-8) 0;
 }
 
 .settlement-switch-label {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.65);
+    font-size: var(--font-size-14);
+    color: var(--color-text-65);
 }
 
 .settlement-switch-label.active {
-  color: #1890ff;
-  font-weight: 500;
+    color: var(--color-input-focus);
+    font-weight: var(--font-weight-500);
 }
 
 .settlement-upload-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    margin-top: var(--spacing-12);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
 }
 
 .settlement-file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
-  border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-8) var(--spacing-12);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-4);
 }
 
 .settlement-file-name {
-  flex: 1;
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.85);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-right: 8px;
+    flex: 1;
+    font-size: var(--font-size-14);
+    color: var(--color-text-85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: var(--spacing-8);
 }
-

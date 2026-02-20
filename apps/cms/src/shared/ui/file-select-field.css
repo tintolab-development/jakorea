@@ -1,0 +1,135 @@
+/**
+ * 파일 선택 필드 공통 스타일
+ * - 숨겨진 input + 파일명 목록 + 버튼(120×40) + 가이드 텍스트
+ */
+
+.file-select-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-12);
+}
+
+/* 숨겨진 file input */
+.file-select-field__input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+/* 파일명 목록 */
+.file-select-field__names {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.file-select-field__name-row {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-8);
+}
+
+.file-select-field__name {
+    font-size: var(--font-size-14);
+    color: var(--color-text-primary);
+}
+
+/* 업로드 취소(X) 버튼 — 회색 원형 배경, 흰색 X */
+.file-select-field__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-border-input);
+    color: var(--color-text-body);
+    cursor: pointer;
+    font-size: var(--font-size-12);
+    flex-shrink: 0;
+}
+
+.file-select-field__remove:hover {
+    background: var(--color-danger-hover);
+    color: var(--color-bg-base);
+}
+
+.file-select-field__remove:focus {
+    outline: none;
+}
+
+.file-select-field__remove:focus-visible {
+    outline: 2px solid var(--color-focus-teal);
+    outline-offset: 1px;
+}
+
+/* 버튼 + 가이드 텍스트 가로 배치 */
+.file-select-field__actions {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--spacing-12);
+    flex-wrap: wrap;
+}
+
+/* 파일 선택 버튼 — 120×40, 연한회색 */
+.file-select-field__btn {
+    flex-shrink: 0;
+    width: 120px;
+    min-width: 120px;
+    height: 40px;
+    padding: 0 var(--spacing-16);
+    background: var(--color-bg-button-secondary) !important;
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border-input) !important;
+    border-radius: 6px;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-regular);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.file-select-field__btn:hover {
+    background: var(--color-bg-button-secondary-hover) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-primary) !important;
+}
+
+/* 수정 모드 활성화 시: 연한 청록 테두리·텍스트 (디자이너 시안) */
+.file-select-field--edit .file-select-field__btn:not(:disabled) {
+    background: var(--color-bg-base) !important;
+    border: 1px solid var(--color-focus-teal) !important;
+    color: var(--color-focus-teal) !important;
+}
+
+.file-select-field--edit .file-select-field__btn:not(:disabled):hover {
+    background: var(--color-bg-input-teal) !important;
+    border-color: var(--color-focus-teal-hover) !important;
+    color: var(--color-focus-teal-hover) !important;
+}
+
+/* 가이드 텍스트 */
+.file-select-field__guide {
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    text-align: left;
+    flex: 1;
+    min-width: 0;
+}
+
+.file-select-field__guide-line {
+    display: block;
+}
+
+.file-select-field__guide-line+.file-select-field__guide-line {
+    margin-top: var(--spacing-4);
+}

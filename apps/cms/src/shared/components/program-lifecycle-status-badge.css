@@ -1,0 +1,47 @@
+/**
+ * 프로그램 진행 현황 배지 색상 (시안 기준)
+ * 수강자 모집 중, 강사 모집 중, 교재 준비 중, 교육 진행 중, 교육 완료, 서류 처리 완료
+ */
+
+/* 모집 예정 */
+.app-status-badge.program-lifecycle-status-badge--planned {
+    background: #f5f5f5;
+    color: #595959;
+}
+
+/* 수강자 모집 중: 연한 녹색 */
+.app-status-badge.program-lifecycle-status-badge--recruiting-students {
+    background: #eaf7ec;
+    color: #1e8c29;
+}
+
+/* 강사 모집 중: 연한 보라 */
+.app-status-badge.program-lifecycle-status-badge--recruiting-instructors {
+    background: #f4f0f9;
+    color: #5b3d99;
+}
+
+/* 교재 준비 중: 연한 주황 */
+.app-status-badge.program-lifecycle-status-badge--matching-completed {
+    background: #fff5e9;
+    color: #ad6800;
+}
+
+/* 교육 진행 중 (교재 발송 전/후) */
+.app-status-badge.program-lifecycle-status-badge--education-before-textbook,
+.app-status-badge.program-lifecycle-status-badge--education-after-textbook {
+    background: #e9f6fa;
+    color: #0d7ea2;
+}
+
+/* 교육 완료: 연한 분홍 */
+.app-status-badge.program-lifecycle-status-badge--education-completed {
+    background: #fdeef1;
+    color: #c41d7f;
+}
+
+/* 서류 처리 완료: 연한 회색 */
+.app-status-badge.program-lifecycle-status-badge--document-processing-completed {
+    background: #f5f5f5;
+    color: #464646;
+}

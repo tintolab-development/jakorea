@@ -62,9 +62,9 @@ pnpm --filter cms lint
 
 ## 🔗 관련 문서
 
-- [진행 상황](../../PROGRESS.md)
-- [Phase 브리핑](../../PHASE_1_BRIEFING.md)
-- [기획 요청사항](../../PLANNING_REQUESTS.md)
+- [진행 상황](../../docs/status/PROGRESS.md)
+- [Phase 브리핑](../../docs/status/PHASE_1_BRIEFING.md)
+- [기획 요청사항](../../docs/planning/PLANNING_REQUESTS.md)
 
 ---
 

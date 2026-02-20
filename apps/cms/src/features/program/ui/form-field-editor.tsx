@@ -18,6 +18,7 @@ import {
   Switch,
   Card,
 } from 'antd'
+import { AppButton } from '@/shared/ui/app-button'
 import {
   PlusOutlined,
   EditOutlined,
@@ -228,24 +229,25 @@ export function FormFieldEditor({
       onCancel={handleCancel}
       width={900}
       footer={[
-        <Button key="cancel" onClick={handleCancel}>
+        <AppButton key="cancel" variant="cancel" size="large" onClick={handleCancel}>
           취소
-        </Button>,
-        <Button key="save" type="primary" onClick={handleSave}>
+        </AppButton>,
+        <AppButton key="save" variant="primary" size="large" onClick={handleSave}>
           저장
-        </Button>,
+        </AppButton>,
       ]}
     >
       <Space direction="vertical" style={{ width: '100%' }} size="large">
         <div>
-          <Button
-            type="primary"
+          <AppButton
+            variant="primary"
+            size="large"
             icon={<PlusOutlined />}
             onClick={handleAdd}
             style={{ marginBottom: 16 }}
           >
             필드 추가
-          </Button>
+          </AppButton>
         </div>
 
         {editingIndex !== null && (
@@ -336,17 +338,19 @@ export function FormFieldEditor({
 
               <Form.Item>
                 <Space>
-                  <Button type="primary" htmlType="submit">
+                  <AppButton variant="primary" size="middle" htmlType="submit">
                     {editingIndex >= fields.length ? '추가' : '수정'}
-                  </Button>
-                  <Button
+                  </AppButton>
+                  <AppButton
+                    variant="cancel"
+                    size="middle"
                     onClick={() => {
                       setEditingIndex(null)
                       fieldForm.resetFields()
                     }}
                   >
                     취소
-                  </Button>
+                  </AppButton>
                 </Space>
               </Form.Item>
             </Form>

@@ -47,6 +47,7 @@ import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
+import { Dashboard2 } from '@/pages/dashboard2'
 const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
@@ -68,6 +69,19 @@ const SchoolListPage = lazyLoad(() => import('@/pages/schools/school-list-page')
 const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
+const EducationProgramLayout = lazyLoad(
+  () =>
+    import('@/pages/programs/education-program-layout').then(m => ({
+      default: m.EducationProgramLayout,
+    }))
+)
+const EducationEnrollmentPage = lazyLoad(
+  () =>
+    import('@/pages/programs/education-enrollment-page').then(m => ({
+      default: m.EducationEnrollmentPage,
+    }))
+)
+const ProgramDetailPage = lazyLoad(() => import('@/pages/programs/program-detail-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
@@ -250,6 +264,10 @@ export const router = createBrowserRouter([
         element: <IndexPage />,
       },
       {
+        path: 'index2',
+        element: <Dashboard2 />,
+      },
+      {
         path: 'my-learning',
         element: <MyLearningPage />,
       },
@@ -285,7 +303,16 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <ProgramListPage /> },
           { path: 'education/schedule', element: <ComingSoonPage title="페이지 준비중" /> }, // 교육 프로그램 > 프로그램 일정
-          { path: 'education', element: <ProgramListPage /> }, // 교육 프로그램 > 프로그램 목록
+          {
+            path: 'education',
+            element: <EducationProgramLayout />,
+            children: [
+              { index: true, element: <ProgramListPage /> }, // 교육 프로그램 > 전체 프로그램
+              { path: 'student-recruitment', element: <ProgramListPage /> }, // 수강자 모집
+              { path: 'instructor-recruitment', element: <ProgramListPage /> }, // 강의 신청 현황 > 강사 모집 중
+              { path: 'enrollment', element: <EducationEnrollmentPage /> }, // 수강 신청 현황
+            ],
+          },
           { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램
           { path: ':id/apply', element: <ProgramApplicationPage /> }, // Phase 0.2.2: 신청서 작성 페이지
           { path: ':id/apply/complete', element: <ProgramApplicationCompletePage /> }, // Phase 0.2.3: 신청 완료 페이지
@@ -298,6 +325,7 @@ export const router = createBrowserRouter([
           { path: 'favorites', element: <MyFavoriteProgramsPage /> },
           { path: 'new', element: <ProgramFormPage /> },
           { path: ':id/edit', element: <ProgramFormPage /> },
+          { path: ':id', element: <ProgramDetailPage /> }, // 프로그램 상세 (관리자)
         ],
       },
       {

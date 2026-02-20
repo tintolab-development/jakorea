@@ -903,6 +903,7 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
         }}
         onSearch={handleSearch}
         onReset={handleFilterReset}
+        showResetButton={false}
       />
 
       <Table

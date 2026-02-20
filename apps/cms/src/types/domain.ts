@@ -118,6 +118,35 @@ export interface Program {
   contactPhone?: string // 문의처 연락처
   oneLineIntroduction?: string // 한 줄 소개
   keyVisualImage?: string // 키비주얼 이미지 URL
+  /** 추가 내용 (Toast UI Editor getHTML() 출력 HTML) */
+  additionalContentHtml?: string
+  /** 모집 안내 (텍스트 또는 HTML) */
+  recruitmentGuide?: string
+  /** 학습 지원 내용 (텍스트 또는 HTML) */
+  learningSupportContent?: string
+  /** 첨부 파일명 목록 (표시용) */
+  attachmentFileNames?: string[]
+  /** 결과 발표일 (미설정 시 applicationEndDate 사용) */
+  resultAnnouncementDate?: DateValue
+  /** 결과 발표 방법 */
+  resultAnnouncementMethod?: string
+  /** 승인된 수강자 수 (표시: approvedStudentCount / capacity 건) */
+  approvedStudentCount?: number
+  /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
+  instructorCapacity?: number
+  /** 강사 모집 기간 */
+  instructorApplicationStartDate?: DateValue
+  instructorApplicationEndDate?: DateValue
+  /** 1차 서류 합격자 발표 */
+  documentPassAnnouncementDate?: DateValue
+  documentPassAnnouncementMethod?: string
+  /** 2차 면접 심사 */
+  interviewStartDate?: DateValue
+  interviewEndDate?: DateValue
+  interviewMethod?: string
+  /** 최종 합격자 발표 */
+  finalPassAnnouncementDate?: DateValue
+  finalPassAnnouncementMethod?: string
   // 프로그램별 폼 업로드 (기획 요구사항)
   applicationFormTemplateId?: UUID // 신청서 폼 템플릿 ID
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID
@@ -126,6 +155,9 @@ export interface Program {
   createdAt: DateValue
   updatedAt: DateValue
 }
+
+// 회차별 진행 방식 (교육 커리큘럼 수정용)
+export type RoundDeliveryType = 'online' | 'offline' | 'hybrid'
 
 // 프로그램 회차
 export interface ProgramRound {
@@ -137,6 +169,10 @@ export interface ProgramRound {
   capacity?: number // 정원
   classCount?: number // 학급수
   status: Status
+  /** 회차별 강의 분량 및 내용 (예: "1시간 | '개인', '근로자', '소비자' 개념 정의 및 설명") */
+  curriculum?: string
+  /** 회차별 진행 방식 (온라인/오프라인/온·오프라인) */
+  deliveryType?: RoundDeliveryType
 }
 
 // 학교

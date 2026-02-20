@@ -28,6 +28,8 @@ pnpm --filter cms typecheck
 pnpm --filter cms lint
 ```
 
+## 문서
 
+- [문서 인덱스 (카테고리별)](./docs/README.md) - 요구사항, 검증, 전략, 구현 등 전체 문서 목록
 
 

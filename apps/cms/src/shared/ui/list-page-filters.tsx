@@ -83,7 +83,7 @@ export function ListPageFilters<T extends Record<string, any>>({
   cardStyle,
 }: ListPageFiltersProps<T>) {
   return (
-    <Card style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}>
+    <Card className="list-page-filters" style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}>
       <Space wrap align="start">
         {onSearchChange && (
           <LabeledSearchInput

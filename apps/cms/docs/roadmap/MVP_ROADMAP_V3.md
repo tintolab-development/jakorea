@@ -1060,7 +1060,7 @@
 - [MVP 로드맵 V2](./MVP_ROADMAP_V2.md)
 - [클라이언트 인터뷰 정리 (2024-12-19)](./CLIENT_INTERVIEW_2024-12-19.md)
 - [프로젝트 가이드](./PROJECT_GUIDE.md)
-- [진행 상황](./PROGRESS.md)
+- [진행 상황](../status/PROGRESS.md)
 - [디자인 요청사항](./DESIGN_REQUESTS.md)
 - [JA코리아 사용자화면 프롬프트](./JA코리아%20사용자화면%20프롬프트_1219.md)
 

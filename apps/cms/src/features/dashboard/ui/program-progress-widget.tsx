@@ -1,18 +1,19 @@
 /**
- * 프로그램 진행 현황 위젯
+ * 프로그램 진행 현황 위젯 (목록/대시보드)
  * Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계)
- * FR-C01: 7단계 위젯 형태로 재구성 (워크플로우/차트 제거)
- * 화살표: 강사모집↔매칭완료, 교재발송후↔교육진행완료 사이
+ * 경로 기반 선택: /programs/education, /programs/education/student-recruitment, /programs/education/instructor-recruitment
+ *
+ * 테이블과 숫자 동기화: 교육 프로그램일 때 useProgramStore.programs를 의존성에 넣어
+ * 목록 페이지에서 생성/수정/삭제 후 fetchPrograms()가 호출되면 위젯도 재조회하여 건수를 맞춤.
  */
 
-import { Typography } from 'antd'
-import { RightOutlined } from '@ant-design/icons'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
 import {
   getProgramProgress7Stage,
   type ProgramProgress7Stage,
 } from '../api/admin-dashboard-service'
+import { useProgramStore } from '@/features/program/model/program-store'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
   PROGRAM_PROGRESS_STAGE_ORDER,
@@ -24,9 +25,18 @@ import {
 import { handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
 import type { ProgramLifecycleStatus } from '@/types/domain'
+import {
+  ProgressStagesWidget,
+  type ProgressStageItem,
+} from '@/features/dashboard/ui/progress-stages-widget'
 import './program-progress-widget.css'
 
-const { Text } = Typography
+/** 교육 프로그램 레이아웃 하위 경로인지 (위젯에서 라우팅 사용) */
+const isEducationLayoutPath = (pathname: string) =>
+  pathname === '/programs/education' || pathname.startsWith('/programs/education/')
+
+/** 의존성 배열용 빈 배열 (동일 참조 유지 — programType !== 'education'일 때 불필요한 재조회 방지) */
+const EMPTY_PROGRAMS: readonly unknown[] = []
 
 interface ProgramProgressWidgetProps {
   title?: string | null
@@ -37,23 +47,48 @@ export function ProgramProgressWidget({
   title: _title = '전체 프로그램 진행 현황',
   showDetailLink: _showDetailLink = true,
 }: ProgramProgressWidgetProps) {
-  const navigate = useNavigate()
   const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // 현재 선택된 상태 확인 (URL 쿼리 파라미터에서)
+  // 경로 기반 선택 (교육 프로그램 레이아웃 하위일 때) — 그 외는 쿼리 status 사용
+  const selectedFromPath = useMemo<
+    'total' | 'studentRecruitment' | 'instructorRecruitment' | null
+  >(() => {
+    if (!isEducationLayoutPath(location.pathname)) return null
+    if (location.pathname === '/programs/education/student-recruitment') return 'studentRecruitment'
+    if (location.pathname === '/programs/education/instructor-recruitment') return 'instructorRecruitment'
+    return 'total'
+  }, [location.pathname])
+
   const selectedStatus = useMemo<ProgramLifecycleStatus | null>(() => {
-    const searchParams = new URLSearchParams(location.search)
-    const status = searchParams.get('status') as ProgramLifecycleStatus | null
-    return status || null
-  }, [location.search])
+    if (selectedFromPath !== null) return null
+    const sp = new URLSearchParams(location.search)
+    return (sp.get('status') as ProgramLifecycleStatus | null) || null
+  }, [location.search, selectedFromPath])
+
+  // 목록 페이지(교육 프로그램)와 동기화: 교육 탭에서는 교육 프로그램만 집계
+  const programType = useMemo<'education' | 'volunteer' | 'all'>(() => {
+    if (location.pathname === '/programs/education' || location.pathname.startsWith('/programs/education/'))
+      return 'education'
+    if (location.pathname === '/programs/volunteer') return 'volunteer'
+    return 'all'
+  }, [location.pathname])
+
+  // 교육 프로그램일 때 목록(스토어)이 바뀌면 위젯도 재조회 — 테이블 건수와 동기화
+  const programs = useProgramStore(state =>
+    programType === 'education' ? state.programs : EMPTY_PROGRAMS
+  )
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
       try {
-        const data = await getProgramProgress7Stage()
+        const data = await getProgramProgress7Stage({
+          programType: programType === 'all' ? undefined : programType,
+        })
         setProgress(data)
       } catch (error) {
         handleError(error, { defaultMessage: MESSAGES.error.programProgressLoadFailed })
@@ -62,167 +97,114 @@ export function ProgramProgressWidget({
       }
     }
     loadData()
-  }, [])
+    // programType 변경 시 + 교육 프로그램일 때 목록(생성/수정/삭제) 반영을 위해 programs 의존
+  }, [programType, programs])
 
-  // 스켈레톤 렌더링
-  const renderSkeleton = () => {
-    return (
-      <div className="program-progress-widget-container">
-        <div className="program-progress-widget">
-          <div className="program-progress-widget__stages">
-            {/* 전체 프로그램 스켈레톤 */}
-            <div className="program-progress-widget__stage program-progress-widget__stage--total program-progress-widget__stage--skeleton">
-              {/* 텍스트 영역은 빈 상태로 유지 */}
-            </div>
+  const stages = useMemo((): ProgressStageItem[] => {
+    if (!progress) return []
 
-            {/* 세로 디바이더 */}
-            <div className="program-progress-widget__divider" />
+    const totalSelected =
+      selectedFromPath === 'total' || (selectedFromPath === null && !selectedStatus)
+    const totalItem: ProgressStageItem = {
+      key: 'total',
+      label: '전체 프로그램',
+      count: progress.total,
+      showArrowAfter: false,
+      isSelected: totalSelected,
+    }
 
-            {/* 6개 단계 스켈레톤 + 화살표 */}
-            {PROGRAM_PROGRESS_STAGE_ORDER.filter(
-              stageKey => stageKey !== 'educationBeforeTextbook'
-            ).map(stageKey => {
-              const showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
-              const elements = [
-                <div
-                  key={stageKey}
-                  className="program-progress-widget__stage program-progress-widget__stage--skeleton"
-                >
-                  {/* 텍스트 영역은 빈 상태로 유지 */}
-                </div>,
-              ]
-              if (showArrowAfter) {
-                elements.push(
-                  <RightOutlined
-                    key={`${stageKey}-arrow`}
-                    className="program-progress-widget__arrow"
-                    style={{ opacity: 0.3 }}
-                  />
-                )
-              }
-              return elements
-            })}
-          </div>
-        </div>
-        <div className="program-progress-widget__bottom-divider" />
-      </div>
+    const stageItems: ProgressStageItem[] = PROGRAM_PROGRESS_STAGE_ORDER.map(
+      (stageKey: ProgramProgressStageKey) => {
+        let count: number
+        if (stageKey === 'matchingCompleted') {
+          count = progress.matchingCompleted + progress.educationBeforeTextbook
+        } else if (stageKey === 'educationAfterTextbook') {
+          count = progress.educationAfterTextbook
+        } else {
+          count = progress[stageKey]
+        }
+        const label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
+        const showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
+        const lifecycleStatus = STAGE_TO_LIFECYCLE[stageKey]
+
+        const isSelectedByPath = selectedFromPath === stageKey
+        const isSelectedByStatus =
+          selectedFromPath === null &&
+          (selectedStatus === lifecycleStatus ||
+            (stageKey === 'matchingCompleted' &&
+              selectedStatus === 'education_before_textbook'))
+
+        return {
+          key: stageKey,
+          label,
+          count,
+          showArrowAfter,
+          isMatchingStyle: false,
+          isSelected: isSelectedByPath || isSelectedByStatus,
+        }
+      }
     )
-  }
 
-  if (loading || !progress) {
-    return renderSkeleton()
+    return [totalItem, ...stageItems]
+  }, [progress, selectedStatus, selectedFromPath])
+
+  const handleStageClick = (key: string) => {
+    if (isEducationLayoutPath(location.pathname)) {
+      // 단일 소스: URL query(status 등). 위젯 클릭 = navigate, 필터 카드 조회 = setSearchParams → 동일 URL로 페이지·테이블 필터 동기화
+      const mergeQuery = (path: string, statusValue: string | null) => {
+        const next = new URLSearchParams(searchParams)
+        if (statusValue) next.set('status', statusValue)
+        else next.delete('status')
+        const query = next.toString()
+        navigate(`${path}${query ? `?${query}` : ''}`, { replace: true })
+      }
+      if (key === 'total') {
+        mergeQuery('/programs/education', null)
+        return
+      }
+      if (key === 'studentRecruitment') {
+        mergeQuery('/programs/education/student-recruitment', 'recruiting_students')
+        return
+      }
+      if (key === 'instructorRecruitment') {
+        mergeQuery('/programs/education/instructor-recruitment', 'recruiting_instructors')
+        return
+      }
+      const stageKey = key as ProgramProgressStageKey
+      const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
+      if (value) mergeQuery('/programs/education', value)
+      return
+    }
+
+    const nextParams = new URLSearchParams(searchParams)
+    if (key === 'total') {
+      nextParams.delete('status')
+      setSearchParams(nextParams, { replace: false })
+      return
+    }
+    const stageKey = key as ProgramProgressStageKey
+    const current = nextParams.get('status') as ProgramLifecycleStatus | null
+    const isSelected =
+      current === (STAGE_TO_LIFECYCLE[stageKey] ?? null) ||
+      (stageKey === 'matchingCompleted' && current === 'education_before_textbook')
+    if (isSelected) {
+      nextParams.delete('status')
+    } else {
+      const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
+      if (value) nextParams.set('status', value)
+    }
+    setSearchParams(nextParams, { replace: false })
   }
 
   return (
-    <div className="program-progress-widget-container">
-      <div className="program-progress-widget">
-        {/* 전체 프로그램 위젯 (첫 번째) */}
-        <div className="program-progress-widget__stages">
-          <div
-            className={`program-progress-widget__stage program-progress-widget__stage--total ${!selectedStatus ? 'program-progress-widget__stage--selected' : ''}`}
-            onClick={() => {
-              const searchParams = new URLSearchParams(location.search)
-              searchParams.delete('status')
-              navigate(`${location.pathname}?${searchParams.toString()}`, { replace: false })
-            }}
-          >
-            <Text className="program-progress-widget__stage-label">전체 프로그램</Text>
-            <div className="program-progress-widget__stage-count-wrapper">
-              <Text className="program-progress-widget__stage-count">{progress.total}</Text>
-              <Text className="program-progress-widget__stage-count-unit">건</Text>
-            </div>
-          </div>
-
-          {/* 세로 디바이더 (전체 프로그램 옆) */}
-          <div className="program-progress-widget__divider" />
-
-          {/* 7단계 위젯 (수평 배치) + 화살표 */}
-          {PROGRAM_PROGRESS_STAGE_ORDER.flatMap((stageKey: ProgramProgressStageKey) => {
-            // matchingCompleted와 educationBeforeTextbook을 하나로 합침
-            let count = progress[stageKey]
-            let label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
-            let lifecycleStatus = STAGE_TO_LIFECYCLE[stageKey]
-            let showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
-
-            // matchingCompleted와 educationBeforeTextbook을 하나로 합침
-            if (stageKey === 'matchingCompleted') {
-              count = progress.matchingCompleted + progress.educationBeforeTextbook
-              label = '매칭 완료 / 교재 준비 중'
-              // 두 상태 모두 선택 가능하도록 처리
-              lifecycleStatus = 'matching_completed' // 기본값
-            } else if (stageKey === 'educationBeforeTextbook') {
-              // educationBeforeTextbook은 표시하지 않음 (matchingCompleted에 통합)
-              return []
-            }
-
-            const { value } = STAGE_TO_PROGRAMS_QUERY[stageKey]
-
-            // 현재 선택된 상태인지 확인 (matchingCompleted의 경우 두 상태 모두 확인)
-            const isSelected =
-              selectedStatus === lifecycleStatus ||
-              (stageKey === 'matchingCompleted' &&
-                (selectedStatus === 'matching_completed' ||
-                  selectedStatus === 'education_before_textbook'))
-
-            // 선택된 상태이거나 기본 하이라이트 상태인 경우
-            const isHighlighted =
-              isSelected ||
-              stageKey === 'matchingCompleted' ||
-              stageKey === 'educationAfterTextbook' ||
-              stageKey === 'studentRecruitment' ||
-              stageKey === 'instructorRecruitment'
-
-            // 현재 경로를 유지하면서 status 쿼리 파라미터만 업데이트
-            const handleStageClick = () => {
-              const searchParams = new URLSearchParams(location.search)
-              if (isSelected) {
-                // 이미 선택된 상태를 클릭하면 필터 제거
-                searchParams.delete('status')
-              } else {
-                // matchingCompleted의 경우 두 상태 모두 필터링하도록 처리
-                if (stageKey === 'matchingCompleted') {
-                  // 두 상태 중 하나라도 선택되어 있으면 제거, 아니면 matching_completed로 설정
-                  if (
-                    selectedStatus === 'matching_completed' ||
-                    selectedStatus === 'education_before_textbook'
-                  ) {
-                    searchParams.delete('status')
-                  } else {
-                    searchParams.set('status', 'matching_completed')
-                  }
-                } else {
-                  searchParams.set('status', value)
-                }
-              }
-              navigate(`${location.pathname}?${searchParams.toString()}`, { replace: false })
-            }
-
-            const card = (
-              <div
-                key={stageKey}
-                className={`program-progress-widget__stage ${isHighlighted ? 'program-progress-widget__stage--highlighted' : ''} ${isSelected ? 'program-progress-widget__stage--selected' : ''} ${stageKey === 'matchingCompleted' ? 'program-progress-widget__stage--matching' : ''}`}
-                onClick={handleStageClick}
-              >
-                <Text className="program-progress-widget__stage-label">{label}</Text>
-                <div className="program-progress-widget__stage-count-wrapper">
-                  <Text
-                    className={`program-progress-widget__stage-count ${stageKey === 'matchingCompleted' ? 'program-progress-widget__stage-count--teal' : ''}`}
-                  >
-                    {count}
-                  </Text>
-                  <Text className="program-progress-widget__stage-count-unit">건</Text>
-                </div>
-              </div>
-            )
-            const arrow = showArrowAfter ? (
-              <RightOutlined key={`${stageKey}-arrow`} className="program-progress-widget__arrow" />
-            ) : null
-            return arrow ? [card, arrow] : [card]
-          })}
-        </div>
-      </div>
-      {/* 하단 디바이더 */}
-      <div className="program-progress-widget__bottom-divider" />
-    </div>
+    <ProgressStagesWidget
+      stages={stages}
+      firstCardVariant="white"
+      showDividerAfterFirstCard={false}
+      showBottomDivider
+      onStageClick={handleStageClick}
+      loading={loading}
+      loadingCardCount={8}
+    />
   )
 }

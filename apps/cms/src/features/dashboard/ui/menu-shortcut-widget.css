@@ -1,0 +1,112 @@
+/**
+ * 메뉴 바로가기 위젯
+ * 디자인 스펙: teal 테두리 212×56 버튼, Pretendard 16px/600, 미확인 뱃지 Outfit 12px/700
+ * 슬롯 높이 채우기: 50%일 때 338px, 100%일 때 202px
+ */
+
+.menu-shortcut-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.menu-shortcut-widget .ant-card-body {
+  padding: var(--spacing-16) var(--spacing-20);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 210px 최소 너비, 남는 공간은 마지막 열이 채움 (minmax) */
+.menu-shortcut-widget__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--spacing-12);
+  align-content: start;
+}
+
+.menu-shortcut-widget__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  min-height: 56px;
+  height: auto;
+  padding: 10px var(--spacing-16);
+  border-radius: var(--radius-8);
+  border: 2px solid rgba(1, 161, 175, 0.10);
+  background: rgba(1, 161, 175, 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.menu-shortcut-widget__item:hover {
+  border-color: rgba(1, 161, 175, 0.30);
+  background: rgba(1, 161, 175, 0.08);
+  box-shadow: 0 2px 8px rgba(1, 161, 175, 0.10);
+}
+
+.menu-shortcut-widget__item:active {
+  background: rgba(1, 161, 175, 0.12);
+}
+
+.menu-shortcut-widget__item-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  min-width: 0;
+}
+
+.menu-shortcut-widget__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  font-size: var(--font-size-24);
+  color: var(--default-BK, #3D3D3D);
+}
+
+.menu-shortcut-widget__label {
+  color: var(--default-BK, #3D3D3D);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: var(--font-size-16);
+  font-style: normal;
+  font-weight: var(--font-weight-600);
+  line-height: 140%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: keep-all;
+  text-align: left;
+}
+
+.menu-shortcut-widget__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--color-settlement, #ff4d4f);
+  flex-shrink: 0;
+
+  color: var(--default-WT, #FFF);
+  text-align: center;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: var(--font-family-number, 'Outfit', sans-serif);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: var(--font-weight-700);
+  line-height: 1;
+}

@@ -44,6 +44,7 @@ export default tseslint.config(
       'react-hooks/purity': 'warn', // 렌더링 중 불순 함수 호출 경고로 변경
       // TypeScript 규칙 완화
       '@typescript-eslint/no-explicit-any': 'warn', // any 타입 사용 경고로 변경
+      '@typescript-eslint/no-unused-vars': 'off', // unused-imports/no-unused-vars로 대체 (_접두사 무시 포함)
       // unused-imports: 사용되지 않은 import/변수 자동 제거
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [

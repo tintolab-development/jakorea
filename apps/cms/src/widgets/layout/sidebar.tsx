@@ -35,7 +35,7 @@ export function Sidebar() {
     const path = location.pathname
     const keys: string[] = []
 
-    // 관리자용 프로그램 관리 (1뎁스 프로그램 관리 > 2뎁스 교육/봉사 > 3뎁스 목록·일정·수강/강의 신청 현황)
+    // 관리자용 프로그램 관리 (1뎁스 프로그램 관리 > 2뎁스 교육 프로그램·수강/강의 신청 현황·봉사 프로그램)
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
       ((path.startsWith('/programs') &&
@@ -45,13 +45,6 @@ export function Sidebar() {
         path === '/instructor-applications')
     if (isProgramMgmt) {
       keys.push('programs-group')
-      if (
-        path.startsWith('/programs/education') ||
-        path === '/applications' ||
-        path === '/instructor-applications'
-      ) {
-        keys.push('education-programs-group')
-      }
     }
 
     // 관리자용 정산 관리
@@ -67,17 +60,6 @@ export function Sidebar() {
       path.startsWith('/school/my-learning')
     ) {
       keys.push('my-learning-group')
-    }
-
-    // 교육 프로그램
-    if (
-      path.startsWith('/programs') &&
-      !path.startsWith('/programs/my') &&
-      !path.startsWith('/programs/favorites') &&
-      !path.startsWith('/programs/volunteer') &&
-      !path.startsWith('/programs/education')
-    ) {
-      keys.push('education-programs-group')
     }
 
     // 봉사 프로그램
@@ -156,6 +138,17 @@ export function Sidebar() {
       (user?.role === 'SCHOOL' && path.startsWith('/school/my-learning'))
     ) {
       return ['/my-learning']
+    }
+
+    // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시에도 '프로그램 목록' 카테고리 활성화
+    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+    if (user?.role === 'ADMIN' && path.startsWith('/programs/')) {
+      const rest = path.slice('/programs/'.length)
+      const segments = rest.split('/').filter(Boolean)
+      const firstSegment = segments[0]
+      if (firstSegment && !programsReserved.includes(firstSegment)) {
+        return ['/programs/education']
+      }
     }
 
     return [path]

@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Space, Typography, List, Tag } from 'antd'
+import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { CalendarOutlined } from '@ant-design/icons'
 import { EmptyState, StatusDisplay, SingleCTA } from '@/shared/ui'
 import { mockSchedules, mockProgramsMap, mockApplications } from '@/data/mock'
@@ -61,16 +62,12 @@ export function MyScheduleListPage() {
     const loadUserSchedules = () => {
       try {
         // 승인 완료된 신청만 필터링
-        const approvedApplications = mockApplications.filter(
-          app => app.status === 'approved'
-        )
+        const approvedApplications = mockApplications.filter(app => app.status === 'approved')
 
         // 각 승인된 신청에 대해 일정 찾기
         const userSchedules: UserSchedule[] = []
         approvedApplications.forEach(app => {
-          const programSchedules = mockSchedules.filter(
-            s => s.programId === app.programId
-          )
+          const programSchedules = mockSchedules.filter(s => s.programId === app.programId)
 
           programSchedules.forEach(schedule => {
             // 일정 상태 결정 (Mock: 날짜 기반)
@@ -175,10 +172,7 @@ export function MyScheduleListPage() {
                     marginBottom: '16px',
                   }}
                 >
-                  <Card
-                    style={{ width: '100%' }}
-                    styles={{ body: { padding: '16px' } }}
-                  >
+                  <Card style={{ width: '100%' }} styles={{ body: { padding: '16px' } }}>
                     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                       {/* 프로그램명 및 상태 */}
                       <Space style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -204,7 +198,8 @@ export function MyScheduleListPage() {
                         <div>
                           <Text type="secondary">일정: </Text>
                           <Text>
-                            {scheduleDate.format('YYYY년 MM월 DD일')} {schedule.startTime} - {schedule.endTime}
+                            {scheduleDate.format('YYYY년 MM월 DD일')} {schedule.startTime} -{' '}
+                            {schedule.endTime}
                           </Text>
                         </div>
                         {schedule.location && (
@@ -216,7 +211,7 @@ export function MyScheduleListPage() {
                         {schedule.onlineLink && !schedule.location && (
                           <div>
                             <Text type="secondary">진행 방식: </Text>
-                            <Tag color="green">온라인</Tag>
+                            <SessionFormatBadge isOnline />
                           </div>
                         )}
                         {schedule.title && (
@@ -246,4 +241,3 @@ export function MyScheduleListPage() {
     </div>
   )
 }
-

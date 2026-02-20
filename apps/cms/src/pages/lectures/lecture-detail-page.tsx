@@ -6,8 +6,9 @@
 
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Result, Spin } from 'antd'
+import { Card, Space, Typography, Descriptions, Result, Spin } from 'antd'
 import { StatusDisplay, SingleCTA, GuideMessage } from '@/shared/ui'
+import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { mockSchedulesMap, mockProgramsMap, mockInstructorsMap } from '@/data/mock'
 import { mockLectureActivitiesMap } from '@/data/mock/activities'
 import dayjs from 'dayjs'
@@ -56,7 +57,14 @@ export function LectureDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px',
+        }}
+      >
         <Spin size="large" />
       </div>
     )
@@ -68,13 +76,7 @@ export function LectureDetailPage() {
         status="404"
         title="강의를 찾을 수 없습니다"
         subTitle="요청하신 강의 정보가 존재하지 않거나 삭제되었습니다."
-        extra={
-          <SingleCTA
-            label="홈으로 이동"
-            targetUrl="/"
-            type="primary"
-          />
-        }
+        extra={<SingleCTA label="홈으로 이동" targetUrl="/" type="primary" />}
       />
     )
   }
@@ -89,13 +91,7 @@ export function LectureDetailPage() {
         status="404"
         title="관련 정보를 찾을 수 없습니다"
         subTitle="강의와 관련된 일정 또는 프로그램 정보가 없습니다."
-        extra={
-          <SingleCTA
-            label="홈으로 이동"
-            targetUrl="/"
-            type="primary"
-          />
-        }
+        extra={<SingleCTA label="홈으로 이동" targetUrl="/" type="primary" />}
       />
     )
   }
@@ -143,7 +139,7 @@ export function LectureDetailPage() {
               {schedule.startTime} - {schedule.endTime}
             </Descriptions.Item>
             <Descriptions.Item label="진행 방식">
-              {isOnline ? <Tag color="green">온라인</Tag> : <Tag>오프라인</Tag>}
+              <SessionFormatBadge isOnline={isOnline} />
             </Descriptions.Item>
             {schedule.location && (
               <Descriptions.Item label="장소">
@@ -182,9 +178,7 @@ export function LectureDetailPage() {
             )}
             {activity.nextRequiredAction.type === 'COMPLETE' && (
               <>
-                <Paragraph style={{ margin: 0 }}>
-                  강의 종료 후 완료 처리를 진행해 주세요.
-                </Paragraph>
+                <Paragraph style={{ margin: 0 }}>강의 종료 후 완료 처리를 진행해 주세요.</Paragraph>
                 <SingleCTA
                   label="강의 완료 처리"
                   targetUrl={activity.nextRequiredAction.targetUrl}
@@ -196,9 +190,7 @@ export function LectureDetailPage() {
             )}
             {activity.nextRequiredAction.type === 'REPORT' && (
               <>
-                <Paragraph style={{ margin: 0 }}>
-                  강의보고서 제출이 필요합니다.
-                </Paragraph>
+                <Paragraph style={{ margin: 0 }}>강의보고서 제출이 필요합니다.</Paragraph>
                 <SingleCTA
                   label="보고서 작성하기"
                   targetUrl={activity.nextRequiredAction.targetUrl}
@@ -213,13 +205,9 @@ export function LectureDetailPage() {
 
         {/* 보조 안내 영역 */}
         <Card>
-          <GuideMessage
-            message="강의 완료 후 보고서 제출 및 정산 절차가 진행됩니다."
-            type="info"
-          />
+          <GuideMessage message="강의 완료 후 보고서 제출 및 정산 절차가 진행됩니다." type="info" />
         </Card>
       </Space>
     </div>
   )
 }
-

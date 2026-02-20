@@ -263,6 +263,7 @@ export function LoginPage() {
               >
                 관리자
               </Button>
+              {/* [임시 주석] 강사 / 학교 / 학생 빠른 로그인
               <Button
                 size="small"
                 onClick={() => {
@@ -296,6 +297,7 @@ export function LoginPage() {
               >
                 학생
               </Button>
+              */}
             </Space>
           </div>
         </div>

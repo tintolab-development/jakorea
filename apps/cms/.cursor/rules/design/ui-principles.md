@@ -7,7 +7,7 @@ category: design
 # 공통 UI 원칙
 
 **작성 일자**: 2024-12-19  
-**기준 문서**: MVP_ROADMAP_V2.md, JA코리아 사용자화면 프롬프트_1219.md  
+**기준 문서**: MVP_ROADMAP_V2.md, JA코리아 사용자화면 프롬프트\_1219.md  
 **적용 범위**: Phase 5 사용자 화면 기반 UI 개선 및 이후 모든 화면
 
 ---
@@ -91,8 +91,8 @@ const getStatusMessage = (status: string): string => {
 ```typescript
 // ✅ 올바른 예시
 {nextAction && nextAction.targetUrl && (
-  <Button 
-    type="primary" 
+  <Button
+    type="primary"
     onClick={() => navigate(nextAction.targetUrl)}
   >
     {nextAction.label || '다음 단계로 이동'}
@@ -106,6 +106,21 @@ const getStatusMessage = (status: string): string => {
   <Button>문의하기</Button>
 </Space>
 ```
+
+---
+
+## 🎯 필터·조회 원칙
+
+### 핵심 원칙
+
+1. **조회 버튼이 있는 필터는 클릭 시에만 적용**
+   - ❌ 입력값 변경 시마다 즉시 목록 필터링 (실시간 필터링)
+   - ✅ 필터 입력 후 **조회 버튼 클릭 시에만** 필터 조건 적용 및 목록 갱신
+   - ✅ 사용자가 조건을 모두 입력한 뒤 조회로 실행한다는 UX 일관성 유지
+
+2. **구현 방향**
+   - 필터 입력값(학생명, 학급 등)은 **임시 상태**로 두고, 조회 클릭 시 **적용된 필터 상태**를 갱신
+   - 테이블/목록은 **적용된 필터 상태** 기준으로만 필터링하여 표시
 
 ---
 
@@ -247,7 +262,7 @@ interface SingleCTAProps {
 
 export function SingleCTA({ label, targetUrl, onClick, type = 'primary' }: SingleCTAProps) {
   const navigate = useNavigate()
-  
+
   const handleClick = () => {
     if (targetUrl) {
       navigate(targetUrl)
@@ -255,7 +270,7 @@ export function SingleCTA({ label, targetUrl, onClick, type = 'primary' }: Singl
       onClick()
     }
   }
-  
+
   return (
     <Button type={type} onClick={handleClick}>
       {label}
@@ -295,8 +310,3 @@ export function SingleCTA({ label, targetUrl, onClick, type = 'primary' }: Singl
 ---
 
 **마지막 업데이트**: 2024-12-19
-
-
-
-
-

@@ -43,7 +43,7 @@ export function ProgramMiniCalendar({
           <LeftOutlined />
         </button>
         <span className="program-mini-calendar-title">
-          {currentMonth.format('MMMM YYYY')}
+          {currentMonth.format('YYYY.MM')}
         </span>
         <button
           type="button"

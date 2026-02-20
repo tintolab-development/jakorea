@@ -1,24 +1,24 @@
 .matching-list__filters {
-  margin-bottom: 16px;
+    margin-bottom: var(--spacing-16);
 }
 
 .matching-list__filter-label {
-  color: rgba(0, 0, 0, 0.65);
+    color: var(--color-text-65);
 }
 
 .matching-list__program-select {
-  width: 300px;
+    width: 300px;
 }
 
 .matching-list__program-title {
-  font-weight: 500;
+    font-weight: var(--font-weight-500);
 }
 
 .matching-list__schedule-meta {
-  font-size: 12px;
-  color: #8c8c8c;
+    font-size: var(--font-size-12);
+    color: var(--color-text-secondary);
 }
 
 .matching-list__row {
-  cursor: pointer;
+    cursor: pointer;
 }

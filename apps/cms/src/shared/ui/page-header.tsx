@@ -19,9 +19,13 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
   return (
     <Space className={`page-header ${className || ''}`}>
-      <div>
+      <div className="page-header__title-row">
         <h1 className="page-header-title">{title}</h1>
-        {description && <Text type="secondary">{description}</Text>}
+        {description && (
+          <Text type="secondary" className="page-header-description">
+            {description}
+          </Text>
+        )}
       </div>
       {actions && <Space className="page-header-actions">{actions}</Space>}
     </Space>

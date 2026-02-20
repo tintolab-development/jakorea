@@ -4,6 +4,7 @@ declare module '@toast-ui/editor' {
   // (런타임 동작에는 영향 없음)
   export interface EditorOptions {
     el: HTMLElement
+    autofocus?: boolean
     height?: string
     initialEditType?: 'markdown' | 'wysiwyg'
     previewStyle?: 'tab' | 'vertical'
@@ -11,6 +12,7 @@ declare module '@toast-ui/editor' {
     initialValue?: string
     events?: {
       change?: () => void
+      load?: (editor: Editor) => void
     }
   }
 
@@ -36,4 +38,3 @@ declare module '@toast-ui/editor/dist/toastui-editor-viewer' {
     destroy(): void
   }
 }
-

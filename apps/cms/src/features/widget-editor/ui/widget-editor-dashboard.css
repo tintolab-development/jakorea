@@ -1,0 +1,81 @@
+/**
+ * 위젯 편집 대시보드 스타일
+ */
+
+.widget-editor-dashboard {
+    width: 100%;
+    min-height: 100vh;
+    padding: var(--spacing-24);
+}
+
+.widget-grid {
+    position: relative;
+}
+
+/* 편집 모드 시 그리드 라인 표시 */
+.widget-editor-dashboard .react-grid-layout {
+    position: relative;
+}
+
+.widget-editor-dashboard .react-grid-item {
+    transition: all 200ms ease;
+    transition-property: left, top, width, height;
+}
+
+/* 그리드 아이템 내부가 셀 높이를 넘지 않도록 (위젯 overflow 스크롤 연동) */
+.widget-editor-dashboard .react-grid-item>div {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.widget-editor-dashboard .react-grid-item.cssTransforms {
+    transition-property: transform, width, height;
+}
+
+.widget-editor-dashboard .react-grid-item.resizing {
+    transition: none;
+    z-index: 1;
+    will-change: width, height;
+}
+
+.widget-editor-dashboard .react-grid-item.dropping {
+    visibility: hidden;
+}
+
+.widget-editor-dashboard .react-grid-item.react-draggable-dragging {
+    transition: none;
+    z-index: 3;
+    will-change: transform;
+}
+
+.widget-editor-dashboard .react-grid-item.dragging {
+    transition: none;
+    z-index: 3;
+    will-change: transform;
+    opacity: 0.8;
+}
+
+/* 편집 모드 시각적 피드백 — 그리드 라인 색상 토큰 */
+.widget-editor-dashboard .react-grid-layout {
+    background-image:
+        linear-gradient(to right, var(--color-border-light) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--color-border-light) 1px, transparent 1px);
+    background-size: 60px 60px;
+}
+
+.widget-editor-dashboard .react-grid-item>.react-resizable-handle {
+    position: absolute;
+    width: var(--spacing-20);
+    height: var(--spacing-20);
+    bottom: 0;
+    right: 0;
+    background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxnIGZpbGw9IiM5OTkiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PHBhdGggZD0ibTUgNS0zIDNMMCA1VjNoMnoiLz48L2c+PC9zdmc+');
+    background-position: bottom right;
+    padding: 0 3px 3px 0;
+    background-repeat: no-repeat;
+    background-origin: content-box;
+    box-sizing: border-box;
+    cursor: se-resize;
+}

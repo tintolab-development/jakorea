@@ -1,0 +1,53 @@
+/**
+ * 프로그램 상세 페이지
+ */
+
+.program-detail-page {
+    padding: 0;
+}
+
+.program-detail-page--loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+}
+
+/* 상세 페이지에서 PageHeader 타이틀 폰트 스펙 */
+.program-detail-page .page-header-title {
+    color: var(--default-BK, #3D3D3D);
+    font-family: Pretendard, sans-serif;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%;
+}
+
+/* 탭 바와 같은 줄 오른쪽 (정보 수정, 프로그램 상세 미리보기) */
+.program-detail-page__tab-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* 탭 액션 AppButton: 페이지 시안 border-radius 6px */
+.program-detail-page__tab-actions .app-button {
+    border-radius: 6px;
+}
+
+/* 위젯과 디바이더 사이 갭 축소 */
+.program-detail-page .program-progress-widget-container {
+    margin-bottom: 12px;
+}
+
+/* 디바이더 갭 축소, 구분선 진하게 */
+.program-detail-page__divider {
+    margin: 12px 0 16px;
+    border-top-width: 1px;
+    border-top-color: #bfbfbf;
+}
+
+/* 탭 영역 빈 화면 (최소 높이만 유지) */
+.program-detail-page__tab-content {
+    min-height: 200px;
+}

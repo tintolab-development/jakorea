@@ -231,8 +231,8 @@
 
 ## 📝 참고 문서
 
-- `MVP_ROADMAP_V3.md` - Phase 7 상세 요구사항
-- `PROGRESS.md` - 전체 진행 상황
+- [MVP_ROADMAP_V3.md](../roadmap/MVP_ROADMAP_V3.md) - Phase 7 상세 요구사항
+- [PROGRESS.md](./PROGRESS.md) - 전체 진행 상황
 - `V2_PHASE5_PRIORITY.md` - 이전 Phase 우선순위 결정
 
 ---

@@ -3,207 +3,243 @@
  */
 
 .main-header {
-  background: #ffffff;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 0 24px;
-  height: 64px;
-  line-height: 64px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  position: fixed;
-  top: 0;
-  left: 220px;
-  /* 사이드바 너비만큼 왼쪽에서 떨어뜨림 */
-  right: 0;
-  z-index: 99;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    background: var(--color-bg-base);
+    border-bottom: 1px solid var(--color-border-light);
+    padding: 0 var(--spacing-24);
+    height: 64px;
+    line-height: 64px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0;
+    left: 220px;
+    /* 사이드바 너비만큼 왼쪽에서 떨어뜨림 */
+    right: 0;
+    z-index: 99;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .main-header-content {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .main-header-left {
-  flex: 1;
-  display: flex;
-  align-items: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
 }
 
 .main-header-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    flex-wrap: wrap;
+    min-height: 32px;
 }
 
 .main-header-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #262626;
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-size-20);
+    font-weight: var(--font-weight-600);
+    line-height: 32px;
+    color: var(--color-text-label);
 }
 
 .main-header-breadcrumb {
-  font-size: 13px;
-  color: #8c8c8c;
+    font-size: var(--font-size-13);
+    line-height: 32px;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.main-header-breadcrumb .ant-breadcrumb {
+    display: flex;
+    align-items: center;
+    line-height: 32px;
+}
+
+.main-header-breadcrumb .ant-breadcrumb ol {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    line-height: 32px;
+}
+
+.main-header-breadcrumb .ant-breadcrumb li {
+    display: inline-flex;
+    align-items: center;
+    line-height: 32px;
+}
+
+.main-header-breadcrumb .ant-breadcrumb-separator {
+    display: inline-flex;
+    align-items: center;
+    line-height: 32px;
 }
 
 .main-header-breadcrumb .ant-breadcrumb-link {
-  display: inline-flex;
+    display: inline-flex;
+    align-items: center;
+    line-height: 32px;
 }
 
 .main-header-right {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .main-header-right .ant-space {
-  align-items: center;
+    align-items: center;
 }
 
 .main-header-right .ant-space-item {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .main-header-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  padding: 0;
-  border: none;
-  color: #595959;
-  transition: all 0.2s;
-  line-height: 1;
-  vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+    border: none;
+    color: #595959;
+    transition: all 0.2s;
+    line-height: 1;
+    vertical-align: middle;
 }
 
 .main-header-icon-button .anticon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .main-header-icon-button:hover {
-  color: #1890ff;
-  background: #f0f7ff;
+    color: #1890ff;
+    background: #f0f7ff;
 }
 
 .main-header-user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
 }
 
 .main-header-user-role {
-  font-size: 14px;
-  font-weight: 400;
-  color: #262626;
-  margin: 0;
-  line-height: 1;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-label);
+    margin: 0;
+    line-height: 1;
 }
 
 .main-header-user-divider {
-  width: 1px;
-  height: 14px;
-  background: #d9d9d9;
+    width: 1px;
+    height: 14px;
+    background: #d9d9d9;
 }
 
 .main-header-user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #262626;
-  margin: 0;
-  line-height: 1;
+    font-size: 14px;
+    font-weight: var(--font-weight-600);
+    color: var(--color-text-label);
+    margin: 0;
+    line-height: 1;
 }
 
 .main-header-avatar {
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.2s;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .main-header-avatar:hover {
-  opacity: 0.8;
+    opacity: 0.8;
 }
 
 /* 알림 드롭다운 스타일 */
 .main-header-notification-dropdown {
-  min-width: 320px;
-  max-width: 400px;
+    min-width: 320px;
+    max-width: 400px;
 }
 
 .main-header-notification-item {
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .main-header-notification-item:hover {
-  background-color: #f5f5f5;
+    background-color: #f5f5f5;
 }
 
 .main-header-notification-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #262626;
-  margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-label);
+    margin-bottom: 4px;
 }
 
 .main-header-notification-message {
-  font-size: 12px;
-  color: #8c8c8c;
-  margin-bottom: 4px;
-  line-height: 1.4;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+    line-height: 1.4;
 }
 
 .main-header-notification-time {
-  font-size: 11px;
-  color: #bfbfbf;
+    font-size: 11px;
+    color: #bfbfbf;
 }
 
 /* 알림 배지 (타원형 스타일) */
 .main-header-notification-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  gap: 6px;
-  height: 32px;
-  padding: 0 14px;
-  background: #e6f7f9;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  line-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    background: #e6f7f9;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    line-height: 32px;
 }
 
 .main-header-notification-badge:hover {
-  background: #d4f1f4;
+    background: #d4f1f4;
 }
 
 .main-header-notification-icon {
-  font-size: 14px;
-  color: #01a1af;
-  display: flex;
-  align-items: center;
+    font-size: 14px;
+    color: #01a1af;
+    display: flex;
+    align-items: center;
 }
 
 .main-header-notification-count {
-  font-size: 13px;
-  font-weight: 500;
-  color: #01a1af;
-  margin: 0;
-  line-height: 1;
-  display: flex;
-  align-items: center;
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: #01a1af;
+    margin: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
 }
