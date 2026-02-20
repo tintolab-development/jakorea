@@ -57,7 +57,7 @@ export function AssignmentSubmissionModal({
                   <td className="assignment-submission-modal__cell assignment-submission-modal__cell--label">
                     학생명
                   </td>
-                  <td className="assignment-submission-modal__cell assignment-submission-modal__cell--value">
+                  <td className="assignment-submission-modal__cell assignment-submission-modal__cell--value assignment-submission-modal__cell--value-left">
                     <div className="assignment-submission-modal__cell-row">
                       {detail.studentName}
                     </div>
@@ -65,7 +65,7 @@ export function AssignmentSubmissionModal({
                   <td className="assignment-submission-modal__cell assignment-submission-modal__cell--label">
                     제출률
                   </td>
-                  <td className="assignment-submission-modal__cell assignment-submission-modal__cell--value">
+                  <td className="assignment-submission-modal__cell assignment-submission-modal__cell--value assignment-submission-modal__cell--value-left">
                     <div className="assignment-submission-modal__cell-row">
                       {detail.submissionRatePercent}%{' '}
                       <span className="assignment-submission-modal__rate-note">
