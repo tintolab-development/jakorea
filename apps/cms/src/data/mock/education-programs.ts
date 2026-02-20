@@ -13,20 +13,29 @@ let additionalEducationPrograms: Program[] | null = null
 /**
  * 교육 프로그램 필터링
  * 봉사 프로그램이 아닌 일반 교육 프로그램
+ * - 위젯/필터 오갈 때 건수 불일치 방지: 반환 배열 id 기준 중복 제거, 추가 생성은 한 번만 수행
  */
 export function getEducationPrograms(): Program[] {
   const volunteerProgramIds = new Set(getVolunteerPrograms().map(p => p.id))
   // 봉사 프로그램이 아닌 프로그램들을 교육 프로그램으로 분류
   const educationPrograms = mockPrograms.filter(program => !volunteerProgramIds.has(program.id))
 
-  // 최소 15개 이상 보장 (부족하면 추가 생성)
+  // 이미 이전에 추가한 edu-prog-* 가 있으면 재사용(한 번만 push 하도록)
+  const existingAdditional = mockPrograms.filter(p => String(p.id).startsWith('edu-prog-'))
+  if (existingAdditional.length > 0) {
+    additionalEducationPrograms = existingAdditional
+  }
+
+  // 최소 15개 이상 보장 (부족하면 추가 생성, 단 한 번만)
   if (educationPrograms.length < 15) {
-    // 이미 생성된 추가 프로그램이 있으면 재사용
-    if (additionalEducationPrograms) {
-      return [...educationPrograms, ...additionalEducationPrograms]
+    if (additionalEducationPrograms && additionalEducationPrograms.length > 0) {
+      // id 기준 중복 제거: educationPrograms에 이미 포함된 항목은 additional에서 제외
+      const baseIds = new Set(educationPrograms.map(p => p.id))
+      const extra = additionalEducationPrograms.filter(p => !baseIds.has(p.id))
+      return [...educationPrograms, ...extra]
     }
 
-    // 기존 프로그램을 기반으로 추가 교육 프로그램 생성
+    // 기존 프로그램을 기반으로 추가 교육 프로그램 생성 (최초 1회만 push)
     const additionalCount = 15 - educationPrograms.length
     const newAdditionalPrograms: Program[] = []
 
@@ -43,15 +52,12 @@ export function getEducationPrograms(): Program[] {
         updatedAt: new Date(Date.now() - i * 7 * 24 * 60 * 60 * 1000 + 5).toISOString(),
       }
 
-      // mockPrograms와 mockProgramsMap에 추가
       mockPrograms.push(newProgram)
       mockProgramsMap.set(newProgram.id, newProgram)
       newAdditionalPrograms.push(newProgram)
     }
 
-    // 캐시에 저장
     additionalEducationPrograms = newAdditionalPrograms
-
     return [...educationPrograms, ...newAdditionalPrograms]
   }
 
