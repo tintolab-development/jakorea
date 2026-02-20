@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Tabs, Descriptions, Table, Input, Select, Modal, Radio } from 'antd'
+import { DownloadOutlined } from '@ant-design/icons'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AppButton } from '@/shared/ui/app-button'
@@ -37,9 +38,15 @@ import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-
 import { getSchoolDetailStudents } from '../lib/school-detail-mock'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import {
+  TEXTBOOK_STATUS_LABELS,
+  type TextbookStatusKey,
+} from '@/data/mock/participating-schools'
+import {
   SchoolDetailAddInstructorAssignModal,
   type AddInstructorAssignOption,
 } from './school-detail-add-instructor-assign-modal'
+import { AddStudentModal } from './add-student-modal'
+import type { AddStudentFormValues } from '../model/school-detail-add-student-schema'
 import { LectureAttendanceModal } from './lecture-attendance-modal'
 import { AssignmentSubmissionModal } from './assignment-submission-modal'
 import './school-detail-modal.css'
@@ -47,6 +54,7 @@ import './school-detail-modal.css'
 const { TextArea } = Input
 const TAB_BASIC = 'basic'
 const TAB_STUDENTS = 'students'
+const TAB_POSTS = 'posts'
 
 function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFormValues {
   return {
@@ -83,7 +91,7 @@ export interface SchoolDetailModalProps {
   detail: SchoolDetailForModal | null
   /** 모달 제목 (기본: "학교 상세 정보", 신청자 목록: "수강 신청 학교 상세 정보") */
   title?: string
-  /** progress: 진행현황 참여학교 | applicant: 신청자목록 신청학교 (반려/승인 버튼, 일정 변경 이력 배지, 강사진/교재 섹션 숨김) */
+  /** progress: 진행현황 참여학교 | applicant: 신청자목록 신청학교 (기본 정보 탭에서만 반려/승인 버튼, 일정 변경 이력 배지, 강사진/교재 섹션 숨김) */
   variant?: SchoolDetailModalVariant
   /** 기본 정보 저장 시 호출 (mock/API 연동 시 부모에서 detail 갱신용) */
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
@@ -116,6 +124,8 @@ export function SchoolDetailModal({
   const [assignmentSubmissionModalOpen, setAssignmentSubmissionModalOpen] = useState(false)
   const [assignmentSubmissionStudent, setAssignmentSubmissionStudent] =
     useState<SchoolDetailStudentRow | null>(null)
+  const [addStudentModalOpen, setAddStudentModalOpen] = useState(false)
+  const [addedStudents, setAddedStudents] = useState<SchoolDetailStudentRow[]>([])
   /* 필터 입력값(조회 클릭 전까지 반영 안 함) */
   const [studentNameFilter, setStudentNameFilter] = useState('')
   const [studentClassFilter, setStudentClassFilter] = useState<string>('all')
@@ -254,7 +264,10 @@ export function SchoolDetailModal({
   useFieldArray({ control, name: 'students' })
 
   useEffect(() => {
-    if (!open) setIsStudentListEditMode(false)
+    if (!open) {
+      setIsStudentListEditMode(false)
+      setAddedStudents([])
+    }
   }, [open])
 
   const studentList = useMemo((): SchoolDetailStudentRow[] => {
@@ -262,15 +275,20 @@ export function SchoolDetailModal({
     return getSchoolDetailStudents(detail.id, detail.studentCount)
   }, [detail])
 
+  const mergedStudentList = useMemo(
+    () => [...studentList, ...addedStudents],
+    [studentList, addedStudents]
+  )
+
   const filteredStudentList = useMemo(() => {
-    return studentList.filter(row => {
+    return mergedStudentList.filter(row => {
       const matchName =
         !appliedStudentNameFilter.trim() || row.name.includes(appliedStudentNameFilter.trim())
       const matchClass =
         appliedStudentClassFilter === 'all' || row.gradeClass === appliedStudentClassFilter
       return matchName && matchClass
     })
-  }, [studentList, appliedStudentNameFilter, appliedStudentClassFilter])
+  }, [mergedStudentList, appliedStudentNameFilter, appliedStudentClassFilter])
 
   const handleStudentSearch = () => {
     setAppliedStudentNameFilter(studentNameFilter)
@@ -278,9 +296,22 @@ export function SchoolDetailModal({
   }
 
   const studentClassOptions = useMemo(() => {
-    const classes = Array.from(new Set(studentList.map(r => r.gradeClass))).sort()
+    const classes = Array.from(new Set(mergedStudentList.map(r => r.gradeClass))).sort()
     return [{ value: 'all', label: '전체' }, ...classes.map(c => ({ value: c, label: c }))]
-  }, [studentList])
+  }, [mergedStudentList])
+
+  const handleAddStudent = useCallback((values: AddStudentFormValues) => {
+    const nextNo = mergedStudentList.length + 1
+    const newRow: SchoolDetailStudentRow = {
+      id: crypto.randomUUID(),
+      no: nextNo,
+      name: values.name,
+      gradeClass: values.gradeClass,
+      contact: values.contact?.trim() || undefined,
+      email: values.email?.trim() || undefined,
+    }
+    setAddedStudents(prev => [...prev, newRow])
+  }, [mergedStudentList.length])
 
   const instructorColumns: ColumnsType<SchoolDetailInstructorRow> = useMemo(
     () => [
@@ -637,6 +668,44 @@ export function SchoolDetailModal({
     },
   ]
 
+  /** 수정 모드 시 강의·교재 정보: 교재 현황만 라디오로 선택 가능 */
+  function getLectureItemsEditMode(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
+    const { control } = form
+    const textbookStatusOptions: { label: string; value: TextbookStatusKey }[] = [
+      { label: TEXTBOOK_STATUS_LABELS.preparing, value: 'preparing' },
+      { label: TEXTBOOK_STATUS_LABELS.shipping, value: 'shipping' },
+      { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
+    ]
+    const d = detail!
+    return [
+      { key: 'lectureRound', label: '강의 진행 회차', children: d.lectureRound },
+      {
+        key: 'textbookStatus',
+        label: '교재 현황',
+        children: (
+          <Controller
+            name="textbookStatus"
+            control={control}
+            render={({ field }) => (
+              <Radio.Group
+                {...field}
+                options={textbookStatusOptions}
+                onChange={e => field.onChange(e.target.value)}
+                className="school-detail-modal__textbook-status-radios"
+              />
+            )}
+          />
+        ),
+      },
+      { key: 'textbookName', label: '교재명', children: d.textbookName ?? '-' },
+      {
+        key: 'textbookQuantity',
+        label: '교재 준비 수량',
+        children: d.textbookQuantity != null ? `${d.textbookQuantity}권` : '-',
+      },
+    ]
+  }
+
   /**
    * 수정 모드 기본 정보: 기획 시안과 동일한 필드 순서 (1행 참여학교명|지역, 2행 대상학년|학급수, 3행 진행장소|대기실, 풀폭 식사·담당교사)
    */
@@ -829,6 +898,11 @@ export function SchoolDetailModal({
     setIsStudentListEditMode(true)
   }
 
+  const handleStudentListCancel = () => {
+    reset(rowsToFormValues(filteredStudentList))
+    setIsStudentListEditMode(false)
+  }
+
   const footer = (
     <AppButton variant="cancel" size="large" onClick={handleClose}>
       닫기
@@ -848,16 +922,7 @@ export function SchoolDetailModal({
                 학교 담당자(교사) 및 관리자만 작성/수정이 가능합니다.
               </span>
             </div>
-            {isApplicant ? (
-              <div className="school-detail-modal__basic-actions school-detail-modal__basic-actions--approval">
-                <AppButton variant="danger" size="middle" onClick={() => {}}>
-                  반려
-                </AppButton>
-                <AppButton variant="primary" size="middle" modalTeal onClick={() => {}}>
-                  승인
-                </AppButton>
-              </div>
-            ) : isBasicEditMode ? (
+            {!isApplicant && isBasicEditMode ? (
               <div className="school-detail-modal__basic-actions">
                 <AppButton variant="cancel" size="middle" onClick={handleBasicCancel}>
                   취소
@@ -871,11 +936,11 @@ export function SchoolDetailModal({
                   저장
                 </AppButton>
               </div>
-            ) : (
+            ) : !isApplicant ? (
               <AppButton variant="cancel" size="middle" onClick={handleBasicEditStart}>
                 수정
               </AppButton>
-            )}
+            ) : null}
           </div>
           <div className="school-detail-modal__descriptions-wrap">
             {isBasicEditMode ? (
@@ -895,7 +960,7 @@ export function SchoolDetailModal({
                     size="middle"
                     className="school-detail-modal__descriptions"
                     labelStyle={{ background: '#EDF0F2' }}
-                    items={lectureItems}
+                    items={getLectureItemsEditMode(basicInfoForm)}
                   />
                 )}
               </>
@@ -1029,6 +1094,9 @@ export function SchoolDetailModal({
             <div className="school-detail-modal__student-table-actions">
               {isStudentListEditMode ? (
                 <>
+                  <AppButton variant="cancel" size="middle" onClick={handleStudentListCancel}>
+                    취소
+                  </AppButton>
                   <AppButton
                     variant="primary"
                     size="middle"
@@ -1044,10 +1112,28 @@ export function SchoolDetailModal({
                 </>
               ) : (
                 <>
-                  <AppButton variant="cancel" size="middle" onClick={enterStudentListEditMode}>
+                  <AppButton
+                    variant="cancel"
+                    size="middle"
+                    icon={<DownloadOutlined />}
+                    onClick={() => {}}
+                  >
+                    수료증 발급
+                  </AppButton>
+                  <AppButton
+                    variant="primary"
+                    size="middle"
+                    modalTeal
+                    onClick={enterStudentListEditMode}
+                  >
                     수정
                   </AppButton>
-                  <AppButton variant="primary" size="middle" modalTeal>
+                  <AppButton
+                    variant="primary"
+                    size="middle"
+                    modalTeal
+                    onClick={() => setAddStudentModalOpen(true)}
+                  >
                     학생 등록
                   </AppButton>
                 </>
@@ -1081,6 +1167,16 @@ export function SchoolDetailModal({
               className="school-detail-modal__student-table"
             />
           )}
+        </div>
+      ),
+    },
+    {
+      key: TAB_POSTS,
+      label: '게시글',
+      disabled: true,
+      children: (
+        <div className="school-detail-modal__posts">
+          <p className="school-detail-modal__posts-placeholder">준비 중입니다.</p>
         </div>
       ),
     },
@@ -1127,6 +1223,16 @@ export function SchoolDetailModal({
                       </AppButton>
                     </div>
                   )}
+                  {isApplicant && activeTab !== TAB_STUDENTS && (
+                    <div className="school-detail-modal__top-actions school-detail-modal__basic-actions school-detail-modal__basic-actions--approval">
+                      <AppButton variant="danger" size="middle" onClick={() => {}}>
+                        반려
+                      </AppButton>
+                      <AppButton variant="primary" size="middle" modalTeal onClick={() => {}}>
+                        승인
+                      </AppButton>
+                    </div>
+                  )}
                 </div>
                 {activeTab === TAB_STUDENTS && (
                   <div className="school-detail-modal__tab-divider-wrap">
@@ -1164,6 +1270,11 @@ export function SchoolDetailModal({
         }}
         student={assignmentSubmissionStudent}
         schoolId={detail?.id ?? ''}
+      />
+      <AddStudentModal
+        open={addStudentModalOpen}
+        onCancel={() => setAddStudentModalOpen(false)}
+        onAdd={handleAddStudent}
       />
     </>
   )

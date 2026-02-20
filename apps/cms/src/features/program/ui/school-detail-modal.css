@@ -26,6 +26,11 @@
     margin-bottom: 0;
 }
 
+/* 수강 신청 학교 상세(applicant): 반려/승인을 탭과 같은 레벨에 배치 */
+.school-detail-modal__top-actions {
+    flex-shrink: 0;
+}
+
 .school-detail-modal__tabs .ant-tabs-content-holder {
     margin-top: var(--spacing-20);
 }
@@ -59,6 +64,16 @@
 .school-detail-modal__tab-divider {
     height: 0;
     border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+/* 게시글 탭 (비활성화 시 플레이스홀더) */
+.school-detail-modal__posts {
+    padding: var(--spacing-20, 20px) 0;
+}
+.school-detail-modal__posts-placeholder {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-text-secondary, #8c8c8c);
 }
 
 .school-detail-modal__basic {
@@ -111,6 +126,12 @@
 .school-detail-modal__instructor-role-radios {
     display: flex;
     justify-content: center;
+    gap: 12px;
+}
+
+.school-detail-modal__textbook-status-radios {
+    display: flex;
+    flex-wrap: wrap;
     gap: 12px;
 }
 
