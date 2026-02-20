@@ -49,10 +49,20 @@ export interface UseProgressInstructorListOptions {
   appliedFilters: ProgressFilters
 }
 
+/** localStorage에서 로드한 행에 상세·이력서 등 확장 필드가 없을 수 있으므로 mock과 id 기준으로 병합 */
+function mergeWithMock(list: ParticipatingInstructorRow[]): ParticipatingInstructorRow[] {
+  const mockById = new Map(MOCK_PARTICIPATING_INSTRUCTORS.map(m => [m.id, m]))
+  return list.map(row => {
+    const extended = mockById.get(row.id)
+    return extended ? { ...row, ...extended } : row
+  })
+}
+
 export function useProgressInstructorList({ appliedFilters }: UseProgressInstructorListOptions) {
   const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => {
     const stored = loadInstructorListFromStorage()
-    return stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
+    const list = stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
+    return stored ? mergeWithMock(list) : list
   })
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
   const [selectedInstructorForDetail, setSelectedInstructorForDetail] =

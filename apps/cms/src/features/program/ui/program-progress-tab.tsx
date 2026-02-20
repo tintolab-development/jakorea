@@ -5,6 +5,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
+import { DownloadOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -17,6 +18,7 @@ import {
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import {
+  MOCK_PARTICIPATING_INSTRUCTORS,
   SETTLEMENT_STATUS_LABELS,
   type ParticipatingInstructorRow,
   type SettlementStatusKey,
@@ -165,22 +167,48 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     setAppliedFilters({ ...filters, teacherName: localTeacherName })
   }
 
-  /** 진행현황 참여 강사 → 모달용 ApplicantInstructorRow 형태로 변환 */
+  /** 진행현황 참여 강사 → 모달용 ApplicantInstructorRow 형태로 변환. 목록이 localStorage 기반이면 상세 필드가 없을 수 있으므로 mock에서 같은 id로 보강 */
   const participatingToApplicantRow = (
     row: ParticipatingInstructorRow
-  ): ApplicantInstructorRow => ({
-    id: row.id,
-    no: row.no,
-    instructorName: row.instructorName,
-    schoolName: row.schoolName,
-    contact: '-',
-    email: '-',
-    address: '-',
-    approvalStatus: 'approved',
-    lectureExperienceYears: 0,
-    educationLevel: '-',
-    educationSchoolName: '-',
-  })
+  ): ApplicantInstructorRow => {
+    const extended =
+      MOCK_PARTICIPATING_INSTRUCTORS.find(m => m.id === row.id) ?? null
+    const r: ParticipatingInstructorRow = extended
+      ? { ...row, ...extended }
+      : row
+    return {
+      id: r.id,
+      no: r.no,
+      instructorName: r.instructorName,
+      schoolName: r.schoolName,
+      contact: r.contact ?? '-',
+      email: r.email ?? '-',
+      address: r.address ?? '-',
+      approvalStatus: 'approved',
+      lectureExperienceYears: r.lectureExperienceYears ?? 0,
+      educationLevel: r.educationLevel ?? '-',
+      educationSchoolName: r.educationSchoolName ?? '-',
+      nameHanja: r.nameHanja,
+      nameEnglish: r.nameEnglish,
+      birthDate: r.birthDate,
+      age: r.age,
+      gender: r.gender,
+      militaryStatus: r.militaryStatus,
+      bankName: r.bankName,
+      accountNumber: r.accountNumber,
+      accountHolder: r.accountHolder,
+      profileImageUrl: r.profileImageUrl,
+      oneLineIntro: r.oneLineIntro,
+      careerDetails: r.careerDetails,
+      qualifications: r.qualifications,
+      awards: r.awards,
+      educations: r.educations,
+      freeWriting1: r.freeWriting1,
+      freeWriting2: r.freeWriting2,
+      freeWriting3: r.freeWriting3,
+      freeWriting4: r.freeWriting4,
+    }
+  }
 
   const textbookStatusKeys: TextbookStatusKey[] = useMemo(
     () => Object.keys(TEXTBOOK_STATUS_LABELS) as TextbookStatusKey[],
@@ -535,6 +563,14 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                 </div>
                 <div className="program-progress-tab__table-actions">
                   <AppButton
+                    variant="cancel"
+                    size="large"
+                    icon={<DownloadOutlined />}
+                    onClick={() => {}}
+                  >
+                    활동확인서 발급
+                  </AppButton>
+                  <AppButton
                     variant="danger"
                     size="large"
                     dangerFillOnHover
@@ -548,7 +584,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                     size="large"
                     onClick={() => setAddInstructorModalOpen(true)}
                   >
-                    강사 추가
+                    강사 등록
                   </AppButton>
                 </div>
               </div>

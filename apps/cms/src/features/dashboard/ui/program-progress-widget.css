@@ -236,17 +236,17 @@
     color: var(--color-brand-primary);
 }
 
-/* 선택된 상태 (목록 페이지 필터 등): 배경 #fff 유지, 청록 텍스트 */
+/* 선택된 상태: 청록 배경 + 흰색 텍스트 (전체 프로그램/수강자 모집/수강신청 현황 등) */
 .program-progress-widget__stage--selected {
-    border: 1px solid var(--color-border-skeleton);
-    background-color: #fff;
+    border: none !important;
+    background: var(--JA-mint-01, #01A1AF) !important;
 }
 
-/* 클릭된 위젯: 색상만 청록으로 변경 (폰트 사이즈·굵기 등은 기존 유지) */
 .program-progress-widget__stage--selected .program-progress-widget__stage-label,
 .program-progress-widget__stage--selected .program-progress-widget__stage-count,
 .program-progress-widget__stage--selected .program-progress-widget__stage-count-unit {
-    color: #01A1AF;
+    color: var(--default-WT, #FFF) !important;
+    font-weight: var(--font-weight-600);
 }
 
 .program-progress-widget__stage-label {

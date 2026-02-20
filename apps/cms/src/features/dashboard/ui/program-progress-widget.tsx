@@ -1,15 +1,19 @@
 /**
  * 프로그램 진행 현황 위젯 (목록/대시보드)
  * Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계)
- * FR-C01: 7단계 위젯 — 범용 ProgressStagesWidget 사용, 첫 카드 청록(전체 프로그램)
+ * 경로 기반 선택: /programs/education, /programs/education/student-recruitment, /programs/education/instructor-recruitment
+ *
+ * 테이블과 숫자 동기화: 교육 프로그램일 때 useProgramStore.programs를 의존성에 넣어
+ * 목록 페이지에서 생성/수정/삭제 후 fetchPrograms()가 호출되면 위젯도 재조회하여 건수를 맞춤.
  */
 
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
 import {
   getProgramProgress7Stage,
   type ProgramProgress7Stage,
 } from '../api/admin-dashboard-service'
+import { useProgramStore } from '@/features/program/model/program-store'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
   PROGRAM_PROGRESS_STAGE_ORDER,
@@ -27,6 +31,13 @@ import {
 } from '@/features/dashboard/ui/progress-stages-widget'
 import './program-progress-widget.css'
 
+/** 교육 프로그램 레이아웃 하위 경로인지 (위젯에서 라우팅 사용) */
+const isEducationLayoutPath = (pathname: string) =>
+  pathname === '/programs/education' || pathname.startsWith('/programs/education/')
+
+/** 의존성 배열용 빈 배열 (동일 참조 유지 — programType !== 'education'일 때 불필요한 재조회 방지) */
+const EMPTY_PROGRAMS: readonly unknown[] = []
+
 interface ProgramProgressWidgetProps {
   title?: string | null
   showDetailLink?: boolean
@@ -37,21 +48,39 @@ export function ProgramProgressWidget({
   showDetailLink: _showDetailLink = true,
 }: ProgramProgressWidgetProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // 경로 기반 선택 (교육 프로그램 레이아웃 하위일 때) — 그 외는 쿼리 status 사용
+  const selectedFromPath = useMemo<
+    'total' | 'studentRecruitment' | 'instructorRecruitment' | null
+  >(() => {
+    if (!isEducationLayoutPath(location.pathname)) return null
+    if (location.pathname === '/programs/education/student-recruitment') return 'studentRecruitment'
+    if (location.pathname === '/programs/education/instructor-recruitment') return 'instructorRecruitment'
+    return 'total'
+  }, [location.pathname])
+
   const selectedStatus = useMemo<ProgramLifecycleStatus | null>(() => {
-    const searchParams = new URLSearchParams(location.search)
-    return (searchParams.get('status') as ProgramLifecycleStatus | null) || null
-  }, [location.search])
+    if (selectedFromPath !== null) return null
+    const sp = new URLSearchParams(location.search)
+    return (sp.get('status') as ProgramLifecycleStatus | null) || null
+  }, [location.search, selectedFromPath])
 
   // 목록 페이지(교육 프로그램)와 동기화: 교육 탭에서는 교육 프로그램만 집계
   const programType = useMemo<'education' | 'volunteer' | 'all'>(() => {
-    if (location.pathname === '/programs/education') return 'education'
+    if (location.pathname === '/programs/education' || location.pathname.startsWith('/programs/education/'))
+      return 'education'
     if (location.pathname === '/programs/volunteer') return 'volunteer'
     return 'all'
   }, [location.pathname])
+
+  // 교육 프로그램일 때 목록(스토어)이 바뀌면 위젯도 재조회 — 테이블 건수와 동기화
+  const programs = useProgramStore(state =>
+    programType === 'education' ? state.programs : EMPTY_PROGRAMS
+  )
 
   useEffect(() => {
     const loadData = async () => {
@@ -68,17 +97,20 @@ export function ProgramProgressWidget({
       }
     }
     loadData()
-  }, [programType])
+    // programType 변경 시 + 교육 프로그램일 때 목록(생성/수정/삭제) 반영을 위해 programs 의존
+  }, [programType, programs])
 
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
 
+    const totalSelected =
+      selectedFromPath === 'total' || (selectedFromPath === null && !selectedStatus)
     const totalItem: ProgressStageItem = {
       key: 'total',
       label: '전체 프로그램',
       count: progress.total,
       showArrowAfter: false,
-      isSelected: !selectedStatus,
+      isSelected: totalSelected,
     }
 
     const stageItems: ProgressStageItem[] = PROGRAM_PROGRESS_STAGE_ORDER.map(
@@ -95,10 +127,12 @@ export function ProgramProgressWidget({
         const showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
         const lifecycleStatus = STAGE_TO_LIFECYCLE[stageKey]
 
-        const isSelected =
-          selectedStatus === lifecycleStatus ||
-          (stageKey === 'matchingCompleted' &&
-            selectedStatus === 'education_before_textbook')
+        const isSelectedByPath = selectedFromPath === stageKey
+        const isSelectedByStatus =
+          selectedFromPath === null &&
+          (selectedStatus === lifecycleStatus ||
+            (stageKey === 'matchingCompleted' &&
+              selectedStatus === 'education_before_textbook'))
 
         return {
           key: stageKey,
@@ -106,15 +140,34 @@ export function ProgramProgressWidget({
           count,
           showArrowAfter,
           isMatchingStyle: false,
-          isSelected,
+          isSelected: isSelectedByPath || isSelectedByStatus,
         }
       }
     )
 
     return [totalItem, ...stageItems]
-  }, [progress, selectedStatus])
+  }, [progress, selectedStatus, selectedFromPath])
 
   const handleStageClick = (key: string) => {
+    if (isEducationLayoutPath(location.pathname)) {
+      if (key === 'total') {
+        navigate('/programs/education')
+        return
+      }
+      if (key === 'studentRecruitment') {
+        navigate('/programs/education/student-recruitment')
+        return
+      }
+      if (key === 'instructorRecruitment') {
+        navigate('/programs/education/instructor-recruitment')
+        return
+      }
+      const stageKey = key as ProgramProgressStageKey
+      const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
+      if (value) navigate(`/programs/education?status=${value}`)
+      return
+    }
+
     const nextParams = new URLSearchParams(searchParams)
     if (key === 'total') {
       nextParams.delete('status')
@@ -138,12 +191,12 @@ export function ProgramProgressWidget({
   return (
     <ProgressStagesWidget
       stages={stages}
-      firstCardVariant="teal"
-      showDividerAfterFirstCard
+      firstCardVariant="white"
+      showDividerAfterFirstCard={false}
       showBottomDivider
       onStageClick={handleStageClick}
       loading={loading}
-      loadingCardCount={6}
+      loadingCardCount={8}
     />
   )
 }
