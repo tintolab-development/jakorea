@@ -150,21 +150,29 @@ export function ProgramProgressWidget({
 
   const handleStageClick = (key: string) => {
     if (isEducationLayoutPath(location.pathname)) {
+      // 단일 소스: URL query(status 등). 위젯 클릭 = navigate, 필터 카드 조회 = setSearchParams → 동일 URL로 페이지·테이블 필터 동기화
+      const mergeQuery = (path: string, statusValue: string | null) => {
+        const next = new URLSearchParams(searchParams)
+        if (statusValue) next.set('status', statusValue)
+        else next.delete('status')
+        const query = next.toString()
+        navigate(`${path}${query ? `?${query}` : ''}`, { replace: true })
+      }
       if (key === 'total') {
-        navigate('/programs/education')
+        mergeQuery('/programs/education', null)
         return
       }
       if (key === 'studentRecruitment') {
-        navigate('/programs/education/student-recruitment')
+        mergeQuery('/programs/education/student-recruitment', 'recruiting_students')
         return
       }
       if (key === 'instructorRecruitment') {
-        navigate('/programs/education/instructor-recruitment')
+        mergeQuery('/programs/education/instructor-recruitment', 'recruiting_instructors')
         return
       }
       const stageKey = key as ProgramProgressStageKey
       const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
-      if (value) navigate(`/programs/education?status=${value}`)
+      if (value) mergeQuery('/programs/education', value)
       return
     }
 

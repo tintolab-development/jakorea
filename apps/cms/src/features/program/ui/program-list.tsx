@@ -83,6 +83,8 @@ interface ProgramListProps {
   instructorRecruitmentTable?: boolean
   /** 테이블에 실제 표시되는 건수·필터 적용 여부 전달 (헤더 "총 N건"과 위젯 동기화: 필터 없을 땐 전체 건수, 있을 땐 표시 건수) */
   onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
+  /** 페이지에서 적용한 진행현황(URL 또는 경로 기본값). 필터 카드 표시와 동기화용, URL에 status 없을 때 사용 */
+  effectiveLifecycleStatus?: ProgramLifecycleStatus | null
 }
 
 export function ProgramList({
@@ -107,6 +109,7 @@ export function ProgramList({
   onViewModeChange: _onViewModeChange, // eslint-disable-line @typescript-eslint/no-unused-vars
   tableVariant = 'all',
   onDisplayCountChange,
+  effectiveLifecycleStatus,
 }: ProgramListProps) {
   const { user } = useAuthStore()
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
@@ -421,8 +424,9 @@ export function ProgramList({
         | string
         | undefined
 
-      // 프로그램 진행현황·진행방식 필터는 URL에서 직접 읽어오기
-      const statusFilter = searchParamsAdmin.get('status') as ProgramLifecycleStatus | null
+      // 프로그램 진행현황: URL 단일 소스. 경로 기본값(수강자/강사 모집)은 페이지에서 effectiveLifecycleStatus로 전달
+      const statusFromUrl = searchParamsAdmin.get('status') as ProgramLifecycleStatus | null
+      const statusFilter = statusFromUrl ?? effectiveLifecycleStatus ?? null
       const typeFilter = searchParamsAdmin.get('type') || null
 
       // 날짜 필터는 URL에서 직접 읽어오기
@@ -468,7 +472,7 @@ export function ProgramList({
         }
       })
     }
-  }, [columnFilters, searchParamsAdmin, isParticipant, table])
+  }, [columnFilters, searchParamsAdmin, isParticipant, table, effectiveLifecycleStatus])
 
   // 조회 버튼 클릭 시 필터 적용
   const handleSearch = useCallback(() => {
@@ -922,6 +926,54 @@ export function ProgramList({
                             render: (text: string) => text ?? '-',
                           },
                           {
+                            title: '프로그램 진행 현황',
+                            key: 'lifecycleStatus',
+                            width: 140,
+                            align: 'center' as const,
+                            render: (_: unknown, record: Program) => {
+                              const lifecycle = record.lifecycleStatus
+                              const badge = lifecycle ? (
+                                <ProgramLifecycleStatusBadge status={lifecycle} />
+                              ) : (
+                                <StatusBadge
+                                  status={record.status}
+                                  statusConfig={commonStatusStatusConfig}
+                                  showIcon={false}
+                                />
+                              )
+                              if (!onChangeStatus) return badge
+                              const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                                (status: ProgramLifecycleStatus) => ({
+                                  key: status,
+                                  label: <ProgramLifecycleStatusBadge status={status} />,
+                                  onClick: e => {
+                                    e?.domEvent?.stopPropagation()
+                                    onChangeStatus(record, status)
+                                  },
+                                })
+                              )
+                              return (
+                                <div
+                                  className="program-status-dropdown-cell"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <Dropdown
+                                    menu={{ items }}
+                                    trigger={['click']}
+                                    getPopupContainer={() => document.body}
+                                  >
+                                    <span
+                                      className="program-status-dropdown-trigger"
+                                      onClick={e => e.stopPropagation()}
+                                    >
+                                      {badge}
+                                    </span>
+                                  </Dropdown>
+                                </div>
+                              )
+                            },
+                          },
+                          {
                             title: '지원자 수',
                             key: 'applicantCount',
                             width: 100,
@@ -1054,6 +1106,54 @@ export function ProgramList({
                               ellipsis: true,
                               align: 'center' as const,
                               render: (text: string) => text ?? '-',
+                            },
+                            {
+                              title: '프로그램 진행 현황',
+                              key: 'lifecycleStatus',
+                              width: 140,
+                              align: 'center' as const,
+                              render: (_: unknown, record: Program) => {
+                                const lifecycle = record.lifecycleStatus
+                                const badge = lifecycle ? (
+                                  <ProgramLifecycleStatusBadge status={lifecycle} />
+                                ) : (
+                                  <StatusBadge
+                                    status={record.status}
+                                    statusConfig={commonStatusStatusConfig}
+                                    showIcon={false}
+                                  />
+                                )
+                                if (!onChangeStatus) return badge
+                                const items: MenuProps['items'] = programLifecycleStatusConfig.order.map(
+                                  (status: ProgramLifecycleStatus) => ({
+                                    key: status,
+                                    label: <ProgramLifecycleStatusBadge status={status} />,
+                                    onClick: e => {
+                                      e?.domEvent?.stopPropagation()
+                                      onChangeStatus(record, status)
+                                    },
+                                  })
+                                )
+                                return (
+                                  <div
+                                    className="program-status-dropdown-cell"
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <Dropdown
+                                      menu={{ items }}
+                                      trigger={['click']}
+                                      getPopupContainer={() => document.body}
+                                    >
+                                      <span
+                                        className="program-status-dropdown-trigger"
+                                        onClick={e => e.stopPropagation()}
+                                      >
+                                        {badge}
+                                      </span>
+                                    </Dropdown>
+                                  </div>
+                                )
+                              },
                             },
                             {
                               title: '지원자 수',

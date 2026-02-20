@@ -201,18 +201,19 @@ export function ProgramListPage() {
     }
   }, [params.programId, user, authStore.isAuthenticated, programs, setParam, navigate])
 
-  // 수강자/강사 모집 전용 경로면 status 고정, 아니면 쿼리 파라미터 사용
+  // 진행현황 단일 소스: URL params.status(위젯 클릭·필터 카드 조회 모두 동일 URL 반영). 없으면 경로 기본값
   const isStudentRecruitmentRoute = location.pathname === '/programs/education/student-recruitment'
   const isInstructorRecruitmentRoute =
     location.pathname === '/programs/education/instructor-recruitment'
   const statusFilter = useMemo<ProgramLifecycleStatus | null>(() => {
+    const value = params.status as ProgramLifecycleStatus | null
+    const validStatuses = new Set(programLifecycleStatusConfig.order)
+    if (value && (value === 'education_before_textbook' || validStatuses.has(value))) {
+      return value === 'education_before_textbook' ? 'matching_completed' : value
+    }
     if (isStudentRecruitmentRoute) return 'recruiting_students'
     if (isInstructorRecruitmentRoute) return 'recruiting_instructors'
-    const value = params.status as ProgramLifecycleStatus | null
-    if (!value) return null
-    const validStatuses = new Set(programLifecycleStatusConfig.order)
-    if (value === 'education_before_textbook') return 'matching_completed'
-    return validStatuses.has(value) ? value : null
+    return null
   }, [params.status, isStudentRecruitmentRoute, isInstructorRecruitmentRoute])
 
   // 강사용: 신청 가능한 프로그램 및 수강자 모집 완료 프로그램 필터링 + 카테고리 필터
@@ -581,19 +582,19 @@ export function ProgramListPage() {
         </div>
       )}
 
-      {/* 위젯 디바이더 아래 버튼 영역 (교육 프로그램만, 수강자 모집 페이지에서는 검색/뷰 전환/신규 등록 제거) */}
+      {/* 위젯 디바이더 아래 버튼 영역 (교육 프로그램만, 진행현황 필터에 따라 제목·컬럼·액션 통일) */}
       {isAdmin && programType === 'education' && (
         <PageHeader
           title={
-            isInstructorRecruitmentRoute
+            statusFilter === 'recruiting_instructors'
               ? '강사 모집 중인 프로그램'
-              : isStudentRecruitmentRoute
+              : statusFilter === 'recruiting_students'
                 ? '수강자 모집 중인 프로그램'
                 : '전체 프로그램'
           }
           description={`총 ${hasListFilters && displayCount !== null ? displayCount : filteredPrograms.length}건`}
           actions={
-            isStudentRecruitmentRoute || isInstructorRecruitmentRoute ? undefined : (
+            statusFilter === null ? (
               <div className="program-list-page__widget-header-actions">
                 {viewMode === 'list' && (
                   <LabeledSearchInput
@@ -627,7 +628,7 @@ export function ProgramListPage() {
                   </AppButton>
                 )}
               </div>
-            )
+            ) : undefined
           }
         />
       )}
@@ -679,12 +680,13 @@ export function ProgramListPage() {
           setSearchParams(nextParams, { replace: true })
         }}
         tableVariant={programType}
-        studentRecruitmentTable={isStudentRecruitmentRoute}
-        instructorRecruitmentTable={isInstructorRecruitmentRoute}
+        studentRecruitmentTable={statusFilter === 'recruiting_students'}
+        instructorRecruitmentTable={statusFilter === 'recruiting_instructors'}
         onDisplayCountChange={(count, hasActiveFilters) => {
           setDisplayCount(count)
           setHasListFilters(hasActiveFilters)
         }}
+        effectiveLifecycleStatus={statusFilter}
       />
 
       <EnrollmentStatusDetailModal
