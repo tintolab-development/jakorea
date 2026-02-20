@@ -1,0 +1,296 @@
+/**
+ * 강의 신청 강사 목록 상세 모달
+ * 강사 모집 페이지 행 클릭 시 노출. 3섹션(프로그램 정보, 강사 모집, 강의 신청 강사 목록) 테이블 구성.
+ */
+
+.instructor-recruitment-detail-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  height: 100%;
+  min-height: 0;
+  min-width: 0; /* flex 자식이 콘텐츠보다 줄어들 수 있게 */
+  max-width: 100%; /* 모달 가로 스크롤 방지 */
+  box-sizing: border-box;
+  padding: var(--teal-header-modal-body-padding, 20px 30px 30px);
+  overflow-x: hidden; /* 가로 스크롤 방지: 모달 바디 전체가 넘치지 않도록 */
+}
+
+.instructor-recruitment-detail-modal__section {
+  flex-shrink: 0;
+}
+
+.instructor-recruitment-detail-modal__section-title {
+  margin: 0 0 10px;
+  color: var(--default-BK, #3D3D3D);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.instructor-recruitment-detail-modal__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.instructor-recruitment-detail-modal__detail-link {
+  flex-shrink: 0;
+  width: 140px;
+  min-width: 140px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 프로그램 정보: 포스터 336×336 + 테이블 */
+.instructor-recruitment-detail-modal__section--program .instructor-recruitment-detail-modal__section-title {
+  margin-bottom: 16px;
+}
+
+.instructor-recruitment-detail-modal__program-inner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.instructor-recruitment-detail-modal__poster-wrap {
+  flex-shrink: 0;
+  width: 336px;
+  height: 336px;
+  border-radius: var(--radius-8);
+  overflow: hidden;
+  background: var(--color-bg-tab, #f5f5f5);
+}
+
+.instructor-recruitment-detail-modal__poster-wrap .ant-image {
+  display: block;
+  width: 336px;
+  height: 336px;
+}
+
+.instructor-recruitment-detail-modal__poster-wrap .ant-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+}
+
+.instructor-recruitment-detail-modal__poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-14);
+}
+
+.instructor-recruitment-detail-modal__program-fields {
+  flex: 1;
+  min-width: 0;
+  max-height: 337px; /* 1px 여유로 스크롤 방지 */
+  overflow-y: auto;
+}
+
+.instructor-recruitment-detail-modal__program-fields .instructor-recruitment-detail-modal__table-wrap {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-8);
+  overflow: hidden;
+}
+
+.instructor-recruitment-detail-modal__table-wrap {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-8);
+  overflow: hidden;
+}
+
+/* 프로그램 정보 / 강사 모집: 네이티브 테이블 */
+.instructor-recruitment-detail-modal__info-table,
+.instructor-recruitment-detail-modal__recruitment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-14);
+}
+
+.instructor-recruitment-detail-modal__info-table th,
+.instructor-recruitment-detail-modal__info-table td,
+.instructor-recruitment-detail-modal__recruitment-table th,
+.instructor-recruitment-detail-modal__recruitment-table td {
+  padding: 0 12px;
+  vertical-align: middle;
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+  box-sizing: border-box;
+}
+
+.instructor-recruitment-detail-modal__info-table th:last-child,
+.instructor-recruitment-detail-modal__info-table td:last-child,
+.instructor-recruitment-detail-modal__recruitment-table td:nth-child(4) {
+  border-right: none;
+}
+
+.instructor-recruitment-detail-modal__info-table tr:last-child th,
+.instructor-recruitment-detail-modal__info-table tr:last-child td,
+.instructor-recruitment-detail-modal__recruitment-table tr:last-child th,
+.instructor-recruitment-detail-modal__recruitment-table tr:last-child td {
+  border-bottom: none;
+}
+
+.instructor-recruitment-detail-modal__info-table th {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  height: 48px;
+  min-height: 48px;
+  background: #EDF0F2;
+  color: var(--default-BK, #3D3D3D);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  border-right: 1px solid #D9D9D9;
+  border-bottom: 1px solid #D9D9D9;
+}
+
+.instructor-recruitment-detail-modal__info-table td {
+  color: var(--color-text-primary, #262626);
+  background: var(--color-bg-base, #fff);
+  text-align: left;
+  width: 332px;
+  min-width: 332px;
+  max-width: 332px;
+  height: 48px;
+  min-height: 48px;
+}
+
+.instructor-recruitment-detail-modal__info-table-row-full th {
+  width: 160px;
+  min-width: 160px;
+  height: 48px;
+  min-height: 48px;
+}
+
+.instructor-recruitment-detail-modal__info-table-row-full td {
+  min-width: 0;
+}
+
+.instructor-recruitment-detail-modal__recruitment-table th {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  height: 54px;
+  min-height: 54px;
+  background: #EDF0F2;
+  color: var(--default-BK, #3D3D3D);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.instructor-recruitment-detail-modal__recruitment-table td {
+  width: 470px;
+  min-width: 470px;
+  height: 54px;
+  min-height: 54px;
+  color: var(--color-text-primary, #262626);
+  background: var(--color-bg-base, #fff);
+  text-align: left;
+}
+
+.instructor-recruitment-detail-modal__recruitment-count {
+  font-weight: 700;
+}
+
+/* 섹션 3: 강의 신청 강사 목록 */
+.instructor-recruitment-detail-modal__section--table {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-recruitment-detail-modal__table-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.instructor-recruitment-detail-modal__table-title {
+  color: var(--default-BK, #3D3D3D);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.instructor-recruitment-detail-modal__table-description {
+  font-size: var(--font-size-14);
+  color: var(--color-text-secondary);
+}
+
+.instructor-recruitment-detail-modal__section--table .instructor-recruitment-detail-modal__table-wrap {
+  overflow: visible;
+}
+
+.instructor-recruitment-detail-modal__table .ant-table {
+  font-size: var(--font-size-14);
+}
+
+.instructor-recruitment-detail-modal__table .ant-table-thead > tr > th {
+  height: 57px;
+  min-height: 57px;
+  padding: 12px 16px;
+  background: #EDF0F2;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-label, #262626);
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid var(--color-border-light);
+}
+
+.instructor-recruitment-detail-modal__table .ant-table-thead > tr > th:last-child {
+  border-right: none;
+}
+
+.instructor-recruitment-detail-modal__table .ant-table-tbody > tr > td {
+  height: 57px;
+  min-height: 57px;
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.instructor-recruitment-detail-modal__table .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.instructor-recruitment-detail-modal__table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.instructor-recruitment-detail-modal__table .ant-table-tbody > tr:nth-child(even) > td {
+  background: #fafafa;
+}
+
+.instructor-recruitment-detail-modal__table .ant-table-tbody > tr:nth-child(even):hover > td {
+  background: #f0f0f0 !important;
+}
+
+/* 결재 현황 드롭다운: 배지 클릭 시 드롭다운, 행 클릭 이벤트와 분리 */
+.instructor-recruitment-detail-modal__approval-dropdown-cell {
+  position: relative;
+  z-index: 1;
+}
+
+.instructor-recruitment-detail-modal__approval-dropdown-trigger {
+  cursor: pointer;
+  display: inline-block;
+}
