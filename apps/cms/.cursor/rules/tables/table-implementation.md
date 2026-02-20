@@ -172,6 +172,7 @@ const columns: ColumnsType<MyRow> = useMemo(
 
 - **TealHeaderModal** 사용 시, 푸터(닫기 버튼) 위에 **30px 여백**이 있도록 이미 공통 스타일 적용됨 (`teal-header-modal.css` → `.teal-header-modal__footer` padding-top: 30px). 테이블이 스크롤되어도 닫기 버튼과 겹치지 않습니다.
 - 모달 내 테이블은 **체크박스 열 48px** 사용 (school-detail-modal 참고).
+- **모달 내 디바이더**: 디바이더가 쓰인 곳은 **양옆 gap 12px**로 통일한다. flex 컨테이너면 `gap: 12px`(또는 `var(--spacing-12)`), 또는 디바이더에 `margin: 0 12px` 적용.
 
 ---
 
@@ -199,7 +200,39 @@ const columns: ColumnsType<MyRow> = useMemo(
 
 ---
 
-## 10. 체크리스트 (새 테이블 구현 시)
+## 10. 모달 내 기본정보·상세 테이블(native table) 정량 스펙
+
+강사진 추가 모달, 강의 신청 강사 상세 모달 등 **모달 내 기본정보/상세용 native `<table>`** 에서 공통으로 적용하는 정량화된 사이즈 룰입니다.
+
+### 10.1 디바이더 갭 (모달 내 공통)
+
+- **모달 내 디바이더가 쓰인 곳은 양옆 gap 12px**로 통일.
+- **세로 디바이더**로 좌/우 블록을 구분할 때: **디바이더 양옆 갭 12px**.
+- **적용 방법**:
+  - **flex 컨테이너**: 자식에 디바이더가 포함된 경우 `gap: 12px`(또는 `var(--spacing-12)`) 사용.
+  - **또는** 디바이더 요소에 `margin: 0 12px` 적용.
+  - **native table**에서: 디바이더 **좌측** 셀(값 셀) `padding-right: 12px`, **우측** 셀(라벨 셀) `border-left: 1px solid var(--color-border-secondary, #e8e8e8)` + `padding-left: 12px`.
+
+### 10.2 tr / td 사이즈
+
+| 구분 | 크기 | 비고 |
+|------|------|------|
+| **tr 높이** | **48px** | 행 높이 통일 |
+| **값 셀(데이터 영역)** | **353px × 48px** | 한줄소개 등 전체 너비 행 제외 |
+| **라벨 셀(순위·행 라벨)** | **180px × 48px** | 희망 배정 학교 순위 열, 기본정보 테이블 주소/정산 계좌 등 row-label |
+| **성명 셀(rowSpan 3)** | 높이 **144px** (48×3) | 한글/한자/영문 3행 대응 |
+
+- 한줄소개처럼 **한 행 전체를 쓰는 셀**은 353×48 적용 대상에서 제외하고, 필요 시 `vertical-align: top`, `max-height` 등으로 처리.
+
+### 10.3 참고 컴포넌트
+
+- **기본정보 테이블 구조**: `features/program/ui/add-instructor-modal.tsx` (성명 rowSpan 3 + 한글/한자/영문 3행)
+- **상세 조회·디바이더·353×48 적용**: `features/program/ui/applicant-instructor-detail-modal.tsx` / `.css`
+- **희망 배정 학교 테이블**: 동일 모달 내 순위 180×48, 학교 셀 353×48, tr 48px
+
+---
+
+## 11. 체크리스트 (새 테이블 구현 시)
 
 - [ ] 행 타입 정의 후 `ColumnsType<Row>` 사용
 - [ ] 컬럼에 `width`, `align: 'center'`, 필요 시 `ellipsis`/`render` 적용
@@ -208,3 +241,4 @@ const columns: ColumnsType<MyRow> = useMemo(
 - [ ] 테이블 상단에 제목·총 N건·액션 있으면 해당 섹션 스타일 통일
 - [ ] 필터가 있으면 조회 버튼 시에만 적용되도록 입력/적용 상태 분리
 - [ ] 모달 내 테이블은 푸터 여백 확인(이미 30px 적용됨)
+- [ ] **모달 내 기본정보/상세 native table** 사용 시: 디바이더 갭 12px(양옆), tr 높이 48px, 값 셀 353×48, 라벨/순위 셀 180×48 적용 ([§10 모달 내 기본정보·상세 테이블 정량 스펙](#10-모달-내-기본정보상세-테이블native-table-정량-스펙) 참고)
