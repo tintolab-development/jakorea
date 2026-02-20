@@ -21,17 +21,17 @@ import type {
 } from '../model/school-detail-types'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 
-const TEACHER_PHONES = ['010-0000-0000', '010-1234-5678', '010-9876-5432']
-const TEACHER_EMAILS = ['tinto@naver.com', 'teacher@school.kr', 'contact@edu.kr']
+const TEACHER_PHONES = ['010-3927-5140', '010-5218-3674', '010-7483-2915']
+const TEACHER_EMAILS = ['teacher@school.kr', 'contact@edu.kr', 'admin@school.kr']
 const VENUES = ['교육 진행 대상 학급의 교실', '학교 강당', '별도 예정']
 const MEAL_NOTICES = [
-  '급식실에서 식사 가능하며 해당 계좌로 인당 4,500원씩 입금 부탁드립니다. OO은행) 100-1000-10000101 김틴토',
+  '급식실에서 식사 가능하며 해당 계좌로 인당 4,500원씩 입금 부탁드립니다. 농협) 352-1846-9203-71 홍채원',
   '미제공',
 ]
 const WAITING_ROOMS = ['교내 1층 귀빈실', '2층 회의실', '없음']
 const TEXTBOOK_NAMES = ["초등 5학년용 '우리 나라'", "초등 6학년용 '경제와 생활'", '교재 미정']
-const INSTRUCTOR_PHONES = ['010-1234-5678', '010-5678-9012', '010-3456-7890']
-const INSTRUCTOR_EMAILS = ['tinto@naver.com', 'tinto@naver.com', 'tinto@naver.com']
+const INSTRUCTOR_PHONES = ['010-2847-5913', '010-4523-9016', '010-6234-7805']
+const INSTRUCTOR_EMAILS = ['instructor0@example.com', 'instructor1@example.com', 'instructor2@example.com']
 
 function hash(s: string): number {
   let h = 0
@@ -112,23 +112,39 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
   }
 }
 
+const STUDENT_SURNAMES = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신']
+const STUDENT_GIVEN_NAMES = [
+  '민준', '서연', '지우', '예린', '도현', '수아', '현우', '지은', '태민', '유리',
+  '가은', '세훈', '다은', '민철', '채원', '준혁', '지원', '수진', '현아', '태양',
+  '아름', '성민', '나윤', '재원', '소희', '동현', '예진', '승호', '미래', '건우',
+]
+const STUDENT_CONTACTS = [
+  '010-2847-5913', '010-3156-8274', '010-4523-9016', '010-5781-2349',
+  '010-6234-7805', '010-7845-1263', '010-8192-3746', '010-9037-6182',
+]
+const STUDENT_EMAILS = [
+  'student01@example.com', 'student02@example.com', 'student03@example.com',
+  'student04@example.com', 'student05@example.com', 'student06@example.com',
+]
+
 /**
  * 해당 학교 학생 명단 Mock (총 인원 수만큼 생성)
  */
 export function getSchoolDetailStudents(schoolId: string, count: number): SchoolDetailStudentRow[] {
   const seed = hash(schoolId)
-  const names = ['김학생', '이학생', '박학생', '최학생', '정학생', '강학생', '조학생', '윤학생']
   const grades = ['1반', '2반', '3반', '4반']
   const rows: SchoolDetailStudentRow[] = []
   for (let i = 0; i < count; i++) {
     const n = count - i
+    const surname = pick(STUDENT_SURNAMES, seed + i)
+    const givenName = pick(STUDENT_GIVEN_NAMES, seed + i * 3 + 7)
     rows.push({
       id: `student-${schoolId}-${i + 1}`,
       no: n,
-      name: `${pick(names, seed + i)}ㅇㅇ`,
+      name: `${surname}${givenName}`,
       gradeClass: pick(grades, seed + i),
-      contact: i % 3 !== 0 ? '010-1234-5678' : undefined,
-      email: i % 2 === 0 ? 'tinto@naver.com' : undefined,
+      contact: i % 3 !== 0 ? pick(STUDENT_CONTACTS, seed + i) : undefined,
+      email: i % 2 === 0 ? pick(STUDENT_EMAILS, seed + i) : undefined,
       lectureAttendance: `${i % 5}/${4}`,
       hasAssignmentSubmission: i % 4 !== 0,
       notes: i % 5 === 0 ? '비고' : undefined,
