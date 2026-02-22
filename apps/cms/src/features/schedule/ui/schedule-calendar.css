@@ -12,7 +12,7 @@
 .schedule-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-2);
     flex: 1;
     min-width: 0;
 }
@@ -58,7 +58,7 @@
 .schedule-item:hover {
     background-color: var(--color-matching-hover);
     border-color: var(--color-matching-hover-border);
-    transform: translateX(2px);
+    transform: translateX(var(--spacing-2));
     box-shadow: var(--shadow-hover);
 }
 
@@ -76,7 +76,7 @@
     flex-shrink: 0;
     font-weight: var(--font-weight-600);
     color: var(--color-text-body);
-    min-width: 40px;
+    min-width: var(--spacing-48, 40px);
 }
 
 .schedule-item-title {

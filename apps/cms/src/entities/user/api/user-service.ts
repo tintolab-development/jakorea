@@ -15,6 +15,8 @@ export async function getUsers(filters?: {
   role?: UserRole
   search?: string
   isActive?: boolean
+  createdAtFrom?: string
+  createdAtTo?: string
 }): Promise<Omit<User, 'password'>[]> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -40,6 +42,16 @@ export async function getUsers(filters?: {
     users = users.filter(user => user.isActive === filters.isActive)
   }
 
+  // 가입일 필터
+  if (filters?.createdAtFrom || filters?.createdAtTo) {
+    users = users.filter(user => {
+      const created = user.createdAt ? new Date(user.createdAt).toISOString().slice(0, 10) : ''
+      if (filters.createdAtFrom && created < filters.createdAtFrom) return false
+      if (filters.createdAtTo && created > filters.createdAtTo) return false
+      return true
+    })
+  }
+
   // 비밀번호 제외하고 반환, participationHistory 계산
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return users.map(({ password, ...user }) => {
@@ -52,6 +64,40 @@ export async function getUsers(filters?: {
       participationHistory: userHistories.length,
     }
   })
+}
+
+export interface GetUsersPageParams {
+  role?: UserRole
+  search?: string
+  isActive?: boolean
+  createdAtFrom?: string
+  createdAtTo?: string
+}
+
+export interface GetUsersPageResult {
+  users: Omit<User, 'password'>[]
+  total: number
+  hasMore: boolean
+}
+
+const PAGE_SIZE = 15
+
+/**
+ * 사용자 목록 페이지 조회 (무한 스크롤용)
+ * 필터 적용 후 offset/limit 슬라이스 반환
+ */
+export async function getUsersPage(
+  filters: GetUsersPageParams | undefined,
+  page: number
+): Promise<GetUsersPageResult> {
+  const all = await getUsers(filters)
+  const offset = page * PAGE_SIZE
+  const users = all.slice(offset, offset + PAGE_SIZE)
+  return {
+    users,
+    total: all.length,
+    hasMore: offset + users.length < all.length,
+  }
 }
 
 /**

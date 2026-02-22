@@ -5,7 +5,7 @@
 /* ===== 메인 컨테이너 (3단: 좌 패널 | 메인 캘린더 | 우 패널) ===== */
 .program-calendar-view {
     display: flex;
-    gap: 24px;
+    gap: var(--spacing-24);
     width: 100%;
     min-height: 600px;
 }
@@ -18,7 +18,7 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--spacing-16);
     align-self: stretch;
 }
 
@@ -28,8 +28,8 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 16px;
+    gap: var(--spacing-16);
+    padding: var(--spacing-16);
     background: var(--color-bg-base);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-8);
@@ -66,33 +66,33 @@
     align-items: center;
     margin-right: 0;
     min-height: var(--filter-control-height, 44px);
-    padding: 0 2px;
+    padding: 0 var(--spacing-2);
 }
 
 .program-calendar-left__filter-item .ant-checkbox + span {
-    padding-left: 8px;
+    padding-left: var(--spacing-8);
     color: var(--color-text-label);
 }
 
 /* 사업분야 체크박스 색상 (스크린샷: 항목별 상이) */
 .program-calendar-left__filter-item--cyan .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: #21C6AD;
-    border-color: #21C6AD;
+    background-color: var(--color-filter-cyan);
+    border-color: var(--color-filter-cyan);
 }
 
 .program-calendar-left__filter-item--red .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: #E04F62;
-    border-color: #E04F62;
+    background-color: var(--color-filter-red);
+    border-color: var(--color-filter-red);
 }
 
 .program-calendar-left__filter-item--purple .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: #8C56B2;
-    border-color: #8C56B2;
+    background-color: var(--color-filter-purple);
+    border-color: var(--color-filter-purple);
 }
 
 .program-calendar-left__filter-item--green .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: #4CAF50;
-    border-color: #4CAF50;
+    background-color: var(--color-filter-green);
+    border-color: var(--color-filter-green);
 }
 
 .program-calendar-view--loading {
@@ -109,7 +109,7 @@
     background: var(--color-bg-base);
     border-radius: var(--radius-8);
     border: 1px solid var(--color-border-light);
-    padding: 16px;
+    padding: var(--spacing-16);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -127,7 +127,7 @@
 .program-calendar-header-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--spacing-16);
 }
 
 .program-calendar-header-title {
@@ -542,7 +542,7 @@
     background: var(--color-bg-base);
     border-radius: var(--radius-8);
     border: 1px solid var(--color-border-light);
-    padding: 16px;
+    padding: var(--spacing-16);
     display: flex;
     flex-direction: column;
     min-height: 300px;

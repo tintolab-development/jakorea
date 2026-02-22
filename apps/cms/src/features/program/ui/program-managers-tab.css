@@ -35,7 +35,7 @@
     align-items: center;
     flex-wrap: nowrap;
     min-width: 0;
-    gap: 16px;
+    gap: var(--spacing-16);
 }
 
 .program-managers-tab__filter-row>.ant-col {
@@ -51,7 +51,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-6);
     height: var(--filter-control-height, 44px);
     min-height: var(--filter-control-height, 44px);
     overflow: visible;
@@ -76,7 +76,7 @@
 
 .program-managers-tab__filter-col .ant-select {
     width: var(--filter-control-width, 180px) !important;
-    min-width: 120px;
+    min-width: var(--filter-control-min-width);
     height: var(--filter-control-height, 44px) !important;
 }
 
@@ -86,20 +86,20 @@
     display: flex !important;
     align-items: center !important;
     box-sizing: border-box !important;
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 4px !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-4) !important;
 }
 
 .program-managers-tab__filters .labeled-search-input__input {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 4px !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-4) !important;
     box-shadow: none !important;
 }
 
 .program-managers-tab__filters .labeled-search-input__input:focus-within,
 .program-managers-tab__filter-col .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
     border-color: var(--color-tab-active) !important;
-    box-shadow: 0 0 0 1px rgba(74, 212, 204, 0.2) !important;
+    box-shadow: var(--shadow-focus-teal) !important;
 }
 
 /* 담당자명 검색: 다른 필터와 동일 너비(180px) */
@@ -111,7 +111,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: var(--spacing-6);
     height: var(--filter-control-height, 44px);
 }
 
@@ -127,7 +127,7 @@
 .program-managers-tab__filters .labeled-search-input__input {
     flex: 0 0 auto;
     width: var(--filter-control-width, 180px) !important;
-    min-width: 120px;
+    min-width: var(--filter-control-min-width);
     height: var(--filter-control-height, 44px) !important;
     min-height: var(--filter-control-height, 44px) !important;
     display: inline-flex !important;
@@ -203,9 +203,9 @@
 
 .program-managers-tab__table .ant-table-thead>tr>th:first-child,
 .program-managers-tab__table .ant-table-tbody>tr>td:first-child {
-    width: 40px;
-    min-width: 40px;
-    max-width: 40px;
+    width: var(--spacing-48);
+    min-width: var(--spacing-48);
+    max-width: var(--spacing-48);
     padding-left: var(--spacing-8);
     padding-right: var(--spacing-8);
 }

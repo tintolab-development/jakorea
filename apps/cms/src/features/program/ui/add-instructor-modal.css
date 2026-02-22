@@ -17,7 +17,7 @@
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--spacing-32);
 }
 
 .add-instructor-modal__form .ant-form-item-label > label.ant-form-item-required::before {
@@ -40,7 +40,7 @@
   font-style: normal;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__form .ant-input,
@@ -107,7 +107,7 @@
 
 .add-instructor-modal__form .ant-select-selection-placeholder,
 .add-instructor-modal__form .ant-picker .ant-picker-input::placeholder {
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 /* 테이블용 네이티브 input 전용: 220×40, span 없이 input만 스타일링 */
@@ -115,14 +115,14 @@
   display: block;
   width: 220px;
   height: 40px;
-  padding: 4px 11px;
-  font-family: 'Pretendard', sans-serif;
-  font-size: 15px;
+  padding: var(--spacing-4) 11px;
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: var(--font-size-15);
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  color: #85969d;
-  background: #fff;
+  color: var(--color-input-placeholder);
+  background: var(--color-bg-base);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-4);
   box-sizing: border-box;
@@ -135,9 +135,9 @@
   width: 220px;
   height: 40px;
   padding: 0 14px 0 16px;
-  border-radius: 6px;
-  border: 1px solid #c4cdd1;
-  background: #fff;
+  border-radius: var(--radius-6);
+  border: 1px solid var(--color-border-input-secondary);
+  background: var(--color-bg-base);
   box-sizing: border-box;
   display: block;
 }
@@ -156,7 +156,7 @@
 }
 
 .add-instructor-modal__table-input::placeholder {
-  color: #85969d;
+  color: var(--color-input-placeholder);
 }
 
 .add-instructor-modal__table-input:hover {
@@ -175,7 +175,7 @@
 
 .add-instructor-modal__section-title {
   margin: 0 0 var(--spacing-12);
-  font-size: 16px;
+  font-size: var(--font-size-16);
   font-weight: var(--font-weight-600);
   color: var(--color-text-primary);
 }
@@ -274,8 +274,8 @@
   min-height: 256px;
   aspect-ratio: 3 / 4;
   border: none;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-8);
+  background: var(--color-overlay-dark-04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -286,11 +286,11 @@
 }
 
 .add-instructor-modal__profile-placeholder:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--color-overlay-dark-06);
 }
 
 .add-instructor-modal__profile-icon {
-  font-size: 32px;
+  font-size: var(--font-size-32);
   color: var(--color-text-tertiary);
 }
 
@@ -300,7 +300,7 @@
   height: 100%;
   min-width: 192px;
   min-height: 256px;
-  border-radius: 8px;
+  border-radius: var(--radius-8);
   overflow: hidden;
   display: block;
   cursor: pointer;
@@ -321,8 +321,8 @@
   min-width: 1128px;
   flex-shrink: 0;
   overflow: hidden;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
-  border-radius: 6px;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
   background: var(--color-bg-base);
   box-sizing: border-box;
 }
@@ -342,10 +342,10 @@
 }
 
 .add-instructor-modal__basic-table tbody tr > td {
-  padding: 4px 16px;
+  padding: var(--spacing-4) var(--spacing-16);
   text-align: left;
   vertical-align: middle;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border: 1px solid var(--color-border-skeleton);
   box-sizing: border-box;
   display: table-cell;
   height: 64px;
@@ -410,10 +410,10 @@
   min-width: 120px !important;
   max-width: 120px !important;
   padding: 0 16px;
-  background: #fafafa;
-  font-size: 14px;
+  background: var(--color-bg-secondary);
+  font-size: var(--font-size-14);
   font-weight: 700;
-  color: var(--color-text-label, #262626);
+  color: var(--color-text-label);
   text-align: center;
   vertical-align: middle;
 }
@@ -428,7 +428,7 @@
 
 .add-instructor-modal__basic-table-label {
   white-space: nowrap;
-  font-size: 16px;
+  font-size: var(--font-size-16);
 }
 
 .add-instructor-modal__basic-table-label--inline {
@@ -440,8 +440,8 @@
 
 /* 값/입력 셀: 흰 배경 (assignment-submission-modal, applicant-instructor-detail-modal 스펙) */
 .add-instructor-modal__basic-table-cell--input {
-  background: #fff;
-  padding: 4px 16px;
+  background: var(--color-bg-base);
+  padding: var(--spacing-4) var(--spacing-16);
 }
 
 .add-instructor-modal__basic-table-cell--input .ant-form-item {
@@ -515,7 +515,7 @@
   height: 13px;
   background: var(--color-border);
   flex-shrink: 0;
-  margin: 0 12px;
+  margin: 0 var(--spacing-12);
 }
 
 /* 정산 계좌 정보: Select·input 세로 정렬 통일 (높이 40px, baseline 맞춤) */
@@ -523,7 +523,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-12);
   width: 100%;
   min-width: 0;
 }
@@ -574,7 +574,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-8);
   width: 100%;
   min-width: 0;
   height: 40px;
@@ -607,8 +607,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
-  font-size: 16px;
+  gap: var(--spacing-12);
+  font-size: var(--font-size-16);
 }
 
 .add-instructor-modal__military-radio-group .ant-radio-wrapper {
@@ -620,7 +620,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-12);
   width: 100%;
   min-width: 0;
 }
@@ -657,7 +657,7 @@
   font-style: normal;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
   border-radius: var(--radius-4);
   box-sizing: border-box;
 }
@@ -667,7 +667,7 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__basic-table-cell--input .ant-select .ant-select-selector {
@@ -676,14 +676,14 @@
 }
 
 .add-instructor-modal__basic-table-cell--input .ant-select-selection-placeholder {
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 /* 기본정보 섹션 Select·DatePicker도 input과 동일 테두리 (6px, #c4cdd1) */
 .add-instructor-modal__section--basic .ant-select-selector,
 .add-instructor-modal__section--basic .ant-picker {
   border-radius: 6px !important;
-  border-color: #c4cdd1 !important;
+  border-color: var(--color-border-input-secondary) !important;
 }
 
 /* 주소 검색: 아이콘 + input 한 묶음 220×40 */
@@ -693,7 +693,7 @@
   width: 220px;
   height: 40px;
   padding: 0 11px;
-  background: #fff;
+  background: var(--color-bg-base);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-4);
   box-sizing: border-box;
@@ -701,16 +701,16 @@
 
 .add-instructor-modal__section--basic .add-instructor-modal__table-input-wrap--with-prefix {
   padding: 0 14px 0 16px;
-  gap: 8px;
-  border-radius: 6px;
-  border-color: #c4cdd1;
+  gap: var(--spacing-8);
+  border-radius: var(--radius-6);
+  border-color: var(--color-border-input-secondary);
 }
 
 .add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input-prefix {
   flex-shrink: 0;
-  margin-right: 8px;
+  margin-right: var(--spacing-8);
   color: var(--color-text-tertiary);
-  font-size: 14px;
+  font-size: var(--font-size-14);
 }
 
 .add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input {
@@ -769,7 +769,7 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
   background: #fff !important;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-4);
@@ -792,8 +792,8 @@
 }
 
 .add-instructor-modal__section--basic .add-instructor-modal__native-select {
-  border-radius: 6px;
-  border-color: #c4cdd1;
+  border-radius: var(--radius-6);
+  border-color: var(--color-border-input-secondary);
 }
 
 /* 네이티브 select 너비 클래스 (학력사항 등) */
@@ -821,8 +821,8 @@
 .add-instructor-modal__education-table-wrap {
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
-  border-radius: 6px;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
   background: var(--color-bg-base);
   box-sizing: border-box;
   margin-bottom: var(--spacing-12);
@@ -941,8 +941,8 @@
 .add-instructor-modal__career-table-wrap {
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
-  border-radius: 6px;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
   background: var(--color-bg-base);
   box-sizing: border-box;
 }
@@ -990,7 +990,7 @@
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-12);
   width: 100%;
 }
 
@@ -1052,12 +1052,12 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: normal !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-input::placeholder,
 .add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-picker .ant-picker-input::placeholder {
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 /* 경력 row 디바이더: 1×13, 양옆 갭 12px */
@@ -1072,27 +1072,27 @@
 /* 삭제 아이콘: 재직중과 12px 갭, 래퍼 패딩 제외한 가장 오른쪽 끝에 위치 (margin-left: auto) */
 .add-instructor-modal__career-row-inputs .add-instructor-modal__remove-row--icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-32);
+  height: var(--spacing-32);
   margin-left: auto;
   margin-right: 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--font-size-16);
 }
 
 .add-instructor-modal__remove-row--icon:hover {
-  color: var(--color-error, #ff4d4f);
+  color: var(--color-required-mark);
 }
 
 /* 자격 및 면허 테이블: 경력 상세와 동일 스타일(테이블 래퍼·행 높이·라벨/입력 열) */
 .add-instructor-modal__qualification-table-wrap {
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
-  border-radius: 6px;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
   background: var(--color-bg-base);
   box-sizing: border-box;
 }
@@ -1134,7 +1134,7 @@
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-12);
   width: 100%;
 }
 
@@ -1175,12 +1175,12 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: normal !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-input::placeholder,
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker .ant-picker-input::placeholder {
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__qualification-divider {
@@ -1193,23 +1193,23 @@
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__remove-row--icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-32);
+  height: var(--spacing-32);
   margin-left: auto;
   margin-right: 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--font-size-16);
 }
 
 /* JA Korea 활동 경험 테이블: 자격 및 면허와 동일 스타일 */
 .add-instructor-modal__ja-activity-table-wrap {
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
-  border-radius: 6px;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
   background: var(--color-bg-base);
   box-sizing: border-box;
 }
@@ -1247,7 +1247,7 @@
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-12);
   width: 100%;
 }
 
@@ -1287,12 +1287,12 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: normal !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-input::placeholder,
 .add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker .ant-picker-input::placeholder {
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__ja-activity-divider {
@@ -1311,23 +1311,23 @@
 
 .add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__remove-row--icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-32);
+  height: var(--spacing-32);
   margin-left: auto;
   margin-right: 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--font-size-16);
 }
 
 /* 수상 및 수료 내역 테이블: 자격 및 면허와 동일 스타일(220×40 인풋, 구분선, 맨 끝 삭제) */
 .add-instructor-modal__award-table-wrap {
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
-  border-radius: 6px;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
   background: var(--color-bg-base);
   box-sizing: border-box;
 }
@@ -1369,7 +1369,7 @@
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-12);
   width: 100%;
 }
 
@@ -1409,12 +1409,12 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: normal !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-input::placeholder,
 .add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker .ant-picker-input::placeholder {
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__award-divider {
@@ -1427,15 +1427,15 @@
 
 .add-instructor-modal__award-row-inputs .add-instructor-modal__remove-row--icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-32);
+  height: var(--spacing-32);
   margin-left: auto;
   margin-right: 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--font-size-16);
 }
 
 .add-instructor-modal__close-x-mask {
@@ -1505,7 +1505,7 @@
   border: none;
   background: transparent;
   color: var(--color-text-tertiary);
-  font-size: 18px;
+  font-size: var(--font-size-18);
   line-height: 1;
   cursor: pointer;
   border-radius: var(--radius-4);
@@ -1559,11 +1559,11 @@
 .add-instructor-modal__free-writing-description {
   margin: 0;
   font-family: 'Pretendard', sans-serif;
-  font-size: 14px;
+  font-size: var(--font-size-14);
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
-  color: #666666;
+  color: var(--color-text-body);
   flex: 1;
   min-width: 0;
 }
@@ -1584,15 +1584,15 @@
 
 .add-instructor-modal__free-writing-question-bar {
   padding: 12px 16px;
-  font-family: 'Pretendard', sans-serif;
-  font-size: 15px;
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: var(--font-size-15);
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
   color: #333333;
   background: #f5f7f8;
   border-radius: 6px 6px 0 0;
-  border: 1px solid #c4cdd1;
+  border: 1px solid var(--color-border-input-secondary);
   border-bottom: none;
   box-sizing: border-box;
 }
@@ -1608,7 +1608,7 @@
   font-style: normal !important;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
   background: #fff !important;
   border: 1px solid #c4cdd1 !important;
   border-radius: 0 0 6px 6px !important;
@@ -1626,7 +1626,7 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
   background: #fff !important;
   border: 1px solid #c4cdd1 !important;
   border-radius: 0 0 6px 6px !important;
@@ -1634,7 +1634,7 @@
 
 .add-instructor-modal__free-writing-textarea::placeholder,
 .add-instructor-modal__free-writing-textarea .ant-input::placeholder {
-  color: #85969d !important;
+  color: var(--color-input-placeholder) !important;
 }
 
 .add-instructor-modal__free-writing-textarea:hover,

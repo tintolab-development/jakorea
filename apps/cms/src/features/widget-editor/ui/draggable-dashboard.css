@@ -51,10 +51,10 @@
     background-image: none;
 }
 
-/* 드래그 시 따라오는 placeholder(딤): 회색 alpha 0.1, 둥근 모서리 — 값 고정 예외 */
+/* 드래그 시 따라오는 placeholder(딤): react-grid-layout 고정값 예외 */
 .draggable-dashboard .react-grid-item.react-grid-placeholder {
     background: rgba(80, 80, 80, 0.1) !important;
-    border-radius: 10px;
+    border-radius: var(--radius-8);
     opacity: 1;
     z-index: 2;
 }

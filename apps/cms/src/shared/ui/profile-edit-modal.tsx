@@ -5,7 +5,7 @@
 import { Modal, Form, Input, Button, message, Divider, Typography, Row, Col, Space } from 'antd'
 import { SaveOutlined, HomeOutlined, BankOutlined, InfoCircleOutlined, ReadOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import type { User } from '@/types/user'
 import { MESSAGES } from '@/shared/constants'
 
@@ -33,7 +33,7 @@ interface ProfileEditModalProps {
 }
 
 export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModalProps) {
-  const { user, updateUser } = useAuthStore()
+  const { user, updateUser } = useAuth()
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
 

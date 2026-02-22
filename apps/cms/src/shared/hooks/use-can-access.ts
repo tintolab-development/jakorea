@@ -4,7 +4,7 @@
  */
 
 import { useMemo } from 'react'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { hasRole, hasAnyRole, hasAllRoles } from '@/shared/utils/permissions'
 import { canAccessPath } from '@/shared/config/menu-config'
 import type { UserRole } from '@/types/user'
@@ -15,7 +15,7 @@ import type { UserRole } from '@/types/user'
  * @returns 접근 가능 여부
  */
 export function useCanAccess(requiredRole: UserRole): boolean {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   return useMemo(() => {
     return hasRole(user, requiredRole)
@@ -28,7 +28,7 @@ export function useCanAccess(requiredRole: UserRole): boolean {
  * @returns 접근 가능 여부
  */
 export function useCanAccessAny(requiredRoles: UserRole[]): boolean {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   return useMemo(() => {
     return hasAnyRole(user, requiredRoles)
@@ -41,7 +41,7 @@ export function useCanAccessAny(requiredRoles: UserRole[]): boolean {
  * @returns 접근 가능 여부
  */
 export function useCanAccessAll(requiredRoles: UserRole[]): boolean {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   return useMemo(() => {
     return hasAllRoles(user, requiredRoles)
@@ -54,7 +54,7 @@ export function useCanAccessAll(requiredRoles: UserRole[]): boolean {
  * @returns 접근 가능 여부
  */
 export function useCanAccessPath(path: string): boolean {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   return useMemo(() => {
     return canAccessPath(path, user?.role || null)
@@ -68,7 +68,7 @@ export function useCanAccessPath(path: string): boolean {
  * @throws 권한이 없을 경우 에러
  */
 export function useRequirePermission(requiredRole: UserRole): void {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   if (!hasRole(user, requiredRole)) {
     throw new Error(`이 작업을 수행하려면 ${requiredRole} 권한이 필요합니다.`)

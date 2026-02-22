@@ -5,7 +5,7 @@
 
 import { Form } from 'antd'
 import type { ComponentProps } from 'react'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { hasAnyRole } from '@/shared/utils/permissions'
 import type { UserRole } from '@/types/user'
 import { useMemo } from 'react'
@@ -39,7 +39,7 @@ export function PermissionField({
   children,
   ...props
 }: PermissionFieldProps) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   // 권한 확인
   const hasPermission = useMemo(() => {

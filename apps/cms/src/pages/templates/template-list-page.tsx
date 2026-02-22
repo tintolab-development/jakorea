@@ -20,23 +20,23 @@ export function TemplateListPage() {
     () => [
       { key: 'program-forms', label: '프로그램 양식', path: '/templates/program-forms' },
       { key: 'files', label: '파일 양식', path: '/templates/file-forms' },
-      { key: 'sms', label: '문자 양식', path: '/templates/kakao-alimtalk' },
+      { key: 'sms', label: '문자 양식', path: '/templates/sms' },
       { key: 'email', label: '메일 양식', path: '/templates/email' },
     ],
     []
   )
 
-  // 파일 양식 하위 페이지인지 확인
+  // 파일 양식 페이지 여부 (단일 경로 /templates/file-forms, 기존 /templates/files 리다이렉트 포함)
   const isFileFormsPage = useMemo(() => {
     const p = location.pathname
-    return p.includes('/templates/file-forms') || p.includes('/templates/files')
+    return p === '/templates/file-forms' || p.startsWith('/templates/file-forms/') || p === '/templates/files'
   }, [location.pathname])
 
   // path 기반 활성 탭 계산
   const activeFromPath = useMemo(() => {
     const p = location.pathname
     if (p.includes('/templates/program-forms')) return 'program-forms'
-    if (p.includes('/templates/kakao-alimtalk') || p.includes('/templates/sms')) return 'sms'
+    if (p.includes('/templates/sms') || p.includes('/templates/kakao-alimtalk')) return 'sms'
     if (p.includes('/templates/email')) return 'email'
     if (p.includes('/templates/file-forms') || p.includes('/templates/files')) return 'files'
     return 'files'

@@ -5,14 +5,14 @@
 
 import { useEffect, useRef } from 'react'
 import React from 'react'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { Modal } from 'antd'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 
 const WARNING_TIME = 5 * 60 * 1000 // 5분 전 경고
 
 export function useSession() {
-  const { logout, expiresAt } = useAuthStore()
+  const { logout, expiresAt } = useAuth()
   const timeoutRef = useRef<number | null>(null)
   const warningRef = useRef<number | null>(null)
   const warningShownRef = useRef(false)

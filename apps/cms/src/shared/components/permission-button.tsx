@@ -6,7 +6,7 @@
 
 import { Button } from 'antd'
 import type { ComponentProps } from 'react'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { hasAnyRole, canPerformWriteAction, hasAdminLevelOrAbove } from '@/shared/utils/permissions'
 import type { UserRole, AdminLevel } from '@/types/user'
 
@@ -46,7 +46,7 @@ export function PermissionButton({
   disabled,
   ...props
 }: PermissionButtonProps) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   // 역할 체크
   const hasRolePermission = allowedRoles ? hasAnyRole(user, allowedRoles) : true // allowedRoles가 없으면 모든 권한 허용

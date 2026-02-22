@@ -16,7 +16,7 @@ import {
   getApplicationCountByProgram,
   getConfirmedRounds,
 } from '../lib/program-helpers'
-import { checkDuplicateApplication } from '@/shared/utils/duplicate-application-check'
+import { checkDuplicateApplication } from '@/features/application/lib/duplicate-application-check'
 
 interface UseProgramApplicationProps {
   program: Program | null

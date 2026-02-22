@@ -7,7 +7,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
-import { ProtectedRoute } from '@/shared/components/protected-route'
+import { ProtectedRoute } from '@/app/components/protected-route'
 import { Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './router.css'
@@ -47,7 +47,6 @@ import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
-import { Dashboard2 } from '@/pages/dashboard2'
 const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
@@ -262,10 +261,6 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <IndexPage />,
-      },
-      {
-        path: 'index2',
-        element: <Dashboard2 />,
       },
       {
         path: 'my-learning',
@@ -563,52 +558,55 @@ export const router = createBrowserRouter([
               },
             ],
           },
-          // 파일 양식
+          // 파일 양식 (단일 경로, 카테고리는 ?category= 쿼리로 관리)
           {
             path: 'file-forms',
             children: [
-              {
-                index: true,
-                element: <TemplateFilesPage />,
-              },
+              { index: true, element: <TemplateFilesPage /> },
+              // 기존 북마크/링크 호환: 하위 경로 → 쿼리 파라미터로 리다이렉트
               {
                 path: 'instructor-resume',
-                element: <TemplateFilesPage defaultCategory="instructor-resume" />,
+                element: <Navigate to="/templates/file-forms?category=instructor-resume" replace />,
               },
               {
                 path: 'lecture-report',
-                element: <TemplateFilesPage defaultCategory="lecture-report" />,
+                element: <Navigate to="/templates/file-forms?category=lecture-report" replace />,
               },
               {
                 path: 'education-plan',
-                element: <TemplateFilesPage defaultCategory="education-plan" />,
+                element: <Navigate to="/templates/file-forms?category=education-plan" replace />,
               },
               {
                 path: 'certificate',
-                element: <TemplateFilesPage defaultCategory="certificate" />,
+                element: <Navigate to="/templates/file-forms?category=certificate" replace />,
               },
               {
                 path: 'activity-confirmation',
-                element: <TemplateFilesPage defaultCategory="activity-confirmation" />,
+                element: <Navigate to="/templates/file-forms?category=activity-confirmation" replace />,
               },
               {
                 path: 'receipt',
-                element: <TemplateFilesPage defaultCategory="receipt" />,
+                element: <Navigate to="/templates/file-forms?category=receipt" replace />,
               },
               {
                 path: 'payment-statement',
-                element: <TemplateFilesPage defaultCategory="payment-statement" />,
+                element: <Navigate to="/templates/file-forms?category=payment-statement" replace />,
               },
               {
                 path: 'employment-certificate',
-                element: <TemplateFilesPage defaultCategory="employment-certificate" />,
+                element: <Navigate to="/templates/file-forms?category=employment-certificate" replace />,
               },
             ],
           },
-          // 카카오 알림톡 관리 (기존 SMS 페이지 연결)
+          // 문자(SMS) 양식 (persona: /templates/sms)
+          {
+            path: 'sms',
+            element: <TemplateSmsPage />,
+          },
+          // 기존 경로 호환: 카카오 알림톡 → sms로 리다이렉트
           {
             path: 'kakao-alimtalk',
-            element: <TemplateSmsPage />,
+            element: <Navigate to="/templates/sms" replace />,
           },
           // 메일 관리 (기존 email 페이지 연결)
           {
@@ -633,10 +631,6 @@ export const router = createBrowserRouter([
           {
             path: 'files',
             element: <Navigate to="file-forms" replace />,
-          },
-          {
-            path: 'sms',
-            element: <Navigate to="kakao-alimtalk" replace />,
           },
         ],
       },

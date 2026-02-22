@@ -7,7 +7,7 @@
 export type DndWidgetType = 'FULL' | 'TALL' | 'NORMAL'
 
 export const DND_WIDGET_TYPE_BY_KEY: Record<string, DndWidgetType> = {
-  // index2 / ADMIN 등에서 자주 쓰이는 위젯
+  // ADMIN 등에서 자주 쓰이는 위젯
   'notification-widget': 'TALL',
   'customer-inquiry-status-widget': 'FULL',
   'program-schedule-widget': 'TALL',

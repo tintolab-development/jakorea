@@ -11,7 +11,7 @@
 
 import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { getBreadcrumbByPath } from '@/shared/config/menu-config'
 import type { BreadcrumbItem } from '@/shared/config/menu-config'
 
@@ -21,7 +21,7 @@ export interface UseBreadcrumbReturn {
 
 export function useBreadcrumb(): UseBreadcrumbReturn {
   const location = useLocation()
-  const user = useAuthStore(s => s.user)
+  const { user } = useAuth()
   const role = user?.role ?? null
 
   const items = useMemo(

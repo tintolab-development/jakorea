@@ -1,12 +1,13 @@
 /**
  * 신청 폼 모달 컴포넌트
  * 프로그램 상세에서 신청하기 버튼 클릭 시 모달로 열리는 신청 폼
+ * FSD: features/application으로 이동 (shared는 features 미참조)
  */
 
 import { Modal } from 'antd'
 import { ApplicationForm } from '@/features/application/ui/application-form'
 import { useApplicationStore } from '@/features/application/model/application-store'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
 import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
@@ -27,17 +28,15 @@ export function ApplicationFormModal({
   onSuccess,
 }: ApplicationFormModalProps) {
   const { createApplication, loading } = useApplicationStore()
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   const handleSubmit = async (data: ApplicationFormData) => {
     try {
-      // 프로그램 ID 고정
       const applicationData: ApplicationFormData = {
         ...data,
-        programId, // 항상 현재 프로그램 ID로 고정
+        programId,
       }
 
-      // 로그인한 권한 기준으로 subjectType/subjectId를 강제 (사용자 입력 오염 방지)
       if (user?.role === 'INSTRUCTOR' && user?.instructorId) {
         applicationData.subjectType = 'instructor'
         applicationData.subjectId = user.instructorId
@@ -46,8 +45,6 @@ export function ApplicationFormModal({
         applicationData.subjectId = user.id
       }
 
-      // createApplication은 submittedAt을 자동 생성하므로 제외하고 전달
-      // ApplicationFormData에는 applicationPathId가 없으므로 제외
       await createApplication({
         programId: applicationData.programId,
         roundId: applicationData.roundId,
@@ -64,7 +61,7 @@ export function ApplicationFormModal({
         defaultMessage: MESSAGES.error.applicationFailed,
         context: 'ApplicationFormModal -> handleSubmit',
       })
-      throw error // ApplicationForm에서 에러 처리
+      throw error
     }
   }
 
@@ -79,7 +76,7 @@ export function ApplicationFormModal({
       zIndex={1001}
     >
       <ApplicationForm
-        programId={programId} // 프로그램 ID 전달
+        programId={programId}
         onSubmit={handleSubmit}
         onCancel={onClose}
         loading={loading}

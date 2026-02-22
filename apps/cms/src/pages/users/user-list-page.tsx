@@ -1,27 +1,27 @@
 /**
- * 사용자 관리 페이지 (SSOT 패턴 적용)
+ * 사용자 관리 페이지
  * Phase 5.1.2: 사용자 관리 페이지
- *
- * 규칙:
- * - 모든 사용자 데이터는 스토어에서만 관리
- * - 로컬 state로 사용자 데이터 복제 금지
- * - 필터 조건은 스토어에 저장, 결과는 selector로 계산
+ * 회원 목록: React Query useInfiniteQuery + 15명씩 무한 스크롤
  */
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Button, Modal } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { useState, useEffect, useCallback } from 'react'
+import { Modal } from 'antd'
+import dayjs, { type Dayjs } from 'dayjs'
+import { useQueryClient } from '@tanstack/react-query'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
+import { useInView } from '@/shared/hooks/use-in-view'
 import { UserList } from '@/features/user/ui/user-list'
 import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
+import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
+import { PageHeader } from '@/shared/ui/page-header'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { AppButton } from '@/shared/ui/app-button'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import {
   useUserStore,
-  selectFilteredUserIds,
   selectSelectedUser,
 } from '@/features/user/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
@@ -33,27 +33,79 @@ interface UserListQueryParams extends Record<string, string | undefined> {
   role?: UserRole | 'ALL'
   search?: string
   id?: string
+  createdAtFrom?: string
+  createdAtTo?: string
 }
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import './user-list-page.css'
 
+type ApiFilters = {
+  role?: UserRole
+  search?: string
+  createdAtFrom?: string
+  createdAtTo?: string
+}
+
+function pendingToApiFilters(pending: {
+  search: string
+  role: UserRole | 'ALL'
+  createdAtRange: [Dayjs | null, Dayjs | null] | null
+}): ApiFilters {
+  const api: ApiFilters = {}
+  if (pending.role !== 'ALL') api.role = pending.role
+  if (pending.search) api.search = pending.search
+  if (pending.createdAtRange?.[0] && pending.createdAtRange[1]) {
+    api.createdAtFrom = pending.createdAtRange[0].format('YYYY-MM-DD')
+    api.createdAtTo = pending.createdAtRange[1].format('YYYY-MM-DD')
+  }
+  return api
+}
+
 export function UserListPage() {
   const { params, setParam } = useQueryParams<UserListQueryParams>()
+  const queryClient = useQueryClient()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
 
-  // 스토어에서 필요한 데이터만 선택적으로 구독
-  const usersById = useUserStore(state => state.usersById)
-  const userIds = useUserStore(state => state.userIds)
-  const loading = useUserStore(state => state.loading)
-  const filters = useUserStore(state => state.filters)
-  const fetchUsers = useUserStore(state => state.fetchUsers)
+  // React Query 무한 스크롤 (15명씩)
+  const [activeFilters, setActiveFilters] = useState<ApiFilters>(() => {
+    const from = params.createdAtFrom
+    const to = params.createdAtTo
+    const api: ApiFilters = {}
+    if (params.role && params.role !== 'ALL') api.role = params.role as UserRole
+    if (params.search) api.search = params.search
+    if (from && to) {
+      api.createdAtFrom = from
+      api.createdAtTo = to
+    }
+    return api
+  })
+
+  const {
+    users: listUsers,
+    total: listTotal,
+    isLoading: listLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteUserList(activeFilters)
+
+  // 무한 스크롤: 하단 센티넬이 보이면 다음 페이지 로드
+  const { ref: loadMoreRef, inView } = useInView({ rootMargin: '200px', threshold: 0 })
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  // 스토어: 선택 사용자(드로어), mutations
   const createUser = useUserStore(state => state.createUser)
   const deleteUser = useUserStore(state => state.deleteUser)
   const changeUserRole = useUserStore(state => state.changeUserRole)
   const setSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const setFilters = useUserStore(state => state.setFilters)
   const clearSelectedUserId = useUserStore(state => state.setSelectedUserId)
+  const loading = useUserStore(state => state.loading)
 
   // Drawer 상태 관리 (useModalState 사용)
   const {
@@ -82,68 +134,67 @@ export function UserListPage() {
   const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
+  // 테이블 행 선택 (일괄 삭제용)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  // 일괄 삭제 대상 (여러 명 선택 시)
+  const [bulkDeleteUsers, setBulkDeleteUsers] = useState<Omit<User, 'password'>[] | null>(null)
+
 
   // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
-  const [pendingFilters, setPendingFilters] = useState({
-    search: params.search || '',
-    role: (params.role || 'ALL') as UserRole | 'ALL',
+  const [pendingFilters, setPendingFilters] = useState<{
+    search: string
+    role: UserRole | 'ALL'
+    createdAtRange: [Dayjs | null, Dayjs | null] | null
+  }>(() => {
+    const from = params.createdAtFrom
+    const to = params.createdAtTo
+    let createdAtRange: [Dayjs | null, Dayjs | null] | null = null
+    if (from && to) {
+      const start = dayjs(from)
+      const end = dayjs(to)
+      if (start.isValid() && end.isValid()) createdAtRange = [start, end]
+    }
+    return {
+      search: params.search || '',
+      role: (params.role || 'ALL') as UserRole | 'ALL',
+      createdAtRange,
+    }
   })
 
-  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
+  // URL에서 필터 값을 읽어와서 pendingFilters 동기화
   useEffect(() => {
+    const from = params.createdAtFrom
+    const to = params.createdAtTo
+    let createdAtRange: [Dayjs | null, Dayjs | null] | null = null
+    if (from && to) {
+      const start = dayjs(from)
+      const end = dayjs(to)
+      if (start.isValid() && end.isValid()) createdAtRange = [start, end]
+    }
     setPendingFilters({
       search: params.search || '',
       role: (params.role || 'ALL') as UserRole | 'ALL',
+      createdAtRange,
     })
-  }, [params.search, params.role])
+  }, [params.search, params.role, params.createdAtFrom, params.createdAtTo])
 
-  // 필터 조건을 스토어에 동기화 (조회 버튼 클릭 시)
-  const applyFilters = useCallback(() => {
-    const newFilters: { role?: UserRole; search?: string } = {}
-    if (pendingFilters.role !== 'ALL') {
-      newFilters.role = pendingFilters.role
-    }
-    if (pendingFilters.search) {
-      newFilters.search = pendingFilters.search
-    }
-    setFilters(newFilters)
-  }, [pendingFilters, setFilters])
-
-  // 필터된 사용자 ID 목록 (selector로 계산, useMemo로 메모이제이션)
-  const filteredUserIds = useMemo(() => {
-    return selectFilteredUserIds({ usersById, userIds, filters })
-  }, [usersById, userIds, filters])
-
-  // 필터된 사용자 객체 배열 (렌더링용)
-  const filteredUsers = useMemo(() => {
-    return filteredUserIds.map(id => usersById[id]).filter(Boolean)
-  }, [filteredUserIds, usersById])
-
-  // 선택된 사용자 (selector로 계산)
+  // 선택된 사용자 (드로어용)
   const selectedUser = useUserStore(state => selectSelectedUser(state))
 
-  // 데이터 불러오기 함수
-  const loadUsers = useCallback(async () => {
-    try {
-      const filters: { role?: UserRole; search?: string } = {}
-      if (pendingFilters.role !== 'ALL') {
-        filters.role = pendingFilters.role
-      }
-      if (pendingFilters.search) {
-        filters.search = pendingFilters.search
-      }
-      await fetchUsers(filters)
-    } catch (error) {
-      handleError(error, { defaultMessage: MESSAGES.error.userListLoadFailed })
-    }
-  }, [fetchUsers, pendingFilters])
-
-  // 조회 버튼 클릭 시 필터 적용 및 데이터 로드
+  // 조회 버튼 클릭 시: URL·스토어 동기화 + React Query 키 변경으로 자동 재조회
   const handleSearch = () => {
+    const api = pendingToApiFilters(pendingFilters)
+    setActiveFilters(api)
     setParam('search', pendingFilters.search || null)
     setParam('role', pendingFilters.role === 'ALL' ? null : pendingFilters.role)
-    applyFilters()
-    loadUsers()
+    if (pendingFilters.createdAtRange?.[0] && pendingFilters.createdAtRange[1]) {
+      setParam('createdAtFrom', pendingFilters.createdAtRange[0].format('YYYY-MM-DD'))
+      setParam('createdAtTo', pendingFilters.createdAtRange[1].format('YYYY-MM-DD'))
+    } else {
+      setParam('createdAtFrom', null)
+      setParam('createdAtTo', null)
+    }
+    setFilters(api)
   }
 
   // 필터 초기화
@@ -151,17 +202,19 @@ export function UserListPage() {
     setPendingFilters({
       search: '',
       role: 'ALL',
+      createdAtRange: null,
     })
     setParam('search', null)
     setParam('role', null)
+    setParam('createdAtFrom', null)
+    setParam('createdAtTo', null)
     setFilters({})
-    loadUsers()
+    setActiveFilters({})
   }
 
-  // 페이지 로드 시 초기 데이터 불러오기
-  useEffect(() => {
-    loadUsers()
-  }, [])
+  const invalidateList = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+  }, [queryClient])
 
   // 사용자 상세 보기
   const handleView = (user: Omit<User, 'password'>) => {
@@ -192,16 +245,7 @@ export function UserListPage() {
       await changeUserRole(userId, newRole, adminLevel, programRole)
       showSuccessMessage(MESSAGES.success.updated)
       closeRoleChangeModal()
-
-      // 목록 새로고침 (필터 조건 유지)
-      const currentFilters: { role?: UserRole; search?: string } = {}
-      if (filters.role) {
-        currentFilters.role = filters.role
-      }
-      if (filters.search) {
-        currentFilters.search = filters.search
-      }
-      await fetchUsers(currentFilters)
+      invalidateList()
     } catch (error) {
       handleError(error, { defaultMessage: MESSAGES.error.roleChangeFailed })
     }
@@ -217,16 +261,7 @@ export function UserListPage() {
       await createUser(request)
       showSuccessMessage(MESSAGES.success.created)
       closeCreateModal()
-
-      // 목록 새로고침 (필터 조건 유지)
-      const currentFilters: { role?: UserRole; search?: string } = {}
-      if (filters.role) {
-        currentFilters.role = filters.role
-      }
-      if (filters.search) {
-        currentFilters.search = filters.search
-      }
-      await fetchUsers(currentFilters)
+      invalidateList()
     } catch (error) {
       handleError(error, { defaultMessage: '회원 추가에 실패했습니다.' })
       throw error
@@ -240,24 +275,21 @@ export function UserListPage() {
   }
 
   const handleDeleteConfirm = async () => {
-    if (!deletingUser) return
+    const bulk = bulkDeleteUsers && bulkDeleteUsers.length > 0
+    const toDelete = bulk ? bulkDeleteUsers! : deletingUser ? [deletingUser] : []
+    if (toDelete.length === 0) return
 
     setDeleteLoading(true)
     try {
-      await deleteUser(deletingUser.id)
-      showSuccessMessage(MESSAGES.success.deleted)
+      for (const u of toDelete) {
+        await deleteUser(u.id)
+      }
+      showSuccessMessage(bulk ? `선택한 ${toDelete.length}명이 삭제되었습니다.` : MESSAGES.success.deleted)
       setDeleteModalOpen(false)
       setDeletingUser(null)
-
-      // 목록 새로고침 (필터 조건 유지)
-      const currentFilters: { role?: UserRole; search?: string } = {}
-      if (filters.role) {
-        currentFilters.role = filters.role
-      }
-      if (filters.search) {
-        currentFilters.search = filters.search
-      }
-      await fetchUsers(currentFilters)
+      setBulkDeleteUsers(null)
+      setSelectedRowKeys(prev => prev.filter(key => !toDelete.some(u => u.id === key)))
+      invalidateList()
     } catch (error) {
       handleError(error, { defaultMessage: '회원 삭제에 실패했습니다.' })
     } finally {
@@ -268,63 +300,110 @@ export function UserListPage() {
   const handleDeleteCancel = () => {
     setDeleteModalOpen(false)
     setDeletingUser(null)
+    setBulkDeleteUsers(null)
   }
 
   return (
     <div>
-      {canWrite && (
-        <div
-          style={{
-            marginBottom: LAYOUT_CONSTANTS.margins.lg,
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-            회원 추가
-          </Button>
-        </div>
-      )}
+      <PageHeader
+        title="전체 회원 목록"
+        description={`총 ${listTotal}건`}
+      />
 
-      <UnifiedFilterCard
+      <div className="user-list-page__filter-wrap">
+        <UnifiedFilterCard
         fields={[
           {
             key: 'search',
             type: 'search',
-            label: '이름/이메일',
-            placeholder: '이름 또는 이메일을 입력하세요',
+            label: '회원명',
+            placeholder: '회원명을 입력하세요',
           },
           {
             key: 'role',
             type: 'select',
-            label: '권한',
+            label: '회원 유형',
             placeholder: '전체',
             options: [
               { label: '전체', value: 'ALL' },
-              { label: '관리자', value: 'ADMIN' },
+              { label: '개인', value: 'INDIVIDUAL' },
+              { label: '학교(교사)', value: 'SCHOOL' },
               { label: '강사', value: 'INSTRUCTOR' },
-              { label: '학생', value: 'INDIVIDUAL' },
-              { label: '학교', value: 'SCHOOL' },
+              { label: '관리자', value: 'ADMIN' },
             ],
           },
+          {
+            key: 'createdAtRange',
+            type: 'dateRange',
+            label: '가입일',
+          },
         ]}
-        filters={pendingFilters}
+        filters={{
+          search: pendingFilters.search,
+          role: pendingFilters.role,
+          createdAtRange: pendingFilters.createdAtRange ?? undefined,
+        }}
         onFilterChange={(key, value) => {
-          setPendingFilters(prev => ({ ...prev, [key]: value }))
+          if (key === 'createdAtRange') {
+            setPendingFilters(prev => ({ ...prev, createdAtRange: value as [Dayjs | null, Dayjs | null] | null }))
+          } else {
+            setPendingFilters(prev => ({ ...prev, [key]: value }))
+          }
         }}
         onSearch={handleSearch}
         onReset={handleFilterReset}
-        loading={loading}
-      />
+        loading={listLoading}
+        showResetButton={false}
+        />
+      </div>
+
+      <div className="user-list-page__table-header">
+        <div className="user-list-page__table-actions">
+          <AppButton
+            variant="danger"
+            size="filter"
+            dangerFillOnHover
+            onClick={() => {
+              const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
+              if (toDelete.length === 0) return
+              if (toDelete.length === 1) {
+                setDeletingUser(toDelete[0])
+                setBulkDeleteUsers(null)
+              } else {
+                setDeletingUser(null)
+                setBulkDeleteUsers(toDelete)
+              }
+              setDeleteModalOpen(true)
+            }}
+            disabled={selectedRowKeys.length === 0}
+          >
+            회원 삭제
+          </AppButton>
+          {canWrite && (
+            <AppButton variant="primary" size="filter" onClick={openCreateModal}>
+              회원 등록
+            </AppButton>
+          )}
+        </div>
+      </div>
 
       <UserList
-        data={filteredUsers}
-        loading={loading}
+        data={listUsers}
+        loading={listLoading}
         onView={handleView}
         onEdit={handleEdit}
         onDelete={canWrite ? handleDeleteClick : undefined}
+        selectedRowKeys={selectedRowKeys}
+        onSelectionChange={setSelectedRowKeys}
+        pagination={false}
       />
+
+      {/* 무한 스크롤: 하단 도달 시 다음 페이지 로드 */}
+      <div ref={loadMoreRef} className="user-list-page__load-more-sentinel" aria-hidden>
+        {isFetchingNextPage && (
+          <div className="user-list-page__load-more-spinner">불러오는 중...</div>
+        )}
+      </div>
 
       <UserDetailDrawer
         open={drawerOpen}
@@ -362,7 +441,12 @@ export function UserListPage() {
         cancelText="취소"
         okButtonProps={{ danger: true }}
       >
-        {deletingUser && (
+        {bulkDeleteUsers && bulkDeleteUsers.length > 1 ? (
+          <>
+            <p>선택한 {bulkDeleteUsers.length}명의 회원을 삭제하시겠습니까?</p>
+            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 회원은 복구할 수 없습니다.</p>
+          </>
+        ) : deletingUser ? (
           <>
             <p>정말로 다음 회원을 삭제하시겠습니까?</p>
             <p style={{ fontWeight: 'bold', margin: '16px 0' }}>
@@ -370,7 +454,7 @@ export function UserListPage() {
             </p>
             <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 회원은 복구할 수 없습니다.</p>
           </>
-        )}
+        ) : null}
       </Modal>
     </div>
   )

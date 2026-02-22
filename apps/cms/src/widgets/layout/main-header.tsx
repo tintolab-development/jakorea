@@ -53,6 +53,11 @@ export function MainHeader() {
       return '관리자 홈'
     }
 
+    // 관리자: 전체 회원 페이지 — 레이아웃 타이틀 '전체 회원 관리'
+    if (user?.role === 'ADMIN' && location.pathname === '/users') {
+      return '전체 회원 관리'
+    }
+
     // 관리자: 강사 모집 경로 — 레이아웃 타이틀 '강의 신청 현황'
     if (
       user?.role === 'ADMIN' &&

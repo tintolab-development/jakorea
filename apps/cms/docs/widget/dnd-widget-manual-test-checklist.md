@@ -1,6 +1,6 @@
 # DnD 위젯 대시보드 수동 테스트 체크리스트
 
-`/index2`에서 **DraggableDashboard** + **DraggableWidgetCard** 사용 시 확인할 항목.
+**DraggableDashboard** + **DraggableWidgetCard** 사용 시 확인할 항목. (과거 `/index2` 라우트는 제거됨)
 
 ## 0a. 2열 정렬 + 밀집 (Strict x alignment + auto-fill)
 
@@ -60,7 +60,7 @@
 1. **반폭 위젯 드래그 후 드롭**: 아무 위치에 놓아도 **항상** 왼쪽(`x=0`) 또는 오른쪽(`x=6`) 열에만 스냅됨. 중앙에 머물지 않음.
 2. **위젯 추가/제거**: 추가·제거 후에도 위젯이 중앙에 오지 않음.
 3. **새로고침**: 저장된 레이아웃을 불러와도 **x=0|6** 유지 (과거에 저장된 잘못된 x 값 없음).
-4. **창 너비 변경** (Responsive 사용 시): 활성 브레이크포인트에서도 정렬 유지. (index2는 lg 단일 브레이크포인트 사용)
+4. **창 너비 변경** (Responsive 사용 시): 활성 브레이크포인트에서도 정렬 유지.
 
 ## 미드라인 기준 드롭 (pointer/시각 위치)
 
@@ -72,4 +72,4 @@
 
 ---
 
-**참고**: 기존 `WidgetEditorDashboard` / `WidgetCard` 는 수정하지 않음. `index2` 만 `DraggableDashboard` 로 전환된 상태.
+**참고**: 기존 `WidgetEditorDashboard` / `WidgetCard` 는 수정하지 않음.

@@ -1,5 +1,6 @@
 /**
  * 만족도 조사 모달 컴포넌트
+ * FSD: features/program으로 이동 (shared는 entities 미참조)
  */
 
 import { Modal, Form, Rate, Input, Button, message } from 'antd'
@@ -57,7 +58,6 @@ export function SatisfactionSurveyModal({
     try {
       // TODO: API 연동 필요
       console.log('Submitting satisfaction survey:', values)
-      // await submitSatisfactionSurvey(program.id, values)
       message.success(MESSAGES.success.satisfactionSurveySubmittedWithThanks)
       form.resetFields()
       onSuccess?.()
