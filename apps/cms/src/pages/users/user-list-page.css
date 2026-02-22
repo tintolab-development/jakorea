@@ -1,3 +1,32 @@
+/* 필터 영역: 기본 240×44, 반응형 */
+.user-list-page__filter-wrap {
+  --filter-control-width: 240px;
+  --filter-control-height: 44px;
+  --filter-control-min-width: 180px;
+}
+
+@media (max-width: 1200px) {
+  .user-list-page__filter-wrap {
+    --filter-control-width: 200px;
+    --filter-control-min-width: 160px;
+  }
+}
+
+@media (max-width: 992px) {
+  .user-list-page__filter-wrap {
+    --filter-control-width: 180px;
+    --filter-control-min-width: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-list-page__filter-wrap {
+    --filter-control-width: 100%;
+    --filter-control-height: 40px;
+    --filter-control-min-width: 0;
+  }
+}
+
 .user-list-header {
   margin-bottom: 16px;
   width: 100%;
@@ -19,4 +48,32 @@
 
 .user-list-role-filter {
   width: 150px;
+}
+
+/* 테이블 위 액션 행 (회원 삭제 / 회원 등록) - program-managers-tab 패턴 참고 */
+.user-list-page__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-12, 12px);
+}
+
+.user-list-page__table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+}
+
+/* 무한 스크롤: 하단 센티넬 (IntersectionObserver 타겟) */
+.user-list-page__load-more-sentinel {
+  min-height: 1px;
+  padding: var(--spacing-8, 8px) 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.user-list-page__load-more-spinner {
+  font-size: var(--font-size-13, 13px);
+  color: var(--color-text-secondary, #666);
 }

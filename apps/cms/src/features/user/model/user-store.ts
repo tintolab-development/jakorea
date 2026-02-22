@@ -28,6 +28,9 @@ interface UserFilters {
   role?: UserRole
   search?: string
   isActive?: boolean
+  /** 가입일 필터 (YYYY-MM-DD). 클라이언트 필터링용 */
+  createdAtFrom?: string
+  createdAtTo?: string
 }
 
 interface UserStore {
@@ -90,6 +93,15 @@ export const selectFilteredUserIds = (
 
     // 활성화 상태 필터
     if (filters.isActive !== undefined && user.isActive !== filters.isActive) {
+      return false
+    }
+
+    // 가입일 필터 (클라이언트 측, createdAt 기준)
+    const createdAt = user.createdAt ? new Date(user.createdAt).toISOString().slice(0, 10) : ''
+    if (filters.createdAtFrom && createdAt < filters.createdAtFrom) {
+      return false
+    }
+    if (filters.createdAtTo && createdAt > filters.createdAtTo) {
       return false
     }
 
