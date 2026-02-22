@@ -4,7 +4,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid var(--color-sidebar-border);
     padding: var(--spacing-16);
     background: var(--color-brand-secondary-1);
     flex-shrink: 0;
@@ -31,7 +31,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    padding-top: 16px;
+    padding-top: var(--spacing-16);
     border-top: 1px solid var(--color-border-light);
     flex-shrink: 0;
 }
@@ -39,7 +39,7 @@
 .header-user-card {
     width: 100%;
     padding: var(--spacing-12) var(--spacing-16);
-    border-radius: 12px;
+    border-radius: var(--radius-8);
     background: var(--color-bg-secondary);
     display: flex;
     flex-direction: column;
@@ -72,7 +72,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-2);
 }
 
 .header-user-name {

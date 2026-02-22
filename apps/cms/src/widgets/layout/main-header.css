@@ -6,18 +6,17 @@
     background: var(--color-bg-base);
     border-bottom: 1px solid var(--color-border-light);
     padding: 0 var(--spacing-24);
-    height: 64px;
-    line-height: 64px;
+    height: var(--header-height);
+    line-height: var(--header-height);
     display: flex;
     align-items: center;
     flex-shrink: 0;
     position: fixed;
     top: 0;
-    left: 220px;
-    /* 사이드바 너비만큼 왼쪽에서 떨어뜨림 */
+    left: var(--sidebar-width);
     right: 0;
     z-index: 99;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-header);
 }
 
 .main-header-content {
@@ -38,7 +37,7 @@
     align-items: center;
     gap: var(--spacing-12);
     flex-wrap: wrap;
-    min-height: 32px;
+    min-height: var(--spacing-32, 32px);
 }
 
 .main-header-title {
@@ -46,13 +45,13 @@
     padding: 0;
     font-size: var(--font-size-20);
     font-weight: var(--font-weight-600);
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
     color: var(--color-text-label);
 }
 
 .main-header-breadcrumb {
     font-size: var(--font-size-13);
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
     color: var(--color-text-secondary);
     display: flex;
     align-items: center;
@@ -61,7 +60,7 @@
 .main-header-breadcrumb .ant-breadcrumb {
     display: flex;
     align-items: center;
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
 }
 
 .main-header-breadcrumb .ant-breadcrumb ol {
@@ -71,25 +70,25 @@
     margin: 0;
     padding: 0;
     list-style: none;
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
 }
 
 .main-header-breadcrumb .ant-breadcrumb li {
     display: inline-flex;
     align-items: center;
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
 }
 
 .main-header-breadcrumb .ant-breadcrumb-separator {
     display: inline-flex;
     align-items: center;
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
 }
 
 .main-header-breadcrumb .ant-breadcrumb-link {
     display: inline-flex;
     align-items: center;
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
 }
 
 .main-header-right {
@@ -110,12 +109,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
+    width: var(--spacing-32, 32px);
+    height: var(--spacing-32, 32px);
+    min-width: var(--spacing-32, 32px);
     padding: 0;
     border: none;
-    color: #595959;
+    color: var(--color-text-body);
     transition: all 0.2s;
     line-height: 1;
     vertical-align: middle;
@@ -128,20 +127,20 @@
 }
 
 .main-header-icon-button:hover {
-    color: #1890ff;
-    background: #f0f7ff;
+    color: var(--color-input-focus);
+    background: var(--color-bg-info-lighter);
 }
 
 .main-header-user-info {
     display: flex;
     align-items: center;
-    gap: 8px;
-    height: 32px;
+    gap: var(--spacing-8);
+    height: var(--spacing-32, 32px);
 }
 
 .main-header-user-role {
-    font-size: 14px;
-    font-weight: 400;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-regular);
     color: var(--color-text-label);
     margin: 0;
     line-height: 1;
@@ -149,12 +148,12 @@
 
 .main-header-user-divider {
     width: 1px;
-    height: 14px;
-    background: #d9d9d9;
+    height: var(--spacing-14);
+    background: var(--color-border-input);
 }
 
 .main-header-user-name {
-    font-size: 14px;
+    font-size: var(--font-size-14);
     font-weight: var(--font-weight-600);
     color: var(--color-text-label);
     margin: 0;
@@ -178,32 +177,32 @@
 }
 
 .main-header-notification-item {
-    padding: 12px 16px;
+    padding: var(--spacing-12) var(--spacing-16);
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
 .main-header-notification-item:hover {
-    background-color: #f5f5f5;
+    background-color: var(--color-bg-tertiary);
 }
 
 .main-header-notification-title {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
     color: var(--color-text-label);
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-4);
 }
 
 .main-header-notification-message {
-    font-size: 12px;
+    font-size: var(--font-size-12);
     color: var(--color-text-secondary);
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-4);
     line-height: 1.4;
 }
 
 .main-header-notification-time {
-    font-size: 11px;
-    color: #bfbfbf;
+    font-size: var(--font-size-11);
+    color: var(--color-text-muted);
 }
 
 /* 알림 배지 (타원형 스타일) */
@@ -212,32 +211,32 @@
     align-items: center;
     justify-content: center;
     vertical-align: middle;
-    gap: 6px;
-    height: 32px;
-    padding: 0 14px;
-    background: #e6f7f9;
-    border-radius: 16px;
+    gap: var(--spacing-6);
+    height: var(--spacing-32, 32px);
+    padding: 0 var(--spacing-14);
+    background: var(--color-bg-accent);
+    border-radius: var(--radius-16);
     cursor: pointer;
     transition: all 0.2s;
     border: none;
-    line-height: 32px;
+    line-height: var(--spacing-32, 32px);
 }
 
 .main-header-notification-badge:hover {
-    background: #d4f1f4;
+    background: var(--color-bg-accent-hover);
 }
 
 .main-header-notification-icon {
-    font-size: 14px;
-    color: #01a1af;
+    font-size: var(--font-size-14);
+    color: var(--color-brand-primary);
     display: flex;
     align-items: center;
 }
 
 .main-header-notification-count {
     font-size: var(--font-size-13);
-    font-weight: 500;
-    color: #01a1af;
+    font-weight: var(--font-weight-500);
+    color: var(--color-brand-primary);
     margin: 0;
     line-height: 1;
     display: flex;

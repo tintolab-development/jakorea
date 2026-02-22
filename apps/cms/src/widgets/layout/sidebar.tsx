@@ -102,7 +102,10 @@ export function Sidebar() {
     // 관리자용 회원 관리
     if (
       user?.role === 'ADMIN' &&
-      (path.startsWith('/users') || path.startsWith('/schools') || path.startsWith('/instructors'))
+      (path.startsWith('/users') ||
+        path.startsWith('/schools') ||
+        path.startsWith('/instructors') ||
+        path.startsWith('/admin/settings/permissions'))
     ) {
       keys.push('members-group')
     }
