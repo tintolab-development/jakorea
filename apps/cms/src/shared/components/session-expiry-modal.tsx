@@ -5,7 +5,7 @@
 
 import { Modal, Button, Space } from 'antd'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { useNavigate } from 'react-router-dom'
 
 interface SessionExpiryModalProps {
@@ -21,7 +21,7 @@ export function SessionExpiryModal({
   onLogout,
   remainingSeconds,
 }: SessionExpiryModalProps) {
-  const { logout } = useAuthStore()
+  const { logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {

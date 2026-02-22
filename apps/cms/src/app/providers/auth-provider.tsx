@@ -2,18 +2,45 @@
  * 인증 Provider
  * Phase 4.1.1: 사용자 인증 시스템
  * Phase 0.5.5: 세션/접근 통제 UX - 세션 경고 모달 통합
+ * FSD: shared에 AuthContext 값을 주입하여 shared가 features/auth를 직접 참조하지 않도록 함
  */
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
+import { AuthContextProvider } from '@/shared/lib/auth/auth-context'
 
 interface AuthProviderProps {
   children: React.ReactNode
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { checkAuth, isAuthenticated } = useAuthStore()
+  const store = useAuthStore()
+  const { checkAuth, isAuthenticated } = store
+
+  const authContextValue = useMemo(
+    () => ({
+      user: store.user,
+      isAuthenticated: store.isAuthenticated,
+      loading: store.loading,
+      checkAuth: store.checkAuth,
+      logout: () => useAuthStore.getState().logout(),
+      updateUser: store.updateUser,
+      requiresMfa: store.requiresMfa,
+      mfaState: store.mfaState,
+      expiresAt: store.expiresAt,
+    }),
+    [
+      store.user,
+      store.isAuthenticated,
+      store.loading,
+      store.checkAuth,
+      store.updateUser,
+      store.requiresMfa,
+      store.mfaState,
+      store.expiresAt,
+    ]
+  )
 
   useEffect(() => {
     // 앱 시작 시 인증 상태 확인
@@ -76,10 +103,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [isAuthenticated])
 
   return (
-    <>
+    <AuthContextProvider value={authContextValue}>
       {children}
       {/* Phase 0.5.5: 세션 만료 경고 모달 */}
       <SessionWarningModal />
-    </>
+    </AuthContextProvider>
   )
 }

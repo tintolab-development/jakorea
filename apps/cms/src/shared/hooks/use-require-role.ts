@@ -5,7 +5,7 @@
 
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { hasRole, hasAnyRole } from '@/shared/utils/permissions'
 import type { UserRole } from '@/types/user'
 
@@ -16,7 +16,7 @@ import type { UserRole } from '@/types/user'
  * @param redirectTo 리다이렉트할 경로 (기본값: '/forbidden')
  */
 export function useRequireRole(requiredRole: UserRole, redirectTo: string = '/forbidden') {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export function useRequireRole(requiredRole: UserRole, redirectTo: string = '/fo
  * @param redirectTo 리다이렉트할 경로 (기본값: '/forbidden')
  */
 export function useRequireAnyRole(requiredRoles: UserRole[], redirectTo: string = '/forbidden') {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {

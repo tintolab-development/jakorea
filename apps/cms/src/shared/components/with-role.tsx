@@ -6,7 +6,7 @@
 import { useEffect } from 'react'
 import type { ComponentType } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { hasRole, hasAnyRole } from '@/shared/utils/permissions'
 import type { UserRole } from '@/types/user'
 
@@ -29,7 +29,7 @@ export function withRole<P extends object>(
   const { redirectTo = '/forbidden' } = options
 
   return function WithRoleComponent(props: P) {
-    const { user } = useAuthStore()
+    const { user } = useAuth()
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -61,7 +61,7 @@ export function withAnyRole<P extends object>(
   const { redirectTo = '/forbidden' } = options
 
   return function WithAnyRoleComponent(props: P) {
-    const { user } = useAuthStore()
+    const { user } = useAuth()
     const navigate = useNavigate()
 
     useEffect(() => {
