@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   Button,
   Dropdown,
@@ -14,6 +14,7 @@ import {
   Select,
   Space,
   Table,
+  Tabs,
   Tag,
   Typography,
   message,
@@ -75,24 +76,31 @@ function statusLabel(status: TemplateStatus) {
   return getTemplateStatusLabel(status)
 }
 
-interface TemplateFilesPageProps {
-  defaultCategory?: FileTemplateCategory
-}
+const VALID_CATEGORIES = new Set<FileTemplateCategory | 'all'>([
+  'all',
+  'instructor-resume',
+  'lecture-report',
+  'education-plan',
+  'certificate',
+  'activity-confirmation',
+  'receipt',
+  'payment-statement',
+  'employment-certificate',
+])
 
-export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPageProps = {}) {
+export default function TemplateFilesPage() {
   const { user } = useAuthStore()
-  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const location = useLocation()
-  
-  // URL 경로에서 카테고리 추출
-  const pathCategory = location.pathname.split('/').pop()
-  const categoryFromPath = pathCategory && pathCategory !== 'file-forms' 
-    ? pathCategory as FileTemplateCategory 
-    : undefined
-  
-  const activeCategory = defaultCategory || categoryFromPath || 'all'
+  // 카테고리: URL 쿼리 ?category= 단일 소스
+  const activeCategory = useMemo((): FileTemplateCategory | 'all' => {
+    const q = searchParams.get('category')
+    if (q && VALID_CATEGORIES.has(q as FileTemplateCategory | 'all')) {
+      return q as FileTemplateCategory | 'all'
+    }
+    return 'all'
+  }, [searchParams])
 
   // 현재 카테고리 이름 가져오기
   const currentCategoryName = useMemo(() => {
@@ -124,12 +132,23 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
   // 사이드바에서 카테고리별 접근 가능하므로 모달 내 카테고리 필드 제거
   const isCertificate = activeCategory === 'certificate'
 
-  // URL 경로 변경 시 필터 동기화
+  // URL 쿼리(activeCategory) 변경 시 필터 상태 동기화
   useEffect(() => {
-    const category = activeCategory
-    setPendingFilters(prev => ({ ...prev, category: category as FileTemplateCategory | 'all' }))
-    setAppliedFilters(prev => ({ ...prev, category: category as FileTemplateCategory | 'all' }))
+    setPendingFilters(prev => ({ ...prev, category: activeCategory }))
+    setAppliedFilters(prev => ({ ...prev, category: activeCategory }))
   }, [activeCategory])
+
+  // 카테고리 탭 클릭 시 URL 업데이트
+  const handleCategoryTabChange = (key: string) => {
+    const next = key === 'all' ? 'all' : (key as FileTemplateCategory)
+    const nextParams = new URLSearchParams(searchParams)
+    if (next === 'all') {
+      nextParams.delete('category')
+    } else {
+      nextParams.set('category', next)
+    }
+    setSearchParams(nextParams, { replace: true })
+  }
 
   const filtered = useMemo(() => {
     const q = appliedFilters.query.trim().toLowerCase()
@@ -150,12 +169,19 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
       .sort((a, b) => dayjs(b.updatedAt).valueOf() - dayjs(a.updatedAt).valueOf())
   }, [appliedFilters, rows])
 
-  // 조회 버튼 클릭 시 필터 적용
+  // 조회 버튼 클릭 시 필터 적용 및 URL 쿼리 동기화
   const handleSearch = () => {
     setAppliedFilters(pendingFilters)
+    const nextParams = new URLSearchParams(searchParams)
+    if (pendingFilters.category === 'all') {
+      nextParams.delete('category')
+    } else {
+      nextParams.set('category', pendingFilters.category)
+    }
+    setSearchParams(nextParams, { replace: true })
   }
 
-  // 필터 초기화
+  // 필터 초기화 (URL category도 제거)
   const handleFilterReset = () => {
     setPendingFilters({
       query: '',
@@ -167,6 +193,9 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
       status: 'all',
       category: 'all',
     })
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('category')
+    setSearchParams(nextParams, { replace: true })
   }
 
   const openCreate = () => {
@@ -714,23 +743,26 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
   }
 
   const getRowMenuItems = (row: FileTemplate): MenuProps['items'] => {
+    // persona: published 상태만 실사용(복사/다운로드) 노출
+    const canUse = row.status === 'published'
     const baseItems: MenuProps['items'] = [
       {
         key: 'download',
         label: '다운로드',
         icon: <DownloadOutlined />,
-        onClick: () => handleDownload(row),
+        disabled: !canUse,
+        onClick: canUse ? () => handleDownload(row) : undefined,
       },
     ]
 
-    // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
     if (canWrite) {
       baseItems.push(
         { type: 'divider' },
         {
           key: 'copy',
           label: '복사',
-          onClick: () => handleCopyTemplate(row),
+          disabled: !canUse,
+          onClick: canUse ? () => handleCopyTemplate(row) : undefined,
         },
         {
           key: 'edit',
@@ -855,6 +887,15 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
     },
   ]
 
+  const categoryTabItems = useMemo(
+    () =>
+      categoryOptions.map(opt => ({
+        key: opt.value,
+        label: opt.label,
+      })),
+    []
+  )
+
   return (
     <div>
       <PageHeader
@@ -866,6 +907,13 @@ export default function TemplateFilesPage({ defaultCategory }: TemplateFilesPage
             </Button>
           ) : undefined
         }
+      />
+
+      <Tabs
+        activeKey={activeCategory}
+        onChange={handleCategoryTabChange}
+        items={categoryTabItems}
+        style={{ marginBottom: 16 }}
       />
 
       <UnifiedFilterCard

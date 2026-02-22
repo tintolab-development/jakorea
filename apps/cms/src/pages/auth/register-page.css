@@ -8,46 +8,46 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #fff;
-  padding: 20px;
+  background: var(--color-bg-base);
+  padding: var(--spacing-20);
 }
 
 .register-card {
   width: 100%;
   max-width: 600px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  box-shadow: var(--shadow-card-soft);
+  border-radius: var(--radius-8);
 }
 
 .register-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: var(--spacing-32);
 }
 
 .register-logo {
   width: 120px;
   height: auto;
   object-fit: contain;
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-24);
 }
 
 .register-step-content {
   min-height: 400px;
-  padding: 0 8px;
+  padding: 0 var(--spacing-8);
 }
 
 .register-error {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-16);
   text-align: center;
-  padding: 12px;
-  background: #fff1f0;
-  border: 1px solid #ffccc7;
-  border-radius: 4px;
+  padding: var(--spacing-12);
+  background: var(--color-settlement-light);
+  border: 1px solid var(--color-settlement-border);
+  border-radius: var(--radius-4);
 }
 
 .register-footer {
-  margin-top: 24px;
+  margin-top: var(--spacing-24);
   text-align: center;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  padding-top: var(--spacing-16);
+  border-top: 1px solid var(--color-border-light);
 }
