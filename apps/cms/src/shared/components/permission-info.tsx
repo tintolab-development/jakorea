@@ -3,7 +3,7 @@
  * Phase 4.2.3: 권한별 UI 컴포넌트
  */
 
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useAuth } from '@/shared/lib/auth/auth-context'
 import { hasAnyRole } from '@/shared/utils/permissions'
 import type { UserRole } from '@/types/user'
 import { useMemo } from 'react'
@@ -39,7 +39,7 @@ export function PermissionInfo({
   maskText = '***',
   children,
 }: PermissionInfoProps) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
 
   // 권한 확인
   const hasPermission = useMemo(() => {

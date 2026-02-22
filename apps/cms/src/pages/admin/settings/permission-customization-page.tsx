@@ -60,23 +60,12 @@ export function PermissionCustomizationPage() {
   const [hasChanges, setHasChanges] = useState(false)
   const [activeTab, setActiveTab] = useState<'admin' | 'program'>('admin')
 
-  // 마스터 관리자 권한 체크
-  if (!user || !isMasterAdmin(user)) {
-    return (
-      <div style={{ padding: 24 }}>
-        <Alert
-          message="접근 권한 없음"
-          description="이 페이지는 마스터 관리자만 접근할 수 있습니다."
-          type="error"
-          showIcon
-        />
-      </div>
-    )
-  }
+  const isMaster = user && isMasterAdmin(user)
 
   useEffect(() => {
+    if (!isMaster) return
     loadConfig()
-  }, [])
+  }, [isMaster])
 
   const loadConfig = async () => {
     setLoading(true)
@@ -211,133 +200,153 @@ export function PermissionCustomizationPage() {
     })
   }
 
-  if (loading || !config) {
-    return <div style={{ padding: 24 }}>로딩 중...</div>
-  }
-
-  // 관리자 권한 테이블 컬럼 (useMemo로 최적화)
+  // 관리자 권한 테이블 컬럼 (useMemo로 최적화) - 훅 규칙 준수를 위해 항상 호출, config 없을 때는 빈 컬럼
   const adminPermissionColumns: ColumnsType<PermissionTableItem> = useMemo(
-    () => [
-      {
-        title: '권한 항목',
-        dataIndex: 'label',
-        key: 'label',
-        width: 200,
-      },
-      {
-        title: '마스터 관리자',
-        key: 'MASTER',
-        width: 150,
-        align: 'center',
-        render: (_, record) => (
-          <Switch
-            checked={
-              config.adminPermissions.MASTER.permissions[
-                record.key as keyof CustomizedAdminPermission['permissions']
-              ]
-            }
-            onChange={checked => handleAdminPermissionChange('MASTER', record.key, checked)}
-          />
-        ),
-      },
-      {
-        title: '중간 관리자',
-        key: 'ADMIN',
-        width: 150,
-        align: 'center',
-        render: (_, record) => (
-          <Switch
-            checked={
-              config.adminPermissions.ADMIN.permissions[
-                record.key as keyof CustomizedAdminPermission['permissions']
-              ]
-            }
-            onChange={checked => handleAdminPermissionChange('ADMIN', record.key, checked)}
-          />
-        ),
-      },
-      {
-        title: '일반 관리자',
-        key: 'GENERAL',
-        width: 150,
-        align: 'center',
-        render: (_, record) => (
-          <Switch
-            checked={
-              config.adminPermissions.GENERAL.permissions[
-                record.key as keyof CustomizedAdminPermission['permissions']
-              ]
-            }
-            onChange={checked => handleAdminPermissionChange('GENERAL', record.key, checked)}
-          />
-        ),
-      },
-    ],
+    () => {
+      if (!config) return [{ title: '권한 항목', dataIndex: 'label', key: 'label', width: 200 }]
+      return [
+        {
+          title: '권한 항목',
+          dataIndex: 'label',
+          key: 'label',
+          width: 200,
+        },
+        {
+          title: '마스터 관리자',
+          key: 'MASTER',
+          width: 150,
+          align: 'center',
+          render: (_, record) => (
+            <Switch
+              checked={
+                config.adminPermissions.MASTER.permissions[
+                  record.key as keyof CustomizedAdminPermission['permissions']
+                ]
+              }
+              onChange={checked => handleAdminPermissionChange('MASTER', record.key, checked)}
+            />
+          ),
+        },
+        {
+          title: '중간 관리자',
+          key: 'ADMIN',
+          width: 150,
+          align: 'center',
+          render: (_, record) => (
+            <Switch
+              checked={
+                config.adminPermissions.ADMIN.permissions[
+                  record.key as keyof CustomizedAdminPermission['permissions']
+                ]
+              }
+              onChange={checked => handleAdminPermissionChange('ADMIN', record.key, checked)}
+            />
+          ),
+        },
+        {
+          title: '일반 관리자',
+          key: 'GENERAL',
+          width: 150,
+          align: 'center',
+          render: (_, record) => (
+            <Switch
+              checked={
+                config.adminPermissions.GENERAL.permissions[
+                  record.key as keyof CustomizedAdminPermission['permissions']
+                ]
+              }
+              onChange={checked => handleAdminPermissionChange('GENERAL', record.key, checked)}
+            />
+          ),
+        },
+      ]
+    },
     [config, handleAdminPermissionChange]
   )
 
-  // 프로그램 역할 권한 테이블 컬럼 (useMemo로 최적화)
+  // 프로그램 역할 권한 테이블 컬럼 (useMemo로 최적화) - 훅 규칙 준수를 위해 항상 호출
   const programRolePermissionColumns: ColumnsType<PermissionTableItem> = useMemo(
-    () => [
-      {
-        title: '권한 항목',
-        dataIndex: 'label',
-        key: 'label',
-        width: 200,
-      },
-      {
-        title: '담당자 (OWNER)',
-        key: 'OWNER',
-        width: 150,
-        align: 'center',
-        render: (_, record) => (
-          <Switch
-            checked={
-              config.programRolePermissions.OWNER.permissions[
-                record.key as keyof CustomizedProgramRolePermission['permissions']
-              ]
-            }
-            onChange={checked => handleProgramRolePermissionChange('OWNER', record.key, checked)}
-          />
-        ),
-      },
-      {
-        title: '파트너 (PARTNER)',
-        key: 'PARTNER',
-        width: 150,
-        align: 'center',
-        render: (_, record) => (
-          <Switch
-            checked={
-              config.programRolePermissions.PARTNER.permissions[
-                record.key as keyof CustomizedProgramRolePermission['permissions']
-              ]
-            }
-            onChange={checked => handleProgramRolePermissionChange('PARTNER', record.key, checked)}
-          />
-        ),
-      },
-      {
-        title: '보조 (ASSISTANT)',
-        key: 'ASSISTANT',
-        width: 150,
-        align: 'center',
-        render: (_, record) => (
-          <Switch
-            checked={
-              config.programRolePermissions.ASSISTANT.permissions[
-                record.key as keyof CustomizedProgramRolePermission['permissions']
-              ]
-            }
-            onChange={checked =>
-              handleProgramRolePermissionChange('ASSISTANT', record.key, checked)
-            }
-          />
-        ),
-      },
-    ],
+    () => {
+      if (!config) return [{ title: '권한 항목', dataIndex: 'label', key: 'label', width: 200 }]
+      return [
+        {
+          title: '권한 항목',
+          dataIndex: 'label',
+          key: 'label',
+          width: 200,
+        },
+        {
+          title: '담당자 (OWNER)',
+          key: 'OWNER',
+          width: 150,
+          align: 'center',
+          render: (_, record) => (
+            <Switch
+              checked={
+                config.programRolePermissions.OWNER.permissions[
+                  record.key as keyof CustomizedProgramRolePermission['permissions']
+                ]
+              }
+              onChange={checked => handleProgramRolePermissionChange('OWNER', record.key, checked)}
+            />
+          ),
+        },
+        {
+          title: '파트너 (PARTNER)',
+          key: 'PARTNER',
+          width: 150,
+          align: 'center',
+          render: (_, record) => (
+            <Switch
+              checked={
+                config.programRolePermissions.PARTNER.permissions[
+                  record.key as keyof CustomizedProgramRolePermission['permissions']
+                ]
+              }
+              onChange={checked => handleProgramRolePermissionChange('PARTNER', record.key, checked)}
+            />
+          ),
+        },
+        {
+          title: '보조 (ASSISTANT)',
+          key: 'ASSISTANT',
+          width: 150,
+          align: 'center',
+          render: (_, record) => (
+            <Switch
+              checked={
+                config.programRolePermissions.ASSISTANT.permissions[
+                  record.key as keyof CustomizedProgramRolePermission['permissions']
+                ]
+              }
+              onChange={checked =>
+                handleProgramRolePermissionChange('ASSISTANT', record.key, checked)
+              }
+            />
+          ),
+        },
+      ]
+    },
     [config, handleProgramRolePermissionChange]
   )
+
+  // 마스터 관리자 권한 체크 - 모든 훅 호출 후 조건부 반환
+  if (!user || !isMasterAdmin(user)) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Alert
+          message="접근 권한 없음"
+          description="이 페이지는 마스터 관리자만 접근할 수 있습니다."
+          type="error"
+          showIcon
+        />
+      </div>
+    )
+  }
+
+  if (loading || !config) {
+    return <div style={{ padding: 24 }}>로딩 중...</div>
+  }
 
   return (
     <div style={{ padding: 24 }}>
