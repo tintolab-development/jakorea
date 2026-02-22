@@ -20,6 +20,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",
+    "@tanstack/react-query": "^5.62.2",
     "@tanstack/react-table": "^8.20.5",
     "@toast-ui/editor": "^3.2.2",
     "@types/react-grid-layout": "^2.1.0",
