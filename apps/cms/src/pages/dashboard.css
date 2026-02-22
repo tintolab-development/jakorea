@@ -1,7 +1,7 @@
 /**
  * 대시보드 페이지 스타일
  * 알림 리스트 / 고객 문의 현황 / 프로그램 일정 높이 동일화
- * index2와 동일한 툴바(타이틀, 설명, 대시보드 설정 버튼) 영역
+ * 툴바(타이틀, 설명, 대시보드 설정 버튼) 영역
  */
 
 .dashboard-container {
@@ -19,7 +19,7 @@
   justify-content: space-between;
   gap: var(--spacing-16);
   margin-bottom: var(--spacing-16);
-  margin-top: -24px; /* ~님 반갑습니다 헤더를 상단으로 24px 올림 */
+  margin-top: calc(-1 * var(--spacing-24)); /* ~님 반갑습니다 헤더를 상단으로 올림 */
   padding: var(--spacing-16) 0 0;
 }
 
@@ -59,7 +59,7 @@
 .dashboard-widgets-left {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-16);
 }
 
 .dashboard-widgets-left .notification-widget {
@@ -158,8 +158,8 @@
 .dashboard-widget-resize-handle {
   position: absolute;
   top: 0;
-  right: 2px;
-  width: 12px;
+  right: var(--spacing-2);
+  width: var(--spacing-12);
   height: 100%;
   cursor: col-resize;
   z-index: 30;
@@ -176,24 +176,24 @@
 }
 
 .dashboard-widget-resize-handle__bar {
-  width: 3px;
-  height: 48px;
-  border-radius: 2px;
-  background: var(--color-border-subtle, #d9d9d9);
+  width: var(--spacing-3);
+  height: var(--spacing-48);
+  border-radius: var(--spacing-2);
+  background: var(--color-border-subtle);
   transition: background 0.15s;
 }
 
 .dashboard-widget-resize-handle:hover .dashboard-widget-resize-handle__bar,
 .dashboard-widget-resize-handle--active .dashboard-widget-resize-handle__bar {
-  background: var(--color-primary, #47a9ad);
+  background: var(--color-modal-header);
 }
 
 /* DragOverlay: 드래그 중 cursor를 따라다니는 위젯 복제본 */
 .dashboard-widget-drag-overlay {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-8);
+  box-shadow: var(--shadow-drag-overlay);
   opacity: 0.95;
   cursor: grabbing;
   overflow: hidden;
