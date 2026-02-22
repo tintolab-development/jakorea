@@ -1,11 +1,12 @@
 /**
  * 중복 신청 알럿 모달 컴포넌트
  * Phase 1: 진행 프로그램 강사용 필터/탭/중복 신청 알럿 구현
+ * FSD: features/application으로 이동
  */
 
 import { Modal } from 'antd'
 import type { Program } from '@/types/domain'
-import type { DuplicateCheckResult } from '@/shared/utils/duplicate-application-check'
+import type { DuplicateCheckResult } from '@/features/application/lib/duplicate-application-check'
 
 interface DuplicateApplicationAlertProps {
   open: boolean
@@ -33,20 +34,12 @@ export function DuplicateApplicationAlert({
     return '추가 신청 확인'
   }
 
-  const handleConfirm = () => {
-    onConfirm()
-  }
-
-  const handleCancel = () => {
-    onCancel()
-  }
-
   return (
     <Modal
       open={open}
       title={getTitle()}
-      onOk={handleConfirm}
-      onCancel={handleCancel}
+      onOk={onConfirm}
+      onCancel={onCancel}
       okText={duplicateResult.case === 'case1' ? '확인' : '추가 신청하기'}
       cancelText="취소"
       width={500}
