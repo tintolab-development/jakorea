@@ -170,6 +170,7 @@ const allMenuItems: MenuItemConfig[] = [
       {
         key: '/mypage/program-schedule',
         label: '내 프로그램 일정',
+        icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
       },
@@ -177,6 +178,7 @@ const allMenuItems: MenuItemConfig[] = [
       {
         key: '/settlements/my',
         label: '강의료 정산',
+        icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['INSTRUCTOR'],
       },
@@ -184,6 +186,7 @@ const allMenuItems: MenuItemConfig[] = [
       {
         key: '/mypage/documents',
         label: '서류 발급 이력',
+        icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
       },
@@ -191,6 +194,7 @@ const allMenuItems: MenuItemConfig[] = [
       {
         key: '/notices/inquiries/my',
         label: '내 문의 내역',
+        icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
       },
@@ -607,9 +611,10 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/users', label: '전체 회원', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/schools', label: '학교(교사) 회원', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/instructors', label: '강사단 관리', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/users', label: '전체 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/schools', label: '학교(교사) 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/instructors', label: '강사단 관리', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/settings/permissions', label: '관리자 및 권한 설정', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   // {
@@ -698,77 +703,30 @@ const allMenuItems: MenuItemConfig[] = [
         ],
       },
       {
-        key: 'file-forms-group',
+        key: '/templates/file-forms',
         label: '파일 양식',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
-        children: [
-          {
-            key: '/templates/file-forms/instructor-resume',
-            label: '강사 이력서',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/file-forms/lecture-report',
-            label: '강의 보고서',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/file-forms/education-plan',
-            label: '교육계획서',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/file-forms/certificate',
-            label: '수료증',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/file-forms/activity-confirmation',
-            label: '활동확인서',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/file-forms/receipt',
-            label: '영수증',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/file-forms/payment-statement',
-            label: '지급조서',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/file-forms/employment-certificate',
-            label: '경력증명서',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-        ],
       },
       {
-        key: '/templates/kakao-alimtalk',
-        label: '카카오 알림톡 관리',
+        key: '/templates/sms',
+        label: '문자 양식',
+        icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
         key: '/templates/email',
         label: '메일 관리',
+        icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
         key: '/templates/banner',
         label: '배너 관리',
+        icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
@@ -781,9 +739,9 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/admin/posts/notices', label: '공지사항', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/admin/posts/faq', label: 'FAQ', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/admin/posts/inquiries', label: '문의하기', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/posts/notices', label: '공지사항', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/posts/faq', label: 'FAQ', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/admin/posts/inquiries', label: '문의하기', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   {
@@ -810,8 +768,8 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/logs/bug', label: '버그', enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/logs/issue', label: '이슈', enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/logs/bug', label: '버그', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      { key: '/logs/issue', label: '이슈', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
     ],
   },
   // {

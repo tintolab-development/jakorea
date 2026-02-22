@@ -31,9 +31,9 @@
     padding: 0;
 }
 
-/* large: 모달 전체(헤더+바디+푸터) 최대 높이 840px, 바디만 스크롤 */
+/* large: 모달 전체(헤더+바디+푸터) 최대 높이, 바디만 스크롤 */
 .teal-header-modal--large .ant-modal-content {
-    max-height: 840px;
+    max-height: var(--max-height-modal-scroll);
     display: flex;
     flex-direction: column;
 }
@@ -156,7 +156,7 @@
 .teal-header-modal__title {
     margin: 0;
     color: var(--color-bg-base);
-    font-family: Pretendard, sans-serif;
+    font-family: var(--font-family-primary), sans-serif;
     font-size: var(--font-size-18);
     font-style: normal;
     font-weight: var(--font-weight-700);
@@ -204,9 +204,9 @@
     max-height: var(--max-height-modal-scroll);
 }
 
-/* 푸터(선택): 버튼 위 30px 여백(테이블 겹침 방지), 버튼 justify center, 버튼 스펙 120×40, 버튼 사이 갭 8px */
+/* 푸터(선택): 버튼 위 여백(테이블 겹침 방지), 버튼 justify center, 버튼 스펙 120×40, 버튼 사이 갭 8px */
 .teal-header-modal__footer {
-    padding: 30px var(--spacing-30) var(--spacing-30);
+    padding: var(--spacing-30) var(--spacing-30) var(--spacing-30);
     display: flex;
     justify-content: center;
     align-items: center;

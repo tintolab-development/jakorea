@@ -65,19 +65,19 @@
 .app-button--primary.ant-btn-primary {
     background: var(--color-focus-teal) !important;
     border-color: var(--color-focus-teal) !important;
-    color: #fff !important;
+    color: var(--default-WT) !important;
 }
 
 .app-button--primary.ant-btn-primary:hover:not(:disabled) {
     background: var(--color-focus-teal-hover) !important;
     border-color: var(--color-focus-teal-hover) !important;
-    color: #fff !important;
+    color: var(--default-WT) !important;
 }
 
 .app-button--primary.ant-btn-primary:disabled {
-    background: #d9d9d9 !important;
-    border-color: #d9d9d9 !important;
-    color: rgba(0, 0, 0, 0.25) !important;
+    background: var(--color-border-input) !important;
+    border-color: var(--color-border-input) !important;
+    color: var(--color-text-disabled) !important;
 }
 
 /* 모달 헤더 청록과 동일한 색 쓰는 경우 (add-instructor 등) */
@@ -121,56 +121,56 @@
     color: var(--color-danger-secondary-hover) !important;
 }
 
-/* 삭제 버튼 호버 시 채움 (테이블 헤더 삭제 등) — 시안 #c32f4a */
+/* 삭제 버튼 호버 시 채움 (테이블 헤더 삭제 등) — 시안 토큰 --color-danger-fill-hover */
 .app-button--danger.app-button--fill-on-hover.ant-btn-dangerous:hover:not(:disabled) {
-    background: #c32f4a !important;
-    border-color: #c32f4a !important;
+    background: var(--color-danger-fill-hover) !important;
+    border-color: var(--color-danger-fill-hover) !important;
     color: var(--color-bg-base) !important;
 }
 
 /* ----- variant: viewDetails (내역 보기 등 테이블 내 액션) ----- */
 .app-button--viewDetails.ant-btn-default {
     width: 100px !important;
-    height: 32px !important;
+    height: var(--spacing-32, 32px) !important;
     min-width: 100px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 6px !important;
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
-    background: #fff !important;
-    color: var(--default-BK, #3d3d3d) !important;
+    border-radius: var(--radius-6) !important;
+    border: 1px solid var(--color-border-input-hover) !important;
+    background: var(--color-bg-base) !important;
+    color: var(--default-BK) !important;
     text-align: center !important;
-    font-family: Pretendard, sans-serif !important;
-    font-size: 12px !important;
+    font-family: var(--font-family-primary), sans-serif !important;
+    font-size: var(--font-size-12) !important;
     font-style: normal !important;
-    font-weight: 600 !important;
+    font-weight: var(--font-weight-600) !important;
 }
 
 .app-button--viewDetails.ant-btn-default:hover:not(:disabled) {
-    border-color: rgba(0, 0, 0, 0.25) !important;
-    color: var(--default-BK, #3d3d3d) !important;
-    background: #fff !important;
+    border-color: var(--color-border-input-strong) !important;
+    color: var(--default-BK) !important;
+    background: var(--color-bg-base) !important;
 }
 
 .app-button--viewDetails.ant-btn-default:disabled {
-    border-color: var(--color-border-light, #d9d9d9) !important;
-    color: rgba(0, 0, 0, 0.25) !important;
-    background: var(--color-bg-disabled, #f5f5f5) !important;
+    border-color: var(--color-border-light) !important;
+    color: var(--color-text-disabled) !important;
+    background: var(--color-bg-disabled) !important;
     cursor: not-allowed !important;
 }
 
 .app-button--cancel.ant-btn-default:disabled {
-    border-color: var(--color-border-light, #d9d9d9) !important;
-    color: rgba(0, 0, 0, 0.25) !important;
-    background: var(--color-bg-disabled, #f5f5f5) !important;
+    border-color: var(--color-border-light) !important;
+    color: var(--color-text-disabled) !important;
+    background: var(--color-bg-disabled) !important;
     cursor: not-allowed !important;
 }
 
 .app-button--danger.ant-btn-dangerous:disabled {
-    border-color: var(--color-border-light, #d9d9d9) !important;
-    color: rgba(0, 0, 0, 0.25) !important;
-    background: var(--color-bg-disabled, #f5f5f5) !important;
+    border-color: var(--color-border-light) !important;
+    color: var(--color-text-disabled) !important;
+    background: var(--color-bg-disabled) !important;
     cursor: not-allowed !important;
 }
 

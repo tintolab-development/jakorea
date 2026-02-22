@@ -7,6 +7,7 @@
 :root {
   --filter-control-width: 180px;
   --filter-control-height: 44px;
+  --filter-control-min-width: var(--filter-control-min-width);
 }
 
 @media (max-width: 1200px) {
@@ -66,6 +67,7 @@
   height: 100% !important;
   min-height: 0 !important;
   line-height: 1 !important;
+  /* Ant Design Input 기본 패딩 11px — 오버라이드 예외 */
   padding: 0 11px !important;
 }
 
@@ -108,7 +110,7 @@
 .program-filter-card .ant-select .ant-select-selector,
 .program-filter-wrapper .ant-select .ant-select-selector {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
   display: flex !important;
@@ -119,7 +121,7 @@
 .program-filter-card .ant-select,
 .program-filter-wrapper .ant-select {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
 }
 
@@ -137,7 +139,7 @@
 .program-filter-wrapper .ant-picker,
 .program-filter-wrapper .ant-picker-range {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
   display: inline-flex !important;
@@ -175,7 +177,7 @@
 /* 진행 현황 탭 필터 */
 .program-progress-tab__filters .ant-select {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   overflow: visible !important;
   align-self: center !important;
@@ -201,12 +203,12 @@
 
 .program-progress-tab__filter-col .ant-select {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
 }
 
 .program-progress-tab__filters .labeled-search-input__input {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
   display: inline-flex !important;
@@ -224,7 +226,7 @@
 .program-applicants-tab__filter-col .ant-select,
 .program-managers-tab__filter-col .ant-select {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
 }
 
@@ -252,7 +254,7 @@
 /* List 페이지 필터 (ListPageFilters) */
 .list-page-filters .ant-select {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
 }
 
@@ -265,7 +267,7 @@
 
 .list-page-filters .labeled-search-input__input {
   width: var(--filter-control-width) !important;
-  min-width: 120px;
+  min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
   display: inline-flex !important;
@@ -290,7 +292,7 @@
   .program-managers-tab__filter-col .ant-select,
   .list-page-filters .ant-select {
     width: 100% !important;
-    min-width: 120px;
+    min-width: var(--filter-control-min-width);
   }
 
   .unified-filter-card .labeled-search-input__input,
@@ -298,7 +300,7 @@
   .program-progress-tab__filters .labeled-search-input__input,
   .list-page-filters .labeled-search-input__input {
     width: 100% !important;
-    min-width: 120px;
+    min-width: var(--filter-control-min-width);
   }
 
   .unified-filter-card .ant-picker,
@@ -308,6 +310,6 @@
   .program-filter-wrapper .ant-picker,
   .program-filter-wrapper .ant-picker-range {
     width: 100% !important;
-    min-width: 120px;
+    min-width: var(--filter-control-min-width);
   }
 }
