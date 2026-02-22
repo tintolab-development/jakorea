@@ -29,7 +29,7 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
-    padding: 20px 30px 30px;
+    padding: var(--spacing-20) var(--spacing-30) var(--spacing-30);
     align-items: stretch;
     display: flex;
     flex-direction: column;
@@ -87,16 +87,16 @@
 }
 
 .applicant-instructor-detail-modal__tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: var(--color-modal-header, #47a9ad);
+    color: var(--color-modal-header);
     font-weight: 600;
 }
 
 .applicant-instructor-detail-modal__tabs .ant-tabs-ink-bar {
-    background: var(--color-modal-header, #47a9ad);
+    background: var(--color-modal-header);
 }
 
 .applicant-instructor-detail-modal__tabs .ant-tabs-tab:hover .ant-tabs-tab-btn {
-    color: var(--color-modal-header, #47a9ad);
+    color: var(--color-modal-header);
 }
 
 .applicant-instructor-detail-modal__basic {
@@ -142,7 +142,7 @@
     width: 100%;
     height: 100%;
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--color-overlay-dark-04);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -151,7 +151,7 @@
 
 .applicant-instructor-detail-modal__profile-icon {
     font-size: 48px;
-    color: var(--color-text-tertiary, #bfbfbf);
+    color: var(--color-text-tertiary);
 }
 
 .applicant-instructor-detail-modal__profile-preview-wrap {
@@ -175,9 +175,9 @@
     flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border: 1px solid var(--color-border-skeleton);
     border-radius: 6px;
-    background: var(--color-bg-base, #fff);
+    background: var(--color-bg-base);
     box-sizing: border-box;
 }
 
@@ -198,7 +198,7 @@
     padding: 4px 16px;
     text-align: left;
     vertical-align: middle;
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border: 1px solid var(--color-border-skeleton);
     box-sizing: border-box;
     display: table-cell;
     height: 48px;
@@ -257,10 +257,10 @@
 
 .applicant-instructor-detail-modal__basic-table-cell--label {
     padding: 0 16px;
-    background: #fafafa;
+    background: var(--color-bg-secondary);
     font-size: 14px;
     font-weight: 700;
-    color: var(--color-text-label, #262626);
+    color: var(--color-text-label);
     text-align: center;
     vertical-align: middle;
 }
@@ -277,7 +277,7 @@
 }
 
 .applicant-instructor-detail-modal__basic-table-cell--input {
-    background: #fff;
+    background: var(--color-bg-base);
     padding: 4px 16px;
 }
 
@@ -287,7 +287,7 @@
 }
 
 .applicant-instructor-detail-modal__basic-table-cell--divider-left {
-    border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+    border-left: 1px solid var(--color-border-skeleton);
     padding-left: 12px;
 }
 
@@ -317,9 +317,9 @@
 }
 
 .applicant-instructor-detail-modal__approval-history-block {
-  background: var(--color-bg-tertiary, #f5f5f5);
+  background: var(--color-bg-tertiary);
   border-radius: 8px;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border: 1px solid var(--color-border-skeleton);
   overflow: hidden;
 }
 
@@ -347,8 +347,8 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  background: #fff;
-  border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+  background: var(--color-bg-base);
+  border-left: 1px solid var(--color-border-skeleton);
 }
 
 .applicant-instructor-detail-modal__approval-history-td-content > .applicant-instructor-detail-modal__approval-history-cell--value {
@@ -356,9 +356,9 @@
 }
 
 .applicant-instructor-detail-modal__approval-history-cell--label {
-  background: #edf0f2;
+  background: var(--color-table-head-bg);
   font-weight: 700;
-  color: var(--color-text-label, #262626);
+  color: var(--color-text-label);
   width: 180px;
   min-width: 180px;
   flex-shrink: 0;
@@ -374,11 +374,11 @@
 }
 
 .applicant-instructor-detail-modal__approval-history-cell--value {
-  background: #fff;
-  color: var(--color-text-primary, #333);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
   flex: 1 1 auto;
   min-width: 0;
-  border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-left: 1px solid var(--color-border-skeleton);
   justify-content: flex-start;
   text-align: left;
 }
@@ -390,7 +390,7 @@
 }
 
 .applicant-instructor-detail-modal__approval-history-cell--action {
-  background: #fff;
+  background: var(--color-bg-base);
   border-left: none;
   padding-left: 12px;
   padding-right: 16px;
@@ -403,7 +403,7 @@
   min-width: 1px;
   height: 13px;
   min-height: 13px;
-  background: var(--color-border-secondary, #e8e8e8);
+  background: var(--color-border-skeleton);
   flex-shrink: 0;
   margin: 0;
   align-self: center;
@@ -437,10 +437,10 @@
 }
 
 .applicant-instructor-detail-modal__preferred-schools-table-wrap {
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border: 1px solid var(--color-border-skeleton);
     border-radius: 6px;
     overflow: hidden;
-    background: #fafafa;
+    background: var(--color-bg-secondary);
 }
 
 .applicant-instructor-detail-modal__preferred-schools-table {
@@ -467,7 +467,7 @@
 .applicant-instructor-detail-modal__preferred-schools-table tbody td {
     height: 48px;
     padding: 0 16px;
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border: 1px solid var(--color-border-skeleton);
     vertical-align: middle;
     box-sizing: border-box;
 }
@@ -479,10 +479,10 @@
     max-width: 180px;
     height: 48px;
     min-height: 48px;
-    background: #fafafa;
+    background: var(--color-bg-secondary);
     font-size: 14px;
     font-weight: 700;
-    color: var(--color-text-label, #262626);
+    color: var(--color-text-label);
     text-align: center;
     padding-right: 12px;
 }
@@ -490,8 +490,8 @@
 .applicant-instructor-detail-modal__preferred-schools-cell--school {
     width: 353px;
     min-width: 353px;
-    background: #fff;
-    border-left: 1px solid var(--color-border-secondary, #e8e8e8);
+    background: var(--color-bg-base);
+    border-left: 1px solid var(--color-border-skeleton);
     padding-left: 12px;
 }
 
@@ -518,7 +518,7 @@
 .applicant-instructor-detail-modal__preferred-school-td-divider {
     width: 1px;
     height: 1em;
-    background: var(--color-border-secondary, #e8e8e8);
+    background: var(--color-border-skeleton);
     flex-shrink: 0;
     margin: 0;
 }
@@ -534,7 +534,7 @@
 .applicant-instructor-detail-modal__section-title {
     font-size: var(--font-size-14);
     font-weight: 700;
-    color: var(--color-text-primary, #333);
+    color: var(--color-text-primary);
 }
 
 .applicant-instructor-detail-modal__actions {
@@ -565,8 +565,8 @@
     font-size: 14px;
     font-weight: 700;
     text-align: left;
-    background: #edf0f2;
-    color: var(--color-text-primary, #333);
+    background: var(--color-table-head-bg);
+    color: var(--color-text-primary);
     box-sizing: border-box;
     vertical-align: middle;
     padding: 12px 16px;
@@ -577,8 +577,8 @@
     font-size: 14px;
     font-weight: 400;
     text-align: left;
-    background: #fff;
-    color: var(--color-text-primary, #333);
+    background: var(--color-bg-base);
+    color: var(--color-text-primary);
     box-sizing: border-box;
     vertical-align: middle;
     padding: 12px 16px;
@@ -671,9 +671,9 @@
 }
 
 .applicant-instructor-detail-modal__resume-card {
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border: 1px solid var(--color-border-skeleton);
     border-radius: 6px;
-    background: var(--color-bg-base, #fff);
+    background: var(--color-bg-base);
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -765,9 +765,9 @@
 }
 
 .applicant-instructor-detail-modal__resume-free-writing-card {
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
+    border: 1px solid var(--color-border-skeleton);
     border-radius: 6px;
-    background: var(--color-bg-base, #fff);
+    background: var(--color-bg-base);
     padding: 16px;
     box-sizing: border-box;
 }

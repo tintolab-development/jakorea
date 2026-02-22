@@ -14,7 +14,7 @@ import {
   CalendarOutlined,
   FormOutlined,
 } from '@ant-design/icons'
-import { SatisfactionSurveyModal } from '@/shared/ui'
+import { SatisfactionSurveyModal } from '@/features/program/ui/satisfaction-survey-modal'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   getMyProgramDetail,
