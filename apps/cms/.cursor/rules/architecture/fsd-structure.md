@@ -68,6 +68,13 @@ src/
 - 라우트별 페이지 컴포넌트
 - Feature와 Widget을 조합하여 페이지 구성
 
+## 의존성 규칙 (FSD)
+
+- **shared**는 `features`, `entities`를 import하지 않습니다. 인증 등이 필요하면 `shared/lib/auth/auth-context`처럼 컨텍스트로 주입하고, app 레이어에서 값을 제공합니다.
+- **권한/ACL** 유틸(`program-acl`, `download-permission`)은 `features/permission-request/lib`에 두고, `shared`에서는 사용하지 않습니다.
+- **ProtectedRoute**는 app 레이어(`app/components/protected-route`)에 두고, features/auth·permission-request를 사용합니다.
+- **Feature Public API**: 페이지·다른 feature는 feature 내부 경로 대신 `@/features/<name>`(index 재export)를 사용하는 것을 권장합니다. (예: `@/features/dashboard`)
+
 ## 컴포넌트 구조 원칙
 
 - 컴포넌트는 기능(Feature) 단위로 묶습니다.
