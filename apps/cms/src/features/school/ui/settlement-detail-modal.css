@@ -1,0 +1,496 @@
+/**
+ * 프로그램 정산 내역 상세 모달 스타일
+ */
+
+.teal-header-modal--settlement-detail .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+.teal-header-modal--settlement-detail .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.teal-header-modal--settlement-detail .teal-header-modal__header {
+  flex-shrink: 0;
+}
+
+.teal-header-modal--settlement-detail .teal-header-modal__body {
+  height: 650px;
+  min-height: 650px;
+  max-height: 650px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: none;
+  padding: 24px 30px 30px;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.teal-header-modal--settlement-detail .teal-header-modal__footer {
+  flex-shrink: 0;
+}
+
+/* 상단 기본 정보 테이블 */
+.settlement-detail__info {
+  width: 100%;
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.settlement-detail__info table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settlement-detail__info th,
+.settlement-detail__info td {
+  padding: 12px 20px;
+  font-size: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-border-skeleton, #f0f0f0);
+}
+
+.settlement-detail__info tr:last-child th,
+.settlement-detail__info tr:last-child td {
+  border-bottom: none;
+}
+
+.settlement-detail__info th {
+  background: var(--color-bg-secondary, #fafafa);
+  font-weight: 700;
+  color: var(--color-text-label, #666);
+  text-align: center;
+  white-space: nowrap;
+  width: 160px;
+}
+
+.settlement-detail__info td {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}
+
+.settlement-detail__info td.settlement-detail__split-td {
+  padding: 0 !important;
+  border-bottom: 1px solid var(--color-border-skeleton, #f0f0f0) !important;
+}
+
+.settlement-detail__info tr:last-child td.settlement-detail__split-td {
+  border-bottom: none !important;
+}
+
+.settlement-detail__info-split {
+  display: flex;
+  width: 100%;
+}
+
+.settlement-detail__info-split-cell {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-height: 44px;
+}
+
+.settlement-detail__info-split-label {
+  background: var(--color-bg-secondary, #fafafa);
+  font-weight: 700;
+  color: var(--color-text-label, #666);
+  text-align: center;
+  white-space: nowrap;
+  width: 160px;
+  min-width: 160px;
+  padding: 12px 20px;
+  font-size: 14px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settlement-detail__info-split-value {
+  flex: 1;
+  padding: 12px 20px;
+  font-size: 14px;
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}
+
+.settlement-detail__info-split-cell + .settlement-detail__info-split-cell {
+  border-left: 1px solid var(--color-border-skeleton, #f0f0f0);
+}
+
+.settlement-detail__status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 정산 항목 섹션 */
+.settlement-detail__section {
+  width: 100%;
+}
+
+.settlement-detail__section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  margin: 0 0 4px;
+}
+
+.settlement-detail__section-desc {
+  font-size: 13px;
+  color: #999;
+  margin: 0 0 12px;
+}
+
+/* 정산 항목 테이블 */
+.settlement-detail__items {
+  width: 100%;
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settlement-detail__items table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.settlement-detail__items th,
+.settlement-detail__items td {
+  padding: 0 20px;
+  font-size: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-border-skeleton, #f0f0f0);
+  height: 44px;
+}
+
+.settlement-detail__items thead th {
+  background: var(--color-bg-secondary, #fafafa);
+  font-weight: 700;
+  color: var(--color-text-label, #666);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.settlement-detail__items colgroup .col-label {
+  width: 12%;
+}
+
+.settlement-detail__items colgroup .col-desc {
+  width: auto;
+}
+
+.settlement-detail__items colgroup .col-amount {
+  width: 14%;
+}
+
+.settlement-detail__items colgroup .col-action {
+  width: 14%;
+}
+
+.settlement-detail__items tbody td {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+}
+
+.settlement-detail__items tbody td:nth-child(1) {
+  font-weight: 600;
+}
+
+.settlement-detail__items tbody td:nth-child(2) {
+  text-align: center;
+}
+
+.settlement-detail__items tbody td:nth-child(3) {
+  white-space: nowrap;
+}
+
+.settlement-detail__items tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 합계 행 */
+.settlement-detail__items tr.settlement-detail__total-row td {
+  border-top: 2px solid var(--color-border-skeleton, #e8e8e8);
+  background: #f0fffe;
+}
+
+.settlement-detail__items tr.settlement-detail__total-row td:first-child {
+  color: var(--JA-mint-01, #01A1AF);
+  font-weight: 700;
+}
+
+.settlement-detail__items tr.settlement-detail__total-row td:nth-child(3) {
+  color: var(--JA-mint-01, #01A1AF);
+  font-weight: 700;
+}
+
+/* 상세보기 / 지급조서 발급 버튼 */
+.settlement-detail__view-btn {
+  display: flex !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  background: #FFF !important;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-size: 13px !important;
+  box-sizing: border-box !important;
+}
+
+.settlement-detail__view-btn.app-button--primary {
+  background: var(--JA-mint-01, #01A1AF) !important;
+  border-color: var(--JA-mint-01, #01A1AF) !important;
+  color: #fff !important;
+}
+
+/* 원천징수 행 금액 마이너스 표시 */
+.settlement-detail__withholding-amount {
+  color: #e74c3c;
+}
+
+/* 지급 신청 반려 모달: 헤더 제외 바디+푸터 = 187px */
+.teal-header-modal--settlement-reject .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  height: calc(50px + 187px);
+  overflow: hidden;
+}
+
+.teal-header-modal--settlement-reject .teal-header-modal__body {
+  flex: 1;
+  min-height: 0;
+  padding: 20px 30px 0;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.teal-header-modal--settlement-reject .teal-header-modal__footer {
+  flex-shrink: 0;
+}
+
+.settlement-reject__body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settlement-reject__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.settlement-reject__input {
+  height: 40px;
+  border-radius: 6px;
+}
+
+/* 지급 반려 확인 모달 */
+.settlement-reject-confirm .ant-modal-content {
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settlement-reject-confirm .ant-modal-body {
+  padding: 0;
+}
+
+.settlement-reject-confirm__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 30px 30px;
+  gap: 16px;
+}
+
+.settlement-reject-confirm__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+}
+
+.settlement-reject-confirm__body {
+  text-align: center;
+}
+
+.settlement-reject-confirm__line {
+  margin: 0;
+  font-size: 15px;
+  color: var(--default-BK, #3d3d3d);
+  line-height: 1.6;
+}
+
+.settlement-reject-confirm__line strong {
+  font-weight: 700;
+}
+
+.settlement-reject-confirm__footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* 강의료 지급 모달 */
+.teal-header-modal--settlement-payment .teal-header-modal__body {
+  padding: 24px 30px 0;
+}
+
+.settlement-payment__body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.settlement-payment__table-wrap {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settlement-payment__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.settlement-payment__table th,
+.settlement-payment__table td {
+  padding: 0 20px;
+  font-size: 14px;
+  vertical-align: middle;
+  height: 48px;
+  border-bottom: 1px solid #d9d9d9;
+  border-right: 1px solid #d9d9d9;
+}
+
+.settlement-payment__table th:last-child,
+.settlement-payment__table td:last-child {
+  border-right: none;
+}
+
+.settlement-payment__table tr:last-child th,
+.settlement-payment__table tr:last-child td {
+  border-bottom: none;
+}
+
+.settlement-payment__table th {
+  background: var(--color-bg-secondary, #fafafa);
+  font-weight: 700;
+  color: var(--color-text-label, #666);
+  text-align: center;
+  white-space: nowrap;
+  width: 140px;
+}
+
+.settlement-payment__table td {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.settlement-payment__amount {
+  color: var(--JA-mint-01, #01A1AF) !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+}
+
+.settlement-payment__account {
+  display: inline-flex;
+  align-items: center;
+}
+
+.settlement-payment__divider {
+  display: inline-block;
+  margin: 0 12px;
+  color: var(--color-border-skeleton, #d9d9d9);
+  font-weight: 300;
+}
+
+.settlement-payment__guide {
+  text-align: center;
+  line-height: 1.8;
+}
+
+.settlement-payment__guide p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.settlement-payment__guide strong {
+  font-weight: 700;
+}
+
+/* 강의료 지급 확인 모달 */
+.settlement-payment-confirm .ant-modal-content {
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settlement-payment-confirm .ant-modal-body {
+  padding: 0;
+}
+
+.settlement-payment-confirm__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 30px 30px;
+  gap: 16px;
+}
+
+.settlement-payment-confirm__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+}
+
+.settlement-payment-confirm__desc {
+  margin: 0;
+  font-size: 15px;
+  color: var(--default-BK, #3d3d3d);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.settlement-payment-confirm__desc strong {
+  font-weight: 700;
+}
+
+.settlement-payment-confirm__footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
