@@ -44,7 +44,7 @@ export function UserList({
     {
       title: 'No.',
       key: 'no',
-      width: 64,
+      width: '7%',
       align: 'center',
       render: (_: unknown, __: Omit<User, 'password'>, index: number) => index + 1,
     },
@@ -52,14 +52,14 @@ export function UserList({
       title: '회원명',
       dataIndex: 'name',
       key: 'name',
-      width: 120,
+      width: '15%',
       align: 'center',
     },
     {
       title: '연락처',
       dataIndex: 'phone',
       key: 'phone',
-      width: 140,
+      width: '17%',
       align: 'center',
       render: (phone: string | undefined) => phone ?? '-',
     },
@@ -67,14 +67,14 @@ export function UserList({
       title: '이메일',
       dataIndex: 'email',
       key: 'email',
-      width: 200,
+      width: '27%',
       align: 'center',
     },
     {
       title: '회원 유형',
       dataIndex: 'role',
       key: 'role',
-      width: 120,
+      width: '17%',
       align: 'center',
       render: (role: UserRole, record) => ROLE_LABELS[role] ?? getRoleLabel(role, record.adminLevel),
     },
@@ -82,7 +82,7 @@ export function UserList({
       title: '가입일',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 120,
+      width: '17%',
       align: 'center',
       render: (date: string) => formatDate(new Date(date)),
     },
@@ -95,7 +95,7 @@ export function UserList({
       dataSource={data}
       loading={loading}
       rowKey="id"
-      scroll={{ x: 900 }}
+      tableLayout="fixed"
       onRow={
         onView
           ? record => ({
