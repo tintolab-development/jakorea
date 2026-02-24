@@ -25,22 +25,26 @@ import {
   type SettlementRowStatus,
   SETTLEMENT_ROW_STATUS_LABELS,
 } from '@/data/mock/school-detail'
+import { SettlementDetailModal, type BankInfo } from './settlement-detail-modal'
 
 export interface TeacherSettlementTabProps {
   data: SettlementOverviewData
+  teacherName?: string
+  bankInfo?: BankInfo
 }
 
 type ViewMode = 'list' | 'calendar'
 
-const SETTLEMENT_ROW_STATUS_KEYS: SettlementRowStatus[] = ['pending', 'reviewing', 'completed']
+const SETTLEMENT_ROW_STATUS_KEYS: SettlementRowStatus[] = ['pending', 'reviewing', 'completed', 'rejected']
 
 const STATUS_TAG_STYLE: Record<SettlementRowStatus, { bg: string; color: string }> = {
   pending: { bg: '#e8f5e9', color: '#1e8c29' },
   reviewing: { bg: '#fff3e0', color: '#e67e22' },
   completed: { bg: '#e0f2f1', color: '#01A1AF' },
+  rejected: { bg: '#fdecea', color: '#d32f2f' },
 }
 
-export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
+export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSettlementTabProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [currentMonth, setCurrentMonth] = useState(() => dayjs(data.month))
   const [searchText, setSearchText] = useState('')
@@ -48,14 +52,51 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
   const [overrides, setOverrides] = useState<Record<string, { status?: SettlementRowStatus }>>({})
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null)
   const [calendarSelectedKeys, setCalendarSelectedKeys] = useState<React.Key[]>([])
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [detailModalRowId, setDetailModalRowId] = useState<string | null>(null)
+
+  const handleOpenDetail = useCallback((row: SettlementRow) => {
+    setDetailModalRowId(row.id)
+    setDetailModalOpen(true)
+  }, [])
+
+  const handleReject = useCallback((_reason: string) => {
+    if (!detailModalRowId) return
+    setOverrides(prev => ({
+      ...prev,
+      [detailModalRowId]: { status: 'rejected' as SettlementRowStatus },
+    }))
+  }, [detailModalRowId])
+
+  const handlePaymentComplete = useCallback(() => {
+    if (!detailModalRowId) return
+    setOverrides(prev => ({
+      ...prev,
+      [detailModalRowId]: { status: 'completed' as SettlementRowStatus },
+    }))
+  }, [detailModalRowId])
 
   const rows = useMemo(() => {
     if (Object.keys(overrides).length === 0) return data.rows
-    return data.rows.map(row => ({
-      ...row,
-      ...(overrides[row.id] ?? {}),
-    }))
+    return data.rows.map(row => {
+      const override = overrides[row.id]
+      if (!override) return row
+      return {
+        ...row,
+        ...override,
+        detail: {
+          ...row.detail,
+          ...(override.status ? { status: override.status } : {}),
+        },
+      }
+    })
   }, [data.rows, overrides])
+
+  const detailModalData = useMemo(() => {
+    if (!detailModalRowId) return null
+    const row = rows.find(r => r.id === detailModalRowId)
+    return row?.detail ?? null
+  }, [rows, detailModalRowId])
 
   const filteredRows = useMemo(() => {
     if (!searchText.trim()) return rows
@@ -139,6 +180,10 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
                     key={s.id}
                     className="settlement-cal__amount-tag"
                     style={{ background: tagStyle.bg, color: tagStyle.color }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleOpenDetail(s)
+                    }}
                   >
                     + {s.amount.toLocaleString()}원
                   </span>
@@ -149,7 +194,7 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
         </div>
       )
     },
-    [currentMonth, selectedDate, getSettlementsForDate],
+    [currentMonth, selectedDate, getSettlementsForDate, handleOpenDetail],
   )
 
   // --- List view columns ---
@@ -328,6 +373,10 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
                   <div className="settlement-tab__checkbox-cell">{originNode}</div>
                 ),
               }}
+              onRow={(record) => ({
+                onClick: () => handleOpenDetail(record),
+                style: { cursor: 'pointer' },
+              })}
             />
           ) : (
             <Empty description="정산 내역이 없습니다." />
@@ -373,7 +422,13 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
                           )
                         }}
                       />
-                      <div className="settlement-cal__detail-body">
+                      <div
+                        className="settlement-cal__detail-body"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleOpenDetail(row)
+                        }}
+                      >
                         <div className="settlement-cal__detail-header">
                           <span
                             className="settlement-cal__detail-status"
@@ -406,6 +461,16 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
           </div>
         </div>
       )}
+
+      <SettlementDetailModal
+        open={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        detail={detailModalData}
+        teacherName={teacherName}
+        bankInfo={bankInfo}
+        onReject={handleReject}
+        onPaymentComplete={handlePaymentComplete}
+      />
     </div>
   )
 }

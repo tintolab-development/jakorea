@@ -92,7 +92,15 @@ export function TeacherDetailModal({
         key: 'settlement',
         label: '정산 현황',
         children: (
-          <TeacherSettlementTab data={detail.settlementOverview} />
+          <TeacherSettlementTab
+            data={detail.settlementOverview}
+            teacherName={detail.name}
+            bankInfo={{
+              bankName: detail.bankName,
+              accountNumber: detail.accountNumber,
+              accountHolder: detail.accountHolder,
+            }}
+          />
         ),
       }] : [{
         key: 'settlement',
