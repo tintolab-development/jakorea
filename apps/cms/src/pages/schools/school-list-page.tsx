@@ -10,7 +10,6 @@ import { mockUsers } from '@/data/mock/users'
 import { UserList } from '@/features/user/ui/user-list'
 import { SchoolDetailModal } from '@/features/school/ui/school-detail-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
-import { PageHeader } from '@/shared/ui/page-header'
 import { AppButton } from '@/shared/ui/app-button'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -187,11 +186,6 @@ export function SchoolListPage() {
 
   return (
     <div className="school-list-page">
-      <PageHeader
-        title="학교(교사) 회원 목록"
-        description={`총 ${schoolUsers.length}건`}
-      />
-
       <UnifiedFilterCard
         fields={[
           {
@@ -218,9 +212,13 @@ export function SchoolListPage() {
         onSearch={handleSearch}
       />
 
-      <Card className="school-list-page__table-card" bodyStyle={{ padding: 20 }}>
-        <div className="school-list-page__table-header">
-          <div className="school-list-page__table-actions">
+      <Card className="member-table-card" bodyStyle={{ padding: 20 }}>
+        <div className="member-table-card__header">
+          <div className="member-table-card__title-area">
+            <h2 className="member-table-card__title">학교(교사) 회원 목록</h2>
+            <span className="member-table-card__count">총 {schoolUsers.length}건</span>
+          </div>
+          <div className="member-table-card__actions">
             <AppButton
               variant="danger"
               size="filter"
