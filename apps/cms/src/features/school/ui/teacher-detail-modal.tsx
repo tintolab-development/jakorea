@@ -18,6 +18,7 @@ import {
 import { TeacherBasicInfoTab } from './teacher-basic-info-tab'
 import { TeacherResumeTab } from './teacher-resume-tab'
 import { TeacherTeachingHistoryTab } from './teacher-teaching-history-tab'
+import { TeacherSettlementTab } from './teacher-settlement-tab'
 import './teacher-detail-modal.css'
 
 export interface TeacherDetailModalProps {
@@ -87,7 +88,13 @@ export function TeacherDetailModal({
           <TeacherTeachingHistoryTab initialData={detail.teachingHistory ?? []} />
         ),
       },
-      {
+      ...(detail.settlementOverview ? [{
+        key: 'settlement',
+        label: '정산 현황',
+        children: (
+          <TeacherSettlementTab data={detail.settlementOverview} />
+        ),
+      }] : [{
         key: 'settlement',
         label: '정산 현황',
         children: (
@@ -95,7 +102,7 @@ export function TeacherDetailModal({
             <Empty description="정산 현황 정보가 없습니다." />
           </div>
         ),
-      },
+      }]),
     ] : []),
   ]
 

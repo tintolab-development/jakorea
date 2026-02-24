@@ -526,3 +526,218 @@
   cursor: pointer;
   display: inline-flex;
 }
+
+/* ==========================================
+   정산 현황 탭
+   ========================================== */
+
+.settlement-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+/* 상단 컨트롤 */
+.settlement-tab__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settlement-tab__month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.settlement-tab__month-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  letter-spacing: 0.5px;
+  min-width: 100px;
+}
+
+.settlement-tab__month-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border-skeleton, #d9d9d9);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  color: #666;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.settlement-tab__month-arrow:hover {
+  border-color: var(--color-modal-header, #4ca0a8);
+  color: var(--color-modal-header, #4ca0a8);
+}
+
+.settlement-tab__controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settlement-tab__search {
+  width: 220px;
+  height: 38px;
+  border-radius: 6px;
+}
+
+.settlement-tab__btn-calendar {
+  white-space: nowrap;
+}
+
+.settlement-tab__btn-settle {
+  background: var(--color-modal-header, #4ca0a8) !important;
+  border-color: var(--color-modal-header, #4ca0a8) !important;
+}
+
+/* 요약 카드 */
+.settlement-tab__summary {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 8px;
+  background: #fff;
+  padding: 18px 0;
+}
+
+.settlement-tab__summary-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.settlement-tab__summary-divider {
+  width: 1px;
+  height: 44px;
+  background: var(--color-border-skeleton, #e8e8e8);
+  flex-shrink: 0;
+}
+
+.settlement-tab__summary-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  white-space: nowrap;
+}
+
+.settlement-tab__summary-label--expected {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: #e6f7f2;
+  color: var(--color-modal-header, #4ca0a8);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settlement-tab__summary-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  letter-spacing: -0.5px;
+}
+
+.settlement-tab__summary-value--expected {
+  color: var(--color-modal-header, #4ca0a8);
+}
+
+.settlement-tab__summary-unit {
+  font-size: 16px;
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+/* 테이블 */
+.settlement-tab__table .ant-table {
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.settlement-tab__table .ant-table-thead > tr > th {
+  background: var(--color-bg-secondary, #fafafa) !important;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text-label, #666);
+  text-align: center;
+  border-bottom: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-right: 1px solid var(--color-border-skeleton, #e8e8e8);
+  padding: 12px 16px;
+}
+
+.settlement-tab__table .ant-table-thead > tr > th:last-child {
+  border-right: none;
+}
+
+.settlement-tab__table .ant-table-tbody > tr > td {
+  font-size: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-border-skeleton, #f0f0f0);
+  border-right: 1px solid var(--color-border-skeleton, #f0f0f0);
+  padding: 10px 16px;
+}
+
+.settlement-tab__table .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.settlement-tab__table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.settlement-tab__table .ant-table-tbody > tr:hover > td {
+  background: #fafafa !important;
+}
+
+.settlement-tab__checkbox-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 정산 상태 배지 */
+.settlement-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  height: 30px;
+  padding: 4px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.settlement-tab__badge--pending {
+  background: #e8f5e9;
+  color: #1e8c29;
+}
+
+.settlement-tab__badge--reviewing {
+  background: #fff3e0;
+  color: #e67e22;
+}
+
+.settlement-tab__badge--completed {
+  background: #e0f2f1;
+  color: #00897b;
+}

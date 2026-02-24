@@ -112,6 +112,7 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
             className="settlement-tab__month-arrow"
             onClick={handlePrevMonth}
             type="button"
+            title="이전 월"
           >
             <LeftOutlined />
           </button>
@@ -119,6 +120,7 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
             className="settlement-tab__month-arrow"
             onClick={handleNextMonth}
             type="button"
+            title="다음 월"
           >
             <RightOutlined />
           </button>
