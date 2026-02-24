@@ -91,6 +91,8 @@ export interface TeacherDetailData {
   freeWriting4?: string
   /** 프로그램 강의 이력 (강사 신청 교사만) */
   teachingHistory?: TeachingHistoryRow[]
+  /** 정산 현황 (강사 신청 교사만) */
+  settlementOverview?: SettlementOverviewData
 }
 
 export type TeachingProgramStatus =
@@ -117,6 +119,32 @@ export const TEACHING_PROGRAM_STATUS_LABELS: Record<TeachingProgramStatus, strin
   EDUCATION_SCHEDULED: '교육 진행 예정',
   EDUCATION_IN_PROGRESS: '교육 진행 중',
   PROGRAM_ENDED: '프로그램 종료',
+}
+
+export type SettlementRowStatus = 'pending' | 'reviewing' | 'completed'
+
+export const SETTLEMENT_ROW_STATUS_LABELS: Record<SettlementRowStatus, string> = {
+  pending: '정산 대기',
+  reviewing: '내역 검토 중',
+  completed: '정산 완료',
+}
+
+export interface SettlementRow {
+  id: string
+  no: number
+  programName: string
+  lectureDate: string
+  lectureDuration: string
+  status: SettlementRowStatus
+  amount: number
+}
+
+export interface SettlementOverviewData {
+  month: string
+  expectedAmount: number
+  completedAmount: number
+  totalAmount: number
+  rows: SettlementRow[]
 }
 
 export const TEACHING_SETTLEMENT_STATUS_LABELS: Record<TeachingSettlementStatus, string> = {
@@ -447,6 +475,10 @@ export function getTeacherDetail(
     ? generateTeachingHistory(idx)
     : []
 
+  const settlementOverview: SettlementOverviewData | undefined = detail.isInstructorApplicant
+    ? generateSettlementOverview(idx)
+    : undefined
+
   return {
     ...detail,
     id: teacher.id,
@@ -462,6 +494,7 @@ export function getTeacherDetail(
     freeWriting3: fw.w3,
     freeWriting4: fw.w4,
     teachingHistory,
+    settlementOverview,
   }
 }
 
@@ -484,6 +517,39 @@ function generateTeachingHistory(seedIdx: number): TeachingHistoryRow[] {
     settlementStatus: settlements[(seedIdx + i) % settlements.length],
     managerName: MANAGER,
   }))
+}
+
+function generateSettlementOverview(seedIdx: number): SettlementOverviewData {
+  const PROGRAM_NAME = '2026 SAP-함께 성장하JA! 참여 고등학생 모집 안내 (IT, SW 멘토링)'
+  const statuses: SettlementRowStatus[] = ['pending', 'pending', 'reviewing', 'reviewing', 'completed', 'completed', 'completed', 'completed', 'completed']
+  const amounts = [52788, 91500, 91500, 52788, 91500, 91500, 91500, 91500, 91500]
+  const sessions = ['3회차', '2회차', '1회차', '1회차', '1회차', '1회차', '1회차', '1회차', '1회차']
+
+  const count = 7 + (seedIdx % 3)
+  const rows: SettlementRow[] = Array.from({ length: count }, (_, i) => ({
+    id: `sr-${seedIdx}-${i}`,
+    no: count - i,
+    programName: PROGRAM_NAME,
+    lectureDate: `2026. 01. 15 (${sessions[i % sessions.length]})`,
+    lectureDuration: '1시간',
+    status: statuses[(seedIdx + i) % statuses.length],
+    amount: amounts[(seedIdx + i) % amounts.length],
+  }))
+
+  const completedAmount = rows
+    .filter(r => r.status === 'completed')
+    .reduce((s, r) => s + r.amount, 0)
+  const expectedAmount = rows
+    .filter(r => r.status !== 'completed')
+    .reduce((s, r) => s + r.amount, 0)
+
+  return {
+    month: '2026-01',
+    expectedAmount,
+    completedAmount,
+    totalAmount: expectedAmount + completedAmount,
+    rows,
+  }
 }
 
 export function getSchoolProgramHistory(schoolUserId: string): ProgramParticipationRow[] {
