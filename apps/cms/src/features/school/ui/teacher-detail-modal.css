@@ -1,26 +1,26 @@
 /**
  * 교사 회원 상세 모달 스타일
  * TealHeaderModal 사용 (회원 상세 모달 UI 패턴 동일)
- * width 1400, body height 680
+ * width 1400, body+footer 830px
  */
 
 .teal-header-modal--teacher-detail.teal-header-modal--large .ant-modal-content {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  height: 830px;
+  max-height: 830px;
 }
 
 .teal-header-modal--teacher-detail .teal-header-modal__body {
-  height: 680px;
-  min-height: 0;
-  max-height: 680px;
-  overflow: hidden;
   flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 16px;
-  padding: 20px 30px 30px;
+  padding: 20px 30px 0;
   width: 100%;
   box-sizing: border-box;
 }
@@ -52,6 +52,10 @@
   overflow: hidden;
 }
 
+.teacher-detail-modal__body .ant-tabs .ant-tabs-nav::before {
+  border-bottom: none !important;
+}
+
 .teacher-detail-modal__body .ant-tabs .ant-tabs-content-holder {
   flex: 1 1 auto;
   min-height: 0;
@@ -71,7 +75,12 @@
 .teacher-detail-modal__body .ant-tabs .ant-tabs-tabpane {
   height: 100%;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
+}
+
+.teacher-detail-modal__body .ant-tabs .ant-tabs-tabpane > * {
+  max-height: 100%;
+  box-sizing: border-box;
 }
 
 /* ==========================================
@@ -139,6 +148,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .teacher-detail-modal__basic-inner {
@@ -452,6 +463,8 @@
   flex-direction: column;
   gap: 12px;
   padding: 4px 0;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .teacher-detail-modal__teaching-header {
@@ -536,6 +549,10 @@
   flex-direction: column;
   gap: 14px;
   padding: 4px 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  height: 100%;
 }
 
 /* 상단 컨트롤 */
@@ -591,7 +608,7 @@
 
 .settlement-tab__search {
   width: 220px;
-  height: 38px;
+  height: 32px;
   border-radius: 6px;
 }
 
@@ -608,26 +625,22 @@
 .settlement-tab__summary {
   display: flex;
   align-items: center;
-  border: 1px solid var(--color-border-skeleton, #e8e8e8);
-  border-radius: 8px;
-  background: #fff;
-  padding: 18px 0;
+  gap: 20px;
 }
 
 .settlement-tab__summary-card {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px 24px;
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 8px;
+  background: #fff;
+  box-sizing: border-box;
 }
 
-.settlement-tab__summary-divider {
-  width: 1px;
-  height: 44px;
-  background: var(--color-border-skeleton, #e8e8e8);
-  flex-shrink: 0;
-}
 
 .settlement-tab__summary-label {
   font-size: 14px;
@@ -637,22 +650,19 @@
 }
 
 .settlement-tab__summary-label--expected {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 12px;
-  border-radius: 4px;
-  background: #e6f7f2;
-  color: var(--color-modal-header, #4ca0a8);
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--JA-mint-01, #01A1AF);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: normal;
 }
 
 .settlement-tab__summary-value {
-  font-size: 26px;
+  color: var(--default-BK, #3D3D3D);
+  font-family: Pretendard, sans-serif;
+  font-size: 32px;
   font-weight: 700;
-  color: var(--default-BK, #3d3d3d);
-  letter-spacing: -0.5px;
+  line-height: normal;
 }
 
 .settlement-tab__summary-value--expected {
@@ -666,6 +676,12 @@
 }
 
 /* 테이블 */
+.settlement-tab__list-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .settlement-tab__table .ant-table {
   border: 1px solid var(--color-border-skeleton, #e8e8e8);
   border-radius: 6px;
@@ -687,12 +703,18 @@
   border-right: none;
 }
 
+.settlement-tab__table .ant-table-tbody > tr {
+  height: 44px !important;
+}
+
 .settlement-tab__table .ant-table-tbody > tr > td {
   font-size: 14px;
   vertical-align: middle;
   border-bottom: 1px solid var(--color-border-skeleton, #f0f0f0);
   border-right: 1px solid var(--color-border-skeleton, #f0f0f0);
-  padding: 10px 16px;
+  padding: 0 16px !important;
+  height: 44px !important;
+  max-height: 44px !important;
 }
 
 .settlement-tab__table .ant-table-tbody > tr > td:last-child {
@@ -713,31 +735,289 @@
   justify-content: center;
 }
 
-/* 정산 상태 배지 */
-.settlement-tab__badge {
-  display: inline-flex;
+/* ==========================================
+   정산 현황 캘린더 뷰
+   ========================================== */
+
+.settlement-cal {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.settlement-cal__calendar-wrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* Ant Calendar 오버라이드 */
+.settlement-cal__calendar-wrap .ant-picker-calendar {
+  background: transparent;
+}
+
+.settlement-cal__calendar-wrap .ant-picker-panel {
+  border-top: none;
+}
+
+.settlement-cal__calendar-wrap .ant-picker-content {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Ant 기본 요일 헤더 숨김 */
+.settlement-cal__calendar-wrap .ant-picker-content thead {
+  display: none;
+}
+
+/* 커스텀 요일 헤더 */
+.settlement-cal__weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.settlement-cal__weekday {
+  text-align: center;
+  padding: 12px 0 6px;
+  color: #9FAEBB;
+  font-family: Outfit, Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: -0.312px;
+}
+
+/* 캘린더 상단 보더 */
+.settlement-cal__calendar-wrap .ant-picker-content tbody tr:first-child > td {
+  border-top: 1px solid var(--color-border-skeleton, #e8e8e8);
+}
+
+.settlement-cal__calendar-wrap .ant-picker-cell {
+  padding: 0 !important;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-border-skeleton, #f0f0f0);
+  border-right: 1px solid var(--color-border-skeleton, #f0f0f0);
+}
+
+.settlement-cal__calendar-wrap .ant-picker-content tr > td:last-child {
+  border-right: none;
+}
+
+.settlement-cal__calendar-wrap .ant-picker-content tbody tr:last-child > td {
+  border-bottom: none;
+}
+
+.settlement-cal__calendar-wrap .ant-picker-cell-inner {
+  display: block !important;
+  min-height: 114px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* 커스텀 셀 */
+.settlement-cal__cell {
+  min-height: 114px;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  box-sizing: border-box;
+}
+
+.settlement-cal__calendar-wrap .ant-picker-cell:hover {
+  background: #f9fffe;
+}
+
+.settlement-cal__calendar-wrap .ant-picker-cell:has(.settlement-cal__cell--outside) {
+  background: #fafafa;
+  cursor: default;
+}
+
+.settlement-cal__calendar-wrap .ant-picker-cell:has(.settlement-cal__cell--selected) {
+  background: #e8f8f9 !important;
+  box-shadow: inset 0 0 0 2px var(--JA-mint-01, #01A1AF);
+}
+
+.settlement-cal__cell--today .settlement-cal__day-num {
+  font-weight: 700;
+}
+
+.settlement-cal__day-num {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  min-width: 100px;
-  height: 30px;
-  padding: 4px 14px;
-  border-radius: 6px;
+  gap: 6px;
   font-size: 13px;
   font-weight: 600;
+  color: var(--default-BK, #3d3d3d);
+  margin-bottom: 1px;
+}
+
+.settlement-cal__td--outside .settlement-cal__day-num {
+  color: #ccc;
+}
+
+.settlement-cal__today-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 17px;
+  padding: 2px 6px;
+  border-radius: 50px;
+  background: var(--JA-mint-01, #01A1AF);
+  overflow: hidden;
+  color: var(--default-WT, #FFF);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 130%;
+  margin-left: 6px;
+  box-sizing: border-box;
+}
+
+.settlement-cal__amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.settlement-cal__amount-tag {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 103px;
+  height: 24px;
+  padding: 4px 6px;
+  gap: 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.settlement-cal__amount-more {
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
   white-space: nowrap;
 }
 
-.settlement-tab__badge--pending {
-  background: #e8f5e9;
-  color: #1e8c29;
+/* 우측 상세 패널 */
+.settlement-cal__detail {
+  width: calc((100% - 40px) / 3);
+  min-width: calc((100% - 40px) / 3);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  min-height: 0;
+  max-height: 100%;
 }
 
-.settlement-tab__badge--reviewing {
-  background: #fff3e0;
-  color: #e67e22;
+.settlement-cal__detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.settlement-tab__badge--completed {
-  background: #e0f2f1;
-  color: #00897b;
+.settlement-cal__detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 70px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  box-sizing: border-box;
+}
+
+.settlement-cal__detail-item .ant-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.settlement-cal__detail-item .ant-checkbox-inner {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.settlement-cal__detail-item:hover {
+  opacity: 0.85;
+}
+
+.settlement-cal__detail-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.settlement-cal__detail-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 8px;
+}
+
+.settlement-cal__detail-status {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.settlement-cal__detail-divider {
+  width: 1px;
+  height: 14px;
+  background: #ccc;
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+
+.settlement-cal__detail-amount {
+  overflow: hidden;
+  color: var(--default-BK, #3D3D3D);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.settlement-cal__detail-program {
+  overflow: hidden;
+  color: var(--default-BK, #3D3D3D);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.settlement-cal__detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #bbb;
+  font-size: 14px;
 }

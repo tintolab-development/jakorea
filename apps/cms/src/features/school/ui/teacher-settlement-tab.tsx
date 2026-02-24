@@ -3,38 +3,72 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
-import { Table, Input, Empty } from 'antd'
-import { LeftOutlined, RightOutlined, SearchOutlined, CalendarOutlined } from '@ant-design/icons'
+import { Table, Input, Empty, Checkbox, Calendar } from 'antd'
+import {
+  LeftOutlined,
+  RightOutlined,
+  SearchOutlined,
+  CalendarOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
+const CAL_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 import { AppButton } from '@/shared/ui/app-button'
+import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
+import type { SettlementStatusKey } from '@/shared/components/settlement-status-badge'
+import { StatusDropdownCell } from '@/features/program/ui/status-dropdown-cell'
 import {
   type SettlementOverviewData,
   type SettlementRow,
   type SettlementRowStatus,
   SETTLEMENT_ROW_STATUS_LABELS,
 } from '@/data/mock/school-detail'
-import dayjs from 'dayjs'
 
 export interface TeacherSettlementTabProps {
   data: SettlementOverviewData
 }
 
-const STATUS_CLASS: Record<SettlementRowStatus, string> = {
-  pending: 'settlement-tab__badge--pending',
-  reviewing: 'settlement-tab__badge--reviewing',
-  completed: 'settlement-tab__badge--completed',
+type ViewMode = 'list' | 'calendar'
+
+const SETTLEMENT_ROW_STATUS_KEYS: SettlementRowStatus[] = ['pending', 'reviewing', 'completed']
+
+const STATUS_TAG_STYLE: Record<SettlementRowStatus, { bg: string; color: string }> = {
+  pending: { bg: '#e8f5e9', color: '#1e8c29' },
+  reviewing: { bg: '#fff3e0', color: '#e67e22' },
+  completed: { bg: '#e0f2f1', color: '#01A1AF' },
 }
 
 export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [currentMonth, setCurrentMonth] = useState(() => dayjs(data.month))
   const [searchText, setSearchText] = useState('')
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [overrides, setOverrides] = useState<Record<string, { status?: SettlementRowStatus }>>({})
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null)
+  const [calendarSelectedKeys, setCalendarSelectedKeys] = useState<React.Key[]>([])
+
+  const rows = useMemo(() => {
+    if (Object.keys(overrides).length === 0) return data.rows
+    return data.rows.map(row => ({
+      ...row,
+      ...(overrides[row.id] ?? {}),
+    }))
+  }, [data.rows, overrides])
 
   const filteredRows = useMemo(() => {
-    if (!searchText.trim()) return data.rows
+    if (!searchText.trim()) return rows
     const keyword = searchText.trim().toLowerCase()
-    return data.rows.filter(r => r.programName.toLowerCase().includes(keyword))
-  }, [data.rows, searchText])
+    return rows.filter(r => r.programName.toLowerCase().includes(keyword))
+  }, [rows, searchText])
+
+  const handleStatusChange = useCallback((rowId: string, status: SettlementRowStatus) => {
+    setOverrides(prev => ({
+      ...prev,
+      [rowId]: { ...prev[rowId], status },
+    }))
+  }, [])
 
   const handlePrevMonth = useCallback(() => {
     setCurrentMonth(prev => prev.subtract(1, 'month'))
@@ -46,6 +80,79 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
 
   const monthLabel = currentMonth.format('YYYY. MM')
 
+  // --- Calendar: date → settlements map ---
+  const dateSettlementMap = useMemo(() => {
+    const map = new Map<string, SettlementRow[]>()
+    for (const row of rows) {
+      const match = row.lectureDate.match(/(\d+)\.\s*(\d+)\.\s*(\d+)/)
+      if (!match) continue
+      const key = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(row)
+    }
+    return map
+  }, [rows])
+
+  const getSettlementsForDate = useCallback(
+    (date: Dayjs) => dateSettlementMap.get(date.format('YYYY-MM-DD')) ?? [],
+    [dateSettlementMap],
+  )
+
+  const selectedDateRows = useMemo(() => {
+    if (!selectedDate) return []
+    return getSettlementsForDate(selectedDate)
+  }, [selectedDate, getSettlementsForDate])
+
+  // --- Calendar: fullCellRender ---
+  const dateFullCellRender = useCallback(
+    (date: Dayjs) => {
+      const isCurrent = date.isSame(currentMonth, 'month')
+      const isToday = date.isSame(dayjs(), 'day')
+      const isSelected = selectedDate?.isSame(date, 'day') ?? false
+      const settlements = isCurrent ? getSettlementsForDate(date) : []
+
+      return (
+        <div
+          className={[
+            'settlement-cal__cell',
+            !isCurrent && 'settlement-cal__cell--outside',
+            isSelected && 'settlement-cal__cell--selected',
+            isToday && 'settlement-cal__cell--today',
+          ].filter(Boolean).join(' ')}
+          onClick={() => {
+            if (isCurrent) {
+              setSelectedDate(isSelected ? null : date)
+              setCalendarSelectedKeys([])
+            }
+          }}
+        >
+          <div className="settlement-cal__day-num">
+            {date.date()}
+            {isToday && <span className="settlement-cal__today-badge">오늘</span>}
+          </div>
+          {settlements.length > 0 && (
+            <div className="settlement-cal__amounts">
+              {settlements.map(s => {
+                const tagStyle = STATUS_TAG_STYLE[s.status]
+                return (
+                  <span
+                    key={s.id}
+                    className="settlement-cal__amount-tag"
+                    style={{ background: tagStyle.bg, color: tagStyle.color }}
+                  >
+                    + {s.amount.toLocaleString()}원
+                  </span>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )
+    },
+    [currentMonth, selectedDate, getSettlementsForDate],
+  )
+
+  // --- List view columns ---
   const columns: ColumnsType<SettlementRow> = [
     {
       title: 'No.',
@@ -60,39 +167,47 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
       key: 'programName',
       ellipsis: true,
       align: 'center' as const,
+      width: 350,
     },
     {
       title: '강의 진행일',
       dataIndex: 'lectureDate',
       key: 'lectureDate',
-      width: 200,
+      width: 190,
       align: 'center' as const,
     },
     {
       title: '강의 진행 시간',
       dataIndex: 'lectureDuration',
       key: 'lectureDuration',
-      width: 130,
+      width: 120,
       align: 'center' as const,
     },
     {
       title: '정산 상태',
       dataIndex: 'status',
       key: 'status',
-      width: 140,
+      width: 150,
       align: 'center' as const,
-      render: (status: SettlementRowStatus) => (
-        <span className={`settlement-tab__badge ${STATUS_CLASS[status]}`}>
-          {SETTLEMENT_ROW_STATUS_LABELS[status]}
-        </span>
+      render: (_: unknown, record: SettlementRow) => (
+        <StatusDropdownCell<SettlementRowStatus>
+          status={record.status}
+          statusKeys={SETTLEMENT_ROW_STATUS_KEYS}
+          renderBadge={(s) => (
+            <SettlementStatusBadge status={s as SettlementStatusKey} />
+          )}
+          onChange={(s) => handleStatusChange(record.id, s)}
+          cellClassName="teacher-detail-modal__status-cell"
+          triggerClassName="teacher-detail-modal__status-trigger"
+        />
       ),
     },
     {
       title: '정산 금액',
       dataIndex: 'amount',
       key: 'amount',
-      width: 130,
-      align: 'right' as const,
+      width: 140,
+      align: 'center' as const,
       render: (amount: number) => `${amount.toLocaleString()}원`,
     },
   ]
@@ -104,7 +219,7 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
 
   return (
     <div className="settlement-tab">
-      {/* 상단 컨트롤: 월 네비게이터 + 검색 + 버튼들 */}
+      {/* 상단 컨트롤 */}
       <div className="settlement-tab__controls">
         <div className="settlement-tab__month-nav">
           <span className="settlement-tab__month-label">{monthLabel}</span>
@@ -135,10 +250,27 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
             onChange={e => setSearchText(e.target.value)}
             allowClear
           />
-          <AppButton variant="cancel" size="middle" className="settlement-tab__btn-calendar">
-            <CalendarOutlined style={{ marginRight: 4 }} />
-            캘린더 뷰로 보기
-          </AppButton>
+          {viewMode === 'list' ? (
+            <AppButton
+              variant="cancel"
+              size="middle"
+              className="settlement-tab__btn-view-toggle"
+              onClick={() => setViewMode('calendar')}
+            >
+              <CalendarOutlined style={{ marginRight: 4 }} />
+              캘린더 뷰로 보기
+            </AppButton>
+          ) : (
+            <AppButton
+              variant="cancel"
+              size="middle"
+              className="settlement-tab__btn-view-toggle"
+              onClick={() => setViewMode('list')}
+            >
+              <UnorderedListOutlined style={{ marginRight: 4 }} />
+              리스트 뷰로 보기
+            </AppButton>
+          )}
           <AppButton variant="primary" size="middle">
             지급조서 발급
           </AppButton>
@@ -159,9 +291,6 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
             <span className="settlement-tab__summary-unit">원</span>
           </span>
         </div>
-
-        <div className="settlement-tab__summary-divider" />
-
         <div className="settlement-tab__summary-card">
           <span className="settlement-tab__summary-label">정산 완료금</span>
           <span className="settlement-tab__summary-value">
@@ -169,9 +298,6 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
             <span className="settlement-tab__summary-unit">건</span>
           </span>
         </div>
-
-        <div className="settlement-tab__summary-divider" />
-
         <div className="settlement-tab__summary-card">
           <span className="settlement-tab__summary-label">
             {currentMonth.format('M')}월 총 정산금
@@ -183,26 +309,102 @@ export function TeacherSettlementTab({ data }: TeacherSettlementTabProps) {
         </div>
       </div>
 
-      {/* 테이블 */}
-      {filteredRows.length > 0 ? (
-        <Table<SettlementRow>
-          columns={columns}
-          dataSource={filteredRows}
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          className="settlement-tab__table"
-          rowSelection={{
-            type: 'checkbox' as const,
-            ...rowSelection,
-            columnWidth: 48,
-            renderCell: (_value, _record, _index, originNode) => (
-              <div className="settlement-tab__checkbox-cell">{originNode}</div>
-            ),
-          }}
-        />
-      ) : (
-        <Empty description="정산 내역이 없습니다." />
+      {/* 리스트 뷰 */}
+      {viewMode === 'list' && (
+        <div className="settlement-tab__list-wrap">
+          {filteredRows.length > 0 ? (
+            <Table<SettlementRow>
+              columns={columns}
+              dataSource={filteredRows}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+              className="settlement-tab__table"
+              rowSelection={{
+                type: 'checkbox' as const,
+                ...rowSelection,
+                columnWidth: 48,
+                renderCell: (_value, _record, _index, originNode) => (
+                  <div className="settlement-tab__checkbox-cell">{originNode}</div>
+                ),
+              }}
+            />
+          ) : (
+            <Empty description="정산 내역이 없습니다." />
+          )}
+        </div>
+      )}
+
+      {/* 캘린더 뷰 */}
+      {viewMode === 'calendar' && (
+        <div className="settlement-cal">
+          <div className="settlement-cal__calendar-wrap">
+            <div className="settlement-cal__weekday-header">
+              {CAL_WEEKDAYS.map(d => (
+                <span key={d} className="settlement-cal__weekday">{d}</span>
+              ))}
+            </div>
+            <Calendar
+              value={currentMonth}
+              fullCellRender={dateFullCellRender}
+              headerRender={() => null}
+            />
+          </div>
+
+          {/* 우측 상세 패널 */}
+          <div className="settlement-cal__detail">
+            {selectedDateRows.length > 0 ? (
+              <div className="settlement-cal__detail-list">
+                {selectedDateRows.map(row => {
+                  const tagStyle = STATUS_TAG_STYLE[row.status]
+                  return (
+                    <label
+                      key={row.id}
+                      className="settlement-cal__detail-item"
+                      style={{ backgroundColor: tagStyle.bg }}
+                    >
+                      <Checkbox
+                        checked={calendarSelectedKeys.includes(row.id)}
+                        onChange={e => {
+                          setCalendarSelectedKeys(prev =>
+                            e.target.checked
+                              ? [...prev, row.id]
+                              : prev.filter(k => k !== row.id),
+                          )
+                        }}
+                      />
+                      <div className="settlement-cal__detail-body">
+                        <div className="settlement-cal__detail-header">
+                          <span
+                            className="settlement-cal__detail-status"
+                            style={{ color: tagStyle.color }}
+                          >
+                            {SETTLEMENT_ROW_STATUS_LABELS[row.status]}
+                          </span>
+                          <span className="settlement-cal__detail-divider" />
+                          <span className="settlement-cal__detail-amount">
+                            +{row.amount.toLocaleString()}원
+                          </span>
+                        </div>
+                        <div className="settlement-cal__detail-program">
+                          [{row.programName.length > 40
+                            ? row.programName.slice(0, 40) + '...'
+                            : row.programName}]
+                        </div>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="settlement-cal__detail-empty">
+                {selectedDate != null
+                  ? '해당 날짜의 정산 내역이 없습니다.'
+                  : '날짜를 선택하세요.'}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )
