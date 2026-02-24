@@ -6,6 +6,16 @@ export { mockSponsors, mockSponsorsMap } from './sponsors'
 export { mockSchools, mockSchoolsMap } from './schools'
 export { mockInstructors, mockInstructorsMap } from './instructors'
 export { mockPrograms, mockProgramsMap } from './programs'
+export {
+  mockProgramPosts,
+  mockProgramPostsMap,
+  getProgramPostsByProgramId,
+} from './program-posts'
+export {
+  mockProgramFiles,
+  mockProgramFilesMap,
+  getProgramFilesByProgramId,
+} from './program-files'
 // ProgramStatistics는 Program 엔티티로 통합됨 (deprecated)
 export { mockApplications, mockApplicationsMap } from './applications'
 export { mockSchedules, mockSchedulesMap } from './schedules'
