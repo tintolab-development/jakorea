@@ -566,17 +566,6 @@ export function ProgramList({
     }
   }, [isParticipant, resetFilters])
 
-  const updateSearchParams = useCallback(
-    (updater: (next: URLSearchParams) => void) => {
-      const nextParams = new URLSearchParams(searchParams)
-      updater(nextParams)
-      if (nextParams.toString() !== searchParams.toString()) {
-        setSearchParams(nextParams, { replace: true })
-      }
-    },
-    [searchParams, setSearchParams]
-  )
-
   const handleToggleFavorite = async (programId: string) => {
     const userId = user?.instructorId || user?.id
     if (!userId) return
@@ -739,26 +728,6 @@ export function ProgramList({
             }
             setSearchParams(nextParams, { replace: true })
           }}
-          onReset={() => {
-            const resetFilters = {
-              search: '',
-              dateRange: null,
-              target: 'all' as const,
-              type: 'all' as const,
-              status: 'all' as const,
-            }
-            setPendingUserFilters(resetFilters)
-            setActiveUserFilters(resetFilters)
-            updateSearchParams(next => {
-              next.delete('startDate')
-              next.delete('endDate')
-              next.delete('target')
-              next.delete('type')
-              next.delete('status')
-              next.delete('search')
-            })
-          }}
-          resetButtonText="초기화"
         />
       )}
 
@@ -834,37 +803,6 @@ export function ProgramList({
             }
           }}
           onSearch={handleSearch}
-          onReset={() => {
-            setPendingFilters({
-              title: '',
-              lifecycleStatus: undefined,
-              category: undefined,
-              businessArea: undefined,
-              targetLevel: undefined,
-              type: undefined,
-              applicationStartDate: null,
-              applicationEndDate: null,
-              operationStartDate: null,
-              operationEndDate: null,
-            })
-            // 테이블 필터 초기화 (lifecycleStatus는 페이지 레벨에서 URL status로 처리)
-            table.getColumn('title')?.setFilterValue(null)
-            table.getColumn('category')?.setFilterValue(null)
-            table.getColumn('businessArea')?.setFilterValue(null)
-            table.getColumn('targetLevel')?.setFilterValue(null)
-            table.getColumn('type')?.setFilterValue(null)
-            // URL 파라미터 초기화
-            const nextParams = new URLSearchParams(searchParamsAdmin)
-            nextParams.delete('status')
-            nextParams.delete('type')
-            nextParams.delete('applicationStartDate')
-            nextParams.delete('applicationEndDate')
-            nextParams.delete('operationStartDate')
-            nextParams.delete('operationEndDate')
-            nextParams.delete('title')
-            setSearchParamsAdmin(nextParams, { replace: true })
-          }}
-          showResetButton={false}
         />
       )}
 

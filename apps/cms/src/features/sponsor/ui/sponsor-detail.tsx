@@ -70,13 +70,6 @@ export function SponsorDetail({ sponsor, onEdit, onDelete, loading }: SponsorDet
     setAppliedFilters(pendingFilters)
   }, [pendingFilters])
 
-  // 필터 초기화 핸들러
-  const handleFilterReset = useCallback(() => {
-    const resetFilters = { search: '', status: 'all' as const }
-    setPendingFilters(resetFilters)
-    setAppliedFilters(resetFilters)
-  }, [])
-
   // 필터링된 데이터
   const filteredPrograms = useMemo(() => {
     let filtered = [...programs]
@@ -245,9 +238,7 @@ export function SponsorDetail({ sponsor, onEdit, onDelete, loading }: SponsorDet
             }))
           }}
           onSearch={handleSearch}
-          onReset={handleFilterReset}
           loading={programsLoading}
-          resetButtonText="초기화"
         />
 
         {/* 프로그램 목록 테이블 */}

@@ -181,22 +181,6 @@ export default function TemplateFilesPage() {
     setSearchParams(nextParams, { replace: true })
   }
 
-  // 필터 초기화 (URL category도 제거)
-  const handleFilterReset = () => {
-    setPendingFilters({
-      query: '',
-      status: 'all',
-      category: 'all',
-    })
-    setAppliedFilters({
-      query: '',
-      status: 'all',
-      category: 'all',
-    })
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.delete('category')
-    setSearchParams(nextParams, { replace: true })
-  }
 
   const openCreate = () => {
     setEditing(null)
@@ -950,8 +934,6 @@ export default function TemplateFilesPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
-        showResetButton={false}
       />
 
       <Table

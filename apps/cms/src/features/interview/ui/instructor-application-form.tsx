@@ -11,7 +11,7 @@ import {
   instructorApplicationFormSchema,
   type InstructorApplicationFormData,
 } from '@/entities/interview/model/schema'
-import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
+import { InterviewStatusBadge } from '@/shared/components'
 import type { InterviewStatus } from '@/types/user'
 
 const { Option } = Select

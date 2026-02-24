@@ -131,21 +131,6 @@ export function InstructorApplicationListPage() {
     })
   }, [pendingFilters, setParams, fetchApplications])
 
-  // 초기화 핸들러
-  const handleFilterReset = useCallback(() => {
-    setPendingFilters({
-      programId: 'ALL',
-      status: 'ALL',
-    })
-    setParams({
-      programId: undefined,
-      status: undefined,
-    })
-    fetchApplications({
-      programId: undefined,
-      status: undefined,
-    })
-  }, [setParams, fetchApplications])
 
   const handleView = useCallback(
     (item: InstructorApplicationItem) => {
@@ -224,7 +209,6 @@ export function InstructorApplicationListPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         loading={loading}
       />
 

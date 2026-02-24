@@ -126,7 +126,7 @@ const reportStatusStatusConfig = {
 }
 
 export function ReportListPage() {
-  const { params, setParams, clearParams } = useQueryParams<ReportListQueryParams>()
+  const { params, setParams } = useQueryParams<ReportListQueryParams>()
   const { getAll: getAllReports } = useReportService()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
@@ -232,13 +232,6 @@ export function ReportListPage() {
       return dateB.getTime() - dateA.getTime()
     })
   }, [filteredReports])
-
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setFilters({ type: 'all', status: 'all' })
-    setSearchText('')
-    clearParams()
-  }
 
   // 통계 계산
   const statistics = useMemo(() => {
@@ -370,7 +363,6 @@ export function ReportListPage() {
             style: { width: LAYOUT_CONSTANTS.widths.filter },
           },
         ]}
-        onReset={handleFilterReset}
       />
 
       {/* 보고서 목록 테이블 */}

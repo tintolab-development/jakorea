@@ -7,31 +7,47 @@
 import { useMemo } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
+import type { Application } from '@/types/domain'
 import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 import {
   type AssignmentSubmissionDetail,
   ASSIGNMENT_SUBMISSION_STATUS_LABELS,
 } from '../model/school-detail-types'
-import { getAssignmentSubmissionDetail } from '../lib/school-detail-mock'
+import {
+  getAssignmentSubmissionDetail,
+  getAssignmentSubmissionDetailForApplication,
+} from '../lib/school-detail-mock'
 import './assignment-submission-modal.css'
 
 export interface AssignmentSubmissionModalProps {
   open: boolean
   onCancel: () => void
-  student: SchoolDetailStudentRow | null
-  schoolId: string
+  /** 학교 상세용: 학생 행 + 학교 ID */
+  student?: SchoolDetailStudentRow | null
+  schoolId?: string
+  /** 회원 상세용: 신청 + 회원명 */
+  application?: Application | null
+  userName?: string
 }
 
 export function AssignmentSubmissionModal({
   open,
   onCancel,
-  student,
-  schoolId,
+  student = null,
+  schoolId = '',
+  application = null,
+  userName = '',
 }: AssignmentSubmissionModalProps) {
   const detail: AssignmentSubmissionDetail | null = useMemo(() => {
-    if (!open || !student || !schoolId) return null
-    return getAssignmentSubmissionDetail(student, schoolId)
-  }, [open, student, schoolId])
+    if (!open) return null
+    if (application && userName) {
+      return getAssignmentSubmissionDetailForApplication(application, userName)
+    }
+    if (student && schoolId) {
+      return getAssignmentSubmissionDetail(student, schoolId)
+    }
+    return null
+  }, [open, student, schoolId, application, userName])
 
   const footer = (
     <AppButton variant="cancel" size="large" onClick={onCancel}>

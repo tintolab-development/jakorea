@@ -130,6 +130,41 @@ export function buildInstructorApproveMessageLines(count: number): string[] {
   ]
 }
 
+/** 회원 삭제 안내 문구 생성 (회원관리 > 전체 회원) */
+export function buildMemberDeleteMessageLines(
+  singleUser: { name: string; email: string } | null,
+  bulkCount: number
+): string[] {
+  if (bulkCount > 1) {
+    return [
+      `선택한 ${bulkCount}명의 회원을 삭제하시겠습니까?`,
+      '삭제된 회원은 복구할 수 없습니다.',
+      '정말로 삭제하시겠습니까?',
+    ]
+  }
+  if (singleUser) {
+    return [
+      `[${singleUser.name}] (${singleUser.email}) 회원을 삭제하시겠습니까?`,
+      '삭제된 회원은 복구할 수 없습니다.',
+      '정말로 삭제하시겠습니까?',
+    ]
+  }
+  return []
+}
+
+/** 회원 탈퇴 안내 문구 생성 (회원 상세 모달 > 탈퇴 버튼) */
+export function buildMemberWithdrawMessageLines(singleUser: {
+  name: string
+  email: string
+} | null): string[] {
+  if (!singleUser) return []
+  return [
+    `[${singleUser.name}] (${singleUser.email}) 회원을 탈퇴 처리하시겠습니까?`,
+    '탈퇴된 회원은 복구할 수 없습니다.',
+    '정말로 탈퇴하시겠습니까?',
+  ]
+}
+
 /** 문장에서 [xxx] 부분을 볼드(700)로 감싸서 React 노드로 반환 */
 function renderLineWithBoldBrackets(line: string) {
   const parts = line.split(/(\[[^\]]+\])/g)

@@ -361,8 +361,6 @@ export function VolunteerProgramListPage() {
                 }
               }}
               onSearch={handleSearch}
-              onReset={handleFilterReset}
-              resetButtonText="텍스트 초기화"
             />
             <Table
               columns={programColumns}

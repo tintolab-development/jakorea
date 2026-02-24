@@ -105,20 +105,6 @@ export function InstructorListPage() {
     loadInstructors()
   }
 
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setPendingFilters({
-      search: '',
-      pillar: 'ALL',
-      instructorType: 'ALL',
-      status: 'ALL',
-    })
-    setParam('search', null)
-    setParam('pillar', null)
-    setParam('instructorType', null)
-    setParam('status', null)
-    loadInstructors()
-  }
 
   // 페이지 로드 시 초기 데이터 불러오기
   useEffect(() => {
@@ -175,7 +161,6 @@ export function InstructorListPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         loading={loading}
       />
 

@@ -122,18 +122,6 @@ export function InstructorListPage() {
     })
   }
 
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setPendingFilters({
-      search: '',
-      region: 'all',
-    })
-    setParams({
-      search: undefined,
-      region: undefined,
-    })
-  }
-
   const handleNewClick = () => {
     openFormModal()
   }
@@ -260,7 +248,6 @@ export function InstructorListPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
       />
 
       <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />

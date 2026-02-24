@@ -123,18 +123,6 @@ export function MyProgramListPage() {
     })
   }, [pendingFilters, setParams])
 
-  // 필터 초기화 핸들러
-  const handleFilterReset = useCallback(() => {
-    const resetFilters = {
-      search: undefined,
-      status: 'all' as const,
-      category: 'all' as const,
-    }
-    setPendingFilters(resetFilters)
-    setActiveFilters(resetFilters)
-    setParams({})
-  }, [setParams])
-
   const handleToggleFavorite = async (programId: string) => {
     const userId = user?.instructorId || user?.id
     if (!userId) return
@@ -361,8 +349,6 @@ export function MyProgramListPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value || undefined }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
-        resetButtonText="초기화"
       />
 
       <Table

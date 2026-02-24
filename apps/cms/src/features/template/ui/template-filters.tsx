@@ -32,7 +32,7 @@ export function TemplateFilters({
   status,
   onStatusChange,
   onSearch,
-  onReset,
+  onReset: _onReset,
   onCreateClick,
   createButtonText = '등록',
   searchPlaceholder = '검색',
@@ -72,7 +72,6 @@ export function TemplateFilters({
         }
       }}
       onSearch={onSearch}
-      onReset={onReset}
       loading={loading}
       extra={
         onCreateClick ? (

@@ -117,20 +117,6 @@ export function AdminInquiryPage() {
     setAppliedFilters(pendingFilters)
   }
 
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setPendingFilters({
-      search: '',
-      category: 'all',
-      status: 'all',
-    })
-    setAppliedFilters({
-      search: '',
-      category: 'all',
-      status: 'all',
-    })
-  }
-
   // 삭제 핸들러
   const handleDelete = (id: string) => {
     setData(prev => prev.filter(item => item.id !== id))
@@ -310,7 +296,6 @@ export function AdminInquiryPage() {
             setPendingFilters(prev => ({ ...prev, [key]: value }))
           }}
           onSearch={handleSearch}
-          onReset={handleFilterReset}
         />
 
         <Table

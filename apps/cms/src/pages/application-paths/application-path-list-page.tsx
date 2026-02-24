@@ -28,7 +28,7 @@ interface ApplicationPathQueryParams extends Record<string, string | undefined> 
 export function ApplicationPathListPage() {
   const { paths, loading, fetchPaths, createPath, updatePath, deletePath } =
     useApplicationPathStore()
-  const { params, setParams, clearParams } = useQueryParams<ApplicationPathQueryParams>()
+  const { params, setParams } = useQueryParams<ApplicationPathQueryParams>()
   const { getByIdSync, getAllSync } = useProgramService()
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [editingPath, setEditingPath] = useState<ApplicationPath | null>(null)
@@ -140,11 +140,6 @@ export function ApplicationPathListPage() {
     setParams({ search: value || undefined })
   }
 
-  // 필터 초기화
-  const handleResetFilters = () => {
-    clearParams()
-  }
-
   // 프로그램 옵션
   const programOptions = useMemo(() => {
     return programs.map(program => ({
@@ -214,7 +209,6 @@ export function ApplicationPathListPage() {
             style: { width: LAYOUT_CONSTANTS.widths.status },
           },
         ]}
-        onReset={handleResetFilters}
         showReset={
           !!(searchKeyword || selectedProgramId || selectedPathType || selectedStatus !== undefined)
         }

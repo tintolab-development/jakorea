@@ -8,7 +8,7 @@ import type { MenuProps } from 'antd'
 import { MoreOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { User } from '@/types/user'
-import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
+import { InterviewStatusBadge } from '@/shared/components'
 import { formatDate } from '@/shared/utils'
 
 interface VolunteerListProps {
