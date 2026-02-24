@@ -243,6 +243,12 @@ export interface Application {
   progressStatus?: ApplicationProgressStatus
   /** 알림 발송 상태 (발송 완료/미발송) */
   notificationSent?: boolean
+  /** 회원 상세 탭: 강의 출석 "출석수/총회차" (예: "0/4") */
+  lectureAttendance?: string
+  /** 회원 상세 탭: 과제 제출 내역 존재 여부 */
+  hasAssignmentSubmission?: boolean
+  /** 회원 상세 탭: 담당자명 (예: "이순신 매니저") */
+  managerName?: string
   submittedAt: DateValue
   reviewedAt?: DateValue
   createdAt: DateValue
@@ -593,6 +599,48 @@ export interface ProgramStatistics {
   instructors: number // 강사 수
   // 담당자
   managerName?: string // 담당자명
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 프로그램 게시글 (수강 프로그램 상세 모달 — 게시글 탭)
+export interface ProgramPost {
+  id: UUID
+  programId: UUID
+  /** 작성자 표시명 (예: "박○○ 담당교사님", "JA KOREA 알림") */
+  authorName: string
+  /** 작성자 사용자 ID (선택, 프로필 연동용) */
+  authorUserId?: UUID
+  title?: string
+  content: string
+  /** 읽음 여부 (수강자/회원 관점) — 미읽음이면 민트 스트로크 + "읽지 않음" 태그 */
+  read: boolean
+  viewCount: number
+  /** 반응/이모티콘 수 */
+  reactionCount: number
+  commentCount: number
+  /** 첨부 파일 개수 */
+  attachmentCount: number
+  /** 게시글 상태 태그 (예: [공지사항], [일정 알림]) */
+  postType?: 'notice' | 'schedule'
+  publishedAt: DateValue
+  createdAt: DateValue
+  updatedAt: DateValue
+}
+
+// 프로그램 첨부 파일 (수강 프로그램 상세 모달 — 파일 및 사진 탭)
+export interface ProgramFile {
+  id: UUID
+  programId: UUID
+  /** 업로드된 게시글 ID (원글 보기 링크용) */
+  postId?: UUID
+  fileName: string
+  /** 파일 확장자 또는 MIME 타입 (아이콘/표시용) */
+  fileType?: string
+  fileSize?: number
+  /** 다운로드/미리보기 URL (mock에서는 placeholder 가능) */
+  fileUrl?: string
+  uploadedAt: DateValue
   createdAt: DateValue
   updatedAt: DateValue
 }

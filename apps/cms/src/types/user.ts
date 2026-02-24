@@ -87,6 +87,12 @@ export interface User {
   detailAddress?: string
   zipCode?: string
 
+  // 회원 상세 모달 표시용 (선택)
+  nameEn?: string
+  birthDate?: DateValue
+  gender?: string
+  affiliation?: string
+  socialAccounts?: string[]
 }
 
 // 로그인 요청
