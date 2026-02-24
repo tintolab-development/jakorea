@@ -1,0 +1,170 @@
+/**
+ * 게시글 작성 모달
+ * 스크린샷 기준: 청록 헤더, 공개 범위(체크박스), 게시글 내용(텍스트영역), 첨부 파일(회색 박스), 하단 닫기
+ */
+
+.post-write-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.post-write-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.post-write-modal .teal-header-modal__header {
+  flex-shrink: 0;
+}
+
+.post-write-modal .teal-header-modal__body {
+  flex-shrink: 0;
+  width: 100%;
+  padding: var(--spacing-20) var(--spacing-30) 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--color-bg-base);
+}
+
+.post-write-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  justify-content: center;
+  padding-top: var(--spacing-30);
+  padding-bottom: var(--spacing-30);
+}
+
+.post-write-modal__body {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.post-write-modal__field + .post-write-modal__field {
+  margin-top: var(--spacing-24);
+}
+
+/* 텍스트영역 → 첨부파일 gap 16px */
+.post-write-modal__field:last-child {
+  margin-top: var(--spacing-16);
+}
+
+.post-write-modal__field {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.post-write-modal__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-label, #3d3d3d);
+  margin: 0;
+}
+
+.post-write-modal__required {
+  color: var(--color-error, #ff4d4f);
+  margin-left: 2px;
+}
+
+/* 공개 범위: 체크박스 가로 배치, 청록(teal) 체크 스타일 */
+.post-write-modal__checkbox-group {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-16);
+  flex-wrap: wrap;
+}
+
+.post-write-modal__checkbox-group .ant-checkbox-wrapper {
+  margin-inline-start: 0;
+}
+
+.post-write-modal__checkbox-group .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--color-modal-header, #01a1af);
+  border-color: var(--color-modal-header, #01a1af);
+}
+
+.post-write-modal__checkbox-group .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.post-write-modal__checkbox-group .ant-checkbox-input:focus + .ant-checkbox-inner {
+  border-color: var(--color-modal-header, #01a1af);
+}
+
+/* 게시글 내용: 높이 280px 고정, 크기 조정 불가, padding 상하 12 / 좌 16 / 우 14 */
+.post-write-modal__textarea.post-write-modal__textarea,
+.post-write-modal__textarea.ant-input {
+  width: 100% !important;
+  height: 280px !important;
+  min-height: 280px !important;
+  max-height: 280px !important;
+  resize: none !important;
+  padding: 12px 14px 12px 16px !important;
+  border-radius: var(--radius-4, 4px);
+  border-color: var(--color-border-light, #e8e8e8);
+  box-sizing: border-box;
+}
+
+.post-write-modal__textarea:hover,
+.post-write-modal__textarea:focus {
+  border-color: var(--color-modal-header, #01a1af);
+  box-shadow: 0 0 0 1px var(--color-modal-header, #01a1af);
+}
+
+/* 첨부 파일: 116px 고정, 패딩 없음, 초과 콘텐츠 clip */
+.post-write-modal__attachment {
+  width: 100%;
+  height: 116px;
+  border: 1px solid var(--color-border-light, #e8e8e8);
+  border-radius: var(--radius-8, 8px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.post-write-modal__attachment-row {
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+}
+
+/* 좌측: 120px, 전체 높이 채움, #EDF0F2 배경 */
+.post-write-modal__attachment-label {
+  flex-shrink: 0;
+  width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-label, #3d3d3d);
+  background: #edf0f2;
+}
+
+/* 우측: 파일 목록 위, 버튼·안내 하단 고정 */
+.post-write-modal__attachment-body {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: var(--spacing-12);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.post-write-modal__file-select.file-select-field {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.post-write-modal__file-select .file-select-field__actions {
+  margin-top: auto;
+}

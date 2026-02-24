@@ -5,14 +5,14 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { Modal } from 'antd'
+import { Card, Modal } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useInView } from '@/shared/hooks/use-in-view'
 import { UserList } from '@/features/user/ui/user-list'
-import { UserDetailDrawer } from '@/features/user/ui/user-detail-drawer'
+import { UserDetailModal } from '@/features/user/ui/user-detail-modal'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
 import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
@@ -37,6 +37,10 @@ interface UserListQueryParams extends Record<string, string | undefined> {
   createdAtTo?: string
 }
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import {
+  DeleteGuideModal,
+  buildMemberDeleteMessageLines,
+} from '@/features/program/ui/manager-delete-guide-modal'
 import './user-list-page.css'
 
 type ApiFilters = {
@@ -107,11 +111,12 @@ export function UserListPage() {
   const clearSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const loading = useUserStore(state => state.loading)
 
-  // Drawer 상태 관리 (useModalState 사용)
+  // Drawer 상태 관리 (useModalState 사용) — 행 클릭 시 열리는 회원 상세
   const {
     open: drawerOpen,
     openModal: openDrawer,
     closeModal: closeDrawer,
+    selectedItem: drawerUser,
   } = useModalState<Omit<User, 'password'>>()
 
   // 권한 변경 모달 상태 관리 (useModalState 사용)
@@ -132,7 +137,7 @@ export function UserListPage() {
   // 삭제 확인 모달 상태
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [, setDeleteLoading] = useState(false)
 
   // 테이블 행 선택 (일괄 삭제용)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
@@ -195,21 +200,6 @@ export function UserListPage() {
       setParam('createdAtTo', null)
     }
     setFilters(api)
-  }
-
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setPendingFilters({
-      search: '',
-      role: 'ALL',
-      createdAtRange: null,
-    })
-    setParam('search', null)
-    setParam('role', null)
-    setParam('createdAtFrom', null)
-    setParam('createdAtTo', null)
-    setFilters({})
-    setActiveFilters({})
   }
 
   const invalidateList = useCallback(() => {
@@ -351,65 +341,75 @@ export function UserListPage() {
           }
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         loading={listLoading}
-        showResetButton={false}
-        />
+      />
       </div>
 
-      <div className="user-list-page__table-header">
-        <div className="user-list-page__table-actions">
-          <AppButton
-            variant="danger"
-            size="filter"
-            dangerFillOnHover
-            onClick={() => {
-              const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
-              if (toDelete.length === 0) return
-              if (toDelete.length === 1) {
-                setDeletingUser(toDelete[0])
-                setBulkDeleteUsers(null)
-              } else {
-                setDeletingUser(null)
-                setBulkDeleteUsers(toDelete)
-              }
-              setDeleteModalOpen(true)
-            }}
-            disabled={selectedRowKeys.length === 0}
-          >
-            회원 삭제
-          </AppButton>
-          {canWrite && (
-            <AppButton variant="primary" size="filter" onClick={openCreateModal}>
-              회원 등록
+      <Card className="user-list-page__table-card" bodyStyle={{ padding: 20 }}>
+        <div className="user-list-page__table-header">
+          <div className="user-list-page__table-actions">
+            <AppButton
+              variant="danger"
+              size="filter"
+              dangerFillOnHover
+              onClick={() => {
+                const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
+                if (toDelete.length === 0) return
+                if (toDelete.length === 1) {
+                  setDeletingUser(toDelete[0])
+                  setBulkDeleteUsers(null)
+                } else {
+                  setDeletingUser(null)
+                  setBulkDeleteUsers(toDelete)
+                }
+                setDeleteModalOpen(true)
+              }}
+              disabled={selectedRowKeys.length === 0}
+            >
+              회원 삭제
             </AppButton>
+            {canWrite && (
+              <AppButton variant="primary" size="filter" onClick={openCreateModal}>
+                회원 등록
+              </AppButton>
+            )}
+          </div>
+        </div>
+
+        <UserList
+          data={listUsers}
+          loading={listLoading}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={canWrite ? handleDeleteClick : undefined}
+          selectedRowKeys={selectedRowKeys}
+          onSelectionChange={setSelectedRowKeys}
+          pagination={false}
+        />
+
+        {/* 무한 스크롤: 하단 도달 시 다음 페이지 로드 */}
+        <div ref={loadMoreRef} className="user-list-page__load-more-sentinel" aria-hidden>
+          {isFetchingNextPage && (
+            <div className="user-list-page__load-more-spinner">불러오는 중...</div>
           )}
         </div>
-      </div>
+      </Card>
 
-      <UserList
-        data={listUsers}
-        loading={listLoading}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={canWrite ? handleDeleteClick : undefined}
-        selectedRowKeys={selectedRowKeys}
-        onSelectionChange={setSelectedRowKeys}
-        pagination={false}
-      />
-
-      {/* 무한 스크롤: 하단 도달 시 다음 페이지 로드 */}
-      <div ref={loadMoreRef} className="user-list-page__load-more-sentinel" aria-hidden>
-        {isFetchingNextPage && (
-          <div className="user-list-page__load-more-spinner">불러오는 중...</div>
-        )}
-      </div>
-
-      <UserDetailDrawer
+      <UserDetailModal
         open={drawerOpen}
-        user={selectedUser}
+        user={drawerUser ?? selectedUser}
         onClose={handleDrawerClose}
-        onEdit={selectedUser ? () => handleEdit(selectedUser) : undefined}
+        onEdit={(drawerUser ?? selectedUser) ? () => handleEdit(drawerUser ?? selectedUser!) : undefined}
+        onWithdraw={
+          canWrite && (drawerUser ?? selectedUser)
+            ? (u) => {
+                handleDrawerClose()
+                setDeletingUser(u)
+                setBulkDeleteUsers(null)
+                setDeleteModalOpen(true)
+              }
+            : undefined
+        }
       />
 
       <UserRoleChangeModal
@@ -431,31 +431,20 @@ export function UserListPage() {
         <UserCreateForm onSubmit={handleCreateUser} onCancel={closeCreateModal} loading={loading} />
       </Modal>
 
-      <Modal
-        open={deleteModalOpen}
-        title="회원 삭제 확인"
-        onOk={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        confirmLoading={deleteLoading}
-        okText="삭제"
-        cancelText="취소"
-        okButtonProps={{ danger: true }}
-      >
-        {bulkDeleteUsers && bulkDeleteUsers.length > 1 ? (
-          <>
-            <p>선택한 {bulkDeleteUsers.length}명의 회원을 삭제하시겠습니까?</p>
-            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 회원은 복구할 수 없습니다.</p>
-          </>
-        ) : deletingUser ? (
-          <>
-            <p>정말로 다음 회원을 삭제하시겠습니까?</p>
-            <p style={{ fontWeight: 'bold', margin: '16px 0' }}>
-              {deletingUser.name} ({deletingUser.email})
-            </p>
-            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 회원은 복구할 수 없습니다.</p>
-          </>
-        ) : null}
-      </Modal>
+      {deleteModalOpen && (
+        <DeleteGuideModal
+          open
+          onCancel={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          title="회원 삭제 안내"
+          lines={buildMemberDeleteMessageLines(
+            deletingUser ? { name: deletingUser.name, email: deletingUser.email } : null,
+            bulkDeleteUsers?.length ?? (deletingUser ? 1 : 0)
+          )}
+          confirmText="삭제"
+          confirmVariant="danger"
+        />
+      )}
     </div>
   )
 }

@@ -1,12 +1,11 @@
 /**
  * 사용자 목록 컴포넌트
  * Phase 5.1.2: 사용자 관리 페이지
- * 리뉴얼: No., 회원명, 연락처, 이메일, 회원 유형, 가입일 컬럼 + rowSelection 지원
+ * 스펙: apps/cms/.cursor/rules/process/member-list-table-spec.md
+ * 테이블 컬럼: [선택], No., 회원명, 연락처, 이메일, 회원 유형, 가입일 (작업 컬럼 없음, 행 클릭 시 상세)
  */
 
-import { Table, Dropdown, Button } from 'antd'
-import type { MenuProps } from 'antd'
-import { MoreOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { User, UserRole } from '@/types/user'
 import { getRoleLabel } from '@/shared/ui'
@@ -37,8 +36,6 @@ export function UserList({
   data,
   loading = false,
   onView,
-  onEdit,
-  onDelete,
   selectedRowKeys = [],
   onSelectionChange,
   pagination = true,
@@ -56,12 +53,14 @@ export function UserList({
       dataIndex: 'name',
       key: 'name',
       width: 120,
+      align: 'center',
     },
     {
       title: '연락처',
       dataIndex: 'phone',
       key: 'phone',
       width: 140,
+      align: 'center',
       render: (phone: string | undefined) => phone ?? '-',
     },
     {
@@ -69,12 +68,14 @@ export function UserList({
       dataIndex: 'email',
       key: 'email',
       width: 200,
+      align: 'center',
     },
     {
       title: '회원 유형',
       dataIndex: 'role',
       key: 'role',
       width: 120,
+      align: 'center',
       render: (role: UserRole, record) => ROLE_LABELS[role] ?? getRoleLabel(role, record.adminLevel),
     },
     {
@@ -82,57 +83,30 @@ export function UserList({
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 120,
+      align: 'center',
       render: (date: string) => formatDate(new Date(date)),
-    },
-    {
-      title: '작업',
-      key: 'actions',
-      width: 80,
-      fixed: 'right',
-      render: (_, record) => {
-        const menuItems: MenuProps['items'] = [
-          {
-            key: 'view',
-            label: '상세 보기',
-            icon: <EyeOutlined />,
-            onClick: () => onView?.(record),
-          },
-          {
-            key: 'edit',
-            label: '권한 변경',
-            icon: <EditOutlined />,
-            onClick: () => onEdit?.(record),
-          },
-          ...(onDelete
-            ? [
-                {
-                  key: 'delete',
-                  label: '삭제',
-                  icon: <DeleteOutlined />,
-                  danger: true,
-                  onClick: () => onDelete(record),
-                },
-              ]
-            : []),
-        ]
-        return (
-          <div onClick={e => e.stopPropagation()}>
-            <Dropdown menu={{ items: menuItems }} trigger={['click']}>
-              <Button type="text" icon={<MoreOutlined />} onClick={e => e.stopPropagation()} />
-            </Dropdown>
-          </div>
-        )
-      },
     },
   ]
 
   return (
     <Table
+      className="user-list-table"
       columns={columns}
       dataSource={data}
       loading={loading}
       rowKey="id"
       scroll={{ x: 900 }}
+      onRow={
+        onView
+          ? record => ({
+              onClick: (e: React.MouseEvent<HTMLElement>) => {
+                if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                onView(record)
+              },
+              style: { cursor: 'pointer' },
+            })
+          : undefined
+      }
       rowSelection={
         onSelectionChange
           ? {
