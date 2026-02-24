@@ -523,18 +523,38 @@ function generateSettlementOverview(seedIdx: number): SettlementOverviewData {
   const PROGRAM_NAME = '2026 SAP-함께 성장하JA! 참여 고등학생 모집 안내 (IT, SW 멘토링)'
   const statuses: SettlementRowStatus[] = ['pending', 'pending', 'reviewing', 'reviewing', 'completed', 'completed', 'completed', 'completed', 'completed']
   const amounts = [52788, 91500, 91500, 52788, 91500, 91500, 91500, 91500, 91500]
-  const sessions = ['3회차', '2회차', '1회차', '1회차', '1회차', '1회차', '1회차', '1회차', '1회차']
+  const dates = [2, 5, 7, 9, 12, 14, 16, 19, 21, 23, 26, 28]
+  const sessionNums = [1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 2, 1]
 
   const count = 7 + (seedIdx % 3)
-  const rows: SettlementRow[] = Array.from({ length: count }, (_, i) => ({
-    id: `sr-${seedIdx}-${i}`,
-    no: count - i,
-    programName: PROGRAM_NAME,
-    lectureDate: `2026. 01. 15 (${sessions[i % sessions.length]})`,
-    lectureDuration: '1시간',
-    status: statuses[(seedIdx + i) % statuses.length],
-    amount: amounts[(seedIdx + i) % amounts.length],
-  }))
+  const rows: SettlementRow[] = Array.from({ length: count }, (_, i) => {
+    const dayIdx = (seedIdx + i) % dates.length
+    const day = String(dates[dayIdx]).padStart(2, '0')
+    const session = sessionNums[dayIdx]
+    return {
+      id: `sr-${seedIdx}-${i}`,
+      no: count - i,
+      programName: PROGRAM_NAME,
+      lectureDate: `2026. 02. ${day} (${session}회차)`,
+      lectureDuration: '1시간',
+      status: statuses[(seedIdx + i) % statuses.length],
+      amount: amounts[(seedIdx + i) % amounts.length],
+    }
+  })
+
+  const feb26Statuses: SettlementRowStatus[] = ['pending', 'reviewing', 'completed', 'pending', 'completed']
+  const feb26Amounts = [75000, 91500, 52788, 60000, 91500]
+  for (let j = 0; j < 5; j++) {
+    rows.push({
+      id: `sr-${seedIdx}-feb26-${j}`,
+      no: count + j + 1,
+      programName: PROGRAM_NAME,
+      lectureDate: `2026. 02. 26 (${j + 1}회차)`,
+      lectureDuration: '1시간',
+      status: feb26Statuses[j],
+      amount: feb26Amounts[j],
+    })
+  }
 
   const completedAmount = rows
     .filter(r => r.status === 'completed')
@@ -544,7 +564,7 @@ function generateSettlementOverview(seedIdx: number): SettlementOverviewData {
     .reduce((s, r) => s + r.amount, 0)
 
   return {
-    month: '2026-01',
+    month: '2026-02',
     expectedAmount,
     completedAmount,
     totalAmount: expectedAmount + completedAmount,
