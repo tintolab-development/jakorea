@@ -46,18 +46,12 @@ export interface UnifiedFilterCardProps {
   onFilterChange: (key: string, value: any) => void
   /** 조회 버튼 클릭 핸들러 */
   onSearch: () => void
-  /** 초기화 핸들러 */
-  onReset?: () => void
   /** 조회 버튼 로딩 상태 */
   loading?: boolean
   /** 추가 컨텐츠 */
   extra?: React.ReactNode
   /** Card 스타일 */
   cardStyle?: React.CSSProperties
-  /** 초기화 버튼 텍스트 (기본값: "초기화") */
-  resetButtonText?: string
-  /** 초기화 버튼 표시 여부 (기본값: true) */
-  showResetButton?: boolean
 }
 
 /**
@@ -74,7 +68,6 @@ export interface UnifiedFilterCardProps {
  *   filters={pendingFilters}
  *   onFilterChange={(key, value) => setPendingFilters(prev => ({ ...prev, [key]: value }))}
  *   onSearch={handleSearch}
- *   onReset={handleReset}
  * />
  * ```
  */
@@ -83,12 +76,9 @@ export function UnifiedFilterCard({
   filters = {},
   onFilterChange,
   onSearch,
-  onReset,
   loading = false,
   extra,
   cardStyle,
-  resetButtonText = '초기화',
-  showResetButton = true,
 }: UnifiedFilterCardProps) {
   // 필터 한 줄 배치 (사이즈 조정으로 단일 행 표현)
   const filterRowFields = fields
@@ -97,7 +87,7 @@ export function UnifiedFilterCard({
   const renderField = (field: FilterFieldConfig) => {
     if (field.type === 'search') {
       return (
-        <Col key={field.key} flex={field.flex ?? '1 1 0'}>
+        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
           <LabeledSearchInput
             label={field.label}
             placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
@@ -112,7 +102,7 @@ export function UnifiedFilterCard({
 
     if (field.type === 'select') {
       return (
-        <Col key={field.key} flex={field.flex ?? '1 1 0'}>
+        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
             <Select
@@ -134,7 +124,7 @@ export function UnifiedFilterCard({
 
     if (field.type === 'dateRange') {
       return (
-        <Col key={field.key} flex={field.flex ?? '1 1 0'}>
+        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
             <RangePicker
@@ -154,11 +144,6 @@ export function UnifiedFilterCard({
 
   const actionButtons = (
     <Space size="small">
-      {showResetButton && onReset && (
-        <AppButton variant="default" size="small" onClick={onReset}>
-          {resetButtonText}
-        </AppButton>
-      )}
       <AppButton variant="primary" size="filter" onClick={onSearch} loading={loading}>
         조회
       </AppButton>
@@ -171,7 +156,7 @@ export function UnifiedFilterCard({
       className="unified-filter-card unified-filter-card--single-row"
       style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}
     >
-      <Row gutter={[8, 0]} className="unified-filter-card__row" align="bottom">
+      <Row gutter={0} className="unified-filter-card__row" align="bottom">
         {filterRowFields.map(renderField)}
         <Col flex="none" className="unified-filter-card__actions">
           {actionButtons}

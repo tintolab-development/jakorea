@@ -163,6 +163,25 @@
     line-height: var(--line-height-tight);
 }
 
+.teal-header-modal__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-8);
+}
+
+.teal-header-modal__header .teal-header-modal__header-close-btn,
+.teal-header-modal__header .ant-btn.teal-header-modal__header-close-btn {
+    border-color: var(--color-bg-base);
+    color: var(--color-bg-base);
+}
+
+.teal-header-modal__header .teal-header-modal__header-close-btn:hover,
+.teal-header-modal__header .ant-btn.teal-header-modal__header-close-btn:hover {
+    border-color: var(--color-bg-base);
+    color: var(--color-bg-base);
+    background: rgba(255, 255, 255, 0.15);
+}
+
 .teal-header-modal__close {
     display: inline-flex;
     align-items: center;
