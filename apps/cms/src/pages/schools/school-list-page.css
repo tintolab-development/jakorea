@@ -1,0 +1,63 @@
+/* 학교(교사) 회원 목록 페이지 — user-list-page 스타일 동일 적용 */
+
+.school-list-page__table-card {
+  border-radius: var(--radius-8, 8px);
+}
+
+.school-list-page__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-12, 12px);
+}
+
+.school-list-page__table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+}
+
+.school-list-page__table-actions .ant-btn {
+  width: 120px;
+  height: 40px;
+  min-width: 120px;
+  min-height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 테이블 보더 (전체 회원 목록과 동일) */
+.school-list-page__table-card .user-list-table .ant-table-thead > tr > th {
+  border-right: 1px solid var(--color-bg-base);
+  border-bottom: 1px solid var(--color-bg-base);
+}
+
+.school-list-page__table-card .user-list-table .ant-table-thead > tr > th:last-child {
+  border-right: none;
+}
+
+.school-list-page__table-card .user-list-table .ant-table-tbody > tr > td {
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.school-list-page__table-card .user-list-table .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.school-list-page__table-card .user-list-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* 선택 행 배경 */
+.school-list-page .user-list-table .ant-table-tbody > tr.ant-table-row-selected > td,
+.school-list-page__table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--ant-color-primary-bg, #e6f4ff) !important;
+}
+
+.school-list-page .user-list-table .ant-table-tbody > tr.ant-table-row-selected:hover > td,
+.school-list-page__table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
+  background: var(--ant-color-primary-bg-hover, #bae0ff) !important;
+}

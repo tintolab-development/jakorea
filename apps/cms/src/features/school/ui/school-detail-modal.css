@@ -1,0 +1,208 @@
+/**
+ * 학교(교사) 상세 정보 모달
+ * width 1400, body height 830, 섹션 간 갭 32px
+ * 스타일 참고: enrollment-status-detail-modal, program/school-detail-modal
+ */
+
+/* TealHeaderModal large + 학교 상세: 바디 고정 높이 830px, 바디만 스크롤 */
+.teal-header-modal--school-detail.teal-header-modal--large .ant-modal-content {
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.teal-header-modal--school-detail .teal-header-modal__body {
+  height: 830px;
+  min-height: 830px;
+  max-height: 830px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 32px;
+  padding: 20px 30px 30px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.teal-header-modal--school-detail .teal-header-modal__footer {
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   섹션 공통
+   ========================================== */
+
+.school-detail-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.school-detail-modal__section-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.school-detail-modal__section-title-count {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3d3d3d;
+  opacity: 0.6;
+  margin-left: 6px;
+  line-height: 1.5;
+}
+
+/* ==========================================
+   1. 학교 정보 테이블 — 보더 2행×4열
+   라벨 200×54, 값 나머지×54
+   ========================================== */
+
+.school-detail-modal__info-table-wrap {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d9d9d9;
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+}
+
+.school-detail-modal__info-table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.school-detail-modal__info-table th,
+.school-detail-modal__info-table td {
+  height: 54px;
+  min-height: 54px;
+  padding: 0 16px;
+  vertical-align: middle;
+  border-right: 1px solid #d9d9d9;
+  border-bottom: 1px solid #d9d9d9;
+  box-sizing: border-box;
+}
+
+.school-detail-modal__info-table tr:last-child th,
+.school-detail-modal__info-table tr:last-child td {
+  border-bottom: none;
+}
+
+.school-detail-modal__info-table th:last-child,
+.school-detail-modal__info-table td:last-child {
+  border-right: none;
+}
+
+.school-detail-modal__info-table th {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  background: #edf0f2;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.school-detail-modal__info-table td {
+  color: var(--color-text-primary, #262626);
+  background: var(--color-bg-base, #fff);
+  text-align: left;
+}
+
+/* ==========================================
+   2. 소속 교사 목록 / 프로그램 참여 이력: 헤더
+   ========================================== */
+
+.school-detail-modal__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.school-detail-modal__table-header .app-button--danger {
+  min-width: 90px;
+  width: auto;
+  height: 36px;
+  font-size: 13px;
+}
+
+/* ==========================================
+   Ant Design 테이블 공통 (교사 목록 / 프로그램 이력)
+   enrollment-status-detail-modal / program school-detail-modal 스타일 준수
+   ========================================== */
+
+.school-detail-modal__table-wrap {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--color-border-light, #e8e8e8);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+}
+
+.school-detail-modal__table .ant-table {
+  font-size: 14px;
+}
+
+.school-detail-modal__table .ant-table-thead > tr > th {
+  height: 48px;
+  min-height: 48px;
+  padding: 12px 16px;
+  background: #edf0f2;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-label, #262626);
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.school-detail-modal__table .ant-table-tbody > tr > td {
+  height: 48px;
+  min-height: 48px;
+  padding: 12px 16px;
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+.school-detail-modal__table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* 짝수 행 배경 */
+.school-detail-modal__table .ant-table-tbody > tr:nth-child(even) > td {
+  background: #fafafa;
+}
+
+.school-detail-modal__table .ant-table-tbody > tr:nth-child(even):hover > td {
+  background: #f0f0f0 !important;
+}
+
+/* 체크박스 열 고정 너비 */
+.school-detail-modal__table .ant-table-thead > tr > th.ant-table-selection-column,
+.school-detail-modal__table .ant-table-tbody > tr > td.ant-table-selection-column {
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
+}
+
+.school-detail-modal__table .ant-table-cell {
+  text-align: center;
+}

@@ -1,26 +1,32 @@
 /**
- * 학교 목록 페이지
- * Phase 1.4: 목록 페이지
- * Phase 2: 리팩토링 패턴 적용
- * 학교 등록을 모달로 변경
+ * 학교(교사) 회원 목록 페이지
+ * 전체 회원 목록(user-list-page)과 동일한 테이블 UI
+ * mock 사용자 데이터에서 SCHOOL 역할만 필터링
  */
 
-import { useEffect, useState, useMemo } from 'react'
-import { Button, Modal } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
-import { SchoolList } from '@/features/school/ui/school-list'
-import { SchoolForm } from '@/features/school/ui/school-form'
-import { useSchoolStore } from '@/features/school/model/school-store'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
-import { useModalState } from '@/shared/hooks/use-modal-state'
-import type { SchoolFormData } from '@/entities/school/model/schema'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { useState, useMemo } from 'react'
+import { Card, Modal } from 'antd'
+import { mockUsers } from '@/data/mock/users'
+import { UserList } from '@/features/user/ui/user-list'
+import { SchoolDetailModal } from '@/features/school/ui/school-detail-modal'
+import { UserCreateForm } from '@/features/user/ui/user-create-form'
+import { PageHeader } from '@/shared/ui/page-header'
+import { AppButton } from '@/shared/ui/app-button'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
-import type { School } from '@/types/domain'
+import { useModalState } from '@/shared/hooks/use-modal-state'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { useUserStore } from '@/features/user/model/user-store'
+import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import {
+  DeleteGuideModal,
+  buildMemberDeleteMessageLines,
+} from '@/features/program/ui/manager-delete-guide-modal'
+import type { User } from '@/types/user'
+import type { CreateUserRequest } from '@/entities/user/api/user-service'
+import './school-list-page.css'
 
 interface SchoolListQueryParams extends Record<string, string | undefined> {
   search?: string
@@ -29,148 +35,133 @@ interface SchoolListQueryParams extends Record<string, string | undefined> {
 
 export function SchoolListPage() {
   const { user } = useAuthStore()
-  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
-
-  const { schools, loading, fetchSchools, createSchool, updateSchool, deleteSchool } =
-    useSchoolStore()
   const { params, setParams } = useQueryParams<SchoolListQueryParams>()
 
-  // Form 모달 상태 관리
+  const createUser = useUserStore(state => state.createUser)
+  const deleteUser = useUserStore(state => state.deleteUser)
+  const loading = useUserStore(state => state.loading)
+
+  // 회원 상세 모달
   const {
-    open: formModalOpen,
-    openModal: openFormModal,
-    closeModal: closeFormModal,
-    selectedItem: editingSchool,
-    isEditing: isEditingMode,
-  } = useModalState<School>()
+    open: detailOpen,
+    openModal: openDetail,
+    closeModal: closeDetail,
+    selectedItem: detailUser,
+  } = useModalState<Omit<User, 'password'>>()
 
-  const [formLoading, setFormLoading] = useState(false)
-  const [, setDeleteLoading] = useState(false)
+  // 회원 등록 모달
+  const {
+    open: createModalOpen,
+    openModal: openCreateModal,
+    closeModal: closeCreateModal,
+  } = useModalState()
+
+  // 삭제 모달
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [deletingSchool, setDeletingSchool] = useState<School | null>(null)
+  const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
+  const [bulkDeleteUsers, setBulkDeleteUsers] = useState<Omit<User, 'password'>[] | null>(null)
+  const [, setDeleteLoading] = useState(false)
 
-  useEffect(() => {
-    fetchSchools()
-  }, [fetchSchools])
+  // 테이블 행 선택 (일괄 삭제용)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
-  // 지역 옵션 생성
+  // 지역 옵션 (SCHOOL 사용자 주소에서 추출)
   const regionOptions = useMemo(() => {
-    const regions = Array.from(new Set(schools.map(s => s.region))).sort()
+    const regions = Array.from(
+      new Set(
+        mockUsers
+          .filter(u => u.role === 'SCHOOL')
+          .map(u => {
+            const addr = u.schoolInfo?.address || ''
+            return addr.split(' ')[0] || ''
+          })
+          .filter(Boolean)
+      )
+    ).sort()
     return [
-      { label: '전체', value: 'all' },
-      ...regions.map(region => ({ label: region, value: region })),
+      { label: '전체', value: 'ALL' },
+      ...regions.map(r => ({ label: r, value: r })),
     ]
-  }, [schools])
+  }, [])
 
-  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
+  // Pending 필터 상태
   const [pendingFilters, setPendingFilters] = useState({
     search: params.search || '',
-    region: params.region || 'all',
+    region: params.region || 'ALL',
   })
 
-  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
-  useEffect(() => {
-    setPendingFilters({
-      search: params.search || '',
-      region: params.region || 'all',
-    })
-  }, [params.search, params.region])
+  // SCHOOL 역할 사용자만 필터링
+  const schoolUsers: Omit<User, 'password'>[] = useMemo(() => {
+    let filtered = mockUsers
+      .filter(u => u.role === 'SCHOOL')
+      .map(({ password, ...rest }) => rest)
 
-  // 필터링된 데이터
-  const filteredSchools = useMemo(() => {
-    let filtered = schools
-
-    // 검색어 필터
     if (params.search) {
-      const searchLower = params.search.toLowerCase()
+      const s = params.search.toLowerCase()
       filtered = filtered.filter(
-        school =>
-          school.name.toLowerCase().includes(searchLower) ||
-          school.contactPerson?.toLowerCase().includes(searchLower) ||
-          school.contactEmail?.toLowerCase().includes(searchLower)
+        u =>
+          u.name.toLowerCase().includes(s) ||
+          u.schoolInfo?.schoolName?.toLowerCase().includes(s)
       )
     }
 
-    // 지역 필터
-    if (params.region && params.region !== 'all') {
-      filtered = filtered.filter(school => school.region === params.region)
+    if (params.region && params.region !== 'ALL') {
+      filtered = filtered.filter(u => {
+        const addr = u.schoolInfo?.address || ''
+        return addr.startsWith(params.region!)
+      })
     }
 
     return filtered
-  }, [schools, params.search, params.region])
+  }, [params.search, params.region])
 
-  // 조회 버튼 클릭 시 필터 적용
   const handleSearch = () => {
     setParams({
       search: pendingFilters.search || undefined,
-      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
+      region: pendingFilters.region === 'ALL' ? undefined : pendingFilters.region,
     })
   }
 
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setPendingFilters({
-      search: '',
-      region: 'all',
-    })
-    setParams({
-      search: undefined,
-      region: undefined,
-    })
+  const handleView = (u: Omit<User, 'password'>) => {
+    openDetail(u)
   }
 
-  const handleNewClick = () => {
-    openFormModal()
+  const handleDeleteClick = (u: Omit<User, 'password'>) => {
+    setDeletingUser(u)
+    setBulkDeleteUsers(null)
+    setDeleteModalOpen(true)
   }
 
-  const handleFormSubmit = async (data: SchoolFormData) => {
-    setFormLoading(true)
-    try {
-      if (editingSchool) {
-        await updateSchool(editingSchool.id, data)
-        showSuccessMessage(MESSAGES.success.updated)
-      } else {
-        await createSchool(data)
-        showSuccessMessage(MESSAGES.success.created)
-      }
-      closeFormModal()
-      fetchSchools()
-    } catch (error) {
-      handleError(error, {
-        defaultMessage: editingSchool ? MESSAGES.error.update : MESSAGES.error.create,
-        context: 'SchoolFormSubmit',
-      })
-    } finally {
-      setFormLoading(false)
+  const handleBulkDelete = () => {
+    const toDelete = schoolUsers.filter(u => selectedRowKeys.includes(u.id))
+    if (toDelete.length === 0) return
+    if (toDelete.length === 1) {
+      setDeletingUser(toDelete[0])
+      setBulkDeleteUsers(null)
+    } else {
+      setDeletingUser(null)
+      setBulkDeleteUsers(toDelete)
     }
-  }
-
-  const handleFormCancel = () => {
-    closeFormModal()
-  }
-
-  // 학교 수정
-  const handleEditClick = (school: School) => {
-    openFormModal(school)
-  }
-
-  // 학교 삭제
-  const handleDeleteClick = (school: School) => {
-    setDeletingSchool(school)
     setDeleteModalOpen(true)
   }
 
   const handleDeleteConfirm = async () => {
-    if (!deletingSchool) return
-
     setDeleteLoading(true)
     try {
-      await deleteSchool(deletingSchool.id)
-      showSuccessMessage(MESSAGES.success.deleted)
+      if (bulkDeleteUsers) {
+        for (const u of bulkDeleteUsers) {
+          await deleteUser(u.id)
+        }
+        showSuccessMessage(`${bulkDeleteUsers.length}명의 회원이 삭제되었습니다.`)
+      } else if (deletingUser) {
+        await deleteUser(deletingUser.id)
+        showSuccessMessage(MESSAGES.success.deleted)
+      }
       setDeleteModalOpen(false)
-      setDeletingSchool(null)
-      fetchSchools()
+      setDeletingUser(null)
+      setBulkDeleteUsers(null)
+      setSelectedRowKeys([])
     } catch (error) {
       handleError(error, { defaultMessage: '학교 삭제에 실패했습니다.' })
     } finally {
@@ -180,33 +171,34 @@ export function SchoolListPage() {
 
   const handleDeleteCancel = () => {
     setDeleteModalOpen(false)
-    setDeletingSchool(null)
+    setDeletingUser(null)
+    setBulkDeleteUsers(null)
+  }
+
+  const handleCreateUser = async (data: CreateUserRequest) => {
+    try {
+      await createUser(data)
+      showSuccessMessage(MESSAGES.success.created)
+      closeCreateModal()
+    } catch (error) {
+      handleError(error, { defaultMessage: MESSAGES.error.create })
+    }
   }
 
   return (
-    <div>
-      <div
-        style={{
-          marginBottom: LAYOUT_CONSTANTS.margins.lg,
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'flex-end',
-        }}
-      >
-        {/* Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가 */}
-        {canWrite && (
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleNewClick}>
-            학교 등록
-          </Button>
-        )}
-      </div>
+    <div className="school-list-page">
+      <PageHeader
+        title="학교(교사) 회원 목록"
+        description={`총 ${schoolUsers.length}건`}
+      />
+
       <UnifiedFilterCard
         fields={[
           {
             key: 'search',
             type: 'search',
-            label: '학교명/담당자/이메일',
-            placeholder: '학교명, 담당자, 이메일을 입력하세요',
+            label: '학교명',
+            placeholder: '학교명을 입력하세요',
           },
           {
             key: 'region',
@@ -216,49 +208,79 @@ export function SchoolListPage() {
             options: regionOptions,
           },
         ]}
-        filters={pendingFilters}
+        filters={{
+          search: pendingFilters.search,
+          region: pendingFilters.region,
+        }}
         onFilterChange={(key, value) => {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
       />
 
-      <SchoolList
-        data={filteredSchools}
-        loading={loading}
-        onEdit={canWrite ? handleEditClick : undefined}
-        onDelete={canWrite ? handleDeleteClick : undefined}
+      <Card className="school-list-page__table-card" bodyStyle={{ padding: 20 }}>
+        <div className="school-list-page__table-header">
+          <div className="school-list-page__table-actions">
+            <AppButton
+              variant="danger"
+              size="filter"
+              dangerFillOnHover
+              onClick={handleBulkDelete}
+              disabled={selectedRowKeys.length === 0}
+            >
+              학교 삭제
+            </AppButton>
+            {canWrite && (
+              <AppButton variant="primary" size="filter" onClick={openCreateModal}>
+                학교 등록
+              </AppButton>
+            )}
+          </div>
+        </div>
+
+        <UserList
+          data={schoolUsers}
+          loading={false}
+          onView={handleView}
+          onDelete={canWrite ? handleDeleteClick : undefined}
+          selectedRowKeys={selectedRowKeys}
+          onSelectionChange={setSelectedRowKeys}
+          pagination={false}
+        />
+      </Card>
+
+      <SchoolDetailModal
+        open={detailOpen}
+        user={detailUser}
+        onClose={closeDetail}
+        onDeleteMembers={canWrite ? () => {} : undefined}
       />
 
       <Modal
-        open={formModalOpen}
-        title={isEditingMode ? '학교 수정' : '학교 등록'}
-        onCancel={handleFormCancel}
+        open={createModalOpen}
+        title="회원 추가"
+        onCancel={closeCreateModal}
         footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnClose
+        destroyOnHidden
       >
-        <SchoolForm
-          key={editingSchool?.id || 'new'} // 수정 모드일 때는 school.id를 key로 사용하여 컴포넌트 재마운트
-          school={editingSchool || undefined}
-          onSubmit={handleFormSubmit}
-          onCancel={handleFormCancel}
-          loading={formLoading}
-        />
+        <UserCreateForm onSubmit={handleCreateUser} onCancel={closeCreateModal} loading={loading} />
       </Modal>
 
-      <ConfirmModal
-        open={deleteModalOpen}
-        title="학교 삭제"
-        content={deletingSchool ? `정말로 이 학교를 삭제하시겠습니까?` : ''}
-        warningMessage="삭제된 학교는 복구할 수 없습니다."
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        confirmText="삭제"
-        cancelText="취소"
-        danger
-      />
+      {deleteModalOpen && (
+        <DeleteGuideModal
+          open
+          onCancel={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          title="학교 삭제 안내"
+          lines={buildMemberDeleteMessageLines(
+            deletingUser ? { name: deletingUser.name, email: deletingUser.email } : null,
+            bulkDeleteUsers?.length ?? (deletingUser ? 1 : 0)
+          )}
+          confirmText="삭제"
+          confirmVariant="danger"
+        />
+      )}
     </div>
   )
 }
