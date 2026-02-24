@@ -3,7 +3,7 @@
  * 참여 강사진 목록 (필터: 교육 학년, 강의 진행 회차, 정산 현황, 교사/강사명)
  */
 
-export type SettlementStatusKey = 'pending' | 'partial' | 'completed' | 'na' | 'reviewing'
+export type SettlementStatusKey = 'pending' | 'partial' | 'completed' | 'na' | 'reviewing' | 'rejected'
 
 /** 참여 강사 상세 모달·강사 이력서 탭용 (ApplicantInstructorRow와 동일 구조) */
 export interface ParticipatingInstructorCareerDetail {
@@ -85,6 +85,7 @@ export const SETTLEMENT_STATUS_LABELS: Record<SettlementStatusKey, string> = {
   completed: '정산 완료',
   na: '해당 없음',
   reviewing: '내역 검토 중',
+  rejected: '지급 반려',
 }
 
 const INSTRUCTOR_NAMES = [

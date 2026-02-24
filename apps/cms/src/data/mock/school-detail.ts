@@ -121,12 +121,32 @@ export const TEACHING_PROGRAM_STATUS_LABELS: Record<TeachingProgramStatus, strin
   PROGRAM_ENDED: '프로그램 종료',
 }
 
-export type SettlementRowStatus = 'pending' | 'reviewing' | 'completed'
+export type SettlementRowStatus = 'pending' | 'reviewing' | 'completed' | 'rejected'
 
 export const SETTLEMENT_ROW_STATUS_LABELS: Record<SettlementRowStatus, string> = {
   pending: '정산 대기',
   reviewing: '내역 검토 중',
   completed: '정산 완료',
+  rejected: '지급 반려',
+}
+
+export interface SettlementDetailItem {
+  label: string
+  description: string
+  amount: number
+}
+
+export interface SettlementDetail {
+  programName: string
+  lectureDate: string
+  lectureDuration: string
+  lectureHours: string
+  settlementAmount: number
+  status: SettlementRowStatus
+  remark: string
+  items: SettlementDetailItem[]
+  withholdingRate: number
+  totalAmount: number
 }
 
 export interface SettlementRow {
@@ -137,6 +157,7 @@ export interface SettlementRow {
   lectureDuration: string
   status: SettlementRowStatus
   amount: number
+  detail: SettlementDetail
 }
 
 export interface SettlementOverviewData {
@@ -522,7 +543,6 @@ function generateTeachingHistory(seedIdx: number): TeachingHistoryRow[] {
 function generateSettlementOverview(seedIdx: number): SettlementOverviewData {
   const PROGRAM_NAME = '2026 SAP-함께 성장하JA! 참여 고등학생 모집 안내 (IT, SW 멘토링)'
   const statuses: SettlementRowStatus[] = ['pending', 'pending', 'reviewing', 'reviewing', 'completed', 'completed', 'completed', 'completed', 'completed']
-  const amounts = [52788, 91500, 91500, 52788, 91500, 91500, 91500, 91500, 91500]
   const dates = [2, 5, 7, 9, 12, 14, 16, 19, 21, 23, 26, 28]
   const sessionNums = [1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 2, 1]
 
@@ -531,6 +551,12 @@ function generateSettlementOverview(seedIdx: number): SettlementOverviewData {
     const dayIdx = (seedIdx + i) % dates.length
     const day = String(dates[dayIdx]).padStart(2, '0')
     const session = sessionNums[dayIdx]
+    const baseAmount = 80000
+    const distanceKm = 146.8
+    const fuelPrice = 1645
+    const transportAmount = distanceKm > 60 ? Math.round(distanceKm * fuelPrice / 10) : 0
+    const lodgingAmount = 80000
+    const totalAmount = baseAmount + transportAmount + lodgingAmount
     return {
       id: `sr-${seedIdx}-${i}`,
       no: count - i,
@@ -538,13 +564,34 @@ function generateSettlementOverview(seedIdx: number): SettlementOverviewData {
       lectureDate: `2026. 02. ${day} (${session}회차)`,
       lectureDuration: '1시간',
       status: statuses[(seedIdx + i) % statuses.length],
-      amount: amounts[(seedIdx + i) % amounts.length],
+      amount: totalAmount,
+      detail: {
+        programName: PROGRAM_NAME,
+        lectureDate: `2026. 02. ${day} (${session}회차)`,
+        lectureDuration: '1시간',
+        lectureHours: '3년',
+        settlementAmount: totalAmount,
+        status: statuses[(seedIdx + i) % statuses.length],
+        remark: '',
+        items: [
+          { label: '기본급', description: '프로그램 1회 강의료', amount: baseAmount },
+          { label: '교통비', description: `서울 강서구 → 대전 중구 이동 (왕복 ${distanceKm}km × 유가 ${fuelPrice.toLocaleString()}원 / 10km)`, amount: transportAmount },
+          { label: '숙박비', description: '8만원 고정', amount: lodgingAmount },
+        ],
+        withholdingRate: 8.8,
+        totalAmount,
+      },
     }
   })
 
   const feb26Statuses: SettlementRowStatus[] = ['pending', 'reviewing', 'completed', 'pending', 'completed']
-  const feb26Amounts = [75000, 91500, 52788, 60000, 91500]
   for (let j = 0; j < 5; j++) {
+    const fbBase = 80000
+    const fbDistanceKm = 146.8
+    const fbFuelPrice = 1645
+    const fbTransport = fbDistanceKm > 60 ? Math.round(fbDistanceKm * fbFuelPrice / 10) : 0
+    const fbLodging = 80000
+    const fbTotal = fbBase + fbTransport + fbLodging
     rows.push({
       id: `sr-${seedIdx}-feb26-${j}`,
       no: count + j + 1,
@@ -552,7 +599,23 @@ function generateSettlementOverview(seedIdx: number): SettlementOverviewData {
       lectureDate: `2026. 02. 26 (${j + 1}회차)`,
       lectureDuration: '1시간',
       status: feb26Statuses[j],
-      amount: feb26Amounts[j],
+      amount: fbTotal,
+      detail: {
+        programName: PROGRAM_NAME,
+        lectureDate: `2026. 02. 26 (${j + 1}회차)`,
+        lectureDuration: '1시간',
+        lectureHours: '3년',
+        settlementAmount: fbTotal,
+        status: feb26Statuses[j],
+        remark: '',
+        items: [
+          { label: '기본급', description: '프로그램 1회 강의료', amount: fbBase },
+          { label: '교통비', description: `서울 강서구 → 대전 중구 이동 (왕복 ${fbDistanceKm}km × 유가 ${fbFuelPrice.toLocaleString()}원 / 10km)`, amount: fbTransport },
+          { label: '숙박비', description: '8만원 고정', amount: fbLodging },
+        ],
+        withholdingRate: 8.8,
+        totalAmount: fbTotal,
+      },
     })
   }
 
