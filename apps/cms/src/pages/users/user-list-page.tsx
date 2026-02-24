@@ -16,7 +16,6 @@ import { UserDetailModal } from '@/features/user/ui/user-detail-modal'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
 import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
-import { PageHeader } from '@/shared/ui/page-header'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { AppButton } from '@/shared/ui/app-button'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -295,11 +294,6 @@ export function UserListPage() {
 
   return (
     <div>
-      <PageHeader
-        title="전체 회원 목록"
-        description={`총 ${listTotal}건`}
-      />
-
       <div className="user-list-page__filter-wrap">
         <UnifiedFilterCard
         fields={[
@@ -345,9 +339,13 @@ export function UserListPage() {
       />
       </div>
 
-      <Card className="user-list-page__table-card" bodyStyle={{ padding: 20 }}>
-        <div className="user-list-page__table-header">
-          <div className="user-list-page__table-actions">
+      <Card className="member-table-card" bodyStyle={{ padding: 20 }}>
+        <div className="member-table-card__header">
+          <div className="member-table-card__title-area">
+            <h2 className="member-table-card__title">전체 회원 목록</h2>
+            <span className="member-table-card__count">총 {listTotal}건</span>
+          </div>
+          <div className="member-table-card__actions">
             <AppButton
               variant="danger"
               size="filter"
