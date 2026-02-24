@@ -5,6 +5,11 @@
  * 모달: 화면 정중앙 고정
  */
 
+/* 모달 mask opacity */
+.ant-modal-mask {
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
 /* 모달 래퍼: 화면 정중앙 (Ant Design centered + CSS 보강) */
 .ant-modal-wrap:has(.teal-header-modal) {
     display: flex !important;

@@ -284,6 +284,88 @@
   padding: 0 11px !important;
 }
 
+/* ==========================================
+   회원 테이블 카드 공통 (전체 회원 / 학교 회원)
+   ========================================== */
+
+.member-table-card {
+  border-radius: var(--radius-8, 8px);
+}
+
+.member-table-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-12, 12px);
+}
+
+.member-table-card__title-area {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.member-table-card__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  line-height: 1.4;
+}
+
+.member-table-card__count {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-secondary, #888);
+}
+
+.member-table-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+}
+
+.member-table-card__actions .ant-btn {
+  width: 120px;
+  height: 40px;
+  min-width: 120px;
+  min-height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-table-card .user-list-table .ant-table-thead > tr > th {
+  border-right: 1px solid var(--color-bg-base);
+  border-bottom: 1px solid var(--color-bg-base);
+}
+
+.member-table-card .user-list-table .ant-table-thead > tr > th:last-child {
+  border-right: none;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr > td {
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--ant-color-primary-bg, #e6f4ff) !important;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
+  background: var(--ant-color-primary-bg-hover, #bae0ff) !important;
+}
+
 /* 768px 이하: 너비 100%일 때 컨테이너 min-width */
 @media (max-width: 768px) {
   .unified-filter-card .ant-select,
