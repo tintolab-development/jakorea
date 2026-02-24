@@ -39,6 +39,12 @@
     color: #1976d2;
 }
 
+/* 내역 검토 중: 연한 주황 */
+.settlement-status-badge--reviewing {
+    background: #fff3e0;
+    color: #e67e22;
+}
+
 /* 해당 없음: 회색 */
 .settlement-status-badge--na {
     background: #f2f3f5;
