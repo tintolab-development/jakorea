@@ -614,7 +614,17 @@ const allMenuItems: MenuItemConfig[] = [
       { key: '/users', label: '전체 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/schools', label: '학교(교사) 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
       { key: '/instructors', label: '강사단 관리', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/admin/settings/permissions', label: '관리자 및 권한 설정', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      {
+        key: 'admin-group',
+        label: '관리자',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+        children: [
+          { key: '/admin/members', label: '관리자 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
+          { key: '/admin/settings/permissions', label: '관리 권한 설정', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
+        ],
+      },
     ],
   },
   // {

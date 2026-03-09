@@ -638,6 +638,17 @@ export const router = createBrowserRouter([
         path: 'admin',
         children: [
           {
+            path: 'members',
+            element: (
+              <ProtectedRoute requiredRoles={['ADMIN']}>
+                <ComingSoonPage
+                  title="관리자 회원"
+                  description="관리자 회원 관리 기능은 현재 준비 중입니다."
+                />
+              </ProtectedRoute>
+            ),
+          },
+          {
             path: 'posts',
             children: [
               { index: true, element: <PostListPage /> },

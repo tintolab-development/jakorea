@@ -99,15 +99,19 @@ export function Sidebar() {
       }
     }
 
-    // 관리자용 회원 관리
+    // 관리자용 회원 관리 (전체 회원, 학교/강사단, 관리자 하위 포함)
     if (
       user?.role === 'ADMIN' &&
       (path.startsWith('/users') ||
         path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
+        path.startsWith('/admin/members') ||
         path.startsWith('/admin/settings/permissions'))
     ) {
       keys.push('members-group')
+      if (path.startsWith('/admin/members') || path.startsWith('/admin/settings/permissions')) {
+        keys.push('admin-group')
+      }
     }
 
     // 관리자용 게시글 관리
