@@ -36,8 +36,11 @@ interface ProgramCalendarViewProps {
 /** 프로그램 진행 현황 배지 배경색 (program-schedule-widget·program-lifecycle-status-badge와 동기화) */
 const LIFECYCLE_STATUS_BG: Record<ProgramLifecycleStatus, string> = {
   planned: '#f5f5f5',
+  instructor_recruitment_planned: '#f5f5f5',
+  volunteer_recruitment_planned: '#f5f5f5',
   recruiting_students: '#eaf7ec',
   recruiting_instructors: '#f4f0f9',
+  recruiting_volunteers: '#f4f0f9',
   matching_completed: '#fff5e9',
   education_before_textbook: '#e9f6fa',
   education_after_textbook: '#e9f6fa',

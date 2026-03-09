@@ -180,19 +180,11 @@
   vertical-align: middle;
   text-align: center;
   border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+  background: #fff;
 }
 
 .school-detail-modal__table .ant-table-tbody > tr:last-child > td {
   border-bottom: none;
-}
-
-/* 짝수 행 배경 */
-.school-detail-modal__table .ant-table-tbody > tr:nth-child(even) > td {
-  background: #fafafa;
-}
-
-.school-detail-modal__table .ant-table-tbody > tr:nth-child(even):hover > td {
-  background: #f0f0f0 !important;
 }
 
 /* 체크박스 열 고정 너비 */

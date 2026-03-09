@@ -17,6 +17,16 @@
   border-bottom: none;
 }
 
+/* 위젯 타이틀 폰트 스펙 */
+.dashboard-container .ant-card .widget-card-title {
+  color: var(--default-BK, #3D3D3D);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
 .dashboard-toolbar {
   display: flex;
   align-items: center;
@@ -133,6 +143,36 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 메뉴 바로가기 위젯: 슬롯 하단 20px 패딩, 배지 잘림 방지(overflow 완화) */
+.dashboard-widget-slot:has(.menu-shortcut-widget) {
+  padding-bottom: 20px;
+  overflow: visible;
+}
+
+.dashboard-widget-slot:has(.menu-shortcut-widget) > .ant-card {
+  flex: none;
+  height: auto;
+  overflow: visible;
+}
+
+/* 메뉴 바로가기: 슬롯/카드 높이 자동 확장, 스크롤 없음, 하단 패딩 20px 유지 */
+.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget .ant-card-body {
+  overflow: visible;
+}
+
+.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
+  overflow: visible;
+}
+
+.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
+  overflow: visible;
+}
+
+.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget__item {
+  overflow: visible;
 }
 
 /* 사업 별 KPI 대비 달성률 위젯: 가로 스크롤이 보이도록 슬롯에서 가로 overflow 해제 */

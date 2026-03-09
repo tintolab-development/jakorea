@@ -13,8 +13,11 @@ const roundDeliveryTypeEnum = z.enum(['online', 'offline', 'hybrid'])
 
 const programLifecycleStatusEnum = z.enum([
   'planned',
+  'instructor_recruitment_planned',
+  'volunteer_recruitment_planned',
   'recruiting_students',
   'recruiting_instructors',
+  'recruiting_volunteers',
   'matching_completed',
   'education_before_textbook',
   'education_after_textbook',

@@ -158,7 +158,7 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
       },
     },
     {
-      title: '프로그램 진행 현황',
+      title: '모집 신청 현황',
       key: 'progressDisplay',
       align: 'center',
       render: (_: unknown, record: Application) => {

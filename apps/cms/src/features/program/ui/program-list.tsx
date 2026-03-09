@@ -864,7 +864,7 @@ export function ProgramList({
                             render: (text: string) => text ?? '-',
                           },
                           {
-                            title: '프로그램 진행 현황',
+                            title: '모집 신청 현황',
                             key: 'lifecycleStatus',
                             width: 140,
                             align: 'center' as const,
@@ -1046,7 +1046,7 @@ export function ProgramList({
                               render: (text: string) => text ?? '-',
                             },
                             {
-                              title: '프로그램 진행 현황',
+                              title: '모집 신청 현황',
                               key: 'lifecycleStatus',
                               width: 140,
                               align: 'center' as const,
@@ -1218,7 +1218,7 @@ export function ProgramList({
                         render: (text: string) => text ?? '-',
                       },
                       {
-                        title: '프로그램 진행 현황',
+                        title: '모집 신청 현황',
                         key: 'lifecycleStatus',
                         width: 140,
                         align: 'center' as const,

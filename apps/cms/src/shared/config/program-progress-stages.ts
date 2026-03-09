@@ -1,6 +1,6 @@
 /**
  * 전체 프로그램 진행 현황 6단계 (필터/위젯용)
- * 수강자 모집 중, 강사 모집 중, 교재 준비 중, 교육 진행 중, 교육 완료, 서류 처리 완료
+ * 참여자 모집 중, 강사 모집 중, 참여자 모집 완료, 강사 모집 완료, 봉사자 모집 완료
  */
 
 import type { ProgramLifecycleStatus } from '@/types/domain'
@@ -14,14 +14,14 @@ export type ProgramProgressStageKey =
   | 'educationCompleted'
   | 'documentProcessingCompleted'
 
-/** 6단계 라벨 (위젯 표시용) */
+/** 6단계 라벨 (위젯 표시용, programLifecycleStatusConfig와 동일 톤) */
 export const PROGRAM_PROGRESS_STAGE_LABELS: Record<ProgramProgressStageKey, string> = {
-  studentRecruitment: '수강자 모집중',
-  instructorRecruitment: '강사 모집중',
-  matchingCompleted: '매칭완료 / 교재 준비 중',
-  educationAfterTextbook: '교재 발송 완료',
-  educationCompleted: '교육 진행 완료',
-  documentProcessingCompleted: '서류 처리 완료',
+  studentRecruitment: '참여자 모집 중',
+  instructorRecruitment: '강사 모집 중',
+  matchingCompleted: '참여자 모집 완료',
+  educationAfterTextbook: '강사 모집 완료',
+  educationCompleted: '강사 모집 완료',
+  documentProcessingCompleted: '봉사자 모집 완료',
 }
 
 /** 6단계 순서 */

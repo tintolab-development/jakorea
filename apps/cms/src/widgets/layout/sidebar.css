@@ -93,11 +93,20 @@
     transition:
         background-color 0.2s ease,
         color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .sidebar-menu .ant-menu-item:hover {
-    background: var(--color-sidebar-overlay-10);
-    color: var(--color-sidebar-text);
+    background: var(--color-sidebar-overlay-10) !important;
+    color: var(--color-sidebar-text) !important;
+}
+
+/* 1뎁스 단일 메뉴(후원사 관리, 실적 관리, 관리자 홈 등) — 서브메뉴 타이틀과 동일 호버 */
+.sidebar-menu.ant-menu > li.ant-menu-item:hover {
+    background: var(--color-sidebar-overlay-10) !important;
+    color: var(--color-sidebar-text) !important;
 }
 
 /* 선택된 메뉴 아이템 */
@@ -110,9 +119,11 @@
     display: none;
 }
 
-/* 메뉴 아이콘 */
+/* 메뉴 아이콘 — 아이콘과 타이틀 갭 10px */
 .sidebar-menu .ant-menu-item-icon {
     color: var(--color-sidebar-text-85);
+    margin-inline-end: 0;
+    flex-shrink: 0;
     transition: color 0.2s ease;
 }
 
@@ -160,6 +171,15 @@
     transition:
         background-color 0.2s ease,
         color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 카테고리 아이콘–텍스트 갭 10px (gap으로 적용, 아이콘 margin 제거) */
+.sidebar-menu .ant-menu-submenu-title .ant-menu-item-icon {
+    margin-inline-end: 0;
+    flex-shrink: 0;
 }
 
 .sidebar-menu .ant-menu-submenu-title:hover {

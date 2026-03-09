@@ -526,7 +526,7 @@
 }
 
 .teacher-detail-modal__teaching-table .ant-table-tbody > tr:hover > td {
-  background: #fafafa !important;
+  background: var(--color-table-row-hover) !important;
 }
 
 .teacher-detail-modal__status-cell {
@@ -726,7 +726,7 @@
 }
 
 .settlement-tab__table .ant-table-tbody > tr:hover > td {
-  background: #fafafa !important;
+  background: var(--color-table-row-hover) !important;
 }
 
 .settlement-tab__checkbox-cell {

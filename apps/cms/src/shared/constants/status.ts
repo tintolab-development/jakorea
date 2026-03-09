@@ -143,19 +143,25 @@ export const programLifecycleStatusConfig = {
     'document_processing_completed',
   ] as ProgramLifecycleStatus[],
   labels: {
-    planned: '모집 예정',
-    recruiting_students: '수강자 모집 중',
+    planned: '참여자 모집 예정',
+    instructor_recruitment_planned: '강사 모집 예정',
+    volunteer_recruitment_planned: '봉사자 모집 예정',
+    recruiting_students: '참여자 모집 중',
     recruiting_instructors: '강사 모집 중',
-    matching_completed: '교재 준비 중',
-    education_before_textbook: '교육 진행 중',
-    education_after_textbook: '교육 진행 중',
-    education_completed: '교육 완료',
-    document_processing_completed: '서류 처리 완료',
+    recruiting_volunteers: '봉사자 모집 중',
+    matching_completed: '참여자 모집 완료',
+    education_before_textbook: '강사 모집 완료',
+    education_after_textbook: '강사 모집 완료',
+    education_completed: '강사 모집 완료',
+    document_processing_completed: '봉사자 모집 완료',
   } as Record<ProgramLifecycleStatus, string>,
   colors: {
     planned: 'default',
+    instructor_recruitment_planned: 'default',
+    volunteer_recruitment_planned: 'default',
     recruiting_students: 'geekblue',
     recruiting_instructors: 'purple',
+    recruiting_volunteers: 'default',
     matching_completed: 'cyan',
     education_before_textbook: 'cyan',
     education_after_textbook: 'cyan',
@@ -374,7 +380,7 @@ export const settlementStatusStatusConfig: Record<SettlementStatus, StatusConfig
 // 프로그램 라이프사이클 상태 StatusBadge용 config
 export const programLifecycleStatusStatusConfig: Record<ProgramLifecycleStatus, StatusConfig> =
   Object.fromEntries(
-    programLifecycleStatusConfig.order.map(status => [
+    (Object.keys(programLifecycleStatusConfig.labels) as ProgramLifecycleStatus[]).map(status => [
       status,
       {
         label: programLifecycleStatusConfig.labels[status],

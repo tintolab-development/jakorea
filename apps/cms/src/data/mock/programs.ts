@@ -1291,6 +1291,13 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     updatedAt: getDate(365 - record.month * 30 + 5),
   }
 
+  // 지원자 수가 있으면 전체 수도 존재하도록: 봉사단 모집 정원 보강
+  if (record.instructors != null && record.instructors > 0 && base.instructorCapacity == null) {
+    base.instructorCapacity = Math.max(record.instructors, 80)
+  }
+  // 참여자(수강자) 모집: rounds.capacity는 createRounds에서 항상 설정되므로 전체 수 존재.
+  // approvedStudentCount가 있으면 이미 rounds 있음. 필요 시 여기서 approvedStudentCount 보강 가능.
+
   if (isDetailMock) {
     return {
       ...base,

@@ -348,6 +348,7 @@
     vertical-align: middle;
     border-right: 1px solid #D9D9D9;
     border-bottom: 1px solid #D9D9D9;
+    background: #fff;
 }
 
 .enrollment-status-detail-modal__table .ant-table-tbody > tr > td:last-child {
@@ -356,15 +357,6 @@
 
 .enrollment-status-detail-modal__table .ant-table-tbody > tr:last-child > td {
     border-bottom: none;
-}
-
-/* program-applicants-tab과 동일: 짝수 행 배경 */
-.enrollment-status-detail-modal__table .ant-table-tbody > tr:nth-child(even) > td {
-    background: #fafafa;
-}
-
-.enrollment-status-detail-modal__table .ant-table-tbody > tr:nth-child(even):hover > td {
-    background: #f0f0f0 !important;
 }
 
 /* 결재 현황 드롭다운: 배지 클릭 시 드롭다운 표시 */

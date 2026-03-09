@@ -35,14 +35,24 @@ export function CustomerInquiryStatusWidget() {
   const navigate = useNavigate()
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
+  const inquiryNotificationReadProgramKeys =
+    useDashboardSettingsStore(s => s.inquiryNotificationReadProgramKeys) ?? {}
+  const setInquiryNotificationReadProgramKey = useDashboardSettingsStore(
+    s => s.setInquiryNotificationReadProgramKey
+  )
 
   const data = useMemo(() => {
     if (allowedProgramIds.length === 0) return MOCK_PROGRAM_INQUIRIES
     return MOCK_PROGRAM_INQUIRIES
   }, [allowedProgramIds])
 
-  const handlePendingClick = () => {
+  const handlePendingClick = (programKey: string) => {
+    setInquiryNotificationReadProgramKey(programKey)
     navigate('/admin/posts/inquiries?status=PENDING')
+  }
+
+  const handleMoreClick = () => {
+    navigate('/admin/posts/inquiries')
   }
 
   const columns: ColumnsType<ProgramInquiryRow> = useMemo(
@@ -61,14 +71,19 @@ export function CustomerInquiryStatusWidget() {
         key: 'pending',
         width: '17%',
         align: 'center',
-        render: (value: number) =>
+        render: (value: number, record: ProgramInquiryRow) =>
           value > 0 ? (
             <button
               type="button"
               className="inquiry-table__pending-cell"
-              onClick={handlePendingClick}
+              onClick={() => handlePendingClick(record.key)}
             >
-              {value}건
+              <span className="inquiry-table__pending-cell-inner">
+                <span className="inquiry-table__pending-cell-text">{value}건</span>
+                {!inquiryNotificationReadProgramKeys[record.key] && (
+                  <span className="inquiry-table__pending-dot" aria-hidden />
+                )}
+              </span>
             </button>
           ) : (
             <span className="inquiry-table__count--muted">0건</span>
@@ -91,7 +106,7 @@ export function CustomerInquiryStatusWidget() {
         render: (value: number) => <span className="inquiry-table__count--muted">{value}건</span>,
       },
     ],
-    [navigate]
+    [navigate, inquiryNotificationReadProgramKeys, setInquiryNotificationReadProgramKey]
   )
 
   return (
@@ -105,7 +120,7 @@ export function CustomerInquiryStatusWidget() {
         <Button
           type="link"
           size="small"
-          onClick={() => navigate('/admin/posts/inquiries')}
+          onClick={handleMoreClick}
           className="widget-more-button"
         >
           더보기

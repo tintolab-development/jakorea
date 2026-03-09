@@ -68,7 +68,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
       align: 'center' as const,
     },
     {
-      title: '프로그램 진행 현황',
+      title: '모집 신청 현황',
       dataIndex: 'programStatus',
       key: 'programStatus',
       width: 180,

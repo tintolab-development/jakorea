@@ -96,7 +96,7 @@ export function EnrollmentProgramDetailView({
       getApplicationEnrollmentDisplayStatus(application.status, application.progressStatus) === 'PROGRAM_ENDED'
     const showEndedTag = programCompleted || enrollmentEnded
     const statusLabelText =
-      lifecycleStatus ? getProgramLifecycleLabel(lifecycleStatus) : '서류 처리 완료'
+      lifecycleStatus ? getProgramLifecycleLabel(lifecycleStatus) : '봉사자 모집 완료'
 
     return [
       { key: 'title', label: '프로그램명', children: program.title ?? '-' },

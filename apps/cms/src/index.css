@@ -118,3 +118,8 @@ body .ant-form-item-label>label.ant-form-item-required:not(.ant-form-item-requir
     line-height: 1;
     content: '*' !important;
 }
+
+/* 테이블 행 호버: 전체 영역 통일 (#01A1AF opacity 0.06) */
+.ant-table-wrapper .ant-table-tbody > tr:hover > td {
+    background: var(--color-table-row-hover) !important;
+}

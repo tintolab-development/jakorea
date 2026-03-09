@@ -27,19 +27,19 @@ export interface ProgramProgressSummary {
 
 /** FR-C01: 7단계 프로그램 진행 현황 */
 export interface ProgramProgress7Stage {
-  /** 수강자 모집 */
+  /** 참여자 모집 중 */
   studentRecruitment: number
-  /** 강사 모집 */
+  /** 강사 모집 중 */
   instructorRecruitment: number
-  /** 매칭 완료 */
+  /** 참여자 모집 완료 (매칭 완료) */
   matchingCompleted: number
-  /** 교육 진행 중 (교재 발송 전) */
+  /** 강사 모집 완료 (교재 발송 전) */
   educationBeforeTextbook: number
-  /** 교육 진행 중 (교재 발송 후) */
+  /** 강사 모집 완료 (교재 발송 후) */
   educationAfterTextbook: number
-  /** 교육 진행 완료 */
+  /** 강사 모집 완료 */
   educationCompleted: number
-  /** 서류 처리 완료 */
+  /** 봉사자 모집 완료 */
   documentProcessingCompleted: number
   /** 합계 */
   total: number
@@ -89,8 +89,13 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
 
   mockPrograms.forEach(program => {
     switch (program.lifecycleStatus) {
+      case 'planned':
+      case 'instructor_recruitment_planned':
+      case 'volunteer_recruitment_planned':
+        break
       case 'recruiting_students':
       case 'recruiting_instructors':
+      case 'recruiting_volunteers':
         byStatus.RECEIVED++
         break
       case 'matching_completed':
@@ -193,10 +198,15 @@ export async function getProgramProgress7StageByProgramId(
 
   if (program) {
     switch (program.lifecycleStatus) {
+      case 'planned':
+      case 'instructor_recruitment_planned':
+      case 'volunteer_recruitment_planned':
+        break
       case 'recruiting_students':
         stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 1
         break
       case 'recruiting_instructors':
+      case 'recruiting_volunteers':
         stages.instructorRecruitment = mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor').length || 1
         break
       case 'matching_completed':
