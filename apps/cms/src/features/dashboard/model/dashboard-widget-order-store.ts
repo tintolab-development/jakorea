@@ -52,6 +52,21 @@ function sameSet(a: string[], b: string[]): boolean {
   return a.every(id => set.has(id))
 }
 
+/**
+ * 상단 빈 영역 방지: 첫 번째가 50%(12), 두 번째가 100%(24)이면 서로 바꾼다.
+ * Row에서 50% 다음에 100%가 오면 100%가 다음 줄로 내려가 첫 줄 오른쪽이 비므로, 100%를 앞으로 보낸다.
+ */
+export function reorderToAvoidTopGap(
+  ids: string[],
+  getColSpan: (id: string) => 12 | 24
+): string[] {
+  if (ids.length < 2) return ids
+  const a = getColSpan(ids[0])
+  const b = getColSpan(ids[1])
+  if (a === 12 && b === 24) return [ids[1], ids[0], ...ids.slice(2)]
+  return ids
+}
+
 export interface DashboardWidgetOrderState {
   orderByRole: Record<string, string[]>
   /** 역할별 위젯별 너비: 12(50%) | 24(100%) */
