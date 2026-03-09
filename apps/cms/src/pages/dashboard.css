@@ -8,6 +8,10 @@
   width: 100%;
 }
 
+.dashboard-widget-row-wrapper {
+  width: 100%;
+}
+
 /* 위젯 카드: 햄버거 아이콘 하단 디바이더 제거 */
 .dashboard-container .ant-card .ant-card-head {
   border-bottom: none;
@@ -198,4 +202,14 @@
   cursor: grabbing;
   overflow: hidden;
   pointer-events: none;
+  transform: scale(1.02);
+}
+
+/* 접근성: 동작 감소 선호 시 오버레이 확대·애니메이션 제거 */
+.dashboard-container--reduced-motion .dashboard-widget-drag-overlay {
+  transform: none;
+}
+
+.dashboard-container--reduced-motion .dashboard-widget-row-wrapper .ant-col {
+  transition-duration: 0.08s !important;
 }
