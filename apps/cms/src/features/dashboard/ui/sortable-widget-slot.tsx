@@ -157,7 +157,12 @@ export function SortableWidgetSlot({
   const slotHeight = height ?? DEFAULT_WIDGET_HEIGHT
 
   return (
-    <Col ref={setColRef} span={colSpan} style={colStyle}>
+    <Col
+      ref={setColRef}
+      span={colSpan}
+      style={colStyle}
+      data-dashboard-slot-id={id}
+    >
       <div ref={slotRef} className="dashboard-widget-slot" style={{ height: slotHeight }}>
         {!hasBuiltInHandle && (
           <div
