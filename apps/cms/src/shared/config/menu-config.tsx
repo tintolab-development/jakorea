@@ -790,7 +790,7 @@ const allMenuItems: MenuItemConfig[] = [
   // { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   {
     key: 'logs-group',
-    label: '로그 관리',
+    label: '보안 설정(로그 관리)',
     icon: <FolderOutlined />,
     enabled: true,
     allowedRoles: ['ADMIN'],

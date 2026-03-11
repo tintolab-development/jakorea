@@ -119,7 +119,7 @@ export function Sidebar() {
       keys.push('posts-group')
     }
 
-    // 관리자용 로그 관리
+    // 관리자용 보안 설정(로그 관리)
     if (user?.role === 'ADMIN' && path.startsWith('/logs')) {
       keys.push('logs-group')
     }
