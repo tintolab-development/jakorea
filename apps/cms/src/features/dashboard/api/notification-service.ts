@@ -13,6 +13,8 @@ export interface Notification {
   type: NotificationType
   title: string
   message: string
+  /** 프로그램명 (알림 위젯 두 번째 라인) */
+  programName?: string
   link?: string
   read: boolean
   createdAt: DateValue
@@ -37,12 +39,14 @@ export async function getNotifications(
     message: string,
     link: string | undefined,
     read: boolean,
-    hoursAgo: number
+    hoursAgo: number,
+    programName?: string
   ): Notification => ({
     id,
     type,
     title,
     message,
+    programName,
     link,
     read,
     createdAt: new Date(now.getTime() - hoursAgo * 60 * 60 * 1000).toISOString(),
@@ -57,16 +61,18 @@ export async function getNotifications(
         '신규 기능이 배포되었습니다.',
         '/',
         false,
-        1
+        1,
+        'JA코리아 관리자 시스템'
       ),
       createNotification(
         'notif-admin-2',
         'matching',
         '매칭 요청',
-        '봉사 프로그램 매칭 요청이 들어왔습니다.',
+        '신규 참여 신청자가 있습니다.',
         '/volunteers/programs',
         false,
-        4
+        4,
+        'HSBC/HKU Business Case Competition 2026'
       ),
       createNotification(
         'notif-admin-3',
@@ -75,16 +81,18 @@ export async function getNotifications(
         '정산 승인 대기 건이 있습니다.',
         '/settlements',
         false,
-        6
+        6,
+        '1사1교 경제금융교육 1차'
       ),
       createNotification(
         'notif-admin-4',
         'matching',
         '매칭 완료',
-        '새로운 강사 매칭이 완료되었습니다.',
+        '대표 강사 김틴토님이 게시글을 작성하였습니다.',
         '/instructors',
         false,
-        8
+        8,
+        'HSBC/HKU Business Case Competition 2026'
       ),
       createNotification(
         'notif-admin-5',
@@ -93,7 +101,8 @@ export async function getNotifications(
         '프로그램 신청 마감일이 다가옵니다.',
         '/programs',
         false,
-        12
+        12,
+        '창업대회 디자인 세미나'
       ),
       createNotification(
         'notif-admin-6',
@@ -102,16 +111,18 @@ export async function getNotifications(
         '새로운 정산 신청이 접수되었습니다.',
         '/settlements',
         false,
-        15
+        15,
+        '그램 역사 특강 2차시'
       ),
       createNotification(
         'notif-admin-7',
         'matching',
         '매칭 요청',
-        '학교 프로그램 매칭 요청이 들어왔습니다.',
+        '신규 강사 권한 요청이 있습니다.',
         '/programs',
         false,
-        18
+        18,
+        '기타 프로그램 지리학 강의 3차시'
       ),
       createNotification(
         'notif-admin-8',
@@ -120,7 +131,8 @@ export async function getNotifications(
         '월간 리포트가 생성되었습니다.',
         '/',
         true,
-        24
+        24,
+        'JA코리아 관리자 시스템'
       ),
       createNotification(
         'notif-admin-9',
@@ -129,16 +141,18 @@ export async function getNotifications(
         '정산 승인이 완료되었습니다.',
         '/settlements',
         true,
-        30
+        30,
+        '1사1교 경제금융교육 1차'
       ),
       createNotification(
         'notif-admin-10',
         'matching',
         '매칭 알림',
-        '봉사자 매칭 상태가 변경되었습니다.',
+        '박틴토 담당교사님이 정보를 수정하였습니다.',
         '/volunteers',
         true,
-        36
+        36,
+        'HSBC/HKU Business Case Competition 2026'
       ),
     ],
     INSTRUCTOR: [
@@ -149,7 +163,8 @@ export async function getNotifications(
         '내일 오후 2시 "JA 경제 교육" 프로그램 일정이 있습니다.',
         '/schedules/my',
         false,
-        2
+        2,
+        'JA 경제 교육'
       ),
       createNotification(
         'notif-inst-2',
@@ -158,7 +173,8 @@ export async function getNotifications(
         '"JA 창업 캠프" 프로그램에 매칭되었습니다.',
         '/programs/my',
         false,
-        5
+        5,
+        'JA 창업 캠프'
       ),
       createNotification(
         'notif-inst-3',
@@ -167,7 +183,8 @@ export async function getNotifications(
         '2025년 1월 정산이 승인되었습니다.',
         '/settlements/my',
         true,
-        24
+        24,
+        'JA 경제 교육'
       ),
     ],
     INDIVIDUAL: [
@@ -178,7 +195,8 @@ export async function getNotifications(
         '마이페이지에서 확인해야 할 작업이 있습니다.',
         '/mypage',
         false,
-        3
+        3,
+        '마이페이지'
       ),
       createNotification(
         'notif-individual-2',
@@ -187,7 +205,8 @@ export async function getNotifications(
         '예정된 프로그램 일정이 있습니다.',
         '/schedules/my',
         false,
-        10
+        10,
+        '내 일정'
       ),
       createNotification(
         'notif-individual-3',
@@ -196,7 +215,8 @@ export async function getNotifications(
         '신청한 프로그램 관련 안내사항이 도착했습니다.',
         '/notices',
         true,
-        30
+        30,
+        '공지사항'
       ),
     ],
     SCHOOL: [
@@ -207,7 +227,8 @@ export async function getNotifications(
         '학교 단위 신청 관련 확인이 필요합니다.',
         '/mypage',
         false,
-        3
+        3,
+        '학교 신청'
       ),
       createNotification(
         'notif-school-2',
@@ -216,7 +237,8 @@ export async function getNotifications(
         '예정된 프로그램 일정이 있습니다.',
         '/schedules/my',
         false,
-        10
+        10,
+        '내 일정'
       ),
     ],
   }
