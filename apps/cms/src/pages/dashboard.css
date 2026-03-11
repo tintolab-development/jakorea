@@ -146,16 +146,15 @@
   box-sizing: border-box;
 }
 
-/* 메뉴 바로가기 위젯: 슬롯 하단 20px 패딩, 배지 잘림 방지(overflow 완화) */
+/* 메뉴 바로가기 위젯: 슬롯 하단 패딩 제거(행 간격은 Row gutter 20px로 통일), 배지 잘림 방지는 overflow 완화로 */
 .dashboard-widget-slot:has(.menu-shortcut-widget) {
-  padding-bottom: 20px;
+  padding-bottom: 0;
   overflow: visible;
 }
 
-/* 메뉴 바로가기 위젯이 50% 사이즈(colSpan 12)일 때 위젯 높이 최대 340px, 퀵메뉴 영역만 스크롤
-   * 하단 패딩 20px 포함 시 콘텐츠가 잘리지 않도록 max-height = 340 + 20 = 360px */
+/* 메뉴 바로가기 위젯이 50% 사이즈(colSpan 12)일 때 위젯 높이 최대 340px, 퀵메뉴 영역만 스크롤 */
 .dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) {
-  max-height: 360px;
+  max-height: 340px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
