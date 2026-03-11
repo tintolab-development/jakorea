@@ -384,9 +384,14 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* 주간 뷰: 오늘 셀 — 셀 보더 제거(program-calendar-view.css 오버라이드) */
+/* 주간 뷰: 오늘 셀 — 기본은 보더 제거. 현재일자 선택 시에는 선택 보더 적용 */
 .program-schedule-widget .program-calendar-week-cell--today {
     border: none !important;
+}
+
+.program-schedule-widget .program-calendar-week-cell--today.program-calendar-week-cell--selected {
+    border: 2px solid var(--color-brand-primary) !important;
+    background-color: var(--color-brand-primary-overlay-04);
 }
 
 .program-schedule-widget .program-calendar-week-cell .program-calendar-week-cell-date {
@@ -462,9 +467,7 @@
     line-height: 130%;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
 }
 
 /* 주간 뷰: "외 n개의 일정" 텍스트 스펙 */
