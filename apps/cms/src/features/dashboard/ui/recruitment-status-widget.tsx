@@ -53,6 +53,7 @@ export function RecruitmentStatusWidget() {
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [openStatusDropdownId, setOpenStatusDropdownId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -109,6 +110,7 @@ export function RecruitmentStatusWidget() {
       key: 'lifecycleStatus',
       width: '20%',
       align: 'center',
+      className: 'recruitment-status-widget__cell-status',
       render: (_: unknown, record: Program) => {
         const status = record.lifecycleStatus
         const isUpdating = updatingId === record.id
@@ -137,9 +139,11 @@ export function RecruitmentStatusWidget() {
             trigger={['click']}
             disabled={isUpdating}
             overlayClassName="recruitment-status-widget__dropdown-overlay"
+            open={openStatusDropdownId === record.id}
+            onOpenChange={open => setOpenStatusDropdownId(open ? record.id : null)}
           >
             <span
-              className="recruitment-status-widget__status-trigger"
+              className={`recruitment-status-widget__status-trigger${openStatusDropdownId === record.id ? ' recruitment-status-widget__status-trigger--open' : ''}`}
               onClick={e => e.stopPropagation()}
             >
               <ProgramLifecycleStatusBadge status={status} />
