@@ -163,7 +163,7 @@ export function SortableWidgetSlot({
       style={colStyle}
       data-dashboard-slot-id={id}
     >
-      <div ref={slotRef} className="dashboard-widget-slot" style={slotStyle}>
+      <div ref={slotRef} className="dashboard-widget-slot" style={slotStyle} data-col-span={colSpan}>
         {!hasBuiltInHandle && (
           <div
             ref={setActivatorNodeRef}
