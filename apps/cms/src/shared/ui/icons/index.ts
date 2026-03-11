@@ -1,0 +1,7 @@
+/**
+ * 공통 커스텀 아이콘
+ * Ant Design 아이콘으로 커버되지 않는 디자인 시안 전용 SVG 아이콘을 여기서 관리합니다.
+ */
+
+export { LogoutIcon } from './LogoutIcon'
+export type { LogoutIconProps } from './LogoutIcon'
