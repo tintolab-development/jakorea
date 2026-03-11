@@ -201,7 +201,7 @@ export function Dashboard() {
       >
         <SortableContext items={displayOrder} strategy={noScaleRectSortingStrategy}>
           <div ref={rowRef} className="dashboard-widget-row-wrapper">
-            <Row gutter={[16, 16]} align="stretch">
+            <Row gutter={[16, 20]} align="stretch">
             {displayOrder.map((id: string) => {
               const meta = displayItemsMeta.find((m: DisplayItemMeta) => m.id === id)
               if (!meta) return null
