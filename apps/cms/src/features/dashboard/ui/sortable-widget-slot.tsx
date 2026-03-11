@@ -31,7 +31,6 @@ interface HandleRect {
   height: number
 }
 
-const DEFAULT_WIDGET_HEIGHT = 338
 /** 스냅 트리거 최소 드래그 거리 (px) */
 const RESIZE_THRESHOLD = 20
 
@@ -154,11 +153,17 @@ export function SortableWidgetSlot({
     opacity: isDragging ? 0 : 1,
   }
 
-  const slotHeight = height ?? DEFAULT_WIDGET_HEIGHT
+  const slotHeight = height !== undefined ? height : 'auto'
+  const slotStyle: React.CSSProperties = { height: slotHeight }
 
   return (
-    <Col ref={setColRef} span={colSpan} style={colStyle}>
-      <div ref={slotRef} className="dashboard-widget-slot" style={{ height: slotHeight }}>
+    <Col
+      ref={setColRef}
+      span={colSpan}
+      style={colStyle}
+      data-dashboard-slot-id={id}
+    >
+      <div ref={slotRef} className="dashboard-widget-slot" style={slotStyle} data-col-span={colSpan}>
         {!hasBuiltInHandle && (
           <div
             ref={setActivatorNodeRef}

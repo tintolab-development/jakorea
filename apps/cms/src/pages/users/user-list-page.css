@@ -50,20 +50,6 @@
   width: 150px;
 }
 
-/* 테이블 위 액션 행 (회원 삭제 / 회원 등록) - program-managers-tab 패턴 참고 */
-.user-list-page__table-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-bottom: var(--spacing-12, 12px);
-}
-
-.user-list-page__table-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8, 8px);
-}
-
 /* 무한 스크롤: 하단 센티넬 (IntersectionObserver 타겟) */
 .user-list-page__load-more-sentinel {
   min-height: 1px;

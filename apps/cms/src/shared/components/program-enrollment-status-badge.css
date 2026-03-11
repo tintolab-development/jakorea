@@ -1,0 +1,49 @@
+/**
+ * 프로그램 수강 이력 > 프로그램 진행 현황 배지
+ * 상태별 색상·폰트 스펙
+ */
+
+.app-status-badge.program-enrollment-status-badge {
+  border-radius: 4px;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+/* 신청 결과 대기 중 */
+.app-status-badge.program-enrollment-status-badge--waiting-result {
+  border: 1px solid rgba(30, 140, 41, 0.06);
+  background: #e9f3ea;
+  color: #1e8c29;
+}
+
+/* 신청 반려 */
+.app-status-badge.program-enrollment-status-badge--rejected {
+  border: 1px solid rgba(228, 73, 112, 0.06);
+  background: #fef5f7;
+  color: #e44970;
+}
+
+/* 교육 진행 예정 */
+.app-status-badge.program-enrollment-status-badge--education-scheduled {
+  border: 1px solid rgba(240, 121, 23, 0.06);
+  background: #fff8e8;
+  color: #f07917;
+}
+
+/* 교육 진행 중 */
+.app-status-badge.program-enrollment-status-badge--education-in-progress {
+  border: 1px solid rgba(240, 121, 23, 0.06);
+  background: #fff8e8;
+  color: #017eaf;
+}
+
+/* 프로그램 종료 */
+.app-status-badge.program-enrollment-status-badge--program-ended {
+  border: 1px solid rgba(126, 138, 150, 0.06);
+  background: #f2f3f5;
+  color: #464646;
+}

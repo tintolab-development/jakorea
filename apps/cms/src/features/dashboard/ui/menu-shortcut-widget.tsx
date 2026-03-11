@@ -32,6 +32,11 @@ import {
 } from '../model/dashboard-settings-store'
 import './menu-shortcut-widget.css'
 
+/** 배지 표시용: 99 초과 시 "99+" */
+function formatBadgeCount(count: number): string {
+  return count >= 99 ? '99+' : String(count)
+}
+
 const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
   programs: <ReadOutlined />,
   applications: <FormOutlined />,
@@ -56,6 +61,7 @@ export function MenuShortcutWidget() {
   const navigate = useNavigate()
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const badgeCounts = useDashboardSettingsStore(s => s.shortcutBadgeCounts)
+  const setShortcutBadgeCount = useDashboardSettingsStore(s => s.setShortcutBadgeCount)
 
   const visibleItems = SHORTCUT_ITEMS.filter(item => shortcutEnabled[item.id])
 
@@ -69,8 +75,10 @@ export function MenuShortcutWidget() {
           <span className="widget-card-title">메뉴 바로가기</span>
         </WidgetTitleWithHandle>
       }
+      bodyStyle={{ paddingBottom: 20 }}
     >
-      <div className="menu-shortcut-widget__grid">
+      <div className="menu-shortcut-widget__body">
+        <div className="menu-shortcut-widget__grid">
         {visibleItems.map(item => {
           const count = badgeCounts[item.id] ?? 0
           return (
@@ -78,7 +86,10 @@ export function MenuShortcutWidget() {
               key={item.id}
               type="button"
               className="menu-shortcut-widget__item"
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                setShortcutBadgeCount(item.id, 0)
+                navigate(item.path)
+              }}
             >
               <span className="menu-shortcut-widget__item-left">
                 <span className="menu-shortcut-widget__icon">
@@ -87,11 +98,12 @@ export function MenuShortcutWidget() {
                 <span className="menu-shortcut-widget__label">{item.label}</span>
               </span>
               {count > 0 && (
-                <span className="menu-shortcut-widget__badge">{count}</span>
+                <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
               )}
             </button>
           )
         })}
+      </div>
       </div>
     </Card>
   )

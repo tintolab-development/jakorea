@@ -38,7 +38,7 @@ export default function ScheduleNegotiationListPage() {
     setSelectedNegotiation,
     clearSelectedNegotiation,
   } = useScheduleNegotiationStore()
-  const { params, setParams, clearParams } = useQueryParams<NegotiationQueryParams>()
+  const { params, setParams } = useQueryParams<NegotiationQueryParams>()
   const { getAllSync: getAllProgramsSync } = useProgramService()
   const [open, setOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -204,7 +204,6 @@ export default function ScheduleNegotiationListPage() {
             style: { width: LAYOUT_CONSTANTS.widths.filter },
           },
         ]}
-        onReset={() => clearParams()}
         showReset={!!(selectedProgramId || selectedSchoolId || selectedStatus)}
       />
 

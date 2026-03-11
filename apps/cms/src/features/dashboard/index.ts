@@ -8,6 +8,7 @@ export {
   useDashboardWidgetOrderStore,
   buildDefaultDisplayItemIds,
   buildDisplayItemsMeta,
+  reorderToAvoidTopGap,
   type DisplayItemMeta,
   type DashboardWidgetOrderState,
 } from './model/dashboard-widget-order-store'

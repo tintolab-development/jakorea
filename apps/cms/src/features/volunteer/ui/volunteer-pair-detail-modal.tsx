@@ -7,7 +7,7 @@ import { Modal, Descriptions, Tag, Row, Col, Card, Divider, Typography } from 'a
 import type { User } from '@/types/user'
 import type { VolunteerPair } from '@/types/volunteer'
 import { RoleBadge } from '@/shared/ui'
-import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
+import { InterviewStatusBadge } from '@/shared/components'
 import { formatDate } from '@/shared/utils'
 import { mockUsers } from '@/data/mock/users'
 

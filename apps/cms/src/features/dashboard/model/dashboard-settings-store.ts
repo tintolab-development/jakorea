@@ -7,11 +7,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-/** 바로가기 항목: id, label, path */
+/** 바로가기 항목: id, label, path (대시보드 설정·메뉴 바로가기 위젯 공통) */
 export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> = [
   { id: 'programs', label: '전체 프로그램', path: '/programs/education' },
-  { id: 'applications', label: '수강 신청 현황', path: '/applications' },
-  { id: 'instructor-applications', label: '강의 신청 현황', path: '/instructor-applications' },
+  { id: 'applications', label: '참여자 모집 현황', path: '/programs/education/student-recruitment' },
+  { id: 'instructor-applications', label: '강사 모집 현황', path: '/programs/education/instructor-recruitment' },
   { id: 'users', label: '전체 회원', path: '/users' },
   { id: 'schools', label: '학교(교사) 회원', path: '/schools' },
   { id: 'instructors', label: '강사단', path: '/instructors' },
@@ -25,7 +25,7 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'file-forms', label: '파일 양식', path: '/templates/file-forms' },
   { id: 'sponsors', label: '후원사', path: '/sponsors' },
   { id: 'performance', label: '실적 현황', path: '/performance' },
-  { id: 'audit-log', label: '로그 관리', path: '/admin/logs/audit' },
+  { id: 'audit-log', label: '보안 설정(로그 관리)', path: '/admin/logs/audit' },
 ]
 
 /** 위젯별 프로그램 설정용 위젯 키 (4개 위젯) */
@@ -47,7 +47,7 @@ const defaultShortcutBadgeCounts: Record<string, number> = {
   schools: 0,
   instructors: 0,
   'kakao-alimtalk': 0,
-  email: 0,
+  email: 105, // 임시: 99+ 배지 확인용
   banner: 0,
   notices: 0,
   faq: 0,
@@ -79,6 +79,9 @@ export interface DashboardSettingsState {
   isProgramSelectedForWidget: (widgetKey: string, programId: string) => boolean
   /** 위젯에 노출할 프로그램 id 목록 (빈 배열이면 전체) */
   getProgramIdsForWidget: (widgetKey: string) => string[]
+  /** 문의 알림 읽음: 프로그램별(행 key) — 해당 행 답변 대기 클릭 시 해당 프로그램만 읽음 처리 */
+  inquiryNotificationReadProgramKeys: Record<string, boolean>
+  setInquiryNotificationReadProgramKey: (programKey: string) => void
 }
 
 const STORAGE_KEY = 'dashboard-settings'
@@ -129,6 +132,16 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
       getProgramIdsForWidget: widgetKey => {
         const ids = get().widgetProgramIds[widgetKey]
         return ids ?? []
+      },
+
+      inquiryNotificationReadProgramKeys: {},
+      setInquiryNotificationReadProgramKey: programKey => {
+        set(state => ({
+          inquiryNotificationReadProgramKeys: {
+            ...state.inquiryNotificationReadProgramKeys,
+            [programKey]: true,
+          },
+        }))
       },
     }),
     { name: STORAGE_KEY }

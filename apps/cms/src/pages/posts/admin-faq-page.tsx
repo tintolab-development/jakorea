@@ -133,18 +133,6 @@ export function AdminFAQPage() {
     setAppliedFilters(pendingFilters)
   }
 
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setPendingFilters({
-      search: '',
-      category: 'all',
-    })
-    setAppliedFilters({
-      search: '',
-      category: 'all',
-    })
-  }
-
   // 상세 모달 상태
   const {
     open: isDetailModalOpen,
@@ -333,7 +321,6 @@ export function AdminFAQPage() {
             setPendingFilters(prev => ({ ...prev, [key]: value }))
           }}
           onSearch={handleSearch}
-          onReset={handleFilterReset}
         />
 
         <Table

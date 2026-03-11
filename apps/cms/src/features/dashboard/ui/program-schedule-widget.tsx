@@ -15,10 +15,10 @@ import { programService } from '@/entities/program/api/program-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import type { Schedule } from '@/types'
 import type { ProgramLifecycleStatus } from '@/types/domain'
-import { SegmentedTab } from '@/shared/ui/segmented-tab'
+import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
-import './program-schedule-widget.css'
 import '@/features/program/ui/program-calendar-view.css'
+import './program-schedule-widget.css'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -36,8 +36,11 @@ interface ScheduleEvent {
 /** 프로그램 진행 현황 배지 배경색 (program-lifecycle-status-badge.css와 동기화) */
 const LIFECYCLE_STATUS_BG: Record<ProgramLifecycleStatus, string> = {
   planned: '#f5f5f5',
+  instructor_recruitment_planned: '#f5f5f5',
+  volunteer_recruitment_planned: '#f5f5f5',
   recruiting_students: '#eaf7ec',
   recruiting_instructors: '#f4f0f9',
+  recruiting_volunteers: '#f4f0f9',
   matching_completed: '#fff5e9',
   education_before_textbook: '#e9f6fa',
   education_after_textbook: '#e9f6fa',
@@ -445,7 +448,7 @@ export function ProgramScheduleWidget() {
         <div className="program-schedule-widget__head-row">
           <div className="program-schedule-widget__head-left">
             <WidgetTitleWithHandle>
-              <span>프로그램 일정</span>
+              <span className="widget-card-title">프로그램 일정</span>
             </WidgetTitleWithHandle>
             <div className="program-schedule-widget__head-nav">
               <button

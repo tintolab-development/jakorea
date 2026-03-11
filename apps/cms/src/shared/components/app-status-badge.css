@@ -1,7 +1,7 @@
 /**
  * 공통 배지 베이스 스타일 (교재 현황 배지와 동일)
  * 모든 도메인 배지는 이 베이스를 사용하고, 모디파이어로 색상만 구분
- * 스펙: 120×33 고정, font-size 14px, font-weight 600, line-height 150%
+ * 스펙: 120×30 고정, padding horizontal 10px vertical 6px, font-size 14px, font-weight 600, line-height 150%
  */
 
 .app-status-badge {
@@ -12,7 +12,8 @@
     width: 120px;
     min-width: 120px;
     max-width: 120px;
-    height: 33px;
+    height: 30px;
+    min-height: 30px;
     margin: 0;
     padding: 6px 10px;
     border: none;

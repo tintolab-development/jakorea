@@ -38,26 +38,22 @@
     color: var(--color-text-primary);
 }
 
-/* 업로드 취소(X) 버튼 — 회색 원형 배경, 흰색 X */
+/* 업로드 취소(X) 버튼 — 배경 없음, SVG 아이콘 그대로 */
 .file-select-field__remove {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: none;
-    border-radius: 50%;
-    background: var(--color-border-input);
-    color: var(--color-text-body);
+    background: none;
     cursor: pointer;
-    font-size: var(--font-size-12);
     flex-shrink: 0;
 }
 
-.file-select-field__remove:hover {
-    background: var(--color-danger-hover);
-    color: var(--color-bg-base);
+.file-select-field__remove:hover svg {
+    opacity: 1;
 }
 
 .file-select-field__remove:focus {
@@ -67,6 +63,7 @@
 .file-select-field__remove:focus-visible {
     outline: 2px solid var(--color-focus-teal);
     outline-offset: 1px;
+    border-radius: 50%;
 }
 
 /* 버튼 + 가이드 텍스트 가로 배치 */

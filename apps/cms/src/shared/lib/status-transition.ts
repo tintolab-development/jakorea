@@ -200,17 +200,19 @@ export function isSettlementFinalStatus(status: SettlementStatus): boolean {
 }
 
 /**
- * Program Lifecycle 상태 전환 규칙 (7단계)
- * planned -> recruiting_students -> recruiting_instructors -> matching_completed -> education_before_textbook -> education_after_textbook -> education_completed -> document_processing_completed
+ * Program Lifecycle 상태 전환 규칙 (디자이너 스펙 9태그 반영)
  */
 export const PROGRAM_LIFECYCLE_STATUS_TRANSITIONS: Record<
   ProgramLifecycleStatus,
   ProgramLifecycleStatus[]
 > = {
-  planned: ['recruiting_students'],
+  planned: ['instructor_recruitment_planned', 'recruiting_students'],
+  instructor_recruitment_planned: ['planned', 'volunteer_recruitment_planned', 'recruiting_instructors'],
+  volunteer_recruitment_planned: ['instructor_recruitment_planned', 'recruiting_volunteers'],
   recruiting_students: ['planned', 'recruiting_instructors'],
-  recruiting_instructors: ['recruiting_students', 'matching_completed'],
-  matching_completed: ['recruiting_instructors', 'education_before_textbook'],
+  recruiting_instructors: ['recruiting_students', 'recruiting_volunteers', 'matching_completed'],
+  recruiting_volunteers: ['volunteer_recruitment_planned', 'recruiting_instructors', 'matching_completed'],
+  matching_completed: ['recruiting_instructors', 'recruiting_volunteers', 'education_before_textbook'],
   education_before_textbook: ['matching_completed', 'education_after_textbook'],
   education_after_textbook: ['education_before_textbook', 'education_completed'],
   education_completed: ['education_after_textbook', 'document_processing_completed'],
@@ -267,9 +269,12 @@ export function getNextProgramLifecycleStatus(
     return 'recruiting_students'
   }
   const transitions: Record<ProgramLifecycleStatus, ProgramLifecycleStatus | null> = {
-    planned: 'recruiting_students',
+    planned: 'instructor_recruitment_planned',
+    instructor_recruitment_planned: 'volunteer_recruitment_planned',
+    volunteer_recruitment_planned: 'recruiting_students',
     recruiting_students: 'recruiting_instructors',
-    recruiting_instructors: 'matching_completed',
+    recruiting_instructors: 'recruiting_volunteers',
+    recruiting_volunteers: 'matching_completed',
     matching_completed: 'education_before_textbook',
     education_before_textbook: 'education_after_textbook',
     education_after_textbook: 'education_completed',
@@ -292,9 +297,12 @@ export function getPreviousProgramLifecycleStatus(
   }
   const transitions: Record<ProgramLifecycleStatus, ProgramLifecycleStatus | null> = {
     planned: null,
-    recruiting_students: 'planned',
+    instructor_recruitment_planned: 'planned',
+    volunteer_recruitment_planned: 'instructor_recruitment_planned',
+    recruiting_students: 'volunteer_recruitment_planned',
     recruiting_instructors: 'recruiting_students',
-    matching_completed: 'recruiting_instructors',
+    recruiting_volunteers: 'recruiting_instructors',
+    matching_completed: 'recruiting_volunteers',
     education_before_textbook: 'matching_completed',
     education_after_textbook: 'education_before_textbook',
     education_completed: 'education_after_textbook',

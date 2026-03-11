@@ -35,14 +35,6 @@ export function SponsorList({ data, loading }: SponsorListProps) {
     table.getColumn('name')?.setFilterValue(pendingFilters.name || undefined)
   }, [pendingFilters, table])
 
-  // 필터 초기화 핸들러
-  const handleFilterReset = useCallback(() => {
-    const resetFilters = { name: '' }
-    setPendingFilters(resetFilters)
-    setAppliedFilters(resetFilters)
-    table.resetColumnFilters()
-  }, [table])
-
   // 필터링된 데이터
   const filteredData = useMemo(() => {
     if (!appliedFilters.name.trim()) {
@@ -69,9 +61,7 @@ export function SponsorList({ data, loading }: SponsorListProps) {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         loading={loading}
-        resetButtonText="초기화"
       />
 
       {/* 테이블 */}

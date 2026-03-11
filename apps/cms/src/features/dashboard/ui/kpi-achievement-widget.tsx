@@ -38,7 +38,8 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
   return (
     <div className="kpi-achievement-widget__kpi-row">
       <div className="kpi-achievement-widget__kpi-label">
-        {kpi.label} (단위: {kpi.description})
+        <span className="kpi-achievement-widget__kpi-label-main">{kpi.label}</span>
+        <span className="kpi-achievement-widget__kpi-label-unit"> (단위: {kpi.description})</span>
       </div>
       <div className="kpi-achievement-widget__bar-wrap">
         <div

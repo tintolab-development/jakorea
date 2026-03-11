@@ -17,6 +17,8 @@ export interface TealHeaderModalProps {
   title: string
   children: React.ReactNode
   footer?: React.ReactNode
+  /** 헤더 우측에 X 버튼 앞에 노출할 추가 내용 (예: 닫기 버튼) */
+  headerExtra?: React.ReactNode
   /** 기본 800, large 시 1400 */
   size?: 'default' | 'large'
   /** 커스텀 width (size보다 우선) */
@@ -33,6 +35,7 @@ export function TealHeaderModal({
   title,
   children,
   footer,
+  headerExtra,
   size = 'default',
   width: widthProp,
   className: classNameProp,
@@ -65,14 +68,17 @@ export function TealHeaderModal({
         <h2 id={titleId} className="teal-header-modal__title">
           {title}
         </h2>
-        <button
-          type="button"
-          className="teal-header-modal__close"
-          onClick={onCancel}
-          aria-label="닫기"
-        >
-          <CloseOutlined />
-        </button>
+        <div className="teal-header-modal__header-actions">
+          {headerExtra}
+          <button
+            type="button"
+            className="teal-header-modal__close"
+            onClick={onCancel}
+            aria-label="닫기"
+          >
+            <CloseOutlined />
+          </button>
+        </div>
       </div>
 
       <div

@@ -15,7 +15,7 @@ import {
 } from '@ant-design/icons'
 import type { Interview } from '@/types/interview'
 import type { User } from '@/types/user'
-import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
+import { InterviewStatusBadge } from '@/shared/components'
 import { mockUsers } from '@/data/mock'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 

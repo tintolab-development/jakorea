@@ -79,18 +79,6 @@ export default function TemplateSmsPage() {
     setAppliedFilters(pendingFilters)
   }
 
-  // 필터 초기화 핸들러
-  const handleFilterReset = () => {
-    setPendingFilters({
-      query: '',
-      status: 'all',
-    })
-    setAppliedFilters({
-      query: '',
-      status: 'all',
-    })
-  }
-
   const handleCreate = () => {
     openCreate()
   }
@@ -176,7 +164,6 @@ export default function TemplateSmsPage() {
         status={pendingFilters.status}
         onStatusChange={value => setPendingFilters(prev => ({ ...prev, status: value }))}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         onCreateClick={canWrite ? handleCreate : undefined}
         createButtonText="문자 양식 등록"
         searchPlaceholder="제목/설명/태그/내용 검색"

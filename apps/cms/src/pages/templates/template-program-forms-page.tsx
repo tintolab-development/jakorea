@@ -171,19 +171,6 @@ export default function TemplateProgramFormsPage() {
     setAppliedFilters(pendingFilters)
   }
 
-  const handleFilterReset = () => {
-    setPendingFilters({
-      query: '',
-      status: 'all',
-      formType: 'all',
-    })
-    setAppliedFilters({
-      query: '',
-      status: 'all',
-      formType: 'all',
-    })
-  }
-
   const openCreate = () => {
     setEditing(null)
     setOpen(true)
@@ -461,7 +448,6 @@ export default function TemplateProgramFormsPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         extra={
           <Button type="primary" onClick={openCreate} disabled={!canWrite}>
             새 템플릿
@@ -519,7 +505,6 @@ export default function TemplateProgramFormsPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         extra={
           canWrite ? (
             <Button type="primary" onClick={openCreate}>

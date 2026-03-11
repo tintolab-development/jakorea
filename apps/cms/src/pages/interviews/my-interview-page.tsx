@@ -8,7 +8,7 @@ import { Card, Descriptions, Tag, Alert, Space } from 'antd'
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getInterviewByUserId } from '@/entities/interview/api/interview-service'
-import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
+import { InterviewStatusBadge } from '@/shared/components'
 import type { Interview } from '@/types/interview'
 
 export function MyInterviewPage() {

@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 import { getUsersPage, type GetUsersPageParams } from '@/entities/user/api/user-service'
 import type { User } from '@/types/user'
 
-export interface UseInfiniteUserListFilters extends GetUsersPageParams {}
+export type UseInfiniteUserListFilters = GetUsersPageParams
 
 export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
   const queryKey = ['users', 'list', filters]

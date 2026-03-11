@@ -1,24 +1,26 @@
 /**
  * 필터 영역 Select(드롭다운) 및 검색 인풋 공통 크기
- * 기본 180×44px, 화면 크기에 따라 반응형 적용
+ * 기본 240×44px, 화면 크기에 따라 반응형 적용
  * 프로그램 상세 탭(진행현황/신청자/담당자): 필터 간격·필터-버튼 간격 12px (각 탭 CSS에서 gutter 12, 버튼 col padding 12px 적용)
  */
 
 :root {
-  --filter-control-width: 180px;
+  --filter-control-width: 240px;
   --filter-control-height: 44px;
-  --filter-control-min-width: var(--filter-control-min-width);
+  --filter-control-min-width: 180px;
 }
 
 @media (max-width: 1200px) {
   :root {
-    --filter-control-width: 160px;
+    --filter-control-width: 200px;
+    --filter-control-min-width: 160px;
   }
 }
 
 @media (max-width: 992px) {
   :root {
-    --filter-control-width: 150px;
+    --filter-control-width: 180px;
+    --filter-control-min-width: 140px;
   }
 }
 
@@ -26,6 +28,7 @@
   :root {
     --filter-control-width: 100%;
     --filter-control-height: 40px;
+    --filter-control-min-width: 0;
   }
 }
 
@@ -279,6 +282,88 @@
   min-height: 0 !important;
   line-height: 1 !important;
   padding: 0 11px !important;
+}
+
+/* ==========================================
+   회원 테이블 카드 공통 (전체 회원 / 학교 회원)
+   ========================================== */
+
+.member-table-card {
+  border-radius: var(--radius-8, 8px);
+}
+
+.member-table-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-12, 12px);
+}
+
+.member-table-card__title-area {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.member-table-card__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  line-height: 1.4;
+}
+
+.member-table-card__count {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-secondary, #888);
+}
+
+.member-table-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+}
+
+.member-table-card__actions .ant-btn {
+  width: 120px;
+  height: 40px;
+  min-width: 120px;
+  min-height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-table-card .user-list-table .ant-table-thead > tr > th {
+  border-right: 1px solid var(--color-bg-base);
+  border-bottom: 1px solid var(--color-bg-base);
+}
+
+.member-table-card .user-list-table .ant-table-thead > tr > th:last-child {
+  border-right: none;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr > td {
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--ant-color-primary-bg, #e6f4ff) !important;
+}
+
+.member-table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
+  background: var(--ant-color-primary-bg-hover, #bae0ff) !important;
 }
 
 /* 768px 이하: 너비 100%일 때 컨테이너 min-width */

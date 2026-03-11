@@ -11,7 +11,7 @@ export function getSlotHeight(
   meta: DisplayItemMeta
 ): number | undefined {
   if (id === 'menu-shortcut-widget') {
-    return effectiveColSpan === 12 ? 338 : 202
+    return undefined /* 내용에 따라 슬롯 높이 자동 확장 */
   }
   if (id === 'program-schedule-widget') {
     return effectiveColSpan === 12 ? 338 : (meta.height ?? 360)

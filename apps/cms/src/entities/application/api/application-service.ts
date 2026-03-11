@@ -182,6 +182,7 @@ export const applicationService = {
 
   /**
    * 사용자별 신청 이력 조회
+   * 회원 상세 탭용 표시 필드(lectureAttendance, hasAssignmentSubmission, managerName)를 함께 채워 반환
    * @param userId 사용자 ID
    * @param subjectType 주체 유형 (선택)
    * @returns 신청 목록
@@ -211,6 +212,30 @@ export const applicationService = {
       return bTime - aTime
     })
 
-    return Promise.resolve(filtered)
+    const enriched = filtered.map(app => enrichApplicationForMemberDetail(app, userId))
+    return Promise.resolve(enriched)
   },
+}
+
+const MOCK_MANAGER_NAMES = ['이순신 매니저', '홍길동 매니저', '김담당 매니저', '박운영 매니저', '최지원 매니저']
+
+function hash(s: string): number {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
+  return Math.abs(h)
+}
+
+/** 회원 상세 탭용: Application에 lectureAttendance, hasAssignmentSubmission, managerName 채움 */
+function enrichApplicationForMemberDetail(app: Application, userId: string): Application {
+  const totalRounds = 4
+  const attended = hash(`${app.id}-${userId}`) % (totalRounds + 1)
+  const lectureAttendance = `${attended}/${totalRounds}`
+  const hasAssignmentSubmission = hash(`${app.id}-${userId}-sub`) % 2 === 0
+  const managerName = MOCK_MANAGER_NAMES[hash(app.programId) % MOCK_MANAGER_NAMES.length]
+  return {
+    ...app,
+    lectureAttendance,
+    hasAssignmentSubmission,
+    managerName,
+  }
 }

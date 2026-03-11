@@ -5,7 +5,7 @@
 
 import { Descriptions, Tag } from 'antd'
 import type { Interview } from '@/types/interview'
-import { InterviewStatusBadge } from '@/shared/components/interview-status-badge'
+import { InterviewStatusBadge } from '@/shared/components'
 import { BaseDetailDrawer } from '@/shared/ui/base-detail-drawer'
 
 interface InterviewDetailDrawerProps {

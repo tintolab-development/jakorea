@@ -85,7 +85,7 @@ export function ApplicationList({
     }
   }
 
-  const { table, resetFilters } = useApplicationTable(filteredData, isAdmin)
+  const { table } = useApplicationTable(filteredData, isAdmin)
   const { getAllSync, getByIdSync } = useProgramService()
   const canWrite = currentUser
     ? canPerformWriteAction(currentUser as Omit<User, 'password'>)
@@ -307,17 +307,6 @@ export function ApplicationList({
     }
   }
 
-  // 필터 초기화
-  const handleFilterReset = () => {
-    setPendingFilters({
-      programId: undefined,
-      subjectType: undefined,
-      status: undefined,
-      notificationSent: undefined,
-    })
-    resetFilters()
-  }
-
   return (
     <div>
       <UnifiedFilterCard
@@ -382,7 +371,6 @@ export function ApplicationList({
           setPendingFilters(prev => ({ ...prev, [key]: value === 'all' ? undefined : value }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
       />
 
       <Table

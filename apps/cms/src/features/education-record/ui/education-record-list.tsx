@@ -165,7 +165,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
     })
   }, [data, appliedFilters.sido, appliedFilters.gun, appliedFilters.gu])
 
-  const { table, resetFilters } = useEducationRecordTable(filteredDataByRegion)
+  const { table } = useEducationRecordTable(filteredDataByRegion)
 
   const sponsors = sponsorService.getAllSync()
   const schools = schoolService.getAllSync()
@@ -251,31 +251,6 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
       }
     })
   }, [pendingFilters, setParams, table])
-
-  // 필터 초기화 핸들러
-  const handleFilterReset = useCallback(() => {
-    const resetFiltersValue = {
-      title: '',
-      educationMonth: '',
-      businessArea: '',
-      sponsorId: '',
-      ips: '',
-      targetLevel: '',
-      institutionType: '',
-      sido: '',
-      gun: '',
-      gu: '',
-    }
-    setPendingFilters(resetFiltersValue)
-    setAppliedFilters(resetFiltersValue)
-    setParams({
-      sido: undefined,
-      gun: undefined,
-      gu: undefined,
-    })
-    // 테이블 필터도 초기화
-    resetFilters()
-  }, [setParams, resetFilters])
 
   // 테이블 columns 정의
   const tableColumns = useMemo(
@@ -756,9 +731,7 @@ export function EducationRecordList({ data, loading, onView }: EducationRecordLi
           })
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
         loading={loading}
-        resetButtonText="초기화"
         extra={
           <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel}>
             엑셀 다운로드

@@ -6,9 +6,9 @@
  * Phase 1 (대시보드 고도화): 즉시 처리 필요 작업, 월별 정산 현황, 통합 활동 피드
  */
 
-import { useMemo, useCallback, useState } from 'react'
+import { useMemo, useCallback, useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Row } from 'antd'
+import { Row, message } from 'antd'
 import {
   DndContext,
   DragOverlay,
@@ -29,6 +29,7 @@ import {
   useDashboardWidgetOrderStore,
   buildDefaultDisplayItemIds,
   buildDisplayItemsMeta,
+  reorderToAvoidTopGap,
   SortableWidgetSlot,
   DashboardSettingsModal,
   DashboardToolbar,
@@ -83,20 +84,73 @@ export function Dashboard() {
   const orderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) =>
     s.getOrderedIds(user?.role ?? null, defaultIds)
   )
-  const setOrderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setOrderedIds)
+  const setOrderedIdsRaw = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setOrderedIds)
   const widthByRole = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.widthByRole)
   const setWidgetWidth = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setWidgetWidth)
   const roleWidths = widthByRole[user?.role ?? ''] ?? {}
 
+  const getColSpanForId = useCallback(
+    (id: string): 12 | 24 => {
+      const w = roleWidths[id]
+      if (w !== undefined) return w
+      const meta = displayItemsMeta.find((m: DisplayItemMeta) => m.id === id)
+      return (meta?.colSpan as 12 | 24) ?? 24
+    },
+    [roleWidths, displayItemsMeta]
+  )
+
+  /** 상단 빈 영역 방지: 50% 다음 100%면 순서 바꿔서 표시·저장 */
+  const displayOrder = useMemo(
+    () => reorderToAvoidTopGap(orderedIds, getColSpanForId),
+    [orderedIds, getColSpanForId]
+  )
+  const setOrderedIds = useCallback(
+    (role: string, next: string[]) => {
+      setOrderedIdsRaw(role, reorderToAvoidTopGap(next, getColSpanForId))
+    },
+    [setOrderedIdsRaw, getColSpanForId]
+  )
+
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+  const rowRef = useRef<HTMLDivElement | null>(null)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setPrefersReducedMotion(mq.matches)
+    const handler = () => setPrefersReducedMotion(mq.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  const getSlotRects = useCallback(() => {
+    const rowEl = rowRef.current
+    if (!rowEl) return []
+    return displayOrder
+      .map(id => {
+        const slot = rowEl.querySelector(`[data-dashboard-slot-id="${id}"]`)
+        return slot ? { id, rect: slot.getBoundingClientRect() } : null
+      })
+      .filter((x): x is { id: string; rect: DOMRect } => x != null)
+  }, [displayOrder])
 
   const {
     activeId,
     sensors,
     handleDragStart,
+    handleDragMove,
     handleDragEnd,
     handleDragCancel,
-  } = useDashboardDnd(orderedIds, setOrderedIds, user?.role ?? null)
+  } = useDashboardDnd({
+    orderedIds: displayOrder,
+    setOrderedIds,
+    userRole: user?.role ?? null,
+    roleWidths: roleWidths as Record<string, 12 | 24>,
+    displayItemsMeta,
+    setWidgetWidth,
+    getSlotRects,
+    onLayoutSaved: () => message.success('위젯 위치가 저장되었습니다.'),
+  })
 
   const handleInstructorCardClick = useCallback(() => {
     navigate('/instructors')
@@ -122,7 +176,9 @@ export function Dashboard() {
   )
 
   return (
-    <div className="dashboard-container">
+    <div
+      className={`dashboard-container${prefersReducedMotion ? ' dashboard-container--reduced-motion' : ''}`}
+    >
       <DashboardToolbar
         userName={user?.name}
         roleLabel={userRoleLabel}
@@ -139,12 +195,14 @@ export function Dashboard() {
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <SortableContext items={orderedIds} strategy={noScaleRectSortingStrategy}>
-          <Row gutter={[16, 16]} align="stretch">
-            {orderedIds.map((id: string) => {
+        <SortableContext items={displayOrder} strategy={noScaleRectSortingStrategy}>
+          <div ref={rowRef} className="dashboard-widget-row-wrapper">
+            <Row gutter={[16, 16]} align="stretch">
+            {displayOrder.map((id: string) => {
               const meta = displayItemsMeta.find((m: DisplayItemMeta) => m.id === id)
               if (!meta) return null
 
@@ -172,14 +230,19 @@ export function Dashboard() {
                 </SortableWidgetSlot>
               )
             })}
-          </Row>
+            </Row>
+          </div>
         </SortableContext>
         <DragOverlay
           adjustScale={false}
-          dropAnimation={{
-            duration: 300,
-            easing: 'cubic-bezier(0.2, 0, 0, 1)',
-          }}
+          dropAnimation={
+            prefersReducedMotion
+              ? null
+              : {
+                  duration: 280,
+                  easing: 'cubic-bezier(0.2, 0, 0, 1)',
+                }
+          }
         >
           {activeId ? (
             <div className="dashboard-widget-drag-overlay">

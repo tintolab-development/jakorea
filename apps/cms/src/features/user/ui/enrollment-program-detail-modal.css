@@ -1,0 +1,661 @@
+/**
+ * 수강 프로그램 상세 모달
+ * 회원 상세 > 프로그램 수강 이력 행 클릭 시 노출
+ * 테이블 UI: 학교 상세 정보 모달(school-detail-modal) 참고 — 키 180px, 행 48px, 라벨 #edf0f2
+ * 치수: width 1400px, 헤더 제외 body height 814px (게시글 탭 스펙 기준)
+ * 푸터(닫기 버튼)가 보이도록 content 최대 높이 확보
+ */
+
+/* 헤더(50) + 바디(814) + 푸터(닫기·여백)가 잘리지 않도록 여유 높이 (참고: lecture-attendance-modal, user-detail-modal) */
+.enrollment-program-detail-modal.teal-header-modal .ant-modal-content {
+  max-height: min(1000px, calc(100vh - 40px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ant-modal-body가 플렉스 컨테이너가 되어 헤더·바디·푸터가 세로로 배치되고 푸터(닫기)가 항상 보이도록 */
+.enrollment-program-detail-modal.teal-header-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.enrollment-program-detail-modal.teal-header-modal .teal-header-modal__header {
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal.teal-header-modal .teal-header-modal__body {
+  height: 814px;
+  min-height: 814px;
+  max-height: 814px;
+  flex-shrink: 0;
+}
+
+/* 닫기 영역: 푸터 하단 30px만 적용 — 버튼이 모달 하단에서 정확히 30px 떨어지도록 */
+.enrollment-program-detail-modal.teal-header-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  padding-top: var(--spacing-30);
+  padding-bottom: var(--spacing-30);
+}
+
+.enrollment-program-detail-modal__body {
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 탭·탭 패널 모달 내 100% width (게시글 탭, 제출 내역 및 서류 발급 탭) */
+.enrollment-program-detail-modal__body .ant-tabs {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.enrollment-program-detail-modal__body .ant-tabs .ant-tabs-nav {
+  width: 100%;
+  margin-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-bottom: none;
+}
+
+.enrollment-program-detail-modal__body .ant-tabs .ant-tabs-nav::before {
+  display: none;
+}
+
+.enrollment-program-detail-modal__body .ant-tabs .ant-tabs-content-holder {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.enrollment-program-detail-modal__body .ant-tabs .ant-tabs-content {
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+}
+
+.enrollment-program-detail-modal__body .ant-tabs .ant-tabs-tabpane {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+}
+
+.enrollment-program-detail-modal__tab-body {
+  padding-top: 8px;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* ─── 보기 전용 뷰 (기본 정보 + 교육 커리큘럼) ───────────────────────── */
+.enrollment-program-detail-modal__view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.enrollment-program-detail-modal__basic {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.enrollment-program-detail-modal__basic-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.enrollment-program-detail-modal__basic-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.enrollment-program-detail-modal__section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-label);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal__notice {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #3d3d3d;
+  opacity: 0.6;
+  line-height: 1.5;
+}
+
+.enrollment-program-detail-modal__status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.enrollment-program-detail-modal__status-cell-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.enrollment-program-detail-modal__status-text {
+  font-size: 14px;
+  color: var(--color-text, rgba(0, 0, 0, 0.88));
+}
+
+.enrollment-program-detail-modal__status-sub {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Descriptions 테이블 — 학교 상세 모달과 동일 규격 (키 180px, 행 48px), 디바이더 양옆 gap 12px */
+.enrollment-program-detail-modal__descriptions-wrap {
+  width: 100%;
+  --detail-divider-w: 1px;
+  --detail-divider-h: 13px;
+  --detail-divider-color: var(--color-border-light, #e8e8e8);
+  --detail-divider-gap: 12px;
+}
+
+.enrollment-program-detail-modal__descriptions {
+  margin-bottom: 0;
+}
+
+/* 기본 정보 테이블과 강의/교재/문의처 하위 테이블 사이 16px 갭 */
+.enrollment-program-detail-modal__descriptions--sub {
+  margin-top: 16px;
+}
+
+.enrollment-program-detail-modal__descriptions .ant-descriptions-view table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.enrollment-program-detail-modal__descriptions .ant-descriptions-view table tbody tr td {
+  box-sizing: border-box;
+  border-right: var(--detail-divider-w) solid var(--detail-divider-color);
+  border-bottom: var(--detail-divider-w) solid var(--detail-divider-color);
+}
+
+.enrollment-program-detail-modal__descriptions .ant-descriptions-view table tbody tr td:last-child {
+  border-right: none;
+}
+
+.enrollment-program-detail-modal__descriptions .ant-descriptions-view table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.enrollment-program-detail-modal__descriptions .ant-descriptions-item-label {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding-left: var(--detail-divider-gap);
+  padding-right: var(--detail-divider-gap);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  background: #edf0f2;
+  color: var(--color-text-label);
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.enrollment-program-detail-modal__descriptions .ant-descriptions-item-content {
+  width: 490px !important;
+  min-width: 490px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding-left: var(--detail-divider-gap);
+  padding-right: var(--detail-divider-gap);
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+/* 교육 커리큘럼 테이블 — 학교 상세 모달 테이블 스타일 */
+.enrollment-program-detail-modal__curriculum {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.enrollment-program-detail-modal__curriculum .enrollment-program-detail-modal__section-title {
+  margin: 0;
+}
+
+.enrollment-program-detail-modal__curriculum-table-wrap {
+  width: 100%;
+}
+
+.enrollment-program-detail-modal__curriculum-table .enrollment-program-detail-modal__curriculum-col-label {
+  width: 180px;
+}
+
+.enrollment-program-detail-modal__curriculum-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.enrollment-program-detail-modal__curriculum-table th,
+.enrollment-program-detail-modal__curriculum-table td {
+  box-sizing: border-box;
+  padding: 0 12px;
+  height: 48px;
+  min-height: 48px;
+  vertical-align: middle;
+  border: 1px solid var(--color-border-light, #e8e8e8);
+  font-size: 14px;
+}
+
+.enrollment-program-detail-modal__curriculum-table th {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  font-weight: 700;
+  text-align: center;
+  background: #edf0f2;
+  color: var(--color-text-label);
+}
+
+.enrollment-program-detail-modal__curriculum-table td {
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.enrollment-program-detail-modal__curriculum-empty {
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.enrollment-program-detail-modal__placeholder {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+/* ─── 게시글 탭 (2컬럼: 게시글 | 파일 및 사진) — 모달 내 100% width ───────────────────────── */
+.enrollment-program-detail-modal__posts-tab {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.enrollment-program-detail-modal__posts-tab-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.enrollment-program-detail-modal__posts-tab-column--left {
+  flex: 1;
+  min-width: 0;
+}
+
+.enrollment-program-detail-modal__posts-tab-column--right {
+  flex: 0 0 360px;
+  width: 360px;
+  max-width: 360px;
+  border-left: 1px solid var(--color-border-light, #e8e8e8);
+  padding-left: 20px;
+}
+
+.enrollment-program-detail-modal__posts-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal__posts-tab-btn {
+  width: 100px !important;
+  min-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.enrollment-program-detail-modal__posts-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.enrollment-program-detail-modal__posts-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* 업로드된 파일 리스트 영역 — 카드 처리, padding 20px, 리스트 간 갭 20px */
+.enrollment-program-detail-modal__files-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light, #e8e8e8);
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+}
+
+/* 게시글 카드 */
+.enrollment-program-detail-modal__post-card {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light, #e8e8e8);
+  background: var(--color-bg-base);
+}
+
+.enrollment-program-detail-modal__post-card--unread {
+  border: 1px solid var(--JA-mint-01, #01a1af);
+}
+
+.enrollment-program-detail-modal__post-card {
+  cursor: pointer;
+}
+
+.enrollment-program-detail-modal__post-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.enrollment-program-detail-modal__post-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.enrollment-program-detail-modal__post-avatar {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  background: var(--color-border-light, #e8e8e8);
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal__post-author-name {
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.enrollment-program-detail-modal__post-date {
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  margin-top: 2px;
+}
+
+/* 읽음/읽지 않음 태그 — 스펙 §4 */
+.enrollment-program-detail-modal__read-tag {
+  display: flex;
+  padding: 3px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal__read-tag--unread {
+  background: rgba(1, 161, 175, 0.1);
+}
+
+.enrollment-program-detail-modal__read-tag--read {
+  background: rgba(51, 51, 51, 0.1);
+}
+
+/* 게시글 상태 태그 + 본문 한 줄 정렬 */
+.enrollment-program-detail-modal__post-body {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+.enrollment-program-detail-modal__post-content-wrap {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.enrollment-program-detail-modal__post-content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 170%;
+}
+
+.enrollment-program-detail-modal__post-more {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  margin-top: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.enrollment-program-detail-modal__post-more:hover {
+  color: var(--default-BK, #3d3d3d);
+}
+
+/* 첨부파일 — 읽음/이모티콘/메시지와 같은 메타 행 레벨 */
+.enrollment-program-detail-modal__post-meta-item--attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.6;
+}
+
+.enrollment-program-detail-modal__post-attachment-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  line-height: 0;
+}
+
+.enrollment-program-detail-modal__post-attachment-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.enrollment-program-detail-modal__post-attachment-mask {
+  mask-type: alpha;
+}
+
+.enrollment-program-detail-modal__post-attachment-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 게시글 상태 [공지사항] 태그 — 본문과 한 줄 정렬 */
+.enrollment-program-detail-modal__post-type-tag {
+  flex-shrink: 0;
+  color: var(--color-modal-header, #01a1af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* 확인/이모티콘/댓글 영역 — 우측 정렬, 아이콘 20×20, 숫자 폰트 */
+.enrollment-program-detail-modal__post-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.enrollment-program-detail-modal__post-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.enrollment-program-detail-modal__post-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.enrollment-program-detail-modal__post-meta-icon {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.enrollment-program-detail-modal__post-meta-icon svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal__post-meta-mask {
+  mask-type: alpha;
+}
+
+/* 파일 항목 — 디바이더 없음, 갭은 상위 .enrollment-program-detail-modal__files-list gap 20px */
+.enrollment-program-detail-modal__file-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.enrollment-program-detail-modal__file-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--color-border-light, #e8e8e8);
+}
+
+.enrollment-program-detail-modal__file-icon[data-type='pdf'] {
+  background: rgba(220, 53, 69, 0.15);
+}
+
+.enrollment-program-detail-modal__file-icon[data-type='xls'],
+.enrollment-program-detail-modal__file-icon[data-type='xlsx'] {
+  background: rgba(40, 167, 69, 0.15);
+}
+
+.enrollment-program-detail-modal__file-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.enrollment-program-detail-modal__file-name {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.enrollment-program-detail-modal__file-origin-link {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  margin-top: 2px;
+  display: inline-block;
+  opacity: 0.6;
+}

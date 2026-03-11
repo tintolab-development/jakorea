@@ -331,28 +331,6 @@ export default function PerformanceDashboardPage() {
     })
   }, [pendingFilters, setParams])
 
-  // 필터 초기화 핸들러
-  const handleFilterReset = useCallback(() => {
-    const defaultPeriod = availablePeriods[0] || ''
-    const resetFilters = {
-      programName: '',
-      period: defaultPeriod,
-      businessArea: '',
-      sponsorId: '',
-      ips: '',
-      targetLevel: '',
-      institutionType: '',
-      si: '',
-      gun: '',
-      gu: '',
-    }
-    setPendingFilters(resetFilters)
-    setAppliedFilters(resetFilters)
-    setParams({
-      period: undefined,
-    })
-  }, [availablePeriods, setParams])
-
   // 필터 옵션
   const periodOptions = useMemo(() => {
     return [
@@ -539,9 +517,7 @@ export default function PerformanceDashboardPage() {
             })
           }}
           onSearch={handleSearch}
-          onReset={handleFilterReset}
           loading={loading}
-          resetButtonText="초기화"
           extra={
             <Button type="primary" icon={<DownloadOutlined />} onClick={handleExportExcel}>
               엑셀 다운로드

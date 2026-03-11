@@ -150,18 +150,6 @@ export function MyEnrolledProgramList() {
     setSearchParams(nextParams, { replace: true })
   }, [pendingFilters, setSearchParams])
 
-  // 필터 초기화 핸들러
-  const handleFilterReset = useCallback(() => {
-    const resetFilters = {
-      search: '',
-      status: 'all' as ProgramStatusFilter,
-      category: 'all' as ProgramCategoryFilter,
-    }
-    setPendingFilters(resetFilters)
-    setActiveFilters(resetFilters)
-    setSearchParams({}, { replace: true })
-  }, [setSearchParams])
-
   const handleToggleFavorite = async (programId: string) => {
     const userId = user?.id
     if (!userId) return
@@ -324,8 +312,6 @@ export function MyEnrolledProgramList() {
           setPendingFilters(prev => ({ ...prev, [key]: value || undefined }))
         }}
         onSearch={handleSearch}
-        onReset={handleFilterReset}
-        resetButtonText="초기화"
       />
 
       <Card>

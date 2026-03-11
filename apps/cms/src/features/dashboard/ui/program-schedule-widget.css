@@ -103,7 +103,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 0 var(--spacing-24) var(--spacing-24);
+    padding: 0 var(--spacing-24) 20px;
     overflow: auto;
 }
 
@@ -231,20 +231,28 @@
     line-height: 130%;
 }
 
-/* 현재 일자만: 민트 컬러 + Outfit 12px/500/130% */
+/* 현재 일자만: 스크린샷과 동일 — 원형 배지 24×24, #01A1AF, 텍스트 #fff */
 .program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell--today .program-calendar-cell-date {
-    background: none;
-    border: none;
-    border-radius: 0;
-    width: auto;
-    height: auto;
-    display: block;
-    color: var(--color-brand-primary);
-    font-family: var(--font-family-number), sans-serif;
-    font-size: var(--font-size-12);
-    font-style: normal;
-    font-weight: 500;
-    line-height: 130%;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    padding: 0 10px !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 60px !important;
+    background: #01A1AF !important;
+    border: none !important;
+    color: #fff !important;
+    font-family: var(--font-family-number), sans-serif !important;
+    font-size: var(--font-size-12) !important;
+    font-weight: 500 !important;
+    line-height: 130% !important;
+    box-sizing: border-box !important;
 }
 
 /* 캘린더 셀 내 일정 표시: 텍스트 없이 색상 블록만, 배지 영역은 셀 내 가운데 정렬 (위젯 50%/100% 반응형 공통) */
@@ -297,7 +305,7 @@
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-8);
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -340,11 +348,18 @@
 
 .program-schedule-widget__body--week .program-schedule-widget__calendar-main {
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
     width: 100%;
     min-width: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+}
+
+/* 주간 그리드: 위젯 높이에 맞춤 — 한 행이 남은 높이만 쓰고 셀은 넘치지 않음 */
+.program-schedule-widget .program-calendar-week-body {
+    min-height: 0;
+    grid-template-rows: 1fr;
 }
 
 /* 주간 뷰: 요일 헤더와 셀 그리드 사이 디바이더 제거 */
@@ -353,9 +368,30 @@
     margin-bottom: 0;
 }
 
-/* 주간 뷰: 날짜 좌측 정렬, 셀 내용 좌측 정렬 */
+/* 주간 뷰: 셀은 그리드 높이 안에서만 표시, 넘치면 셀 내부 스크롤 */
 .program-schedule-widget .program-calendar-week-cell {
     align-items: flex-start;
+    overflow: hidden;
+    min-height: 0;
+    height: 100%;
+}
+
+.program-schedule-widget .program-calendar-week-cell .program-schedule-widget__week-events {
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 주간 뷰: 오늘 셀 — 기본은 보더 제거. 현재일자 선택 시에는 선택 보더 적용 */
+.program-schedule-widget .program-calendar-week-cell--today {
+    border: none !important;
+}
+
+.program-schedule-widget .program-calendar-week-cell--today.program-calendar-week-cell--selected {
+    border: 2px solid var(--color-brand-primary) !important;
+    background-color: var(--color-brand-primary-overlay-04);
 }
 
 .program-schedule-widget .program-calendar-week-cell .program-calendar-week-cell-date {
@@ -363,28 +399,37 @@
     text-align: left;
 }
 
-/* 주간 뷰: 현재 날짜 — 보더·백그라운드 제거, 텍스트 색상만 변경 */
+/* 주간 뷰: 현재 날짜 — 스크린샷 스펙: 원형 배지 24×24, #01A1AF, 텍스트 #fff (program-calendar-view.css 오버라이드) */
 .program-schedule-widget .program-calendar-week-cell--today .program-calendar-week-cell-date {
-    background: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    padding: 0 10px !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 60px !important;
+    background: #01A1AF !important;
     border: none !important;
-    border-radius: 0;
-    width: auto;
-    height: auto;
-    display: block;
-    color: var(--color-brand-primary);
-    font-family: var(--font-family-number), sans-serif;
-    font-size: var(--font-size-14);
-    font-weight: 500;
+    color: #fff !important;
+    font-family: var(--font-family-number), sans-serif !important;
+    font-size: var(--font-size-14) !important;
+    font-weight: 500 !important;
+    box-sizing: border-box !important;
 }
 
-/* 주간 뷰: 일정 카드 목록 (최대 3개 + 외 n개 텍스트) */
+/* 주간 뷰: 일정 카드 목록 (최대 3개 + 외 n개 텍스트), 날짜와 첫 태그 간격 10px */
 .program-schedule-widget__week-events {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-6);
     width: 100%;
     min-width: 0;
-    margin-top: 6px;
+    margin-top: 10px;
 }
 
 /* 주간 뷰: 일정 카드 — 셀 영역 width 전체 사용(패딩 제외), 높이 47px, radius 2px, 반응형 */
@@ -422,21 +467,20 @@
     line-height: 130%;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
 }
 
 /* 주간 뷰: "외 n개의 일정" 텍스트 스펙 */
 .program-schedule-widget__week-event-more {
     overflow: hidden;
-    color: var(--default-BK);
+    color: var(--default-BK, #3D3D3D);
     text-overflow: ellipsis;
-    font-family: var(--font-family-primary, Pretendard), sans-serif;
-    font-size: var(--font-size-12);
+    font-family: Pretendard, var(--font-family-primary), sans-serif;
+    font-size: 12px;
     font-style: normal;
     font-weight: 500;
     line-height: 130%;
+    opacity: 0.6;
     margin-top: var(--spacing-2);
 }
 
@@ -550,12 +594,14 @@
 
 .program-schedule-widget__event-item {
     display: block;
+    min-width: 0;
 }
 
 .program-schedule-widget__event-column {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-4);
+    min-width: 0;
 }
 
 .program-schedule-widget__event-head {
@@ -577,4 +623,7 @@
     font-size: var(--font-size-13);
     color: var(--color-text-label);
     line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }

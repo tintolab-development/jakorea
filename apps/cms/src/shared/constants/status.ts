@@ -10,6 +10,7 @@ import type {
   ProgramLifecycleStatus,
   ReportStatus,
 } from '@/types/domain'
+import type { ApplicationProgressStatus } from '@/types/application-progress'
 import type { Status } from '@/types'
 
 // 공통 상태 (Program, Matching 등에서 사용)
@@ -142,19 +143,25 @@ export const programLifecycleStatusConfig = {
     'document_processing_completed',
   ] as ProgramLifecycleStatus[],
   labels: {
-    planned: '모집 예정',
-    recruiting_students: '수강자 모집 중',
+    planned: '참여자 모집 예정',
+    instructor_recruitment_planned: '강사 모집 예정',
+    volunteer_recruitment_planned: '봉사자 모집 예정',
+    recruiting_students: '참여자 모집 중',
     recruiting_instructors: '강사 모집 중',
-    matching_completed: '교재 준비 중',
-    education_before_textbook: '교육 진행 중',
-    education_after_textbook: '교육 진행 중',
-    education_completed: '교육 완료',
-    document_processing_completed: '서류 처리 완료',
+    recruiting_volunteers: '봉사자 모집 중',
+    matching_completed: '참여자 모집 완료',
+    education_before_textbook: '강사 모집 완료',
+    education_after_textbook: '강사 모집 완료',
+    education_completed: '강사 모집 완료',
+    document_processing_completed: '봉사자 모집 완료',
   } as Record<ProgramLifecycleStatus, string>,
   colors: {
     planned: 'default',
+    instructor_recruitment_planned: 'default',
+    volunteer_recruitment_planned: 'default',
     recruiting_students: 'geekblue',
     recruiting_instructors: 'purple',
+    recruiting_volunteers: 'default',
     matching_completed: 'cyan',
     education_before_textbook: 'cyan',
     education_after_textbook: 'cyan',
@@ -169,6 +176,134 @@ export function getProgramLifecycleLabel(status: ProgramLifecycleStatus | string
 
 export function getProgramLifecycleColor(status: ProgramLifecycleStatus | string): string {
   return programLifecycleStatusConfig.colors[status as ProgramLifecycleStatus] || 'default'
+}
+
+/** 회원 상세 > 프로그램 수강 이력 탭: 표시용 진행 현황 5단계 */
+export type ProgramEnrollmentDisplayStatus =
+  | 'WAITING_RESULT'       // 신청 결과 대기 중
+  | 'REJECTED'             // 신청 반려
+  | 'EDUCATION_SCHEDULED'  // 교육 진행 예정
+  | 'EDUCATION_IN_PROGRESS' // 교육 진행 중
+  | 'PROGRAM_ENDED'        // 프로그램 종료
+
+export const programEnrollmentDisplayConfig = {
+  labels: {
+    WAITING_RESULT: '신청 결과 대기 중',
+    REJECTED: '신청 반려',
+    EDUCATION_SCHEDULED: '교육 진행 예정',
+    EDUCATION_IN_PROGRESS: '교육 진행 중',
+    PROGRAM_ENDED: '프로그램 종료',
+  } as Record<ProgramEnrollmentDisplayStatus, string>,
+  colors: {
+    WAITING_RESULT: 'cyan',
+    REJECTED: 'red',
+    EDUCATION_SCHEDULED: 'orange',
+    EDUCATION_IN_PROGRESS: 'blue',
+    PROGRAM_ENDED: 'default',
+  } as Record<ProgramEnrollmentDisplayStatus, string>,
+}
+
+export function getProgramEnrollmentDisplayLabel(
+  status: ProgramEnrollmentDisplayStatus | string
+): string {
+  return programEnrollmentDisplayConfig.labels[status as ProgramEnrollmentDisplayStatus] || status
+}
+
+export function getProgramEnrollmentDisplayColor(
+  status: ProgramEnrollmentDisplayStatus | string
+): string {
+  return programEnrollmentDisplayConfig.colors[status as ProgramEnrollmentDisplayStatus] || 'default'
+}
+
+/** 회원 상세 탭 프로그램 진행 현황 — StatusBadge용 config */
+export const programEnrollmentDisplayStatusConfig: Record<
+  ProgramEnrollmentDisplayStatus,
+  StatusConfig
+> = Object.fromEntries(
+  (
+    [
+      'WAITING_RESULT',
+      'REJECTED',
+      'EDUCATION_SCHEDULED',
+      'EDUCATION_IN_PROGRESS',
+      'PROGRAM_ENDED',
+    ] as ProgramEnrollmentDisplayStatus[]
+  ).map(key => [
+    key,
+    {
+      label: programEnrollmentDisplayConfig.labels[key],
+      color: programEnrollmentDisplayConfig.colors[key],
+    },
+  ])
+) as Record<ProgramEnrollmentDisplayStatus, StatusConfig>
+
+const PROGRESS_FOR_EDUCATION_SCHEDULED: ApplicationProgressStatus[] = [
+  'RECEIVED',
+  'MATCHING_IN_PROGRESS',
+  'MATCHING_COMPLETED',
+  'MATERIAL_PREPARING',
+  'MATERIAL_SHIPPED',
+]
+const PROGRESS_FOR_EDUCATION_IN_PROGRESS: ApplicationProgressStatus[] = [
+  'IN_PROGRESS',
+  'SURVEY_SUBMITTED',
+]
+
+/** 회원 상세 탭: Application.status + progressStatus → 표시용 5단계 */
+export function getApplicationEnrollmentDisplayStatus(
+  status: ApplicationStatus,
+  progressStatus?: ApplicationProgressStatus
+): ProgramEnrollmentDisplayStatus {
+  if (status === 'submitted' || status === 'reviewing' || status === 'waiting') {
+    return 'WAITING_RESULT'
+  }
+  if (status === 'rejected' || status === 'cancelled') {
+    return 'REJECTED'
+  }
+  if (status !== 'approved') {
+    return 'WAITING_RESULT'
+  }
+  if (!progressStatus) {
+    return 'EDUCATION_SCHEDULED'
+  }
+  if (progressStatus === 'REPORT_SUBMITTED') {
+    return 'PROGRAM_ENDED'
+  }
+  if (PROGRESS_FOR_EDUCATION_SCHEDULED.includes(progressStatus)) {
+    return 'EDUCATION_SCHEDULED'
+  }
+  if (PROGRESS_FOR_EDUCATION_IN_PROGRESS.includes(progressStatus)) {
+    return 'EDUCATION_IN_PROGRESS'
+  }
+  return 'EDUCATION_SCHEDULED'
+}
+
+/** 프로그램 라이프사이클이 종료 단계인지 (추론: 이 단계면 수강도 PROGRAM_ENDED로 볼 수 있음) */
+export function isProgramLifecycleEnded(
+  lifecycle: ProgramLifecycleStatus | undefined
+): boolean {
+  return (
+    lifecycle === 'education_completed' || lifecycle === 'document_processing_completed'
+  )
+}
+
+/**
+ * 수강 이력 표시용 진행 현황 (추론 연동)
+ * Application 기준으로 계산한 뒤, 프로그램이 종료 단계면 PROGRAM_ENDED로 통일
+ */
+export function getEffectiveEnrollmentDisplayStatus(
+  applicationStatus: ApplicationStatus,
+  applicationProgressStatus: ApplicationProgressStatus | undefined,
+  programLifecycleStatus?: ProgramLifecycleStatus
+): ProgramEnrollmentDisplayStatus {
+  const fromApplication = getApplicationEnrollmentDisplayStatus(
+    applicationStatus,
+    applicationProgressStatus
+  )
+  if (isProgramLifecycleEnded(programLifecycleStatus)) {
+    return 'PROGRAM_ENDED'
+  }
+  return fromApplication
 }
 
 // 보고서 상태
@@ -245,7 +380,7 @@ export const settlementStatusStatusConfig: Record<SettlementStatus, StatusConfig
 // 프로그램 라이프사이클 상태 StatusBadge용 config
 export const programLifecycleStatusStatusConfig: Record<ProgramLifecycleStatus, StatusConfig> =
   Object.fromEntries(
-    programLifecycleStatusConfig.order.map(status => [
+    (Object.keys(programLifecycleStatusConfig.labels) as ProgramLifecycleStatus[]).map(status => [
       status,
       {
         label: programLifecycleStatusConfig.labels[status],

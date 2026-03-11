@@ -6,6 +6,7 @@
     background: var(--color-bg-base);
     border-radius: var(--radius-8);
     width: 100%;
+    margin-bottom: 20px;
 }
 
 .unified-filter-card__row {
@@ -13,16 +14,33 @@
     display: flex;
     flex-wrap: nowrap;
     align-items: flex-end;
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .unified-filter-card__row {
+        flex-wrap: wrap;
+        gap: var(--spacing-8);
+    }
+    .unified-filter-card__row .ant-col {
+        flex: 1 1 100% !important;
+        max-width: 100%;
+        min-width: var(--filter-control-min-width, 0);
+    }
+    .unified-filter-card__actions {
+        margin-left: 0;
+        width: 100%;
+    }
 }
 
 .unified-filter-card .ant-card-body {
-    padding: var(--spacing-12) var(--spacing-16);
+    padding: 18px 20px 20px;
     width: 100%;
 }
 
-/* 필터 필드들이 한 줄에서 균등 분할되도록 */
-.unified-filter-card__row .ant-col {
-    min-width: 0;
+/* 필터 필드: 기본 240×44 반응형 — 각 컬럼 최소 너비 적용 */
+.unified-filter-card__row .ant-col:not(.unified-filter-card__actions) {
+    min-width: var(--filter-control-width, 240px);
 }
 
 .unified-filter-card__field {
@@ -46,20 +64,20 @@
 }
 
 .unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-select {
-    min-width: 90px;
+    min-width: var(--filter-control-width, 240px);
 }
 
 .unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-picker-range {
-    min-width: var(--filter-control-width, 180px);
+    min-width: var(--filter-control-width, 240px);
 }
 
 .unified-filter-card--single-row .labeled-search-input__input {
-    min-width: 100px;
+    min-width: var(--filter-control-width, 240px);
 }
 
 .unified-filter-card__actions {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    margin-left: var(--spacing-8);
+    margin-left: auto !important;
 }

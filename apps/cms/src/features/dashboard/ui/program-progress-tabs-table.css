@@ -9,6 +9,7 @@
 
 .program-progress-tabs-table .ant-card-body {
     padding-top: var(--spacing-16);
+    padding-bottom: 20px;
 }
 
 .program-progress-tabs-table__tabs .ant-tabs-nav {

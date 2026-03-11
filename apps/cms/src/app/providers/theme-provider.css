@@ -22,6 +22,7 @@
     --shadow-brand-total-hover: 0 2px 8px rgba(1, 161, 175, 0.25);
     --shadow-focus-teal: 0 0 0 1px rgba(74, 212, 204, 0.2);
     --color-table-head-bg: #edf0f2;
+    --color-table-row-hover: rgba(1, 161, 175, 0.06);
     --color-table-row-selected: #f6ffed;
     --color-table-row-selected-hover: #d9f7be;
     --shadow-card-soft: 0 10px 40px rgba(0, 0, 0, 0.1);

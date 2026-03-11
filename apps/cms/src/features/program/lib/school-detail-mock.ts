@@ -20,6 +20,7 @@ import type {
   AssignmentSubmissionStatusKey,
 } from '../model/school-detail-types'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { Application } from '@/types/domain'
 
 const TEACHER_PHONES = ['010-3927-5140', '010-5218-3674', '010-7483-2915']
 const TEACHER_EMAILS = ['teacher@school.kr', 'contact@edu.kr', 'admin@school.kr']
@@ -216,6 +217,72 @@ export function getAssignmentSubmissionDetail(
     heldCount === 0 ? 0 : Math.round((submittedCount / heldCount) * 100)
   return {
     studentName: student.name,
+    submissionRatePercent,
+    sessions,
+  }
+}
+
+/**
+ * 회원 상세 탭: Application + 회원명 기준 강의 출석 내역 모달용 데이터
+ */
+export function getLectureAttendanceDetailForApplication(
+  application: Application,
+  userName: string
+): LectureAttendanceDetail {
+  const raw = application.lectureAttendance ?? '0/0'
+  const [attendedStr, totalStr] = raw.split('/').map(s => s.trim())
+  const attendedCount = Math.max(0, parseInt(attendedStr, 10) || 0)
+  const totalRounds = Math.max(1, parseInt(totalStr, 10) || 1)
+  const seed = hash(application.id)
+  const notHeldCount = Math.min(totalRounds - 1, seed % 3)
+  const heldCount = totalRounds - notHeldCount
+  const absentCount = Math.max(0, heldCount - attendedCount)
+  const statuses: LectureAttendanceStatusKey[] = []
+  for (let i = 0; i < attendedCount; i++) statuses.push('attended')
+  for (let i = 0; i < absentCount; i++) statuses.push('absent')
+  for (let i = 0; i < notHeldCount; i++) statuses.push('not_held')
+  for (let i = statuses.length - 1; i >= 1; i--) {
+    const j = (seed + i * 11) % (i + 1)
+    ;[statuses[i], statuses[j]] = [statuses[j], statuses[i]]
+  }
+  const sessions: LectureAttendanceSession[] = statuses.map((status, i) => ({
+    roundNumber: i + 1,
+    status,
+  }))
+  const attendanceRatePercent = heldCount === 0 ? 0 : Math.round((attendedCount / heldCount) * 100)
+  return {
+    studentName: userName,
+    attendanceRatePercent,
+    sessions,
+  }
+}
+
+/**
+ * 회원 상세 탭: Application + 회원명 기준 과제 제출 내역 모달용 데이터
+ */
+export function getAssignmentSubmissionDetailForApplication(
+  application: Application,
+  userName: string
+): AssignmentSubmissionDetail {
+  const seed = hash(application.id)
+  const totalRounds = 4
+  const statuses: AssignmentSubmissionStatusKey[] = []
+  for (let i = 0; i < totalRounds; i++) {
+    const r = (seed + i * 7) % 3
+    if (r === 0) statuses.push('submitted')
+    else if (r === 1) statuses.push('not_submitted')
+    else statuses.push('not_started')
+  }
+  const sessions: AssignmentSubmissionSession[] = statuses.map((status, i) => ({
+    roundNumber: i + 1,
+    status,
+  }))
+  const submittedCount = statuses.filter(s => s === 'submitted').length
+  const heldCount = statuses.filter(s => s !== 'not_started').length
+  const submissionRatePercent =
+    heldCount === 0 ? 0 : Math.round((submittedCount / heldCount) * 100)
+  return {
+    studentName: userName,
     submissionRatePercent,
     sessions,
   }
