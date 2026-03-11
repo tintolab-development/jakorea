@@ -152,6 +152,55 @@
   overflow: visible;
 }
 
+/* 메뉴 바로가기 위젯이 50% 사이즈(colSpan 12)일 때 위젯 높이 최대 340px, 퀵메뉴 영역만 스크롤
+   * 하단 패딩 20px 포함 시 콘텐츠가 잘리지 않도록 max-height = 340 + 20 = 360px */
+.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) {
+  max-height: 360px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) > .ant-card {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget .ant-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 퀵메뉴 그리드만 스크롤 */
+.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: visible;
+}
+
 .dashboard-widget-slot:has(.menu-shortcut-widget) > .ant-card {
   flex: none;
   height: auto;
