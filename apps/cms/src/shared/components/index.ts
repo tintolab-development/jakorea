@@ -10,6 +10,13 @@ export { TextbookStatusBadge } from './textbook-status-badge'
 export type { TextbookStatusKey } from './textbook-status-badge'
 export { ProgramLifecycleStatusBadge } from './program-lifecycle-status-badge'
 export type { ProgramLifecycleStatusBadgeProps } from './program-lifecycle-status-badge'
+export {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from './status-dropdown-cell'
+export type { StatusDropdownCellProps } from './status-dropdown-cell'
+export { ProgramLifecycleStatusCell } from './program-lifecycle-status-cell'
+export type { ProgramLifecycleStatusCellProps } from './program-lifecycle-status-cell'
 export { ProgramEnrollmentStatusBadge } from './program-enrollment-status-badge'
 export type { ProgramEnrollmentStatusBadgeProps } from './program-enrollment-status-badge'
 export { SettlementStatusBadge } from './settlement-status-badge'

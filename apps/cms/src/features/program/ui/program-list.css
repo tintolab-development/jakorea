@@ -605,6 +605,26 @@
     display: inline-block;
 }
 
+/* 모집신청 현황 셀(StatusDropdownCell) 사용 행: 드롭다운 열어도 행 높이 고정 — UI shifting 방지 */
+.program-list-card .ant-table-wrapper .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
+    height: 47px;
+    min-height: 47px;
+    max-height: 47px;
+    overflow: visible;
+}
+
+.program-list-card .ant-table-wrapper .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) > td.status-dropdown-cell__cell-status {
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: visible;
+}
+
+.program-list-card .ant-table-wrapper .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
+    height: 47px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
+}
+
 /* 테이블 헤더 내 뷰 전환 단일 버튼 스타일 */
 .program-view-toggle-single-button {
     height: var(--filter-control-height, 40px);

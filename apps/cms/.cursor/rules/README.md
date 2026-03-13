@@ -16,6 +16,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 
 - [코드 스타일](./coding/code-style.md) - ESLint, Prettier, TypeScript, 파일 명명 규칙
 - [컴포넌트 패턴](./coding/component-patterns.md) - 컴포넌트 관심사 분리 및 패턴
+- [상태 드롭다운 셀](./coding/status-dropdown-cell.md) - 테이블용 상태 배지·드롭다운 셀(StatusDropdownCell) 아키텍처, 새 테이블/도메인 확장 방법
 - [Custom Hooks](./coding/custom-hooks.md) - Custom Hooks 작성 가이드
 - [타입 안전성 및 일관성](./coding/type-safety-and-consistency.md) - Deprecated 코드 사용 금지, 타입 일관성 유지
 - [리팩토링 원칙](./coding/refactoring-principles.md) - 코드 품질 원칙
@@ -55,6 +56,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 
 - [테이블 구현 컨텍스트](./tables/table-implementation.md) - Ant Design Table 컬럼·CSS·필터 패턴 (새 테이블 구현 시 참고)
 - [테이블 관리](./tables/table-management.md) - @tanstack/react-table 및 Query Parameter 동기화
+- [상태 드롭다운 셀](./coding/status-dropdown-cell.md) - 테이블에서 상태 배지+드롭다운 컬럼 사용 시 공통 컴포넌트(StatusDropdownCell) 및 UI shifting 방지
 
 ## 🌐 환경
 
