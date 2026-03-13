@@ -63,7 +63,7 @@ const columns: ColumnsType<MyRow> = useMemo(
 | `render`    | 커스텀 셀 (배지, 버튼, `-` 처리)        | `(v) => v ?? '-'`, 배지/버튼 컴포넌트                  |
 
 - **No. 열**: 보통 `width: 72` 또는 `56`, `align: 'center'`.
-- **배지/상태 열**: `render`에서 공용 Badge 컴포넌트 사용 (예: `TextbookStatusBadge`, `SettlementStatusBadge`).
+- **배지/상태 열**: `render`에서 공용 Badge 컴포넌트 사용 (예: `TextbookStatusBadge`, `SettlementStatusBadge`). **상태를 클릭해 드롭다운으로 변경하는 열**은 [상태 드롭다운 셀](../coding/status-dropdown-cell.md) 패턴 사용 (`StatusDropdownCell`, `ProgramLifecycleStatusCell`, `STATUS_DROPDOWN_CELL_CLASSNAME`).
 - **버튼/링크 열**: `dataIndex` 없이 `key`만 두고 `render`에서 버튼 반환. 링크 스타일은 `border: none; background: none; color: var(--color-link); text-decoration: underline` 등으로 통일.
 
 ---
