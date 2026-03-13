@@ -80,22 +80,30 @@
     font-weight: 500;
     line-height: 150%;
     padding: var(--spacing-10) var(--spacing-12);
-    height: 47px;
-    min-height: 47px;
-    max-height: 47px;
+    height: 47px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
     vertical-align: middle;
     background: #fff;
+    box-sizing: border-box;
 }
 
-/* 모집 신청 현황 셀: 상하 패딩 0, 항상 overflow visible로 두어 드롭다운 열 때 1px 시프팅 방지 */
-.recruitment-status-widget__table .ant-table-tbody > tr > td.recruitment-status-widget__cell-status {
-    padding-top: 0;
-    padding-bottom: 0;
+/* 모집 신청 현황 셀: 상하 패딩 0, 고정 높이, overflow visible — 드롭다운 열어도 시프팅 방지 */
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.recruitment-status-widget__cell-status,
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    height: 47px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
     overflow: visible;
+    vertical-align: middle;
 }
 
 /* 태그 선택(드롭다운 열림) 시에도 상하 패딩 유지(0) — 시프팅 방지 */
-.recruitment-status-widget__table .ant-table-tbody > tr > td.recruitment-status-widget__cell-status:has(.recruitment-status-widget__status-trigger--open) {
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.recruitment-status-widget__cell-status:has(.recruitment-status-widget__status-trigger--open),
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.recruitment-status-widget__cell-status:has(.status-dropdown-cell__status-trigger--open),
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.status-dropdown-cell__cell-status:has(.status-dropdown-cell__status-trigger--open) {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
 }
@@ -106,15 +114,19 @@
 }
 
 /* tbody 행: 47px 고정(다른 셀 패딩 포함 자연 높이와 동일), 드롭다운 열어도 높이 유지 */
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr,
 .recruitment-status-widget__table .ant-table-tbody > tr {
-    height: 47px;
-    min-height: 47px;
-    max-height: 47px;
+    height: 47px !important;
+    min-height: 47px !important;
+    max-height: 47px !important;
     overflow: visible;
 }
 
-/* 드롭다운 열린 행도 47px 유지 — 패딩 사라져도 행 높이 변하지 않도록 */
-.recruitment-status-widget__table .ant-table-tbody > tr:has(td .recruitment-status-widget__status-trigger--open) > td {
+/* 드롭다운 열린 행의 모든 td 47px 강제 유지 — UI shifting 방지 (공통 셀 클래스 포함) */
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr:has(td .recruitment-status-widget__status-trigger--open) > td,
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td,
+.recruitment-status-widget__table .ant-table-tbody > tr:has(td .recruitment-status-widget__status-trigger--open) > td,
+.recruitment-status-widget__table .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
     height: 47px !important;
     min-height: 47px !important;
     max-height: 47px !important;
