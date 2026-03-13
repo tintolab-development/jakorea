@@ -148,7 +148,7 @@ export function Sidebar() {
     }
 
     // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시에도 '프로그램 목록' 카테고리 활성화
-    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
     if (user?.role === 'ADMIN' && path.startsWith('/programs/')) {
       const rest = path.slice('/programs/'.length)
       const segments = rest.split('/').filter(Boolean)

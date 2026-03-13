@@ -20,4 +20,6 @@ export type { DashboardWidgetRendererProps } from './ui/dashboard-widget-rendere
 export { useOverallStatistics } from './hooks/use-overall-statistics'
 export { useInstructorActivity } from './hooks/use-instructor-activity'
 export { useDashboardDnd } from './hooks/use-dashboard-dnd'
+export { useDashboardLayout } from './hooks/use-dashboard-layout'
+export type { UseDashboardLayoutResult } from './hooks/use-dashboard-layout'
 export { getSlotHeight } from './lib/dashboard-slot-utils'
