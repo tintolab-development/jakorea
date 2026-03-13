@@ -16,6 +16,35 @@ import type { DashboardWidgetConfig } from '@/shared/config/dashboard-config'
 export const WIDGET_IDS_WITHOUT_BUILT_IN_HANDLE: readonly string[] = [] as const
 
 const STORAGE_KEY = 'dashboard-widget-order'
+const PERSIST_VERSION = 1
+
+interface PersistedLayoutState {
+  orderByRole: Record<string, string[]>
+  widthByRole: Record<string, Record<string, 12 | 24>>
+}
+
+function migrateLayoutState(
+  persisted: unknown,
+  _version: number
+): PersistedLayoutState {
+  if (
+    persisted != null &&
+    typeof persisted === 'object' &&
+    'orderByRole' in persisted &&
+    'widthByRole' in persisted
+  ) {
+    const p = persisted as PersistedLayoutState
+    if (
+      typeof p.orderByRole === 'object' &&
+      p.orderByRole !== null &&
+      typeof p.widthByRole === 'object' &&
+      p.widthByRole !== null
+    ) {
+      return { orderByRole: p.orderByRole, widthByRole: p.widthByRole }
+    }
+  }
+  return { orderByRole: {}, widthByRole: {} }
+}
 
 /**
  * config 위젯 배열에서 정렬 단위 id 목록 생성
@@ -74,6 +103,8 @@ export interface DashboardWidgetOrderState {
   setOrderedIds: (role: string, ids: string[]) => void
   getOrderedIds: (role: UserRole | null, defaultIds: string[]) => string[]
   setWidgetWidth: (role: string, widgetId: string, colSpan: 12 | 24) => void
+  /** 해당 역할의 위젯 순서·너비를 기본값으로 초기화 */
+  resetLayoutForRole: (role: string, defaultIds: string[]) => void
 }
 
 export const useDashboardWidgetOrderStore = create<DashboardWidgetOrderState>()(
@@ -103,7 +134,18 @@ export const useDashboardWidgetOrderStore = create<DashboardWidgetOrderState>()(
           },
         }))
       },
+
+      resetLayoutForRole(role: string, defaultIds: string[]) {
+        set(state => ({
+          orderByRole: { ...state.orderByRole, [role]: defaultIds },
+          widthByRole: { ...state.widthByRole, [role]: {} },
+        }))
+      },
     }),
-    { name: STORAGE_KEY }
+    {
+      name: STORAGE_KEY,
+      version: PERSIST_VERSION,
+      migrate: migrateLayoutState,
+    }
   )
 )

@@ -21,11 +21,13 @@ import {
 } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
+import { isWidgetResizable } from '@/shared/config/dashboard-config'
 import { getRoleLabel } from '@/shared/ui'
 import { mockInstructors } from '@/data/mock'
 import {
   useDashboardData,
   useDashboardLayout,
+  useDashboardWidgetOrderStore,
   SortableWidgetSlot,
   DashboardSettingsModal,
   DashboardToolbar,
@@ -71,6 +73,7 @@ export function Dashboard() {
   const {
     displayOrder,
     displayItemsMeta,
+    defaultIds,
     roleWidths,
     setOrderedIds,
     setWidgetWidth,
@@ -80,6 +83,15 @@ export function Dashboard() {
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const resetLayoutForRole = useDashboardWidgetOrderStore(s => s.resetLayoutForRole)
+
+  const handleResetLayout = useCallback(() => {
+    if (user?.role) {
+      resetLayoutForRole(user.role, defaultIds)
+      message.success('기본 레이아웃으로 되돌렸습니다.')
+      setSettingsModalOpen(false)
+    }
+  }, [user?.role, defaultIds, resetLayoutForRole])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -144,6 +156,7 @@ export function Dashboard() {
       <DashboardSettingsModal
         open={settingsModalOpen}
         onCancel={() => setSettingsModalOpen(false)}
+        onResetLayout={handleResetLayout}
       />
 
       <DndContext
@@ -155,17 +168,21 @@ export function Dashboard() {
         onDragCancel={handleDragCancel}
       >
         <SortableContext items={displayOrder} strategy={noScaleRectSortingStrategy}>
-          <div ref={rowRef} className="dashboard-widget-row-wrapper">
+          <div
+            ref={rowRef}
+            className="dashboard-widget-row-wrapper"
+            data-dragging={activeId ? 'true' : undefined}
+          >
             <Row gutter={[16, 20]} align="stretch">
-            {displayOrder.map((id: string) => {
+            {displayOrder.flatMap((id: string) => {
               const meta = displayItemsMeta.find((m) => m.id === id)
-              if (!meta) return null
+              if (!meta) return []
 
               const effectiveColSpan =
                 (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
               const slotHeight = getSlotHeight(id, effectiveColSpan, meta)
 
-              return (
+              return [
                 <SortableWidgetSlot
                   key={id}
                   id={id}
@@ -173,7 +190,7 @@ export function Dashboard() {
                   hasBuiltInHandle={meta.hasBuiltInHandle}
                   height={slotHeight}
                   onResizeWidth={
-                    user?.role && id !== 'kpi-achievement-widget'
+                    user?.role && isWidgetResizable(id)
                       ? (newColSpan) => setWidgetWidth(user.role, id, newColSpan)
                       : undefined
                   }
@@ -182,8 +199,8 @@ export function Dashboard() {
                     widgetType={id}
                     {...widgetRendererProps}
                   />
-                </SortableWidgetSlot>
-              )
+                </SortableWidgetSlot>,
+              ]
             })}
             </Row>
           </div>

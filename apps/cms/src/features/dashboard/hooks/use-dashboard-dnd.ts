@@ -9,6 +9,7 @@
 import { useState, useCallback, useRef } from 'react'
 import {
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -17,17 +18,13 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import type { DisplayItemMeta } from '@/features/dashboard/model/dashboard-widget-order-store'
+import { isWidgetResizable } from '@/shared/config/dashboard-config'
 
 const COL_SPAN_FULL = 24
 const COL_SPAN_HALF = 12
 
 /** 100% 위젯 위 드롭 시: 포인터가 가운데 이 비율(40%) 안이면 오버레이→순서만, 좌/우 치우침이면 50% 분할 */
 const FULL_WIDTH_CENTER_RATIO = 0.4
-
-/** 리사이즈(너비 변경)가 가능한 위젯인지 */
-function supportsResize(widgetId: string): boolean {
-  return widgetId !== 'kpi-achievement-widget'
-}
 
 export interface SlotRect {
   id: string
@@ -181,10 +178,18 @@ export function useDashboardDnd({
   onLayoutSaved,
 }: UseDashboardDndParams) {
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [dropInsertIndex, setDropInsertIndex] = useState<number | null>(null)
   const lastPointerRef = useRef({ x: 0, y: 0 })
+  const lastDropIndexRef = useRef<number | null>(null)
+  /** 드롭 시 over가 null이어도 직전에 올려둔 위젯으로 1:1 교환하기 위함 (DragOverlay가 포인터를 가릴 수 있음) */
+  const lastOverIdRef = useRef<string | null>(null)
+  const slotRectsCacheRef = useRef<SlotRect[]>([])
+  const slotRectsCacheTimeRef = useRef(0)
+  const THROTTLE_MS = 80
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
   )
 
   const getEffectiveColSpan = useCallback(
@@ -199,27 +204,80 @@ export function useDashboardDnd({
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string)
+    setDropInsertIndex(null)
+    lastDropIndexRef.current = null
+    lastOverIdRef.current = null
+    slotRectsCacheRef.current = []
+    slotRectsCacheTimeRef.current = 0
     const activator = event.activatorEvent as PointerEvent
     if (activator?.clientX != null) {
       lastPointerRef.current = { x: activator.clientX, y: activator.clientY }
     }
   }, [])
 
-  const handleDragMove = useCallback((event: DragMoveEvent) => {
-    lastPointerRef.current.x += event.delta.x
-    lastPointerRef.current.y += event.delta.y
-  }, [])
+  const handleDragMove = useCallback(
+    (event: DragMoveEvent) => {
+      lastPointerRef.current.x += event.delta.x
+      lastPointerRef.current.y += event.delta.y
+      const { over, active } = event
+      const activeIdStr = active.id as string
+      const now = Date.now()
+      if (getSlotRects) {
+        if (
+          slotRectsCacheRef.current.length === 0 ||
+          now - slotRectsCacheTimeRef.current > THROTTLE_MS
+        ) {
+          slotRectsCacheRef.current = getSlotRects()
+          slotRectsCacheTimeRef.current = now
+        }
+      }
+      const slotRects = slotRectsCacheRef.current
+      let nextIndex: number | null = null
+      if (over && over.id !== active.id) {
+        const overIdStr = over.id as string
+        lastOverIdRef.current = overIdStr
+        const overIndex = orderedIds.indexOf(overIdStr)
+        if (overIndex >= 0) {
+          const overRect = slotRects.find(s => s.id === overIdStr)?.rect
+          nextIndex =
+            overRect != null &&
+            lastPointerRef.current.x < overRect.left + overRect.width / 2
+              ? overIndex
+              : Math.min(overIndex + 1, orderedIds.length)
+        }
+      } else {
+        if (!over || over.id === active.id) lastOverIdRef.current = null
+        if (slotRects.length > 0) {
+          const { newIndex } = getInsertIndexFromPoint(
+            lastPointerRef.current,
+            slotRects,
+            orderedIds,
+            activeIdStr
+          )
+          nextIndex = newIndex
+        }
+      }
+      if (nextIndex !== lastDropIndexRef.current) {
+        lastDropIndexRef.current = nextIndex
+        setDropInsertIndex(nextIndex)
+      }
+    },
+    [orderedIds, getSlotRects]
+  )
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event
       const activeIdStr = active.id as string
       setActiveId(null)
+      setDropInsertIndex(null)
 
       if (!userRole) return
 
       const oldIndex = orderedIds.indexOf(activeIdStr)
       if (oldIndex === -1) return
+
+      const slotRects = getSlotRects?.() ?? []
 
       let newIndex: number
       let overIdStr: string | null = over ? (over.id as string) : null
@@ -227,8 +285,16 @@ export function useDashboardDnd({
       let droppedInEmptySpace = false
       let skipShrinkActive = false
 
-      if (over && active.id !== over.id) {
-        overIdStr = over.id as string
+      // 드롭 시 over가 null이어도 직전에 올려둔 위젯이 있으면 1:1 교환 (DragOverlay가 포인터를 가릴 수 있음)
+      const effectiveOverId =
+        overIdStr && activeIdStr !== overIdStr
+          ? overIdStr
+          : lastOverIdRef.current && lastOverIdRef.current !== activeIdStr
+            ? lastOverIdRef.current
+            : null
+
+      if (effectiveOverId) {
+        overIdStr = effectiveOverId
         const overIndex = orderedIds.indexOf(overIdStr)
         if (overIndex === -1) return
 
@@ -236,57 +302,37 @@ export function useDashboardDnd({
         const activeColSpan = getEffectiveColSpan(activeIdStr)
         const isTargetFullWidth =
           targetColSpan === COL_SPAN_FULL &&
-          supportsResize(overIdStr) &&
-          supportsResize(activeIdStr)
+          isWidgetResizable(overIdStr) &&
+          isWidgetResizable(activeIdStr)
 
-        // 100%↔100%: 오버레이(중앙)면 순서만 변경, 좌/우 치우침이면 둘 다 50% 분할
+        // 100%↔100%: 항상 1:1 위치 교환. 중앙이면 사이즈 유지, 좌/우 치우침이면 둘 다 50% 분할
         if (isTargetFullWidth) {
           let pointerInCenter = false
-          if (getSlotRects) {
-            const overRect = getSlotRects().find(s => s.id === overIdStr)?.rect
-            if (overRect && overRect.width > 0) {
-              const ratio = (lastPointerRef.current.x - overRect.left) / overRect.width
-              const half = (1 - FULL_WIDTH_CENTER_RATIO) / 2 // 좌측 치우침 구간 끝
-              pointerInCenter = ratio >= half && ratio <= 1 - half
-            }
+          const overRect = slotRects.find(s => s.id === overIdStr)?.rect
+          if (overRect && overRect.width > 0) {
+            const ratio = (lastPointerRef.current.x - overRect.left) / overRect.width
+            const half = (1 - FULL_WIDTH_CENTER_RATIO) / 2 // 좌측 치우침 구간 끝
+            pointerInCenter = ratio >= half && ratio <= 1 - half
           }
-          if (pointerInCenter) {
-            // 오버레이: 위치만 교환, 사이즈 변경 없음
-            newIndex = overIndex
-          } else {
+          newIndex = overIndex
+          if (!pointerInCenter) {
             shouldSplit = true
-            newIndex = Math.min(overIndex + 1, orderedIds.length)
           }
         } else if (targetColSpan === activeColSpan) {
           // 같은 크기(50%↔50%)만 1:1 위치 교환
           newIndex = overIndex
         } else {
           // 100%를 50% 위젯 위에 드롭 → 그 자리를 차지(스왑)하고 50%로 축소. 문의 현황 등이 아래로 이동.
-          if (activeColSpan === COL_SPAN_FULL && targetColSpan === COL_SPAN_HALF && supportsResize(activeIdStr)) {
+          if (activeColSpan === COL_SPAN_FULL && targetColSpan === COL_SPAN_HALF && isWidgetResizable(activeIdStr)) {
             newIndex = overIndex
             droppedInEmptySpace = true
           } else {
-            // 그 외(50%를 100% 위에 등): 포인터가 over 오른쪽이면 "뒤에 삽입"
-            const point = lastPointerRef.current
-            let pointerIsRightOfOver = false
-            if (getSlotRects) {
-              const overRect = getSlotRects().find(s => s.id === overIdStr)?.rect
-              if (overRect) {
-                const centerX = overRect.left + overRect.width / 2
-                pointerIsRightOfOver = point.x > centerX
-              }
-            }
-            if (pointerIsRightOfOver) {
-              newIndex = Math.min(overIndex + 1, orderedIds.length)
-              droppedInEmptySpace = activeColSpan === COL_SPAN_FULL && supportsResize(activeIdStr)
-            } else {
-              newIndex = overIndex
-            }
+            // 그 외(50%를 100% 위에 등): 위젯 위에 드롭 시 1:1 교환
+            newIndex = overIndex
           }
         }
-      } else if (getSlotRects) {
+      } else if (slotRects.length > 0) {
         // 빈 공간 드롭: 포인터 위치로 삽입 인덱스 계산 (드래그 중인 위젯 자리는 제외)
-        const slotRects = getSlotRects()
         const point = lastPointerRef.current
         const { newIndex: idx, insertAfterId } = getInsertIndexFromPoint(
           point,
@@ -299,8 +345,8 @@ export function useDashboardDnd({
           const targetColSpan = getEffectiveColSpan(insertAfterId)
           const couldSplit =
             targetColSpan === COL_SPAN_FULL &&
-            supportsResize(insertAfterId) &&
-            supportsResize(activeIdStr)
+            isWidgetResizable(insertAfterId) &&
+            isWidgetResizable(activeIdStr)
           if (couldSplit) {
             // 100% 위젯 옆에 삽입 시에도: 포인터가 해당 위젯 중앙이면 순서만, 좌/우 치우침이면 50% 분할
             const overRect = slotRects.find(s => s.id === insertAfterId)?.rect
@@ -335,7 +381,7 @@ export function useDashboardDnd({
         const activeColSpan = getEffectiveColSpan(activeIdStr)
         if (
           activeColSpan === COL_SPAN_FULL &&
-          supportsResize(activeIdStr)
+          isWidgetResizable(activeIdStr)
         ) {
           setWidgetWidth(userRole, activeIdStr, COL_SPAN_HALF)
         }
@@ -355,10 +401,12 @@ export function useDashboardDnd({
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null)
+    setDropInsertIndex(null)
   }, [])
 
   return {
     activeId,
+    dropInsertIndex,
     sensors,
     handleDragStart,
     handleDragMove,

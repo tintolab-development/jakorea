@@ -119,3 +119,16 @@ export function isWidgetAllowed(
   const widgets = getDashboardWidgetsByRole(userRole)
   return widgets.some(widget => widget.type === widgetType)
 }
+
+/**
+ * 너비 리사이즈(50% ↔ 100%)가 불가한 위젯 id 목록.
+ * DnD 훅·대시보드 페이지에서 리사이즈 핸들 노출 여부 판단에 사용.
+ */
+export const WIDGET_IDS_NON_RESIZABLE: readonly string[] = ['kpi-achievement-widget']
+
+/**
+ * 위젯이 너비 리사이즈 가능한지 여부
+ */
+export function isWidgetResizable(widgetId: string): boolean {
+  return !WIDGET_IDS_NON_RESIZABLE.includes(widgetId)
+}
