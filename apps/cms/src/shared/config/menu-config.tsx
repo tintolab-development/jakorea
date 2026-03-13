@@ -70,7 +70,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 [교육 프로그램(→프로그램 목록), 수강 신청 현황, 강의 신청 현황, 봉사 프로그램] */
+  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 [일반 교육 프로그램(→프로그램 목록), 수강 신청 현황, 강의 신청 현황, 경제 교육 프로그램] */
   {
     key: 'programs-group',
     label: '프로그램 관리',
@@ -80,7 +80,7 @@ const allMenuItems: MenuItemConfig[] = [
     children: [
       {
         key: '/programs/education',
-        label: '교육 프로그램',
+        label: '일반 교육 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
@@ -100,8 +100,8 @@ const allMenuItems: MenuItemConfig[] = [
       //   allowedRoles: ['ADMIN'],
       // },
       {
-        key: '/programs/volunteer',
-        label: '봉사 프로그램',
+        key: '/programs/economy-education',
+        label: '경제 교육 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
@@ -1420,7 +1420,7 @@ export function getBreadcrumbByPath(
   }
 
   // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시 브레드크럼 연동
-  const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+  const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
   if (!match && userRole === 'ADMIN' && n.startsWith('/programs/')) {
     const rest = n.slice('/programs/'.length)
     const segments = rest.split('/').filter(Boolean)

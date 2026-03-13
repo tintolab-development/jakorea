@@ -97,6 +97,12 @@ const ApplicationProgressPage = lazyLoad(
   () => import('@/pages/applications/application-progress-page')
 )
 const MyFavoriteProgramsPage = lazyLoad(() => import('@/pages/programs/my-favorite-programs-page'))
+const EconomyEducationProgramPage = lazyLoad(
+  () =>
+    import('@/pages/programs/economy-education-program-page').then(m => ({
+      default: m.EconomyEducationProgramPage,
+    }))
+)
 const ApplicationListPage = lazyLoad(() => import('@/pages/applications/application-list-page'))
 const ApplicationFormPage = lazyLoad(() => import('@/pages/applications/application-form-page'))
 const ApplicationResultPage = lazyLoad(() => import('@/pages/applications/application-result-page'))
@@ -308,7 +314,8 @@ export const router = createBrowserRouter([
               { path: 'enrollment', element: <EducationEnrollmentPage /> }, // 수강 신청 현황
             ],
           },
-          { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램
+          { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램 (기존 경로 유지)
+          { path: 'economy-education', element: <EconomyEducationProgramPage /> }, // 경제 교육 프로그램 (빈 페이지)
           { path: ':id/apply', element: <ProgramApplicationPage /> }, // Phase 0.2.2: 신청서 작성 페이지
           { path: ':id/apply/complete', element: <ProgramApplicationCompletePage /> }, // Phase 0.2.3: 신청 완료 페이지
           { path: 'my', element: <MyProgramApplicationsPage /> },
