@@ -9,6 +9,17 @@
     margin-bottom: 20px;
 }
 
+.unified-filter-card--no-border {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.unified-filter-card--no-border .ant-card-body {
+    border: none !important;
+    box-shadow: none !important;
+}
+
 .unified-filter-card__row {
     width: 100%;
     display: flex;

@@ -55,6 +55,7 @@ export {
 } from './interviews'
 export { getVolunteerPrograms, mockVolunteerProgramsMap } from './volunteer-programs'
 export { getEducationPrograms, mockEducationProgramsMap } from './education-programs'
+export { getEconomyPrograms } from './economy-programs'
 export { getStudentEnrolledPrograms } from './student-enrollments'
 export { getFormTemplateByProgramId, formTemplatesByProgramId } from './form-templates'
 export {
