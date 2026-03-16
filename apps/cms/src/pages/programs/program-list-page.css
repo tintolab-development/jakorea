@@ -119,3 +119,16 @@
 .program-list-page__divider-wrapper {
   padding: 12px 20px 32px 20px;
 }
+
+/* 선택 삭제 버튼 (예정 프로그램 필터 활성 시) */
+.program-list-page__bulk-delete-button.ant-btn {
+  border-color: var(--color-red, #c32f4a) !important;
+  background: var(--color-danger-secondary-bg) !important;
+  color: var(--color-danger-secondary) !important;
+}
+
+.program-list-page__bulk-delete-button.ant-btn:hover:not(:disabled) {
+  border-color: var(--color-red, #c32f4a) !important;
+  background: var(--color-danger-secondary-bg-hover) !important;
+  color: var(--color-danger-secondary-hover) !important;
+}

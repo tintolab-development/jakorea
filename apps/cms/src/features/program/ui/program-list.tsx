@@ -8,7 +8,7 @@ import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { message } from 'antd'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { useProgramTable } from '../model/use-program-table'
 import type {
   Program,
@@ -124,6 +124,8 @@ export function ProgramList({
   children,
 }: ProgramListProps) {
   const { user } = useAuthStore()
+  const location = useLocation()
+  const isEconomyPage = location.pathname === '/programs/economy-education'
   const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -720,7 +722,11 @@ export function ProgramList({
   }
 
   return (
-    <div className="program-list-container">
+    <div
+      className={
+        viewMode === 'list' ? 'program-list-container' : 'program-list-calendar-view-container'
+      }
+    >
       {isParticipant && (
         <UnifiedFilterCard
           fields={participantFilterFields}
@@ -811,7 +817,7 @@ export function ProgramList({
               >
                 <Table
                   rowSelection={
-                    tableVariant !== 'education' && showRowSelection && onBulkDelete
+                    showRowSelection && onBulkDelete
                       ? {
                           selectedRowKeys: effectiveSelectedRowKeys,
                           onChange: handleSelectionChange,
@@ -1153,87 +1159,49 @@ export function ProgramList({
                                 if (!s.isValid() || !e.isValid()) return '-'
                                 return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
                               }
-                              return [
-                                {
-                                  title: 'No.',
-                                  key: 'no',
-                                  width: 64,
-                                  align: 'center' as const,
-                                  render: (_: unknown, __: Program, index: number) => index + 1,
-                                },
-                                {
-                                  title: '프로그램명',
-                                  dataIndex: 'title',
-                                  key: 'title',
-                                  width: 260,
-                                  ellipsis: true,
-                                  align: 'center' as const,
-                                  render: (text: string) => text ?? '-',
-                                },
-                                {
-                                  title: '모집 신청 현황',
-                                  key: 'lifecycleStatus',
-                                  width: 140,
-                                  align: 'center' as const,
-                                  className: readOnlyLifecycleStatus
-                                    ? undefined
-                                    : STATUS_DROPDOWN_CELL_CLASSNAME,
-                                  render: (_: unknown, record: Program) =>
-                                    readOnlyLifecycleStatus ? (
-                                      record.lifecycleStatus ? (
-                                        <ProgramLifecycleStatusBadge
-                                          status={record.lifecycleStatus}
-                                        />
-                                      ) : (
-                                        '-'
-                                      )
-                                    ) : (
-                                      <ProgramLifecycleStatusCell
-                                        record={record}
-                                        onStatusChange={handleLifecycleStatusChange}
-                                        isUpdating={updatingStatusId === record.id}
-                                        openDropdownId={openStatusDropdownId}
-                                        onOpenDropdownChange={setOpenStatusDropdownId}
-                                      />
-                                    ),
-                                },
-                                {
-                                  title: '수강자 모집 인원',
-                                  key: 'capacity',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (_: unknown, record: Program) => {
-                                    const cap = getCapacity(record)
-                                    const approved = record.approvedStudentCount ?? 0
-                                    if (cap !== undefined) return `${approved} / ${cap}`
-                                    return `${approved}`
-                                  },
-                                },
-                                {
-                                  title: '강사 모집 인원',
-                                  key: 'instructorCapacity',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (_: unknown, record: Program) => {
-                                    const cap = getCapacity(record)
-                                    const current = record.instructors ?? 0
-                                    if (cap !== undefined && cap !== null)
-                                      return `${current} / ${cap}`
-                                    return `${current}`
-                                  },
-                                },
-                                {
-                                  title: '수강자 유형',
-                                  dataIndex: 'category',
-                                  key: 'category',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (value: ProgramCategory | undefined) =>
-                                    value
-                                      ? (categoryOptions.find(o => o.value === value)?.label ??
-                                        value)
-                                      : '-',
-                                },
+
+                              const capacityColumn = isEconomyPage
+                                ? {
+                                    title: '참여자 모집 인원',
+                                    key: 'participantCapacity',
+                                    width: 120,
+                                    align: 'center' as const,
+                                    render: (_: unknown, record: Program) => {
+                                      const cap = getCapacity(record)
+                                      const approved = record.approvedStudentCount ?? 0
+                                      if (cap !== undefined) return `${approved} / ${cap}`
+                                      return `${approved}`
+                                    },
+                                  }
+                                : [
+                                    {
+                                      title: '수강자 모집 인원',
+                                      key: 'capacity',
+                                      width: 120,
+                                      align: 'center' as const,
+                                      render: (_: unknown, record: Program) => {
+                                        const cap = getCapacity(record)
+                                        const approved = record.approvedStudentCount ?? 0
+                                        if (cap !== undefined) return `${approved} / ${cap}`
+                                        return `${approved}`
+                                      },
+                                    },
+                                    {
+                                      title: '강사 모집 인원',
+                                      key: 'instructorCapacity',
+                                      width: 120,
+                                      align: 'center' as const,
+                                      render: (_: unknown, record: Program) => {
+                                        const cap = getCapacity(record)
+                                        const current = record.instructors ?? 0
+                                        if (cap !== undefined && cap !== null)
+                                          return `${current} / ${cap}`
+                                        return `${current}`
+                                      },
+                                    },
+                                  ]
+
+                              const optionalColumns = [
                                 {
                                   title: '교육 분야',
                                   dataIndex: 'businessArea',
@@ -1294,6 +1262,79 @@ export function ProgramList({
                                   render: () => '-',
                                 },
                               ]
+
+                              const hiddenKeysOnEconomy = new Set([
+                                'businessArea',
+                                'type',
+                                'operationPeriod',
+                                'sponsorId',
+                                'owner',
+                              ])
+                              const filteredOptionalColumns = isEconomyPage
+                                ? optionalColumns.filter(col => !hiddenKeysOnEconomy.has(col.key as string))
+                                : optionalColumns
+
+                              const baseColumns = [
+                                {
+                                  title: 'No.',
+                                  key: 'no',
+                                  width: 64,
+                                  align: 'center' as const,
+                                  render: (_: unknown, __: Program, index: number) => index + 1,
+                                },
+                                {
+                                  title: '프로그램명',
+                                  dataIndex: 'title',
+                                  key: 'title',
+                                  width: 260,
+                                  ellipsis: true,
+                                  align: 'center' as const,
+                                  render: (text: string) => text ?? '-',
+                                },
+                                {
+                                  title: '모집 신청 현황',
+                                  key: 'lifecycleStatus',
+                                  width: 140,
+                                  align: 'center' as const,
+                                  className: readOnlyLifecycleStatus
+                                    ? undefined
+                                    : STATUS_DROPDOWN_CELL_CLASSNAME,
+                                  render: (_: unknown, record: Program) =>
+                                    readOnlyLifecycleStatus ? (
+                                      record.lifecycleStatus ? (
+                                        <ProgramLifecycleStatusBadge
+                                          status={record.lifecycleStatus}
+                                        />
+                                      ) : (
+                                        '-'
+                                      )
+                                    ) : (
+                                      <ProgramLifecycleStatusCell
+                                        record={record}
+                                        onStatusChange={handleLifecycleStatusChange}
+                                        isUpdating={updatingStatusId === record.id}
+                                        openDropdownId={openStatusDropdownId}
+                                        onOpenDropdownChange={setOpenStatusDropdownId}
+                                      />
+                                    ),
+                                },
+                                ...(Array.isArray(capacityColumn) ? capacityColumn : [capacityColumn]),
+                                {
+                                  title: '수강자 유형',
+                                  dataIndex: 'category',
+                                  key: 'category',
+                                  width: 120,
+                                  align: 'center' as const,
+                                  render: (value: ProgramCategory | undefined) =>
+                                    value
+                                      ? (categoryOptions.find(o => o.value === value)?.label ??
+                                        value)
+                                      : '-',
+                                },
+                                ...filteredOptionalColumns,
+                              ]
+
+                              return baseColumns
                             })()
                       : []
                   }

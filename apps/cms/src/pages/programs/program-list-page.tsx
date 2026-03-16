@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { Tabs } from 'antd'
+import { Tabs, Modal } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { AppButton } from '@/shared/ui/app-button'
@@ -168,6 +168,27 @@ export function ProgramListPage() {
     isAdmin && canWrite && (programType === 'education' || programType === 'economy')
   )
 
+  /** 예정 프로그램 필터 활성 시에만 행 선택·선택 삭제 표시 (경제 교육 페이지) */
+  const isScheduledFilter = programType === 'economy' && statusFilter === 'economy_scheduled'
+  const showRowSelectionForScheduled = showEducationActions && isScheduledFilter
+
+  const handleBulkDeleteClick = () => {
+    const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
+    if (programsToDelete.length === 0) return
+    Modal.confirm({
+      title: '선택 삭제',
+      content: `선택한 ${programsToDelete.length}건을 삭제하시겠습니까?`,
+      okText: '삭제',
+      cancelText: '취소',
+      onOk: () => handleBulkDelete(programsToDelete, () => setSelectedRowKeys([])),
+    })
+  }
+
+  // 예정 프로그램 필터 해제 시 선택 초기화
+  useEffect(() => {
+    if (!isScheduledFilter) setSelectedRowKeys([])
+  }, [isScheduledFilter])
+
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
       const redirectPath = `/programs/${program.id}`
@@ -248,10 +269,10 @@ export function ProgramListPage() {
             ? programs => handleBulkDelete(programs, () => setSelectedRowKeys([]))
             : undefined
         }
-        onSelectionChange={showEducationActions ? setSelectedRowKeys : undefined}
-        selectedRowKeys={showEducationActions ? selectedRowKeys : undefined}
+        onSelectionChange={showRowSelectionForScheduled ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showRowSelectionForScheduled ? selectedRowKeys : undefined}
         showActions={showEducationActions}
-        showRowSelection={showEducationActions}
+        showRowSelection={showRowSelectionForScheduled}
         showFavorite={false}
         onChangeStatus={showEducationActions ? handleStatusChange : undefined}
         showCalendarView={isAdmin && (programType === 'education' || programType === 'economy')}
@@ -288,6 +309,17 @@ export function ProgramListPage() {
               )}
             </div>
             <div className="program-list-page__widget-header-actions">
+              {isScheduledFilter && (
+                <AppButton
+                  variant="cancel"
+                  size="filter"
+                  onClick={handleBulkDeleteClick}
+                  disabled={selectedRowKeys.length === 0}
+                  className="program-list-page__bulk-delete-button"
+                >
+                  선택 삭제
+                </AppButton>
+              )}
               <AppButton
                 variant="cancel"
                 size="filter"
