@@ -97,12 +97,19 @@ const INSTRUCTOR_NAME_OPTIONS = [
   })),
 ]
 
+export type ProgramApplicantsTabMode = 'all' | 'participants' | 'instructors'
+
 interface ProgramApplicantsTabProps {
   programId: string
+  /** 풀페이지 모달 등에서 단일 카테고리만 노출 시 사용 (participants=신청 학교만, instructors=신청 강사만) */
+  mode?: ProgramApplicantsTabMode
 }
 
-export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicantsTabProps) {
+export function ProgramApplicantsTab({ programId: _programId, mode = 'all' }: ProgramApplicantsTabProps) {
   const { subTab, filters, setSubTab, setFilter } = useApplicantsTabParams()
+  const effectiveSubTab =
+    mode === 'participants' ? SUB_TAB_SCHOOLS : mode === 'instructors' ? SUB_TAB_INSTRUCTORS : subTab
+  const showSubTabSwitcher = mode === 'all'
   const [appliedFilters, setAppliedFilters] = useState<ApplicantsFilters>(filters)
   const [schoolList, setSchoolList] = useState<ApplicantSchoolRow[]>(() => [...MOCK_APPLICANT_SCHOOLS])
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [
@@ -493,22 +500,24 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
       <Card className="program-applicants-tab__card" bordered={false}>
         <div className="program-applicants-tab__top">
           <div className="program-applicants-tab__bar-inner">
-            <div className="program-applicants-tab__tabs">
-              <button
-                type="button"
-                className={`program-applicants-tab__tab-btn ${subTab === SUB_TAB_SCHOOLS ? 'program-applicants-tab__tab-btn--active' : ''}`}
-                onClick={() => setSubTab(SUB_TAB_SCHOOLS)}
-              >
-                신청 학교
-              </button>
-              <button
-                type="button"
-                className={`program-applicants-tab__tab-btn ${subTab === SUB_TAB_INSTRUCTORS ? 'program-applicants-tab__tab-btn--active' : ''}`}
-                onClick={() => setSubTab(SUB_TAB_INSTRUCTORS)}
-              >
-                신청 강사
-              </button>
-            </div>
+            {showSubTabSwitcher && (
+              <div className="program-applicants-tab__tabs">
+                <button
+                  type="button"
+                  className={`program-applicants-tab__tab-btn ${effectiveSubTab === SUB_TAB_SCHOOLS ? 'program-applicants-tab__tab-btn--active' : ''}`}
+                  onClick={() => setSubTab(SUB_TAB_SCHOOLS)}
+                >
+                  신청 학교
+                </button>
+                <button
+                  type="button"
+                  className={`program-applicants-tab__tab-btn ${effectiveSubTab === SUB_TAB_INSTRUCTORS ? 'program-applicants-tab__tab-btn--active' : ''}`}
+                  onClick={() => setSubTab(SUB_TAB_INSTRUCTORS)}
+                >
+                  신청 강사
+                </button>
+              </div>
+            )}
             <div className="program-applicants-tab__filters">
               <Row
                 gutter={[12, 12]}
@@ -516,7 +525,7 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                 wrap={false}
                 className="program-applicants-tab__filter-row"
               >
-                {subTab === SUB_TAB_SCHOOLS && (
+                {effectiveSubTab === SUB_TAB_SCHOOLS && (
                   <>
                     <Col flex="0 1 auto" className="program-applicants-tab__filter-col">
                       <div className="program-applicants-tab__filter-field">
@@ -589,7 +598,7 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
                     </Col>
                   </>
                 )}
-                {subTab === SUB_TAB_INSTRUCTORS && (
+                {effectiveSubTab === SUB_TAB_INSTRUCTORS && (
                   <>
                     <Col flex="0 1 auto" className="program-applicants-tab__filter-col">
                       <div className="program-applicants-tab__filter-field">
@@ -646,7 +655,7 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
           </div>
         </div>
 
-        {subTab === SUB_TAB_SCHOOLS && (
+        {effectiveSubTab === SUB_TAB_SCHOOLS && (
           <>
             <div className="program-applicants-tab__divider" />
             <div className="program-applicants-tab__below-divider">
@@ -704,7 +713,7 @@ export function ProgramApplicantsTab({ programId: _programId }: ProgramApplicant
           </>
         )}
 
-        {subTab === SUB_TAB_INSTRUCTORS && (
+        {effectiveSubTab === SUB_TAB_INSTRUCTORS && (
           <>
             <div className="program-applicants-tab__divider" />
             <div className="program-applicants-tab__below-divider">
