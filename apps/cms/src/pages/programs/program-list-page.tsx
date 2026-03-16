@@ -89,6 +89,8 @@ export function ProgramListPage() {
   const [selectedProgramForModal, setSelectedProgramForModal] = useState<Program | null>(null)
   const [selectedProgramForInstructorModal, setSelectedProgramForInstructorModal] =
     useState<Program | null>(null)
+  const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
+    useState<Program | null>(null)
 
   // 4. Effects
   useEffect(() => {
@@ -115,8 +117,24 @@ export function ProgramListPage() {
     }
   }, [location.pathname, viewMode, searchParams, setSearchParams])
 
-  // Phase 0.2.1: 로그인 후 redirect 파라미터 대응
+  // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동 — 새로고침 시에도 모달 유지
+  const isFullPageModalPath =
+    location.pathname === '/programs/education' ||
+    location.pathname === '/programs/economy-education'
   useEffect(() => {
+    if (!isFullPageModalPath) return
+    const programIdFromUrl = searchParams.get('programId')
+    if (programIdFromUrl && programs.length > 0) {
+      const program = programs.find(p => p.id === programIdFromUrl)
+      if (program) {
+        setSelectedProgramForFullPageModal(program)
+      }
+    }
+  }, [isFullPageModalPath, searchParams, programs, setSelectedProgramForFullPageModal])
+
+  // Phase 0.2.1: 로그인 후 redirect 파라미터 대응 (교육/경제 목록에서는 상세 페이지로 가지 않고 풀페이지 모달만 사용)
+  useEffect(() => {
+    if (isFullPageModalPath) return
     const programId = params.programId
     if (programId && user && isAuthenticated) {
       const program = programs.find(p => p.id === programId)
@@ -125,7 +143,7 @@ export function ProgramListPage() {
         navigate(`/programs/${programId}`)
       }
     }
-  }, [params.programId, user, isAuthenticated, programs, setParam, navigate])
+  }, [isFullPageModalPath, params.programId, user, isAuthenticated, programs, setParam, navigate])
 
   // 5. Handlers (role/action 플래그 — statusFilter, filteredPrograms는 useProgramListFilters에서 제공)
   const isAdmin = user?.role === 'ADMIN'
@@ -149,6 +167,17 @@ export function ProgramListPage() {
 
     if (location.pathname === '/programs/education/instructor-recruitment') {
       setSelectedProgramForInstructorModal(program)
+      return
+    }
+
+    if (
+      location.pathname === '/programs/education' ||
+      location.pathname === '/programs/economy-education'
+    ) {
+      setSelectedProgramForFullPageModal(program)
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.set('programId', program.id)
+      setSearchParams(nextParams, { replace: true })
       return
     }
 
@@ -333,6 +362,14 @@ export function ProgramListPage() {
         onCancelEnrollmentModal={() => setSelectedProgramForModal(null)}
         selectedProgramForInstructorModal={selectedProgramForInstructorModal}
         onCancelInstructorModal={() => setSelectedProgramForInstructorModal(null)}
+        selectedProgramForFullPageModal={selectedProgramForFullPageModal}
+        onCloseFullPageModal={() => {
+          setSelectedProgramForFullPageModal(null)
+          const nextParams = new URLSearchParams(searchParams)
+          nextParams.delete('programId')
+          nextParams.delete('tab')
+          setSearchParams(nextParams, { replace: true })
+        }}
       />
     </div>
   )
