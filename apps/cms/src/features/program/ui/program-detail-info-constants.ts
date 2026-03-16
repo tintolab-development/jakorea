@@ -77,6 +77,22 @@ export function getInstructorRecruitmentStatus(
   return 'closed'
 }
 
+/** 봉사자 모집 현황: lifecycleStatus를 모집 예정/모집 중/모집 마감 세 가지로 매핑 */
+export function getVolunteerRecruitmentStatus(
+  program: Program
+): 'scheduled' | 'recruiting' | 'closed' | null {
+  const status = program.lifecycleStatus
+  if (!status) return null
+  if (status === 'recruiting_volunteers') return 'recruiting'
+  if (
+    status === 'volunteer_recruitment_planned' ||
+    status === 'planned' ||
+    status === 'recruiting_students'
+  )
+    return 'scheduled'
+  return 'closed'
+}
+
 // ─── 라벨 맵 ──────────────────────────────────────────────
 
 export const CATEGORY_LABEL: Record<string, string> = {
