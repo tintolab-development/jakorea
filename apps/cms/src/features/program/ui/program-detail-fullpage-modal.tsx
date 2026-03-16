@@ -16,8 +16,10 @@ import { CurriculumSection } from './curriculum-section'
 import { ProgramKpiTargetSection } from './program-kpi-target-section'
 import { ParticipantRecruitmentSection } from './participant-recruitment-section'
 import { DetailInfoSection } from './detail-info-section'
-import { ProgramApplicantsTab } from './program-applicants-tab'
-import { ProgramVolunteersTab } from './program-volunteers-tab'
+import { InstructorRecruitmentSection } from './instructor-recruitment-section'
+import { InstructorDetailInfoSection } from './instructor-detail-info-section'
+import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
+import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
 import type { Program } from '@/types/domain'
 import './program-detail-info-tab.css'
 import './program-detail-fullpage-modal.css'
@@ -266,7 +268,10 @@ export function ProgramDetailFullPageModal({
             </div>
             {displayProgram && (
               <div className="program-detail-fullpage-modal__header-actions">
-                {activeTab === 'info' && (
+                {(activeTab === 'info' ||
+                  activeTab === 'participants' ||
+                  activeTab === 'instructors' ||
+                  activeTab === 'volunteers') && (
                   <AppButton variant="primary" size="large" onClick={handleInfoEdit}>
                     정보 수정
                   </AppButton>
@@ -316,13 +321,25 @@ export function ProgramDetailFullPageModal({
                   </div>
                 )}
                 {activeTab === 'instructors' && (
-                  <div className="program-detail-fullpage-modal__tab-panel">
-                    <ProgramApplicantsTab programId={displayProgram.id} mode="instructors" />
+                  <div className="program-detail-fullpage-modal__info-tab">
+                    <InstructorRecruitmentSection
+                      program={displayProgram}
+                      sponsorName={sponsorName}
+                    />
+                    <div className="program-detail-fullpage-modal__info-tab-block">
+                      <InstructorDetailInfoSection program={displayProgram} />
+                    </div>
                   </div>
                 )}
                 {activeTab === 'volunteers' && (
-                  <div className="program-detail-fullpage-modal__tab-panel">
-                    <ProgramVolunteersTab programId={displayProgram.id} />
+                  <div className="program-detail-fullpage-modal__info-tab">
+                    <VolunteerRecruitmentSection
+                      program={displayProgram}
+                      sponsorName={sponsorName}
+                    />
+                    <div className="program-detail-fullpage-modal__info-tab-block">
+                      <VolunteerDetailInfoSection program={displayProgram} />
+                    </div>
                   </div>
                 )}
               </>
