@@ -52,6 +52,8 @@ export interface UnifiedFilterCardProps {
   extra?: React.ReactNode
   /** Card 스타일 */
   cardStyle?: React.CSSProperties
+  /** Card 테두리 표시 여부 */
+  bordered?: boolean
 }
 
 /**
@@ -79,6 +81,7 @@ export function UnifiedFilterCard({
   loading = false,
   extra,
   cardStyle,
+  bordered,
 }: UnifiedFilterCardProps) {
   // 필터 한 줄 배치 (사이즈 조정으로 단일 행 표현)
   const filterRowFields = fields
@@ -153,8 +156,13 @@ export function UnifiedFilterCard({
 
   return (
     <Card
-      className="unified-filter-card unified-filter-card--single-row"
-      style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}
+      className={`unified-filter-card unified-filter-card--single-row${bordered === false ? ' unified-filter-card--no-border' : ''}`}
+      style={{
+        marginBottom: LAYOUT_CONSTANTS.margins.md,
+        ...cardStyle,
+        ...(bordered === false ? { border: 'none', boxShadow: 'none' } : {}),
+      }}
+      bordered={bordered}
     >
       <Row gutter={0} className="unified-filter-card__row" align="bottom">
         {filterRowFields.map(renderField)}
