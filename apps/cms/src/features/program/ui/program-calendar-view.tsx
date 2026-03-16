@@ -13,7 +13,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { ProgramMiniCalendar } from './program-mini-calendar'
 import { ProgramScheduleList } from './program-schedule-list'
-import { businessAreaOptions } from './program-list-constants'
+import { businessAreaOptions } from './constants/program-list-constants'
 import { SegmentedTab } from '@/shared/ui'
 import './program-calendar-view.css'
 

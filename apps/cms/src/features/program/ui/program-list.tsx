@@ -28,13 +28,10 @@ import {
 import {
   programTypes,
   programFormats,
-  statusOptions,
   businessAreaOptions,
   targetLevelOptions,
   categoryOptions,
-  economyParticipantTypeOptions,
-  economyTargetLevelOptions,
-} from './program-list-constants'
+} from './constants/program-list-constants'
 import { getCapacity, getApplicationCountByProgram } from '../lib/program-helpers'
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { ProgramLifecycleStatusCell } from '@/shared/components/program-lifecycle-status-cell'
@@ -48,6 +45,15 @@ import {
   removeFavoriteProgram,
   isFavoriteProgram,
 } from '@/entities/program/api/favorite-program-service'
+import {
+  programListFilterFields,
+  participantFilterFields,
+  economyFilterFields,
+} from './filters/program-list-filter-fields'
+import {
+  buildProgramListFilters,
+  buildParticipantFilters,
+} from './filters/program-list-filter-builder'
 import dayjs, { type Dayjs } from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -717,57 +723,8 @@ export function ProgramList({
     <div className="program-list-container">
       {isParticipant && (
         <UnifiedFilterCard
-          fields={[
-            {
-              key: 'search',
-              type: 'search',
-              label: '프로그램명',
-              placeholder: '프로그램명을 입력하세요',
-            },
-            {
-              key: 'dateRange',
-              type: 'dateRange',
-              label: '운영 기간',
-            },
-            {
-              key: 'target',
-              type: 'select',
-              label: '수강 대상',
-              placeholder: '전체',
-              options: [
-                { value: 'all', label: '전체' },
-                { value: 'individual', label: '개인 학생' },
-                { value: 'school', label: '학교(선생님)' },
-              ],
-            },
-            {
-              key: 'type',
-              type: 'select',
-              label: '교육 유형',
-              placeholder: '전체',
-              options: [
-                { value: 'all', label: '전체' },
-                ...programTypes.map(type => ({ value: type.value, label: type.label })),
-              ],
-            },
-            {
-              key: 'status',
-              type: 'select',
-              label: '진행 상태',
-              placeholder: '전체',
-              options: [
-                { value: 'all', label: '전체' },
-                ...statusOptions.map(status => ({ value: status.value, label: status.label })),
-              ],
-            },
-          ]}
-          filters={{
-            search: pendingUserFilters.search || '',
-            dateRange: pendingUserFilters.dateRange || periodRange,
-            target: pendingUserFilters.target || 'all',
-            type: pendingUserFilters.type || 'all',
-            status: pendingUserFilters.status || 'all',
-          }}
+          fields={participantFilterFields}
+          filters={buildParticipantFilters(pendingUserFilters, periodRange)}
           onFilterChange={(key, value) => {
             if (key === 'dateRange') {
               setPendingUserFilters(prev => ({
@@ -819,102 +776,8 @@ export function ProgramList({
           className={`program-list-content-wrapper${tableVariant === 'education' ? ' program-list-content-wrapper--no-shadow' : ''}`}
         >
           <UnifiedFilterCard
-            fields={
-              readOnlyLifecycleStatus
-                ? [
-                    {
-                      key: 'title',
-                      type: 'search',
-                      label: '프로그램명',
-                      placeholder: '프로그램명을 입력하세요',
-                    },
-                    {
-                      key: 'lifecycleStatusText',
-                      type: 'search',
-                      label: '프로그램 진행 현황',
-                      placeholder: '프로그램 진행 현황을 입력하세요',
-                    },
-                    {
-                      key: 'category',
-                      type: 'select',
-                      label: '참여자 유형',
-                      placeholder: '전체',
-                      options: economyParticipantTypeOptions,
-                    },
-                    {
-                      key: 'targetLevel',
-                      type: 'select',
-                      label: '교육 대상',
-                      placeholder: '전체',
-                      options: economyTargetLevelOptions,
-                    },
-                  ]
-                : [
-                    {
-                      key: 'lifecycleStatus',
-                      type: 'select',
-                      label: '프로그램 진행현황',
-                      placeholder: '전체',
-                      options: statusOptions,
-                    },
-                    {
-                      key: 'category',
-                      type: 'select',
-                      label: '수강자 유형',
-                      placeholder: '전체',
-                      options: categoryOptions,
-                    },
-                    {
-                      key: 'businessArea',
-                      type: 'select',
-                      label: '교육 분야',
-                      placeholder: '전체',
-                      options: businessAreaOptions,
-                    },
-                    {
-                      key: 'targetLevel',
-                      type: 'select',
-                      label: '교육 대상',
-                      placeholder: '전체',
-                      options: targetLevelOptions,
-                    },
-                    {
-                      key: 'type',
-                      type: 'select',
-                      label: '진행방식',
-                      placeholder: '전체',
-                      options: [
-                        { value: 'all', label: '전체' },
-                        ...programTypes.map(t => ({ value: t.value, label: t.label })),
-                      ],
-                    },
-                    {
-                      key: 'operationPeriod',
-                      type: 'dateRange',
-                      label: '운영기간',
-                    },
-                  ]
-            }
-            filters={
-              readOnlyLifecycleStatus
-                ? {
-                    title: pendingFilters.title,
-                    lifecycleStatusText: pendingFilters.lifecycleStatusText,
-                    category: pendingFilters.category,
-                    targetLevel: pendingFilters.targetLevel,
-                  }
-                : {
-                    lifecycleStatus: pendingFilters.lifecycleStatus,
-                    category: pendingFilters.category,
-                    businessArea: pendingFilters.businessArea,
-                    targetLevel: pendingFilters.targetLevel,
-                    type: pendingFilters.type,
-                    operationPeriod:
-                      pendingFilters.operationStartDate && pendingFilters.operationEndDate
-                        ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
-                        : null,
-                  }
-            }
+            fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
+            filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
             onFilterChange={(key, value) => {
               if (key === 'operationPeriod') {
                 const dates = value as [Dayjs, Dayjs] | null
@@ -1021,7 +884,7 @@ export function ProgramList({
                                 width: 100,
                                 align: 'center' as const,
                                 render: (_: unknown, record: Program) =>
-                                  `${getApplicationCountByProgram(record.id)}건`,
+                                  `${getApplicationCountByProgram(record.id)}`,
                               },
                               {
                                 title: '수강자 모집 인원',
@@ -1030,7 +893,7 @@ export function ProgramList({
                                 align: 'center' as const,
                                 render: (_: unknown, record: Program) => {
                                   const cap = getCapacity(record)
-                                  return cap !== undefined ? `${cap}건` : '-'
+                                  return cap !== undefined ? `${cap}` : '-'
                                 },
                               },
                               {
@@ -1179,7 +1042,7 @@ export function ProgramList({
                                   width: 100,
                                   align: 'center' as const,
                                   render: (_: unknown, record: Program) =>
-                                    `${getApplicationCountByProgram(record.id)}건`,
+                                    `${getApplicationCountByProgram(record.id)}`,
                                 },
                                 {
                                   title: '강사 모집 인원',
@@ -1190,8 +1053,8 @@ export function ProgramList({
                                     const cap = getCapacity(record)
                                     const current = record.instructors ?? 0
                                     if (cap !== undefined && cap !== null)
-                                      return `${current} / ${cap}건`
-                                    return `${current}건`
+                                      return `${current} / ${cap}`
+                                    return `${current}`
                                   },
                                 },
                                 {
@@ -1342,8 +1205,8 @@ export function ProgramList({
                                   render: (_: unknown, record: Program) => {
                                     const cap = getCapacity(record)
                                     const approved = record.approvedStudentCount ?? 0
-                                    if (cap !== undefined) return `${approved} / ${cap}건`
-                                    return `${approved}건`
+                                    if (cap !== undefined) return `${approved} / ${cap}`
+                                    return `${approved}`
                                   },
                                 },
                                 {
@@ -1355,8 +1218,8 @@ export function ProgramList({
                                     const cap = getCapacity(record)
                                     const current = record.instructors ?? 0
                                     if (cap !== undefined && cap !== null)
-                                      return `${current} / ${cap}건`
-                                    return `${current}건`
+                                      return `${current} / ${cap}`
+                                    return `${current}`
                                   },
                                 },
                                 {
@@ -1470,11 +1333,14 @@ export function ProgramList({
       ) : null}
 
       {!isParticipant && showCalendarView && viewMode === 'calendar' ? (
-        <ProgramCalendarView
-          programs={table.getRowModel().rows.map(row => row.original)}
-          loading={loading}
-          onProgramClick={onView}
-        />
+        <>
+          {children}
+          <ProgramCalendarView
+            programs={table.getRowModel().rows.map(row => row.original)}
+            loading={loading}
+            onProgramClick={onView}
+          />
+        </>
       ) : null}
 
       {/* 참가자용 목록 뷰 (카드로 감싸기) */}

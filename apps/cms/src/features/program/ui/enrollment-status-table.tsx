@@ -15,7 +15,7 @@ import {
   businessAreaOptions,
   targetLevelOptions,
   categoryOptions,
-} from './program-list-constants'
+} from './constants/program-list-constants'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토']

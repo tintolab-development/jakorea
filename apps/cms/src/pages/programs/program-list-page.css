@@ -1,86 +1,121 @@
 .program-list-widget-container,
 .program-progress-widget-container {
-    margin-bottom: 24px;
-    width: 100%;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
 /* 위젯 상단 액션 영역: 검색바 300×44 반응형, 버튼 160×44 (AppButton size=filter) */
 .program-list-page__widget-header-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-12);
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  flex-wrap: wrap;
 }
 
 .program-list-page__widget-header-actions .labeled-search-input {
-    margin: 0;
-    min-width: 200px;
-    width: 300px;
+  margin: 0;
+  min-width: 200px;
+  width: 300px;
 }
 
 .program-list-page__widget-header-actions .labeled-search-input .ant-input-affix-wrapper,
 .program-list-page__widget-header-actions .labeled-search-input .labeled-search-input__input {
-    width: 100% !important;
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
-    box-sizing: border-box;
+  width: 100% !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box;
 }
 
 .program-list-page__widget-header-actions .labeled-search-input .ant-input {
-    height: 100% !important;
-    min-height: 0 !important;
-    line-height: 1 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  line-height: 1 !important;
 }
 
 @media (max-width: 1200px) {
-    .program-list-page__widget-header-actions .labeled-search-input {
-        width: 280px;
-    }
+  .program-list-page__widget-header-actions .labeled-search-input {
+    width: 280px;
+  }
 }
 
 @media (max-width: 992px) {
-    .program-list-page__widget-header-actions .labeled-search-input {
-        width: 260px;
-    }
+  .program-list-page__widget-header-actions .labeled-search-input {
+    width: 260px;
+  }
 }
 
 @media (max-width: 768px) {
-    .program-list-page__widget-header-actions .labeled-search-input {
-        width: 100%;
-        min-width: 200px;
-    }
+  .program-list-page__widget-header-actions .labeled-search-input {
+    width: 100%;
+    min-width: 200px;
+  }
 
-    .program-list-page__widget-header-actions .labeled-search-input .ant-input-affix-wrapper,
-    .program-list-page__widget-header-actions .labeled-search-input .labeled-search-input__input {
-        height: var(--filter-control-height, 40px) !important;
-        min-height: var(--filter-control-height, 40px) !important;
-    }
+  .program-list-page__widget-header-actions .labeled-search-input .ant-input-affix-wrapper,
+  .program-list-page__widget-header-actions .labeled-search-input .labeled-search-input__input {
+    height: var(--filter-control-height, 40px) !important;
+    min-height: var(--filter-control-height, 40px) !important;
+  }
 }
 
 /* 뷰 전환 버튼 스타일 (기본 상태가 활성화된 스타일) */
 .program-view-mode-button.ant-btn {
-    background-color: var(--color-program-light) !important;
-    border-color: var(--color-brand-primary) !important;
-    color: var(--color-brand-primary) !important;
-    transition: all 0.2s !important;
+  background-color: var(--color-program-light) !important;
+  border-color: var(--color-brand-primary) !important;
+  color: var(--color-brand-primary) !important;
+  transition: all 0.2s !important;
 }
 
 .program-view-mode-button.ant-btn:hover {
-    background-color: #d0e8e8 !important;
-    border-color: var(--color-brand-primary-hover) !important;
-    color: var(--color-brand-primary-hover) !important;
+  background-color: #d0e8e8 !important;
+  border-color: var(--color-brand-primary-hover) !important;
+  color: var(--color-brand-primary-hover) !important;
 }
 
 .program-view-mode-button.ant-btn:focus {
-    background-color: #d0e8e8 !important;
-    border-color: var(--color-brand-primary-hover) !important;
-    color: var(--color-brand-primary-hover) !important;
+  background-color: #d0e8e8 !important;
+  border-color: var(--color-brand-primary-hover) !important;
+  color: var(--color-brand-primary-hover) !important;
 }
 
 .program-view-mode-button .anticon {
-    color: var(--color-brand-primary) !important;
+  color: var(--color-brand-primary) !important;
 }
 
 .program-view-mode-button:hover .anticon {
-    color: var(--color-brand-primary-hover) !important;
+  color: var(--color-brand-primary-hover) !important;
+}
+
+/* 필터 정보 영역 (전체 프로그램 + 건수 + 액션 버튼) */
+.program-list-page__filter-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 0 28px;
+}
+
+.program-list-page__filter-info-texts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.program-list-page__filter-info-title {
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.program-list-page__filter-info-count {
+  color: var(--color-text-secondary);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.program-list-page__divider-wrapper {
+  padding: 12px 20px 32px 20px;
 }

@@ -2,7 +2,7 @@
  * 프로그램 목록 페이지
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Tabs } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
@@ -14,6 +14,10 @@ import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
+import {
+  PROGRAM_PROGRESS_STAGE_LABELS,
+  type ProgramProgressStageKey,
+} from '@/shared/config/program-progress-stages'
 import type { Program, ProgramCategory, ProgramLifecycleStatus } from '@/types/domain'
 
 // Local Hooks & Components
@@ -23,6 +27,7 @@ import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
 
 import './program-list-page.css'
+import { Divider } from '@/shared/components/divider'
 
 export function ProgramListPage() {
   const navigate = useNavigate()
@@ -59,8 +64,37 @@ export function ProgramListPage() {
 
   // 2. Local State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
-  const [, setDisplayCount] = useState<number | null>(null)
+  const [displayCount, setDisplayCount] = useState<number | null>(null)
   const [, setHasListFilters] = useState(false)
+
+  // 헤더 타이틀 계산: statusFilter (위젯 클릭) → 모집단계 라벨 → "전체 프로그램"
+  const headerTitle = useMemo(() => {
+    if (programType === 'economy' && statusFilter) {
+      if (statusFilter === 'economy_scheduled') return '예정 프로그램'
+      if (statusFilter === 'economy_in_progress') return '진행 중인 프로그램'
+      if (statusFilter === 'economy_completed') return '완료 프로그램'
+    }
+
+    // 7단계/교육 모집단계 매핑
+    if (statusFilter) {
+      const stageKey = Object.entries(PROGRAM_PROGRESS_STAGE_LABELS).find(([key, _label]) => {
+        // config에서 lifecycleStatus 매핑 찾기
+        const mapping = {
+          studentRecruitment: 'recruiting_students',
+          instructorRecruitment: 'recruiting_instructors',
+          matchingCompleted: 'matching_completed',
+          educationAfterTextbook: 'education_after_textbook',
+          educationCompleted: 'education_completed',
+          documentProcessingCompleted: 'document_processing_completed',
+        }
+        return mapping[key as ProgramProgressStageKey] === statusFilter
+      })?.[0] as ProgramProgressStageKey | undefined
+
+      if (stageKey) return PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
+    }
+
+    return '전체 프로그램'
+  }, [statusFilter, programType])
 
   // 뷰 모드 관리
   const viewModeFromUrl = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -172,9 +206,7 @@ export function ProgramListPage() {
       {/* 위젯 영역 */}
       {isAdmin && (
         <div className="program-progress-widget-container">
-          <ProgramStatusWidget
-            title={null}
-          />
+          <ProgramStatusWidget title={null} />
         </div>
       )}
 
@@ -235,13 +267,27 @@ export function ProgramListPage() {
           setHasListFilters(hasActiveFilters)
         }}
         effectiveLifecycleStatus={
-          programType === 'economy' ? undefined : (statusFilter as ProgramLifecycleStatus | null)
+          programType === 'economy'
+            ? undefined
+            : statusFilter === 'matching_completed'
+              ? 'education_before_textbook'
+              : (statusFilter as ProgramLifecycleStatus | null)
         }
       >
-        {isAdmin &&
-          (programType === 'education' || programType === 'economy') &&
-          statusFilter === null && (
-            <div className="program-list-page__widget-header-actions" style={{ marginBottom: 16 }}>
+        <div className="program-list-page__divider-wrapper">
+          {viewMode === 'list' && <Divider />}
+        </div>
+        {isAdmin && (programType === 'education' || programType === 'economy') && (
+          <div className="program-list-page__filter-info">
+            <div className="program-list-page__filter-info-texts">
+              <span className="program-list-page__filter-info-title">{headerTitle}</span>
+              {displayCount !== null && (
+                <span className="program-list-page__filter-info-count">
+                  {displayCount.toLocaleString()}건
+                </span>
+              )}
+            </div>
+            <div className="program-list-page__widget-header-actions">
               <AppButton
                 variant="cancel"
                 size="filter"
@@ -257,7 +303,8 @@ export function ProgramListPage() {
                 </AppButton>
               )}
             </div>
-          )}
+          </div>
+        )}
       </ProgramList>
 
       <ProgramListModals
