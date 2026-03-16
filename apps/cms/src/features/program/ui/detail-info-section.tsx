@@ -17,6 +17,7 @@ import {
   DEFAULT_RECRUITMENT_GUIDE,
   DEFAULT_LEARNING_SUPPORT,
   DEFAULT_ADDITIONAL_HTML,
+  getThumbnailFilename,
 } from './program-detail-info-constants'
 
 const { TextArea } = Input
@@ -28,6 +29,8 @@ export interface DetailInfoSectionProps {
   form?: UseFormReturn<ProgramDetailEditFormValues>
   /** 수정 모드에서 저장 시 추가 내용 HTML 수집용 getter 등록 */
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
+  /** 참여자 정보 탭 등에서 상세 정보 상단에 썸네일 이미지 행 노출 */
+  showThumbnail?: boolean
 }
 
 export function DetailInfoSection({
@@ -35,6 +38,7 @@ export function DetailInfoSection({
   isEditMode = false,
   form,
   onRegisterGetAdditionalContentHtml,
+  showThumbnail = false,
 }: DetailInfoSectionProps) {
   const [editorOpen, setEditorOpen] = useState(false)
   useEffect(() => {
@@ -71,8 +75,11 @@ export function DetailInfoSection({
     ? (form.watch('attachmentFileNames') ?? [])
     : (program.attachmentFileNames ?? [])
 
+  const thumbnailUrl = program.keyVisualImage || program.posterImage
+  const thumbnailFilename = thumbnailUrl ? getThumbnailFilename(thumbnailUrl) : ''
+
   return (
-    <section className="program-detail-info-tab__section">
+    <>
       <div className="program-detail-info-tab__section-header-row">
         <h3 className="program-detail-info-tab__section-title">상세 정보</h3>
         <p className="program-detail-info-tab__detail-note">
@@ -86,6 +93,45 @@ export function DetailInfoSection({
             <col />
           </colgroup>
           <tbody>
+            {showThumbnail && (
+              <tr>
+                <th>썸네일 이미지</th>
+                <td className="program-detail-info-tab__cell--thumbnail">
+                  <div className="program-detail-info-tab__thumbnail-wrap">
+                    <div className="program-detail-info-tab__thumbnail-row">
+                      {thumbnailUrl ? (
+                        <Image
+                          src={thumbnailUrl}
+                          alt={program.title}
+                          className="program-detail-info-tab__thumbnail-img"
+                          preview={{ mask: '확대 보기' }}
+                        />
+                      ) : (
+                        <div className="program-detail-info-tab__thumbnail-placeholder-box">
+                          이미지 없음
+                        </div>
+                      )}
+                      <div className="program-detail-info-tab__thumbnail-meta">
+                        <span className="program-detail-info-tab__thumbnail-filename">
+                          {thumbnailFilename || '파일명.jpg'}
+                        </span>
+                        <FileSelectField
+                          accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                          disabled={!isEditMode}
+                          buttonLabel="파일 선택"
+                          className="program-detail-info-tab__file-select"
+                          fileNames={[]}
+                          guideLines={[
+                            '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+                            '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+                          ]}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
             <tr>
               <th>
                 프로그램 설명{isEditMode ? <span className="program-detail-info-tab__required">*</span> : null}
@@ -186,6 +232,7 @@ export function DetailInfoSection({
                         }
                         alt="추가 내용"
                         className="program-detail-info-tab__additional-image"
+                        preview={{ mask: '확대 보기' }}
                         fallback="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
                       />
                     </div>
@@ -206,12 +253,12 @@ export function DetailInfoSection({
                   accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                   multiple
                   disabled={!isEditMode}
-                  buttonLabel={isEditMode ? '파일 선택' : '조회'}
+                  buttonLabel="파일 선택"
                   className={isEditMode ? 'file-select-field--edit' : ''}
                   fileNames={displayFileNames}
                   guideLines={[
-                    '파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-                    '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+                    '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+                    '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
                   ]}
                   onFilesChange={
                     isFormEdit
@@ -241,6 +288,6 @@ export function DetailInfoSection({
           </tbody>
         </table>
       </div>
-    </section>
+    </>
   )
 }

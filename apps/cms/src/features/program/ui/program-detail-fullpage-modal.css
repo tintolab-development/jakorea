@@ -1,0 +1,331 @@
+/**
+ * 프로그램 상세 풀페이지 모달
+ * LNB(다크 배경) + 메인(헤더 타이틀+닫기, 탭, 콘텐츠) 레이아웃
+ * 스크린샷 기준: 모달 헤더 없음, LNB 다크 UI, 선택 항목 연한 파란 배경
+ */
+
+.program-detail-fullpage-modal .teal-header-modal__body {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* 클릭 시 포커스 보더 제거 */
+.program-detail-fullpage-modal button:focus,
+.program-detail-fullpage-modal button:focus-visible,
+.program-detail-fullpage-modal .ant-btn:focus,
+.program-detail-fullpage-modal .ant-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.program-detail-fullpage-modal__layout {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* LNB: 배경 #F5F6F7, JA Korea 로고, 메뉴 아이콘+드롭다운 */
+.program-detail-fullpage-modal__lnb {
+  flex-shrink: 0;
+  width: 240px;
+  background: #F5F6F7;
+  display: flex;
+  flex-direction: column;
+}
+
+.program-detail-fullpage-modal__lnb-brand {
+  padding: 30px 44px 30px;
+  border-bottom: 1px solid var(--color-border-secondary, #e8e8e8);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.program-detail-fullpage-modal__lnb-brand svg {
+  display: block;
+  max-width: 100%;
+  width: 182px;
+  height: auto;
+  aspect-ratio: 182 / 92;
+  object-fit: contain;
+}
+
+.program-detail-fullpage-modal__lnb-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-8) 0 20px;
+}
+
+.program-detail-fullpage-modal__lnb-list > li {
+  margin-bottom: 8px;
+}
+
+.program-detail-fullpage-modal__lnb-list > li:last-child {
+  margin-bottom: 0;
+}
+
+/* 카테고리 영역 padding vertical 10, left 20, right 18 / 아이콘-타이틀 gap 8 */
+.program-detail-fullpage-modal__lnb-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 18px 10px 20px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+  color: var(--default-BK, #3D3D3D);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  gap: 8px;
+}
+
+/* 호버 시 배경만 유지, 색상은 변경 없음 */
+.program-detail-fullpage-modal__lnb-item:hover {
+  background: transparent;
+}
+
+.program-detail-fullpage-modal__lnb-item--active {
+  background: transparent;
+  color: var(--JA-mint-01, #01A1AF);
+}
+
+.program-detail-fullpage-modal__lnb-item--active:hover {
+  color: var(--JA-mint-01, #01A1AF);
+}
+
+.program-detail-fullpage-modal__lnb-item--active:hover .program-detail-fullpage-modal__lnb-icon {
+  color: var(--JA-mint-01, #01A1AF);
+}
+
+.program-detail-fullpage-modal__lnb-item--active .program-detail-fullpage-modal__lnb-icon {
+  color: var(--JA-mint-01, #01A1AF);
+}
+
+.program-detail-fullpage-modal__lnb-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.program-detail-fullpage-modal__lnb-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.program-detail-fullpage-modal__lnb-item-label {
+  flex: 1;
+}
+
+.program-detail-fullpage-modal__lnb-item-arrow {
+  font-size: 10px;
+  opacity: 0.7;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+/* LNB 제외한 풀페이지 모달 전체(헤더+탭+콘텐츠)가 하나의 스크롤 영역 */
+.program-detail-fullpage-modal__main {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--color-bg-base);
+}
+
+/* 메인 헤더: 프로그램명 + 우측 닫기(X) / padding-left 60, height 90 */
+.program-detail-fullpage-modal__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 60px;
+  padding-right: var(--spacing-24);
+  height: 90px;
+  gap: var(--spacing-16);
+}
+
+.program-detail-fullpage-modal__title {
+  margin: 0;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+  color: var(--default-BK, #3D3D3D);
+  flex: 1;
+  min-width: 0;
+}
+
+.program-detail-fullpage-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--radius-4);
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.program-detail-fullpage-modal__close:hover {
+  background: var(--color-overlay-light, rgba(0, 0, 0, 0.04));
+  color: var(--color-text-primary);
+}
+
+/* 탭 영역: 스펙 program-detail-fullpage-modal-tabs-spec.md §1 — 좌 52px, 디바이더 없음 */
+.program-detail-fullpage-modal__tabs-row {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--spacing-16) var(--spacing-24) 0 52px;
+  gap: var(--spacing-16);
+  min-height: 0;
+}
+
+.program-detail-fullpage-modal__tabs {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+}
+
+.program-detail-fullpage-modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-shrink: 0;
+}
+
+/* 탭 버튼: 스펙 — flex, padding 6 16 10 16, center/flex-start, gap 10, 활성 시 하단 보더 */
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab {
+  display: flex;
+  padding: 6px 16px 10px 16px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: #7D7D7D;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:hover {
+  color: var(--color-text-primary);
+}
+
+/* 활성 탭 — 동일 specificity로 base 오버라이드 (색상·보더 적용되도록) */
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab.program-detail-fullpage-modal__tab--active {
+  color: var(--JA-mint-01, #01A1AF);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  border-bottom: 2px solid var(--JA-mint-01, #01A1AF);
+}
+
+.program-detail-fullpage-modal__tab-label {
+  display: inline-block;
+}
+
+.program-detail-fullpage-modal__content {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  padding: var(--spacing-24);
+}
+
+/* 공통 정보 탭일 때 content 패딩 제거 → info-tab 래퍼가 32px 52px 담당 */
+.program-detail-fullpage-modal__content:has(> .program-detail-fullpage-modal__info-tab) {
+  padding: 0;
+}
+
+.program-detail-fullpage-modal__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* 공통 정보 탭: 각 항목을 모두 감싸는 래퍼 패딩 유지 */
+.program-detail-fullpage-modal__info-tab {
+  padding: 32px 52px;
+}
+
+/* 참여자 정보 탭: 항목별 갭 32px (공통 정보 탭과 동일하게 margin-top) */
+.program-detail-fullpage-modal__info-tab-block {
+  margin-top: 32px;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* 항목 타이틀과 테이블 사이 갭 10px (공통 정보 탭과 동일) */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__section-title {
+  margin-bottom: 10px;
+}
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__section-header-row {
+  margin-bottom: 10px;
+}
+
+/* 기본 정보: 최초 등록일·마지막 수정일 테이블만 분리, 하위 16px 갭 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table-wrapper--dates {
+  margin-bottom: 16px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table-wrapper--top {
+  margin-bottom: 16px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table-wrapper--sub {
+  margin-top: 0;
+}
+
+/* 기본 정보 / 교육 커리큘럼 / 사업 KPI 목표 블록: 항목당 32px gap, 디바이더 없음 */
+.program-detail-fullpage-modal__info-tab > .program-detail-info-tab__section-title--block-start,
+.program-detail-fullpage-modal__info-tab > .program-kpi-target-section {
+  margin-top: 32px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.program-detail-fullpage-modal__tab-panel {
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+}

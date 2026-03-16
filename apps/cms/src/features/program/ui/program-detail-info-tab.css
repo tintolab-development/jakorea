@@ -21,25 +21,26 @@
     border-top: 1px solid var(--color-border-light);
 }
 
-/* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬, 수직 중앙 맞춤 */
+/* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬, 좌측 정렬 */
 .program-detail-info-tab__section-header-row {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: baseline;
     gap: var(--spacing-12);
     margin-bottom: var(--spacing-16);
+    text-align: left;
 }
 
 .program-detail-info-tab__section-header-row .program-detail-info-tab__section-title {
     margin: 0;
     line-height: 1.4;
-    vertical-align: middle;
+    text-align: left;
 }
 
 .program-detail-info-tab__section-header-row .program-detail-info-tab__detail-note {
     margin: 0;
     line-height: 1.4;
-    vertical-align: middle;
+    text-align: left;
 }
 
 .program-detail-info-tab__section-title {
@@ -62,8 +63,19 @@
     overflow: hidden;
 }
 
+/* 최초 등록일·마지막 수정일 전용 테이블 — 하위 16px 갭 */
+.program-detail-info-tab__table-wrapper--dates {
+    margin-bottom: 16px;
+}
+
+/* 상단 테이블(대표 프로그램명 등) 하위 16px 갭 */
+.program-detail-info-tab__table-wrapper--top {
+    margin-bottom: 16px;
+}
+
+/* 하위 테이블: 상단 테이블과의 갭은 --top의 margin-bottom으로 충당 */
 .program-detail-info-tab__table-wrapper--sub {
-    margin-top: var(--spacing-24);
+    margin-top: 0;
 }
 
 /* 기본 정보 테이블 — 라벨: #F9F9F9·가운데정렬·굵게, 값: 흰색·좌정렬, 구분선 #E0E0E0 */
@@ -124,6 +136,50 @@
     width: auto;
 }
 
+/* 참여자 모집 현황: 배지 없이 텍스트만, 상태별 대표 색상 유지 */
+.program-detail-info-tab__recruitment-status-text--recruiting {
+    color: var(--color-badge-recruiting-text);
+}
+.program-detail-info-tab__recruitment-status-text--scheduled {
+    color: var(--color-badge-scheduled-text);
+}
+.program-detail-info-tab__recruitment-status-text--closed {
+    color: var(--color-badge-closed-text);
+}
+
+/* 기본 정보 — 프로그램 진행 상태: 배지 제외, 대표 색상 텍스트만 (스펙: Pretendard 16px 500 150%) */
+.program-detail-info-tab__lifecycle-status-text {
+    font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+}
+
+/* 그룹1: 모집 예정 — 대표색 #E44970 */
+.program-detail-info-tab__lifecycle-status-text--planned,
+.program-detail-info-tab__lifecycle-status-text--instructor-recruitment-planned,
+.program-detail-info-tab__lifecycle-status-text--volunteer-recruitment-planned,
+.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-planned {
+    color: #E44970;
+}
+
+/* 그룹2: 모집 중 — 대표색 #017EAF */
+.program-detail-info-tab__lifecycle-status-text--recruiting-students,
+.program-detail-info-tab__lifecycle-status-text--recruiting-instructors,
+.program-detail-info-tab__lifecycle-status-text--recruiting-volunteers,
+.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruiting {
+    color: #017EAF;
+}
+
+/* 그룹3: 모집 완료 — 대표색 #464646 */
+.program-detail-info-tab__lifecycle-status-text--matching-completed,
+.program-detail-info-tab__lifecycle-status-text--education-completed,
+.program-detail-info-tab__lifecycle-status-text--document-processing-completed,
+.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-completed {
+    color: #464646;
+}
+
 /* 교육 커리큘럼 테이블 — 기본 정보와 동일 스타일(라벨 200px, #F9F9F9, 구분선 #E0E0E0) */
 .program-detail-info-tab__curriculum-table {
     width: 100%;
@@ -182,12 +238,16 @@
     margin: 0 12px;
 }
 
-/* 썸네일 — 86×86 이미지, 오른쪽에 파일명·삭제(X)·버튼·안내 (디자이너 시안: 패딩·수직 정렬·버튼 스타일) */
+/* 썸네일 이미지 td: 패딩 12px */
+.program-detail-info-tab__cell--thumbnail {
+    padding: 12px;
+}
+
+/* 썸네일 — 86×86 이미지, 오른쪽에 파일명·삭제(X)·버튼·안내 (디자이너 시안: 수직 정렬·버튼 스타일) */
 .program-detail-info-tab__thumbnail-wrap {
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding: 8px 0;
 }
 
 .program-detail-info-tab__thumbnail-row {
@@ -375,18 +435,33 @@
     min-height: 120px;
 }
 
+/* 추가 내용 td 이미지 래퍼: 확대보기 마스크 영역까지 200px로 제한 */
 .program-detail-info-tab__additional-image-wrap {
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    max-width: 100%;
+    display: inline-block;
+    max-width: 200px;
+    max-height: 200px;
+    line-height: 0;
+}
+.program-detail-info-tab__additional-image-wrap .ant-image {
+    display: block;
+    max-width: 200px;
+    max-height: 200px;
+}
+.program-detail-info-tab__additional-image-wrap .ant-image-img {
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: contain;
 }
 
+/* 추가 내용 td 이미지: 미리보기 클릭 시 확대 */
 .program-detail-info-tab__additional-image {
     display: block;
-    max-width: 100%;
+    max-width: 200px;
+    max-height: 200px;
+    width: auto;
     height: auto;
     object-fit: contain;
+    cursor: pointer;
 }
 
 /* Toast UI Editor getHTML() 출력용 — 뷰어와 동일 스펙(제목/문단/리스트/이미지 등) */
