@@ -52,19 +52,20 @@ export interface ApplicationPath {
   updatedAt: DateValue
 }
 
-// 프로그램 진행 워크플로우 상태 (디자이너 스펙 9태그: 예정 3 + 모집 중 3 + 완료 3)
+// 프로그램 진행 워크플로우 상태 (12개: 예정 4 + 모집 중 4 + 완료 4, 참여자·강사 일정 겹침 포함)
 export type ProgramLifecycleStatus =
   | 'planned' // 참여자 모집 예정
   | 'instructor_recruitment_planned' // 강사 모집 예정
   | 'volunteer_recruitment_planned' // 봉사자 모집 예정
+  | 'participant_instructor_recruitment_planned' // 참여자&교육자 모집 예정
   | 'recruiting_students' // 참여자 모집 중
   | 'recruiting_instructors' // 강사 모집 중
   | 'recruiting_volunteers' // 봉사자 모집 중
+  | 'participant_instructor_recruiting' // 참여자&교육자 모집 중
   | 'matching_completed' // 참여자 모집 완료
-  | 'education_before_textbook' // 강사 모집 완료 (교재 발송 전)
-  | 'education_after_textbook' // 강사 모집 완료 (교재 발송 후)
   | 'education_completed' // 강사 모집 완료
   | 'document_processing_completed' // 봉사자 모집 완료
+  | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
 // 프로그램
 export interface Program {

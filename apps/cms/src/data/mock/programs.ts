@@ -1207,10 +1207,11 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const recruitingInstructorsIndices = [0, 1, 8, 15, 22] // 강사 모집중 5개 (0은 상세 mock)
   const otherLifecycleStatuses: ProgramLifecycleStatus[] = [
     'matching_completed',
-    'education_before_textbook',
-    'education_after_textbook',
     'education_completed',
     'document_processing_completed',
+    'participant_instructor_recruitment_planned',
+    'participant_instructor_recruiting',
+    'participant_instructor_recruitment_completed',
   ]
   const otherIndices = [3, 4, 5, 6, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 29]
   const otherPos = otherIndices.indexOf(index)
@@ -1223,9 +1224,8 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const baseStatus =
     lifecycleStatus === 'document_processing_completed'
       ? ('completed' as const)
-      : ['education_before_textbook', 'education_after_textbook', 'education_completed'].includes(
-            lifecycleStatus
-          )
+      : lifecycleStatus === 'education_completed' ||
+          lifecycleStatus === 'participant_instructor_recruitment_completed'
         ? ('active' as const)
         : ('pending' as const)
 

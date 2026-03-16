@@ -28,10 +28,9 @@ export function ProgramScheduleSummaryCard({
     (lifecycleStatus &&
       ![
         'matching_completed',
-        'education_before_textbook',
-        'education_after_textbook',
         'education_completed',
         'document_processing_completed',
+        'participant_instructor_recruitment_completed',
       ].includes(lifecycleStatus))
   ) {
     return null

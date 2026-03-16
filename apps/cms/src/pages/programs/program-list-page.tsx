@@ -208,9 +208,7 @@ export function ProgramListPage() {
   const statusFilter = useMemo<ProgramLifecycleStatus | null>(() => {
     const value = params.status as ProgramLifecycleStatus | null
     const validStatuses = new Set(programLifecycleStatusConfig.order)
-    if (value && (value === 'education_before_textbook' || validStatuses.has(value))) {
-      return value === 'education_before_textbook' ? 'matching_completed' : value
-    }
+    if (value && validStatuses.has(value)) return value
     if (isStudentRecruitmentRoute) return 'recruiting_students'
     if (isInstructorRecruitmentRoute) return 'recruiting_instructors'
     return null
@@ -243,21 +241,9 @@ export function ProgramListPage() {
       filtered = filtered.filter(program => volunteerProgramIds.has(program.id))
     }
 
-    // status 쿼리 파라미터 필터링 (6단계: 교재 준비 중 = matching+before, 교육 진행 중 = before+after)
+    // status 쿼리 파라미터 필터링 (5단계)
     if (statusFilter) {
-      if (statusFilter === 'matching_completed') {
-        filtered = filtered.filter(
-          program =>
-            program.lifecycleStatus === 'matching_completed' ||
-            program.lifecycleStatus === 'education_before_textbook'
-        )
-      } else if (statusFilter === 'education_after_textbook') {
-        filtered = filtered.filter(
-          program => program.lifecycleStatus === 'education_after_textbook'
-        )
-      } else {
-        filtered = filtered.filter(program => program.lifecycleStatus === statusFilter)
-      }
+      filtered = filtered.filter(program => program.lifecycleStatus === statusFilter)
     }
 
     // 강사용일 경우 신청 가능한 프로그램 및 진행 단계 프로그램 표시 (7단계)
@@ -269,10 +255,11 @@ export function ProgramListPage() {
           'recruiting_students',
           'recruiting_instructors',
           'matching_completed',
-          'education_before_textbook',
-          'education_after_textbook',
           'education_completed',
           'document_processing_completed',
+          'participant_instructor_recruitment_planned',
+          'participant_instructor_recruiting',
+          'participant_instructor_recruitment_completed',
         ]
         return available.includes(status)
       })

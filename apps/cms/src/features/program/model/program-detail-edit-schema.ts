@@ -15,14 +15,15 @@ const programLifecycleStatusEnum = z.enum([
   'planned',
   'instructor_recruitment_planned',
   'volunteer_recruitment_planned',
+  'participant_instructor_recruitment_planned',
   'recruiting_students',
   'recruiting_instructors',
   'recruiting_volunteers',
+  'participant_instructor_recruiting',
   'matching_completed',
-  'education_before_textbook',
-  'education_after_textbook',
   'education_completed',
   'document_processing_completed',
+  'participant_instructor_recruitment_completed',
 ])
 
 const roundEditSchema = z.object({

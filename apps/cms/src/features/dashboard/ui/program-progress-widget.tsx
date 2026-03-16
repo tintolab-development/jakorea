@@ -115,24 +115,14 @@ export function ProgramProgressWidget({
 
     const stageItems: ProgressStageItem[] = PROGRAM_PROGRESS_STAGE_ORDER.map(
       (stageKey: ProgramProgressStageKey) => {
-        let count: number
-        if (stageKey === 'matchingCompleted') {
-          count = progress.matchingCompleted + progress.educationBeforeTextbook
-        } else if (stageKey === 'educationAfterTextbook') {
-          count = progress.educationAfterTextbook
-        } else {
-          count = progress[stageKey]
-        }
+        const count = progress[stageKey]
         const label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
         const showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
         const lifecycleStatus = STAGE_TO_LIFECYCLE[stageKey]
 
         const isSelectedByPath = selectedFromPath === stageKey
         const isSelectedByStatus =
-          selectedFromPath === null &&
-          (selectedStatus === lifecycleStatus ||
-            (stageKey === 'matchingCompleted' &&
-              selectedStatus === 'education_before_textbook'))
+          selectedFromPath === null && selectedStatus === lifecycleStatus
 
         return {
           key: stageKey,
@@ -184,9 +174,7 @@ export function ProgramProgressWidget({
     }
     const stageKey = key as ProgramProgressStageKey
     const current = nextParams.get('status') as ProgramLifecycleStatus | null
-    const isSelected =
-      current === (STAGE_TO_LIFECYCLE[stageKey] ?? null) ||
-      (stageKey === 'matchingCompleted' && current === 'education_before_textbook')
+    const isSelected = current === (STAGE_TO_LIFECYCLE[stageKey] ?? null)
     if (isSelected) {
       nextParams.delete('status')
     } else {

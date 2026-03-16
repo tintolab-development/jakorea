@@ -25,7 +25,7 @@ export interface ProgramProgressSummary {
   }
 }
 
-/** FR-C01: 7단계 프로그램 진행 현황 */
+/** FR-C01: 5단계 프로그램 진행 현황 (9개 lifecycleStatus 반영) */
 export interface ProgramProgress7Stage {
   /** 참여자 모집 중 */
   studentRecruitment: number
@@ -33,10 +33,6 @@ export interface ProgramProgress7Stage {
   instructorRecruitment: number
   /** 참여자 모집 완료 (매칭 완료) */
   matchingCompleted: number
-  /** 강사 모집 완료 (교재 발송 전) */
-  educationBeforeTextbook: number
-  /** 강사 모집 완료 (교재 발송 후) */
-  educationAfterTextbook: number
   /** 강사 모집 완료 */
   educationCompleted: number
   /** 봉사자 모집 완료 */
@@ -92,20 +88,17 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
       case 'planned':
       case 'instructor_recruitment_planned':
       case 'volunteer_recruitment_planned':
+      case 'participant_instructor_recruitment_planned':
         break
       case 'recruiting_students':
       case 'recruiting_instructors':
       case 'recruiting_volunteers':
+      case 'participant_instructor_recruiting':
         byStatus.RECEIVED++
         break
       case 'matching_completed':
+      case 'participant_instructor_recruitment_completed':
         byStatus.MATCHING_COMPLETED++
-        break
-      case 'education_before_textbook':
-        byStatus.MATERIAL_PREPARING++
-        break
-      case 'education_after_textbook':
-        byStatus.MATERIAL_SHIPPED++
         break
       case 'education_completed':
         byStatus.IN_PROGRESS++
@@ -138,8 +131,6 @@ export async function getProgramProgress7Stage(options?: {
     studentRecruitment: 0,
     instructorRecruitment: 0,
     matchingCompleted: 0,
-    educationBeforeTextbook: 0,
-    educationAfterTextbook: 0,
     educationCompleted: 0,
     documentProcessingCompleted: 0,
   }
@@ -152,14 +143,15 @@ export async function getProgramProgress7Stage(options?: {
       case 'recruiting_instructors':
         stages.instructorRecruitment++
         break
+      case 'participant_instructor_recruiting':
+        stages.studentRecruitment++
+        stages.instructorRecruitment++
+        break
       case 'matching_completed':
         stages.matchingCompleted++
         break
-      case 'education_before_textbook':
-        stages.educationBeforeTextbook++
-        break
-      case 'education_after_textbook':
-        stages.educationAfterTextbook++
+      case 'participant_instructor_recruitment_completed':
+        stages.matchingCompleted++
         break
       case 'education_completed':
         stages.educationCompleted++
@@ -168,7 +160,7 @@ export async function getProgramProgress7Stage(options?: {
         stages.documentProcessingCompleted++
         break
       default:
-        break // planned 등 7단계 외 상태는 집계 제외
+        break // planned 등 5단계 외 상태는 집계 제외
     }
   })
 
@@ -190,8 +182,6 @@ export async function getProgramProgress7StageByProgramId(
     studentRecruitment: 0,
     instructorRecruitment: 0,
     matchingCompleted: 0,
-    educationBeforeTextbook: 0,
-    educationAfterTextbook: 0,
     educationCompleted: 0,
     documentProcessingCompleted: 0,
   }
@@ -201,6 +191,7 @@ export async function getProgramProgress7StageByProgramId(
       case 'planned':
       case 'instructor_recruitment_planned':
       case 'volunteer_recruitment_planned':
+      case 'participant_instructor_recruitment_planned':
         break
       case 'recruiting_students':
         stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 1
@@ -209,12 +200,13 @@ export async function getProgramProgress7StageByProgramId(
       case 'recruiting_volunteers':
         stages.instructorRecruitment = mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor').length || 1
         break
-      case 'matching_completed':
-      case 'education_before_textbook':
-        stages.matchingCompleted = mockMatchings.filter(m => m.programId === programId).length || 1
+      case 'participant_instructor_recruiting':
+        stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 1
+        stages.instructorRecruitment = mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor').length || 1
         break
-      case 'education_after_textbook':
-        stages.educationAfterTextbook = 1
+      case 'matching_completed':
+      case 'participant_instructor_recruitment_completed':
+        stages.matchingCompleted = mockMatchings.filter(m => m.programId === programId).length || 1
         break
       case 'education_completed':
         stages.educationCompleted = 1
