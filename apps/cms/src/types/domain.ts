@@ -52,7 +52,7 @@ export interface ApplicationPath {
   updatedAt: DateValue
 }
 
-// 프로그램 진행 워크플로우 상태 (12개: 예정 4 + 모집 중 4 + 완료 4, 참여자·강사 일정 겹침 포함)
+// 프로그램 진행 워크플로우 상태 (15개: 예정 4 + 모집 중 4 + 진행 중 3 + 완료 4)
 export type ProgramLifecycleStatus =
   | 'planned' // 참여자 모집 예정
   | 'instructor_recruitment_planned' // 강사 모집 예정
@@ -62,7 +62,10 @@ export type ProgramLifecycleStatus =
   | 'recruiting_instructors' // 강사 모집 중
   | 'recruiting_volunteers' // 봉사자 모집 중
   | 'participant_instructor_recruiting' // 참여자&교육자 모집 중
+  | 'education_in_progress' // 프로그램 진행 중
   | 'matching_completed' // 참여자 모집 완료
+  | 'education_before_textbook' // 경제교육: 교재 전 단계
+  | 'education_after_textbook' // 경제교육: 교재 후 진행 중
   | 'education_completed' // 강사 모집 완료
   | 'document_processing_completed' // 봉사자 모집 완료
   | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
@@ -103,6 +106,10 @@ export interface Program {
   programCategory?: string | null // 프로그램 종류 (IPS가 Succeed일 때)
   programChannel?: string | null // 프로그램 채널 및 형식 (IPS가 Inspire일 때)
   educationTime?: number // 교육시간 (시간)
+  /** 팀구분 (공통 정보 탭 기본 정보 하단 블록) */
+  teamDivision?: string
+  /** 교육 과정 (공통 정보 탭 기본 정보 하단 블록, 예: Traditional (Paper)) */
+  educationProcess?: string
   // 엑셀 데이터 기반 추가 필드 - 참가자 통계 정보
   maleParticipants?: number // 남성 참가자
   femaleParticipants?: number // 여성 참가자
@@ -158,6 +165,10 @@ export interface Program {
   lectureReportFormTemplateId?: UUID // 강의보고서 폼 템플릿 ID
   createdAt: DateValue
   updatedAt: DateValue
+  /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */
+  createdByName?: string
+  /** 최종 수정자 표시명 (목록/상세 표시용, API·mock에서 채움) */
+  updatedByName?: string
 }
 
 // 회차별 진행 방식 (교육 커리큘럼 수정용)
