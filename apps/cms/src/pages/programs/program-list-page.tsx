@@ -1,5 +1,5 @@
 /**
- * 프로그램 목록 페이지 (Refactored)
+ * 프로그램 목록 페이지
  */
 
 import { useState, useEffect } from 'react'
@@ -12,8 +12,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget'
-import { ProgressStagesWidget } from '@/features/dashboard/ui/progress-stages-widget'
+import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
 import type { Program, ProgramCategory, ProgramLifecycleStatus } from '@/types/domain'
 
@@ -37,7 +36,6 @@ export function ProgramListPage() {
     programType,
     statusFilter,
     filteredPrograms,
-    economyStages,
     categoryTab,
     handleCategoryTabChange,
     params,
@@ -161,16 +159,6 @@ export function ProgramListPage() {
     closeDrawer()
   }
 
-  const handleEconomyStageClick = (key: string) => {
-    const nextParams = new URLSearchParams(searchParams)
-    if (key === 'total') {
-      nextParams.delete('status')
-    } else {
-      nextParams.set('status', key)
-    }
-    setSearchParams(nextParams, { replace: true })
-  }
-
   const handleViewModeToggle = () => {
     const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
     setViewMode(newViewMode)
@@ -182,25 +170,13 @@ export function ProgramListPage() {
   return (
     <div>
       {/* 위젯 영역 */}
-      {isAdmin && programType === 'economy' && (
+      {isAdmin && (
         <div className="program-progress-widget-container">
-          <ProgressStagesWidget
-            stages={economyStages}
-            firstCardVariant="teal"
-            showDividerAfterFirstCard={false}
-            showBottomDivider
-            onStageClick={handleEconomyStageClick}
+          <ProgramStatusWidget
+            title={null}
           />
         </div>
       )}
-
-      {isAdmin &&
-        programType === 'education' &&
-        !location.pathname.startsWith('/programs/education') && (
-          <div className="program-progress-widget-container">
-            <ProgramProgressWidget title={null} />
-          </div>
-        )}
 
       {isAdmin && programType === 'all' && (
         <div className="program-list-widget-container">

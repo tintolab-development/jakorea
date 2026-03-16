@@ -4,20 +4,10 @@
  */
 
 import { Outlet } from 'react-router-dom'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget'
 
 export function EducationProgramLayout() {
-  const user = useAuthStore(s => s.user)
-  const isAdmin = user?.role === 'ADMIN'
-
   return (
     <div>
-      {isAdmin && (
-        <div className="program-progress-widget-container">
-          <ProgramProgressWidget title={null} />
-        </div>
-      )}
       <Outlet />
     </div>
   )

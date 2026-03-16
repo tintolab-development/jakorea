@@ -1,17 +1,16 @@
 /**
  * 프로그램 진행 현황 위젯 (목록/대시보드)
  * Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계)
- * 경로 기반 선택: /programs/education, /programs/education/student-recruitment, /programs/education/instructor-recruitment
- *
- * 테이블과 숫자 동기화: 교육 프로그램일 때 useProgramStore.programs를 의존성에 넣어
- * 목록 페이지에서 생성/수정/삭제 후 fetchPrograms()가 호출되면 위젯도 재조회하여 건수를 맞춤.
+ * 경로 기반 선택: /programs/education, /programs/economy-education, student-recruitment, instructor-recruitment
  */
 
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
 import {
-  getProgramProgress7Stage,
-  type ProgramProgress7Stage,
+  getProgramProgressStages,
+  type ProgramProgressStagesResult,
+  type ProgramProgressStages,
+  type ProgramEconomyStages,
 } from '../api/admin-dashboard-service'
 import { useProgramStore } from '@/features/program/model/program-store'
 import {
@@ -29,64 +28,65 @@ import {
   ProgressStagesWidget,
   type ProgressStageItem,
 } from '@/features/dashboard/ui/progress-stages-widget'
-import './program-progress-widget.css'
+import './program-status-widget.css'
 
-/** 교육 프로그램 레이아웃 하위 경로인지 (위젯에서 라우팅 사용) */
+/** 교육/경제 교육 프로그램 레이아웃 하위 경로인지 */
 const isEducationLayoutPath = (pathname: string) =>
   pathname === '/programs/education' || pathname.startsWith('/programs/education/')
 
-/** 의존성 배열용 빈 배열 (동일 참조 유지 — programType !== 'education'일 때 불필요한 재조회 방지) */
+const isEconomyLayoutPath = (pathname: string) => pathname === '/programs/economy-education'
+
+/** 의존성 배열용 빈 배열 */
 const EMPTY_PROGRAMS: readonly unknown[] = []
 
-interface ProgramProgressWidgetProps {
+interface ProgramStatusWidgetProps {
   title?: string | null
   showDetailLink?: boolean
 }
 
-export function ProgramProgressWidget({
+export function ProgramStatusWidget({
   title: _title = '전체 프로그램 진행 현황',
   showDetailLink: _showDetailLink = true,
-}: ProgramProgressWidgetProps) {
+}: ProgramStatusWidgetProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
+  const [progress, setProgress] = useState<ProgramProgressStagesResult | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // 경로 기반 선택 (교육 프로그램 레이아웃 하위일 때) — 그 외는 쿼리 status 사용
+  const programType = useMemo<'education' | 'economy' | 'volunteer' | 'all'>(() => {
+    if (isEducationLayoutPath(location.pathname)) return 'education'
+    if (isEconomyLayoutPath(location.pathname)) return 'economy'
+    if (location.pathname === '/programs/volunteer') return 'volunteer'
+    return 'all'
+  }, [location.pathname])
+
+  // 경로 기반 선택 (교육 프로그램 레이아웃 하위일 때)
   const selectedFromPath = useMemo<
     'total' | 'studentRecruitment' | 'instructorRecruitment' | null
   >(() => {
     if (!isEducationLayoutPath(location.pathname)) return null
     if (location.pathname === '/programs/education/student-recruitment') return 'studentRecruitment'
-    if (location.pathname === '/programs/education/instructor-recruitment') return 'instructorRecruitment'
+    if (location.pathname === '/programs/education/instructor-recruitment')
+      return 'instructorRecruitment'
     return 'total'
   }, [location.pathname])
 
-  const selectedStatus = useMemo<ProgramLifecycleStatus | null>(() => {
+  const selectedStatus = useMemo<string | null>(() => {
     if (selectedFromPath !== null) return null
     const sp = new URLSearchParams(location.search)
-    return (sp.get('status') as ProgramLifecycleStatus | null) || null
+    return sp.get('status') || null
   }, [location.search, selectedFromPath])
 
-  // 목록 페이지(교육 프로그램)와 동기화: 교육 탭에서는 교육 프로그램만 집계
-  const programType = useMemo<'education' | 'volunteer' | 'all'>(() => {
-    if (location.pathname === '/programs/education' || location.pathname.startsWith('/programs/education/'))
-      return 'education'
-    if (location.pathname === '/programs/volunteer') return 'volunteer'
-    return 'all'
-  }, [location.pathname])
-
-  // 교육 프로그램일 때 목록(스토어)이 바뀌면 위젯도 재조회 — 테이블 건수와 동기화
   const programs = useProgramStore(state =>
-    programType === 'education' ? state.programs : EMPTY_PROGRAMS
+    programType === 'education' || programType === 'economy' ? state.programs : EMPTY_PROGRAMS
   )
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
       try {
-        const data = await getProgramProgress7Stage({
+        const data = await getProgramProgressStages({
           programType: programType === 'all' ? undefined : programType,
         })
         setProgress(data)
@@ -97,18 +97,56 @@ export function ProgramProgressWidget({
       }
     }
     loadData()
-    // programType 변경 시 + 교육 프로그램일 때 목록(생성/수정/삭제) 반영을 위해 programs 의존
   }, [programType, programs])
 
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
 
+    // 경제 교육 4단계 UI (Total, Scheduled, In Progress, Completed)
+    if (programType === 'economy') {
+      const p = progress as ProgramEconomyStages
+      const s = selectedStatus
+      return [
+        {
+          key: 'total',
+          label: '전체 프로그램',
+          count: p.total,
+          showArrowAfter: true,
+          isSelected:
+            !s || !['economy_scheduled', 'economy_in_progress', 'economy_completed'].includes(s),
+        },
+        {
+          key: 'economy_scheduled',
+          label: '예정 프로그램',
+          count: p.scheduled,
+          showArrowAfter: true,
+          isSelected: s === 'economy_scheduled',
+        },
+        {
+          key: 'economy_in_progress',
+          label: '진행 중인 프로그램',
+          count: p.inProgress,
+          showArrowAfter: true,
+          isSelected: s === 'economy_in_progress',
+        },
+        {
+          key: 'economy_completed',
+          label: '완료 프로그램',
+          count: p.completed,
+          showArrowAfter: false,
+          isSelected: s === 'economy_completed',
+        },
+      ]
+    }
+
+    // 교육/봉사 7단계 UI
+    const p = progress as ProgramProgressStages
     const totalSelected =
       selectedFromPath === 'total' || (selectedFromPath === null && !selectedStatus)
     const totalItem: ProgressStageItem = {
       key: 'total',
       label: '전체 프로그램',
-      count: progress.total,
+      count: p.total,
       showArrowAfter: false,
       isSelected: totalSelected,
     }
@@ -117,11 +155,11 @@ export function ProgramProgressWidget({
       (stageKey: ProgramProgressStageKey) => {
         let count: number
         if (stageKey === 'matchingCompleted') {
-          count = progress.matchingCompleted + progress.educationBeforeTextbook
+          count = p.matchingCompleted + p.educationBeforeTextbook
         } else if (stageKey === 'educationAfterTextbook') {
-          count = progress.educationAfterTextbook
+          count = p.educationAfterTextbook
         } else {
-          count = progress[stageKey]
+          count = p[stageKey]
         }
         const label = PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
         const showArrowAfter = STAGE_HAS_ARROW_AFTER.has(stageKey)
@@ -131,8 +169,7 @@ export function ProgramProgressWidget({
         const isSelectedByStatus =
           selectedFromPath === null &&
           (selectedStatus === lifecycleStatus ||
-            (stageKey === 'matchingCompleted' &&
-              selectedStatus === 'education_before_textbook'))
+            (stageKey === 'matchingCompleted' && selectedStatus === 'education_before_textbook'))
 
         return {
           key: stageKey,
@@ -146,11 +183,21 @@ export function ProgramProgressWidget({
     )
 
     return [totalItem, ...stageItems]
-  }, [progress, selectedStatus, selectedFromPath])
+  }, [progress, selectedStatus, selectedFromPath, programType])
 
   const handleStageClick = (key: string) => {
+    if (programType === 'economy') {
+      const nextParams = new URLSearchParams(searchParams)
+      if (key === 'total') {
+        nextParams.delete('status')
+      } else {
+        nextParams.set('status', key)
+      }
+      setSearchParams(nextParams, { replace: true })
+      return
+    }
+
     if (isEducationLayoutPath(location.pathname)) {
-      // 단일 소스: URL query(status 등). 위젯 클릭 = navigate, 필터 카드 조회 = setSearchParams → 동일 URL로 페이지·테이블 필터 동기화
       const mergeQuery = (path: string, statusValue: string | null) => {
         const next = new URLSearchParams(searchParams)
         if (statusValue) next.set('status', statusValue)
@@ -199,12 +246,12 @@ export function ProgramProgressWidget({
   return (
     <ProgressStagesWidget
       stages={stages}
-      firstCardVariant="white"
+      firstCardVariant={'white'}
       showDividerAfterFirstCard={false}
       showBottomDivider
       onStageClick={handleStageClick}
       loading={loading}
-      loadingCardCount={8}
+      loadingCardCount={programType === 'economy' ? 4 : 8}
     />
   )
 }

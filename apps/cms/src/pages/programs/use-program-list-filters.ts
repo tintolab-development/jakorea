@@ -151,57 +151,6 @@ export function useProgramListFilters(
     return filtered
   }, [programs, isUserRole, isAdmin, categoryTab, statusFilter, programType])
 
-  const economyStages = useMemo(() => {
-    if (programType !== 'economy') return []
-    const economyPrograms = getEconomyPrograms()
-    const scheduled = economyPrograms.filter(p =>
-      ['recruiting_students', 'recruiting_instructors', 'matching_completed', 'education_before_textbook'].includes(
-        p.lifecycleStatus || ''
-      )
-    ).length
-    const inProgress = economyPrograms.filter(
-      p => p.lifecycleStatus === 'education_after_textbook'
-    ).length
-    const completed = economyPrograms.filter(p =>
-      ['education_completed', 'document_processing_completed'].includes(
-        p.lifecycleStatus || ''
-      )
-    ).length
-    const total = economyPrograms.length
-    const s = statusFilter as EconomyStatusFilter | null
-    
-    return [
-      {
-        key: 'total',
-        label: '전체 프로그램',
-        count: total,
-        showArrowAfter: true,
-        isSelected: !s || !economyStatusValues.includes(s),
-      },
-      {
-        key: 'economy_scheduled',
-        label: '예정 프로그램',
-        count: scheduled,
-        showArrowAfter: true,
-        isSelected: s === 'economy_scheduled',
-      },
-      {
-        key: 'economy_in_progress',
-        label: '진행 중인 프로그램',
-        count: inProgress,
-        showArrowAfter: true,
-        isSelected: s === 'economy_in_progress',
-      },
-      {
-        key: 'economy_completed',
-        label: '완료 프로그램',
-        count: completed,
-        showArrowAfter: false,
-        isSelected: s === 'economy_completed',
-      },
-    ]
-  }, [statusFilter, programType, economyStatusValues])
-
   const handleCategoryTabChange = (category: ProgramCategory | 'all') => {
     if (category === 'all') {
       setParam('category', null)
@@ -214,7 +163,6 @@ export function useProgramListFilters(
     programType,
     statusFilter,
     filteredPrograms,
-    economyStages,
     categoryTab,
     handleCategoryTabChange,
     params,
