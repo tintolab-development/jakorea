@@ -5,7 +5,7 @@
  */
 
 import { RightOutlined } from '@ant-design/icons'
-import './program-progress-widget.css'
+import './program-status-widget.css'
 
 export interface ProgressStageItem {
   key: string
@@ -117,7 +117,9 @@ export function ProgressStagesWidget({
     elements.push(card)
 
     if (isFirst && showDividerAfterFirstCard && firstCardVariant === 'teal') {
-      elements.push(<div key={`divider-${item.key}`} className="program-progress-widget__divider" />)
+      elements.push(
+        <div key={`divider-${item.key}`} className="program-progress-widget__divider" />
+      )
     }
     if (item.showArrowAfter) {
       elements.push(

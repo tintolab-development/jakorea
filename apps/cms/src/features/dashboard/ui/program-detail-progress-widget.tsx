@@ -5,8 +5,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import {
-  getProgramProgress7StageByProgramId,
-  type ProgramProgress7Stage,
+  getProgramProgressStagesByProgramId,
+  type ProgramProgressStages,
 } from '../api/admin-dashboard-service'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
@@ -52,7 +52,7 @@ export function ProgramDetailProgressWidget({
   programId,
   currentLifecycleStatus,
 }: ProgramDetailProgressWidgetProps) {
-  const [_progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
+  const [_progress, setProgress] = useState<ProgramProgressStages | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function ProgramDetailProgressWidget({
     const load = async () => {
       setLoading(true)
       try {
-        const data = await getProgramProgress7StageByProgramId(programId)
+        const data = await getProgramProgressStagesByProgramId(programId)
         if (!cancelled) setProgress(data)
       } finally {
         if (!cancelled) setLoading(false)

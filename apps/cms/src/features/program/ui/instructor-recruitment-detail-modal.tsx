@@ -25,7 +25,7 @@ import {
   businessAreaOptions,
   targetLevelOptions,
   categoryOptions,
-} from './program-list-constants'
+} from './constants/program-list-constants'
 import {
   getApplicantInstructorsByProgramId,
   updateApplicantInstructorApprovalStatus,

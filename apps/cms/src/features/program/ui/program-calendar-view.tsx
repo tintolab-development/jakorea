@@ -13,7 +13,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { ProgramMiniCalendar } from './program-mini-calendar'
 import { ProgramScheduleList } from './program-schedule-list'
-import { businessAreaOptions } from './program-list-constants'
+import { businessAreaOptions } from './constants/program-list-constants'
 import { SegmentedTab } from '@/shared/ui'
 import './program-calendar-view.css'
 
@@ -64,16 +64,14 @@ type SpanRole = 'start' | 'middle' | 'end' | 'single'
 function getProgramSpanRole(program: Program, date: Dayjs): SpanRole {
   const start = dayjs(program.startDate)
   const end = dayjs(program.endDate)
-  const isInEducation =
-    date.isSameOrAfter(start, 'day') && date.isSameOrBefore(end, 'day')
+  const isInEducation = date.isSameOrAfter(start, 'day') && date.isSameOrBefore(end, 'day')
   let rangeStart: Dayjs
   let rangeEnd: Dayjs
 
   if (program.applicationStartDate && program.applicationEndDate) {
     const appStart = dayjs(program.applicationStartDate)
     const appEnd = dayjs(program.applicationEndDate)
-    const isInApp =
-      date.isSameOrAfter(appStart, 'day') && date.isSameOrBefore(appEnd, 'day')
+    const isInApp = date.isSameOrAfter(appStart, 'day') && date.isSameOrBefore(appEnd, 'day')
     if (isInApp) {
       rangeStart = appStart
       rangeEnd = appEnd
@@ -117,9 +115,7 @@ export function ProgramCalendarView({
       list = list.filter(p => (p.title ?? '').toLowerCase().includes(keyword))
     }
     if (calendarBusinessAreaKeys.length > 0) {
-      list = list.filter(
-        p => p.businessArea && calendarBusinessAreaKeys.includes(p.businessArea)
-      )
+      list = list.filter(p => p.businessArea && calendarBusinessAreaKeys.includes(p.businessArea))
     }
     return list
   }, [programs, calendarSearchKeyword, calendarBusinessAreaKeys])
@@ -418,14 +414,16 @@ export function ProgramCalendarView({
           </div>
           <div className="program-calendar-left__filters">
             {businessAreaOptions.map(opt => (
-              <Checkbox
-                key={opt.value}
-                className={`program-calendar-left__filter-item ${businessAreaColorClasses[opt.value] ?? ''}`}
-                checked={calendarBusinessAreaKeys.includes(opt.value)}
-                onChange={e => handleBusinessAreaChange(opt.value, e.target.checked)}
-              >
-                {opt.label}
-              </Checkbox>
+              <div className="program-calendar-left__filters-wrapper">
+                <Checkbox
+                  key={opt.value}
+                  className={`program-calendar-left__filter-item ${businessAreaColorClasses[opt.value] ?? ''}`}
+                  checked={calendarBusinessAreaKeys.includes(opt.value)}
+                  onChange={e => handleBusinessAreaChange(opt.value, e.target.checked)}
+                >
+                  {opt.label}
+                </Checkbox>
+              </div>
             ))}
           </div>
         </div>

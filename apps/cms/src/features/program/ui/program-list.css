@@ -123,6 +123,9 @@
   background: var(--color-bg-base);
   box-shadow: var(--shadow-brand-active);
 }
+.program-list-calendar-view-container {
+  width: 100%;
+}
 
 /* 필터 + tableButtonSection + 테이블 공통 배경 컨테이너 */
 .program-list-content-wrapper {

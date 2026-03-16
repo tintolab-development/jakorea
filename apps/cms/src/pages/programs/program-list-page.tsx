@@ -1,9 +1,9 @@
 /**
- * 프로그램 목록 페이지 (Refactored)
+ * 프로그램 목록 페이지
  */
 
-import { useState, useEffect } from 'react'
-import { Tabs } from 'antd'
+import { useState, useEffect, useMemo } from 'react'
+import { Tabs, Modal } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { AppButton } from '@/shared/ui/app-button'
@@ -12,9 +12,12 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ProgramProgressWidget } from '@/features/dashboard/ui/program-progress-widget'
-import { ProgressStagesWidget } from '@/features/dashboard/ui/progress-stages-widget'
+import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
+import {
+  PROGRAM_PROGRESS_STAGE_LABELS,
+  type ProgramProgressStageKey,
+} from '@/shared/config/program-progress-stages'
 import type { Program, ProgramCategory, ProgramLifecycleStatus } from '@/types/domain'
 
 // Local Hooks & Components
@@ -24,6 +27,7 @@ import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
 
 import './program-list-page.css'
+import { Divider } from '@/shared/components/divider'
 
 export function ProgramListPage() {
   const navigate = useNavigate()
@@ -37,7 +41,6 @@ export function ProgramListPage() {
     programType,
     statusFilter,
     filteredPrograms,
-    economyStages,
     categoryTab,
     handleCategoryTabChange,
     params,
@@ -61,8 +64,37 @@ export function ProgramListPage() {
 
   // 2. Local State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
-  const [, setDisplayCount] = useState<number | null>(null)
+  const [displayCount, setDisplayCount] = useState<number | null>(null)
   const [, setHasListFilters] = useState(false)
+
+  // 헤더 타이틀 계산: statusFilter (위젯 클릭) → 모집단계 라벨 → "전체 프로그램"
+  const headerTitle = useMemo(() => {
+    if (programType === 'economy' && statusFilter) {
+      if (statusFilter === 'economy_scheduled') return '예정 프로그램'
+      if (statusFilter === 'economy_in_progress') return '진행 중인 프로그램'
+      if (statusFilter === 'economy_completed') return '완료 프로그램'
+    }
+
+    // 7단계/교육 모집단계 매핑
+    if (statusFilter) {
+      const stageKey = Object.entries(PROGRAM_PROGRESS_STAGE_LABELS).find(([key, _label]) => {
+        // config에서 lifecycleStatus 매핑 찾기
+        const mapping = {
+          studentRecruitment: 'recruiting_students',
+          instructorRecruitment: 'recruiting_instructors',
+          matchingCompleted: 'matching_completed',
+          educationAfterTextbook: 'education_after_textbook',
+          educationCompleted: 'education_completed',
+          documentProcessingCompleted: 'document_processing_completed',
+        }
+        return mapping[key as ProgramProgressStageKey] === statusFilter
+      })?.[0] as ProgramProgressStageKey | undefined
+
+      if (stageKey) return PROGRAM_PROGRESS_STAGE_LABELS[stageKey]
+    }
+
+    return '전체 프로그램'
+  }, [statusFilter, programType])
 
   // 뷰 모드 관리
   const viewModeFromUrl = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -153,6 +185,28 @@ export function ProgramListPage() {
   const showEducationActions = Boolean(
     isAdmin && canWrite && (programType === 'education' || programType === 'economy')
   )
+
+  /** 예정 프로그램 필터 활성 시에만 행 선택·선택 삭제 표시 (경제 교육 페이지) */
+  const isScheduledFilter = programType === 'economy' && statusFilter === 'economy_scheduled'
+  const showRowSelectionForScheduled = showEducationActions && isScheduledFilter
+
+  const handleBulkDeleteClick = () => {
+    const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
+    if (programsToDelete.length === 0) return
+    Modal.confirm({
+      title: '선택 삭제',
+      content: `선택한 ${programsToDelete.length}건을 삭제하시겠습니까?`,
+      okText: '삭제',
+      cancelText: '취소',
+      onOk: () => handleBulkDelete(programsToDelete, () => setSelectedRowKeys([])),
+    })
+  }
+
+  // 예정 프로그램 필터 해제 시 선택 초기화
+  useEffect(() => {
+    if (!isScheduledFilter) setSelectedRowKeys([])
+  }, [isScheduledFilter])
+
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
       const redirectPath = `/programs/${program.id}`
@@ -189,16 +243,6 @@ export function ProgramListPage() {
     closeDrawer()
   }
 
-  const handleEconomyStageClick = (key: string) => {
-    const nextParams = new URLSearchParams(searchParams)
-    if (key === 'total') {
-      nextParams.delete('status')
-    } else {
-      nextParams.set('status', key)
-    }
-    setSearchParams(nextParams, { replace: true })
-  }
-
   const handleViewModeToggle = () => {
     const newViewMode = viewMode === 'list' ? 'calendar' : 'list'
     setViewMode(newViewMode)
@@ -210,25 +254,11 @@ export function ProgramListPage() {
   return (
     <div>
       {/* 위젯 영역 */}
-      {isAdmin && programType === 'economy' && (
+      {isAdmin && (
         <div className="program-progress-widget-container">
-          <ProgressStagesWidget
-            stages={economyStages}
-            firstCardVariant="teal"
-            showDividerAfterFirstCard={false}
-            showBottomDivider
-            onStageClick={handleEconomyStageClick}
-          />
+          <ProgramStatusWidget title={null} />
         </div>
       )}
-
-      {isAdmin &&
-        programType === 'education' &&
-        !location.pathname.startsWith('/programs/education') && (
-          <div className="program-progress-widget-container">
-            <ProgramProgressWidget title={null} />
-          </div>
-        )}
 
       {isAdmin && programType === 'all' && (
         <div className="program-list-widget-container">
@@ -268,10 +298,10 @@ export function ProgramListPage() {
             ? programs => handleBulkDelete(programs, () => setSelectedRowKeys([]))
             : undefined
         }
-        onSelectionChange={showEducationActions ? setSelectedRowKeys : undefined}
-        selectedRowKeys={showEducationActions ? selectedRowKeys : undefined}
+        onSelectionChange={showRowSelectionForScheduled ? setSelectedRowKeys : undefined}
+        selectedRowKeys={showRowSelectionForScheduled ? selectedRowKeys : undefined}
         showActions={showEducationActions}
-        showRowSelection={showEducationActions}
+        showRowSelection={showRowSelectionForScheduled}
         showFavorite={false}
         onChangeStatus={showEducationActions ? handleStatusChange : undefined}
         showCalendarView={isAdmin && (programType === 'education' || programType === 'economy')}
@@ -287,13 +317,38 @@ export function ProgramListPage() {
           setHasListFilters(hasActiveFilters)
         }}
         effectiveLifecycleStatus={
-          programType === 'economy' ? undefined : (statusFilter as ProgramLifecycleStatus | null)
+          programType === 'economy'
+            ? undefined
+            : statusFilter === 'matching_completed'
+              ? 'education_before_textbook'
+              : (statusFilter as ProgramLifecycleStatus | null)
         }
       >
-        {isAdmin &&
-          (programType === 'education' || programType === 'economy') &&
-          statusFilter === null && (
-            <div className="program-list-page__widget-header-actions" style={{ marginBottom: 16 }}>
+        <div className="program-list-page__divider-wrapper">
+          {viewMode === 'list' && <Divider />}
+        </div>
+        {isAdmin && (programType === 'education' || programType === 'economy') && (
+          <div className="program-list-page__filter-info">
+            <div className="program-list-page__filter-info-texts">
+              <span className="program-list-page__filter-info-title">{headerTitle}</span>
+              {displayCount !== null && (
+                <span className="program-list-page__filter-info-count">
+                  {displayCount.toLocaleString()}건
+                </span>
+              )}
+            </div>
+            <div className="program-list-page__widget-header-actions">
+              {isScheduledFilter && (
+                <AppButton
+                  variant="cancel"
+                  size="filter"
+                  onClick={handleBulkDeleteClick}
+                  disabled={selectedRowKeys.length === 0}
+                  className="program-list-page__bulk-delete-button"
+                >
+                  선택 삭제
+                </AppButton>
+              )}
               <AppButton
                 variant="cancel"
                 size="filter"
@@ -309,7 +364,8 @@ export function ProgramListPage() {
                 </AppButton>
               )}
             </div>
-          )}
+          </div>
+        )}
       </ProgramList>
 
       <ProgramListModals
