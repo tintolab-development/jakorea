@@ -255,6 +255,18 @@
   min-height: 0;
 }
 
+/* 모집 신청 현황 위젯 50%일 때: 카드·본문·테이블이 콘텐츠 높이만 사용해 하단 빈 공간 제거 */
+.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) > .ant-card {
+  flex: 0 0 auto;
+  height: auto;
+}
+.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) .recruitment-status-widget .ant-card-body {
+  flex: 0 1 auto;
+}
+.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) .recruitment-status-widget .ant-card-body .ant-table-wrapper {
+  flex: 0 1 auto;
+}
+
 .dashboard-widget-slot__handle {
   flex-shrink: 0;
 }
