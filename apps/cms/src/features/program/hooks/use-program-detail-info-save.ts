@@ -16,7 +16,7 @@ import {
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
-  program: Program
+  program: Program | null
   onSaveEdit?: (draft: Program) => Promise<void>
 }
 
@@ -33,9 +33,11 @@ export function useProgramDetailInfoSave({
   }, [])
 
   const triggerSave = useCallback(async () => {
-    if (savingRef.current || !onSaveEdit) return
+    if (savingRef.current || !onSaveEdit || !program) return
     savingRef.current = true
     try {
+      const isValid = await form.trigger()
+      if (!isValid) return
       const values = form.getValues()
       const patch = detailEditValuesToProgramPatch(values, program)
       const html = getAdditionalContentHtmlRef.current?.()
