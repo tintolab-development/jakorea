@@ -1,11 +1,11 @@
 /**
- * 전체 프로그램 진행 현황 6단계 (필터/위젯용)
+ * 전체 프로그램 진행 현황 5단계 (필터/위젯용)
  * 참여자 모집 중, 강사 모집 중, 참여자 모집 완료, 강사 모집 완료, 봉사자 모집 완료
  */
 
 import type { ProgramLifecycleStatus } from '@/types/domain'
 
-/** 6단계 키 (educationBeforeTextbook 제외, 교육 진행 중 = educationAfterTextbook으로 쿼리) */
+/** 6단계 키 (교육: 참여자/강사 모집, 매칭+교재전, 교재후, 강사/봉사 모집 완료) */
 export type ProgramProgressStageKey =
   | 'studentRecruitment'
   | 'instructorRecruitment'
@@ -19,7 +19,7 @@ export const PROGRAM_PROGRESS_STAGE_LABELS: Record<ProgramProgressStageKey, stri
   studentRecruitment: '참여자 모집 중',
   instructorRecruitment: '강사 모집 중',
   matchingCompleted: '참여자 모집 완료',
-  educationAfterTextbook: '강사 모집 완료',
+  educationAfterTextbook: '교재 후 진행 중',
   educationCompleted: '강사 모집 완료',
   documentProcessingCompleted: '봉사자 모집 완료',
 }
@@ -34,7 +34,7 @@ export const PROGRAM_PROGRESS_STAGE_ORDER: ProgramProgressStageKey[] = [
   'documentProcessingCompleted',
 ]
 
-/** 6단계 ↔ lifecycleStatus (쿼리 파라미터용, 테이블 필터에서 education_after_textbook → before+after 모두 표시) */
+/** 6단계 ↔ lifecycleStatus (쿼리 파라미터용) */
 export const STAGE_TO_LIFECYCLE: Record<ProgramProgressStageKey, ProgramLifecycleStatus> = {
   studentRecruitment: 'recruiting_students',
   instructorRecruitment: 'recruiting_instructors',
@@ -62,4 +62,5 @@ export const STAGE_HAS_ARROW_AFTER: Set<ProgramProgressStageKey> = new Set([
   'instructorRecruitment',
   'educationAfterTextbook',
   'educationCompleted',
+  'documentProcessingCompleted',
 ])

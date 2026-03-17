@@ -32,8 +32,8 @@ import {
   LIFECYCLE_OPTIONS,
   BUSINESS_AREA_OPTIONS,
 } from './program-detail-info-constants'
+import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
-import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 
@@ -48,6 +48,8 @@ export interface BasicInfoSectionProps {
   isEditMode?: boolean
   /** 수정 모드일 때만 전달, react-hook-form 인스턴스 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  /** 공통 정보 탭 전용: 기본 정보만 상단/하단 블록 2개 테이블로 노출 (대표/세부 프로그램명, 팀구분, 교육 과정, IP/IPS 등) */
+  displayMode?: 'commonInfo'
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -61,6 +63,7 @@ export function BasicInfoSection({
   lifecycleStatus,
   isEditMode = false,
   form,
+  displayMode,
 }: BasicInfoSectionProps) {
   const [selectedThumbnailFile, setSelectedThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null)
@@ -105,8 +108,143 @@ export function BasicInfoSection({
 
   const isFormEdit = isEditMode && form
 
+  /* 공통 정보 탭 전용: 스크린샷 구조 — 상단 블록(등록일/대표·세부 프로그램명/사업 운영 기간/참여자·후원사) + 하단 블록(팀구분/교육 과정/IP·IPS 등) */
+  if (displayMode === 'commonInfo') {
+    const partnerLabel = program.partnerInvolvement === true ? 'Yes' : program.partnerInvolvement === false ? 'No' : '-'
+    const courseDeliveredLabel =
+      program.courseDeliveredBy === 'JA'
+        ? 'JA'
+        : program.courseDeliveredBy === 'Jointly'
+          ? 'Jointly'
+          : program.courseDeliveredBy === 'Partner'
+            ? 'Partner'
+            : program.courseDeliveredBy ?? '-'
+    const sponsorManagerLine = [program.managerName, program.contactPhone].filter(Boolean).join(' | ') || '-'
+    return (
+      <>
+        <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
+        {/* 최초 등록일·마지막 수정일만 단일 행 테이블로 분리, 하위 16px gap */}
+        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--dates">
+          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--dates">
+            <colgroup>
+              <col style={{ width: '200px' }} />
+              <col />
+              <col style={{ width: '200px' }} />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <th>최초 등록일</th>
+                <td>
+                  {formatDate(program.createdAt)} | {createdByName ?? '-'}
+                </td>
+                <th>마지막 수정일</th>
+                <td>
+                  {formatDate(program.updatedAt)} | {updatedByName ?? '-'}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
+          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--top">
+            <colgroup>
+              <col style={{ width: '200px' }} />
+              <col />
+              <col style={{ width: '200px' }} />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <th>대표 프로그램명</th>
+                <td>{program.mainTitle ?? '-'}</td>
+                <th>세부 프로그램명</th>
+                <td>{program.title}</td>
+              </tr>
+              <tr>
+                <th>사업 운영 기간</th>
+                <td>{formatDateRange(program.startDate, program.endDate)}</td>
+                <th>프로그램 진행 상태</th>
+                <td>
+                  {lifecycleStatus ? (
+                    <span
+                      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycleStatus.replace(/_/g, '-')}`}
+                    >
+                      {getProgramLifecycleLabel(lifecycleStatus)}
+                    </span>
+                  ) : (
+                    '-'
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <th>참여자 유형</th>
+                <td>{categoryLabel}</td>
+                <th>사업 분야</th>
+                <td>{program.businessArea ?? '-'}</td>
+              </tr>
+              <tr>
+                <th>후원사</th>
+                <td>
+                  {program.sponsorId ? (
+                    <Link
+                      to={`/sponsors/${program.sponsorId}`}
+                      className="program-detail-info-tab__sponsor-link"
+                    >
+                      {sponsorName ?? '-'}
+                    </Link>
+                  ) : (
+                    sponsorName ?? '-'
+                  )}
+                </td>
+                <th>후원사 담당자</th>
+                <td>{sponsorManagerLine}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--sub">
+          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--sub">
+            <colgroup>
+              <col style={{ width: '200px' }} />
+              <col />
+              <col style={{ width: '200px' }} />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <th>팀구분</th>
+                <td>{program.teamDivision ?? '-'}</td>
+                <th>교육 과정</th>
+                <td>{program.educationProcess ?? '-'}</td>
+              </tr>
+              <tr>
+                <th>IP Owned</th>
+                <td>{program.ipOwned ?? 'JA'}</td>
+                <th>Course Delivered By</th>
+                <td>{courseDeliveredLabel}</td>
+              </tr>
+              <tr>
+                <th>Partner Involvement</th>
+                <td>{partnerLabel}</td>
+                <th>IPS</th>
+                <td>{program.ips ?? '-'}</td>
+              </tr>
+              <tr>
+                <th>프로그램 종류</th>
+                <td>{program.ips === 'Succeed' ? (program.programCategory ?? '-') : '-'}</td>
+                <th>프로그램 채널</th>
+                <td>{program.ips === 'Inspire' ? (program.programChannel ?? '-') : '-'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </>
+    )
+  }
+
   return (
-    <section className="program-detail-info-tab__section">
+    <>
       <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
 
       <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
@@ -173,7 +311,11 @@ export function BasicInfoSection({
                     )}
                   />
                 ) : lifecycleStatus ? (
-                  <ProgramLifecycleStatusBadge status={lifecycleStatus} />
+                  <span
+                    className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycleStatus.replace(/_/g, '-')}`}
+                  >
+                    {getProgramLifecycleLabel(lifecycleStatus)}
+                  </span>
                 ) : (
                   '-'
                 )}
@@ -196,7 +338,7 @@ export function BasicInfoSection({
               <th>
                 썸네일 이미지{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
-              <td colSpan={3}>
+              <td colSpan={3} className="program-detail-info-tab__cell--thumbnail">
                 <div className="program-detail-info-tab__thumbnail-wrap">
                   <div className="program-detail-info-tab__thumbnail-row">
                     {displayThumbnailUrl ? (
@@ -242,7 +384,7 @@ export function BasicInfoSection({
                             : 'program-detail-info-tab__file-select'
                         }
                         guideLines={[
-                          '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다. / 가로 사이즈 500px 권장, 세로 사이즈 무관',
+                          '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
                           '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
                         ]}
                         onFilesChange={files => {
@@ -924,6 +1066,6 @@ export function BasicInfoSection({
           </tbody>
         </table>
       </div>
-    </section>
+    </>
   )
 }

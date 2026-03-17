@@ -38,17 +38,21 @@ const LIFECYCLE_STATUS_BG: Record<ProgramLifecycleStatus, string> = {
   planned: '#f5f5f5',
   instructor_recruitment_planned: '#f5f5f5',
   volunteer_recruitment_planned: '#f5f5f5',
+  participant_instructor_recruitment_planned: '#fef5f7',
   recruiting_students: '#eaf7ec',
   recruiting_instructors: '#f4f0f9',
   recruiting_volunteers: '#f4f0f9',
+  participant_instructor_recruiting: '#e6f2f7',
+  education_in_progress: '#e6f4ff',
+  education_before_textbook: '#e6f4ff',
+  education_after_textbook: '#e6f4ff',
   matching_completed: '#fff5e9',
-  education_before_textbook: '#e9f6fa',
-  education_after_textbook: '#e9f6fa',
   education_completed: '#fdeef1',
   document_processing_completed: '#f5f5f5',
+  participant_instructor_recruitment_completed: '#f2f3f5',
 }
 
-const DEFAULT_LIFECYCLE_STATUS: ProgramLifecycleStatus = 'education_before_textbook'
+const DEFAULT_LIFECYCLE_STATUS: ProgramLifecycleStatus = 'education_completed'
 
 function getLifecycleBg(status: ProgramLifecycleStatus | undefined): string {
   return LIFECYCLE_STATUS_BG[status ?? DEFAULT_LIFECYCLE_STATUS] ?? '#f0f0f0'

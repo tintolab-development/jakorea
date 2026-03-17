@@ -218,7 +218,6 @@ export function ProgramList({
     const fromUrl = searchParams.get('status') as ProgramLifecycleStatus | null
     const value = fromUrl || activeUserFilters.status
     if (!value || value === 'all') return 'all'
-    if (value === 'education_before_textbook') return 'matching_completed'
     const validStatuses = new Set(programLifecycleStatusConfig.order)
     return validStatuses.has(value as ProgramLifecycleStatus)
       ? (value as ProgramLifecycleStatus)
@@ -331,18 +330,9 @@ export function ProgramList({
     }
 
     if (progressStatusFilter !== 'all') {
-      filtered = filtered.filter(program => {
-        if (progressStatusFilter === 'matching_completed') {
-          return (
-            program.lifecycleStatus === 'matching_completed' ||
-            program.lifecycleStatus === 'education_before_textbook'
-          )
-        }
-        if (progressStatusFilter === 'education_after_textbook') {
-          return program.lifecycleStatus === 'education_after_textbook'
-        }
-        return program.lifecycleStatus === progressStatusFilter
-      })
+      filtered = filtered.filter(
+        program => program.lifecycleStatus === progressStatusFilter
+      )
     }
 
     return filtered

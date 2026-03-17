@@ -1,0 +1,354 @@
+/**
+ * 프로그램 상세 풀페이지 모달
+ * 경제/일반 교육 프로그램 목록 테이블 행 클릭 시 노출.
+ * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
+ */
+
+import React, { useId, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Spin, Typography } from 'antd'
+import { CloseOutlined } from '@ant-design/icons'
+import { AppButton } from '@/shared/ui/app-button'
+import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { useProgramDetail } from '@/pages/programs/use-program-detail'
+import { BasicInfoSection } from './basic-info-section'
+import { CurriculumSection } from './curriculum-section'
+import { ProgramKpiTargetSection } from './program-kpi-target-section'
+import { ParticipantRecruitmentSection } from './participant-recruitment-section'
+import { DetailInfoSection } from './detail-info-section'
+import { InstructorRecruitmentSection } from './instructor-recruitment-section'
+import { InstructorDetailInfoSection } from './instructor-detail-info-section'
+import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
+import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
+import type { Program } from '@/types/domain'
+import './program-detail-info-tab.css'
+import './program-detail-fullpage-modal.css'
+
+export interface ProgramDetailFullPageModalProps {
+  open: boolean
+  onClose: () => void
+  program: Program | null
+}
+
+const TAB_KEYS = ['info', 'participants', 'instructors', 'volunteers'] as const
+type TabKey = (typeof TAB_KEYS)[number]
+
+const TAB_PARAM = 'tab'
+
+function parseTabFromSearch(searchParams: URLSearchParams): TabKey {
+  const tab = searchParams.get(TAB_PARAM)
+  if (tab && (TAB_KEYS as readonly string[]).includes(tab)) return tab as TabKey
+  return 'info'
+}
+
+/** 탭 카테고리: 공통 정보 / 참여자 정보 / 강사 정보 / 봉사자 정보 */
+const TAB_LABELS: Record<TabKey, string> = {
+  info: '공통 정보',
+  participants: '참여자 정보',
+  instructors: '강사 정보',
+  volunteers: '봉사자 정보',
+}
+
+/** LNB 카테고리 (탭과 연동 없음, 기존 4개 유지) */
+const LNB_KEYS = ['info', 'applicants', 'progress', 'managers'] as const
+type LnbKey = (typeof LNB_KEYS)[number]
+
+/** LNB 아이콘 20×20, fill은 currentColor로 활성/비활성 색 상속 */
+function LnbIconProjectInfo(props: React.SVGProps<SVGSVGElement>) {
+  const id = useId().replace(/:/g, '_')
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+      <mask id={`mask_${id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+        <rect width="20" height="20" fill="#D9D9D9" />
+      </mask>
+      <g mask={`url(#mask_${id})`}>
+        <path d="M8.49458 15C8.08153 15 7.72917 14.8531 7.4375 14.5594C7.14583 14.2656 7 13.9125 7 13.5V12.1042C6.20833 11.5861 5.59375 10.9219 5.15625 10.1115C4.71875 9.30104 4.5 8.43056 4.5 7.5C4.5 5.96792 5.03319 4.6682 6.09958 3.60083C7.16597 2.53361 8.46458 2 9.99542 2C11.5262 2 12.8264 2.53361 13.8958 3.60083C14.9653 4.6682 15.5 5.96792 15.5 7.5C15.5 8.42806 15.2812 9.29896 14.8438 10.1127C14.4062 10.9265 13.7917 11.5903 13 12.1042V13.5C13 13.9125 12.8529 14.2656 12.5588 14.5594C12.2647 14.8531 11.9112 15 11.4981 15H8.49458ZM8.5 13.5H11.5V11.2917L12.1875 10.8542C12.7569 10.4931 13.2014 10.0126 13.5208 9.41292C13.8403 8.81319 14 8.17556 14 7.5C14 6.39333 13.6095 5.45 12.8285 4.67C12.0477 3.89 11.1033 3.5 9.99521 3.5C8.88729 3.5 7.94444 3.89 7.16667 4.67C6.38889 5.45 6 6.39333 6 7.5C6 8.17556 6.15972 8.81319 6.47917 9.41292C6.79861 10.0126 7.24306 10.4931 7.8125 10.8542L8.5 11.2917V13.5ZM8.5 18C8.21667 18 7.97917 17.9042 7.7875 17.7125C7.59583 17.5208 7.5 17.2833 7.5 17V16.5H12.5V17C12.5 17.2833 12.4042 17.5208 12.2125 17.7125C12.0208 17.9042 11.7833 18 11.5 18H8.5Z" fill="currentColor" />
+      </g>
+    </svg>
+  )
+}
+
+function LnbIconApplicants(props: React.SVGProps<SVGSVGElement>) {
+  const id = useId().replace(/:/g, '_')
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+      <mask id={`mask_${id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+        <rect width="20" height="20" fill="#D9D9D9" />
+      </mask>
+      <g mask={`url(#mask_${id})`}>
+        <path d="M1.5 14.4236C1.5 14.0357 1.59404 13.6792 1.78212 13.354C1.9702 13.0289 2.22975 12.7685 2.56076 12.5729C3.37326 12.0914 4.23466 11.7228 5.14497 11.467C6.05527 11.2112 7.00694 11.0833 8 11.0833C8.99306 11.0833 9.94473 11.2112 10.855 11.467C11.7653 11.7228 12.6267 12.0914 13.4392 12.5729C13.7703 12.7685 14.0298 13.0289 14.2179 13.354C14.406 13.6792 14.5 14.0357 14.5 14.4236V14.875C14.5 15.3219 14.3408 15.7044 14.0224 16.0227C13.7041 16.3409 13.3213 16.5 12.8741 16.5H3.11868C2.6715 16.5 2.28993 16.3409 1.97396 16.0227C1.65799 15.7044 1.5 15.3219 1.5 14.875V14.4236ZM17.2083 16.5H15.6962C15.8316 16.2442 15.9369 15.9795 16.0122 15.7058C16.0874 15.4322 16.125 15.1553 16.125 14.875V14.4236C16.125 13.7917 15.9783 13.2049 15.6849 12.6632C15.3915 12.1215 14.9965 11.6777 14.5 11.3316C15.0868 11.452 15.6548 11.6137 16.204 11.8168C16.7532 12.02 17.276 12.272 17.7726 12.5729C18.1036 12.7685 18.3631 13.0293 18.5512 13.3554C18.7393 13.6816 18.8333 14.0377 18.8333 14.4236V14.875C18.8333 15.3219 18.6742 15.7044 18.356 16.0227C18.0378 16.3409 17.6552 16.5 17.2083 16.5ZM5.69792 9.05208C5.06597 8.42014 4.75 7.65278 4.75 6.75C4.75 5.84722 5.06597 5.07986 5.69792 4.44792C6.32986 3.81597 7.09722 3.5 8 3.5C8.90278 3.5 9.67014 3.81597 10.3021 4.44792C10.934 5.07986 11.25 5.84722 11.25 6.75C11.25 7.65278 10.934 8.42014 10.3021 9.05208C9.67014 9.68403 8.90278 10 8 10C7.09722 10 6.32986 9.68403 5.69792 9.05208ZM14.6354 9.05208C14.0035 9.68403 13.2361 10 12.3333 10C12.213 10 12.1001 9.99624 11.9948 9.98872C11.8895 9.98119 11.7766 9.96238 11.6562 9.93229C12.0324 9.49595 12.3296 9.01071 12.5477 8.47656C12.7659 7.94242 12.875 7.3669 12.875 6.75C12.875 6.1331 12.7659 5.55758 12.5477 5.02344C12.3296 4.48929 12.0324 4.00405 11.6562 3.56771C11.7766 3.53762 11.8895 3.51881 11.9948 3.51128C12.1001 3.50376 12.213 3.5 12.3333 3.5C13.2361 3.5 14.0035 3.81597 14.6354 4.44792C15.2674 5.07986 15.5833 5.84722 15.5833 6.75C15.5833 7.65278 15.2674 8.42014 14.6354 9.05208ZM3.125 14.875H12.875V14.4236C12.875 14.3263 12.8522 14.2378 12.8066 14.1582C12.7612 14.0784 12.7012 14.0165 12.6267 13.9722C11.9196 13.566 11.1748 13.2538 10.3924 13.0356C9.60995 12.8174 8.8125 12.7083 8 12.7083C7.1875 12.7083 6.39005 12.8137 5.60764 13.0243C4.82523 13.235 4.08044 13.5509 3.37326 13.9722C3.29878 14.0148 3.23875 14.0743 3.19316 14.1507C3.14772 14.2273 3.125 14.3176 3.125 14.4216V14.875ZM9.15104 7.8963C9.46701 7.57717 9.625 7.19349 9.625 6.74526C9.625 6.29703 9.46544 5.91493 9.1463 5.59896C8.82717 5.28299 8.44349 5.125 7.99526 5.125C7.54703 5.125 7.16493 5.28457 6.84896 5.6037C6.53299 5.92283 6.375 6.30651 6.375 6.75474C6.375 7.20297 6.53457 7.58507 6.8537 7.90104C7.17283 8.21701 7.55651 8.375 8.00474 8.375C8.45297 8.375 8.83507 8.21543 9.15104 7.8963Z" fill="currentColor" />
+      </g>
+    </svg>
+  )
+}
+
+function LnbIconProgress(props: React.SVGProps<SVGSVGElement>) {
+  const id = useId().replace(/:/g, '_')
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+      <mask id={`mask_${id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+        <rect width="20" height="20" fill="#D9D9D9" />
+      </mask>
+      <g mask={`url(#mask_${id})`}>
+        <path d="M5.33333 14C6.01972 14 6.68785 14.0764 7.33771 14.2292C7.98757 14.3819 8.625 14.5972 9.25 14.875V5.41667C8.65278 5.09722 8.03104 4.86458 7.38479 4.71875C6.73868 4.57292 6.08549 4.5 5.42521 4.5C4.91951 4.5 4.41667 4.54167 3.91667 4.625C3.41667 4.70833 2.94444 4.86097 2.5 5.08292V14.5C2.94444 14.3056 3.40625 14.1736 3.88542 14.1042C4.36458 14.0347 4.84722 14 5.33333 14ZM10.75 14.875C11.375 14.5972 12.0124 14.3819 12.6623 14.2292C13.3122 14.0764 13.9803 14 14.6667 14C15.1528 14 15.6354 14.0347 16.1146 14.1042C16.5938 14.1736 17.0556 14.3056 17.5 14.5V5.08333C17.0139 4.90278 16.5105 4.76042 15.9898 4.65625C15.4691 4.55208 14.9447 4.5 14.4167 4.5C13.7778 4.5 13.1528 4.57986 12.5417 4.73958C11.9306 4.89931 11.3333 5.125 10.75 5.41667V14.875ZM9.51042 16.7292C9.36458 16.6458 9.21375 16.5625 9.05792 16.4792C8.50542 16.1597 7.92375 15.9167 7.31292 15.75C6.70194 15.5833 6.07681 15.5 5.4375 15.5C4.99306 15.5 4.54514 15.5278 4.09375 15.5833C3.64236 15.6389 3.20833 15.7569 2.79167 15.9375C2.36111 16.1319 1.95486 16.1562 1.57292 16.0104C1.19097 15.8646 1 15.6042 1 15.2292V4.75C1 4.55556 1.05556 4.37847 1.16667 4.21875C1.27778 4.05903 1.41667 3.93056 1.58333 3.83333C2.16667 3.5 2.78042 3.27778 3.42458 3.16667C4.06875 3.05556 4.72583 3 5.39583 3C6.20139 3 6.96875 3.08333 7.69792 3.25C8.42708 3.41667 9.19444 3.70833 10 4.125C10.8056 3.70833 11.5729 3.41667 12.3021 3.25C13.0313 3.08333 13.7986 3 14.6042 3C15.2218 3 15.8276 3.05208 16.4217 3.15625C17.0156 3.26042 17.5833 3.4375 18.125 3.6875C18.3611 3.79861 18.5694 3.94097 18.75 4.11458C18.9306 4.28819 19.0208 4.5 19.0208 4.75V15.2292C19.0208 15.5625 18.8576 15.8056 18.5312 15.9583C18.2049 16.1111 17.8542 16.1181 17.4792 15.9792C16.9931 15.7986 16.4965 15.6736 15.9896 15.6042C15.4826 15.5347 14.9722 15.5 14.4583 15.5C13.8381 15.5 13.2316 15.5799 12.639 15.7396C12.0463 15.8993 11.4861 16.1458 10.9583 16.4792C10.8056 16.5764 10.6528 16.6632 10.5 16.7396C10.3472 16.816 10.1806 16.8542 10 16.8542C9.81944 16.8542 9.65625 16.8125 9.51042 16.7292ZM11.75 7.02083C11.75 6.82639 11.809 6.65278 11.9271 6.5C12.0451 6.34722 12.2014 6.25 12.3958 6.20833C12.7431 6.13889 13.0851 6.08333 13.4219 6.04167C13.7588 6 14.1131 5.97917 14.4848 5.97917C14.7172 5.97917 14.9571 5.99076 15.2046 6.01396C15.4521 6.03701 15.6964 6.06708 15.9375 6.10417C16.1042 6.13194 16.2396 6.21208 16.3438 6.34458C16.4479 6.47708 16.5 6.62611 16.5 6.79167C16.5 7.02778 16.4167 7.22222 16.25 7.375C16.0833 7.52778 15.8819 7.58826 15.6458 7.55646C15.4514 7.53271 15.2583 7.51042 15.0667 7.48958C14.875 7.46875 14.6802 7.45833 14.4823 7.45833C14.1608 7.45833 13.8507 7.47569 13.5521 7.51042C13.2535 7.54514 12.9522 7.60326 12.6483 7.68479C12.4106 7.75604 12.2014 7.72222 12.0208 7.58333C11.8403 7.44444 11.75 7.25694 11.75 7.02083ZM11.7917 11.9167C11.7917 11.7222 11.8507 11.5486 11.9688 11.3958C12.0868 11.2431 12.2431 11.1458 12.4375 11.1042C12.7847 11.0347 13.1267 10.9792 13.4635 10.9375C13.8005 10.8958 14.1548 10.875 14.5265 10.875C14.7588 10.875 14.9987 10.8866 15.2463 10.9098C15.4938 10.9328 15.7381 10.9629 15.9792 11C16.1458 11.0278 16.2812 11.1079 16.3854 11.2404C16.4896 11.3729 16.5417 11.5219 16.5417 11.6875C16.5417 11.9236 16.4583 12.1181 16.2917 12.2708C16.125 12.4236 15.9236 12.4841 15.6875 12.4523C15.4931 12.4285 15.3 12.4062 15.1083 12.3854C14.9167 12.3646 14.7219 12.3542 14.524 12.3542C14.2024 12.3542 13.8924 12.3715 13.5938 12.4062C13.2951 12.441 12.9939 12.4991 12.69 12.5806C12.4522 12.6519 12.2431 12.6181 12.0625 12.4792C11.8819 12.3403 11.7917 12.1528 11.7917 11.9167ZM11.7917 9.47917C11.7917 9.28472 11.8507 9.11111 11.9688 8.95833C12.0868 8.80556 12.2431 8.70833 12.4375 8.66667C12.7847 8.59722 13.1267 8.54167 13.4635 8.5C13.8005 8.45833 14.1548 8.4375 14.5265 8.4375C14.7588 8.4375 14.9987 8.4491 15.2463 8.47229C15.4938 8.49535 15.7381 8.52542 15.9792 8.5625C16.1458 8.59028 16.2812 8.67042 16.3854 8.80292C16.4896 8.93542 16.5417 9.08444 16.5417 9.25C16.5417 9.48611 16.4583 9.68056 16.2917 9.83333C16.125 9.98611 15.9236 10.0466 15.6875 10.0148C15.4931 9.99104 15.3 9.96875 15.1083 9.94792C14.9167 9.92708 14.7219 9.91667 14.524 9.91667C14.2024 9.91667 13.8924 9.93403 13.5938 9.96875C13.2951 10.0035 12.9939 10.0616 12.69 10.1431C12.4522 10.2144 12.2431 10.1806 12.0625 10.0417C11.8819 9.90278 11.7917 9.71528 11.7917 9.47917Z" fill="currentColor" />
+      </g>
+    </svg>
+  )
+}
+
+function LnbIconManagers(props: React.SVGProps<SVGSVGElement>) {
+  const id = useId().replace(/:/g, '_')
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+      <mask id={`mask_${id}`} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+        <rect width="20" height="20" fill="#D9D9D9" />
+      </mask>
+      <g mask={`url(#mask_${id})`}>
+        <path d="M5 14H10V13.5208C10 13.276 9.93403 13.0491 9.80208 12.8402C9.67014 12.6315 9.48611 12.4694 9.25 12.3542C8.97222 12.2431 8.69097 12.1562 8.40625 12.0938C8.12153 12.0312 7.81944 12 7.5 12C7.18056 12 6.87847 12.0312 6.59375 12.0938C6.30903 12.1562 6.02778 12.2463 5.75 12.364C5.51389 12.4685 5.32986 12.6259 5.19792 12.836C5.06597 13.0462 5 13.2744 5 13.5208V14ZM12.75 13H14.25C14.4583 13 14.6354 12.9271 14.7812 12.7812C14.9271 12.6354 15 12.4583 15 12.25C15 12.0417 14.9271 11.8646 14.7812 11.7188C14.6354 11.5729 14.4583 11.5 14.25 11.5H12.75C12.5417 11.5 12.3646 11.5729 12.2188 11.7188C12.0729 11.8646 12 12.0417 12 12.25C12 12.4583 12.0729 12.6354 12.2188 12.7812C12.3646 12.9271 12.5417 13 12.75 13ZM8.38542 11.1354C8.62847 10.8924 8.75 10.5972 8.75 10.25C8.75 9.90278 8.62847 9.60764 8.38542 9.36458C8.14236 9.12153 7.84722 9 7.5 9C7.15278 9 6.85764 9.12153 6.61458 9.36458C6.37153 9.60764 6.25 9.90278 6.25 10.25C6.25 10.5972 6.37153 10.8924 6.61458 11.1354C6.85764 11.3785 7.15278 11.5 7.5 11.5C7.84722 11.5 8.14236 11.3785 8.38542 11.1354ZM12.75 10.5H14.25C14.4583 10.5 14.6354 10.4271 14.7812 10.2812C14.9271 10.1354 15 9.95833 15 9.75C15 9.54167 14.9271 9.36458 14.7812 9.21875C14.6354 9.07292 14.4583 9 14.25 9H12.75C12.5417 9 12.3646 9.07292 12.2188 9.21875C12.0729 9.36458 12 9.54167 12 9.75C12 9.95833 12.0729 10.1354 12.2188 10.2812C12.3646 10.4271 12.5417 10.5 12.75 10.5ZM3.5 17C3.0875 17 2.73438 16.8531 2.44063 16.5594C2.14688 16.2656 2 15.9125 2 15.5V6.5C2 6.0875 2.14688 5.73438 2.44063 5.44063C2.73438 5.14688 3.0875 5 3.5 5H8V2.5C8 2.0875 8.14688 1.73438 8.44063 1.44063C8.73438 1.14688 9.0875 1 9.5 1H10.5C10.9125 1 11.2656 1.14688 11.5594 1.44063C11.8531 1.73438 12 2.0875 12 2.5V5H16.5C16.9125 5 17.2656 5.14688 17.5594 5.44063C17.8531 5.73438 18 6.0875 18 6.5V15.5C18 15.9125 17.8531 16.2656 17.5594 16.5594C17.2656 16.8531 16.9125 17 16.5 17H3.5ZM3.5 15.5H16.5V6.5H12C12 6.91667 11.8531 7.27083 11.5594 7.5625C11.2656 7.85417 10.9125 8 10.5 8H9.5C9.0875 8 8.73438 7.85312 8.44063 7.55937C8.14688 7.26562 8 6.9125 8 6.5H3.5V15.5ZM9.5 6.5H10.5V2.5H9.5V6.5Z" fill="currentColor" />
+      </g>
+    </svg>
+  )
+}
+
+function JakoreaLogo(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="182"
+      height="92"
+      viewBox="0 0 182 92"
+      fill="none"
+      {...props}
+    >
+      <g clipPath="url(#clip0_1220_33366)">
+        <path d="M73.0812 0L48.7466 18.4108L63.9601 18.3686L73.0812 0Z" fill="#296075" />
+        <path d="M93.2559 38.9086L95.4694 36.2453C96.6077 37.7983 97.985 38.6345 99.6294 38.6345C101.787 38.6345 102.89 37.3486 102.89 34.7767V23.948H95.4413V20.6875H106.776V34.5659C106.776 39.4989 104.323 41.9232 99.7137 41.9232C97.0786 41.9232 94.6894 40.848 93.2559 38.9016V38.9086Z" fill="#296075" />
+        <path d="M125.383 36.7872H114.913L112.847 41.6359H108.842L118.265 20.6953H122.095L131.546 41.6359H127.477L125.383 36.7872ZM124.097 33.7375L120.148 24.5813L116.227 33.7375H124.097Z" fill="#296075" />
+        <path d="M103.67 62.7794L100.346 66.1875V71.5421H96.46V50.6016H100.346V61.3389L110.697 50.6016H115.068L106.27 59.9616L115.602 71.5351H111.055L103.67 62.7724V62.7794Z" fill="#296075" />
+        <path d="M116.592 63.5599C116.592 58.7745 120.183 55.3945 125.088 55.3945C129.993 55.3945 133.612 58.7745 133.612 63.5599C133.612 68.3453 130.049 71.7535 125.088 71.7535C120.127 71.7535 116.592 68.3453 116.592 63.5599ZM129.838 63.5599C129.838 60.5102 127.807 58.5637 125.081 58.5637C122.354 58.5637 120.352 60.5102 120.352 63.5599C120.352 66.6097 122.383 68.5562 125.081 68.5562C127.779 68.5562 129.838 66.6097 129.838 63.5599Z" fill="#296075" />
+        <path d="M146.443 55.3945V58.9572C146.113 58.894 145.846 58.8659 145.579 58.8659C142.74 58.8659 140.941 60.5383 140.941 63.7989V71.5497H137.203V55.5772H140.765V57.9102C141.84 56.2378 143.787 55.3945 146.45 55.3945H146.443Z" fill="#296075" />
+        <path d="M164.713 64.7545H152.177C152.627 67.0875 154.573 68.5843 157.349 68.5843C159.141 68.5843 160.546 68.0151 161.685 66.8486L163.687 69.1535C162.254 70.861 160.005 71.7535 157.258 71.7535C151.903 71.7535 148.432 68.3102 148.432 63.5599C148.432 58.8097 151.931 55.3945 156.688 55.3945C161.446 55.3945 164.762 58.6551 164.762 63.6513C164.762 63.9535 164.734 64.3962 164.706 64.7545H164.713ZM152.149 62.274H161.214C160.912 59.9691 159.148 58.388 156.695 58.388C154.243 58.388 152.507 59.941 152.149 62.274Z" fill="#296075" />
+        <path d="M181.733 62.1826V71.5426H178.205V69.5962C177.306 70.9735 175.57 71.7535 173.181 71.7535C169.534 71.7535 167.229 69.7507 167.229 66.968C167.229 64.1853 169.021 62.2107 173.87 62.2107H177.994V61.9718C177.994 59.7864 176.68 58.5005 174.017 58.5005C172.225 58.5005 170.37 59.0978 169.168 60.0886L167.7 57.3691C169.407 56.0551 171.888 55.3945 174.46 55.3945C179.07 55.3945 181.726 57.5799 181.726 62.1826H181.733ZM177.994 66.5534V64.6983H174.137C171.593 64.6983 170.904 65.654 170.904 66.8205C170.904 68.1626 172.043 69.034 173.954 69.034C175.865 69.034 177.362 68.1978 177.994 66.5534Z" fill="#296075" />
+        <path d="M73.0952 0L63.9741 18.3687L73.1022 30.5114L73.0952 0Z" fill="#01A1AF" />
+        <path d="M73.0812 30.5117L63.9601 48.8804L48.7466 48.9225L73.0812 30.5117Z" fill="#296075" />
+        <path d="M73.0949 30.5117L63.9668 48.8804L73.1019 61.0301L73.0949 30.5117Z" fill="#01A1AF" />
+        <path d="M48.6764 18.4102L39.5553 36.7788L24.3418 36.821L48.6764 18.4102Z" fill="#296075" />
+        <path d="M48.6901 18.4102L39.562 36.7788L48.6971 48.9215L48.6901 18.4102Z" fill="#01A1AF" />
+        <path d="M0 55.2311L15.2065 55.1819L24.3346 36.8203L0 55.2311Z" fill="#296075" />
+        <path d="M24.3488 36.8203L15.2207 55.1819L24.3488 67.3317V36.8203Z" fill="#01A1AF" />
+        <path d="M48.6691 48.9219L39.541 67.2905L24.3345 67.3327L48.6691 48.9219Z" fill="#296075" />
+        <path d="M48.6833 48.9219L39.5552 67.2905L48.6833 79.4403V48.9219Z" fill="#01A1AF" />
+        <path d="M73.0738 61.0312L63.9457 79.3999L48.7393 79.4421L73.0738 61.0312Z" fill="#296075" />
+        <path d="M63.96 79.3929L73.0951 91.5426L73.0881 61.0312L63.96 79.3929Z" fill="#01A1AF" />
+      </g>
+      <defs>
+        <clipPath id="clip0_1220_33366">
+          <rect width="182" height="92" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+
+/** LNB 전용 키/라벨 — 탭과 연동 없음, 기존 카테고리 유지 (드롭다운 표시 포함) */
+function LnbArrowDown(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+      <path
+        d="M4.55806 7.94194C4.31398 7.69786 4.31398 7.30223 4.55806 7.05815C4.80214 6.81407 5.19777 6.81407 5.44185 7.05815L9.99995 11.6163L14.5581 7.05815C14.8021 6.81407 15.1978 6.81407 15.4418 7.05815C15.6859 7.30223 15.6859 7.69786 15.4418 7.94194L10.4418 12.9419C10.1978 13.186 9.80214 13.186 9.55806 12.9419L4.55806 7.94194Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+const LNB_ITEMS: { key: LnbKey; label: string; icon: React.ReactNode; hasDropdown?: boolean }[] = [
+  { key: 'info', label: '프로젝트 정보', icon: <LnbIconProjectInfo className="program-detail-fullpage-modal__lnb-icon" /> },
+  { key: 'applicants', label: '신청자 목록', icon: <LnbIconApplicants className="program-detail-fullpage-modal__lnb-icon" />, hasDropdown: true },
+  { key: 'progress', label: '프로그램 진행 현황', icon: <LnbIconProgress className="program-detail-fullpage-modal__lnb-icon" />, hasDropdown: true },
+  { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers className="program-detail-fullpage-modal__lnb-icon" /> },
+]
+
+export function ProgramDetailFullPageModal({
+  open,
+  onClose,
+  program,
+}: ProgramDetailFullPageModalProps) {
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const programId = program?.id
+  const { program: detailProgram, loading, sponsorName } = useProgramDetail(
+    open ? programId : undefined
+  )
+  const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
+  const [activeLnb, setActiveLnb] = useState<LnbKey>('info')
+
+  const setActiveTab = (key: TabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(TAB_PARAM, key)
+    setSearchParams(next, { replace: true })
+  }
+
+  const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
+  const title = displayProgram?.title ?? '프로그램 상세'
+
+  const handleInfoEdit = () => {
+    if (displayProgram) {
+      onClose()
+      navigate(`/programs/${displayProgram.id}`)
+    }
+  }
+
+  const handlePreview = () => {
+    if (displayProgram) {
+      window.open(`/programs/${displayProgram.id}`, '_blank')
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <TealHeaderModal
+      open={open}
+      onCancel={onClose}
+      title=""
+      size="full"
+      hideHeader
+      className="program-detail-fullpage-modal"
+    >
+      <div className="program-detail-fullpage-modal__layout">
+        <nav className="program-detail-fullpage-modal__lnb" aria-label="프로그램 상세 메뉴">
+          <div className="program-detail-fullpage-modal__lnb-brand">
+            <JakoreaLogo aria-hidden />
+          </div>
+          <ul className="program-detail-fullpage-modal__lnb-list">
+            {LNB_ITEMS.map(item => (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  className={`program-detail-fullpage-modal__lnb-item ${activeLnb === item.key ? 'program-detail-fullpage-modal__lnb-item--active' : ''}`}
+                  onClick={() => setActiveLnb(item.key)}
+                >
+                  <span className="program-detail-fullpage-modal__lnb-item-icon">{item.icon}</span>
+                  <span className="program-detail-fullpage-modal__lnb-item-label">{item.label}</span>
+                  {item.hasDropdown && (
+                    <LnbArrowDown className="program-detail-fullpage-modal__lnb-item-arrow" />
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="program-detail-fullpage-modal__main">
+          <header className="program-detail-fullpage-modal__header">
+            <h2 className="program-detail-fullpage-modal__title">{title}</h2>
+            <button
+              type="button"
+              className="program-detail-fullpage-modal__close"
+              onClick={onClose}
+              aria-label="닫기"
+            >
+              <CloseOutlined />
+            </button>
+          </header>
+
+          <div className="program-detail-fullpage-modal__tabs-row">
+            <div className="program-detail-fullpage-modal__tabs">
+              {TAB_KEYS.map(key => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
+                  onClick={() => setActiveTab(key)}
+                >
+                  <span className="program-detail-fullpage-modal__tab-label">{TAB_LABELS[key]}</span>
+                </button>
+              ))}
+            </div>
+            {displayProgram && (
+              <div className="program-detail-fullpage-modal__header-actions">
+                {(activeTab === 'info' ||
+                  activeTab === 'participants' ||
+                  activeTab === 'instructors' ||
+                  activeTab === 'volunteers') && (
+                  <AppButton variant="primary" size="large" onClick={handleInfoEdit}>
+                    정보 수정
+                  </AppButton>
+                )}
+                <AppButton variant="primary" size="large" onClick={handlePreview}>
+                  프로그램 상세 미리보기
+                </AppButton>
+              </div>
+            )}
+          </div>
+
+          <div className="program-detail-fullpage-modal__content">
+            {loading && !displayProgram ? (
+              <div className="program-detail-fullpage-modal__loading">
+                <Spin size="large" />
+              </div>
+            ) : displayProgram ? (
+              <>
+                {activeTab === 'info' && (
+                  <div className="program-detail-fullpage-modal__info-tab">
+                    <BasicInfoSection
+                      program={displayProgram}
+                      sponsorName={sponsorName}
+                      createdByName={displayProgram.createdByName}
+                      updatedByName={displayProgram.updatedByName}
+                      lifecycleStatus={displayProgram.lifecycleStatus ?? undefined}
+                      isEditMode={false}
+                      displayMode="commonInfo"
+                    />
+                    <CurriculumSection program={displayProgram} isEditMode={false} />
+                    <ProgramKpiTargetSection programId={displayProgram.id} />
+                  </div>
+                )}
+                {activeTab === 'participants' && (
+                  <div className="program-detail-fullpage-modal__info-tab">
+                    <ParticipantRecruitmentSection
+                      program={displayProgram}
+                      sponsorName={sponsorName}
+                    />
+                    <div className="program-detail-fullpage-modal__info-tab-block">
+                      <DetailInfoSection
+                        program={displayProgram}
+                        isEditMode={false}
+                        showThumbnail
+                      />
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'instructors' && (
+                  <div className="program-detail-fullpage-modal__info-tab">
+                    <InstructorRecruitmentSection
+                      program={displayProgram}
+                      sponsorName={sponsorName}
+                    />
+                    <div className="program-detail-fullpage-modal__info-tab-block">
+                      <InstructorDetailInfoSection program={displayProgram} />
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'volunteers' && (
+                  <div className="program-detail-fullpage-modal__info-tab">
+                    <VolunteerRecruitmentSection
+                      program={displayProgram}
+                      sponsorName={sponsorName}
+                    />
+                    <div className="program-detail-fullpage-modal__info-tab-block">
+                      <VolunteerDetailInfoSection program={displayProgram} />
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
+            )}
+          </div>
+        </div>
+      </div>
+    </TealHeaderModal>
+  )
+}

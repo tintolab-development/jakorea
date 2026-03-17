@@ -231,9 +231,7 @@ export function ProgramStatusWidget({
     }
     const stageKey = key as ProgramProgressStageKey
     const current = nextParams.get('status') as ProgramLifecycleStatus | null
-    const isSelected =
-      current === (STAGE_TO_LIFECYCLE[stageKey] ?? null) ||
-      (stageKey === 'matchingCompleted' && current === 'education_before_textbook')
+    const isSelected = current === (STAGE_TO_LIFECYCLE[stageKey] ?? null)
     if (isSelected) {
       nextParams.delete('status')
     } else {

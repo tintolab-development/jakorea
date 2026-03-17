@@ -9,17 +9,23 @@ import type { ProgramLifecycleStatus } from '@/types/domain'
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
 
-/** 드롭다운 표시 순서: 예정(3) → 모집 중(3) → 완료(3) */
+/** 드롭다운 표시 순서: 예정(4) → 모집 중(4) → 완료(4) */
 const LIFECYCLE_STATUS_ORDER: ProgramLifecycleStatus[] = [
   'planned',
   'instructor_recruitment_planned',
   'volunteer_recruitment_planned',
+  'participant_instructor_recruitment_planned',
   'recruiting_students',
   'recruiting_instructors',
   'recruiting_volunteers',
+  'participant_instructor_recruiting',
   'matching_completed',
+  'education_in_progress',
+  'education_before_textbook',
+  'education_after_textbook',
   'education_completed',
   'document_processing_completed',
+  'participant_instructor_recruitment_completed',
 ]
 
 /** 그룹 구분: 해당 항목 위에 여백 */
@@ -50,11 +56,7 @@ export function ProgramLifecycleStatusCell({
       status={status ?? null}
       statusOptions={LIFECYCLE_STATUS_ORDER}
       renderBadge={s => <ProgramLifecycleStatusBadge status={s} />}
-      isItemDisabled={(cur, opt) =>
-        cur === opt ||
-        (opt === 'education_completed' &&
-          (cur === 'education_before_textbook' || cur === 'education_after_textbook'))
-      }
+      isItemDisabled={(cur, opt) => cur === opt}
       getItemClassName={opt =>
         DROPDOWN_GROUP_START_KEYS.has(opt) ? 'status-dropdown-cell__dropdown-group-start' : undefined
       }
