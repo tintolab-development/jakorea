@@ -34,6 +34,8 @@ export function useProgramDetailEditForm({
       rounds: [],
       sponsorId: '',
       managerName: '',
+      description: '',
+      learningSupportContent: '',
     }
   }, [program])
 
