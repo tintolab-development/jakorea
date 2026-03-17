@@ -61,14 +61,21 @@ export const programDetailEditSchema = z.object({
   oneLineIntroduction: z.string().optional(),
   keyVisualImage: z.string().optional(),
   posterImage: z.string().optional(),
-  description: z.string().optional(),
-  recruitmentGuide: z.string().optional(),
-  learningSupportContent: z.string().optional(),
+  description: z.string().min(1, '프로그램 설명을 입력해주세요'),
+  recruitmentGuide: z
+    .string()
+    .optional()
+    .refine(v => v === undefined || (typeof v === 'string' && v.trim().length >= 1), '모집 안내를 입력해주세요'),
+  learningSupportContent: z
+    .string()
+    .min(1, '학습 지원 내용을 입력해주세요'),
   attachmentFileNames: z.array(z.string()).optional(),
   rounds: z.array(roundEditSchema),
   // 수강자 모집
   resultAnnouncementDate: z.string().optional(),
   resultAnnouncementMethod: z.string().optional(),
+  /** 학생 명단 제출 여부: 필요 | 불필요 */
+  studentListRequired: z.enum(['required', 'not_required']).optional(),
   // 강사 모집
   instructorCapacity: z.number().min(0).optional(),
   instructorApplicationStartDate: z.string().optional(),
@@ -80,6 +87,38 @@ export const programDetailEditSchema = z.object({
   interviewMethod: z.string().optional(),
   finalPassAnnouncementDate: z.string().optional(),
   finalPassAnnouncementMethod: z.string().optional(),
+  instructorTarget: z.string().optional(),
+  instructorTargetDetail: z.string().optional(),
+  // 봉사자 정보 탭
+  volunteerApplicationStartDate: z.string().optional(),
+  volunteerApplicationEndDate: z.string().optional(),
+  volunteerTarget: z.string().optional(),
+  volunteerTargetDetail: z.string().optional(),
+  applicationMethod: z
+    .string()
+    .optional()
+    .refine(v => v === undefined || (typeof v === 'string' && v.trim().length >= 1), '지원 방법을 입력해주세요'),
+  otherNotes: z
+    .string()
+    .optional()
+    .refine(v => v === undefined || (typeof v === 'string' && v.trim().length >= 1), '기타사항을 입력해주세요'),
+  additionalContentHtml: z.string().optional(),
+  // 공통 정보 탭 전용
+  mainTitle: z.string().optional(),
+  teamDivision: z.string().optional(),
+  educationProcess: z.string().optional(),
+  ipOwned: z.string().optional(),
+  courseDeliveredBy: z.enum(['JA', 'Jointly', 'Partner']).optional(),
+  partnerInvolvement: z.boolean().optional(),
+  ips: z.enum(['Inspire', 'Prepare', 'Succeed']).optional(),
+  programCategory: z.string().optional(),
+  programChannel: z.string().optional(),
+  // 사업 KPI 목표 (폼 전용, API 연동은 별도)
+  kpiFinalParticipants: z.number().min(0).optional(),
+  kpiInstructorCount: z.number().min(0).optional(),
+  kpiVolunteerCount: z.number().min(0).optional(),
+  kpiFinalSchools: z.number().min(0).optional(),
+  kpiFinalClasses: z.number().min(0).optional(),
 })
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
@@ -110,14 +149,16 @@ export function programToDetailEditValues(
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
     keyVisualImage: program.keyVisualImage ?? undefined,
     posterImage: program.posterImage ?? undefined,
-    description: program.description ?? undefined,
-    recruitmentGuide: program.recruitmentGuide ?? undefined,
-    learningSupportContent: program.learningSupportContent ?? undefined,
+    description: program.description ?? '',
+    recruitmentGuide: program.recruitmentGuide?.trim() ? program.recruitmentGuide : undefined,
+    learningSupportContent: program.learningSupportContent ?? '',
     attachmentFileNames: program.attachmentFileNames ?? [],
     resultAnnouncementDate: program.resultAnnouncementDate
       ? toStr(program.resultAnnouncementDate)
       : undefined,
     resultAnnouncementMethod: program.resultAnnouncementMethod ?? undefined,
+    /** 수정 모드 진입 시 미설정이면 '필요'로 기본 체크 */
+    studentListRequired: program.studentListRequired ?? 'required',
     instructorCapacity: program.instructorCapacity ?? undefined,
     instructorApplicationStartDate: program.instructorApplicationStartDate
       ? toStr(program.instructorApplicationStartDate)
@@ -136,6 +177,19 @@ export function programToDetailEditValues(
       ? toStr(program.finalPassAnnouncementDate)
       : undefined,
     finalPassAnnouncementMethod: program.finalPassAnnouncementMethod ?? undefined,
+    instructorTarget: program.instructorTarget ?? undefined,
+    instructorTargetDetail: program.instructorTargetDetail ?? undefined,
+    volunteerApplicationStartDate: program.volunteerApplicationStartDate
+      ? toStr(program.volunteerApplicationStartDate)
+      : undefined,
+    volunteerApplicationEndDate: program.volunteerApplicationEndDate
+      ? toStr(program.volunteerApplicationEndDate)
+      : undefined,
+    volunteerTarget: program.volunteerTarget ?? undefined,
+    volunteerTargetDetail: program.volunteerTargetDetail ?? undefined,
+    applicationMethod: program.applicationMethod?.trim() ? program.applicationMethod : undefined,
+    otherNotes: program.otherNotes?.trim() ? program.otherNotes : undefined,
+    additionalContentHtml: program.additionalContentHtml ?? undefined,
     rounds: (program.rounds ?? []).map(r => ({
       id: r.id,
       programId: r.programId,
@@ -148,6 +202,15 @@ export function programToDetailEditValues(
       curriculum: r.curriculum ?? undefined,
       deliveryType: r.deliveryType ?? 'offline',
     })),
+    mainTitle: program.mainTitle ?? undefined,
+    teamDivision: program.teamDivision ?? undefined,
+    educationProcess: program.educationProcess ?? undefined,
+    ipOwned: program.ipOwned ?? undefined,
+    courseDeliveredBy: program.courseDeliveredBy ?? undefined,
+    partnerInvolvement: program.partnerInvolvement,
+    ips: program.ips ?? undefined,
+    programCategory: program.programCategory ?? undefined,
+    programChannel: program.programChannel ?? undefined,
   }
 }
 
@@ -183,6 +246,7 @@ export function detailEditValuesToProgramPatch(
     rounds: values.rounds as ProgramRound[],
     resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
     resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
+    studentListRequired: values.studentListRequired ?? existing.studentListRequired,
     instructorCapacity: values.instructorCapacity ?? existing.instructorCapacity,
     instructorApplicationStartDate:
       values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
@@ -199,5 +263,25 @@ export function detailEditValuesToProgramPatch(
       values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
       values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod,
+    instructorTarget: values.instructorTarget ?? existing.instructorTarget,
+    instructorTargetDetail: values.instructorTargetDetail ?? existing.instructorTargetDetail,
+    volunteerApplicationStartDate:
+      values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
+    volunteerApplicationEndDate:
+      values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate,
+    volunteerTarget: values.volunteerTarget ?? existing.volunteerTarget,
+    volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
+    applicationMethod: values.applicationMethod ?? existing.applicationMethod,
+    otherNotes: values.otherNotes ?? existing.otherNotes,
+    additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,
+    mainTitle: values.mainTitle ?? existing.mainTitle,
+    teamDivision: values.teamDivision ?? existing.teamDivision,
+    educationProcess: values.educationProcess ?? existing.educationProcess,
+    ipOwned: values.ipOwned ?? existing.ipOwned,
+    courseDeliveredBy: values.courseDeliveredBy ?? existing.courseDeliveredBy,
+    partnerInvolvement: values.partnerInvolvement ?? existing.partnerInvolvement,
+    ips: values.ips ?? existing.ips,
+    programCategory: values.programCategory ?? existing.programCategory,
+    programChannel: values.programChannel ?? existing.programChannel,
   }
 }
