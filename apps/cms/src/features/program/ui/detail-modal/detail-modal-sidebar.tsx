@@ -15,6 +15,7 @@ export const TAB_LABELS: Record<TabKey, string> = {
 /** LNB 카테고리 (탭과 연동 없음, 기존 4개 유지) */
 export const LNB_KEYS = ['info', 'applicants', 'progress', 'managers'] as const
 export type LnbKey = (typeof LNB_KEYS)[number]
+export type ApplicantChildKey = 'institutions' | 'instructors' | 'volunteers'
 
 /** LNB 아이콘 20×20, fill은 currentColor로 활성/비활성 색 상속 */
 function LnbIconProjectInfo(props: React.SVGProps<SVGSVGElement>) {
@@ -235,8 +236,8 @@ function LnbArrowDown(props: React.SVGProps<SVGSVGElement>) {
 }
 
 /** 신청자 목록 하위 메뉴 */
-const APPLICANTS_CHILDREN: { key: TabKey; label: string }[] = [
-  { key: 'participants', label: '신청 기관' },
+const APPLICANTS_CHILDREN: { key: ApplicantChildKey; label: string }[] = [
+  { key: 'institutions', label: '신청 기관' },
   { key: 'instructors', label: '신청 강사' },
   { key: 'volunteers', label: '신청 봉사자' },
 ]
@@ -271,8 +272,8 @@ export interface DetailModalSidebarProps {
   setActiveLnb: (key: LnbKey) => void
   applicantsExpanded: boolean
   setApplicantsExpanded: React.Dispatch<React.SetStateAction<boolean>>
-  activeChildMenu: TabKey | ''
-  setActiveChildMenu: (key: TabKey) => void
+  activeChildMenu: ApplicantChildKey | ''
+  setActiveChildMenu: (key: ApplicantChildKey) => void
 }
 
 export function DetailModalSidebar({

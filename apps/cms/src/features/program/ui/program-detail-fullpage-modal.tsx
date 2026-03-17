@@ -6,14 +6,11 @@
 
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Spin, Typography, message } from 'antd'
+import { Spin, Typography } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
-import { useProgramDetailEditForm } from '../hooks/use-program-detail-edit-form'
-import { useProgramDetailInfoSave } from '../hooks/use-program-detail-info-save'
-import { MESSAGES } from '@/shared/constants'
 import { BasicInfoSection } from './basic-info-section'
 import { CurriculumSection } from './curriculum-section'
 import { ProgramKpiTargetSection } from './program-kpi-target-section'
@@ -24,15 +21,15 @@ import { InstructorDetailInfoSection } from './instructor-detail-info-section'
 import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
 import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
 import { ApplicantDetails } from './detail-modal/applicants-detail'
-import type { Program } from '@/types/domain'
 import {
   DetailModalSidebar,
   TAB_KEYS,
   TAB_LABELS,
   type TabKey,
   type LnbKey,
+  type ApplicantChildKey,
 } from './detail-modal/detail-modal-sidebar'
-import '@toast-ui/editor/dist/toastui-editor.css'
+import type { Program } from '@/types/domain'
 import './program-detail-info-tab.css'
 import './program-detail-fullpage-modal.css'
 
@@ -43,19 +40,11 @@ export interface ProgramDetailFullPageModalProps {
 }
 
 const TAB_PARAM = 'tab'
-const EDIT_PARAM = 'edit'
 
 function parseTabFromSearch(searchParams: URLSearchParams): TabKey {
   const tab = searchParams.get(TAB_PARAM)
   if (tab && (TAB_KEYS as readonly string[]).includes(tab)) return tab as TabKey
   return 'info'
-}
-
-/** 쿼리 파라미터에서 수정 모드 탭 파싱. edit=info 등 현재 탭과 일치할 때만 해당 탭이 수정 모드 */
-function parseEditTabFromSearch(searchParams: URLSearchParams): TabKey | null {
-  const edit = searchParams.get(EDIT_PARAM)
-  if (edit && (TAB_KEYS as readonly string[]).includes(edit)) return edit as TabKey
-  return null
 }
 
 export function ProgramDetailFullPageModal({
@@ -70,200 +59,26 @@ export function ProgramDetailFullPageModal({
     program: detailProgram,
     loading,
     sponsorName,
-    updateProgram,
   } = useProgramDetail(open ? programId : undefined)
   const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
-  const editTab = open ? parseEditTabFromSearch(searchParams) : null
   const [activeLnb, setActiveLnb] = useState<LnbKey>('info')
   const [applicantsExpanded, setApplicantsExpanded] = useState(false)
-  const [activeChildMenu, setActiveChildMenu] = useState<TabKey | ''>('')
+  const [activeChildMenu, setActiveChildMenu] = useState<ApplicantChildKey | ''>('')
 
   const setActiveTab = (key: TabKey) => {
     const next = new URLSearchParams(searchParams)
     next.set(TAB_PARAM, key)
-    next.delete(EDIT_PARAM)
-    setSearchParams(next, { replace: true })
-  }
-
-  const setEditMode = (tab: TabKey | null) => {
-    const next = new URLSearchParams(searchParams)
-    if (tab) next.set(EDIT_PARAM, tab)
-    else next.delete(EDIT_PARAM)
     setSearchParams(next, { replace: true })
   }
 
   const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
   const title = displayProgram?.title ?? '프로그램 상세'
 
-  const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
-  const infoForm = useProgramDetailEditForm({
-    program: displayProgram,
-    isEditMode: isEditModeInfo,
-  })
-  const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
-    useProgramDetailInfoSave({
-      form: infoForm,
-      program: displayProgram ?? ({} as Program),
-      onSaveEdit:
-        displayProgram && updateProgram
-          ? async draft => {
-              try {
-                const { id: _id, createdAt: _c, ...patch } = draft
-                await updateProgram(draft.id, patch)
-                message.success(MESSAGES.success.programUpdated)
-                setEditMode(null)
-              } catch {
-                message.error(MESSAGES.error.update)
-              }
-            }
-          : undefined,
-    })
-
-  const isEditModeParticipants =
-    activeTab === 'participants' && editTab === 'participants' && !!displayProgram
-  const participantsForm = useProgramDetailEditForm({
-    program: displayProgram,
-    isEditMode: isEditModeParticipants,
-  })
-  const {
-    triggerSave: participantsTriggerSave,
-    resetToProgram: participantsResetToProgram,
-    registerGetAdditionalContentHtml: registerParticipantsAdditionalHtml,
-  } = useProgramDetailInfoSave({
-    form: participantsForm,
-    program: displayProgram ?? ({} as Program),
-    onSaveEdit:
-      displayProgram && updateProgram
-        ? async draft => {
-            try {
-              const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
-              setEditMode(null)
-            } catch {
-              message.error(MESSAGES.error.update)
-            }
-          }
-        : undefined,
-  })
-
-  const isEditModeInstructors =
-    activeTab === 'instructors' && editTab === 'instructors' && !!displayProgram
-  const instructorsForm = useProgramDetailEditForm({
-    program: displayProgram,
-    isEditMode: isEditModeInstructors,
-  })
-  const {
-    triggerSave: instructorsTriggerSave,
-    resetToProgram: instructorsResetToProgram,
-    registerGetAdditionalContentHtml: registerInstructorsAdditionalHtml,
-  } = useProgramDetailInfoSave({
-    form: instructorsForm,
-    program: displayProgram ?? ({} as Program),
-    onSaveEdit:
-      displayProgram && updateProgram
-        ? async draft => {
-            try {
-              const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
-              setEditMode(null)
-            } catch {
-              message.error(MESSAGES.error.update)
-            }
-          }
-        : undefined,
-  })
-
   const handleInfoEdit = () => {
-    if (activeTab === 'info' && displayProgram) {
-      infoResetToProgram()
-      setEditMode('info')
-      return
-    }
-    if (activeTab === 'participants' && displayProgram) {
-      participantsResetToProgram()
-      setEditMode('participants')
-      return
-    }
-    if (activeTab === 'instructors' && displayProgram) {
-      instructorsResetToProgram()
-      setEditMode('instructors')
-      return
-    }
-    if (activeTab === 'volunteers' && displayProgram) {
-      volunteersResetToProgram()
-      setEditMode('volunteers')
-      return
-    }
     if (displayProgram) {
       onClose()
       navigate(`/programs/${displayProgram.id}`)
     }
-  }
-
-  const handleInfoCancelEdit = () => {
-    infoResetToProgram()
-    setEditMode(null)
-  }
-
-  const handleInfoSave = () => {
-    if (displayProgram) infoTriggerSave()
-  }
-
-  const handleParticipantsSave = () => {
-    participantsTriggerSave()
-  }
-
-  const handleParticipantsCancelEdit = () => {
-    participantsResetToProgram()
-    setEditMode(null)
-  }
-
-  const handleInstructorsCancelEdit = () => {
-    instructorsResetToProgram()
-    setEditMode(null)
-  }
-
-  const handleInstructorsSave = () => {
-    instructorsTriggerSave()
-  }
-
-  const isEditModeVolunteers =
-    activeTab === 'volunteers' && editTab === 'volunteers' && !!displayProgram
-  const volunteersForm = useProgramDetailEditForm({
-    program: displayProgram,
-    isEditMode: isEditModeVolunteers,
-  })
-  const {
-    triggerSave: volunteersTriggerSave,
-    resetToProgram: volunteersResetToProgram,
-    registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
-  } = useProgramDetailInfoSave({
-    form: volunteersForm,
-    program: displayProgram ?? ({} as Program),
-    onSaveEdit:
-      displayProgram && updateProgram
-        ? async draft => {
-            try {
-              const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
-              setEditMode(null)
-            } catch {
-              message.error(MESSAGES.error.update)
-            }
-          }
-        : undefined,
-  })
-
-  const handleVolunteersSave = () => {
-    volunteersTriggerSave()
-  }
-
-  const handleVolunteersCancelEdit = () => {
-    volunteersResetToProgram()
-    setEditMode(null)
   }
 
   const handlePreview = () => {
@@ -324,79 +139,14 @@ export function ProgramDetailFullPageModal({
               </div>
               {displayProgram && (
                 <div className="program-detail-fullpage-modal__header-actions">
-                  {activeTab === 'info' ? (
-                    <>
-                      {isEditModeInfo && (
-                        <AppButton variant="danger" size="large" onClick={handleInfoCancelEdit}>
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeInfo ? handleInfoSave : handleInfoEdit}
-                      >
-                        {isEditModeInfo ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : activeTab === 'participants' ? (
-                    <>
-                      {isEditModeParticipants && (
-                        <AppButton
-                          variant="danger"
-                          size="large"
-                          onClick={handleParticipantsCancelEdit}
-                        >
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeParticipants ? handleParticipantsSave : handleInfoEdit}
-                      >
-                        {isEditModeParticipants ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : activeTab === 'volunteers' ? (
-                    <>
-                      {isEditModeVolunteers && (
-                        <AppButton
-                          variant="danger"
-                          size="large"
-                          onClick={handleVolunteersCancelEdit}
-                        >
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeVolunteers ? handleVolunteersSave : handleInfoEdit}
-                      >
-                        {isEditModeVolunteers ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : activeTab === 'instructors' ? (
-                    <>
-                      {isEditModeInstructors && (
-                        <AppButton
-                          variant="danger"
-                          size="large"
-                          onClick={handleInstructorsCancelEdit}
-                        >
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeInstructors ? handleInstructorsSave : handleInfoEdit}
-                      >
-                        {isEditModeInstructors ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : null}
+                  {(activeTab === 'info' ||
+                    activeTab === 'participants' ||
+                    activeTab === 'instructors' ||
+                    activeTab === 'volunteers') && (
+                    <AppButton variant="primary" size="large" onClick={handleInfoEdit}>
+                      정보 수정
+                    </AppButton>
+                  )}
                   <AppButton variant="primary" size="large" onClick={handlePreview}>
                     프로그램 상세 미리보기
                   </AppButton>
@@ -422,20 +172,11 @@ export function ProgramDetailFullPageModal({
                           createdByName={displayProgram.createdByName}
                           updatedByName={displayProgram.updatedByName}
                           lifecycleStatus={displayProgram.lifecycleStatus ?? undefined}
-                          isEditMode={isEditModeInfo}
-                          form={isEditModeInfo ? infoForm : undefined}
+                          isEditMode={false}
                           displayMode="commonInfo"
                         />
-                        <CurriculumSection
-                          program={displayProgram}
-                          isEditMode={isEditModeInfo}
-                          form={isEditModeInfo ? infoForm : undefined}
-                        />
-                        <ProgramKpiTargetSection
-                          programId={displayProgram.id}
-                          isEditMode={isEditModeInfo}
-                          form={isEditModeInfo ? infoForm : undefined}
-                        />
+                        <CurriculumSection program={displayProgram} isEditMode={false} />
+                        <ProgramKpiTargetSection programId={displayProgram.id} />
                       </div>
                     )}
                     {activeTab === 'participants' && (
@@ -443,15 +184,11 @@ export function ProgramDetailFullPageModal({
                         <ParticipantRecruitmentSection
                           program={displayProgram}
                           sponsorName={sponsorName}
-                          isEditMode={isEditModeParticipants}
-                          form={isEditModeParticipants ? participantsForm : undefined}
                         />
                         <div className="program-detail-fullpage-modal__info-tab-block">
                           <DetailInfoSection
                             program={displayProgram}
-                            isEditMode={isEditModeParticipants}
-                            form={isEditModeParticipants ? participantsForm : undefined}
-                            onRegisterGetAdditionalContentHtml={registerParticipantsAdditionalHtml}
+                            isEditMode={false}
                             showThumbnail
                           />
                         </div>
@@ -462,16 +199,9 @@ export function ProgramDetailFullPageModal({
                         <InstructorRecruitmentSection
                           program={displayProgram}
                           sponsorName={sponsorName}
-                          isEditMode={isEditModeInstructors}
-                          form={isEditModeInstructors ? instructorsForm : undefined}
                         />
                         <div className="program-detail-fullpage-modal__info-tab-block">
-                          <InstructorDetailInfoSection
-                            program={displayProgram}
-                            isEditMode={isEditModeInstructors}
-                            form={isEditModeInstructors ? instructorsForm : undefined}
-                            onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
-                          />
+                          <InstructorDetailInfoSection program={displayProgram} />
                         </div>
                       </div>
                     )}
@@ -480,16 +210,9 @@ export function ProgramDetailFullPageModal({
                         <VolunteerRecruitmentSection
                           program={displayProgram}
                           sponsorName={sponsorName}
-                          isEditMode={isEditModeVolunteers}
-                          form={isEditModeVolunteers ? volunteersForm : undefined}
                         />
                         <div className="program-detail-fullpage-modal__info-tab-block">
-                          <VolunteerDetailInfoSection
-                            program={displayProgram}
-                            isEditMode={isEditModeVolunteers}
-                            form={isEditModeVolunteers ? volunteersForm : undefined}
-                            onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
-                          />
+                          <VolunteerDetailInfoSection program={displayProgram} />
                         </div>
                       </div>
                     )}

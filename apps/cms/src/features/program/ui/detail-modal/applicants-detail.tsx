@@ -1,9 +1,15 @@
-import type { TabKey } from './detail-modal-sidebar'
+import type { ApplicantChildKey } from './detail-modal-sidebar'
 
 export interface ApplicantDetailsProps {
-  menu: TabKey | ''
+  menu: ApplicantChildKey | ''
 }
 
-export function ApplicantDetails({ menu: _menu }: ApplicantDetailsProps) {
-  return <div>{/* 신청 기관 관련 콘텐츠 */}</div>
+export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
+  return (
+    <>
+      {menu === 'institutions' && <div>institutions</div>}
+      {menu === 'instructors' && <div>instructors</div>}
+      {menu === 'volunteers' && <div>volunteers</div>}
+    </>
+  )
 }
