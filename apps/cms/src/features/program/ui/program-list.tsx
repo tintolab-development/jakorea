@@ -10,13 +10,7 @@ import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { useProgramTable } from '../model/use-program-table'
-import type {
-  Program,
-  ProgramLifecycleStatus,
-  ProgramCategory,
-  ProgramType,
-  TargetLevel,
-} from '@/types/domain'
+import type { Program, ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
@@ -25,17 +19,9 @@ import {
   commonStatusStatusConfig,
   getProgramLifecycleLabel,
 } from '@/shared/constants/status'
-import {
-  programTypes,
-  programFormats,
-  businessAreaOptions,
-  targetLevelOptions,
-  categoryOptions,
-} from './constants/program-list-constants'
-import { getCapacity, getApplicationCountByProgram } from '../lib/program-helpers'
+import { programTypes, programFormats } from './constants/program-list-constants'
+import { resolveEducationColumns } from './table/program-table-column-resolver'
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
-import { ProgramLifecycleStatusCell } from '@/shared/components/program-lifecycle-status-cell'
-import { STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components/status-dropdown-cell'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
 import { domainColorsHex } from '@/shared/constants/colors'
@@ -49,11 +35,11 @@ import {
   programListFilterFields,
   participantFilterFields,
   economyFilterFields,
-} from './filters/program-list-filter-fields'
+} from './table/program-list-filter-fields'
 import {
   buildProgramListFilters,
   buildParticipantFilters,
-} from './filters/program-list-filter-builder'
+} from './table/program-list-filter-builder'
 import dayjs, { type Dayjs } from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -721,6 +707,31 @@ export function ProgramList({
     }
   }
 
+  const columnsAdmin = useMemo(() => {
+    if (tableVariant !== 'education') return []
+
+    return resolveEducationColumns({
+      studentRecruitmentTable,
+      instructorRecruitmentTable,
+      isEconomyPage,
+      readOnlyLifecycleStatus,
+      handleLifecycleStatusChange,
+      updatingStatusId,
+      openStatusDropdownId,
+      setOpenStatusDropdownId,
+    })
+  }, [
+    tableVariant,
+    studentRecruitmentTable,
+    instructorRecruitmentTable,
+    isEconomyPage,
+    readOnlyLifecycleStatus,
+    handleLifecycleStatusChange,
+    updatingStatusId,
+    openStatusDropdownId,
+    setOpenStatusDropdownId,
+  ])
+
   return (
     <div
       className={
@@ -802,19 +813,16 @@ export function ProgramList({
               }
             }}
             onSearch={handleSearch}
-            bordered={tableVariant !== 'education'}
+            bordered={false}
           />
           {children}
           <div className="program-list-content-wrapper__table">
             <Card
               loading={loading}
-              className={`program-list-card program-list-card--in-wrapper${tableVariant === 'education' ? ' program-list-card--no-border' : ''}`}
-              bordered={tableVariant !== 'education'}
-              style={tableVariant === 'education' ? { border: 'none', boxShadow: 'none' } : {}}
+              className="program-list-card program-list-card--in-wrapper program-list-card--no-border"
+              style={{ border: 'none', boxShadow: 'none' }}
             >
-              <div
-                className={`program-list-table-wrapper${tableVariant === 'education' ? ' program-list-table-wrapper--scroll-x' : ''}`}
-              >
+              <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
                 <Table
                   rowSelection={
                     showRowSelection && onBulkDelete
@@ -825,544 +833,13 @@ export function ProgramList({
                       : undefined
                   }
                   dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
-                  columns={
-                    tableVariant === 'education'
-                      ? studentRecruitmentTable
-                        ? (() => {
-                            const dayShort = ['일', '월', '화', '수', '목', '금', '토']
-                            const formatDateRange = (
-                              start?: string | Date,
-                              end?: string | Date
-                            ) => {
-                              if (start == null || end == null) return '-'
-                              const s = dayjs(start)
-                              const e = dayjs(end)
-                              if (!s.isValid() || !e.isValid()) return '-'
-                              return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
-                            }
-                            return [
-                              {
-                                title: 'No.',
-                                key: 'no',
-                                width: 64,
-                                align: 'center' as const,
-                                render: (_: unknown, __: Program, index: number) => index + 1,
-                              },
-                              {
-                                title: '프로그램명',
-                                dataIndex: 'title',
-                                key: 'title',
-                                width: 260,
-                                ellipsis: true,
-                                align: 'center' as const,
-                                render: (text: string) => text ?? '-',
-                              },
-                              {
-                                title: '모집 신청 현황',
-                                key: 'lifecycleStatus',
-                                width: 140,
-                                align: 'center' as const,
-                                className: readOnlyLifecycleStatus
-                                  ? undefined
-                                  : STATUS_DROPDOWN_CELL_CLASSNAME,
-                                render: (_: unknown, record: Program) =>
-                                  readOnlyLifecycleStatus ? (
-                                    record.lifecycleStatus ? (
-                                      <ProgramLifecycleStatusBadge
-                                        status={record.lifecycleStatus}
-                                      />
-                                    ) : (
-                                      '-'
-                                    )
-                                  ) : (
-                                    <ProgramLifecycleStatusCell
-                                      record={record}
-                                      onStatusChange={handleLifecycleStatusChange}
-                                      isUpdating={updatingStatusId === record.id}
-                                      openDropdownId={openStatusDropdownId}
-                                      onOpenDropdownChange={setOpenStatusDropdownId}
-                                    />
-                                  ),
-                              },
-                              {
-                                title: '지원자 수',
-                                key: 'applicantCount',
-                                width: 100,
-                                align: 'center' as const,
-                                render: (_: unknown, record: Program) =>
-                                  `${getApplicationCountByProgram(record.id)}`,
-                              },
-                              {
-                                title: '수강자 모집 인원',
-                                key: 'capacity',
-                                width: 120,
-                                align: 'center' as const,
-                                render: (_: unknown, record: Program) => {
-                                  const cap = getCapacity(record)
-                                  return cap !== undefined ? `${cap}` : '-'
-                                },
-                              },
-                              {
-                                title: '교육 분야',
-                                dataIndex: 'businessArea',
-                                key: 'businessArea',
-                                width: 110,
-                                align: 'center' as const,
-                                render: (value: string | undefined) =>
-                                  value
-                                    ? (businessAreaOptions.find(o => o.value === value)?.label ??
-                                      value)
-                                    : '-',
-                              },
-                              {
-                                title: '수강자 유형',
-                                dataIndex: 'category',
-                                key: 'category',
-                                width: 120,
-                                align: 'center' as const,
-                                render: (value: ProgramCategory | undefined) =>
-                                  value
-                                    ? (categoryOptions.find(o => o.value === value)?.label ?? value)
-                                    : '-',
-                              },
-                              {
-                                title: '교육 대상',
-                                dataIndex: 'targetLevel',
-                                key: 'targetLevel',
-                                width: 100,
-                                align: 'center' as const,
-                                render: (value: TargetLevel | undefined) =>
-                                  value
-                                    ? (targetLevelOptions.find(o => o.value === value)?.label ??
-                                      value)
-                                    : '-',
-                              },
-                              {
-                                title: '진행 방식',
-                                dataIndex: 'type',
-                                key: 'type',
-                                width: 100,
-                                align: 'center' as const,
-                                render: (value: string | undefined) =>
-                                  value
-                                    ? (programTypes.find(t => t.value === value)?.label ?? value)
-                                    : '-',
-                              },
-                              {
-                                title: '신청자 모집 기간',
-                                key: 'applicationPeriod',
-                                width: 160,
-                                align: 'center' as const,
-                                render: (_: unknown, record: Program) =>
-                                  formatDateRange(
-                                    record.applicationStartDate,
-                                    record.applicationEndDate
-                                  ),
-                              },
-                              {
-                                title: '프로그램 운영 기간',
-                                key: 'operationPeriod',
-                                width: 160,
-                                align: 'center' as const,
-                                render: (_: unknown, record: Program) =>
-                                  formatDateRange(record.startDate, record.endDate),
-                              },
-                              {
-                                title: '후원사',
-                                dataIndex: 'sponsorId',
-                                key: 'sponsorId',
-                                width: 120,
-                                align: 'center' as const,
-                                render: (id: string | undefined) =>
-                                  id ? sponsorService.getNameById(id) : '-',
-                              },
-                              {
-                                title: '담당자',
-                                key: 'owner',
-                                width: 100,
-                                align: 'center' as const,
-                                render: () => '-',
-                              },
-                            ]
-                          })()
-                        : instructorRecruitmentTable
-                          ? (() => {
-                              const dayShort = ['일', '월', '화', '수', '목', '금', '토']
-                              const formatDateRange = (
-                                start?: string | Date,
-                                end?: string | Date
-                              ) => {
-                                if (start == null || end == null) return '-'
-                                const s = dayjs(start)
-                                const e = dayjs(end)
-                                if (!s.isValid() || !e.isValid()) return '-'
-                                return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
-                              }
-                              return [
-                                {
-                                  title: 'No.',
-                                  key: 'no',
-                                  width: 64,
-                                  align: 'center' as const,
-                                  render: (_: unknown, __: Program, index: number) => index + 1,
-                                },
-                                {
-                                  title: '프로그램명',
-                                  dataIndex: 'title',
-                                  key: 'title',
-                                  width: 260,
-                                  ellipsis: true,
-                                  align: 'center' as const,
-                                  render: (text: string) => text ?? '-',
-                                },
-                                {
-                                  title: '모집 신청 현황',
-                                  key: 'lifecycleStatus',
-                                  width: 140,
-                                  align: 'center' as const,
-                                  className: readOnlyLifecycleStatus
-                                    ? undefined
-                                    : STATUS_DROPDOWN_CELL_CLASSNAME,
-                                  render: (_: unknown, record: Program) =>
-                                    readOnlyLifecycleStatus ? (
-                                      record.lifecycleStatus ? (
-                                        <ProgramLifecycleStatusBadge
-                                          status={record.lifecycleStatus}
-                                        />
-                                      ) : (
-                                        '-'
-                                      )
-                                    ) : (
-                                      <ProgramLifecycleStatusCell
-                                        record={record}
-                                        onStatusChange={handleLifecycleStatusChange}
-                                        isUpdating={updatingStatusId === record.id}
-                                        openDropdownId={openStatusDropdownId}
-                                        onOpenDropdownChange={setOpenStatusDropdownId}
-                                      />
-                                    ),
-                                },
-                                {
-                                  title: '지원자 수',
-                                  key: 'applicantCount',
-                                  width: 100,
-                                  align: 'center' as const,
-                                  render: (_: unknown, record: Program) =>
-                                    `${getApplicationCountByProgram(record.id)}`,
-                                },
-                                {
-                                  title: '강사 모집 인원',
-                                  key: 'instructorCapacity',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (_: unknown, record: Program) => {
-                                    const cap = getCapacity(record)
-                                    const current = record.instructors ?? 0
-                                    if (cap !== undefined && cap !== null)
-                                      return `${current} / ${cap}`
-                                    return `${current}`
-                                  },
-                                },
-                                {
-                                  title: '교육 분야',
-                                  dataIndex: 'businessArea',
-                                  key: 'businessArea',
-                                  width: 110,
-                                  align: 'center' as const,
-                                  render: (value: string | undefined) =>
-                                    value
-                                      ? (businessAreaOptions.find(o => o.value === value)?.label ??
-                                        value)
-                                      : '-',
-                                },
-                                {
-                                  title: '수강자 유형',
-                                  dataIndex: 'category',
-                                  key: 'category',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (value: ProgramCategory | undefined) =>
-                                    value
-                                      ? (categoryOptions.find(o => o.value === value)?.label ??
-                                        value)
-                                      : '-',
-                                },
-                                {
-                                  title: '교육 대상',
-                                  dataIndex: 'targetLevel',
-                                  key: 'targetLevel',
-                                  width: 100,
-                                  align: 'center' as const,
-                                  render: (value: TargetLevel | undefined) =>
-                                    value
-                                      ? (targetLevelOptions.find(o => o.value === value)?.label ??
-                                        value)
-                                      : '-',
-                                },
-                                {
-                                  title: '진행 방식',
-                                  dataIndex: 'type',
-                                  key: 'type',
-                                  width: 100,
-                                  align: 'center' as const,
-                                  render: (value: string | undefined) =>
-                                    value
-                                      ? (programTypes.find(t => t.value === value)?.label ?? value)
-                                      : '-',
-                                },
-                                {
-                                  title: '신청자 모집 기간',
-                                  key: 'applicationPeriod',
-                                  width: 160,
-                                  align: 'center' as const,
-                                  render: (_: unknown, record: Program) =>
-                                    formatDateRange(
-                                      record.applicationStartDate,
-                                      record.applicationEndDate
-                                    ),
-                                },
-                                {
-                                  title: '프로그램 운영 기간',
-                                  key: 'operationPeriod',
-                                  width: 160,
-                                  align: 'center' as const,
-                                  render: (_: unknown, record: Program) =>
-                                    formatDateRange(record.startDate, record.endDate),
-                                },
-                                {
-                                  title: '후원사',
-                                  dataIndex: 'sponsorId',
-                                  key: 'sponsorId',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (id: string | undefined) =>
-                                    id ? sponsorService.getNameById(id) : '-',
-                                },
-                                {
-                                  title: '담당자',
-                                  key: 'owner',
-                                  width: 100,
-                                  align: 'center' as const,
-                                  render: () => '-',
-                                },
-                              ]
-                            })()
-                          : (() => {
-                              const dayShort = ['일', '월', '화', '수', '목', '금', '토']
-                              const formatDateRange = (
-                                start?: string | Date,
-                                end?: string | Date
-                              ) => {
-                                if (start == null || end == null) return '-'
-                                const s = dayjs(start)
-                                const e = dayjs(end)
-                                if (!s.isValid() || !e.isValid()) return '-'
-                                return `${s.format('YY.MM.DD')}(${dayShort[s.day()]}) ~ ${e.format('YY.MM.DD')}(${dayShort[e.day()]})`
-                              }
-
-                              const capacityColumn = isEconomyPage
-                                ? {
-                                    title: '참여자 모집 인원',
-                                    key: 'participantCapacity',
-                                    width: 120,
-                                    align: 'center' as const,
-                                    render: (_: unknown, record: Program) => {
-                                      const cap = getCapacity(record)
-                                      const approved = record.approvedStudentCount ?? 0
-                                      if (cap !== undefined) return `${approved} / ${cap}`
-                                      return `${approved}`
-                                    },
-                                  }
-                                : [
-                                    {
-                                      title: '수강자 모집 인원',
-                                      key: 'capacity',
-                                      width: 120,
-                                      align: 'center' as const,
-                                      render: (_: unknown, record: Program) => {
-                                        const cap = getCapacity(record)
-                                        const approved = record.approvedStudentCount ?? 0
-                                        if (cap !== undefined) return `${approved} / ${cap}`
-                                        return `${approved}`
-                                      },
-                                    },
-                                    {
-                                      title: '강사 모집 인원',
-                                      key: 'instructorCapacity',
-                                      width: 120,
-                                      align: 'center' as const,
-                                      render: (_: unknown, record: Program) => {
-                                        const cap = getCapacity(record)
-                                        const current = record.instructors ?? 0
-                                        if (cap !== undefined && cap !== null)
-                                          return `${current} / ${cap}`
-                                        return `${current}`
-                                      },
-                                    },
-                                  ]
-
-                              const optionalColumns = [
-                                {
-                                  title: '교육 분야',
-                                  dataIndex: 'businessArea',
-                                  key: 'businessArea',
-                                  width: 110,
-                                  align: 'center' as const,
-                                  render: (value: string | undefined) =>
-                                    value
-                                      ? (businessAreaOptions.find(o => o.value === value)?.label ??
-                                        value)
-                                      : '-',
-                                },
-                                {
-                                  title: '교육 대상',
-                                  dataIndex: 'targetLevel',
-                                  key: 'targetLevel',
-                                  width: 100,
-                                  align: 'center' as const,
-                                  render: (value: TargetLevel | undefined) =>
-                                    value
-                                      ? (targetLevelOptions.find(o => o.value === value)?.label ??
-                                        value)
-                                      : '-',
-                                },
-                                {
-                                  title: '진행 방식',
-                                  dataIndex: 'type',
-                                  key: 'type',
-                                  width: 100,
-                                  align: 'center' as const,
-                                  render: (value: string | undefined) =>
-                                    value
-                                      ? (programTypes.find(t => t.value === value)?.label ?? value)
-                                      : '-',
-                                },
-                                {
-                                  title: '프로그램 운영기간',
-                                  key: 'operationPeriod',
-                                  width: 160,
-                                  align: 'center' as const,
-                                  render: (_: unknown, record: Program) =>
-                                    formatDateRange(record.startDate, record.endDate),
-                                },
-                                {
-                                  title: '후원사',
-                                  dataIndex: 'sponsorId',
-                                  key: 'sponsorId',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (id: string | undefined) =>
-                                    id ? sponsorService.getNameById(id) : '-',
-                                },
-                                {
-                                  title: '담당자',
-                                  key: 'owner',
-                                  width: 100,
-                                  align: 'center' as const,
-                                  render: () => '-',
-                                },
-                              ]
-
-                              const hiddenKeysOnEconomy = new Set([
-                                'businessArea',
-                                'type',
-                                'operationPeriod',
-                                'sponsorId',
-                                'owner',
-                              ])
-                              const filteredOptionalColumns = isEconomyPage
-                                ? optionalColumns.filter(col => !hiddenKeysOnEconomy.has(col.key as string))
-                                : optionalColumns
-
-                              const baseColumns = [
-                                {
-                                  title: 'No.',
-                                  key: 'no',
-                                  width: 64,
-                                  align: 'center' as const,
-                                  render: (_: unknown, __: Program, index: number) => index + 1,
-                                },
-                                {
-                                  title: '프로그램명',
-                                  dataIndex: 'title',
-                                  key: 'title',
-                                  width: 260,
-                                  ellipsis: true,
-                                  align: 'center' as const,
-                                  render: (text: string) => text ?? '-',
-                                },
-                                {
-                                  title: '모집 신청 현황',
-                                  key: 'lifecycleStatus',
-                                  width: 140,
-                                  align: 'center' as const,
-                                  className: readOnlyLifecycleStatus
-                                    ? undefined
-                                    : STATUS_DROPDOWN_CELL_CLASSNAME,
-                                  render: (_: unknown, record: Program) =>
-                                    readOnlyLifecycleStatus ? (
-                                      record.lifecycleStatus ? (
-                                        <ProgramLifecycleStatusBadge
-                                          status={record.lifecycleStatus}
-                                        />
-                                      ) : (
-                                        '-'
-                                      )
-                                    ) : (
-                                      <ProgramLifecycleStatusCell
-                                        record={record}
-                                        onStatusChange={handleLifecycleStatusChange}
-                                        isUpdating={updatingStatusId === record.id}
-                                        openDropdownId={openStatusDropdownId}
-                                        onOpenDropdownChange={setOpenStatusDropdownId}
-                                      />
-                                    ),
-                                },
-                                ...(Array.isArray(capacityColumn) ? capacityColumn : [capacityColumn]),
-                                {
-                                  title: '수강자 유형',
-                                  dataIndex: 'category',
-                                  key: 'category',
-                                  width: 120,
-                                  align: 'center' as const,
-                                  render: (value: ProgramCategory | undefined) =>
-                                    value
-                                      ? (categoryOptions.find(o => o.value === value)?.label ??
-                                        value)
-                                      : '-',
-                                },
-                                ...filteredOptionalColumns,
-                              ]
-
-                              return baseColumns
-                            })()
-                      : []
-                  }
+                  columns={columnsAdmin}
                   rowKey="id"
                   loading={loading}
                   tableLayout="fixed"
                   scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
                   onRow={record => ({
-                    onClick: event => {
-                      const target = event.target as HTMLElement
-                      if (
-                        target.closest('.program-status-dropdown-cell') ||
-                        target.closest('.program-status-dropdown-trigger') ||
-                        target.closest('.status-dropdown-cell__status-trigger')
-                      ) {
-                        return
-                      }
-                      if (
-                        target.closest('.ant-image-preview-wrap') ||
-                        target.closest('.ant-image')
-                      ) {
-                        return
-                      }
-                      if (target.closest('.ant-image-mask')) {
-                        return
-                      }
-                      onView(record)
-                    },
+                    onClick: () => onView(record),
                     style: { cursor: 'pointer' },
                   })}
                   pagination={false}
@@ -1527,7 +1004,10 @@ export function ProgramList({
                                   <HeartOutlined />
                                 )
                               }
-                              onClick={() => handleToggleFavorite(record.id)}
+                              onClick={e => {
+                                e.stopPropagation()
+                                handleToggleFavorite(record.id)
+                              }}
                             />
                           </div>
                         ),
