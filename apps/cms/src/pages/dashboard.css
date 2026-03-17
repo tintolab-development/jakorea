@@ -165,6 +165,7 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  border-radius: var(--radius-8);
 }
 
 /* 메뉴 바로가기 위젯: 슬롯 하단 패딩 제거(행 간격은 Row gutter 20px로 통일), 배지 잘림 방지는 overflow 완화로 */
@@ -253,12 +254,16 @@
 .dashboard-widget-slot > .ant-card {
   flex: 1;
   min-height: 0;
+  border-radius: var(--radius-8);
+  overflow: hidden;
 }
 
-/* 모집 신청 현황 위젯 50%일 때: 카드·본문·테이블이 콘텐츠 높이만 사용해 하단 빈 공간 제거 */
+/* 모집 신청 현황 위젯 50%일 때: 카드·본문·테이블이 콘텐츠 높이만 사용해 하단 빈 공간 제거, 컨테이너 radius 유지 */
 .dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) > .ant-card {
   flex: 0 0 auto;
   height: auto;
+  border-radius: var(--radius-8);
+  overflow: hidden;
 }
 .dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) .recruitment-status-widget .ant-card-body {
   flex: 0 1 auto;
