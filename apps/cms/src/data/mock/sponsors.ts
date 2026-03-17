@@ -104,6 +104,29 @@ export const mockSponsors: Sponsor[] = sponsorNames.slice(0, 30).map(name => {
   }
 })
 
+// JA코리아(JA Korea 고유목적사업) 담당자 목데이터 — 후원사 담당자 셀렉트 연동용 (programs.ts updateSponsors에서 mockSponsors[0]이 JA Korea 고유목적사업으로 설정됨)
+// educationRecords[0].managerName('OO팀 이순신 책임') 등과 연동
+export const JA_KOREA_MANAGERS = [
+  { name: 'OO팀 이순신 책임', phone: '010-1234-5678' },
+  { name: '이소율', phone: '02-6347-6113' },
+  { name: '김경제', phone: '02-6085-6028' },
+  { name: '박교육', phone: '010-2345-6789' },
+  { name: '정미래', phone: '010-3456-7890' },
+] as const
+
+// 기타 후원사용 기본 담당자 목록 (셀렉트 옵션용)
+const defaultManagers = [
+  { name: '○○팀 이순신 책임', phone: '010-1234-5678' },
+  { name: '홍길동', phone: '010-9876-5432' },
+  { name: '김담당', phone: '010-1111-2222' },
+  { name: '이소율', phone: '02-6347-6113' },
+]
+
+// mockSponsors[0] = JA Korea 고유목적사업으로 연동되므로 JA코리아 담당자 목록 부여, 나머지는 기본 목록
+mockSponsors.forEach((s, i) => {
+  s.managers = i === 0 ? [...JA_KOREA_MANAGERS] : [...defaultManagers]
+})
+
 export const mockSponsorsMap = new Map(mockSponsors.map(sponsor => [sponsor.id, sponsor]))
 
 

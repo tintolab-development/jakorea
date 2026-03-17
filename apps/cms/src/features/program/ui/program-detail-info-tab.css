@@ -100,22 +100,33 @@
     text-align: left;
 }
 
-/* 라벨 셀: 연한 회색 배경 #F9F9F9, 굵은 검정/다크그레이 var(--color-text-primary), 가운데 정렬, 헤더 200px 고정 */
+/* 라벨 셀(th): 연한 회색 배경, 가운데 정렬, 헤더 200px 고정. 폰트: Pretendard 16px 700, line-height 140%, 색상 #3D3D3D */
 .program-detail-info-tab__table th {
     width: 200px !important;
     min-width: 200px !important;
     max-width: 200px !important;
-    font-size: 14px;
-    font-weight: 700;
+    color: var(--default-BK, #3D3D3D);
     text-align: center;
-    color: var(--color-text-primary);
+    font-family: Pretendard, var(--font-family-primary, sans-serif);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 140%;
     background: #edf0f2;
 }
 
-/* 필수 항목 * 표시: 수정 상태에서만 노출, 빨간색·텍스트와 2px 간격 (시인성 확보) */
+/* 필수 영역일 때만 옆에 붙는 필수 표시(*): 빨간색, 텍스트와 2px 간격 */
 .program-detail-info-tab__table th .program-detail-info-tab__required {
-    color: var(--color-required-mark, #ff4d4f);
+    color: var(--color-red, #C32F4A);
     margin-left: 2px;
+}
+
+/* 필수 필드 검증 에러 메시지 (강사 정보 등) */
+.program-detail-info-tab__field-error {
+    display: block;
+    margin-top: var(--spacing-4);
+    font-size: var(--font-size-12);
+    color: var(--color-red, #ff4d4f);
 }
 
 /* 값 셀: 흰색 배경, 검정 텍스트 */
@@ -250,10 +261,12 @@
     gap: 0;
 }
 
+/* 이미지 유무와 관계없이 행 높이 고정 → 삭제 시 파일 선택 UI shifting 방지 (참여자/강사 정보 탭 공통) */
 .program-detail-info-tab__thumbnail-row {
     display: flex;
     align-items: center;
     gap: 16px;
+    min-height: 86px;
 }
 
 /* 썸네일 이미지 86×86 고정 (Ant Design Image 래퍼 + 내부 img 모두 제한) */
@@ -283,13 +296,14 @@
     display: block;
 }
 
-/* 썸네일 오른쪽: 1행 = 파일명 + 삭제(X), 2행 = 파일선택버튼 + 안내 텍스트 */
+/* 썸네일 오른쪽: 1행 = 파일명 + 삭제(X), 2행 = 파일선택버튼 + 안내 텍스트. 삭제 시 파일명 영역이 사라져도 높이 고정으로 파일 선택 UI shifting 방지 */
 .program-detail-info-tab__thumbnail-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
     min-width: 0;
+    min-height: 80px;
 }
 
 .program-detail-info-tab__thumbnail-filename-row {
@@ -625,6 +639,40 @@
     border-radius: 6px;
 }
 
+/* 강사 정보 탭: 문의처 3필드 행 */
+.program-detail-info-tab__contact-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.program-detail-info-tab__contact-input--name,
+.program-detail-info-tab__contact-input--email {
+    max-width: 240px;
+}
+
+.program-detail-info-tab__contact-input--phone {
+    max-width: 160px;
+}
+
+.program-detail-info-tab__select--instructor-target {
+    width: 100%;
+    max-width: 200px;
+}
+
+.program-detail-info-tab__select--interview-method {
+    width: 100%;
+    max-width: 160px;
+    margin-top: 8px;
+}
+
+/* 봉사자 모집 2차 면접 방식 Select */
+.program-detail-info-tab__interview-method-select {
+    min-width: 100px;
+    margin-left: 8px;
+}
+
 /* 수강자/강사 모집 인원: 승인수 / 정원 입력 (시안: "30 / 30") */
 .program-detail-info-tab__capacity-row {
     display: flex;
@@ -693,6 +741,14 @@
     vertical-align: middle;
 }
 
+/* 공통 정보 탭: 프로그램 채널 셀 (Select + 파일선택 버튼) */
+.program-detail-info-tab__program-channel-cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-12);
+}
+
 .program-detail-info-tab__sponsor-manager-inputs {
     display: flex;
     flex-wrap: wrap;
@@ -714,11 +770,6 @@
     padding: 0 4px;
 }
 
-.program-detail-info-tab__contact-phone-readonly {
-    font-size: 14px;
-    color: var(--color-text-primary);
-    min-width: 100px;
-}
 
 /* 문의처 행: 문의처명 | Tel 입력 | E-mail 입력 (레이블·구분선 디자인 시안) */
 .program-detail-info-tab__contact-inputs {
@@ -730,6 +781,9 @@
 
 .program-detail-info-tab__contact-inputs .ant-input {
     border-radius: 6px;
+    width: 190px;
+    height: 40px;
+    box-sizing: border-box;
 }
 
 .program-detail-info-tab__contact-name-readonly {
@@ -744,9 +798,57 @@
 }
 
 .program-detail-info-tab__contact-phone-input {
-    max-width: 160px;
+    width: 190px;
+    max-width: 190px;
+}
+
+.program-detail-info-tab__manager-select {
+    min-width: 200px;
+}
+
+/* 후원사 담당자: 휴대폰 번호 — 인풋 없이 텍스트만 표시, 담당자 선택과 연동 */
+.program-detail-info-tab__contact-phone-readonly {
+    font-size: var(--font-size-14);
+    color: var(--default-BK, #3d3d3d);
+    line-height: 1.5;
+    min-width: 100px;
 }
 
 .program-detail-info-tab__contact-email-input {
-    max-width: 240px;
+    width: 190px;
+    max-width: 190px;
+}
+
+/* 문의처: 문의처 | Tel | E-mail 세 그룹, 항목별 갭 16px(디바이더 양옆). 그룹은 콘텐츠 너비만 사용(균등 넓힘 제거) */
+.program-detail-info-tab__contact-inputs--even {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0 16px;
+}
+
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group {
+    flex: 0 0 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group .program-detail-info-tab__contact-label {
+    flex-shrink: 0;
+}
+
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group .ant-input {
+    width: 190px;
+    height: 40px;
+    flex: 0 0 190px;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-phone-input,
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-email-input {
+    width: 190px;
+    max-width: 190px;
 }

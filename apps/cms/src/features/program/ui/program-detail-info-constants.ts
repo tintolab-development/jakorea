@@ -60,6 +60,20 @@ export const RECRUITMENT_RADIO_OPTIONS = [
   { value: 'closed', label: '모집 마감' },
 ]
 
+/** 강사 모집 대상 옵션 (강사 정보 탭) */
+export const INSTRUCTOR_TARGET_OPTIONS = [
+  { value: '성인', label: '성인' },
+  { value: '대학생', label: '대학생' },
+  { value: '기타', label: '기타' },
+]
+
+/** 2차 면접 심사 방법 옵션 */
+export const INTERVIEW_METHOD_OPTIONS = [
+  { value: '온라인', label: '온라인' },
+  { value: '오프라인', label: '오프라인' },
+  { value: '온/오프라인', label: '온/오프라인' },
+]
+
 export function getRecruitmentStatusLabel(program: Program): string {
   const v = getRecruitmentStatusValue(program)
   const opt = RECRUITMENT_RADIO_OPTIONS.find(o => o.value === v)
@@ -118,6 +132,13 @@ export const TYPE_LABEL: Record<string, string> = {
   hybrid: '온/오프라인',
 }
 
+/** 봉사자 모집 대상 옵션 */
+export const VOLUNTEER_TARGET_OPTIONS = [
+  { value: '대학(원)생', label: '대학(원)생' },
+  { value: '일반인', label: '일반인' },
+  { value: '기타', label: '기타' },
+]
+
 export const TARGET_LEVEL_LABEL: Record<string, string> = {
   elementary: '초등학교',
   middle: '중학교',
@@ -130,6 +151,58 @@ export const LIFECYCLE_OPTIONS = programLifecycleStatusConfig.order.map(
     label: getProgramLifecycleLabel(status),
   })
 )
+
+// ─── 공통 정보 탭 전용 옵션 ─────────────────────────────────────
+
+export const TEAM_DIVISION_OPTIONS = [
+  { value: 'C&D', label: 'C&D' },
+  { value: 'C', label: 'C' },
+  { value: 'D', label: 'D' },
+  { value: '기타', label: '기타' },
+]
+
+export const EDUCATION_PROCESS_OPTIONS = [
+  { value: 'Traditional (Paper)', label: 'Traditional (Paper)' },
+  { value: 'Digital', label: 'Digital' },
+  { value: 'Hybrid', label: 'Hybrid' },
+  { value: '기타', label: '기타' },
+]
+
+export const IP_OWNED_OPTIONS = [
+  { value: 'JA', label: 'JA' },
+  { value: 'Partner', label: 'Partner' },
+  { value: 'Joint', label: 'Joint' },
+]
+
+export const COURSE_DELIVERED_BY_OPTIONS = [
+  { value: 'JA', label: 'JA' },
+  { value: 'Jointly', label: 'Jointly' },
+  { value: 'Partner', label: 'Partner' },
+]
+
+export const PARTNER_INVOLVEMENT_OPTIONS = [
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+]
+
+export const IPS_OPTIONS = [
+  { value: 'Inspire', label: 'Inspire' },
+  { value: 'Prepare', label: 'Prepare' },
+  { value: 'Succeed', label: 'Succeed' },
+]
+
+export const PROGRAM_CATEGORY_OPTIONS = [
+  { value: '자격증 수여 (Credential)', label: '자격증 수여 (Credential)' },
+  { value: '수료증', label: '수료증' },
+  { value: '기타', label: '기타' },
+]
+
+export const PROGRAM_CHANNEL_OPTIONS = [
+  { value: '다운받을 자료 (Downloaded resource)', label: '다운받을 자료 (Downloaded resource)' },
+  { value: '온라인 플랫폼', label: '온라인 플랫폼' },
+  { value: '대면', label: '대면' },
+  { value: '기타', label: '기타' },
+]
 
 // ─── 기본 콘텐츠 (시안 placeholder) ────────────────────────
 

@@ -27,6 +27,32 @@ export function useTemplateEditor(
 
     destroyEditor()
 
+    const hostEl = editorHostRef.current
+    let userClickedInEditor = false
+    let tResetUserClick = 0
+    const USER_CLICK_GRACE_MS = 300
+
+    // 에디터 생성 전에 호스트에 focusin 캡처 리스너 부착 → WYSIWYG(ProseMirror)가 DOM 추가 직후 포커스를 잡아도 즉시 blur (MutationObserver보다 먼저 포커스가 발생할 수 있음)
+    const onHostFocusIn = () => {
+      if (userClickedInEditor) return
+      // focusin이 생성자 직후 같은 틱에 올 수 있어 editorRef.current가 아직 없을 수 있음 → 다음 틱에 blur
+      setTimeout(() => {
+        const current = editorRef.current as unknown as { blur(): void } | null
+        if (current) current.blur()
+      }, 0)
+    }
+    const onUserInteraction = () => {
+      userClickedInEditor = true
+      if (tResetUserClick) clearTimeout(tResetUserClick)
+      tResetUserClick = window.setTimeout(() => {
+        userClickedInEditor = false
+        tResetUserClick = 0
+      }, USER_CLICK_GRACE_MS)
+    }
+    hostEl.addEventListener('focusin', onHostFocusIn, true)
+    hostEl.addEventListener('mousedown', onUserInteraction, true)
+    hostEl.addEventListener('pointerdown', onUserInteraction, true)
+
     // 라이브러리 기본값이 autofocus: true 이고, 생성자 끝에서 moveCursorToStart(autofocus) 호출 → false로 초기 포커스 방지
     const instance = new Editor({
       el: editorHostRef.current,
@@ -67,16 +93,12 @@ export function useTemplateEditor(
       requestAnimationFrame(() => editorCore.blur())
     }
     // Toast UI Editor(ProseMirror)가 마운트 후 포커스를 잡아 스크롤이 내려가는 이슈 방지: ProseMirror에 focus 시 즉시 blur
-    const hostEl = editorHostRef.current
     if (hostEl) {
       hostEl.setAttribute('tabindex', '-1')
     }
     editorCore.blur()
     // 수정 모드 진입 시 에디터로 포커스가 가지 않도록: 사용자가 직접 클릭할 때만 포커스 허용 (스크롤은 페이지 쪽 useEditModeFocusRestore에서만 처리)
     let removeProseFocusListener: (() => void) | null = null
-    let userClickedInEditor = false
-    let tResetUserClick = 0
-    const USER_CLICK_GRACE_MS = 300
     const attachProseBlur = (el: HTMLElement) => {
       if (!el || (el as unknown as { _proseBlurAttached?: boolean })._proseBlurAttached) return
       ;(el as unknown as { _proseBlurAttached?: boolean })._proseBlurAttached = true
@@ -142,6 +164,10 @@ export function useTemplateEditor(
     const t5 = setTimeout(blurAgain, 450)
     const t6 = setTimeout(blurAgain, 600)
     return () => {
+      clearTimeout(tResetUserClick)
+      hostEl.removeEventListener('focusin', onHostFocusIn, true)
+      hostEl.removeEventListener('mousedown', onUserInteraction, true)
+      hostEl.removeEventListener('pointerdown', onUserInteraction, true)
       cleanupMo?.()
       removeProseFocusListener?.()
       clearTimeout(t1)

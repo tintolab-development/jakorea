@@ -2,16 +2,23 @@
  * 사업 KPI 목표 테이블 섹션
  * 프로그램 상세 공통 정보 탭 하단에 표시 (참여자 최종 인원, 최종 파견 학교 수, 교육진행자 최종 인원, 최종 파견 학급 수)
  * td 영역에서는 숫자 텍스트만 볼드 처리.
+ * 수정 모드 시 form 연동으로 Input 표시.
  */
 
 import type { ReactNode } from 'react'
 import { useState, useEffect } from 'react'
+import { Input } from 'antd'
+import { Controller } from 'react-hook-form'
 import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
 import type { KpiMetric } from '@/features/dashboard/api/admin-dashboard-service'
+import type { UseFormReturn } from 'react-hook-form'
+import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
 import './program-kpi-target-section.css'
 
 export interface ProgramKpiTargetSectionProps {
   programId: string
+  isEditMode?: boolean
+  form?: UseFormReturn<ProgramDetailEditFormValues>
 }
 
 const EDUCATION_INSTRUCTOR_LABEL = '교육진행자 최종 인원'
@@ -36,8 +43,13 @@ function formatKpiValueWithBoldNumbers(value: string | number | undefined): Reac
   )
 }
 
-export function ProgramKpiTargetSection({ programId }: ProgramKpiTargetSectionProps) {
+export function ProgramKpiTargetSection({
+  programId,
+  isEditMode = false,
+  form,
+}: ProgramKpiTargetSectionProps) {
   const [kpis, setKpis] = useState<KpiMetric[] | null>(null)
+  const isFormEdit = isEditMode && form
 
   useEffect(() => {
     let cancelled = false
@@ -53,7 +65,32 @@ export function ProgramKpiTargetSection({ programId }: ProgramKpiTargetSectionPr
     }
   }, [programId])
 
-  if (!kpis || kpis.length === 0) {
+  // 수정 모드 진입 시 API에서 받은 KPI 값으로 폼 시드 (한 번만)
+  useEffect(() => {
+    if (!isFormEdit || !kpis?.length || !form) return
+    const participantsRow = kpis.find(k => k.key === 'finalParticipants')
+    const schoolsRow = kpis.find(k => k.key === 'finalSchools')
+    const classesRow = kpis.find(k => k.key === 'finalClasses')
+    const current = form.getValues()
+    if (participantsRow?.target != null && current.kpiFinalParticipants == null) {
+      form.setValue('kpiFinalParticipants', Number(participantsRow.target))
+    }
+    if (schoolsRow?.target != null && current.kpiFinalSchools == null) {
+      form.setValue('kpiFinalSchools', Number(schoolsRow.target))
+    }
+    if (classesRow?.target != null && current.kpiFinalClasses == null) {
+      form.setValue('kpiFinalClasses', Number(classesRow.target))
+    }
+  }, [isFormEdit, kpis, form])
+
+  const participantsRow = kpis?.find(k => k.key === 'finalParticipants')
+  const schoolsRow = kpis?.find(k => k.key === 'finalSchools')
+  const classesRow = kpis?.find(k => k.key === 'finalClasses')
+  const instructorDisplay: string | undefined = isFormEdit
+    ? undefined
+    : '강사: 80 봉사자 : 80'
+
+  if (!isFormEdit && (!kpis || kpis.length === 0)) {
     return (
       <section className="program-kpi-target-section">
         <h3 className="program-detail-info-tab__section-title">사업 KPI 목표</h3>
@@ -61,7 +98,7 @@ export function ProgramKpiTargetSection({ programId }: ProgramKpiTargetSectionPr
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-kpi-target-section__table">
             <tbody>
               <tr>
-                <td colSpan={2} className="program-kpi-target-section__empty">
+                <td colSpan={4} className="program-kpi-target-section__empty">
                   KPI 목표 데이터가 없습니다.
                 </td>
               </tr>
@@ -71,11 +108,6 @@ export function ProgramKpiTargetSection({ programId }: ProgramKpiTargetSectionPr
       </section>
     )
   }
-
-  const participantsRow = kpis.find(k => k.key === 'finalParticipants')
-  const schoolsRow = kpis.find(k => k.key === 'finalSchools')
-  const classesRow = kpis.find(k => k.key === 'finalClasses')
-  const instructorDisplay = '감사: 80 봉사자 : 80'
 
   return (
     <section className="program-kpi-target-section">
@@ -90,16 +122,136 @@ export function ProgramKpiTargetSection({ programId }: ProgramKpiTargetSectionPr
           </colgroup>
           <tbody>
             <tr>
-              <th>참여자 최종 인원</th>
-              <td>{formatKpiValueWithBoldNumbers(participantsRow?.target)}</td>
-              <th>{EDUCATION_INSTRUCTOR_LABEL}</th>
-              <td>{formatKpiValueWithBoldNumbers(instructorDisplay)}</td>
+              <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
+                참여자 최종 인원{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+              </th>
+              <td>
+                {isFormEdit && form ? (
+                  <Controller
+                    name="kpiFinalParticipants"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        min={0}
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const n = parseInt(e.target.value, 10)
+                          field.onChange(isNaN(n) ? undefined : n)
+                        }}
+                        className="program-kpi-target-section__input"
+                      />
+                    )}
+                  />
+                ) : (
+                  formatKpiValueWithBoldNumbers(participantsRow?.target)
+                )}
+              </td>
+              <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
+                {EDUCATION_INSTRUCTOR_LABEL}{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+              </th>
+              <td>
+                {isFormEdit && form ? (
+                  <div className="program-kpi-target-section__instructor-row">
+                    <span className="program-kpi-target-section__instructor-label">강사</span>
+                    <Controller
+                      name="kpiInstructorCount"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={e => {
+                            const n = parseInt(e.target.value, 10)
+                            field.onChange(isNaN(n) ? undefined : n)
+                          }}
+                          className="program-kpi-target-section__input program-kpi-target-section__input--sm"
+                        />
+                      )}
+                    />
+                    <span className="program-kpi-target-section__instructor-divider" aria-hidden>
+                      |
+                    </span>
+                    <span className="program-kpi-target-section__instructor-label">봉사자</span>
+                    <Controller
+                      name="kpiVolunteerCount"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={e => {
+                            const n = parseInt(e.target.value, 10)
+                            field.onChange(isNaN(n) ? undefined : n)
+                          }}
+                          className="program-kpi-target-section__input program-kpi-target-section__input--sm"
+                        />
+                      )}
+                    />
+                  </div>
+                ) : (
+                  formatKpiValueWithBoldNumbers(instructorDisplay ?? undefined)
+                )}
+              </td>
             </tr>
             <tr>
-              <th>최종 파견 학교 수</th>
-              <td>{formatKpiValueWithBoldNumbers(schoolsRow?.target)}</td>
-              <th>최종 파견 학급 수</th>
-              <td>{formatKpiValueWithBoldNumbers(classesRow?.target)}</td>
+              <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
+                최종 파견 학교 수{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+              </th>
+              <td>
+                {isFormEdit && form ? (
+                  <Controller
+                    name="kpiFinalSchools"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        min={0}
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const n = parseInt(e.target.value, 10)
+                          field.onChange(isNaN(n) ? undefined : n)
+                        }}
+                        className="program-kpi-target-section__input"
+                      />
+                    )}
+                  />
+                ) : (
+                  formatKpiValueWithBoldNumbers(schoolsRow?.target)
+                )}
+              </td>
+              <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
+                최종 파견 학급 수{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+              </th>
+              <td>
+                {isFormEdit && form ? (
+                  <Controller
+                    name="kpiFinalClasses"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        min={0}
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const n = parseInt(e.target.value, 10)
+                          field.onChange(isNaN(n) ? undefined : n)
+                        }}
+                        className="program-kpi-target-section__input"
+                      />
+                    )}
+                  />
+                ) : (
+                  formatKpiValueWithBoldNumbers(classesRow?.target)
+                )}
+              </td>
             </tr>
           </tbody>
         </table>

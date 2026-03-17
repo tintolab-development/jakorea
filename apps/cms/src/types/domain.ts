@@ -7,6 +7,12 @@ import type { UUID, Status, DateValue } from './index'
 import type { ApplicationProgressStatus } from './application-progress'
 import type { SettlementCalculationResult } from './settlement-result'
 
+// 후원사 담당자 (이름 + 휴대폰, 담당자 선택 시 휴대폰은 읽기 전용 표시)
+export interface SponsorManager {
+  name: string
+  phone: string
+}
+
 // 스폰서
 export interface Sponsor {
   id: UUID
@@ -14,6 +20,8 @@ export interface Sponsor {
   nameEn?: string // 후원사명(영문)
   description?: string
   contactInfo?: string
+  /** 후원사 담당자 목록 (담당자 선택 시 해당 휴대폰 번호 불러와 읽기 전용 표시) */
+  managers?: SponsorManager[]
   securityMemo?: string // 보안/정책 메모
   createdAt: DateValue
   updatedAt: DateValue
@@ -141,6 +149,8 @@ export interface Program {
   resultAnnouncementDate?: DateValue
   /** 결과 발표 방법 */
   resultAnnouncementMethod?: string
+  /** 학생 명단 제출 여부 (참여자 정보 탭) */
+  studentListRequired?: 'required' | 'not_required'
   /** 승인된 수강자 수 (표시: approvedStudentCount / capacity 건) */
   approvedStudentCount?: number
   /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
