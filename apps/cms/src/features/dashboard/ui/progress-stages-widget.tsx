@@ -105,11 +105,7 @@ export function ProgressStagesWidget({
       >
         <span className="program-progress-widget__stage-label">{item.label}</span>
         <div className="program-progress-widget__stage-count-wrapper">
-          <span
-            className={`program-progress-widget__stage-count ${item.isMatchingStyle ? 'program-progress-widget__stage-count--teal' : ''}`}
-          >
-            {item.count}
-          </span>
+          <span className={`program-progress-widget__stage-count`}>{item.count}</span>
           <span className="program-progress-widget__stage-count-unit">건</span>
         </div>
       </div>

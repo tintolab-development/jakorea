@@ -5,355 +5,353 @@
 
 /* 위젯 컨테이너 전체 너비 */
 .program-progress-widget-container {
-    width: 100%;
-    margin-bottom: var(--spacing-24);
+  width: 100%;
+  margin-bottom: var(--spacing-24);
 }
 
 /* 하단 디바이더 */
 .program-progress-widget__bottom-divider {
-    width: 100%;
-    height: 1px;
-    background-color: var(--color-border);
-    margin-top: var(--spacing-24);
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-border);
+  margin-top: var(--spacing-24);
 }
 
 .program-progress-widget__placeholder {
-    height: var(--height-widget-stage);
-    min-height: var(--height-widget-stage);
+  height: var(--height-widget-stage);
+  min-height: var(--height-widget-stage);
 }
 
 /* 스켈레톤 스타일 - 카드 영역만 스켈레톤 처리 (애니메이션 그라데이션 예외) */
 .program-progress-widget__stage--skeleton {
-    pointer-events: none;
-    cursor: default;
-    background: linear-gradient(90deg,
-            var(--color-bg-tertiary) 25%,
-            var(--color-border-skeleton) 50%,
-            var(--color-bg-tertiary) 75%) !important;
-    background-size: 200% 100% !important;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
+  pointer-events: none;
+  cursor: default;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 25%,
+    var(--color-border-skeleton) 50%,
+    var(--color-bg-tertiary) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 
 /* 전체 프로그램 스켈레톤 배경색 (브랜드 그라데이션 예외) */
 .program-progress-widget__stage--total.program-progress-widget__stage--skeleton {
-    background: linear-gradient(90deg,
-            var(--color-brand-primary) 25%,
-            var(--color-brand-primary-hover) 50%,
-            var(--color-brand-primary) 75%) !important;
-    background-size: 200% 100% !important;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    var(--color-brand-primary) 25%,
+    var(--color-brand-primary-hover) 50%,
+    var(--color-brand-primary) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 
 @keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
+  0% {
+    background-position: 200% 0;
+  }
 
-    100% {
-        background-position: -200% 0;
-    }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .program-progress-widget__title {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-8);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
 }
 
 /* 상세 보기 + 아이콘 일괄 클릭 */
 .program-progress-widget__detail-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-4);
-    padding: var(--spacing-4) 0;
-    margin: calc(-1 * var(--spacing-4)) 0;
-    border: none;
-    background: none;
-    font: inherit;
-    font-size: var(--font-size-12);
-    color: var(--color-text-body);
-    cursor: pointer;
-    transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4) 0;
+  margin: calc(-1 * var(--spacing-4)) 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-12);
+  color: var(--color-text-body);
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
 .program-progress-widget__detail-link:hover {
-    color: var(--color-input-focus);
+  color: var(--color-input-focus);
 }
 
 .program-progress-widget__detail-link:focus {
-    outline: none;
+  outline: none;
 }
 
 .program-progress-widget__detail-link:focus-visible {
-    outline: var(--spacing-2) solid var(--color-input-focus);
-    outline-offset: var(--spacing-2);
-    border-radius: var(--spacing-2);
+  outline: var(--spacing-2) solid var(--color-input-focus);
+  outline-offset: var(--spacing-2);
+  border-radius: var(--spacing-2);
 }
 
 .program-progress-widget__detail-link .program-progress-widget__extra-icon {
-    font-size: var(--font-size-12);
+  font-size: var(--font-size-12);
 }
 
 .program-progress-widget {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    width: 100%;
-    min-height: var(--height-widget-stage);
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-height: var(--height-widget-stage);
 }
 
 .program-progress-widget__stages {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-10);
-    flex: 1;
-    min-width: 0;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-10);
+  flex: 1;
+  min-width: 0;
+  width: 100%;
 }
 
 /* 전체 프로그램 위젯 스타일 (첫 번째) */
 .program-progress-widget__stage--total {
-    background: var(--color-brand-primary) !important;
-    border: none !important;
-    flex: 1 1 0;
-    min-width: var(--min-width-widget-total);
-    height: var(--height-widget-stage);
-    box-sizing: border-box;
+  background: var(--color-brand-primary) !important;
+  border: none !important;
+  flex: 1 1 0;
+  min-width: var(--min-width-widget-total);
+  height: var(--height-widget-stage);
+  box-sizing: border-box;
 }
 
 .program-progress-widget__stage--total .program-progress-widget__stage-label {
-    color: var(--color-bg-base) !important;
-    font-weight: var(--font-weight-600);
-    align-self: flex-start;
+  color: var(--color-bg-base) !important;
+  font-weight: var(--font-weight-600);
+  align-self: flex-start;
 }
 
 .program-progress-widget__stage--total .program-progress-widget__stage-count-wrapper {
-    align-self: flex-end;
-    width: 100%;
+  align-self: flex-end;
+  width: 100%;
 }
 
 .program-progress-widget__stage--total .program-progress-widget__stage-count,
 .program-progress-widget__stage--total .program-progress-widget__stage-count-unit {
-    color: var(--color-bg-base) !important;
-    font-weight: var(--font-weight-600);
+  color: var(--color-bg-base) !important;
+  font-weight: var(--font-weight-600);
 }
 
 /* 세로 디바이더 (전체 프로그램 옆) */
 .program-progress-widget__divider {
-    width: 1px;
-    height: 60%;
-    background-color: var(--color-border);
-    flex: 0 0 auto;
-    align-self: center;
-    margin: 0 var(--spacing-8);
+  width: 1px;
+  height: 60%;
+  background-color: var(--color-border);
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0 var(--spacing-8);
 }
 
 /* 카드 동적 크기: 화면 너비에 맞게 확장 */
-.program-progress-widget__stages>.program-progress-widget__stage {
-    flex: 1 1 0;
-    min-width: var(--min-width-widget-stage);
-    height: var(--height-widget-stage);
+.program-progress-widget__stages > .program-progress-widget__stage {
+  flex: 1 1 0;
+  min-width: var(--min-width-widget-stage);
+  height: var(--height-widget-stage);
 }
 
-.program-progress-widget__stages>.program-progress-widget__arrow {
-    flex: 0 0 auto;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-12);
-    margin: 0 var(--spacing-2);
+.program-progress-widget__stages > .program-progress-widget__arrow {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-12);
+  margin: 0 var(--spacing-2);
 }
 
 /* 카드 기본: 디폴트 보더(연한 회색), 디폴트 텍스트(검정) */
 .program-progress-widget__stage {
-    background: var(--color-bg-base);
-    border: 1px solid var(--color-border-skeleton);
-    border-radius: var(--radius-8);
-    padding: var(--spacing-14) var(--spacing-16);
-    text-align: left;
-    cursor: default;
-    transition: all 0.2s;
-    flex: 1 1 0;
-    min-width: var(--min-width-widget-stage);
-    height: var(--height-widget-stage);
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: space-between;
-    position: relative;
-    box-sizing: border-box;
+  background: var(--color-bg-base);
+  border-radius: var(--radius-8);
+  padding: 20px 28px;
+  text-align: left;
+  cursor: default;
+  transition: all 0.2s;
+  flex: 1 1 0;
+  min-width: var(--min-width-widget-stage);
+  height: var(--height-widget-stage);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .program-progress-widget__stage--clickable,
 .program-progress-widget__stage--clickable * {
-    cursor: pointer;
-    user-select: none;
+  cursor: pointer;
+  user-select: none;
 }
 
 /* 카드 전체를 빈틈 없는 클릭/호버 영역으로 만드는 투명 오버레이 */
 .program-progress-widget__stage--clickable::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .program-progress-widget__stage--clickable:hover {
-    border-color: var(--color-brand-primary);
-    box-shadow: var(--shadow-brand-hover);
+  border-color: var(--color-brand-primary);
+  box-shadow: var(--shadow-brand-hover);
 }
 
 .program-progress-widget__stage--clickable:active {
-    transform: scale(0.97);
-    box-shadow: var(--shadow-brand-active);
+  transform: scale(0.97);
+  box-shadow: var(--shadow-brand-active);
 }
 
 /* 전체 프로그램 카드 hover */
 .program-progress-widget__stage--total.program-progress-widget__stage--clickable:hover {
-    border-color: transparent !important;
-    box-shadow: var(--shadow-brand-total-hover);
-    filter: brightness(1.08);
+  border-color: transparent !important;
+  box-shadow: var(--shadow-brand-total-hover);
+  filter: brightness(1.08);
 }
 
 .program-progress-widget__stage--total.program-progress-widget__stage--clickable:active {
-    filter: brightness(0.95);
+  filter: brightness(0.95);
 }
 
 /* 선택 상태 hover */
 .program-progress-widget__stage--selected.program-progress-widget__stage--clickable:hover {
-    border-color: var(--color-brand-primary);
-    box-shadow: var(--shadow-brand-selected);
+  border-color: var(--color-brand-primary);
+  box-shadow: var(--shadow-brand-selected);
 }
 
 /* 매칭 완료 / 교재 준비 중 카드 특수 스타일 - 텍스트만 청록 */
 .program-progress-widget__stage--matching {
-    border: none !important;
+  border: none !important;
 }
 
 .program-progress-widget__stage--matching .program-progress-widget__stage-label {
-    color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
 }
 
 .program-progress-widget__stage--matching .program-progress-widget__stage-count {
-    color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
 }
 
 /* 선택된 상태: 청록 배경 + 흰색 텍스트 (전체 프로그램/수강자 모집/수강신청 현황 등) */
 .program-progress-widget__stage--selected {
-    border: none !important;
-    background: var(--color-brand-primary) !important;
+  border: none !important;
+  background: var(--color-brand-primary) !important;
 }
 
 .program-progress-widget__stage--selected .program-progress-widget__stage-label,
 .program-progress-widget__stage--selected .program-progress-widget__stage-count,
 .program-progress-widget__stage--selected .program-progress-widget__stage-count-unit {
-    color: var(--default-WT) !important;
-    font-weight: var(--font-weight-600);
+  color: var(--default-WT) !important;
+  font-weight: var(--font-weight-600);
 }
 
 .program-progress-widget__stage-label {
-    display: block;
-    font-size: var(--font-size-12);
-    color: var(--color-text-strong);
-    margin-bottom: 0;
-    line-height: 1.35;
-    word-break: keep-all;
-    align-self: flex-start;
+  color: var(--default-BK, #3d3d3d);
+  font-size: var(--font-size-18);
+  font-style: normal;
+  font-weight: var(--font-weight-500);
+  line-height: normal;
 }
 
 .program-progress-widget__stage-count-wrapper {
-    display: flex;
-    align-items: baseline;
-    justify-content: flex-end;
-    gap: var(--spacing-2);
-    margin-top: auto;
-    align-self: flex-end;
-    width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  margin-top: auto;
+  align-self: flex-end;
+  width: 100%;
 }
 
 .program-progress-widget__stage-count {
-    display: inline-block;
-    font-family: var(--font-family-primary), sans-serif;
-    font-size: var(--font-size-32);
-    font-weight: var(--font-weight-700);
-    color: var(--color-text-strong);
-    line-height: normal;
+  line-height: 1;
+  font-size: var(--font-size-32);
+  font-weight: var(--font-weight-700);
+  color: var(--color-text-strong);
 }
 
 .program-progress-widget__stage-count-unit {
-    display: inline-block;
-    font-size: var(--font-size-12);
-    color: var(--color-text-strong);
-    line-height: 1;
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-700);
+  color: var(--color-text-strong);
 }
 
 .program-progress-widget__stage--matching .program-progress-widget__stage-count-unit {
-    color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
 }
 
 .program-progress-widget__total {
-    background: var(--color-school);
-    border-radius: var(--radius-8);
-    padding: var(--spacing-14) var(--spacing-20);
-    text-align: center;
-    min-width: 100px;
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  background: var(--color-school);
+  border-radius: var(--radius-8);
+  padding: var(--spacing-14) var(--spacing-20);
+  text-align: center;
+  min-width: 100px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .program-progress-widget__total-label {
-    display: block;
-    font-size: var(--font-size-12);
-    color: var(--color-bg-base);
-    margin-bottom: var(--spacing-6);
+  display: block;
+  font-size: var(--font-size-12);
+  color: var(--color-bg-base);
+  margin-bottom: var(--spacing-6);
 }
 
 .program-progress-widget__total-count {
-    display: block;
-    font-size: var(--font-size-20);
-    font-weight: bold;
-    color: var(--color-bg-base);
+  display: block;
+  font-size: var(--font-size-20);
+  font-weight: bold;
+  color: var(--color-bg-base);
 }
 
 /* 반응형: 작은 화면에서는 세로 배치 */
 @media (max-width: 1200px) {
-    .program-progress-widget {
-        flex-direction: column;
-        align-items: stretch;
-    }
+  .program-progress-widget {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    .program-progress-widget__stages {
-        flex-direction: column;
-        padding-right: 0;
-        padding-bottom: var(--spacing-16);
-        border-right: none;
-        border-bottom: 1px solid var(--color-border-skeleton);
-        margin-right: 0;
-        margin-bottom: var(--spacing-16);
-    }
+  .program-progress-widget__stages {
+    flex-direction: column;
+    padding-right: 0;
+    padding-bottom: var(--spacing-16);
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-skeleton);
+    margin-right: 0;
+    margin-bottom: var(--spacing-16);
+  }
 
-    .program-progress-widget__stages>.program-progress-widget__stage {
-        flex: 1 1 auto;
-        width: 100%;
-        height: auto;
-        min-height: var(--height-widget-stage);
-    }
+  .program-progress-widget__stages > .program-progress-widget__stage {
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: var(--height-widget-stage);
+  }
 
-    .program-progress-widget__stage--total {
-        width: 100%;
-        height: auto;
-        min-height: var(--height-widget-stage);
-    }
+  .program-progress-widget__stage--total {
+    width: 100%;
+    height: auto;
+    min-height: var(--height-widget-stage);
+  }
 
-    .program-progress-widget__stages>.program-progress-widget__arrow {
-        align-self: center;
-        margin: var(--spacing-4) 0;
-    }
+  .program-progress-widget__stages > .program-progress-widget__arrow {
+    align-self: center;
+    margin: var(--spacing-4) 0;
+  }
 
-    .program-progress-widget__divider {
-        width: 100%;
-        height: 1px;
-        margin: var(--spacing-8) 0;
-    }
+  .program-progress-widget__divider {
+    width: 100%;
+    height: 1px;
+    margin: var(--spacing-8) 0;
+  }
 }

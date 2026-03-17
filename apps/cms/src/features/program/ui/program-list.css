@@ -563,6 +563,28 @@
   overflow-x: auto !important;
 }
 
+/* 테이블 스타일 */
+.ant-table-thead {
+  background: var(--color-table-head-bg) !important;
+}
+.ant-table-cell {
+  padding: 12px 16px !important;
+  max-height: 50px !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  border-right: 1px solid var(--color-border) !important;
+
+  font-size: var(--font-size-16) !important;
+  font-weight: var(--font-weight-500) !important;
+  color: var(--color-text-label) !important;
+}
+.ant-table-thead > tr > th {
+  height: 30px !important;
+  font-weight: var(--font-weight-700) !important;
+}
+.ant-table-cell:last-child {
+  border-right: none !important;
+}
+
 /* 교육 프로그램/수강자 모집: 전체 프로그램과 동일하게 가로 스크롤 적용 */
 .program-list-table-wrapper--scroll-x {
   overflow-x: auto;
