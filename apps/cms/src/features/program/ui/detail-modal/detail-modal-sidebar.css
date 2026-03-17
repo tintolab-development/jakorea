@@ -113,6 +113,24 @@
   transform: rotate(180deg);
 }
 
+/* 뎁스 열림/닫힘 애니메이션 (기존 LNB 서브메뉴와 동일한 방식) */
+.program-detail-fullpage-modal__lnb-children-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+  pointer-events: none;
+}
+
+.program-detail-fullpage-modal__lnb-children-wrap--open {
+  grid-template-rows: 1fr;
+  pointer-events: auto;
+}
+
+.program-detail-fullpage-modal__lnb-children-wrap > .program-detail-fullpage-modal__lnb-children {
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* 신청자 목록 하위 메뉴 */
 .program-detail-fullpage-modal__lnb-children {
   list-style: none;

@@ -4,7 +4,7 @@
  * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
@@ -44,11 +44,20 @@ export interface ProgramDetailFullPageModalProps {
 
 const TAB_PARAM = 'tab'
 const EDIT_PARAM = 'edit'
+const LNB_PARAM = 'lnb'
+
+const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
 
 function parseTabFromSearch(searchParams: URLSearchParams): TabKey {
   const tab = searchParams.get(TAB_PARAM)
   if (tab && (TAB_KEYS as readonly string[]).includes(tab)) return tab as TabKey
   return 'info'
+}
+
+function parseLnbFromSearch(searchParams: URLSearchParams): LnbKey | null {
+  const lnb = searchParams.get(LNB_PARAM)
+  if (lnb && (LNB_KEYS_READONLY as readonly string[]).includes(lnb)) return lnb as LnbKey
+  return null
 }
 
 /** 쿼리 파라미터에서 수정 모드 탭 파싱. edit=info 등 현재 탭과 일치할 때만 해당 탭이 수정 모드 */
@@ -74,12 +83,37 @@ export function ProgramDetailFullPageModal({
   } = useProgramDetail(open ? programId : undefined)
   const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
   const editTab = open ? parseEditTabFromSearch(searchParams) : null
-  const [activeLnb, setActiveLnb] = useState<LnbKey>('info')
-  const [applicantsExpanded, setApplicantsExpanded] = useState(false)
-  const [activeChildMenu, setActiveChildMenu] = useState<TabKey | ''>('')
+  const activeLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
+  const applicantsExpanded = activeLnb === 'applicants'
+  const activeChildMenu: TabKey | '' =
+    activeLnb === 'applicants' ? parseTabFromSearch(searchParams) : ''
+
+  const setLnb = (key: LnbKey, childTab?: TabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, key)
+    if (key === 'info') {
+      const tab = searchParams.get(TAB_PARAM)
+      next.set(TAB_PARAM, tab && (TAB_KEYS as readonly string[]).includes(tab) ? tab : 'info')
+    } else if (key === 'applicants') {
+      const tab = childTab ?? searchParams.get(TAB_PARAM)
+      next.set(
+        TAB_PARAM,
+        tab && ['participants', 'instructors', 'volunteers'].includes(tab) ? tab : 'participants'
+      )
+    }
+    setSearchParams(next, { replace: true })
+  }
+
+  const setApplicantsChild = (tab: TabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'applicants')
+    next.set(TAB_PARAM, tab)
+    setSearchParams(next, { replace: true })
+  }
 
   const setActiveTab = (key: TabKey) => {
     const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'info')
     next.set(TAB_PARAM, key)
     next.delete(EDIT_PARAM)
     setSearchParams(next, { replace: true })
@@ -286,11 +320,10 @@ export function ProgramDetailFullPageModal({
       <div className="program-detail-fullpage-modal__layout">
         <DetailModalSidebar
           activeLnb={activeLnb}
-          setActiveLnb={setActiveLnb}
+          onSelectLnb={setLnb}
           applicantsExpanded={applicantsExpanded}
-          setApplicantsExpanded={setApplicantsExpanded}
+          onSelectApplicantsChild={setApplicantsChild}
           activeChildMenu={activeChildMenu}
-          setActiveChildMenu={setActiveChildMenu}
         />
 
         <div className="program-detail-fullpage-modal__main">

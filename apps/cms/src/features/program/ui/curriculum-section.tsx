@@ -196,6 +196,11 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
           </tbody>
         </table>
       </div>
+      {isFormEdit && form?.formState?.errors?.rounds?.message && (
+        <span className="program-detail-info-tab__field-error">
+          {form.formState.errors.rounds.message}
+        </span>
+      )}
     </>
   )
 }

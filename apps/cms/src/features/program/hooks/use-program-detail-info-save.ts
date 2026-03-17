@@ -53,7 +53,9 @@ export function useProgramDetailInfoSave({
   }, [form, program, onSaveEdit])
 
   const resetToProgram = useCallback(() => {
-    if (program) form.reset(programToDetailEditValues(program))
+    if (program) {
+      form.reset(programToDetailEditValues(program), { keepDefaultValues: false })
+    }
   }, [form, program])
 
   return { triggerSave, resetToProgram, registerGetAdditionalContentHtml }

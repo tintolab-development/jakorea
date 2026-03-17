@@ -127,23 +127,31 @@ export function ProgramKpiTargetSection({
               </th>
               <td>
                 {isFormEdit && form ? (
-                  <Controller
-                    name="kpiFinalParticipants"
-                    control={form.control}
-                    render={({ field }) => (
-                      <Input
-                        type="number"
-                        min={0}
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={e => {
-                          const n = parseInt(e.target.value, 10)
-                          field.onChange(isNaN(n) ? undefined : n)
-                        }}
-                        className="program-kpi-target-section__input"
-                      />
+                  <>
+                    <Controller
+                      name="kpiFinalParticipants"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={e => {
+                            const n = parseInt(e.target.value, 10)
+                            field.onChange(isNaN(n) ? undefined : n)
+                          }}
+                          className="program-kpi-target-section__input"
+                          status={form.formState.errors.kpiFinalParticipants ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.kpiFinalParticipants?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.kpiFinalParticipants.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   formatKpiValueWithBoldNumbers(participantsRow?.target)
                 )}
@@ -169,6 +177,7 @@ export function ProgramKpiTargetSection({
                             field.onChange(isNaN(n) ? undefined : n)
                           }}
                           className="program-kpi-target-section__input program-kpi-target-section__input--sm"
+                          status={form.formState.errors.kpiInstructorCount ? 'error' : undefined}
                         />
                       )}
                     />
@@ -190,9 +199,17 @@ export function ProgramKpiTargetSection({
                             field.onChange(isNaN(n) ? undefined : n)
                           }}
                           className="program-kpi-target-section__input program-kpi-target-section__input--sm"
+                          status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
                         />
                       )}
                     />
+                    {(form.formState.errors.kpiInstructorCount?.message ||
+                      form.formState.errors.kpiVolunteerCount?.message) && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.kpiInstructorCount?.message ||
+                          form.formState.errors.kpiVolunteerCount?.message}
+                      </span>
+                    )}
                   </div>
                 ) : (
                   formatKpiValueWithBoldNumbers(instructorDisplay ?? undefined)
@@ -205,23 +222,31 @@ export function ProgramKpiTargetSection({
               </th>
               <td>
                 {isFormEdit && form ? (
-                  <Controller
-                    name="kpiFinalSchools"
-                    control={form.control}
-                    render={({ field }) => (
-                      <Input
-                        type="number"
-                        min={0}
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={e => {
-                          const n = parseInt(e.target.value, 10)
-                          field.onChange(isNaN(n) ? undefined : n)
-                        }}
-                        className="program-kpi-target-section__input"
-                      />
+                  <>
+                    <Controller
+                      name="kpiFinalSchools"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={e => {
+                            const n = parseInt(e.target.value, 10)
+                            field.onChange(isNaN(n) ? undefined : n)
+                          }}
+                          className="program-kpi-target-section__input"
+                          status={form.formState.errors.kpiFinalSchools ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.kpiFinalSchools?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.kpiFinalSchools.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   formatKpiValueWithBoldNumbers(schoolsRow?.target)
                 )}
@@ -231,23 +256,31 @@ export function ProgramKpiTargetSection({
               </th>
               <td>
                 {isFormEdit && form ? (
-                  <Controller
-                    name="kpiFinalClasses"
-                    control={form.control}
-                    render={({ field }) => (
-                      <Input
-                        type="number"
-                        min={0}
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={e => {
-                          const n = parseInt(e.target.value, 10)
-                          field.onChange(isNaN(n) ? undefined : n)
-                        }}
-                        className="program-kpi-target-section__input"
-                      />
+                  <>
+                    <Controller
+                      name="kpiFinalClasses"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={e => {
+                            const n = parseInt(e.target.value, 10)
+                            field.onChange(isNaN(n) ? undefined : n)
+                          }}
+                          className="program-kpi-target-section__input"
+                          status={form.formState.errors.kpiFinalClasses ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.kpiFinalClasses?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.kpiFinalClasses.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   formatKpiValueWithBoldNumbers(classesRow?.target)
                 )}

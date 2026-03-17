@@ -268,20 +268,18 @@ const LNB_ITEMS: { key: LnbKey; label: string; icon: React.ReactNode; hasDropdow
 
 export interface DetailModalSidebarProps {
   activeLnb: LnbKey
-  setActiveLnb: (key: LnbKey) => void
+  onSelectLnb: (key: LnbKey, childTab?: TabKey) => void
   applicantsExpanded: boolean
-  setApplicantsExpanded: React.Dispatch<React.SetStateAction<boolean>>
+  onSelectApplicantsChild: (key: TabKey) => void
   activeChildMenu: TabKey | ''
-  setActiveChildMenu: (key: TabKey) => void
 }
 
 export function DetailModalSidebar({
   activeLnb,
-  setActiveLnb,
+  onSelectLnb,
   applicantsExpanded,
-  setApplicantsExpanded,
+  onSelectApplicantsChild,
   activeChildMenu,
-  setActiveChildMenu,
 }: DetailModalSidebarProps) {
   return (
     <nav className="program-detail-fullpage-modal__lnb" aria-label="프로그램 상세 메뉴">
@@ -297,8 +295,11 @@ export function DetailModalSidebar({
                   type="button"
                   className={`program-detail-fullpage-modal__lnb-item ${activeLnb === item.key ? 'program-detail-fullpage-modal__lnb-item--active' : ''}`}
                   onClick={() => {
-                    setActiveLnb(item.key)
-                    setApplicantsExpanded(prev => !prev)
+                    if (activeLnb === 'applicants') {
+                      onSelectLnb('applicants')
+                    } else {
+                      onSelectLnb('applicants')
+                    }
                   }}
                 >
                   <span className="program-detail-fullpage-modal__lnb-item-icon">{item.icon}</span>
@@ -311,17 +312,17 @@ export function DetailModalSidebar({
                     />
                   )}
                 </button>
-                {applicantsExpanded && (
+                <div
+                  className={`program-detail-fullpage-modal__lnb-children-wrap ${applicantsExpanded ? 'program-detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+                  aria-hidden={!applicantsExpanded}
+                >
                   <ul className="program-detail-fullpage-modal__lnb-children">
                     {APPLICANTS_CHILDREN.map(child => (
                       <li key={child.key}>
                         <button
                           type="button"
                           className={`program-detail-fullpage-modal__lnb-child ${activeChildMenu === child.key ? 'program-detail-fullpage-modal__lnb-child--active' : ''}`}
-                          onClick={() => {
-                            setActiveLnb('applicants')
-                            setActiveChildMenu(child.key)
-                          }}
+                          onClick={() => onSelectApplicantsChild(child.key)}
                         >
                           <span className="program-detail-fullpage-modal__lnb-child-dot" />
                           <span className="program-detail-fullpage-modal__lnb-child-label">
@@ -331,13 +332,13 @@ export function DetailModalSidebar({
                       </li>
                     ))}
                   </ul>
-                )}
+                </div>
               </>
             ) : (
               <button
                 type="button"
                 className={`program-detail-fullpage-modal__lnb-item ${activeLnb === item.key ? 'program-detail-fullpage-modal__lnb-item--active' : ''}`}
-                onClick={() => setActiveLnb(item.key)}
+                onClick={() => onSelectLnb(item.key)}
               >
                 <span className="program-detail-fullpage-modal__lnb-item-icon">{item.icon}</span>
                 <span className="program-detail-fullpage-modal__lnb-item-label">{item.label}</span>

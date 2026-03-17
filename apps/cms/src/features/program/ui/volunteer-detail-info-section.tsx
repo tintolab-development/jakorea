@@ -201,19 +201,27 @@ export function VolunteerDetailInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="description"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        value={field.value ?? ''}
-                        rows={6}
-                        placeholder="프로그램 설명"
-                        className="program-detail-info-tab__content-textarea"
-                      />
+                  <>
+                    <Controller
+                      name="description"
+                      control={form.control}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={field.value ?? ''}
+                          rows={6}
+                          placeholder="프로그램 설명"
+                          className="program-detail-info-tab__content-textarea"
+                          status={form.formState.errors.description ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.description?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.description.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   <div className="program-detail-info-tab__content-block">
                     {program.description || DEFAULT_PROGRAM_DESCRIPTION}
@@ -228,19 +236,27 @@ export function VolunteerDetailInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="recruitmentGuide"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        value={field.value ?? ''}
-                        rows={6}
-                        placeholder="모집 안내"
-                        className="program-detail-info-tab__content-textarea"
-                      />
+                  <>
+                    <Controller
+                      name="recruitmentGuide"
+                      control={form.control}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={field.value ?? ''}
+                          rows={6}
+                          placeholder="모집 안내"
+                          className="program-detail-info-tab__content-textarea"
+                          status={form.formState.errors.recruitmentGuide ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.recruitmentGuide?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.recruitmentGuide.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   <div className="program-detail-info-tab__content-block">
                     {program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
@@ -252,19 +268,27 @@ export function VolunteerDetailInfoSection({
               <th>지원 방법</th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="applicationMethod"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        value={field.value ?? ''}
-                        rows={3}
-                        placeholder="지원 방법"
-                        className="program-detail-info-tab__content-textarea"
-                      />
+                  <>
+                    <Controller
+                      name="applicationMethod"
+                      control={form.control}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={field.value ?? ''}
+                          rows={3}
+                          placeholder="지원 방법"
+                          className="program-detail-info-tab__content-textarea"
+                          status={form.formState.errors.applicationMethod ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.applicationMethod?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.applicationMethod.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   <div className="program-detail-info-tab__content-block">
                     {applicationMethod}
@@ -315,19 +339,27 @@ export function VolunteerDetailInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="otherNotes"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        value={field.value ?? ''}
-                        rows={4}
-                        placeholder="기타사항"
-                        className="program-detail-info-tab__content-textarea"
-                      />
+                  <>
+                    <Controller
+                      name="otherNotes"
+                      control={form.control}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={field.value ?? ''}
+                          rows={4}
+                          placeholder="기타사항"
+                          className="program-detail-info-tab__content-textarea"
+                          status={form.formState.errors.otherNotes ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.otherNotes?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.otherNotes.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   <div className="program-detail-info-tab__content-block">
                     {otherNotes}
