@@ -3,10 +3,9 @@
   padding: 24px;
   height: 100%;
 }
-
-.applicant-contents__header {
+.header-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 24px;
 }
@@ -134,4 +133,13 @@
 .resume-placeholder {
   padding: 100px 0;
   text-align: center;
+}
+
+/* Remove border bottom from Ant Design Tabs */
+.applicant-contents__tabs .ant-tabs-nav {
+  margin-bottom: 0 !important;
+}
+
+.applicant-contents__tabs .ant-tabs-nav::before {
+  border-bottom: none !important;
 }
