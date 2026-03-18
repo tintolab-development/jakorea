@@ -23,8 +23,8 @@ import { InstructorRecruitmentSection } from './instructor-recruitment-section'
 import { InstructorDetailInfoSection } from './instructor-detail-info-section'
 import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
 import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
-import { ApplicantDetails } from './detail-modal/applicants-detail'
 import { ParticipatingInstitutionsSection } from './participating-institutions-section'
+import { ApplicantDetails } from './detail-modal/applicants-detail'
 import type { Program } from '@/types/domain'
 import {
   DetailModalSidebar,
@@ -90,13 +90,22 @@ export function ProgramDetailFullPageModal({
   const activeChildMenu: TabKey | '' =
     activeLnb === 'applicants' ? parseTabFromSearch(searchParams) : ''
   const progressExpanded = activeLnb === 'progress'
-  const progressTabRaw = activeLnb === 'progress' ? parseTabFromSearch(searchParams) : ''
+  const progressTab = parseTabFromSearch(searchParams)
   const activeProgressChild: TabKey | '' =
-    progressTabRaw && ['participants', 'instructors', 'volunteers'].includes(progressTabRaw)
-      ? progressTabRaw
-      : activeLnb === 'progress'
-        ? 'participants'
-        : ''
+    activeLnb === 'progress' && ['participants', 'instructors', 'volunteers'].includes(progressTab)
+      ? progressTab
+      : ''
+
+  // 모달이 열릴 때 LNB 상태 초기화 (lnb=info, tab=info)
+  useEffect(() => {
+    if (open) {
+      const next = new URLSearchParams(searchParams)
+      next.set(LNB_PARAM, 'info')
+      next.set(TAB_PARAM, 'info')
+      next.delete(EDIT_PARAM)
+      setSearchParams(next, { replace: true })
+    }
+  }, [open])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     const next = new URLSearchParams(searchParams)

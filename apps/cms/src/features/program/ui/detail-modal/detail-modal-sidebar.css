@@ -204,3 +204,19 @@
 .program-detail-fullpage-modal__lnb-child--active .program-detail-fullpage-modal__lnb-child-dot {
   background-color: var(--JA-mint-01, #01a1af);
 }
+
+.program-detail-fullpage-modal__lnb-child--selected {
+  border-radius: 8px;
+  background: rgba(1, 161, 175, 0.1);
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.program-detail-fullpage-modal__lnb-child--selected .program-detail-fullpage-modal__lnb-child-dot {
+  background-color: var(--JA-mint-01, #01a1af);
+}
