@@ -4,6 +4,12 @@ export interface ApplicantDetailsProps {
   menu: TabKey | ''
 }
 
-export function ApplicantDetails({ menu: _menu }: ApplicantDetailsProps) {
-  return <div>{/* 신청 기관 관련 콘텐츠 */}</div>
+export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
+  return (
+    <>
+      {menu === 'participants' && <div>participants</div>}
+      {menu === 'instructors' && <div>instructors</div>}
+      {menu === 'volunteers' && <div>volunteers</div>}
+    </>
+  )
 }
