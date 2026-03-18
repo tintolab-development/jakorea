@@ -184,13 +184,17 @@ export function SchoolDetailModal({
     return MOCK_PARTICIPATING_INSTRUCTORS.filter(r => !assignedIds.has(r.id)).map(r => ({
       value: r.id,
       label: r.instructorName,
+      contact: r.contact,
+      email: r.email,
+      initialApproval: r.initialApproval ?? true,
     }))
   }, [detail])
 
   const handleAddInstructorAssign = (
     instructorId: string,
     role: InstructorRoleKey,
-    option: AddInstructorAssignOption
+    option: AddInstructorAssignOption,
+    _meta?: { isNewApproval: boolean }
   ) => {
     if (!detail) return
     let currentList: InstructorListFormInstructor[] = isInstructorEditMode
@@ -855,10 +859,13 @@ export function SchoolDetailModal({
       <SchoolDetailAddInstructorAssignModal
         open={addInstructorAssignModalOpen}
         onCancel={() => setAddInstructorAssignModalOpen(false)}
+        schoolName={detail?.schoolName ?? ''}
         instructorOptions={addInstructorAssignOptions}
         currentLeadInstructorName={
           detail?.instructors.find(i => i.role === 'lead')?.instructorName ?? null
         }
+        currentAssignedCount={detail?.instructors.length ?? 0}
+        requiredInstructorCount={4}
         onAdd={handleAddInstructorAssign}
       />
     </>

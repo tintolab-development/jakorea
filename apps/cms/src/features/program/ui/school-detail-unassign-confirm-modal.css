@@ -1,0 +1,21 @@
+/**
+ * 배정 취소 확인 모달 (배정 취소 안내)
+ */
+
+.school-detail-unassign-confirm-modal .teal-header-modal__body {
+  padding: 0;
+}
+
+.school-detail-unassign-confirm-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.school-detail-unassign-confirm-modal__main {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--default-BK, #3d3d3d);
+}

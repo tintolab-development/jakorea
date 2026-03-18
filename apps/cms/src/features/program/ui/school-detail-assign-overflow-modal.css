@@ -1,0 +1,21 @@
+/**
+ * 강사 배정 인원 초과 안내 모달
+ */
+
+.school-detail-assign-overflow-modal .teal-header-modal__body {
+  padding: 0;
+}
+
+.school-detail-assign-overflow-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.school-detail-assign-overflow-modal__line {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--default-BK, #3d3d3d);
+}
