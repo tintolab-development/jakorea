@@ -15,6 +15,12 @@ const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'hybrid', label: '온/오프라인' },
 ]
 
+const ROUND_DELIVERY_LABELS: Record<RoundDeliveryType, string> = {
+  online: '온라인',
+  offline: '오프라인',
+  hybrid: '온/오프라인',
+}
+
 const DEFAULT_CURRICULUM_BY_ROUND: string[] = [
   "'개인', '근로자', '소비자' 개념 정의 및 설명",
   '기업과 경제적 개념 이해',
@@ -51,6 +57,18 @@ function getRoundCurriculumContent(
   if (programCurriculum?.trim()) return formatCurriculumCell(programCurriculum)
   const defaultDesc = DEFAULT_CURRICULUM_BY_ROUND[roundNumber - 1]
   return defaultDesc ? `1시간 | ${defaultDesc}` : '1시간 | (상세 내용 없음)'
+}
+
+/** 조회 모드: 시간 + (온라인|오프라인|온/오프라인) + 설명 */
+function formatCurriculumDisplay(
+  content: string,
+  deliveryType: RoundDeliveryType | undefined
+): string {
+  const { duration, description } = parseCurriculumContent(content)
+  const deliveryLabel = ROUND_DELIVERY_LABELS[deliveryType ?? 'offline']
+  return description
+    ? `${duration} (${deliveryLabel}) | ${description}`
+    : `${duration} (${deliveryLabel})`
 }
 
 export interface CurriculumSectionProps {
@@ -95,8 +113,8 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
   )
 
   return (
-    <section className="program-detail-info-tab__section">
-      <h3 className="program-detail-info-tab__section-title">교육 커리큘럼</h3>
+    <>
+      <h3 className="program-detail-info-tab__section-title program-detail-info-tab__section-title--block-start">교육 커리큘럼</h3>
       <div className="program-detail-info-tab__table-wrapper">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__curriculum-table">
           <colgroup>
@@ -119,7 +137,13 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
 
                 return (
                   <tr key={round.id}>
-                    <th>
+                    <th
+                      className={
+                        isFormEdit && round.roundNumber <= 4
+                          ? 'program-detail-info-tab__th--required'
+                          : undefined
+                      }
+                    >
                       {round.roundNumber}회차 강의 분량 및 내용
                       {isEditMode && round.roundNumber <= 4 ? (
                         <span className="program-detail-info-tab__required">*</span>
@@ -156,7 +180,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                           />
                         </div>
                       ) : (
-                        content
+                        formatCurriculumDisplay(content, round.deliveryType)
                       )}
                     </td>
                   </tr>
@@ -172,6 +196,11 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
           </tbody>
         </table>
       </div>
-    </section>
+      {isFormEdit && form?.formState?.errors?.rounds?.message && (
+        <span className="program-detail-info-tab__field-error">
+          {form.formState.errors.rounds.message}
+        </span>
+      )}
+    </>
   )
 }

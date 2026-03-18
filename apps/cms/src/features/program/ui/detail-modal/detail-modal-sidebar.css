@@ -1,0 +1,206 @@
+/* LNB: 배경 #F5F6F7, JA Korea 로고, 메뉴 아이콘+드롭다운 */
+.program-detail-fullpage-modal__lnb {
+  flex-shrink: 0;
+  width: 240px;
+  background: #f5f6f7;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+}
+
+.program-detail-fullpage-modal__lnb-brand {
+  padding: 30px 24px 30px;
+  border-bottom: 1px solid var(--color-border-secondary, #e8e8e8);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.program-detail-fullpage-modal__lnb-brand svg {
+  display: block;
+  max-width: 100%;
+  width: 182px;
+  height: auto;
+  aspect-ratio: 182 / 92;
+  object-fit: contain;
+}
+
+.program-detail-fullpage-modal__lnb-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-8) 0 20px;
+}
+
+.program-detail-fullpage-modal__lnb-list > li {
+  margin-bottom: 8px;
+}
+
+.program-detail-fullpage-modal__lnb-list > li:last-child {
+  margin-bottom: 0;
+}
+
+/* 카테고리 영역 padding vertical 10, left 20, right 18 / 아이콘-타이틀 gap 8 */
+.program-detail-fullpage-modal__lnb-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 18px 10px 0;
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+  color: var(--default-BK, #3d3d3d);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  gap: 8px;
+}
+
+/* 호버 시 배경만 유지, 색상은 변경 없음 */
+.program-detail-fullpage-modal__lnb-item:hover {
+  background: transparent;
+}
+
+.program-detail-fullpage-modal__lnb-item--active {
+  background: transparent;
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.program-detail-fullpage-modal__lnb-item--active:hover {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.program-detail-fullpage-modal__lnb-item--active:hover .program-detail-fullpage-modal__lnb-icon {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.program-detail-fullpage-modal__lnb-item--active .program-detail-fullpage-modal__lnb-icon {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.program-detail-fullpage-modal__lnb-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.program-detail-fullpage-modal__lnb-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.program-detail-fullpage-modal__lnb-item-label {
+  flex: 1;
+}
+
+.program-detail-fullpage-modal__lnb-item-arrow {
+  font-size: 10px;
+  opacity: 0.7;
+  flex-shrink: 0;
+  color: inherit;
+  transition: transform 0.2s;
+}
+
+.program-detail-fullpage-modal__lnb-item-arrow--expanded {
+  transform: rotate(180deg);
+}
+
+/* 뎁스 열림/닫힘 애니메이션 (기존 LNB 서브메뉴와 동일한 방식) */
+.program-detail-fullpage-modal__lnb-children-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+  pointer-events: none;
+}
+
+.program-detail-fullpage-modal__lnb-children-wrap--open {
+  grid-template-rows: 1fr;
+  pointer-events: auto;
+}
+
+.program-detail-fullpage-modal__lnb-children-wrap > .program-detail-fullpage-modal__lnb-children {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 신청자 목록 하위 메뉴 */
+.program-detail-fullpage-modal__lnb-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.program-detail-fullpage-modal__lnb-children > li {
+  margin-bottom: 4px;
+}
+
+.program-detail-fullpage-modal__lnb-children > li:last-child {
+  margin-bottom: 8px;
+}
+
+.program-detail-fullpage-modal__lnb-child {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 120%;
+  color: var(--default-BK, #3d3d3d);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  gap: 8px;
+}
+
+.program-detail-fullpage-modal__lnb-child-dot {
+  width: 4px;
+  height: 4px;
+  background-color: var(--default-BK, #3d3d3d);
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background-color 0.2s;
+}
+
+.program-detail-fullpage-modal__lnb-child:hover {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.program-detail-fullpage-modal__lnb-child:hover .program-detail-fullpage-modal__lnb-child-dot {
+  background-color: var(--JA-mint-01, #01a1af);
+}
+
+/* 하위 뎁스 선택 시 스타일 (신청자 목록 / 프로그램 진행 현황 공통) */
+.program-detail-fullpage-modal__lnb-child--active {
+  display: flex;
+  height: 44px;
+  padding: 12px 18px 12px 24px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  border-radius: 8px;
+  background: rgba(1, 161, 175, 0.1);
+  color: var(--JA-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.program-detail-fullpage-modal__lnb-child--active .program-detail-fullpage-modal__lnb-child-dot {
+  background-color: var(--JA-mint-01, #01a1af);
+}

@@ -118,6 +118,8 @@ export function ProgramDetailPage() {
                   ref={detailTabSaveRef}
                   program={program}
                   sponsorName={sponsorName}
+                  createdByName={program.createdByName}
+                  updatedByName={program.updatedByName}
                   lifecycleStatus={program.lifecycleStatus ?? null}
                   isEditMode={isEditMode}
                   onCancelEdit={() => setIsEditMode(false)}

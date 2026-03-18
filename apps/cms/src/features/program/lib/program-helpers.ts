@@ -84,13 +84,17 @@ export function getApplicationUnavailableReason(
           return '수강자 모집이 마감되었습니다. 현재 강사/봉사자 모집 중입니다.'
         }
         return null // 강사는 신청 가능
+      case 'recruiting_volunteers':
+        return null // 강사는 신청 가능
+      case 'participant_instructor_recruiting':
+        return null // 참여자·교육자 동시 모집 중 — 학교·강사 모두 신청 가능
       case 'planned':
+      case 'participant_instructor_recruitment_planned':
         return '모집이 아직 시작되지 않았습니다.'
       case 'matching_completed':
-      case 'education_before_textbook':
-      case 'education_after_textbook':
       case 'education_completed':
       case 'document_processing_completed':
+      case 'participant_instructor_recruitment_completed':
         return '해당 단계에서는 신청할 수 없습니다.'
       default:
         return '프로그램 상태로 인해 신청할 수 없습니다.'

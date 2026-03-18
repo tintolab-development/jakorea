@@ -51,26 +51,32 @@ export const ProgramDetailInfoTab = forwardRef<
   return (
     <div className="program-detail-info-tab">
       <Card className="program-detail-info-tab__card" bordered={false}>
-        <BasicInfoSection
-          program={program}
-          sponsorName={sponsorName}
-          createdByName={createdByName}
-          updatedByName={updatedByName}
-          lifecycleStatus={lifecycleStatus}
-          isEditMode={isEditMode}
-          form={isEditMode ? form : undefined}
-        />
-        <DetailInfoSection
-          program={program}
-          isEditMode={isEditMode}
-          form={isEditMode ? form : undefined}
-          onRegisterGetAdditionalContentHtml={registerGetAdditionalContentHtml}
-        />
-        <CurriculumSection
-          program={program}
-          isEditMode={isEditMode}
-          form={isEditMode ? form : undefined}
-        />
+        <div className="program-detail-info-tab__section">
+          <BasicInfoSection
+            program={program}
+            sponsorName={sponsorName}
+            createdByName={createdByName}
+            updatedByName={updatedByName}
+            lifecycleStatus={lifecycleStatus}
+            isEditMode={isEditMode}
+            form={isEditMode ? form : undefined}
+          />
+        </div>
+        <div className="program-detail-info-tab__section">
+          <DetailInfoSection
+            program={program}
+            isEditMode={isEditMode}
+            form={isEditMode ? form : undefined}
+            onRegisterGetAdditionalContentHtml={registerGetAdditionalContentHtml}
+          />
+        </div>
+        <div className="program-detail-info-tab__section">
+          <CurriculumSection
+            program={program}
+            isEditMode={isEditMode}
+            form={isEditMode ? form : undefined}
+          />
+        </div>
       </Card>
     </div>
   )

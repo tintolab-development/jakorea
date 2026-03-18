@@ -116,11 +116,10 @@ export async function getOverallProgramProgress(): Promise<OverallProgramProgres
       return
     }
 
-    // 진행 중 (7단계: 교재 발송 전·후, 교육 진행 완료)
+    // 진행 중 (5단계: 교육 진행 완료, 참여자&교육자 모집 완료)
     if (
-      s === 'education_before_textbook' ||
-      s === 'education_after_textbook' ||
       s === 'education_completed' ||
+      s === 'participant_instructor_recruitment_completed' ||
       (now >= startDate && now <= endDate)
     ) {
       inProgress++

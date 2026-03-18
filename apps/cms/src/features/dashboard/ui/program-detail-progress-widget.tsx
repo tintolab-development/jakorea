@@ -5,8 +5,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import {
-  getProgramProgress7StageByProgramId,
-  type ProgramProgress7Stage,
+  getProgramProgressStagesByProgramId,
+  type ProgramProgressStages,
 } from '../api/admin-dashboard-service'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
@@ -21,23 +21,23 @@ import {
 } from '@/features/dashboard/ui/progress-step-bar'
 import './program-detail-progress-widget.css'
 
-/** lifecycleStatus → 6단계 인덱스 (0~5). 없으면 -1 (전부 대기) */
+/** lifecycleStatus → 5단계 인덱스 (0~4). 없으면 -1 (전부 대기) */
 function getCurrentStageIndex(status: ProgramLifecycleStatus | null | undefined): number {
   if (!status) return -1
   switch (status) {
     case 'recruiting_students':
+    case 'participant_instructor_recruitment_planned':
       return 0
     case 'recruiting_instructors':
+    case 'participant_instructor_recruiting':
       return 1
     case 'matching_completed':
-    case 'education_before_textbook':
+    case 'participant_instructor_recruitment_completed':
       return 2
-    case 'education_after_textbook':
-      return 3
     case 'education_completed':
-      return 4
+      return 3
     case 'document_processing_completed':
-      return 5
+      return 4
     default:
       return -1
   }
@@ -52,7 +52,7 @@ export function ProgramDetailProgressWidget({
   programId,
   currentLifecycleStatus,
 }: ProgramDetailProgressWidgetProps) {
-  const [_progress, setProgress] = useState<ProgramProgress7Stage | null>(null)
+  const [_progress, setProgress] = useState<ProgramProgressStages | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function ProgramDetailProgressWidget({
     const load = async () => {
       setLoading(true)
       try {
-        const data = await getProgramProgress7StageByProgramId(programId)
+        const data = await getProgramProgressStagesByProgramId(programId)
         if (!cancelled) setProgress(data)
       } finally {
         if (!cancelled) setLoading(false)

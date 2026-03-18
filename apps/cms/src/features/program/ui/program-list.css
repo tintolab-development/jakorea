@@ -4,152 +4,180 @@
 
 /* 캘린더 날짜 셀에 보더 추가 - 구분 명확화 (정산 캘린더 참고) */
 .ant-picker-calendar-date {
-    border: 1px solid var(--color-border-light);
+  border: 1px solid var(--color-border-light);
 }
 
 /* 호버 시 보더 강조 */
 .ant-picker-calendar-date:hover {
-    border-color: var(--color-border-input);
+  border-color: var(--color-border-input);
 }
 
 /* 선택된 날짜 보더 강조 */
 .ant-picker-calendar-date-selected {
-    border-color: var(--color-input-focus);
+  border-color: var(--color-input-focus);
 }
 
 /* 오늘 날짜 보더 강조 */
 .ant-picker-calendar-date-today {
-    border-color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
 }
 
 /* 캘린더 셀 스타일 */
 .program-calendar-cell {
-    height: 100%;
-    min-height: 80px;
-    display: flex;
-    flex-direction: column;
-    padding: var(--spacing-4);
-    border-radius: var(--radius-4);
-    transition: all 0.2s;
+  height: 100%;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-4);
+  border-radius: var(--radius-4);
+  transition: all 0.2s;
 }
 
 .program-calendar-cell-date {
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-label);
-    margin-bottom: var(--spacing-4);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-label);
+  margin-bottom: var(--spacing-4);
 }
 
 .program-calendar-cell-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-2);
-    overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  overflow: hidden;
 }
 
 .program-calendar-cell-item {
-    font-size: var(--font-size-12);
-    padding: var(--spacing-2) var(--spacing-4);
-    margin: 1px 0;
-    background: var(--color-input-focus);
-    color: var(--color-bg-base);
-    border-radius: var(--spacing-2);
-    cursor: pointer;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    transition: all 0.2s;
+  font-size: var(--font-size-12);
+  padding: var(--spacing-2) var(--spacing-4);
+  margin: 1px 0;
+  background: var(--color-input-focus);
+  color: var(--color-bg-base);
+  border-radius: var(--spacing-2);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.2s;
 }
 
 .program-calendar-cell-item:hover {
-    background: var(--color-input-hover);
-    transform: translateX(2px);
+  background: var(--color-input-hover);
+  transform: translateX(2px);
 }
 
 .program-calendar-cell-more {
-    font-size: var(--font-size-11);
-    color: var(--color-text-body);
-    margin-top: var(--spacing-2);
-    text-align: center;
+  font-size: var(--font-size-11);
+  color: var(--color-text-body);
+  margin-top: var(--spacing-2);
+  text-align: center;
 }
 
 /* 뷰 전환 탭 스타일 (정산 캘린더 참고) */
 .program-view-toggle {
-    display: inline-flex;
-    background-color: var(--color-bg-tertiary);
-    border-radius: var(--radius-8);
-    padding: var(--spacing-4);
-    gap: var(--spacing-4);
+  display: inline-flex;
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-8);
+  padding: var(--spacing-4);
+  gap: var(--spacing-4);
 }
 
 .program-view-toggle-button {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-6);
-    padding: var(--spacing-8) var(--spacing-16);
-    border: none;
-    border-radius: var(--radius-6);
-    background-color: transparent;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    cursor: pointer;
-    transition: all 0.2s;
-    outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  padding: var(--spacing-8) var(--spacing-16);
+  border: none;
+  border-radius: var(--radius-6);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
 }
 
 .program-view-toggle-button:hover {
-    color: var(--color-text-label);
-    background-color: var(--color-overlay-light);
+  color: var(--color-text-label);
+  background-color: var(--color-overlay-light);
 }
 
 .program-view-toggle-button--active {
-    background-color: var(--color-bg-base);
-    color: var(--color-text-label);
-    box-shadow: var(--shadow-card);
-    font-weight: var(--font-weight-600);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-label);
+  box-shadow: var(--shadow-card);
+  font-weight: var(--font-weight-600);
 }
 
 .program-view-toggle-button--active:hover {
-    background-color: var(--color-bg-base);
-    color: var(--color-text-label);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-label);
 }
 
 /* 프로그램 목록 컨테이너 */
 .program-list-container {
-    width: 100%;
+  width: 100%;
+  border-radius: 12px;
+  background: var(--color-bg-base);
+  box-shadow: var(--shadow-brand-active);
+}
+.program-list-calendar-view-container {
+  width: 100%;
+}
+
+/* 필터 + tableButtonSection + 테이블 공통 배경 컨테이너 */
+.program-list-content-wrapper {
+  background: var(--color-bg-base);
+  margin-bottom: var(--spacing-24);
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
+}
+
+.program-list-content-wrapper .unified-filter-card {
+  margin-bottom: var(--spacing-16);
+}
+
+.program-list-content-wrapper__table {
+  margin-top: var(--spacing-16);
+}
+
+.program-list-content-wrapper .program-list-card--in-wrapper {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .program-filter-wrapper {
-    width: 100%;
-    margin-bottom: var(--spacing-16);
+  width: 100%;
+  margin-bottom: var(--spacing-16);
 }
 
 /* 필터 카드 스타일 */
 .program-filter-card {
-    margin-bottom: var(--spacing-24);
-    width: 100%;
+  margin-bottom: var(--spacing-24);
+  width: 100%;
 }
 
 .program-filter-card.ant-card {
-    width: 100%;
+  width: 100%;
 }
 
 .program-filter-card .ant-card-body {
-    padding: var(--spacing-24);
+  padding: var(--spacing-24);
 }
 
 .program-filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
 }
 
 .program-filter-label {
-    font-size: var(--font-size-13);
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-body);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-body);
 }
 
 /* 필터 입력 필드 통일 스타일 (공통 높이 44px, 반응형) */
@@ -157,154 +185,154 @@
 .program-filter-card .ant-select .ant-select-selector,
 .program-filter-card .ant-picker,
 .program-filter-card .ant-input-affix-wrapper {
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
-    border-radius: var(--radius-6) !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  border-radius: var(--radius-6) !important;
 }
 
 /* affix wrapper 내부 input은 높이 auto */
 .program-filter-card .ant-input-affix-wrapper .ant-input {
-    height: auto !important;
-    line-height: 1.5715;
-    /* Ant Design 기본 line-height */
+  height: auto !important;
+  line-height: 1.5715;
+  /* Ant Design 기본 line-height */
 }
 
 .program-filter-card .ant-select .ant-select-selector {
-    display: flex !important;
-    align-items: center !important;
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
+  display: flex !important;
+  align-items: center !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
 }
 
 .program-filter-card .ant-select .ant-select-selection-item,
 .program-filter-card .ant-select .ant-select-selection-placeholder {
-    line-height: 1 !important;
-    display: flex;
-    align-items: center;
+  line-height: 1 !important;
+  display: flex;
+  align-items: center;
 }
 
 .program-filter-card .ant-input::placeholder,
 .program-filter-card .ant-input-affix-wrapper .ant-input::placeholder {
-    color: var(--color-scrollbar-thumb-hover);
+  color: var(--color-scrollbar-thumb-hover);
 }
 
 /* 필터 내 아이콘 센터링 */
 /* Input prefix 아이콘 (검색 아이콘) */
 .program-filter-card .ant-input-affix-wrapper .ant-input-prefix {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 0 var(--spacing-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 var(--spacing-8);
 }
 
 .program-filter-card .ant-input-affix-wrapper .ant-input-prefix .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-14);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-14);
+  line-height: 1;
 }
 
 /* Input clear 버튼 (X 아이콘) */
 .program-filter-card .ant-input-affix-wrapper .ant-input-clear-icon,
 .program-filter-card .ant-input-clear-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 0;
-    right: var(--spacing-8);
-    top: 50%;
-    transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  right: var(--spacing-8);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .program-filter-card .ant-input-affix-wrapper .ant-input-clear-icon .anticon,
 .program-filter-card .ant-input-clear-icon .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 /* Select 화살표 아이콘 */
 .program-filter-card .ant-select .ant-select-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-top: 0;
-    right: var(--spacing-10);
-    width: var(--spacing-12);
-    height: var(--spacing-12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: var(--spacing-10);
+  width: var(--spacing-12);
+  height: var(--spacing-12);
 }
 
 .program-filter-card .ant-select .ant-select-arrow .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 /* Select clear 버튼 (X 아이콘) */
 .program-filter-card .ant-select .ant-select-clear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-top: 0;
-    right: var(--spacing-24);
-    width: var(--spacing-12);
-    height: var(--spacing-12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: var(--spacing-24);
+  width: var(--spacing-12);
+  height: var(--spacing-12);
 }
 
 .program-filter-card .ant-select .ant-select-clear .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 /* DatePicker 아이콘 */
 .program-filter-card .ant-picker .ant-picker-suffix {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 0 var(--spacing-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 var(--spacing-8);
 }
 
 .program-filter-card .ant-picker .ant-picker-suffix .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-14);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-14);
+  line-height: 1;
 }
 
 /* DatePicker clear 버튼 (X 아이콘) */
 .program-filter-card .ant-picker .ant-picker-clear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-top: 0;
-    right: var(--spacing-8);
-    width: var(--spacing-12);
-    height: var(--spacing-12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: var(--spacing-8);
+  width: var(--spacing-12);
+  height: var(--spacing-12);
 }
 
 .program-filter-card .ant-picker .ant-picker-clear .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 /* 참가자용 필터 입력 필드 통일 스타일 (공통 높이 44px, 반응형) */
@@ -312,341 +340,374 @@
 .program-filter-wrapper .ant-select .ant-select-selector,
 .program-filter-wrapper .ant-picker,
 .program-filter-wrapper .ant-input-affix-wrapper {
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
 }
 
 .program-filter-wrapper .ant-select .ant-select-selector {
-    display: flex !important;
-    align-items: center !important;
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
+  display: flex !important;
+  align-items: center !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
 }
 
 .program-filter-wrapper .ant-select .ant-select-selection-item,
 .program-filter-wrapper .ant-select .ant-select-selection-placeholder {
-    line-height: 1 !important;
-    display: flex;
-    align-items: center;
+  line-height: 1 !important;
+  display: flex;
+  align-items: center;
 }
 
 /* 참가자용 필터 아이콘 센터링 (필터 카드 외부) */
 .program-filter-wrapper .ant-input-affix-wrapper .ant-input-prefix {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 0 var(--spacing-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 var(--spacing-8);
 }
 
 .program-filter-wrapper .ant-input-affix-wrapper .ant-input-prefix .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-14);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-14);
+  line-height: 1;
 }
 
 .program-filter-wrapper .ant-input-affix-wrapper .ant-input-clear-icon,
 .program-filter-wrapper .ant-input-clear-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 0;
-    right: var(--spacing-8);
-    top: 50%;
-    transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  right: var(--spacing-8);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .program-filter-wrapper .ant-input-affix-wrapper .ant-input-clear-icon .anticon,
 .program-filter-wrapper .ant-input-clear-icon .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 .program-filter-wrapper .ant-select .ant-select-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-top: 0;
-    right: var(--spacing-10);
-    width: var(--spacing-12);
-    height: var(--spacing-12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: var(--spacing-10);
+  width: var(--spacing-12);
+  height: var(--spacing-12);
 }
 
 .program-filter-wrapper .ant-select .ant-select-arrow .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 .program-filter-wrapper .ant-select .ant-select-clear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-top: 0;
-    right: var(--spacing-24);
-    width: var(--spacing-12);
-    height: var(--spacing-12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: var(--spacing-24);
+  width: var(--spacing-12);
+  height: var(--spacing-12);
 }
 
 .program-filter-wrapper .ant-select .ant-select-clear .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 .program-filter-wrapper .ant-picker .ant-picker-suffix {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 0 var(--spacing-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 var(--spacing-8);
 }
 
 .program-filter-wrapper .ant-picker .ant-picker-suffix .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-14);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-14);
+  line-height: 1;
 }
 
 .program-filter-wrapper .ant-picker .ant-picker-clear {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-top: 0;
-    right: var(--spacing-8);
-    width: var(--spacing-12);
-    height: var(--spacing-12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  right: var(--spacing-8);
+  width: var(--spacing-12);
+  height: var(--spacing-12);
 }
 
 .program-filter-wrapper .ant-picker .ant-picker-clear .anticon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-12);
-    line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-12);
+  line-height: 1;
 }
 
 .program-filter-date-separator {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 var(--spacing-8);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
-    height: var(--spacing-32);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-8);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-14);
+  height: var(--spacing-32);
 }
 
 .program-filter-search-button {
-    height: var(--spacing-32);
-    min-width: var(--filter-control-min-width);
-    background-color: var(--color-brand-primary);
-    border-color: var(--color-brand-primary);
-    border-radius: var(--radius-6);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
+  height: var(--spacing-32);
+  min-width: var(--filter-control-min-width);
+  background-color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+  border-radius: var(--radius-6);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
 }
 
 .program-filter-search-button:hover {
-    background-color: var(--color-brand-primary-hover) !important;
-    border-color: var(--color-brand-primary-hover) !important;
+  background-color: var(--color-brand-primary-hover) !important;
+  border-color: var(--color-brand-primary-hover) !important;
 }
 
 /* 테이블 헤더 스타일 */
 .program-table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-16);
-    padding: var(--spacing-16) 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-16);
+  padding: var(--spacing-16) 0;
 }
 
 .program-table-header-left {
-    display: flex;
-    align-items: baseline;
-    gap: var(--spacing-8);
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-8);
 }
 
 .program-table-header-title {
-    font-size: var(--font-size-16);
-    font-weight: var(--font-weight-600);
-    color: var(--color-text-label);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-600);
+  color: var(--color-text-label);
 }
 
 .program-table-header-count {
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-regular);
-    color: var(--color-text-secondary);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
 }
 
 .program-table-header-right {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-12);
-    /* 뷰 전환 버튼이 왼쪽, 프로그램 신규 등록 버튼이 오른쪽에 위치 */
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  /* 뷰 전환 버튼이 왼쪽, 프로그램 신규 등록 버튼이 오른쪽에 위치 */
 }
 
 .program-table-header-button {
-    background-color: var(--color-brand-primary);
-    border-color: var(--color-brand-primary);
+  background-color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
 }
 
 .program-table-header-button:hover {
-    background-color: var(--color-brand-primary-hover) !important;
-    border-color: var(--color-brand-primary-hover) !important;
+  background-color: var(--color-brand-primary-hover) !important;
+  border-color: var(--color-brand-primary-hover) !important;
 }
 
 /* 프로그램 목록 카드 스타일 (위젯 스타일) */
 .program-list-card {
-    margin-bottom: var(--spacing-24);
-    margin-top: var(--spacing-24);
-    /* 상단 여백 추가 */
+  margin-bottom: var(--spacing-24);
+  margin-top: var(--spacing-24);
+  /* 상단 여백 추가 */
 }
 
 /* 테이블 가로 스크롤 (반응형: 컬럼이 화면을 넘을 때 스크롤) */
 .program-list-table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 /* Ant Design Table scroll.x 사용 시 스크롤 영역이 보이도록 */
 .program-list-table-wrapper .ant-table-wrapper {
-    min-width: 0;
+  min-width: 0;
 }
 
 .program-list-table-wrapper .ant-table-content {
-    overflow-x: auto !important;
+  overflow-x: auto !important;
+}
+
+/* 테이블 스타일 */
+.ant-table-thead {
+  background: var(--color-table-head-bg) !important;
+}
+.ant-table-cell {
+  padding: 12px 16px !important;
+  max-height: 50px !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  border-right: 1px solid var(--color-border) !important;
+
+  font-size: var(--font-size-16) !important;
+  font-weight: var(--font-weight-500) !important;
+  color: var(--color-text-label) !important;
+}
+.ant-table-thead > tr > th {
+  height: 30px !important;
+  font-weight: var(--font-weight-700) !important;
+}
+.ant-table-cell:last-child {
+  border-right: none !important;
 }
 
 /* 교육 프로그램/수강자 모집: 전체 프로그램과 동일하게 가로 스크롤 적용 */
 .program-list-table-wrapper--scroll-x {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 프로그램 목록 테이블 셀별 구분선 */
 .program-list-card .ant-table-thead > tr > th {
-    border-right: 1px solid var(--color-bg-base);
-    border-bottom: 1px solid var(--color-bg-base);
+  border-right: 1px solid var(--color-bg-base);
+  border-bottom: 1px solid var(--color-bg-base);
 }
 
 .program-list-card .ant-table-thead > tr > th:last-child {
-    border-right: none;
+  border-right: none;
 }
 
 .program-list-card .ant-table-tbody > tr > td {
-    border-right: 1px solid var(--color-border-light);
-    border-bottom: 1px solid var(--color-border-light);
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .program-list-card .ant-table-tbody > tr > td:last-child {
-    border-right: none;
+  border-right: none;
 }
 
 .program-list-card .ant-table-tbody > tr:last-child > td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .program-list-card .ant-card-head {
-    border-bottom: 1px solid var(--color-border-light);
-    padding: var(--spacing-16) var(--spacing-24);
-    min-height: 56px;
-    /* 헤더 최소 높이 */
-    display: flex;
-    align-items: center;
-    /* 수직 정렬 */
+  border-bottom: 1px solid var(--color-border-light);
+  padding: var(--spacing-16) var(--spacing-24);
+  min-height: 56px;
+  /* 헤더 최소 높이 */
+  display: flex;
+  align-items: center;
+  /* 수직 정렬 */
 }
 
 .program-list-card .ant-card-head-title {
-    padding: 0;
-    display: flex;
-    align-items: center;
-    /* title 수직 정렬 */
-    line-height: 1.5;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  /* title 수직 정렬 */
+  line-height: 1.5;
 }
 
 .program-list-card .ant-card-extra {
-    padding: 0;
-    display: flex;
-    align-items: center;
-    /* extra 수직 정렬 */
-    line-height: 1.5;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  /* extra 수직 정렬 */
+  line-height: 1.5;
 }
 
 .program-list-card .ant-card-body {
-    padding: var(--spacing-24);
+  padding: var(--spacing-24);
 }
 
 /* 프로그램 진행 현황 드롭다운: 셀/트리거 클릭 시 행 클릭 이벤트 버블링 방지 */
 .program-status-dropdown-cell {
-    position: relative;
-    z-index: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .program-status-dropdown-trigger {
-    cursor: pointer;
-    display: inline-block;
+  cursor: pointer;
+  display: inline-block;
 }
 
 /* 모집신청 현황 셀(StatusDropdownCell) 사용 행: 드롭다운 열어도 행 높이 고정 — UI shifting 방지 */
-.program-list-card .ant-table-wrapper .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
-    height: 47px;
-    min-height: 47px;
-    max-height: 47px;
-    overflow: visible;
+.program-list-card
+  .ant-table-wrapper
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 47px;
+  min-height: 47px;
+  max-height: 47px;
+  overflow: visible;
 }
 
-.program-list-card .ant-table-wrapper .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) > td.status-dropdown-cell__cell-status {
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: visible;
+.program-list-card
+  .ant-table-wrapper
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: visible;
 }
 
-.program-list-card .ant-table-wrapper .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
-    height: 47px !important;
-    min-height: 47px !important;
-    max-height: 47px !important;
+.program-list-card
+  .ant-table-wrapper
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 47px !important;
+  min-height: 47px !important;
+  max-height: 47px !important;
 }
 
 /* 테이블 헤더 내 뷰 전환 단일 버튼 스타일 */
 .program-view-toggle-single-button {
-    height: var(--filter-control-height, 40px);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-6);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    border-radius: var(--radius-6);
-    border: 1px solid var(--color-border-input);
-    background-color: var(--color-bg-base);
-    color: var(--color-text-label);
-    transition: all 0.2s;
+  height: var(--filter-control-height, 40px);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  border-radius: var(--radius-6);
+  border: 1px solid var(--color-border-input);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-label);
+  transition: all 0.2s;
 }
 
 .program-view-toggle-single-button:hover {
-    border-color: var(--color-brand-primary);
-    color: var(--color-brand-primary);
-    background-color: var(--color-bg-base);
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
+  background-color: var(--color-bg-base);
 }
 
 .program-view-toggle-single-button:active {
-    border-color: var(--color-brand-primary-hover);
-    color: var(--color-brand-primary-hover);
+  border-color: var(--color-brand-primary-hover);
+  color: var(--color-brand-primary-hover);
 }

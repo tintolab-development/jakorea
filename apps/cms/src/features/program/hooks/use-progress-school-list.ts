@@ -8,6 +8,7 @@ import { message } from 'antd'
 import {
   MOCK_PARTICIPATING_SCHOOLS,
   type ParticipatingSchoolRow,
+  type ParticipatingSchoolApprovalStatusKey,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
@@ -44,6 +45,11 @@ export function useProgressSchoolList({
 
   const filteredSchools = useMemo(() => {
     return schoolList.filter(row => {
+      const schoolNameKeyword = (appliedFilters.schoolName || '').trim()
+      if (schoolNameKeyword) {
+        const lower = schoolNameKeyword.toLowerCase()
+        if (!row.schoolName.toLowerCase().includes(lower)) return false
+      }
       if (
         appliedFilters.region &&
         appliedFilters.region !== 'all' &&
@@ -112,6 +118,28 @@ export function useProgressSchoolList({
     message.success(`${count}건의 학교가 삭제되었습니다.`)
   }, [selectedSchoolRowKeys])
 
+  /** 선택 반려 확인 시: 선택된 참여 기관을 리스트에서 제거 */
+  const handleBulkRejectConfirm = useCallback(() => {
+    const keysSet = new Set(selectedSchoolRowKeys.map(String))
+    const count = keysSet.size
+    setSchoolList(prev => prev.filter(row => !keysSet.has(row.id)))
+    setSelectedSchoolRowKeys([])
+    message.success(`선택한 ${count}건의 참여 기관이 반려되어 목록에서 제거되었습니다.`)
+  }, [selectedSchoolRowKeys])
+
+  /** 선택 승인 확인 시: 선택된 참여 기관 approvalStatus → approved */
+  const handleBulkApproveConfirm = useCallback(() => {
+    const keysSet = new Set(selectedSchoolRowKeys.map(String))
+    const count = keysSet.size
+    setSchoolList(prev =>
+      prev.map(row =>
+        keysSet.has(row.id) ? { ...row, approvalStatus: 'approved' as ParticipatingSchoolApprovalStatusKey } : row
+      )
+    )
+    setSelectedSchoolRowKeys([])
+    message.success(`선택한 ${count}건의 참여 기관이 승인되었습니다.`)
+  }, [selectedSchoolRowKeys])
+
   /** 학교별 담당 강사진 표시 문자열 (저장 패치 우선, 없으면 참여 강사 목록에서 schoolName 기준) */
   const getInstructorDisplayForSchool = useCallback(
     (schoolId: string, schoolName: string): string => {
@@ -149,6 +177,8 @@ export function useProgressSchoolList({
     handleTextbookStatusChange,
     handleSchoolDeleteClick,
     handleSchoolDeleteConfirm,
+    handleBulkRejectConfirm,
+    handleBulkApproveConfirm,
     getInstructorDisplayForSchool,
     getInstructorRowsForSchool,
   }

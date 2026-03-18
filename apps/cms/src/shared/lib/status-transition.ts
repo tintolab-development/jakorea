@@ -206,17 +206,21 @@ export const PROGRAM_LIFECYCLE_STATUS_TRANSITIONS: Record<
   ProgramLifecycleStatus,
   ProgramLifecycleStatus[]
 > = {
-  planned: ['instructor_recruitment_planned', 'recruiting_students'],
-  instructor_recruitment_planned: ['planned', 'volunteer_recruitment_planned', 'recruiting_instructors'],
-  volunteer_recruitment_planned: ['instructor_recruitment_planned', 'recruiting_volunteers'],
-  recruiting_students: ['planned', 'recruiting_instructors'],
-  recruiting_instructors: ['recruiting_students', 'recruiting_volunteers', 'matching_completed'],
-  recruiting_volunteers: ['volunteer_recruitment_planned', 'recruiting_instructors', 'matching_completed'],
-  matching_completed: ['recruiting_instructors', 'recruiting_volunteers', 'education_before_textbook'],
+  planned: ['instructor_recruitment_planned', 'recruiting_students', 'participant_instructor_recruitment_planned'],
+  instructor_recruitment_planned: ['planned', 'volunteer_recruitment_planned', 'recruiting_instructors', 'participant_instructor_recruitment_planned'],
+  volunteer_recruitment_planned: ['instructor_recruitment_planned', 'recruiting_volunteers', 'participant_instructor_recruitment_planned'],
+  participant_instructor_recruitment_planned: ['planned', 'recruiting_students', 'recruiting_instructors', 'participant_instructor_recruiting'],
+  recruiting_students: ['planned', 'recruiting_instructors', 'participant_instructor_recruiting'],
+  recruiting_instructors: ['recruiting_students', 'recruiting_volunteers', 'matching_completed', 'participant_instructor_recruiting'],
+  recruiting_volunteers: ['volunteer_recruitment_planned', 'recruiting_instructors', 'matching_completed', 'participant_instructor_recruiting'],
+  participant_instructor_recruiting: ['participant_instructor_recruitment_planned', 'recruiting_students', 'recruiting_instructors', 'participant_instructor_recruitment_completed'],
+  education_in_progress: ['matching_completed', 'education_completed'],
+  matching_completed: ['recruiting_instructors', 'recruiting_volunteers', 'education_in_progress', 'education_before_textbook', 'education_completed', 'participant_instructor_recruitment_completed'],
   education_before_textbook: ['matching_completed', 'education_after_textbook'],
   education_after_textbook: ['education_before_textbook', 'education_completed'],
-  education_completed: ['education_after_textbook', 'document_processing_completed'],
-  document_processing_completed: ['education_completed'],
+  education_completed: ['matching_completed', 'education_in_progress', 'education_after_textbook', 'document_processing_completed', 'participant_instructor_recruitment_completed'],
+  document_processing_completed: ['education_completed', 'participant_instructor_recruitment_completed'],
+  participant_instructor_recruitment_completed: ['participant_instructor_recruiting', 'matching_completed', 'education_in_progress', 'education_completed', 'document_processing_completed'],
 }
 
 /**
@@ -272,14 +276,18 @@ export function getNextProgramLifecycleStatus(
     planned: 'instructor_recruitment_planned',
     instructor_recruitment_planned: 'volunteer_recruitment_planned',
     volunteer_recruitment_planned: 'recruiting_students',
+    participant_instructor_recruitment_planned: 'participant_instructor_recruiting',
     recruiting_students: 'recruiting_instructors',
     recruiting_instructors: 'recruiting_volunteers',
     recruiting_volunteers: 'matching_completed',
-    matching_completed: 'education_before_textbook',
+    participant_instructor_recruiting: 'participant_instructor_recruitment_completed',
+    education_in_progress: 'education_completed',
+    matching_completed: 'education_in_progress',
     education_before_textbook: 'education_after_textbook',
     education_after_textbook: 'education_completed',
     education_completed: 'document_processing_completed',
     document_processing_completed: null,
+    participant_instructor_recruitment_completed: 'document_processing_completed',
   }
   return transitions[currentStatus] || null
 }
@@ -299,14 +307,18 @@ export function getPreviousProgramLifecycleStatus(
     planned: null,
     instructor_recruitment_planned: 'planned',
     volunteer_recruitment_planned: 'instructor_recruitment_planned',
-    recruiting_students: 'volunteer_recruitment_planned',
+    participant_instructor_recruitment_planned: 'volunteer_recruitment_planned',
+    recruiting_students: 'participant_instructor_recruitment_planned',
     recruiting_instructors: 'recruiting_students',
     recruiting_volunteers: 'recruiting_instructors',
-    matching_completed: 'recruiting_volunteers',
+    participant_instructor_recruiting: 'participant_instructor_recruitment_planned',
+    education_in_progress: 'matching_completed',
+    matching_completed: 'participant_instructor_recruiting',
     education_before_textbook: 'matching_completed',
     education_after_textbook: 'education_before_textbook',
-    education_completed: 'education_after_textbook',
+    education_completed: 'education_in_progress',
     document_processing_completed: 'education_completed',
+    participant_instructor_recruitment_completed: 'participant_instructor_recruiting',
   }
   return transitions[currentStatus] || null
 }

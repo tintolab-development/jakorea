@@ -32,9 +32,7 @@
     height: 100%;
 }
 
-/* 카드 하단 20px — 프로그램별 문의 현황 위젯과 동일 */
-
-/* 테이블 100% 확장 시 컬럼 비율 유지, 상단 1px 여백으로 최상단 행 트리거 보더 잘림 방지 */
+/* 테이블 100% 확장 시 컬럼 비율 유지 */
 .recruitment-status-widget__table.ant-table-wrapper .ant-table {
     table-layout: fixed;
     width: 100%;
@@ -88,24 +86,9 @@
     box-sizing: border-box;
 }
 
-/* 모집 신청 현황 셀: 상하 패딩 0, 고정 높이, overflow visible — 드롭다운 열어도 시프팅 방지 */
-.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.recruitment-status-widget__cell-status,
-.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    height: 47px !important;
-    min-height: 47px !important;
-    max-height: 47px !important;
-    overflow: visible;
+/* 모집 신청 현황 셀 */
+.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.recruitment-status-widget__cell-status {
     vertical-align: middle;
-}
-
-/* 태그 선택(드롭다운 열림) 시에도 상하 패딩 유지(0) — 시프팅 방지 */
-.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.recruitment-status-widget__cell-status:has(.recruitment-status-widget__status-trigger--open),
-.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.recruitment-status-widget__cell-status:has(.status-dropdown-cell__status-trigger--open),
-.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr > td.status-dropdown-cell__cell-status:has(.status-dropdown-cell__status-trigger--open) {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
 }
 
 /* 본문 컬럼 구분선: 연한 회색 */
@@ -113,20 +96,9 @@
     border-right: 1px solid #EEF0F0;
 }
 
-/* tbody 행: 47px 고정(다른 셀 패딩 포함 자연 높이와 동일), 드롭다운 열어도 높이 유지 */
+/* tbody 행: 47px 고정 */
 .recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr,
 .recruitment-status-widget__table .ant-table-tbody > tr {
-    height: 47px !important;
-    min-height: 47px !important;
-    max-height: 47px !important;
-    overflow: visible;
-}
-
-/* 드롭다운 열린 행의 모든 td 47px 강제 유지 — UI shifting 방지 (공통 셀 클래스 포함) */
-.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr:has(td .recruitment-status-widget__status-trigger--open) > td,
-.recruitment-status-widget .ant-table-wrapper .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td,
-.recruitment-status-widget__table .ant-table-tbody > tr:has(td .recruitment-status-widget__status-trigger--open) > td,
-.recruitment-status-widget__table .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
     height: 47px !important;
     min-height: 47px !important;
     max-height: 47px !important;
@@ -134,136 +106,6 @@
 
 .recruitment-status-widget__table .ant-table-tbody > tr:hover > td {
     background: var(--color-table-row-hover) !important;
-}
-
-.recruitment-status-widget__status-empty {
-    color: var(--color-text-tertiary, #8c8c8c);
-}
-
-.recruitment-status-widget__status-trigger {
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-/* 드롭다운 열림 시: inset box-shadow로 테두리 표현해 상단 1px 잘림 방지(overflow 부모 대응) */
-.recruitment-status-widget__status-trigger--open {
-  width: 136px;
-  min-width: 136px;
-  max-width: 136px;
-  height: 44px;
-  min-height: 44px;
-  background: #fff;
-  border: none;
-  box-shadow: inset 0 0 0 1px var(--JA-mint-01, #01A1AF), 0 4px 16px 0 rgba(32, 32, 33, 0.10);
-  border-radius: 6px;
-  padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.recruitment-status-widget__status-trigger--open .app-status-badge.program-lifecycle-status-badge {
-  /* 태그 사이즈 120×30, padding 10 horizontal / 6 vertical — 배경은 모디파이어 유지 */
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-  height: 30px;
-  min-height: 30px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-  box-shadow: none;
-}
-
-.recruitment-status-widget__status-updating {
-    color: var(--color-text-tertiary, #8c8c8c);
-    font-size: 12px;
-}
-
-/* 드롭다운 메뉴 항목: 태그 배지 스타일 유지 — 메뉴 행은 배경 없이 배지 색만 노출 */
-.recruitment-status-widget__dropdown-item {
-  display: inline-block;
-  width: 100%;
-}
-
-.recruitment-status-widget__dropdown-item .program-lifecycle-status-badge {
-  pointer-events: none;
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-  height: 30px;
-  min-height: 30px;
-  padding: 6px 10px;
-}
-
-/* 드롭다운 내 배지: program-lifecycle-status-badge.css 스펙 동일 적용 (배경/텍스트/보더) */
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--planned,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--instructor-recruitment-planned,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--volunteer-recruitment-planned {
-    background: #FEF5F7 !important;
-    color: #E44970 !important;
-    border: 1px solid rgba(228, 73, 112, 0.06) !important;
-}
-
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--recruiting-students,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--recruiting-instructors,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--recruiting-volunteers {
-    background: #E6F2F7 !important;
-    color: #017EAF !important;
-    border: 1px solid rgba(1, 126, 175, 0.06) !important;
-}
-
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--matching-completed,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--education-before-textbook,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--education-after-textbook,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--education-completed,
-.recruitment-status-widget__dropdown-overlay .app-status-badge.program-lifecycle-status-badge--document-processing-completed {
-    background: #F2F3F5 !important;
-    color: #464646 !important;
-    border: 1px solid rgba(126, 138, 150, 0.06) !important;
-}
-
-/* 드롭다운 오버레이 래퍼: 너비 136px 고정해 트리거와 동일하게 */
-.recruitment-status-widget__dropdown-overlay {
-  width: 136px !important;
-  min-width: 136px !important;
-}
-
-/* 드롭다운 메뉴: width 136px(패딩 포함), 내부 패딩 8px, 항목 간 갭 8px */
-.recruitment-status-widget__dropdown-overlay .ant-dropdown-menu {
-  box-sizing: border-box;
-  min-width: 136px !important;
-  width: 136px !important;
-  max-width: 136px !important;
-  border-radius: 6px;
-  background: #FFF;
-  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.10);
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.recruitment-status-widget__dropdown-overlay .ant-dropdown-menu-item {
-  margin: 0;
-  height: 30px;
-  min-height: 30px;
-  padding: 0;
-  border-radius: 6px;
-  background: transparent !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.recruitment-status-widget__dropdown-overlay .ant-dropdown-menu-item:last-child {
-  margin-bottom: 0;
-}
-
-.recruitment-status-widget__dropdown-overlay .ant-dropdown-menu-item:hover {
-  background: transparent !important;
 }
 
 .recruitment-status-widget .widget-more-button {
@@ -274,3 +116,4 @@
     color: var(--color-text-primary) !important;
     opacity: 0.8;
 }
+
