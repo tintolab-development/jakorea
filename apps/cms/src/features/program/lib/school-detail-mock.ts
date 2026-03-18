@@ -30,7 +30,24 @@ const MEAL_NOTICES = [
   '미제공',
 ]
 const WAITING_ROOMS = ['교내 1층 귀빈실', '2층 회의실', '없음']
-const TEXTBOOK_NAMES = ["초등 5학년용 '우리 나라'", "초등 6학년용 '경제와 생활'", '교재 미정']
+const ADDRESS_DETAILS = ['1층 교무실 이길동 선생님 앞', '2층 행정실', '별도 안내']
+const EDUCATION_FORMATS = ['온/오프라인', '오프라인', '온라인']
+const AFFILIATED_FINANCIAL = ['미결연', 'KB국민은행', '신한은행']
+const APPLICATION_REASONS = [
+  '아이들의 경제감각 성장에 큰 도움이 될 것 같아 신청합니다!',
+  '경제 교육 프로그램에 참여하고 싶어 신청합니다.',
+]
+const OTHER_REQUESTS = [
+  '혹시 다른 학년도 동일하게 추가 신청이 가능할까요?',
+  '없습니다.',
+]
+const PREVIOUS_YEAR = ['참여 X', '참여 O']
+const COMPUTER_IN_ROOM = ['1대 사용 가능 | USB 사용 불가', '2대 사용 가능', '없음']
+const PARKING_INFO = ['있음 | 학교 정문 앞 주차장 사용 가능', '있음 | 후문 주차장', '없음']
+const CRIMINAL_CHECK = ['온라인 제출 요청', '제출 완료', '미요청']
+const TEXTBOOK_NAMES = ["초등 5학년용 '우리 나라'", "초등 6학년용 '경제와 생활'", '성공하는 경제생활', '교재 미정']
+const TEXTBOOK_KITS = [4, 6, 8]
+const TEXTBOOK_QUANTITIES = [96, 144, 192]
 const INSTRUCTOR_PHONES = ['010-2847-5913', '010-4523-9016', '010-6234-7805']
 const INSTRUCTOR_EMAILS = ['instructor0@example.com', 'instructor1@example.com', 'instructor2@example.com']
 
@@ -90,25 +107,39 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     ? row.educationGrade
     : `초등학교 ${row.educationGrade}`
 
+  const sessionCount = row.sessions?.length ?? 2
   return {
     id: row.id,
     schoolName: row.schoolName,
     region: row.region,
+    addressDetail: pick(ADDRESS_DETAILS, seed),
     educationGrade: educationGradeLabel,
     venue: pick(VENUES, seed),
+    educationFormat: pick(EDUCATION_FORMATS, seed),
+    totalEducationHours: 2,
+    totalSessions: sessionCount,
+    affiliatedFinancialCompany: pick(AFFILIATED_FINANCIAL, seed),
     mealProvided: seed % 3 !== 0,
     mealNotice: pick(MEAL_NOTICES, seed),
     teacherName: row.teacherName,
     teacherPhone: pick(TEACHER_PHONES, seed),
     teacherEmail: pick(TEACHER_EMAILS, seed),
+    teacherMobile: pick(TEACHER_PHONES, seed + 1),
     classCount: row.classCount,
     studentCount: row.studentCount,
     waitingRoomAvailable: seed % 2 === 0,
     waitingRoomLocation: pick(WAITING_ROOMS, seed),
+    computerInRoom: pick(COMPUTER_IN_ROOM, seed),
+    parkingInfo: pick(PARKING_INFO, seed),
+    criminalCheckRequest: pick(CRIMINAL_CHECK, seed),
     lectureRound: row.lectureRound,
     textbookName: pick(TEXTBOOK_NAMES, seed),
+    textbookKits: pick(TEXTBOOK_KITS, seed),
     textbookStatus: row.textbookStatus,
-    textbookQuantity: row.studentCount,
+    textbookQuantity: pick(TEXTBOOK_QUANTITIES, seed),
+    previousYearParticipation: pick(PREVIOUS_YEAR, seed),
+    applicationReason: pick(APPLICATION_REASONS, seed),
+    otherRequests: pick(OTHER_REQUESTS, seed),
     instructors,
   }
 }
@@ -128,6 +159,11 @@ const STUDENT_EMAILS = [
   'student04@example.com', 'student05@example.com', 'student06@example.com',
 ]
 
+/** 성별 mock: seed 기반 남/여 */
+function pickGender(seed: number): 'male' | 'female' {
+  return seed % 2 === 0 ? 'male' : 'female'
+}
+
 /**
  * 해당 학교 학생 명단 Mock (총 인원 수만큼 생성)
  */
@@ -143,6 +179,7 @@ export function getSchoolDetailStudents(schoolId: string, count: number): School
       id: `student-${schoolId}-${i + 1}`,
       no: n,
       name: `${surname}${givenName}`,
+      gender: pickGender(seed + i),
       gradeClass: pick(grades, seed + i),
       contact: i % 3 !== 0 ? pick(STUDENT_CONTACTS, seed + i) : undefined,
       email: i % 2 === 0 ? pick(STUDENT_EMAILS, seed + i) : undefined,
@@ -316,8 +353,9 @@ export function getApplicantSchoolDetail(row: ApplicantSchoolRow): SchoolDetailF
     waitingRoomLocation: pick(WAITING_ROOMS, seed),
     lectureRound: '진행 전',
     textbookName: pick(TEXTBOOK_NAMES, seed),
+    textbookKits: pick(TEXTBOOK_KITS, seed),
     textbookStatus: 'preparing',
-    textbookQuantity: row.studentCount,
+    textbookQuantity: pick(TEXTBOOK_QUANTITIES, seed),
     instructors: [],
   }
 }
