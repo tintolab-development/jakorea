@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Tabs, Descriptions, Tag, Radio, Space, Table, Empty } from 'antd'
+import { Tabs, Space, Table, Empty } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
-import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-schools'
 import type {
   ApplicantInstructorRow,
