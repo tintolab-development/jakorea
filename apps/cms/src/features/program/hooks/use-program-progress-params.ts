@@ -15,6 +15,7 @@ const VALID_SUB_TABS = [SUB_TAB_SCHOOLS, SUB_TAB_INSTRUCTORS] as const
 export type ProgressSubTabKey = (typeof VALID_SUB_TABS)[number]
 
 const FILTER_KEYS_SCHOOLS = [
+  'schoolName',
   'region',
   'educationGrade',
   'lectureRound',
@@ -30,6 +31,7 @@ const FILTER_KEYS_INSTRUCTORS = [
 ] as const
 
 export interface ProgressFilters {
+  schoolName: string
   region: string
   educationGrade: string
   lectureRound: string
@@ -39,6 +41,7 @@ export interface ProgressFilters {
 }
 
 const DEFAULT_FILTERS: ProgressFilters = {
+  schoolName: '',
   region: 'all',
   educationGrade: 'all',
   lectureRound: 'all',
@@ -61,6 +64,7 @@ export function useProgramProgressParams() {
 
   const filters = useMemo((): ProgressFilters => {
     return {
+      schoolName: searchParams.get('schoolName') ?? DEFAULT_FILTERS.schoolName,
       region: searchParams.get('region') ?? DEFAULT_FILTERS.region,
       educationGrade: searchParams.get('educationGrade') ?? DEFAULT_FILTERS.educationGrade,
       lectureRound: searchParams.get('lectureRound') ?? DEFAULT_FILTERS.lectureRound,
