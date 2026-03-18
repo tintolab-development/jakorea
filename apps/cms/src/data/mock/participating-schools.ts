@@ -5,6 +5,20 @@
 
 export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered'
 
+/** 참여 기관 승인/반려 상태 (선택 승인·선택 반려 연동) */
+export type ParticipatingSchoolApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+
+/** 강의 회차별 교육 진행 일정 한 건 (참여 기관 테이블용) */
+export interface ParticipatingSchoolSession {
+  round: number
+  date: string
+  dayOfWeek: string
+  duration: string
+  format: string
+  classNum: string
+  timeRange: string
+}
+
 export interface ParticipatingSchoolRow {
   id: string
   no: number
@@ -15,8 +29,12 @@ export interface ParticipatingSchoolRow {
   studentCount: number
   lectureRound: string
   textbookStatus: TextbookStatusKey
+  /** 참여 승인/반려 상태 (선택 승인·선택 반려 연동) */
+  approvalStatus: ParticipatingSchoolApprovalStatusKey
   teacherName: string
   instructors: string
+  /** 강의 회차 별 교육 진행 날짜 및 시간 (참여 기관 페이지 컬럼용) */
+  sessions?: ParticipatingSchoolSession[]
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {
@@ -110,6 +128,31 @@ const INSTRUCTOR_SAMPLES = [
 
 const textbookStatuses: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
+const APPROVAL_STATUSES: ParticipatingSchoolApprovalStatusKey[] = ['pending', 'rejected', 'approved']
+
+const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
+
+function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
+  const sessionCount = 1 + (rowIndex % 5)
+  const sessions: ParticipatingSchoolSession[] = []
+  for (let s = 0; s < sessionCount; s++) {
+    const dayOffset = rowIndex * 7 + s * 3
+    const d = new Date(2026, 0, 9 + dayOffset)
+    const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
+    const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+    sessions.push({
+      round: s + 1,
+      date: dateStr,
+      dayOfWeek,
+      duration: '1시간',
+      format: '오프라인',
+      classNum: `${s + 1}교시`,
+      timeRange: `${9 + s}:20~${10 + s}:10`,
+    })
+  }
+  return sessions
+}
+
 function buildMockList(count: number): ParticipatingSchoolRow[] {
   const rows: ParticipatingSchoolRow[] = []
   for (let i = 0; i < count; i++) {
@@ -125,8 +168,10 @@ function buildMockList(count: number): ParticipatingSchoolRow[] {
       studentCount: 40 + (i % 30),
       lectureRound: LECTURE_ROUND_LABEL,
       textbookStatus: textbookStatuses[statusIdx],
+      approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
       instructors: INSTRUCTOR_SAMPLES[i % INSTRUCTOR_SAMPLES.length],
+      sessions: buildSessionsForRow(i),
     })
   }
   return rows
