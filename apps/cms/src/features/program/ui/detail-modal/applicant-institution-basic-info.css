@@ -1,0 +1,73 @@
+/**
+ * 신청 기관 상세 - 기본 정보 / 안내 사항 / 강의 회차
+ * applicant-instructor-basic-info 스타일 참고
+ */
+
+.applicant-institution-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.applicant-institution-basic-info__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.applicant-institution-basic-info__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+.applicant-institution-basic-info__table-wrap {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.applicant-institution-basic-info__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.applicant-institution-basic-info__table tbody tr {
+  min-height: 48px;
+}
+
+.applicant-institution-basic-info__table .applicant-institution-basic-info__cell {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+.applicant-institution-basic-info__cell--label {
+  background: #f9f9f9;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+.applicant-institution-basic-info__cell--value {
+  background: #fff;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 140%;
+}
+
+.applicant-institution-basic-info__sessions {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+

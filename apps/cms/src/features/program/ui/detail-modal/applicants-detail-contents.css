@@ -18,6 +18,10 @@
   width: 100%;
 }
 
+.applicant-contents__tabs.ant-tabs .ant-tabs-nav::before {
+  border-bottom: none;
+}
+
 .applicant-contents__tabs.ant-tabs .ant-tabs-tab {
   padding: 12px 0;
   margin-right: 24px;
