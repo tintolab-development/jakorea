@@ -16,6 +16,8 @@ export interface ApplicantSchoolRow {
   classCount: number
   studentCount: number
   teacherName: string
+  contact?: string
+  appliedAt?: string
   approvalStatus: ApplicantApprovalStatusKey
   /** 일정 변경&취소 이력 횟수 (참여 학교명 옆 배지용) */
   scheduleChangeCancelCount?: number
@@ -118,6 +120,8 @@ function buildMockList(count: number, programIds?: string[]): ApplicantSchoolRow
       classCount: 5 + (i % 4),
       studentCount: 130 + (i % 50),
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
+      contact: `010-1234-${(1000 + i).toString()}`,
+      appliedAt: `2026.01.${(10 + (i % 20)).toString().padStart(2, '0')}`,
       approvalStatus: APPROVAL_STATUSES[statusIdx],
       scheduleChangeCancelCount:
         scheduleChangeCancelCount > 0 ? scheduleChangeCancelCount : undefined,

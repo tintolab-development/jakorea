@@ -1,0 +1,180 @@
+.applicant-calendar-layout {
+  display: flex;
+  gap: 16px;
+  height: 100%;
+}
+
+.applicant-calendar-main {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 600px;
+}
+
+.applicant-calendar-right {
+  width: 320px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.applicant-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.applicant-calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.applicant-calendar-header-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.applicant-calendar-today-btn {
+  border-radius: 4px;
+}
+
+.applicant-calendar-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.applicant-calendar-nav-btn {
+  color: #8c8c8c;
+}
+
+/* Calendar Cells */
+.applicant-calendar-cell {
+  height: 120px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.2s;
+  cursor: pointer;
+  border-top: 1px solid #f0f0f0;
+}
+
+.applicant-calendar-cell:hover {
+  background: #fcfcfc;
+}
+
+.applicant-calendar-cell--other-month {
+  color: #bfbfbf;
+  background: #fafafa;
+}
+
+.applicant-calendar-cell--selected {
+  background: #e6f7ff !important;
+}
+
+.applicant-calendar-cell--today .applicant-calendar-cell-date-today {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  background: #01a1af;
+  color: #fff;
+  border-radius: 50%;
+}
+
+.applicant-calendar-cell-date {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.applicant-calendar-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.applicant-calendar-event {
+  font-size: 11px;
+  padding: 4px 6px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #595959;
+}
+
+.applicant-calendar-event--selected {
+  background: #bae7ff;
+  color: #096dd9;
+}
+
+.applicant-calendar-event-more {
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-top: 2px;
+}
+
+/* Schedule List */
+.applicant-schedule-list {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.applicant-schedule-item {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fcfcfc;
+  border: 1px solid #f0f0f0;
+}
+
+.applicant-schedule-item:hover {
+  background: #f5f5f5;
+  border-color: #d9d9d9;
+}
+
+.applicant-schedule-item--selected {
+  background: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.applicant-schedule-item-title {
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.applicant-schedule-item-detail {
+  font-size: 13px;
+  color: #8c8c8c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-divider {
+  color: #f0f0f0;
+}
+
+.applicant-calendar-view--loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}

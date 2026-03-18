@@ -4,7 +4,7 @@
  * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
  */
 
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
@@ -87,6 +87,17 @@ export function ProgramDetailFullPageModal({
   const applicantsExpanded = activeLnb === 'applicants'
   const activeChildMenu: TabKey | '' =
     activeLnb === 'applicants' ? parseTabFromSearch(searchParams) : ''
+
+  // 모달이 열릴 때 LNB 상태 초기화 (lnb=info, tab=info)
+  useEffect(() => {
+    if (open) {
+      const next = new URLSearchParams(searchParams)
+      next.set(LNB_PARAM, 'info')
+      next.set(TAB_PARAM, 'info')
+      next.delete(EDIT_PARAM)
+      setSearchParams(next, { replace: true })
+    }
+  }, [open])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     const next = new URLSearchParams(searchParams)

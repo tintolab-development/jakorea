@@ -1,0 +1,8 @@
+.clickable-table .ant-table-row {
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.clickable-table .ant-table-row:hover > td {
+  background-color: #fafafa !important;
+}
