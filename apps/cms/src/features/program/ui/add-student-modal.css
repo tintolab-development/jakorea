@@ -1,7 +1,6 @@
 /**
- * 학생 등록 모달
- * 스펙: 모달 width 800px, 본문은 폼 높이만큼만 사용해 버튼과 인풋 간격 최소화
- * 청록 헤더 + 흰색 본문(폼) + 푸터(취소/추가)
+ * 학생 추가 등록 모달
+ * 스펙: 디스크립션 16px/500/150%, 필드 간격 30px, 필수 학생명·학급, 푸터 우측 취소/등록
  */
 
 .add-student-modal.ant-modal .ant-modal-content {
@@ -23,11 +22,11 @@
   flex-shrink: 0;
 }
 
-/* body: 고정 높이 제거, 폼 높이만큼만 사용 → 버튼과 인풋 사이 간격 축소 */
+/* body: 모달 컨테이너 패딩 안에 두어 overflow 잘림 방지 */
 .add-student-modal .teal-header-modal__body {
   flex-shrink: 0;
   width: 100%;
-  padding: var(--spacing-20) var(--spacing-30) var(--spacing-24);
+  padding: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -37,45 +36,43 @@
 
 .add-student-modal .teal-header-modal__footer {
   flex-shrink: 0;
-  justify-content: center;
-  padding-top: var(--spacing-20);
+  justify-content: flex-end;
+  padding-top: 0;
+  gap: var(--spacing-12);
 }
 
-/* 폼: 2열 그리드, 좌측 학생명/연락처/학급, 우측 성별/이메일 */
 .add-student-modal__body {
   width: 100%;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+}
+
+/* 디스크립션 폰트 스펙: #3D3D3D, 16px, 500, 150% */
+.add-student-modal__description {
+  margin: 0 0 30px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .add-student-modal__form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-24);
-}
-
-.add-student-modal__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-24);
-  align-items: flex-start;
-}
-
-.add-student-modal__row--full {
-  grid-template-columns: 1fr;
-}
-
-.add-student-modal__field--full {
-  width: 100%;
+  gap: 30px;
 }
 
 .add-student-modal__field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: 8px;
+  align-items: stretch;
 }
 
 .add-student-modal__field--spacer {
@@ -94,15 +91,25 @@
 }
 
 .add-student-modal__input {
-  width: 364px;
+  width: 100%;
   height: 40px;
   border-radius: var(--radius-4);
   border: 1px solid var(--color-border, #e8e8e8);
   box-sizing: border-box;
 }
 
-.add-student-modal__input--full {
+.add-student-modal__select.add-student-modal__select--full {
   width: 100%;
+}
+
+.add-student-modal__select .ant-select-selector {
+  min-height: 40px !important;
+  border-radius: var(--radius-4);
+}
+
+.add-student-modal__select.ant-select-focused:not(.ant-select-disabled).ant-select-single .ant-select-selector {
+  border-color: var(--color-modal-header) !important;
+  box-shadow: 0 0 0 1px var(--color-focus-teal-ring, rgba(71, 169, 173, 0.2)) !important;
 }
 
 .add-student-modal__input:hover {
@@ -117,7 +124,7 @@
 
 .add-student-modal__radio-group {
   display: flex;
-  gap: var(--spacing-24);
+  gap: 16px;
 }
 
 .add-student-modal__radio-group .ant-radio-wrapper {
