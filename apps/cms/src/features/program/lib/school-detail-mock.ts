@@ -91,6 +91,103 @@ export function getInstructorRowsForSchool(
   return forSchool.map((r, i) => toDetailInstructor(r, i))
 }
 
+/** 배정된 강사 목록 테이블용 확장 필드 목 데이터 */
+const ASSIGNED_DISPLAY_HOME_ADDRESSES = [
+  '서울특별시 강서구 방화동',
+  '서울특별시 마포구 연남동',
+  '서울특별시 영등포구 당산동',
+  '서울특별시 서대문구 연희동',
+  '서울특별시 강남구 역삼동',
+  '경기도 성남시 분당구',
+]
+const ASSIGNED_DISPLAY_DISTANCES = ['3km', '5km', '7km', '4km', '6km', '8km']
+const ASSIGNED_DISPLAY_DATES = ['2026. 01. 09(금)', '2026. 01. 10(토)', '2026. 01. 11(일)']
+const ASSIGNED_DISPLAY_TIMES = [
+  '1교시 (9:20 ~ 10:10)',
+  '2교시 (10:20 ~ 11:10)',
+  '3교시 (11:20 ~ 12:10)',
+]
+const ASSIGNED_DISPLAY_SESSIONS = ['1차시', '2차시', '3차시', '4차시']
+
+/** 배정된 강사 목록 테이블용 행 (자택 주소·거리·담당 일정 등 목 데이터 연동) */
+export interface AssignedInstructorDisplayRowMock extends SchoolDetailInstructorRow {
+  no: number
+  homeAddress?: string
+  distanceToSchool?: string
+  assignedDate?: string
+  assignedTime?: string
+  assignedSession?: string
+}
+
+export function getAssignedInstructorDisplayRows(
+  instructors: SchoolDetailInstructorRow[]
+): AssignedInstructorDisplayRowMock[] {
+  return instructors.map((inv, idx) => {
+    const seed = hash(inv.id)
+    return {
+      ...inv,
+      no: idx + 1,
+      homeAddress: pick(ASSIGNED_DISPLAY_HOME_ADDRESSES, seed),
+      distanceToSchool: pick(ASSIGNED_DISPLAY_DISTANCES, seed + idx),
+      assignedDate: pick(ASSIGNED_DISPLAY_DATES, seed % 3),
+      assignedTime: pick(ASSIGNED_DISPLAY_TIMES, idx % 3),
+      assignedSession: pick(ASSIGNED_DISPLAY_SESSIONS, idx % 4),
+    }
+  })
+}
+
+/** 배정 대기 강사 목록용 배정 현황·희망 일정 목 데이터 */
+const WAITING_ASSIGNMENT_STATUSES = ['waiting', 'waiting', 'cancelled', 'assigned', 'waiting'] as const
+const WAITING_HOPE_DATES = ['2026. 01. 10(토)', '2026. 01. 11(일)', '2026. 01. 12(일)']
+const WAITING_HOPE_TIMES = [
+  '1교시 (9:20 ~ 10:10)',
+  '2교시 (10:20 ~ 11:10)',
+  '3교시 (11:20 ~ 12:10)',
+]
+const WAITING_HOPE_SESSIONS = ['1차시', '2차시']
+const WAITING_HOME_ADDRESSES = [
+  '서울특별시 강남구 역삼동',
+  '서울특별시 송파구 잠실동',
+  '서울특별시 노원구 상계동',
+  '경기도 수원시 영통구',
+  '인천시 남동구',
+]
+const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km']
+
+/** 배정 대기 강사 테이블용 행 (목 데이터) */
+export interface WaitingInstructorRowMock {
+  id: string
+  no: number
+  instructorName: string
+  homeAddress?: string
+  distanceToSchool?: string
+  assignmentStatus: 'waiting' | 'cancelled' | 'assigned'
+  hopeDate?: string
+  hopeTime?: string
+  hopeSession?: string
+}
+
+export function getWaitingInstructorRows(
+  schoolName: string,
+  instructorList: ParticipatingInstructorRow[]
+): WaitingInstructorRowMock[] {
+  const notAssignedToThisSchool = instructorList.filter(r => r.schoolName !== schoolName)
+  return notAssignedToThisSchool.slice(0, 12).map((r, idx) => {
+    const seed = hash(r.id)
+    return {
+      id: r.id,
+      no: idx + 1,
+      instructorName: r.instructorName,
+      homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + idx),
+      distanceToSchool: pick(WAITING_DISTANCES, seed % 5),
+      assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], seed + idx),
+      hopeDate: pick(WAITING_HOPE_DATES, idx % 3),
+      hopeTime: pick(WAITING_HOPE_TIMES, idx % 3),
+      hopeSession: pick(WAITING_HOPE_SESSIONS, idx % 2),
+    }
+  })
+}
+
 /**
  * 목록 행 기준으로 학교 상세 정보 생성 (확장 필드 + 해당 학교 강사진)
  */

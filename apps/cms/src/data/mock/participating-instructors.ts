@@ -77,6 +77,8 @@ export interface ParticipatingInstructorRow {
   freeWriting3?: string
   /** 4. 교육 중 예기치 않은 상황... */
   freeWriting4?: string
+  /** 프로그램 참여 최초 승인 유무 (false면 강사 신규 배정 안내 모달 노출) */
+  initialApproval?: boolean
 }
 
 export const SETTLEMENT_STATUS_LABELS: Record<SettlementStatusKey, string> = {
@@ -292,6 +294,8 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
       lectureRound: LECTURE_ROUNDS[i % LECTURE_ROUNDS.length],
       settlementStatus: settlementStatuses[statusIdx],
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
+      /** 일부 강사는 최초 승인 미완료(신규 배정 안내 모달 테스트용) */
+      initialApproval: i % 4 !== 2,
       ...extension,
     })
   }
