@@ -14,6 +14,9 @@ let additionalEducationPrograms: Program[] | null = null
  * 교육 프로그램 필터링
  * 봉사 프로그램이 아닌 일반 교육 프로그램
  * - 위젯/필터 오갈 때 건수 불일치 방지: 반환 배열 id 기준 중복 제거, 추가 생성은 한 번만 수행
+ *
+ * 데이터 소스 정합성: 일반 교육 프로그램 목록(프로그램 목록 페이지)과 모집 신청 현황 위젯·진행 단계 위젯은
+ * 모두 이 함수(getEducationPrograms) 반환값을 사용하므로 목록 건수·lifecycleStatus·단계 집계가 일치한다.
  */
 export function getEducationPrograms(): Program[] {
   const volunteerProgramIds = new Set(getVolunteerPrograms().map(p => p.id))

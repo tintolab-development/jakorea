@@ -183,9 +183,22 @@
   background-color: var(--JA-mint-01, #01a1af);
 }
 
+/* 하위 뎁스 선택 시 스타일 (신청자 목록 / 프로그램 진행 현황 공통) */
 .program-detail-fullpage-modal__lnb-child--active {
+  display: flex;
+  height: 44px;
+  padding: 12px 18px 12px 24px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  border-radius: 8px;
+  background: rgba(1, 161, 175, 0.1);
   color: var(--JA-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
   font-weight: 700;
+  line-height: 120%;
 }
 
 .program-detail-fullpage-modal__lnb-child--active .program-detail-fullpage-modal__lnb-child-dot {

@@ -1,0 +1,389 @@
+/**
+ * 참여 기관 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여 기관)
+ * 필터·테이블 헤더·테이블 스타일. 가로 스크롤 및 강의 회차 셀.
+ */
+
+.participating-institutions-section {
+  width: 100%;
+}
+
+/* 필터 영역: 좌측 정렬, 레이블 위 / 입력 아래 배치 */
+.participating-institutions-section__filters {
+  margin-bottom: 32px;
+  width: 100%;
+  display: block;
+  text-align: left;
+}
+
+/* 필터 행: 좌측 정렬, 하단 정렬로 조회 버튼과 필터 입력 같은 레벨 */
+.participating-institutions-section__filters .program-progress-tab__filter-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  column-gap: 0 !important;
+  row-gap: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100%;
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-row > .ant-col {
+  flex: 0 0 auto !important;
+  max-width: none;
+  margin: 0 !important;
+}
+
+/* 필터 간 갭 12px: 두 번째 Col부터 margin-left 12px (Ant Design gap 덮어써도 동일 적용) */
+.participating-institutions-section__filters .program-progress-tab__filter-row > .ant-col + .ant-col {
+  margin-left: 12px !important;
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-row > .ant-col:not(.program-progress-tab__filter-col--btn) {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 조회 버튼: 필터 입력과 같은 레벨(align-end로 하단 맞춤, 높이 44px) */
+.participating-institutions-section__filters .program-progress-tab__filter-col--btn {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-col--btn .app-button {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  line-height: 1 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-field.participating-institutions-section__filter-field--label-top {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  height: auto;
+  min-height: 0;
+}
+
+/* 필터 레이블 텍스트 스펙 */
+.participating-institutions-section__filters .program-progress-tab__filter-field.participating-institutions-section__filter-field--label-top .program-progress-tab__filter-label {
+  height: auto;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* 필터 컨트롤 기본 사이즈 270*44, 테두리·패딩·배경 */
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-input-affix-wrapper,
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select .ant-select-selector {
+  display: flex;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 14px 0 16px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #c4cdd1;
+  background: var(--default-WT, #fff);
+  width: 270px;
+  min-width: 270px;
+  box-sizing: border-box;
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select {
+  width: 270px;
+  min-width: 270px;
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select .ant-select-selector {
+  width: 100%;
+}
+
+/* 기관명 Input이 affix-wrapper 없이 렌더될 때 */
+.participating-institutions-section__filters .program-progress-tab__filter-field .participating-institutions-section__filter-input.ant-input {
+  width: 270px;
+  min-width: 270px;
+  height: 44px;
+  padding: 0 14px 0 16px;
+  border-radius: 8px;
+  border: 1px solid #c4cdd1;
+  background: var(--default-WT, #fff);
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-input-affix-wrapper .ant-input {
+  padding: 0;
+  border: none;
+  height: 100%;
+  width: auto;
+  min-width: 0;
+  flex: 1;
+}
+
+/* 필터 플레이스홀더 스펙 */
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-input::placeholder {
+  overflow: hidden;
+  color: #85969d;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select-selection-placeholder,
+.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select-selection-item {
+  overflow: hidden;
+  color: #85969d;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+
+.participating-institutions-section__divider {
+  margin: 0;
+  border-top: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+.participating-institutions-section__below-divider {
+  margin-top: 32px;
+}
+
+.participating-institutions-section__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+}
+
+.participating-institutions-section__table-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-8);
+}
+
+.participating-institutions-section__table-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary, #3d3d3d);
+}
+
+.participating-institutions-section__table-description {
+  font-size: 14px;
+  color: var(--color-text-secondary, #666);
+}
+
+.participating-institutions-section__table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-shrink: 0;
+}
+
+/* 선택 승인 버튼: 민트 테두리·배경 (JA-mint-01, color-bg-mint) */
+.participating-institutions-section__btn-approve.app-button {
+  border-radius: 8px !important;
+  border: 1px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--color-bg-mint, linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff) !important;
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+.participating-institutions-section__btn-approve.app-button:hover {
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  background: rgba(1, 161, 175, 0.08) !important;
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+/* 테이블 가로 스크롤: 컬럼 한 줄 표시, 잘림 없이 스크롤로 확인 */
+.participating-institutions-section__table-wrap {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.participating-institutions-section__table {
+  min-width: 0;
+  table-layout: auto;
+}
+
+/* th 텍스트 스펙 */
+.participating-institutions-section__table .ant-table-thead > tr > th {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* td 텍스트 스펙 */
+.participating-institutions-section__table .ant-table-tbody > tr > td {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 컬럼 내용 한 줄 유지(강의 회차 셀 제외), 스크롤로 전체 확인 */
+.participating-institutions-section__table .ant-table-tbody > tr > td {
+  white-space: nowrap;
+}
+
+/* 강의 회차 td: 상하 12px, 좌우 24px, 너비는 내용만 사용(오른쪽 빈 공간 없음) */
+.participating-institutions-section__table .ant-table-tbody > tr > td.participating-institutions-section__td-sessions {
+  width: 1%;
+  max-width: max-content;
+  white-space: normal;
+  padding: 12px 24px !important;
+  min-width: 0;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+.participating-institutions-section__table--clickable .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+/* 강의 회차 별 교육 진행 날짜 셀: td vertical padding 12px 외 추가 여백 없음 */
+.participating-institutions-section__sessions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  line-height: 150%;
+}
+
+.participating-institutions-section__session-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* n차시 배지: 47*26 고정, 배지 내 텍스트 스펙 */
+.participating-institutions-section__session-round-tag {
+  display: inline-flex;
+  width: 47px;
+  height: 26px;
+  padding: 3px 8px 2px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  flex-shrink: 0;
+}
+
+/* 날짜 | 시간 | 교시 구분 디바이더 */
+.participating-institutions-section__session-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* 외 n개의 교육 일정 텍스트: opacity 0.5 */
+.participating-institutions-section__session-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  margin-top: 0;
+}
+
+/* 교재 배송 현황: 공통 StatusDropdownCell 사용 — 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
+.participating-institutions-section .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 (트리거/래퍼 152px와 동일) */
+.participating-institutions-section .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+/* 선택된 태그 오버레이(트리거) 152px 고정 — 드롭다운 래퍼와 동일 */
+.participating-institutions-section .status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 152px !important;
+  min-width: 152px !important;
+  max-width: 152px !important;
+}
+
+/* 테이블 셀 높이 53px인 경우: 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
+.participating-institutions-section .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+/* 테이블 셀 높이 53px인 경우 해당 셀 vertical padding 0 — vertical UI shifting 방지 */
+.participating-institutions-section .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}

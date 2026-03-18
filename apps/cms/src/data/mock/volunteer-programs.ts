@@ -14,10 +14,10 @@ export function getVolunteerPrograms(): Program[] {
   // 봉사자가 필요한 프로그램 필터링
   // 실제로는 프로그램 타입이나 설정에 따라 결정되지만,
   // 여기서는 mockPrograms에서 일부를 봉사 프로그램으로 지정
-  return mockPrograms.filter((program, index) => {
-    // 일부 프로그램을 봉사 프로그램으로 지정 (예: 인덱스 기반)
-    // 실제로는 프로그램의 특정 필드나 설정으로 판단해야 함
-    return index % 3 === 0 || program.format === 'workshop' || program.format === 'seminar'
+  return mockPrograms.filter((_program, index) => {
+    // 일부 프로그램만 봉사 프로그램으로 지정 (인덱스 기반).
+    // format 기준 제거 시 교육 프로그램 목록에 mockPrograms가 포함되어 0번에 신용케어 아카데미(교육 2) 등 노출 가능.
+    return index % 3 === 0
   })
 }
 

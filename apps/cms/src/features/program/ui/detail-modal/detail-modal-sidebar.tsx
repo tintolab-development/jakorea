@@ -241,6 +241,13 @@ const APPLICANTS_CHILDREN: { key: TabKey; label: string }[] = [
   { key: 'volunteers', label: '신청 봉사자' },
 ]
 
+/** 프로그램 진행 현황 하위 메뉴 (참여 기관 / 참여 강사 / 참여 봉사자) */
+const PROGRESS_CHILDREN: { key: TabKey; label: string }[] = [
+  { key: 'participants', label: '참여 기관' },
+  { key: 'instructors', label: '참여 강사' },
+  { key: 'volunteers', label: '참여 봉사자' },
+]
+
 const LNB_ITEMS: { key: LnbKey; label: string; icon: React.ReactNode; hasDropdown?: boolean }[] = [
   {
     key: 'info',
@@ -272,6 +279,11 @@ export interface DetailModalSidebarProps {
   applicantsExpanded: boolean
   onSelectApplicantsChild: (key: TabKey) => void
   activeChildMenu: TabKey | ''
+  /** 프로그램 진행 현황 하위 펼침 여부 */
+  progressExpanded: boolean
+  /** 프로그램 진행 현황 하위 선택 (참여 기관/강사/봉사자) */
+  onSelectProgressChild: (key: TabKey) => void
+  activeProgressChild: TabKey | ''
 }
 
 export function DetailModalSidebar({
@@ -280,6 +292,9 @@ export function DetailModalSidebar({
   applicantsExpanded,
   onSelectApplicantsChild,
   activeChildMenu,
+  progressExpanded,
+  onSelectProgressChild,
+  activeProgressChild,
 }: DetailModalSidebarProps) {
   return (
     <nav className="program-detail-fullpage-modal__lnb" aria-label="프로그램 상세 메뉴">
@@ -323,6 +338,49 @@ export function DetailModalSidebar({
                           type="button"
                           className={`program-detail-fullpage-modal__lnb-child ${activeChildMenu === child.key ? 'program-detail-fullpage-modal__lnb-child--active' : ''}`}
                           onClick={() => onSelectApplicantsChild(child.key)}
+                        >
+                          <span className="program-detail-fullpage-modal__lnb-child-dot" />
+                          <span className="program-detail-fullpage-modal__lnb-child-label">
+                            {child.label}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : item.key === 'progress' ? (
+              <>
+                <button
+                  type="button"
+                  className={`program-detail-fullpage-modal__lnb-item ${activeLnb === item.key ? 'program-detail-fullpage-modal__lnb-item--active' : ''}`}
+                  onClick={() => {
+                    if (activeLnb === 'progress') {
+                      onSelectLnb('progress', activeProgressChild || 'participants')
+                    } else {
+                      onSelectLnb('progress', 'participants')
+                    }
+                  }}
+                >
+                  <span className="program-detail-fullpage-modal__lnb-item-icon">{item.icon}</span>
+                  <span className="program-detail-fullpage-modal__lnb-item-label">{item.label}</span>
+                  {item.hasDropdown && (
+                    <LnbArrowDown
+                      className={`program-detail-fullpage-modal__lnb-item-arrow ${progressExpanded ? 'program-detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
+                    />
+                  )}
+                </button>
+                <div
+                  className={`program-detail-fullpage-modal__lnb-children-wrap ${progressExpanded ? 'program-detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+                  aria-hidden={!progressExpanded}
+                >
+                  <ul className="program-detail-fullpage-modal__lnb-children">
+                    {PROGRESS_CHILDREN.map(child => (
+                      <li key={child.key}>
+                        <button
+                          type="button"
+                          className={`program-detail-fullpage-modal__lnb-child ${activeProgressChild === child.key ? 'program-detail-fullpage-modal__lnb-child--active' : ''}`}
+                          onClick={() => onSelectProgressChild(child.key)}
                         >
                           <span className="program-detail-fullpage-modal__lnb-child-dot" />
                           <span className="program-detail-fullpage-modal__lnb-child-label">

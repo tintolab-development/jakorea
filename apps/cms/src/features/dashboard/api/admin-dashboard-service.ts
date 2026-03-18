@@ -287,6 +287,7 @@ export async function getProgramProgressStagesByProgramId(
 /**
  * 모집 신청 현황 위젯용 프로그램 목록
  * 프로그램 리스트 + lifecycleStatus, approvedStudentCount, instructors, instructorCapacity 등
+ * 정합성: 일반 교육 프로그램 목록과 동일한 getEducationPrograms() 사용 → 목록·위젯 상태 일치
  */
 export async function getRecruitmentStatusList(options?: {
   programIds?: string[]
