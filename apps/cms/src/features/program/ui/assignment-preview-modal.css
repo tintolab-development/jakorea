@@ -1,0 +1,67 @@
+/**
+ * 과제 미리보기 모달 — 1400×880, 미리보기 영역 #E3E3E3
+ * 레이아웃은 ContentModal 사용
+ */
+
+/* 모달 컨테이너: 고정 크기 1400×880 */
+.assignment-preview-modal.ant-modal .ant-modal-content {
+  width: 1400px;
+  max-width: calc(100vw - 32px);
+  height: 880px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.assignment-preview-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 디스크립션: 타이틀–디스크립션 16px, 디스크립션 아래 30px 갭 */
+.assignment-preview-modal__description {
+  margin: 16px 0 30px 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  line-height: 150%;
+  flex-shrink: 0;
+}
+
+.assignment-preview-modal__description .assignment-preview-modal__description-name {
+  font-weight: 700;
+}
+
+.assignment-preview-modal__description .assignment-preview-modal__description-text {
+  font-weight: 500;
+}
+
+/* 미리보기 영역: 1340×644, 배경 #E3E3E3, 디스크립션과 vertical gap 30px 아래 위치 */
+.assignment-preview-modal__preview {
+  width: 1340px;
+  max-width: 100%;
+  height: 644px;
+  flex-shrink: 0;
+  background: #e3e3e3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 파일 다운로드 버튼: 140×40, 아이콘·텍스트 row 정렬 (푸터 .ant-btn column 오버라이드) */
+.assignment-preview-modal .teal-header-modal__footer .assignment-preview-modal__btn-download.ant-btn,
+.assignment-preview-modal__btn-download.ant-btn {
+  width: 140px;
+  min-width: 140px;
+  height: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
