@@ -4,12 +4,13 @@
  */
 
 .school-detail-fullpage-view__tabs-row {
-  padding-left: 52px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .school-detail-fullpage-view__content {
-  padding-left: 60px;
-  padding-right: var(--spacing-24);
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* 프로그램 승인 현황 셀 — 가로(row) 정렬 */
@@ -130,4 +131,209 @@
 .school-detail-fullpage-view__instructor-list li {
   margin-bottom: var(--spacing-8);
   color: var(--color-text-primary);
+}
+
+/* ========== 강사 배정 현황 탭 ========== */
+.school-detail-fullpage-view__instructor-tab {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* 테이블 헤더(타이틀 영역)와 테이블 간 gap 10px */
+.school-detail-fullpage-view__instructor-tab .participating-institutions-section__table-header {
+  margin-bottom: 10px;
+}
+
+.school-detail-fullpage-view__instructor-section {
+  width: 100%;
+}
+
+.school-detail-fullpage-view__instructor-section--waiting {
+  margin-top: 0;
+}
+
+/* 배정된 강사 / 배정 대기 강사 테이블 — 래퍼 공통 */
+.school-detail-fullpage-view__instructor-section .participating-institutions-section__table-wrap {
+  min-height: 200px;
+  border: 1px solid var(--color-border, #e8e8e8);
+  border-radius: var(--radius-4, 4px);
+  background: var(--color-bg-base, #fff);
+}
+
+/* 배정된 강사 없을 때 — 테이블 대신 200px 높이 블록, 문구 중앙 정렬 (테이블 UI 아님) */
+.school-detail-fullpage-view__instructor-section .participating-institutions-section__table-wrap:has(.school-detail-fullpage-view__assigned-empty) {
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: rgba(61, 61, 61, 0.02);
+}
+
+.school-detail-fullpage-view__assigned-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  height: 200px;
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+}
+
+.school-detail-fullpage-view__instructor-section .ant-table-tbody > tr.ant-table-placeholder > td {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  text-align: center;
+  border-bottom: none;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.school-detail-fullpage-view__instructor-section .ant-table-tbody > tr.ant-table-placeholder .ant-empty {
+  margin: 0;
+}
+
+.school-detail-fullpage-view__instructor-section .ant-table-tbody > tr.ant-table-placeholder .ant-empty-description {
+  text-align: center;
+}
+
+/* 역할 컬럼 — StatusDropdownCell 사용 시 행/셀 고정 (교재 배송현황 드롭다운과 동일) */
+.school-detail-fullpage-view .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+.school-detail-fullpage-view .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.school-detail-fullpage-view .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+.school-detail-fullpage-view .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* 배정된 강사 목록 — 역할 태그 (정산 현황 배지 UI 참고) */
+.school-detail-fullpage-view__role-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 120px;
+  max-width: 120px;
+  height: 33px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.school-detail-fullpage-view__role-tag--lead {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.school-detail-fullpage-view__role-tag--assistant {
+  background: #f2f3f5;
+  color: #464646;
+}
+
+/* 정산 현황 — 상태값 텍스트만, 상태별 색상: 정산대기 초록 / 일부 정산 완료 보라 / 정산 완료 파랑 / 해당 없음 검정 */
+.school-detail-fullpage-view__settlement-text {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.school-detail-fullpage-view__settlement-text--pending {
+  color: #1e8c29; /* 정산 대기 — 초록 */
+}
+
+.school-detail-fullpage-view__settlement-text--partial {
+  color: #8457ce; /* 일부 정산 완료 — 보라 */
+}
+
+.school-detail-fullpage-view__settlement-text--completed {
+  color: #1976d2; /* 정산 완료 — 파랑 */
+}
+
+.school-detail-fullpage-view__settlement-text--reviewing {
+  color: #e67e22;
+}
+
+.school-detail-fullpage-view__settlement-text--rejected {
+  color: #d32f2f;
+}
+
+.school-detail-fullpage-view__settlement-text--na {
+  color: #000; /* 해당 없음 — 검정 */
+}
+
+/* 배정 대기 목록 — 배정 현황 (동일 텍스트 스펙) */
+.school-detail-fullpage-view__assignment-status {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.school-detail-fullpage-view__assignment-status--waiting {
+  color: #1890ff;
+}
+
+.school-detail-fullpage-view__assignment-status--cancelled {
+  color: #ff4d4f;
+}
+
+.school-detail-fullpage-view__assignment-status--assigned {
+  color: var(--color-text-tertiary, #8c8c8c);
+}
+
+/* 배정 완료된 행: 회색 처리(비활성 느낌) */
+.school-detail-fullpage-view__waiting-row--assigned.ant-table-row {
+  color: var(--color-text-tertiary, #8c8c8c);
+}
+
+.school-detail-fullpage-view__waiting-row--assigned.ant-table-row td {
+  color: inherit;
 }
