@@ -327,10 +327,11 @@
   flex-shrink: 0;
 }
 
-/* 외 n개의 교육 일정 텍스트 스펙 */
+/* 외 n개의 교육 일정 텍스트: opacity 0.5 */
 .participating-institutions-section__session-more {
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
   text-overflow: ellipsis;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
