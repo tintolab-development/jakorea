@@ -16,7 +16,7 @@ import {
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
 import { ApplicantCalendarView } from './applicant-calendar-view'
-import { ApplicantsDetailContents } from './applicants-detail-contents'
+import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
 import './applicants-detail.css'
 
 export interface ApplicantDetailsProps {
@@ -364,11 +364,11 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
           type={menu as ApplicantType}
           data={selectedItem}
           onBack={() => setSelectedItem(null)}
-          onApprove={(id) => {
+          onApprove={() => {
             message.success('승인되었습니다.')
             setSelectedItem(null)
           }}
-          onReject={(id) => {
+          onReject={() => {
             message.success('반려되었습니다.')
             setSelectedItem(null)
           }}

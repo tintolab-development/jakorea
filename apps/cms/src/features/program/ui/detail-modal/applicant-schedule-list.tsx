@@ -3,7 +3,7 @@ import type { Dayjs } from 'dayjs'
 import './applicant-calendar-view.css'
 
 interface ApplicantScheduleListProps {
-  selectedDate: Dayjs
+  selectedDate?: Dayjs
   events: any[]
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
@@ -11,7 +11,6 @@ interface ApplicantScheduleListProps {
 }
 
 export function ApplicantScheduleList({
-  selectedDate,
   events,
   selectedRowKeys,
   onSelectionChange,
