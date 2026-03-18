@@ -47,8 +47,21 @@ const TAB_PARAM = 'tab'
 const EDIT_PARAM = 'edit'
 const LNB_PARAM = 'lnb'
 const SCHOOL_ID_PARAM = 'schoolId'
+const SCHOOL_TAB_PARAM = 'schoolTab'
+const SUB_TAB_PARAM = 'subTab'
 
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
+
+/** 학교 상세 뷰 내 탭(신청 정보 | 학생 명단 | 강사 배정 현황 | 게시글) */
+const SCHOOL_DETAIL_TAB_KEYS_READONLY = ['application', 'students', 'instructors', 'posts'] as const
+type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS_READONLY)[number]
+
+function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTabKey {
+  const t = searchParams.get(SCHOOL_TAB_PARAM)
+  if (t && SCHOOL_DETAIL_TAB_KEYS_READONLY.includes(t as SchoolDetailTabKey))
+    return t as SchoolDetailTabKey
+  return 'application'
+}
 
 function parseTabFromSearch(searchParams: URLSearchParams): TabKey {
   const tab = searchParams.get(TAB_PARAM)
@@ -96,16 +109,87 @@ export function ProgramDetailFullPageModal({
       ? progressTab
       : ''
 
-  // 모달이 열릴 때 LNB 상태 초기화 (lnb=info, tab=info)
+  const APPLICANTS_TAB_KEYS: TabKey[] = ['participants', 'instructors', 'volunteers']
+  const PROGRESS_TAB_KEYS: TabKey[] = ['participants', 'instructors', 'volunteers']
+
+  const schoolIdFromUrl = searchParams.get(SCHOOL_ID_PARAM)
+  const activeSchoolTab = schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams) : 'application'
+
+  // 모달이 열릴 때: URL에 유효한 lnb·tab이 있으면 유지(새로고침 복원), 없으면 info 또는 해당 카테고리 기본 탭으로 보정
+  // programId는 모달이 열려 있는 동안 항상 유지(클릭/새로고침 타이밍 이슈 방지)
   useEffect(() => {
-    if (open) {
+    if (!open) return
+    const currentLnb = parseLnbFromSearch(searchParams)
+    const currentTab = parseTabFromSearch(searchParams)
+    // 공통 정보(lnb=info) 내 탭: info | participants | instructors | volunteers
+    if (currentLnb === 'info' && (TAB_KEYS as readonly string[]).includes(currentTab)) return
+    // 신청자 목록(lnb=applicants) 내 탭 — 유효하면 유지
+    if (currentLnb === 'applicants') {
+      if (APPLICANTS_TAB_KEYS.includes(currentTab)) return
       const next = new URLSearchParams(searchParams)
-      next.set(LNB_PARAM, 'info')
-      next.set(TAB_PARAM, 'info')
+      next.set(LNB_PARAM, 'applicants')
+      next.set(TAB_PARAM, 'participants')
       next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
       setSearchParams(next, { replace: true })
+      return
     }
-  }, [open])
+    // 프로그램 진행현황(lnb=progress) 내 탭 — 유효하면 유지
+    if (currentLnb === 'progress') {
+      if (PROGRESS_TAB_KEYS.includes(currentTab)) return
+      const next = new URLSearchParams(searchParams)
+      next.set(LNB_PARAM, 'progress')
+      next.set(TAB_PARAM, 'participants')
+      next.delete(SUB_TAB_PARAM)
+      next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
+    // 담당자 정보
+    if (currentLnb === 'managers') return
+    // lnb 없음/비유효 시 공통 정보로 초기화
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'info')
+    next.set(TAB_PARAM, 'info')
+    next.delete(EDIT_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, programId])
+
+  // 진행현황 진입 시 tab=instructors면 subTab=instructors 보장(새로고침 시 세그먼트 복원)
+  useEffect(() => {
+    if (!open || activeLnb !== 'progress') return
+    if (progressTab !== 'instructors') return
+    if (searchParams.get(SUB_TAB_PARAM) === 'instructors') return
+    const next = new URLSearchParams(searchParams)
+    next.set(SUB_TAB_PARAM, 'instructors')
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, progressTab, searchParams, setSearchParams, programId])
+
+  // 진행현황 내 세그먼트(subTab) 변경 시 tab 동기화 — LNB 활성 메뉴와 일치
+  useEffect(() => {
+    if (!open || activeLnb !== 'progress') return
+    const subTab = searchParams.get(SUB_TAB_PARAM)
+    const wantTab = subTab === 'instructors' ? 'instructors' : 'participants'
+    if (progressTab === wantTab) return
+    const next = new URLSearchParams(searchParams)
+    next.set(TAB_PARAM, wantTab)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, progressTab, searchParams, setSearchParams, programId])
+
+  // 학교 상세 뷰 탭(schoolTab) 유효성 — schoolId 있을 때만
+  useEffect(() => {
+    if (!open || !schoolIdFromUrl) return
+    const raw = searchParams.get(SCHOOL_TAB_PARAM)
+    if (raw && SCHOOL_DETAIL_TAB_KEYS_READONLY.includes(raw as SchoolDetailTabKey)) return
+    const next = new URLSearchParams(searchParams)
+    next.set(SCHOOL_TAB_PARAM, 'application')
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     const next = new URLSearchParams(searchParams)
@@ -121,10 +205,11 @@ export function ProgramDetailFullPageModal({
       )
     } else if (key === 'progress') {
       const tab = childTab ?? searchParams.get(TAB_PARAM)
-      next.set(
-        TAB_PARAM,
+      const progressTabValue =
         tab && ['participants', 'instructors', 'volunteers'].includes(tab) ? tab : 'participants'
-      )
+      next.set(TAB_PARAM, progressTabValue)
+      if (progressTabValue === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+      else next.delete(SUB_TAB_PARAM)
     }
     setSearchParams(next, { replace: true })
   }
@@ -133,6 +218,7 @@ export function ProgramDetailFullPageModal({
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'applicants')
     next.set(TAB_PARAM, tab)
+    if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
   }
 
@@ -140,16 +226,28 @@ export function ProgramDetailFullPageModal({
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'progress')
     next.set(TAB_PARAM, tab)
+    if (tab === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+    else next.delete(SUB_TAB_PARAM)
+    if (programId) next.set('programId', programId)
     next.delete(SCHOOL_ID_PARAM)
     setSearchParams(next, { replace: true })
   }
 
-  const schoolIdFromUrl = searchParams.get(SCHOOL_ID_PARAM)
-
   const setSchoolId = (id: string | null) => {
     const next = new URLSearchParams(searchParams)
-    if (id) next.set(SCHOOL_ID_PARAM, id)
-    else next.delete(SCHOOL_ID_PARAM)
+    if (id) {
+      next.set(SCHOOL_ID_PARAM, id)
+      next.set(SCHOOL_TAB_PARAM, 'application')
+    } else {
+      next.delete(SCHOOL_ID_PARAM)
+      next.delete(SCHOOL_TAB_PARAM)
+    }
+    setSearchParams(next, { replace: true })
+  }
+
+  const setSchoolTab = (tab: SchoolDetailTabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(SCHOOL_TAB_PARAM, tab)
     setSearchParams(next, { replace: true })
   }
 
@@ -592,6 +690,8 @@ export function ProgramDetailFullPageModal({
                         programId={displayProgram?.id}
                         program={displayProgram}
                         schoolIdFromUrl={schoolIdFromUrl}
+                        schoolTabFromUrl={activeSchoolTab}
+                        onSchoolTabChange={setSchoolTab}
                         onSchoolRowClick={row => setSchoolId(row.id)}
                         onClearSchoolId={() => setSchoolId(null)}
                         onSchoolDetailOpen={name => setSchoolDetailTitle(name)}
