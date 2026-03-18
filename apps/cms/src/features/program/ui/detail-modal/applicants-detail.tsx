@@ -1,13 +1,13 @@
-import type { ApplicantChildKey } from './detail-modal-sidebar'
+import type { TabKey } from './detail-modal-sidebar'
 
 export interface ApplicantDetailsProps {
-  menu: ApplicantChildKey | ''
+  menu: TabKey | ''
 }
 
 export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   return (
     <>
-      {menu === 'institutions' && <div>institutions</div>}
+      {menu === 'participants' && <div>participants</div>}
       {menu === 'instructors' && <div>instructors</div>}
       {menu === 'volunteers' && <div>volunteers</div>}
     </>

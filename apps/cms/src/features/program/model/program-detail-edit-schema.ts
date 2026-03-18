@@ -211,6 +211,12 @@ export function programToDetailEditValues(
     ips: program.ips ?? undefined,
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
+    // 사업 KPI 목표 (폼 전용, 별도 API로 채움 가능)
+    kpiFinalParticipants: undefined,
+    kpiInstructorCount: undefined,
+    kpiVolunteerCount: undefined,
+    kpiFinalSchools: undefined,
+    kpiFinalClasses: undefined,
   }
 }
 

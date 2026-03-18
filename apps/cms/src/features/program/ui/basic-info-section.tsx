@@ -174,13 +174,20 @@ export function BasicInfoSection({
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
-                    <Controller
-                      name="mainTitle"
-                      control={form.control}
-                      render={({ field }) => (
-                        <Input {...field} value={field.value ?? ''} placeholder="대표 프로그램명" />
+                    <>
+                      <Controller
+                        name="mainTitle"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Input {...field} value={field.value ?? ''} placeholder="대표 프로그램명" />
+                        )}
+                      />
+                      {form.formState.errors.mainTitle?.message && (
+                        <span className="program-detail-info-tab__field-error">
+                          {form.formState.errors.mainTitle.message}
+                        </span>
                       )}
-                    />
+                    </>
                   ) : (
                     program.mainTitle ?? '-'
                   )}
@@ -190,13 +197,25 @@ export function BasicInfoSection({
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
-                    <Controller
-                      name="title"
-                      control={form.control}
-                      render={({ field }) => (
-                        <Input {...field} value={field.value ?? ''} placeholder="세부 프로그램명" />
+                    <>
+                      <Controller
+                        name="title"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            value={field.value ?? ''}
+                            placeholder="세부 프로그램명"
+                            status={form.formState.errors.title ? 'error' : undefined}
+                          />
+                        )}
+                      />
+                      {form.formState.errors.title?.message && (
+                        <span className="program-detail-info-tab__field-error">
+                          {form.formState.errors.title.message}
+                        </span>
                       )}
-                    />
+                    </>
                   ) : (
                     program.title
                   )}
@@ -302,22 +321,30 @@ export function BasicInfoSection({
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
-                    <Controller
-                      name="sponsorId"
-                      control={form.control}
-                      render={({ field }) => (
-                        <Select
-                          {...field}
-                          placeholder="후원사 선택"
-                          allowClear={false}
-                          showSearch
-                          optionFilterProp="label"
-                          options={sponsors.map(s => ({ value: s.id, label: s.name }))}
-                          onChange={v => field.onChange(v ?? '')}
-                          className="program-detail-info-tab__sponsor-select"
-                        />
+                    <>
+                      <Controller
+                        name="sponsorId"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Select
+                            {...field}
+                            placeholder="후원사 선택"
+                            allowClear={false}
+                            showSearch
+                            optionFilterProp="label"
+                            options={sponsors.map(s => ({ value: s.id, label: s.name }))}
+                            onChange={v => field.onChange(v ?? '')}
+                            className="program-detail-info-tab__sponsor-select"
+                            status={form.formState.errors.sponsorId ? 'error' : undefined}
+                          />
+                        )}
+                      />
+                      {form.formState.errors.sponsorId?.message && (
+                        <span className="program-detail-info-tab__field-error">
+                          {form.formState.errors.sponsorId.message}
+                        </span>
                       )}
-                    />
+                    </>
                   ) : program.sponsorId ? (
                     <Link
                       to={`/sponsors/${program.sponsorId}`}
@@ -339,6 +366,7 @@ export function BasicInfoSection({
                       const selectedSponsor = sponsors.find(s => s.id === sponsorId)
                       const managers = selectedSponsor?.managers ?? []
                       return (
+                        <>
                         <div className="program-detail-info-tab__sponsor-manager-inputs">
                           <Controller
                             name="managerName"
@@ -368,6 +396,7 @@ export function BasicInfoSection({
                                     }
                                   }}
                                   className="program-detail-info-tab__manager-select"
+                                  status={form.formState.errors.managerName ? 'error' : undefined}
                                 />
                               )
                             }}
@@ -379,6 +408,12 @@ export function BasicInfoSection({
                             {form.watch('contactPhone') || '-'}
                           </span>
                         </div>
+                        {form.formState.errors.managerName?.message && (
+                          <span className="program-detail-info-tab__field-error">
+                            {form.formState.errors.managerName.message}
+                          </span>
+                        )}
+                      </>
                       )
                     })()
                   ) : (
@@ -775,11 +810,24 @@ export function BasicInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="title"
-                    control={form.control}
-                    render={({ field }) => <Input {...field} placeholder="프로그램명" />}
-                  />
+                  <>
+                    <Controller
+                      name="title"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          placeholder="프로그램명"
+                          status={form.formState.errors.title ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.title?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.title.message}
+                      </span>
+                    )}
+                  </>
                 ) : (
                   program.title
                 )}
@@ -917,22 +965,30 @@ export function BasicInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="sponsorId"
-                    control={form.control}
-                    render={({ field }) => (
-                      <Select
-                        {...field}
-                        placeholder="후원사 선택"
-                        allowClear={false}
-                        showSearch
-                        optionFilterProp="label"
-                        options={sponsors.map(s => ({ value: s.id, label: s.name }))}
-                        onChange={v => field.onChange(v ?? '')}
-                        className="program-detail-info-tab__sponsor-select"
-                      />
+                  <>
+                    <Controller
+                      name="sponsorId"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          placeholder="후원사 선택"
+                          allowClear={false}
+                          showSearch
+                          optionFilterProp="label"
+                          options={sponsors.map(s => ({ value: s.id, label: s.name }))}
+                          onChange={v => field.onChange(v ?? '')}
+                          className="program-detail-info-tab__sponsor-select"
+                          status={form.formState.errors.sponsorId ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.sponsorId?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.sponsorId.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : program.sponsorId ? (
                   <Link
                     to={`/sponsors/${program.sponsorId}`}
@@ -954,46 +1010,54 @@ export function BasicInfoSection({
                     const selectedSponsor = sponsors.find(s => s.id === sponsorId)
                     const managers = selectedSponsor?.managers ?? []
                     return (
-                      <div className="program-detail-info-tab__sponsor-manager-inputs">
-                        <Controller
-                          name="managerName"
-                          control={form.control}
-                          render={({ field }) => {
-                            const currentName = field.value ?? ''
-                            const currentPhone = form.watch('contactPhone') ?? ''
-                            const selectedIndex =
-                              managers.length > 0
-                                ? managers.findIndex(
-                                    m => m.name === currentName || m.phone === currentPhone
-                                  )
-                                : -1
-                            return (
-                              <Select<number>
-                                placeholder="담당자 선택"
-                                allowClear
-                                value={selectedIndex >= 0 ? selectedIndex : undefined}
-                                options={managers.map((m, i) => ({ value: i, label: m.name }))}
-                                onChange={idx => {
-                                  if (idx !== undefined && idx >= 0 && managers[idx]) {
-                                    form.setValue('managerName', managers[idx].name)
-                                    form.setValue('contactPhone', managers[idx].phone)
-                                  } else {
-                                    form.setValue('managerName', '')
-                                    form.setValue('contactPhone', undefined)
-                                  }
-                                }}
-                                className="program-detail-info-tab__manager-select"
-                              />
-                            )
-                          }}
-                        />
-                        <span className="program-detail-info-tab__contact-divider" aria-hidden>
-                          |
-                        </span>
-                        <span className="program-detail-info-tab__contact-phone-readonly">
-                          {form.watch('contactPhone') || '-'}
-                        </span>
-                      </div>
+                      <>
+                        <div className="program-detail-info-tab__sponsor-manager-inputs">
+                          <Controller
+                            name="managerName"
+                            control={form.control}
+                            render={({ field }) => {
+                              const currentName = field.value ?? ''
+                              const currentPhone = form.watch('contactPhone') ?? ''
+                              const selectedIndex =
+                                managers.length > 0
+                                  ? managers.findIndex(
+                                      m => m.name === currentName || m.phone === currentPhone
+                                    )
+                                  : -1
+                              return (
+                                <Select<number>
+                                  placeholder="담당자 선택"
+                                  allowClear
+                                  value={selectedIndex >= 0 ? selectedIndex : undefined}
+                                  options={managers.map((m, i) => ({ value: i, label: m.name }))}
+                                  onChange={idx => {
+                                    if (idx !== undefined && idx >= 0 && managers[idx]) {
+                                      form.setValue('managerName', managers[idx].name)
+                                      form.setValue('contactPhone', managers[idx].phone)
+                                    } else {
+                                      form.setValue('managerName', '')
+                                      form.setValue('contactPhone', undefined)
+                                    }
+                                  }}
+                                  className="program-detail-info-tab__manager-select"
+                                  status={form.formState.errors.managerName ? 'error' : undefined}
+                                />
+                              )
+                            }}
+                          />
+                          <span className="program-detail-info-tab__contact-divider" aria-hidden>
+                            |
+                          </span>
+                          <span className="program-detail-info-tab__contact-phone-readonly">
+                            {form.watch('contactPhone') || '-'}
+                          </span>
+                        </div>
+                        {form.formState.errors.managerName?.message && (
+                          <span className="program-detail-info-tab__field-error">
+                            {form.formState.errors.managerName.message}
+                          </span>
+                        )}
+                      </>
                     )
                   })()
                 ) : (

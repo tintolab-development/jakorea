@@ -203,19 +203,27 @@ export function DetailInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="description"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        value={field.value ?? ''}
-                        rows={6}
-                        placeholder="프로그램 설명"
-                        className="program-detail-info-tab__content-textarea"
-                      />
+                  <>
+                    <Controller
+                      name="description"
+                      control={form.control}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={field.value ?? ''}
+                          rows={6}
+                          placeholder="프로그램 설명"
+                          className="program-detail-info-tab__content-textarea"
+                          status={form.formState.errors.description ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.description?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.description.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   <div className="program-detail-info-tab__content-block">
                     {program.description || DEFAULT_PROGRAM_DESCRIPTION}
@@ -229,19 +237,27 @@ export function DetailInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="recruitmentGuide"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        value={field.value ?? ''}
-                        rows={6}
-                        placeholder="모집 안내"
-                        className="program-detail-info-tab__content-textarea"
-                      />
+                  <>
+                    <Controller
+                      name="recruitmentGuide"
+                      control={form.control}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={field.value ?? ''}
+                          rows={6}
+                          placeholder="모집 안내"
+                          className="program-detail-info-tab__content-textarea"
+                          status={form.formState.errors.recruitmentGuide ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.recruitmentGuide?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.recruitmentGuide.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   <div className="program-detail-info-tab__content-block">
                     {program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
@@ -255,19 +271,27 @@ export function DetailInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Controller
-                    name="learningSupportContent"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        value={field.value ?? ''}
-                        rows={5}
-                        placeholder="학습 지원 내용"
-                        className="program-detail-info-tab__content-textarea program-detail-info-tab__content-textarea--sm"
-                      />
+                  <>
+                    <Controller
+                      name="learningSupportContent"
+                      control={form.control}
+                      render={({ field }) => (
+                        <TextArea
+                          {...field}
+                          value={field.value ?? ''}
+                          rows={5}
+                          placeholder="학습 지원 내용"
+                          className="program-detail-info-tab__content-textarea program-detail-info-tab__content-textarea--sm"
+                          status={form.formState.errors.learningSupportContent ? 'error' : undefined}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.learningSupportContent?.message && (
+                      <span className="program-detail-info-tab__field-error">
+                        {form.formState.errors.learningSupportContent.message}
+                      </span>
                     )}
-                  />
+                  </>
                 ) : (
                   <div className="program-detail-info-tab__content-block program-detail-info-tab__content-block--sm">
                     {program.learningSupportContent || DEFAULT_LEARNING_SUPPORT}

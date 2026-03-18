@@ -57,7 +57,7 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
     { type: 'menu-shortcut-widget', colSpan: 24, order: 0, height: 202 },
     { type: 'program-schedule-widget', colSpan: 24, order: 1, height: 360 },
     { type: 'recruitment-status-widget', colSpan: 24, order: 2, height: 340 },
-    { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3 },
+    { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3, height: 338 },
     { type: 'kpi-achievement-widget', colSpan: 24, order: 4, height: 314 },
   ],
   // 강사: 본인 활동 요약

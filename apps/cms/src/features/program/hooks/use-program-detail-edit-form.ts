@@ -47,17 +47,17 @@ export function useProgramDetailEditForm({
 
   const { reset } = form
 
-  // program 변경 시 폼 값 동기화
+  // program 변경 시 폼 값 동기화 (defaultValues까지 갱신해 디폴트 누락 방지)
   useEffect(() => {
     if (program) {
-      reset(programToDetailEditValues(program))
+      reset(programToDetailEditValues(program), { keepDefaultValues: false })
     }
   }, [program, reset])
 
   // 수정 모드 진입 시 폼을 최신 program 값으로 채움 (useLayoutEffect로 페인트 전 실행)
   useLayoutEffect(() => {
     if (isEditMode && program) {
-      reset(programToDetailEditValues(program))
+      reset(programToDetailEditValues(program), { keepDefaultValues: false })
     }
   }, [isEditMode, program, reset])
 
