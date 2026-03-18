@@ -4,7 +4,7 @@
  * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
  */
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
@@ -46,6 +46,7 @@ export interface ProgramDetailFullPageModalProps {
 const TAB_PARAM = 'tab'
 const EDIT_PARAM = 'edit'
 const LNB_PARAM = 'lnb'
+const SCHOOL_ID_PARAM = 'schoolId'
 
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
 
@@ -130,6 +131,16 @@ export function ProgramDetailFullPageModal({
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'progress')
     next.set(TAB_PARAM, tab)
+    next.delete(SCHOOL_ID_PARAM)
+    setSearchParams(next, { replace: true })
+  }
+
+  const schoolIdFromUrl = searchParams.get(SCHOOL_ID_PARAM)
+
+  const setSchoolId = (id: string | null) => {
+    const next = new URLSearchParams(searchParams)
+    if (id) next.set(SCHOOL_ID_PARAM, id)
+    else next.delete(SCHOOL_ID_PARAM)
     setSearchParams(next, { replace: true })
   }
 
@@ -149,7 +160,16 @@ export function ProgramDetailFullPageModal({
   }
 
   const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
-  const title = displayProgram?.title ?? '프로그램 상세'
+  const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!schoolIdFromUrl) setSchoolDetailTitle(null)
+  }, [schoolIdFromUrl])
+
+  const title =
+    schoolDetailTitle != null && displayProgram
+      ? `${displayProgram.title}_${schoolDetailTitle}`
+      : displayProgram?.title ?? '프로그램 상세'
 
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
   const infoForm = useProgramDetailEditForm({
@@ -357,8 +377,8 @@ export function ProgramDetailFullPageModal({
             <button
               type="button"
               className="program-detail-fullpage-modal__close"
-              onClick={onClose}
-              aria-label="닫기"
+              onClick={schoolIdFromUrl ? () => setSchoolId(null) : onClose}
+              aria-label={schoolIdFromUrl ? '목록으로' : '닫기'}
             >
               <CloseOutlined />
             </button>
@@ -559,7 +579,15 @@ export function ProgramDetailFullPageModal({
                 {activeLnb === 'progress' && (
                   <div className="program-detail-fullpage-modal__info-tab">
                     {activeProgressChild === 'participants' && (
-                      <ParticipatingInstitutionsSection programId={displayProgram?.id} program={displayProgram} />
+                      <ParticipatingInstitutionsSection
+                        programId={displayProgram?.id}
+                        program={displayProgram}
+                        schoolIdFromUrl={schoolIdFromUrl}
+                        onSchoolRowClick={row => setSchoolId(row.id)}
+                        onClearSchoolId={() => setSchoolId(null)}
+                        onSchoolDetailOpen={name => setSchoolDetailTitle(name)}
+                        onSchoolDetailClose={() => setSchoolDetailTitle(null)}
+                      />
                     )}
                     {activeProgressChild === 'instructors' && (
                       <div className="program-detail-fullpage-modal__progress-section">
