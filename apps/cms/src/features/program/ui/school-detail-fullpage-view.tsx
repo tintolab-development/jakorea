@@ -5,22 +5,49 @@
  */
 
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { Table, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { AppButton } from '@/shared/ui/app-button'
 import type { Program } from '@/types/domain'
-import type { SchoolDetailForModal } from '../model/school-detail-types'
+import type {
+  SchoolDetailForModal,
+  SchoolDetailInstructorRow,
+  InstructorRoleKey,
+} from '../model/school-detail-types'
+import { INSTRUCTOR_ROLE_LABELS } from '../model/school-detail-types'
 import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/data/mock/participating-schools'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type {
+  ParticipatingInstructorRow,
+  SettlementStatusKey,
+} from '@/data/mock/participating-instructors'
+import { SETTLEMENT_STATUS_LABELS } from '@/data/mock/participating-instructors'
 import type { InstructorListFormInstructor } from '../model/school-detail-types'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
-import { getInstructorRowsForSchool } from '../lib/school-detail-mock'
+import {
+  getInstructorRowsForSchool,
+  getAssignedInstructorDisplayRows,
+  getWaitingInstructorRows,
+} from '../lib/school-detail-mock'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
+import {
+  SchoolDetailAddInstructorAssignModal,
+  type AddInstructorAssignOption,
+} from './school-detail-add-instructor-assign-modal'
+import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-assign-confirm-modal'
+import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
+import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
 import './program-detail-info-tab.css'
+import './participating-institutions-section.css'
 import './school-detail-fullpage-view.css'
 
 const SCHOOL_DETAIL_TAB_KEYS = ['application', 'students', 'instructors', 'posts'] as const
-type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS)[number]
+export type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS)[number]
 
 const SCHOOL_DETAIL_TAB_LABELS: Record<SchoolDetailTabKey, string> = {
   application: '신청 정보',
@@ -28,6 +55,40 @@ const SCHOOL_DETAIL_TAB_LABELS: Record<SchoolDetailTabKey, string> = {
   instructors: '강사 배정 현황',
   posts: '게시글',
 }
+
+/** 배정된 강사 테이블용 행 (표시용 확장 필드 포함) */
+interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
+  no: number
+  homeAddress?: string
+  distanceToSchool?: string
+  assignedDate?: string
+  assignedTime?: string
+  assignedSession?: string
+}
+
+/** 배정 대기 강사 테이블용 행 */
+export type AssignmentStatusKey = 'waiting' | 'cancelled' | 'assigned'
+
+interface WaitingInstructorRow {
+  id: string
+  no: number
+  instructorName: string
+  homeAddress?: string
+  distanceToSchool?: string
+  assignmentStatus: AssignmentStatusKey
+  hopeDate?: string
+  hopeTime?: string
+  hopeSession?: string
+}
+
+const ASSIGNMENT_STATUS_LABELS: Record<AssignmentStatusKey, string> = {
+  waiting: '배정 대기',
+  cancelled: '배정 취소',
+  assigned: '배정 완료',
+}
+
+/** 필요 배정 인원(분모) — 상세에 필드 없으면 mock */
+const MOCK_REQUIRED_INSTRUCTORS = 4
 
 const SESSION_STATUS_LABELS: Record<string, string> = {
   completed: '진행 완료',
@@ -68,6 +129,10 @@ export interface SchoolDetailFullpageViewProps {
   program: Program
   detail: SchoolDetailForModal
   row: ParticipatingSchoolRow
+  /** URL 쿼리 파라미터와 연동 시 활성 탭 (제공 시 controlled) */
+  activeTab?: SchoolDetailTabKey
+  /** 탭 변경 시 호출 (쿼리 파라미터 갱신용) */
+  onTabChange?: (key: SchoolDetailTabKey) => void
   onClearSchoolId: () => void
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
   onSaveInstructorInfo?: (schoolId: string, instructors: InstructorListFormInstructor[]) => void
@@ -80,14 +145,39 @@ export function SchoolDetailFullpageView({
   program: _program,
   detail,
   row,
+  activeTab: activeTabFromUrl,
+  onTabChange,
   onClearSchoolId: _onClearSchoolId,
   onSaveBasicInfo: _onSaveBasicInfo,
-  onSaveInstructorInfo: _onSaveInstructorInfo,
+  onSaveInstructorInfo,
   savedBasicPatches = {},
   savedInstructorPatches = {},
   instructorList,
 }: SchoolDetailFullpageViewProps) {
-  const [activeTab, setActiveTab] = useState<SchoolDetailTabKey>('application')
+  const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
+  const activeTab =
+    activeTabFromUrl !== undefined && activeTabFromUrl !== null
+      ? activeTabFromUrl
+      : internalTab
+  const setActiveTab = (key: SchoolDetailTabKey) => {
+    if (onTabChange) onTabChange(key)
+    else setInternalTab(key)
+  }
+  const [selectedAssignedKeys, setSelectedAssignedKeys] = useState<React.Key[]>([])
+  const [selectedWaitingKeys, setSelectedWaitingKeys] = useState<React.Key[]>([])
+  const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
+  const [addAssignOverflowOpen, setAddAssignOverflowOpen] = useState(false)
+  const [addModalOpenedFromOverflow, setAddModalOpenedFromOverflow] = useState(false)
+  const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
+  const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
+  const [selectAssignOverflowOpen, setSelectAssignOverflowOpen] = useState(false)
+  const [assignCompleteModal, setAssignCompleteModal] = useState<{
+    instructorName: string
+    schoolName: string
+    currentCount: number
+    showApprovalAlarmSection: boolean
+  } | null>(null)
+  const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const instructors =
@@ -118,6 +208,273 @@ export function SchoolDetailFullpageView({
     mergedDetail.totalEducationHours != null && mergedDetail.totalSessions != null
       ? `${mergedDetail.totalEducationHours}시간 (총 ${mergedDetail.totalSessions}회차)`
       : '-'
+
+  /** 배정된 강사 테이블용 행 (목 데이터 연동) */
+  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
+    () => getAssignedInstructorDisplayRows(instructors),
+    [instructors]
+  )
+
+  /** 배정 대기 강사 목록 (목 데이터 연동: 해당 학교 미배정 참여 강사 + 배정 현황/희망 일정) */
+  const waitingRows: WaitingInstructorRow[] = useMemo(
+    () => getWaitingInstructorRows(row.schoolName, instructorList),
+    [row.schoolName, instructorList]
+  )
+
+  /** 추가 배정 모달용 옵션: 배정 대기 중인 강사 또는 미배정 참여 강사 */
+  const addAssignInstructorOptions: AddInstructorAssignOption[] = useMemo(() => {
+    const assignedIds = new Set(instructors.map(i => i.id))
+    return instructorList
+      .filter(r => !assignedIds.has(r.id))
+      .slice(0, 20)
+      .map(r => ({
+        value: r.id,
+        label: r.instructorName,
+        contact: r.contact,
+        email: r.email,
+        initialApproval: r.initialApproval ?? true,
+      }))
+  }, [instructorList, instructors])
+
+  const currentLeadName =
+    instructors.find((i: { role: InstructorRoleKey }) => i.role === 'lead')?.instructorName ?? null
+
+  /** 선택 배정 확인 모달에서 "강사 배정" 클릭 시: 선택한 배정 대기 강사를 배정된 목록에 추가 */
+  const handleSelectAssignConfirm = useCallback(() => {
+    if (selectedWaitingKeys.length === 0) return
+    const selectedRows = waitingRows.filter(r => selectedWaitingKeys.includes(r.id))
+    const existingFormList: InstructorListFormInstructor[] = instructors.map(
+      ({ id, role, instructorName, contact, email }) => ({
+        id,
+        role,
+        instructorName,
+        contact,
+        email,
+      })
+    )
+    const newFormList: InstructorListFormInstructor[] = selectedRows
+      .map(w => {
+        const fromList = instructorList.find(r => r.id === w.id)
+        return fromList
+          ? {
+              id: fromList.id,
+              role: 'assistant' as InstructorRoleKey,
+              instructorName: fromList.instructorName,
+              contact: fromList.contact ?? '',
+              email: fromList.email ?? '',
+            }
+          : null
+      })
+      .filter((x): x is InstructorListFormInstructor => x != null)
+    if (newFormList.length === 0) {
+      message.warning('선택한 강사 정보를 찾을 수 없습니다.')
+      return
+    }
+    onSaveInstructorInfo?.(detail.id, [...existingFormList, ...newFormList])
+    setSelectAssignConfirmOpen(false)
+    setSelectedWaitingKeys([])
+    message.success('강사가 배정되었습니다.')
+  }, [
+    selectedWaitingKeys,
+    waitingRows,
+    instructorList,
+    instructors,
+    detail.id,
+    onSaveInstructorInfo,
+  ])
+
+  /** 배정 취소 확인 모달에서 "배정 취소" 클릭 시: 선택한 배정된 강사를 목록에서 제거 */
+  const handleUnassignConfirm = useCallback(() => {
+    if (selectedAssignedKeys.length === 0) return
+    const newFormList: InstructorListFormInstructor[] = instructors
+      .filter(inv => !selectedAssignedKeys.includes(inv.id))
+      .map(({ id, role, instructorName, contact, email }) => ({
+        id,
+        role,
+        instructorName,
+        contact,
+        email,
+      }))
+    onSaveInstructorInfo?.(detail.id, newFormList)
+    setUnassignConfirmOpen(false)
+    setSelectedAssignedKeys([])
+    message.success('배정이 취소되었습니다.')
+  }, [selectedAssignedKeys, instructors, detail.id, onSaveInstructorInfo])
+
+  const handleRoleChange = useCallback(
+    (instructorId: string, newRole: InstructorRoleKey) => {
+      const updated = instructors.map(inv => ({
+        ...inv,
+        role:
+          inv.id === instructorId
+            ? newRole
+            : (newRole === 'lead' ? 'assistant' : inv.role),
+      }))
+      const formList: InstructorListFormInstructor[] = updated.map(
+        ({ id, role, instructorName, contact, email }) => ({
+          id,
+          role,
+          instructorName,
+          contact,
+          email,
+        })
+      )
+      onSaveInstructorInfo?.(detail.id, formList)
+      setOpenRoleDropdownId(null)
+      message.success('역할이 변경되었습니다.')
+    },
+    [instructors, detail.id, onSaveInstructorInfo]
+  )
+
+  const assignedInstructorColumns: ColumnsType<AssignedInstructorDisplayRow> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      {
+        title: '역할',
+        dataIndex: 'role',
+        key: 'role',
+        width: 120,
+        align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
+          <StatusDropdownCell<InstructorRoleKey>
+            status={role}
+            statusOptions={['lead', 'assistant']}
+            renderBadge={r => (
+              <span
+                className={
+                  r === 'lead'
+                    ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
+                    : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
+                }
+              >
+                {INSTRUCTOR_ROLE_LABELS[r]}
+              </span>
+            )}
+            isItemDisabled={(cur, opt) => cur === opt}
+            onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
+            isOpen={openRoleDropdownId === record.id}
+            onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
+            emptyPlaceholder="-"
+          />
+        ),
+      },
+      { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
+      {
+        title: '자택 주소',
+        dataIndex: 'homeAddress',
+        key: 'homeAddress',
+        width: 160,
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '기관과의 거리',
+        dataIndex: 'distanceToSchool',
+        key: 'distanceToSchool',
+        width: 100,
+        align: 'center',
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '교육 담당 날짜',
+        dataIndex: 'assignedDate',
+        key: 'assignedDate',
+        width: 140,
+        align: 'center',
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '교육 담당 수업 시간',
+        dataIndex: 'assignedTime',
+        key: 'assignedTime',
+        width: 180,
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '교육 담당 차시',
+        dataIndex: 'assignedSession',
+        key: 'assignedSession',
+        width: 100,
+        align: 'center',
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '정산 현황',
+        dataIndex: 'settlementStatus',
+        key: 'settlementStatus',
+        width: 120,
+        align: 'center',
+        render: (status: SettlementStatusKey) => (
+          <span
+            className={`school-detail-fullpage-view__settlement-text school-detail-fullpage-view__settlement-text--${status}`}
+          >
+            {SETTLEMENT_STATUS_LABELS[status]}
+          </span>
+        ),
+      },
+    ],
+    [openRoleDropdownId, handleRoleChange]
+  )
+
+  const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
+      {
+        title: '자택 주소',
+        dataIndex: 'homeAddress',
+        key: 'homeAddress',
+        width: 160,
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '기관과의 거리',
+        dataIndex: 'distanceToSchool',
+        key: 'distanceToSchool',
+        width: 100,
+        align: 'center',
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '배정 현황',
+        dataIndex: 'assignmentStatus',
+        key: 'assignmentStatus',
+        width: 100,
+        align: 'center',
+        render: (status: AssignmentStatusKey) => (
+          <span
+            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status}`}
+          >
+            {ASSIGNMENT_STATUS_LABELS[status]}
+          </span>
+        ),
+      },
+      {
+        title: '교육 희망 날짜',
+        dataIndex: 'hopeDate',
+        key: 'hopeDate',
+        width: 140,
+        align: 'center',
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '교육 희망 수업 시간',
+        dataIndex: 'hopeTime',
+        key: 'hopeTime',
+        width: 180,
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '교육 희망 차시',
+        dataIndex: 'hopeSession',
+        key: 'hopeSession',
+        width: 110,
+        align: 'center',
+        render: (v: string | undefined) => v ?? '-',
+      },
+    ],
+    []
+  )
 
   /** 기본 정보: 스크린샷 순서. 2열 배치 후 담당 교사/신청 사유/기타 요청사항은 span 2 */
   const basicInfoItems = [
@@ -313,7 +670,7 @@ export function SchoolDetailFullpageView({
               key={key}
               type="button"
               className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-              onClick={() => setActiveTab(key)}
+              onClick={() => setActiveTab(key as SchoolDetailTabKey)}
             >
               <span className="program-detail-fullpage-modal__tab-label">
                 {SCHOOL_DETAIL_TAB_LABELS[key]}
@@ -411,22 +768,227 @@ export function SchoolDetailFullpageView({
         )}
 
         {activeTab === 'instructors' && (
-          <div className="program-detail-fullpage-modal__info-tab">
-            <div className="program-detail-info-tab__section-header-row">
-              <h3 className="program-detail-info-tab__section-title">강사 배정 현황</h3>
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
+            {/* 섹션 1: 배정된 강사 목록 */}
+            <div className="school-detail-fullpage-view__instructor-section">
+              <div className="participating-institutions-section__table-header">
+                <div className="participating-institutions-section__table-heading">
+                  <span className="participating-institutions-section__table-title">
+                    배정된 강사 목록
+                  </span>
+                  <span className="participating-institutions-section__table-description">
+                    {instructors.length} / {MOCK_REQUIRED_INSTRUCTORS}명
+                  </span>
+                </div>
+                <div className="participating-institutions-section__table-actions">
+                  <AppButton
+                    variant="danger"
+                    size="large"
+                    onClick={() => {
+                      if (selectedAssignedKeys.length === 0) {
+                        message.warning('배정 취소할 강사를 선택해 주세요.')
+                        return
+                      }
+                      setUnassignConfirmOpen(true)
+                    }}
+                  >
+                    배정 취소
+                  </AppButton>
+                  <AppButton
+                    variant="primary"
+                    size="large"
+                    className="participating-institutions-section__btn-approve"
+                    onClick={() => {
+                      if (instructors.length >= MOCK_REQUIRED_INSTRUCTORS) {
+                        setAddAssignOverflowOpen(true)
+                      } else {
+                        setAddAssignModalOpen(true)
+                      }
+                    }}
+                  >
+                    추가 배정
+                  </AppButton>
+                </div>
+              </div>
+              <div className="participating-institutions-section__table-wrap">
+                {assignedRows.length === 0 ? (
+                  <div
+                    className="school-detail-fullpage-view__assigned-empty"
+                    role="status"
+                    aria-label="배정된 강사 없음"
+                  >
+                    배정된 강사가 없습니다.
+                  </div>
+                ) : (
+                  <Table<AssignedInstructorDisplayRow>
+                    className="participating-institutions-section__table"
+                    rowKey="id"
+                    size="middle"
+                    pagination={false}
+                    scroll={{ x: 1100 }}
+                    rowSelection={{
+                      selectedRowKeys: selectedAssignedKeys,
+                      onChange: keys => setSelectedAssignedKeys(keys),
+                    }}
+                    columns={assignedInstructorColumns}
+                    dataSource={assignedRows}
+                  />
+                )}
+              </div>
             </div>
-            {instructors.length === 0 ? (
-              <p className="school-detail-fullpage-view__placeholder">배정된 강사가 없습니다.</p>
-            ) : (
-              <ul className="school-detail-fullpage-view__instructor-list">
-                {instructors.map(i => (
-                  <li key={i.id}>
-                    {i.role === 'lead' ? '[대표] ' : ''}
-                    {i.instructorName} · {i.contact} · {i.email}
-                  </li>
-                ))}
-              </ul>
-            )}
+
+            {/* 섹션 2: 배정 대기 강사 목록 */}
+            <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
+              <div className="participating-institutions-section__table-header">
+                <div className="participating-institutions-section__table-heading">
+                  <span className="participating-institutions-section__table-title">
+                    배정 대기 강사 목록
+                  </span>
+                  <span className="participating-institutions-section__table-description">
+                    {waitingRows.length}건
+                  </span>
+                </div>
+                <div className="participating-institutions-section__table-actions">
+                  <AppButton
+                    variant="primary"
+                    size="large"
+                    className="participating-institutions-section__btn-approve"
+                    onClick={() => {
+                      if (selectedWaitingKeys.length === 0) {
+                        message.warning('배정할 강사를 선택해 주세요.')
+                        return
+                      }
+                      setSelectAssignConfirmOpen(true)
+                    }}
+                  >
+                    선택 배정
+                  </AppButton>
+                </div>
+              </div>
+              <div className="participating-institutions-section__table-wrap">
+                <Table<WaitingInstructorRow>
+                  className="participating-institutions-section__table"
+                  rowKey="id"
+                  size="middle"
+                  pagination={false}
+                  scroll={{ x: 1000 }}
+                  rowSelection={{
+                    selectedRowKeys: selectedWaitingKeys,
+                    onChange: keys => setSelectedWaitingKeys(keys),
+                    getCheckboxProps: record => ({
+                      disabled: record.assignmentStatus === 'assigned',
+                    }),
+                  }}
+                  columns={waitingInstructorColumns}
+                  dataSource={waitingRows}
+                  rowClassName={record =>
+                    record.assignmentStatus === 'assigned'
+                      ? 'school-detail-fullpage-view__waiting-row--assigned'
+                      : ''
+                  }
+                  locale={{ emptyText: '배정 대기 중인 강사가 없습니다.' }}
+                />
+              </div>
+            </div>
+
+            <SchoolDetailAssignOverflowModal
+              open={addAssignOverflowOpen}
+              onCancel={() => setAddAssignOverflowOpen(false)}
+              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              variant="add"
+              onConfirm={() => {
+                setAddAssignOverflowOpen(false)
+                setAddModalOpenedFromOverflow(true)
+                setAddAssignModalOpen(true)
+              }}
+            />
+            <SchoolDetailAddInstructorAssignModal
+              open={addAssignModalOpen}
+              onCancel={() => {
+                setAddAssignModalOpen(false)
+                setAddModalOpenedFromOverflow(false)
+              }}
+              schoolName={row.schoolName}
+              instructorOptions={addAssignInstructorOptions}
+              currentLeadInstructorName={currentLeadName}
+              currentAssignedCount={instructors.length}
+              requiredInstructorCount={MOCK_REQUIRED_INSTRUCTORS}
+              overflowAlreadyConfirmed={addModalOpenedFromOverflow}
+              onAdd={(_instructorId, role, option, _meta) => {
+                const existingFormList: InstructorListFormInstructor[] = instructors.map(
+                  ({ id, role: r, instructorName, contact, email }) => ({
+                    id,
+                    role: r,
+                    instructorName,
+                    contact,
+                    email,
+                  })
+                )
+                const newInstructor: InstructorListFormInstructor = {
+                  id: option.value,
+                  role,
+                  instructorName: option.label,
+                  contact: option.contact ?? '',
+                  email: option.email ?? '',
+                }
+                onSaveInstructorInfo?.(detail.id, [...existingFormList, newInstructor])
+                setAddAssignModalOpen(false)
+                setAddModalOpenedFromOverflow(false)
+                setAssignCompleteModal({
+                  instructorName: option.label,
+                  schoolName: row.schoolName,
+                  currentCount: instructors.length + 1,
+                  showApprovalAlarmSection: _meta?.isNewApproval ?? false,
+                })
+              }}
+            />
+            <SchoolDetailSelectAssignConfirmModal
+              open={selectAssignConfirmOpen}
+              onCancel={() => {
+                setSelectAssignConfirmOpen(false)
+              }}
+              schoolName={row.schoolName}
+              instructorNames={waitingRows
+                .filter(r => selectedWaitingKeys.includes(r.id))
+                .map(r => r.instructorName)}
+              currentCount={instructors.length}
+              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              onConfirm={() => {
+                if (instructors.length >= MOCK_REQUIRED_INSTRUCTORS) {
+                  setSelectAssignConfirmOpen(false)
+                  setSelectAssignOverflowOpen(true)
+                } else {
+                  handleSelectAssignConfirm()
+                }
+              }}
+            />
+            <SchoolDetailAssignOverflowModal
+              open={selectAssignOverflowOpen}
+              onCancel={() => setSelectAssignOverflowOpen(false)}
+              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              onConfirm={() => {
+                handleSelectAssignConfirm()
+                setSelectAssignOverflowOpen(false)
+              }}
+            />
+            <SchoolDetailAssignCompleteModal
+              open={assignCompleteModal != null}
+              onClose={() => setAssignCompleteModal(null)}
+              instructorName={assignCompleteModal?.instructorName ?? ''}
+              schoolName={assignCompleteModal?.schoolName ?? ''}
+              currentCount={assignCompleteModal?.currentCount ?? 0}
+              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              showApprovalAlarmSection={assignCompleteModal?.showApprovalAlarmSection ?? false}
+            />
+            <SchoolDetailUnassignConfirmModal
+              open={unassignConfirmOpen}
+              onCancel={() => setUnassignConfirmOpen(false)}
+              schoolName={row.schoolName}
+              instructorNames={assignedRows
+                .filter(r => selectedAssignedKeys.includes(r.id))
+                .map(r => r.instructorName)}
+              onConfirm={handleUnassignConfirm}
+            />
           </div>
         )}
 

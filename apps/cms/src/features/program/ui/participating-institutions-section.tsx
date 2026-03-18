@@ -31,7 +31,10 @@ import { useProgressSchoolList } from '../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
 import type { ProgressFilters } from '../hooks/use-program-progress-params'
 import { SchoolDetailModal } from './school-detail-modal'
-import { SchoolDetailFullpageView } from './school-detail-fullpage-view'
+import {
+  SchoolDetailFullpageView,
+  type SchoolDetailTabKey,
+} from './school-detail-fullpage-view'
 import { getSchoolDetailByRow } from '../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
@@ -92,6 +95,10 @@ export interface ParticipatingInstitutionsSectionProps {
   program?: Program | null
   /** URL의 schoolId. 있으면 해당 학교 상세 인라인 뷰 표시 */
   schoolIdFromUrl?: string | null
+  /** URL의 학교 상세 탭(application | students | instructors | posts). 쿼리 파라미터 연동용 */
+  schoolTabFromUrl?: SchoolDetailTabKey | null
+  /** 학교 상세 뷰 내 탭 변경 시 호출 (쿼리 파라미터 갱신용) */
+  onSchoolTabChange?: (tab: SchoolDetailTabKey) => void
   /** 행 클릭 시 호출 (풀페이지 인라인 뷰용). 있으면 모달 대신 schoolId로 전환 */
   onSchoolRowClick?: (row: ParticipatingSchoolRow) => void
   /** 상세 뷰 닫기(목록으로) 시 호출 */
@@ -106,6 +113,8 @@ export function ParticipatingInstitutionsSection({
   programId: _programId,
   program,
   schoolIdFromUrl,
+  schoolTabFromUrl,
+  onSchoolTabChange,
   onSchoolRowClick,
   onClearSchoolId,
   onSchoolDetailOpen,
@@ -366,6 +375,8 @@ export function ParticipatingInstitutionsSection({
           program={program}
           detail={mergedDetail}
           row={selectedRowFromUrl}
+          activeTab={schoolTabFromUrl ?? undefined}
+          onTabChange={onSchoolTabChange}
           onClearSchoolId={onClearSchoolId ?? (() => {})}
           onSaveBasicInfo={patch => {
             setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))

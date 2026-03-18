@@ -40,6 +40,10 @@ export interface FileSelectFieldProps {
   onRemoveFile?: (index: number) => void
   /** 버튼에 표시할 텍스트 (기본: "파일 선택") */
   buttonLabel?: string
+  /** 파일이 없을 때 파일명 자리에 표시할 안내 문구 (예: "파일을 선택해주세요") */
+  emptyPlaceholder?: string
+  /** 업로드 중일 때 true — 파일명 영역에 "파일을 업로드중입니다" 표시하여 UI shifting 방지 */
+  uploading?: boolean
   /** 추가 클래스명 */
   className?: string
 }
@@ -53,6 +57,8 @@ export function FileSelectField({
   onFilesChange,
   onRemoveFile,
   buttonLabel = '파일 선택',
+  emptyPlaceholder,
+  uploading = false,
   className = '',
 }: FileSelectFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -81,25 +87,39 @@ export function FileSelectField({
         />
       )}
 
-      {fileNames && fileNames.length > 0 && (
+      {(fileNames && fileNames.length > 0) || (emptyPlaceholder && (!fileNames || fileNames.length === 0)) || uploading ? (
         <div className="file-select-field__names">
-          {fileNames.map((name, i) => (
-            <span key={`${i}-${name}`} className="file-select-field__name-row">
-              <span className="file-select-field__name">{name}</span>
-              {canRemove && (
-                <button
-                  type="button"
-                  className="file-select-field__remove"
-                  onClick={() => onRemoveFile?.(i)}
-                  aria-label={`${name} 업로드 취소`}
-                >
-                  <RemoveIcon />
-                </button>
-              )}
+          {uploading ? (
+            <span className="file-select-field__name-row">
+              <span className="file-select-field__name file-select-field__name--uploading">
+                파일을 업로드중입니다
+              </span>
             </span>
-          ))}
+          ) : fileNames && fileNames.length > 0 ? (
+            fileNames.map((name, i) => (
+              <span key={`${i}-${name}`} className="file-select-field__name-row">
+                <span className="file-select-field__name">{name}</span>
+                {canRemove && (
+                  <button
+                    type="button"
+                    className="file-select-field__remove"
+                    onClick={() => onRemoveFile?.(i)}
+                    aria-label={`${name} 업로드 취소`}
+                  >
+                    <RemoveIcon />
+                  </button>
+                )}
+              </span>
+            ))
+          ) : (
+            <span className="file-select-field__name-row">
+              <span className="file-select-field__name file-select-field__name--placeholder">
+                {emptyPlaceholder}
+              </span>
+            </span>
+          )}
         </div>
-      )}
+      ) : null}
 
       <div className="file-select-field__actions">
         <Button
@@ -110,7 +130,7 @@ export function FileSelectField({
         >
           {buttonLabel}
         </Button>
-        {guideLines && guideLines.length > 0 && (
+        {guideLines && guideLines.length > 0 ? (
           <div className="file-select-field__guide">
             {guideLines.map((line, i) => (
               <span key={i} className="file-select-field__guide-line">
@@ -118,7 +138,7 @@ export function FileSelectField({
               </span>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
