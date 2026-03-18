@@ -180,9 +180,9 @@
   min-height: 200px;
 }
 
-/* 공통 정보 탭: 각 항목을 모두 감싸는 래퍼 패딩 유지 */
+/* 공통 정보 탭: 각 항목을 모두 감싸는 래퍼. 좌우 52px, 하단만 32px */
 .program-detail-fullpage-modal__info-tab {
-  padding: 32px 52px;
+  padding: 0 52px 32px;
 }
 
 /* 참여자 정보 탭: 항목별 갭 32px (공통 정보 탭과 동일하게 margin-top) */
@@ -225,4 +225,14 @@
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
+}
+
+/* 프로그램 진행 현황 하위(참여 기관/참여 강사/참여 봉사자) 섹션 */
+.program-detail-fullpage-modal__progress-section {
+  margin-top: 0;
+}
+
+.program-detail-fullpage-modal__progress-section .ant-typography + .ant-typography {
+  display: block;
+  margin-top: 8px;
 }

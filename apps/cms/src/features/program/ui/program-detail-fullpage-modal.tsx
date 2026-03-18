@@ -24,6 +24,7 @@ import { InstructorDetailInfoSection } from './instructor-detail-info-section'
 import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
 import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
 import { ApplicantDetails } from './detail-modal/applicants-detail'
+import { ParticipatingInstitutionsSection } from './participating-institutions-section'
 import type { Program } from '@/types/domain'
 import {
   DetailModalSidebar,
@@ -87,6 +88,14 @@ export function ProgramDetailFullPageModal({
   const applicantsExpanded = activeLnb === 'applicants'
   const activeChildMenu: TabKey | '' =
     activeLnb === 'applicants' ? parseTabFromSearch(searchParams) : ''
+  const progressExpanded = activeLnb === 'progress'
+  const progressTabRaw = activeLnb === 'progress' ? parseTabFromSearch(searchParams) : ''
+  const activeProgressChild: TabKey | '' =
+    progressTabRaw && ['participants', 'instructors', 'volunteers'].includes(progressTabRaw)
+      ? progressTabRaw
+      : activeLnb === 'progress'
+        ? 'participants'
+        : ''
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     const next = new URLSearchParams(searchParams)
@@ -100,6 +109,12 @@ export function ProgramDetailFullPageModal({
         TAB_PARAM,
         tab && ['participants', 'instructors', 'volunteers'].includes(tab) ? tab : 'participants'
       )
+    } else if (key === 'progress') {
+      const tab = childTab ?? searchParams.get(TAB_PARAM)
+      next.set(
+        TAB_PARAM,
+        tab && ['participants', 'instructors', 'volunteers'].includes(tab) ? tab : 'participants'
+      )
     }
     setSearchParams(next, { replace: true })
   }
@@ -107,6 +122,13 @@ export function ProgramDetailFullPageModal({
   const setApplicantsChild = (tab: TabKey) => {
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'applicants')
+    next.set(TAB_PARAM, tab)
+    setSearchParams(next, { replace: true })
+  }
+
+  const setProgressChild = (tab: TabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'progress')
     next.set(TAB_PARAM, tab)
     setSearchParams(next, { replace: true })
   }
@@ -324,6 +346,9 @@ export function ProgramDetailFullPageModal({
           applicantsExpanded={applicantsExpanded}
           onSelectApplicantsChild={setApplicantsChild}
           activeChildMenu={activeChildMenu}
+          progressExpanded={progressExpanded}
+          onSelectProgressChild={setProgressChild}
+          activeProgressChild={activeProgressChild}
         />
 
         <div className="program-detail-fullpage-modal__main">
@@ -530,6 +555,30 @@ export function ProgramDetailFullPageModal({
                 )}
 
                 {activeLnb === 'applicants' && <ApplicantDetails menu={activeChildMenu} />}
+
+                {activeLnb === 'progress' && (
+                  <div className="program-detail-fullpage-modal__info-tab">
+                    {activeProgressChild === 'participants' && (
+                      <ParticipatingInstitutionsSection programId={displayProgram?.id} program={displayProgram} />
+                    )}
+                    {activeProgressChild === 'instructors' && (
+                      <div className="program-detail-fullpage-modal__progress-section">
+                        <Typography.Title level={5}>참여 강사</Typography.Title>
+                        <Typography.Text type="secondary">
+                          참여 강사 목록 및 현황이 표시됩니다.
+                        </Typography.Text>
+                      </div>
+                    )}
+                    {activeProgressChild === 'volunteers' && (
+                      <div className="program-detail-fullpage-modal__progress-section">
+                        <Typography.Title level={5}>참여 봉사자</Typography.Title>
+                        <Typography.Text type="secondary">
+                          참여 봉사자 목록 및 현황이 표시됩니다.
+                        </Typography.Text>
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
