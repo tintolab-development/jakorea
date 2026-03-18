@@ -1,0 +1,87 @@
+/**
+ * 신청 강사 상세 - 기본 정보 테이블
+ * program-detail-info-tab / applicant-instructor-detail-modal 기본 정보 테이블 스타일 참고
+ * 라벨: 연한 회색 배경·가운데 정렬, 값: 흰색 배경·좌측 정렬, 구분선 #E0E0E0
+ */
+
+.applicant-instructor-basic-info__title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+.applicant-instructor-basic-info__table-wrap {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.applicant-instructor-basic-info__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.applicant-instructor-basic-info__table tbody tr {
+  min-height: 48px;
+}
+
+.applicant-instructor-basic-info__table .applicant-instructor-basic-info__cell {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+.applicant-instructor-basic-info__cell--label {
+  background: #f9f9f9;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+.applicant-instructor-basic-info__cell--label.applicant-instructor-basic-info__cell--name {
+  vertical-align: middle;
+}
+
+.applicant-instructor-basic-info__cell--sub {
+  background: #f9f9f9;
+  font-weight: 500;
+}
+
+.applicant-instructor-basic-info__cell--value {
+  background: #fff;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 140%;
+  color: #262626;
+}
+
+.applicant-instructor-basic-info__cell--one-line {
+  vertical-align: top;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  max-height: 72px;
+  overflow-y: auto;
+}
+
+.applicant-instructor-basic-info__name-badge {
+  margin-left: 8px;
+  vertical-align: middle;
+
+  color: var(--default-BK) !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(195, 47, 74, 0.1) !important;
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.06) 0%, rgba(195, 47, 74, 0.06) 100%),
+    #fff
+  ) !important;
+}

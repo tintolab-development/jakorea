@@ -1,3 +1,27 @@
+/* 프로그램 승인 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(상세 모달) 방지 */
+.applicant-details__approval-dropdown-cell {
+  position: relative;
+  z-index: 1;
+}
+
+.applicant-details__approval-dropdown-trigger {
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* 테이블 스크롤 영역 (pagination 제거, infinite scroll) */
+.applicant-details__table-wrapper {
+  min-width: 0;
+}
+
+.applicant-details__table-wrapper .ant-table-body {
+  overflow-y: auto !important;
+}
+
+.applicant-details__divider-wrapper {
+  padding: 12px 32px 32px 42px;
+}
+
 .clickable-table .ant-table-row {
   cursor: pointer;
   transition: background 0.3s;
