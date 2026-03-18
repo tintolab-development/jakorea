@@ -156,13 +156,14 @@ export function ProgramListPage() {
   useEffect(() => {
     if (!isFullPageModalPath) return
     const programIdFromUrl = searchParams.get('programId')
-    if (programIdFromUrl && programs.length > 0) {
-      const program = programs.find(p => p.id === programIdFromUrl)
-      if (program) {
-        setSelectedProgramForFullPageModal(program)
-      }
+    if (!programIdFromUrl) return
+    // 목록은 filteredPrograms(교육/경제 시 mock) 기준이므로 여기서 찾아야 새로고침 복원이 안정적임
+    if (filteredPrograms.length === 0) return
+    const program = filteredPrograms.find(p => p.id === programIdFromUrl)
+    if (program) {
+      setSelectedProgramForFullPageModal(program)
     }
-  }, [isFullPageModalPath, searchParams, programs, setSelectedProgramForFullPageModal])
+  }, [isFullPageModalPath, searchParams, filteredPrograms, setSelectedProgramForFullPageModal])
 
   // Phase 0.2.1: 로그인 후 redirect 파라미터 대응 (교육/경제 목록에서는 상세 페이지로 가지 않고 풀페이지 모달만 사용)
   useEffect(() => {
