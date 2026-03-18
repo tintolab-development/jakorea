@@ -8,6 +8,9 @@ export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered'
 /** 참여 기관 승인/반려 상태 (선택 승인·선택 반려 연동) */
 export type ParticipatingSchoolApprovalStatusKey = 'pending' | 'rejected' | 'approved'
 
+/** 강의 회차별 진행 상태 (교육기관 상세 신청 정보 탭용) */
+export type ParticipatingSchoolSessionStatusKey = 'completed' | 'pending' | 'not_planned'
+
 /** 강의 회차별 교육 진행 일정 한 건 (참여 기관 테이블용) */
 export interface ParticipatingSchoolSession {
   round: number
@@ -17,6 +20,8 @@ export interface ParticipatingSchoolSession {
   format: string
   classNum: string
   timeRange: string
+  /** 진행 완료 | 진행 대기 | 미진행 희망 (상세 뷰용, 선택) */
+  status?: ParticipatingSchoolSessionStatusKey
 }
 
 export interface ParticipatingSchoolRow {
@@ -132,6 +137,8 @@ const APPROVAL_STATUSES: ParticipatingSchoolApprovalStatusKey[] = ['pending', 'r
 
 const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
 
+const SESSION_STATUSES: ParticipatingSchoolSessionStatusKey[] = ['completed', 'pending', 'not_planned']
+
 function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   const sessionCount = 1 + (rowIndex % 5)
   const sessions: ParticipatingSchoolSession[] = []
@@ -140,14 +147,16 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
     const d = new Date(2026, 0, 9 + dayOffset)
     const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+    const status = SESSION_STATUSES[(rowIndex + s) % 3]
     sessions.push({
       round: s + 1,
       date: dateStr,
       dayOfWeek,
       duration: '1시간',
-      format: '오프라인',
+      format: s % 2 === 0 ? '오프라인' : '온라인',
       classNum: `${s + 1}교시`,
       timeRange: `${9 + s}:20~${10 + s}:10`,
+      status,
     })
   }
   return sessions

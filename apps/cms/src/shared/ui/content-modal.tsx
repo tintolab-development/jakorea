@@ -1,0 +1,71 @@
+/**
+ * 컨텐츠 모달 (공통 레이아웃)
+ * - 컨테이너 padding: top 28, bottom 34, horizontal 30
+ * - 헤더: 보더 없음, padding 제거, 타이틀 24px Bold
+ * - 바디: padding 제거
+ * - 푸터: 상단 디바이더 없음, margin-top 30px, 버튼 래퍼 100% + 우측 정렬
+ * 다른 모달에서 이 컴포넌트를 위주로 사용할 수 있도록 공통화함.
+ */
+
+import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import './content-modal.css'
+
+/** 기본 닫기 버튼 X 아이콘 24×24, opacity 0.5 */
+const DEFAULT_CLOSE_ICON = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <g opacity="0.5">
+      <path d="M18 6L6 18" stroke="#3D3D3D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 6L18 18" stroke="#3D3D3D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+  </svg>
+)
+
+export interface ContentModalProps {
+  open: boolean
+  onCancel: () => void
+  title: string
+  children: React.ReactNode
+  /** 푸터 영역. 전달 시 100% 너비 래퍼 안에서 우측 정렬됨 */
+  footer?: React.ReactNode
+  /** 기본 800, large 시 1400 */
+  size?: 'default' | 'large'
+  width?: number
+  /** 모달 루트에 붙는 추가 클래스 (공통으로 content-modal 포함) */
+  className?: string
+  /** 닫기 버튼 아이콘 (미지정 시 기본 X 아이콘) */
+  closeIcon?: React.ReactNode
+}
+
+export function ContentModal({
+  open,
+  onCancel,
+  title,
+  children,
+  footer,
+  size = 'default',
+  width,
+  className,
+  closeIcon = DEFAULT_CLOSE_ICON,
+}: ContentModalProps) {
+  const resolvedClassName = ['content-modal', className].filter(Boolean).join(' ')
+
+  const wrappedFooter =
+    footer != null ? (
+      <div className="content-modal__footer-actions">{footer}</div>
+    ) : undefined
+
+  return (
+    <TealHeaderModal
+      open={open}
+      onCancel={onCancel}
+      title={title}
+      size={size}
+      width={width}
+      footer={wrappedFooter}
+      className={resolvedClassName}
+      closeIcon={closeIcon}
+    >
+      {children}
+    </TealHeaderModal>
+  )
+}

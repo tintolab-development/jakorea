@@ -1,116 +1,99 @@
-/* 강의 출석 내역 모달 (명세: lecture-attendance-modal-table-prompt.md)
-   모달 높이: 테이블(144px)+헤더+푸터(닫기 버튼)가 잘리지 않도록 여유 있게 설정 */
+/**
+ * 강의 출석 내역 모달 — 컨텐츠 전용 스타일
+ * 레이아웃(컨테이너/헤더/푸터)은 ContentModal(content-modal.css) 사용
+ */
 
-/* 모달 높이: 헤더 50 + 바디(테이블 144+패딩) + 푸터(닫기) 모두 보이도록 350px */
-.lecture-attendance-modal.ant-modal .ant-modal-content {
-    height: 350px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+/* 디스크립션: 타이틀–디스크립션 16px, 디스크립션–테이블 30px */
+.lecture-attendance-modal__description {
+  margin: 16px 0 30px 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  line-height: 150%;
 }
 
-/* ant-modal-body가 플렉스 컨테이너가 되어 헤더·바디·푸터가 세로로 배치되고 푸터(닫기)가 보이도록 */
-.lecture-attendance-modal.ant-modal .ant-modal-body {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    padding: 0;
+.lecture-attendance-modal__description .lecture-attendance-modal__description-name {
+  font-weight: 700;
 }
 
-.lecture-attendance-modal .teal-header-modal__header {
-    flex-shrink: 0;
+.lecture-attendance-modal__description .lecture-attendance-modal__description-text {
+  font-weight: 500;
 }
 
-.lecture-attendance-modal .teal-header-modal__footer {
-    flex-shrink: 0;
-}
-
-/* 바디 래퍼: 남은 높이 채우고 자식(테이블) 가로·세로 중앙 */
-.lecture-attendance-modal .teal-header-modal__body {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* 타이틀 텍스트 가운데 정렬 */
-.lecture-attendance-modal .teal-header-modal__title {
-    flex: 1;
-    text-align: center;
-}
-
-/* 바디: 남은 높이 채우며 테이블을 가로·세로 중앙 배치 */
-.lecture-attendance-modal__body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    flex: 1 1 auto;
-    min-height: 0;
-    box-sizing: border-box;
-}
-
-/* 테이블 래퍼: 모서리 둥글게 */
+/* 테이블 래퍼: 둥근 모서리 8px, 구분선 색상 테두리 */
 .lecture-attendance-modal__table-wrap {
-    width: 700px;
-    max-width: 100%;
-    height: 144px;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
+  width: 100%;
+  max-width: 700px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-base, #d9d9d9);
 }
 
-/* 테이블: 700×144px, 행 48px, 라벨열 144px, 값열 가변 */
 .lecture-attendance-modal__table {
-    width: 100%;
-    height: 144px;
-    table-layout: fixed;
-    border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
 .lecture-attendance-modal__table tbody tr {
-    height: 48px;
+  height: 48px;
 }
 
-.lecture-attendance-modal__table tbody tr>td {
-    height: 48px;
-    min-height: 48px;
-    max-height: 48px;
-    padding: 0 16px;
-    text-align: left;
-    vertical-align: middle;
-    border: 1px solid var(--color-border-secondary, #e8e8e8);
-    box-sizing: border-box;
+/* 테이블 셀: 구분선 적용 */
+.lecture-attendance-modal__table tbody tr > td {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 16px;
+  text-align: left;
+  vertical-align: middle;
+  border: 1px solid var(--color-border-base, #d9d9d9);
+  box-sizing: border-box;
 }
 
-/* 1·3열: 라벨 144px, 연한 회색, 굵게, 가로·세로 가운데 정렬 */
+/* 라벨 셀(헤더 역할): 연한 회색 배경, 라벨–값 구분선 */
 .lecture-attendance-modal__table .lecture-attendance-modal__cell--label {
-    width: 144px;
-    min-width: 144px;
-    max-width: 144px;
-    background: #fafafa;
-    font-weight: 700;
-    color: var(--color-text-label, #262626);
-    text-align: center;
-    vertical-align: middle;
+  width: 144px;
+  min-width: 144px;
+  max-width: 144px;
+  background: #f1f3f5;
+  font-weight: 700;
+  color: var(--color-text-label, #262626);
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid var(--color-border-base, #d9d9d9);
 }
 
-/* 2·4열: 값, 흰 배경, 텍스트만·선택 불가 */
+/* 값 셀: 흰 배경 */
 .lecture-attendance-modal__table .lecture-attendance-modal__cell--value {
-    background: #fff;
-    user-select: none;
+  background: #fff;
+  user-select: none;
 }
 
-/* 참석률 값 중 '(강의 진행 회차 기준)' 텍스트만 폰트 스펙 적용 */
+/* 결석: 빨간 텍스트 */
+.lecture-attendance-modal__table .lecture-attendance-modal__cell--status-absent {
+  color: var(--color-danger-primary, #ff4d4f);
+  font-weight: 600;
+}
+
+/* 강의 미진행 상태 텍스트 스펙 */
+.lecture-attendance-modal__table .lecture-attendance-modal__cell--status-not_held {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+  opacity: 0.5;
+}
+
+/* '(강의 진행 회차 기준)' 텍스트 스펙 */
 .lecture-attendance-modal__attendance-rate-note {
-    color: var(--default-BK, #3d3d3d);
-    font-family: Pretendard, sans-serif;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 18px */
+  opacity: 0.6;
 }
