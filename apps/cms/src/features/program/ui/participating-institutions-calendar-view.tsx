@@ -134,6 +134,10 @@ export interface ParticipatingInstitutionsCalendarViewProps {
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
   onSchoolClick: (row: ParticipatingSchoolRow) => void
+  /** 우측 카드 영역을 대체할 컨텐츠. 없으면 ApplicantScheduleList 사용 */
+  rightContent?: React.ReactNode
+  /** 날짜 셀 클릭 시 호출 (참여 강사 캘린더에서 우측 강사 목록 필터용) */
+  onDateSelect?: (date: Dayjs) => void
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -141,6 +145,8 @@ export function ParticipatingInstitutionsCalendarView({
   selectedRowKeys,
   onSelectionChange,
   onSchoolClick,
+  rightContent,
+  onDateSelect,
 }: ParticipatingInstitutionsCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
@@ -171,6 +177,7 @@ export function ParticipatingInstitutionsCalendarView({
 
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date)
+    onDateSelect?.(date)
     if (!date.isSame(currentMonth, 'month')) {
       setCurrentMonth(date.startOf('month'))
     }
@@ -438,14 +445,18 @@ export function ParticipatingInstitutionsCalendarView({
         )}
       </div>
       <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right">
-        <ApplicantScheduleList
-          selectedDate={selectedDate}
-          events={eventListForList}
-          selectedRowKeys={selectedRowKeys}
-          onSelectionChange={onSelectionChange}
-          onEventClick={item => item?.row && onSchoolClick(item.row)}
-          getColorForEvent={e => getColorForEvent(e as CalendarEvent)}
-        />
+        {rightContent !== undefined ? (
+          rightContent
+        ) : (
+          <ApplicantScheduleList
+            selectedDate={selectedDate}
+            events={eventListForList}
+            selectedRowKeys={selectedRowKeys}
+            onSelectionChange={onSelectionChange}
+            onEventClick={item => item?.row && onSchoolClick(item.row)}
+            getColorForEvent={e => getColorForEvent(e as CalendarEvent)}
+          />
+        )}
       </div>
     </div>
   )

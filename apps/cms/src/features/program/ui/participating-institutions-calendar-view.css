@@ -346,6 +346,9 @@
 
 .participating-institutions-calendar-cell--selected {
   /* 배경 변경 제거, 텍스트/강조 색상만 유지 */
+  border: 2px solid var(--color-tab-active, #01a1af);
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .participating-institutions-calendar-cell--today .participating-institutions-calendar-cell-date-today {
