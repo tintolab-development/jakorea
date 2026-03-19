@@ -8,7 +8,7 @@ interface ApplicantScheduleListProps {
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
   onEventClick: (item: any) => void
-  getColorForEvent?: (event: any) => { primary: string; light: string }
+  getColorForEvent?: (event: any) => { primary: string; light: string; border: string }
 }
 
 export function ApplicantScheduleList({
@@ -30,10 +30,7 @@ export function ApplicantScheduleList({
     <div className="applicant-schedule-list">
       <div className="applicant-schedule-list-content">
         {events.length === 0 ? (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="해당 날짜에 일정이 없습니다"
-          />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
         ) : (
           events.map(event => {
             const isSelected = selectedRowKeys.includes(event.id)
@@ -66,14 +63,21 @@ export function ApplicantScheduleList({
                   color
                     ? {
                         backgroundColor: color.light,
+                        border: `1px solid ${color.border}`,
                       }
                     : undefined
                 }
               >
-                <div className="applicant-schedule-item-checkbox" onClick={() => handleToggleSelection(event.id)}>
+                <div
+                  className="applicant-schedule-item-checkbox"
+                  onClick={() => handleToggleSelection(event.id)}
+                >
                   <Checkbox checked={isSelected} />
                 </div>
-                <div className="applicant-schedule-item-info" onClick={() => onEventClick(originalItem)}>
+                <div
+                  className="applicant-schedule-item-info"
+                  onClick={() => onEventClick(originalItem)}
+                >
                   <div className="applicant-schedule-item-title">{displayTitle}</div>
                   {hasDetail && (
                     <div className="applicant-schedule-item-detail">

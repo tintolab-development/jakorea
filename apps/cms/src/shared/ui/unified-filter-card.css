@@ -49,6 +49,12 @@
   width: 100%;
 }
 
+.unified-filter-card__button {
+  border-radius: 8px !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+
 /* 필터 필드: 기본 240×44 반응형 — 각 컬럼 최소 너비 적용 */
 .unified-filter-card__row .ant-col:not(.unified-filter-card__actions) {
   min-width: var(--filter-control-width, 240px);
@@ -58,6 +64,32 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-6);
+}
+
+/* Select 스타일 */
+.unified-filter-card__select.ant-select .ant-select-selector {
+  border-radius: 8px;
+  border: 1px solid #c4cdd1;
+  padding: 0 14px 0 16px !important;
+}
+
+.unified-filter-card__select.ant-select .ant-select-selection-placeholder {
+  overflow: hidden;
+  color: #85969d;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.unified-filter-card__select.ant-select .ant-select-selection-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .unified-filter-card__label {

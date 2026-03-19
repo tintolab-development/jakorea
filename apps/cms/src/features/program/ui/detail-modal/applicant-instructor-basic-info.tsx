@@ -111,7 +111,7 @@ export function ApplicantInstructorBasicInfo({
               >
                 성명
               </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label applicant-instructor-basic-info__cell--sub">
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 한글
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
@@ -125,7 +125,7 @@ export function ApplicantInstructorBasicInfo({
               </td>
             </tr>
             <tr>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label applicant-instructor-basic-info__cell--sub">
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 영문
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">

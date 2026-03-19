@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
@@ -35,11 +36,15 @@ import './applicants-detail.css'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Divider } from '@/shared/components/divider'
 
+const APPLICANT_ID_PARAM = 'applicantId'
+const DETAIL_TAB_PARAM = 'detailTab'
+
 export interface ApplicantDetailsProps {
   menu: TabKey | ''
 }
 
 export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
   // 필터 상태 관리
   const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({})
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({})
@@ -66,14 +71,51 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   // 프로그램 승인 현황 드롭다운 열림 상태 (participating-institutions-section과 동일 스타일)
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
 
-  // 메뉴 변경 시 상태 초기화
+  // 메뉴 변경 시에만 상태 초기화 + URL에서 applicantId/detailTab 제거 (초기 마운트 시 복원 방지)
+  const prevMenuRef = useRef<TabKey | ''>(menu)
   useEffect(() => {
-    setPendingFilters({})
-    setAppliedFilters({})
-    setSelectedRowKeys([])
-    setSelectedItem(null)
-    setOpenApprovalDropdownId(null)
-  }, [menu])
+    if (prevMenuRef.current !== menu) {
+      prevMenuRef.current = menu
+      setPendingFilters({})
+      setAppliedFilters({})
+      setSelectedRowKeys([])
+      setSelectedItem(null)
+      setOpenApprovalDropdownId(null)
+      const next = new URLSearchParams(searchParams)
+      if (next.has(APPLICANT_ID_PARAM)) {
+        next.delete(APPLICANT_ID_PARAM)
+        next.delete(DETAIL_TAB_PARAM)
+        setSearchParams(next, { replace: true })
+      }
+    }
+  }, [menu, searchParams, setSearchParams])
+
+  // selectedItem ↔ URL applicantId 동기화
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams)
+    if (selectedItem) {
+      if (next.get(APPLICANT_ID_PARAM) !== selectedItem.id) {
+        next.set(APPLICANT_ID_PARAM, selectedItem.id)
+        setSearchParams(next, { replace: true })
+      }
+    } else if (next.has(APPLICANT_ID_PARAM)) {
+      next.delete(APPLICANT_ID_PARAM)
+      next.delete(DETAIL_TAB_PARAM)
+      setSearchParams(next, { replace: true })
+    }
+  }, [selectedItem, searchParams, setSearchParams])
+
+  // URL applicantId로 상세 복원 (새로고침 시)
+  useEffect(() => {
+    if (!menu || menu === 'volunteers') return
+    const applicantId = searchParams.get(APPLICANT_ID_PARAM)
+    if (!applicantId) return
+    const list = menu === 'institutions' ? institutionList : instructorList
+    const found = list.find(item => item.id === applicantId)
+    if (found) {
+      setSelectedItem(found)
+    }
+  }, [menu, searchParams, institutionList, instructorList])
 
   // 현재 메뉴에 따른 필터 필드 설정
   const fields = useMemo(() => {
@@ -710,9 +752,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
               <div className="applicant-details__table-header">
                 <div className="applicant-details__table-heading">
                   <span className="applicant-details__table-title">{title}</span>
-                  <span className="applicant-details__table-description">
-                    {tableData.length}건
-                  </span>
+                  <span className="applicant-details__table-description">{tableData.length}건</span>
                 </div>
                 <div className="applicant-details__table-actions">
                   <div style={{ display: 'flex', gap: '8px' }}>

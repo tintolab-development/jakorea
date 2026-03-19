@@ -53,7 +53,7 @@
 .instructor-resume-row-left {
   flex-shrink: 0;
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 140%;
   color: #8c8c8c;
   min-width: 0;
@@ -96,7 +96,6 @@
 .instructor-resume-empty {
   margin: 0;
   font-size: 16px;
-  color: #8c8c8c;
   line-height: 140%;
 }
 

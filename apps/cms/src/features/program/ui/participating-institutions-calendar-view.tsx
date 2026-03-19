@@ -9,7 +9,10 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type {
+  ParticipatingSchoolRow,
+  ParticipatingSchoolSession,
+} from '@/data/mock/participating-schools'
 import { ApplicantScheduleList } from './detail-modal/applicant-schedule-list'
 import './participating-institutions-calendar-view.css'
 
@@ -75,24 +78,30 @@ interface CalendarEvent {
   }
 }
 
-/** 초등학교별 태그 배경색 (학교명 기준으로 일관 적용) */
-const SCHEDULE_COLOR_BASE: { primary: string; light: string }[] = [
-  { primary: '#E91E63', light: '#FCE4EC' },
-  { primary: '#4CAF50', light: '#E8F5E9' },
-  { primary: '#00BCD4', light: '#E0F7FA' },
-  { primary: '#9C27B0', light: '#F3E5F5' },
-  { primary: '#FF9800', light: '#FFF3E0' },
-  { primary: '#2196F3', light: '#E3F2FD' },
-  { primary: '#795548', light: '#EFEBE9' },
-  { primary: '#607D8B', light: '#ECEFF1' },
-  { primary: '#E91E63', light: '#F8BBD9' },
-  { primary: '#7B1FA2', light: '#E1BEE7' },
-  { primary: '#00838F', light: '#B2EBF2' },
-  { primary: '#558B2F', light: '#DCEDC8' },
+/** 초등학교별 태그 배경색 (학교명 기준으로 일관 적용, tone-on-tone border) */
+const SCHEDULE_COLOR_BASE: { primary: string; light: string; border: string }[] = [
+  { primary: '#E8D4D4', light: '#FCF8F8', border: '#E8D4D4' },
+  { primary: '#E8C4C4', light: '#FBEFEF', border: '#E8C4C4' },
+  { primary: '#E8C8DC', light: '#FEEBF6', border: '#E8C8DC' },
+  { primary: '#E8B0B0', light: '#FFDCDC', border: '#E8B0B0' },
+  { primary: '#E8E0C8', light: '#FFFBF1', border: '#E8E0C8' },
+  { primary: '#D4D8A8', light: '#F1F3E0', border: '#D4D8A8' },
+  { primary: '#A8D898', light: '#DDF6D2', border: '#A8D898' },
+  { primary: '#B8E0A8', light: '#ECFAE5', border: '#B8E0A8' },
+  { primary: '#98D088', light: '#D8EFD3', border: '#98D088' },
+  { primary: '#88D0E8', light: '#D4F6FF', border: '#88D0E8' },
+  { primary: '#88B0E0', light: '#C6E7FF', border: '#88B0E0' },
+  { primary: '#B8C0E8', light: '#EEF1FF', border: '#B8C0E8' },
+  { primary: '#D8E0A8', light: '#F4F8D3', border: '#D8E0A8' },
+  { primary: '#E8E088', light: '#FFF9BF', border: '#E8E088' },
+  { primary: '#E8E898', light: '#FDFFBC', border: '#E8E898' },
 ]
 
 function buildEventsFromSchools(schools: ParticipatingSchoolRow[]): CalendarEvent[] {
-  const byDateAndSchool = new Map<string, { row: ParticipatingSchoolRow; sessions: ParticipatingSchoolSession[] }>()
+  const byDateAndSchool = new Map<
+    string,
+    { row: ParticipatingSchoolRow; sessions: ParticipatingSchoolSession[] }
+  >()
   for (const row of schools) {
     const sessions = row.sessions ?? []
     for (const session of sessions) {
@@ -220,7 +229,11 @@ export function ParticipatingInstitutionsCalendarView({
       <div className="participating-institutions-calendar-header">
         <div className="participating-institutions-calendar-header-left">
           <span className="participating-institutions-calendar-header-title">{headerTitle}</span>
-          <Button size="small" className="participating-institutions-calendar-today-btn" onClick={handleToday}>
+          <Button
+            size="small"
+            className="participating-institutions-calendar-today-btn"
+            onClick={handleToday}
+          >
             오늘
           </Button>
           <div className="participating-institutions-calendar-nav">
@@ -292,7 +305,11 @@ export function ParticipatingInstitutionsCalendarView({
               return (
                 <Tooltip
                   key={ev.id}
-                  title={<pre className="participating-institutions-calendar-event-tooltip">{getEventPreviewContent(ev)}</pre>}
+                  title={
+                    <pre className="participating-institutions-calendar-event-tooltip">
+                      {getEventPreviewContent(ev)}
+                    </pre>
+                  }
                   placement="topLeft"
                   mouseEnterDelay={0.2}
                 >
@@ -301,7 +318,9 @@ export function ParticipatingInstitutionsCalendarView({
                     data-color-index={colorIdx}
                     onClick={e => e.stopPropagation()}
                   >
-                    <span className="participating-institutions-calendar-event-title">{displayTitle}</span>
+                    <span className="participating-institutions-calendar-event-title">
+                      {displayTitle}
+                    </span>
                   </div>
                 </Tooltip>
               )
@@ -335,7 +354,9 @@ export function ParticipatingInstitutionsCalendarView({
     const { row, sessionsOnDate, educationGrade } = ev.originalItem
     const lines = [`${row.schoolName} | ${row.region}`]
     if (sessionsOnDate.length > 0) {
-      const sessionLines = sessionsOnDate.map(s => `${s.classNum} (${s.timeRange.replace(/~/g, ' ~ ')}) | ${educationGrade}`)
+      const sessionLines = sessionsOnDate.map(
+        s => `${s.classNum} (${s.timeRange.replace(/~/g, ' ~ ')}) | ${educationGrade}`
+      )
       lines.push(...sessionLines)
     }
     return lines.join('\n')
@@ -373,7 +394,11 @@ export function ParticipatingInstitutionsCalendarView({
                       return (
                         <Tooltip
                           key={ev.id}
-                          title={<pre className="participating-institutions-calendar-event-tooltip">{getEventPreviewContent(ev)}</pre>}
+                          title={
+                            <pre className="participating-institutions-calendar-event-tooltip">
+                              {getEventPreviewContent(ev)}
+                            </pre>
+                          }
                           placement="topLeft"
                           mouseEnterDelay={0.2}
                         >

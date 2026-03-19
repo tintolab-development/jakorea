@@ -138,7 +138,9 @@
   background: var(--default-WT, #fff);
   color: #3d3d3d;
   box-sizing: border-box !important;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .participating-institutions-calendar-nav-btn:hover {
@@ -290,13 +292,27 @@
   opacity: 0.5;
 }
 
-.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(1)::before { content: 'Sun'; }
-.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(2)::before { content: 'Mon'; }
-.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(3)::before { content: 'Tue'; }
-.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(4)::before { content: 'Wed'; }
-.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(5)::before { content: 'Thu'; }
-.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(6)::before { content: 'Fri'; }
-.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(7)::before { content: 'Sat'; }
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(1)::before {
+  content: 'Sun';
+}
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(2)::before {
+  content: 'Mon';
+}
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(3)::before {
+  content: 'Tue';
+}
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(4)::before {
+  content: 'Wed';
+}
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(5)::before {
+  content: 'Thu';
+}
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(6)::before {
+  content: 'Fri';
+}
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(7)::before {
+  content: 'Sat';
+}
 
 /* Ant Design Calendar 셀 구분선, 셀 영역 154×124.2px (사방 보더) */
 .participating-institutions-calendar-card--left .ant-picker-content table {
@@ -351,7 +367,8 @@
   box-sizing: border-box;
 }
 
-.participating-institutions-calendar-cell--today .participating-institutions-calendar-cell-date-today {
+.participating-institutions-calendar-cell--today
+  .participating-institutions-calendar-cell-date-today {
   display: inline-flex;
   width: 24px;
   height: 24px;
@@ -377,7 +394,8 @@
   align-self: flex-start;
 }
 
-.participating-institutions-calendar-cell--other-month .participating-institutions-calendar-cell-date {
+.participating-institutions-calendar-cell--other-month
+  .participating-institutions-calendar-cell-date {
   color: #bfbfbf;
 }
 
@@ -434,42 +452,51 @@
   text-overflow: ellipsis;
 }
 
-/* 초등학교별 태그 배경색 (data-color-index 0~11) */
+/* 초등학교별 태그 배경색 (data-color-index 0~15) */
 .participating-institutions-calendar-event[data-color-index='0'] {
-  background-color: #fce4ec;
+  background-color: #fcf8f8;
 }
 .participating-institutions-calendar-event[data-color-index='1'] {
-  background-color: #e8f5e9;
+  background-color: #fbefef;
 }
 .participating-institutions-calendar-event[data-color-index='2'] {
-  background-color: #e0f7fa;
+  background-color: #feebf6;
 }
 .participating-institutions-calendar-event[data-color-index='3'] {
-  background-color: #f3e5f5;
+  background-color: #ffdcdc;
 }
 .participating-institutions-calendar-event[data-color-index='4'] {
-  background-color: #fff3e0;
+  background-color: #fffbf1;
 }
 .participating-institutions-calendar-event[data-color-index='5'] {
-  background-color: #e3f2fd;
+  background-color: #f1f3e0;
 }
 .participating-institutions-calendar-event[data-color-index='6'] {
-  background-color: #efebe9;
+  background-color: #ddf6d2;
 }
 .participating-institutions-calendar-event[data-color-index='7'] {
-  background-color: #eceff1;
+  background-color: #ecfae5;
 }
 .participating-institutions-calendar-event[data-color-index='8'] {
-  background-color: #f8bbd9;
+  background-color: #d8efd3;
 }
 .participating-institutions-calendar-event[data-color-index='9'] {
-  background-color: #e1bee7;
+  background-color: #d4f6ff;
 }
 .participating-institutions-calendar-event[data-color-index='10'] {
-  background-color: #b2ebf2;
+  background-color: #c6e7ff;
 }
 .participating-institutions-calendar-event[data-color-index='11'] {
-  background-color: #dcedc8;
+  background-color: #eef1ff;
+}
+.participating-institutions-calendar-event[data-color-index='12'] {
+  background-color: #f4f8d3;
+}
+.participating-institutions-calendar-event[data-color-index='13'] {
+  background-color: #fff9bf;
+}
+.participating-institutions-calendar-event[data-color-index='14'] {
+  background-color: #fdffbc;
 }
 /* 선택 시 태그 밖으로 삐져나온 파란색 제거 (배경색은 유지) */
 .participating-institutions-calendar-event--selected[data-color-index] {
@@ -543,7 +570,8 @@
   background: #e6f7ff;
 }
 
-.participating-institutions-calendar-week-cell--today .participating-institutions-calendar-week-cell-date {
+.participating-institutions-calendar-week-cell--today
+  .participating-institutions-calendar-week-cell-date {
   background: var(--JA-mint-01, #01a1af);
   color: #fff;
   border-radius: 50%;
@@ -593,6 +621,7 @@
   border-color: #f0f0f0;
 }
 
-.participating-institutions-calendar-card--right .applicant-schedule-item[data-has-color='true'].applicant-schedule-item--selected {
+.participating-institutions-calendar-card--right
+  .applicant-schedule-item[data-has-color='true'].applicant-schedule-item--selected {
   box-shadow: none;
 }

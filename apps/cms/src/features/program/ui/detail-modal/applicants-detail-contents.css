@@ -1,6 +1,6 @@
 .applicant-contents {
   background: #fff;
-  padding: 24px 24px 24px 56px;
+  padding: 0 24px 24px 56px;
   height: 100%;
 }
 
@@ -40,6 +40,12 @@
 .applicant-contents__header-actions {
   flex-shrink: 0;
   margin-left: 24px;
+}
+
+.applicant-contents__header-actions .app-button {
+  border-radius: 8px !important;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .header-actions {
@@ -271,8 +277,10 @@
 .instructor-resume-empty {
   margin: 0;
   font-size: 16px;
-  color: #8c8c8c;
-  line-height: 140%;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .instructor-resume-section--free-writing {

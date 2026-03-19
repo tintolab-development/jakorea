@@ -60,7 +60,7 @@
   background: #fff;
   text-align: left;
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 140%;
 }
 
@@ -78,7 +78,8 @@
   gap: 10px;
 }
 
-.applicant-institution-basic-info__session-value .applicant-institution-basic-info__session-divider {
+.applicant-institution-basic-info__session-value
+  .applicant-institution-basic-info__session-divider {
   width: 1px;
   height: 13px;
   background: var(--default-BK, #3d3d3d);
@@ -101,4 +102,3 @@
 .applicant-institution-basic-info__session-status--not_planned {
   color: #8c8c8c;
 }
-
