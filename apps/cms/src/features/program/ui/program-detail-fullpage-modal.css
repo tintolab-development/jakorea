@@ -92,13 +92,13 @@
   color: var(--color-text-primary);
 }
 
-/* 탭 영역: 스펙 program-detail-fullpage-modal-tabs-spec.md §1 — 좌 52px, 디바이더 없음 */
+/* 탭 영역: 스펙 program-detail-fullpage-modal-tabs-spec.md §1 — 좌 52px, 하단 32px, 디바이더 없음 */
 .program-detail-fullpage-modal__tabs-row {
   flex-shrink: 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: var(--spacing-16) var(--spacing-24) 0 52px;
+  padding: var(--spacing-16) var(--spacing-24) 32px 52px;
   gap: var(--spacing-16);
   min-height: 0;
 }

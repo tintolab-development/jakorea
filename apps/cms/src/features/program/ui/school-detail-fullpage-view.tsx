@@ -42,6 +42,7 @@ import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-ass
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
+import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
 import './program-detail-info-tab.css'
 import './participating-institutions-section.css'
 import './school-detail-fullpage-view.css'
@@ -178,6 +179,7 @@ export function SchoolDetailFullpageView({
     showApprovalAlarmSection: boolean
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const instructors =
@@ -691,6 +693,13 @@ export function SchoolDetailFullpageView({
             </AppButton>
           </div>
         )}
+        {activeTab === 'posts' && (
+          <div className="program-detail-fullpage-modal__header-actions">
+            <AppButton variant="primary" size="large" onClick={() => setPostWriteModalOpen(true)}>
+              게시글 등록
+            </AppButton>
+          </div>
+        )}
       </div>
 
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
@@ -993,8 +1002,14 @@ export function SchoolDetailFullpageView({
         )}
 
         {activeTab === 'posts' && (
-          <div className="program-detail-fullpage-modal__info-tab">
-            <p className="school-detail-fullpage-view__placeholder">게시글 탭 (기존 모달 콘텐츠 재사용 예정)</p>
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__posts-tab-wrap">
+            <EnrollmentProgramDetailPostsTab
+              program={_program}
+              schoolId={detail.id}
+              showWriteButtonInSection={false}
+              writeModalOpen={postWriteModalOpen}
+              onWriteModalOpenChange={setPostWriteModalOpen}
+            />
           </div>
         )}
       </div>

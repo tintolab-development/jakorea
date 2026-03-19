@@ -15,6 +15,23 @@
 .school-detail-fullpage-view__content {
   padding-left: 0;
   padding-right: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 게시글 탭: 2컬럼이 content 영역 높이를 채우도록 */
+.school-detail-fullpage-view__posts-tab-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.school-detail-fullpage-view__posts-tab-wrap .enrollment-program-detail-modal__posts-tab {
+  flex: 1;
+  min-height: 0;
 }
 
 /* 프로그램 승인 현황 셀 — 가로(row) 정렬 */
@@ -139,7 +156,7 @@
 
 /* ========== 강사 배정 현황 탭 ========== */
 .school-detail-fullpage-view__instructor-tab {
-  margin-top: 32px;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   gap: 32px;
