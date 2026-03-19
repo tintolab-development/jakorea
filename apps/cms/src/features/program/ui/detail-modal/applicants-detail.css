@@ -60,7 +60,6 @@
 
 /* 테이블 영역 */
 .applicant-details__below-divider {
-  margin-top: 32px;
   padding: 0 24px 24px 42px;
 }
 
@@ -80,13 +79,14 @@
 }
 
 .applicant-details__table-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--color-text-primary, #3d3d3d);
+  color: var(--default-BK);
 }
 
 .applicant-details__table-description {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--color-text-secondary, #666);
 }
 
@@ -95,6 +95,12 @@
   align-items: center;
   gap: var(--spacing-8, 8px);
   flex-shrink: 0;
+}
+
+.applicant-details__table-actions .app-button {
+  border-radius: 8px !important;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 /* 테이블 가로 스크롤 */
@@ -199,10 +205,7 @@
 }
 
 /* 강의 회차 td: 좌우 24px·상하 10px 패딩 명시, 텍스트가 셀 밖으로 나가지 않도록 */
-.applicant-details__table
-  .ant-table-tbody
-  > tr
-  > td.applicant-details__td-sessions {
+.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
   width: 520px;
   min-width: 520px;
   white-space: normal;

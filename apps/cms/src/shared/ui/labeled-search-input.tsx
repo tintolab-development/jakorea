@@ -58,7 +58,7 @@ export function LabeledSearchInput({
   style,
   allowClear = true,
   disabled = false,
-  showPrefixIcon = true,
+  showPrefixIcon = false,
   showLabel = true,
 }: LabeledSearchInputProps) {
   return (

@@ -138,7 +138,7 @@ export function ApplicantsDetailContents({
   const renderHeaderButtons = () => {
     if (isApprovedInstitution) {
       return (
-        <Space size="middle" className="applicant-contents__header-actions">
+        <Space size="small" className="applicant-contents__header-actions">
           <AppButton
             variant="danger"
             onClick={() => onCancelApproval?.(data.id)}
@@ -158,7 +158,7 @@ export function ApplicantsDetailContents({
     }
     if (isApprovedInstructor) {
       return (
-        <Space size="middle" className="applicant-contents__header-actions">
+        <Space size="small" className="applicant-contents__header-actions">
           <AppButton
             variant="danger"
             onClick={() => onCancelApproval?.(data.id)}
@@ -175,7 +175,7 @@ export function ApplicantsDetailContents({
     }
     if (isRejectedInstructor || isRejectedInstitution) {
       return (
-        <Space size="middle" className="applicant-contents__header-actions">
+        <Space size="small" className="applicant-contents__header-actions">
           <AppButton
             variant="danger"
             onClick={() => onCancelReject?.(data.id)}
@@ -192,7 +192,7 @@ export function ApplicantsDetailContents({
     }
     if (isInstitution) {
       return (
-        <Space size="middle" className="applicant-contents__header-actions">
+        <Space size="small" className="applicant-contents__header-actions">
           <AppButton variant="danger" size="filter" onClick={() => onReject(data.id)}>
             참여 반려
           </AppButton>
@@ -207,7 +207,7 @@ export function ApplicantsDetailContents({
     }
     if (isInstructor) {
       return (
-        <Space size="middle" className="applicant-contents__header-actions">
+        <Space size="small" className="applicant-contents__header-actions">
           <AppButton variant="danger" size="filter" onClick={() => onReject(data.id)}>
             참여 반려
           </AppButton>

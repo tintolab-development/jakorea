@@ -39,28 +39,26 @@
 .applicant-instructor-basic-info__cell--label {
   background: #f9f9f9;
   text-align: center;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 140%;
-  color: #3d3d3d;
 }
 
-.applicant-instructor-basic-info__cell--label.applicant-instructor-basic-info__cell--name {
+.applicant-instructor-basic-info__cell--label .applicant-instructor-basic-info__cell--name {
   vertical-align: middle;
 }
 
 .applicant-instructor-basic-info__cell--sub {
   background: #f9f9f9;
-  font-weight: 500;
+  font-weight: 00;
 }
 
 .applicant-instructor-basic-info__cell--value {
   background: #fff;
   text-align: left;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 140%;
-  color: #262626;
 }
 
 .applicant-instructor-basic-info__cell--one-line {
