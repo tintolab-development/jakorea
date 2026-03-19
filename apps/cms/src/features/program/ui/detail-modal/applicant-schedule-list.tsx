@@ -8,6 +8,7 @@ interface ApplicantScheduleListProps {
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
   onEventClick: (item: any) => void
+  getColorForEvent?: (event: any) => { primary: string; light: string }
 }
 
 export function ApplicantScheduleList({
@@ -15,6 +16,7 @@ export function ApplicantScheduleList({
   selectedRowKeys,
   onSelectionChange,
   onEventClick,
+  getColorForEvent,
 }: ApplicantScheduleListProps) {
   const handleToggleSelection = (id: React.Key) => {
     if (selectedRowKeys.includes(id)) {
@@ -36,7 +38,8 @@ export function ApplicantScheduleList({
           events.map(event => {
             const isSelected = selectedRowKeys.includes(event.id)
             const displayTitle = event.title.replace(/^\[.*?\]\s*/, '')
-            
+            const color = getColorForEvent?.(event)
+
             // Extract info from original item if available
             const originalItem = event.originalItem
             const grade = originalItem?.educationGrade || originalItem?.desiredGrade || ''
@@ -56,6 +59,14 @@ export function ApplicantScheduleList({
               <div
                 key={event.id}
                 className={`applicant-schedule-item ${isSelected ? 'applicant-schedule-item--selected' : ''}`}
+                data-has-color={color ? 'true' : undefined}
+                style={
+                  color
+                    ? {
+                        backgroundColor: color.light,
+                      }
+                    : undefined
+                }
               >
                 <div className="applicant-schedule-item-checkbox" onClick={() => handleToggleSelection(event.id)}>
                   <Checkbox checked={isSelected} />

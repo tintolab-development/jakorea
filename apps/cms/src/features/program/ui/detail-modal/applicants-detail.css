@@ -1,7 +1,6 @@
 /* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
 /* 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
-.applicant-details .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status) {
+.applicant-details .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
   height: 53px;
   min-height: 53px;
   max-height: 53px;
@@ -9,7 +8,8 @@
 }
 
 /* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 */
-.applicant-details .ant-table-tbody
+.applicant-details
+  .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
   width: 152px;
@@ -30,28 +30,38 @@
 }
 
 /* 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
-.applicant-details .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
+.applicant-details .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
   height: 53px !important;
   min-height: 53px !important;
   max-height: 53px !important;
 }
 
 /* 해당 셀 vertical padding 0 — vertical UI shifting 방지 */
-.applicant-details .ant-table-tbody
+.applicant-details
+  .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
 
-/* 테이블 스크롤 영역 (pagination 제거, infinite scroll) */
-.applicant-details__table-wrapper {
-  min-width: 0;
+/* 테이블 가로 스크롤: participating-institutions-section과 동일 */
+.applicant-details__table--wrap {
+  overflow-x: auto;
+  width: 100%;
 }
 
-.applicant-details__table-wrapper .ant-table-body {
+.applicant-details__table {
+  min-width: 0;
+  table-layout: auto;
+}
+
+/* th 한줄 처리: 컬럼 헤더 텍스트 줄바꿈 방지 */
+.applicant-details__table .ant-table-thead > tr > th {
+  white-space: nowrap;
+}
+
+.applicant-details__table .ant-table-body {
   overflow-y: auto !important;
 }
 
@@ -59,29 +69,45 @@
   padding: 12px 32px 32px 42px;
 }
 
-.clickable-table .ant-table-row {
+.applicant-details__table--clickable .ant-table-row {
   cursor: pointer;
   transition: background 0.3s;
 }
 
-.clickable-table .ant-table-row:hover > td {
+.applicant-details__table--clickable .ant-table-row:hover > td {
   background-color: #fafafa !important;
 }
 
-/* 강의 회차 별 희망 교육 날짜 및 시간 셀 */
-.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  width: 1%;
-  max-width: max-content;
-  white-space: normal;
-  padding: 12px 24px !important;
-  min-width: 0;
-  vertical-align: top;
-  box-sizing: border-box;
+/* 컬럼 내용 한 줄 유지(강의 회차 셀 제외), 스크롤로 전체 확인 */
+.applicant-details__table .ant-table-tbody > tr > td {
+  white-space: nowrap;
 }
 
-/* 강의 회차 컬럼: 헤더만 중앙정렬, 본문 셀은 좌측 정렬 */
-.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  text-align: left;
+.applicant-details__table--clickable .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+/* 강의 회차 td: 반응형 — 화면비에 맞게 min-width 조절, 내용 줄바꿈 허용 */
+.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
+  min-width: 180px;
+  white-space: normal;
+  padding: 12px 16px !important;
+  vertical-align: top;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 768px) {
+  .applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
+    min-width: 240px;
+    padding: 12px 24px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
+    min-width: 280px;
+  }
 }
 
 .applicant-details__sessions-cell {
@@ -89,7 +115,6 @@
   flex-direction: column;
   gap: 10px;
   text-align: left;
-  align-items: flex-start;
   padding: 0;
   margin: 0;
   min-width: 0;
@@ -98,18 +123,29 @@
   line-height: 150%;
 }
 
+/* 강의 회차 라인: 반응형 — 좁은 화면에서 줄바꿈 허용 */
 .applicant-details__session-line {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   min-width: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: keep-all;
   box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .applicant-details__session-line {
+    font-size: 16px;
+    white-space: nowrap;
+  }
 }
 
 .applicant-details__session-round-tag {

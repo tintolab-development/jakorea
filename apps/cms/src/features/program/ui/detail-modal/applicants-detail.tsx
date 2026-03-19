@@ -124,7 +124,25 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
     []
   )
 
-  // 참여 기관(학교) 컬럼 정의
+  /** 날짜·시간·교시 구간 텍스트 (participating-institutions-section과 동일) */
+  const getSessionLineParts = useCallback(
+    (s: {
+      date: string
+      dayOfWeek: string
+      duration: string
+      format: string
+      classNum: string
+      timeRange: string
+    }) => {
+      const datePart = `${s.date.replace(/\./g, '. ')}(${s.dayOfWeek})`
+      const durationPart = `${s.duration} (${s.format})`
+      const periodPart = `${s.classNum} (${s.timeRange.replace('~', ' ~ ')})`
+      return { datePart, durationPart, periodPart }
+    },
+    []
+  )
+
+  // 참여 기관(학교) 컬럼 정의 — participating-institutions-section과 동일 순서(강의 회차 | 승인 현황)
   const institutionColumns: ColumnsType<ApplicantSchoolRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
@@ -153,6 +171,39 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         ellipsis: true,
       },
       {
+        title: '강의 회차 별 희망 교육 날짜 및 시간',
+        key: 'sessions',
+        width: 1,
+        onCell: () => ({ className: 'applicant-details__td-sessions' }),
+        render: (_: unknown, record: ApplicantSchoolRow) => {
+          const sessions = record.sessions ?? []
+          const total = sessions.length
+          const showCount = total <= 3 ? total : 2
+          const displaySessions = sessions.slice(0, showCount)
+          const restCount = total - showCount
+          return (
+            <div className="applicant-details__sessions-cell">
+              {displaySessions.map(s => {
+                const { datePart, durationPart, periodPart } = getSessionLineParts(s)
+                return (
+                  <div key={s.round} className="applicant-details__session-line">
+                    <span className="applicant-details__session-round-tag">{s.round}차시</span>
+                    {datePart}
+                    <span className="applicant-details__session-divider" aria-hidden />
+                    {durationPart}
+                    <span className="applicant-details__session-divider" aria-hidden />
+                    {periodPart}
+                  </div>
+                )
+              })}
+              {restCount > 0 && (
+                <div className="applicant-details__session-more">외 {restCount}개의 교육 일정</div>
+              )}
+            </div>
+          )
+        },
+      },
+      {
         title: '프로그램 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
@@ -173,42 +224,6 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
             />
           </div>
         ),
-      },
-      {
-        title: '강의 회차 별 희망 교육 날짜 및 시간',
-        key: 'sessions',
-        width: 380,
-        align: 'center',
-        onCell: () => ({ className: 'applicant-details__td-sessions' }),
-        render: (_: unknown, record: ApplicantSchoolRow) => {
-          const sessions = record.sessions ?? []
-          const total = sessions.length
-          const showCount = total <= 3 ? total : 2
-          const displaySessions = sessions.slice(0, showCount)
-          const restCount = total - showCount
-          return (
-            <div className="applicant-details__sessions-cell">
-              {displaySessions.map(s => {
-                const datePart = `${s.date.replace(/\./g, '. ')}(${s.dayOfWeek})`
-                const durationPart = `${s.duration} (${s.format})`
-                const periodPart = `${s.classNum} (${s.timeRange.replace('~', ' ~ ')})`
-                return (
-                  <div key={s.round} className="applicant-details__session-line">
-                    <span className="applicant-details__session-round-tag">{s.round}차시</span>
-                    {datePart}
-                    <span className="applicant-details__session-divider" aria-hidden />
-                    {durationPart}
-                    <span className="applicant-details__session-divider" aria-hidden />
-                    {periodPart}
-                  </div>
-                )
-              })}
-              {restCount > 0 && (
-                <div className="applicant-details__session-more">외 {restCount}개의 교육 일정</div>
-              )}
-            </div>
-          )
-        },
       },
       {
         title: '대상 학년',
@@ -241,7 +256,12 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         align: 'center',
       },
     ],
-    [approvalStatusKeys, handleInstitutionApprovalStatusChange, openApprovalDropdownId]
+    [
+      approvalStatusKeys,
+      getSessionLineParts,
+      handleInstitutionApprovalStatusChange,
+      openApprovalDropdownId,
+    ]
   )
 
   // 신청 강사 컬럼 정의
@@ -514,6 +534,12 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
     return []
   }, [menu, institutionColumns, instructorColumns])
 
+  /** 컬럼 너비 합(체크박스 48 + 나머지). institutions/instructors 메뉴별 상이 */
+  const tableScrollX =
+    menu === 'instructors'
+      ? 48 + 72 + 110 + 150 + 120 + 110 + 130 + 160 + 152
+      : 48 + 72 + 160 + 150 + 200 + 152 + 90 + 100 + 100 + 110
+
   // Helper function to map applicant data to calendar event format
   const mapApplicantDataToCalendarEvents = (
     data: ApplicantSchoolRow[] | ApplicantInstructorRow[],
@@ -727,13 +753,13 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
               </div>
 
               {viewMode === 'table' ? (
-                <div className="applicant-details__table-wrapper">
+                <div className="applicant-details__table-wrap">
                   <Table<any>
                     rowKey="id"
                     columns={columns}
                     dataSource={tableData}
                     size="middle"
-                    className="clickable-table"
+                    className="applicant-details__table applicant-details__table--clickable"
                     onRow={record => ({
                       onClick: e => {
                         const target = e.target as HTMLElement
@@ -748,7 +774,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
                       },
                       style: { cursor: 'pointer' },
                     })}
-                    scroll={{ y: 'calc(100vh - 360px)' }}
+                    scroll={{ x: tableScrollX }}
                     pagination={false}
                     rowSelection={{
                       selectedRowKeys,
