@@ -5,12 +5,10 @@
  * FSD: app 레이어로 이동 (features/auth, features/permission-request 사용, shared는 features 미참조 유지)
  */
 
-import { Navigate, useLocation, useParams } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { Spin } from 'antd'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { canAccessProgram } from '@/features/permission-request/lib/program-acl'
-import { canAccessPath } from '@/shared/config/menu-config'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import type { UserRole } from '@/types/user'
 
@@ -26,8 +24,6 @@ export function ProtectedRoute({
   requireAuth = true,
 }: ProtectedRouteProps) {
   const { isAuthenticated, user, loading, checkAuth, requiresMfa, mfaState } = useAuthStore()
-  const location = useLocation()
-  const params = useParams()
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
@@ -94,27 +90,6 @@ export function ProtectedRoute({
     }
   }
 
-  if (user && location.pathname !== '/' && !canAccessPath(location.pathname, user.role)) {
-    return (
-      <ComingSoonPage
-        title="접근 권한이 없습니다"
-        description="이 페이지에 접근할 권한이 없습니다. 해당 기능은 현재 준비 중입니다."
-      />
-    )
-  }
-
-  const programId = params.id || params.programId
-  if (user && programId && location.pathname.includes('/programs/')) {
-    const action = location.pathname.includes('/edit') ? 'EDIT' : 'VIEW'
-    if (!canAccessProgram(user, programId, action)) {
-      return (
-        <ComingSoonPage
-          title="접근 권한이 없습니다"
-          description="이 프로그램에 접근할 권한이 없습니다. 해당 기능은 현재 준비 중입니다."
-        />
-      )
-    }
-  }
-
+  // 경로/프로그램 접근 제어는 레이아웃 콘텐츠 영역에서 처리 (LNB·헤더 유지)
   return <>{children}</>
 }
