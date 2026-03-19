@@ -297,16 +297,18 @@
   color: var(--color-text-secondary, #8c8c8c);
 }
 
-/* ─── 게시글 탭 (2컬럼: 게시글 | 파일 및 사진) — 모달 내 100% width ───────────────────────── */
+/* ─── 게시글 탭 (2컬럼: 게시글 1094px | gap 32px | 파일 420px) — 전체 1546×862, 넘치면 스크롤 ───── */
 .enrollment-program-detail-modal__posts-tab {
   display: flex;
-  gap: 20px;
-  height: 100%;
-  min-height: 0;
-  width: 100%;
+  gap: 32px;
+  width: 1546px; /* 1094 + 32 + 420 */
   max-width: 100%;
+  height: 862px;
+  max-height: 100%;
+  min-height: 0;
   padding: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .enrollment-program-detail-modal__posts-tab-column {
@@ -316,17 +318,29 @@
   gap: 12px;
 }
 
+/* 게시글 래퍼 — 우측 카드와 분리, 고정 너비 1094px */
 .enrollment-program-detail-modal__posts-tab-column--left {
-  flex: 1;
+  width: 1094px;
+  flex: 0 0 1094px;
   min-width: 0;
 }
 
+/* 우측 파일 카드 영역 — 420×862, padding 24px, gap 12px, border-radius 10px, border #D4D4D4 */
 .enrollment-program-detail-modal__posts-tab-column--right {
-  flex: 0 0 360px;
-  width: 360px;
-  max-width: 360px;
-  border-left: 1px solid var(--color-border-light, #e8e8e8);
-  padding-left: 20px;
+  display: flex;
+  width: 420px;
+  height: 862px;
+  padding: 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px; /* 인풋 영역과 업로드된 파일 영역 사이 vertical gap 12px */
+  align-self: stretch;
+  border-radius: 10px;
+  border: 1px solid #D4D4D4;
+  box-sizing: border-box;
+  flex: 0 0 420px;
+  min-height: 0;
+  background: var(--color-bg-base, #fff);
 }
 
 .enrollment-program-detail-modal__posts-tab-header {
@@ -346,10 +360,12 @@
 .enrollment-program-detail-modal__posts-list {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -358,31 +374,81 @@
   display: none;
 }
 
-/* 업로드된 파일 리스트 영역 — 카드 처리, padding 20px, 리스트 간 갭 20px */
+/* 파일 검색 인풋 — 스펙: height 44px, padding 0 14px, gap 8px, border-radius 8px, border #C4CDD1 */
+.enrollment-program-detail-modal__files-search-wrap {
+  flex-shrink: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+.enrollment-program-detail-modal__files-search.ant-input-affix-wrapper,
+.enrollment-program-detail-modal__files-search {
+  display: flex;
+  height: 44px;
+  padding: 0 14px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #C4CDD1;
+  background: var(--default-WT, #FFF);
+  width: 100%;
+  box-sizing: border-box;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+}
+
+.enrollment-program-detail-modal__files-search .ant-input {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.enrollment-program-detail-modal__files-search .ant-input::placeholder {
+  overflow: hidden;
+  color: #85969D;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.enrollment-program-detail-modal__files-search-icon {
+  color: var(--color-text-tertiary);
+}
+
+/* 업로드된 파일 리스트 — 세로 간격, 스크롤 */
 .enrollment-program-detail-modal__files-list {
   flex: 1;
   min-height: 0;
+  width: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-light, #e8e8e8);
-  background: var(--color-bg-base);
+  gap: 12px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   box-sizing: border-box;
 }
 
-/* 게시글 카드 */
+/* 게시글 카드 — 게시글 래퍼와 동일 1094px, 최대 1094×248 패딩 포함 */
 .enrollment-program-detail-modal__post-card {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-light, #e8e8e8);
-  background: var(--color-bg-base);
+  width: 100%;
+  min-width: 0;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #D4D4D4;
+  background: var(--default-WT, #FFF);
+  max-width: 1094px;
+  max-height: 248px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.enrollment-program-detail-modal__post-card--unread {
-  border: 1px solid var(--JA-mint-01, #01a1af);
+/* 선택된 게시글에만 활성 보더 */
+.enrollment-program-detail-modal__post-card--selected {
+  border-color: var(--JA-mint-01, #01a1af);
 }
 
 .enrollment-program-detail-modal__post-card {
@@ -394,7 +460,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .enrollment-program-detail-modal__post-author {
@@ -409,8 +475,6 @@
   height: 48px;
   min-width: 48px;
   min-height: 48px;
-  border-radius: 50%;
-  background: var(--color-border-light, #e8e8e8);
   flex-shrink: 0;
 }
 
@@ -435,26 +499,34 @@
   margin-top: 2px;
 }
 
-/* 읽음/읽지 않음 태그 — 스펙 §4 */
+/* 읽음/읽지 않음 배지 — 76×30, 스펙 */
 .enrollment-program-detail-modal__read-tag {
   display: flex;
-  padding: 3px 8px;
+  padding: 4px 12px 5px 12px;
   justify-content: center;
   align-items: center;
   gap: 10px;
   border-radius: 50px;
-  font-size: 12px;
+  min-width: 76px;
+  height: 30px;
+  box-sizing: border-box;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 500;
-  color: var(--color-text-primary);
+  line-height: 150%;
+  text-align: center;
   flex-shrink: 0;
 }
 
 .enrollment-program-detail-modal__read-tag--unread {
-  background: rgba(1, 161, 175, 0.1);
+  background: rgba(1, 161, 175, 0.10);
+  color: var(--JA-mint-01, #01a1af);
 }
 
 .enrollment-program-detail-modal__read-tag--read {
-  background: rgba(51, 51, 51, 0.1);
+  background: rgba(51, 51, 51, 0.10);
+  color: var(--default-BK, #3d3d3d);
 }
 
 /* 게시글 상태 태그 + 본문 한 줄 정렬 */
@@ -463,7 +535,7 @@
   align-items: baseline;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   min-width: 0;
 }
 
@@ -487,6 +559,7 @@
   line-height: 170%;
 }
 
+/* ...더보기 — 세 줄 이상일 때 노출, 스펙 */
 .enrollment-program-detail-modal__post-more {
   display: block;
   width: 100%;
@@ -497,14 +570,17 @@
   background: none;
   cursor: pointer;
   text-align: left;
+  color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 500;
-  color: var(--color-text-secondary, #8c8c8c);
+  line-height: 170%;
+  opacity: 0.5;
 }
 
 .enrollment-program-detail-modal__post-more:hover {
-  color: var(--default-BK, #3d3d3d);
+  opacity: 0.8;
 }
 
 /* 첨부파일 — 읽음/이모티콘/메시지와 같은 메타 행 레벨 */
@@ -603,11 +679,19 @@
   mask-type: alpha;
 }
 
-/* 파일 항목 — 디바이더 없음, 갭은 상위 .enrollment-program-detail-modal__files-list gap 20px */
+/* 업로드된 파일 위젯 — 372×82, padding 16px 12px 16px 16px, 배경 #F5F6F7, 아이콘 48×48 */
 .enrollment-program-detail-modal__file-item {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  padding: 16px 12px 16px 16px;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: 8px;
+  background: #F5F6F7;
+  box-sizing: border-box;
+  width: 372px;
+  max-width: 100%;
+  min-height: 82px;
 }
 
 .enrollment-program-detail-modal__file-icon {
@@ -617,16 +701,37 @@
   min-height: 48px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #FFF;
+  -webkit-text-stroke-width: 0.5px;
+  -webkit-text-stroke-color: var(--White, #FFF);
+  font-family: "Varela Round", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.7px;
   background: var(--color-border-light, #e8e8e8);
 }
 
 .enrollment-program-detail-modal__file-icon[data-type='pdf'] {
-  background: rgba(220, 53, 69, 0.15);
+  background: #dc3545;
 }
 
 .enrollment-program-detail-modal__file-icon[data-type='xls'],
 .enrollment-program-detail-modal__file-icon[data-type='xlsx'] {
-  background: rgba(40, 167, 69, 0.15);
+  background: #28a745;
+}
+
+.enrollment-program-detail-modal__file-icon[data-type='png'],
+.enrollment-program-detail-modal__file-icon[data-type='jpg'],
+.enrollment-program-detail-modal__file-icon[data-type='jpeg'],
+.enrollment-program-detail-modal__file-icon[data-type='gif'],
+.enrollment-program-detail-modal__file-icon[data-type='webp'] {
+  background: var(--JA-mint-01, #01a1af);
 }
 
 .enrollment-program-detail-modal__file-info {
@@ -636,14 +741,47 @@
 
 .enrollment-program-detail-modal__file-name {
   overflow: hidden;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--default-BK, #3D3D3D);
   text-overflow: ellipsis;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
   white-space: nowrap;
+}
+
+.enrollment-program-detail-modal__file-meta {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--default-BK, #3D3D3D);
+  text-overflow: ellipsis;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+}
+
+.enrollment-program-detail-modal__file-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal__file-menu-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-overlay-light, rgba(0, 0, 0, 0.04));
 }
 
 .enrollment-program-detail-modal__file-origin-link {
