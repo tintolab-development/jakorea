@@ -192,6 +192,12 @@
   border-top: none;
 }
 
+/* 첫 번째 블록(기본 정보): 상단 여백 제거 */
+.program-detail-fullpage-modal__info-tab > .program-detail-fullpage-modal__info-tab-block:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
 /* 항목 타이틀과 테이블 사이 갭 10px (공통 정보 탭과 동일) */
 .program-detail-fullpage-modal__info-tab .program-detail-info-tab__section-title {
   margin-bottom: 10px;

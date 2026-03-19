@@ -3,9 +3,13 @@
  * 테이블·섹션 타이틀 UI는 program-detail-info-tab.css 재사용 (네이티브 table)
  */
 
-.school-detail-fullpage-view__tabs-row {
-  padding-left: 0;
-  padding-right: 0;
+/* 교육기관 상세: 탭 행 패딩 제거, 하단만 32px */
+.school-detail-fullpage-view .program-detail-fullpage-modal__tabs-row {
+  padding: 0 0 32px 0;
+}
+
+.school-detail-fullpage-view .program-detail-fullpage-modal__info-tab {
+  padding: 0;
 }
 
 .school-detail-fullpage-view__content {
