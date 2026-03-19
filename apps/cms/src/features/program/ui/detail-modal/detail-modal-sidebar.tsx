@@ -1,13 +1,13 @@
 import React, { useId } from 'react'
 import './detail-modal-sidebar.css'
 
-export const TAB_KEYS = ['info', 'participants', 'instructors', 'volunteers'] as const
+export const TAB_KEYS = ['info', 'institutions', 'instructors', 'volunteers'] as const
 export type TabKey = (typeof TAB_KEYS)[number]
 
-/** 탭 카테고리 라벨 (공통 정보 / 참여자 정보 / 강사 정보 / 봉사자 정보) */
+/** 탭 카테고리 라벨 (공통 정보 / 기관 정보 / 강사 정보 / 봉사자 정보) */
 export const TAB_LABELS: Record<TabKey, string> = {
   info: '공통 정보',
-  participants: '참여자 정보',
+  institutions: '기관 정보',
   instructors: '강사 정보',
   volunteers: '봉사자 정보',
 }
@@ -236,14 +236,14 @@ function LnbArrowDown(props: React.SVGProps<SVGSVGElement>) {
 
 /** 신청자 목록 하위 메뉴 */
 const APPLICANTS_CHILDREN: { key: TabKey; label: string }[] = [
-  { key: 'participants', label: '신청 기관' },
+  { key: 'institutions', label: '신청 기관' },
   { key: 'instructors', label: '신청 강사' },
   { key: 'volunteers', label: '신청 봉사자' },
 ]
 
 /** 프로그램 진행 현황 하위 메뉴 (참여 기관 / 참여 강사 / 참여 봉사자) */
 const PROGRESS_CHILDREN: { key: TabKey; label: string }[] = [
-  { key: 'participants', label: '참여 기관' },
+  { key: 'institutions', label: '참여 기관' },
   { key: 'instructors', label: '참여 강사' },
   { key: 'volunteers', label: '참여 봉사자' },
 ]
@@ -356,9 +356,9 @@ export function DetailModalSidebar({
                   className={`program-detail-fullpage-modal__lnb-item ${activeLnb === item.key ? 'program-detail-fullpage-modal__lnb-item--active' : ''}`}
                   onClick={() => {
                     if (activeLnb === 'progress') {
-                      onSelectLnb('progress', activeProgressChild || 'participants')
+                      onSelectLnb('progress', activeProgressChild || 'institutions')
                     } else {
-                      onSelectLnb('progress', 'participants')
+                      onSelectLnb('progress', 'institutions')
                     }
                   }}
                 >

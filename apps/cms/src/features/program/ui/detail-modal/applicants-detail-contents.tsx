@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Tabs, Space, Table, Empty } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-schools'
+import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import './applicants-detail-contents.css'
 
-export type ApplicantType = 'participants' | 'instructors' | 'volunteers'
+export type ApplicantType = 'institutions' | 'instructors' | 'volunteers'
 
 interface ApplicantsDetailContentsProps {
   type: ApplicantType
@@ -33,24 +33,27 @@ export function ApplicantsDetailContents({
 }: ApplicantsDetailContentsProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'extra'>('info')
 
-  const isSchool = type === 'participants'
+  const isInstitution = type === 'institutions'
   const isInstructor = type === 'instructors'
 
-  const schoolData = isSchool ? (data as ApplicantSchoolRow) : null
+  const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
 
   /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [정보상세 보기] */
-  const isApprovedSchool = isSchool && schoolData?.approvalStatus === 'approved'
+  const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
 
   /** 신청 강사 승인 완료: [승인 취소] [정보상세 보기] */
   const isApprovedInstructor = isInstructor && instructorData?.approvalStatus === 'approved'
+
+  /** 신청 기관 반려: [반려 취소] [정보상세 보기] */
+  const isRejectedInstitution = isInstitution && institutionData?.approvalStatus === 'rejected'
 
   /** 신청 강사 반려: [반려 취소] [정보상세 보기] */
   const isRejectedInstructor = isInstructor && instructorData?.approvalStatus === 'rejected'
 
   const renderInstitutionInfo = () => {
-    if (!schoolData) return null
-    return <ApplicantInstitutionBasicInfo school={schoolData} />
+    if (!institutionData) return null
+    return <ApplicantInstitutionBasicInfo institution={institutionData} />
   }
 
   const renderInstructorInfo = () => {
@@ -68,7 +71,7 @@ export function ApplicantsDetailContents({
   }
 
   const renderExtraTab = () => {
-    if (isSchool) {
+    if (isInstitution) {
       const columns = [
         { title: 'No.', dataIndex: 'no', key: 'no', width: 60 },
         { title: '이름', dataIndex: 'name', key: 'name' },
@@ -104,7 +107,7 @@ export function ApplicantsDetailContents({
   }
 
   const renderHeaderButtons = () => {
-    if (isApprovedSchool) {
+    if (isApprovedInstitution) {
       return (
         <Space size="middle" className="applicant-contents__header-actions">
           <AppButton
@@ -141,30 +144,31 @@ export function ApplicantsDetailContents({
         </Space>
       )
     }
-    if (isRejectedInstructor) {
+    if (isRejectedInstructor || isRejectedInstitution) {
       return (
         <Space size="middle" className="applicant-contents__header-actions">
           <AppButton
             variant="danger"
             onClick={() => onCancelReject?.(data.id)}
             disabled={!onCancelReject}
+            size="filter"
           >
             반려 취소
           </AppButton>
-          <AppButton variant="primary" onClick={onBack}>
+          <AppButton variant="primary" size="filter" onClick={onBack}>
             정보상세 보기
           </AppButton>
         </Space>
       )
     }
-    if (isSchool) {
+    if (isInstitution) {
       return (
         <Space size="middle" className="applicant-contents__header-actions">
           <AppButton variant="danger" size="filter" onClick={() => onReject(data.id)}>
-            신청 반려
+            참여 반려
           </AppButton>
-          <AppButton variant="primary" size="filter" onClick={() => onApprove(data.id)}>
-            선택 승인
+          <AppButton variant="cancel" size="filter" onClick={() => onApprove(data.id)}>
+            참여 승인
           </AppButton>
           <AppButton variant="primary" size="filter" onClick={onBack}>
             정보상세 보기
@@ -202,13 +206,13 @@ export function ApplicantsDetailContents({
             {
               key: 'info',
               label: '기본 정보',
-              children: isSchool ? renderInstitutionInfo() : renderInstructorInfo(),
+              children: isInstitution ? renderInstitutionInfo() : renderInstructorInfo(),
             },
             {
               key: 'extra',
-              label: isSchool ? '학생 명단' : '강사 이력서',
+              label: isInstitution ? '학생 명단' : '강사 이력서',
               children: renderExtraTab(),
-              disabled: isSchool,
+              disabled: isInstitution,
             },
           ]}
         />

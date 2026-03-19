@@ -1,6 +1,6 @@
 /**
  * 참여 기관 페이지(풀페이지 모달) 필터 쿼리 파라미터 연동
- * lnb=progress&tab=participants 일 때 기관명·지역·학년·교재배송현황·담당교사강사명
+ * lnb=progress&tab=institutions 일 때 기관명·지역·학년·교재배송현황·담당교사강사명
  */
 
 import { useMemo, useCallback, useState } from 'react'

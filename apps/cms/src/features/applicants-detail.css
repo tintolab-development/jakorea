@@ -1,49 +1,12 @@
-/* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
-/* 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
-.applicant-details .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 53px;
-  min-height: 53px;
-  max-height: 53px;
-  overflow: visible;
+/* 프로그램 승인 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(상세 모달) 방지 */
+.applicant-details__approval-dropdown-cell {
+  position: relative;
+  z-index: 1;
 }
 
-/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 */
-.applicant-details .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
-  padding-top: 0;
-  padding-bottom: 0;
-  overflow: visible;
-  box-sizing: border-box;
-}
-
-/* 선택된 태그 오버레이(트리거) 152px 고정 */
-.applicant-details .status-dropdown-cell__status-trigger--open {
-  box-sizing: border-box !important;
-  width: 152px !important;
-  min-width: 152px !important;
-  max-width: 152px !important;
-}
-
-/* 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
-.applicant-details .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
-  height: 53px !important;
-  min-height: 53px !important;
-  max-height: 53px !important;
-}
-
-/* 해당 셀 vertical padding 0 — vertical UI shifting 방지 */
-.applicant-details .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+.applicant-details__approval-dropdown-trigger {
+  cursor: pointer;
+  display: inline-block;
 }
 
 /* 테이블 스크롤 영역 (pagination 제거, infinite scroll) */
