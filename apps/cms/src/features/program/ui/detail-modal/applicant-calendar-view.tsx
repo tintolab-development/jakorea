@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Calendar, Button, Spin, Segmented } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -11,16 +11,68 @@ import './applicant-calendar-view.css'
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-/** 학교/강사별 색상 팔레트 — primary: 좌측 accent, light: 배경 (스크린샷: pink, green, cyan 등) */
-const SCHEDULE_COLOR_BASE: { primary: string; light: string }[] = [
-  { primary: '#E91E63', light: '#FCE4EC' }, // pink
-  { primary: '#4CAF50', light: '#E8F5E9' }, // green/mint
-  { primary: '#00BCD4', light: '#E0F7FA' }, // cyan
-  { primary: '#9C27B0', light: '#F3E5F5' }, // purple
-  { primary: '#FF9800', light: '#FFF3E0' }, // orange
-  { primary: '#2196F3', light: '#E3F2FD' }, // blue
-  { primary: '#795548', light: '#EFEBE9' }, // brown
-  { primary: '#607D8B', light: '#ECEFF1' }, // blue grey
+/** 학교/강사별 색상 팔레트 — primary: 좌측 accent, light: 배경 (opacity 0.8) */
+const SCHEDULE_COLOR_BASE: { primary: string; light: string; border: string }[] = [
+  {
+    primary: 'rgba(233, 30, 99, 0.8)',
+    light: 'rgba(252, 228, 236, 0.6)',
+    border: 'rgba(233, 30, 99, 0.7)',
+  }, // pink
+  {
+    primary: 'rgba(76, 175, 80, 0.8)',
+    light: 'rgba(232, 245, 233, 0.6)',
+    border: 'rgba(76, 175, 80, 0.7)',
+  }, // green/mint
+  {
+    primary: 'rgba(0, 188, 212, 0.8)',
+    light: 'rgba(224, 247, 250, 0.6)',
+    border: 'rgba(0, 188, 212, 0.7)',
+  }, // cyan
+  {
+    primary: 'rgba(255, 152, 0, 0.8)',
+    light: 'rgba(255, 243, 224, 0.6)',
+    border: 'rgba(255, 152, 0, 0.7)',
+  }, // orange
+  {
+    primary: 'rgba(121, 85, 72, 0.8)',
+    light: 'rgba(239, 235, 233, 0.6)',
+    border: 'rgba(121, 85, 72, 0.7)',
+  }, // brown
+  {
+    primary: 'rgba(96, 125, 139, 0.8)',
+    light: 'rgba(236, 239, 241, 0.6)',
+    border: 'rgba(96, 125, 139, 0.7)',
+  }, // blue grey
+  {
+    primary: 'rgba(255, 235, 59, 0.8)',
+    light: 'rgba(255, 249, 196, 0.6)',
+    border: 'rgba(255, 235, 59, 0.7)',
+  }, // 연한 노란색
+  {
+    primary: 'rgba(79, 195, 247, 0.8)',
+    light: 'rgba(179, 229, 252, 0.6)',
+    border: 'rgba(79, 195, 247, 0.7)',
+  }, // 연한 하늘색
+  {
+    primary: 'rgba(244, 143, 177, 0.8)',
+    light: 'rgba(252, 228, 236, 0.6)',
+    border: 'rgba(244, 143, 177, 0.7)',
+  }, // 연한 분홍색
+  {
+    primary: 'rgba(129, 199, 132, 0.8)',
+    light: 'rgba(232, 245, 233, 0.7)',
+    border: 'rgba(129, 199, 132, 0.7)',
+  }, // 연한 연두색
+  {
+    primary: 'rgba(179, 157, 219, 0.8)',
+    light: 'rgba(243, 229, 245, 0.6)',
+    border: 'rgba(179, 157, 219, 0.7)',
+  }, // 연한 보라색
+  {
+    primary: 'rgba(248, 187, 208, 0.8)',
+    light: 'rgba(252, 228, 236, 0.8)',
+    border: 'rgba(248, 187, 208, 0.7)',
+  }, // 연한 분홍색 (파스텔)
 ]
 
 function getEntityKey(event: any): string {
@@ -66,11 +118,43 @@ export function ApplicantCalendarView({
     return map
   }, [events, colorPalette])
 
-  const getColorForEvent = (event: any) => {
-    const key = getEntityKey(event)
-    const idx = entityToColorIndex.get(key) ?? 0
-    return colorPalette[idx]
-  }
+  /** 인접한 서로 다른 엔티티 간 동일 색상 방지. 이미 사용된 색은 최대한 재사용하지 않고 미사용 색 우선 배정 */
+  const buildResolvedColorMap = useCallback(
+    (eventList: any[]) => {
+      const map = new Map<string, (typeof colorPalette)[0]>()
+      const usedIndices = new Set<number>()
+      let prevIdx = -1
+      let prevKey = ''
+
+      eventList.forEach(ev => {
+        const key = getEntityKey(ev)
+        let idx = entityToColorIndex.get(key) ?? 0
+
+        // 서로 다른 엔티티가 인접한데 같은 색이면 → 미사용 색 우선, 없으면 다음 색
+        if (prevIdx >= 0 && idx === prevIdx && key !== prevKey) {
+          let altIdx = -1
+          for (let i = 0; i < colorPalette.length; i++) {
+            if (!usedIndices.has(i) && i !== prevIdx) {
+              altIdx = i
+              break
+            }
+          }
+          if (altIdx >= 0) {
+            idx = altIdx
+          } else {
+            idx = (prevIdx + 1) % colorPalette.length
+          }
+        }
+
+        usedIndices.add(idx)
+        prevIdx = idx
+        prevKey = key
+        map.set(ev.id, colorPalette[idx])
+      })
+      return map
+    },
+    [entityToColorIndex, colorPalette]
+  )
 
   // 메인 캘린더 높이 측정하여 우측 패널에 적용
   useEffect(() => {
@@ -92,6 +176,16 @@ export function ApplicantCalendarView({
       return date.isSameOrAfter(start, 'day') && date.isSameOrBefore(end, 'day')
     })
   }
+
+  const dayEvents = useMemo(() => getEventsForDate(selectedDate), [events, selectedDate])
+  const scheduleListColorMap = useMemo(
+    () => buildResolvedColorMap(dayEvents),
+    [dayEvents, buildResolvedColorMap]
+  )
+  const getColorForScheduleList = useCallback(
+    (event: any) => scheduleListColorMap.get(event.id) ?? colorPalette[0],
+    [scheduleListColorMap, colorPalette]
+  )
 
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date)
@@ -183,23 +277,26 @@ export function ApplicantCalendarView({
         </div>
         {hasEvents && (
           <div className="applicant-calendar-cell-events">
-            {dayEvents.slice(0, 2).map(event => {
-              const displayTitle = event.title.replace(/^\[.*?\]\s*/, '')
-              const isEventSelected = selectedRowKeys.includes(event.id)
-              const color = getColorForEvent(event)
-              return (
-                <div
-                  key={event.id}
-                  className={`applicant-calendar-event ${isEventSelected ? 'applicant-calendar-event--selected' : ''}`}
-                  style={{
-                    backgroundColor: color.light,
-                    ...(isEventSelected && { boxShadow: '0 0 0 2px #1890ff' }),
-                  }}
-                >
-                  <span className="applicant-calendar-event-title">{displayTitle}</span>
-                </div>
-              )
-            })}
+            {(() => {
+              const resolvedMap = buildResolvedColorMap(dayEvents)
+              return dayEvents.slice(0, 2).map(event => {
+                const displayTitle = event.title.replace(/^\[.*?\]\s*/, '')
+                const isEventSelected = selectedRowKeys.includes(event.id)
+                const color = resolvedMap.get(event.id) ?? colorPalette[0]
+                return (
+                  <div
+                    key={event.id}
+                    className={`applicant-calendar-event ${isEventSelected ? 'applicant-calendar-event--selected' : ''}`}
+                    style={{
+                      backgroundColor: color.light,
+                      ...(isEventSelected && { boxShadow: '0 0 0 2px #1890ff' }),
+                    }}
+                  >
+                    <span className="applicant-calendar-event-title">{displayTitle}</span>
+                  </div>
+                )
+              })
+            })()}
             {dayEvents.length > 2 && (
               <div className="applicant-calendar-event-more">
                 외 {dayEvents.length - 2}개의 일정
@@ -239,11 +336,11 @@ export function ApplicantCalendarView({
       >
         <ApplicantScheduleList
           selectedDate={selectedDate}
-          events={getEventsForDate(selectedDate)}
+          events={dayEvents}
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={onSelectionChange}
           onEventClick={onItemClick}
-          getColorForEvent={getColorForEvent}
+          getColorForEvent={getColorForScheduleList}
         />
       </div>
     </div>

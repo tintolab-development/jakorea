@@ -8,7 +8,7 @@ interface ApplicantScheduleListProps {
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
   onEventClick: (item: any) => void
-  getColorForEvent?: (event: any) => { primary: string; light: string }
+  getColorForEvent?: (event: any) => { primary: string; light: string; border: string }
 }
 
 export function ApplicantScheduleList({
@@ -30,10 +30,7 @@ export function ApplicantScheduleList({
     <div className="applicant-schedule-list">
       <div className="applicant-schedule-list-content">
         {events.length === 0 ? (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="해당 날짜에 일정이 없습니다"
-          />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
         ) : (
           events.map(event => {
             const isSelected = selectedRowKeys.includes(event.id)
@@ -44,7 +41,7 @@ export function ApplicantScheduleList({
             const originalItem = event.originalItem
             const grade = originalItem?.educationGrade || originalItem?.desiredGrade || ''
             const periodInfo = originalItem?.desiredEducationPeriod || ''
-            
+
             // Extract "1교시 (9:20 ~ 10:10)" from period info if possible
             // Format expected: "2026-01-09 09:20 - 10:10"
             let sessionInfo = ''
@@ -64,18 +61,30 @@ export function ApplicantScheduleList({
                   color
                     ? {
                         backgroundColor: color.light,
+                        border: `1px solid ${color.border}`,
                       }
                     : undefined
                 }
               >
-                <div className="applicant-schedule-item-checkbox" onClick={() => handleToggleSelection(event.id)}>
+                <div
+                  className="applicant-schedule-item-checkbox"
+                  onClick={() => handleToggleSelection(event.id)}
+                >
                   <Checkbox checked={isSelected} />
                 </div>
-                <div className="applicant-schedule-item-info" onClick={() => onEventClick(originalItem)}>
+                <div
+                  className="applicant-schedule-item-info"
+                  onClick={() => onEventClick(originalItem)}
+                >
                   <div className="applicant-schedule-item-title">{displayTitle}</div>
                   <div className="applicant-schedule-item-detail">
-                    {sessionInfo && <span>{sessionInfo}</span>}
-                    {sessionInfo && grade && <span className="detail-divider">|</span>}
+                    {sessionInfo ? (
+                      <span>{sessionInfo}</span>
+                    ) : (
+                      <>
+                        <span>시간 정보 없음</span> <span className="detail-divider">|</span>
+                      </>
+                    )}
                     {grade && <span>{grade}</span>}
                   </div>
                 </div>

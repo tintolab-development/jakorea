@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Tabs, Space, Table, Empty } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
@@ -9,6 +10,16 @@ import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import './applicants-detail-contents.css'
 
 export type ApplicantType = 'institutions' | 'instructors' | 'volunteers'
+
+const DETAIL_TAB_PARAM = 'detailTab'
+const DETAIL_TAB_KEYS = ['info', 'extra'] as const
+type DetailTabKey = (typeof DETAIL_TAB_KEYS)[number]
+
+function parseDetailTabFromSearch(searchParams: URLSearchParams): DetailTabKey {
+  const t = searchParams.get(DETAIL_TAB_PARAM)
+  if (t && DETAIL_TAB_KEYS.includes(t as DetailTabKey)) return t as DetailTabKey
+  return 'info'
+}
 
 interface ApplicantsDetailContentsProps {
   type: ApplicantType
@@ -31,7 +42,25 @@ export function ApplicantsDetailContents({
   onCancelApproval,
   onCancelReject,
 }: ApplicantsDetailContentsProps) {
-  const [activeTab, setActiveTab] = useState<'info' | 'extra'>('info')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const activeTab = useMemo(
+    (): DetailTabKey => parseDetailTabFromSearch(searchParams),
+    [searchParams]
+  )
+
+  const setActiveTab = useCallback(
+    (key: DetailTabKey) => {
+      const next = new URLSearchParams(searchParams)
+      if (key === 'info') {
+        next.delete(DETAIL_TAB_PARAM)
+      } else {
+        next.set(DETAIL_TAB_PARAM, key)
+      }
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
 
   const isInstitution = type === 'institutions'
   const isInstructor = type === 'instructors'
@@ -199,7 +228,7 @@ export function ApplicantsDetailContents({
       <div className="applicant-contents__tabs-wrap">
         <Tabs
           activeKey={activeTab}
-          onChange={key => setActiveTab(key as any)}
+          onChange={key => setActiveTab(key as DetailTabKey)}
           className="applicant-contents__tabs"
           tabBarExtraContent={renderHeaderButtons()}
           items={[
