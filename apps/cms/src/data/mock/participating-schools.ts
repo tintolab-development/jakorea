@@ -144,6 +144,9 @@ const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
 
 const SESSION_STATUSES: ParticipatingSchoolSessionStatusKey[] = ['completed', 'pending', 'not_planned']
 
+/** 3월 중 하루: 캘린더 "외 n개의 일정" 확인용 — 이 날짜에 4개 학교 일정이 겹침 */
+const MARCH_MULTI_DAY = '2026.03.12'
+
 function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   const sessionCount = 1 + (rowIndex % 5)
   const sessions: ParticipatingSchoolSession[] = []
@@ -167,11 +170,31 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   return sessions
 }
 
+/** 3월 12일 한 날에 4개 학교 일정 추가 (월간 캘린더 "외 n개의 일정" 노출용) */
+function addMarchMultiDaySessions(
+  sessions: ParticipatingSchoolSession[],
+  rowIndex: number,
+): ParticipatingSchoolSession[] {
+  const marchDaySchools = [0, 1, 2, 3]
+  if (!marchDaySchools.includes(rowIndex)) return sessions
+  const d = new Date(2026, 2, 12)
+  const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
+  const extra: ParticipatingSchoolSession[] = [
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '오프라인', classNum: '1', timeRange: '9:20~10:10', status: 'pending' },
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '온라인', classNum: '2', timeRange: '10:20~11:10', status: 'pending' },
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '오프라인', classNum: '3', timeRange: '11:20~12:10', status: 'pending' },
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '온라인', classNum: '4', timeRange: '14:00~14:50', status: 'pending' },
+  ]
+  return [...sessions, extra[rowIndex]]
+}
+
 function buildMockList(count: number): ParticipatingSchoolRow[] {
   const rows: ParticipatingSchoolRow[] = []
   for (let i = 0; i < count; i++) {
     const idx = i % SCHOOL_NAMES.length
     const statusIdx = i % textbookStatuses.length
+    const baseSessions = buildSessionsForRow(i)
+    const sessions = addMarchMultiDaySessions(baseSessions, i)
     rows.push({
       id: `school-${i + 1}`,
       no: count - i,
@@ -185,7 +208,7 @@ function buildMockList(count: number): ParticipatingSchoolRow[] {
       approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
       instructors: INSTRUCTOR_SAMPLES[i % INSTRUCTOR_SAMPLES.length],
-      sessions: buildSessionsForRow(i),
+      sessions,
     })
   }
   return rows

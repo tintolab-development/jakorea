@@ -39,18 +39,20 @@ export function ApplicantScheduleList({
 
             // Extract info from original item if available
             const originalItem = event.originalItem
-            const grade = originalItem?.educationGrade || originalItem?.desiredGrade || ''
+            const rawGrade = originalItem?.educationGrade || originalItem?.desiredGrade || ''
+            const grade = rawGrade ? (rawGrade.endsWith('학년') ? rawGrade : `${rawGrade}학년`) : ''
             const periodInfo = originalItem?.desiredEducationPeriod || ''
 
-            // Extract "1교시 (9:20 ~ 10:10)" from period info if possible
-            // Format expected: "2026-01-09 09:20 - 10:10"
-            let sessionInfo = ''
-            if (periodInfo) {
-              const match = periodInfo.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/)
+            // "N교시 (H:MM ~ H:MM)" 형식이면 그대로, 아니면 기존 시간만 추출
+            let sessionInfo = periodInfo
+            if (periodInfo && !periodInfo.includes('교시')) {
+              const match = periodInfo.match(/(\d{1,2}:\d{2})\s*[-~]\s*(\d{1,2}:\d{2})/)
               if (match) {
                 sessionInfo = `${match[1]} ~ ${match[2]}`
               }
             }
+
+            const hasDetail = sessionInfo || grade
 
             return (
               <div
@@ -77,16 +79,13 @@ export function ApplicantScheduleList({
                   onClick={() => onEventClick(originalItem)}
                 >
                   <div className="applicant-schedule-item-title">{displayTitle}</div>
-                  <div className="applicant-schedule-item-detail">
-                    {sessionInfo ? (
-                      <span>{sessionInfo}</span>
-                    ) : (
-                      <>
-                        <span>시간 정보 없음</span> <span className="detail-divider">|</span>
-                      </>
-                    )}
-                    {grade && <span>{grade}</span>}
-                  </div>
+                  {hasDetail && (
+                    <div className="applicant-schedule-item-detail">
+                      {sessionInfo && <span>{sessionInfo}</span>}
+                      {sessionInfo && grade && <span className="applicant-schedule-item-detail-divider">|</span>}
+                      {grade && <span>{grade}</span>}
+                    </div>
+                  )}
                 </div>
               </div>
             )

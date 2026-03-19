@@ -752,9 +752,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
               <div className="applicant-details__table-header">
                 <div className="applicant-details__table-heading">
                   <span className="applicant-details__table-title">{title}</span>
-                  <span className="applicant-details__table-description">
-                    {tableData.length}건
-                  </span>
+                  <span className="applicant-details__table-description">{tableData.length}건</span>
                 </div>
                 <div className="applicant-details__table-actions">
                   <div style={{ display: 'flex', gap: '8px' }}>
