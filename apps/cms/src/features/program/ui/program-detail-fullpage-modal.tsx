@@ -24,6 +24,7 @@ import { InstructorDetailInfoSection } from './instructor-detail-info-section'
 import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
 import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
 import { ParticipatingInstitutionsSection } from './participating-institutions-section'
+import { ParticipatingInstructorsSection } from './participating-instructors-section'
 import { ApplicantDetails } from './detail-modal/applicants-detail'
 import type { Program } from '@/types/domain'
 import {
@@ -699,12 +700,7 @@ export function ProgramDetailFullPageModal({
                       />
                     )}
                     {activeProgressChild === 'instructors' && (
-                      <div className="program-detail-fullpage-modal__progress-section">
-                        <Typography.Title level={5}>참여 강사</Typography.Title>
-                        <Typography.Text type="secondary">
-                          참여 강사 목록 및 현황이 표시됩니다.
-                        </Typography.Text>
-                      </div>
+                      <ParticipatingInstructorsSection programId={displayProgram?.id} />
                     )}
                     {activeProgressChild === 'volunteers' && (
                       <div className="program-detail-fullpage-modal__progress-section">
