@@ -61,10 +61,8 @@
 
 .post-detail-modal__avatar {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--color-border-input, #d9d9d9);
+  width: 48px;
+  height: 48px;
 }
 
 .post-detail-modal__author-info {

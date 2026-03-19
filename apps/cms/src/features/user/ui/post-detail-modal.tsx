@@ -8,6 +8,7 @@ import { TealHeaderModal } from '@/shared/ui'
 import { AppButton } from '@/shared/ui'
 import type { ProgramPost, ProgramFile } from '@/types/domain'
 import dayjs from 'dayjs'
+import { ProfileAvatarIcon } from '@/shared/components/profile-avatar-icon'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -184,7 +185,7 @@ export function PostDetailModal({ open, onCancel, post, files }: PostDetailModal
         {/* ── 게시글 카드 ── */}
         <div className="post-detail-modal__card">
           <div className="post-detail-modal__card-header">
-            <div className="post-detail-modal__avatar" />
+            <ProfileAvatarIcon className="post-detail-modal__avatar" />
             <div className="post-detail-modal__author-info">
               <span className="post-detail-modal__author-name">{post.authorName}</span>
               <div className="post-detail-modal__author-meta">
@@ -230,7 +231,7 @@ export function PostDetailModal({ open, onCancel, post, files }: PostDetailModal
         <div className="post-detail-modal__comments-card">
           {comments.map(comment => (
             <div key={comment.id} className="post-detail-modal__comment">
-              <div className="post-detail-modal__avatar" />
+              <ProfileAvatarIcon className="post-detail-modal__avatar" />
               <div className="post-detail-modal__comment-body">
                 <div className="post-detail-modal__comment-header">
                   <span className="post-detail-modal__comment-author">{comment.authorName}</span>
@@ -244,7 +245,7 @@ export function PostDetailModal({ open, onCancel, post, files }: PostDetailModal
           ))}
 
           <div className="post-detail-modal__comment-input-row">
-            <div className="post-detail-modal__avatar" />
+            <ProfileAvatarIcon className="post-detail-modal__avatar" />
             <input
               className="post-detail-modal__comment-input"
               placeholder="댓글을 남겨보세요"
