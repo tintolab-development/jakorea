@@ -148,9 +148,19 @@
   border-color: #d9d9d9;
 }
 
+/* 학교별 색상 적용 시 hover: 배경 약간 어둡게 */
+.applicant-schedule-item[data-has-color='true']:hover {
+  filter: brightness(0.97);
+}
+
 .applicant-schedule-item--selected {
   background: #e6f7ff;
   border-color: #1890ff;
+}
+
+/* 학교별 색상 + 선택 시: accent 유지, 선택 링 표시 */
+.applicant-schedule-item[data-has-color='true'].applicant-schedule-item--selected {
+  box-shadow: 0 0 0 2px #1890ff;
 }
 
 .applicant-schedule-item-title {

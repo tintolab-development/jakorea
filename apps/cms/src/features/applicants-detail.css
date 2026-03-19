@@ -31,13 +31,12 @@
   background-color: #fafafa !important;
 }
 
-/* 강의 회차 별 희망 교육 날짜 및 시간 셀 */
+/* 강의 회차 별 희망 교육 날짜 및 시간 셀 (모달 내부 col 겹침 방지) */
 .applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  width: 1%;
-  max-width: max-content;
+  width: 200px;
+  min-width: 200px;
   white-space: normal;
   padding: 12px 24px !important;
-  min-width: 0;
   vertical-align: top;
   box-sizing: border-box;
 }

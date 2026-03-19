@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Calendar, Button, Spin, Segmented } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -10,6 +10,25 @@ import './applicant-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
+
+/** 학교/강사별 색상 팔레트 — primary: 좌측 accent, light: 배경 (스크린샷: pink, green, cyan 등) */
+const SCHEDULE_COLOR_BASE: { primary: string; light: string }[] = [
+  { primary: '#E91E63', light: '#FCE4EC' }, // pink
+  { primary: '#4CAF50', light: '#E8F5E9' }, // green/mint
+  { primary: '#00BCD4', light: '#E0F7FA' }, // cyan
+  { primary: '#9C27B0', light: '#F3E5F5' }, // purple
+  { primary: '#FF9800', light: '#FFF3E0' }, // orange
+  { primary: '#2196F3', light: '#E3F2FD' }, // blue
+  { primary: '#795548', light: '#EFEBE9' }, // brown
+  { primary: '#607D8B', light: '#ECEFF1' }, // blue grey
+]
+
+function getEntityKey(event: any): string {
+  const item = event?.originalItem
+  if (item?.schoolName) return item.schoolName
+  if (item?.instructorName) return item.instructorName
+  return event?.title?.replace(/^\[.*?\]\s*/, '') ?? ''
+}
 
 interface ApplicantCalendarViewProps {
   events: any[]
@@ -31,6 +50,27 @@ export function ApplicantCalendarView({
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
   const [sidebarHeight, setSidebarHeight] = useState<number | null>(null)
   const mainCalendarRef = useRef<HTMLDivElement>(null)
+
+  // 고정 팔레트 (학교/강사별 색상 일관 유지)
+  const colorPalette = SCHEDULE_COLOR_BASE
+  // 학교/강사별 색상 매핑 (순차 할당)
+  const entityToColorIndex = useMemo(() => {
+    const keys = new Set<string>()
+    events.forEach(ev => {
+      const k = getEntityKey(ev)
+      if (k) keys.add(k)
+    })
+    const sorted = Array.from(keys).sort()
+    const map = new Map<string, number>()
+    sorted.forEach((k, i) => map.set(k, i % colorPalette.length))
+    return map
+  }, [events, colorPalette])
+
+  const getColorForEvent = (event: any) => {
+    const key = getEntityKey(event)
+    const idx = entityToColorIndex.get(key) ?? 0
+    return colorPalette[idx]
+  }
 
   // 메인 캘린더 높이 측정하여 우측 패널에 적용
   useEffect(() => {
@@ -146,10 +186,15 @@ export function ApplicantCalendarView({
             {dayEvents.slice(0, 2).map(event => {
               const displayTitle = event.title.replace(/^\[.*?\]\s*/, '')
               const isEventSelected = selectedRowKeys.includes(event.id)
+              const color = getColorForEvent(event)
               return (
                 <div
                   key={event.id}
                   className={`applicant-calendar-event ${isEventSelected ? 'applicant-calendar-event--selected' : ''}`}
+                  style={{
+                    backgroundColor: color.light,
+                    ...(isEventSelected && { boxShadow: '0 0 0 2px #1890ff' }),
+                  }}
                 >
                   <span className="applicant-calendar-event-title">{displayTitle}</span>
                 </div>
@@ -198,6 +243,7 @@ export function ApplicantCalendarView({
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={onSelectionChange}
           onEventClick={onItemClick}
+          getColorForEvent={getColorForEvent}
         />
       </div>
     </div>
