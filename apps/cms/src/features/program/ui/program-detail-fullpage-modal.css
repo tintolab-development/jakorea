@@ -165,7 +165,7 @@
   flex: 1 1 0;
   min-width: 0;
   width: 100%;
-  padding: var(--spacing-24);
+  padding: 0 24px 24px 0;
 }
 
 /* 공통 정보 탭일 때 content 패딩 제거 → info-tab 래퍼가 32px 52px 담당 */

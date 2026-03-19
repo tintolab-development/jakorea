@@ -7,18 +7,21 @@ import {
   ApprovalStatusBadge,
   type ApprovalStatusKey,
 } from '@/shared/components/approval-status-badge'
-import { StatusDropdownCell } from '../status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import type { TabKey } from './detail-modal-sidebar'
 import {
-  participantFilterFields,
+  institutionFilterFields,
   instructorFilterFields,
   volunteerFilterFields,
 } from '../table/applicant-filter-fields'
 import {
-  MOCK_APPLICANT_SCHOOLS,
+  MOCK_APPLICANT_INSTITUTIONS,
   updateApplicantSchoolApprovalStatus,
   type ApplicantSchoolRow,
-} from '@/data/mock/applicant-schools'
+} from '@/data/mock/applicant-institutions'
 import {
   MOCK_APPLICANT_INSTRUCTORS,
   updateApplicantInstructorApprovalStatus,
@@ -40,8 +43,8 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({})
 
   // 데이터 상태 관리
-  const [schoolList, setSchoolList] = useState<ApplicantSchoolRow[]>(() => [
-    ...MOCK_APPLICANT_SCHOOLS,
+  const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>(() => [
+    ...MOCK_APPLICANT_INSTITUTIONS,
   ])
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [
     ...MOCK_APPLICANT_INSTRUCTORS,
@@ -58,19 +61,23 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   // 선택 상태 관리
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
+  // 프로그램 승인 현황 드롭다운 열림 상태 (participating-institutions-section과 동일 스타일)
+  const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
+
   // 메뉴 변경 시 상태 초기화
   useEffect(() => {
     setPendingFilters({})
     setAppliedFilters({})
     setSelectedRowKeys([])
     setSelectedItem(null)
+    setOpenApprovalDropdownId(null)
   }, [menu])
 
   // 현재 메뉴에 따른 필터 필드 설정
   const fields = useMemo(() => {
     switch (menu) {
-      case 'participants':
-        return participantFilterFields
+      case 'institutions':
+        return institutionFilterFields
       case 'instructors':
         return instructorFilterFields
       case 'volunteers':
@@ -81,16 +88,14 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   }, [menu])
 
   const approvalStatusKeys = useMemo<ApprovalStatusKey[]>(
-    () => (['pending', 'rejected', 'approved'] as ApprovalStatusKey[]),
+    () => ['pending', 'rejected', 'approved'] as ApprovalStatusKey[],
     []
   )
 
-  const handleSchoolApprovalStatusChange = useCallback(
+  const handleInstitutionApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
-      setSchoolList(prev =>
-        prev.map(row =>
-          row.id === recordId ? { ...row, approvalStatus: status } : row
-        )
+      setInstitutionList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
       )
       setSelectedItem(prev =>
         prev && 'schoolName' in prev && prev.id === recordId
@@ -106,9 +111,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   const handleInstructorApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
       setInstructorList(prev =>
-        prev.map(row =>
-          row.id === recordId ? { ...row, approvalStatus: status } : row
-        )
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
       )
       setSelectedItem(prev =>
         prev && 'instructorName' in prev && prev.id === recordId
@@ -122,7 +125,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   )
 
   // 참여 기관(학교) 컬럼 정의
-  const participantColumns: ColumnsType<ApplicantSchoolRow> = useMemo(
+  const institutionColumns: ColumnsType<ApplicantSchoolRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
       {
@@ -153,28 +156,59 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         title: '프로그램 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 120,
+        width: 152,
         align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
-          <StatusDropdownCell
-            status={status}
-            statusKeys={approvalStatusKeys}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
-            onChange={newStatus =>
-              handleSchoolApprovalStatusChange(record.id, newStatus)
-            }
-            cellClassName="applicant-details__approval-dropdown-cell"
-            triggerClassName="applicant-details__approval-dropdown-trigger"
-          />
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<ApprovalStatusKey>
+              status={status ?? null}
+              statusOptions={approvalStatusKeys}
+              renderBadge={s => <ApprovalStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
+              isOpen={openApprovalDropdownId === record.id}
+              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+              emptyPlaceholder="-"
+            />
+          </div>
         ),
       },
       {
         title: '강의 회차 별 희망 교육 날짜 및 시간',
-        dataIndex: 'desiredEducationPeriod',
-        key: 'desiredEducationPeriod',
-        width: 280,
+        key: 'sessions',
+        width: 380,
         align: 'center',
-        ellipsis: true,
+        onCell: () => ({ className: 'applicant-details__td-sessions' }),
+        render: (_: unknown, record: ApplicantSchoolRow) => {
+          const sessions = record.sessions ?? []
+          const total = sessions.length
+          const showCount = total <= 3 ? total : 2
+          const displaySessions = sessions.slice(0, showCount)
+          const restCount = total - showCount
+          return (
+            <div className="applicant-details__sessions-cell">
+              {displaySessions.map(s => {
+                const datePart = `${s.date.replace(/\./g, '. ')}(${s.dayOfWeek})`
+                const durationPart = `${s.duration} (${s.format})`
+                const periodPart = `${s.classNum} (${s.timeRange.replace('~', ' ~ ')})`
+                return (
+                  <div key={s.round} className="applicant-details__session-line">
+                    <span className="applicant-details__session-round-tag">{s.round}차시</span>
+                    {datePart}
+                    <span className="applicant-details__session-divider" aria-hidden />
+                    {durationPart}
+                    <span className="applicant-details__session-divider" aria-hidden />
+                    {periodPart}
+                  </div>
+                )
+              })}
+              {restCount > 0 && (
+                <div className="applicant-details__session-more">외 {restCount}개의 교육 일정</div>
+              )}
+            </div>
+          )
+        },
       },
       {
         title: '대상 학년',
@@ -206,8 +240,8 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         width: 110,
         align: 'center',
       },
-        ],
-    [approvalStatusKeys, handleSchoolApprovalStatusChange]
+    ],
+    [approvalStatusKeys, handleInstitutionApprovalStatusChange, openApprovalDropdownId]
   )
 
   // 신청 강사 컬럼 정의
@@ -271,23 +305,26 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         title: '프로그램 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 120,
+        width: 152,
         align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantInstructorRow) => (
-          <StatusDropdownCell
-            status={status}
-            statusKeys={approvalStatusKeys}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
-            onChange={newStatus =>
-              handleInstructorApprovalStatusChange(record.id, newStatus)
-            }
-            cellClassName="applicant-details__approval-dropdown-cell"
-            triggerClassName="applicant-details__approval-dropdown-trigger"
-          />
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<ApprovalStatusKey>
+              status={status ?? null}
+              statusOptions={approvalStatusKeys}
+              renderBadge={s => <ApprovalStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={newStatus => handleInstructorApprovalStatusChange(record.id, newStatus)}
+              isOpen={openApprovalDropdownId === record.id}
+              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+              emptyPlaceholder="-"
+            />
+          </div>
         ),
       },
     ],
-    [approvalStatusKeys, handleInstructorApprovalStatusChange]
+    [approvalStatusKeys, handleInstructorApprovalStatusChange, openApprovalDropdownId]
   )
 
   const handleFilterChange = (key: string, value: any) => {
@@ -307,8 +344,8 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
       return
     }
     const keys = selectedRowKeys as string[]
-    if (menu === 'participants') {
-      setSchoolList(prev =>
+    if (menu === 'institutions') {
+      setInstitutionList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
         )
@@ -336,8 +373,8 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
       return
     }
     const keys = selectedRowKeys as string[]
-    if (menu === 'participants') {
-      setSchoolList(prev =>
+    if (menu === 'institutions') {
+      setInstitutionList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
         )
@@ -360,7 +397,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   }
 
   const handleCancelApproval = (id: string) => {
-    setSchoolList(prev =>
+    setInstitutionList(prev =>
       prev.map(row => (row.id === id ? { ...row, approvalStatus: 'pending' as const } : row))
     )
     setSelectedItem(prev =>
@@ -404,7 +441,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
 
   const title = useMemo(() => {
     switch (menu) {
-      case 'participants':
+      case 'institutions':
         return '수강 신청 기관 목록'
       case 'instructors':
         return '강의 신청 강사 목록'
@@ -416,8 +453,8 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   }, [menu])
 
   const tableData = useMemo(() => {
-    if (menu === 'participants') {
-      return schoolList.filter(item => {
+    if (menu === 'institutions') {
+      return institutionList.filter(item => {
         const { organizationName, region, grade, teacherName, approvalStatus } = appliedFilters
         if (
           organizationName &&
@@ -469,13 +506,13 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
       })
     }
     return []
-  }, [menu, schoolList, instructorList, appliedFilters])
+  }, [menu, institutionList, instructorList, appliedFilters])
 
   const columns = useMemo(() => {
-    if (menu === 'participants') return participantColumns
+    if (menu === 'institutions') return institutionColumns
     if (menu === 'instructors') return instructorColumns
     return []
-  }, [menu, participantColumns, instructorColumns])
+  }, [menu, institutionColumns, instructorColumns])
 
   // Helper function to map applicant data to calendar event format
   const mapApplicantDataToCalendarEvents = (
@@ -490,7 +527,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
       const id = item.id || item.no || index
 
       if (
-        currentMenu === 'participants' &&
+        currentMenu === 'institutions' &&
         'schoolName' in item &&
         'desiredEducationPeriod' in item
       ) {
@@ -560,8 +597,8 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
           data={selectedItem}
           onBack={() => setSelectedItem(null)}
           onApprove={id => {
-            if (menu === 'participants') {
-              setSchoolList(prev =>
+            if (menu === 'institutions') {
+              setInstitutionList(prev =>
                 prev.map(row =>
                   row.id === id ? { ...row, approvalStatus: 'approved' as const } : row
                 )
@@ -585,8 +622,8 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
             }
           }}
           onReject={id => {
-            if (menu === 'participants') {
-              setSchoolList(prev =>
+            if (menu === 'institutions') {
+              setInstitutionList(prev =>
                 prev.map(row =>
                   row.id === id ? { ...row, approvalStatus: 'rejected' as const } : row
                 )
@@ -610,7 +647,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
             }
           }}
           onCancelApproval={
-            menu === 'participants'
+            menu === 'institutions'
               ? handleCancelApproval
               : menu === 'instructors'
                 ? handleCancelApprovalInstructor
@@ -628,7 +665,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
               onSearch={handleSearch}
               bordered={false}
               cardStyle={{
-                padding: '24px 24px 0 24px',
+                paddingLeft: '24px',
                 marginBottom: 0,
                 background: 'transparent',
               }}
@@ -691,30 +728,26 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
 
               {viewMode === 'table' ? (
                 <div className="applicant-details__table-wrapper">
-                <Table<any>
-                  rowKey="id"
-                  columns={columns}
-                  dataSource={tableData}
-                  size="middle"
-                  className="clickable-table"
-                  onRow={record => ({
-                    onClick: e => {
-                      const target = e.target as HTMLElement
-                      if (
-                        target.closest(
-                          '.applicant-details__approval-dropdown-cell'
-                        ) ||
-                        target.closest(
-                          '.applicant-details__approval-dropdown-trigger'
-                        ) ||
-                        target.closest('.ant-table-selection-column') ||
-                        target.closest('.ant-checkbox-wrapper')
-                      )
-                        return
-                      setSelectedItem(record)
-                    },
-                    style: { cursor: 'pointer' },
-                  })}
+                  <Table<any>
+                    rowKey="id"
+                    columns={columns}
+                    dataSource={tableData}
+                    size="middle"
+                    className="clickable-table"
+                    onRow={record => ({
+                      onClick: e => {
+                        const target = e.target as HTMLElement
+                        if (
+                          target.closest('.status-dropdown-cell__cell-status') ||
+                          target.closest('.status-dropdown-cell__status-trigger') ||
+                          target.closest('.ant-table-selection-column') ||
+                          target.closest('.ant-checkbox-wrapper')
+                        )
+                          return
+                        setSelectedItem(record)
+                      },
+                      style: { cursor: 'pointer' },
+                    })}
                     scroll={{ y: 'calc(100vh - 360px)' }}
                     pagination={false}
                     rowSelection={{

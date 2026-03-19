@@ -1,10 +1,21 @@
 /**
  * 신청 기관 상세 - 기본 정보 / 안내 사항 / 강의 회차 별 교육 희망 날짜 및 시간
  * applicant-instructor-basic-info 스타일 참고, 이미지 시안 구조 반영
+ * 강의 회차 표시: 프로그램 진행 현황 참여 기관과 동일 형식 (ParticipatingSchoolSession)
  */
 
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-schools'
+import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import './applicant-institution-basic-info.css'
+
+const SESSION_STATUS_LABELS: Record<
+  NonNullable<ParticipatingSchoolSession['status']>,
+  string
+> = {
+  completed: '진행 완료',
+  pending: '진행 대기',
+  not_planned: '미진행 희망',
+}
 
 const APPROVAL_STATUS_LABELS: Record<ApplicantSchoolRow['approvalStatus'], string> = {
   pending: '대기 중',
@@ -29,12 +40,10 @@ export interface ApplicantInstitutionDetailExtend {
   parkingInfo?: string
   mealInfo?: string
   sexOffenseCheckRequest?: string
-  /** 1차시~4차시 강의 (label: "1차시 강의", value: "2026. 01. 09(금) | ...") */
-  sessions?: { label: string; value: string }[]
 }
 
 export interface ApplicantInstitutionBasicInfoProps {
-  school: ApplicantSchoolRow
+  institution: ApplicantSchoolRow
   detail?: ApplicantInstitutionDetailExtend
 }
 
@@ -68,27 +77,22 @@ function TableRowTwoCols({
 }
 
 export function ApplicantInstitutionBasicInfo({
-  school,
+  institution,
   detail,
 }: ApplicantInstitutionBasicInfoProps) {
-  const approvalLabel = APPROVAL_STATUS_LABELS[school.approvalStatus] ?? '-'
-  const address = school.region ?? '-'
+  const approvalLabel = APPROVAL_STATUS_LABELS[institution.approvalStatus] ?? '-'
+  const address = institution.region ?? '-'
   const addressDetail = detail?.addressDetail ?? '-'
-  const gradeDisplay = school.educationGrade ? `초등학교 ${school.educationGrade}` : '-'
+  const gradeDisplay = institution.educationGrade ? `초등학교 ${institution.educationGrade}` : '-'
   const classAndCount =
-    school.classCount != null && school.studentCount != null
-      ? `${school.classCount}개 학급 | 총 ${school.studentCount}명`
+    institution.classCount != null && institution.studentCount != null
+      ? `${institution.classCount}개 학급 | 총 ${institution.studentCount}명`
       : '-'
   const teacherInfo =
-    detail?.teacherInfo ?? ([school.teacherName, school.contact].filter(Boolean).join(' | ') || '-')
+    detail?.teacherInfo ??
+    ([institution.teacherName, institution.contact].filter(Boolean).join(' | ') || '-')
 
-  const defaultSessions: { label: string; value: string }[] = [
-    { label: '1차시 강의', value: school.desiredEducationPeriod ?? '-' },
-    { label: '2차시 강의', value: '-' },
-    { label: '3차시 강의', value: '미진행 희망' },
-    { label: '4차시 강의', value: '미진행 희망' },
-  ]
-  const sessions = detail?.sessions?.length ? detail.sessions : defaultSessions
+  const sessions = institution.sessions ?? []
 
   return (
     <div className="applicant-institution-basic-info">
@@ -106,7 +110,7 @@ export function ApplicantInstitutionBasicInfo({
             <tbody>
               <TableRowTwoCols
                 label1="신청 기관명"
-                value1={school.schoolName ?? '-'}
+                value1={institution.schoolName ?? '-'}
                 label2="프로그램 승인 현황"
                 value2={approvalLabel}
               />
@@ -230,7 +234,7 @@ export function ApplicantInstitutionBasicInfo({
         </div>
       </section>
 
-      {/* 강의 회차 별 교육 희망 날짜 및 시간 */}
+      {/* 강의 회차 별 교육 희망 날짜 및 시간 (참여 기관과 동일 표시 방식) */}
       <section className="applicant-institution-basic-info__section">
         <h3 className="applicant-institution-basic-info__title">
           강의 회차 별 교육 희망 날짜 및 시간
@@ -242,20 +246,70 @@ export function ApplicantInstitutionBasicInfo({
               <col />
             </colgroup>
             <tbody>
-              {sessions.map((s, idx) => (
-                <tr key={idx}>
-                  <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-                    {s.label}
-                  </td>
-                  <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-                    {s.value}
+              {sessions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
+                  >
+                    등록된 교육 일정이 없습니다.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                sessions.map(session => (
+                  <SessionTableRow key={session.round} session={session} />
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </section>
     </div>
+  )
+}
+
+function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
+  const isNotPlanned = session.status === 'not_planned' || !session.date
+  const datePart = `${session.date.replace(/\./g, '. ')}(${session.dayOfWeek})`
+  const durationFormat = `${session.duration} (${session.format})`
+  const periodTime = `${session.classNum} (${session.timeRange.replace('~', ' ~ ')})`
+  const statusLabel =
+    session.status ? SESSION_STATUS_LABELS[session.status] ?? session.status : '미진행 희망'
+  const statusClass =
+    session.status === 'completed'
+      ? 'applicant-institution-basic-info__session-status--completed'
+      : session.status === 'pending'
+        ? 'applicant-institution-basic-info__session-status--pending'
+        : 'applicant-institution-basic-info__session-status--not_planned'
+
+  const contentCell = isNotPlanned ? (
+    '미진행 희망'
+  ) : (
+    <span className="applicant-institution-basic-info__session-value">
+      {datePart}
+      <span className="applicant-institution-basic-info__session-divider" aria-hidden />
+      {durationFormat}
+      <span className="applicant-institution-basic-info__session-divider" aria-hidden />
+      {periodTime}
+      <span className="applicant-institution-basic-info__session-divider" aria-hidden />
+      <span
+        className={`applicant-institution-basic-info__session-status ${statusClass}`}
+      >
+        {statusLabel}
+      </span>
+    </span>
+  )
+
+  return (
+    <tr>
+      <td
+        className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label"
+      >
+        {session.round}차시 강의
+      </td>
+      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
+        {contentCell}
+      </td>
+    </tr>
   )
 }

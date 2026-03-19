@@ -5,7 +5,7 @@
  */
 
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-schools'
+import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import type {

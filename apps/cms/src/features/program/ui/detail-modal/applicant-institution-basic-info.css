@@ -71,3 +71,34 @@
   background: #fff;
 }
 
+/* 강의 회차 별 교육 희망 날짜 및 시간 (참여 기관과 동일 표시 방식) */
+.applicant-institution-basic-info__session-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.applicant-institution-basic-info__session-value .applicant-institution-basic-info__session-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.applicant-institution-basic-info__session-status {
+  font-weight: 500;
+}
+
+.applicant-institution-basic-info__session-status--completed {
+  color: var(--color-success, #52c41a);
+}
+
+.applicant-institution-basic-info__session-status--pending {
+  color: var(--color-warning, #faad14);
+}
+
+.applicant-institution-basic-info__session-status--not_planned {
+  color: #8c8c8c;
+}
+

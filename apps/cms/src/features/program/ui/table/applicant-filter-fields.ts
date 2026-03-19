@@ -18,8 +18,8 @@ const APPROVAL_STATUS_OPTIONS = [
   { label: APPROVAL_STATUS_LABELS.approved, value: 'approved' },
 ]
 
-/** 신청 기관(Participants) 필터 필드 */
-export const participantFilterFields: FilterFieldConfig[] = [
+/** 신청 기관(Institutions) 필터 필드 */
+export const institutionFilterFields: FilterFieldConfig[] = [
   {
     key: 'organizationName',
     type: 'search',
