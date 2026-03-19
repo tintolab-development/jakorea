@@ -79,6 +79,10 @@ export interface ParticipatingInstructorRow {
   freeWriting4?: string
   /** 프로그램 참여 최초 승인 유무 (false면 강사 신규 배정 안내 모달 노출) */
   initialApproval?: boolean
+  /** 거주 지역 (참여 강사 목록 필터·테이블용) */
+  region?: string
+  /** JA 평가 등급 (참여 강사 목록 필터·테이블용) */
+  jaEvaluationGrade?: string
 }
 
 export const SETTLEMENT_STATUS_LABELS: Record<SettlementStatusKey, string> = {
@@ -145,6 +149,29 @@ const SCHOOL_NAMES = [...INSTRUCTOR_SCHOOL_OPTIONS]
 const GRADES = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년']
 
 const LECTURE_ROUNDS = ['진행 전', '1회차', '2회차', '진행 완료']
+
+/** 거주 지역 옵션 (참여 강사 필터·목록용) */
+const REGIONS = [
+  '서울특별시 강서구',
+  '경기도 수원시',
+  '부산광역시 해운대구',
+  '대구광역시 수성구',
+  '인천광역시 남동구',
+  '광주광역시 광산구',
+  '대전광역시 유성구',
+  '울산광역시 중구',
+  '세종시',
+  '경기도 성남시',
+  '경기도 고양시',
+  '강원도 춘천시',
+  '충청북도 청주시',
+  '전라북도 전주시',
+  '경상남도 창원시',
+  '제주특별자치도',
+]
+
+const JA_EVALUATION_GRADES = ['A등급', 'B등급', 'C등급'] as const
+const JA_LECTURE_YEARS = [1, 2, 3, 5]
 
 const TEACHER_NAMES = [
   '홍채원',
@@ -283,6 +310,9 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
   for (let i = 0; i < count; i++) {
     const statusIdx = i % settlementStatuses.length
     const extension = getDetailExtension(i)
+    const region = REGIONS[i % REGIONS.length]
+    const jaGrade = JA_EVALUATION_GRADES[i % JA_EVALUATION_GRADES.length]
+    const lectureYears = JA_LECTURE_YEARS[i % JA_LECTURE_YEARS.length]
     rows.push({
       id: `instructor-${i + 1}`,
       no: count - i,
@@ -296,6 +326,9 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
       /** 일부 강사는 최초 승인 미완료(신규 배정 안내 모달 테스트용) */
       initialApproval: i % 4 !== 2,
+      region,
+      jaEvaluationGrade: jaGrade,
+      lectureExperienceYears: extension.lectureExperienceYears ?? lectureYears,
       ...extension,
     })
   }
