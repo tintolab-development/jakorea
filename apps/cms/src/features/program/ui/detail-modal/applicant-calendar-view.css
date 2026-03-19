@@ -133,6 +133,7 @@
 
 .applicant-schedule-item {
   display: flex;
+  align-items: center;
   gap: 12px;
   padding: 16px;
   border-radius: 8px;
@@ -170,16 +171,46 @@
   font-size: 15px;
 }
 
+.applicant-schedule-item-checkbox {
+  flex-shrink: 0;
+}
+
+.applicant-schedule-item-checkbox .ant-checkbox-wrapper {
+  align-items: center;
+}
+
+.applicant-schedule-item-checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+  top: 0;
+}
+
+.applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner::after {
+  inset-block-start: 45%;
+}
+
 .applicant-schedule-item-detail {
   font-size: 13px;
   color: #8c8c8c;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.applicant-schedule-item-detail-divider {
+  color: #d9d9d9;
+  flex-shrink: 0;
+  margin: 0 0;
 }
 
 .detail-divider {
-  color: #f0f0f0;
+  color: #d9d9d9;
 }
 
 .applicant-calendar-view--loading {
