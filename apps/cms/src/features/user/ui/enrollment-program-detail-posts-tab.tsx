@@ -6,12 +6,21 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { AppButton } from '@/shared/ui/app-button'
-import type { Program, ProgramPost } from '@/types/domain'
-import { getProgramPostsByProgramId, getProgramFilesByProgramId } from '@/data/mock'
+import { Input, Dropdown, type MenuProps } from 'antd'
+import { SearchOutlined, MoreOutlined } from '@ant-design/icons'
+import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
+import { getProgramPostsByProgramId, getProgramPostsByProgramIdAndSchoolId, getProgramFilesByProgramId } from '@/data/mock'
 import dayjs from 'dayjs'
 
-interface EnrollmentProgramDetailPostsTabProps {
+export interface EnrollmentProgramDetailPostsTabProps {
   program: Program
+  /** 참여기관(학교) ID. 있으면 해당 학교 전용 게시글만 표시 (학교 상세 게시글 탭) */
+  schoolId?: string
+  /** 왼쪽 컬럼 상단 "게시글 작성" 버튼 표시 여부. 기본 true. 학교 상세 풀페이지에서는 탭 행 "게시글 등록"만 쓰므로 false */
+  showWriteButtonInSection?: boolean
+  /** PostWriteModal open을 부모에서 제어할 때 사용 */
+  writeModalOpen?: boolean
+  onWriteModalOpenChange?: (open: boolean) => void
 }
 
 function formatKoDate(date: string | Date): string {
@@ -20,9 +29,21 @@ function formatKoDate(date: string | Date): string {
   const hour = d.hour() % 12 || 12
   return d.format(`YYYY년 M월 D일 ${ampm} ${hour}:mm`)
 }
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return ''
+  const mb = bytes / (1024 * 1024)
+  if (mb >= 1) return `${Math.round(mb)}MB`
+  const kb = bytes / 1024
+  return `${Math.round(kb)}KB`
+}
+
+function formatFileDate(date: string | Date): string {
+  return dayjs(date).format('YY. MM. DD')
+}
 import { PostWriteModal } from './post-write-modal'
 import { PostDetailModal } from './post-detail-modal'
-import { ProgramFilesModal } from './program-files-modal'
+import { ProfileAvatarIcon } from '@/shared/components/profile-avatar-icon'
 import './enrollment-program-detail-modal.css'
 
 /** 게시글 메타 아이콘 — 눈(조회). mask id는 postId로 고유화 */
@@ -120,36 +141,69 @@ function PostAttachmentIcon({ postId }: { postId: string }) {
   )
 }
 
-export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDetailPostsTabProps) {
-  const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
+export function EnrollmentProgramDetailPostsTab({
+  program,
+  schoolId,
+  showWriteButtonInSection = true,
+  writeModalOpen: writeModalOpenProp,
+  onWriteModalOpenChange,
+}: EnrollmentProgramDetailPostsTabProps) {
+  const [internalWriteModalOpen, setInternalWriteModalOpen] = useState(false)
+  const isWriteModalControlled = writeModalOpenProp !== undefined && onWriteModalOpenChange !== undefined
+  const postWriteModalOpen = isWriteModalControlled ? writeModalOpenProp! : internalWriteModalOpen
+  const setPostWriteModalOpen = isWriteModalControlled ? onWriteModalOpenChange! : setInternalWriteModalOpen
+
   const [detailPost, setDetailPost] = useState<ProgramPost | null>(null)
-  const [filesModalOpen, setFilesModalOpen] = useState(false)
   const posts = useMemo(() => {
-    const list = getProgramPostsByProgramId(program.id)
+    const list = schoolId
+      ? getProgramPostsByProgramIdAndSchoolId(program.id, schoolId)
+      : getProgramPostsByProgramId(program.id)
     return [...list].sort((a, b) => {
       if (a.read !== b.read) return a.read ? 1 : -1
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
-  }, [program.id])
-  const allFiles = useMemo(
-    () => getProgramFilesByProgramId(program.id),
-    [program.id]
-  )
+  }, [program.id, schoolId])
+  const allFilesRaw = useMemo(() => getProgramFilesByProgramId(program.id), [program.id])
+  const schoolPostIds = useMemo(() => new Set(posts.map(p => p.id)), [posts])
+  const allFiles = useMemo(() => {
+    if (!schoolId) return allFilesRaw
+    return allFilesRaw.filter(f => !f.postId || schoolPostIds.has(f.postId))
+  }, [allFilesRaw, schoolId, schoolPostIds])
+
+  const [fileSearchQuery, setFileSearchQuery] = useState('')
+  const filteredFiles = useMemo(() => {
+    if (!fileSearchQuery.trim()) return allFiles
+    const q = fileSearchQuery.trim().toLowerCase()
+    return allFiles.filter(f => f.fileName.toLowerCase().includes(q))
+  }, [allFiles, fileSearchQuery])
+
+  const makeFileMenuItems = (file: ProgramFile): MenuProps['items'] => [
+    { key: 'download', label: '다운로드', onClick: () => window.open(file.fileUrl ?? '#', '_blank') },
+    { key: 'preview', label: '원글보기', onClick: () => window.open(file.fileUrl ?? '#', '_blank') },
+  ]
+
+  const getFileTypeLabel = (file: ProgramFile): string => {
+    const t = (file.fileType ?? file.fileName.split('.').pop() ?? '').toLowerCase()
+    if (t === 'pdf') return 'PDF'
+    if (t === 'xls' || t === 'xlsx') return 'XLS'
+    return ''
+  }
 
   return (
     <div className="enrollment-program-detail-modal__posts-tab">
       <div className="enrollment-program-detail-modal__posts-tab-column enrollment-program-detail-modal__posts-tab-column--left">
-        <div className="enrollment-program-detail-modal__posts-tab-header">
-          <h3 className="enrollment-program-detail-modal__section-title">게시글</h3>
-          <AppButton
-            variant="primary"
-            size="middle"
-            className="enrollment-program-detail-modal__posts-tab-btn"
-            onClick={() => setPostWriteModalOpen(true)}
-          >
-            게시글 작성
-          </AppButton>
-        </div>
+        {showWriteButtonInSection && (
+          <div className="enrollment-program-detail-modal__posts-tab-header">
+            <AppButton
+              variant="primary"
+              size="middle"
+              className="enrollment-program-detail-modal__posts-tab-btn"
+              onClick={() => setPostWriteModalOpen(true)}
+            >
+              게시글 작성
+            </AppButton>
+          </div>
+        )}
         <div className="enrollment-program-detail-modal__posts-list">
           {posts.length === 0 ? (
             <p className="enrollment-program-detail-modal__placeholder">등록된 게시글이 없습니다.</p>
@@ -159,7 +213,7 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
                 key={post.id}
                 role="button"
                 tabIndex={0}
-                className={`enrollment-program-detail-modal__post-card ${!post.read ? 'enrollment-program-detail-modal__post-card--unread' : ''}`}
+                className={`enrollment-program-detail-modal__post-card ${detailPost?.id === post.id ? 'enrollment-program-detail-modal__post-card--selected' : ''}`}
                 onClick={() => setDetailPost(post)}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -170,7 +224,7 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
               >
                 <div className="enrollment-program-detail-modal__post-header">
                   <div className="enrollment-program-detail-modal__post-author">
-                    <div className="enrollment-program-detail-modal__post-avatar" />
+                    <ProfileAvatarIcon className="enrollment-program-detail-modal__post-avatar" />
                     <div>
                       <div className="enrollment-program-detail-modal__post-author-name">{post.authorName}</div>
                       <div className="enrollment-program-detail-modal__post-date">
@@ -222,25 +276,47 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
         </div>
       </div>
       <div className="enrollment-program-detail-modal__posts-tab-column enrollment-program-detail-modal__posts-tab-column--right">
-        <div className="enrollment-program-detail-modal__posts-tab-header">
-          <h3 className="enrollment-program-detail-modal__section-title">파일 및 사진</h3>
-          <AppButton variant="cancel" size="middle" className="enrollment-program-detail-modal__posts-tab-btn" onClick={() => setFilesModalOpen(true)}>
-            더보기
-          </AppButton>
+        <div className="enrollment-program-detail-modal__files-search-wrap">
+          <Input
+            placeholder="파일명으로 검색해보세요"
+            prefix={<SearchOutlined className="enrollment-program-detail-modal__files-search-icon" />}
+            value={fileSearchQuery}
+            onChange={e => setFileSearchQuery(e.target.value)}
+            allowClear
+            className="enrollment-program-detail-modal__files-search"
+          />
         </div>
         <div className="enrollment-program-detail-modal__files-list">
           {allFiles.length === 0 ? (
             <p className="enrollment-program-detail-modal__placeholder">등록된 파일이 없습니다.</p>
+          ) : filteredFiles.length === 0 ? (
+            <p className="enrollment-program-detail-modal__placeholder">검색 결과가 없습니다.</p>
           ) : (
-            allFiles.map(file => (
+            filteredFiles.map(file => (
               <div key={file.id} className="enrollment-program-detail-modal__file-item">
-                <div className="enrollment-program-detail-modal__file-icon" data-type={file.fileType || 'file'} />
-                <div className="enrollment-program-detail-modal__file-info">
-                  <div className="enrollment-program-detail-modal__file-name">{file.fileName}</div>
-                  {file.postId && (
-                    <a href="#" className="enrollment-program-detail-modal__file-origin-link">원글 보기</a>
-                  )}
+                <div className="enrollment-program-detail-modal__file-icon" data-type={file.fileType || 'file'}>
+                  {getFileTypeLabel(file) || null}
                 </div>
+                <div className="enrollment-program-detail-modal__file-info">
+                  <div className="enrollment-program-detail-modal__file-name" title={file.fileName}>{file.fileName}</div>
+                  <div className="enrollment-program-detail-modal__file-meta">
+                    {formatFileDate(file.uploadedAt)}
+                    {file.fileSize != null ? ` | ${formatFileSize(file.fileSize)}` : ''}
+                  </div>
+                </div>
+                <Dropdown
+                  menu={{ items: makeFileMenuItems(file) }}
+                  trigger={['click']}
+                  placement="bottomRight"
+                >
+                  <button
+                    type="button"
+                    className="enrollment-program-detail-modal__file-menu-btn"
+                    aria-label="파일 메뉴"
+                  >
+                    <MoreOutlined />
+                  </button>
+                </Dropdown>
               </div>
             ))
           )}
@@ -255,12 +331,6 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
         onCancel={() => setDetailPost(null)}
         post={detailPost}
         files={detailPost ? allFiles.filter(f => f.postId === detailPost.id) : []}
-      />
-      <ProgramFilesModal
-        open={filesModalOpen}
-        onCancel={() => setFilesModalOpen(false)}
-        files={allFiles}
-        posts={posts}
       />
     </div>
   )
