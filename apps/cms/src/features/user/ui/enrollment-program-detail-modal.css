@@ -297,12 +297,11 @@
   color: var(--color-text-secondary, #8c8c8c);
 }
 
-/* ─── 게시글 탭 (2컬럼: 게시글 1094px | gap 32px | 파일 420px) — 전체 1546×862, 넘치면 스크롤 ───── */
+/* ─── 게시글 탭 (2컬럼 7:3 비율 반응형 | gap 32px) — 전체 width 100%, height 862px ───── */
 .enrollment-program-detail-modal__posts-tab {
   display: flex;
   gap: 32px;
-  width: 1546px; /* 1094 + 32 + 420 */
-  max-width: 100%;
+  width: 100%;
   height: 862px;
   max-height: 100%;
   min-height: 0;
@@ -318,27 +317,26 @@
   gap: 12px;
 }
 
-/* 게시글 래퍼 — 우측 카드와 분리, 고정 너비 1094px */
+/* 게시글 래퍼 — 7:3 비율 중 7 (70%) */
 .enrollment-program-detail-modal__posts-tab-column--left {
-  width: 1094px;
-  flex: 0 0 1094px;
+  flex: 7 7 0%;
   min-width: 0;
 }
 
-/* 우측 파일 카드 영역 — 420×862, padding 24px, gap 12px, border-radius 10px, border #D4D4D4 */
+/* 우측 파일 카드 영역 — 7:3 비율 중 3 (30%), padding 24px, border-radius 10px */
 .enrollment-program-detail-modal__posts-tab-column--right {
   display: flex;
-  width: 420px;
+  flex: 3 3 0%;
+  min-width: 0;
   height: 862px;
   padding: 24px;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px; /* 인풋 영역과 업로드된 파일 영역 사이 vertical gap 12px */
+  gap: 12px;
   align-self: stretch;
   border-radius: 10px;
   border: 1px solid #D4D4D4;
   box-sizing: border-box;
-  flex: 0 0 420px;
   min-height: 0;
   background: var(--color-bg-base, #fff);
 }
@@ -397,6 +395,25 @@
   font-family: Pretendard, var(--font-family-primary), sans-serif;
 }
 
+.enrollment-program-detail-modal__files-search .ant-input-prefix {
+  display: flex;
+  align-items: center;
+  margin-right: 0;
+}
+
+.enrollment-program-detail-modal__files-search-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: #85969D;
+}
+
+.enrollment-program-detail-modal__files-search-icon svg {
+  display: block;
+  vertical-align: middle;
+}
+
 .enrollment-program-detail-modal__files-search .ant-input {
   color: var(--color-text-secondary, #8c8c8c);
 }
@@ -410,10 +427,6 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-}
-
-.enrollment-program-detail-modal__files-search-icon {
-  color: var(--color-text-tertiary);
 }
 
 /* 업로드된 파일 리스트 — 세로 간격, 스크롤 */
@@ -432,7 +445,7 @@
   box-sizing: border-box;
 }
 
-/* 게시글 카드 — 게시글 래퍼와 동일 1094px, 최대 1094×248 패딩 포함 */
+/* 게시글 카드 — 래퍼 너비 100%, 최대 높이 248px */
 .enrollment-program-detail-modal__post-card {
   width: 100%;
   min-width: 0;
@@ -440,7 +453,6 @@
   border-radius: 10px;
   border: 1px solid #D4D4D4;
   background: var(--default-WT, #FFF);
-  max-width: 1094px;
   max-height: 248px;
   box-sizing: border-box;
   overflow: hidden;
@@ -679,9 +691,10 @@
   mask-type: alpha;
 }
 
-/* 업로드된 파일 위젯 — 372×82, padding 16px 12px 16px 16px, 배경 #F5F6F7, 아이콘 48×48 */
+/* 업로드된 파일 위젯 — width 100% 반응형, min-height 82px, padding 16px 12px 16px 16px, 배경 #F5F6F7 */
 .enrollment-program-detail-modal__file-item {
   display: flex;
+  width: 100%;
   padding: 16px 12px 16px 16px;
   align-items: center;
   gap: 10px;
@@ -689,8 +702,6 @@
   border-radius: 8px;
   background: #F5F6F7;
   box-sizing: border-box;
-  width: 372px;
-  max-width: 100%;
   min-height: 82px;
 }
 
@@ -768,8 +779,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: none;
   background: transparent;
