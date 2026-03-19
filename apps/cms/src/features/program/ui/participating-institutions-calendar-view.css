@@ -1,0 +1,595 @@
+/**
+ * 참여 기관 캘린더 뷰 레이아웃
+ * 비율 7 : 3, 갭 16px 유지, 화면 가로 꽉 채움
+ */
+
+.participating-institutions-calendar-layout {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  min-height: 742px;
+}
+
+.participating-institutions-calendar-card {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-card--left {
+  flex: 7;
+  min-width: 0;
+  height: 742px;
+  padding: 16px 20px 20px 20px;
+  overflow: hidden;
+}
+
+/* 캘린더 본문만 보이게, 다음 행이 살짝 보이는 것 방지 */
+.participating-institutions-calendar-card--left .ant-picker-calendar {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-body {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-content {
+  overflow: hidden;
+}
+
+.participating-institutions-calendar-card--right {
+  flex: 3;
+  min-width: 280px;
+  height: 742px;
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* Header */
+.participating-institutions-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+/* [날짜]와 [오늘, 나비게이션] 사이 16px, 오늘·나비게이션 버튼 사이 8px */
+.participating-institutions-calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 캘린더 년도·날짜 영역 텍스트 스펙 */
+.participating-institutions-calendar-header-title {
+  margin-right: 8px; /* 8px(gap) + 8px = 16px between 날짜 and 오늘 */
+  color: var(--default-BK, #3d3d3d);
+  font-family: Outfit, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+/* 오늘 버튼 스펙: 60×34 고정 */
+.participating-institutions-calendar-today-btn {
+  display: flex;
+  width: 60px;
+  height: 34px;
+  padding: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  border-radius: 6px;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  color: var(--JA-mint-01, #01a1af);
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-today-btn:hover {
+  border-color: var(--JA-mint-01, #01a1af);
+  color: var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  opacity: 0.9;
+}
+
+.participating-institutions-calendar-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 캘린더 네비게이터 버튼: 34×34 고정 (Ant Design 기본 스타일 오버라이드) */
+.participating-institutions-calendar-nav-btn {
+  display: inline-flex !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  padding: 0 !important;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--default-WT, #fff);
+  color: #3d3d3d;
+  box-sizing: border-box !important;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.participating-institutions-calendar-nav-btn:hover {
+  border-color: #d9d9d9;
+  background: #fafafa;
+  color: #3d3d3d;
+}
+
+.participating-institutions-calendar-nav-btn .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  line-height: 0;
+}
+
+.participating-institutions-calendar-nav-btn .anticon svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.participating-institutions-calendar-nav-icon--left {
+  transform: scaleX(-1);
+}
+
+.participating-institutions-calendar-header-right {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== 월간/주간 스위처 (백그라운드 컨테이너 124×42, padding 4px) ===== */
+.participating-institutions-calendar-view-mode {
+  position: relative;
+  width: 124px;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+  display: flex;
+  padding-top: 4px;
+  padding-right: 4px;
+  padding-bottom: 4px;
+  padding-left: 4px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+}
+
+/* 슬라이드 인디케이터: 탭 전환 시 이동 (상·하·좌·우 4px 안쪽에 배치) */
+.participating-institutions-calendar-view-mode__indicator {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  right: auto;
+  bottom: 4px;
+  width: 56px;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.participating-institutions-calendar-view-mode__indicator--week {
+  transform: translateX(60px);
+}
+
+.participating-institutions-calendar-view-mode__tab {
+  position: relative;
+  z-index: 1;
+  width: 56px;
+  min-width: 56px;
+  height: 34px;
+  padding: 0 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #8c8c8c;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: color 0.2s;
+  text-align: center;
+}
+
+.participating-institutions-calendar-view-mode__tab:hover {
+  color: #595959;
+}
+
+.participating-institutions-calendar-view-mode__tab--active {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 700;
+}
+
+/* 탭 내부 텍스트 row 정렬 (세로·가로 중앙) */
+.participating-institutions-calendar-view-mode__tab-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ===== Ant Design Calendar 요일 헤더 (삼글자, 가운데 정렬, 폰트 스펙) ===== */
+.participating-institutions-calendar-card--left .ant-picker-content thead th {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Outfit, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  letter-spacing: -0.312px;
+  padding: 0 !important;
+  padding-bottom: 9px !important;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-content thead th {
+  font-size: 0;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-content thead th::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Outfit, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  letter-spacing: -0.312px;
+  opacity: 0.5;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(1)::before { content: 'Sun'; }
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(2)::before { content: 'Mon'; }
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(3)::before { content: 'Tue'; }
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(4)::before { content: 'Wed'; }
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(5)::before { content: 'Thu'; }
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(6)::before { content: 'Fri'; }
+.participating-institutions-calendar-card--left .ant-picker-content thead th:nth-child(7)::before { content: 'Sat'; }
+
+/* Ant Design Calendar 셀 구분선, 셀 영역 154×124.2px (사방 보더) */
+.participating-institutions-calendar-card--left .ant-picker-content table {
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-content thead th,
+.participating-institutions-calendar-card--left .ant-picker-content tbody td {
+  width: 154px;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-content tbody tr {
+  height: 124.2px;
+}
+
+.participating-institutions-calendar-card--left .ant-picker-cell {
+  width: 154px;
+  height: 124.2px;
+  border: 1px solid #f0f0f0;
+  padding: 0;
+  vertical-align: top;
+}
+
+/* Calendar cells: 154×124.2px, padding 8px */
+.participating-institutions-calendar-cell {
+  width: 100%;
+  height: 100%;
+  min-height: 124.2px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.2s;
+  cursor: pointer;
+  border: none;
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-cell:hover {
+  /* 배경 변경 없음 (텍스트 색상 등만 유지) */
+}
+
+.participating-institutions-calendar-cell--other-month {
+  color: #bfbfbf;
+  /* 배경 변경 제거, 텍스트 색상만 유지 */
+}
+
+.participating-institutions-calendar-cell--selected {
+  /* 배경 변경 제거, 텍스트/강조 색상만 유지 */
+}
+
+.participating-institutions-calendar-cell--today .participating-institutions-calendar-cell-date-today {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  align-items: center;
+  justify-content: center;
+  background: var(--JA-mint-01, #01a1af);
+  color: #fff;
+  border-radius: 50%;
+}
+
+/* 날짜 좌상단, 폰트 스펙 */
+.participating-institutions-calendar-cell-date {
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-family: Outfit, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  letter-spacing: -0.312px;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+.participating-institutions-calendar-cell--other-month .participating-institutions-calendar-cell-date {
+  color: #bfbfbf;
+}
+
+.participating-institutions-calendar-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.participating-institutions-calendar-event {
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #595959;
+}
+
+.participating-institutions-calendar-event--selected {
+  color: #096dd9;
+}
+
+/* 외 n개의 일정 텍스트 스펙 */
+.participating-institutions-calendar-event-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+  margin-top: 2px;
+  cursor: default;
+  text-align: left;
+}
+
+.participating-institutions-calendar-event-tooltip {
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: inherit;
+  white-space: pre-wrap;
+  font-family: inherit;
+}
+
+.participating-institutions-calendar-event-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 초등학교별 태그 배경색 (data-color-index 0~11) */
+.participating-institutions-calendar-event[data-color-index='0'] {
+  background-color: #fce4ec;
+}
+.participating-institutions-calendar-event[data-color-index='1'] {
+  background-color: #e8f5e9;
+}
+.participating-institutions-calendar-event[data-color-index='2'] {
+  background-color: #e0f7fa;
+}
+.participating-institutions-calendar-event[data-color-index='3'] {
+  background-color: #f3e5f5;
+}
+.participating-institutions-calendar-event[data-color-index='4'] {
+  background-color: #fff3e0;
+}
+.participating-institutions-calendar-event[data-color-index='5'] {
+  background-color: #e3f2fd;
+}
+.participating-institutions-calendar-event[data-color-index='6'] {
+  background-color: #efebe9;
+}
+.participating-institutions-calendar-event[data-color-index='7'] {
+  background-color: #eceff1;
+}
+.participating-institutions-calendar-event[data-color-index='8'] {
+  background-color: #f8bbd9;
+}
+.participating-institutions-calendar-event[data-color-index='9'] {
+  background-color: #e1bee7;
+}
+.participating-institutions-calendar-event[data-color-index='10'] {
+  background-color: #b2ebf2;
+}
+.participating-institutions-calendar-event[data-color-index='11'] {
+  background-color: #dcedc8;
+}
+/* 선택 시 태그 밖으로 삐져나온 파란색 제거 (배경색은 유지) */
+.participating-institutions-calendar-event--selected[data-color-index] {
+  box-shadow: none;
+  outline: none;
+  border: none;
+}
+
+/* Week view */
+.participating-institutions-calendar-week {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 주간 뷰 요일 헤더: 삼글자, 가운데 정렬, 폰트 스펙 */
+.participating-institutions-calendar-week-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 0 9px 0;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Outfit, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  letter-spacing: -0.312px;
+  opacity: 0.5;
+}
+
+.participating-institutions-calendar-week-header-cell {
+  text-align: center;
+}
+
+.participating-institutions-calendar-week-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+
+.participating-institutions-calendar-week-cell {
+  border-right: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  min-height: 100px;
+  box-sizing: border-box;
+}
+
+/* 주간 뷰 셀 사방 구분선: 첫 행·첫 열에 상·좌 보더 */
+.participating-institutions-calendar-week-cell:nth-child(7n + 1) {
+  border-left: 1px solid #f0f0f0;
+}
+
+.participating-institutions-calendar-week-cell:nth-child(-n + 7) {
+  border-top: 1px solid #f0f0f0;
+}
+
+.participating-institutions-calendar-week-cell:hover {
+  background: #fcfcfc;
+}
+
+.participating-institutions-calendar-week-cell--selected {
+  background: #e6f7ff;
+}
+
+.participating-institutions-calendar-week-cell--today .participating-institutions-calendar-week-cell-date {
+  background: var(--JA-mint-01, #01a1af);
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 주간 뷰 날짜 좌상단, 폰트 스펙 */
+.participating-institutions-calendar-week-cell-date {
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-family: Outfit, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  letter-spacing: -0.312px;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+.participating-institutions-calendar-week-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+/* Right panel: reuse applicant-calendar-view list styles inside card */
+.participating-institutions-calendar-card--right .applicant-schedule-list {
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* 우측 카드 태그: 선택 시 백그라운드 제거(기본/학교색 유지), 체크박스 세로 중앙 */
+.participating-institutions-calendar-card--right .applicant-schedule-item {
+  align-items: center;
+}
+
+.participating-institutions-calendar-card--right .applicant-schedule-item--selected {
+  background: #fcfcfc;
+  border-color: #f0f0f0;
+}
+
+.participating-institutions-calendar-card--right .applicant-schedule-item[data-has-color='true'].applicant-schedule-item--selected {
+  box-shadow: none;
+}
