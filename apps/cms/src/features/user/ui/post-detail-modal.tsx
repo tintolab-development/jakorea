@@ -3,12 +3,16 @@
  * 수강 프로그램 상세 > 게시글 탭 > 게시글 카드 클릭 시 노출
  */
 
-import { useState, useMemo } from 'react'
-import { TealHeaderModal } from '@/shared/ui'
+import { useState, useMemo, useEffect } from 'react'
+import { message, Popover } from 'antd'
+import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui'
 import type { ProgramPost, ProgramFile } from '@/types/domain'
 import dayjs from 'dayjs'
 import { ProfileAvatarIcon } from '@/shared/components/profile-avatar-icon'
+import { getCommentsByPostId, markPostAsRead, createProgramPostComment, incrementPostCommentCount } from '@/data/mock'
+import { downloadFile } from '@/shared/lib/file-download'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -18,41 +22,22 @@ function formatKoDate(date: string | Date): string {
   return d.format(`YYYY년 M월 D일 ${ampm} ${hour}:mm`)
 }
 
-// ── 인라인 mock 댓글 ─────────────────────────────────
-
-interface PostComment {
-  id: string
-  authorName: string
-  content: string
-  createdAt: string
-}
-
-const COMMENT_SEEDS = [
-  { name: '김OO', content: '확인했습니다!' },
-  { name: '최OO', content: '넵~~' },
-  { name: '이OO', content: '감사합니다!' },
-  { name: '정OO', content: '알겠습니다.' },
-]
-
-function getMockComments(post: ProgramPost): PostComment[] {
-  const base = new Date(post.publishedAt).getTime()
-  return Array.from({ length: post.commentCount }, (_, i) => {
-    const seed = COMMENT_SEEDS[i % COMMENT_SEEDS.length]
-    return {
-      id: `${post.id}-c${i}`,
-      authorName: seed.name,
-      content: seed.content,
-      createdAt: new Date(base + (i + 1) * 7200000).toISOString(),
-    }
-  })
+/** 인풋 문자열에 이모지가 포함되어 있는지 여부 */
+function hasEmoji(str: string): boolean {
+  return /\p{Extended_Pictographic}/u.test(str)
 }
 
 // ── 아이콘 ───────────────────────────────────────────
 
 function EyeIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
-      <path d="M12.408 12.408C13.068 11.748 13.398 10.945 13.398 10C13.398 9.055 13.068 8.252 12.408 7.592C11.748 6.932 10.946 6.602 10 6.602C9.055 6.602 8.252 6.932 7.592 7.592C6.932 8.252 6.603 9.055 6.603 10C6.603 10.945 6.932 11.748 7.592 12.408C8.252 13.068 9.055 13.397 10 13.397C10.946 13.397 11.748 13.068 12.408 12.408ZM18.297 10.736C17.429 12.262 16.268 13.493 14.813 14.429C13.359 15.365 11.754 15.833 10 15.833C8.246 15.833 6.641 15.365 5.187 14.429C3.732 13.493 2.571 12.262 1.704 10.736C1.634 10.616 1.583 10.495 1.551 10.374C1.519 10.253 1.503 10.128 1.503 10C1.503 9.872 1.519 9.747 1.551 9.626C1.583 9.505 1.634 9.384 1.704 9.264C2.571 7.738 3.732 6.506 5.187 5.571C6.641 4.635 8.246 4.167 10 4.167C11.754 4.167 13.359 4.635 14.813 5.571C16.268 6.506 17.429 7.738 18.297 9.264C18.366 9.384 18.417 9.505 18.449 9.626C18.481 9.747 18.497 9.872 18.497 10C18.497 10.128 18.481 10.253 18.449 10.374C18.417 10.495 18.366 10.616 18.297 10.736ZM10 5.417C8.431 5.417 6.99 5.83 5.677 6.656C4.365 7.483 3.361 8.597 2.667 10C3.361 11.403 4.365 12.517 5.677 13.344C6.99 14.17 8.431 14.583 10 14.583C11.569 14.583 13.011 14.17 14.323 13.344C15.635 12.517 16.639 11.403 17.333 10C16.639 8.597 15.635 7.483 14.323 6.656C13.011 5.83 11.569 5.417 10 5.417Z" fill="currentColor"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+      <mask id="post-detail-modal-eye-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+        <rect width="22" height="22" fill="#D9D9D9" />
+      </mask>
+      <g mask="url(#post-detail-modal-eye-mask)">
+        <path d="M13.6493 13.6513C14.375 12.9256 14.7379 12.0427 14.7379 11.0026C14.7379 9.96249 14.375 9.07959 13.6493 8.3539C12.9236 7.6282 12.0407 7.26535 11.0006 7.26535C9.96052 7.26535 9.07762 7.6282 8.35192 8.3539C7.62623 9.07959 7.26338 9.96249 7.26338 11.0026C7.26338 12.0427 7.62623 12.9256 8.35192 13.6513C9.07762 14.377 9.96052 14.7399 11.0006 14.7399C12.0407 14.7399 12.9236 14.377 13.6493 13.6513ZM9.24751 12.7557C8.76625 12.2745 8.52563 11.6901 8.52563 11.0026C8.52563 10.3151 8.76625 9.73073 9.24751 9.24948C9.72875 8.76823 10.3131 8.5276 11.0006 8.5276C11.6881 8.5276 12.2725 8.76823 12.7538 9.24948C13.235 9.73073 13.4756 10.3151 13.4756 11.0026C13.4756 11.6901 13.235 12.2745 12.7538 12.7557C12.2725 13.237 11.6881 13.4776 11.0006 13.4776C10.3131 13.4776 9.72875 13.237 9.24751 12.7557ZM5.70596 15.8749C4.10592 14.8455 2.82878 13.4911 1.87453 11.8118C1.79814 11.6801 1.7423 11.5476 1.70701 11.4142C1.67187 11.2808 1.6543 11.1436 1.6543 11.0026C1.6543 10.8616 1.67187 10.7244 1.70701 10.591C1.7423 10.4576 1.79814 10.3251 1.87453 10.1934C2.82878 8.51408 4.10592 7.15971 5.70596 6.13029C7.30601 5.10072 9.07089 4.58594 11.0006 4.58594C12.9304 4.58594 14.6953 5.10072 16.2953 6.13029C17.8953 7.15971 19.1725 8.51408 20.1267 10.1934C20.2031 10.3251 20.259 10.4576 20.2943 10.591C20.3294 10.7244 20.347 10.8616 20.347 11.0026C20.347 11.1436 20.3294 11.2808 20.2943 11.4142C20.259 11.5476 20.2031 11.6801 20.1267 11.8118C19.1725 13.4911 17.8953 14.8455 16.2953 15.8749C14.6953 16.9045 12.9304 17.4193 11.0006 17.4193C9.07089 17.4193 7.30601 16.9045 5.70596 15.8749ZM15.7558 14.6807C17.1996 13.7717 18.3034 12.5457 19.0673 11.0026C18.3034 9.45955 17.1996 8.23351 15.7558 7.32448C14.3121 6.41545 12.727 5.96094 11.0006 5.96094C9.27424 5.96094 7.68917 6.41545 6.24542 7.32448C4.80167 8.23351 3.69785 9.45955 2.93396 11.0026C3.69785 12.5457 4.80167 13.7717 6.24542 14.6807C7.68917 15.5898 9.27424 16.0443 11.0006 16.0443C12.727 16.0443 14.3121 15.5898 15.7558 14.6807Z" fill="currentColor" />
+      </g>
     </svg>
   )
 }
@@ -150,14 +135,41 @@ export interface PostDetailModalProps {
   onCancel: () => void
   post: ProgramPost | null
   files: ProgramFile[]
+  /** 댓글 등록 시 표시할 작성자명 (미입력 시 '나') */
+  commentAuthorName?: string
 }
 
-export function PostDetailModal({ open, onCancel, post, files }: PostDetailModalProps) {
+export function PostDetailModal({ open, onCancel, post, files, commentAuthorName }: PostDetailModalProps) {
   const [commentInput, setCommentInput] = useState('')
   const [emojiActive, setEmojiActive] = useState(false)
+  const [commentsVersion, setCommentsVersion] = useState(0)
   const sendActive = commentInput.trim().length > 0
 
-  const comments = useMemo(() => (post ? getMockComments(post) : []), [post])
+  const comments = useMemo(
+    () => (post ? getCommentsByPostId(post.id) : []),
+    [post?.id, commentsVersion]
+  )
+  useEffect(() => {
+    if (open && post) markPostAsRead(post.id)
+  }, [open, post?.id])
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setCommentInput(prev => prev + emojiData.emoji)
+  }
+
+  const handleSubmitComment = () => {
+    if (!post) return
+    const trimmed = commentInput.trim()
+    if (!trimmed) {
+      message.warning('댓글 내용을 입력해 주세요.')
+      return
+    }
+    createProgramPostComment(post.id, commentAuthorName ?? '나', trimmed)
+    incrementPostCommentCount(post.id)
+    setCommentsVersion(v => v + 1)
+    setCommentInput('')
+    message.success('댓글이 등록되었습니다.')
+  }
 
   if (!post) return null
 
@@ -168,11 +180,11 @@ export function PostDetailModal({ open, onCancel, post, files }: PostDetailModal
     null
 
   return (
-    <TealHeaderModal
+    <ContentModal
       open={open}
       onCancel={onCancel}
       title="게시글 상세"
-      width={740}
+      width={800}
       className="post-detail-modal"
       footer={
         <AppButton variant="cancel" size="large" onClick={onCancel}>
@@ -181,53 +193,69 @@ export function PostDetailModal({ open, onCancel, post, files }: PostDetailModal
       }
     >
       <div className="post-detail-modal__body">
-
-        {/* ── 게시글 카드 ── */}
-        <div className="post-detail-modal__card">
-          <div className="post-detail-modal__card-header">
-            <ProfileAvatarIcon className="post-detail-modal__avatar" />
-            <div className="post-detail-modal__author-info">
-              <span className="post-detail-modal__author-name">{post.authorName}</span>
-              <div className="post-detail-modal__author-meta">
-                <span className="post-detail-modal__date">{dateStr}</span>
-                <span className="post-detail-modal__meta-divider">|</span>
-                <span className="post-detail-modal__meta-item">
-                  <EyeIcon /> {post.viewCount}
-                </span>
-                <span className="post-detail-modal__meta-item">
-                  <EmoticonIcon /> {post.reactionCount}
-                </span>
-                <span className="post-detail-modal__meta-item">
-                  <CommentIcon /> {post.commentCount}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="post-detail-modal__content">
-            {postTypeLabel && (
-              <span className="post-detail-modal__type-tag">{postTypeLabel}</span>
-            )}
-            {post.content}
-          </div>
-
-          {files.length > 0 && (
-            <div className="post-detail-modal__attachments">
-              <div className="post-detail-modal__attachments-header">
-                <ClipIcon />
-                {files.length}개의 첨부파일
-              </div>
-              {files.map(file => (
-                <div key={file.id} className="post-detail-modal__file-item">
-                  <DownloadIcon />
-                  <span>{file.fileName}</span>
+        {/* 7:3 레이아웃: 좌 게시글 본문, 우 첨부파일 */}
+        <div className="post-detail-modal__main-row">
+          <div className="post-detail-modal__main-left">
+            {/* ── 게시글 카드 (본문만) ── */}
+            <div className="post-detail-modal__card">
+              <div className="post-detail-modal__card-header">
+                <ProfileAvatarIcon className="post-detail-modal__avatar" />
+                <div className="post-detail-modal__author-info">
+                  <span className="post-detail-modal__author-name">{post.authorName}</span>
+                  <div className="post-detail-modal__author-meta">
+                    <span className="post-detail-modal__date">{dateStr}</span>
+                    <span className="post-detail-modal__meta-divider">|</span>
+                    <span className="post-detail-modal__meta-item">
+                      <EyeIcon /> {post.viewCount}
+                    </span>
+                    <span className="post-detail-modal__meta-item">
+                      <EmoticonIcon /> {post.reactionCount}
+                    </span>
+                    <span className="post-detail-modal__meta-item">
+                      <CommentIcon /> {post.commentCount}
+                    </span>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="post-detail-modal__content">
+                {postTypeLabel && (
+                  <span className="post-detail-modal__type-tag">{postTypeLabel}</span>
+                )}
+                {post.content}
+              </div>
+
+              {/* 첨부파일: 본문 카드 하단, 스크린샷 스펙 */}
+              {files.length > 0 && (
+                <div className="post-detail-modal__attachments">
+                  <div className="post-detail-modal__attachments-header">
+                    <span className="post-detail-modal__attachments-icon">
+                      <ClipIcon />
+                    </span>
+                    <span>{files.length}개의 첨부파일</span>
+                  </div>
+                  <div className="post-detail-modal__file-list">
+                    {files.map(file => (
+                      <button
+                        key={file.id}
+                        type="button"
+                        className="post-detail-modal__file-item"
+                        onClick={() => downloadFile(file.fileName, file.fileUrl)}
+                      >
+                        <span className="post-detail-modal__file-item-icon">
+                          <DownloadIcon />
+                        </span>
+                        <span className="post-detail-modal__file-item-name">{file.fileName}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* ── 댓글 카드 ── */}
+        {/* ── 댓글 카드 (전체 너비) ── */}
         <div className="post-detail-modal__comments-card">
           {comments.map(comment => (
             <div key={comment.id} className="post-detail-modal__comment">
@@ -251,19 +279,44 @@ export function PostDetailModal({ open, onCancel, post, files }: PostDetailModal
               placeholder="댓글을 남겨보세요"
               value={commentInput}
               onChange={e => setCommentInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                  e.preventDefault()
+                  handleSubmitComment()
+                }
+              }}
             />
-            <button
-              type="button"
-              className="post-detail-modal__comment-btn"
-              aria-label="이모티콘"
-              onClick={() => setEmojiActive(v => !v)}
+            <Popover
+              trigger="click"
+              open={emojiActive}
+              onOpenChange={setEmojiActive}
+              overlayClassName="post-detail-modal__emoji-popover"
+              content={
+                <div className="post-detail-modal__emoji-picker-wrap">
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    width="100%"
+                    height={360}
+                    searchPlaceHolder="이모지 검색"
+                    previewConfig={{ showPreview: false }}
+                  />
+                </div>
+              }
+              placement="topRight"
             >
-              <EmojiIcon active={emojiActive} />
-            </button>
+              <button
+                type="button"
+                className="post-detail-modal__comment-btn"
+                aria-label="이모티콘"
+              >
+                <EmojiIcon active={emojiActive || hasEmoji(commentInput)} />
+              </button>
+            </Popover>
             <button
               type="button"
               className="post-detail-modal__comment-btn"
               aria-label="댓글 전송"
+              onClick={handleSubmitComment}
             >
               <SendIcon active={sendActive} />
             </button>
@@ -271,6 +324,6 @@ export function PostDetailModal({ open, onCancel, post, files }: PostDetailModal
         </div>
 
       </div>
-    </TealHeaderModal>
+    </ContentModal>
   )
 }
