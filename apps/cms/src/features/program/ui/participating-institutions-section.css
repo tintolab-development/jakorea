@@ -294,16 +294,15 @@
   white-space: nowrap;
 }
 
-/* 강의 회차 td: 상하 12px, 좌우 24px, 너비는 내용만 사용(오른쪽 빈 공간 없음) */
+/* 강의 회차 td: 셀 내 줄바꿈 없음. 회차별 한 줄, 영역은 텍스트 길이만큼(480px). 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
 .participating-institutions-section__table
   .ant-table-tbody
   > tr
   > td.participating-institutions-section__td-sessions {
-  width: 1%;
-  max-width: max-content;
+  width: 480px;
+  min-width: 480px;
   white-space: normal;
   padding: 12px 24px !important;
-  min-width: 0;
   vertical-align: top;
   box-sizing: border-box;
 }
@@ -312,7 +311,7 @@
   cursor: pointer;
 }
 
-/* 강의 회차 별 교육 진행 날짜 셀: td vertical padding 12px 외 추가 여백 없음 */
+/* 강의 회차 별 교육 진행 날짜 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
 .participating-institutions-section__sessions-cell {
   display: flex;
   flex-direction: column;
@@ -326,6 +325,7 @@
   line-height: 150%;
 }
 
+/* 강의 회차 라인: 회차별 한 줄 처리 */
 .participating-institutions-section__session-line {
   display: inline-flex;
   align-items: center;
