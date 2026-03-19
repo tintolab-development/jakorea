@@ -47,6 +47,7 @@
     font-size: var(--font-size-15);
     font-weight: var(--font-weight-700);
     color: var(--color-text-primary);
+    margin-top: 0;
     margin-bottom: var(--spacing-16);
 }
 

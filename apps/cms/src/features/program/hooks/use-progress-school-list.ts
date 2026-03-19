@@ -140,6 +140,18 @@ export function useProgressSchoolList({
     message.success(`선택한 ${count}건의 참여 기관이 승인되었습니다.`)
   }, [selectedSchoolRowKeys])
 
+  /** 학교 상세에서 승인 취소 확인 시: 해당 기관 approvalStatus → cancelled */
+  const handleSchoolApprovalCancel = useCallback((schoolId: string) => {
+    setSchoolList(prev =>
+      prev.map(row =>
+        row.id === schoolId
+          ? { ...row, approvalStatus: 'cancelled' as ParticipatingSchoolApprovalStatusKey }
+          : row
+      )
+    )
+    message.success('프로그램 승인 현황이 [승인 취소]로 변경되었습니다.')
+  }, [])
+
   /** 학교별 담당 강사진 표시 문자열 (저장 패치 우선, 없으면 참여 강사 목록에서 schoolName 기준) */
   const getInstructorDisplayForSchool = useCallback(
     (schoolId: string, schoolName: string): string => {
@@ -179,6 +191,7 @@ export function useProgressSchoolList({
     handleSchoolDeleteConfirm,
     handleBulkRejectConfirm,
     handleBulkApproveConfirm,
+    handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
     getInstructorRowsForSchool,
   }

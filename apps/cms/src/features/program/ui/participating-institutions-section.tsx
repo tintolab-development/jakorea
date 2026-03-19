@@ -170,6 +170,7 @@ export function ParticipatingInstitutionsSection({
     handleTextbookStatusChange,
     handleBulkRejectConfirm: hookBulkRejectConfirm,
     handleBulkApproveConfirm: hookBulkApproveConfirm,
+    handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
     savedBasicPatches,
     setSavedBasicPatches,
@@ -229,8 +230,8 @@ export function ParticipatingInstitutionsSection({
     navigate('/programs/education/schedule')
   }
 
-  /** 컬럼 너비 합(체크박스 48 + 나머지): 강의 회차 컬럼은 내용 너비만 사용(1px로 예약) */
-  const tableScrollX = 48 + 64 + 180 + 200 + 1 + 96 + 100 + 100 + 152 + 120 + 180
+  /** 컬럼 너비 합. 회차 컬럼 480px(한 줄 텍스트 길이만큼) → 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
+  const tableScrollX = 48 + 64 + 180 + 200 + 480 + 96 + 100 + 100 + 152 + 120 + 180
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
@@ -256,7 +257,7 @@ export function ParticipatingInstitutionsSection({
       {
         title: '강의 회차 별 교육 진행 날짜',
         key: 'sessions',
-        width: 1,
+        width: 480,
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
           const sessions = record.sessions ?? []
@@ -387,6 +388,7 @@ export function ParticipatingInstitutionsSection({
           savedBasicPatches={savedBasicPatches}
           savedInstructorPatches={savedInstructorPatches}
           instructorList={instructorHook.instructorList}
+          onCancelApproval={handleSchoolApprovalCancel}
         />
       </div>
     )

@@ -5,8 +5,8 @@
 
 export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered'
 
-/** 참여 기관 승인/반려 상태 (선택 승인·선택 반려 연동) */
-export type ParticipatingSchoolApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+/** 참여 기관 승인/반려 상태 (선택 승인·선택 반려·승인 취소 연동) */
+export type ParticipatingSchoolApprovalStatusKey = 'pending' | 'rejected' | 'approved' | 'cancelled'
 
 /** 강의 회차별 진행 상태 (교육기관 상세 신청 정보 탭용) */
 export type ParticipatingSchoolSessionStatusKey = 'completed' | 'pending' | 'not_planned'
@@ -133,7 +133,12 @@ const INSTRUCTOR_SAMPLES = [
 
 const textbookStatuses: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
-const APPROVAL_STATUSES: ParticipatingSchoolApprovalStatusKey[] = ['pending', 'rejected', 'approved']
+const APPROVAL_STATUSES: ParticipatingSchoolApprovalStatusKey[] = [
+  'pending',
+  'rejected',
+  'approved',
+  'cancelled',
+]
 
 const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
 

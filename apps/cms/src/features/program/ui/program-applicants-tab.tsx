@@ -10,6 +10,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
 import {
   MOCK_APPLICANT_INSTITUTIONS,
+  type ApplicantApprovalStatusKey,
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
@@ -24,6 +25,7 @@ import {
 } from './manager-delete-guide-modal'
 import {
   MOCK_APPLICANT_INSTRUCTORS,
+  type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
 import {
@@ -165,8 +167,9 @@ export function ProgramApplicantsTab({
 
   const handleSchoolApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
+      const next = status as ApplicantApprovalStatusKey
       setSchoolList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
       message.success('결재 현황이 변경되었습니다.')
     },
@@ -193,7 +196,7 @@ export function ProgramApplicantsTab({
     setSchoolList(prev =>
       prev.map(row =>
         selectedSchoolRowKeys.includes(row.id)
-          ? { ...row, approvalStatus: 'rejected' as ApprovalStatusKey }
+          ? { ...row, approvalStatus: 'rejected' as ApplicantApprovalStatusKey }
           : row
       )
     )
@@ -206,7 +209,7 @@ export function ProgramApplicantsTab({
     setSchoolList(prev =>
       prev.map(row =>
         selectedSchoolRowKeys.includes(row.id)
-          ? { ...row, approvalStatus: 'approved' as ApprovalStatusKey }
+          ? { ...row, approvalStatus: 'approved' as ApplicantApprovalStatusKey }
           : row
       )
     )
@@ -217,8 +220,9 @@ export function ProgramApplicantsTab({
 
   const handleInstructorApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
+      const next = status as ApplicantInstructorApprovalStatusKey
       setInstructorList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
       message.success('결재 현황이 변경되었습니다.')
     },
@@ -245,7 +249,7 @@ export function ProgramApplicantsTab({
     setInstructorList(prev =>
       prev.map(row =>
         selectedInstructorRowKeys.includes(row.id)
-          ? { ...row, approvalStatus: 'rejected' as ApprovalStatusKey }
+          ? { ...row, approvalStatus: 'rejected' as ApplicantInstructorApprovalStatusKey }
           : row
       )
     )
@@ -258,7 +262,7 @@ export function ProgramApplicantsTab({
     setInstructorList(prev =>
       prev.map(row =>
         selectedInstructorRowKeys.includes(row.id)
-          ? { ...row, approvalStatus: 'approved' as ApprovalStatusKey }
+          ? { ...row, approvalStatus: 'approved' as ApplicantInstructorApprovalStatusKey }
           : row
       )
     )
@@ -270,7 +274,7 @@ export function ProgramApplicantsTab({
   const handleInstructorDetailReject = useCallback((instructor: ApplicantInstructorRow) => {
     setInstructorList(prev =>
       prev.map(row =>
-        row.id === instructor.id ? { ...row, approvalStatus: 'rejected' as ApprovalStatusKey } : row
+        row.id === instructor.id ? { ...row, approvalStatus: 'rejected' as ApplicantInstructorApprovalStatusKey } : row
       )
     )
     setInstructorDetailModalOpen(false)
@@ -283,7 +287,7 @@ export function ProgramApplicantsTab({
       setInstructorList(prev =>
         prev.map(row =>
           row.id === instructor.id
-            ? { ...row, approvalStatus: 'approved' as ApprovalStatusKey }
+            ? { ...row, approvalStatus: 'approved' as ApplicantInstructorApprovalStatusKey }
             : row
         )
       )

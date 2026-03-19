@@ -246,7 +246,7 @@
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
-/* 테이블 가로 스크롤: 컬럼 한 줄 표시, 잘림 없이 스크롤로 확인 */
+/* 테이블 가로 스크롤: 컬럼 한 줄 표시, 화면 넘어가면 테이블 자체 가로 스크롤 */
 .participating-institutions-section__table-wrap {
   overflow-x: auto;
   width: 100%;
@@ -254,7 +254,16 @@
 
 .participating-institutions-section__table {
   min-width: 0;
-  table-layout: auto;
+}
+
+/* 컬럼 너비 고정 → 화면 넘어가면 가로 스크롤 (컬럼 압축·헤더 두 줄 방지) */
+.participating-institutions-section__table table.ant-table {
+  table-layout: fixed;
+}
+
+/* thead 컬럼 한 줄 유지 (두 줄 처리 방지) */
+.participating-institutions-section__table .ant-table-thead .ant-table-cell {
+  white-space: nowrap;
 }
 
 /* th 텍스트 스펙 */
@@ -266,6 +275,7 @@
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
+  white-space: nowrap;
 }
 
 /* td 텍스트 스펙 */
@@ -284,16 +294,15 @@
   white-space: nowrap;
 }
 
-/* 강의 회차 td: 상하 12px, 좌우 24px, 너비는 내용만 사용(오른쪽 빈 공간 없음) */
+/* 강의 회차 td: 셀 내 줄바꿈 없음. 회차별 한 줄, 영역은 텍스트 길이만큼(480px). 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
 .participating-institutions-section__table
   .ant-table-tbody
   > tr
   > td.participating-institutions-section__td-sessions {
-  width: 1%;
-  max-width: max-content;
+  width: 480px;
+  min-width: 480px;
   white-space: normal;
   padding: 12px 24px !important;
-  min-width: 0;
   vertical-align: top;
   box-sizing: border-box;
 }
@@ -302,7 +311,7 @@
   cursor: pointer;
 }
 
-/* 강의 회차 별 교육 진행 날짜 셀: td vertical padding 12px 외 추가 여백 없음 */
+/* 강의 회차 별 교육 진행 날짜 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
 .participating-institutions-section__sessions-cell {
   display: flex;
   flex-direction: column;
@@ -316,6 +325,7 @@
   line-height: 150%;
 }
 
+/* 강의 회차 라인: 회차별 한 줄 처리 */
 .participating-institutions-section__session-line {
   display: inline-flex;
   align-items: center;
@@ -384,7 +394,8 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 (트리거/래퍼 152px와 동일) */
+/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 (트리거/래퍼 152px와 동일).
+ * 좌우 패딩 0으로 해야 152px 트리거가 셀을 넘지 않음 (100% 배율에서 Ant Design td 기본 패딩 시 내용 영역 < 152px 되어 overflow 발생) */
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
@@ -394,6 +405,8 @@
   max-width: 152px;
   padding-top: 0;
   padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
   overflow: visible;
   box-sizing: border-box;
 }
@@ -416,11 +429,13 @@
   max-height: 53px !important;
 }
 
-/* 테이블 셀 높이 53px인 경우 해당 셀 vertical padding 0 — vertical UI shifting 방지 */
+/* 테이블 셀 높이 53px인 경우 해당 셀 padding 0 — vertical shifting 방지, 좌우 0으로 152px 트리거가 셀 밖으로 넘지 않도록 */
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

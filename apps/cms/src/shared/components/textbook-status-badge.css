@@ -38,3 +38,9 @@
     background: #f2f3f5;
     color: #464646;
 }
+
+/* 승인 취소 */
+.app-status-badge.textbook-status-badge--cancelled {
+    background: #fff3e0;
+    color: #e65100;
+}
