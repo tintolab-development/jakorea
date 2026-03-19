@@ -1,12 +1,11 @@
 /**
- * 게시글 작성 모달
- * 수강 프로그램 상세 > 게시글 탭 > "게시글 작성" 버튼 클릭 시 노출
- * 스크린샷·persona 기준: 공개 범위(담당교사/강사진/학생), 게시글 내용, 첨부 파일, 하단 닫기
+ * 게시글 등록 모달
+ * 수강 프로그램 상세 / 학교 상세 게시글 탭 > "게시글 등록" 버튼 클릭 시 노출
+ * antd Modal 사용 (흰색 헤더, 타이틀 + X), 공개 범위·내용·첨부파일·취소/등록
  */
 
 import { useState } from 'react'
-import { Checkbox, Input } from 'antd'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { Checkbox, Input, Modal } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import './post-write-modal.css'
@@ -37,18 +36,32 @@ export function PostWriteModal({ open, onCancel }: PostWriteModalProps) {
     setFileNames(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleRegister = () => {
+    // TODO: 등록 API 연동
+    onCancel()
+  }
+
   return (
-    <TealHeaderModal
+    <Modal
       open={open}
       onCancel={onCancel}
-      title="게시글 작성"
+      title="게시글 등록"
       width={800}
       className="post-write-modal"
       footer={
-        <AppButton variant="cancel" size="large" onClick={onCancel}>
-          닫기
-        </AppButton>
+        <div className="post-write-modal__footer-actions">
+          <AppButton variant="cancel" size="large" onClick={onCancel}>
+            취소
+          </AppButton>
+          <AppButton variant="primary" size="large" onClick={handleRegister}>
+            등록
+          </AppButton>
+        </div>
       }
+      closable
+      destroyOnClose
+      maskClosable
+      centered
     >
       <div className="post-write-modal__body">
         {/* 게시글 공개 범위 */}
@@ -98,6 +111,6 @@ export function PostWriteModal({ open, onCancel }: PostWriteModalProps) {
           </div>
         </div>
       </div>
-    </TealHeaderModal>
+    </Modal>
   )
 }

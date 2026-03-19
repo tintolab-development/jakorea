@@ -1,6 +1,6 @@
 /**
- * 게시글 작성 모달
- * 스크린샷 기준: 청록 헤더, 공개 범위(체크박스), 게시글 내용(텍스트영역), 첨부 파일(회색 박스), 하단 닫기
+ * 게시글 등록 모달 (antd Modal)
+ * 공개 범위(체크박스), 게시글 내용(텍스트영역), 첨부 파일(회색 박스), 하단 취소/등록
  */
 
 .post-write-modal.ant-modal .ant-modal-content {
@@ -15,29 +15,16 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  padding: 0;
-}
-
-.post-write-modal .teal-header-modal__header {
-  flex-shrink: 0;
-}
-
-.post-write-modal .teal-header-modal__body {
-  flex-shrink: 0;
-  width: 100%;
   padding: var(--spacing-20) var(--spacing-30) 0;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
   background: var(--color-bg-base);
 }
 
-.post-write-modal .teal-header-modal__footer {
-  flex-shrink: 0;
-  justify-content: center;
-  padding-top: var(--spacing-30);
-  padding-bottom: var(--spacing-30);
+.post-write-modal__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
 }
 
 .post-write-modal__body {
