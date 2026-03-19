@@ -30,6 +30,8 @@ export interface ApplicantSchoolRow {
   programId?: string
   /** 강의 회차 별 희망 교육 날짜 및 시간 (참여 기관과 동일 형식) */
   sessions?: ParticipatingSchoolSession[]
+  /** 담당 강사(들) — 신청 단계에서는 미배정일 수 있음 */
+  assignedInstructorNames?: string
 }
 
 const SCHOOL_NAMES = [
@@ -165,6 +167,7 @@ function buildMockList(count: number, programIds?: string[]): ApplicantSchoolRow
         scheduleChangeCancelCount > 0 ? scheduleChangeCancelCount : undefined,
       programId: programIds?.[i % programIds.length],
       sessions: buildSessionsForRow(i),
+      assignedInstructorNames: statusIdx === 2 ? `김강사${(i % 3) + 1}` : undefined,
     })
   }
   return rows

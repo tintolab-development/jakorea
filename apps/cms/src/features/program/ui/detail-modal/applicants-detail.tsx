@@ -20,11 +20,13 @@ import {
 import {
   MOCK_APPLICANT_INSTITUTIONS,
   updateApplicantSchoolApprovalStatus,
+  type ApplicantApprovalStatusKey,
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import {
   MOCK_APPLICANT_INSTRUCTORS,
   updateApplicantInstructorApprovalStatus,
+  type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
 import { ApplicantCalendarView } from './applicant-calendar-view'
@@ -94,15 +96,16 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
 
   const handleInstitutionApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
+      const next = status as ApplicantApprovalStatusKey
       setInstitutionList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
       setSelectedItem(prev =>
         prev && 'schoolName' in prev && prev.id === recordId
-          ? { ...prev, approvalStatus: status }
+          ? { ...prev, approvalStatus: next }
           : prev
       )
-      updateApplicantSchoolApprovalStatus(recordId, status)
+      updateApplicantSchoolApprovalStatus(recordId, next)
       message.success('결재 현황이 변경되었습니다.')
     },
     []
@@ -110,15 +113,16 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
 
   const handleInstructorApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
+      const next = status as ApplicantInstructorApprovalStatusKey
       setInstructorList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: status } : row))
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
       setSelectedItem(prev =>
         prev && 'instructorName' in prev && prev.id === recordId
-          ? { ...prev, approvalStatus: status }
+          ? { ...prev, approvalStatus: next }
           : prev
       )
-      updateApplicantInstructorApprovalStatus(recordId, status)
+      updateApplicantInstructorApprovalStatus(recordId, next)
       message.success('결재 현황이 변경되었습니다.')
     },
     []
@@ -142,15 +146,15 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
     []
   )
 
-  // 참여 기관(학교) 컬럼 정의 — participating-institutions-section과 동일 순서(강의 회차 | 승인 현황)
+  // 교육 신청 기관 컬럼 — 프로그램 진행 현황(참여 기관) 테이블 구조와 동일: 회차 컬럼 한 줄 처리, width: 1로 가로 스크롤
   const institutionColumns: ColumnsType<ApplicantSchoolRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
       {
         title: '참여 기관명',
         dataIndex: 'schoolName',
         key: 'schoolName',
-        width: 160,
+        width: 180,
         align: 'center',
         ellipsis: true,
         render: (text: string, record) => (
@@ -166,14 +170,36 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         title: '기관 지역',
         dataIndex: 'region',
         key: 'region',
-        width: 150,
+        width: 200,
         align: 'center',
         ellipsis: true,
       },
       {
+        title: '프로그램 승인 현황',
+        dataIndex: 'approvalStatus',
+        key: 'approvalStatus',
+        width: 152,
+        align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<ApprovalStatusKey>
+              status={status ?? null}
+              statusOptions={approvalStatusKeys}
+              renderBadge={s => <ApprovalStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
+              isOpen={openApprovalDropdownId === record.id}
+              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+              emptyPlaceholder="-"
+            />
+          </div>
+        ),
+      },
+      {
         title: '강의 회차 별 희망 교육 날짜 및 시간',
         key: 'sessions',
-        width: 1,
+        width: 520,
         onCell: () => ({ className: 'applicant-details__td-sessions' }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
           const sessions = record.sessions ?? []
@@ -204,32 +230,10 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         },
       },
       {
-        title: '프로그램 승인 현황',
-        dataIndex: 'approvalStatus',
-        key: 'approvalStatus',
-        width: 152,
-        align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<ApprovalStatusKey>
-              status={status ?? null}
-              statusOptions={approvalStatusKeys}
-              renderBadge={s => <ApprovalStatusBadge status={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
-              isOpen={openApprovalDropdownId === record.id}
-              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
-              emptyPlaceholder="-"
-            />
-          </div>
-        ),
-      },
-      {
         title: '대상 학년',
         dataIndex: 'educationGrade',
         key: 'educationGrade',
-        width: 90,
+        width: 96,
         align: 'center',
       },
       {
@@ -241,19 +245,20 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
         render: (v: number) => (v != null ? `${v}개` : '-'),
       },
       {
-        title: '총 학생 수',
-        dataIndex: 'studentCount',
-        key: 'studentCount',
-        width: 100,
-        align: 'center',
-        render: (v: number) => (v != null ? `${v}명` : '-'),
-      },
-      {
         title: '담당 교사명',
         dataIndex: 'teacherName',
         key: 'teacherName',
-        width: 110,
+        width: 120,
         align: 'center',
+      },
+      {
+        title: '담당 강사',
+        dataIndex: 'assignedInstructorNames',
+        key: 'assignedInstructorNames',
+        width: 180,
+        align: 'center',
+        ellipsis: true,
+        render: (v: string | undefined) => v ?? '-',
       },
     ],
     [
@@ -462,7 +467,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   const title = useMemo(() => {
     switch (menu) {
       case 'institutions':
-        return '수강 신청 기관 목록'
+        return '교육 신청 기관 목록'
       case 'instructors':
         return '강의 신청 강사 목록'
       case 'volunteers':
@@ -534,11 +539,11 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
     return []
   }, [menu, institutionColumns, instructorColumns])
 
-  /** 컬럼 너비 합(체크박스 48 + 나머지). institutions/instructors 메뉴별 상이 */
+  /** 컬럼 너비 합. 회차 컬럼 520px(한 줄+좌우 24px 패딩) → 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
   const tableScrollX =
     menu === 'instructors'
       ? 48 + 72 + 110 + 150 + 120 + 110 + 130 + 160 + 152
-      : 48 + 72 + 160 + 150 + 200 + 152 + 90 + 100 + 100 + 110
+      : 49 + 64 + 180 + 200 + 152 + 520 + 96 + 100 + 120 + 180
 
   // Helper function to map applicant data to calendar event format
   const mapApplicantDataToCalendarEvents = (
@@ -701,23 +706,12 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
             <Divider />
           </div>
           {menu && (
-            <div style={{ padding: '0 24px 24px 42px' }}>
-              <div
-                className="applicant-details__table-header"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <div
-                  className="applicant-details__table-title"
-                  style={{ fontSize: '20px', fontWeight: 700 }}
-                >
-                  {title}{' '}
-                  <span style={{ fontWeight: 500, fontSize: '16px', marginLeft: '8px' }}>
-                    총 {tableData.length}건
+            <div className="applicant-details__below-divider">
+              <div className="applicant-details__table-header">
+                <div className="applicant-details__table-heading">
+                  <span className="applicant-details__table-title">{title}</span>
+                  <span className="applicant-details__table-description">
+                    {tableData.length}건
                   </span>
                 </div>
                 <div className="applicant-details__table-actions">
@@ -754,9 +748,9 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
 
               {viewMode === 'table' ? (
                 <div className="applicant-details__table-wrap">
-                  <Table<any>
+                  <Table<ApplicantSchoolRow | ApplicantInstructorRow>
                     rowKey="id"
-                    columns={columns}
+                    columns={columns as ColumnsType<ApplicantSchoolRow | ApplicantInstructorRow>}
                     dataSource={tableData}
                     size="middle"
                     className="applicant-details__table applicant-details__table--clickable"
