@@ -200,7 +200,9 @@ export const mockProgramPosts: ProgramPost[] = [
 
 const byProgramId = new Map<UUID, ProgramPost[]>()
 const byProgramAndSchool = new Map<string, ProgramPost[]>()
+const byPostId = new Map<UUID, ProgramPost>()
 mockProgramPosts.forEach(post => {
+  byPostId.set(post.id, post)
   const list = byProgramId.get(post.programId) ?? []
   list.push(post)
   byProgramId.set(post.programId, list)
@@ -226,3 +228,76 @@ export function getProgramPostsByProgramIdAndSchoolId(programId: UUID, schoolId:
 }
 
 export const mockProgramPostsMap = new Map(mockProgramPosts.map(p => [p.id, p]))
+
+/** 게시글 등록 시 사용하는 페이로드 */
+export interface CreateProgramPostPayload {
+  programId: UUID
+  schoolId?: UUID
+  authorName: string
+  content: string
+  /** 공개 범위 (teacher, instructor, student) — 저장용 옵션 */
+  audience?: string[]
+  attachmentCount: number
+}
+
+/** 게시글 등록 (Mock: in-memory 추가 후 목록에 반영) */
+export function createProgramPost(payload: CreateProgramPostPayload): ProgramPost {
+  const now = new Date().toISOString()
+  const id = `post-created-${Date.now()}-${Math.random().toString(36).slice(2, 11)}` as UUID
+  const post: ProgramPost = {
+    id,
+    programId: payload.programId,
+    schoolId: payload.schoolId,
+    authorName: payload.authorName,
+    content: payload.content.trim(),
+    read: false,
+    viewCount: 0,
+    reactionCount: 0,
+    commentCount: 0,
+    attachmentCount: payload.attachmentCount,
+    publishedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  let programList = byProgramId.get(payload.programId)
+  if (!programList) {
+    programList = []
+    byProgramId.set(payload.programId, programList)
+  }
+  programList.push(post)
+  byPostId.set(post.id, post)
+  programList.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+
+  if (payload.schoolId) {
+    const key = `${payload.programId}:${payload.schoolId}`
+    let schoolList = byProgramAndSchool.get(key)
+    if (!schoolList) {
+      schoolList = []
+      byProgramAndSchool.set(key, schoolList)
+    }
+    schoolList.push(post)
+    schoolList.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+  }
+
+  return post
+}
+
+/** 게시글 상세 진입 시 읽음 처리 (Mock: in-memory 반영, 목록 재렌더 시 읽음 표시) */
+export function markPostAsRead(postId: UUID): void {
+  const post = byPostId.get(postId)
+  if (post) {
+    post.read = true
+    post.viewCount = (post.viewCount || 0) + 1
+    post.updatedAt = new Date().toISOString()
+  }
+}
+
+/** 댓글 등록 시 게시글 commentCount 증가 (Mock: in-memory 반영) */
+export function incrementPostCommentCount(postId: UUID): void {
+  const post = byPostId.get(postId)
+  if (post) {
+    post.commentCount = (post.commentCount || 0) + 1
+    post.updatedAt = new Date().toISOString()
+  }
+}

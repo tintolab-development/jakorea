@@ -670,6 +670,25 @@ export interface ProgramPost {
   updatedAt: DateValue
 }
 
+// 프로그램 게시글 댓글 (게시글 상세 — 댓글 목록)
+export interface ProgramPostComment {
+  id: UUID
+  postId: UUID
+  authorName: string
+  content: string
+  createdAt: DateValue
+}
+
+// 프로그램 게시글 반응/이모지 (게시글 상세 — 반응 뷰어)
+export interface ProgramPostReaction {
+  id: UUID
+  postId: UUID
+  /** 이모지 타입 (예: 'like' | 'heart' | 'clap') */
+  emojiType: string
+  /** 반응한 사용자 수 또는 사용자 ID 목록 */
+  count: number
+}
+
 // 프로그램 첨부 파일 (수강 프로그램 상세 모달 — 파일 및 사진 탭)
 export interface ProgramFile {
   id: UUID

@@ -138,3 +138,49 @@ export function getProgramFilesByProgramId(programId: UUID): ProgramFile[] {
 }
 
 export const mockProgramFilesMap = new Map(mockProgramFiles.map(f => [f.id, f]))
+
+/** 게시글 등록 시 업로드된 첨부파일을 목록에 추가 (우측 첨부파일 카드 갱신용) */
+export interface AddProgramFileItem {
+  fileName: string
+  fileUrl?: string
+  fileSize?: number
+}
+
+let createdFileIdSeq = 10000
+
+export function addProgramFiles(
+  programId: UUID,
+  postId: UUID,
+  items: AddProgramFileItem[]
+): ProgramFile[] {
+  const now = new Date().toISOString()
+  const added: ProgramFile[] = []
+  for (const item of items) {
+    const id = `pfile-created-${++createdFileIdSeq}` as UUID
+    const ext = item.fileName.substring(item.fileName.lastIndexOf('.')).toLowerCase()
+    const file: ProgramFile = {
+      id,
+      programId,
+      postId,
+      fileName: item.fileName,
+      fileType: ext.replace('.', '') || undefined,
+      fileSize: item.fileSize,
+      fileUrl: item.fileUrl,
+      uploadedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    }
+    added.push(file)
+    let list = byProgramId.get(programId)
+    if (!list) {
+      list = []
+      byProgramId.set(programId, list)
+    }
+    list.push(file)
+  }
+  const list = byProgramId.get(programId)
+  if (list) {
+    list.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
+  }
+  return added
+}
