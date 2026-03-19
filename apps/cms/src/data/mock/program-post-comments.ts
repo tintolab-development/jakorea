@@ -7,13 +7,6 @@ import type { UUID } from '../../types'
 import type { ProgramPostComment, ProgramPostReaction } from '../../types/domain'
 import { mockProgramPosts } from './program-posts'
 
-function isoDate(daysAgo: number, hour: number, minute: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - daysAgo)
-  d.setHours(hour, minute, 0, 0)
-  return d.toISOString()
-}
-
 const COMMENT_AUTHORS = ['김○○', '최○○', '이○○', '정○○', '박○○', '강○○', 'JA KOREA 알림']
 const COMMENT_CONTENTS = [
   '확인했습니다!',
