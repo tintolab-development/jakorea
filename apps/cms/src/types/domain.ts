@@ -647,6 +647,8 @@ export interface ProgramStatistics {
 export interface ProgramPost {
   id: UUID
   programId: UUID
+  /** 참여기관(학교) 단위 게시글일 때 해당 학교 ID (미설정 시 프로그램 전체 공지) */
+  schoolId?: UUID
   /** 작성자 표시명 (예: "박○○ 담당교사님", "JA KOREA 알림") */
   authorName: string
   /** 작성자 사용자 ID (선택, 프로필 연동용) */

@@ -1,11 +1,12 @@
 /**
  * 프로그램 게시글 Mock 데이터
  * 수강 프로그램 상세 모달 — 게시글 탭
- * mockPrograms의 programId와 연동하여 정합성 유지
+ * mockPrograms의 programId와 연동, 참여기관(학교)별 게시글 포함
  */
 
 import type { ProgramPost, UUID } from '../../types'
 import { mockPrograms } from './programs'
+import { MOCK_PARTICIPATING_SCHOOLS } from './participating-schools'
 
 function date(daysAgo: number, hour: number = 15, minute: number = 0): string {
   const d = new Date()
@@ -14,7 +15,126 @@ function date(daysAgo: number, hour: number = 15, minute: number = 0): string {
   return d.toISOString()
 }
 
-/** programId별 게시글 목록 생성. mockPrograms에 존재하는 programId만 사용 */
+/** HSBC/HKU Business Case Competition 2026 모집 안내 + 강서초등학교 전용 게시글 (스크린샷 3장) */
+const HSBC_ECONOMY_PROGRAM_ID = 'economy-prog-001' as UUID
+const GANGSEO_SCHOOL_ID = 'school-1'
+
+function buildPostsForHSBCGangseo(): ProgramPost[] {
+  const posts: ProgramPost[] = [
+    {
+      id: 'post-hsbc-gs-001' as UUID,
+      programId: HSBC_ECONOMY_PROGRAM_ID,
+      schoolId: GANGSEO_SCHOOL_ID as UUID,
+      authorName: '박○○ 담당교사님',
+      content:
+        '최근 과제 제출과 관련하여 다른 반 친구의 과제를 그대로 베끼거나, GPT 등에 답을 맡기는 사례가 많다는 소식을 전해 들었습니다.\n\n강서초등학교 학생 여러분, 과제를 스스로 성실히 수행하는 학생이 되어 주시기 바랍니다.\n\n앞으로 타인의 글을 베끼거나 대신 작성한 것으로 확인되는 과제는 0점 처리하며 재제출이 필요합니다.',
+      read: false,
+      viewCount: 12,
+      reactionCount: 10,
+      commentCount: 2,
+      attachmentCount: 0,
+      postType: 'notice',
+      publishedAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
+      createdAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
+      updatedAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
+    },
+    {
+      id: 'post-hsbc-gs-002' as UUID,
+      programId: HSBC_ECONOMY_PROGRAM_ID,
+      schoolId: GANGSEO_SCHOOL_ID as UUID,
+      authorName: '김틴토 강사님',
+      content:
+        '2회차 강의의 테마는 "나를 보여주는 기술"입니다. 면접 태도와 모의 면접을 다룰 예정이오니 교재를 꼭 준비해 주시고, 이번 주까지 과제 제출 부탁드립니다.',
+      read: false,
+      viewCount: 12,
+      reactionCount: 10,
+      commentCount: 2,
+      attachmentCount: 2,
+      postType: 'notice',
+      publishedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+      createdAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+      updatedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+    },
+    {
+      id: 'post-hsbc-gs-003' as UUID,
+      programId: HSBC_ECONOMY_PROGRAM_ID,
+      schoolId: GANGSEO_SCHOOL_ID as UUID,
+      authorName: 'JA KOREA 알림',
+      content:
+        '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
+      read: true,
+      viewCount: 12,
+      reactionCount: 10,
+      commentCount: 2,
+      attachmentCount: 0,
+      postType: 'schedule',
+      publishedAt: new Date(2026, 0, 5, 10, 0, 0).toISOString(),
+      createdAt: new Date(2026, 0, 5, 10, 0, 0).toISOString(),
+      updatedAt: new Date(2026, 0, 5, 10, 0, 0).toISOString(),
+    },
+  ]
+  return posts
+}
+
+/** 참여기관(학교)별 게시글 생성 — 해당 학교 전용 공지/일정 (진월초등학교 등) */
+function buildPostsForSchools(): ProgramPost[] {
+  const programId = mockPrograms[0]?.id
+  if (!programId) return []
+
+  const authors = [
+    '박○○ 담당교사님',
+    '김틴토 강사님',
+    'JA KOREA 알림',
+    '이○○ 담당교사님',
+    '담당 매니저',
+  ]
+  const schoolRows = MOCK_PARTICIPATING_SCHOOLS.slice(0, 12)
+  const posts: ProgramPost[] = []
+  let idSeq = 1000
+
+  schoolRows.forEach((school, schoolIdx) => {
+    const schoolName = school.schoolName
+    const postCount = schoolIdx < 3 ? 5 : schoolIdx < 6 ? 3 : 2
+    const contentsForSchool = [
+      `${schoolName} 담당교사님께 안내드립니다. 2026년 1학기 경제금융교육 일정이 확정되었습니다. 첨부된 일정표를 확인해 주시기 바랍니다.`,
+      `[${schoolName}] 강사 대기실 위치가 변경되었습니다. 당일 안내도는 첨부 파일을 참고해 주세요.`,
+      `${schoolName} 1회차 강의가 잘 마무리되었습니다. 2회차에서는 기업과 경제적 개념을 다룰 예정이오니 미리 교재 2장을 읽어 오시면 좋겠습니다.`,
+      `[공지] ${schoolName} 교육 당일 주차는 건물 지하 B2를 이용해 주세요. 출입증은 당일 오전 문자로 발송됩니다.`,
+      `${schoolName} 만족도 설문 링크가 발송되었습니다. 참여해 주신 모든 분들께 감사드립니다.`,
+      `[일정] ${schoolName} 2회차 강의가 다음 주 금요일로 예정되어 있습니다. 교재 미배송 시 연락 주시면 재발송 도와드리겠습니다.`,
+      `${schoolName} 질의응답 시간에 자주 나온 내용을 정리한 FAQ를 첨부했습니다. 추가 문의는 댓글로 남겨 주세요.`,
+    ]
+
+    for (let i = 0; i < postCount; i++) {
+      const publishedAt = date(20 - schoolIdx * 2 - i, 14 + (i % 3), i * 5)
+      const isRead = schoolIdx === 0 ? [0, 2].includes(i) : i === 0
+      const postType: ProgramPost['postType'] = i % 3 === 0 ? 'notice' : i % 3 === 1 ? 'schedule' : undefined
+      const contentIndex = i % contentsForSchool.length
+      posts.push({
+        id: `post-${String(idSeq).padStart(3, '0')}` as UUID,
+        programId,
+        schoolId: school.id as UUID,
+        authorName: authors[(schoolIdx + i) % authors.length],
+        title: undefined,
+        content: contentsForSchool[contentIndex],
+        read: isRead,
+        viewCount: 8 + schoolIdx + i * 2,
+        reactionCount: 5 + i,
+        commentCount: i % 2,
+        attachmentCount: postType === 'schedule' ? 2 : i === 1 ? 1 : 0,
+        postType,
+        publishedAt,
+        createdAt: publishedAt,
+        updatedAt: publishedAt,
+      })
+      idSeq += 1
+    }
+  })
+
+  return posts
+}
+
+/** programId별 게시글 목록 생성. mockPrograms에 존재하는 programId만 사용 (프로그램 전체 공지) */
 function buildPosts(): ProgramPost[] {
   const programIds = mockPrograms.slice(0, 10).map(p => p.id)
   const authors = [
@@ -72,19 +192,37 @@ function buildPosts(): ProgramPost[] {
   return posts
 }
 
-export const mockProgramPosts: ProgramPost[] = buildPosts()
+export const mockProgramPosts: ProgramPost[] = [
+  ...buildPosts(),
+  ...buildPostsForSchools(),
+  ...buildPostsForHSBCGangseo(),
+]
 
 const byProgramId = new Map<UUID, ProgramPost[]>()
+const byProgramAndSchool = new Map<string, ProgramPost[]>()
 mockProgramPosts.forEach(post => {
   const list = byProgramId.get(post.programId) ?? []
   list.push(post)
   byProgramId.set(post.programId, list)
+  if (post.schoolId) {
+    const key = `${post.programId}:${post.schoolId}`
+    const schoolList = byProgramAndSchool.get(key) ?? []
+    schoolList.push(post)
+    byProgramAndSchool.set(key, schoolList)
+  }
 })
 byProgramId.forEach(list => list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()))
+byProgramAndSchool.forEach(list => list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()))
 
-/** 프로그램 ID로 게시글 목록 조회 (최신순) */
+/** 프로그램 ID로 게시글 목록 조회 (최신순, 프로그램 전체 공지 + 학교별 공지 모두 포함) */
 export function getProgramPostsByProgramId(programId: UUID): ProgramPost[] {
   return (byProgramId.get(programId) ?? []).slice()
+}
+
+/** 프로그램 + 참여기관(학교) ID로 해당 학교 게시글만 조회 (학교 상세 게시글 탭용) */
+export function getProgramPostsByProgramIdAndSchoolId(programId: UUID, schoolId: string): ProgramPost[] {
+  const key = `${programId}:${schoolId}`
+  return (byProgramAndSchool.get(key) ?? []).slice()
 }
 
 export const mockProgramPostsMap = new Map(mockProgramPosts.map(p => [p.id, p]))

@@ -10,6 +10,7 @@ export {
   mockProgramPosts,
   mockProgramPostsMap,
   getProgramPostsByProgramId,
+  getProgramPostsByProgramIdAndSchoolId,
 } from './program-posts'
 export {
   mockProgramFiles,
