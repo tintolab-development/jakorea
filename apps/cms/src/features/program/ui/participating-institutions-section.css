@@ -195,6 +195,12 @@
   margin-top: 32px;
 }
 
+.participating-institutions-section__calendar-wrap {
+  width: 100%;
+  overflow-x: auto;
+  min-height: 742px;
+}
+
 .participating-institutions-section__table-header {
   display: flex;
   align-items: center;

@@ -5,10 +5,9 @@
 
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { Table, Row, Col, Select, Input } from 'antd'
-import { CalendarOutlined } from '@ant-design/icons'
+import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
-import { useNavigate } from 'react-router-dom'
 import { message } from 'antd'
 import {
   DeleteGuideModal,
@@ -38,6 +37,7 @@ import {
 import { getSchoolDetailByRow } from '../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
+import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -120,13 +120,13 @@ export function ParticipatingInstitutionsSection({
   onSchoolDetailOpen,
   onSchoolDetailClose,
 }: ParticipatingInstitutionsSectionProps) {
-  const navigate = useNavigate()
   const prevSchoolIdFromUrl = useRef<string | null>(null)
   const { filters, appliedFilters, setFilter, applyFilters } = useParticipatingInstitutionsParams()
   const [localSchoolName, setLocalSchoolName] = useState(() => filters.schoolName)
   const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName)
   const [openTextbookDropdownId, setOpenTextbookDropdownId] = useState<string | null>(null)
   const [bulkConfirmModal, setBulkConfirmModal] = useState<'reject' | 'approve' | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   /** 쿼리 파라미터(URL)와 로컬 입력 동기화 */
   useEffect(() => {
@@ -227,7 +227,11 @@ export function ParticipatingInstitutionsSection({
   }
 
   const handleCalendarView = () => {
-    navigate('/programs/education/schedule')
+    setViewMode('calendar')
+  }
+
+  const handleListView = () => {
+    setViewMode('list')
   }
 
   /** 컬럼 너비 합. 회차 컬럼 480px(한 줄 텍스트 길이만큼) → 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
@@ -493,17 +497,30 @@ export function ParticipatingInstitutionsSection({
             >
               선택 승인
             </AppButton>
-            <AppButton
-              variant="cancel"
-              size="large"
-              icon={<CalendarOutlined />}
-              onClick={handleCalendarView}
-            >
-              캘린더 뷰로 보기
-            </AppButton>
+            {viewMode === 'list' ? (
+              <AppButton
+                variant="cancel"
+                size="large"
+                icon={<CalendarOutlined />}
+                onClick={handleCalendarView}
+              >
+                캘린더 뷰로 보기
+              </AppButton>
+            ) : (
+              <AppButton
+                variant="cancel"
+                size="large"
+                icon={<UnorderedListOutlined />}
+                onClick={handleListView}
+                className="participating-institutions-section__btn-approve"
+              >
+                리스트 뷰로 보기
+              </AppButton>
+            )}
           </div>
         </div>
 
+        {viewMode === 'list' ? (
         <div className="participating-institutions-section__table-wrap">
           <Table<ParticipatingSchoolRow>
             className="participating-institutions-section__table participating-institutions-section__table--clickable"
@@ -538,6 +555,23 @@ export function ParticipatingInstitutionsSection({
             })}
           />
         </div>
+        ) : (
+          <div className="participating-institutions-section__calendar-wrap">
+            <ParticipatingInstitutionsCalendarView
+              schools={filteredSchools}
+              selectedRowKeys={selectedSchoolRowKeys}
+              onSelectionChange={setSelectedSchoolRowKeys}
+              onSchoolClick={row => {
+                if (onSchoolRowClick) {
+                  onSchoolRowClick(row)
+                } else {
+                  setSelectedSchoolForDetail(row)
+                  setSchoolDetailModalOpen(true)
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {!schoolIdFromUrl && (
