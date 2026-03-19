@@ -97,10 +97,6 @@
   border-radius: 4px;
 }
 
-.participating-instructors-section__calendar-card-checkbox .ant-checkbox-inner::after {
-  inset-inline-start: 6px;
-}
-
 .participating-instructors-section__calendar-card-body {
   flex: 1;
   min-width: 0;
