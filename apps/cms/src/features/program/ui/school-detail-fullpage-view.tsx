@@ -42,6 +42,10 @@ import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-ass
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
+import {
+  DeleteGuideModal,
+  buildSchoolCancelApprovalMessageLines,
+} from './manager-delete-guide-modal'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
 import './program-detail-info-tab.css'
 import './participating-institutions-section.css'
@@ -140,6 +144,8 @@ export interface SchoolDetailFullpageViewProps {
   savedBasicPatches?: Record<string, Partial<SchoolDetailForModal>>
   savedInstructorPatches?: Record<string, InstructorListFormInstructor[]>
   instructorList: ParticipatingInstructorRow[]
+  /** 승인 취소 버튼 클릭 후 컨펌 시 호출 (프로그램 승인 현황 → 승인 취소) */
+  onCancelApproval?: (schoolId: string) => void
 }
 
 export function SchoolDetailFullpageView({
@@ -154,8 +160,10 @@ export function SchoolDetailFullpageView({
   savedBasicPatches = {},
   savedInstructorPatches = {},
   instructorList,
+  onCancelApproval,
 }: SchoolDetailFullpageViewProps) {
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
+  const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
   const activeTab =
     activeTabFromUrl !== undefined && activeTabFromUrl !== null
       ? activeTabFromUrl
@@ -682,9 +690,15 @@ export function SchoolDetailFullpageView({
         </div>
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton variant="danger" size="large" onClick={() => {}}>
-              승인 취소
-            </AppButton>
+            {row.approvalStatus === 'approved' && (
+              <AppButton
+                variant="danger"
+                size="large"
+                onClick={() => setCancelApprovalConfirmOpen(true)}
+              >
+                승인 취소
+              </AppButton>
+            )}
             <AppButton variant="primary" size="large" onClick={() => {}}>
               정보 수정
             </AppButton>
@@ -1013,6 +1027,21 @@ export function SchoolDetailFullpageView({
           </div>
         )}
       </div>
+
+      {cancelApprovalConfirmOpen && (
+        <DeleteGuideModal
+          open={cancelApprovalConfirmOpen}
+          onCancel={() => setCancelApprovalConfirmOpen(false)}
+          onConfirm={() => {
+            onCancelApproval?.(row.id)
+            setCancelApprovalConfirmOpen(false)
+          }}
+          title="승인 취소 안내"
+          lines={buildSchoolCancelApprovalMessageLines(row.schoolName)}
+          confirmText="취소"
+          confirmVariant="danger"
+        />
+      )}
     </div>
   )
 }

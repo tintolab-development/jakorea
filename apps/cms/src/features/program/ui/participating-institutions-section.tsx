@@ -170,6 +170,7 @@ export function ParticipatingInstitutionsSection({
     handleTextbookStatusChange,
     handleBulkRejectConfirm: hookBulkRejectConfirm,
     handleBulkApproveConfirm: hookBulkApproveConfirm,
+    handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
     savedBasicPatches,
     setSavedBasicPatches,
@@ -387,6 +388,7 @@ export function ParticipatingInstitutionsSection({
           savedBasicPatches={savedBasicPatches}
           savedInstructorPatches={savedInstructorPatches}
           instructorList={instructorHook.instructorList}
+          onCancelApproval={handleSchoolApprovalCancel}
         />
       </div>
     )

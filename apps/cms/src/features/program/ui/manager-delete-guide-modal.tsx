@@ -90,6 +90,15 @@ export function buildSchoolApproveMessageLines(count: number): string[] {
   ]
 }
 
+/** 참여기관 학교 상세 - 승인 취소 확인 문구 생성 */
+export function buildSchoolCancelApprovalMessageLines(schoolName: string): string[] {
+  return [
+    `[${schoolName}] 기관의 참여 승인을 취소하시겠습니까?`,
+    '취소 시 프로그램 승인 현황이 [승인 취소]로 변경됩니다.',
+    '정말로 취소하시겠습니까?',
+  ]
+}
+
 /** 강사 삭제 문구 생성 */
 export function buildInstructorMessageLines(names: string[]): string[] {
   if (names.length === 0) return []
