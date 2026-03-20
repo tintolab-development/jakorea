@@ -352,20 +352,14 @@ export function ProgramListPage() {
               )}
               <AppButton
                 variant="cancel"
-                size="filter"
+                size="filter-wide"
                 icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
                 onClick={handleViewModeToggle}
-                className="program-view-mode-button button--large"
               >
                 {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
               </AppButton>
               {showEducationActions && (
-                <AppButton
-                  className="button--large"
-                  variant="primary"
-                  size="filter"
-                  onClick={() => openFormModal()}
-                >
+                <AppButton variant="primary" size="filter-wide" onClick={() => openFormModal()}>
                   프로그램 신규 등록
                 </AppButton>
               )}

@@ -7,7 +7,12 @@ import { useMemo, useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { Table, Row, Col, Select, Input, Checkbox } from 'antd'
-import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons'
+import {
+  CalendarOutlined,
+  UnorderedListOutlined,
+  DownloadOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { message } from 'antd'
@@ -21,10 +26,7 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { useParticipatingInstructorsParams } from '../hooks/use-participating-instructors-params'
 import type { ProgressFilters } from '../hooks/use-program-progress-params'
 import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
-import {
-  DeleteGuideModal,
-  buildInstructorMessageLines,
-} from './manager-delete-guide-modal'
+import { DeleteGuideModal, buildInstructorMessageLines } from './manager-delete-guide-modal'
 import { AddInstructorModal, type AddInstructorFormValues } from './add-instructor-modal'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
@@ -142,7 +144,9 @@ function getSettlementTextClass(status: SettlementStatusKey): string {
   return `${base} ${base}--${status}`
 }
 
-export function ParticipatingInstructorsSection({ programId: _programId }: ParticipatingInstructorsSectionProps) {
+export function ParticipatingInstructorsSection({
+  programId: _programId,
+}: ParticipatingInstructorsSectionProps) {
   const { filters, appliedFilters, setFilter, applyFilters } = useParticipatingInstructorsParams()
   const [localInstructorName, setLocalInstructorName] = useState(() => filters.instructorName)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
@@ -206,11 +210,19 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
         return false
       return true
     })
-  }, [baseFiltered, appliedFilters.region, appliedFilters.jaLectureExperience, appliedFilters.jaEvaluationGrade])
+  }, [
+    baseFiltered,
+    appliedFilters.region,
+    appliedFilters.jaLectureExperience,
+    appliedFilters.jaEvaluationGrade,
+  ])
 
   /** 캘린더에서 선택한 날짜에 교육이 있는 학교에 배정된 강사만 우측 카드에 표시 */
   const instructorsForCalendarDate = useMemo(() => {
-    const schoolNamesOnDate = getSchoolNamesForDate(MOCK_PARTICIPATING_SCHOOLS, calendarSelectedDate)
+    const schoolNamesOnDate = getSchoolNamesForDate(
+      MOCK_PARTICIPATING_SCHOOLS,
+      calendarSelectedDate
+    )
     if (schoolNamesOnDate.length === 0) return []
     return filteredInstructors.filter(row => schoolNamesOnDate.includes(row.schoolName))
   }, [filteredInstructors, calendarSelectedDate])
@@ -234,8 +246,7 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
     }
   }
 
-  const tableScrollX =
-    48 + 64 + 100 + 140 + 160 + 100 + 100 + 120 + 140 + 120
+  const tableScrollX = 48 + 64 + 100 + 140 + 160 + 100 + 100 + 120 + 140 + 120
 
   const columns: ColumnsType<ParticipatingInstructorRow> = useMemo(
     () => [
@@ -304,9 +315,7 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
         width: 120,
         align: 'center',
         render: (status: SettlementStatusKey) => (
-          <span className={getSettlementTextClass(status)}>
-            {SETTLEMENT_STATUS_LABELS[status]}
-          </span>
+          <span className={getSettlementTextClass(status)}>{SETTLEMENT_STATUS_LABELS[status]}</span>
         ),
       },
     ],
@@ -316,7 +325,12 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
   return (
     <div className="participating-instructors-section participating-institutions-section">
       <div className="participating-institutions-section__filters program-progress-tab__filters">
-        <Row gutter={[0, 0]} align="bottom" wrap={false} className="program-progress-tab__filter-row">
+        <Row
+          gutter={[0, 0]}
+          align="bottom"
+          wrap={false}
+          className="program-progress-tab__filter-row"
+        >
           <Col flex="0 0 auto" className="program-progress-tab__filter-col">
             <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
               <span className="program-progress-tab__filter-label">강사명</span>
@@ -394,7 +408,9 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
       <div className="participating-institutions-section__below-divider">
         <div className="participating-institutions-section__table-header">
           <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">교육 참여 강사 목록</span>
+            <span className="participating-institutions-section__table-title">
+              교육 참여 강사 목록
+            </span>
             <span className="participating-institutions-section__table-description">
               {filteredInstructors.length}건
             </span>
@@ -403,7 +419,7 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
             {viewMode === 'list' ? (
               <AppButton
                 variant="cancel"
-                size="large"
+                size="filter-wide"
                 icon={<CalendarOutlined />}
                 onClick={handleCalendarView}
               >
@@ -412,32 +428,27 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
             ) : (
               <AppButton
                 variant="cancel"
-                size="large"
+                size="filter-wide"
                 icon={<UnorderedListOutlined />}
                 onClick={handleListView}
-                className="participating-institutions-section__btn-approve"
               >
                 리스트 뷰로 보기
               </AppButton>
             )}
             <AppButton
               variant="cancel"
-              size="large"
+              size="filter-wide"
               icon={<DownloadOutlined />}
               onClick={() => message.info('활동확인서 발급 기능 준비 중입니다.')}
             >
               활동확인서 발급
             </AppButton>
-            <AppButton
-              variant="danger"
-              size="large"
-              onClick={handleInstructorDeleteClick}
-            >
+            <AppButton variant="danger" size="filter" onClick={handleInstructorDeleteClick}>
               강사 삭제
             </AppButton>
             <AppButton
               variant="primary"
-              size="large"
+              size="filter"
               onClick={() => setAddInstructorModalOpen(true)}
               className="participating-institutions-section__btn-approve"
             >
@@ -446,7 +457,7 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
             {viewMode === 'list' && (
               <AppButton
                 variant="primary"
-                size="large"
+                size="filter"
                 icon={<InfoCircleOutlined />}
                 onClick={handleInfoDetailClick}
                 disabled={selectedInstructorRowKeys.length !== 1}
@@ -474,7 +485,10 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
               onRow={record => ({
                 onClick: e => {
                   const target = e.target as HTMLElement
-                  if (target.closest('.ant-table-selection-column') || target.closest('.ant-checkbox-wrapper'))
+                  if (
+                    target.closest('.ant-table-selection-column') ||
+                    target.closest('.ant-checkbox-wrapper')
+                  )
                     return
                   setSelectedInstructorForDetail(record)
                   setInstructorDetailModalOpen(true)
@@ -529,14 +543,19 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
                         <span className="participating-instructors-section__calendar-card-name">
                           {row.instructorName}
                         </span>
-                        <span className="participating-instructors-section__calendar-card-divider">|</span>
+                        <span className="participating-instructors-section__calendar-card-divider">
+                          |
+                        </span>
                         <span className="participating-instructors-section__calendar-card-region">
                           {row.region ?? row.address ?? '-'}
                         </span>
                       </div>
                       <div className="participating-instructors-section__calendar-card-tags">
                         <span className="participating-instructors-section__calendar-card-tag">
-                          경력 : {row.lectureExperienceYears != null ? `${row.lectureExperienceYears}년` : '-'}
+                          경력 :{' '}
+                          {row.lectureExperienceYears != null
+                            ? `${row.lectureExperienceYears}년`
+                            : '-'}
                         </span>
                         <span className="participating-instructors-section__calendar-card-tag">
                           등급 : {row.jaEvaluationGrade ?? '-'}
@@ -585,7 +604,9 @@ export function ParticipatingInstructorsSection({ programId: _programId }: Parti
           setSelectedInstructorForDetail(null)
         }}
         instructor={
-          selectedInstructorForDetail ? participatingToApplicantRow(selectedInstructorForDetail) : null
+          selectedInstructorForDetail
+            ? participatingToApplicantRow(selectedInstructorForDetail)
+            : null
         }
         title="참여 강사 상세 정보"
         showApprovalButtons={false}

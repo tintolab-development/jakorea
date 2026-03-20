@@ -766,7 +766,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
                       <AppButton
                         icon={<CalendarOutlined />}
                         variant="cancel"
-                        size="filter"
+                        size="filter-wide"
                         onClick={handleViewCalendar}
                       >
                         캘린더 뷰로 보기
@@ -776,7 +776,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
                       <AppButton
                         variant="cancel"
                         icon={<UnorderedListOutlined />}
-                        size="filter"
+                        size="filter-wide"
                         onClick={() => setViewMode('table')}
                       >
                         리스트로 보기

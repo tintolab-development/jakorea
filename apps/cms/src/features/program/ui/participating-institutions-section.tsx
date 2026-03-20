@@ -30,10 +30,7 @@ import { useProgressSchoolList } from '../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
 import type { ProgressFilters } from '../hooks/use-program-progress-params'
 import { SchoolDetailModal } from './school-detail-modal'
-import {
-  SchoolDetailFullpageView,
-  type SchoolDetailTabKey,
-} from './school-detail-fullpage-view'
+import { SchoolDetailFullpageView, type SchoolDetailTabKey } from './school-detail-fullpage-view'
 import { getSchoolDetailByRow } from '../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
@@ -279,9 +276,15 @@ export function ParticipatingInstitutionsSection({
                       {s.round}차시
                     </span>
                     {datePart}
-                    <span className="participating-institutions-section__session-divider" aria-hidden />
+                    <span
+                      className="participating-institutions-section__session-divider"
+                      aria-hidden
+                    />
                     {durationPart}
-                    <span className="participating-institutions-section__session-divider" aria-hidden />
+                    <span
+                      className="participating-institutions-section__session-divider"
+                      aria-hidden
+                    />
                     {periodPart}
                   </div>
                 )
@@ -401,7 +404,12 @@ export function ParticipatingInstitutionsSection({
   return (
     <div className="participating-institutions-section">
       <div className="participating-institutions-section__filters program-progress-tab__filters">
-        <Row gutter={[0, 0]} align="bottom" wrap={false} className="program-progress-tab__filter-row">
+        <Row
+          gutter={[0, 0]}
+          align="bottom"
+          wrap={false}
+          className="program-progress-tab__filter-row"
+        >
           <Col flex="0 0 auto" className="program-progress-tab__filter-col">
             <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
               <span className="program-progress-tab__filter-label">기관명</span>
@@ -480,18 +488,20 @@ export function ParticipatingInstitutionsSection({
       <div className="participating-institutions-section__below-divider">
         <div className="participating-institutions-section__table-header">
           <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">교육 참여 기관 목록</span>
+            <span className="participating-institutions-section__table-title">
+              교육 참여 기관 목록
+            </span>
             <span className="participating-institutions-section__table-description">
               {filteredSchools.length}건
             </span>
           </div>
           <div className="participating-institutions-section__table-actions">
-            <AppButton variant="danger" size="large" onClick={handleBulkReject}>
+            <AppButton variant="danger" size="filter" onClick={handleBulkReject}>
               선택 반려
             </AppButton>
             <AppButton
               variant="primary"
-              size="large"
+              size="filter"
               onClick={handleBulkApprove}
               className="participating-institutions-section__btn-approve"
             >
@@ -500,7 +510,7 @@ export function ParticipatingInstitutionsSection({
             {viewMode === 'list' ? (
               <AppButton
                 variant="cancel"
-                size="large"
+                size="filter-wide"
                 icon={<CalendarOutlined />}
                 onClick={handleCalendarView}
               >
@@ -509,10 +519,9 @@ export function ParticipatingInstitutionsSection({
             ) : (
               <AppButton
                 variant="cancel"
-                size="large"
+                size="filter-wide"
                 icon={<UnorderedListOutlined />}
                 onClick={handleListView}
-                className="participating-institutions-section__btn-approve"
               >
                 리스트 뷰로 보기
               </AppButton>
@@ -521,40 +530,40 @@ export function ParticipatingInstitutionsSection({
         </div>
 
         {viewMode === 'list' ? (
-        <div className="participating-institutions-section__table-wrap">
-          <Table<ParticipatingSchoolRow>
-            className="participating-institutions-section__table participating-institutions-section__table--clickable"
-            rowKey="id"
-            size="middle"
-            pagination={false}
-            scroll={{ x: tableScrollX }}
-            columns={columns}
-            dataSource={filteredSchools}
-            rowSelection={{
-              selectedRowKeys: selectedSchoolRowKeys,
-              onChange: keys => setSelectedSchoolRowKeys(keys as string[]),
-            }}
-            onRow={record => ({
-              onClick: e => {
-                const target = e.target as HTMLElement
-                if (
-                  target.closest('.ant-table-selection-column') ||
-                  target.closest('.ant-checkbox-wrapper') ||
-                  target.closest('.status-dropdown-cell__cell-status') ||
-                  target.closest('.status-dropdown-cell__status-trigger')
-                )
-                  return
-                if (onSchoolRowClick) {
-                  onSchoolRowClick(record)
-                } else {
-                  setSelectedSchoolForDetail(record)
-                  setSchoolDetailModalOpen(true)
-                }
-              },
-              style: { cursor: 'pointer' },
-            })}
-          />
-        </div>
+          <div className="participating-institutions-section__table-wrap">
+            <Table<ParticipatingSchoolRow>
+              className="participating-institutions-section__table participating-institutions-section__table--clickable"
+              rowKey="id"
+              size="middle"
+              pagination={false}
+              scroll={{ x: tableScrollX }}
+              columns={columns}
+              dataSource={filteredSchools}
+              rowSelection={{
+                selectedRowKeys: selectedSchoolRowKeys,
+                onChange: keys => setSelectedSchoolRowKeys(keys as string[]),
+              }}
+              onRow={record => ({
+                onClick: e => {
+                  const target = e.target as HTMLElement
+                  if (
+                    target.closest('.ant-table-selection-column') ||
+                    target.closest('.ant-checkbox-wrapper') ||
+                    target.closest('.status-dropdown-cell__cell-status') ||
+                    target.closest('.status-dropdown-cell__status-trigger')
+                  )
+                    return
+                  if (onSchoolRowClick) {
+                    onSchoolRowClick(record)
+                  } else {
+                    setSelectedSchoolForDetail(record)
+                    setSchoolDetailModalOpen(true)
+                  }
+                },
+                style: { cursor: 'pointer' },
+              })}
+            />
+          </div>
         ) : (
           <div className="participating-institutions-section__calendar-wrap">
             <ParticipatingInstitutionsCalendarView
