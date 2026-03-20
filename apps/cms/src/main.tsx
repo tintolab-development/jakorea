@@ -8,6 +8,7 @@ import { AuthProvider } from './app/providers/auth-provider'
 import { QueryProvider } from './app/providers/query-provider'
 import { router } from './app/router'
 import './index.css'
+import './common.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -22,6 +23,5 @@ createRoot(document.getElementById('root')!).render(
         </QueryProvider>
       </ThemeProvider>
     </ErrorBoundary>
-  </StrictMode>,
+  </StrictMode>
 )
-

@@ -5,251 +5,253 @@
  */
 
 :root {
-    /* 브랜드 컬러 */
-    --color-brand-primary: #01a1af;
-    --color-brand-primary-hover: #019ba8;
-    --color-brand-secondary-1: #296075;
-    --color-brand-secondary-2: #22404b;
-    --color-brand-primary-overlay-04: rgba(1, 161, 175, 0.04);
-    --color-brand-primary-overlay-08: rgba(1, 161, 175, 0.08);
-    --color-brand-primary-overlay-10: rgba(1, 161, 175, 0.10);
-    --color-brand-primary-overlay-12: rgba(1, 161, 175, 0.12);
-    --color-brand-primary-overlay-25: rgba(1, 161, 175, 0.25);
-    --color-brand-primary-overlay-30: rgba(1, 161, 175, 0.30);
-    --shadow-brand-hover: 0 2px 8px rgba(1, 161, 175, 0.12);
-    --shadow-brand-selected: 0 2px 8px rgba(1, 161, 175, 0.18);
-    --shadow-brand-active: 0 1px 4px rgba(1, 161, 175, 0.10);
-    --shadow-brand-total-hover: 0 2px 8px rgba(1, 161, 175, 0.25);
-    --shadow-focus-teal: 0 0 0 1px rgba(74, 212, 204, 0.2);
-    --color-table-head-bg: #edf0f2;
-    --color-table-row-hover: rgba(1, 161, 175, 0.06);
-    --color-table-row-selected: #f6ffed;
-    --color-table-row-selected-hover: #d9f7be;
-    --shadow-card-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
-    /* 캘린더 필터 체크박스 (사업분야별) */
-    --color-filter-cyan: #21C6AD;
-    --color-filter-red: #E04F62;
-    --color-filter-purple: #8C56B2;
-    --color-filter-green: #4CAF50;
+  /* 브랜드 컬러 */
+  --color-brand-primary: #01a1af;
+  --color-brand-primary-hover: #019ba8;
+  --color-brand-secondary-1: #296075;
+  --color-brand-secondary-2: #22404b;
+  --color-brand-primary-overlay-04: rgba(1, 161, 175, 0.04);
+  --color-brand-primary-overlay-08: rgba(1, 161, 175, 0.08);
+  --color-brand-primary-overlay-10: rgba(1, 161, 175, 0.1);
+  --color-brand-primary-overlay-12: rgba(1, 161, 175, 0.12);
+  --color-brand-primary-overlay-25: rgba(1, 161, 175, 0.25);
+  --color-brand-primary-overlay-30: rgba(1, 161, 175, 0.3);
+  --shadow-brand-hover: 0 2px 8px rgba(1, 161, 175, 0.12);
+  --shadow-brand-selected: 0 2px 8px rgba(1, 161, 175, 0.18);
+  --shadow-brand-active: 0 1px 4px rgba(1, 161, 175, 0.1);
+  --shadow-brand-total-hover: 0 2px 8px rgba(1, 161, 175, 0.25);
+  --shadow-focus-teal: 0 0 0 1px rgba(74, 212, 204, 0.2);
+  --color-table-head-bg: #edf0f2;
+  --color-table-row-hover: rgba(1, 161, 175, 0.06);
+  --color-table-row-selected: #f6ffed;
+  --color-table-row-selected-hover: #d9f7be;
+  --shadow-card-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
+  /* 캘린더 필터 체크박스 (사업분야별) */
+  --color-filter-cyan: #21c6ad;
+  --color-filter-red: #e04f62;
+  --color-filter-purple: #8c56b2;
+  --color-filter-green: #4caf50;
 
-    /* 프로그램 관련 색상 variation (메인 컬러 사용) */
-    --color-program: #01a1af;
-    --color-program-light: #e6f7f9;
-    --color-program-dark: #296075;
+  /* 프로그램 관련 색상 variation (메인 컬러 사용) */
+  --color-program: #01a1af;
+  --color-program-light: #e6f7f9;
+  --color-program-dark: #296075;
 
-    /* 학교 관련 색상 variation (밝은 청록) */
-    --color-school: #13c2c2;
-    --color-school-light: #e6fffb;
-    --color-school-dark: #08979c;
+  /* 학교 관련 색상 variation (밝은 청록) */
+  --color-school: #13c2c2;
+  --color-school-light: #e6fffb;
+  --color-school-dark: #08979c;
 
-    /* 강사 관련 색상 variation (보라) */
-    --color-instructor: #722ed1;
-    --color-instructor-light: #f9f0ff;
-    --color-instructor-dark: #531dab;
+  /* 강사 관련 색상 variation (보라) */
+  --color-instructor: #722ed1;
+  --color-instructor-light: #f9f0ff;
+  --color-instructor-dark: #531dab;
 
-    /* 스폰서 관련 색상 variation (주황) */
-    --color-sponsor: #fa8c16;
-    --color-sponsor-light: #fff7e6;
-    --color-sponsor-dark: #d46b08;
+  /* 스폰서 관련 색상 variation (주황) */
+  --color-sponsor: #fa8c16;
+  --color-sponsor-light: #fff7e6;
+  --color-sponsor-dark: #d46b08;
 
-    /* 신청 관련 색상 variation (분홍) */
-    --color-application: #eb2f96;
-    --color-application-light: #fff0f6;
-    --color-application-dark: #c41d7f;
+  /* 신청 관련 색상 variation (분홍) */
+  --color-application: #eb2f96;
+  --color-application-light: #fff0f6;
+  --color-application-dark: #c41d7f;
 
-    /* 일정 관련 색상 variation (노랑) */
-    --color-schedule: #fadb14;
-    --color-schedule-light: #fffbe6;
-    --color-schedule-dark: #d4b106;
+  /* 일정 관련 색상 variation (노랑) */
+  --color-schedule: #fadb14;
+  --color-schedule-light: #fffbe6;
+  --color-schedule-dark: #d4b106;
 
-    /* 매칭 관련 색상 variation (녹색) */
-    --color-matching: #52c41a;
-    --color-matching-light: #f6ffed;
-    --color-matching-dark: #389e0d;
+  /* 매칭 관련 색상 variation (녹색) */
+  --color-matching: #52c41a;
+  --color-matching-light: #f6ffed;
+  --color-matching-dark: #389e0d;
 
-    /* 정산 관련 색상 variation (빨강) */
-    --color-settlement: #ff4d4f;
-    --color-settlement-light: #fff1f0;
-    --color-settlement-dark: #cf1322;
+  /* 정산 관련 색상 variation (빨강) */
+  --color-settlement: #ff4d4f;
+  --color-settlement-light: #fff1f0;
+  --color-settlement-dark: #cf1322;
 
-    /* 텍스트 색상 */
-    --color-text-heading: #22404b;
-    --color-text-body: #595959;
-    --color-text-secondary: #8c8c8c;
-    --color-link: #01a1af;
-    --color-link-hover: #296075;
+  /* 텍스트 색상 */
+  --color-text-heading: #22404b;
+  --color-text-body: #595959;
+  --color-text-secondary: #8c8c8c;
+  --color-link: #01a1af;
+  --color-link-hover: #296075;
 
-    /* 배경 색상 */
-    --color-bg-base: #ffffff;
-    --color-bg-secondary: #fafafa;
-    --color-bg-tertiary: #f5f5f5;
-    --color-bg-accent: #e6f7f9;
-    --color-bg-accent-hover: #d4f1f4;
-    --color-bg-hover: #f0f0f0;
+  /* 배경 색상 */
+  --color-bg-base: #ffffff;
+  --color-bg-secondary: #fafafa;
+  --color-bg-tertiary: #f5f5f5;
+  --color-bg-accent: #e6f7f9;
+  --color-bg-accent-hover: #d4f1f4;
+  --color-bg-hover: #f0f0f0;
 
-    /* UI 컴포넌트 색상 */
-    --color-ui-more-button: #3d3d3d;
-    --color-ui-more-button-hover: #595959;
+  --JA-mint-02: #296075;
 
-    /* 보조 색상 (테두리·구분선) */
-    --color-border: #e0e0e0;
-    --color-border-light: #f0f0f0;
-    --color-border-input: #d9d9d9;
-    --color-border-input-secondary: #c4cdd1;
-    --color-input-placeholder: #85969d;
-    --color-border-subtle: #d9d9d9;
-    --color-border-skeleton: #e8e8e8;
-    --color-required-mark: #ff4d4f;
-    --color-text-disabled: rgba(0, 0, 0, 0.25);
-    --color-border-input-hover: rgba(0, 0, 0, 0.15);
-    --color-border-input-strong: rgba(0, 0, 0, 0.25);
-    --color-bg-disabled: #f5f5f5;
-    --color-danger-fill-hover: #c32f4a;
+  /* UI 컴포넌트 색상 */
+  --color-ui-more-button: #3d3d3d;
+  --color-ui-more-button-hover: #595959;
 
-    /* 텍스트 보조 */
-    --color-text-primary: #333333;
-    --color-text-label: #262626;
-    --color-text-strong: #000000;
-    --color-text-muted: #999999;
-    --color-text-tertiary: #bfbfbf;
-    --color-text-85: rgba(0, 0, 0, 0.85);
-    --color-text-65: rgba(0, 0, 0, 0.65);
-    --color-text-45: rgba(0, 0, 0, 0.45);
-    --color-bg-info-light: #e6f7ff;
-    --color-bg-info-lighter: #f0f7ff;
-    --color-border-info: #91d5ff;
+  /* 보조 색상 (테두리·구분선) */
+  --color-border: #e0e0e0;
+  --color-border-light: #f0f0f0;
+  --color-border-input: #d9d9d9;
+  --color-border-input-secondary: #c4cdd1;
+  --color-input-placeholder: #85969d;
+  --color-border-subtle: #d9d9d9;
+  --color-border-skeleton: #e8e8e8;
+  --color-required-mark: #ff4d4f;
+  --color-text-disabled: rgba(0, 0, 0, 0.25);
+  --color-border-input-hover: rgba(0, 0, 0, 0.15);
+  --color-border-input-strong: rgba(0, 0, 0, 0.25);
+  --color-bg-disabled: #f5f5f5;
+  --color-danger-fill-hover: #c32f4a;
 
-    /* 인터랙션 (버튼·입력 등) */
-    --color-bg-button-secondary: #e0e0e0;
-    --color-bg-button-secondary-hover: #d5d5d5;
-    --color-danger-hover: #ba444d;
-    /* 취소/위험 보조 버튼 (연한 배경 + 붉은 갈색) */
-    --color-danger-secondary: #ba444d;
-    --color-danger-secondary-hover: #a33c44;
-    --color-danger-secondary-bg: #fdf2f3;
-    --color-danger-secondary-bg-hover: #fce8ea;
-    --color-focus-teal: #40a8a6;
-    --color-focus-teal-hover: #389592;
-    --color-bg-input-teal: #f0fafa;
-    --color-input-focus: #1890ff;
-    --color-input-hover: #40a9ff;
-    --color-focus-ring: rgba(24, 144, 255, 0.2);
+  /* 텍스트 보조 */
+  --color-text-primary: #333333;
+  --color-text-label: #262626;
+  --color-text-strong: #000000;
+  --color-text-muted: #999999;
+  --color-text-tertiary: #bfbfbf;
+  --color-text-85: rgba(0, 0, 0, 0.85);
+  --color-text-65: rgba(0, 0, 0, 0.65);
+  --color-text-45: rgba(0, 0, 0, 0.45);
+  --color-bg-info-light: #e6f7ff;
+  --color-bg-info-lighter: #f0f7ff;
+  --color-border-info: #91d5ff;
 
-    /* 간격 (spacing) — 4px 베이스 */
-    --spacing-2: 2px;
-    --spacing-3: 3px;
-    --spacing-4: 4px;
-    --spacing-6: 6px;
-    --spacing-8: 8px;
-    --spacing-10: 10px;
-    --spacing-12: 12px;
-    --spacing-14: 14px;
-    --spacing-16: 16px;
-    --spacing-20: 20px;
-    --spacing-24: 24px;
-    --spacing-32: 32px;
+  /* 인터랙션 (버튼·입력 등) */
+  --color-bg-button-secondary: #e0e0e0;
+  --color-bg-button-secondary-hover: #d5d5d5;
+  --color-danger-hover: #ba444d;
+  /* 취소/위험 보조 버튼 (연한 배경 + 붉은 갈색) */
+  --color-danger-secondary: #ba444d;
+  --color-danger-secondary-hover: #a33c44;
+  --color-danger-secondary-bg: #fdf2f3;
+  --color-danger-secondary-bg-hover: #fce8ea;
+  --color-focus-teal: #40a8a6;
+  --color-focus-teal-hover: #389592;
+  --color-bg-input-teal: #f0fafa;
+  --color-input-focus: #1890ff;
+  --color-input-hover: #40a9ff;
+  --color-focus-ring: rgba(24, 144, 255, 0.2);
 
-    /* 기본 색상 토큰 (Figma 디자인 시스템) */
-    --default-BK: #3D3D3D;
-    --default-WT: #FFFFFF;
+  /* 간격 (spacing) — 4px 베이스 */
+  --spacing-2: 2px;
+  --spacing-3: 3px;
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-14: 14px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
 
-    /* 폰트 패밀리 */
-    --font-family-primary: 'Pretendard', sans-serif;
-    --font-family-number: 'Outfit', sans-serif;
+  /* 기본 색상 토큰 (Figma 디자인 시스템) */
+  --default-BK: #3d3d3d;
+  --default-WT: #ffffff;
 
-    /* 타이포그래피 */
-    --font-size-11: 11px;
-    --font-size-12: 12px;
-    --font-size-13: 13px;
-    --font-size-14: 14px;
-    --font-size-15: 15px;
-    --font-size-16: 16px;
-    --font-size-18: 18px;
-    --font-size-20: 20px;
-    --font-size-24: 24px;
-    --font-size-32: 32px;
-    --font-weight-regular: 400;
-    --font-weight-500: 500;
-    --font-weight-600: 600;
-    --font-weight-700: 700;
-    --line-height-tight: 1.2;
-    --line-height-normal: 1.4;
+  /* 폰트 패밀리 */
+  --font-family-primary: 'Pretendard', sans-serif;
+  --font-family-number: 'Outfit', sans-serif;
 
-    /* 모서리 (radius) */
-    --radius-3: 3px;
-    --radius-4: 4px;
-    --radius-6: 6px;
-    --radius-8: 8px;
-    --radius-16: 16px;
+  /* 타이포그래피 */
+  --font-size-11: 11px;
+  --font-size-12: 12px;
+  --font-size-13: 13px;
+  --font-size-14: 14px;
+  --font-size-15: 15px;
+  --font-size-16: 16px;
+  --font-size-18: 18px;
+  --font-size-20: 20px;
+  --font-size-24: 24px;
+  --font-size-32: 32px;
+  --font-weight-regular: 400;
+  --font-weight-500: 500;
+  --font-weight-600: 600;
+  --font-weight-700: 700;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.4;
 
-    /* 그림자 */
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03);
-    --shadow-card-selected: 0 1px 4px rgba(0, 0, 0, 0.08);
-    --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --shadow-modal: 0 4px 20px rgba(0, 0, 0, 0.15);
-    --shadow-drag-overlay: 0 20px 60px rgba(0, 0, 0, 0.2);
-    --color-bg-pending-light: #f8f2f3;
-    --color-bg-answered-light: #e3f4f9;
-    --color-bg-neutral: #f7f7f7;
-    --color-status-pending: #c94f5e;
-    --color-status-answered: #3592be;
-    --color-matching-border: #b7eb8f;
-    --color-matching-hover: #d9f7be;
-    --color-matching-hover-border: #95de64;
-    --color-settlement-border: #ffccc7;
-    --color-settlement-hover: #ff7875;
-    --color-bg-today: #d8f0ee;
-    --color-scrollbar-thumb-hover: #bfbfbf;
-    --color-bg-tab: #efefef;
-    --color-text-tab: #808080;
-    --color-tab-active: #4ad4cc;
+  /* 모서리 (radius) */
+  --radius-3: 3px;
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-16: 16px;
 
-    /* 모달·헤더 등 (기존 시안 유지) */
-    --color-modal-header: #47a9ad;
-    --color-modal-header-hover: #3d9599;
-    --color-focus-teal-ring: rgba(71, 169, 173, 0.2);
-    --color-overlay-light: rgba(255, 255, 255, 0.2);
-    --color-overlay-light-80: rgba(255, 255, 255, 0.8);
-    --color-overlay-dark-04: rgba(0, 0, 0, 0.04);
-    --color-overlay-dark-06: rgba(0, 0, 0, 0.06);
-    --spacing-30: 30px;
-    --spacing-50: 50px;
-    --max-height-modal-scroll: 840px;
+  /* 그림자 */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card-selected: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --shadow-drag-overlay: 0 20px 60px rgba(0, 0, 0, 0.2);
+  --color-bg-pending-light: #f8f2f3;
+  --color-bg-answered-light: #e3f4f9;
+  --color-bg-neutral: #f7f7f7;
+  --color-status-pending: #c94f5e;
+  --color-status-answered: #3592be;
+  --color-matching-border: #b7eb8f;
+  --color-matching-hover: #d9f7be;
+  --color-matching-hover-border: #95de64;
+  --color-settlement-border: #ffccc7;
+  --color-settlement-hover: #ff7875;
+  --color-bg-today: #d8f0ee;
+  --color-scrollbar-thumb-hover: #bfbfbf;
+  --color-bg-tab: #efefef;
+  --color-text-tab: #808080;
+  --color-tab-active: #4ad4cc;
 
-    /* 모집 상태 배지 */
-    --color-badge-recruiting-bg: #ebf5f9;
-    --color-badge-recruiting-text: #3470a7;
-    --color-badge-scheduled-bg: #f2f2f2;
-    --color-badge-scheduled-text: #333333;
-    --color-badge-closed-bg: #f9ebeb;
-    --color-badge-closed-text: #a73434;
+  /* 모달·헤더 등 (기존 시안 유지) */
+  --color-modal-header: #47a9ad;
+  --color-modal-header-hover: #3d9599;
+  --color-focus-teal-ring: rgba(71, 169, 173, 0.2);
+  --color-overlay-light: rgba(255, 255, 255, 0.2);
+  --color-overlay-light-80: rgba(255, 255, 255, 0.8);
+  --color-overlay-dark-04: rgba(0, 0, 0, 0.04);
+  --color-overlay-dark-06: rgba(0, 0, 0, 0.06);
+  --spacing-30: 30px;
+  --spacing-50: 50px;
+  --max-height-modal-scroll: 840px;
 
-    /* 사이드바 (어두운 배경 위 라이트 텍스트/오버레이) */
-    --color-sidebar-text: #ffffff;
-    --color-sidebar-overlay-06: rgba(255, 255, 255, 0.06);
-    --color-sidebar-overlay-08: rgba(255, 255, 255, 0.08);
-    --color-sidebar-overlay-10: rgba(255, 255, 255, 0.1);
-    --color-sidebar-overlay-12: rgba(255, 255, 255, 0.12);
-    --color-sidebar-overlay-15: rgba(255, 255, 255, 0.15);
-    --color-sidebar-text-65: rgba(255, 255, 255, 0.65);
-    --color-sidebar-text-70: rgba(255, 255, 255, 0.7);
-    --color-sidebar-text-75: rgba(255, 255, 255, 0.75);
-    --color-sidebar-text-85: rgba(255, 255, 255, 0.85);
-    --color-sidebar-text-90: rgba(255, 255, 255, 0.9);
-    --color-sidebar-text-95: rgba(255, 255, 255, 0.95);
-    --color-sidebar-sub-bg: rgba(0, 0, 0, 0.1);
-    --color-sidebar-border: rgba(255, 255, 255, 0.2);
-    --color-sidebar-scrollbar-track: rgba(255, 255, 255, 0.1);
-    --color-sidebar-scrollbar-thumb: rgba(255, 255, 255, 0.3);
-    --color-sidebar-scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
+  /* 모집 상태 배지 */
+  --color-badge-recruiting-bg: #ebf5f9;
+  --color-badge-recruiting-text: #3470a7;
+  --color-badge-scheduled-bg: #f2f2f2;
+  --color-badge-scheduled-text: #333333;
+  --color-badge-closed-bg: #f9ebeb;
+  --color-badge-closed-text: #a73434;
 
-    /* 레이아웃 고정값 (헤더/사이드바 등) */
-    --spacing-48: 48px;
-    --spacing-64: 64px;
-    --header-height: 64px;
-    --sidebar-width: 220px;
-    --height-widget-stage: 114px;
-    --min-width-widget-stage: 140px;
-    --min-width-widget-total: 160px;
-    --shadow-header: 0 2px 8px rgba(0, 0, 0, 0.06);
+  /* 사이드바 (어두운 배경 위 라이트 텍스트/오버레이) */
+  --color-sidebar-text: #ffffff;
+  --color-sidebar-overlay-06: rgba(255, 255, 255, 0.06);
+  --color-sidebar-overlay-08: rgba(255, 255, 255, 0.08);
+  --color-sidebar-overlay-10: rgba(255, 255, 255, 0.1);
+  --color-sidebar-overlay-12: rgba(255, 255, 255, 0.12);
+  --color-sidebar-overlay-15: rgba(255, 255, 255, 0.15);
+  --color-sidebar-text-65: rgba(255, 255, 255, 0.65);
+  --color-sidebar-text-70: rgba(255, 255, 255, 0.7);
+  --color-sidebar-text-75: rgba(255, 255, 255, 0.75);
+  --color-sidebar-text-85: rgba(255, 255, 255, 0.85);
+  --color-sidebar-text-90: rgba(255, 255, 255, 0.9);
+  --color-sidebar-text-95: rgba(255, 255, 255, 0.95);
+  --color-sidebar-sub-bg: rgba(0, 0, 0, 0.1);
+  --color-sidebar-border: rgba(255, 255, 255, 0.2);
+  --color-sidebar-scrollbar-track: rgba(255, 255, 255, 0.1);
+  --color-sidebar-scrollbar-thumb: rgba(255, 255, 255, 0.3);
+  --color-sidebar-scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
+
+  /* 레이아웃 고정값 (헤더/사이드바 등) */
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --header-height: 64px;
+  --sidebar-width: 220px;
+  --height-widget-stage: 114px;
+  --min-width-widget-stage: 140px;
+  --min-width-widget-total: 160px;
+  --shadow-header: 0 2px 8px rgba(0, 0, 0, 0.06);
 }

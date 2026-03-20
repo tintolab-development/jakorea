@@ -117,7 +117,7 @@
 
 /* 전체 프로그램 위젯 스타일 (첫 번째) */
 .program-progress-widget__stage--total {
-  background: var(--color-brand-primary) !important;
+  background: var(--JA-mint-02, #296075) !important;
   border: none !important;
   flex: 1 1 0;
   min-width: var(--min-width-widget-total);
@@ -242,7 +242,7 @@
 /* 선택된 상태: 청록 배경 + 흰색 텍스트 (전체 프로그램/수강자 모집/수강신청 현황 등) */
 .program-progress-widget__stage--selected {
   border: none !important;
-  background: var(--color-brand-primary) !important;
+  background: var(--JA-mint-02) !important;
 }
 
 .program-progress-widget__stage--selected .program-progress-widget__stage-label,

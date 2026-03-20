@@ -355,12 +355,17 @@ export function ProgramListPage() {
                 size="filter"
                 icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
                 onClick={handleViewModeToggle}
-                className="program-view-mode-button"
+                className="program-view-mode-button button--large"
               >
                 {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
               </AppButton>
               {showEducationActions && (
-                <AppButton variant="primary" size="filter" onClick={() => openFormModal()}>
+                <AppButton
+                  className="button--large"
+                  variant="primary"
+                  size="filter"
+                  onClick={() => openFormModal()}
+                >
                   프로그램 신규 등록
                 </AppButton>
               )}
