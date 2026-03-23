@@ -4,9 +4,9 @@
  */
 
 import { useState, useCallback } from 'react'
-import { sendOtp, verifyOtp } from '@/entities/user/api/mfa-service'
+import { sendOtp, verifyOtp, verifyTotp } from '@/entities/user/api/mfa-service'
 import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
-import type { OtpSendRequest, OtpVerifyRequest } from '@/types/mfa'
+import type { OtpSendRequest, OtpVerifyRequest, TotpVerifyRequest } from '@/types/mfa'
 
 interface UseOtpVerificationResult {
   /** OTP 발송 중 여부 */
@@ -21,8 +21,10 @@ interface UseOtpVerificationResult {
   lockUntil: string | null
   /** OTP 발송 */
   sendOtpCode: (request: OtpSendRequest) => Promise<void>
-  /** OTP 검증 */
+  /** OTP 검증 (SMS Mock) */
   verifyOtpCode: (request: OtpVerifyRequest) => Promise<boolean>
+  /** TOTP 검증 (Microsoft Authenticator 등) */
+  verifyTotpCode: (request: TotpVerifyRequest) => Promise<boolean>
   /** 상태 리셋 */
   reset: () => void
 }
@@ -112,6 +114,63 @@ export function useOtpVerification(): UseOtpVerificationResult {
     }
   }, [failedAttempts, isLocked, lockUntil])
 
+  const verifyTotpCode = useCallback(async (request: TotpVerifyRequest): Promise<boolean> => {
+    setVerifying(true)
+
+    if (!request.otpCode || request.otpCode.length !== OTP_LENGTH) {
+      setVerifying(false)
+      throw new Error(`인증번호는 ${OTP_LENGTH}자리입니다.`)
+    }
+
+    if (!/^\d+$/.test(request.otpCode)) {
+      setVerifying(false)
+      throw new Error('인증번호는 숫자만 입력 가능합니다.')
+    }
+
+    if (isLocked && lockUntil) {
+      const lockTime = new Date(lockUntil)
+      if (lockTime > new Date()) {
+        setVerifying(false)
+        throw new Error(
+          `인증 시도 횟수를 초과했습니다. ${Math.ceil((lockTime.getTime() - Date.now()) / 60000)}분 후 다시 시도해주세요.`
+        )
+      }
+      setIsLocked(false)
+      setLockUntil(null)
+      setFailedAttempts(0)
+    }
+
+    try {
+      const response = await verifyTotp(request.email, request.otpCode)
+
+      if (response.verified) {
+        setFailedAttempts(0)
+        setIsLocked(false)
+        setLockUntil(null)
+        return true
+      }
+
+      const newFailedAttempts = failedAttempts + 1
+      setFailedAttempts(newFailedAttempts)
+
+      if (newFailedAttempts >= OTP_POLICY.maxFailedAttempts) {
+        const lockTime = new Date(Date.now() + OTP_POLICY.lockoutDurationMinutes * 60 * 1000)
+        setIsLocked(true)
+        setLockUntil(lockTime.toISOString())
+        throw new Error(
+          `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`
+        )
+      }
+
+      return false
+    } catch (error) {
+      console.error('TOTP 검증 실패:', error)
+      throw error
+    } finally {
+      setVerifying(false)
+    }
+  }, [failedAttempts, isLocked, lockUntil])
+
   const reset = useCallback(() => {
     setFailedAttempts(0)
     setIsLocked(false)
@@ -126,6 +185,7 @@ export function useOtpVerification(): UseOtpVerificationResult {
     lockUntil,
     sendOtpCode,
     verifyOtpCode,
+    verifyTotpCode,
     reset,
   }
 }

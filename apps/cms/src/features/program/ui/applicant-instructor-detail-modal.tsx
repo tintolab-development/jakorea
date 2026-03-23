@@ -113,7 +113,7 @@ function formatAccountDisplay(
   if (!bank && !num && !holder) return '-'
   if (mask) {
     const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
-    const maskedHolder = holder ? MASKING_POLICY.name(holder) : ''
+    const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
     return [bank, maskedNum].filter(Boolean).join(' ') + (maskedHolder ? ` | ${maskedHolder}` : '')
   }
   return [bank, num].filter(Boolean).join(' ') + (holder ? ` | ${holder}` : '')

@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           borderRadiusSM: 4,
 
           // Font
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          fontFamily: 'Pretendard, system-ui, sans-serif',
           fontSize: 14,
           fontSizeLG: 16,
           fontSizeSM: 12,
@@ -43,6 +43,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           },
           Table: {
             borderRadius: 8,
+            rowHoverBg: 'rgba(1, 161, 175, 0.06)',
+            rowSelectedBg: 'rgba(1, 161, 175, 0.06)',
           },
           Input: {
             borderRadius: 6,
@@ -58,4 +60,3 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     </ConfigProvider>
   )
 }
-

@@ -10,9 +10,10 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import type { Program } from '@/types/domain'
 import { ProgramMiniCalendar } from './program-mini-calendar'
 import { ProgramScheduleList } from './program-schedule-list'
+import { getScheduleColorPair } from './program-schedule-colors'
 import { businessAreaOptions } from './constants/program-list-constants'
 import { SegmentedTab } from '@/shared/ui'
 import './program-calendar-view.css'
@@ -31,31 +32,6 @@ interface ProgramCalendarViewProps {
   programs: Program[]
   loading?: boolean
   onProgramClick: (program: Program) => void
-}
-
-/** 프로그램 진행 현황 배지 배경색 (program-schedule-widget·program-lifecycle-status-badge와 동기화) */
-const LIFECYCLE_STATUS_BG: Record<ProgramLifecycleStatus, string> = {
-  planned: '#f5f5f5',
-  instructor_recruitment_planned: '#f5f5f5',
-  volunteer_recruitment_planned: '#f5f5f5',
-  participant_instructor_recruitment_planned: '#fef5f7',
-  recruiting_students: '#eaf7ec',
-  recruiting_instructors: '#f4f0f9',
-  recruiting_volunteers: '#f4f0f9',
-  participant_instructor_recruiting: '#e6f2f7',
-  education_in_progress: '#e6f4ff',
-  education_before_textbook: '#e6f4ff',
-  education_after_textbook: '#e6f4ff',
-  matching_completed: '#fff5e9',
-  education_completed: '#fdeef1',
-  document_processing_completed: '#f5f5f5',
-  participant_instructor_recruitment_completed: '#f2f3f5',
-}
-
-const DEFAULT_LIFECYCLE_STATUS: ProgramLifecycleStatus = 'education_completed'
-
-function getLifecycleBg(status: ProgramLifecycleStatus | undefined): string {
-  return LIFECYCLE_STATUS_BG[status ?? DEFAULT_LIFECYCLE_STATUS] ?? '#f0f0f0'
 }
 
 type SpanRole = 'start' | 'middle' | 'end' | 'single'
@@ -287,11 +263,12 @@ export function ProgramCalendarView({
           <div className="program-calendar-cell-events">
             {sortedDayPrograms.slice(0, 2).map(program => {
               const spanRole = getProgramSpanRole(program, date)
+              const colors = getScheduleColorPair(String(program.id))
               return (
                 <div
                   key={program.id}
                   className={`program-calendar-event program-calendar-event--span-${spanRole}`}
-                  style={{ backgroundColor: getLifecycleBg(program.lifecycleStatus) }}
+                  style={{ backgroundColor: colors.bg }}
                   onClick={e => {
                     e.stopPropagation()
                     onProgramClick(program)
@@ -356,11 +333,12 @@ export function ProgramCalendarView({
                   <div className="program-calendar-week-cell-events">
                     {sortedDayPrograms.slice(0, 2).map(program => {
                       const spanRole = getProgramSpanRole(program, date)
+                      const colors = getScheduleColorPair(String(program.id))
                       return (
                         <div
                           key={program.id}
                           className={`program-calendar-event program-calendar-event--span-${spanRole}`}
-                          style={{ backgroundColor: getLifecycleBg(program.lifecycleStatus) }}
+                          style={{ backgroundColor: colors.bg }}
                           onClick={e => {
                             e.stopPropagation()
                             onProgramClick(program)

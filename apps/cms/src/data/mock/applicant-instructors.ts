@@ -211,9 +211,9 @@ const SCHOOL_NAMES = [
 ]
 
 const ADDRESSES = [
-  '서울특별시 강서구',
-  '서울특별시 강서구 화곡동',
-  '서울특별시 마포구',
+  '서울특별시 강서구 화곡동 3394-23 302호',
+  '서울특별시 강서구 화곡동 123-45',
+  '서울특별시 마포구 상수동 511-2',
   '경기도 수원시',
   '경기도 성남시',
   '부산광역시 해운대구',
@@ -324,7 +324,9 @@ const ACCOUNT_NUMBERS = [
 ]
 
 /** 강사 이력서 탭 UI 검증용 샘플 (i === 0, 1에만 주입) */
-function getResumeSample(index: number): Pick<
+function getResumeSample(
+  index: number
+): Pick<
   ApplicantInstructorRow,
   | 'careerDetails'
   | 'qualifications'
@@ -339,8 +341,18 @@ function getResumeSample(index: number): Pick<
   if (index === 0) {
     return {
       careerDetails: [
-        { companyName: '한솔교육', role: '학습지 방문 교육', startDate: '2024.02', isCurrent: true },
-        { companyName: '대교 눈높이학원', role: '초등학생 수학 강의', startDate: '2023.01', endDate: '2024.01' },
+        {
+          companyName: '한솔교육',
+          role: '학습지 방문 교육',
+          startDate: '2024.02',
+          isCurrent: true,
+        },
+        {
+          companyName: '대교 눈높이학원',
+          role: '초등학생 수학 강의',
+          startDate: '2023.01',
+          endDate: '2024.01',
+        },
       ],
       qualifications: [{ name: '1종 운전면허', year: '2020' }],
       awards: [
@@ -348,13 +360,30 @@ function getResumeSample(index: number): Pick<
         { name: '서울특별시 교육청 우수 강사 표창장', year: '2020' },
       ],
       educations: [
-        { schoolType: '대학 4년제', status: 'graduated', schoolName: '한성대학교', major: '경영학과', enrollmentYear: '2020.03', graduationYear: '2025.02' },
-        { schoolType: '고등학교', status: 'graduated', schoolName: '경복고등학교', enrollmentYear: '2017.03', graduationYear: '2020.02' },
+        {
+          schoolType: '대학 4년제',
+          status: 'graduated',
+          schoolName: '한성대학교',
+          major: '경영학과',
+          enrollmentYear: '2020.03',
+          graduationYear: '2025.02',
+        },
+        {
+          schoolType: '고등학교',
+          status: 'graduated',
+          schoolName: '경복고등학교',
+          enrollmentYear: '2017.03',
+          graduationYear: '2020.02',
+        },
       ],
-      freeWriting1: '대학에서 경영학을 전공하며 금융과 경제에 깊은 관심을 갖게 되었습니다. 청소년들이 돈의 흐름과 경제의 원리를 일찍부터 이해하면 더 현명한 선택을 할 수 있다고 믿으며, 실생활 사례 중심의 참여형 수업으로 아이들이 흥미를 잃지 않도록 이끌겠습니다.',
-      freeWriting2: '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
-      freeWriting3: '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
-      freeWriting4: '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
+      freeWriting1:
+        '대학에서 경영학을 전공하며 금융과 경제에 깊은 관심을 갖게 되었습니다. 청소년들이 돈의 흐름과 경제의 원리를 일찍부터 이해하면 더 현명한 선택을 할 수 있다고 믿으며, 실생활 사례 중심의 참여형 수업으로 아이들이 흥미를 잃지 않도록 이끌겠습니다.',
+      freeWriting2:
+        '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
+      freeWriting3:
+        '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
+      freeWriting4:
+        '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
     }
   }
   return {
@@ -367,11 +396,21 @@ function getResumeSample(index: number): Pick<
     ],
     awards: [{ name: 'JA코리아 우수 강사상', year: '2023' }],
     educations: [
-      { schoolType: '대학 2・3년제', status: 'graduated', schoolName: '동서울대학교', major: '유아교육과', enrollmentYear: '2018.03', graduationYear: '2020.02' },
+      {
+        schoolType: '대학 2・3년제',
+        status: 'graduated',
+        schoolName: '동서울대학교',
+        major: '유아교육과',
+        enrollmentYear: '2018.03',
+        graduationYear: '2020.02',
+      },
     ],
-    freeWriting1: '전공을 살려 초등 대상 교육에 지원하게 되었습니다. 아이들이 경제 개념을 쉽게 이해하도록 돕고 싶습니다.',
-    freeWriting2: '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
-    freeWriting3: '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
+    freeWriting1:
+      '전공을 살려 초등 대상 교육에 지원하게 되었습니다. 아이들이 경제 개념을 쉽게 이해하도록 돕고 싶습니다.',
+    freeWriting2:
+      '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
+    freeWriting3:
+      '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
     freeWriting4: '-',
   }
 }
@@ -410,7 +449,10 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
     const status: ApplicantInstructorApprovalStatusKey = APPROVAL_STATUSES[statusIdx]
     const assignedSchool =
       status === 'approved'
-        ? { assignedSchoolId: PREFERRED_SCHOOL_OPTIONS[0].schoolId, assignedSchoolName: PREFERRED_SCHOOL_OPTIONS[0].schoolName }
+        ? {
+            assignedSchoolId: PREFERRED_SCHOOL_OPTIONS[0].schoolId,
+            assignedSchoolName: PREFERRED_SCHOOL_OPTIONS[0].schoolName,
+          }
         : {}
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
     const resumeSample = getResumeSample(i)

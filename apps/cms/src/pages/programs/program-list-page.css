@@ -72,7 +72,6 @@
 }
 
 .program-list-page__filter-info-title {
-  font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
@@ -81,15 +80,18 @@
 
 .program-list-page__filter-info-count {
   color: var(--color-text-secondary);
-  font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .program-list-page__divider-wrapper {
-  padding: 12px 20px 32px 20px;
+  padding: 0 20px 32px 20px;
 }
 
 /* 선택 삭제 버튼 (예정 프로그램 필터 활성 시) */

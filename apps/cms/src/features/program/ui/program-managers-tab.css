@@ -1,6 +1,6 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터: 레이블 상단(진행현황과 동일 토큰) · 1fr·1fr + 조회 · 컨트롤 44px
+ * 필터: 그리드 1fr·1fr(담당자명/권한) + 조회, 컨트롤 44px · StatusDropdownCell(권한) · 테이블
  */
 
 .program-managers-tab {
@@ -18,12 +18,12 @@
     max-width: 100%;
 }
 
-/* 담당자명·권한 1:1 + 조회 — 레이블은 컨트롤 위(세로 스택), 조회 버튼은 컨트롤 하단 정렬 */
+/* 담당자명·권한: 레이블 상단 + 입력(프로그램 목록 필터 카드와 동일 패턴), 조회는 입력 행과 수직 정렬 */
 .program-managers-tab__filter-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: var(--spacing-16);
-    align-items: end;
+    align-items: start;
     width: 100%;
     min-width: 0;
 }
@@ -32,20 +32,19 @@
     min-width: 0;
     width: 100%;
     display: flex;
-    flex-direction: column;
     align-items: stretch;
 }
 
-/* LabeledSearchInput: 기본 column + 진행현황 필터 라벨 톤 */
 .program-managers-tab__filter-grow .labeled-search-input {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--spacing-6);
+    gap: var(--spacing-8);
     width: 100%;
     min-width: 0;
 }
 
+/* Typography.Text — 레이블은 입력 위, 한 줄 높이만 차지 */
 .program-managers-tab__filter-grow .labeled-search-input__label.ant-typography,
 .program-managers-tab__filter-grow .labeled-search-input__label {
     flex: 0 0 auto;
@@ -56,22 +55,15 @@
     white-space: nowrap;
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-500);
-    color: #262626;
+    color: var(--color-text-heading);
     line-height: 1.5 !important;
-    height: auto !important;
-    min-height: 0;
-}
-
-.program-managers-tab__filter-grow .labeled-search-input__label .ant-typography {
-    margin: 0 !important;
-    line-height: inherit !important;
+    height: auto;
 }
 
 .program-managers-tab__filter-grow .labeled-search-input__input.ant-input-affix-wrapper {
-    flex: 0 0 auto;
-    margin: 0;
+    flex: 1 1 0;
     min-width: 0;
-    width: 100% !important;
+    width: auto !important;
     max-width: none;
     min-height: var(--filter-control-height, 44px) !important;
     height: var(--filter-control-height, 44px) !important;
@@ -104,9 +96,10 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--spacing-6);
+    gap: var(--spacing-8);
     width: 100%;
     min-width: 0;
+    min-height: 0;
 }
 
 .program-managers-tab__filter-label {
@@ -118,13 +111,13 @@
     white-space: nowrap;
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-500);
-    color: #262626;
+    color: var(--color-text-heading);
     line-height: 1.5 !important;
-    height: auto !important;
+    height: auto;
 }
 
 .program-managers-tab__role-filter-select.ant-select {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     min-width: 0;
     width: 100% !important;
     max-width: none;
@@ -141,11 +134,14 @@
     border-radius: var(--radius-4) !important;
 }
 
+/* 레이블 행 높이만큼 내려 조회 버튼을 입력 필드와 같은 베이스라인에 맞춤 */
 .program-managers-tab__filter-actions {
     display: inline-flex;
     align-items: center;
-    align-self: end;
-    padding-bottom: 0;
+    align-self: start;
+    margin-top: calc(var(--font-size-14) * 1.5 + var(--spacing-8));
+    height: var(--filter-control-height, 44px);
+    min-height: var(--filter-control-height, 44px);
 }
 
 .program-managers-tab__filter-actions .app-button {
@@ -340,6 +336,7 @@
     }
 
     .program-managers-tab__filter-actions {
+        margin-top: 0;
         justify-self: end;
         width: auto;
     }
