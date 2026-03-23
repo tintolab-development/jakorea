@@ -488,8 +488,11 @@
   margin: 4px;
 }
 
+.program-mini-calendar table tr:hover {
+  background: transparent !important;
+}
 .program-mini-calendar-cell:hover {
-  background-color: var(--color-border-light);
+  background-color: var(--color-border-light) !important;
 }
 
 .program-mini-calendar-cell--selected {
