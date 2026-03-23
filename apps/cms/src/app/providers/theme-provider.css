@@ -34,8 +34,8 @@
   --shadow-focus-teal: 0 0 0 1px rgba(74, 212, 204, 0.2);
   --color-table-head-bg: #edf0f2;
   --color-table-row-hover: rgba(1, 161, 175, 0.06);
-  --color-table-row-selected: #f6ffed;
-  --color-table-row-selected-hover: #d9f7be;
+  --color-table-row-selected: #f0f9fa;
+  --color-table-row-selected-hover: #f0f9fa;
   --shadow-card-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
   /* 캘린더 필터 체크박스 (사업분야별) */
   --color-filter-cyan: #21c6ad;
