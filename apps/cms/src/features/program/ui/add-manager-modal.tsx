@@ -8,7 +8,11 @@ import { Form, Input, Select, Modal, Button } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ProgramRole } from '@/types/user'
-import { PROGRAM_ROLE_LABELS, MAX_OWNER_COUNT } from '@/data/mock/program-managers'
+import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
+import {
+  canAddProgramPmFromPmCount,
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
 import type { ProgramManagerRow } from '@/data/mock/program-managers'
 import './add-manager-modal.css'
 
@@ -28,7 +32,7 @@ export interface AddManagerFormValues {
 interface AddManagerModalProps {
   open: boolean
   onCancel: () => void
-  /** PM(담당자) 3명 제한 검증용 — 현재 OWNER 수 */
+  /** PM(ProgramRole.OWNER) 인원 — 프로그램당 상한 검증용 */
   currentOwnerCount: number
   onAdd: (values: AddManagerFormValues) => void
 }
@@ -53,7 +57,7 @@ export function AddManagerModal({
   }, [open])
 
   const handleSubmit = (values: AddManagerFormValues) => {
-    if (values.role === 'OWNER' && currentOwnerCount >= MAX_OWNER_COUNT) {
+    if (values.role === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)) {
       setShowOwnerLimitModal(true)
       return
     }
@@ -130,7 +134,11 @@ export function AddManagerModal({
               <Select
                 placeholder="권한을 선택해주세요"
                 size="large"
-                options={ROLE_OPTIONS}
+                options={ROLE_OPTIONS.map(opt => ({
+                  ...opt,
+                  disabled:
+                    opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount),
+                }))}
                 getPopupContainer={() => document.body}
               />
             </Form.Item>
@@ -172,7 +180,7 @@ export function AddManagerModal({
         centered
         width={400}
       >
-        PM(담당자)는 총 {MAX_OWNER_COUNT}명까지만 지정할 수 있습니다.
+        {PROGRAM_PM_ROLE_LIMIT_MESSAGE}
       </Modal>
     </TealHeaderModal>
   )
