@@ -6,7 +6,7 @@
 import type { LoginRequest, LoginResponse, User } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import { validateLogin, getUserByPhone } from '@/data/mock/users'
-import { createMockMfaState } from '@/data/mock/mfa'
+import { createTotpMfaState } from '@/data/mock/mfa'
 
 /**
  * 로그인 API
@@ -29,8 +29,7 @@ export async function login(
   let mfaState: MfaState | undefined
 
   if (requiresMfa) {
-    const phoneNumber = user.phone || '010-1234-5678'
-    mfaState = createMockMfaState(user.id, phoneNumber)
+    mfaState = createTotpMfaState(user.id, user.email)
   }
 
   // Mock JWT 토큰 생성 (MFA 완료 전에는 임시 토큰)
@@ -145,8 +144,7 @@ export async function loginWithPhone(
   let mfaState: MfaState | undefined
 
   if (requiresMfa) {
-    const phone = user.phone || '010-1234-5678'
-    mfaState = createMockMfaState(user.id, phone)
+    mfaState = createTotpMfaState(user.id, user.email)
   }
 
   // Mock JWT 토큰 생성
@@ -214,8 +212,7 @@ export async function loginWithSocial(
   let mfaState: MfaState | undefined
 
   if (requiresMfa) {
-    const phoneNumber = user.phone || '010-1234-5678'
-    mfaState = createMockMfaState(user.id, phoneNumber)
+    mfaState = createTotpMfaState(user.id, user.email)
   }
 
   // Mock JWT 토큰 생성
