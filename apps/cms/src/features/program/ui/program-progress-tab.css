@@ -5,401 +5,408 @@
  */
 
 .program-progress-tab {
-    width: 100%;
+  width: 100%;
 }
 
 /* 전체(탭·필터·테이블) 카드 래퍼: 배경 var(--color-bg-base). 탭/필터는 카드가 아닌 카드 내부 상단 */
 .program-progress-tab__card {
-    background: var(--color-bg-base);
-    border-radius: var(--radius-8);
-    border: 1px solid var(--color-border-light);
+  background: var(--color-bg-base);
+  border-radius: var(--radius-8);
+  border: 1px solid var(--color-border-light);
 }
 
 .program-progress-tab__card .ant-card-body {
-    padding: var(--spacing-16) var(--spacing-24) var(--spacing-24);
+  padding: var(--spacing-16) var(--spacing-24) var(--spacing-24);
 }
 
 /* 탭 + 필터 영역(카드 아님, 카드 내부 첫 블록) */
 .program-progress-tab__top {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 /* 기획: 탭과 필터 space-between, 세로 중앙 정렬 */
 .program-progress-tab__bar-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-16);
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  flex-wrap: wrap;
 }
 
 /* 왼쪽 탭: SegmentedTab size="mediumCompact" (214×40) 사용 */
 
 /* 오른쪽: 필터 영역 (space-between으로 탭과 분리) */
 .program-progress-tab__filters {
-    flex: 0 1 auto;
-    min-width: 0;
-    max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* 필터+조회 버튼 한 줄, 세로 중앙 정렬 통일 */
 .program-progress-tab__filters .ant-row.program-progress-tab__filter-row {
-    width: 100%;
-    align-items: center;
-    flex-wrap: nowrap;
-    min-width: 0;
-    gap: 0;
+  width: 100%;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+  gap: 0;
 }
 
 /* 모든 필터 Col 내부: 세로 중앙으로 드롭다운/인풋/버튼 한 줄 정렬 */
-.program-progress-tab__filters .program-progress-tab__filter-row>.ant-col {
-    display: flex;
-    align-items: center;
+.program-progress-tab__filters .program-progress-tab__filter-row > .ant-col {
+  display: flex;
+  align-items: center;
 }
 
-.program-progress-tab__filters .program-progress-tab__filter-row>.ant-col:last-child {
-    flex-shrink: 0;
+.program-progress-tab__filters .program-progress-tab__filter-row > .ant-col:last-child {
+  flex-shrink: 0;
 }
 
 /* 필터와 버튼 사이 갭 12px */
-.program-progress-tab__filters .program-progress-tab__filter-row>.ant-col.program-progress-tab__filter-col--btn {
-    padding-inline-start: var(--spacing-12) !important;
+.program-progress-tab__filters
+  .program-progress-tab__filter-row
+  > .ant-col.program-progress-tab__filter-col--btn {
+  padding-inline-start: var(--spacing-12) !important;
 }
 
 /* overflow를 주면 브라우저가 overflow-y를 auto로 바꿔서 드롭다운 하단이 잘림. 제거하여 해결 */
 .program-progress-tab__filters {
-    overflow: visible;
+  overflow: visible;
 }
 
 .program-progress-tab__filters .ant-row {
-    width: 100%;
-    align-items: center;
+  width: 100%;
+  align-items: center;
 }
 
 /* 필터 필드: 같은 선상(공통 높이), 레이블·인풋 12px 간격 */
 .program-progress-tab__filter-field {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: var(--spacing-12);
-    height: var(--filter-control-height, 44px);
-    min-height: var(--filter-control-height, 44px);
-    overflow: visible;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-12);
+  height: var(--filter-control-height, 44px);
+  min-height: var(--filter-control-height, 44px);
+  overflow: visible;
 }
 
 .program-progress-tab__filter-field .ant-select {
-    overflow: visible !important;
+  overflow: visible !important;
 }
 
 /* 레이블: 공통 높이 + line-height로 한 줄 텍스트 세로 중앙 */
 .program-progress-tab__filter-label {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    height: var(--filter-control-height, 44px);
-    line-height: var(--filter-control-height, 44px) !important;
-    margin: 0;
-    padding: 0;
-    display: block;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  height: var(--filter-control-height, 44px);
+  line-height: var(--filter-control-height, 44px) !important;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
 .program-progress-tab__filter-label .ant-typography {
-    margin: 0 !important;
-    line-height: inherit !important;
+  margin: 0 !important;
+  line-height: inherit !important;
 }
 
 .program-progress-tab__filter-field .ant-select {
-    flex: 1 1 0;
-    min-width: 0;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* 교사/강사명 검색: 필터와 같은 공통 높이, 레이블·인풋 12px 간격 */
 .program-progress-tab__filters .labeled-search-input {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: var(--spacing-12);
-    height: var(--filter-control-height, 44px);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-12);
+  height: var(--filter-control-height, 44px);
 }
 
 .program-progress-tab__filters .labeled-search-input__label {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    margin: 0;
-    height: var(--filter-control-height, 44px);
-    line-height: var(--filter-control-height, 44px) !important;
-    display: block;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  margin: 0;
+  height: var(--filter-control-height, 44px);
+  line-height: var(--filter-control-height, 44px) !important;
+  display: block;
 }
 
 .program-progress-tab__filters .labeled-search-input__label .ant-typography {
-    margin: 0 !important;
-    line-height: inherit !important;
+  margin: 0 !important;
+  line-height: inherit !important;
 }
 
 .program-progress-tab__filters .labeled-search-input__input,
 .program-progress-tab__filters .labeled-search-input .ant-input {
-    flex: 0 0 auto;
-    width: var(--filter-control-width, 180px) !important;
-    min-width: var(--filter-control-min-width);
+  flex: 0 0 auto;
+  width: var(--filter-control-width, 180px) !important;
+  min-width: var(--filter-control-min-width);
 }
 
 /* 필터 영역 셀렉트/드롭박스: 공통 변수(--filter-control-*), 하단 잘리지 않도록 box-sizing·overflow */
 .program-progress-tab__filter-col {
-    min-width: 160px;
+  min-width: 160px;
 }
 
 .program-progress-tab__filter-col .ant-select {
-    width: var(--filter-control-width, 180px) !important;
-    min-width: var(--filter-control-min-width);
+  width: var(--filter-control-width, 180px) !important;
+  min-width: var(--filter-control-min-width);
 }
 
 /* 셀렉트 래퍼: 공통 높이, 필터 필드에서 세로 중앙 */
 .program-progress-tab__filters .ant-select {
-    overflow: visible !important;
-    height: var(--filter-control-height, 44px) !important;
-    align-self: center !important;
+  overflow: visible !important;
+  height: var(--filter-control-height, 44px) !important;
+  align-self: center !important;
 }
 
 /* 셀렉트 박스: 내부 텍스트·아이콘 세로 중앙 (Ant Design 기본 스타일 오버라이드) */
-.program-progress-tab__filters .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-    box-sizing: border-box !important;
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
-    width: 100% !important;
-    padding: 0 28px 0 var(--spacing-12) !important;
-    border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-4) !important;
-    display: flex !important;
-    align-items: center !important;
-    position: relative !important;
-    overflow: visible !important;
+.program-progress-tab__filters
+  .ant-select-single:not(.ant-select-customize-input)
+  .ant-select-selector {
+  box-sizing: border-box !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  width: 100% !important;
+  padding: 0 28px 0 var(--spacing-12) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-4) !important;
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+  overflow: visible !important;
 }
 
 /* 선택 영역(전체 등) 텍스트 세로 중앙 - Ant Design 내부 구조 */
 .program-progress-tab__filters .ant-select-single .ant-select-selector .ant-select-selection-search,
 .program-progress-tab__filters .ant-select-single .ant-select-selector .ant-select-selection-item,
-.program-progress-tab__filters .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
-    line-height: 1 !important;
-    height: auto !important;
-    display: flex !important;
-    align-items: center !important;
-    margin: 0 !important;
-    padding: 0 !important;
+.program-progress-tab__filters
+  .ant-select-single
+  .ant-select-selector
+  .ant-select-selection-placeholder {
+  line-height: 1 !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .program-progress-tab__filters .ant-select-single .ant-select-selection-item,
 .program-progress-tab__filters .ant-select-single .ant-select-selection-placeholder {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 /* 드롭다운 화살표: 셀렉트 박스 안에서 세로 중앙 */
 .program-progress-tab__filters .ant-select .ant-select-arrow {
-    position: absolute !important;
-    top: 50% !important;
-    bottom: auto !important;
-    inset-inline-end: var(--spacing-10) !important;
-    inset-inline-start: auto !important;
-    margin: 0 !important;
-    transform: translateY(-50%) !important;
-    width: var(--spacing-12) !important;
-    height: var(--spacing-12) !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: var(--color-text-45);
-    pointer-events: none;
+  position: absolute !important;
+  top: 50% !important;
+  bottom: auto !important;
+  inset-inline-end: var(--spacing-10) !important;
+  inset-inline-start: auto !important;
+  margin: 0 !important;
+  transform: translateY(-50%) !important;
+  width: var(--spacing-12) !important;
+  height: var(--spacing-12) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--color-text-45);
+  pointer-events: none;
 }
 
 .program-progress-tab__filters .ant-select .ant-select-arrow .anticon {
-    display: block;
-    line-height: 0;
-    font-size: var(--font-size-12);
+  display: block;
+  line-height: 0;
+  font-size: var(--font-size-12);
 }
 
 /* 교사/강사명 검색: 다른 필터와 동일 너비(180px) */
 .program-progress-tab__filter-col--search {
-    min-width: 0;
+  min-width: 0;
 }
 
 /* 검색 인풋: 공통 크기, 테두리 한 겹만 적용 */
 .program-progress-tab__filters .labeled-search-input__input {
-    width: var(--filter-control-width, 180px) !important;
-    min-width: var(--filter-control-min-width);
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
-    border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-4) !important;
-    box-shadow: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
+  width: var(--filter-control-width, 180px) !important;
+  min-width: var(--filter-control-min-width);
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-4) !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
 .program-progress-tab__filters .labeled-search-input__input .ant-input {
-    height: 100% !important;
-    min-height: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 11px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 11px !important;
 }
 
 .program-progress-tab__filters .labeled-search-input__input.ant-input-affix-wrapper .ant-input {
-    height: 100% !important;
-    min-height: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
 }
 
 .program-progress-tab__filters .ant-input:focus,
 .program-progress-tab__filters .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
-    border-color: var(--color-tab-active) !important;
-    box-shadow: var(--shadow-focus-teal) !important;
+  border-color: var(--color-tab-active) !important;
+  box-shadow: var(--shadow-focus-teal) !important;
 }
 
 .program-progress-tab__filters .labeled-search-input__input:focus-within {
-    border-color: var(--color-tab-active) !important;
-    box-shadow: var(--shadow-focus-teal) !important;
+  border-color: var(--color-tab-active) !important;
+  box-shadow: var(--shadow-focus-teal) !important;
 }
 
 /* 조회 AppButton: 필터 영역 시안 border-radius 8px */
 .program-progress-tab__filter-col--btn .app-button {
-    border-radius: var(--radius-8);
+  border-radius: var(--radius-8);
 }
 
 @media (max-width: 1200px) {
-    .program-progress-tab__filters .ant-row {
-        flex-wrap: wrap;
-    }
+  .program-progress-tab__filters .ant-row {
+    flex-wrap: wrap;
+  }
 
-    .program-progress-tab__filter-col,
-    .program-progress-tab__filter-col--search {
-        flex: 1 1 120px !important;
-        max-width: none;
-    }
+  .program-progress-tab__filter-col,
+  .program-progress-tab__filter-col--search {
+    flex: 1 1 120px !important;
+    max-width: none;
+  }
 }
 
 .program-progress-tab__filter-field .program-progress-tab__filter-label {
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    color: #262626;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  color: #262626;
 }
 
 /* 탭·필터와 테이블 구분 디바이더 */
 .program-progress-tab__divider {
-    height: 0;
-    border: none;
-    border-top: 1px solid var(--color-border-skeleton);
-    margin: var(--spacing-16) 0 0;
+  height: 0;
+  border: none;
+  border-top: 1px solid var(--color-border-skeleton);
+  margin: var(--spacing-16) 0 0;
 }
 
 /* 디바이더 하위: 테이블 영역 */
 .program-progress-tab__below-divider {
-    padding-top: var(--spacing-16);
-    margin-top: 0;
+  padding-top: var(--spacing-16);
+  margin-top: 0;
 }
 
 /* 디바이더 바로 아래: 목록 요약(왼쪽) + 학교 삭제(오른쪽) */
 .program-progress-tab__table-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-12);
 }
 
 .program-progress-tab__table-heading {
-    display: inline-flex;
-    align-items: baseline;
-    gap: var(--spacing-6);
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--spacing-6);
 }
 
 /* 테이블 헤더 타이틀: 굵게, 큰 제목, 진한 회색 */
 /* 테이블 헤더 타이틀 */
 .program-progress-tab__table-title {
-    color: var(--default-BK);
-    font-family: var(--font-family-primary), sans-serif;
-    font-size: var(--font-size-18);
-    font-style: normal;
-    font-weight: 700;
-    line-height: 140%;
+  color: var(--default-BK);
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: var(--font-size-18);
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
 }
 
 /* 테이블 헤더 디스크립션: 총 N건 */
 .program-progress-tab__table-description {
-    color: var(--default-BK);
-    opacity: 0.6;
-    font-family: Pretendard, sans-serif;
-    font-size: var(--font-size-14);
-    font-style: normal;
-    font-weight: var(--font-weight-500);
-    line-height: 150%;
+  color: var(--default-BK);
+  opacity: 0.6;
+  font-family: Pretendard, sans-serif;
+  font-size: var(--font-size-14);
+  font-style: normal;
+  font-weight: var(--font-weight-500);
+  line-height: 150%;
 }
 
 /* 강사 탭: 테이블 헤더 오른쪽 버튼 그룹 (강사 삭제 + 강사 추가) */
 .program-progress-tab__table-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-8);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
 }
 
 /* 테이블: 헤더·셀 가운데 정렬, 구분선 */
 .program-progress-tab__table {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 /* 체크박스 열: 좁은 고정 너비 */
-.program-progress-tab__table .ant-table-thead>tr>th:first-child,
-.program-progress-tab__table .ant-table-tbody>tr>td:first-child {
-    width: var(--spacing-48, 40px);
-    min-width: var(--spacing-48, 40px);
-    max-width: var(--spacing-48, 40px);
-    padding-left: var(--spacing-8);
-    padding-right: var(--spacing-8);
+.program-progress-tab__table .ant-table-thead > tr > th:first-child,
+.program-progress-tab__table .ant-table-tbody > tr > td:first-child {
+  width: var(--spacing-48, 40px);
+  min-width: var(--spacing-48, 40px);
+  max-width: var(--spacing-48, 40px);
+  padding-left: var(--spacing-8);
+  padding-right: var(--spacing-8);
 }
 
-.program-progress-tab__table .ant-table-thead>tr>th,
-.program-progress-tab__table .ant-table-tbody>tr>td {
-    text-align: center;
-    vertical-align: middle;
-    border-right: 1px solid var(--color-border-light);
+.program-progress-tab__table .ant-table-thead > tr > th,
+.program-progress-tab__table .ant-table-tbody > tr > td {
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid var(--color-border-light);
 }
 
-.program-progress-tab__table .ant-table-thead>tr>th:last-child,
-.program-progress-tab__table .ant-table-tbody>tr>td:last-child {
-    border-right: none;
+.program-progress-tab__table .ant-table-thead > tr > th:last-child,
+.program-progress-tab__table .ant-table-tbody > tr > td:last-child {
+  border-right: none;
 }
 
-.program-progress-tab__table .ant-table-thead>tr>th {
-    background: var(--color-table-head-bg);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-700);
-    color: var(--color-text-label);
-    text-align: center;
+.program-progress-tab__table .ant-table-thead > tr > th {
+  background: var(--color-table-head-bg);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-700);
+  color: var(--color-text-label);
+  text-align: center;
 }
 
 /* 선택된 행 하이라이트: 연한 녹색 */
-.program-progress-tab__table .ant-table-tbody>tr.ant-table-row-selected>td {
-    background: var(--color-table-row-selected) !important;
+.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--color-table-row-selected) !important;
 }
 
-.program-progress-tab__table .ant-table-tbody>tr.ant-table-row-selected:hover>td {
-    background: var(--color-table-row-selected-hover) !important;
+.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
+  background: var(--color-table-row-selected-hover) !important;
 }
 
 /* 교재 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(학교 상세 모달) 방지 */
 .textbook-status-dropdown-cell {
-    position: relative;
-    z-index: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .textbook-status-dropdown-trigger {
-    cursor: pointer;
-    display: inline-block;
+  cursor: pointer;
+  display: inline-block;
 }
 
 /* 정산 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(강사 상세 모달) 방지 */
 .settlement-status-dropdown-cell {
-    position: relative;
-    z-index: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .settlement-status-dropdown-trigger {
-    cursor: pointer;
-    display: inline-block;
+  cursor: pointer;
+  display: inline-block;
 }

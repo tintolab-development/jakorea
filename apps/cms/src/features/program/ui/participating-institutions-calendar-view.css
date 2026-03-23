@@ -414,6 +414,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #595959;
+  box-sizing: border-box;
 }
 
 .participating-institutions-calendar-event--selected {
@@ -450,59 +451,6 @@
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* 초등학교별 태그 배경색 (data-color-index 0~15) */
-.participating-institutions-calendar-event[data-color-index='0'] {
-  background-color: #fcf8f8;
-}
-.participating-institutions-calendar-event[data-color-index='1'] {
-  background-color: #fbefef;
-}
-.participating-institutions-calendar-event[data-color-index='2'] {
-  background-color: #feebf6;
-}
-.participating-institutions-calendar-event[data-color-index='3'] {
-  background-color: #ffdcdc;
-}
-.participating-institutions-calendar-event[data-color-index='4'] {
-  background-color: #fffbf1;
-}
-.participating-institutions-calendar-event[data-color-index='5'] {
-  background-color: #f1f3e0;
-}
-.participating-institutions-calendar-event[data-color-index='6'] {
-  background-color: #ddf6d2;
-}
-.participating-institutions-calendar-event[data-color-index='7'] {
-  background-color: #ecfae5;
-}
-.participating-institutions-calendar-event[data-color-index='8'] {
-  background-color: #d8efd3;
-}
-.participating-institutions-calendar-event[data-color-index='9'] {
-  background-color: #d4f6ff;
-}
-.participating-institutions-calendar-event[data-color-index='10'] {
-  background-color: #c6e7ff;
-}
-.participating-institutions-calendar-event[data-color-index='11'] {
-  background-color: #eef1ff;
-}
-.participating-institutions-calendar-event[data-color-index='12'] {
-  background-color: #f4f8d3;
-}
-.participating-institutions-calendar-event[data-color-index='13'] {
-  background-color: #fff9bf;
-}
-.participating-institutions-calendar-event[data-color-index='14'] {
-  background-color: #fdffbc;
-}
-/* 선택 시 태그 밖으로 삐져나온 파란색 제거 (배경색은 유지) */
-.participating-institutions-calendar-event--selected[data-color-index] {
-  box-shadow: none;
-  outline: none;
-  border: none;
 }
 
 /* Week view */

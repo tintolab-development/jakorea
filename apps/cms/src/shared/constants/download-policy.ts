@@ -3,6 +3,18 @@
  * Phase 0.5.3: 다운로드 보호 UX (NFR-DATA-01, NFR-DATA-02)
  */
 
+/** 한국어 2글자 복성(예금주명 `accountHolderName` 마스킹 시 성 길이) */
+const COMPOUND_SURNAMES_TWO = new Set([
+  '남궁',
+  '황보',
+  '사공',
+  '제갈',
+  '선우',
+  '독고',
+  '동방',
+  '서문',
+])
+
 /**
  * 다운로드 제한 정책
  */
@@ -36,16 +48,32 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 계좌번호 마스킹: ****-****-****-1234
+   * 계좌번호 마스킹: 숫자만 전부 `*` (하이픈·공백 등 비숫자 구분자는 유지)
+   * 은행명은 호출부에서 별도 필드로 두고 마스킹하지 않음.
    */
   accountNumber: (value: string): string => {
     if (!value) return value
-    if (value.length <= 4) return '*'.repeat(value.length)
-    return '*'.repeat(value.length - 4) + value.slice(-4)
+    return value.replace(/\d/g, '*')
   },
 
   /**
-   * 이름 마스킹: 홍*동
+   * 예금주명 마스킹: 성씨만 노출, 나머지 `*`
+   * 단일 성(1글자) 기본, 복성은 아래 집합이면 앞 2글자를 성으로 간주.
+   */
+  accountHolderName: (value: string): string => {
+    if (!value) return value
+    const trimmed = value.trim()
+    if (trimmed.length === 0) return value
+    let surnameLen = 1
+    if (trimmed.length >= 2 && COMPOUND_SURNAMES_TWO.has(trimmed.slice(0, 2))) {
+      surnameLen = 2
+    }
+    if (trimmed.length <= surnameLen) return trimmed
+    return trimmed.slice(0, surnameLen) + '*'.repeat(trimmed.length - surnameLen)
+  },
+
+  /**
+   * 이름 마스킹: 홍*동 (목록·일반 표시용)
    */
   name: (value: string): string => {
     if (!value) return value

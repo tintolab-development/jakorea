@@ -43,6 +43,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           },
           Table: {
             borderRadius: 8,
+            rowHoverBg: 'rgba(1, 161, 175, 0.06)',
+            rowSelectedBg: 'rgba(1, 161, 175, 0.06)',
           },
           Input: {
             borderRadius: 6,

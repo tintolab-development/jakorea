@@ -186,7 +186,9 @@
   align-self: center !important;
 }
 
-.program-progress-tab__filters .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+.program-progress-tab__filters
+  .ant-select-single:not(.ant-select-customize-input)
+  .ant-select-selector {
   width: 100% !important;
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
@@ -197,7 +199,10 @@
 
 .program-progress-tab__filters .ant-select-single .ant-select-selector .ant-select-selection-search,
 .program-progress-tab__filters .ant-select-single .ant-select-selector .ant-select-selection-item,
-.program-progress-tab__filters .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+.program-progress-tab__filters
+  .ant-select-single
+  .ant-select-selector
+  .ant-select-selection-placeholder {
   line-height: 1 !important;
   height: auto !important;
   display: flex !important;

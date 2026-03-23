@@ -14,6 +14,7 @@ import type {
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
 import { ApplicantScheduleList } from './detail-modal/applicant-schedule-list'
+import { SCHEDULE_COLORS } from './program-schedule-colors'
 import './participating-institutions-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
@@ -77,25 +78,6 @@ interface CalendarEvent {
     desiredEducationPeriod: string
   }
 }
-
-/** 초등학교별 태그 배경색 (학교명 기준으로 일관 적용, tone-on-tone border) */
-const SCHEDULE_COLOR_BASE: { primary: string; light: string; border: string }[] = [
-  { primary: '#E8D4D4', light: '#FCF8F8', border: '#E8D4D4' },
-  { primary: '#E8C4C4', light: '#FBEFEF', border: '#E8C4C4' },
-  { primary: '#E8C8DC', light: '#FEEBF6', border: '#E8C8DC' },
-  { primary: '#E8B0B0', light: '#FFDCDC', border: '#E8B0B0' },
-  { primary: '#E8E0C8', light: '#FFFBF1', border: '#E8E0C8' },
-  { primary: '#D4D8A8', light: '#F1F3E0', border: '#D4D8A8' },
-  { primary: '#A8D898', light: '#DDF6D2', border: '#A8D898' },
-  { primary: '#B8E0A8', light: '#ECFAE5', border: '#B8E0A8' },
-  { primary: '#98D088', light: '#D8EFD3', border: '#98D088' },
-  { primary: '#88D0E8', light: '#D4F6FF', border: '#88D0E8' },
-  { primary: '#88B0E0', light: '#C6E7FF', border: '#88B0E0' },
-  { primary: '#B8C0E8', light: '#EEF1FF', border: '#B8C0E8' },
-  { primary: '#D8E0A8', light: '#F4F8D3', border: '#D8E0A8' },
-  { primary: '#E8E088', light: '#FFF9BF', border: '#E8E088' },
-  { primary: '#E8E898', light: '#FDFFBC', border: '#E8E898' },
-]
 
 function buildEventsFromSchools(schools: ParticipatingSchoolRow[]): CalendarEvent[] {
   const byDateAndSchool = new Map<
@@ -169,13 +151,13 @@ export function ParticipatingInstitutionsCalendarView({
     const keys = new Set(schools.map(s => s.schoolName))
     const sorted = Array.from(keys).sort()
     const map = new Map<string, number>()
-    sorted.forEach((k, i) => map.set(k, i % SCHEDULE_COLOR_BASE.length))
+    sorted.forEach((k, i) => map.set(k, i % SCHEDULE_COLORS.length))
     return map
   }, [schools])
 
   const getColorForEvent = (event: CalendarEvent) => {
     const idx = entityToColorIndex.get(event.title) ?? 0
-    return SCHEDULE_COLOR_BASE[idx]
+    return SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length]
   }
 
   const getEventsForDate = (date: Dayjs): CalendarEvent[] => {
@@ -301,7 +283,7 @@ export function ParticipatingInstitutionsCalendarView({
             {dayEvents.slice(0, 2).map(ev => {
               const displayTitle = `${ev.originalItem.row.schoolName} | ${ev.originalItem.row.region}`
               const isEventSelected = selectedRowKeys.includes(ev.id)
-              const colorIdx = entityToColorIndex.get(ev.title) ?? 0
+              const colors = getColorForEvent(ev)
               return (
                 <Tooltip
                   key={ev.id}
@@ -315,7 +297,10 @@ export function ParticipatingInstitutionsCalendarView({
                 >
                   <div
                     className={`participating-institutions-calendar-event ${isEventSelected ? 'participating-institutions-calendar-event--selected' : ''}`}
-                    data-color-index={colorIdx}
+                    style={{
+                      backgroundColor: colors.bg,
+                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                    }}
                     onClick={e => e.stopPropagation()}
                   >
                     <span className="participating-institutions-calendar-event-title">
@@ -390,7 +375,7 @@ export function ParticipatingInstitutionsCalendarView({
                   <div className="participating-institutions-calendar-week-cell-events">
                     {dayEvents.slice(0, 2).map(ev => {
                       const displayTitle = `${ev.originalItem.row.schoolName} | ${ev.originalItem.row.region}`
-                      const colorIdx = entityToColorIndex.get(ev.title) ?? 0
+                      const colors = getColorForEvent(ev)
                       return (
                         <Tooltip
                           key={ev.id}
@@ -404,7 +389,10 @@ export function ParticipatingInstitutionsCalendarView({
                         >
                           <div
                             className="participating-institutions-calendar-event"
-                            data-color-index={colorIdx}
+                            style={{
+                              backgroundColor: colors.bg,
+                              border: `1px solid ${colors.border}`,
+                            }}
                             onClick={e => e.stopPropagation()}
                           >
                             <span className="participating-institutions-calendar-event-title">
