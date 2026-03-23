@@ -102,7 +102,14 @@ import { mockUsers } from '@/data/mock/users'
  * 소셜 로그인 제공자 타입
  * Phase 0.1.3: 간편인증 로그인
  */
-export type SocialProvider = 'kakao' | 'naver'
+export type SocialProvider = 'kakao' | 'naver' | 'google'
+
+/** UI·메시지용 제공자 표시 이름 */
+export const SOCIAL_PROVIDER_LABEL: Record<SocialProvider, string> = {
+  kakao: '카카오',
+  naver: '네이버',
+  google: '구글',
+}
 
 /**
  * 소셜 로그인용 Mock 매핑 테이블 (소셜 ID → User ID)
@@ -166,7 +173,7 @@ export async function loginWithPhone(
 /**
  * 소셜 로그인
  * Phase 0.1.3: 간편인증 로그인
- * @param provider 소셜 제공자 (kakao/naver)
+ * @param provider 소셜 제공자 (kakao/naver/google)
  * @param socialToken 소셜 토큰 (Mock)
  */
 export async function loginWithSocial(

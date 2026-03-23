@@ -38,7 +38,7 @@ import { SocialRegisterForm } from '@/features/auth/ui/social-register-form'
 import type { UserRole } from '@/types/user'
 import type { RegisterFormData, RegisterRequest } from '@/types/register'
 import { Select } from 'antd'
-import type { SocialProvider } from '@/entities/user/api/auth-service'
+import { SOCIAL_PROVIDER_LABEL, type SocialProvider } from '@/entities/user/api/auth-service'
 import { MESSAGES } from '@/shared/constants'
 import './register-page.css'
 
@@ -399,7 +399,7 @@ export function RegisterPage() {
                 }}
               >
                 <Text type="success">
-                  {socialProvider === 'kakao' ? '카카오' : '네이버'} 연동이 완료되었습니다.
+                  {SOCIAL_PROVIDER_LABEL[socialProvider]} 연동이 완료되었습니다.
                 </Text>
               </div>
             )}

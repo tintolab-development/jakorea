@@ -6,8 +6,13 @@
 import { Button, Space, message } from 'antd'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { loginWithSocial, type SocialProvider } from '@/entities/user/api/auth-service'
+import {
+  loginWithSocial,
+  SOCIAL_PROVIDER_LABEL,
+  type SocialProvider,
+} from '@/entities/user/api/auth-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { GoogleMarkIcon } from '@/shared/components/google-mark-icon'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { MESSAGES } from '@/shared/constants'
 import './social-login-form.css'
@@ -46,6 +51,20 @@ const naverButtonStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: '8px',
+}
+
+/** 구글 로그인 버튼 (브랜드 가이드에 가까운 흰 배경 + 테두리) */
+const googleButtonStyle: React.CSSProperties = {
+  backgroundColor: '#ffffff',
+  color: '#3c4043',
+  border: '1px solid #dadce0',
+  height: '50px',
+  fontSize: '16px',
+  fontWeight: 600,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '10px',
 }
 
 export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
@@ -96,7 +115,7 @@ export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
       }
     } catch (error: any) {
       message.error(
-        error?.message || `${provider === 'kakao' ? '카카오' : '네이버'} 로그인에 실패했습니다.`
+        error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 로그인에 실패했습니다.`
       )
     } finally {
       setLoading(null)
@@ -128,6 +147,19 @@ export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
           icon={<span style={{ fontSize: '20px', fontWeight: 'bold' }}>N</span>}
         >
           네이버로 시작하기
+        </Button>
+
+        <Button
+          type="default"
+          block
+          className="social-login-google-btn"
+          style={googleButtonStyle}
+          onClick={() => handleSocialLogin('google')}
+          loading={loading === 'google'}
+          disabled={loading !== null}
+          icon={<GoogleMarkIcon />}
+        >
+          Google로 시작하기
         </Button>
       </Space>
 

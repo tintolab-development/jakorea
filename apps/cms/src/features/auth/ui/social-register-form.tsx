@@ -5,7 +5,9 @@
 
 import { Button, Space, message } from 'antd'
 import { useState } from 'react'
-import type { SocialProvider } from '@/entities/user/api/auth-service'
+import { SOCIAL_PROVIDER_LABEL, type SocialProvider } from '@/entities/user/api/auth-service'
+import { GoogleMarkIcon } from '@/shared/components/google-mark-icon'
+import './social-register-form.css'
 
 interface SocialRegisterFormProps {
   onSocialRegister: (provider: SocialProvider, socialData: {
@@ -48,6 +50,19 @@ const naverButtonStyle: React.CSSProperties = {
   gap: '8px',
 }
 
+const googleButtonStyle: React.CSSProperties = {
+  backgroundColor: '#ffffff',
+  color: '#3c4043',
+  border: '1px solid #dadce0',
+  height: '50px',
+  fontSize: '16px',
+  fontWeight: 600,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '10px',
+}
+
 export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegisterFormProps) {
   const [loading, setLoading] = useState<SocialProvider | null>(null)
 
@@ -61,22 +76,26 @@ export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegiste
       // Mock: 소셜 정보 가져오기 (실제로는 OAuth 인증 플로우를 거쳐야 함)
       // 더 현실적인 Mock 데이터 생성
       const randomId = Math.random().toString(36).substring(2, 8)
-      const mockNames = {
+      const mockNames: Record<SocialProvider, string[]> = {
         kakao: ['김카카오', '이카톡', '박카카오', '최카카오', '정카카오'],
         naver: ['김네이버', '이나이버', '박네이버', '최네이버', '정네이버'],
+        google: ['김구글', '이지메일', '박크롬', '최드라이브', '정워크스페이스'],
       }
       const randomName = mockNames[provider][Math.floor(Math.random() * mockNames[provider].length)]
-      
+
+      const emailDomain =
+        provider === 'kakao' ? 'kakao.com' : provider === 'naver' ? 'naver.com' : 'gmail.com'
+
       const mockSocialData = {
-        email: `${provider}${randomId}@${provider === 'kakao' ? 'kakao.com' : 'naver.com'}`,
+        email: `${provider}${randomId}@${emailDomain}`,
         name: randomName,
         phone: undefined, // 소셜 로그인에서는 전화번호가 없을 수 있음 (선택사항)
       }
       
       onSocialRegister(provider, mockSocialData)
-      message.success(`${provider === 'kakao' ? '카카오' : '네이버'} 연동이 완료되었습니다.`)
+      message.success(`${SOCIAL_PROVIDER_LABEL[provider]} 연동이 완료되었습니다.`)
     } catch (error: any) {
-      message.error(error?.message || `${provider === 'kakao' ? '카카오' : '네이버'} 연동에 실패했습니다.`)
+      message.error(error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 연동에 실패했습니다.`)
     } finally {
       setLoading(null)
     }
@@ -111,6 +130,19 @@ export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegiste
           }
         >
           네이버로 가입하기
+        </Button>
+
+        <Button
+          type="default"
+          block
+          className="social-register-google-btn"
+          style={googleButtonStyle}
+          onClick={() => handleSocialRegister('google')}
+          loading={loading === 'google'}
+          disabled={disabled || loading !== null}
+          icon={<GoogleMarkIcon />}
+        >
+          Google로 가입하기
         </Button>
       </Space>
 
