@@ -333,7 +333,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
       <div className="program-managers-tab__top">
         <div className="program-managers-tab__filters">
           <div className="program-managers-tab__filter-row">
-            <div className="program-managers-tab__filter-grow">
+            <div className="program-managers-tab__filter-grow program-managers-tab__filter-col">
               <LabeledSearchInput
                 label="담당자명"
                 placeholder="담당자명을 입력하세요"
@@ -344,7 +344,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
                 showPrefixIcon={false}
               />
             </div>
-            <div className="program-managers-tab__filter-grow">
+            <div className="program-managers-tab__filter-grow program-managers-tab__filter-col">
               <div className="program-managers-tab__filter-field">
                 <span className="program-managers-tab__filter-label">권한</span>
                 <Select
