@@ -127,9 +127,6 @@ body
 }
 
 /* 테이블 행 호버 및 선택: 전체 영역 통일 (#01A1AF opacity 0.06) */
-.ant-table-wrapper .ant-table-tbody > tr:hover > td,
-.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td,
-table tr:hover,
-table tr.selected {
-  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+table:not(.ant-picker-content) tr:hover {
+  background: var(--color-table-row-hover) !important;
 }
