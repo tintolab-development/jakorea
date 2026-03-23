@@ -1,9 +1,10 @@
 /**
  * 컨텐츠 모달 공통 레이아웃
- * 컨테이너 패딩, 헤더/바디/푸터 스타일, 푸터 버튼 영역 우측 정렬
+ * 패딩: top 28px · horizontal 30px · bottom 34px
+ * 타이틀 ↔ 본문 갭 30px · 푸터 상단 갭 30px
  */
 
-/* 모달 컨테이너: padding top 28, bottom 34, horizontal 30 */
+/* 모달 컨테이너 */
 .content-modal.ant-modal .ant-modal-content {
   padding: 28px 30px 34px;
 }
@@ -17,21 +18,21 @@
   padding: 0;
 }
 
-/* 타이틀: 24px Bold, default-BK */
+/* 헤더 타이틀 스펙 */
 .content-modal .teal-header-modal__title {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 24px;
   font-style: normal;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 150%; /* 36px */
 }
 
 .content-modal .teal-header-modal__close {
   color: var(--color-text-secondary, #8c8c8c);
 }
 
-/* 바디: padding 제거 */
+/* 본문: 타이틀과의 갭 30px */
 .content-modal .teal-header-modal__body {
   flex: 1 1 auto;
   min-height: 0;
@@ -39,6 +40,7 @@
   flex-direction: column;
   align-items: stretch;
   padding: 0;
+  margin-top: 30px;
 }
 
 /* 푸터: 테이블–버튼 갭 30px, padding/보더 없음, 전체 너비 */
