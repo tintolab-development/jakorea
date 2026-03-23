@@ -325,9 +325,11 @@ export function ProgramListPage() {
               : (statusFilter as ProgramLifecycleStatus | null)
         }
       >
-        <div className="program-list-page__divider-wrapper">
-          {viewMode === 'list' && <Divider />}
-        </div>
+        {viewMode === 'list' && (
+          <div className="program-list-page__divider-wrapper">
+            <Divider />
+          </div>
+        )}
         {isAdmin && (programType === 'education' || programType === 'economy') && (
           <div className="program-list-page__filter-info">
             <div className="program-list-page__filter-info-texts">

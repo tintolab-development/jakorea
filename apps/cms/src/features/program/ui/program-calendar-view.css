@@ -131,15 +131,15 @@
 .program-calendar-header-left {
   display: flex;
   align-items: center;
-  gap: var(--spacing-16);
+  gap: 8px;
 }
 
 .program-calendar-header-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
-  color: var(--color-text-label);
   text-align: left;
   white-space: nowrap;
+  margin-right: 8px;
 }
 
 .program-calendar-today-btn {
@@ -151,8 +151,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-color: var(--color-brand-primary);
-  color: var(--color-brand-primary);
+  border-radius: 6px;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 21px */
 }
 
 .program-calendar-today-btn:hover {
@@ -212,8 +218,7 @@
 }
 
 .program-calendar-cell--selected {
-  border-color: var(--color-brand-primary) !important;
-  border-width: 2px;
+  border: 1px solid var(--color-brand-primary) !important;
   background-color: rgba(1, 161, 175, 0.04);
 }
 
@@ -226,6 +231,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%; /* 18.2px */
 }
 
 .program-calendar-cell--other-month {
@@ -250,7 +260,7 @@
 .program-calendar-cell-date {
   color: var(--default-BK, #3d3d3d);
   font-family: Outfit, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 130%;
@@ -288,7 +298,7 @@
   background: #bfbfbf;
 }
 
-/* 셀 내 일정 배지: 24px 높이, 2px radius (패딩 포함), 프로그램 진행 현황 배지 배경과 동기화 */
+/* 셀 내 일정 배지: 24px 높이, ProgramScheduleList와 동일 bg 팔레트(테두리 없음) */
 .program-calendar-event {
   display: flex;
   align-items: center;
@@ -296,6 +306,7 @@
   min-height: 24px;
   padding: 0 8px;
   box-sizing: border-box;
+  border: none;
   border-radius: 2px;
   cursor: pointer;
   transition: filter 0.2s;
@@ -549,24 +560,30 @@
   padding: var(--spacing-16);
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  overflow-y: auto;
   min-height: 300px;
 }
 
-.program-schedule-list-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-/* 일정 항목: 관리자 홈 캘린더 위젯 일정상세 UI와 동일 구조/스타일 */
+/* 일정 항목: 프로그램별 팔레트 태그 (border/bg는 --schedule-item-* 로 주입) */
 .program-schedule-item {
-  padding: var(--spacing-10, 10px) 0;
-  border-block-end: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 20px;
+  border: 1px solid var(--schedule-item-border, #373530);
+  background: var(--schedule-item-bg, #ffffff);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition:
+    outline-color 0.15s ease,
+    outline-width 0.15s ease;
+  border-radius: 6px;
 }
 
 .program-schedule-item:hover {
-  background-color: var(--color-bg-secondary);
+  border: 2px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
 }
 
 .program-schedule-item:last-child {
@@ -576,45 +593,34 @@
 .program-schedule-list__event-column {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4, 4px);
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
 }
 
-/* 모집 상태 + 교육 시간: 디바이더(|) 사이 갭 10px */
 .program-schedule-list__event-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* 모집 상태만 색상·폰트 스펙 적용 */
-.program-schedule-list__event-type {
-  color: var(--JA-mint-01, #01a1af);
-  font-family: Pretendard, sans-serif;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-}
-
-/* 교육 시간 영역: 이전 스타일 유지 */
-.program-schedule-list__event-time {
-  font-size: var(--font-size-13, 13px);
-  color: var(--color-text-secondary);
-  font-weight: normal;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 /* 일정 상세 일정(제목) 영역 폰트 스펙 */
 .program-schedule-list__event-desc {
   overflow: hidden;
-  color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
   white-space: nowrap;
   min-width: 0;
+  font-size: var(--font-size-16);
+  color: var(--color-text-secondary);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
 }
 
 /* Empty 상태 */
@@ -681,8 +687,7 @@
 }
 
 .program-calendar-week-cell--selected {
-  border-color: var(--color-brand-primary) !important;
-  border-width: 2px;
+  border: 1px solid var(--color-brand-primary) !important;
   background-color: rgba(1, 161, 175, 0.04);
 }
 

@@ -33,7 +33,7 @@
     flex-wrap: wrap;
 }
 
-/* 왼쪽 탭: SegmentedTab size="mediumCompact" (214×50) 사용 */
+/* 왼쪽 탭: SegmentedTab size="mediumCompact" (214×40) 사용 */
 
 /* 오른쪽: 필터 영역 (space-between으로 탭과 분리) */
 .program-progress-tab__filters {
