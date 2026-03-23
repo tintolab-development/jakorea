@@ -15,7 +15,7 @@ export type AppButtonVariant =
   | 'viewDetails' // 연청 아웃라인 (내역 보기 등 테이블 내 액션)
   | 'default' // Ant 기본
 
-export type AppButtonSize = 'small' | 'middle' | 'large' | 'tableAction' | 'filter'
+export type AppButtonSize = 'small' | 'middle' | 'large' | 'tableAction' | 'filter' | 'filter-wide'
 
 export interface AppButtonProps extends Omit<ButtonProps, 'size' | 'variant'> {
   /** 스타일 변형 */
@@ -53,7 +53,7 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
   ) => {
     const isVariantDanger = variant === 'danger'
     const antSize =
-      size === 'large' || size === 'tableAction' || size === 'filter'
+      size === 'large' || size === 'tableAction' || size === 'filter' || size === 'filter-wide'
         ? 'large'
         : size === 'small'
           ? 'small'

@@ -6,12 +6,21 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { AppButton } from '@/shared/ui/app-button'
-import type { Program, ProgramPost } from '@/types/domain'
-import { getProgramPostsByProgramId, getProgramFilesByProgramId } from '@/data/mock'
+import { Input, Dropdown, type MenuProps } from 'antd'
+import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
+import { getProgramPostsByProgramId, getProgramPostsByProgramIdAndSchoolId, getProgramFilesByProgramId } from '@/data/mock'
+import { downloadFile } from '@/shared/lib/file-download'
 import dayjs from 'dayjs'
 
-interface EnrollmentProgramDetailPostsTabProps {
+export interface EnrollmentProgramDetailPostsTabProps {
   program: Program
+  /** 참여기관(학교) ID. 있으면 해당 학교 전용 게시글만 표시 (학교 상세 게시글 탭) */
+  schoolId?: string
+  /** 왼쪽 컬럼 상단 "게시글 작성" 버튼 표시 여부. 기본 true. 학교 상세 풀페이지에서는 탭 행 "게시글 등록"만 쓰므로 false */
+  showWriteButtonInSection?: boolean
+  /** PostWriteModal open을 부모에서 제어할 때 사용 */
+  writeModalOpen?: boolean
+  onWriteModalOpenChange?: (open: boolean) => void
 }
 
 function formatKoDate(date: string | Date): string {
@@ -20,22 +29,50 @@ function formatKoDate(date: string | Date): string {
   const hour = d.hour() % 12 || 12
   return d.format(`YYYY년 M월 D일 ${ampm} ${hour}:mm`)
 }
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return ''
+  const mb = bytes / (1024 * 1024)
+  if (mb >= 1) return `${Math.round(mb)}MB`
+  const kb = bytes / 1024
+  return `${Math.round(kb)}KB`
+}
+
+function formatFileDate(date: string | Date): string {
+  return dayjs(date).format('YY. MM. DD')
+}
 import { PostWriteModal } from './post-write-modal'
 import { PostDetailModal } from './post-detail-modal'
-import { ProgramFilesModal } from './program-files-modal'
+import { ProfileAvatarIcon } from '@/shared/components/profile-avatar-icon'
 import './enrollment-program-detail-modal.css'
 
-/** 게시글 메타 아이콘 — 눈(조회). mask id는 postId로 고유화 */
+/** 파일 리스트 옵션 아이콘 (세로 점 세 개) — 30×30 */
+function FileMenuOptionIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
+      <g opacity="0.5">
+        <mask id="mask0_file_menu_option" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
+          <rect width="30" height="30" fill="#D9D9D9" />
+        </mask>
+        <g mask="url(#mask0_file_menu_option)">
+          <path d="M15 24.0872C14.4844 24.0872 14.043 23.9035 13.6759 23.5363C13.3086 23.1692 13.125 22.7278 13.125 22.2122C13.125 21.6966 13.3086 21.2551 13.6759 20.8878C14.043 20.5207 14.4844 20.3372 15 20.3372C15.5156 20.3372 15.957 20.5207 16.3241 20.8878C16.6914 21.2551 16.875 21.6966 16.875 22.2122C16.875 22.7278 16.6914 23.1692 16.3241 23.5363C15.957 23.9035 15.5156 24.0872 15 24.0872ZM15 16.8756C14.4844 16.8756 14.043 16.692 13.6759 16.3247C13.3086 15.9576 13.125 15.5163 13.125 15.0006C13.125 14.485 13.3086 14.0436 13.6759 13.6766C14.043 13.3093 14.4844 13.1256 15 13.1256C15.5156 13.1256 15.957 13.3093 16.3241 13.6766C16.6914 14.0436 16.875 14.485 16.875 15.0006C16.875 15.5163 16.6914 15.9576 16.3241 16.3247C15.957 16.692 15.5156 16.8756 15 16.8756ZM15 9.66406C14.4844 9.66406 14.043 9.48052 13.6759 9.11344C13.3086 8.74615 13.125 8.30469 13.125 7.78906C13.125 7.27344 13.3086 6.83208 13.6759 6.465C14.043 6.09771 14.4844 5.91406 15 5.91406C15.5156 5.91406 15.957 6.09771 16.3241 6.465C16.6914 6.83208 16.875 7.27344 16.875 7.78906C16.875 8.30469 16.6914 8.74615 16.3241 9.11344C15.957 9.48052 15.5156 9.66406 15 9.66406Z" fill="#3D3D3D" />
+        </g>
+      </g>
+    </svg>
+  )
+}
+
+/** 게시글 메타 아이콘 — 눈(조회). mask id는 postId로 고유화, 22×22 */
 function PostMetaEyeIcon({ postId }: { postId: string }) {
   const maskId = `post-meta-eye-${postId}`.replace(/:/g, '')
   return (
     <span className="enrollment-program-detail-modal__post-meta-icon" aria-hidden>
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" role="img" aria-label="조회수">
-        <mask id={maskId} className="enrollment-program-detail-modal__post-meta-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
-          <rect width="20" height="20" fill="#D9D9D9" />
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" role="img" aria-label="조회수">
+        <mask id={maskId} className="enrollment-program-detail-modal__post-meta-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+          <rect width="22" height="22" fill="#D9D9D9" />
         </mask>
         <g mask={`url(#${maskId})`}>
-          <path d="M12.408 12.4079C13.0677 11.7482 13.3976 10.9455 13.3976 9.99996C13.3976 9.0544 13.0677 8.25176 12.408 7.59204C11.7483 6.93232 10.9456 6.60246 10.0001 6.60246C9.05453 6.60246 8.25189 6.93232 7.59217 7.59204C6.93245 8.25176 6.60259 9.0544 6.60259 9.99996C6.60259 10.9455 6.93245 11.7482 7.59217 12.4079C8.25189 13.0676 9.05453 13.3975 10.0001 13.3975C10.9456 13.3975 11.7483 13.0676 12.408 12.4079ZM8.40633 11.5937C7.96883 11.1562 7.75008 10.625 7.75008 9.99996C7.75008 9.37496 7.96883 8.84371 8.40633 8.40621C8.84383 7.96871 9.37508 7.74996 10.0001 7.74996C10.6251 7.74996 11.1563 7.96871 11.5938 8.40621C12.0313 8.84371 12.2501 9.37496 12.2501 9.99996C12.2501 10.625 12.0313 11.1562 11.5938 11.5937C11.1563 12.0312 10.6251 12.25 10.0001 12.25C9.37508 12.25 8.84383 12.0312 8.40633 11.5937ZM5.18675 14.4293C3.73217 13.4935 2.57113 12.2623 1.70363 10.7356C1.63418 10.6159 1.58342 10.4954 1.55133 10.3741C1.51939 10.2529 1.50342 10.1282 1.50342 9.99996C1.50342 9.87177 1.51939 9.74704 1.55133 9.62579C1.58342 9.50454 1.63418 9.38406 1.70363 9.26433C2.57113 7.73767 3.73217 6.50642 5.18675 5.57058C6.64134 4.63461 8.24578 4.16663 10.0001 4.16663C11.7544 4.16663 13.3588 4.63461 14.8134 5.57058C16.268 6.50642 17.429 7.73767 18.2965 9.26433C18.366 9.38406 18.4168 9.50454 18.4488 9.62579C18.4808 9.74704 18.4968 9.87177 18.4968 9.99996C18.4968 10.1282 18.4808 10.2529 18.4488 10.3741C18.4168 10.4954 18.366 10.6159 18.2965 10.7356C17.429 12.2623 16.268 13.4935 14.8134 14.4293C13.3588 15.3653 11.7544 15.8333 10.0001 15.8333C8.24578 15.8333 6.64134 15.3653 5.18675 14.4293ZM14.323 13.3437C15.6355 12.5173 16.639 11.4027 17.3334 9.99996C16.639 8.59718 15.6355 7.4826 14.323 6.65621C13.0105 5.82982 11.5695 5.41663 10.0001 5.41663C8.43064 5.41663 6.98967 5.82982 5.67717 6.65621C4.36467 7.4826 3.3612 8.59718 2.66675 9.99996C3.3612 11.4027 4.36467 12.5173 5.67717 13.3437C6.98967 14.1701 8.43064 14.5833 10.0001 14.5833C11.5695 14.5833 13.0105 14.1701 14.323 13.3437Z" fill="currentColor" />
+          <path d="M13.6493 13.6513C14.375 12.9256 14.7379 12.0427 14.7379 11.0026C14.7379 9.96249 14.375 9.07959 13.6493 8.3539C12.9236 7.6282 12.0407 7.26535 11.0006 7.26535C9.96052 7.26535 9.07762 7.6282 8.35192 8.3539C7.62623 9.07959 7.26338 9.96249 7.26338 11.0026C7.26338 12.0427 7.62623 12.9256 8.35192 13.6513C9.07762 14.377 9.96052 14.7399 11.0006 14.7399C12.0407 14.7399 12.9236 14.377 13.6493 13.6513ZM9.24751 12.7557C8.76625 12.2745 8.52563 11.6901 8.52563 11.0026C8.52563 10.3151 8.76625 9.73073 9.24751 9.24948C9.72875 8.76823 10.3131 8.5276 11.0006 8.5276C11.6881 8.5276 12.2725 8.76823 12.7538 9.24948C13.235 9.73073 13.4756 10.3151 13.4756 11.0026C13.4756 11.6901 13.235 12.2745 12.7538 12.7557C12.2725 13.237 11.6881 13.4776 11.0006 13.4776C10.3131 13.4776 9.72875 13.237 9.24751 12.7557ZM5.70596 15.8749C4.10592 14.8455 2.82878 13.4911 1.87453 11.8118C1.79814 11.6801 1.7423 11.5476 1.70701 11.4142C1.67187 11.2808 1.6543 11.1436 1.6543 11.0026C1.6543 10.8616 1.67187 10.7244 1.70701 10.591C1.7423 10.4576 1.79814 10.3251 1.87453 10.1934C2.82878 8.51408 4.10592 7.15971 5.70596 6.13029C7.30601 5.10072 9.07089 4.58594 11.0006 4.58594C12.9304 4.58594 14.6953 5.10072 16.2953 6.13029C17.8953 7.15971 19.1725 8.51408 20.1267 10.1934C20.2031 10.3251 20.259 10.4576 20.2943 10.591C20.3294 10.7244 20.347 10.8616 20.347 11.0026C20.347 11.1436 20.3294 11.2808 20.2943 11.4142C20.259 11.5476 20.2031 11.6801 20.1267 11.8118C19.1725 13.4911 17.8953 14.8455 16.2953 15.8749C14.6953 16.9045 12.9304 17.4193 11.0006 17.4193C9.07089 17.4193 7.30601 16.9045 5.70596 15.8749ZM15.7558 14.6807C17.1996 13.7717 18.3034 12.5457 19.0673 11.0026C18.3034 9.45955 17.1996 8.23351 15.7558 7.32448C14.3121 6.41545 12.727 5.96094 11.0006 5.96094C9.27424 5.96094 7.68917 6.41545 6.24542 7.32448C4.80167 8.23351 3.69785 9.45955 2.93396 11.0026C3.69785 12.5457 4.80167 13.7717 6.24542 14.6807C7.68917 15.5898 9.27424 16.0443 11.0006 16.0443C12.727 16.0443 14.3121 15.5898 15.7558 14.6807Z" fill="currentColor" />
         </g>
       </svg>
     </span>
@@ -120,36 +157,92 @@ function PostAttachmentIcon({ postId }: { postId: string }) {
   )
 }
 
-export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDetailPostsTabProps) {
-  const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
+export function EnrollmentProgramDetailPostsTab({
+  program,
+  schoolId,
+  showWriteButtonInSection = true,
+  writeModalOpen: writeModalOpenProp,
+  onWriteModalOpenChange,
+}: EnrollmentProgramDetailPostsTabProps) {
+  const [internalWriteModalOpen, setInternalWriteModalOpen] = useState(false)
+  const isWriteModalControlled = writeModalOpenProp !== undefined && onWriteModalOpenChange !== undefined
+  const postWriteModalOpen = isWriteModalControlled ? writeModalOpenProp! : internalWriteModalOpen
+  const setPostWriteModalOpen = isWriteModalControlled ? onWriteModalOpenChange! : setInternalWriteModalOpen
+
   const [detailPost, setDetailPost] = useState<ProgramPost | null>(null)
-  const [filesModalOpen, setFilesModalOpen] = useState(false)
+  const [postsVersion, setPostsVersion] = useState(0)
   const posts = useMemo(() => {
-    const list = getProgramPostsByProgramId(program.id)
+    const list = schoolId
+      ? getProgramPostsByProgramIdAndSchoolId(program.id, schoolId)
+      : getProgramPostsByProgramId(program.id)
     return [...list].sort((a, b) => {
       if (a.read !== b.read) return a.read ? 1 : -1
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
-  }, [program.id])
-  const allFiles = useMemo(
+  }, [program.id, schoolId, postsVersion])
+  const allFilesRaw = useMemo(
     () => getProgramFilesByProgramId(program.id),
-    [program.id]
+    [program.id, postsVersion]
   )
+  const schoolPostIds = useMemo(() => new Set(posts.map(p => p.id)), [posts])
+  const allFiles = useMemo(() => {
+    if (!schoolId) return allFilesRaw
+    return allFilesRaw.filter(f => !f.postId || schoolPostIds.has(f.postId))
+  }, [allFilesRaw, schoolId, schoolPostIds])
+
+  const [fileSearchInput, setFileSearchInput] = useState('')
+  const [fileSearchDebounced, setFileSearchDebounced] = useState('')
+  useEffect(() => {
+    if (fileSearchInput.trim() === '') {
+      setFileSearchDebounced('')
+      return
+    }
+    const t = setTimeout(() => setFileSearchDebounced(fileSearchInput), 280)
+    return () => clearTimeout(t)
+  }, [fileSearchInput])
+
+  const filteredFiles = useMemo(() => {
+    if (!fileSearchDebounced.trim()) return allFiles
+    const q = fileSearchDebounced.trim().toLowerCase()
+    return allFiles.filter(f => f.fileName.toLowerCase().includes(q))
+  }, [allFiles, fileSearchDebounced])
+
+  const makeFileMenuItems = (file: ProgramFile): MenuProps['items'] => [
+    { key: 'download', label: '다운로드', onClick: () => downloadFile(file.fileName, file.fileUrl) },
+    {
+      key: 'preview',
+      label: '원글보기',
+      onClick: () => {
+        if (file.postId) {
+          const post = posts.find(p => p.id === file.postId)
+          if (post) setDetailPost(post)
+        }
+      },
+    },
+  ]
+
+  const getFileTypeLabel = (file: ProgramFile): string => {
+    const t = (file.fileType ?? file.fileName.split('.').pop() ?? '').toLowerCase()
+    if (t === 'pdf') return 'PDF'
+    if (t === 'xls' || t === 'xlsx') return 'XLS'
+    return ''
+  }
 
   return (
     <div className="enrollment-program-detail-modal__posts-tab">
       <div className="enrollment-program-detail-modal__posts-tab-column enrollment-program-detail-modal__posts-tab-column--left">
-        <div className="enrollment-program-detail-modal__posts-tab-header">
-          <h3 className="enrollment-program-detail-modal__section-title">게시글</h3>
-          <AppButton
-            variant="primary"
-            size="middle"
-            className="enrollment-program-detail-modal__posts-tab-btn"
-            onClick={() => setPostWriteModalOpen(true)}
-          >
-            게시글 작성
-          </AppButton>
-        </div>
+        {showWriteButtonInSection && (
+          <div className="enrollment-program-detail-modal__posts-tab-header">
+            <AppButton
+              variant="primary"
+              size="middle"
+              className="enrollment-program-detail-modal__posts-tab-btn"
+              onClick={() => setPostWriteModalOpen(true)}
+            >
+              게시글 작성
+            </AppButton>
+          </div>
+        )}
         <div className="enrollment-program-detail-modal__posts-list">
           {posts.length === 0 ? (
             <p className="enrollment-program-detail-modal__placeholder">등록된 게시글이 없습니다.</p>
@@ -159,7 +252,7 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
                 key={post.id}
                 role="button"
                 tabIndex={0}
-                className={`enrollment-program-detail-modal__post-card ${!post.read ? 'enrollment-program-detail-modal__post-card--unread' : ''}`}
+                className={`enrollment-program-detail-modal__post-card ${detailPost?.id === post.id ? 'enrollment-program-detail-modal__post-card--selected' : ''}`}
                 onClick={() => setDetailPost(post)}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -170,7 +263,7 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
               >
                 <div className="enrollment-program-detail-modal__post-header">
                   <div className="enrollment-program-detail-modal__post-author">
-                    <div className="enrollment-program-detail-modal__post-avatar" />
+                    <ProfileAvatarIcon className="enrollment-program-detail-modal__post-avatar" />
                     <div>
                       <div className="enrollment-program-detail-modal__post-author-name">{post.authorName}</div>
                       <div className="enrollment-program-detail-modal__post-date">
@@ -222,25 +315,53 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
         </div>
       </div>
       <div className="enrollment-program-detail-modal__posts-tab-column enrollment-program-detail-modal__posts-tab-column--right">
-        <div className="enrollment-program-detail-modal__posts-tab-header">
-          <h3 className="enrollment-program-detail-modal__section-title">파일 및 사진</h3>
-          <AppButton variant="cancel" size="middle" className="enrollment-program-detail-modal__posts-tab-btn" onClick={() => setFilesModalOpen(true)}>
-            더보기
-          </AppButton>
+        <div className="enrollment-program-detail-modal__files-search-wrap">
+          <Input
+            placeholder="파일명으로 검색해보세요"
+            prefix={
+              <span className="enrollment-program-detail-modal__files-search-icon" aria-hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M9.0625 1.875C13.032 1.875 16.25 5.09295 16.25 9.0625C16.25 10.8222 15.6153 12.4322 14.5654 13.6816L17.9419 17.0581C18.1859 17.3022 18.1859 17.6978 17.9419 17.9419C17.6978 18.186 17.3022 18.1859 17.0581 17.9419L13.6816 14.5667C12.4323 15.6162 10.8219 16.25 9.0625 16.25C5.09295 16.25 1.875 13.032 1.875 9.0625C1.875 5.09296 5.09295 1.875 9.0625 1.875ZM9.0625 3.125C5.78331 3.125 3.125 5.78331 3.125 9.0625C3.125 12.3417 5.78331 15 9.0625 15C12.3417 15 15 12.3417 15 9.0625C15 5.78331 12.3417 3.125 9.0625 3.125Z" fill="#85969D" />
+                </svg>
+              </span>
+            }
+            value={fileSearchInput}
+            onChange={e => setFileSearchInput(e.target.value)}
+            allowClear
+            className="enrollment-program-detail-modal__files-search"
+          />
         </div>
         <div className="enrollment-program-detail-modal__files-list">
           {allFiles.length === 0 ? (
             <p className="enrollment-program-detail-modal__placeholder">등록된 파일이 없습니다.</p>
+          ) : filteredFiles.length === 0 ? (
+            <p className="enrollment-program-detail-modal__placeholder">검색 결과가 없습니다.</p>
           ) : (
-            allFiles.map(file => (
+            filteredFiles.map(file => (
               <div key={file.id} className="enrollment-program-detail-modal__file-item">
-                <div className="enrollment-program-detail-modal__file-icon" data-type={file.fileType || 'file'} />
-                <div className="enrollment-program-detail-modal__file-info">
-                  <div className="enrollment-program-detail-modal__file-name">{file.fileName}</div>
-                  {file.postId && (
-                    <a href="#" className="enrollment-program-detail-modal__file-origin-link">원글 보기</a>
-                  )}
+                <div className="enrollment-program-detail-modal__file-icon" data-type={file.fileType || 'file'}>
+                  {getFileTypeLabel(file) || null}
                 </div>
+                <div className="enrollment-program-detail-modal__file-info">
+                  <div className="enrollment-program-detail-modal__file-name" title={file.fileName}>{file.fileName}</div>
+                  <div className="enrollment-program-detail-modal__file-meta">
+                    {formatFileDate(file.uploadedAt)}
+                    {file.fileSize != null ? ` | ${formatFileSize(file.fileSize)}` : ''}
+                  </div>
+                </div>
+                <Dropdown
+                  menu={{ items: makeFileMenuItems(file) }}
+                  trigger={['click']}
+                  placement="bottomRight"
+                >
+                  <button
+                    type="button"
+                    className="enrollment-program-detail-modal__file-menu-btn"
+                    aria-label="파일 메뉴"
+                  >
+                    <FileMenuOptionIcon />
+                  </button>
+                </Dropdown>
               </div>
             ))
           )}
@@ -249,18 +370,16 @@ export function EnrollmentProgramDetailPostsTab({ program }: EnrollmentProgramDe
       <PostWriteModal
         open={postWriteModalOpen}
         onCancel={() => setPostWriteModalOpen(false)}
+        programId={program.id}
+        schoolId={schoolId}
+        authorName="JA KOREA 알림"
+        onSuccess={() => setPostsVersion(v => v + 1)}
       />
       <PostDetailModal
         open={detailPost !== null}
         onCancel={() => setDetailPost(null)}
         post={detailPost}
         files={detailPost ? allFiles.filter(f => f.postId === detailPost.id) : []}
-      />
-      <ProgramFilesModal
-        open={filesModalOpen}
-        onCancel={() => setFilesModalOpen(false)}
-        files={allFiles}
-        posts={posts}
       />
     </div>
   )

@@ -1182,11 +1182,27 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
 
   // Phase 0.1.5: 관리자 레벨별 접근 제어
+  // 임시: ADMIN은 관리자 홈, 일반 교육 프로그램, 경제 교육 프로그램만 접근 가능 (이외 Coming Soon)
   if (userRole === 'ADMIN') {
-    // MASTER 관리자는 모든 경로 접근 가능
-    // 일반 관리자는 프로그램 ACL로 제어됨
-    // 여기서는 기본적으로 접근 허용 (프로그램 ACL은 protected-route에서 체크)
-    return true
+    if (normalizedPath === '/') return true
+    if (normalizedPath.startsWith('/programs/education')) return true
+    if (normalizedPath === '/programs/economy-education') return true
+    const programsReserved = [
+      'education',
+      'economy-education',
+      'my',
+      'favorites',
+      'volunteer',
+      'new',
+      'satisfaction',
+    ]
+    if (normalizedPath.startsWith('/programs/')) {
+      const rest = normalizedPath.slice('/programs/'.length)
+      const segments = rest.split('/').filter(Boolean)
+      const firstSegment = segments[0]
+      if (firstSegment && !programsReserved.includes(firstSegment)) return true // 프로그램 상세/수정/신청 등
+    }
+    return false
   }
 
   // 역할별 내 학습 관리 경로는 항상 허용 (index 라우팅용)

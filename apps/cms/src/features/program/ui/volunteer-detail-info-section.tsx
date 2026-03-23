@@ -138,12 +138,14 @@ export function VolunteerDetailInfoSection({
                         accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                         disabled={!isEditMode || uploadingThumbnail}
                         buttonLabel={uploadingThumbnail ? '업로드 중…' : '파일 선택'}
+                        uploading={uploadingThumbnail}
                         className={
                           isEditMode
                             ? 'program-detail-info-tab__file-select file-select-field--edit'
                             : 'program-detail-info-tab__file-select'
                         }
                         fileNames={thumbnailFilename ? [thumbnailFilename] : []}
+                        emptyPlaceholder="파일을 선택해주세요"
                         guideLines={THUMBNAIL_GUIDE_LINES}
                         onFilesChange={
                           isFormEdit
@@ -378,6 +380,7 @@ export function VolunteerDetailInfoSection({
                     buttonLabel="파일 선택"
                     className="file-select-field--edit"
                     fileNames={displayFileNames}
+                    emptyPlaceholder="파일을 선택해주세요"
                     guideLines={ATTACHMENT_GUIDE_LINES}
                     onFilesChange={
                       isFormEdit

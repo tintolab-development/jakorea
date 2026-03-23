@@ -647,6 +647,8 @@ export interface ProgramStatistics {
 export interface ProgramPost {
   id: UUID
   programId: UUID
+  /** 참여기관(학교) 단위 게시글일 때 해당 학교 ID (미설정 시 프로그램 전체 공지) */
+  schoolId?: UUID
   /** 작성자 표시명 (예: "박○○ 담당교사님", "JA KOREA 알림") */
   authorName: string
   /** 작성자 사용자 ID (선택, 프로필 연동용) */
@@ -666,6 +668,25 @@ export interface ProgramPost {
   publishedAt: DateValue
   createdAt: DateValue
   updatedAt: DateValue
+}
+
+// 프로그램 게시글 댓글 (게시글 상세 — 댓글 목록)
+export interface ProgramPostComment {
+  id: UUID
+  postId: UUID
+  authorName: string
+  content: string
+  createdAt: DateValue
+}
+
+// 프로그램 게시글 반응/이모지 (게시글 상세 — 반응 뷰어)
+export interface ProgramPostReaction {
+  id: UUID
+  postId: UUID
+  /** 이모지 타입 (예: 'like' | 'heart' | 'clap') */
+  emojiType: string
+  /** 반응한 사용자 수 또는 사용자 ID 목록 */
+  count: number
 }
 
 // 프로그램 첨부 파일 (수강 프로그램 상세 모달 — 파일 및 사진 탭)

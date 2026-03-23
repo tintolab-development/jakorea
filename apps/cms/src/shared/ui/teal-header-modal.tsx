@@ -27,6 +27,8 @@ export interface TealHeaderModalProps {
   className?: string
   /** true 시 헤더(타이틀+닫기) 영역 미렌더 — 풀페이지 모달 등에서 자체 헤더/닫기 사용 시 */
   hideHeader?: boolean
+  /** 닫기 버튼 커스텀 아이콘 (미지정 시 CloseOutlined) */
+  closeIcon?: React.ReactNode
 }
 
 const SIZE_WIDTH = { default: 800, large: 1400, full: undefined }
@@ -42,6 +44,7 @@ export function TealHeaderModal({
   width: widthProp,
   className: classNameProp,
   hideHeader = false,
+  closeIcon,
 }: TealHeaderModalProps) {
   const width = widthProp ?? SIZE_WIDTH[size]
   const bodyScrollable = size === 'large' || size === 'full'
@@ -83,7 +86,7 @@ export function TealHeaderModal({
               onClick={onCancel}
               aria-label="닫기"
             >
-              <CloseOutlined />
+              {closeIcon ?? <CloseOutlined />}
             </button>
           </div>
         </div>

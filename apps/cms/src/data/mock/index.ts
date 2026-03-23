@@ -10,11 +10,25 @@ export {
   mockProgramPosts,
   mockProgramPostsMap,
   getProgramPostsByProgramId,
+  getProgramPostsByProgramIdAndSchoolId,
+  createProgramPost,
+  markPostAsRead,
+  incrementPostCommentCount,
+  type CreateProgramPostPayload,
 } from './program-posts'
+export {
+  mockProgramPostComments,
+  mockProgramPostReactions,
+  getCommentsByPostId,
+  getReactionsByPostId,
+  createProgramPostComment,
+} from './program-post-comments'
 export {
   mockProgramFiles,
   mockProgramFilesMap,
   getProgramFilesByProgramId,
+  addProgramFiles,
+  type AddProgramFileItem,
 } from './program-files'
 // ProgramStatistics는 Program 엔티티로 통합됨 (deprecated)
 export { mockApplications, mockApplicationsMap } from './applications'

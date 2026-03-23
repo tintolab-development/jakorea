@@ -1,0 +1,116 @@
+/* 프로그램 승인 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(상세 모달) 방지 */
+.applicant-details__approval-dropdown-cell {
+  position: relative;
+  z-index: 1;
+}
+
+.applicant-details__approval-dropdown-trigger {
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* 테이블 스크롤 영역 (pagination 제거, infinite scroll) */
+.applicant-details__table-wrapper {
+  min-width: 0;
+}
+
+.applicant-details__table-wrapper .ant-table-body {
+  overflow-y: auto !important;
+}
+
+.applicant-details__divider-wrapper {
+  padding: 12px 32px 32px 42px;
+}
+
+.clickable-table .ant-table-row {
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.clickable-table .ant-table-row:hover > td {
+  background-color: #fafafa !important;
+}
+
+/* 강의 회차 별 희망 교육 날짜 및 시간 셀 (모달 내부 col 겹침 방지) */
+.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
+  width: 200px;
+  min-width: 200px;
+  white-space: normal;
+  padding: 12px 24px !important;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+/* 강의 회차 컬럼: 헤더만 중앙정렬, 본문 셀은 좌측 정렬 */
+.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
+  text-align: left;
+}
+
+.applicant-details__sessions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  align-items: flex-start;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  line-height: 150%;
+}
+
+.applicant-details__session-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.applicant-details__session-round-tag {
+  display: inline-flex;
+  width: 47px;
+  height: 26px;
+  padding: 3px 8px 2px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  flex-shrink: 0;
+}
+
+.applicant-details__session-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.applicant-details__session-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  margin-top: 0;
+}

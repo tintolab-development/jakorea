@@ -1,0 +1,200 @@
+/**
+ * 참여 강사 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여 강사)
+ * 필터·테이블 헤더·테이블 스타일. 정산현황 텍스트 컬러.
+ */
+
+.participating-instructors-section {
+  width: 100%;
+}
+
+/* 테이블 헤더 타이틀 스펙 */
+.participating-instructors-section .participating-institutions-section__table-title {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+/* 정산현황 컬럼: 텍스트만 표기, 기본 폰트 스펙 + 상태별 대표 컬러 */
+.participating-instructors-section__settlement-text {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.participating-instructors-section__settlement-text--pending {
+  color: var(--color-green, #1e8c29);
+}
+
+.participating-instructors-section__settlement-text--completed {
+  color: var(--color-blue, #017eaf);
+}
+
+.participating-instructors-section__settlement-text--partial {
+  color: var(--color-purple, #8457ce);
+}
+
+.participating-instructors-section__settlement-text--na {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+.participating-instructors-section__settlement-text--reviewing {
+  color: #ed6c02;
+}
+
+.participating-instructors-section__settlement-text--rejected {
+  color: #d32f2f;
+}
+
+/* 캘린더 뷰 우측 카드 리스트 */
+.participating-instructors-section__calendar-right-cards {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 카드 컨테이너: width 100% 반응형, height 78px */
+.participating-instructors-section__calendar-card {
+  display: flex;
+  padding: 10px 16px;
+  align-items: center;
+  gap: 16px;
+  align-self: stretch;
+  border-radius: 6px;
+  border: 1px solid rgba(61, 61, 61, 0.1);
+  background: rgba(61, 61, 61, 0.02);
+  width: 100%;
+  height: 78px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+/* 우측 카드 내 체크박스 20*20 고정 */
+.participating-instructors-section__calendar-card-checkbox {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.participating-instructors-section__calendar-card-checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+}
+
+.participating-instructors-section__calendar-card-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.participating-instructors-section__calendar-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+.participating-instructors-section__calendar-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.participating-instructors-section__calendar-card-name {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.participating-instructors-section__calendar-card-divider {
+  color: rgba(61, 61, 61, 0.4);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.participating-instructors-section__calendar-card-region {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.6;
+}
+
+/* 하위 태그 행: 태그 사이 갭 4px */
+.participating-instructors-section__calendar-card-tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* 하위 태그 스펙 (색상은 정산 상태별, 공통 텍스트 스펙) */
+.participating-instructors-section__calendar-card-tag {
+  display: flex;
+  height: 26px;
+  padding: 1px 8px 2px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--default-WT, #fff);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  box-sizing: border-box;
+}
+
+/* 정산 상태 태그 컬러 (상태별 색상, font-weight 500) */
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--pending {
+  color: var(--color-green, #1e8c29);
+}
+
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--completed {
+  color: var(--color-blue, #017eaf);
+}
+
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--partial {
+  color: var(--color-purple, #8457ce);
+}
+
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--na {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--reviewing {
+  color: #ed6c02;
+}
+
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--rejected {
+  color: #d32f2f;
+}

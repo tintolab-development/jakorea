@@ -3,12 +3,11 @@
  * 필터 + 테이블(교육 참여 기관 목록, 선택 반려/승인, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
  */
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { Table, Row, Col, Select, Input } from 'antd'
-import { CalendarOutlined } from '@ant-design/icons'
+import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
-import { useNavigate } from 'react-router-dom'
 import { message } from 'antd'
 import {
   DeleteGuideModal,
@@ -31,9 +30,11 @@ import { useProgressSchoolList } from '../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
 import type { ProgressFilters } from '../hooks/use-program-progress-params'
 import { SchoolDetailModal } from './school-detail-modal'
+import { SchoolDetailFullpageView, type SchoolDetailTabKey } from './school-detail-fullpage-view'
 import { getSchoolDetailByRow } from '../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
+import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
@@ -89,15 +90,40 @@ export interface ParticipatingInstitutionsSectionProps {
   programId?: string
   /** 프로그램 정보. 교재 배송 현황 필터는 program에 교재 필드(textbookName 등)가 있을 때만 노출 */
   program?: Program | null
+  /** URL의 schoolId. 있으면 해당 학교 상세 인라인 뷰 표시 */
+  schoolIdFromUrl?: string | null
+  /** URL의 학교 상세 탭(application | students | instructors | posts). 쿼리 파라미터 연동용 */
+  schoolTabFromUrl?: SchoolDetailTabKey | null
+  /** 학교 상세 뷰 내 탭 변경 시 호출 (쿼리 파라미터 갱신용) */
+  onSchoolTabChange?: (tab: SchoolDetailTabKey) => void
+  /** 행 클릭 시 호출 (풀페이지 인라인 뷰용). 있으면 모달 대신 schoolId로 전환 */
+  onSchoolRowClick?: (row: ParticipatingSchoolRow) => void
+  /** 상세 뷰 닫기(목록으로) 시 호출 */
+  onClearSchoolId?: () => void
+  /** 상세 뷰 진입 시 제목용으로 학교명 전달 */
+  onSchoolDetailOpen?: (schoolName: string) => void
+  /** 상세 뷰 종료 시 호출 */
+  onSchoolDetailClose?: () => void
 }
 
-export function ParticipatingInstitutionsSection({ programId: _programId, program }: ParticipatingInstitutionsSectionProps) {
-  const navigate = useNavigate()
+export function ParticipatingInstitutionsSection({
+  programId: _programId,
+  program,
+  schoolIdFromUrl,
+  schoolTabFromUrl,
+  onSchoolTabChange,
+  onSchoolRowClick,
+  onClearSchoolId,
+  onSchoolDetailOpen,
+  onSchoolDetailClose,
+}: ParticipatingInstitutionsSectionProps) {
+  const prevSchoolIdFromUrl = useRef<string | null>(null)
   const { filters, appliedFilters, setFilter, applyFilters } = useParticipatingInstitutionsParams()
   const [localSchoolName, setLocalSchoolName] = useState(() => filters.schoolName)
   const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName)
   const [openTextbookDropdownId, setOpenTextbookDropdownId] = useState<string | null>(null)
   const [bulkConfirmModal, setBulkConfirmModal] = useState<'reject' | 'approve' | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   /** 쿼리 파라미터(URL)와 로컬 입력 동기화 */
   useEffect(() => {
@@ -141,6 +167,7 @@ export function ParticipatingInstitutionsSection({ programId: _programId, progra
     handleTextbookStatusChange,
     handleBulkRejectConfirm: hookBulkRejectConfirm,
     handleBulkApproveConfirm: hookBulkApproveConfirm,
+    handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
     savedBasicPatches,
     setSavedBasicPatches,
@@ -148,6 +175,23 @@ export function ParticipatingInstitutionsSection({ programId: _programId, progra
     setSavedInstructorPatches,
     getInstructorRowsForSchool,
   } = schoolHook
+
+  /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
+  const selectedRowFromUrl = useMemo(() => {
+    if (!schoolIdFromUrl) return null
+    return filteredSchools.find(r => r.id === schoolIdFromUrl) ?? null
+  }, [schoolIdFromUrl, filteredSchools])
+
+  /** 상세 뷰 진입/종료 시 부모에 제목용 학교명 알림 */
+  useEffect(() => {
+    if (selectedRowFromUrl) {
+      onSchoolDetailOpen?.(selectedRowFromUrl.schoolName)
+      prevSchoolIdFromUrl.current = schoolIdFromUrl ?? null
+    } else {
+      if (prevSchoolIdFromUrl.current != null) onSchoolDetailClose?.()
+      prevSchoolIdFromUrl.current = null
+    }
+  }, [selectedRowFromUrl, schoolIdFromUrl, onSchoolDetailOpen, onSchoolDetailClose])
 
   const handleSearch = () => {
     applyFilters({ schoolName: localSchoolName, teacherName: localTeacherName })
@@ -180,11 +224,15 @@ export function ParticipatingInstitutionsSection({ programId: _programId, progra
   }
 
   const handleCalendarView = () => {
-    navigate('/programs/education/schedule')
+    setViewMode('calendar')
   }
 
-  /** 컬럼 너비 합(체크박스 48 + 나머지): 강의 회차 컬럼은 내용 너비만 사용(1px로 예약) */
-  const tableScrollX = 48 + 64 + 180 + 200 + 1 + 96 + 100 + 100 + 152 + 120 + 180
+  const handleListView = () => {
+    setViewMode('list')
+  }
+
+  /** 컬럼 너비 합. 회차 컬럼 480px(한 줄 텍스트 길이만큼) → 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
+  const tableScrollX = 48 + 64 + 180 + 200 + 480 + 96 + 100 + 100 + 152 + 120 + 180
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
@@ -210,7 +258,7 @@ export function ParticipatingInstitutionsSection({ programId: _programId, progra
       {
         title: '강의 회차 별 교육 진행 날짜',
         key: 'sessions',
-        width: 1,
+        width: 480,
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
           const sessions = record.sessions ?? []
@@ -228,9 +276,15 @@ export function ParticipatingInstitutionsSection({ programId: _programId, progra
                       {s.round}차시
                     </span>
                     {datePart}
-                    <span className="participating-institutions-section__session-divider" aria-hidden />
+                    <span
+                      className="participating-institutions-section__session-divider"
+                      aria-hidden
+                    />
                     {durationPart}
-                    <span className="participating-institutions-section__session-divider" aria-hidden />
+                    <span
+                      className="participating-institutions-section__session-divider"
+                      aria-hidden
+                    />
                     {periodPart}
                   </div>
                 )
@@ -306,10 +360,56 @@ export function ParticipatingInstitutionsSection({ programId: _programId, progra
     [handleTextbookStatusChange, getInstructorDisplayForSchool, openTextbookDropdownId]
   )
 
+  if (selectedRowFromUrl && program) {
+    const baseDetail = getSchoolDetailByRow(selectedRowFromUrl)
+    const schoolId = selectedRowFromUrl.id
+    const mergedDetail = {
+      ...baseDetail,
+      ...savedBasicPatches[schoolId],
+      instructors:
+        savedInstructorPatches[schoolId] !== undefined
+          ? savedInstructorPatches[schoolId].map(inv => ({
+              ...inv,
+              settlementStatus: 'pending' as SettlementStatusKey,
+            }))
+          : getInstructorRowsForSchool(
+              selectedRowFromUrl.schoolName,
+              instructorHook.instructorList
+            ),
+    }
+    return (
+      <div className="participating-institutions-section">
+        <SchoolDetailFullpageView
+          program={program}
+          detail={mergedDetail}
+          row={selectedRowFromUrl}
+          activeTab={schoolTabFromUrl ?? undefined}
+          onTabChange={onSchoolTabChange}
+          onClearSchoolId={onClearSchoolId ?? (() => {})}
+          onSaveBasicInfo={patch => {
+            setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))
+          }}
+          onSaveInstructorInfo={(id, instructors) => {
+            setSavedInstructorPatches(prev => ({ ...prev, [id]: instructors }))
+          }}
+          savedBasicPatches={savedBasicPatches}
+          savedInstructorPatches={savedInstructorPatches}
+          instructorList={instructorHook.instructorList}
+          onCancelApproval={handleSchoolApprovalCancel}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="participating-institutions-section">
       <div className="participating-institutions-section__filters program-progress-tab__filters">
-        <Row gutter={[0, 0]} align="bottom" wrap={false} className="program-progress-tab__filter-row">
+        <Row
+          gutter={[0, 0]}
+          align="bottom"
+          wrap={false}
+          className="program-progress-tab__filter-row"
+        >
           <Col flex="0 0 auto" className="program-progress-tab__filter-col">
             <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
               <span className="program-progress-tab__filter-label">기관명</span>
@@ -388,101 +488,138 @@ export function ParticipatingInstitutionsSection({ programId: _programId, progra
       <div className="participating-institutions-section__below-divider">
         <div className="participating-institutions-section__table-header">
           <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">교육 참여 기관 목록</span>
+            <span className="participating-institutions-section__table-title">
+              교육 참여 기관 목록
+            </span>
             <span className="participating-institutions-section__table-description">
               {filteredSchools.length}건
             </span>
           </div>
           <div className="participating-institutions-section__table-actions">
-            <AppButton variant="danger" size="large" onClick={handleBulkReject}>
+            <AppButton variant="danger" size="filter" onClick={handleBulkReject}>
               선택 반려
             </AppButton>
             <AppButton
               variant="primary"
-              size="large"
+              size="filter"
               onClick={handleBulkApprove}
               className="participating-institutions-section__btn-approve"
             >
               선택 승인
             </AppButton>
-            <AppButton
-              variant="cancel"
-              size="large"
-              icon={<CalendarOutlined />}
-              onClick={handleCalendarView}
-            >
-              캘린더 뷰로 보기
-            </AppButton>
+            {viewMode === 'list' ? (
+              <AppButton
+                variant="cancel"
+                size="filter-wide"
+                icon={<CalendarOutlined />}
+                onClick={handleCalendarView}
+              >
+                캘린더 뷰로 보기
+              </AppButton>
+            ) : (
+              <AppButton
+                variant="cancel"
+                size="filter-wide"
+                icon={<UnorderedListOutlined />}
+                onClick={handleListView}
+              >
+                리스트 뷰로 보기
+              </AppButton>
+            )}
           </div>
         </div>
 
-        <div className="participating-institutions-section__table-wrap">
-          <Table<ParticipatingSchoolRow>
-            className="participating-institutions-section__table participating-institutions-section__table--clickable"
-            rowKey="id"
-            size="middle"
-            pagination={false}
-            scroll={{ x: tableScrollX }}
-            columns={columns}
-            dataSource={filteredSchools}
-            rowSelection={{
-              selectedRowKeys: selectedSchoolRowKeys,
-              onChange: keys => setSelectedSchoolRowKeys(keys as string[]),
-            }}
-            onRow={record => ({
-              onClick: e => {
-                const target = e.target as HTMLElement
-                if (
-                  target.closest('.ant-table-selection-column') ||
-                  target.closest('.ant-checkbox-wrapper') ||
-                  target.closest('.status-dropdown-cell__cell-status') ||
-                  target.closest('.status-dropdown-cell__status-trigger')
-                )
-                  return
-                setSelectedSchoolForDetail(record)
-                setSchoolDetailModalOpen(true)
-              },
-              style: { cursor: 'pointer' },
-            })}
-          />
-        </div>
+        {viewMode === 'list' ? (
+          <div className="participating-institutions-section__table-wrap">
+            <Table<ParticipatingSchoolRow>
+              className="participating-institutions-section__table participating-institutions-section__table--clickable"
+              rowKey="id"
+              size="middle"
+              pagination={false}
+              scroll={{ x: tableScrollX }}
+              columns={columns}
+              dataSource={filteredSchools}
+              rowSelection={{
+                selectedRowKeys: selectedSchoolRowKeys,
+                onChange: keys => setSelectedSchoolRowKeys(keys as string[]),
+              }}
+              onRow={record => ({
+                onClick: e => {
+                  const target = e.target as HTMLElement
+                  if (
+                    target.closest('.ant-table-selection-column') ||
+                    target.closest('.ant-checkbox-wrapper') ||
+                    target.closest('.status-dropdown-cell__cell-status') ||
+                    target.closest('.status-dropdown-cell__status-trigger')
+                  )
+                    return
+                  if (onSchoolRowClick) {
+                    onSchoolRowClick(record)
+                  } else {
+                    setSelectedSchoolForDetail(record)
+                    setSchoolDetailModalOpen(true)
+                  }
+                },
+                style: { cursor: 'pointer' },
+              })}
+            />
+          </div>
+        ) : (
+          <div className="participating-institutions-section__calendar-wrap">
+            <ParticipatingInstitutionsCalendarView
+              schools={filteredSchools}
+              selectedRowKeys={selectedSchoolRowKeys}
+              onSelectionChange={setSelectedSchoolRowKeys}
+              onSchoolClick={row => {
+                if (onSchoolRowClick) {
+                  onSchoolRowClick(row)
+                } else {
+                  setSelectedSchoolForDetail(row)
+                  setSchoolDetailModalOpen(true)
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      <SchoolDetailModal
-        open={schoolDetailModalOpen}
-        onCancel={() => {
-          setSchoolDetailModalOpen(false)
-          setSelectedSchoolForDetail(null)
-        }}
-        detail={
-          selectedSchoolForDetail
-            ? (() => {
-                const base = getSchoolDetailByRow(selectedSchoolForDetail)
-                const schoolId = selectedSchoolForDetail.id
-                const schoolName = selectedSchoolForDetail.schoolName
-                const savedInstructors = savedInstructorPatches[schoolId]
-                const instructors =
-                  savedInstructors !== undefined
-                    ? savedInstructors.map(inv => ({
-                        ...inv,
-                        settlementStatus: 'pending' as SettlementStatusKey,
-                      }))
-                    : getInstructorRowsForSchool(schoolName, instructorHook.instructorList)
-                return {
-                  ...base,
-                  ...savedBasicPatches[schoolId],
-                  instructors,
-                }
-              })()
-            : null
-        }
-        onSaveBasicInfo={patch => {
-          setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))
-        }}
-        onSaveInstructorInfo={(schoolId, instructors) => {
-          setSavedInstructorPatches(prev => ({ ...prev, [schoolId]: instructors }))
-        }}
-      />
+      {!schoolIdFromUrl && (
+        <SchoolDetailModal
+          open={schoolDetailModalOpen}
+          onCancel={() => {
+            setSchoolDetailModalOpen(false)
+            setSelectedSchoolForDetail(null)
+          }}
+          detail={
+            selectedSchoolForDetail
+              ? (() => {
+                  const base = getSchoolDetailByRow(selectedSchoolForDetail)
+                  const schoolId = selectedSchoolForDetail.id
+                  const schoolName = selectedSchoolForDetail.schoolName
+                  const savedInstructors = savedInstructorPatches[schoolId]
+                  const instructors =
+                    savedInstructors !== undefined
+                      ? savedInstructors.map(inv => ({
+                          ...inv,
+                          settlementStatus: 'pending' as SettlementStatusKey,
+                        }))
+                      : getInstructorRowsForSchool(schoolName, instructorHook.instructorList)
+                  return {
+                    ...base,
+                    ...savedBasicPatches[schoolId],
+                    instructors,
+                  }
+                })()
+              : null
+          }
+          onSaveBasicInfo={patch => {
+            setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))
+          }}
+          onSaveInstructorInfo={(schoolId, instructors) => {
+            setSavedInstructorPatches(prev => ({ ...prev, [schoolId]: instructors }))
+          }}
+        />
+      )}
 
       {bulkConfirmModal === 'reject' && (
         <DeleteGuideModal

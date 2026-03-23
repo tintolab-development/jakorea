@@ -1,6 +1,6 @@
 /**
  * 삭제 안내 모달 (재확인) — 담당자/학교 등 공통
- * 헤더 없음. 타이틀 22px 700, 본문 16px 500, [이름] 볼드 700
+ * 패딩 26/30/34 · 타이틀 24px 700 · 본문 16px 500 좌측 · [이름] 볼드
  */
 
 import { Modal } from 'antd'
@@ -19,6 +19,8 @@ export interface DeleteGuideModalProps {
   confirmText?: string
   /** 확인 버튼 스타일 (기본: danger) */
   confirmVariant?: 'danger' | 'primary'
+  /** TealHeaderModal·풀페이지·중첩 모달 위 표시 (antd 스택 z-index보다 높게) */
+  zIndex?: number
 }
 
 /** 담당자 삭제 전용 props (기존 호환) */
@@ -37,8 +39,7 @@ export function buildManagerMessageLines(names: string[]): string[] {
     const name = names[0]
     return [
       `[${name}] 매니저를 해당 프로젝트 담당자 목록에서 삭제하시겠습니까?`,
-      `삭제 시 [${name}] 매니저님은 해당 프로젝트의 권한을 모두 잃게됩니다.`,
-      '정말로 삭제하시겠습니까?',
+      `삭제 시 [${name}] 매니저님은 해당 프로젝트의 권한을 모두 잃게 됩니다.`,
     ]
   }
   const count = names.length
@@ -87,6 +88,15 @@ export function buildSchoolApproveMessageLines(count: number): string[] {
     `선택한 ${count}건의 학교 신청을 승인하시겠습니까?`,
     '승인 시 해당 학교들의 신청 상태가 [승인 완료]로 변경됩니다.',
     '정말로 승인하시겠습니까?',
+  ]
+}
+
+/** 참여기관 학교 상세 - 승인 취소 확인 문구 생성 */
+export function buildSchoolCancelApprovalMessageLines(schoolName: string): string[] {
+  return [
+    `[${schoolName}] 기관의 참여 승인을 취소하시겠습니까?`,
+    '취소 시 프로그램 승인 현황이 [승인 취소]로 변경됩니다.',
+    '정말로 취소하시겠습니까?',
   ]
 }
 
@@ -188,6 +198,7 @@ export function DeleteGuideModal({
   lines,
   confirmText = '삭제',
   confirmVariant = 'danger',
+  zIndex = 2500,
 }: DeleteGuideModalProps) {
   return (
     <Modal
@@ -200,6 +211,7 @@ export function DeleteGuideModal({
       centered
       maskClosable
       destroyOnClose
+      zIndex={zIndex}
     >
       <div className="manager-delete-guide-modal__content">
         <button
@@ -225,12 +237,7 @@ export function DeleteGuideModal({
           <AppButton variant="cancel" size="large" onClick={onCancel}>
             취소
           </AppButton>
-          <AppButton
-            variant={confirmVariant}
-            size="large"
-            {...(confirmVariant === 'danger' ? { dangerFillOnHover: true } : {})}
-            onClick={onConfirm}
-          >
+          <AppButton variant={confirmVariant} size="large" onClick={onConfirm}>
             {confirmText}
           </AppButton>
         </div>
@@ -254,6 +261,7 @@ export function ManagerDeleteGuideModal({
       onConfirm={onConfirm}
       title="담당자 삭제 안내"
       lines={lines}
+      confirmText="담당자 삭제"
     />
   )
 }

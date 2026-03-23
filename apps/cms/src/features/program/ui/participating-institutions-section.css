@@ -37,11 +37,16 @@
 }
 
 /* 필터 간 갭 12px: 두 번째 Col부터 margin-left 12px (Ant Design gap 덮어써도 동일 적용) */
-.participating-institutions-section__filters .program-progress-tab__filter-row > .ant-col + .ant-col {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-row
+  > .ant-col
+  + .ant-col {
   margin-left: 12px !important;
 }
 
-.participating-institutions-section__filters .program-progress-tab__filter-row > .ant-col:not(.program-progress-tab__filter-col--btn) {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-row
+  > .ant-col:not(.program-progress-tab__filter-col--btn) {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   padding-left: 0 !important;
@@ -69,7 +74,8 @@
   justify-content: center !important;
 }
 
-.participating-institutions-section__filters .program-progress-tab__filter-field.participating-institutions-section__filter-field--label-top {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field.participating-institutions-section__filter-field--label-top {
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
@@ -78,7 +84,9 @@
 }
 
 /* 필터 레이블 텍스트 스펙 */
-.participating-institutions-section__filters .program-progress-tab__filter-field.participating-institutions-section__filter-field--label-top .program-progress-tab__filter-label {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field.participating-institutions-section__filter-field--label-top
+  .program-progress-tab__filter-label {
   height: auto;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
@@ -89,8 +97,13 @@
 }
 
 /* 필터 컨트롤 기본 사이즈 270*44, 테두리·패딩·배경 */
-.participating-institutions-section__filters .program-progress-tab__filter-field .ant-input-affix-wrapper,
-.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select .ant-select-selector {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .ant-input-affix-wrapper,
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .ant-select
+  .ant-select-selector {
   display: flex;
   height: 44px;
   min-height: 44px;
@@ -111,12 +124,17 @@
   min-width: 270px;
 }
 
-.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select .ant-select-selector {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .ant-select
+  .ant-select-selector {
   width: 100%;
 }
 
 /* 기관명 Input이 affix-wrapper 없이 렌더될 때 */
-.participating-institutions-section__filters .program-progress-tab__filter-field .participating-institutions-section__filter-input.ant-input {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .participating-institutions-section__filter-input.ant-input {
   width: 270px;
   min-width: 270px;
   height: 44px;
@@ -126,7 +144,10 @@
   background: var(--default-WT, #fff);
 }
 
-.participating-institutions-section__filters .program-progress-tab__filter-field .ant-input-affix-wrapper .ant-input {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .ant-input-affix-wrapper
+  .ant-input {
   padding: 0;
   border: none;
   height: 100%;
@@ -136,7 +157,9 @@
 }
 
 /* 필터 플레이스홀더 스펙 */
-.participating-institutions-section__filters .program-progress-tab__filter-field .ant-input::placeholder {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .ant-input::placeholder {
   overflow: hidden;
   color: #85969d;
   text-overflow: ellipsis;
@@ -147,8 +170,12 @@
   line-height: 150%;
 }
 
-.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select-selection-placeholder,
-.participating-institutions-section__filters .program-progress-tab__filter-field .ant-select-selection-item {
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .ant-select-selection-placeholder,
+.participating-institutions-section__filters
+  .program-progress-tab__filter-field
+  .ant-select-selection-item {
   overflow: hidden;
   color: #85969d;
   text-overflow: ellipsis;
@@ -158,7 +185,6 @@
   font-weight: 500;
   line-height: 150%;
 }
-
 
 .participating-institutions-section__divider {
   margin: 0;
@@ -167,6 +193,12 @@
 
 .participating-institutions-section__below-divider {
   margin-top: 32px;
+}
+
+.participating-institutions-section__calendar-wrap {
+  width: 100%;
+  overflow-x: auto;
+  min-height: 742px;
 }
 
 .participating-institutions-section__table-header {
@@ -206,7 +238,11 @@
 .participating-institutions-section__btn-approve.app-button {
   border-radius: 8px !important;
   border: 1px solid var(--JA-mint-01, #01a1af) !important;
-  background: var(--color-bg-mint, linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff) !important;
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff
+  ) !important;
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
@@ -216,7 +252,7 @@
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
-/* 테이블 가로 스크롤: 컬럼 한 줄 표시, 잘림 없이 스크롤로 확인 */
+/* 테이블 가로 스크롤: 컬럼 한 줄 표시, 화면 넘어가면 테이블 자체 가로 스크롤 */
 .participating-institutions-section__table-wrap {
   overflow-x: auto;
   width: 100%;
@@ -224,7 +260,16 @@
 
 .participating-institutions-section__table {
   min-width: 0;
-  table-layout: auto;
+}
+
+/* 컬럼 너비 고정 → 화면 넘어가면 가로 스크롤 (컬럼 압축·헤더 두 줄 방지) */
+.participating-institutions-section__table table.ant-table {
+  table-layout: fixed;
+}
+
+/* thead 컬럼 한 줄 유지 (두 줄 처리 방지) */
+.participating-institutions-section__table .ant-table-thead .ant-table-cell {
+  white-space: nowrap;
 }
 
 /* th 텍스트 스펙 */
@@ -236,6 +281,7 @@
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
+  white-space: nowrap;
 }
 
 /* td 텍스트 스펙 */
@@ -254,13 +300,15 @@
   white-space: nowrap;
 }
 
-/* 강의 회차 td: 상하 12px, 좌우 24px, 너비는 내용만 사용(오른쪽 빈 공간 없음) */
-.participating-institutions-section__table .ant-table-tbody > tr > td.participating-institutions-section__td-sessions {
-  width: 1%;
-  max-width: max-content;
+/* 강의 회차 td: 셀 내 줄바꿈 없음. 회차별 한 줄, 영역은 텍스트 길이만큼(480px). 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
+.participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions {
+  width: 480px;
+  min-width: 480px;
   white-space: normal;
   padding: 12px 24px !important;
-  min-width: 0;
   vertical-align: top;
   box-sizing: border-box;
 }
@@ -269,7 +317,7 @@
   cursor: pointer;
 }
 
-/* 강의 회차 별 교육 진행 날짜 셀: td vertical padding 12px 외 추가 여백 없음 */
+/* 강의 회차 별 교육 진행 날짜 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
 .participating-institutions-section__sessions-cell {
   display: flex;
   flex-direction: column;
@@ -283,6 +331,7 @@
   line-height: 150%;
 }
 
+/* 강의 회차 라인: 회차별 한 줄 처리 */
 .participating-institutions-section__session-line {
   display: inline-flex;
   align-items: center;
@@ -342,7 +391,8 @@
 }
 
 /* 교재 배송 현황: 공통 StatusDropdownCell 사용 — 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
-.participating-institutions-section .ant-table-tbody
+.participating-institutions-section
+  .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status) {
   height: 53px;
   min-height: 53px;
@@ -350,8 +400,10 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 (트리거/래퍼 152px와 동일) */
-.participating-institutions-section .ant-table-tbody
+/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 (트리거/래퍼 152px와 동일).
+ * 좌우 패딩 0으로 해야 152px 트리거가 셀을 넘지 않음 (100% 배율에서 Ant Design td 기본 패딩 시 내용 영역 < 152px 되어 overflow 발생) */
+.participating-institutions-section
+  .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
   width: 152px;
@@ -359,6 +411,8 @@
   max-width: 152px;
   padding-top: 0;
   padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
   overflow: visible;
   box-sizing: border-box;
 }
@@ -372,7 +426,8 @@
 }
 
 /* 테이블 셀 높이 53px인 경우: 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
-.participating-institutions-section .ant-table-tbody
+.participating-institutions-section
+  .ant-table-tbody
   > tr:has(td .status-dropdown-cell__status-trigger--open)
   > td {
   height: 53px !important;
@@ -380,10 +435,13 @@
   max-height: 53px !important;
 }
 
-/* 테이블 셀 높이 53px인 경우 해당 셀 vertical padding 0 — vertical UI shifting 방지 */
-.participating-institutions-section .ant-table-tbody
+/* 테이블 셀 높이 53px인 경우 해당 셀 padding 0 — vertical shifting 방지, 좌우 0으로 152px 트리거가 셀 밖으로 넘지 않도록 */
+.participating-institutions-section
+  .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

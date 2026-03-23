@@ -4,7 +4,7 @@
  * 프로그램에 등록된 모든 파일 표시, 파일명 검색 지원
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Dropdown, type MenuProps } from 'antd'
 import { TealHeaderModal } from '@/shared/ui'
 import { AppButton } from '@/shared/ui'
@@ -40,12 +40,12 @@ function ImageIcon() {
 function DotsIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
-      <g opacity="0.6">
-        <mask id="mask0_859_28226" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
+      <g opacity="0.5">
+        <mask id="mask0_1220_42910" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
           <rect width="30" height="30" fill="#D9D9D9"/>
         </mask>
-        <g mask="url(#mask0_859_28226)">
-          <path d="M15 24.0862C14.4844 24.0862 14.043 23.9026 13.6759 23.5353C13.3086 23.1682 13.125 22.7268 13.125 22.2112C13.125 21.6956 13.3086 21.2541 13.6759 20.8868C14.043 20.5198 14.4844 20.3362 15 20.3362C15.5156 20.3362 15.957 20.5198 16.3241 20.8868C16.6914 21.2541 16.875 21.6956 16.875 22.2112C16.875 22.7268 16.6914 23.1682 16.3241 23.5353C15.957 23.9026 15.5156 24.0862 15 24.0862ZM15 16.8747C14.4844 16.8747 14.043 16.691 13.6759 16.3237C13.3086 15.9566 13.125 15.5153 13.125 14.9997C13.125 14.484 13.3086 14.0427 13.6759 13.6756C14.043 13.3083 14.4844 13.1246 15 13.1246C15.5156 13.1246 15.957 13.3083 16.3241 13.6756C16.6914 14.0427 16.875 14.484 16.875 14.9997C16.875 15.5153 16.6914 15.9566 16.3241 16.3237C15.957 16.691 15.5156 16.8747 15 16.8747ZM15 9.66309C14.4844 9.66309 14.043 9.47954 13.6759 9.11246C13.3086 8.74517 13.125 8.30371 13.125 7.78809C13.125 7.27246 13.3086 6.83111 13.6759 6.46402C14.043 6.09673 14.4844 5.91309 15 5.91309C15.5156 5.91309 15.957 6.09673 16.3241 6.46402C16.6914 6.83111 16.875 7.27246 16.875 7.78809C16.875 8.30371 16.6914 8.74517 16.3241 9.11246C15.957 9.47954 15.5156 9.66309 15 9.66309Z" fill="#3D3D3D"/>
+        <g mask="url(#mask0_1220_42910)">
+          <path d="M15 24.0872C14.4844 24.0872 14.043 23.9035 13.6759 23.5363C13.3086 23.1692 13.125 22.7278 13.125 22.2122C13.125 21.6966 13.3086 21.2551 13.6759 20.8878C14.043 20.5207 14.4844 20.3372 15 20.3372C15.5156 20.3372 15.957 20.5207 16.3241 20.8878C16.6914 21.2551 16.875 21.6966 16.875 22.2122C16.875 22.7278 16.6914 23.1692 16.3241 23.5363C15.957 23.9035 15.5156 24.0872 15 24.0872ZM15 16.8756C14.4844 16.8756 14.043 16.692 13.6759 16.3247C13.3086 15.9576 13.125 15.5163 13.125 15.0006C13.125 14.485 13.3086 14.0436 13.6759 13.6766C14.043 13.3093 14.4844 13.1256 15 13.1256C15.5156 13.1256 15.957 13.3093 16.3241 13.6766C16.6914 14.0436 16.875 14.485 16.875 15.0006C16.875 15.5163 16.6914 15.9576 16.3241 16.3247C15.957 16.692 15.5156 16.8756 15 16.8756ZM15 9.66406C14.4844 9.66406 14.043 9.48052 13.6759 9.11344C13.3086 8.74615 13.125 8.30469 13.125 7.78906C13.125 7.27344 13.3086 6.83208 13.6759 6.465C14.043 6.09771 14.4844 5.91406 15 5.91406C15.5156 5.91406 15.957 6.09771 16.3241 6.465C16.6914 6.83208 16.875 7.27344 16.875 7.78906C16.875 8.30469 16.6914 8.74615 16.3241 9.11344C15.957 9.48052 15.5156 9.66406 15 9.66406Z" fill="#3D3D3D"/>
         </g>
       </g>
     </svg>
@@ -96,8 +96,19 @@ export interface ProgramFilesModalProps {
   posts: ProgramPost[]
 }
 
+const FILE_SEARCH_DEBOUNCE_MS = 280
+
 export function ProgramFilesModal({ open, onCancel, files, posts }: ProgramFilesModalProps) {
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [searchDebounced, setSearchDebounced] = useState('')
+  useEffect(() => {
+    if (searchInput.trim() === '') {
+      setSearchDebounced('')
+      return
+    }
+    const t = setTimeout(() => setSearchDebounced(searchInput), FILE_SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   const postMap = useMemo(() => {
     const map = new Map<string, ProgramPost>()
@@ -106,10 +117,10 @@ export function ProgramFilesModal({ open, onCancel, files, posts }: ProgramFiles
   }, [posts])
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
+    const q = searchDebounced.trim().toLowerCase()
     if (!q) return files
     return files.filter(f => f.fileName.toLowerCase().includes(q))
-  }, [files, search])
+  }, [files, searchDebounced])
 
   const getMenuItems = (file: ProgramFile): MenuProps['items'] => [
     { key: 'download', label: '다운로드' },
@@ -137,8 +148,8 @@ export function ProgramFilesModal({ open, onCancel, files, posts }: ProgramFiles
         <input
           className="program-files-modal__search"
           placeholder="파일명 검색"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
         />
       </div>
 

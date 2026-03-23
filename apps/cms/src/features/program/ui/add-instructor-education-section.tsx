@@ -28,12 +28,16 @@ export function EducationSection() {
   const showMajorInput =
     !educationSchoolType || !SCHOOL_TYPES_WITHOUT_MAJOR.includes(educationSchoolType)
   const educationRowLabel = educationSchoolType || '학교'
+  const educationSummaryText = educationSchoolType ?? '정보 없음'
 
   return (
     <section className="add-instructor-modal__section">
       <h3 className="add-instructor-modal__section-title">
         학력사항
         <span className="add-instructor-modal__required-asterisk" aria-hidden> *</span>
+        <span className="add-instructor-modal__section-summary add-instructor-modal__section-summary--education">
+          {educationSummaryText}
+        </span>
       </h3>
       <Form.List name="educations">
         {(fields, { remove }) => (
@@ -61,6 +65,7 @@ export function EducationSection() {
                                 className="add-instructor-modal__table-input add-instructor-modal__education-school-type"
                               />
                             </Form.Item>
+                            <span className="add-instructor-modal__education-divider" aria-hidden />
                             <Form.Item name={[fields[0].name, 'status']} noStyle>
                               <NativeSelect
                                 placeholder="상태"
@@ -77,6 +82,7 @@ export function EducationSection() {
                               className="add-instructor-modal__table-input add-instructor-modal__education-school-type"
                               disabled
                             />
+                            <span className="add-instructor-modal__education-divider" aria-hidden />
                             <NativeSelect
                               placeholder="상태"
                               options={EDUCATION_STATUS_OPTIONS}
@@ -106,6 +112,7 @@ export function EducationSection() {
                               className="add-instructor-modal__table-input add-instructor-modal__education-school-input"
                             />
                           </Form.Item>
+                          <span className="add-instructor-modal__education-divider" aria-hidden />
                           {showMajorInput && (
                             <Form.Item name={[field.name, 'major']} noStyle>
                               <Input
@@ -116,6 +123,7 @@ export function EducationSection() {
                               />
                             </Form.Item>
                           )}
+                          <span className="add-instructor-modal__education-divider" aria-hidden />
                           <Form.Item name={[field.name, 'enrollmentYear']} noStyle>
                             <DatePicker
                               picker="year"
@@ -124,6 +132,9 @@ export function EducationSection() {
                               className="add-instructor-modal__education-year"
                             />
                           </Form.Item>
+                          <span className="add-instructor-modal__education-date-sep" aria-hidden>
+                            ~
+                          </span>
                           <Form.Item name={[field.name, 'graduationYear']} noStyle>
                             <DatePicker
                               picker="year"

@@ -52,6 +52,11 @@ pnpm --filter cms typecheck  # 특정 앱만 타입 체크
 - 명확하고 간결한 커밋 메시지 작성
 - 변경 사항을 구체적으로 설명
 
+### 커밋 전 검증 (필수)
+- **`--no-verify` 사용 금지.** pre-commit 훅을 건너뛰지 않는다.
+- 커밋/병합 전 반드시 `pnpm typecheck`, `pnpm lint`를 실행하고, 에러가 없을 때만 커밋한다.
+- 자세한 내용: [commit-verify-required.md](./commit-verify-required.md)
+
 
 
 

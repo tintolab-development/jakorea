@@ -1,94 +1,154 @@
 /**
- * 학교 상세정보 – 강사진 추가 배정 모달
- * add-instructor-modal 스타일 패턴 재사용
+ * 학교 상세정보 – 강사 배정 안내 모달
+ * 풀페이지 모달 내 ContentModal 사용, add-student-modal과 동일 레이아웃 패턴(디스크립션 + 폼 필드)
  */
 
+.school-detail-add-instructor-assign-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.school-detail-add-instructor-assign-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.school-detail-add-instructor-assign-modal .teal-header-modal__header {
+  flex-shrink: 0;
+}
+
+.school-detail-add-instructor-assign-modal .teal-header-modal__body {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--color-bg-base);
+}
+
+.school-detail-add-instructor-assign-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-top: 0;
+  gap: var(--spacing-12);
+}
+
+.school-detail-add-instructor-assign-modal__body {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* 안내 문구: 16px/500/150% (스크린샷 스펙) */
+.school-detail-add-instructor-assign-modal__description {
+  margin: 0 0 30px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .school-detail-add-instructor-assign-modal__form {
-    width: 100%;
-    max-width: 100%;
+  width: 100%;
+  max-width: 100%;
 }
 
 .school-detail-add-instructor-assign-modal__fields {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-30);
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-30);
+  width: 100%;
 }
 
 .school-detail-add-instructor-assign-modal__field {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
-.school-detail-add-instructor-assign-modal__field .ant-form-item-label>label {
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-label);
+.school-detail-add-instructor-assign-modal__field .ant-form-item-label > label {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-label);
 }
 
-.school-detail-add-instructor-assign-modal__form .ant-form-item-label>label.ant-form-item-required::before {
-    display: none !important;
-    content: none !important;
+.school-detail-add-instructor-assign-modal__form .ant-form-item-label > label.ant-form-item-required::before {
+  display: none !important;
+  content: none !important;
 }
 
 .school-detail-add-instructor-assign-modal__required {
-    color: var(--color-required-mark);
-    margin-left: var(--spacing-4);
+  color: var(--color-required-mark);
+  margin-left: var(--spacing-4);
 }
 
 .school-detail-add-instructor-assign-modal__form .ant-select-selector {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-4);
+  min-height: 40px !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
 }
 
 .school-detail-add-instructor-assign-modal__form .ant-select:hover .ant-select-selector {
-    border-color: var(--color-modal-header);
+  border-color: var(--color-modal-header);
 }
 
 .school-detail-add-instructor-assign-modal__form .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
-    border-color: var(--color-modal-header);
-    box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
+  border-color: var(--color-modal-header);
+  box-shadow: 0 0 0 1px var(--color-focus-teal-ring, rgba(71, 169, 173, 0.2));
 }
 
 .school-detail-add-instructor-assign-modal__form .ant-radio-group {
-    display: flex;
-    gap: var(--spacing-24);
+  display: flex;
+  gap: 16px;
 }
 
-/* 대표 강사 지정 안내 확인 모달 (600×250) */
-.school-detail-add-instructor-assign-modal__lead-confirm .ant-modal-content {
-    border-radius: var(--radius-8, 8px);
+.school-detail-add-instructor-assign-modal__form .ant-radio-wrapper {
+  margin-inline-end: 0;
 }
 
-.school-detail-add-instructor-assign-modal__lead-confirm .ant-modal-header {
-    padding: 20px 24px 16px;
+/* 대표 강사 지정 안내 확인 더블 모달 (스크린샷 스펙: 흰 배경, 둥근 모서리, 헤더 좌측 타이틀+우측 X, 본문 왼쪽 정렬, 푸터 우측 취소/변경) */
+.school-detail-add-instructor-assign-modal__lead-confirm.ant-modal .ant-modal-content {
+  border-radius: var(--radius-8, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.school-detail-add-instructor-assign-modal__lead-confirm .ant-modal-title {
-    font-size: 20px;
-    font-weight: 700;
-    text-align: center;
+.school-detail-add-instructor-assign-modal__lead-confirm .teal-header-modal__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
 }
 
 .school-detail-add-instructor-assign-modal__lead-confirm-body {
-    padding: 8px 0 24px;
-    font-size: 16px;
-    color: var(--color-text-body, #464646);
-    text-align: center;
-    line-height: 1.6;
+  padding: 0;
+  font-size: 16px;
+  color: var(--color-text-body, #464646);
+  text-align: left;
+  line-height: 1.6;
 }
 
 .school-detail-add-instructor-assign-modal__lead-confirm-body p {
-    margin: 0 0 12px;
+  margin: 0 0 12px;
 }
 
 .school-detail-add-instructor-assign-modal__lead-confirm-body p:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .school-detail-add-instructor-assign-modal__lead-confirm-footer {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid var(--color-border, #e8e8e8);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }

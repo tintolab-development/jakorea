@@ -335,23 +335,32 @@
     gap: 8px;
 }
 
-/* 강의 출석 내역 링크 스타일 */
+/* 강의 출석 내역 td 텍스트 스펙 (링크 버튼) */
 .school-detail-modal__link-button {
     background: none;
     border: none;
     padding: 0;
-    font-size: inherit;
-    color: var(--color-link, #01a1af);
-    text-decoration: underline;
+    text-align: center;
+    font-family: Pretendard, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+    color: var(--color-link, #0070E7);
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-skip-ink: none;
+    text-decoration-thickness: auto;
+    text-underline-offset: auto;
+    text-underline-position: from-font;
     cursor: pointer;
-    /* 클릭/포커스 시 남는 흔적(아웃라인·배경·탭 하이라이트) 제거 */
     outline: none;
     box-shadow: none;
     -webkit-tap-highlight-color: transparent;
 }
 
 .school-detail-modal__link-button:hover {
-    color: var(--color-link, #01a1af);
+    color: var(--color-link, #0070E7);
 }
 
 .school-detail-modal__link-button:focus,

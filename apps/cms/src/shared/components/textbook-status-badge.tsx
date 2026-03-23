@@ -13,12 +13,13 @@ import './textbook-status-badge.css'
 export type { TextbookStatusKey }
 
 /** 결재 현황 (신청자 목록 탭) — 동일 배지 컴포넌트, 색상만 다름 */
-export type ApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+export type ApprovalStatusKey = 'pending' | 'rejected' | 'approved' | 'cancelled'
 
 export const APPROVAL_STATUS_LABELS: Record<ApprovalStatusKey, string> = {
   pending: '승인 대기',
   rejected: '신청 반려',
   approved: '승인 완료',
+  cancelled: '승인 취소',
 }
 
 type StatusBadgeVariant = 'textbook' | 'approval'

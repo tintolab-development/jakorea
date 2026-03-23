@@ -1,0 +1,97 @@
+/**
+ * 학교 상세 > 학생 명단 탭 공통 섹션
+ * 필터 너비 456px, 화면 크기에 맞춘 반응형
+ */
+
+.school-detail-student-list-section {
+  width: 100%;
+}
+
+/* 디바이더와 참여 학생 목록·수료증 발급 버튼 영역 사이 갭 32px */
+.school-detail-student-list-section .school-detail-modal__students {
+  margin-top: 32px;
+}
+
+/* 필터 컬럼: 고정 456px (참여기관 270px 오버라이드) */
+.school-detail-student-list-section__filters .program-progress-tab__filter-row > .ant-col.program-progress-tab__filter-col {
+  flex: 0 0 456px !important;
+  width: 456px !important;
+  min-width: 456px !important;
+  max-width: 456px !important;
+}
+
+.school-detail-student-list-section__filters .program-progress-tab__filter-row > .ant-col.program-progress-tab__filter-col--btn {
+  flex: none;
+}
+
+/* 필터 필드 내부 컨트롤: 456px 고정 */
+.school-detail-student-list-section__filters .program-progress-tab__filter-field .participating-institutions-section__filter-input.ant-input,
+.school-detail-student-list-section__filters .program-progress-tab__filter-field .ant-select,
+.school-detail-student-list-section__filters .program-progress-tab__filter-field .ant-select .ant-select-selector {
+  width: 456px !important;
+  min-width: 456px !important;
+  max-width: 456px !important;
+}
+
+.school-detail-student-list-section__filters .program-progress-tab__filter-field .ant-input-affix-wrapper {
+  width: 456px !important;
+  min-width: 456px !important;
+  max-width: 456px !important;
+}
+
+/* 수료증 발급 버튼 스펙: 140×44, border-radius 8px, JA-mint 배경/테두리, 22×22 아이콘 */
+.school-detail-student-list-section__btn-certificate.app-button.app-button--cancel.ant-btn {
+  display: flex !important;
+  width: 140px !important;
+  height: 44px !important;
+  min-width: 140px !important;
+  padding: 0 24px 0 20px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px !important;
+  border: 1px solid var(--JA-mint-01, #01A1AF) !important;
+  background: var(--color-bg-mint, linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff) !important;
+  color: var(--JA-mint-01, #01A1AF) !important;
+}
+
+.school-detail-student-list-section__btn-certificate.app-button.app-button--cancel.ant-btn:hover:not(:disabled) {
+  border-color: var(--color-modal-header-hover, #01919e) !important;
+  color: var(--color-modal-header-hover, #01919e) !important;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.08) 0%, rgba(1, 161, 175, 0.08) 100%), #fff !important;
+}
+
+.school-detail-student-list-section__btn-certificate.app-button .ant-btn-icon {
+  display: flex;
+  align-items: center;
+}
+
+.school-detail-student-list-section__btn-certificate.app-button .anticon,
+.school-detail-student-list-section__btn-certificate.app-button svg {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 22px;
+}
+
+/* 정보 수정 버튼 스펙: 140×44, border-radius 8px, JA-mint 아웃라인/배경 */
+.school-detail-student-list-section__btn-edit-info.app-button.app-button--cancel.ant-btn {
+  display: flex !important;
+  flex-direction: column;
+  width: 140px !important;
+  height: 44px !important;
+  min-width: 140px !important;
+  padding: 12px 31px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px !important;
+  border: 1px solid var(--JA-mint-01, #01A1AF) !important;
+  background: var(--color-bg-mint, linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff) !important;
+  color: var(--JA-mint-01, #01A1AF) !important;
+}
+
+.school-detail-student-list-section__btn-edit-info.app-button.app-button--cancel.ant-btn:hover:not(:disabled) {
+  border-color: var(--color-modal-header-hover, #01919e) !important;
+  color: var(--color-modal-header-hover, #01919e) !important;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.08) 0%, rgba(1, 161, 175, 0.08) 100%), #fff !important;
+}

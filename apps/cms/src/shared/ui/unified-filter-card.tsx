@@ -112,6 +112,7 @@ export function UnifiedFilterCard({
               size="small"
               placeholder={field.placeholder || '전체'}
               value={filters[field.key]}
+              className="unified-filter-card__select"
               onChange={value => onFilterChange(field.key, value)}
               allowClear={field.allowClear !== false}
               style={{ width: '100%', ...field.style }}
@@ -147,7 +148,13 @@ export function UnifiedFilterCard({
 
   const actionButtons = (
     <Space size="small">
-      <AppButton variant="primary" size="filter" onClick={onSearch} loading={loading}>
+      <AppButton
+        variant="primary"
+        size="filter"
+        onClick={onSearch}
+        loading={loading}
+        className="unified-filter-card__button"
+      >
         조회
       </AppButton>
       {extra}

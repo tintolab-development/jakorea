@@ -4,6 +4,10 @@
  */
 
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
+import {
+  canAssignUserProgramRoleForProgram,
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
 import { mockUsers } from '@/data/mock/users'
 import { mockUserHistories } from '@/data/mock/mypage'
 import type { UUID } from '@/types/index'
@@ -284,6 +288,10 @@ export async function updateUserProgramRole(
   // 관리자가 아니면 프로그램 역할 설정 불가
   if (user.role !== 'ADMIN') {
     throw new Error('관리자만 프로그램 역할을 가질 수 있습니다.')
+  }
+
+  if (!canAssignUserProgramRoleForProgram(mockUsers, programId, userId, programRole)) {
+    throw new Error(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
   }
 
   // programRoles가 없으면 초기화

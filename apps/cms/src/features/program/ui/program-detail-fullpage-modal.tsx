@@ -4,7 +4,7 @@
  * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
  */
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
@@ -23,8 +23,10 @@ import { InstructorRecruitmentSection } from './instructor-recruitment-section'
 import { InstructorDetailInfoSection } from './instructor-detail-info-section'
 import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
 import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
-import { ApplicantDetails } from './detail-modal/applicants-detail'
 import { ParticipatingInstitutionsSection } from './participating-institutions-section'
+import { ParticipatingInstructorsSection } from './participating-instructors-section'
+import { ApplicantDetails } from './detail-modal/applicants-detail'
+import { ProgramManagersTab } from './program-managers-tab'
 import type { Program } from '@/types/domain'
 import {
   DetailModalSidebar,
@@ -46,8 +48,22 @@ export interface ProgramDetailFullPageModalProps {
 const TAB_PARAM = 'tab'
 const EDIT_PARAM = 'edit'
 const LNB_PARAM = 'lnb'
+const SCHOOL_ID_PARAM = 'schoolId'
+const SCHOOL_TAB_PARAM = 'schoolTab'
+const SUB_TAB_PARAM = 'subTab'
 
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
+
+/** 학교 상세 뷰 내 탭(신청 정보 | 학생 명단 | 강사 배정 현황 | 게시글) */
+const SCHOOL_DETAIL_TAB_KEYS_READONLY = ['application', 'students', 'instructors', 'posts'] as const
+type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS_READONLY)[number]
+
+function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTabKey {
+  const t = searchParams.get(SCHOOL_TAB_PARAM)
+  if (t && SCHOOL_DETAIL_TAB_KEYS_READONLY.includes(t as SchoolDetailTabKey))
+    return t as SchoolDetailTabKey
+  return 'application'
+}
 
 function parseTabFromSearch(searchParams: URLSearchParams): TabKey {
   const tab = searchParams.get(TAB_PARAM)
@@ -89,13 +105,93 @@ export function ProgramDetailFullPageModal({
   const activeChildMenu: TabKey | '' =
     activeLnb === 'applicants' ? parseTabFromSearch(searchParams) : ''
   const progressExpanded = activeLnb === 'progress'
-  const progressTabRaw = activeLnb === 'progress' ? parseTabFromSearch(searchParams) : ''
+  const progressTab = parseTabFromSearch(searchParams)
   const activeProgressChild: TabKey | '' =
-    progressTabRaw && ['participants', 'instructors', 'volunteers'].includes(progressTabRaw)
-      ? progressTabRaw
-      : activeLnb === 'progress'
-        ? 'participants'
-        : ''
+    activeLnb === 'progress' && ['institutions', 'instructors', 'volunteers'].includes(progressTab)
+      ? progressTab
+      : ''
+
+  const APPLICANTS_TAB_KEYS: TabKey[] = ['institutions', 'instructors', 'volunteers']
+  const PROGRESS_TAB_KEYS: TabKey[] = ['institutions', 'instructors', 'volunteers']
+
+  const schoolIdFromUrl = searchParams.get(SCHOOL_ID_PARAM)
+  const activeSchoolTab = schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams) : 'application'
+
+  // 모달이 열릴 때: URL에 유효한 lnb·tab이 있으면 유지(새로고침 복원), 없으면 info 또는 해당 카테고리 기본 탭으로 보정
+  // programId는 모달이 열려 있는 동안 항상 유지(클릭/새로고침 타이밍 이슈 방지)
+  useEffect(() => {
+    if (!open) return
+    const currentLnb = parseLnbFromSearch(searchParams)
+    const currentTab = parseTabFromSearch(searchParams)
+    // 공통 정보(lnb=info) 내 탭: info | institutions | instructors | volunteers
+    if (currentLnb === 'info' && (TAB_KEYS as readonly string[]).includes(currentTab)) return
+    // 신청자 목록(lnb=applicants) 내 탭 — 유효하면 유지
+    if (currentLnb === 'applicants') {
+      if (APPLICANTS_TAB_KEYS.includes(currentTab)) return
+      const next = new URLSearchParams(searchParams)
+      next.set(LNB_PARAM, 'applicants')
+      next.set(TAB_PARAM, 'institutions')
+      next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
+    // 프로그램 진행현황(lnb=progress) 내 탭 — 유효하면 유지
+    if (currentLnb === 'progress') {
+      if (PROGRESS_TAB_KEYS.includes(currentTab)) return
+      const next = new URLSearchParams(searchParams)
+      next.set(LNB_PARAM, 'progress')
+      next.set(TAB_PARAM, 'institutions')
+      next.delete(SUB_TAB_PARAM)
+      next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
+    // 담당자 정보
+    if (currentLnb === 'managers') return
+    // lnb 없음/비유효 시 공통 정보로 초기화
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'info')
+    next.set(TAB_PARAM, 'info')
+    next.delete(EDIT_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, programId])
+
+  // 진행현황 진입 시 tab=instructors면 subTab=instructors 보장(새로고침 시 세그먼트 복원)
+  useEffect(() => {
+    if (!open || activeLnb !== 'progress') return
+    if (progressTab !== 'instructors') return
+    if (searchParams.get(SUB_TAB_PARAM) === 'instructors') return
+    const next = new URLSearchParams(searchParams)
+    next.set(SUB_TAB_PARAM, 'instructors')
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, progressTab, searchParams, setSearchParams, programId])
+
+  // 진행현황 내 세그먼트(subTab) 변경 시 tab 동기화 — LNB 활성 메뉴와 일치
+  useEffect(() => {
+    if (!open || activeLnb !== 'progress') return
+    const subTab = searchParams.get(SUB_TAB_PARAM)
+    const wantTab = subTab === 'instructors' ? 'instructors' : 'institutions'
+    if (progressTab === wantTab) return
+    const next = new URLSearchParams(searchParams)
+    next.set(TAB_PARAM, wantTab)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, progressTab, searchParams, setSearchParams, programId])
+
+  // 학교 상세 뷰 탭(schoolTab) 유효성 — schoolId 있을 때만
+  useEffect(() => {
+    if (!open || !schoolIdFromUrl) return
+    const raw = searchParams.get(SCHOOL_TAB_PARAM)
+    if (raw && SCHOOL_DETAIL_TAB_KEYS_READONLY.includes(raw as SchoolDetailTabKey)) return
+    const next = new URLSearchParams(searchParams)
+    next.set(SCHOOL_TAB_PARAM, 'application')
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     const next = new URLSearchParams(searchParams)
@@ -107,14 +203,15 @@ export function ProgramDetailFullPageModal({
       const tab = childTab ?? searchParams.get(TAB_PARAM)
       next.set(
         TAB_PARAM,
-        tab && ['participants', 'instructors', 'volunteers'].includes(tab) ? tab : 'participants'
+        tab && ['institutions', 'instructors', 'volunteers'].includes(tab) ? tab : 'institutions'
       )
     } else if (key === 'progress') {
       const tab = childTab ?? searchParams.get(TAB_PARAM)
-      next.set(
-        TAB_PARAM,
-        tab && ['participants', 'instructors', 'volunteers'].includes(tab) ? tab : 'participants'
-      )
+      const progressTabValue =
+        tab && ['institutions', 'instructors', 'volunteers'].includes(tab) ? tab : 'institutions'
+      next.set(TAB_PARAM, progressTabValue)
+      if (progressTabValue === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+      else next.delete(SUB_TAB_PARAM)
     }
     setSearchParams(next, { replace: true })
   }
@@ -123,6 +220,7 @@ export function ProgramDetailFullPageModal({
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'applicants')
     next.set(TAB_PARAM, tab)
+    if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
   }
 
@@ -130,6 +228,28 @@ export function ProgramDetailFullPageModal({
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'progress')
     next.set(TAB_PARAM, tab)
+    if (tab === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+    else next.delete(SUB_TAB_PARAM)
+    if (programId) next.set('programId', programId)
+    next.delete(SCHOOL_ID_PARAM)
+    setSearchParams(next, { replace: true })
+  }
+
+  const setSchoolId = (id: string | null) => {
+    const next = new URLSearchParams(searchParams)
+    if (id) {
+      next.set(SCHOOL_ID_PARAM, id)
+      next.set(SCHOOL_TAB_PARAM, 'application')
+    } else {
+      next.delete(SCHOOL_ID_PARAM)
+      next.delete(SCHOOL_TAB_PARAM)
+    }
+    setSearchParams(next, { replace: true })
+  }
+
+  const setSchoolTab = (tab: SchoolDetailTabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(SCHOOL_TAB_PARAM, tab)
     setSearchParams(next, { replace: true })
   }
 
@@ -149,7 +269,16 @@ export function ProgramDetailFullPageModal({
   }
 
   const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
-  const title = displayProgram?.title ?? '프로그램 상세'
+  const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!schoolIdFromUrl) setSchoolDetailTitle(null)
+  }, [schoolIdFromUrl])
+
+  const title =
+    schoolDetailTitle != null && displayProgram
+      ? `${displayProgram.title}_${schoolDetailTitle}`
+      : displayProgram?.title ?? '프로그램 상세'
 
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
   const infoForm = useProgramDetailEditForm({
@@ -175,18 +304,18 @@ export function ProgramDetailFullPageModal({
           : undefined,
     })
 
-  const isEditModeParticipants =
-    activeTab === 'participants' && editTab === 'participants' && !!displayProgram
-  const participantsForm = useProgramDetailEditForm({
+  const isEditModeInstitutions =
+    activeTab === 'institutions' && editTab === 'institutions' && !!displayProgram
+  const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
-    isEditMode: isEditModeParticipants,
+    isEditMode: isEditModeInstitutions,
   })
   const {
-    triggerSave: participantsTriggerSave,
-    resetToProgram: participantsResetToProgram,
-    registerGetAdditionalContentHtml: registerParticipantsAdditionalHtml,
+    triggerSave: institutionsTriggerSave,
+    resetToProgram: institutionsResetToProgram,
+    registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
   } = useProgramDetailInfoSave({
-    form: participantsForm,
+    form: institutionsForm,
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
       displayProgram && updateProgram
@@ -237,9 +366,9 @@ export function ProgramDetailFullPageModal({
       setEditMode('info')
       return
     }
-    if (activeTab === 'participants' && displayProgram) {
-      participantsResetToProgram()
-      setEditMode('participants')
+    if (activeTab === 'institutions' && displayProgram) {
+      institutionsResetToProgram()
+      setEditMode('institutions')
       return
     }
     if (activeTab === 'instructors' && displayProgram) {
@@ -267,12 +396,12 @@ export function ProgramDetailFullPageModal({
     if (displayProgram) infoTriggerSave()
   }
 
-  const handleParticipantsSave = () => {
-    participantsTriggerSave()
+  const handleInstitutionsSave = () => {
+    institutionsTriggerSave()
   }
 
-  const handleParticipantsCancelEdit = () => {
-    participantsResetToProgram()
+  const handleInstitutionsCancelEdit = () => {
+    institutionsResetToProgram()
     setEditMode(null)
   }
 
@@ -357,8 +486,8 @@ export function ProgramDetailFullPageModal({
             <button
               type="button"
               className="program-detail-fullpage-modal__close"
-              onClick={onClose}
-              aria-label="닫기"
+              onClick={schoolIdFromUrl ? () => setSchoolId(null) : onClose}
+              aria-label={schoolIdFromUrl ? '목록으로' : '닫기'}
             >
               <CloseOutlined />
             </button>
@@ -397,13 +526,13 @@ export function ProgramDetailFullPageModal({
                         {isEditModeInfo ? '수정사항 저장' : '정보 수정'}
                       </AppButton>
                     </>
-                  ) : activeTab === 'participants' ? (
+                  ) : activeTab === 'institutions' ? (
                     <>
-                      {isEditModeParticipants && (
+                      {isEditModeInstitutions && (
                         <AppButton
                           variant="danger"
                           size="large"
-                          onClick={handleParticipantsCancelEdit}
+                          onClick={handleInstitutionsCancelEdit}
                         >
                           수정 취소
                         </AppButton>
@@ -411,9 +540,9 @@ export function ProgramDetailFullPageModal({
                       <AppButton
                         variant="primary"
                         size="large"
-                        onClick={isEditModeParticipants ? handleParticipantsSave : handleInfoEdit}
+                        onClick={isEditModeInstitutions ? handleInstitutionsSave : handleInfoEdit}
                       >
-                        {isEditModeParticipants ? '수정사항 저장' : '정보 수정'}
+                        {isEditModeInstitutions ? '수정사항 저장' : '정보 수정'}
                       </AppButton>
                     </>
                   ) : activeTab === 'volunteers' ? (
@@ -496,20 +625,20 @@ export function ProgramDetailFullPageModal({
                         />
                       </div>
                     )}
-                    {activeTab === 'participants' && (
+                    {activeTab === 'institutions' && (
                       <div className="program-detail-fullpage-modal__info-tab">
                         <ParticipantRecruitmentSection
                           program={displayProgram}
                           sponsorName={sponsorName}
-                          isEditMode={isEditModeParticipants}
-                          form={isEditModeParticipants ? participantsForm : undefined}
+                          isEditMode={isEditModeInstitutions}
+                          form={isEditModeInstitutions ? institutionsForm : undefined}
                         />
                         <div className="program-detail-fullpage-modal__info-tab-block">
                           <DetailInfoSection
                             program={displayProgram}
-                            isEditMode={isEditModeParticipants}
-                            form={isEditModeParticipants ? participantsForm : undefined}
-                            onRegisterGetAdditionalContentHtml={registerParticipantsAdditionalHtml}
+                            isEditMode={isEditModeInstitutions}
+                            form={isEditModeInstitutions ? institutionsForm : undefined}
+                            onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
                             showThumbnail
                           />
                         </div>
@@ -556,18 +685,29 @@ export function ProgramDetailFullPageModal({
 
                 {activeLnb === 'applicants' && <ApplicantDetails menu={activeChildMenu} />}
 
+                {activeLnb === 'managers' && displayProgram?.id && (
+                  <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+                    <ProgramManagersTab programId={displayProgram.id} />
+                  </div>
+                )}
+
                 {activeLnb === 'progress' && (
                   <div className="program-detail-fullpage-modal__info-tab">
-                    {activeProgressChild === 'participants' && (
-                      <ParticipatingInstitutionsSection programId={displayProgram?.id} program={displayProgram} />
+                    {activeProgressChild === 'institutions' && (
+                      <ParticipatingInstitutionsSection
+                        programId={displayProgram?.id}
+                        program={displayProgram}
+                        schoolIdFromUrl={schoolIdFromUrl}
+                        schoolTabFromUrl={activeSchoolTab}
+                        onSchoolTabChange={setSchoolTab}
+                        onSchoolRowClick={row => setSchoolId(row.id)}
+                        onClearSchoolId={() => setSchoolId(null)}
+                        onSchoolDetailOpen={name => setSchoolDetailTitle(name)}
+                        onSchoolDetailClose={() => setSchoolDetailTitle(null)}
+                      />
                     )}
                     {activeProgressChild === 'instructors' && (
-                      <div className="program-detail-fullpage-modal__progress-section">
-                        <Typography.Title level={5}>참여 강사</Typography.Title>
-                        <Typography.Text type="secondary">
-                          참여 강사 목록 및 현황이 표시됩니다.
-                        </Typography.Text>
-                      </div>
+                      <ParticipatingInstructorsSection programId={displayProgram?.id} />
                     )}
                     {activeProgressChild === 'volunteers' && (
                       <div className="program-detail-fullpage-modal__progress-section">

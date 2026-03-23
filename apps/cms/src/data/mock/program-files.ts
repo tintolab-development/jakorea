@@ -8,6 +8,10 @@ import type { ProgramFile, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockProgramPosts } from './program-posts'
 
+/** HSBC/HKU Business Case Competition 2026 + 강서초등학교 게시글 첨부파일 */
+const HSBC_ECONOMY_PROGRAM_ID = 'economy-prog-001' as UUID
+const POST_HSBC_GS_002 = 'post-hsbc-gs-002' as UUID
+
 function date(daysAgo: number): string {
   const d = new Date()
   d.setDate(d.getDate() - daysAgo)
@@ -84,6 +88,35 @@ function buildFiles(): ProgramFile[] {
     }
   })
 
+  // HSBC/HKU Business Case Competition 2026 모집 안내_강서초등학교 — 김틴토 강사님 게시글 첨부 2개
+  const hsbcUploadedAt = new Date(2026, 0, 10, 10, 0, 0).toISOString()
+  files.push(
+    {
+      id: 'pfile-hsbc-gs-001' as UUID,
+      programId: HSBC_ECONOMY_PROGRAM_ID,
+      postId: POST_HSBC_GS_002,
+      fileName: '(2026) 나를 보여주는 기술_면접 가이드',
+      fileType: 'pdf',
+      fileSize: 18 * 1024 * 1024,
+      fileUrl: '#mock-file-hsbc-gs-001',
+      uploadedAt: hsbcUploadedAt,
+      createdAt: hsbcUploadedAt,
+      updatedAt: hsbcUploadedAt,
+    },
+    {
+      id: 'pfile-hsbc-gs-002' as UUID,
+      programId: HSBC_ECONOMY_PROGRAM_ID,
+      postId: POST_HSBC_GS_002,
+      fileName: '2회차 강의 자료_모의 면접 체크리스트',
+      fileType: 'xlsx',
+      fileSize: 2 * 1024 * 1024,
+      fileUrl: '#mock-file-hsbc-gs-002',
+      uploadedAt: hsbcUploadedAt,
+      createdAt: hsbcUploadedAt,
+      updatedAt: hsbcUploadedAt,
+    }
+  )
+
   return files
 }
 
@@ -105,3 +138,49 @@ export function getProgramFilesByProgramId(programId: UUID): ProgramFile[] {
 }
 
 export const mockProgramFilesMap = new Map(mockProgramFiles.map(f => [f.id, f]))
+
+/** 게시글 등록 시 업로드된 첨부파일을 목록에 추가 (우측 첨부파일 카드 갱신용) */
+export interface AddProgramFileItem {
+  fileName: string
+  fileUrl?: string
+  fileSize?: number
+}
+
+let createdFileIdSeq = 10000
+
+export function addProgramFiles(
+  programId: UUID,
+  postId: UUID,
+  items: AddProgramFileItem[]
+): ProgramFile[] {
+  const now = new Date().toISOString()
+  const added: ProgramFile[] = []
+  for (const item of items) {
+    const id = `pfile-created-${++createdFileIdSeq}` as UUID
+    const ext = item.fileName.substring(item.fileName.lastIndexOf('.')).toLowerCase()
+    const file: ProgramFile = {
+      id,
+      programId,
+      postId,
+      fileName: item.fileName,
+      fileType: ext.replace('.', '') || undefined,
+      fileSize: item.fileSize,
+      fileUrl: item.fileUrl,
+      uploadedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    }
+    added.push(file)
+    let list = byProgramId.get(programId)
+    if (!list) {
+      list = []
+      byProgramId.set(programId, list)
+    }
+    list.push(file)
+  }
+  const list = byProgramId.get(programId)
+  if (list) {
+    list.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
+  }
+  return added
+}

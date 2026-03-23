@@ -58,11 +58,17 @@ export interface ApplicantInstructorRow {
   contact: string
   email: string
   address: string
+  appliedAt?: string
+  affiliation?: string
   approvalStatus: ApplicantInstructorApprovalStatusKey
   /** 신청 학교(필터용) */
   schoolName: string
   /** 일정 변경&취소 이력 횟수. 1 이상일 때만 강사 상세 모달 강사명 옆 배지 표시 */
   scheduleChangeCancelCount?: number
+  /** JA 평가 등급 (A|B|C) */
+  evaluationGrade?: string
+  /** JA 강의 경력 (신규|1년 미만|1~3년|3년 이상 등) */
+  teachingExperience?: string
   /** 한줄소개 (강사 상세 모달 기본 정보 탭) */
   oneLineIntro?: string
   /** 성명 한자 */
@@ -408,6 +414,9 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
         : {}
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
     const resumeSample = getResumeSample(i)
+    const evaluationGrades = ['A', 'B', 'C']
+    const teachingExperiences = ['신규', '1년 미만', '1~3년', '3년 이상']
+
     rows.push({
       id: `applicant-instructor-${i + 1}`,
       no: count - i,
@@ -419,11 +428,15 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       gender: GENDERS[i % GENDERS.length],
       militaryStatus: MILITARY_STATUSES[i % MILITARY_STATUSES.length],
       lectureExperienceYears: 1 + (i % 10),
+      evaluationGrade: evaluationGrades[i % evaluationGrades.length],
+      teachingExperience: teachingExperiences[i % teachingExperiences.length],
       educationLevel: EDUCATION_LEVELS[eduIdx],
       educationSchoolName: EDUCATION_SCHOOLS[eduIdx % EDUCATION_SCHOOLS.length],
       contact: CONTACT_NUMBERS[i % CONTACT_NUMBERS.length],
       email: i === 3 ? 'tinto@naver.com' : `instructor${i}@example.com`,
       address: ADDRESSES[i % ADDRESSES.length],
+      appliedAt: `2026.01.${(10 + (i % 20)).toString().padStart(2, '0')}`,
+      affiliation: i % 2 === 0 ? '개인' : '삼성전자',
       approvalStatus: status,
       schoolName: SCHOOL_NAMES[i % SCHOOL_NAMES.length],
       ...assignedSchool,
