@@ -72,7 +72,6 @@
 }
 
 .program-list-page__filter-info-title {
-  font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
@@ -81,11 +80,14 @@
 
 .program-list-page__filter-info-count {
   color: var(--color-text-secondary);
-  font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .program-list-page__divider-wrapper {

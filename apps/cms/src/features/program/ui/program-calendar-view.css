@@ -140,6 +140,7 @@
   text-align: left;
   white-space: nowrap;
   margin-right: 8px;
+  font-family: var(--font-family-number);
 }
 
 .program-calendar-today-btn {
@@ -223,11 +224,6 @@
 }
 
 .program-calendar-cell--today .program-calendar-cell-date {
-  background-color: var(--color-brand-primary);
-  color: var(--color-bg-base);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -443,9 +439,9 @@
 /* ===== 미니 캘린더 ===== */
 .program-mini-calendar {
   background: var(--color-bg-base);
-  border-radius: var(--radius-8);
-  border: 1px solid var(--color-border-light);
-  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  padding: 20px;
 }
 
 .program-mini-calendar-header {
@@ -456,9 +452,10 @@
 }
 
 .program-mini-calendar-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--color-text-label);
+  font-family: var(--font-family-number);
 }
 
 .program-mini-calendar-nav-btn {
@@ -468,6 +465,7 @@
   cursor: pointer;
   color: var(--color-text-secondary);
   transition: color 0.2s;
+  outline: none !important;
 }
 
 .program-mini-calendar-nav-btn:hover {
@@ -485,6 +483,9 @@
   border-radius: 4px;
   transition: background-color 0.2s;
   position: relative;
+  width: 30px;
+  height: 30px;
+  margin: 4px;
 }
 
 .program-mini-calendar-cell:hover {
@@ -495,19 +496,17 @@
   background-color: rgba(1, 161, 175, 0.1);
 }
 
-.program-mini-calendar-cell--today .program-mini-calendar-date {
+.program-mini-calendar-cell--today {
   background-color: var(--color-brand-primary);
-  color: var(--color-bg-base);
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
-.program-mini-calendar-cell--other-month .program-mini-calendar-date {
-  color: #bfbfbf;
+.program-mini-calendar-cell--today .program-mini-calendar-date {
+  color: var(--default-WT);
 }
 
 .program-mini-calendar-date {
@@ -533,6 +532,27 @@
   border: none;
 }
 
+/* 고정 miniContentHeight 제거 → 실제 행 높이만큼만 차지 */
+.program-mini-calendar .ant-picker-calendar-mini .ant-picker-content {
+  height: auto !important;
+  min-height: 0;
+}
+
+.program-mini-calendar .ant-picker-date-panel,
+.program-mini-calendar .ant-picker-panel {
+  height: auto;
+}
+
+/* 6행 고정 그리드 중, 표시 월 날짜가 하나도 없는 행은 숨김 (예: 말일 이후 다음 달만 있는 줄) */
+.program-mini-calendar .ant-picker-content tbody tr:not(:has(.ant-picker-cell-in-view)) {
+  display: none;
+}
+
+/* 헤더 숨김 후에도 패널에 남는 상단 구분선 제거 */
+.program-mini-calendar .ant-picker-calendar .ant-picker-panel {
+  border-top: none;
+}
+
 .program-mini-calendar .ant-picker-calendar-mini .ant-picker-calendar-header {
   display: none;
 }
@@ -549,6 +569,12 @@
 .program-mini-calendar .ant-picker-calendar-date-value,
 .program-mini-calendar .ant-picker-calendar-date-content {
   display: none;
+}
+
+/* 현재 표시 월 밖 날짜: rc-picker는 ant-picker-cell-in-view 미부여 — 숫자 숨김·선택 불가 */
+.program-mini-calendar .ant-picker-cell:not(.ant-picker-cell-in-view) {
+  pointer-events: none;
+  visibility: hidden;
 }
 
 /* ===== 일정 리스트 ===== */
@@ -723,4 +749,26 @@
   min-width: 0;
   overflow: hidden;
   min-height: 0;
+}
+
+/* 미니 캘린더 요일 표시 스타일 */
+.program-mini-calendar .ant-picker-calendar .ant-picker-date-panel .ant-picker-content th {
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-family: var(--font-family-number);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 12px;
+  padding-bottom: 8px;
+}
+
+.program-mini-calendar-date {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-number);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%; /* 20.8px */
 }

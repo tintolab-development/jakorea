@@ -4,10 +4,18 @@
  */
 
 import { Calendar } from 'antd'
+import enUS from 'antd/es/calendar/locale/en_US'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import updateLocale from 'dayjs/plugin/updateLocale'
 import './program-calendar-view.css'
+
+dayjs.extend(updateLocale)
+dayjs.updateLocale('en', {
+  weekdaysMin: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+})
+dayjs.locale('en')
 
 interface ProgramMiniCalendarProps {
   currentMonth: Dayjs
@@ -35,21 +43,11 @@ export function ProgramMiniCalendar({
   const headerRender = () => {
     return (
       <div className="program-mini-calendar-header">
-        <button
-          type="button"
-          className="program-mini-calendar-nav-btn"
-          onClick={handlePrevMonth}
-        >
+        <button type="button" className="program-mini-calendar-nav-btn" onClick={handlePrevMonth}>
           <LeftOutlined />
         </button>
-        <span className="program-mini-calendar-title">
-          {currentMonth.format('YYYY.MM')}
-        </span>
-        <button
-          type="button"
-          className="program-mini-calendar-nav-btn"
-          onClick={handleNextMonth}
-        >
+        <span className="program-mini-calendar-title">{currentMonth.format('YYYY.MM')}</span>
+        <button type="button" className="program-mini-calendar-nav-btn" onClick={handleNextMonth}>
           <RightOutlined />
         </button>
       </div>
@@ -57,13 +55,16 @@ export function ProgramMiniCalendar({
   }
 
   const dateFullCellRender = (date: Dayjs) => {
+    if (!date.isSame(currentMonth, 'month')) {
+      return null
+    }
+
     const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
-    const isCurrentMonth = date.isSame(currentMonth, 'month')
 
     return (
       <div
-        className={`program-mini-calendar-cell ${isToday ? 'program-mini-calendar-cell--today' : ''} ${isSelected ? 'program-mini-calendar-cell--selected' : ''} ${!isCurrentMonth ? 'program-mini-calendar-cell--other-month' : ''}`}
+        className={`program-mini-calendar-cell ${isToday ? 'program-mini-calendar-cell--today' : ''} ${isSelected ? 'program-mini-calendar-cell--selected' : ''}`}
         onClick={() => onDateSelect(date)}
       >
         <span className="program-mini-calendar-date">{date.date()}</span>
@@ -77,6 +78,7 @@ export function ProgramMiniCalendar({
       <Calendar
         fullscreen={false}
         value={currentMonth}
+        locale={enUS}
         fullCellRender={dateFullCellRender}
         onSelect={onDateSelect}
         headerRender={() => null}
