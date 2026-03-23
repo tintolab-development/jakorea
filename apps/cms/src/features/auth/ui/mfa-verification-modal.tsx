@@ -1,10 +1,9 @@
 /**
  * MFA/OTP 인증 모달
- * Phase 0.5.1: MFA/OTP UX (NFR-SEC-AUT-01)
- * 시니어 개발자 관점: 컴포넌트 및 Hook 분리로 관심사 분리
+ * Phase 0.5.1: MFA/OTP UX — TOTP (Microsoft Authenticator)
  */
 
-import { Modal, Form, Alert, Typography, App } from 'antd'
+import { Modal, Form, Alert, Typography, App, Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMfaVerification } from '@/features/auth/hooks/use-mfa-verification'
 import { MfaModalHeader } from './mfa-modal-header'
@@ -26,16 +25,14 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
     otpCode,
     setOtpCode,
     mfaState,
-    remainingSeconds,
-    isExpired,
-    canResend,
-    resendCooldownSeconds,
+    provisioning,
+    provisioningLoading,
+    provisioningError,
     failedAttempts,
     isLocked,
-    sending,
     verifying,
     handleVerify,
-    handleResend,
+    refreshProvisioning,
     lockMessage,
   } = useMfaVerification({ open, messageApi: message })
 
@@ -58,50 +55,58 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
         },
       }}
     >
-      <MfaModalHeader phoneNumber={mfaState?.phoneNumber} />
+      <MfaModalHeader accountLabel={mfaState?.accountLabel} />
 
       {lockMessage && (
-        <Alert
-          type="error"
-          message={lockMessage}
-          style={{ marginBottom: 24 }}
-          showIcon
-        />
+        <Alert type="error" message={lockMessage} style={{ marginBottom: 24 }} showIcon />
       )}
 
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleVerify}
-      >
-        <MfaOtpInput
-          onChange={setOtpCode}
-          disabled={isLocked || isExpired}
-        />
+      {provisioningError && (
+        <Alert type="warning" message={provisioningError} style={{ marginBottom: 16 }} showIcon />
+      )}
 
-        <MfaOtpStatus
-          remainingSeconds={remainingSeconds}
-          isExpired={isExpired}
-          failedAttempts={failedAttempts}
-        />
+      <div style={{ textAlign: 'center', marginBottom: 20, minHeight: 220 }}>
+        {provisioningLoading ? (
+          <Spin tip="QR 코드 생성 중…" />
+        ) : provisioning ? (
+          <>
+            <img
+              src={provisioning.qrDataUrl}
+              alt="TOTP QR"
+              width={220}
+              height={220}
+              style={{ display: 'inline-block' }}
+            />
+            <div style={{ marginTop: 12 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                수동 입력 키 (Base32)
+              </Text>
+              <br />
+              <Text code copyable={{ text: provisioning.manualSecret }} style={{ fontSize: 12 }}>
+                {provisioning.manualSecret}
+              </Text>
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      <Form form={form} layout="vertical" onFinish={handleVerify}>
+        <MfaOtpInput onChange={setOtpCode} disabled={isLocked} />
+
+        <MfaOtpStatus failedAttempts={failedAttempts} />
 
         <MfaActionButtons
           otpCode={otpCode}
           verifying={verifying}
-          sending={sending}
-          canResend={canResend}
-          resendCooldownSeconds={resendCooldownSeconds}
+          qrLoading={provisioningLoading}
           isLocked={isLocked}
-          isExpired={isExpired}
-          onResend={handleResend}
+          onRefreshQr={() => void refreshProvisioning()}
         />
       </Form>
 
       <div style={{ marginTop: 24, textAlign: 'center' }}>
         <Text type="secondary" style={{ fontSize: '12px' }}>
-          인증번호가 오지 않나요? 재전송 버튼을 클릭하세요.
-          <br />
-          테스트용 인증번호: <Text code>123456</Text> 또는 <Text code>000000</Text>
+          개발용: 시크릿은 Mock 데이터에 고정되어 있습니다. 운영 환경에서는 서버에서만 검증해야 합니다.
         </Text>
       </div>
     </Modal>
