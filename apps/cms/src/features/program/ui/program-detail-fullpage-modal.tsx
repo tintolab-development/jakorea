@@ -26,6 +26,7 @@ import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
 import { ParticipatingInstitutionsSection } from './participating-institutions-section'
 import { ParticipatingInstructorsSection } from './participating-instructors-section'
 import { ApplicantDetails } from './detail-modal/applicants-detail'
+import { ProgramManagersTab } from './program-managers-tab'
 import type { Program } from '@/types/domain'
 import {
   DetailModalSidebar,
@@ -683,6 +684,12 @@ export function ProgramDetailFullPageModal({
                 )}
 
                 {activeLnb === 'applicants' && <ApplicantDetails menu={activeChildMenu} />}
+
+                {activeLnb === 'managers' && displayProgram?.id && (
+                  <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+                    <ProgramManagersTab programId={displayProgram.id} />
+                  </div>
+                )}
 
                 {activeLnb === 'progress' && (
                   <div className="program-detail-fullpage-modal__info-tab">
