@@ -1,19 +1,23 @@
 /**
  * 담당자 등록 모달
- * 프로그램 상세 > 담당자 정보 탭 > 등록 버튼 클릭 시
+ * 프로그램 상세 > 담당자 정보 탭 > 등록 버튼
+ * ContentModal 레이아웃(패딩 28/30/34) · 담당자명 Select · 권한 설정 Radio
  */
 
-import { useEffect, useState } from 'react'
-import { Form, Input, Select, Modal, Button } from 'antd'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { useEffect, useMemo, useState } from 'react'
+import { Form, Select, Radio, Modal, Button } from 'antd'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ProgramRole } from '@/types/user'
-import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
+import {
+  PROGRAM_ROLE_LABELS,
+  getAssignableManagerCandidates,
+  type ProgramManagerRow,
+} from '@/data/mock/program-managers'
 import {
   canAddProgramPmFromPmCount,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
-import type { ProgramManagerRow } from '@/data/mock/program-managers'
 import './add-manager-modal.css'
 
 const ROLE_OPTIONS: { label: string; value: ProgramRole }[] = [
@@ -21,6 +25,11 @@ const ROLE_OPTIONS: { label: string; value: ProgramRole }[] = [
   { label: PROGRAM_ROLE_LABELS.PARTNER, value: 'PARTNER' },
   { label: PROGRAM_ROLE_LABELS.ASSISTANT, value: 'ASSISTANT' },
 ]
+
+type AddManagerModalFormValues = {
+  managerPreset: string
+  role: ProgramRole
+}
 
 export interface AddManagerFormValues {
   name: string
@@ -34,6 +43,8 @@ interface AddManagerModalProps {
   onCancel: () => void
   /** PM(ProgramRole.OWNER) 인원 — 프로그램당 상한 검증용 */
   currentOwnerCount: number
+  /** 이미 해당 프로그램 담당자로 등록된 이름 — 선택 목록에서 제외 */
+  excludeManagerNames?: string[]
   onAdd: (values: AddManagerFormValues) => void
 }
 
@@ -41,30 +52,42 @@ export function AddManagerModal({
   open,
   onCancel,
   currentOwnerCount,
+  excludeManagerNames = [],
   onAdd,
 }: AddManagerModalProps) {
-  const [form] = Form.useForm<AddManagerFormValues>()
+  const [form] = Form.useForm<AddManagerModalFormValues>()
   const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
 
+  const assignablePool = useMemo(
+    () => getAssignableManagerCandidates(excludeManagerNames),
+    [excludeManagerNames]
+  )
+
   useEffect(() => {
-    if (open) {
-      form.resetFields()
+    if (!open) return
+    form.resetFields()
+    if (!canAddProgramPmFromPmCount(currentOwnerCount)) {
+      form.setFieldsValue({ role: 'PARTNER' })
     }
-  }, [open, form])
+  }, [open, form, currentOwnerCount])
 
   useEffect(() => {
     if (!open) setShowOwnerLimitModal(false)
   }, [open])
 
-  const handleSubmit = (values: AddManagerFormValues) => {
+  const handleSubmit = (values: AddManagerModalFormValues) => {
+    const picked = assignablePool.find(m => m.id === values.managerPreset)
+    if (!picked) return
+
     if (values.role === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)) {
       setShowOwnerLimitModal(true)
       return
     }
+
     onAdd({
-      name: values.name.trim(),
-      email: values.email.trim(),
-      phone: values.phone.trim(),
+      name: picked.name,
+      email: picked.email,
+      phone: picked.phone,
       role: values.role,
     })
     form.resetFields()
@@ -82,90 +105,75 @@ export function AddManagerModal({
         취소
       </AppButton>
       <AppButton variant="primary" size="large" modalTeal onClick={() => form.submit()}>
-        등록
+        담당자 등록
       </AppButton>
     </>
   )
 
   return (
-    <TealHeaderModal
-      open={open}
-      onCancel={handleCancel}
-      title="담당자 등록"
-      footer={footer}
-      width={800}
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        className="add-manager-modal__form"
-        onFinish={handleSubmit}
-        initialValues={{ name: '', email: '', phone: '', role: 'ASSISTANT' }}
-        requiredMark={(labelNode, { required }) =>
-          required ? (
-            <>
-              {labelNode}
-              <span className="add-manager-modal__required-asterisk" aria-hidden>
-                {' '}
-                *
-              </span>
-            </>
-          ) : (
-            labelNode
-          )
-        }
+    <>
+      <ContentModal
+        open={open}
+        onCancel={handleCancel}
+        title="담당자 등록"
+        width={560}
+        footer={footer}
+        className="add-manager-modal"
       >
-        <div className="add-manager-modal__fields">
-          <div className="add-manager-modal__row">
+        <div className="add-manager-modal__body">
+          <Form<AddManagerModalFormValues>
+            form={form}
+            layout="vertical"
+            className="add-manager-modal__form"
+            onFinish={handleSubmit}
+            initialValues={{ managerPreset: undefined, role: 'OWNER' }}
+            requiredMark={false}
+          >
             <Form.Item
-              name="name"
+              name="managerPreset"
               label="담당자명"
-              rules={[{ required: true, message: '담당자명을 입력해주세요' }]}
-              className="add-manager-modal__field"
-            >
-              <Input placeholder="담당자명을 입력하세요" size="large" allowClear />
-            </Form.Item>
-            <Form.Item
-              name="role"
-              label="권한"
-              rules={[{ required: true, message: '권한을 선택해주세요' }]}
+              rules={[{ required: true, message: '담당자를 선택해주세요' }]}
               className="add-manager-modal__field"
             >
               <Select
-                placeholder="권한을 선택해주세요"
+                placeholder="담당자를 선택하세요"
                 size="large"
-                options={ROLE_OPTIONS.map(opt => ({
-                  ...opt,
-                  disabled:
-                    opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount),
+                allowClear
+                className="add-manager-modal__select"
+                options={assignablePool.map(m => ({
+                  value: m.id,
+                  label: m.name,
                 }))}
+                notFoundContent={
+                  assignablePool.length === 0 ? '등록 가능한 담당자가 없습니다' : undefined
+                }
                 getPopupContainer={() => document.body}
               />
             </Form.Item>
-          </div>
-          <div className="add-manager-modal__row">
+
             <Form.Item
-              name="phone"
-              label="연락처"
-              rules={[{ required: true, message: '연락처를 입력해주세요' }]}
+              name="role"
+              label="권한 설정"
+              rules={[{ required: true, message: '권한을 선택해주세요' }]}
               className="add-manager-modal__field"
             >
-              <Input placeholder="010-1234-5678" size="large" allowClear />
+              <Radio.Group className="add-manager-modal__role-radios" size="large">
+                {ROLE_OPTIONS.map(opt => (
+                  <Radio
+                    key={opt.value}
+                    value={opt.value}
+                    disabled={
+                      opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)
+                    }
+                  >
+                    {opt.label}
+                  </Radio>
+                ))}
+              </Radio.Group>
             </Form.Item>
-            <Form.Item
-              name="email"
-              label="이메일"
-              rules={[
-                { required: true, message: '이메일을 입력해주세요' },
-                { type: 'email', message: '올바른 이메일 형식이 아닙니다' },
-              ]}
-              className="add-manager-modal__field"
-            >
-              <Input placeholder="이메일을 입력하세요" size="large" allowClear />
-            </Form.Item>
-          </div>
+          </Form>
         </div>
-      </Form>
+      </ContentModal>
 
       <Modal
         title="설정 불가"
@@ -182,7 +190,7 @@ export function AddManagerModal({
       >
         {PROGRAM_PM_ROLE_LIMIT_MESSAGE}
       </Modal>
-    </TealHeaderModal>
+    </>
   )
 }
 

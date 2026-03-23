@@ -1,62 +1,90 @@
 /**
- * 담당자 권한 수정 모달
- * 담당자명(읽기 전용), 권한 설정(라디오), 담당자 삭제 링크, 취소/변경 푸터
+ * 담당자 권한 수정 — ContentModal
+ * 패딩: 상 26px · 좌우 30px · 하 34px
+ * 타이틀↔본문 30px · 라벨↔컨트롤 6px · 필드 블록·라디오↔삭제·삭제↔푸터 30px
  */
 
-/* 모달: 헤더+바디+푸터(취소/변경) 모두 노출되도록 flex */
-.edit-manager-role-modal__root.ant-modal .ant-modal-content {
-    max-height: min(400px, 90vh);
-    height: auto;
-    min-height: 307px;
+.content-modal.edit-manager-role-modal.ant-modal .ant-modal-content {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    padding: 26px 30px 34px;
 }
 
-.edit-manager-role-modal__root.ant-modal .ant-modal-body {
+.edit-manager-role-modal.ant-modal .ant-modal-body {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
+    padding: 0;
 }
 
-.edit-manager-role-modal__root.ant-modal .teal-header-modal__header {
+.edit-manager-role-modal .teal-header-modal__header {
     flex-shrink: 0;
 }
 
-.edit-manager-role-modal__root.ant-modal .teal-header-modal__body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+.edit-manager-role-modal .teal-header-modal__body {
+    flex-shrink: 0;
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background: var(--color-bg-base);
+    margin-top: 30px;
 }
 
-.edit-manager-role-modal__root.ant-modal .teal-header-modal__footer {
+.edit-manager-role-modal .teal-header-modal__footer {
     flex-shrink: 0;
-    padding-top: var(--spacing-16);
+    justify-content: flex-end;
+    padding-top: 0;
+    margin-top: 30px;
+}
+
+.edit-manager-role-modal__body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .edit-manager-role-modal__form {
     width: 100%;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-30);
+    margin: 0;
+}
+
+.edit-manager-role-modal__form.ant-form-vertical .ant-form-item.edit-manager-role-modal__field {
+    margin-bottom: 0 !important;
 }
 
 .edit-manager-role-modal__field {
-    margin-bottom: var(--spacing-20);
+    margin-bottom: 0 !important;
 }
 
-.edit-manager-role-modal__field:last-of-type {
-    margin-bottom: 0;
+/* 라벨 ↔ 컨트롤 6px */
+.edit-manager-role-modal__field .ant-form-item-label {
+    padding-bottom: 0;
+    margin-bottom: var(--spacing-6);
 }
 
 .edit-manager-role-modal__field .ant-form-item-label>label {
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-500);
     color: var(--color-text-label);
+    height: auto;
 }
 
-/* 담당자명: 읽기 전용, 회색 배경 */
+/* 담당자명: 읽기 전용 회색 배경 */
 .edit-manager-role-modal__name-input {
     background: var(--color-bg-secondary) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-4) !important;
     cursor: default;
 }
 
@@ -64,31 +92,36 @@
     color: var(--color-text-primary);
 }
 
-/* 권한 설정: 라디오(원형) row 정렬 */
 .edit-manager-role-modal__role-radios {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: var(--spacing-16);
+    align-items: center;
+    gap: var(--spacing-24);
 }
 
 .edit-manager-role-modal__role-radios .ant-radio-wrapper {
+    margin-inline-end: 0;
     font-size: var(--font-size-14);
-    color: var(--color-text-primary);
+    font-weight: var(--font-weight-500);
+    color: var(--color-text-heading);
+}
+
+.edit-manager-role-modal__role-radios .ant-radio-wrapper-checked {
+    color: var(--color-modal-header);
 }
 
 .edit-manager-role-modal__role-radios .ant-radio-checked .ant-radio-inner {
     border-color: var(--color-modal-header);
-    background: var(--color-modal-header);
+    background-color: #fff;
 }
 
-.edit-manager-role-modal__role-radios .ant-radio-inner::after {
-    background: var(--color-bg-base);
+.edit-manager-role-modal__role-radios .ant-radio-checked .ant-radio-inner::after {
+    background-color: var(--color-modal-header);
 }
 
-/* 담당자 삭제 링크: 빨간색, 밑줄, 클릭 가능 */
 .edit-manager-role-modal__delete-wrap {
-    margin-top: var(--spacing-16);
+    margin-top: 0;
 }
 
 .edit-manager-role-modal__delete-link {
@@ -97,12 +130,12 @@
     background: none;
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-500);
-    color: var(--color-danger-secondary);
+    color: var(--color-danger-secondary, #e44970);
     text-decoration: underline;
     cursor: pointer;
     line-height: 1.5;
 }
 
 .edit-manager-role-modal__delete-link:hover {
-    color: var(--color-danger-secondary-hover);
+    color: var(--color-danger-secondary-hover, #c73d5f);
 }
