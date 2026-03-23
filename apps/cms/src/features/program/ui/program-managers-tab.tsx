@@ -1,10 +1,10 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/권한 수정
+ * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/정보상세·권한 수정
  */
 
-import { useMemo, useState, useEffect } from 'react'
-import { Card, Table, Row, Col, Select, message } from 'antd'
+import { useMemo, useState, useEffect, useCallback } from 'react'
+import { Table, Select, message } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
@@ -17,6 +17,11 @@ import {
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/data/mock/program-managers'
+import {
+  canAddProgramPm,
+  canSetProgramManagerRole,
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import {
   AddManagerModal,
@@ -25,6 +30,10 @@ import {
 } from './add-manager-modal'
 import { EditManagerRoleModal } from './edit-manager-role-modal'
 import { ManagerDeleteGuideModal } from './manager-delete-guide-modal'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import './program-managers-tab.css'
 
 const ROLE_OPTIONS = [
@@ -34,16 +43,35 @@ const ROLE_OPTIONS = [
   { label: PROGRAM_ROLE_LABELS.ASSISTANT, value: 'ASSISTANT' },
 ]
 
+const TABLE_ROLE_ORDER: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
+
+function maskPhoneDisplay(phone: string): string {
+  const parts = phone.split('-')
+  if (parts.length === 3 && parts[0].length >= 2 && parts[2].length >= 2) {
+    return `${parts[0]}-****-${parts[2]}`
+  }
+  return phone
+}
+
+function maskEmailDisplay(email: string): string {
+  const at = email.indexOf('@')
+  if (at <= 0) return email
+  const local = email.slice(0, at)
+  const domain = email.slice(at)
+  const head = local.slice(0, Math.min(5, local.length))
+  return `${head}***${domain}`
+}
+
 interface ProgramManagersTabProps {
   programId: string
 }
 
 export function ProgramManagersTab({ programId: _programId }: ProgramManagersTabProps) {
   const { filters, setFilter } = useProgramManagersParams()
-  /** 담당자명은 로컬 state로 두고 blur/조회 시에만 URL 동기화 (한글 IME 조합 깨짐 방지) */
   const [localManagerName, setLocalManagerName] = useState(() => filters.managerName ?? '')
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
+  const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
 
   useEffect(() => {
     setLocalManagerName(filters.managerName ?? '')
@@ -55,11 +83,12 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   const [editRoleModalOpen, setEditRoleModalOpen] = useState(false)
   const [managerForEditRole, setManagerForEditRole] = useState<ProgramManagerRow | null>(null)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
-  /** 권한 수정 모달 내 "담당자 삭제"로 열린 경우 해당 담당자 (삭제 안내 모달 연동) */
-  const [deleteFromEditManager, setDeleteFromEditManager] = useState<ProgramManagerRow | null>(null)
+  const [deleteFromEditManager, setDeleteFromEditManager] = useState<ProgramManagerRow | null>(
+    null
+  )
 
   const filteredManagers = useMemo(() => {
-    return managerList.filter(row => {
+    const list = managerList.filter(row => {
       const keyword = (appliedFilters.managerName || '').trim().toLowerCase()
       if (keyword && !row.name.toLowerCase().includes(keyword)) return false
       if (
@@ -71,11 +100,15 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
       }
       return true
     })
+    return [...list].sort((a, b) => b.no - a.no)
   }, [managerList, appliedFilters])
 
   const handleSearch = () => {
     setFilter('managerName', localManagerName)
-    setAppliedFilters({ ...filters, managerName: localManagerName })
+    setAppliedFilters({
+      managerName: localManagerName,
+      role: filters.role,
+    })
   }
 
   const handleDeleteClick = () => {
@@ -86,12 +119,24 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
     setDeleteGuideModalOpen(true)
   }
 
+  const handleViewDetailClick = () => {
+    if (selectedRowKeys.length !== 1) {
+      message.warning('정보 상세를 보려면 담당자를 한 명 선택해 주세요.')
+      return
+    }
+    const id = String(selectedRowKeys[0])
+    const row = managerList.find(r => r.id === id)
+    if (row) {
+      setManagerForEditRole(row)
+      setEditRoleModalOpen(true)
+    }
+  }
+
   const managerNamesToDeleteFromTable = useMemo(() => {
     const keysSet = new Set(selectedRowKeys.map(String))
     return managerList.filter(row => keysSet.has(row.id)).map(row => row.name)
   }, [selectedRowKeys, managerList])
 
-  /** 삭제 안내 모달에 표시할 이름 목록: 권한 수정 모달에서 연 경우 1명, 테이블 삭제 버튼이면 선택된 N명 */
   const managerNamesToDelete = deleteFromEditManager
     ? [deleteFromEditManager.name]
     : managerNamesToDeleteFromTable
@@ -120,6 +165,10 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   }
 
   const handleAdd = (values: AddManagerFormValues) => {
+    if (values.role === 'OWNER' && !canAddProgramPm(managerList)) {
+      message.error(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
+      return
+    }
     const nextNo = managerList.length > 0 ? Math.max(...managerList.map(r => r.no)) + 1 : 1
     const nextId = `manager-new-${Date.now()}`
     const newRow = buildManagerRowFromForm(values, nextNo, nextId)
@@ -127,10 +176,10 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
     message.success('담당자가 등록되었습니다.')
   }
 
-  const openEditRoleModal = (record: ProgramManagerRow) => {
+  const openEditRoleModal = useCallback((record: ProgramManagerRow) => {
     setManagerForEditRole(record)
     setEditRoleModalOpen(true)
-  }
+  }, [])
 
   const handleSaveRole = (role: ProgramRole) => {
     if (!managerForEditRole) return
@@ -141,6 +190,50 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
     setManagerForEditRole(null)
     setEditRoleModalOpen(false)
   }
+
+  const handleTableRoleChange = useCallback(
+    (recordId: string, newRole: ProgramRole) => {
+      const manager = managerList.find(m => m.id === recordId)
+      if (!manager) return
+      if (manager.role === newRole) {
+        setOpenRoleDropdownId(null)
+        return
+      }
+      if (!canSetProgramManagerRole(managerList, recordId, newRole)) {
+        message.error(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
+        setOpenRoleDropdownId(null)
+        return
+      }
+      setManagerList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, role: newRole } : row))
+      )
+      message.success('권한이 변경되었습니다.')
+      setOpenRoleDropdownId(null)
+    },
+    [managerList]
+  )
+
+  const roleItemDisabled = useCallback(
+    (record: ProgramManagerRow, optionRole: ProgramRole) => {
+      if (record.role === optionRole) return true
+      if (optionRole !== 'OWNER') return false
+      return !canSetProgramManagerRole(managerList, record.id, 'OWNER')
+    },
+    [managerList]
+  )
+
+  const renderRoleBadge = useCallback((r: ProgramRole) => {
+    const label = PROGRAM_ROLE_LABELS[r]
+    const mod =
+      r === 'OWNER'
+        ? 'program-managers-tab__role-badge--owner'
+        : r === 'PARTNER'
+          ? 'program-managers-tab__role-badge--partner'
+          : 'program-managers-tab__role-badge--assistant'
+    return (
+      <span className={`program-managers-tab__role-badge ${mod}`}>{label}</span>
+    )
+  }, [])
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
     () => [
@@ -156,16 +249,21 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 100,
+        width: 152,
         align: 'center',
-        render: (role: ProgramRole) => {
-          const label = PROGRAM_ROLE_LABELS[role]
-          return role === 'OWNER' ? (
-            <span className="program-managers-tab__role-pm">{label}</span>
-          ) : (
-            label
-          )
-        },
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (role: ProgramRole, record: ProgramManagerRow) => (
+          <StatusDropdownCell<ProgramRole>
+            status={role}
+            statusOptions={TABLE_ROLE_ORDER}
+            renderBadge={renderRoleBadge}
+            isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
+            onChange={key => handleTableRoleChange(record.id, key)}
+            isOpen={openRoleDropdownId === record.id}
+            onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
+            emptyPlaceholder="-"
+          />
+        ),
       },
       {
         title: '연락처',
@@ -173,6 +271,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         key: 'phone',
         width: 140,
         align: 'center',
+        render: (phone: string) => maskPhoneDisplay(phone),
       },
       {
         title: '이메일',
@@ -181,12 +280,13 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         width: 180,
         align: 'center',
         ellipsis: true,
+        render: (email: string) => maskEmailDisplay(email),
       },
       {
         title: '등록일시',
         dataIndex: 'registeredAt',
         key: 'registeredAt',
-        width: 140,
+        width: 160,
         align: 'center',
       },
       {
@@ -208,92 +308,92 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         ),
       },
     ],
-    []
+    [
+      handleTableRoleChange,
+      openRoleDropdownId,
+      openEditRoleModal,
+      renderRoleBadge,
+      roleItemDisabled,
+    ]
   )
 
   return (
     <div className="program-managers-tab">
-      <Card className="program-managers-tab__card" bordered={false}>
-        <div className="program-managers-tab__top">
-          <div className="program-managers-tab__filters">
-            <Row
-              align="middle"
-              wrap={false}
-              className="program-managers-tab__filter-row"
-            >
-              <Col
-                flex="0 1 auto"
-                className="program-managers-tab__filter-col program-managers-tab__filter-col--search"
-              >
-                <LabeledSearchInput
-                  label="담당자명"
+      <div className="program-managers-tab__top">
+        <div className="program-managers-tab__filters">
+          <div className="program-managers-tab__filter-row">
+            <div className="program-managers-tab__filter-grow">
+              <LabeledSearchInput
+                label="담당자명"
+                placeholder="담당자명을 입력하세요"
+                value={localManagerName}
+                onChange={setLocalManagerName}
+                onBlur={() => setFilter('managerName', localManagerName)}
+                width="100%"
+                showPrefixIcon={false}
+              />
+            </div>
+            <div className="program-managers-tab__filter-grow">
+              <div className="program-managers-tab__filter-field">
+                <span className="program-managers-tab__filter-label">권한</span>
+                <Select
                   placeholder="전체"
-                  value={localManagerName}
-                  onChange={setLocalManagerName}
-                  onBlur={() => setFilter('managerName', localManagerName)}
-                  width="100%"
-                  showPrefixIcon={false}
+                  value={filters.role}
+                  onChange={v => setFilter('role', (v as string) ?? 'all')}
+                  options={ROLE_OPTIONS}
+                  getPopupContainer={() => document.body}
+                  className="program-managers-tab__role-filter-select"
                 />
-              </Col>
-              <Col flex="0 1 auto" className="program-managers-tab__filter-col">
-                <div className="program-managers-tab__filter-field">
-                  <span className="program-managers-tab__filter-label">권한</span>
-                  <Select
-                    placeholder="전체"
-                    value={filters.role || undefined}
-                    onChange={v => setFilter('role', v ?? 'all')}
-                    allowClear
-                    options={ROLE_OPTIONS}
-                    getPopupContainer={() => document.body}
-                  />
-                </div>
-              </Col>
-              <Col flex="none" className="program-managers-tab__filter-col--btn">
-                <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                  조회
-                </AppButton>
-              </Col>
-            </Row>
+              </div>
+            </div>
+            <div className="program-managers-tab__filter-actions">
+              <AppButton variant="primary" size="filter" onClick={handleSearch}>
+                조회
+              </AppButton>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="program-managers-tab__divider" />
-        <div className="program-managers-tab__below-divider">
-          <div className="program-managers-tab__table-header">
-            <div className="program-managers-tab__table-heading">
-              <span className="program-managers-tab__table-title">담당자 목록</span>
-              <span className="program-managers-tab__table-description">
-                총 {filteredManagers.length}건
-              </span>
-            </div>
-            <div className="program-managers-tab__table-actions">
-              <AppButton
-                variant="danger"
-                size="large"
-                dangerFillOnHover
-                onClick={handleDeleteClick}
-              >
-                삭제
-              </AppButton>
-              <AppButton variant="primary" size="large" onClick={() => setAddModalOpen(true)}>
-                등록
-              </AppButton>
-            </div>
+      <div className="program-managers-tab__divider" />
+      <div className="program-managers-tab__below-divider">
+        <div className="program-managers-tab__table-header">
+          <div className="program-managers-tab__table-heading">
+            <span className="program-managers-tab__table-title">담당자 목록</span>
+            <span className="program-managers-tab__table-description">
+              {filteredManagers.length}건
+            </span>
           </div>
-          <Table<ProgramManagerRow>
-            className="program-managers-tab__table"
-            rowKey="id"
-            size="middle"
-            pagination={false}
-            rowSelection={{
-              selectedRowKeys,
-              onChange: keys => setSelectedRowKeys(keys as string[]),
-            }}
-            columns={columns}
-            dataSource={filteredManagers}
-          />
+          <div className="program-managers-tab__table-actions">
+            <AppButton
+              variant="danger"
+              size="large"
+              dangerFillOnHover
+              onClick={handleDeleteClick}
+            >
+              담당자 삭제
+            </AppButton>
+            <AppButton variant="primary" size="large" onClick={() => setAddModalOpen(true)}>
+              담당자 등록
+            </AppButton>
+            <AppButton variant="primary" size="large" onClick={handleViewDetailClick}>
+              정보상세 보기
+            </AppButton>
+          </div>
         </div>
-      </Card>
+        <Table<ProgramManagerRow>
+          className="program-managers-tab__table"
+          rowKey="id"
+          size="middle"
+          pagination={false}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: keys => setSelectedRowKeys(keys as string[]),
+          }}
+          columns={columns}
+          dataSource={filteredManagers}
+        />
+      </div>
 
       <AddManagerModal
         open={addModalOpen}
