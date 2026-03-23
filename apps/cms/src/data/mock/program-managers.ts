@@ -22,8 +22,8 @@ export const PROGRAM_ROLE_LABELS: Record<ProgramRole, string> = {
   ASSISTANT: '보조',
 }
 
-/** PM(담당자) 권한 부여 가능 최대 인원 */
-export const MAX_OWNER_COUNT = 3
+/** @deprecated {@link MAX_PM_PER_PROGRAM} 사용 권장 (엔티티 정책과 동일 값) */
+export { MAX_PM_PER_PROGRAM as MAX_OWNER_COUNT } from '@/entities/program/lib/program-pm-role-policy'
 
 export const MOCK_PROGRAM_MANAGERS: ProgramManagerRow[] = [
   {
