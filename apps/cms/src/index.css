@@ -2,9 +2,8 @@
 @import './shared/ui/filter-controls-common.css';
 
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
-
 :root {
-  font-family: var(--font-family-primary, system-ui), Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-family-primary), Avenir, Helvetica, Arial, sans-serif;
   line-height: var(--line-height-normal, 1.5);
   font-weight: var(--font-weight-regular, 400);
 
@@ -34,6 +33,11 @@ body {
   min-width: 1920px;
   min-height: 100vh;
   background-color: var(--color-bg-tertiary);
+  font-family:
+    var(--font-family-primary),
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 h1 {

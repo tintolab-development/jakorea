@@ -4,6 +4,17 @@
  * 메인 컬러: #01A1AF, 서브 컬러: #296075, #22404B
  */
 
+/* Outfit 폰트 로드 */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+/* Pretendard 폰트 로드 */
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../../../public/fonts/PretendardVariable.woff2') format('woff2');
+  font-weight: 100 200 300 400 500 600 700 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* 브랜드 컬러 */
   --color-brand-primary: #01a1af;

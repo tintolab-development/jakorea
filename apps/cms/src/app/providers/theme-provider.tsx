@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           borderRadiusSM: 4,
 
           // Font
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          fontFamily: 'Pretendard, system-ui, sans-serif',
           fontSize: 14,
           fontSizeLG: 16,
           fontSizeSM: 12,
@@ -58,4 +58,3 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     </ConfigProvider>
   )
 }
-
