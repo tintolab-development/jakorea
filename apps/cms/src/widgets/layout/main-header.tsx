@@ -199,7 +199,7 @@ export function MainHeader() {
               placement="bottomRight"
               overlayStyle={{ overflow: 'visible' }}
               dropdownRender={() => (
-                <div style={{ paddingTop: 1 }}>
+                <div className="main-header-notification-dropdown">
                   <NotificationDropdown
                     notifications={notifications}
                     unreadCount={unreadCount}
