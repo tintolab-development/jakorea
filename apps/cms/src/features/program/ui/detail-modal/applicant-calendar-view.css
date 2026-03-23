@@ -395,6 +395,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #595959;
+  box-sizing: border-box;
 }
 
 .applicant-calendar-event--selected {
@@ -431,58 +432,6 @@
   color: inherit;
   white-space: pre-wrap;
   font-family: inherit;
-}
-
-/* 학교/강사별 태그 배경색 (data-color-index 0~15) */
-.applicant-calendar-event[data-color-index='0'] {
-  background-color: #fcf8f8;
-}
-.applicant-calendar-event[data-color-index='1'] {
-  background-color: #fbefef;
-}
-.applicant-calendar-event[data-color-index='2'] {
-  background-color: #feebf6;
-}
-.applicant-calendar-event[data-color-index='3'] {
-  background-color: #ffdcdc;
-}
-.applicant-calendar-event[data-color-index='4'] {
-  background-color: #fffbf1;
-}
-.applicant-calendar-event[data-color-index='5'] {
-  background-color: #f1f3e0;
-}
-.applicant-calendar-event[data-color-index='6'] {
-  background-color: #ddf6d2;
-}
-.applicant-calendar-event[data-color-index='7'] {
-  background-color: #ecfae5;
-}
-.applicant-calendar-event[data-color-index='8'] {
-  background-color: #d8efd3;
-}
-.applicant-calendar-event[data-color-index='9'] {
-  background-color: #d4f6ff;
-}
-.applicant-calendar-event[data-color-index='10'] {
-  background-color: #c6e7ff;
-}
-.applicant-calendar-event[data-color-index='11'] {
-  background-color: #eef1ff;
-}
-.applicant-calendar-event[data-color-index='12'] {
-  background-color: #f4f8d3;
-}
-.applicant-calendar-event[data-color-index='13'] {
-  background-color: #fff9bf;
-}
-.applicant-calendar-event[data-color-index='14'] {
-  background-color: #fdffbc;
-}
-.applicant-calendar-event--selected[data-color-index] {
-  box-shadow: none;
-  outline: none;
-  border: none;
 }
 
 /* Week view */
@@ -611,8 +560,9 @@
 .applicant-schedule-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 10px 12px 10px 16px;
   border-radius: 6px;
   margin-bottom: 10px;
   cursor: pointer;
@@ -621,13 +571,13 @@
 }
 
 .applicant-schedule-item:hover {
-  background: #f5f5f5;
-  border-color: #d9d9d9;
-}
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
 
-/* 학교별 색상 적용 시 hover: 배경 약간 어둡게 */
-.applicant-schedule-item[data-has-color='true']:hover {
-  filter: brightness(0.97);
+  /* shadow/hover */
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 .applicant-schedule-item--selected {
@@ -652,6 +602,11 @@
 
 .applicant-schedule-item-checkbox {
   flex-shrink: 0;
+  padding: 12px;
+}
+.applicant-schedule-item-checkbox:hover {
+  border-radius: 6px;
+  background: rgba(1, 161, 175, 0.06);
 }
 
 .applicant-schedule-item-checkbox .ant-checkbox-wrapper {

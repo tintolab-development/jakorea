@@ -334,14 +334,17 @@ export function ProgramApplicantsTab({
     })
   }, [schoolList, appliedFilters])
 
+  /** 신청 학교 탭에서만 유효한 학교명이 남아 있으면 강사 목록이 전부 필터링되는 것을 막음 */
+  const instructorSchoolNames = useMemo(
+    () => new Set(MOCK_APPLICANT_INSTRUCTORS.map(r => r.schoolName)),
+    []
+  )
+
   const filteredInstructors = useMemo(() => {
     return instructorList.filter(row => {
-      if (
-        appliedFilters.schoolName &&
-        appliedFilters.schoolName !== 'all' &&
-        row.schoolName !== appliedFilters.schoolName
-      )
-        return false
+      const sn = appliedFilters.schoolName
+      const schoolFilterApplies = sn && sn !== 'all' && instructorSchoolNames.has(sn)
+      if (schoolFilterApplies && row.schoolName !== sn) return false
       if (
         appliedFilters.instructorName &&
         appliedFilters.instructorName !== 'all' &&
@@ -356,7 +359,7 @@ export function ProgramApplicantsTab({
         return false
       return true
     })
-  }, [instructorList, appliedFilters])
+  }, [instructorList, appliedFilters, instructorSchoolNames])
 
   const handleSearch = () => {
     setAppliedFilters(filters)

@@ -170,10 +170,13 @@
     opacity: 0.8;
 }
 
-/* 알림 드롭다운 스타일 */
+/* 알림 드롭다운 오버레이 루트 — 너비 고정으로 카테고리 전환 시 시프트 방지 */
 .main-header-notification-dropdown {
-    min-width: 320px;
-    max-width: 400px;
+    box-sizing: border-box;
+    width: 406px;
+    min-width: 406px;
+    max-width: 406px;
+    padding-top: 1px;
 }
 
 .main-header-notification-item {

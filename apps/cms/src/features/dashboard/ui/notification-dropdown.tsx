@@ -1,6 +1,6 @@
 /**
  * 알림 드롭다운 패널 (스펙: notification-dropdown-spec.md)
- * 406×500, 카테고리 필터 6개, 알림 목록
+ * 최대 406×500, 카테고리 필터 6개(한 줄), 알림 목록
  */
 
 import { Button, Empty, Typography } from 'antd'
@@ -114,7 +114,10 @@ export function NotificationDropdown({
                   <Text className="notification-dropdown-item-tag">
                     [{getCategoryLabel(notification.type)}]
                   </Text>
-                  <Text className="notification-dropdown-item-message">
+                  <Text
+                    className="notification-dropdown-item-message"
+                    title={notification.message || notification.title}
+                  >
                     {notification.message || notification.title}
                   </Text>
                 </div>

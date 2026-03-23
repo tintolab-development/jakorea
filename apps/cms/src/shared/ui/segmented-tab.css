@@ -1,19 +1,19 @@
 /**
- * SegmentedTab: 프로그램 진행현황 탭과 동일 UI (배경·테두리·활성 색)
- * variant: small 116×34, medium 217×50
+ * SegmentedTab: 참고 스펙 — 연한 트랙 + 흰 활성 칩 + 브랜드 테두리/텍스트
  */
 
 .segmented-tab {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-  padding: var(--spacing-4);
-  border-radius: var(--radius-8);
+  align-items: stretch;
+  gap: 0;
+  padding: 3px;
+  border-radius: 10px;
   box-sizing: border-box;
-  background: var(--color-bg-tab);
+  background: #f2f4f5;
+  border: 1px solid #e5e7eb;
 }
 
-/* small: 위젯 헤더용 116×34 */
+/* small: 위젯 헤더용 */
 .segmented-tab--small {
   width: 116px;
   height: 34px;
@@ -22,79 +22,73 @@
 .segmented-tab--small .segmented-tab__btn {
   flex: 1;
   min-width: 0;
-  height: 26px;
-  padding: 0 var(--spacing-8);
+  min-height: 0;
+  padding: 0 6px;
   font-size: var(--font-size-13);
 }
 
-/* medium: 217×50 */
+/* medium: 캘린더 월간/주간 등 */
 .segmented-tab--medium {
-  width: 217px;
-  height: 50px;
+  width: 128px;
+  height: 40px;
 }
 
 .segmented-tab--medium .segmented-tab__btn {
-  height: 42px;
-  padding: 0 var(--spacing-16);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 12px;
   font-size: var(--font-size-14);
 }
 
-.segmented-tab--medium .segmented-tab__btn:first-child {
-  width: 117px;
-  flex: 0 0 117px;
-}
-
-.segmented-tab--medium .segmented-tab__btn:last-child {
-  width: 88px;
-  flex: 0 0 88px;
-}
-
-/* mediumCompact: 프로그램 진행현황 하위 탭용 214×50 */
+/* mediumCompact: 프로그램 진행현황 하위 탭 */
 .segmented-tab--mediumCompact {
   width: 214px;
-  height: 50px;
+  height: 40px;
 }
 
 .segmented-tab--mediumCompact .segmented-tab__btn {
-  height: 42px;
-  padding: 0 var(--spacing-16);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 12px;
   font-size: var(--font-size-14);
 }
 
-.segmented-tab--mediumCompact .segmented-tab__btn:first-child {
-  width: 117px;
-  flex: 0 0 117px;
-}
-
-.segmented-tab--mediumCompact .segmented-tab__btn:last-child {
-  width: 88px;
-  flex: 0 0 88px;
-}
-
-/* 공통 버튼 스타일 (진행현황 탭과 동일) */
 .segmented-tab__btn {
   border: 1px solid transparent;
-  border-radius: var(--radius-8);
-  background: var(--color-bg-tab);
-  color: var(--color-text-tab);
-  font-weight: var(--font-weight-500);
+  border-radius: 8px;
+  background: transparent;
+  color: #7d7d7d;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 22.5px */
   cursor: pointer;
-  line-height: 1.4;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background 0.2s;
   text-align: center;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  outline: none !important;
 }
 
 .segmented-tab__btn:hover {
-  color: var(--color-tab-active);
+  color: var(--JA-mint-01, #01a1af);
 }
 
 .segmented-tab__btn--active {
-  border: 1.5px solid var(--color-tab-active);
-  background: var(--color-bg-base);
-  color: var(--color-tab-active);
-  font-weight: var(--font-weight-600);
+  border: 1px solid var(--color-brand-primary, #01a1af);
+  background: #ffffff;
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: var(--font-weight-700);
+}
+
+.segmented-tab__btn:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
 }

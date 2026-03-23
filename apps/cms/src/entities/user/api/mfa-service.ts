@@ -8,7 +8,12 @@ import type {
   OtpSendResponse,
   OtpVerifyRequest,
   OtpVerifyResponse,
+  TotpProvisioning,
 } from '@/types/mfa'
+import { generateURI, verify } from 'otplib'
+import QRCode from 'qrcode'
+import { TOTP_ISSUER } from '@/shared/constants/totp'
+import { getTotpSecretByEmail } from '@/data/mock/totp-secrets'
 import { OTP_POLICY } from '@/shared/constants/mfa-policy'
 import { generateMockOtp, verifyMockOtp } from '@/data/mock/mfa'
 import { saveSmsLog, updateSmsLogStatus, getSmsLogByOtp } from '@/data/mock/sms-logs'
@@ -182,6 +187,70 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
     message: '인증번호가 올바르지 않습니다.',
     verified: false,
     failedAttempts: 1, // Mock: 실제로는 백엔드에서 관리
+    isLocked: false,
+    lockUntil: null,
+  }
+}
+
+/** Microsoft Authenticator 등 표준 앱용 TOTP QR·수동 키 (Mock) */
+export async function getTotpProvisioning(email: string): Promise<TotpProvisioning> {
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  const secret = getTotpSecretByEmail(email)
+  if (!secret) {
+    throw new Error(
+      'TOTP가 설정된 관리자 계정이 아닙니다. 개발용 mock 이메일(admin1~3@jakorea.org)을 사용하세요.'
+    )
+  }
+
+  const otpauthUri = generateURI({
+    issuer: TOTP_ISSUER,
+    label: email,
+    secret,
+  })
+  const qrDataUrl = await QRCode.toDataURL(otpauthUri, { margin: 2, width: 220 })
+
+  return { otpauthUri, qrDataUrl, manualSecret: secret }
+}
+
+/** TOTP 6자리 검증 (Mock — 시크릿은 클라이언트 mock 맵) */
+export async function verifyTotp(email: string, otpCode: string): Promise<OtpVerifyResponse> {
+  await new Promise(resolve => setTimeout(resolve, 300))
+
+  const secret = getTotpSecretByEmail(email)
+  if (!secret) {
+    return {
+      success: false,
+      message: '인증 설정을 찾을 수 없습니다.',
+      verified: false,
+      failedAttempts: 0,
+      isLocked: false,
+      lockUntil: null,
+    }
+  }
+
+  const result = await verify({
+    secret,
+    token: otpCode,
+    epochTolerance: 30,
+  })
+
+  if (result.valid) {
+    return {
+      success: true,
+      message: '인증이 완료되었습니다.',
+      verified: true,
+      failedAttempts: 0,
+      isLocked: false,
+      lockUntil: null,
+    }
+  }
+
+  return {
+    success: false,
+    message: '인증번호가 올바르지 않습니다.',
+    verified: false,
+    failedAttempts: 1,
     isLocked: false,
     lockUntil: null,
   }

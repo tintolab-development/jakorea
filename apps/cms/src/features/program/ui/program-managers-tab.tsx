@@ -13,7 +13,7 @@ import {
   type ProgramManagersFilters,
 } from '../hooks/use-program-managers-params'
 import {
-  getMockProgramManagers,
+  MOCK_PROGRAM_MANAGERS,
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/data/mock/program-managers'
@@ -66,7 +66,7 @@ interface ProgramManagersTabProps {
   programId: string
 }
 
-export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId: _programId }: ProgramManagersTabProps) {
   const { filters, setFilter } = useProgramManagersParams()
   const [localManagerName, setLocalManagerName] = useState(() => filters.managerName ?? '')
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
@@ -76,9 +76,9 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   useEffect(() => {
     setLocalManagerName(filters.managerName ?? '')
   }, [filters.managerName])
-  const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() =>
-    getMockProgramManagers(programId)
-  )
+  const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() => [
+    ...MOCK_PROGRAM_MANAGERS,
+  ])
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editRoleModalOpen, setEditRoleModalOpen] = useState(false)
   const [managerForEditRole, setManagerForEditRole] = useState<ProgramManagerRow | null>(null)
@@ -86,17 +86,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   const [deleteFromEditManager, setDeleteFromEditManager] = useState<ProgramManagerRow | null>(
     null
   )
-
-  useEffect(() => {
-    setManagerList(getMockProgramManagers(programId))
-    setSelectedRowKeys([])
-    setManagerForEditRole(null)
-    setEditRoleModalOpen(false)
-    setDeleteGuideModalOpen(false)
-    setDeleteFromEditManager(null)
-  }, [programId])
-
-  const existingManagerNames = useMemo(() => managerList.map(m => m.name), [managerList])
 
   const filteredManagers = useMemo(() => {
     const list = managerList.filter(row => {
@@ -333,7 +322,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
       <div className="program-managers-tab__top">
         <div className="program-managers-tab__filters">
           <div className="program-managers-tab__filter-row">
-            <div className="program-managers-tab__filter-grow program-managers-tab__filter-col">
+            <div className="program-managers-tab__filter-grow">
               <LabeledSearchInput
                 label="담당자명"
                 placeholder="담당자명을 입력하세요"
@@ -344,7 +333,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
                 showPrefixIcon={false}
               />
             </div>
-            <div className="program-managers-tab__filter-grow program-managers-tab__filter-col">
+            <div className="program-managers-tab__filter-grow">
               <div className="program-managers-tab__filter-field">
                 <span className="program-managers-tab__filter-label">권한</span>
                 <Select
@@ -410,7 +399,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
         currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
-        excludeManagerNames={existingManagerNames}
         onAdd={handleAdd}
       />
 

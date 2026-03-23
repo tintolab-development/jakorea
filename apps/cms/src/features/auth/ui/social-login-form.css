@@ -14,3 +14,13 @@
 .social-login-form .ant-btn-primary:active:not(:disabled) {
   opacity: 0.8;
 }
+
+.social-login-form .social-login-google-btn:hover:not(:disabled) {
+  background-color: #f8f9fa !important;
+  border-color: #dadce0 !important;
+  color: #3c4043 !important;
+}
+
+.social-login-form .social-login-google-btn:active:not(:disabled) {
+  background-color: #f1f3f4 !important;
+}

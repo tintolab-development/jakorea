@@ -1,18 +1,19 @@
 /**
  * MFA/OTP 인증 페이지
- * Phase 0.5.1: MFA/OTP UX (NFR-SEC-AUT-01)
+ * Phase 0.5.1: MFA/OTP UX — TOTP (Microsoft Authenticator)
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { Form, Input, Button, Card, message, Typography, Space, Alert } from 'antd'
+import { Form, Input, Button, Card, message, Typography, Space, Alert, Spin } from 'antd'
 import { SafetyOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
-import { useOtpCountdown } from '@/features/auth/hooks/use-otp-countdown'
+import { getTotpProvisioning } from '@/entities/user/api/mfa-service'
 import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import type { TotpProvisioning } from '@/types/mfa'
 import './mfa-page.css'
 
 const { Text, Title } = Typography
@@ -21,88 +22,61 @@ export function MfaPage() {
   const navigate = useNavigate()
   const { user, setMfaVerified } = useAuthStore()
   const { mfaState, initializeMfa, completeMfa } = useMfa()
-  const { sending, verifying, failedAttempts, isLocked, lockUntil, sendOtpCode, verifyOtpCode, reset: resetVerification } = useOtpVerification()
-  const { remainingSeconds, isExpired, canResend, resendCooldownSeconds, start: startCountdown } = useOtpCountdown()
+  const { verifying, failedAttempts, isLocked, lockUntil, verifyTotpCode } = useOtpVerification()
   const [form] = Form.useForm()
   const [otpCode, setOtpCode] = useState('')
+  const [provisioning, setProvisioning] = useState<TotpProvisioning | null>(null)
+  const [provisioningLoading, setProvisioningLoading] = useState(false)
+  const [provisioningError, setProvisioningError] = useState<string | null>(null)
 
-  // 초기 OTP 발송 여부 추적
-  const [initialOtpSent, setInitialOtpSent] = useState(false)
-
-  // OTP 발송 함수 (useCallback으로 감싸서 effect에서 사용 가능)
-  const handleSendOtp = useCallback(async () => {
-    if (!user) return
-
+  const loadProvisioning = useCallback(async () => {
+    if (!user?.email) return
+    setProvisioningLoading(true)
+    setProvisioningError(null)
     try {
-      await sendOtpCode({
-        userId: user.id,
-        phoneNumber: user.phone || '010-1234-5678',
-      })
-      message.success(MESSAGES.success.codeSent)
-      startCountdown()
-      resetVerification()
-      form.setFieldsValue({ otpCode: '' })
-      setOtpCode('')
-    } catch (error: any) {
-      message.error(error.message || MESSAGES.error.otpSendFailed)
+      const p = await getTotpProvisioning(user.email)
+      setProvisioning(p)
+    } catch (e: unknown) {
+      setProvisioningError(e instanceof Error ? e.message : 'QR 정보를 불러오지 못했습니다.')
+      setProvisioning(null)
+    } finally {
+      setProvisioningLoading(false)
     }
-  }, [user, sendOtpCode, startCountdown, resetVerification, form])
+  }, [user?.email])
 
-  // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
   useEffect(() => {
     if (!user) {
       navigate('/login')
       return
     }
 
-    // MFA 상태 초기화 (관리자만 MFA 필요)
     if (user.role === 'ADMIN' && !mfaState) {
-      // Mock: 사용자 전화번호 (실제로는 사용자 정보에서 가져옴)
-      const phoneNumber = user.phone || '010-1234-5678'
-      initializeMfa(user.id, phoneNumber)
+      initializeMfa(user.id, user.email)
     } else if (user.role !== 'ADMIN') {
-      // 관리자가 아니면 MFA 불필요, 대시보드로 이동
       navigate('/')
     }
   }, [user, mfaState, initializeMfa, navigate])
 
-  // 초기 OTP 발송 (mfaState가 초기화된 후 한 번만)
   useEffect(() => {
-    if (mfaState && !mfaState.isVerified && !initialOtpSent) {
-      handleSendOtp()
-      setInitialOtpSent(true)
+    if (user?.email && mfaState && !mfaState.isVerified) {
+      void loadProvisioning()
     }
-  }, [mfaState, initialOtpSent, handleSendOtp])
-
-  // 카운트다운 시작
-  useEffect(() => {
-    if (mfaState && !mfaState.isVerified) {
-      startCountdown()
-    }
-  }, [mfaState, startCountdown])
-
-  // 만료 시 알림
-  useEffect(() => {
-    if (isExpired && mfaState && !mfaState.isVerified) {
-      message.warning(MESSAGES.warning.codeExpired)
-    }
-  }, [isExpired, mfaState])
+  }, [user?.email, mfaState, loadProvisioning])
 
   const handleVerify = async () => {
-    if (!user || !otpCode || otpCode.length !== OTP_LENGTH) {
+    if (!user?.email || !otpCode || otpCode.length !== OTP_LENGTH) {
       message.error(MESSAGES.error.enterOtpCode)
       return
     }
 
     try {
-      const verified = await verifyOtpCode({
-        userId: user.id,
+      const verified = await verifyTotpCode({
+        email: user.email,
         otpCode,
       })
 
       if (verified) {
         completeMfa()
-        // auth-store의 MFA 인증 완료 처리
         setMfaVerified()
         message.success(MESSAGES.success.authenticated)
         navigate('/')
@@ -111,25 +85,17 @@ export function MfaPage() {
         form.setFieldsValue({ otpCode: '' })
         setOtpCode('')
       }
-    } catch (error: any) {
-      message.error(error.message || MESSAGES.error.authenticationFailed)
+    } catch (error: unknown) {
+      message.error(error instanceof Error ? error.message : MESSAGES.error.authenticationFailed)
       form.setFieldsValue({ otpCode: '' })
       setOtpCode('')
     }
   }
 
-  const handleResend = async () => {
-    if (!canResend) {
-      message.warning(MESSAGES.warning.resendCooldown(Math.ceil(resendCooldownSeconds / 60)))
-      return
-    }
-    await handleSendOtp()
-  }
-
-  // 잠금 상태 확인 (lockUntil 기반)
-  const lockMessage = isLocked && lockUntil
-    ? `인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.`
-    : null
+  const lockMessage =
+    isLocked && lockUntil
+      ? `인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.`
+      : null
 
   if (!user || user.role !== 'ADMIN') {
     return null
@@ -139,16 +105,18 @@ export function MfaPage() {
     <div className="mfa-page">
       <Card className="mfa-card">
         <div className="mfa-header">
-          <SafetyOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: LAYOUT_CONSTANTS.margins.lg }} />
+          <SafetyOutlined
+            style={{ fontSize: 48, color: '#1890ff', marginBottom: LAYOUT_CONSTANTS.margins.lg }}
+          />
           <Title level={3} style={{ marginBottom: 8 }}>
             2단계 인증
           </Title>
           <Text type="secondary">
-            등록된 휴대폰으로 발송된 인증번호를 입력하세요.
+            Microsoft Authenticator 등으로 QR을 등록한 뒤, 앱의 6자리 코드를 입력하세요.
           </Text>
           {mfaState && (
             <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-              {mfaState.phoneNumber}
+              {mfaState.accountLabel}
             </Text>
           )}
         </div>
@@ -162,11 +130,30 @@ export function MfaPage() {
           />
         )}
 
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleVerify}
-        >
+        {provisioningError && (
+          <Alert type="warning" message={provisioningError} style={{ marginBottom: 16 }} showIcon />
+        )}
+
+        <div style={{ textAlign: 'center', marginBottom: 24, minHeight: 220 }}>
+          {provisioningLoading ? (
+            <Spin tip="QR 코드 생성 중…" />
+          ) : provisioning ? (
+            <>
+              <img src={provisioning.qrDataUrl} alt="TOTP QR" width={220} height={220} />
+              <div style={{ marginTop: 12 }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  수동 입력 키 (Base32)
+                </Text>
+                <br />
+                <Text code copyable={{ text: provisioning.manualSecret }} style={{ fontSize: 12 }}>
+                  {provisioning.manualSecret}
+                </Text>
+              </div>
+            </>
+          ) : null}
+        </div>
+
+        <Form form={form} layout="vertical" onFinish={handleVerify}>
           <Form.Item
             label="인증번호"
             name="otpCode"
@@ -179,15 +166,13 @@ export function MfaPage() {
               length={OTP_LENGTH}
               value={otpCode}
               onChange={setOtpCode}
-              disabled={isLocked || isExpired}
+              disabled={isLocked}
               size="large"
             />
           </Form.Item>
 
           <div style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, textAlign: 'center' }}>
-            <Text type={isExpired ? 'danger' : 'secondary'}>
-              유효시간: {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}
-            </Text>
+            <Text type="secondary">앱의 코드는 약 30초마다 바뀝니다.</Text>
             {failedAttempts > 0 && (
               <Text type="danger" style={{ display: 'block', marginTop: 4 }}>
                 실패 횟수: {failedAttempts} / {OTP_POLICY.maxFailedAttempts}
@@ -202,30 +187,29 @@ export function MfaPage() {
               block
               size="large"
               loading={verifying}
-              disabled={isLocked || isExpired || otpCode.length !== OTP_LENGTH}
+              disabled={isLocked || otpCode.length !== OTP_LENGTH}
               icon={<SafetyOutlined />}
             >
               인증하기
             </Button>
 
             <Button
-              onClick={handleResend}
+              type="default"
+              onClick={() => void loadProvisioning()}
               block
               size="large"
-              loading={sending}
-              disabled={!canResend || isLocked}
+              loading={provisioningLoading}
+              disabled={isLocked}
               icon={<ReloadOutlined />}
             >
-              {canResend ? '재전송' : `재전송 (${Math.ceil(resendCooldownSeconds / 60)}분 후 가능)`}
+              QR 코드 다시 불러오기
             </Button>
           </Space>
         </Form>
 
         <div style={{ marginTop: 24, textAlign: 'center' }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            인증번호가 오지 않나요? 재전송 버튼을 클릭하세요.
-            <br />
-            테스트용 인증번호: <Text code>123456</Text> 또는 <Text code>000000</Text>
+            개발용 Mock TOTP — 운영에서는 서버에서만 시크릿·검증을 처리해야 합니다.
           </Text>
         </div>
       </Card>

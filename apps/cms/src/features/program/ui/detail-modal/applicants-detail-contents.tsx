@@ -1,23 +1,30 @@
 import { useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Tabs, Space, Table, Empty } from 'antd'
+import { Tabs, Space, Empty } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
+import { SchoolDetailStudentListSection } from '../school-detail-student-list-section'
+import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
 
 export type ApplicantType = 'institutions' | 'instructors' | 'volunteers'
 
 const DETAIL_TAB_PARAM = 'detailTab'
-const DETAIL_TAB_KEYS = ['info', 'extra'] as const
-type DetailTabKey = (typeof DETAIL_TAB_KEYS)[number]
 
-function parseDetailTabFromSearch(searchParams: URLSearchParams): DetailTabKey {
+function parseDetailTabFromSearch(searchParams: URLSearchParams, type: ApplicantType): string {
   const t = searchParams.get(DETAIL_TAB_PARAM)
-  if (t && DETAIL_TAB_KEYS.includes(t as DetailTabKey)) return t as DetailTabKey
+  if (type === 'institutions') {
+    /** 학생 명단·강사 배정 현황 탭 비활성화 중 — 선택 가능한 탭은 기본 정보 뿐 */
+    return 'info'
+  }
+  if (type === 'instructors') {
+    if (t === 'extra') return 'extra'
+    return 'info'
+  }
   return 'info'
 }
 
@@ -45,12 +52,12 @@ export function ApplicantsDetailContents({
   const [searchParams, setSearchParams] = useSearchParams()
 
   const activeTab = useMemo(
-    (): DetailTabKey => parseDetailTabFromSearch(searchParams),
-    [searchParams]
+    () => parseDetailTabFromSearch(searchParams, type),
+    [searchParams, type]
   )
 
   const setActiveTab = useCallback(
-    (key: DetailTabKey) => {
+    (key: string) => {
       const next = new URLSearchParams(searchParams)
       if (key === 'info') {
         next.delete(DETAIL_TAB_PARAM)
@@ -64,6 +71,7 @@ export function ApplicantsDetailContents({
 
   const isInstitution = type === 'institutions'
   const isInstructor = type === 'instructors'
+  const isVolunteer = type === 'volunteers'
 
   const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
@@ -85,6 +93,21 @@ export function ApplicantsDetailContents({
     return <ApplicantInstitutionBasicInfo institution={institutionData} />
   }
 
+  const renderInstitutionStudentList = () => {
+    if (!institutionData) return null
+    return (
+      <div className="extra-tab-content applicant-contents__student-list-tab">
+        <SchoolDetailStudentListSection
+          schoolId={institutionData.id}
+          studentCount={institutionData.studentCount}
+          readOnly={false}
+          onViewDetail={() => {}}
+          onSaveEdit={() => {}}
+        />
+      </div>
+    )
+  }
+
   const renderInstructorInfo = () => {
     if (!instructorData) return null
     const d = instructorData
@@ -99,30 +122,7 @@ export function ApplicantsDetailContents({
     )
   }
 
-  const renderExtraTab = () => {
-    if (isInstitution) {
-      const columns = [
-        { title: 'No.', dataIndex: 'no', key: 'no', width: 60 },
-        { title: '이름', dataIndex: 'name', key: 'name' },
-        { title: '학년/반', dataIndex: 'gradeClass', key: 'gradeClass' },
-        { title: '연락처', dataIndex: 'contact', key: 'contact' },
-        { title: '비고', dataIndex: 'notes', key: 'notes' },
-      ]
-      return (
-        <div className="extra-tab-content">
-          <div className="section-header">
-            <h3 className="section-title">학생 명단</h3>
-          </div>
-          <Table
-            columns={columns}
-            dataSource={[]}
-            locale={{ emptyText: <Empty description="등록된 학생이 없습니다." /> }}
-            pagination={{ pageSize: 10 }}
-          />
-        </div>
-      )
-    }
-
+  const renderInstructorResumeTab = () => {
     return (
       <div className="extra-tab-content">
         <div className="section-header">
@@ -223,27 +223,77 @@ export function ApplicantsDetailContents({
     return null
   }
 
+  if (isVolunteer) {
+    return (
+      <div className="applicant-contents">
+        <div className="applicant-contents__tabs-wrap">
+          <Tabs
+            activeKey="info"
+            items={[
+              {
+                key: 'info',
+                label: '기본 정보',
+                children: (
+                  <div className="extra-tab-content">
+                    <Empty description="준비 중입니다." />
+                  </div>
+                ),
+              },
+            ]}
+            className="applicant-contents__tabs"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  const institutionTabItems =
+    institutionData != null
+      ? [
+          {
+            key: 'info',
+            label: '기본 정보',
+            children: renderInstitutionInfo(),
+          },
+          {
+            key: 'students',
+            label: '학생 명단',
+            children: renderInstitutionStudentList(),
+            disabled: true,
+          },
+          {
+            key: 'assign',
+            label: '강사 배정 현황',
+            children: (
+              <ApplicantInstitutionInstructorAssignTab schoolName={institutionData.schoolName} />
+            ),
+            disabled: true,
+          },
+        ]
+      : []
+
+  const instructorTabItems = [
+    {
+      key: 'info',
+      label: '기본 정보',
+      children: renderInstructorInfo(),
+    },
+    {
+      key: 'extra',
+      label: '강사 이력서',
+      children: renderInstructorResumeTab(),
+    },
+  ]
+
   return (
     <div className="applicant-contents">
       <div className="applicant-contents__tabs-wrap">
         <Tabs
           activeKey={activeTab}
-          onChange={key => setActiveTab(key as DetailTabKey)}
+          onChange={setActiveTab}
           className="applicant-contents__tabs"
           tabBarExtraContent={renderHeaderButtons()}
-          items={[
-            {
-              key: 'info',
-              label: '기본 정보',
-              children: isInstitution ? renderInstitutionInfo() : renderInstructorInfo(),
-            },
-            {
-              key: 'extra',
-              label: isInstitution ? '학생 명단' : '강사 이력서',
-              children: renderExtraTab(),
-              disabled: isInstitution,
-            },
-          ]}
+          items={isInstitution ? institutionTabItems : instructorTabItems}
         />
       </div>
     </div>

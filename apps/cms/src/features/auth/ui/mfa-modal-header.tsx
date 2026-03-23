@@ -1,7 +1,6 @@
 /**
  * MFA 모달 헤더 컴포넌트
- * Phase 0.5.1: MFA/OTP UX
- * 시니어 개발자 관점: UI 컴포넌트 분리
+ * Phase 0.5.1: MFA/OTP UX — TOTP
  */
 
 import { Typography } from 'antd'
@@ -10,10 +9,10 @@ import { SafetyOutlined } from '@ant-design/icons'
 const { Text, Title } = Typography
 
 interface MfaModalHeaderProps {
-  phoneNumber?: string
+  accountLabel?: string
 }
 
-export function MfaModalHeader({ phoneNumber }: MfaModalHeaderProps) {
+export function MfaModalHeader({ accountLabel }: MfaModalHeaderProps) {
   return (
     <div style={{ textAlign: 'center', marginBottom: 24 }}>
       <SafetyOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
@@ -21,11 +20,12 @@ export function MfaModalHeader({ phoneNumber }: MfaModalHeaderProps) {
         2단계 인증
       </Title>
       <Text type="secondary">
-        등록된 휴대폰으로 발송된 인증번호를 입력하세요.
+        Microsoft Authenticator(또는 Google Authenticator 등)로 QR을 등록한 뒤, 앱에 표시된 6자리 코드를
+        입력하세요.
       </Text>
-      {phoneNumber && (
+      {accountLabel && (
         <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-          {phoneNumber}
+          {accountLabel}
         </Text>
       )}
     </div>
