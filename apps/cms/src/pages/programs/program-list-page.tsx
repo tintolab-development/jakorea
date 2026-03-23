@@ -325,17 +325,19 @@ export function ProgramListPage() {
               : (statusFilter as ProgramLifecycleStatus | null)
         }
       >
-        <div className="program-list-page__divider-wrapper">
-          {viewMode === 'list' && <Divider />}
-        </div>
+        {viewMode === 'list' && (
+          <div className="program-list-page__divider-wrapper">
+            <Divider />
+          </div>
+        )}
         {isAdmin && (programType === 'education' || programType === 'economy') && (
           <div className="program-list-page__filter-info">
             <div className="program-list-page__filter-info-texts">
-              <span className="program-list-page__filter-info-title">{headerTitle}</span>
+              <div className="program-list-page__filter-info-title">{headerTitle}</div>
               {displayCount !== null && (
-                <span className="program-list-page__filter-info-count">
-                  {displayCount.toLocaleString()}건
-                </span>
+                <div className="program-list-page__filter-info-count">
+                  총 {displayCount.toLocaleString()}건
+                </div>
               )}
             </div>
             <div className="program-list-page__widget-header-actions">

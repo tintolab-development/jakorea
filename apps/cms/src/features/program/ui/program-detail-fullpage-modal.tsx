@@ -71,6 +71,13 @@ function parseTabFromSearch(searchParams: URLSearchParams): TabKey {
   return 'info'
 }
 
+/** 신청자 목록 LNB: tab은 신청 기관/강사/봉사자만 유효 (info 등 공통정보 탭 값은 테이블이 비지 않도록 기본값) */
+function parseApplicantsChildTabFromSearch(searchParams: URLSearchParams): TabKey {
+  const tab = searchParams.get(TAB_PARAM)
+  if (tab === 'institutions' || tab === 'instructors' || tab === 'volunteers') return tab
+  return 'institutions'
+}
+
 function parseLnbFromSearch(searchParams: URLSearchParams): LnbKey | null {
   const lnb = searchParams.get(LNB_PARAM)
   if (lnb && (LNB_KEYS_READONLY as readonly string[]).includes(lnb)) return lnb as LnbKey
@@ -103,7 +110,7 @@ export function ProgramDetailFullPageModal({
   const activeLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
   const applicantsExpanded = activeLnb === 'applicants'
   const activeChildMenu: TabKey | '' =
-    activeLnb === 'applicants' ? parseTabFromSearch(searchParams) : ''
+    activeLnb === 'applicants' ? parseApplicantsChildTabFromSearch(searchParams) : ''
   const progressExpanded = activeLnb === 'progress'
   const progressTab = parseTabFromSearch(searchParams)
   const activeProgressChild: TabKey | '' =

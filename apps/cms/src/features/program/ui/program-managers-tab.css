@@ -1,6 +1,6 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터: 레이블 상단(진행현황과 동일 토큰) · 1fr·1fr + 조회 · 컨트롤 44px
+ * 필터: 그리드 1fr·1fr(담당자명/권한) + 조회, 컨트롤 44px · StatusDropdownCell(권한) · 테이블
  */
 
 .program-managers-tab {
@@ -18,12 +18,12 @@
     max-width: 100%;
 }
 
-/* 담당자명·권한 1:1 + 조회 — 레이블은 컨트롤 위(세로 스택), 조회 버튼은 컨트롤 하단 정렬 */
+/* 담당자명·권한 1:1(동일 폭), 조회 — 그리드로 간격·수직 정렬 통일 */
 .program-managers-tab__filter-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: var(--spacing-16);
-    align-items: end;
+    align-items: center;
     width: 100%;
     min-width: 0;
 }
@@ -32,46 +32,41 @@
     min-width: 0;
     width: 100%;
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+    min-height: var(--filter-control-height, 44px);
 }
 
-/* LabeledSearchInput: 기본 column + 진행현황 필터 라벨 톤 */
 .program-managers-tab__filter-grow .labeled-search-input {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-6);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-8);
     width: 100%;
     min-width: 0;
+    min-height: var(--filter-control-height, 44px);
 }
 
+/* Typography.Text 기본 마진·라인하이트로 라벨이 박스와 어긋나지 않게 */
 .program-managers-tab__filter-grow .labeled-search-input__label.ant-typography,
 .program-managers-tab__filter-grow .labeled-search-input__label {
     flex: 0 0 auto;
     margin: 0 !important;
     padding: 0 !important;
-    display: block !important;
-    align-self: flex-start;
+    display: inline-flex !important;
+    align-items: center;
+    align-self: center;
     white-space: nowrap;
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-500);
-    color: #262626;
-    line-height: 1.5 !important;
-    height: auto !important;
-    min-height: 0;
-}
-
-.program-managers-tab__filter-grow .labeled-search-input__label .ant-typography {
-    margin: 0 !important;
-    line-height: inherit !important;
+    color: var(--color-text-heading);
+    line-height: var(--line-height-base, 1.5715) !important;
+    height: var(--filter-control-height, 44px);
 }
 
 .program-managers-tab__filter-grow .labeled-search-input__input.ant-input-affix-wrapper {
-    flex: 0 0 auto;
-    margin: 0;
+    flex: 1 1 0;
     min-width: 0;
-    width: 100% !important;
+    width: auto !important;
     max-width: none;
     min-height: var(--filter-control-height, 44px) !important;
     height: var(--filter-control-height, 44px) !important;
@@ -102,29 +97,31 @@
 
 .program-managers-tab__filter-field {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-6);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-8);
     width: 100%;
     min-width: 0;
+    min-height: var(--filter-control-height, 44px);
 }
 
 .program-managers-tab__filter-label {
     flex: 0 0 auto;
     margin: 0 !important;
     padding: 0 !important;
-    display: block;
-    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
     white-space: nowrap;
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-500);
-    color: #262626;
-    line-height: 1.5 !important;
-    height: auto !important;
+    color: var(--color-text-heading);
+    line-height: var(--line-height-base, 1.5715) !important;
+    height: var(--filter-control-height, 44px);
 }
 
 .program-managers-tab__role-filter-select.ant-select {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     min-width: 0;
     width: 100% !important;
     max-width: none;
@@ -144,8 +141,8 @@
 .program-managers-tab__filter-actions {
     display: inline-flex;
     align-items: center;
-    align-self: end;
-    padding-bottom: 0;
+    align-self: center;
+    height: var(--filter-control-height, 44px);
 }
 
 .program-managers-tab__filter-actions .app-button {

@@ -1,5 +1,6 @@
 import { Empty, Checkbox } from 'antd'
 import type { Dayjs } from 'dayjs'
+import type { ScheduleColorPair } from '../program-schedule-colors'
 import './applicant-calendar-view.css'
 
 interface ApplicantScheduleListProps {
@@ -8,7 +9,7 @@ interface ApplicantScheduleListProps {
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
   onEventClick: (item: any) => void
-  getColorForEvent?: (event: any) => { primary: string; light: string; border: string }
+  getColorForEvent?: (event: any) => ScheduleColorPair
 }
 
 export function ApplicantScheduleList({
@@ -62,18 +63,12 @@ export function ApplicantScheduleList({
                 style={
                   color
                     ? {
-                        backgroundColor: color.light,
+                        backgroundColor: color.bg,
                         border: `1px solid ${color.border}`,
                       }
                     : undefined
                 }
               >
-                <div
-                  className="applicant-schedule-item-checkbox"
-                  onClick={() => handleToggleSelection(event.id)}
-                >
-                  <Checkbox checked={isSelected} />
-                </div>
                 <div
                   className="applicant-schedule-item-info"
                   onClick={() => onEventClick(originalItem)}
@@ -82,10 +77,18 @@ export function ApplicantScheduleList({
                   {hasDetail && (
                     <div className="applicant-schedule-item-detail">
                       {sessionInfo && <span>{sessionInfo}</span>}
-                      {sessionInfo && grade && <span className="applicant-schedule-item-detail-divider">|</span>}
+                      {sessionInfo && grade && (
+                        <span className="applicant-schedule-item-detail-divider">|</span>
+                      )}
                       {grade && <span>{grade}</span>}
                     </div>
                   )}
+                </div>
+                <div
+                  className="applicant-schedule-item-checkbox"
+                  onClick={() => handleToggleSelection(event.id)}
+                >
+                  <Checkbox checked={isSelected} />
                 </div>
               </div>
             )

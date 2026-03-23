@@ -1,7 +1,8 @@
 /**
- * 2옵션 세그먼트 탭 (프로그램 진행현황 하위 탭 UI 동일)
+ * 2옵션 세그먼트 탭
  * - small: 래퍼 116×34 (위젯 헤더용)
- * - medium: 래퍼 217×50 (프로그램 진행현황 참여학교/강사 정보용)
+ * - medium: 래퍼 217×40 (캘린더 월간/주간 등)
+ * - mediumCompact: 래퍼 214×40 (프로그램 진행현황 하위 탭)
  */
 
 import './segmented-tab.css'
@@ -15,7 +16,7 @@ interface SegmentedTabProps {
   options: SegmentedTabOption[]
   value: string
   onChange: (value: string) => void
-  /** small: 116×34 / medium: 217×50 / mediumCompact: 214×50 (진행현황 탭용) */
+  /** small: 116×34 / medium: 217×40 / mediumCompact: 214×40 */
   size?: 'small' | 'medium' | 'mediumCompact'
 }
 

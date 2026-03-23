@@ -3,11 +3,12 @@
  * 선택된 날짜의 프로그램 일정을 리스트로 표시
  */
 
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
+import { getScheduleColorPair } from './program-schedule-colors'
 import './program-calendar-view.css'
 
 interface ProgramScheduleListProps {
@@ -22,10 +23,7 @@ type EventStatus =
   | 'education_scheduled'
   | 'education_ongoing'
 
-const statusConfig: Record<
-  EventStatus,
-  { label: string; color: string; tagColor: string }
-> = {
+const statusConfig: Record<EventStatus, { label: string; color: string; tagColor: string }> = {
   recruiting_start: {
     label: '모집 시작',
     color: '#52c41a',
@@ -76,18 +74,12 @@ function getEventStatus(program: Program, date: Dayjs): EventStatus {
 
 function getEventTime(program: Program, date: Dayjs): string {
   // 신청 시작일인 경우
-  if (
-    program.applicationStartDate &&
-    date.isSame(dayjs(program.applicationStartDate), 'day')
-  ) {
+  if (program.applicationStartDate && date.isSame(dayjs(program.applicationStartDate), 'day')) {
     return '00:00'
   }
 
   // 신청 마감일인 경우
-  if (
-    program.applicationEndDate &&
-    date.isSame(dayjs(program.applicationEndDate), 'day')
-  ) {
+  if (program.applicationEndDate && date.isSame(dayjs(program.applicationEndDate), 'day')) {
     return '24:00'
   }
 
@@ -110,8 +102,7 @@ export function ProgramScheduleList({
       const start = dayjs(program.startDate)
       const end = dayjs(program.endDate)
       const isInEducationPeriod =
-        selectedDate.isSameOrAfter(start, 'day') &&
-        selectedDate.isSameOrBefore(end, 'day')
+        selectedDate.isSameOrAfter(start, 'day') && selectedDate.isSameOrBefore(end, 'day')
 
       // 모집 기간 체크
       let isInApplicationPeriod = false
@@ -119,8 +110,7 @@ export function ProgramScheduleList({
         const appStart = dayjs(program.applicationStartDate)
         const appEnd = dayjs(program.applicationEndDate)
         isInApplicationPeriod =
-          selectedDate.isSameOrAfter(appStart, 'day') &&
-          selectedDate.isSameOrBefore(appEnd, 'day')
+          selectedDate.isSameOrAfter(appStart, 'day') && selectedDate.isSameOrBefore(appEnd, 'day')
       }
 
       return isInEducationPeriod || isInApplicationPeriod
@@ -129,43 +119,40 @@ export function ProgramScheduleList({
 
   return (
     <div className="program-schedule-list">
-      <div className="program-schedule-list-content">
-        {dayPrograms.length === 0 ? (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="해당 날짜에 일정이 없습니다"
-          />
-        ) : (
-          dayPrograms.map(program => {
-            const status = getEventStatus(program, selectedDate)
-            const time = getEventTime(program, selectedDate)
-            const config = statusConfig[status]
+      {dayPrograms.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        dayPrograms.map(program => {
+          const status = getEventStatus(program, selectedDate)
+          const time = getEventTime(program, selectedDate)
+          const config = statusConfig[status]
+          const colorPair = getScheduleColorPair(program.id)
 
-            return (
-              <div
-                key={program.id}
-                className="program-schedule-item"
-                onClick={() => onProgramClick(program)}
-              >
-                <div className="program-schedule-list__event-column">
-                  <div className="program-schedule-list__event-head">
-                    <span className="program-schedule-list__event-type">
-                      {config.label}
-                    </span>
-                    <span className="program-schedule-list__event-time">| {time}</span>
-                  </div>
-                  <div
-                    className="program-schedule-list__event-desc"
-                    title={program.title ?? ''}
-                  >
-                    {program.title ?? ''}
-                  </div>
+          return (
+            <div
+              key={program.id}
+              className="program-schedule-item"
+              style={
+                {
+                  '--schedule-item-border': colorPair.border,
+                  '--schedule-item-bg': colorPair.bg,
+                } as CSSProperties
+              }
+              onClick={() => onProgramClick(program)}
+            >
+              <div className="program-schedule-list__event-column">
+                <div className="program-schedule-list__event-head" title={program.title ?? ''}>
+                  {program.title ?? ''}
+                </div>
+                <div className="program-schedule-list__event-desc">
+                  <span>{config.label}</span>
+                  <span>| {time}</span>
                 </div>
               </div>
-            )
-          })
-        )}
-      </div>
+            </div>
+          )
+        })
+      )}
     </div>
   )
 }

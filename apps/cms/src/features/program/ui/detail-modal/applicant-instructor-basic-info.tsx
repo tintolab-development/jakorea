@@ -30,10 +30,65 @@ function formatAccountDisplay(instructor: ApplicantInstructorRow, mask: boolean)
   if (!bank && !num && !holder) return '-'
   if (mask) {
     const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
-    const maskedHolder = holder ? MASKING_POLICY.name(holder) : ''
+    const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
     return [bank, maskedNum].filter(Boolean).join(' ') + (maskedHolder ? ` | ${maskedHolder}` : '')
   }
   return [bank, num].filter(Boolean).join(' ') + (holder ? ` | ${holder}` : '')
+}
+
+/** 읍·면·동 단위까지 노출, 그 이후는 블러(마스킹 모드). 'OO동' 형태만 매칭(동작구 등 제외). */
+function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
+  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
+  const m = address.match(re)
+  if (!m) return null
+  const dong = m[1]
+  const i = address.indexOf(dong)
+  if (i === -1) return null
+  const end = i + dong.length
+  return { head: address.slice(0, end), tail: address.slice(end) }
+}
+
+/** 최종 학력 학교명: 접미사(대학교·고등학교 등)만 남기고 앞은 *** (예: 동서울대학교 → ***대학교) */
+function maskEducationSchoolName(name: string): string {
+  const suffixes = [
+    '교육대학교',
+    '전문대학교',
+    '초등학교',
+    '고등학교',
+    '중학교',
+    '대학교',
+    '대학원',
+    '대학',
+    '전문대',
+  ].sort((a, b) => b.length - a.length)
+  for (const suf of suffixes) {
+    if (name.endsWith(suf)) {
+      return `***${suf}`
+    }
+  }
+  if (name.length <= 2) return '**'
+  return `***${name.slice(-2)}`
+}
+
+function AddressDisplay({ address, mask }: { address: string; mask: boolean }) {
+  if (!address) return <>-</>
+  if (!mask) return <>{address}</>
+  const split = splitAddressAfterDong(address)
+  if (!split) {
+    return <>{MASKING_POLICY.address(address)}</>
+  }
+  const { head, tail } = split
+  if (!tail.trim()) {
+    return <>{head}</>
+  }
+  return (
+    <>
+      {head}
+      <span className="applicant-instructor-basic-info__address-blur" aria-hidden="true">
+        {tail}
+      </span>
+    </>
+  )
 }
 
 export interface ApplicantInstructorBasicInfoProps {
@@ -57,16 +112,16 @@ export function ApplicantInstructorBasicInfo({
       ? MASKING_POLICY.email(instructor.email)
       : instructor.email
     : '-'
-  const addressDisplay = instructor.address
-    ? mask
-      ? MASKING_POLICY.address(instructor.address)
-      : instructor.address
-    : '-'
   const accountDisplay = formatAccountDisplay(instructor, mask)
   const birthDisplay = formatBirthDateAndAge(instructor.birthDate, instructor.age)
   const genderBirthDisplay = [instructor.gender, birthDisplay].filter(Boolean).join(' | ') || '-'
+  const schoolPart = instructor.educationSchoolName
+    ? mask
+      ? maskEducationSchoolName(instructor.educationSchoolName)
+      : instructor.educationSchoolName
+    : ''
   const educationDisplay =
-    [instructor.educationLevel, instructor.educationSchoolName].filter(Boolean).join(' | ') || '-'
+    [instructor.educationLevel, schoolPart].filter(Boolean).join(' | ') || '-'
   const affiliationDisplay =
     [
       instructor.affiliation ?? '',
@@ -163,7 +218,11 @@ export function ApplicantInstructorBasicInfo({
                 자택 주소
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {addressDisplay}
+                {instructor.address ? (
+                  <AddressDisplay address={instructor.address} mask={mask} />
+                ) : (
+                  '-'
+                )}
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 정산 계좌 정보
