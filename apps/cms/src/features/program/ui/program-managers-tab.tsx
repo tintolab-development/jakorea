@@ -13,7 +13,7 @@ import {
   type ProgramManagersFilters,
 } from '../hooks/use-program-managers-params'
 import {
-  MOCK_PROGRAM_MANAGERS,
+  getMockProgramManagers,
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/data/mock/program-managers'
@@ -66,7 +66,7 @@ interface ProgramManagersTabProps {
   programId: string
 }
 
-export function ProgramManagersTab({ programId: _programId }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   const { filters, setFilter } = useProgramManagersParams()
   const [localManagerName, setLocalManagerName] = useState(() => filters.managerName ?? '')
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
@@ -76,9 +76,9 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   useEffect(() => {
     setLocalManagerName(filters.managerName ?? '')
   }, [filters.managerName])
-  const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() => [
-    ...MOCK_PROGRAM_MANAGERS,
-  ])
+  const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() =>
+    getMockProgramManagers(programId)
+  )
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editRoleModalOpen, setEditRoleModalOpen] = useState(false)
   const [managerForEditRole, setManagerForEditRole] = useState<ProgramManagerRow | null>(null)
@@ -86,6 +86,17 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   const [deleteFromEditManager, setDeleteFromEditManager] = useState<ProgramManagerRow | null>(
     null
   )
+
+  useEffect(() => {
+    setManagerList(getMockProgramManagers(programId))
+    setSelectedRowKeys([])
+    setManagerForEditRole(null)
+    setEditRoleModalOpen(false)
+    setDeleteGuideModalOpen(false)
+    setDeleteFromEditManager(null)
+  }, [programId])
+
+  const existingManagerNames = useMemo(() => managerList.map(m => m.name), [managerList])
 
   const filteredManagers = useMemo(() => {
     const list = managerList.filter(row => {
@@ -399,6 +410,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
         currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
+        excludeManagerNames={existingManagerNames}
         onAdd={handleAdd}
       />
 
