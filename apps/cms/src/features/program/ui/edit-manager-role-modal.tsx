@@ -9,7 +9,11 @@ import { Form, Input, Radio, Modal, Button } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ProgramRole } from '@/types/user'
-import { PROGRAM_ROLE_LABELS, MAX_OWNER_COUNT } from '@/data/mock/program-managers'
+import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
+import {
+  canSetProgramManagerRole,
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
 import type { ProgramManagerRow } from '@/data/mock/program-managers'
 import './edit-manager-role-modal.css'
 
@@ -23,7 +27,7 @@ interface EditManagerRoleModalProps {
   open: boolean
   onCancel: () => void
   manager: ProgramManagerRow | null
-  /** PM(담당자) 3명 제한 검증용 전체 담당자 목록 */
+  /** 프로그램당 PM 인원 상한 검증용 전체 담당자 목록 */
   managerList: ProgramManagerRow[]
   onSave: (role: ProgramRole) => void
   /** 담당자 삭제 링크 클릭 시 호출 — 상위에서 삭제 안내 모달 노출 */
@@ -52,18 +56,17 @@ export function EditManagerRoleModal({
   }, [open])
 
   const handleSubmit = (values: { role: ProgramRole }) => {
-    if (manager && values.role === manager.role) {
+    if (!manager) {
       onCancel()
       return
     }
-    if (values.role === 'OWNER') {
-      const currentOwnerCount = managerList.filter(m => m.role === 'OWNER').length
-      const isCurrentOwner = manager?.role === 'OWNER'
-      const newOwnerCount = currentOwnerCount - (isCurrentOwner ? 1 : 0) + 1
-      if (newOwnerCount > MAX_OWNER_COUNT) {
-        setShowOwnerLimitModal(true)
-        return
-      }
+    if (values.role === manager.role) {
+      onCancel()
+      return
+    }
+    if (!canSetProgramManagerRole(managerList, manager.id, values.role)) {
+      setShowOwnerLimitModal(true)
+      return
     }
     onSave(values.role)
     onCancel()
@@ -118,11 +121,17 @@ export function EditManagerRoleModal({
           className="edit-manager-role-modal__field"
         >
           <Radio.Group size="middle" className="edit-manager-role-modal__role-radios">
-            {ROLE_OPTIONS.map(opt => (
-              <Radio key={opt.value} value={opt.value}>
-                {opt.label}
-              </Radio>
-            ))}
+            {ROLE_OPTIONS.map(opt => {
+              const disablePm =
+                manager &&
+                opt.value === 'OWNER' &&
+                !canSetProgramManagerRole(managerList, manager.id, 'OWNER')
+              return (
+                <Radio key={opt.value} value={opt.value} disabled={!!disablePm}>
+                  {opt.label}
+                </Radio>
+              )
+            })}
           </Radio.Group>
         </Form.Item>
         {manager && onDeleteRequest && (
@@ -151,7 +160,7 @@ export function EditManagerRoleModal({
         centered
         width={400}
       >
-        PM(담당자)는 총 {MAX_OWNER_COUNT}명까지만 지정할 수 있습니다.
+        {PROGRAM_PM_ROLE_LIMIT_MESSAGE}
       </Modal>
     </TealHeaderModal>
   )
