@@ -47,6 +47,8 @@ function saveInstructorListToStorage(list: ParticipatingInstructorRow[]) {
 
 export interface UseProgressInstructorListOptions {
   appliedFilters: ProgressFilters
+  /** true면 localStorage 대신 항상 MOCK_PARTICIPATING_INSTRUCTORS 사용(저장 안 함). 풀페이지 참여 강사 섹션용 */
+  preferMock?: boolean
 }
 
 /** localStorage에서 로드한 행에 상세·이력서 등 확장 필드가 없을 수 있으므로 mock과 id 기준으로 병합 */
@@ -58,8 +60,12 @@ function mergeWithMock(list: ParticipatingInstructorRow[]): ParticipatingInstruc
   })
 }
 
-export function useProgressInstructorList({ appliedFilters }: UseProgressInstructorListOptions) {
+export function useProgressInstructorList({
+  appliedFilters,
+  preferMock = false,
+}: UseProgressInstructorListOptions) {
   const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => {
+    if (preferMock) return [...MOCK_PARTICIPATING_INSTRUCTORS]
     const stored = loadInstructorListFromStorage()
     const list = stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
     return stored ? mergeWithMock(list) : list
@@ -72,8 +78,8 @@ export function useProgressInstructorList({ appliedFilters }: UseProgressInstruc
   const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
 
   useEffect(() => {
-    saveInstructorListToStorage(instructorList)
-  }, [instructorList])
+    if (!preferMock) saveInstructorListToStorage(instructorList)
+  }, [instructorList, preferMock])
 
   const filteredInstructors = useMemo(() => {
     return instructorList.filter(row => {

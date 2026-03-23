@@ -39,7 +39,7 @@ export const fileUploadService = {
    * 파일 업로드 (Mock)
    * 실제로는 서버로 파일을 전송하고 저장된 URL을 반환
    */
-  upload: async (file: File, type: 'studentList' | 'document'): Promise<FileUploadResult> => {
+  upload: async (file: File, type: 'studentList' | 'document' | 'image'): Promise<FileUploadResult> => {
     // Mock: 비동기 시뮬레이션
     await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -61,7 +61,7 @@ export const fileUploadService = {
    */
   uploadMultiple: async (
     files: File[],
-    type: 'studentList' | 'document'
+    type: 'studentList' | 'document' | 'image'
   ): Promise<FileUploadResult[]> => {
     return Promise.all(files.map(file => fileUploadService.upload(file, type)))
   },

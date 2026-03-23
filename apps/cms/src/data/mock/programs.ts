@@ -53,6 +53,7 @@ const createRounds = (programId: string, classCount: number, startDate: string):
       capacity: 30,
       classCount: classCount || undefined,
       status: i === 1 ? 'active' : 'completed',
+      deliveryType: 'offline',
     })
   }
   return rounds
@@ -125,15 +126,16 @@ const convertPartnerInvolvement = (value: string | boolean): boolean => {
 }
 
 // 실제 교육실적 데이터 (30개 샘플) - 유니크값 정리 문서 기반
+// 첫 번째 레코드는 공통 정보 탭 상세 mock용 (스크린샷 기준: JA Korea 초등 경제교육, 1사1교 등)
 const educationRecords = [
   {
-    month: 6,
-    businessArea: '경제금융',
-    sponsorNameEn: 'Barings',
-    titleEn: 'Invest in Your Future',
-    sponsorNameKr: '베어링 자산운용',
-    mainTitle: '개인 재무 기초 교육',
-    title: '개인 재무 기초 교육',
+    month: 12,
+    businessArea: '기업가정신',
+    sponsorNameEn: 'JA Korea',
+    titleEn: '1 Company 1 School',
+    sponsorNameKr: 'JA Korea 고유목적사업',
+    mainTitle: '2026년 JA Korea 초등 경제교육',
+    title: '1사1교 경제금융교육',
     textbookName: 'Personal Finance',
     textbookNameEn: 'Personal Finance',
     schoolName: '발곡고등학교',
@@ -143,9 +145,9 @@ const educationRecords = [
     courseDeliveredBy: 'JA',
     partnerInvolvement: 'No',
     institutionType: '학교 안',
-    ips: 'Prepare',
+    ips: 'Inspire',
     programCategory: '해당없음',
-    programChannel: '해당없음',
+    programChannel: '다운받을 자료 (Downloadable material)',
     educationType: '오프라인',
     educationTime: 3,
     classCount: 1,
@@ -158,7 +160,7 @@ const educationRecords = [
     generalTeachers: 1,
     educatedTeachers: 0,
     instructors: 0,
-    managerName: '이송희',
+    managerName: 'OO팀 이순신 책임',
   },
   {
     month: 7,
@@ -1149,9 +1151,10 @@ const educationRecords = [
   },
 ]
 
-// 스폰서 이름 업데이트 (실제 데이터에 맞게)
+// 스폰서 이름 업데이트 (실제 데이터에 맞게, 공통 정보 탭 상세 mock용 JA Korea 고유목적사업 선두)
 const updateSponsors = () => {
   const sponsorMap: Record<string, { name: string; nameEn?: string }> = {
+    'JA Korea 고유목적사업': { name: 'JA Korea 고유목적사업', nameEn: 'JA Korea' },
     '베어링 자산운용': { name: '베어링 자산운용', nameEn: 'Barings' },
     'BNP 파리바 카디프생명': { name: 'BNP 파리바 카디프생명', nameEn: 'BNP PARIBAS Cardif' },
     'BNP PARIBAS CIB': { name: 'BNP PARIBAS CIB', nameEn: 'BNP PARIBAS CIB' },
@@ -1207,10 +1210,11 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const recruitingInstructorsIndices = [0, 1, 8, 15, 22] // 강사 모집중 5개 (0은 상세 mock)
   const otherLifecycleStatuses: ProgramLifecycleStatus[] = [
     'matching_completed',
-    'education_before_textbook',
-    'education_after_textbook',
     'education_completed',
     'document_processing_completed',
+    'participant_instructor_recruitment_planned',
+    'participant_instructor_recruiting',
+    'participant_instructor_recruitment_completed',
   ]
   const otherIndices = [3, 4, 5, 6, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 29]
   const otherPos = otherIndices.indexOf(index)
@@ -1223,9 +1227,8 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   const baseStatus =
     lifecycleStatus === 'document_processing_completed'
       ? ('completed' as const)
-      : ['education_before_textbook', 'education_after_textbook', 'education_completed'].includes(
-            lifecycleStatus
-          )
+      : lifecycleStatus === 'education_completed' ||
+          lifecycleStatus === 'participant_instructor_recruitment_completed'
         ? ('active' as const)
         : ('pending' as const)
 
@@ -1251,7 +1254,7 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
     applicationStartDate: applicationStart.toISOString(),
     applicationEndDate: applicationEnd.toISOString(),
     status: baseStatus,
-    lifecycleStatus: isDetailMock ? 'recruiting_instructors' : lifecycleStatus,
+    lifecycleStatus: isDetailMock ? 'education_in_progress' : lifecycleStatus,
     // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
     businessArea: record.businessArea,
     titleEn: record.titleEn === '해당없음' ? undefined : record.titleEn,
@@ -1301,6 +1304,15 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
   if (isDetailMock) {
     return {
       ...base,
+      createdAt: '2025-12-08T00:15:00.000Z',
+      updatedAt: '2025-12-08T08:55:00.000Z',
+      createdByName: '홍길동',
+      updatedByName: '이순신',
+      startDate: '2025-12-08T00:00:00.000Z',
+      endDate: '2026-12-30T00:00:00.000Z',
+      contactPhone: '010-1234-5678',
+      teamDivision: 'C&D',
+      educationProcess: 'Traditional (Paper)',
       resultAnnouncementDate: new Date('2026-01-26T00:00:00.000Z').toISOString(),
       resultAnnouncementMethod: '홈페이지 공지 및 담당교사 개별 안내',
       approvedStudentCount: 30,
@@ -1338,6 +1350,70 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
 </ul>`,
     }
   }
+
+  // 신용케어 아카데미 (교육 2): 공통/참여자/강사/봉사자 정보 탭 전용 풀 데이터
+  const isCreditCareDetail = index === 1 && record.mainTitle === '신용케어 아카데미'
+  if (isCreditCareDetail) {
+    return {
+      ...base,
+      title: '신용케어 아카데미 (교육 2)',
+      mainTitle: '신용케어 아카데미',
+      createdByName: '이소율',
+      updatedByName: '이소율',
+      startDate: '2026-03-04T00:00:00.000Z',
+      endDate: '2026-12-30T00:00:00.000Z',
+      applicationStartDate: '2026-01-10T00:00:00.000Z',
+      applicationEndDate: '2026-02-15T00:00:00.000Z',
+      contactPhone: '02-6347-6113',
+      contactEmail: 'ujat@jakorea.org',
+      lifecycleStatus: 'recruiting_volunteers' as ProgramLifecycleStatus,
+      status: 'pending',
+      resultAnnouncementDate: '2026-02-03T00:00:00.000Z',
+      resultAnnouncementMethod: '홈페이지 공지 및 합격자 개별 안내',
+      approvedStudentCount: record.totalParticipants ?? 12,
+      instructorCapacity: 20,
+      instructors: record.instructors ?? 1,
+      instructorApplicationStartDate: '2026-01-15T00:00:00.000Z',
+      instructorApplicationEndDate: '2026-02-01T00:00:00.000Z',
+      documentPassAnnouncementDate: '2026-02-11T00:00:00.000Z',
+      documentPassAnnouncementMethod: '합격자 개별 안내',
+      interviewStartDate: '2026-02-24T00:00:00.000Z',
+      interviewEndDate: '2026-02-25T00:00:00.000Z',
+      interviewMethod: '온라인',
+      finalPassAnnouncementDate: '2026-02-26T00:00:00.000Z',
+      finalPassAnnouncementMethod: '합격자 개별 안내',
+      instructorTarget: '성인',
+      instructorTargetDetail: '-',
+      volunteerApplicationStartDate: '2026-01-05T00:00:00.000Z',
+      volunteerApplicationEndDate: '2026-01-28T00:00:00.000Z',
+      volunteerTarget: '대학(원)생',
+      volunteerTargetDetail: '-',
+      oneLineIntroduction: '상기 일정은 기관 사정에 따라 변동될 수 있습니다.',
+      description:
+        '제이에이코리아(JA Korea)는 매년 지역별 대학생 봉사단과 함께 초등학생 대상 경제교육을 무료로 진행하고 있습니다. 신용케어 아카데미는 어린이 금융박사 홈즈 교재를 활용한 경제·금융 교육 프로그램입니다. 많은 관심과 신청 부탁드립니다.',
+      recruitmentGuide: `1. 대학(원)생(전공무관, 휴학생 지원 가능)
+2. 경제·금융·청소년 관련 강의 경력 2년 이상
+3. 아동 성범죄 전력조회 결격 사유가 해당하지 않는 자`,
+      learningSupportContent: `선정된 기관에 한하여 다음과 같이 지원 예정
+· 초등학생 대상 학급별 대면 교육
+· 경제·금융 교육 교재·교구 제공
+· 신용케어 아카데미 강사 파견`,
+      applicationMethod:
+        '해당 페이지의 [신청버튼] 클릭 후 항목 상세 기재 후 제출',
+      otherNotes:
+        '강사비 및 내부 기준에 따라 교통비 및 숙박비 지원 등',
+      additionalContentHtml: `<p><strong>신용케어 아카데미 (교육 2) 운영 안내</strong></p>
+<ul>
+<li>2026년 3~12월 중 전국 지역아동센터 및 초등학교 방문 경제·금융교육 진행</li>
+<li>오리엔테이션: 2026년 2월 (오프라인, 장소 추후 공지)</li>
+<li>교육기간: 2026년 3월~12월 (학기 중)</li>
+<li>1365 봉사시간 등록 가능</li>
+</ul>`,
+      attachmentFileNames: ['(2026) JA Korea 경제금융교육 강사단 지원서.docx'],
+      keyVisualImage: base.posterImage,
+    }
+  }
+
   return base
 })
 

@@ -1,0 +1,34 @@
+/**
+ * 강사 배정 완료 안내 모달
+ */
+
+.school-detail-assign-complete-modal .teal-header-modal__body {
+  padding: 0;
+}
+
+.school-detail-assign-complete-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.school-detail-assign-complete-modal__main {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.school-detail-assign-complete-modal__sub {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.school-detail-assign-complete-modal__alarm {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border, #e8e8e8);
+}

@@ -7,6 +7,12 @@ import type { UUID, Status, DateValue } from './index'
 import type { ApplicationProgressStatus } from './application-progress'
 import type { SettlementCalculationResult } from './settlement-result'
 
+// 후원사 담당자 (이름 + 휴대폰, 담당자 선택 시 휴대폰은 읽기 전용 표시)
+export interface SponsorManager {
+  name: string
+  phone: string
+}
+
 // 스폰서
 export interface Sponsor {
   id: UUID
@@ -14,6 +20,8 @@ export interface Sponsor {
   nameEn?: string // 후원사명(영문)
   description?: string
   contactInfo?: string
+  /** 후원사 담당자 목록 (담당자 선택 시 해당 휴대폰 번호 불러와 읽기 전용 표시) */
+  managers?: SponsorManager[]
   securityMemo?: string // 보안/정책 메모
   createdAt: DateValue
   updatedAt: DateValue
@@ -52,19 +60,23 @@ export interface ApplicationPath {
   updatedAt: DateValue
 }
 
-// 프로그램 진행 워크플로우 상태 (디자이너 스펙 9태그: 예정 3 + 모집 중 3 + 완료 3)
+// 프로그램 진행 워크플로우 상태 (15개: 예정 4 + 모집 중 4 + 진행 중 3 + 완료 4)
 export type ProgramLifecycleStatus =
   | 'planned' // 참여자 모집 예정
   | 'instructor_recruitment_planned' // 강사 모집 예정
   | 'volunteer_recruitment_planned' // 봉사자 모집 예정
+  | 'participant_instructor_recruitment_planned' // 참여자&교육자 모집 예정
   | 'recruiting_students' // 참여자 모집 중
   | 'recruiting_instructors' // 강사 모집 중
   | 'recruiting_volunteers' // 봉사자 모집 중
+  | 'participant_instructor_recruiting' // 참여자&교육자 모집 중
+  | 'education_in_progress' // 프로그램 진행 중
   | 'matching_completed' // 참여자 모집 완료
-  | 'education_before_textbook' // 강사 모집 완료 (교재 발송 전)
-  | 'education_after_textbook' // 강사 모집 완료 (교재 발송 후)
+  | 'education_before_textbook' // 경제교육: 교재 전 단계
+  | 'education_after_textbook' // 경제교육: 교재 후 진행 중
   | 'education_completed' // 강사 모집 완료
   | 'document_processing_completed' // 봉사자 모집 완료
+  | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
 // 프로그램
 export interface Program {
@@ -102,6 +114,10 @@ export interface Program {
   programCategory?: string | null // 프로그램 종류 (IPS가 Succeed일 때)
   programChannel?: string | null // 프로그램 채널 및 형식 (IPS가 Inspire일 때)
   educationTime?: number // 교육시간 (시간)
+  /** 팀구분 (공통 정보 탭 기본 정보 하단 블록) */
+  teamDivision?: string
+  /** 교육 과정 (공통 정보 탭 기본 정보 하단 블록, 예: Traditional (Paper)) */
+  educationProcess?: string
   // 엑셀 데이터 기반 추가 필드 - 참가자 통계 정보
   maleParticipants?: number // 남성 참가자
   femaleParticipants?: number // 여성 참가자
@@ -133,6 +149,8 @@ export interface Program {
   resultAnnouncementDate?: DateValue
   /** 결과 발표 방법 */
   resultAnnouncementMethod?: string
+  /** 학생 명단 제출 여부 (참여자 정보 탭) */
+  studentListRequired?: 'required' | 'not_required'
   /** 승인된 수강자 수 (표시: approvedStudentCount / capacity 건) */
   approvedStudentCount?: number
   /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
@@ -150,6 +168,21 @@ export interface Program {
   /** 최종 합격자 발표 */
   finalPassAnnouncementDate?: DateValue
   finalPassAnnouncementMethod?: string
+  /** 강사 모집 대상 (강사 정보 탭) */
+  instructorTarget?: string
+  /** 강사 모집 대상 상세 */
+  instructorTargetDetail?: string
+  /** 봉사자 모집 기간 */
+  volunteerApplicationStartDate?: DateValue
+  volunteerApplicationEndDate?: DateValue
+  /** 봉사자 모집 대상 (봉사자 정보 탭) */
+  volunteerTarget?: string
+  /** 봉사자 모집 대상 상세 */
+  volunteerTargetDetail?: string
+  /** 지원 방법 (강사/봉사자 상세정보 탭) */
+  applicationMethod?: string
+  /** 기타사항 (강사/봉사자 상세정보 탭) */
+  otherNotes?: string
   // 프로그램별 폼 업로드 (기획 요구사항)
   applicationFormTemplateId?: UUID // 신청서 폼 템플릿 ID
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID
@@ -157,6 +190,10 @@ export interface Program {
   lectureReportFormTemplateId?: UUID // 강의보고서 폼 템플릿 ID
   createdAt: DateValue
   updatedAt: DateValue
+  /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */
+  createdByName?: string
+  /** 최종 수정자 표시명 (목록/상세 표시용, API·mock에서 채움) */
+  updatedByName?: string
 }
 
 // 회차별 진행 방식 (교육 커리큘럼 수정용)
@@ -610,6 +647,8 @@ export interface ProgramStatistics {
 export interface ProgramPost {
   id: UUID
   programId: UUID
+  /** 참여기관(학교) 단위 게시글일 때 해당 학교 ID (미설정 시 프로그램 전체 공지) */
+  schoolId?: UUID
   /** 작성자 표시명 (예: "박○○ 담당교사님", "JA KOREA 알림") */
   authorName: string
   /** 작성자 사용자 ID (선택, 프로필 연동용) */
@@ -629,6 +668,25 @@ export interface ProgramPost {
   publishedAt: DateValue
   createdAt: DateValue
   updatedAt: DateValue
+}
+
+// 프로그램 게시글 댓글 (게시글 상세 — 댓글 목록)
+export interface ProgramPostComment {
+  id: UUID
+  postId: UUID
+  authorName: string
+  content: string
+  createdAt: DateValue
+}
+
+// 프로그램 게시글 반응/이모지 (게시글 상세 — 반응 뷰어)
+export interface ProgramPostReaction {
+  id: UUID
+  postId: UUID
+  /** 이모지 타입 (예: 'like' | 'heart' | 'clap') */
+  emojiType: string
+  /** 반응한 사용자 수 또는 사용자 ID 목록 */
+  count: number
 }
 
 // 프로그램 첨부 파일 (수강 프로그램 상세 모달 — 파일 및 사진 탭)

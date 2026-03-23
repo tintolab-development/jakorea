@@ -18,6 +18,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-32);
+  margin-top: 30px;
 }
 
 .add-instructor-modal__form .ant-form-item-label > label.ant-form-item-required::before {
@@ -28,6 +29,7 @@
 .add-instructor-modal__required-asterisk {
   color: var(--color-required-mark);
   margin-left: var(--spacing-4);
+  display: none !important;
 }
 
 /* 모달 내 전반 Input·Select·DatePicker 공통 텍스트 스펙 (동일 적용) */
@@ -107,7 +109,15 @@
 
 .add-instructor-modal__form .ant-select-selection-placeholder,
 .add-instructor-modal__form .ant-picker .ant-picker-input::placeholder {
-  color: var(--color-input-placeholder) !important;
+  overflow: hidden !important;
+  color: #85969d !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 15px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
 }
 
 /* 테이블용 네이티브 input 전용: 220×40, span 없이 input만 스타일링 */
@@ -156,7 +166,15 @@
 }
 
 .add-instructor-modal__table-input::placeholder {
-  color: var(--color-input-placeholder);
+  overflow: hidden;
+  color: #85969d;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .add-instructor-modal__table-input:hover {
@@ -175,9 +193,26 @@
 
 .add-instructor-modal__section-title {
   margin: 0 0 var(--spacing-12);
-  font-size: var(--font-size-16);
-  font-weight: var(--font-weight-600);
-  color: var(--color-text-primary);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.add-instructor-modal__section-summary {
+  margin-left: 10px;
+  color: var(--JA-mint-01, #01a1af);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.add-instructor-modal__section-summary--education {
+  margin-left: 10px;
 }
 
 .add-instructor-modal__section-head {
@@ -593,7 +628,7 @@
 }
 
 .add-instructor-modal__resident-registration-row .add-instructor-modal__table-input {
-  text-align: center;
+  text-align: left;
 }
 
 .add-instructor-modal__resident-registration-divider {
@@ -676,7 +711,15 @@
 }
 
 .add-instructor-modal__basic-table-cell--input .ant-select-selection-placeholder {
-  color: var(--color-input-placeholder) !important;
+  overflow: hidden !important;
+  color: #85969d !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 15px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
 }
 
 /* 기본정보 섹션 Select·DatePicker도 input과 동일 테두리 (6px, #c4cdd1) */
@@ -708,7 +751,7 @@
 
 .add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input-prefix {
   flex-shrink: 0;
-  margin-right: var(--spacing-8);
+  margin-right: 0;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-14);
 }
@@ -769,7 +812,7 @@
   font-size: 15px !important;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: var(--color-input-placeholder) !important;
+  color: #85969d !important;
   background: #fff !important;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-4);
@@ -777,10 +820,25 @@
   outline: none;
   box-shadow: none;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2385969d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M9.65572 13.0222C9.89831 13.1824 10.2283 13.1552 10.4418 12.9416L15.4418 7.94164C15.6859 7.69756 15.6859 7.30193 15.4418 7.05785C15.1978 6.81377 14.8021 6.81377 14.5581 7.05785L9.99995 11.616L5.44185 7.05785C5.19777 6.81377 4.80214 6.81377 4.55806 7.05785C4.31398 7.30193 4.31398 7.69756 4.55806 7.94164L9.55806 12.9416L9.65572 13.0222Z' fill='%2385969D'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 20px 20px !important;
+}
+
+.add-instructor-modal__native-select:invalid,
+.add-instructor-modal__native-select option[disabled] {
+  overflow: hidden;
+  color: #85969d;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .add-instructor-modal__native-select:hover:not(:disabled) {
@@ -804,9 +862,24 @@
 }
 
 .add-instructor-modal__native-select.add-instructor-modal__education-status {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
+}
+
+.add-instructor-modal__native-select.add-instructor-modal__education-school-type,
+.add-instructor-modal__native-select.add-instructor-modal__education-status {
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  color: var(--color-input-placeholder) !important;
+}
+
+.add-instructor-modal__native-select.add-instructor-modal__education-school-type option:disabled,
+.add-instructor-modal__native-select.add-instructor-modal__education-status option:disabled {
+  color: var(--color-input-placeholder);
 }
 
 /* 최종 학력: 학교명으로 검색 인풋 348×40 */
@@ -846,8 +919,8 @@
 }
 
 .add-instructor-modal__education-table-col-label {
-  width: 180px;
-  min-width: 180px;
+  width: 200px;
+  min-width: 200px;
 }
 
 .add-instructor-modal__education-table-col-input {
@@ -856,8 +929,9 @@
 
 /* 최종 학력 테이블 내 학교명 인풋 348×40 */
 .add-instructor-modal__education-school-input {
-  width: 348px !important;
-  min-width: 348px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
 }
@@ -902,18 +976,47 @@
 }
 
 .add-instructor-modal__education-major {
-  width: 140px !important;
-  min-width: 140px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
 }
 
 .add-instructor-modal__education-year.ant-picker {
   /* ant-picker는 내부적으로 inline-flex — display 명시해서 레이아웃 유지 */
   display: inline-flex !important;
-  width: 120px !important;
-  min-width: 120px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
   box-shadow: none !important;
+}
+
+.add-instructor-modal__education-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.add-instructor-modal__education-date-sep {
+  color: var(--color-text-tertiary);
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.add-instructor-modal__education-table tbody tr > td {
+  height: 64px !important;
+  min-height: 64px !important;
+}
+
+.add-instructor-modal__education-table .add-instructor-modal__basic-table-cell--label {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  height: 64px !important;
+  min-height: 64px !important;
 }
 
 .add-instructor-modal__remove-row--table {
@@ -936,6 +1039,121 @@
   width: auto;
   flex-shrink: 0;
 }
+
+.add-instructor-modal__section-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-instructor-content-modal .teal-header-modal__container {
+  max-height: 92vh;
+}
+
+.add-instructor-content-modal .teal-header-modal__body {
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.add-instructor-content-modal .teal-header-modal__title {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.add-instructor-modal__consent-table-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
+  background: var(--color-bg-base);
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__consent-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.add-instructor-modal__consent-table-col-label {
+  width: 240px;
+  min-width: 240px;
+}
+
+.add-instructor-modal__consent-table-col-input {
+  width: auto;
+  min-width: 0;
+}
+
+.add-instructor-modal__consent-table tbody tr {
+  height: 50px;
+}
+
+.add-instructor-modal__consent-table .add-instructor-modal__basic-table-cell--label {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+  height: 50px !important;
+  min-height: 50px !important;
+}
+
+.add-instructor-modal__consent-radio-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-instructor-modal__consent-radio-group .ant-radio-wrapper {
+  margin-inline-end: 0;
+}
+
+.add-instructor-modal__consent-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-instructor-modal__consent-btn {
+  display: flex !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: var(--JA-mint-01, #01a1af) !important;
+  color: #fff !important;
+}
+
+.add-instructor-modal__consent-description {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.add-instructor-modal__consent-description p {
+  margin: 0;
+}
+
+.add-instructor-modal__consent-complete {
+  color: var(--color-blue, #017eaf);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.add-instructor-modal__consent-complete--disabled {
+  color: var(--color-text-tertiary);
+}
+
 
 /* 경력 상세 테이블: 최종 학력과 동일 스타일 */
 .add-instructor-modal__career-table-wrap {
@@ -966,8 +1184,8 @@
 
 /* 경력 테이블: row 기준 td 영역 분배 (라벨 180px, 입력 영역 나머지) */
 .add-instructor-modal__career-table-col-label {
-  width: 180px;
-  min-width: 180px;
+  width: 200px;
+  min-width: 200px;
 }
 
 .add-instructor-modal__career-table-col-input {
@@ -994,6 +1212,12 @@
   width: 100%;
 }
 
+.add-instructor-modal__career-type-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .add-instructor-modal__career-row-inputs .ant-form-item {
   flex: 0 0 auto;
   margin-bottom: 0;
@@ -1002,10 +1226,10 @@
 
 /* 회사명·담당 업무·입사연월·퇴사연월 Form.Item 220px 고정, 오른쪽 여백 제거 → 퇴사연월과 재직중 사이 12px만 */
 .add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap {
-  flex: 0 0 220px;
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  flex: 0 0 190px;
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
   margin-right: 0 !important;
   padding-right: 0;
   box-sizing: border-box;
@@ -1038,8 +1262,9 @@
 
 /* 경력 인풋 220px 고정, Select·DatePicker·Input 텍스트 스펙 통일 */
 .add-instructor-modal__career-input {
-  width: 220px !important;
-  min-width: 220px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
 }
 
 .add-instructor-modal__career-row-inputs .add-instructor-modal__career-input-wrap .ant-picker {
@@ -1067,6 +1292,12 @@
   background: var(--color-border);
   flex-shrink: 0;
   margin: 0 var(--spacing-12);
+}
+
+.add-instructor-modal__career-date-sep {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
 }
 
 /* 삭제 아이콘: 재직중과 12px 갭, 래퍼 패딩 제외한 가장 오른쪽 끝에 위치 (margin-left: auto) */
@@ -1116,8 +1347,8 @@
 }
 
 .add-instructor-modal__qualification-table-col-label {
-  width: 180px;
-  min-width: 180px;
+  width: 200px;
+  min-width: 200px;
 }
 
 .add-instructor-modal__qualification-table-col-input {
@@ -1145,25 +1376,27 @@
 }
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap {
-  flex: 0 0 220px;
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  flex: 0 0 190px;
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
   margin-right: 0 !important;
   box-sizing: border-box;
 }
 
 /* 자격 및 면허 인풋 220×40 고정, Select·DatePicker·Input 텍스트 스펙 통일 */
 .add-instructor-modal__qualification-input {
-  width: 220px !important;
-  min-width: 220px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
 }
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__qualification-input-wrap .ant-picker {
-  width: 220px !important;
-  min-width: 220px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
   box-shadow: none !important;
@@ -1233,8 +1466,8 @@
 }
 
 .add-instructor-modal__ja-activity-table-col-label {
-  width: 180px;
-  min-width: 180px;
+  width: 200px;
+  min-width: 200px;
 }
 
 .add-instructor-modal__ja-activity-table-col-input {
@@ -1258,24 +1491,26 @@
 }
 
 .add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap {
-  flex: 0 0 220px;
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  flex: 0 0 190px;
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
   margin-right: 0 !important;
   box-sizing: border-box;
 }
 
 .add-instructor-modal__ja-activity-input {
-  width: 220px !important;
-  min-width: 220px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
 }
 
 .add-instructor-modal__ja-activity-row-inputs .add-instructor-modal__ja-activity-input-wrap .ant-picker {
-  width: 220px !important;
-  min-width: 220px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
   box-shadow: none !important;
@@ -1351,8 +1586,8 @@
 }
 
 .add-instructor-modal__award-table-col-label {
-  width: 180px;
-  min-width: 180px;
+  width: 200px;
+  min-width: 200px;
 }
 
 .add-instructor-modal__award-table-col-input {
@@ -1380,24 +1615,26 @@
 }
 
 .add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap {
-  flex: 0 0 220px;
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  flex: 0 0 190px;
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
   margin-right: 0 !important;
   box-sizing: border-box;
 }
 
 .add-instructor-modal__award-input {
-  width: 220px !important;
-  min-width: 220px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
 }
 
 .add-instructor-modal__award-row-inputs .add-instructor-modal__award-input-wrap .ant-picker {
-  width: 220px !important;
-  min-width: 220px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
   height: 40px !important;
   min-height: 40px !important;
   box-shadow: none !important;
@@ -1436,6 +1673,17 @@
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-16);
+}
+
+.add-instructor-modal__career-table .add-instructor-modal__basic-table-cell--label,
+.add-instructor-modal__ja-activity-table .add-instructor-modal__basic-table-cell--label,
+.add-instructor-modal__qualification-table .add-instructor-modal__basic-table-cell--label,
+.add-instructor-modal__award-table .add-instructor-modal__basic-table-cell--label {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  height: 64px !important;
+  min-height: 64px !important;
 }
 
 .add-instructor-modal__close-x-mask {
@@ -1519,9 +1767,9 @@
 
 /* 항목 추가 버튼 100×32 */
 .add-instructor-modal__add-btn {
-  width: 100px !important;
-  min-width: 100px !important;
-  height: 32px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  height: 40px !important;
   padding: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -1590,10 +1838,12 @@
   font-weight: 500;
   line-height: 150%;
   color: #333333;
-  background: #f5f7f8;
+  background: #f5f6f7;
   border-radius: 6px 6px 0 0;
-  border: 1px solid var(--color-border-input-secondary);
-  border-bottom: none;
+  border-top: 1px solid var(--table-line, #e0e0e0);
+  border-left: 1px solid var(--table-line, #e0e0e0);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
   box-sizing: border-box;
 }
 
@@ -1651,4 +1901,99 @@
 
 .add-instructor-modal__section--free-writing .ant-form-item {
   margin-bottom: 0;
+}
+
+/* 기본정보 레이아웃 보정: 프로필 영역 제거 + 스크린샷 4열 테이블 정렬 */
+.add-instructor-modal__section--basic .add-instructor-modal__basic-info {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__profile-area {
+  display: none;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__basic-table-wrap {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  border: none;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__basic-table {
+  height: auto;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__basic-table-col-label {
+  width: 200px;
+  min-width: 200px;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__basic-table-col-input {
+  width: calc((100% - 400px) / 2);
+  min-width: 260px;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__basic-table-cell--label {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  height: 64px !important;
+  min-height: 64px !important;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__table-input--wide {
+  width: 100% !important;
+}
+
+.add-instructor-modal__address-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.add-instructor-modal__address-divider {
+  width: 1px;
+  height: 13px;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input-wrap--with-prefix,
+.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input {
+  width: 396px !important;
+  min-width: 396px !important;
+  max-width: 396px !important;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* 공통 규칙: 모든 디바이더 양옆 간격 12px */
+.add-instructor-modal__divider,
+.add-instructor-modal__gender-military-divider,
+.add-instructor-modal__bank-account-divider,
+.add-instructor-modal__education-level-divider,
+.add-instructor-modal__education-divider,
+.add-instructor-modal__career-divider,
+.add-instructor-modal__qualification-divider,
+.add-instructor-modal__ja-activity-divider,
+.add-instructor-modal__award-divider,
+.add-instructor-modal__address-divider {
+  margin: 0 !important;
+}
+
+.add-instructor-modal__resident-registration-divider {
+  margin: 0 !important;
+}
+
+.add-instructor-modal__section--basic .add-instructor-modal__table-input--wide {
+  width: 396px !important;
+  min-width: 396px !important;
+  max-width: 396px !important;
 }

@@ -19,12 +19,18 @@ import './dashboard-settings-modal.css'
 export interface DashboardSettingsModalProps {
   open: boolean
   onCancel: () => void
+  /** 기본 레이아웃으로 되돌리기 (순서·너비 초기화) */
+  onResetLayout?: () => void
 }
 
 const programList = mockPrograms.map(p => ({ id: p.id, title: p.title }))
 const allProgramIds = programList.map(p => p.id)
 
-export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
+export function DashboardSettingsModal({
+  open,
+  onCancel,
+  onResetLayout,
+}: DashboardSettingsModalProps) {
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const setShortcutEnabled = useDashboardSettingsStore(s => s.setShortcutEnabled)
   const setWidgetProgramIds = useDashboardSettingsStore(s => s.setWidgetProgramIds)
@@ -62,9 +68,16 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   )
 
   const footer = (
-    <Button type="primary" onClick={onCancel}>
-      닫기
-    </Button>
+    <>
+      {onResetLayout && (
+        <Button onClick={onResetLayout} style={{ marginRight: 8 }}>
+          기본 레이아웃으로 되돌리기
+        </Button>
+      )}
+      <Button type="primary" onClick={onCancel}>
+        닫기
+      </Button>
+    </>
   )
 
   return (

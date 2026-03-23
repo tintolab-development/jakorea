@@ -3,6 +3,7 @@
  */
 
 import { Card, Statistic } from 'antd'
+import { DashboardWidgetSkeleton } from '@/features/dashboard/ui/dashboard-widget-skeleton'
 import type { OverallStatistics } from '@/features/dashboard/api/statistics-service'
 import type { InstructorActivitySummary } from '@/features/dashboard/api/instructor-activity-service'
 import { PendingActionsAlert } from '@/features/dashboard/ui/pending-actions-alert'
@@ -54,11 +55,7 @@ export function DashboardWidgetRenderer({
       return <PendingActionsAlert />
     case 'overall-statistics-cards':
       if (!overallStatistics) {
-        return (
-          <Card loading={statisticsLoading}>
-            <div style={{ height: 150 }} />
-          </Card>
-        )
+        return <DashboardWidgetSkeleton loading={statisticsLoading} height={150} />
       }
       return (
         <OverallStatisticsCards
@@ -109,11 +106,7 @@ export function DashboardWidgetRenderer({
       return <MyApplicationSummary />
     case 'upcoming-schedules-list':
       if (!instructorActivity) {
-        return (
-          <Card loading={instructorActivityLoading}>
-            <div style={{ height: 200 }} />
-          </Card>
-        )
+        return <DashboardWidgetSkeleton loading={instructorActivityLoading} />
       }
       return (
         <UpcomingSchedulesList
@@ -123,11 +116,7 @@ export function DashboardWidgetRenderer({
       )
     case 'pending-tasks-list':
       if (!instructorActivity) {
-        return (
-          <Card loading={instructorActivityLoading}>
-            <div style={{ height: 200 }} />
-          </Card>
-        )
+        return <DashboardWidgetSkeleton loading={instructorActivityLoading} />
       }
       return (
         <PendingTasksList
@@ -139,11 +128,7 @@ export function DashboardWidgetRenderer({
       )
     case 'volunteer-pending-tasks-list':
       if (!instructorActivity) {
-        return (
-          <Card loading={instructorActivityLoading}>
-            <div style={{ height: 200 }} />
-          </Card>
-        )
+        return <DashboardWidgetSkeleton loading={instructorActivityLoading} />
       }
       return (
         <VolunteerPendingTasksList

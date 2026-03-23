@@ -1,5 +1,7 @@
 /**
- * 게시글 상세 모달
+ * 게시글 상세 모달 (ContentModal)
+ * 헤더: 게시글 상세 24px Bold, 푸터: 닫기
+ * 본문: 7:3 (좌 게시글 카드, 우 첨부파일) + 댓글 카드 전체 너비
  */
 
 .post-detail-modal.ant-modal .ant-modal-content {
@@ -17,22 +19,12 @@
   padding: 0;
 }
 
-.post-detail-modal .teal-header-modal__header {
-  flex-shrink: 0;
-}
-
-.post-detail-modal .teal-header-modal__body {
+/* ContentModal 사용 시 body는 .content-modal .teal-header-modal__body 내부에 있음 */
+.post-detail-modal.content-modal .teal-header-modal__body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--spacing-20) var(--spacing-30) var(--spacing-30);
-}
-
-.post-detail-modal .teal-header-modal__footer {
-  flex-shrink: 0;
-  justify-content: center;
-  padding-top: var(--spacing-30);
-  padding-bottom: var(--spacing-30);
+  padding: 0;
 }
 
 /* ── body ──────────────────────────────────────── */
@@ -40,7 +32,18 @@
 .post-detail-modal__body {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-16);
+  gap: 16px;
+}
+
+/* 본문 행: 게시글 카드 단일 컬럼 (첨부파일은 카드 내부 하단) */
+.post-detail-modal__main-row {
+  display: flex;
+  min-width: 0;
+}
+
+.post-detail-modal__main-left {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* ── 게시글 카드 ─────────────────────────────────── */
@@ -61,10 +64,8 @@
 
 .post-detail-modal__avatar {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--color-border-input, #d9d9d9);
+  width: 48px;
+  height: 48px;
 }
 
 .post-detail-modal__author-info {
@@ -117,43 +118,101 @@
   margin-bottom: var(--spacing-16);
 }
 
+.post-detail-modal__content:has(+ .post-detail-modal__attachments) {
+  margin-bottom: 0;
+}
+
 .post-detail-modal__type-tag {
   color: var(--color-modal-header, #01a1af);
   font-weight: 700;
   margin-right: 4px;
 }
 
-/* ── 첨부파일 섹션 (카드 내부) ──────────────────────── */
+/* ── 첨부파일 섹션 (본문 카드 하단, 스크린샷 스펙) ───────────────────── */
 
 .post-detail-modal__attachments {
-  background: #f5f5f5;
-  border-radius: var(--radius-6, 6px);
-  padding: var(--spacing-12) var(--spacing-16);
+  margin-top: 20px;
+  box-sizing: border-box;
+  background: #F5F6F7;
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .post-detail-modal__attachments-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--color-modal-header, #01a1af);
+  gap: 8px;
+  color: #00A9A3;
   font-size: 14px;
   font-weight: 700;
-  margin-bottom: var(--spacing-8);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.post-detail-modal__attachments-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: #00A9A3;
+}
+
+.post-detail-modal__attachments-icon svg {
+  display: block;
+}
+
+.post-detail-modal__file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .post-detail-modal__file-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-8);
-  padding: 5px 0;
+  gap: 8px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text-primary, #3d3d3d);
   cursor: pointer;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+}
+
+.post-detail-modal__file-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: #5c6b73;
+}
+
+.post-detail-modal__file-item-icon svg {
+  display: block;
+}
+
+.post-detail-modal__file-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .post-detail-modal__file-item:hover {
-  color: var(--color-modal-header, #01a1af);
+  color: #00A9A3;
+}
+
+.post-detail-modal__file-item:hover .post-detail-modal__file-item-icon {
+  color: #00A9A3;
 }
 
 /* ── 댓글 카드 ──────────────────────────────────── */
@@ -169,7 +228,6 @@
   display: flex;
   gap: var(--spacing-12);
   padding: var(--spacing-16) var(--spacing-20);
-  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
 }
 
 .post-detail-modal__comment-body {
@@ -205,20 +263,32 @@
 /* ── 댓글 입력 ──────────────────────────────────── */
 
 .post-detail-modal__comment-input-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: 8px;
   padding: var(--spacing-12) var(--spacing-20);
 }
 
+.post-detail-modal__comment-input-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%;
+  height: 1px;
+  background: var(--color-border-light, #e8e8e8);
+}
+
 .post-detail-modal__comment-input {
-  flex: 1;
+  flex: 1 0 0;
   min-width: 0;
-  height: 36px;
-  padding: 0 12px 0 16px;
-  border: 1px solid #c4cdd1;
-  border-radius: 5px;
-  background: #fff;
+  height: 44px;
+  padding: 0 14px 0 16px;
+  border: 1px solid #C4CDD1;
+  border-radius: 8px;
+  background: #FFF;
   outline: none;
   font-size: 14px;
   color: var(--color-text-primary, #3d3d3d);
@@ -226,7 +296,14 @@
 }
 
 .post-detail-modal__comment-input::placeholder {
-  color: var(--color-text-placeholder, #bfbfbf);
+  overflow: hidden;
+  color: #85969D;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .post-detail-modal__comment-input:focus {
@@ -258,4 +335,33 @@
   outline: none;
   box-shadow: none;
   background: none;
+}
+
+/* 이모지 피커 팝오버 — 내용 잘림 방지 */
+.post-detail-modal__emoji-popover .ant-popover-inner {
+  overflow: visible;
+}
+
+.post-detail-modal__emoji-popover .ant-popover-content {
+  overflow: visible;
+}
+
+/* 이모지 피커 팝오버 래퍼 — 검색 인풋·스킨톤(색상) 영역이 잘리지 않도록 여유 확보 */
+.post-detail-modal__emoji-picker-wrap {
+  width: 380px;
+  padding: 8px 12px 12px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.post-detail-modal__emoji-picker-wrap .epr-main {
+  border: none;
+  box-sizing: border-box;
+}
+
+/* 검색 인풋 + 스킨톤 영역이 잘리지 않도록 내부 여백 */
+.post-detail-modal__emoji-picker-wrap .EmojiPickerReact {
+  width: 100% !important;
+  max-width: 100%;
+  box-sizing: border-box;
 }

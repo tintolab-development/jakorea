@@ -168,7 +168,7 @@ export function SortableWidgetSlot({
           <div
             ref={setActivatorNodeRef}
             className="widget-drag-handle dashboard-widget-slot__handle"
-            aria-hidden
+            aria-label="위젯 드래그 핸들"
             {...listeners}
             {...attributes}
           >
@@ -180,7 +180,7 @@ export function SortableWidgetSlot({
           <div
             ref={setActivatorNodeRef}
             className="dashboard-widget-slot__handle-overlay"
-            aria-hidden
+            aria-label="위젯 드래그 핸들"
             style={{
               position: 'absolute',
               top: handleRect.top,
@@ -205,6 +205,7 @@ export function SortableWidgetSlot({
             onLostPointerCapture={handleResizeEnd}
             role="separator"
             aria-label="너비 조절 (드래그)"
+            title="너비 조절: 좌우로 드래그하면 50% / 100%로 변경됩니다"
           >
             <div className="dashboard-widget-resize-handle__bar" />
           </div>

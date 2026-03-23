@@ -1,26 +1,40 @@
 /**
  * 강사진 추가 모달
  * 프로그램 진행 현황 > 강사 정보 탭에서 "강사 추가" 클릭 시 노출
- * TealHeaderModal 사용, 1400×830(바디) 스펙
+ * ContentModal 사용, 1400px 대형 레이아웃 스펙
  * 섹션: 기본 정보(프로필 사진 + 2열 필드), 최종 학력, 경력 상세, 자격 및 면허, 수상 및 수료 내역
  */
 
-import { useEffect, useState } from 'react'
-import { Form, Input, Radio, DatePicker, Upload } from 'antd'
-import { CameraOutlined, SearchOutlined } from '@ant-design/icons'
+import { useEffect } from 'react'
+import { Form, Input, Radio, DatePicker } from 'antd'
 import type { InputHTMLAttributes } from 'react'
+import { useForm, type Path } from 'react-hook-form'
 
 /** 주소 검색용: 아이콘 + 네이티브 input 한 묶음 220×40, Form.Item value/onChange는 input에 전달 */
 function AddressSearchInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="add-instructor-modal__table-input-wrap add-instructor-modal__table-input-wrap--with-prefix">
-      <SearchOutlined className="add-instructor-modal__table-input-prefix" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="none"
+        className="add-instructor-modal__table-input-prefix"
+        aria-hidden
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M8.15625 1.6875C11.7288 1.6875 14.625 4.58366 14.625 8.15625C14.625 9.73996 14.0538 11.189 13.1089 12.3135L16.1477 15.3523C16.3673 15.572 16.3673 15.9281 16.1477 16.1477C15.9281 16.3674 15.572 16.3673 15.3523 16.1477L12.3135 13.11C11.1891 14.0546 9.73971 14.625 8.15625 14.625C4.58366 14.625 1.6875 11.7288 1.6875 8.15625C1.6875 4.58366 4.58366 1.6875 8.15625 1.6875ZM8.15625 2.8125C5.20498 2.8125 2.8125 5.20498 2.8125 8.15625C2.8125 11.1075 5.20498 13.5 8.15625 13.5C11.1075 13.5 13.5 11.1075 13.5 8.15625C13.5 5.20498 11.1075 2.8125 8.15625 2.8125Z"
+          fill="#85969D"
+        />
+      </svg>
       <input className="add-instructor-modal__table-input" {...props} />
     </div>
   )
 }
-import type { UploadProps } from 'antd'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type {
   ParticipatingInstructorRow,
@@ -32,40 +46,41 @@ import { CareerDetailSection } from './add-instructor-career-section'
 import { NativeSelect } from './add-instructor-native-select'
 import './add-instructor-modal.css'
 
-/** 삭제용 X 아이콘 24×24 (자격·수상 섹션 삭제 버튼) */
+/** 삭제용 X 아이콘 28×28 (자격·수상 섹션 삭제 버튼) */
 function CloseXIcon({ maskId }: { maskId: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
       fill="none"
       aria-hidden
     >
-      <mask
-        id={maskId}
-        className="add-instructor-modal__close-x-mask"
-        maskUnits="userSpaceOnUse"
-        x="0"
-        y="0"
-        width="24"
-        height="24"
-      >
-        <rect width="24" height="24" fill="#D9D9D9" />
-      </mask>
-      <g mask={`url(#${maskId})`}>
-        <path
-          d="M12 13.0538L15.073 16.127C15.2115 16.2653 15.3856 16.3362 15.5953 16.3395C15.8048 16.3427 15.982 16.2718 16.127 16.127C16.2718 15.982 16.3443 15.8063 16.3443 15.6C16.3443 15.3937 16.2718 15.218 16.127 15.073L13.0538 12L16.127 8.927C16.2653 8.7885 16.3362 8.61442 16.3395 8.40475C16.3427 8.19525 16.2718 8.018 16.127 7.873C15.982 7.72817 15.8063 7.65575 15.6 7.65575C15.3937 7.65575 15.218 7.72817 15.073 7.873L12 10.9462L8.927 7.873C8.7885 7.73467 8.61442 7.66383 8.40475 7.6605C8.19525 7.65733 8.018 7.72817 7.873 7.873C7.72817 8.018 7.65575 8.19367 7.65575 8.4C7.65575 8.60633 7.72817 8.782 7.873 8.927L10.9462 12L7.873 15.073C7.73467 15.2115 7.66383 15.3856 7.6605 15.5953C7.65733 15.8048 7.72817 15.982 7.873 16.127C8.018 16.2718 8.19367 16.3443 8.4 16.3443C8.60633 16.3443 8.782 16.2718 8.927 16.127L12 13.0538ZM12.0017 21.5C10.6877 21.5 9.45267 21.2507 8.2965 20.752C7.14033 20.2533 6.13467 19.5766 5.2795 18.7218C4.42433 17.8669 3.74725 16.8617 3.24825 15.706C2.74942 14.5503 2.5 13.3156 2.5 12.0017C2.5 10.6877 2.74933 9.45267 3.248 8.2965C3.74667 7.14033 4.42342 6.13467 5.27825 5.2795C6.13308 4.42433 7.13833 3.74725 8.294 3.24825C9.44967 2.74942 10.6844 2.5 11.9983 2.5C13.3123 2.5 14.5473 2.74933 15.7035 3.248C16.8597 3.74667 17.8653 4.42342 18.7205 5.27825C19.5757 6.13308 20.2528 7.13833 20.7518 8.294C21.2506 9.44967 21.5 10.6844 21.5 11.9983C21.5 13.3123 21.2507 14.5473 20.752 15.7035C20.2533 16.8597 19.5766 17.8653 18.7218 18.7205C17.8669 19.5757 16.8617 20.2528 15.706 20.7518C14.5503 21.2506 13.3156 21.5 12.0017 21.5ZM12 20C14.2333 20 16.125 19.225 17.675 17.675C19.225 16.125 20 14.2333 20 12C20 9.76667 19.225 7.875 17.675 6.325C16.125 4.775 14.2333 4 12 4C9.76667 4 7.875 4.775 6.325 6.325C4.775 7.875 4 9.76667 4 12C4 14.2333 4.775 16.125 6.325 17.675C7.875 19.225 9.76667 20 12 20Z"
-          fill="currentColor"
-        />
+      <g opacity="0.6">
+        <mask
+          id={maskId}
+          className="add-instructor-modal__close-x-mask"
+          maskUnits="userSpaceOnUse"
+          x="0"
+          y="0"
+          width="28"
+          height="28"
+        >
+          <rect width="28" height="28" fill="#D9D9D9" />
+        </mask>
+        <g mask={`url(#${maskId})`}>
+          <path
+            d="M13.9985 15.083L17.5837 18.6685C17.7453 18.8299 17.924 18.9076 18.12 18.9018C18.3159 18.8958 18.4983 18.8083 18.6675 18.6393C18.8365 18.4701 18.921 18.2895 18.921 18.0974C18.921 17.9053 18.8365 17.7246 18.6675 17.5555L15.082 13.9995L18.6675 10.4143C18.8289 10.2527 18.9115 10.0739 18.9154 9.87794C18.9191 9.68213 18.8365 9.49965 18.6675 9.33048C18.4983 9.16151 18.3177 9.07702 18.1256 9.07702C17.9335 9.07702 17.7528 9.16151 17.5837 9.33048L13.9985 12.9159L10.4133 9.33048C10.2518 9.16909 10.0778 9.08645 9.89154 9.08256C9.70546 9.07887 9.52784 9.16151 9.35867 9.33048C9.1897 9.49965 9.10521 9.68028 9.10521 9.8724C9.10521 10.0645 9.1897 10.2451 9.35867 10.4143L12.915 13.9995L9.3295 17.5846C9.16811 17.7462 9.09034 17.9202 9.09617 18.1064C9.1022 18.2925 9.1897 18.4701 9.35867 18.6393C9.52784 18.8083 9.70847 18.8928 9.90059 18.8928C10.0927 18.8928 10.2733 18.8083 10.4425 18.6393L13.9985 15.083ZM14.0005 24.6161C12.5453 24.6161 11.1724 24.3398 9.88192 23.7872C8.59139 23.2346 7.46186 22.4742 6.49334 21.5061C5.52481 20.538 4.76404 19.4089 4.21104 18.119C3.65824 16.829 3.38184 15.4565 3.38184 14.0015C3.38184 12.5269 3.65814 11.1491 4.21075 9.86831C4.76336 8.58751 5.52374 7.46284 6.49188 6.49431C7.46002 5.52578 8.58906 4.76502 9.879 4.21202C11.1689 3.65922 12.5414 3.38281 13.9965 3.38281C15.4711 3.38281 16.8489 3.65912 18.1297 4.21173C19.4105 4.76434 20.5351 5.52472 21.5037 6.49285C22.4722 7.46099 23.233 8.58517 23.786 9.8654C24.3388 11.1456 24.6152 12.523 24.6152 13.9974C24.6152 15.4527 24.3389 16.8255 23.7863 18.1161C23.2336 19.4066 22.4733 20.5361 21.5051 21.5046C20.537 22.4732 19.4128 23.2339 18.1326 23.7869C16.8524 24.3397 15.475 24.6161 14.0005 24.6161Z"
+            fill="#3D3D3D"
+          />
+        </g>
       </g>
     </svg>
   )
 }
 
 const BANK_OPTIONS = [
-  { label: '전체', value: 'all' },
   { label: '국민은행', value: 'kb' },
   { label: '신한은행', value: 'shinhan' },
   { label: '우리은행', value: 'woori' },
@@ -75,12 +90,6 @@ const BANK_OPTIONS = [
   { label: '카카오뱅크', value: 'kakao' },
 ]
 
-/** 병역사항 라디오: 미필 / 군필 / 해당없음 */
-const MILITARY_RADIO_OPTIONS = [
-  { label: '미필', value: 'not_completed' },
-  { label: '군필', value: 'completed' },
-  { label: '해당없음', value: 'exempted' },
-]
 export interface EducationItem {
   schoolType?: string
   status?: string
@@ -100,11 +109,13 @@ export interface CareerItem {
 
 export interface QualificationItem {
   name?: string
+  issuer?: string
   year?: string
 }
 
 export interface AwardItem {
   name?: string
+  issuer?: string
   year?: string
 }
 
@@ -130,11 +141,14 @@ export interface AddInstructorFormValues {
   bankName?: string
   accountNumber?: string
   accountHolder?: string
+  oneLineIntro?: string
   schoolName?: string
   /** 반복 항목 */
   educations?: EducationItem[]
   careerType?: 'new' | 'experienced'
   careers?: CareerItem[]
+  careerTypeSchool?: string
+  careerTypeStatus?: string
   jaKoreaExperiences?: JaKoreaActivityItem[]
   qualifications?: QualificationItem[]
   awards?: AwardItem[]
@@ -143,6 +157,14 @@ export interface AddInstructorFormValues {
   freeWriting2?: string
   freeWriting3?: string
   freeWriting4?: string
+  consentOpenProfile?: 'agree' | 'disagree'
+  consentOpenEducation?: 'agree' | 'disagree'
+  consentOpenCareer?: 'agree' | 'disagree'
+  consentOpenJaActivity?: 'agree' | 'disagree'
+  consentMarketing?: 'agree' | 'disagree'
+  consentWithholdingTax?: 'agree' | 'disagree'
+  consentCriminalRecord?: 'agree' | 'disagree'
+  consentAdministrativeInfo?: 'agree' | 'disagree'
 }
 
 interface AddInstructorModalProps {
@@ -164,72 +186,114 @@ const requiredMark = (labelNode: React.ReactNode, { required }: { required?: boo
     labelNode
   )
 
+const CONSENT_RADIO_OPTIONS = [
+  { label: '동의', value: 'agree' },
+  { label: '미동의', value: 'disagree' },
+]
+
+const INITIAL_FORM_VALUES: AddInstructorFormValues = {
+  nameKorean: '',
+  nameEnglish: '',
+  residentRegistrationFirst: '',
+  residentRegistrationLast: '',
+  contact: '',
+  email: '',
+  address: '',
+  detailAddress: '',
+  militaryStatus: 'not_completed',
+  bankName: undefined,
+  accountNumber: '',
+  accountHolder: '',
+  oneLineIntro: '',
+  schoolName: undefined,
+  educations: [{}],
+  careerType: 'experienced',
+  careerTypeSchool: undefined,
+  careerTypeStatus: undefined,
+  careers: [{}],
+  jaKoreaExperiences: [{}],
+  qualifications: [{}],
+  awards: [{}],
+  freeWriting1: '',
+  freeWriting2: '',
+  freeWriting3: '',
+  freeWriting4: '',
+  consentOpenProfile: 'agree',
+  consentOpenEducation: 'agree',
+  consentOpenCareer: 'agree',
+  consentOpenJaActivity: 'agree',
+  consentMarketing: 'agree',
+  consentWithholdingTax: 'agree',
+  consentCriminalRecord: 'disagree',
+  consentAdministrativeInfo: 'agree',
+}
+
 export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModalProps) {
   const [form] = Form.useForm<AddInstructorFormValues>()
-  const [profilePreviewUrl, setProfilePreviewUrl] = useState<string | null>(null)
+  const rhfForm = useForm<AddInstructorFormValues>({
+    defaultValues: INITIAL_FORM_VALUES,
+    mode: 'onChange',
+  })
+  const jaKoreaExperiences = Form.useWatch('jaKoreaExperiences', form) ?? []
+  const qualifications = Form.useWatch('qualifications', form) ?? []
+  const awards = Form.useWatch('awards', form) ?? []
+  const consentWithholdingTax = Form.useWatch('consentWithholdingTax', form)
+  const consentCriminalRecord = Form.useWatch('consentCriminalRecord', form)
+  const consentAdministrativeInfo = Form.useWatch('consentAdministrativeInfo', form)
+  const jaProgramCount = countRows(jaKoreaExperiences)
+  const qualificationCount = countRows(qualifications)
+  const awardCount = countRows(awards)
+
+  const syncToReactHookForm = (values: AddInstructorFormValues) => {
+    const walk = (target: unknown, basePath = '') => {
+      if (Array.isArray(target)) {
+        target.forEach((item, index) => {
+          const nextPath = basePath ? `${basePath}.${index}` : String(index)
+          walk(item, nextPath)
+        })
+        if (target.length === 0 && basePath) {
+          rhfForm.setValue(basePath as Path<AddInstructorFormValues>, [] as never, {
+            shouldDirty: true,
+          })
+        }
+        return
+      }
+      if (target && typeof target === 'object') {
+        Object.entries(target).forEach(([key, value]) => {
+          const nextPath = basePath ? `${basePath}.${key}` : key
+          walk(value, nextPath)
+        })
+        return
+      }
+      if (basePath) {
+        rhfForm.setValue(basePath as Path<AddInstructorFormValues>, target as never, {
+          shouldDirty: true,
+        })
+      }
+    }
+    walk(values)
+  }
 
   useEffect(() => {
     if (open) {
       form.resetFields()
-      form.setFieldsValue({
-        educations: [{}],
-        careerType: 'new',
-        careers: [{}],
-        jaKoreaExperiences: [{}],
-        qualifications: [{}],
-        awards: [{}],
-        freeWriting1: '',
-        freeWriting2: '',
-        freeWriting3: '',
-        freeWriting4: '',
-      })
-      setProfilePreviewUrl(prev => {
-        if (prev) URL.revokeObjectURL(prev)
-        return null
-      })
+      form.setFieldsValue(INITIAL_FORM_VALUES)
+      rhfForm.reset(INITIAL_FORM_VALUES)
     }
-  }, [open, form])
-
-  useEffect(() => {
-    return () => {
-      setProfilePreviewUrl(prev => {
-        if (prev) URL.revokeObjectURL(prev)
-        return null
-      })
-    }
-  }, [])
+  }, [open, form, rhfForm])
 
   const handleSubmit = (values: AddInstructorFormValues) => {
-    onAdd(values)
+    syncToReactHookForm(values)
+    onAdd(rhfForm.getValues())
     form.resetFields()
-    setProfilePreviewUrl(prev => {
-      if (prev) URL.revokeObjectURL(prev)
-      return null
-    })
+    rhfForm.reset(INITIAL_FORM_VALUES)
     onCancel()
   }
 
   const handleCancel = () => {
     form.resetFields()
-    setProfilePreviewUrl(prev => {
-      if (prev) URL.revokeObjectURL(prev)
-      return null
-    })
+    rhfForm.reset(INITIAL_FORM_VALUES)
     onCancel()
-  }
-
-  const profileUploadProps: UploadProps = {
-    name: 'profile',
-    listType: 'picture-card',
-    showUploadList: false,
-    accept: 'image/*',
-    beforeUpload: file => {
-      setProfilePreviewUrl(prev => {
-        if (prev) URL.revokeObjectURL(prev)
-        return URL.createObjectURL(file)
-      })
-      return false
-    },
   }
 
   const footer = (
@@ -244,20 +308,20 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
         modalTeal
         form="add-instructor-form"
       >
-        저장
+        신규 등록
       </AppButton>
     </div>
   )
 
   return (
-    <TealHeaderModal
+    <ContentModal
       open={open}
       onCancel={handleCancel}
       title="강사진 등록"
       footer={footer}
       width={1400}
       size="large"
-      className="teal-header-modal--instructor-add"
+      className="add-instructor-content-modal"
     >
       <Form
         id="add-instructor-form"
@@ -265,29 +329,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
         layout="vertical"
         className="add-instructor-modal__form"
         onFinish={handleSubmit}
+        onValuesChange={(_, allValues) => syncToReactHookForm(allValues as AddInstructorFormValues)}
         requiredMark={requiredMark}
-        initialValues={{
-          nameKorean: '',
-          nameEnglish: '',
-          residentRegistrationFirst: '',
-          residentRegistrationLast: '',
-          contact: '',
-          email: '',
-          address: '',
-          detailAddress: '',
-          militaryStatus: 'not_completed',
-          bankName: 'all',
-          accountNumber: '',
-          accountHolder: '',
-          schoolName: undefined,
-          educations: [{}],
-          careerType: 'new',
-          careers: [{}],
-          qualifications: [{}],
-          awards: [{}],
-        }}
+        initialValues={INITIAL_FORM_VALUES}
       >
-        {/* 기본 정보: 1340×384, 프로필 192×256, 우측 테이블 */}
+        {/* 기본 정보: 스크린샷 기준 2열 테이블 */}
         <section className="add-instructor-modal__section add-instructor-modal__section--basic">
           <h3 className="add-instructor-modal__section-title">
             기본 정보
@@ -297,43 +343,18 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
             </span>
           </h3>
           <div className="add-instructor-modal__basic-info">
-            <div className="add-instructor-modal__profile-area">
-              <Upload {...profileUploadProps}>
-                {profilePreviewUrl ? (
-                  <div className="add-instructor-modal__profile-preview-wrap">
-                    <img
-                      src={profilePreviewUrl}
-                      alt="프로필 미리보기"
-                      className="add-instructor-modal__profile-preview"
-                    />
-                  </div>
-                ) : (
-                  <div className="add-instructor-modal__profile-placeholder">
-                    <CameraOutlined className="add-instructor-modal__profile-icon" />
-                  </div>
-                )}
-              </Upload>
-            </div>
-            {/* 우측 테이블: 스크린샷 기준 — 좌(성명 한글/영문, 연락처, 주소, 정산 계좌) | 우(주민등록번호, 병역사항 라디오, 이메일, 상세 주소) */}
             <div className="add-instructor-modal__basic-table-wrap">
               <table className="add-instructor-modal__basic-table">
                 <colgroup>
-                  <col className="add-instructor-modal__basic-table-col-label-left" />
-                  <col className="add-instructor-modal__basic-table-col-name-sub" />
-                  <col className="add-instructor-modal__basic-table-col-input-left" />
-                  <col className="add-instructor-modal__basic-table-col-label-right" />
-                  <col className="add-instructor-modal__basic-table-col-input-right" />
+                  <col className="add-instructor-modal__basic-table-col-label" />
+                  <col className="add-instructor-modal__basic-table-col-input" />
+                  <col className="add-instructor-modal__basic-table-col-label" />
+                  <col className="add-instructor-modal__basic-table-col-input" />
                 </colgroup>
                 <tbody>
                   <tr>
-                    <td
-                      rowSpan={2}
-                      className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--name"
-                    >
-                      <span className="add-instructor-modal__basic-table-label">성명</span>
-                    </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--name-sub">
-                      <span className="add-instructor-modal__basic-table-label">한글</span>
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
+                      <span className="add-instructor-modal__basic-table-label">한글 성명</span>
                     </td>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
@@ -347,8 +368,25 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         />
                       </Form.Item>
                     </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--label-right">
-                      <span className="add-instructor-modal__basic-table-label">주민등록번호</span>
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
+                      <span className="add-instructor-modal__basic-table-label">영문 성명</span>
+                    </td>
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
+                      <Form.Item
+                        name="nameEnglish"
+                        rules={[{ required: true, message: '영문 성명을 입력해주세요' }]}
+                        noStyle
+                      >
+                        <input
+                          className="add-instructor-modal__table-input"
+                          placeholder="영문 성명"
+                        />
+                      </Form.Item>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
+                      <span className="add-instructor-modal__basic-table-label">주민등록 번호</span>
                     </td>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <div className="add-instructor-modal__resident-registration-row">
@@ -388,40 +426,24 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         </Form.Item>
                       </div>
                     </td>
-                  </tr>
-                  <tr>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--name-sub">
-                      <span className="add-instructor-modal__basic-table-label">영문</span>
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
+                      <span className="add-instructor-modal__basic-table-label">소속</span>
                     </td>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                      <Form.Item
-                        name="nameEnglish"
-                        rules={[{ required: true, message: '영문 성명을 입력해주세요' }]}
-                        noStyle
-                      >
-                        <input
+                      <Form.Item name="schoolName" noStyle>
+                        <NativeSelect
+                          placeholder="소속"
+                          options={INSTRUCTOR_SCHOOL_OPTIONS.map(school => ({
+                            label: school,
+                            value: school,
+                          }))}
                           className="add-instructor-modal__table-input"
-                          placeholder="영문 성명"
-                        />
-                      </Form.Item>
-                    </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--label-right">
-                      <span className="add-instructor-modal__basic-table-label">병역사항</span>
-                    </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                      <Form.Item name="militaryStatus" rules={[{ required: true }]} noStyle>
-                        <Radio.Group
-                          options={MILITARY_RADIO_OPTIONS}
-                          className="add-instructor-modal__military-radio-group"
                         />
                       </Form.Item>
                     </td>
                   </tr>
                   <tr>
-                    <td
-                      colSpan={2}
-                      className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label"
-                    >
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
                       <span className="add-instructor-modal__basic-table-label">연락처</span>
                     </td>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
@@ -433,7 +455,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         <input className="add-instructor-modal__table-input" placeholder="연락처" />
                       </Form.Item>
                     </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--label-right">
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
                       <span className="add-instructor-modal__basic-table-label">이메일</span>
                     </td>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
@@ -454,38 +476,33 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     </td>
                   </tr>
                   <tr>
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
+                      <span className="add-instructor-modal__basic-table-label">자택 주소</span>
+                    </td>
                     <td
-                      colSpan={2}
-                      className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label"
+                      className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input"
+                      colSpan={3}
                     >
-                      <span className="add-instructor-modal__basic-table-label">주소</span>
-                    </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                      <Form.Item
-                        name="address"
-                        rules={[{ required: true, message: '주소를 입력해주세요' }]}
-                        noStyle
-                      >
-                        <AddressSearchInput placeholder="건물명, 도로명 또는 지번" />
-                      </Form.Item>
-                    </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--label-right">
-                      <span className="add-instructor-modal__basic-table-label">상세 주소</span>
-                    </td>
-                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
-                      <Form.Item name="detailAddress" noStyle>
-                        <input
-                          className="add-instructor-modal__table-input"
-                          placeholder="상세 주소"
-                        />
-                      </Form.Item>
+                      <div className="add-instructor-modal__address-row">
+                        <Form.Item
+                          name="address"
+                          rules={[{ required: true, message: '주소를 입력해주세요' }]}
+                          noStyle
+                        >
+                          <AddressSearchInput placeholder="건물명, 도로명 또는 지번" />
+                        </Form.Item>
+                        <span className="add-instructor-modal__address-divider" aria-hidden />
+                        <Form.Item name="detailAddress" noStyle>
+                          <input
+                            className="add-instructor-modal__table-input"
+                            placeholder="상세 주소"
+                          />
+                        </Form.Item>
+                      </div>
                     </td>
                   </tr>
                   <tr>
-                    <td
-                      colSpan={2}
-                      className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label"
-                    >
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
                       <span className="add-instructor-modal__basic-table-label">
                         정산 계좌 정보
                       </span>
@@ -505,7 +522,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         <Form.Item name="accountNumber" rules={[{ required: true }]} noStyle>
                           <input
                             className="add-instructor-modal__table-input add-instructor-modal__bank-account-input--number"
-                            placeholder="계좌번호"
+                            placeholder="계좌번호(숫자만)"
                           />
                         </Form.Item>
                         <div className="add-instructor-modal__bank-account-divider" aria-hidden />
@@ -518,9 +535,153 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       </div>
                     </td>
                   </tr>
+                  <tr>
+                    <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">
+                      <span className="add-instructor-modal__basic-table-label">한 줄 소개</span>
+                    </td>
+                    <td
+                      className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input"
+                      colSpan={3}
+                    >
+                      <Form.Item name="oneLineIntro" noStyle>
+                        <input
+                          className="add-instructor-modal__table-input add-instructor-modal__table-input--wide"
+                          placeholder="자유롭게 작성해주세요"
+                        />
+                      </Form.Item>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
+          </div>
+        </section>
+
+        <section className="add-instructor-modal__section">
+          <h3 className="add-instructor-modal__section-title">정보 제공 동의</h3>
+          <div className="add-instructor-modal__consent-table-wrap">
+            <table className="add-instructor-modal__consent-table add-instructor-modal__basic-table">
+              <colgroup>
+                <col className="add-instructor-modal__consent-table-col-label" />
+                <col className="add-instructor-modal__consent-table-col-input" />
+                <col className="add-instructor-modal__consent-table-col-label" />
+                <col className="add-instructor-modal__consent-table-col-input" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
+                    <span className="add-instructor-modal__basic-table-label">개인정보 수집 동의</span>
+                  </td>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
+                    <Form.Item name="consentOpenProfile" noStyle>
+                      <Radio.Group
+                        options={CONSENT_RADIO_OPTIONS}
+                        className="add-instructor-modal__consent-radio-group"
+                      />
+                    </Form.Item>
+                  </td>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
+                    <span className="add-instructor-modal__basic-table-label">마케팅 제공 동의</span>
+                  </td>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
+                    <Form.Item name="consentMarketing" noStyle>
+                      <Radio.Group
+                        options={CONSENT_RADIO_OPTIONS}
+                        className="add-instructor-modal__consent-radio-group"
+                      />
+                    </Form.Item>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
+                    <span className="add-instructor-modal__basic-table-label">지급조서 작성 동의</span>
+                  </td>
+                  <td
+                    className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input"
+                    colSpan={3}
+                  >
+                    <div className="add-instructor-modal__consent-action-row">
+                      <Form.Item name="consentWithholdingTax" noStyle>
+                        <Radio.Group
+                          options={CONSENT_RADIO_OPTIONS}
+                          className="add-instructor-modal__consent-radio-group"
+                        />
+                      </Form.Item>
+                      <AppButton
+                        variant="cancel"
+                        size="middle"
+                        className="add-instructor-modal__consent-btn"
+                        disabled={consentWithholdingTax !== 'agree'}
+                      >
+                        동의서 작성
+                      </AppButton>
+                      <div className="add-instructor-modal__consent-description">
+                        <p>- 작성 버튼을 눌러 동의서를 작성 및 제출해주세요.</p>
+                        <p>- 제출까지 완료되어야 동의된 것으로 간주됩니다.</p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
+                    <span className="add-instructor-modal__basic-table-label">성범죄 경력조회 동의</span>
+                  </td>
+                  <td
+                    className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input"
+                    colSpan={3}
+                  >
+                    <div className="add-instructor-modal__consent-action-row">
+                      <Form.Item name="consentCriminalRecord" noStyle>
+                        <Radio.Group
+                          options={CONSENT_RADIO_OPTIONS}
+                          className="add-instructor-modal__consent-radio-group"
+                        />
+                      </Form.Item>
+                      <AppButton
+                        variant="cancel"
+                        size="middle"
+                        className="add-instructor-modal__consent-btn"
+                        disabled={consentCriminalRecord !== 'agree'}
+                      >
+                        동의서 작성
+                      </AppButton>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
+                    <span className="add-instructor-modal__basic-table-label">행정정보 공동이용 사전 동의</span>
+                  </td>
+                  <td
+                    className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input"
+                    colSpan={3}
+                  >
+                    <div className="add-instructor-modal__consent-action-row">
+                      <Form.Item name="consentAdministrativeInfo" noStyle>
+                        <Radio.Group
+                          options={CONSENT_RADIO_OPTIONS}
+                          className="add-instructor-modal__consent-radio-group"
+                        />
+                      </Form.Item>
+                      <AppButton
+                        variant="primary"
+                        size="middle"
+                        modalTeal
+                        className="add-instructor-modal__consent-btn"
+                        disabled={consentAdministrativeInfo !== 'agree'}
+                      >
+                        동의서 수정
+                      </AppButton>
+                      <span
+                        className={`add-instructor-modal__consent-complete ${consentAdministrativeInfo === 'agree' ? '' : 'add-instructor-modal__consent-complete--disabled'}`}
+                      >
+                        {consentAdministrativeInfo === 'agree' ? '제출 완료' : '미제출'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -535,7 +696,12 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
             {(fields, { add, remove }) => (
               <>
                 <div className="add-instructor-modal__section-head add-instructor-modal__section-head--with-btn">
-                  <h3 className="add-instructor-modal__section-title">JA Korea 활동 경험</h3>
+                  <h3 className="add-instructor-modal__section-title">
+                    JA Korea 활동 경험
+                    <span className="add-instructor-modal__section-summary">
+                      총 참여 프로그램 {jaProgramCount}개
+                    </span>
+                  </h3>
                   <AppButton
                     htmlType="button"
                     variant="primary"
@@ -596,7 +762,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                   className="add-instructor-modal__ja-activity-date-sep"
                                   aria-hidden
                                 >
-                                  -
+                                  ~
                                 </span>
                                 <Form.Item
                                   name={[field.name, 'endDate']}
@@ -655,7 +821,12 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
             {(fields, { add, remove }) => (
               <>
                 <div className="add-instructor-modal__section-head add-instructor-modal__section-head--with-btn">
-                  <h3 className="add-instructor-modal__section-title">자격 및 면허</h3>
+                  <h3 className="add-instructor-modal__section-title">
+                    자격 및 면허
+                    <span className="add-instructor-modal__section-summary">
+                      총 취득 개수 {qualificationCount}개
+                    </span>
+                  </h3>
                   <AppButton
                     htmlType="button"
                     variant="primary"
@@ -692,6 +863,22 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                 >
                                   <Input
                                     placeholder="자격증/면허"
+                                    size="large"
+                                    allowClear
+                                    className="add-instructor-modal__table-input add-instructor-modal__qualification-input"
+                                  />
+                                </Form.Item>
+                                <div
+                                  className="add-instructor-modal__qualification-divider"
+                                  aria-hidden
+                                />
+                                <Form.Item
+                                  name={[field.name, 'issuer']}
+                                  noStyle
+                                  className="add-instructor-modal__qualification-input-wrap"
+                                >
+                                  <Input
+                                    placeholder="발행처"
                                     size="large"
                                     allowClear
                                     className="add-instructor-modal__table-input add-instructor-modal__qualification-input"
@@ -743,7 +930,12 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
             {(fields, { add, remove }) => (
               <>
                 <div className="add-instructor-modal__section-head add-instructor-modal__section-head--with-btn">
-                  <h3 className="add-instructor-modal__section-title">수상 및 수료 내역</h3>
+                  <h3 className="add-instructor-modal__section-title">
+                    수상 및 수료 내역
+                    <span className="add-instructor-modal__section-summary">
+                      총 수상 개수 {awardCount}개
+                    </span>
+                  </h3>
                   <AppButton
                     htmlType="button"
                     variant="primary"
@@ -780,6 +972,19 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                 >
                                   <Input
                                     placeholder="수상/수료"
+                                    size="large"
+                                    allowClear
+                                    className="add-instructor-modal__table-input add-instructor-modal__award-input"
+                                  />
+                                </Form.Item>
+                                <div className="add-instructor-modal__award-divider" aria-hidden />
+                                <Form.Item
+                                  name={[field.name, 'issuer']}
+                                  noStyle
+                                  className="add-instructor-modal__award-input-wrap"
+                                >
+                                  <Input
+                                    placeholder="발행처"
                                     size="large"
                                     allowClear
                                     className="add-instructor-modal__table-input add-instructor-modal__award-input"
@@ -882,8 +1087,12 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
           </div>
         </section>
       </Form>
-    </TealHeaderModal>
+    </ContentModal>
   )
+}
+
+function countRows(items: unknown[]): number {
+  return items.filter(Boolean).length
 }
 
 /** 폼 연/월 값(dayjs 또는 문자열)을 YYYY.MM 문자열로 변환 */
@@ -938,6 +1147,7 @@ export function buildInstructorRowFromForm(
     qualifications: values.qualifications,
     awards: values.awards,
     educations,
+    oneLineIntro: values.oneLineIntro,
     freeWriting1: values.freeWriting1,
     freeWriting2: values.freeWriting2,
     freeWriting3: values.freeWriting3,

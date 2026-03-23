@@ -7,6 +7,7 @@
 import type { Program } from '@/types/domain'
 import { mockPrograms } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
+import { getEconomyPrograms } from '@/data/mock/economy-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
 import { mockSettlements } from '@/data/mock/settlements'
@@ -25,17 +26,17 @@ export interface ProgramProgressSummary {
   }
 }
 
-/** FR-C01: 7단계 프로그램 진행 현황 */
-export interface ProgramProgress7Stage {
+/** 7단계 프로그램 진행 현황 (교육/봉사, 경제교육 교재 전·후 포함) */
+export interface ProgramProgressStages {
   /** 참여자 모집 중 */
   studentRecruitment: number
   /** 강사 모집 중 */
   instructorRecruitment: number
-  /** 참여자 모집 완료 (매칭 완료) */
+  /** 참여자 모집 완료 (매칭 완료 + 교재 전) */
   matchingCompleted: number
-  /** 강사 모집 완료 (교재 발송 전) */
+  /** 교재 전 */
   educationBeforeTextbook: number
-  /** 강사 모집 완료 (교재 발송 후) */
+  /** 교재 후 진행 중 */
   educationAfterTextbook: number
   /** 강사 모집 완료 */
   educationCompleted: number
@@ -44,6 +45,16 @@ export interface ProgramProgress7Stage {
   /** 합계 */
   total: number
 }
+
+/** 경제 교육 3단계 진행 현황 */
+export interface ProgramEconomyStages {
+  scheduled: number
+  inProgress: number
+  completed: number
+  total: number
+}
+
+export type ProgramProgressStagesResult = ProgramProgressStages | ProgramEconomyStages
 
 export interface PendingActionCounts {
   pendingApplications: number
@@ -92,20 +103,17 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
       case 'planned':
       case 'instructor_recruitment_planned':
       case 'volunteer_recruitment_planned':
+      case 'participant_instructor_recruitment_planned':
         break
       case 'recruiting_students':
       case 'recruiting_instructors':
       case 'recruiting_volunteers':
+      case 'participant_instructor_recruiting':
         byStatus.RECEIVED++
         break
       case 'matching_completed':
+      case 'participant_instructor_recruitment_completed':
         byStatus.MATCHING_COMPLETED++
-        break
-      case 'education_before_textbook':
-        byStatus.MATERIAL_PREPARING++
-        break
-      case 'education_after_textbook':
-        byStatus.MATERIAL_SHIPPED++
         break
       case 'education_completed':
         byStatus.IN_PROGRESS++
@@ -123,16 +131,38 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
 }
 
 /**
- * FR-C01: 7단계 프로그램 진행 현황 집계 (ProgramLifecycleStatus와 동기화)
- * - programType 'education' 시 교육 프로그램만 집계 (목록 페이지 테이블과 동기화)
+ * 프로그램 진행 현황 집계 (상태별 세분화)
+ * - programType 'education' | 'volunteer' 시 7단계 집계
+ * - programType 'economy' 시 3단계(예정/진행/완료) 집계
  */
-export async function getProgramProgress7Stage(options?: {
-  programType?: 'education' | 'volunteer' | 'all'
-}): Promise<ProgramProgress7Stage> {
+export async function getProgramProgressStages(options?: {
+  programType?: 'education' | 'economy' | 'volunteer' | 'all'
+}): Promise<ProgramProgressStagesResult> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  const programs =
-    options?.programType === 'education' ? getEducationPrograms() : mockPrograms
+  if (options?.programType === 'economy') {
+    const programs = getEconomyPrograms()
+    const stages = {
+      scheduled: 0,
+      inProgress: 0,
+      completed: 0,
+    }
+
+    programs.forEach(program => {
+      const status = program.lifecycleStatus || ''
+      if (['recruiting_students', 'recruiting_instructors', 'matching_completed', 'education_before_textbook'].includes(status)) {
+        stages.scheduled++
+      } else if (status === 'education_after_textbook') {
+        stages.inProgress++
+      } else if (['education_completed', 'document_processing_completed'].includes(status)) {
+        stages.completed++
+      }
+    })
+
+    return { ...stages, total: programs.length }
+  }
+
+  const programs = options?.programType === 'education' ? getEducationPrograms() : mockPrograms
 
   const stages = {
     studentRecruitment: 0,
@@ -152,7 +182,14 @@ export async function getProgramProgress7Stage(options?: {
       case 'recruiting_instructors':
         stages.instructorRecruitment++
         break
+      case 'participant_instructor_recruiting':
+        stages.studentRecruitment++
+        stages.instructorRecruitment++
+        break
       case 'matching_completed':
+        stages.matchingCompleted++
+        break
+      case 'participant_instructor_recruitment_completed':
         stages.matchingCompleted++
         break
       case 'education_before_textbook':
@@ -168,7 +205,7 @@ export async function getProgramProgress7Stage(options?: {
         stages.documentProcessingCompleted++
         break
       default:
-        break // planned 등 7단계 외 상태는 집계 제외
+        break // planned 등 그 외 상태는 집계 제외
     }
   })
 
@@ -178,11 +215,10 @@ export async function getProgramProgress7Stage(options?: {
 
 /**
  * 특정 프로그램의 7단계 진행 현황 (상세 페이지 위젯용)
- * 해당 프로그램의 lifecycle 1건 + 동일 프로그램 신청/매칭 등 단계별 건수
  */
-export async function getProgramProgress7StageByProgramId(
+export async function getProgramProgressStagesByProgramId(
   programId: string
-): Promise<ProgramProgress7Stage> {
+): Promise<ProgramProgressStages> {
   await new Promise(resolve => setTimeout(resolve, 150))
 
   const program = mockPrograms.find(p => p.id === programId)
@@ -201,17 +237,28 @@ export async function getProgramProgress7StageByProgramId(
       case 'planned':
       case 'instructor_recruitment_planned':
       case 'volunteer_recruitment_planned':
+      case 'participant_instructor_recruitment_planned':
         break
       case 'recruiting_students':
-        stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 1
+        stages.studentRecruitment =
+          mockApplications.filter(a => a.programId === programId).length || 1
         break
       case 'recruiting_instructors':
       case 'recruiting_volunteers':
+        stages.instructorRecruitment =
+          mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor')
+            .length || 1
+        break
+      case 'participant_instructor_recruiting':
+        stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 1
         stages.instructorRecruitment = mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor').length || 1
         break
       case 'matching_completed':
-      case 'education_before_textbook':
+      case 'participant_instructor_recruitment_completed':
         stages.matchingCompleted = mockMatchings.filter(m => m.programId === programId).length || 1
+        break
+      case 'education_before_textbook':
+        stages.educationBeforeTextbook = 1
         break
       case 'education_after_textbook':
         stages.educationAfterTextbook = 1
@@ -223,19 +270,24 @@ export async function getProgramProgress7StageByProgramId(
         stages.documentProcessingCompleted = 1
         break
       default:
-        stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 0
+        stages.studentRecruitment =
+          mockApplications.filter(a => a.programId === programId).length || 0
         break
     }
   }
 
   // 전체 건수는 해당 프로그램이 현재 속한 단계에 1건으로 집계
-  const total = Math.max(1, Object.values(stages).reduce((sum, c) => sum + c, 0))
+  const total = Math.max(
+    1,
+    Object.values(stages).reduce((sum, c) => sum + c, 0)
+  )
   return { ...stages, total }
 }
 
 /**
  * 모집 신청 현황 위젯용 프로그램 목록
  * 프로그램 리스트 + lifecycleStatus, approvedStudentCount, instructors, instructorCapacity 등
+ * 정합성: 일반 교육 프로그램 목록과 동일한 getEducationPrograms() 사용 → 목록·위젯 상태 일치
  */
 export async function getRecruitmentStatusList(options?: {
   programIds?: string[]
@@ -291,9 +343,7 @@ export async function getKpiAchievementList(options?: {
   await new Promise(resolve => setTimeout(resolve, 200))
   const programs = getEducationPrograms()
   const idSet =
-    options?.programIds && options.programIds.length > 0
-      ? new Set(options.programIds)
-      : null
+    options?.programIds && options.programIds.length > 0 ? new Set(options.programIds) : null
   const filtered = idSet ? programs.filter(p => idSet.has(p.id)) : programs
 
   return filtered.map((program, index) => {

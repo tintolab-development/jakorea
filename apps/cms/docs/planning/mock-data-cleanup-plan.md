@@ -46,7 +46,7 @@
 - `educations[0].major: 'OO학과'`
 - `freeWriting1` (index 0): Lorem ipsum
 
-#### `applicant-schools.ts`
+#### applicant-institutions.ts
 | 위치 | 현재 값 | 문제 |
 |---|---|---|
 | `TEACHER_NAMES` | `홍길동`, `김길동`, ..., `조길동` | 전형적 테스트명, 모두 `길동` |
@@ -131,7 +131,7 @@
 |---|---|---|---|
 | 1 | `applicant-instructors.ts` | 크게 | 강사 신청자 탭 전체 |
 | 2 | `participating-instructors.ts` | 크게 | 진행 현황 강사 탭 전체 |
-| 3 | `applicant-schools.ts` | 소규모 | 신청 학교 탭 교사명 |
+| 3 | applicant-institutions.ts | 소규모 | 신청 학교 탭 교사명 |
 | 4 | `participating-schools.ts` | 소규모 | 진행 현황 학교 탭 교사명 |
 | 5 | `program-managers.ts` | 소규모 | 담당자 탭 연락처/날짜 |
 
@@ -143,7 +143,7 @@
 
 1. `INSTRUCTOR_SCHOOL_OPTIONS` (participating-instructors) ↔ 학교 배정 선택 UI
 2. `INSTRUCTOR_NAMES` 변경 시 `accountHolder` 필드도 동기화 필요
-3. `SCHOOL_NAMES` 배열은 applicant-instructors / applicant-schools / participating-instructors가 공유하므로 변경 불필요
+3. `SCHOOL_NAMES` 배열은 applicant-institutions / applicant-institutions / participating-instructors가 공유하므로 변경 불필요
 
 ---
 
@@ -171,7 +171,7 @@ Phase 1: applicant-instructors.ts 수정
 
 Phase 2: participating-instructors.ts 수정 (Phase 1과 동일 패턴)
 
-Phase 3: applicant-schools.ts + participating-schools.ts 수정 (TEACHER_NAMES 교체)
+Phase 3: applicant-institutions.ts + participating-schools.ts 수정 (TEACHER_NAMES 교체)
 
 Phase 4: program-managers.ts 수정 (전화번호·등록일시 다양화)
 

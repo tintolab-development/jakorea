@@ -1,19 +1,18 @@
 /**
  * 담당자 삭제 안내 모달 (재확인)
- * 헤더 없음. 600×273, 타이틀 22px 700, 본문 16px 500, [담당자명] 700
+ * 패딩: 상 26px · 좌우 30px · 하 34px
+ * 타이틀↔본문 30px · 본문↔푸터 30px · 본문 좌측 정렬 · 너비 600px
  */
 
-/* 모달 크기 600×273 */
 .manager-delete-guide-modal__root.ant-modal .ant-modal-content {
-    max-height: 273px;
-    height: 273px;
     width: 600px;
     max-width: 600px;
     display: flex;
     flex-direction: column;
-    padding: 0;
+    padding: 26px 30px 34px;
     border-radius: var(--radius-8);
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .manager-delete-guide-modal__root.ant-modal .ant-modal-body {
@@ -24,21 +23,21 @@
     flex-direction: column;
 }
 
-/* 상단 48px, 좌우 30px, 하단은 푸터에서 40px */
 .manager-delete-guide-modal__content {
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    padding: 48px var(--spacing-30) 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 0;
     background: var(--color-bg-base);
 }
 
-/* 닫기 버튼 (헤더 없이 우측 상단, 상단 48px 패딩 영역 내) */
+/* 닫기: 타이틀 행 우측 (컨텐츠 영역 기준) */
 .manager-delete-guide-modal__close {
     position: absolute;
-    top: 10px;
-    right: var(--spacing-30);
+    top: 0;
+    right: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -61,21 +60,24 @@
     background: var(--color-bg-secondary);
 }
 
-/* 타이틀: 22px, 700, 헤더 없이 본문 상단 */
+/* 타이틀: 24px 700, 좌측 (닫기와 겹침 방지) */
 .manager-delete-guide-modal__title {
-    margin: 0 0 var(--spacing-16);
-    font-size: 22px;
+    margin: 0 0 var(--spacing-30);
+    padding-right: var(--spacing-32);
+    font-family: Pretendard, sans-serif;
+    font-size: 24px;
+    font-style: normal;
     font-weight: 700;
-    line-height: 1.4;
-    color: var(--color-text-heading);
-    text-align: center;
+    line-height: 150%;
+    color: var(--default-BK, #3d3d3d);
+    text-align: left;
 }
 
-/* 본문: 16px, 500, line-height 24px, 센터링 */
+/* 본문: 16px 500, line-height 24px, 좌측 정렬 */
 .manager-delete-guide-modal__body {
     flex: 1 1 auto;
     min-height: 0;
-    text-align: center;
+    text-align: left;
     width: 100%;
     padding: 0;
     font-size: 16px;
@@ -85,16 +87,12 @@
 }
 
 .manager-delete-guide-modal__line {
-    margin: 0 0 var(--spacing-8);
+    margin: 0;
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     color: var(--color-text-primary);
-    text-align: center;
-}
-
-.manager-delete-guide-modal__line:last-child {
-    margin-bottom: 0;
+    text-align: left;
 }
 
 /* [담당자명] 등 괄호 부분: 700 */
@@ -102,15 +100,16 @@
     font-weight: 700;
 }
 
-/* 푸터: 설명과 버튼 사이 30px, 버튼 하단 40px */
+/* 푸터: 본문 마지막 줄 ↔ 버튼 30px, 하단 여백은 모달 padding(34px) */
 .manager-delete-guide-modal__footer {
     flex-shrink: 0;
     margin-top: var(--spacing-30);
-    padding-bottom: 40px;
+    padding-bottom: 0;
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: center;
-    gap: var(--spacing-8);
+    gap: var(--spacing-10);
+    width: 100%;
 }
 
 .manager-delete-guide-modal__footer .app-button,

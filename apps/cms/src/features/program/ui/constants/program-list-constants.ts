@@ -6,7 +6,7 @@
 
 import type { ProgramCategory, TargetLevel } from '@/types/domain'
 import { programLifecycleStatusConfig, getProgramLifecycleLabel } from '@/shared/constants/status'
-import { getRecruitmentStatus } from './program-detail-info-constants'
+import { getRecruitmentStatus } from '../program-detail-info-constants'
 
 export { getRecruitmentStatus }
 
@@ -51,4 +51,21 @@ export const targetLevelOptions: { value: TargetLevel; label: string }[] = [
 export const categoryOptions: { value: ProgramCategory; label: string }[] = [
   { value: 'school', label: '학교(단체)' },
   { value: 'individual', label: '개인 학생' },
+]
+
+/** 경제 교육 프로그램 필터: 참여자 유형 */
+export const economyParticipantTypeOptions = [
+  { value: 'school', label: '학교/기관' },
+  { value: 'volunteer', label: '봉사자' },
+  { value: 'individual', label: '개인 학습자' },
+  { value: 'instructor', label: '교사/강사' },
+]
+
+/** 경제 교육 프로그램 필터: 교육 대상 */
+export const economyTargetLevelOptions = [
+  { value: 'elementary', label: '초등학생' },
+  { value: 'middle', label: '중학생' },
+  { value: 'high', label: '고등학생' },
+  { value: 'college', label: '대학생' },
+  { value: 'adult', label: '성인' },
 ]

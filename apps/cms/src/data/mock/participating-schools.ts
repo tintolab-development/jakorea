@@ -5,6 +5,25 @@
 
 export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered'
 
+/** 참여 기관 승인/반려 상태 (선택 승인·선택 반려·승인 취소 연동) */
+export type ParticipatingSchoolApprovalStatusKey = 'pending' | 'rejected' | 'approved' | 'cancelled'
+
+/** 강의 회차별 진행 상태 (교육기관 상세 신청 정보 탭용) */
+export type ParticipatingSchoolSessionStatusKey = 'completed' | 'pending' | 'not_planned'
+
+/** 강의 회차별 교육 진행 일정 한 건 (참여 기관 테이블용) */
+export interface ParticipatingSchoolSession {
+  round: number
+  date: string
+  dayOfWeek: string
+  duration: string
+  format: string
+  classNum: string
+  timeRange: string
+  /** 진행 완료 | 진행 대기 | 미진행 희망 (상세 뷰용, 선택) */
+  status?: ParticipatingSchoolSessionStatusKey
+}
+
 export interface ParticipatingSchoolRow {
   id: string
   no: number
@@ -15,8 +34,12 @@ export interface ParticipatingSchoolRow {
   studentCount: number
   lectureRound: string
   textbookStatus: TextbookStatusKey
+  /** 참여 승인/반려 상태 (선택 승인·선택 반려 연동) */
+  approvalStatus: ParticipatingSchoolApprovalStatusKey
   teacherName: string
   instructors: string
+  /** 강의 회차 별 교육 진행 날짜 및 시간 (참여 기관 페이지 컬럼용) */
+  sessions?: ParticipatingSchoolSession[]
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {
@@ -110,11 +133,68 @@ const INSTRUCTOR_SAMPLES = [
 
 const textbookStatuses: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
+const APPROVAL_STATUSES: ParticipatingSchoolApprovalStatusKey[] = [
+  'pending',
+  'rejected',
+  'approved',
+  'cancelled',
+]
+
+const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
+
+const SESSION_STATUSES: ParticipatingSchoolSessionStatusKey[] = ['completed', 'pending', 'not_planned']
+
+/** 3월 중 하루: 캘린더 "외 n개의 일정" 확인용 — 이 날짜에 4개 학교 일정이 겹침 */
+const MARCH_MULTI_DAY = '2026.03.12'
+
+function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
+  const sessionCount = 1 + (rowIndex % 5)
+  const sessions: ParticipatingSchoolSession[] = []
+  for (let s = 0; s < sessionCount; s++) {
+    const dayOffset = rowIndex * 7 + s * 3
+    const d = new Date(2026, 0, 9 + dayOffset)
+    const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
+    const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+    const status = SESSION_STATUSES[(rowIndex + s) % 3]
+    sessions.push({
+      round: s + 1,
+      date: dateStr,
+      dayOfWeek,
+      duration: '1시간',
+      format: s % 2 === 0 ? '오프라인' : '온라인',
+      classNum: `${s + 1}교시`,
+      timeRange: `${9 + s}:20~${10 + s}:10`,
+      status,
+    })
+  }
+  return sessions
+}
+
+/** 3월 12일 한 날에 4개 학교 일정 추가 (월간 캘린더 "외 n개의 일정" 노출용) */
+function addMarchMultiDaySessions(
+  sessions: ParticipatingSchoolSession[],
+  rowIndex: number,
+): ParticipatingSchoolSession[] {
+  const marchDaySchools = [0, 1, 2, 3]
+  if (!marchDaySchools.includes(rowIndex)) return sessions
+  const d = new Date(2026, 2, 12)
+  const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
+  const extra: ParticipatingSchoolSession[] = [
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '오프라인', classNum: '1', timeRange: '9:20~10:10', status: 'pending' },
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '온라인', classNum: '2', timeRange: '10:20~11:10', status: 'pending' },
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '오프라인', classNum: '3', timeRange: '11:20~12:10', status: 'pending' },
+    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '온라인', classNum: '4', timeRange: '14:00~14:50', status: 'pending' },
+  ]
+  return [...sessions, extra[rowIndex]]
+}
+
 function buildMockList(count: number): ParticipatingSchoolRow[] {
   const rows: ParticipatingSchoolRow[] = []
   for (let i = 0; i < count; i++) {
     const idx = i % SCHOOL_NAMES.length
     const statusIdx = i % textbookStatuses.length
+    const baseSessions = buildSessionsForRow(i)
+    const sessions = addMarchMultiDaySessions(baseSessions, i)
     rows.push({
       id: `school-${i + 1}`,
       no: count - i,
@@ -125,8 +205,10 @@ function buildMockList(count: number): ParticipatingSchoolRow[] {
       studentCount: 40 + (i % 30),
       lectureRound: LECTURE_ROUND_LABEL,
       textbookStatus: textbookStatuses[statusIdx],
+      approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
       instructors: INSTRUCTOR_SAMPLES[i % INSTRUCTOR_SAMPLES.length],
+      sessions,
     })
   }
   return rows

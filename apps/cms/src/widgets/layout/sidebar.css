@@ -119,10 +119,10 @@
     display: none;
 }
 
-/* 메뉴 아이콘 — 아이콘과 타이틀 갭 10px */
+/* 메뉴 아이콘 — 아이콘과 타이틀 갭 8px */
 .sidebar-menu .ant-menu-item-icon {
     color: var(--color-sidebar-text-85);
-    margin-inline-end: 0;
+    margin-inline-end: 8px;
     flex-shrink: 0;
     transition: color 0.2s ease;
 }
@@ -178,7 +178,7 @@
 
 /* 카테고리 아이콘–텍스트 갭 10px (gap으로 적용, 아이콘 margin 제거) */
 .sidebar-menu .ant-menu-submenu-title .ant-menu-item-icon {
-    margin-inline-end: 0;
+    margin-inline-end: 8px;
     flex-shrink: 0;
 }
 

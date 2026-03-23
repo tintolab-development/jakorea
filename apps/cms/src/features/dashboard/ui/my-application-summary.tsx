@@ -58,9 +58,8 @@ export function MyApplicationSummary() {
     const s = program?.lifecycleStatus
 
     if (
-      s === 'education_before_textbook' ||
-      s === 'education_after_textbook' ||
-      s === 'education_completed'
+      s === 'education_completed' ||
+      s === 'participant_instructor_recruitment_completed'
     ) {
       return 'IN_PROGRESS'
     }

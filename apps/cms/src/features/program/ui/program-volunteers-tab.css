@@ -1,0 +1,17 @@
+/**
+ * 봉사자 정보 탭 (placeholder)
+ */
+
+.program-volunteers-tab {
+  min-height: 200px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.program-volunteers-tab__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: var(--spacing-24);
+}

@@ -22,6 +22,9 @@ import './main-header.css'
 const { Header: AntHeader } = Layout
 const { Text } = Typography
 
+/** 임시: true로 변경 시 브레드크럼 표시 */
+const SHOW_BREADCRUMB = false
+
 export function MainHeader() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -75,7 +78,7 @@ export function MainHeader() {
     }
 
     // 관리자: 프로그램 상세/수정 페이지 타이틀
-    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'new', 'satisfaction']
+    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
     if (user?.role === 'ADMIN' && location.pathname.startsWith('/programs/')) {
       const rest = location.pathname.slice('/programs/'.length)
       const segments = rest.split('/').filter(Boolean)
@@ -176,7 +179,8 @@ export function MainHeader() {
         <div className="main-header-left">
           <div className="main-header-title-wrap">
             <h1 className="main-header-title">{categoryName}</h1>
-            {breadcrumbItems.length > 0 && (
+            {/* 임시 비표시: 브레드크럼 (SHOW_BREADCRUMB true 시 복구) */}
+            {SHOW_BREADCRUMB && breadcrumbItems.length > 0 && (
               <AppBreadcrumb
                 items={breadcrumbItems}
                 separator=" > "

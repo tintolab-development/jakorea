@@ -453,6 +453,8 @@ JAKorea CMS 프로젝트에서 사용되는 각 역할(시니어 PM, 기획자, 
 - [프로젝트 개요](../project-overview.md)
 - [대시보드 위젯 50% 분할](./dashboard-widget-drop-50-split.md)
 - [대시보드 위젯 재정렬 비즈니스 로직 및 UX 개선](./dashboard-widget-reorder-ux.md)
+- [프로그램 상세 풀페이지 모달 — 탭 UI 스펙](./program-detail-fullpage-modal-tabs-spec.md) (디자이너 검토 완료 → 개발 위임)
+- [교육 신청 기관 목록 테이블 UI 수정 명세](./applicant-institutions-table-ui-spec.md) (스크린샷 기반 — 컬럼 겹침·가로 스크롤 수정 위임)
 
 ---
 

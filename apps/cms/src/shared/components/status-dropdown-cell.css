@@ -3,10 +3,12 @@
  * 여러 테이블·도메인에서 동일한 트리거/드롭다운 레이아웃 적용
  */
 
-/* 테이블 td에 적용 시: 상하 패딩 0, overflow visible (드롭다운 시프팅 방지) */
+/* 테이블 td에 적용 시: 상하·좌우 패딩 0, overflow visible (드롭다운 시프팅 방지, 152px 트리거가 셀을 넘지 않도록) */
 .status-dropdown-cell__cell-status {
   padding-top: 0;
   padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
   overflow: visible;
 }
 
@@ -21,10 +23,12 @@
   gap: 2px;
 }
 
+/* 선택된 태그 오버레이: 152px 고정 (padding 포함) */
 .status-dropdown-cell__status-trigger--open {
-  width: 136px;
-  min-width: 136px;
-  max-width: 136px;
+  box-sizing: border-box;
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
   height: 44px;
   min-height: 44px;
   background: #fff;
@@ -70,17 +74,18 @@
   padding: 6px 10px;
 }
 
-/* 드롭다운 오버레이·메뉴 레이아웃 */
+/* 드롭다운 래퍼: 선택된 태그(트리거)와 동일 152px 고정 — 셀 시프팅 방지 */
 .status-dropdown-cell__dropdown-overlay {
-  width: 136px !important;
-  min-width: 136px !important;
+  width: 152px !important;
+  min-width: 152px !important;
+  max-width: 152px !important;
 }
 
 .status-dropdown-cell__dropdown-overlay .ant-dropdown-menu {
   box-sizing: border-box;
-  min-width: 136px !important;
-  width: 136px !important;
-  max-width: 136px !important;
+  min-width: 152px !important;
+  width: 152px !important;
+  max-width: 152px !important;
   border-radius: 6px;
   background: #FFF;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.10);

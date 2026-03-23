@@ -57,7 +57,7 @@ const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
     { type: 'menu-shortcut-widget', colSpan: 24, order: 0, height: 202 },
     { type: 'program-schedule-widget', colSpan: 24, order: 1, height: 360 },
     { type: 'recruitment-status-widget', colSpan: 24, order: 2, height: 340 },
-    { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3 },
+    { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3, height: 338 },
     { type: 'kpi-achievement-widget', colSpan: 24, order: 4, height: 314 },
   ],
   // 강사: 본인 활동 요약
@@ -118,4 +118,17 @@ export function isWidgetAllowed(
 
   const widgets = getDashboardWidgetsByRole(userRole)
   return widgets.some(widget => widget.type === widgetType)
+}
+
+/**
+ * 너비 리사이즈(50% ↔ 100%)가 불가한 위젯 id 목록.
+ * DnD 훅·대시보드 페이지에서 리사이즈 핸들 노출 여부 판단에 사용.
+ */
+export const WIDGET_IDS_NON_RESIZABLE: readonly string[] = ['kpi-achievement-widget']
+
+/**
+ * 위젯이 너비 리사이즈 가능한지 여부
+ */
+export function isWidgetResizable(widgetId: string): boolean {
+  return !WIDGET_IDS_NON_RESIZABLE.includes(widgetId)
 }

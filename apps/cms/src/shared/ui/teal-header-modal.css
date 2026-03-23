@@ -5,6 +5,56 @@
  * 모달: 화면 정중앙 고정
  */
 
+/* 풀페이지 모달: 뷰포트 전체 채우기, 양옆 빈공간 없음 */
+.ant-modal-wrap:has(.teal-header-modal--full) {
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+}
+
+.teal-header-modal--full.ant-modal {
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    max-width: 100vw;
+    width: 100vw;
+    box-sizing: border-box;
+}
+
+.teal-header-modal--full .ant-modal-content {
+    max-width: 100%;
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    box-sizing: border-box;
+}
+
+.teal-header-modal--full .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.teal-header-modal--full .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: none;
+}
+
+/* 헤더 숨김(풀페이지 모달 등): 바디가 최상단부터 채움 */
+.teal-header-modal--hide-header .teal-header-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 /* 모달 mask opacity */
 .ant-modal-mask {
     background: rgba(0, 0, 0, 0.3) !important;
@@ -23,6 +73,13 @@
     top: 0;
     max-width: calc(100vw - var(--spacing-32));
     margin: 0 auto;
+}
+
+/* 풀페이지: 일반 모달 max-width 덮어써서 화면 전체 너비 */
+.ant-modal-wrap:has(.teal-header-modal--full) .teal-header-modal--full.ant-modal {
+    max-width: 100vw;
+    width: 100vw;
+    margin: 0;
 }
 
 .teal-header-modal .ant-modal-content {

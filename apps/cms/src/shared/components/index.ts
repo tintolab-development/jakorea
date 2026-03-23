@@ -10,6 +10,8 @@ export { TextbookStatusBadge } from './textbook-status-badge'
 export type { TextbookStatusKey } from './textbook-status-badge'
 export { ProgramLifecycleStatusBadge } from './program-lifecycle-status-badge'
 export type { ProgramLifecycleStatusBadgeProps } from './program-lifecycle-status-badge'
+export { ProgramLifecycleStatusText } from './program-lifecycle-status-text'
+export type { ProgramLifecycleStatusTextProps } from './program-lifecycle-status-text'
 export {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,

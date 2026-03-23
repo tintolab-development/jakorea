@@ -5,9 +5,8 @@
  * 학생 명단 탭 수정 모드: docs/design/school-detail-modal-student-list-edit-spec.md
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { Tabs, Descriptions, Table, Input, Select, Modal, Radio } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { Tabs, Descriptions, Table, Input, Modal, Radio } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AppButton } from '@/shared/ui/app-button'
@@ -16,9 +15,6 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
-  SchoolDetailStudentRow,
-  StudentListFormValues,
-  StudentListFormStudent,
   InstructorListFormValues,
   InstructorListFormInstructor,
 } from '../model/school-detail-types'
@@ -35,7 +31,6 @@ import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { getSchoolDetailStudents } from '../lib/school-detail-mock'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import {
   TEXTBOOK_STATUS_LABELS,
@@ -45,30 +40,13 @@ import {
   SchoolDetailAddInstructorAssignModal,
   type AddInstructorAssignOption,
 } from './school-detail-add-instructor-assign-modal'
-import { AddStudentModal } from './add-student-modal'
-import type { AddStudentFormValues } from '../model/school-detail-add-student-schema'
-import { LectureAttendanceModal } from './lecture-attendance-modal'
-import { AssignmentSubmissionModal } from './assignment-submission-modal'
+import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import './school-detail-modal.css'
 
 const { TextArea } = Input
 const TAB_BASIC = 'basic'
 const TAB_STUDENTS = 'students'
 const TAB_POSTS = 'posts'
-
-function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFormValues {
-  return {
-    students: rows.map(r => ({
-      id: r.id,
-      no: r.no,
-      name: r.name,
-      gradeClass: r.gradeClass,
-      contact: r.contact ?? '',
-      email: r.email ?? '',
-      lectureAttendance: r.lectureAttendance,
-    })),
-  }
-}
 
 function instructorsToFormValues(rows: SchoolDetailInstructorRow[]): InstructorListFormValues {
   return {
@@ -113,25 +91,9 @@ export function SchoolDetailModal({
   const isApplicant = variant === 'applicant'
   const [activeTab, setActiveTab] = useState<string>(TAB_BASIC)
   const [selectedInstructorKeys, setSelectedInstructorKeys] = useState<React.Key[]>([])
-  const [selectedStudentKeys, setSelectedStudentKeys] = useState<React.Key[]>([])
-  const [isStudentListEditMode, setIsStudentListEditMode] = useState(false)
   const [isBasicEditMode, setIsBasicEditMode] = useState(false)
   const [isInstructorEditMode, setIsInstructorEditMode] = useState(false)
   const [addInstructorAssignModalOpen, setAddInstructorAssignModalOpen] = useState(false)
-  const [lectureAttendanceModalOpen, setLectureAttendanceModalOpen] = useState(false)
-  const [lectureAttendanceStudent, setLectureAttendanceStudent] =
-    useState<SchoolDetailStudentRow | null>(null)
-  const [assignmentSubmissionModalOpen, setAssignmentSubmissionModalOpen] = useState(false)
-  const [assignmentSubmissionStudent, setAssignmentSubmissionStudent] =
-    useState<SchoolDetailStudentRow | null>(null)
-  const [addStudentModalOpen, setAddStudentModalOpen] = useState(false)
-  const [addedStudents, setAddedStudents] = useState<SchoolDetailStudentRow[]>([])
-  /* 필터 입력값(조회 클릭 전까지 반영 안 함) */
-  const [studentNameFilter, setStudentNameFilter] = useState('')
-  const [studentClassFilter, setStudentClassFilter] = useState<string>('all')
-  /* 조회 버튼 클릭 시에만 적용되는 필터 (필터·조회 룰) */
-  const [appliedStudentNameFilter, setAppliedStudentNameFilter] = useState('')
-  const [appliedStudentClassFilter, setAppliedStudentClassFilter] = useState<string>('all')
 
   const defaultBasicValues = useMemo<SchoolDetailBasicFormValues>(
     () => (detail ? detailToBasicFormValues(detail) : EMPTY_BASIC_FORM_VALUES),
@@ -191,10 +153,6 @@ export function SchoolDetailModal({
     if (!open) {
       setIsInstructorEditMode(false)
       setAddInstructorAssignModalOpen(false)
-      setLectureAttendanceModalOpen(false)
-      setLectureAttendanceStudent(null)
-      setAssignmentSubmissionModalOpen(false)
-      setAssignmentSubmissionStudent(null)
     }
   }, [open])
 
@@ -226,13 +184,17 @@ export function SchoolDetailModal({
     return MOCK_PARTICIPATING_INSTRUCTORS.filter(r => !assignedIds.has(r.id)).map(r => ({
       value: r.id,
       label: r.instructorName,
+      contact: r.contact,
+      email: r.email,
+      initialApproval: r.initialApproval ?? true,
     }))
   }, [detail])
 
   const handleAddInstructorAssign = (
     instructorId: string,
     role: InstructorRoleKey,
-    option: AddInstructorAssignOption
+    option: AddInstructorAssignOption,
+    _meta?: { isNewApproval: boolean }
   ) => {
     if (!detail) return
     let currentList: InstructorListFormInstructor[] = isInstructorEditMode
@@ -255,63 +217,6 @@ export function SchoolDetailModal({
     }
     setAddInstructorAssignModalOpen(false)
   }
-
-  const studentListForm = useForm<StudentListFormValues>({
-    defaultValues: { students: [] },
-  })
-  const { control, reset, watch, handleSubmit, formState } = studentListForm
-  const { isDirty } = formState
-  useFieldArray({ control, name: 'students' })
-
-  useEffect(() => {
-    if (!open) {
-      setIsStudentListEditMode(false)
-      setAddedStudents([])
-    }
-  }, [open])
-
-  const studentList = useMemo((): SchoolDetailStudentRow[] => {
-    if (!detail) return []
-    return getSchoolDetailStudents(detail.id, detail.studentCount)
-  }, [detail])
-
-  const mergedStudentList = useMemo(
-    () => [...studentList, ...addedStudents],
-    [studentList, addedStudents]
-  )
-
-  const filteredStudentList = useMemo(() => {
-    return mergedStudentList.filter(row => {
-      const matchName =
-        !appliedStudentNameFilter.trim() || row.name.includes(appliedStudentNameFilter.trim())
-      const matchClass =
-        appliedStudentClassFilter === 'all' || row.gradeClass === appliedStudentClassFilter
-      return matchName && matchClass
-    })
-  }, [mergedStudentList, appliedStudentNameFilter, appliedStudentClassFilter])
-
-  const handleStudentSearch = () => {
-    setAppliedStudentNameFilter(studentNameFilter)
-    setAppliedStudentClassFilter(studentClassFilter)
-  }
-
-  const studentClassOptions = useMemo(() => {
-    const classes = Array.from(new Set(mergedStudentList.map(r => r.gradeClass))).sort()
-    return [{ value: 'all', label: '전체' }, ...classes.map(c => ({ value: c, label: c }))]
-  }, [mergedStudentList])
-
-  const handleAddStudent = useCallback((values: AddStudentFormValues) => {
-    const nextNo = mergedStudentList.length + 1
-    const newRow: SchoolDetailStudentRow = {
-      id: crypto.randomUUID(),
-      no: nextNo,
-      name: values.name,
-      gradeClass: values.gradeClass,
-      contact: values.contact?.trim() || undefined,
-      email: values.email?.trim() || undefined,
-    }
-    setAddedStudents(prev => [...prev, newRow])
-  }, [mergedStudentList.length])
 
   const instructorColumns: ColumnsType<SchoolDetailInstructorRow> = useMemo(
     () => [
@@ -451,168 +356,6 @@ export function SchoolDetailModal({
           ]
         : [],
     [detail, instructorControl, watchInstructors, setInstructorValue]
-  )
-
-  const openLectureAttendance = useCallback((record: SchoolDetailStudentRow) => {
-    setLectureAttendanceStudent(record)
-    setLectureAttendanceModalOpen(true)
-  }, [])
-
-  const openAssignmentSubmission = useCallback((record: SchoolDetailStudentRow) => {
-    setAssignmentSubmissionStudent(record)
-    setAssignmentSubmissionModalOpen(true)
-  }, [])
-
-  const studentColumnsView: ColumnsType<SchoolDetailStudentRow> = useMemo(
-    () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
-      { title: '학생명', dataIndex: 'name', key: 'name', width: 120, align: 'center' },
-      { title: '학급', dataIndex: 'gradeClass', key: 'gradeClass', width: 100, align: 'center' },
-      {
-        title: '연락처',
-        dataIndex: 'contact',
-        key: 'contact',
-        width: 130,
-        align: 'center',
-        render: (v: string | undefined) => v ?? '-',
-      },
-      {
-        title: '이메일',
-        dataIndex: 'email',
-        key: 'email',
-        width: 180,
-        align: 'center',
-        ellipsis: true,
-        render: (v: string | undefined) => v ?? '-',
-      },
-      {
-        title: '강의 출석 내역',
-        dataIndex: 'lectureAttendance',
-        key: 'lectureAttendance',
-        width: 120,
-        align: 'center',
-        render: (v: string | undefined, record: SchoolDetailStudentRow) => (
-          <button
-            type="button"
-            className="school-detail-modal__link-button"
-            onClick={() => openLectureAttendance(record)}
-          >
-            {v ?? '0/0'}
-          </button>
-        ),
-      },
-      {
-        title: '과제 제출 내역',
-        key: 'assignment',
-        width: 120,
-        align: 'center',
-        render: (_: unknown, record: SchoolDetailStudentRow) => (
-          <AppButton
-            variant="viewDetails"
-            size="small"
-            onClick={() => openAssignmentSubmission(record)}
-          >
-            내역 보기
-          </AppButton>
-        ),
-      },
-    ],
-    [openLectureAttendance, openAssignmentSubmission]
-  )
-
-  const studentColumnsEdit: ColumnsType<StudentListFormStudent> = useMemo(
-    () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
-      {
-        title: '학생명',
-        key: 'name',
-        width: 120,
-        align: 'center',
-        render: (_: unknown, __: unknown, index: number) => (
-          <Controller
-            control={control}
-            name={`students.${index}.name`}
-            render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
-            )}
-          />
-        ),
-      },
-      {
-        title: '학급',
-        key: 'gradeClass',
-        width: 100,
-        align: 'center',
-        render: (_: unknown, __: unknown, index: number) => (
-          <Controller
-            control={control}
-            name={`students.${index}.gradeClass`}
-            render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
-            )}
-          />
-        ),
-      },
-      {
-        title: '연락처',
-        key: 'contact',
-        width: 130,
-        align: 'center',
-        render: (_: unknown, __: unknown, index: number) => (
-          <Controller
-            control={control}
-            name={`students.${index}.contact`}
-            render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
-            )}
-          />
-        ),
-      },
-      {
-        title: '이메일',
-        key: 'email',
-        width: 180,
-        align: 'center',
-        render: (_: unknown, __: unknown, index: number) => (
-          <Controller
-            control={control}
-            name={`students.${index}.email`}
-            render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
-            )}
-          />
-        ),
-      },
-      {
-        title: '강의 출석 내역',
-        dataIndex: 'lectureAttendance',
-        key: 'lectureAttendance',
-        width: 120,
-        align: 'center',
-        render: (v: string | undefined) => (
-          <button
-            type="button"
-            className="school-detail-modal__link-button school-detail-modal__link-button--disabled"
-            onClick={() => {}}
-            disabled
-          >
-            {v ?? '0/0'}
-          </button>
-        ),
-      },
-      {
-        title: '과제 제출 내역',
-        key: 'assignment',
-        width: 120,
-        align: 'center',
-        render: () => (
-          <AppButton variant="viewDetails" size="small" disabled>
-            내역 보기
-          </AppButton>
-        ),
-      },
-    ],
-    [control]
   )
 
   if (!detail) return null
@@ -875,7 +618,8 @@ export function SchoolDetailModal({
 
   const handleClose = () => {
     const basicDirty = isBasicEditMode && basicInfoForm.formState.isDirty
-    if ((isStudentListEditMode && isDirty) || basicDirty) {
+    const instructorDirty = isInstructorEditMode && instructorFormState.isDirty
+    if (basicDirty || instructorDirty) {
       Modal.confirm({
         title: '저장하지 않은 변경 사항이 있습니다.',
         content: '계속하시겠습니까?',
@@ -886,21 +630,6 @@ export function SchoolDetailModal({
     } else {
       onCancel()
     }
-  }
-
-  const handleStudentListSave = handleSubmit(() => {
-    setIsStudentListEditMode(false)
-    reset(rowsToFormValues(filteredStudentList))
-  })
-
-  const enterStudentListEditMode = () => {
-    reset(rowsToFormValues(filteredStudentList))
-    setIsStudentListEditMode(true)
-  }
-
-  const handleStudentListCancel = () => {
-    reset(rowsToFormValues(filteredStudentList))
-    setIsStudentListEditMode(false)
   }
 
   const footer = (
@@ -1078,97 +807,13 @@ export function SchoolDetailModal({
     {
       key: TAB_STUDENTS,
       label: '학생 명단',
-      children: (
-        <div className="school-detail-modal__students">
-          <div className="school-detail-modal__student-table-header">
-            <div className="school-detail-modal__student-table-heading">
-              <span className="school-detail-modal__student-table-title">학생 정보</span>
-              <span className="school-detail-modal__table-description">
-                총{' '}
-                {isStudentListEditMode
-                  ? (watch('students')?.length ?? 0)
-                  : filteredStudentList.length}
-                건
-              </span>
-            </div>
-            <div className="school-detail-modal__student-table-actions">
-              {isStudentListEditMode ? (
-                <>
-                  <AppButton variant="cancel" size="middle" onClick={handleStudentListCancel}>
-                    취소
-                  </AppButton>
-                  <AppButton
-                    variant="primary"
-                    size="middle"
-                    modalTeal
-                    disabled={!isDirty}
-                    onClick={handleStudentListSave}
-                  >
-                    저장
-                  </AppButton>
-                  <AppButton variant="primary" size="middle" modalTeal>
-                    학교 등록
-                  </AppButton>
-                </>
-              ) : (
-                <>
-                  <AppButton
-                    variant="cancel"
-                    size="middle"
-                    icon={<DownloadOutlined />}
-                    onClick={() => {}}
-                  >
-                    수료증 발급
-                  </AppButton>
-                  <AppButton
-                    variant="primary"
-                    size="middle"
-                    modalTeal
-                    onClick={enterStudentListEditMode}
-                  >
-                    수정
-                  </AppButton>
-                  <AppButton
-                    variant="primary"
-                    size="middle"
-                    modalTeal
-                    onClick={() => setAddStudentModalOpen(true)}
-                  >
-                    학생 등록
-                  </AppButton>
-                </>
-              )}
-            </div>
-          </div>
-          {isStudentListEditMode ? (
-            <Table
-              rowKey="id"
-              size="middle"
-              pagination={false}
-              rowSelection={{
-                selectedRowKeys: selectedStudentKeys,
-                onChange: keys => setSelectedStudentKeys(keys),
-              }}
-              columns={studentColumnsEdit}
-              dataSource={watch('students') ?? []}
-              className="school-detail-modal__student-table"
-            />
-          ) : (
-            <Table<SchoolDetailStudentRow>
-              rowKey="id"
-              size="middle"
-              pagination={false}
-              rowSelection={{
-                selectedRowKeys: selectedStudentKeys,
-                onChange: keys => setSelectedStudentKeys(keys),
-              }}
-              columns={studentColumnsView}
-              dataSource={filteredStudentList}
-              className="school-detail-modal__student-table"
-            />
-          )}
-        </div>
-      ),
+      children: detail ? (
+        <SchoolDetailStudentListSection
+          schoolId={detail.id}
+          studentCount={detail.studentCount}
+          onSaveEdit={() => {}}
+        />
+      ) : null,
     },
     {
       key: TAB_POSTS,
@@ -1195,34 +840,6 @@ export function SchoolDetailModal({
               <>
                 <div className="school-detail-modal__top">
                   <DefaultTabBar {...tabBarProps} className="school-detail-modal__tabs-nav" />
-                  {activeTab === TAB_STUDENTS && (
-                    <div className="school-detail-modal__tab-filters">
-                      <span className="school-detail-modal__filter-label">학생명</span>
-                      <Input
-                        placeholder="전체"
-                        value={studentNameFilter}
-                        onChange={e => setStudentNameFilter(e.target.value)}
-                        className="school-detail-modal__filter-input"
-                        allowClear
-                      />
-                      <span className="school-detail-modal__filter-label">학급</span>
-                      <Select
-                        placeholder="전체"
-                        value={studentClassFilter}
-                        onChange={setStudentClassFilter}
-                        options={studentClassOptions}
-                        className="school-detail-modal__filter-select"
-                      />
-                      <AppButton
-                        variant="primary"
-                        size="middle"
-                        modalTeal
-                        onClick={handleStudentSearch}
-                      >
-                        조회
-                      </AppButton>
-                    </div>
-                  )}
                   {isApplicant && activeTab !== TAB_STUDENTS && (
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions school-detail-modal__basic-actions--approval">
                       <AppButton variant="danger" size="middle" onClick={() => {}}>
@@ -1234,11 +851,6 @@ export function SchoolDetailModal({
                     </div>
                   )}
                 </div>
-                {activeTab === TAB_STUDENTS && (
-                  <div className="school-detail-modal__tab-divider-wrap">
-                    <div className="school-detail-modal__tab-divider" aria-hidden />
-                  </div>
-                )}
               </>
             )}
           />
@@ -1247,34 +859,14 @@ export function SchoolDetailModal({
       <SchoolDetailAddInstructorAssignModal
         open={addInstructorAssignModalOpen}
         onCancel={() => setAddInstructorAssignModalOpen(false)}
+        schoolName={detail?.schoolName ?? ''}
         instructorOptions={addInstructorAssignOptions}
         currentLeadInstructorName={
           detail?.instructors.find(i => i.role === 'lead')?.instructorName ?? null
         }
+        currentAssignedCount={detail?.instructors.length ?? 0}
+        requiredInstructorCount={4}
         onAdd={handleAddInstructorAssign}
-      />
-      <LectureAttendanceModal
-        open={lectureAttendanceModalOpen}
-        onCancel={() => {
-          setLectureAttendanceModalOpen(false)
-          setLectureAttendanceStudent(null)
-        }}
-        student={lectureAttendanceStudent}
-        schoolId={detail?.id ?? ''}
-      />
-      <AssignmentSubmissionModal
-        open={assignmentSubmissionModalOpen}
-        onCancel={() => {
-          setAssignmentSubmissionModalOpen(false)
-          setAssignmentSubmissionStudent(null)
-        }}
-        student={assignmentSubmissionStudent}
-        schoolId={detail?.id ?? ''}
-      />
-      <AddStudentModal
-        open={addStudentModalOpen}
-        onCancel={() => setAddStudentModalOpen(false)}
-        onAdd={handleAddStudent}
       />
     </>
   )

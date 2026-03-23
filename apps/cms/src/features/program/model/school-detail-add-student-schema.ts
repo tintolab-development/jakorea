@@ -1,7 +1,6 @@
 /**
  * 학생 등록 모달 폼 스키마
- * 필수: 학생명, 성별, 학급 / 선택: 연락처, 이메일
- * React Hook Form + Zod 검증
+ * 필수: 학생명, 학급 / 선택: 성별, 연락처, 이메일 (react-hook-form)
  */
 
 import { z } from 'zod'
@@ -15,7 +14,7 @@ export const addStudentFormSchema = z.object({
     .trim()
     .min(1, '학생명을 입력해주세요')
     .max(50, '학생명은 50자 이내로 입력해주세요'),
-  gender: z.enum(['male', 'female'], { required_error: '성별을 선택해주세요' }),
+  gender: z.enum(['male', 'female']).default('male'),
   contact: z.union([
     z.string().trim().max(20, '연락처는 20자 이내로 입력해주세요'),
     z.literal(''),
@@ -27,7 +26,7 @@ export const addStudentFormSchema = z.object({
   gradeClass: z
     .string()
     .trim()
-    .min(1, '학급을 입력해주세요')
+    .min(1, '학급을 선택해주세요')
     .max(20, '학급은 20자 이내로 입력해주세요'),
 })
 

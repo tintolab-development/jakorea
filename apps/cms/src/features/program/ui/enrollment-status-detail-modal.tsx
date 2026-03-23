@@ -26,12 +26,9 @@ import {
   businessAreaOptions,
   targetLevelOptions,
   categoryOptions,
-} from './program-list-constants'
-import {
-  getApplicantSchoolsByProgramId,
-  updateApplicantSchoolApprovalStatus,
-} from '@/data/mock/applicant-schools'
-import type { ApplicantSchoolRow, ApplicantApprovalStatusKey } from '@/data/mock/applicant-schools'
+} from './constants/program-list-constants'
+import { getApplicantSchoolsByProgramId, updateApplicantSchoolApprovalStatus, } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow, ApplicantApprovalStatusKey } from '@/data/mock/applicant-institutions'
 import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { StatusDropdownCell } from './status-dropdown-cell'
