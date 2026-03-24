@@ -8,30 +8,20 @@ import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
-import { AppButton } from '@/shared/ui/app-button'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useProgramDetailEditForm } from '../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../hooks/use-program-detail-info-save'
 import { MESSAGES } from '@/shared/constants'
-import { BasicInfoSection } from './basic-info-section'
-import { CurriculumSection } from './curriculum-section'
-import { ProgramKpiTargetSection } from './program-kpi-target-section'
-import { ParticipantRecruitmentSection } from './participant-recruitment-section'
-import { DetailInfoSection } from './detail-info-section'
-import { InstructorRecruitmentSection } from './instructor-recruitment-section'
-import { InstructorDetailInfoSection } from './instructor-detail-info-section'
-import { VolunteerRecruitmentSection } from './volunteer-recruitment-section'
-import { VolunteerDetailInfoSection } from './volunteer-detail-info-section'
 import { ParticipatingInstitutionsSection } from './participating-institutions-section'
 import { ParticipatingInstructorsSection } from './participating-instructors-section'
 import { ApplicantDetails } from './detail-modal/applicants-detail'
+import { ProjectInfoDetailPanels } from './detail-modal/project-info-detail'
 import { ProgramManagersTab } from './program-managers-tab'
 import type { Program } from '@/types/domain'
 import {
   DetailModalSidebar,
   TAB_KEYS,
-  TAB_LABELS,
   type TabKey,
   type LnbKey,
 } from './detail-modal/detail-modal-sidebar'
@@ -52,6 +42,12 @@ const SCHOOL_ID_PARAM = 'schoolId'
 const SCHOOL_TAB_PARAM = 'schoolTab'
 const SUB_TAB_PARAM = 'subTab'
 
+/** 프로그램 상세 모달 LNB 카테고리
+ * info: 프로젝트 정보
+ * applicants: 신청자 목록
+ * progress: 프로그램 진행 현황
+ * managers: 담당자 정보
+ */
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
 
 /** 학교 상세 뷰 내 탭(신청 정보 | 학생 명단 | 강사 배정 현황 | 게시글) */
@@ -285,7 +281,7 @@ export function ProgramDetailFullPageModal({
   const title =
     schoolDetailTitle != null && displayProgram
       ? `${displayProgram.title}_${schoolDetailTitle}`
-      : displayProgram?.title ?? '프로그램 상세'
+      : (displayProgram?.title ?? '프로그램 상세')
 
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
   const infoForm = useProgramDetailEditForm({
@@ -500,105 +496,6 @@ export function ProgramDetailFullPageModal({
             </button>
           </header>
 
-          {activeLnb === 'info' && (
-            <div className="program-detail-fullpage-modal__tabs-row">
-              <div className="program-detail-fullpage-modal__tabs">
-                {TAB_KEYS.map(key => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-                    onClick={() => setActiveTab(key)}
-                  >
-                    <span className="program-detail-fullpage-modal__tab-label">
-                      {TAB_LABELS[key]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              {displayProgram && (
-                <div className="program-detail-fullpage-modal__header-actions">
-                  {activeTab === 'info' ? (
-                    <>
-                      {isEditModeInfo && (
-                        <AppButton variant="danger" size="large" onClick={handleInfoCancelEdit}>
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeInfo ? handleInfoSave : handleInfoEdit}
-                      >
-                        {isEditModeInfo ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : activeTab === 'institutions' ? (
-                    <>
-                      {isEditModeInstitutions && (
-                        <AppButton
-                          variant="danger"
-                          size="large"
-                          onClick={handleInstitutionsCancelEdit}
-                        >
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeInstitutions ? handleInstitutionsSave : handleInfoEdit}
-                      >
-                        {isEditModeInstitutions ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : activeTab === 'volunteers' ? (
-                    <>
-                      {isEditModeVolunteers && (
-                        <AppButton
-                          variant="danger"
-                          size="large"
-                          onClick={handleVolunteersCancelEdit}
-                        >
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeVolunteers ? handleVolunteersSave : handleInfoEdit}
-                      >
-                        {isEditModeVolunteers ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : activeTab === 'instructors' ? (
-                    <>
-                      {isEditModeInstructors && (
-                        <AppButton
-                          variant="danger"
-                          size="large"
-                          onClick={handleInstructorsCancelEdit}
-                        >
-                          수정 취소
-                        </AppButton>
-                      )}
-                      <AppButton
-                        variant="primary"
-                        size="large"
-                        onClick={isEditModeInstructors ? handleInstructorsSave : handleInfoEdit}
-                      >
-                        {isEditModeInstructors ? '수정사항 저장' : '정보 수정'}
-                      </AppButton>
-                    </>
-                  ) : null}
-                  <AppButton variant="primary" size="large" onClick={handlePreview}>
-                    프로그램 상세 미리보기
-                  </AppButton>
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="program-detail-fullpage-modal__content">
             {loading && !displayProgram ? (
               <div className="program-detail-fullpage-modal__loading">
@@ -607,87 +504,34 @@ export function ProgramDetailFullPageModal({
             ) : displayProgram ? (
               <>
                 {activeLnb === 'info' && (
-                  <>
-                    {activeTab === 'info' && (
-                      <div className="program-detail-fullpage-modal__info-tab">
-                        <BasicInfoSection
-                          program={displayProgram}
-                          sponsorName={sponsorName}
-                          createdByName={displayProgram.createdByName}
-                          updatedByName={displayProgram.updatedByName}
-                          lifecycleStatus={displayProgram.lifecycleStatus ?? undefined}
-                          isEditMode={isEditModeInfo}
-                          form={isEditModeInfo ? infoForm : undefined}
-                          displayMode="commonInfo"
-                        />
-                        <CurriculumSection
-                          program={displayProgram}
-                          isEditMode={isEditModeInfo}
-                          form={isEditModeInfo ? infoForm : undefined}
-                        />
-                        <ProgramKpiTargetSection
-                          programId={displayProgram.id}
-                          isEditMode={isEditModeInfo}
-                          form={isEditModeInfo ? infoForm : undefined}
-                        />
-                      </div>
-                    )}
-                    {activeTab === 'institutions' && (
-                      <div className="program-detail-fullpage-modal__info-tab">
-                        <ParticipantRecruitmentSection
-                          program={displayProgram}
-                          sponsorName={sponsorName}
-                          isEditMode={isEditModeInstitutions}
-                          form={isEditModeInstitutions ? institutionsForm : undefined}
-                        />
-                        <div className="program-detail-fullpage-modal__info-tab-block">
-                          <DetailInfoSection
-                            program={displayProgram}
-                            isEditMode={isEditModeInstitutions}
-                            form={isEditModeInstitutions ? institutionsForm : undefined}
-                            onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
-                            showThumbnail
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {activeTab === 'instructors' && (
-                      <div className="program-detail-fullpage-modal__info-tab">
-                        <InstructorRecruitmentSection
-                          program={displayProgram}
-                          sponsorName={sponsorName}
-                          isEditMode={isEditModeInstructors}
-                          form={isEditModeInstructors ? instructorsForm : undefined}
-                        />
-                        <div className="program-detail-fullpage-modal__info-tab-block">
-                          <InstructorDetailInfoSection
-                            program={displayProgram}
-                            isEditMode={isEditModeInstructors}
-                            form={isEditModeInstructors ? instructorsForm : undefined}
-                            onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {activeTab === 'volunteers' && (
-                      <div className="program-detail-fullpage-modal__info-tab">
-                        <VolunteerRecruitmentSection
-                          program={displayProgram}
-                          sponsorName={sponsorName}
-                          isEditMode={isEditModeVolunteers}
-                          form={isEditModeVolunteers ? volunteersForm : undefined}
-                        />
-                        <div className="program-detail-fullpage-modal__info-tab-block">
-                          <VolunteerDetailInfoSection
-                            program={displayProgram}
-                            isEditMode={isEditModeVolunteers}
-                            form={isEditModeVolunteers ? volunteersForm : undefined}
-                            onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </>
+                  <ProjectInfoDetailPanels
+                    program={displayProgram}
+                    sponsorName={sponsorName}
+                    isBodyLoading={loading && !displayProgram}
+                    activeTab={activeTab}
+                    onSelectTab={setActiveTab}
+                    isEditModeInfo={isEditModeInfo}
+                    infoForm={isEditModeInfo ? infoForm : undefined}
+                    isEditModeInstitutions={isEditModeInstitutions}
+                    institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
+                    registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
+                    isEditModeInstructors={isEditModeInstructors}
+                    instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
+                    registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
+                    isEditModeVolunteers={isEditModeVolunteers}
+                    volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
+                    registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
+                    onInfoEdit={handleInfoEdit}
+                    onInfoCancelEdit={handleInfoCancelEdit}
+                    onInfoSave={handleInfoSave}
+                    onInstitutionsSave={handleInstitutionsSave}
+                    onInstitutionsCancelEdit={handleInstitutionsCancelEdit}
+                    onInstructorsCancelEdit={handleInstructorsCancelEdit}
+                    onInstructorsSave={handleInstructorsSave}
+                    onVolunteersSave={handleVolunteersSave}
+                    onVolunteersCancelEdit={handleVolunteersCancelEdit}
+                    onPreview={handlePreview}
+                  />
                 )}
 
                 {activeLnb === 'applicants' && <ApplicantDetails menu={activeChildMenu} />}
