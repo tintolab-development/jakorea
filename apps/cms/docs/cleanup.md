@@ -156,6 +156,31 @@ The admin home **menu shortcut** widget uses `SHORTCUT_ITEMS` in `features/dashb
 
 ---
 
+## Aggressive cleanup — Phase C (commit checkpoint)
+
+**Goal:** Delete page modules and instructor-application **list** UI that the router no longer loads; keep `manual-assignment-modal.tsx` (used from `program-detail-drawer`).
+
+- **Removed** under `pages/`: applications CRUD/progress, instructor-application list page, application-paths, `education-record-list-page-v2`, performance dashboard, schedule-negotiations, matchings, interviews (list/my/apply), todos detail, reports, lectures detail, volunteers subtree, histories, mypage index, admin settlement review / permission-requests / audit log, post-list index, schedule calendar root, log-list, survey-list, ops settlement pages (`settlement-list`, overview, monthly, calculation-settings, payment-statements, pending/review/paid).
+- **Kept** under `pages/settlements/`: `my-*` settlement routes only.
+- **Removed** `features/instructor-application/ui/instructor-application-list.tsx`, `instructor-application-detail-drawer.tsx`, and `hooks/use-instructor-application-review.ts`.
+- **Empty directories** under `pages/` for removed areas were removed.
+
+`pnpm run typecheck` in `apps/cms` passes after Phase C.
+
+---
+
+## Aggressive cleanup — Phase D (commit checkpoint)
+
+**Goal:** Remove `features/`, `entities/`, `data/mock`, and `types` modules with no remaining importers after Phase C.
+
+- **Deleted features:** `matching`, `interview`, `volunteer`, `performance`, `schedule-negotiation`, `audit-log`; removed `application/ui/application-list.tsx` and `report/hooks/use-lecture-report-submit.ts`.
+- **Entities:** Removed `interview`, `schedule-negotiation`, `performance`; trimmed `matching` to **`api/matching-service.ts` only** (still used by `use-settlement-detail`).
+- **Mocks / types:** Removed `data/mock/interviews.ts`, `schedule-negotiations.ts`, `performance-stats.ts` and their barrel exports; removed `types/interview.ts`, `types/volunteer.ts` and `export * from './volunteer'` in `types/index.ts`.
+
+`pnpm run typecheck` and `pnpm run build` in `apps/cms` pass after Phase D.
+
+---
+
 ## Source files referenced
 
 - `apps/cms/src/widgets/layout/sidebar.tsx`

@@ -36,7 +36,6 @@ export { mockSchedules, mockSchedulesMap } from './schedules'
 export { mockMatchings, mockMatchingsMap } from './matchings'
 export { mockSettlements, mockSettlementsMap } from './settlements'
 export { mockPaymentStatements, mockPaymentStatementsMap } from './payment-statements'
-export { mockPerformanceStats, mockPerformanceStatsMap } from './performance-stats'
 export { mockTodos, mockTodosMap } from './todos'
 export {
   lectureReportFields,
@@ -58,15 +57,7 @@ export {
   mockApplicationPathsMap,
   getApplicationPathByProgramId,
 } from './application-paths'
-export { mockScheduleNegotiations, mockScheduleNegotiationsMap } from './schedule-negotiations'
 export { mockUsers, getUserByEmail, getUsersByRole, validateLogin } from './users'
-export {
-  mockInterviews,
-  getInterviewById,
-  getInterviewByUserId,
-  getInterviewsByStatus,
-  getPendingInterviews,
-} from './interviews'
 export { getVolunteerPrograms, mockVolunteerProgramsMap } from './volunteer-programs'
 export { getEducationPrograms, mockEducationProgramsMap } from './education-programs'
 export { getEconomyPrograms } from './economy-programs'
