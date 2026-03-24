@@ -241,142 +241,6 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
 
-  { key: 'divider-user', type: 'divider', enabled: true },
-
-  // ============================================
-  // 사용자(INSTRUCTOR, INDIVIDUAL, SCHOOL) 공통 1뎁스 메뉴
-  // ============================================
-
-  // 1. 내 학습 관리 (1뎁스)
-  {
-    key: '/my-learning',
-    label: '내 학습 관리',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 2. 교육 프로그램 (1뎁스)
-  {
-    key: '/programs',
-    label: '교육 프로그램',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 3. 봉사 프로그램 (1뎁스)
-  {
-    key: '/programs/volunteer',
-    label: '봉사 프로그램',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 4. 마이페이지 (1뎁스) - 2뎁스 구조
-  {
-    key: 'mypage-group',
-    label: '마이페이지',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      // 개인정보 관리 (2뎁스) - 3뎁스 확장 가능
-      {
-        key: 'personal-info-group',
-        label: '개인정보 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-        children: [
-          {
-            key: '/mypage/profile',
-            label: '내 정보',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-          },
-          // 학교(교사) 인증 / 교사 정보 (SCHOOL 권한에서만, 인증 상태에 따라 라벨 변경)
-          {
-            key: '/mypage/school-auth',
-            label: '학교(교사) 인증',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['SCHOOL'],
-          },
-          // 강사 인증 / 강사 정보 (INSTRUCTOR, INDIVIDUAL 권한에서만, 인증 상태에 따라 라벨 변경)
-          {
-            key: '/mypage/instructor-auth',
-            label: '강사 인증',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL'],
-          },
-        ],
-      },
-      // 내 프로그램 일정 (2뎁스)
-      {
-        key: '/mypage/program-schedule',
-        label: '내 프로그램 일정',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-      // 강의료 정산 (2뎁스) - 강사(INSTRUCTOR) 권한에서만
-      {
-        key: '/settlements/my',
-        label: '강의료 정산',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      // 서류 발급 이력 (2뎁스)
-      {
-        key: '/mypage/documents',
-        label: '서류 발급 이력',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-      // 내 문의 내역 (2뎁스)
-      {
-        key: '/notices/inquiries/my',
-        label: '내 문의 내역',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-    ],
-  },
-
-  // 5. 공지사항 (1뎁스)
-  {
-    key: '/notices',
-    label: '공지사항',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 6. FAQ (1뎁스)
-  {
-    key: '/notices/faq',
-    label: 'FAQ',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 7. 문의하기 (1뎁스)
-  {
-    key: '/notices/inquiries',
-    label: '문의하기',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
   // ============================================
   // 주석 처리된 메뉴 (일반 사용자용)
   // ============================================
@@ -954,20 +818,9 @@ const allMenuItems: MenuItemConfig[] = [
     label: '일정 관리',
     icon: <CalendarOutlined />,
     enabled: false,
+    allowedRoles: ['ADMIN'],
     children: [
-      { key: '/schedules', label: '일정 캘린더', enabled: false },
-      {
-        key: '/schedules/my',
-        label: '본인 일정 목록',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-      {
-        key: '/schedules/my/calendar',
-        label: '본인 일정 캘린더',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
+      { key: '/schedules', label: '일정 캘린더', enabled: false, allowedRoles: ['ADMIN'] },
       {
         key: '/schedule-negotiations',
         label: '일정 협의 관리',
@@ -981,21 +834,9 @@ const allMenuItems: MenuItemConfig[] = [
     label: '면접 관리',
     icon: <TeamOutlined />,
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+    allowedRoles: ['ADMIN'],
     children: [
       { key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] },
-      {
-        key: '/interviews/apply',
-        label: '강사 신청',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      {
-        key: '/interviews/my',
-        label: '내 면접 일정',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
     ],
   },
   {
@@ -1003,15 +844,9 @@ const allMenuItems: MenuItemConfig[] = [
     label: '보고서',
     icon: <FileTextOutlined />,
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+    allowedRoles: ['ADMIN'],
     children: [
       { key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] },
-      {
-        key: '/reports/new',
-        label: '보고서 작성',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
     ],
   },
 ]
@@ -1019,15 +854,10 @@ const allMenuItems: MenuItemConfig[] = [
 /**
  * 권한별 메뉴 필터링
  *
- * 참고사항:
- * - 각 권한(INSTRUCTOR/INDIVIDUAL/SCHOOL)별로 완전히 분리된 메뉴 구조
- * - 공통 메뉴 없이 권한별로 독립적으로 관리
- * - allowedRoles로 접근 가능한 메뉴만 필터링하여 표시
- * - 인증 상태에 따라 메뉴 라벨이 동적으로 변경됨
- *
+ * - `allowedRoles`로 LNB에 노출할 항목을 제한한다.
  * @param userRole 사용자 권한
  * @param items 메뉴 아이템 목록
- * @param user 사용자 정보 (인증 상태 확인용, 선택적)
+ * @param user 사용자 정보 (선택, 하위 호환용)
  * @returns 필터링된 메뉴 아이템 목록
  */
 export function filterMenuByRole(
@@ -1072,40 +902,6 @@ export function filterMenuByRole(
         key: item.key,
         label: item.label,
         icon: showIcon ? (item.icon ?? <CategoryIcon />) : depth >= 1 ? <BulletIcon /> : undefined,
-      }
-
-      // 인증 상태에 따른 동적 메뉴 라벨 변경 (재귀적으로 모든 뎁스에서 적용)
-      // 권한별 렌더링 확실히: 인증 상태에 따라 메뉴 라벨과 경로 동적 변경
-      if (user) {
-        // 학교(교사) 인증 / 교사 정보 (SCHOOL 권한에서만)
-        // 케이스 1: 교사 인증이 안 되어있으면 "교사 인증"으로 메뉴 노출 + 진입 시 교사 인증 프로세스
-        // 케이스 2: 인증된 교사인 경우, "교사 정보"로 메뉴 노출 + 진입 시 교사 정보 노출
-        if (item.key === '/mypage/school-auth' || item.key === '/mypage/school-info') {
-          if (user.schoolInfo) {
-            // 인증된 교사: "교사 정보"로 표시
-            menuItem.label = '교사 정보'
-            menuItem.key = '/mypage/school-info'
-          } else {
-            // 인증 안 된 교사: "학교(교사) 인증"으로 표시
-            menuItem.label = '학교(교사) 인증'
-            menuItem.key = '/mypage/school-auth'
-          }
-        }
-
-        // 강사 인증 / 강사 정보 (INSTRUCTOR, INDIVIDUAL 권한에서만)
-        // 케이스 1: 강사 인증이 안 되어있으면 "강사 인증"으로 메뉴 노출 + 진입 시 강사 인증 프로세스
-        // 케이스 2: 인증된 강사인 경우, "강사 정보"로 메뉴 노출 + 진입 시 강사 정보 노출
-        if (item.key === '/mypage/instructor-auth' || item.key === '/mypage/instructor-info') {
-          if (user.instructorId) {
-            // 인증된 강사: "강사 정보"로 표시
-            menuItem.label = '강사 정보'
-            menuItem.key = '/mypage/instructor-info'
-          } else {
-            // 인증 안 된 강사: "강사 인증"으로 표시
-            menuItem.label = '강사 인증'
-            menuItem.key = '/mypage/instructor-auth'
-          }
-        }
       }
 
       // Phase 0.1.5: 자식 메뉴가 있는 경우 재귀적으로 필터링 (강화)

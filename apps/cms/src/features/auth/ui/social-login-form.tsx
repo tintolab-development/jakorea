@@ -5,21 +5,21 @@
 
 import { Button, Space, message } from 'antd'
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+// import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  loginWithSocial,
+  // loginWithSocial,
   SOCIAL_PROVIDER_LABEL,
   type SocialProvider,
 } from '@/entities/user/api/auth-service'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+// import { useAuthStore } from '@/features/auth/model/auth-store'
 import { GoogleMarkIcon } from '@/shared/components/google-mark-icon'
-import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
-import { MESSAGES } from '@/shared/constants'
+// import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+// import { MESSAGES } from '@/shared/constants'
 import './social-login-form.css'
 
-interface SocialLoginFormProps {
-  onSuccess?: () => void
-}
+// interface SocialLoginFormProps {
+//   onSuccess?: () => void
+// }
 
 /**
  * 카카오 로그인 버튼 스타일
@@ -67,12 +67,12 @@ const googleButtonStyle: React.CSSProperties = {
   gap: '10px',
 }
 
-export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const authStore = useAuthStore()
-  const { setAuth } = authStore
-  const redirectPath = searchParams.get('redirect')
+export function SocialLoginForm() {
+  // const navigate = useNavigate()
+  // const [searchParams] = useSearchParams()
+  // const authStore = useAuthStore()
+  // const { setAuth } = authStore
+  // const redirectPath = searchParams.get('redirect')
 
   const [loading, setLoading] = useState<SocialProvider | null>(null)
 
@@ -80,6 +80,7 @@ export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
   const handleSocialLogin = async (provider: SocialProvider) => {
     setLoading(provider)
     try {
+      /* 사용자 로그인 로직 전체 주석 처리 (0324)
       // Mock: 소셜 토큰 생성 (실제로는 OAuth 인증 플로우를 거쳐야 함)
       const mockSocialToken = `mock-${provider}-token-${Date.now()}`
 
@@ -109,14 +110,13 @@ export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
       const finalRedirectPath = redirectPath || getRedirectPathByRole(response.user)
       message.success(MESSAGES.success.loginSuccess)
       navigate(finalRedirectPath, { replace: true })
-
+   
       if (onSuccess) {
         onSuccess()
       }
+      */
     } catch (error: any) {
-      message.error(
-        error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 로그인에 실패했습니다.`
-      )
+      message.error(error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 로그인에 실패했습니다.`)
     } finally {
       setLoading(null)
     }

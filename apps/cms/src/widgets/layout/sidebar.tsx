@@ -5,9 +5,6 @@
  * Phase 0.1.5: 역할별 메뉴 필터링 강화 (hidden 처리, 권한별 필터링)
  * 타이틀을 사이드바 최상단에 배치
  *
- * 참고사항:
- * - 각 권한(INSTRUCTOR/INDIVIDUAL/SCHOOL)별로 완전히 분리된 메뉴 구조
- * - 공통 메뉴 없이 권한별로 독립적으로 관리됨
  */
 
 import { Layout, Menu } from 'antd'
@@ -43,40 +40,6 @@ export function Sidebar() {
       !path.startsWith('/programs/favorites')
     if (isProgramMgmt) {
       keys.push('programs-group')
-    }
-
-    // 사용자(INSTRUCTOR, INDIVIDUAL, SCHOOL) 공통 메뉴
-    // 내 학습 관리
-    if (
-      path.startsWith('/instructor/schedule') ||
-      path.startsWith('/schedules/my') ||
-      path.startsWith('/school/my-learning')
-    ) {
-      keys.push('my-learning-group')
-    }
-
-    // 봉사 프로그램
-    if (path.startsWith('/programs/volunteer')) {
-      keys.push('volunteer-programs-group')
-    }
-
-    // 마이페이지 (공통 2뎁스 구조)
-    if (
-      path.startsWith('/mypage') ||
-      path.startsWith('/settlements/my') ||
-      path.startsWith('/notices/inquiries/my')
-    ) {
-      keys.push('mypage-group')
-      // 개인정보 관리 하위 메뉴인 경우 확장
-      if (
-        path.startsWith('/mypage/profile') ||
-        path.startsWith('/mypage/school-auth') ||
-        path.startsWith('/mypage/school-info') ||
-        path.startsWith('/mypage/instructor-auth') ||
-        path.startsWith('/mypage/instructor-info')
-      ) {
-        keys.push('personal-info-group')
-      }
     }
 
     // 관리자용 템플릿 관리 (1뎁스 템플릿 관리 > 2뎁스 프로그램 양식/파일 양식 > 3뎁스 각 카테고리)
@@ -127,18 +90,9 @@ export function Sidebar() {
     setControlledOpenKeys(openKeys)
   }, [openKeys])
 
-  // 선택된 메뉴 키 결정 (역할별 내 학습 관리 페이지일 때 /my-learning 활성화)
+  // 선택된 메뉴 키 결정
   const selectedKeys = useMemo(() => {
     const path = location.pathname
-
-    // 역할별 내 학습 관리 페이지일 때 /my-learning 활성화
-    if (
-      (user?.role === 'INSTRUCTOR' && path.startsWith('/instructor/schedule')) ||
-      (user?.role === 'INDIVIDUAL' && path.startsWith('/schedules/my')) ||
-      (user?.role === 'SCHOOL' && path.startsWith('/school/my-learning'))
-    ) {
-      return ['/my-learning']
-    }
 
     // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시에도 '프로그램 목록' 카테고리 활성화
     const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
