@@ -4,7 +4,8 @@
  * - firstCardVariant: 'teal' = 첫 카드 청록 배경(목록용), 'white' = 첫 카드 흰색(상세용)
  */
 
-import { RightOutlined } from '@ant-design/icons'
+import { CaretRightOutlined } from '@ant-design/icons'
+import { DividerVertical } from '@/shared/components/divider-vertical'
 import './program-status-widget.css'
 
 export interface ProgressStageItem {
@@ -118,9 +119,21 @@ export function ProgressStagesWidget({
       )
     }
     if (item.showArrowAfter) {
-      elements.push(
-        <RightOutlined key={`arrow-${item.key}`} className="program-progress-widget__arrow" />
-      )
+      if (isFirst) {
+        elements.push(
+          <DividerVertical
+            height={60}
+            className="program-progress-widget__divider-vertical--wrapper"
+          />
+        )
+      } else {
+        elements.push(
+          <CaretRightOutlined
+            key={`arrow-${item.key}`}
+            className="program-progress-widget__arrow"
+          />
+        )
+      }
     }
   })
 

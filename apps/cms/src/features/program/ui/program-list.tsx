@@ -330,9 +330,7 @@ export function ProgramList({
     }
 
     if (progressStatusFilter !== 'all') {
-      filtered = filtered.filter(
-        program => program.lifecycleStatus === progressStatusFilter
-      )
+      filtered = filtered.filter(program => program.lifecycleStatus === progressStatusFilter)
     }
 
     return filtered
@@ -779,9 +777,7 @@ export function ProgramList({
 
       {/* 관리자 목록 뷰: 필터, tableButtonSection, 테이블을 단일 배경 컨테이너로 감쌈 */}
       {!isParticipant && viewMode === 'list' ? (
-        <div
-          className={`program-list-content-wrapper${tableVariant === 'education' ? ' program-list-content-wrapper--no-shadow' : ''}`}
-        >
+        <div className={`program-list-content-wrapper`}>
           <UnifiedFilterCard
             fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
             filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}

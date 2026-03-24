@@ -1,0 +1,5 @@
+.app-divider-vertical {
+  width: 1px;
+  flex-shrink: 0;
+  background: #c4cdd1;
+}

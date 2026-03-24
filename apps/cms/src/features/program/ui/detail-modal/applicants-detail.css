@@ -191,10 +191,6 @@
   transition: background 0.3s;
 }
 
-.applicant-details__table--clickable .ant-table-row:hover > td {
-  background-color: #fafafa !important;
-}
-
 /* 컬럼 내용 한 줄 유지(강의 회차 셀 제외), 스크롤로 전체 확인 — 참여 기관 테이블과 동일 */
 .applicant-details__table .ant-table-tbody > tr > td {
   white-space: nowrap;
