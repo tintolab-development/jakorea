@@ -272,6 +272,16 @@
   flex: 0 1 auto;
 }
 
+/* 50% 너비 슬롯: 긴 헤더 라벨 한 줄 유지를 위해 좌우 패딩 축소 */
+.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget)
+  .recruitment-status-widget__table
+  .ant-table-thead
+  > tr
+  > th {
+  padding-left: var(--spacing-8);
+  padding-right: var(--spacing-8);
+}
+
 .dashboard-widget-slot__handle {
   flex-shrink: 0;
 }
