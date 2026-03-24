@@ -8,6 +8,8 @@ This document records a static analysis of `apps/cms`: what is **not** reachable
 - **Keep** auth-related pages, error pages, and API client modules (`entities/**/api`, `features/**/api`, etc.).
 - **No files were deleted** as part of producing this document.
 
+**Historical note (post Phases A–E and Round 2):** The sections [Unused pages](#unused-pages-routed-but-no-active-lnb-item) and [Unused components](#unused-components-page-modules-not-imported-by-the-router) describe findings from an **earlier** snapshot of the router and menu. Many of those routes and page modules have since been removed or redirected. Use [`menu-config.tsx`](../src/shared/config/menu-config.tsx) and [`router/index.tsx`](../src/app/router/index.tsx) as the source of truth for what exists today; keep the tables below as **audit trail**, not a current deletion list.
+
 ---
 
 ## Method
@@ -189,6 +191,18 @@ The admin home **menu shortcut** widget uses `SHORTCUT_ITEMS` in `features/dashb
 - **Kept despite knip noise:** `shared/constants/application-status.ts`, `interview-status.ts` (used by auth/application UI); `types/toast-ui-editor.d.ts` (ambient types for `@toast-ui/editor`).
 
 `pnpm run typecheck` and `pnpm run build` in `apps/cms` pass after Phase E.
+
+---
+
+## Round 2 — menu comments and dead code (commit checkpoints)
+
+**Goal:** Trim obsolete comments in navigation-related files, keep `enabled: false` menu placeholders that still affect `canAccessPath` / `findAllMenuItemsByPath`, and remove feature modules confirmed unused by import graph (lazy routes and barrels checked manually).
+
+- **Menu config:** Removed large commented legacy non-admin menu blocks; left a short note to reintroduce non-admin items via `allMenuItems` + `allowedRoles` when product-ready. Documented why certain `enabled: false` entries must stay.
+- **Comments only:** `sidebar.tsx`, `pages/home/index-page.tsx`, `shared/utils/auth-redirect.ts` — aligned file-level docs with current ADMIN vs non-admin behavior.
+- **Dead code:** Removed unused UI/hooks/mocks including: entire `features/widget-editor` (dashboard now imports `features/dashboard/ui/widget-card.css` only), `features/schedule` and `entities/schedule` pieces that only served that feature (`schedule-service`, `schema`), orphan settlement admin list/review/payment-statement components and related hooks/stores, orphan auth helpers (`use-login`, phone login form, status label/timeline), dashboard `global-search` / `notification-list` / `recent-activities`, unused school/instructor table helpers, template filter hook, several unused program/user components, `data/mock/program-statistics.ts`, `entities/program-statistics` schema, and unused settlement entity helpers (`ecount-integration`, `distance-calculation`). **Kept** `entities/schedule/api/instructor-schedule-service.ts` and all settlement flows still wired from pages (e.g. `my-settlement-*`, `settlement-detail-drawer`).
+
+`pnpm run typecheck` and `pnpm run build` in `apps/cms` pass after the dead-code step.
 
 ---
 
