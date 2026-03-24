@@ -42,6 +42,7 @@ const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<
 import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
+import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
@@ -178,6 +179,18 @@ export const router = createBrowserRouter([
   {
     path: '/forbidden',
     element: <ForbiddenPage />,
+  },
+  {
+    path: '/oauth/google',
+    element: <OAuthCallbackPage provider="google" />,
+  },
+  {
+    path: '/oauth/kakao',
+    element: <OAuthCallbackPage provider="kakao" />,
+  },
+  {
+    path: '/oauth/naver',
+    element: <OAuthCallbackPage provider="naver" />,
   },
   {
     path: '/',
