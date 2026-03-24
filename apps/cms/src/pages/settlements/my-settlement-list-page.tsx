@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Space, Card, Button, Table, Tabs, Select, Segmented } from 'antd'
+import { Space, Card, Button, Table, Tabs, Select, Segmented, Modal, Descriptions } from 'antd'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -16,7 +16,7 @@ import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { SettlementSubmitModal } from '@/features/settlement/ui/settlement-submit-modal'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
-import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
+import { programService } from '@/entities/program/api/program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
@@ -50,7 +50,7 @@ export function MySettlementListPage() {
   const [allSettlements, setAllSettlements] = useState<Settlement[]>([]) // 탭 카운트용
   const [loading, setLoading] = useState(false)
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null)
 
   // 카테고리명 가져오기
@@ -155,7 +155,7 @@ export function MySettlementListPage() {
 
   const handleViewSettlement = (settlement: Settlement) => {
     setSelectedSettlement(settlement)
-    setDrawerOpen(true)
+    setDetailModalOpen(true)
   }
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -390,18 +390,49 @@ export function MySettlementListPage() {
         </Card>
       )}
 
-      <SettlementDetailDrawer
-        open={drawerOpen}
-        settlement={selectedSettlement}
-        onClose={() => {
-          setDrawerOpen(false)
+      <Modal
+        title="정산 상세"
+        open={detailModalOpen}
+        onCancel={() => {
+          setDetailModalOpen(false)
           setSelectedSettlement(null)
         }}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onStatusChange={async () => {}}
-        loading={loading}
-      />
+        footer={null}
+        width={640}
+        destroyOnClose
+      >
+        {selectedSettlement && (
+          <Descriptions column={1} bordered size="small">
+            <Descriptions.Item label="정산 ID">{selectedSettlement.id}</Descriptions.Item>
+            <Descriptions.Item label="상태">
+              <StatusBadge
+                status={selectedSettlement.status}
+                statusConfig={settlementStatusStatusConfig}
+              />
+            </Descriptions.Item>
+            <Descriptions.Item label="기간">{selectedSettlement.period}</Descriptions.Item>
+            <Descriptions.Item label="프로그램">
+              {programService.getByIdSync(selectedSettlement.programId)?.title ?? '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="정산 금액">
+              {selectedSettlement.totalAmount.toLocaleString()}원
+            </Descriptions.Item>
+            <Descriptions.Item label="항목 요약">
+              {selectedSettlement.items.map(i => `${i.description}: ${i.amount.toLocaleString()}원`).join(' / ') ||
+                '-'}
+            </Descriptions.Item>
+            {selectedSettlement.notes ? (
+              <Descriptions.Item label="비고">{selectedSettlement.notes}</Descriptions.Item>
+            ) : null}
+            <Descriptions.Item label="생성일">
+              {dayjs(selectedSettlement.createdAt).format('YYYY-MM-DD HH:mm')}
+            </Descriptions.Item>
+            <Descriptions.Item label="수정일">
+              {dayjs(selectedSettlement.updatedAt).format('YYYY-MM-DD HH:mm')}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
 
       <SettlementSubmitModal
         open={submitModalOpen}
