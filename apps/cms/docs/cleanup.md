@@ -181,6 +181,17 @@ The admin home **menu shortcut** widget uses `SHORTCUT_ITEMS` in `features/dashb
 
 ---
 
+## Aggressive cleanup — Phase E (commit checkpoint)
+
+**Goal:** Remove `shared/` and `types/` modules with no importers (validated with `pnpm dlx knip` hints + grep; barrels and lazy routes produce knip false positives, so each path was checked).
+
+- **Removed:** `shared/constants/audit-events.ts`, `shared/constants/dashboard-layout.ts`, `shared/hooks/use-session.ts` (dead; auth uses `use-session-timeout`), `shared/utils/api-filtering.ts`, `shared/utils/type-guards.ts`, `types/settlement.ts` (approval/reviewer types unused in `src/`).
+- **Kept despite knip noise:** `shared/constants/application-status.ts`, `interview-status.ts` (used by auth/application UI); `types/toast-ui-editor.d.ts` (ambient types for `@toast-ui/editor`).
+
+`pnpm run typecheck` and `pnpm run build` in `apps/cms` pass after Phase E.
+
+---
+
 ## Source files referenced
 
 - `apps/cms/src/widgets/layout/sidebar.tsx`
