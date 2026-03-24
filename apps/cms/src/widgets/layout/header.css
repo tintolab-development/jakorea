@@ -1,112 +1,111 @@
 .sidebar-header {
-    height: auto !important;
-    min-height: auto;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    border-bottom: 1px solid var(--color-sidebar-border);
-    padding: var(--spacing-16);
-    background: var(--color-brand-secondary-1);
-    flex-shrink: 0;
+  height: auto !important;
+  min-height: auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 30px 44px;
+  background: var(--color-sidebar-bg);
+  flex-shrink: 0;
 }
 
 .sidebar-logo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: var(--spacing-12);
-    cursor: pointer;
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: var(--spacing-12);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
-    width: 100px;
-    height: auto;
-    object-fit: contain;
-    display: block;
+  width: 100px;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .header-user-section {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    padding-top: var(--spacing-16);
-    border-top: 1px solid var(--color-border-light);
-    flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--spacing-16);
+  border-top: 1px solid var(--color-border-light);
+  flex-shrink: 0;
 }
 
 .header-user-card {
-    width: 100%;
-    padding: var(--spacing-12) var(--spacing-16);
-    border-radius: var(--radius-8);
-    background: var(--color-bg-secondary);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-8);
+  width: 100%;
+  padding: var(--spacing-12) var(--spacing-16);
+  border-radius: var(--radius-8);
+  background: var(--color-bg-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
 }
 
 .header-user-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-8);
-    gap: var(--spacing-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-8);
+  gap: var(--spacing-8);
 }
 
 .header-user-avatar {
-    flex-shrink: 0;
-    min-width: fit-content;
+  flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .header-user-avatar .ant-tag {
-    min-width: 60px;
-    text-align: center;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
+  min-width: 60px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .header-user-text {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-2);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
 }
 
 .header-user-name {
-    font-size: var(--font-size-15);
-    font-weight: var(--font-weight-600);
-    color: var(--color-text-strong);
-    line-height: 1.4;
-    display: block;
+  font-size: var(--font-size-15);
+  font-weight: var(--font-weight-600);
+  color: var(--color-text-strong);
+  line-height: 1.4;
+  display: block;
 }
 
 .header-user-email {
-    font-size: var(--font-size-12);
-    color: var(--color-text-secondary);
-    line-height: 1.4;
-    display: block;
-    word-break: break-word;
-    white-space: normal;
+  font-size: var(--font-size-12);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  display: block;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .header-account-button {
-    padding: var(--spacing-4) var(--spacing-8);
-    height: auto;
-    font-size: var(--font-size-12);
-    color: var(--color-text-secondary);
-    border-radius: var(--radius-4);
-    flex-shrink: 0;
-    min-width: 60px;
-    text-align: center;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
+  padding: var(--spacing-4) var(--spacing-8);
+  height: auto;
+  font-size: var(--font-size-12);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-4);
+  flex-shrink: 0;
+  min-width: 60px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .header-account-button:hover {
-    color: var(--color-input-focus);
-    background: var(--color-bg-info-lighter);
+  color: var(--color-input-focus);
+  background: var(--color-bg-info-lighter);
 }

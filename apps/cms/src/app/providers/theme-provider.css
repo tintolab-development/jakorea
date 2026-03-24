@@ -237,7 +237,11 @@
   --color-badge-closed-bg: #f9ebeb;
   --color-badge-closed-text: #a73434;
 
-  /* 사이드바 (어두운 배경 위 라이트 텍스트/오버레이) */
+  /* 사이드바 — 다크 틸 면 계층(기본 / 활성·펼침 행 / 서브 패널) */
+  --color-sidebar-bg: #2a6374;
+  --color-sidebar-parent-open-bg: #234e5e;
+  --color-sidebar-submenu-panel: #172f33;
+  --color-sidebar-item-selected: rgba(0, 0, 0, 0.22);
   --color-sidebar-text: #ffffff;
   --color-sidebar-overlay-06: rgba(255, 255, 255, 0.06);
   --color-sidebar-overlay-08: rgba(255, 255, 255, 0.08);
@@ -250,7 +254,7 @@
   --color-sidebar-text-85: rgba(255, 255, 255, 0.85);
   --color-sidebar-text-90: rgba(255, 255, 255, 0.9);
   --color-sidebar-text-95: rgba(255, 255, 255, 0.95);
-  --color-sidebar-sub-bg: rgba(0, 0, 0, 0.1);
+  --color-sidebar-sub-bg: var(--color-sidebar-submenu-panel);
   --color-sidebar-border: rgba(255, 255, 255, 0.2);
   --color-sidebar-scrollbar-track: rgba(255, 255, 255, 0.1);
   --color-sidebar-scrollbar-thumb: rgba(255, 255, 255, 0.3);
