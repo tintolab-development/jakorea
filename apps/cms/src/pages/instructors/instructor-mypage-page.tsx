@@ -136,7 +136,7 @@ export function InstructorMypagePage() {
             </Col>
           </Row>
           <div style={{ marginTop: 16, textAlign: 'right' }}>
-            <Button type="link" onClick={() => navigate('/instructor/applications')}>
+            <Button type="link" onClick={() => navigate('/programs/my')}>
               신청 내역 전체 보기 →
             </Button>
           </div>

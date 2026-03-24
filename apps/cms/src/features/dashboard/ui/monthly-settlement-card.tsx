@@ -22,7 +22,7 @@ export function MonthlySettlementCard() {
   const isDecrease = changeRate < 0
 
   const handleClick = () => {
-    navigate('/settlements/monthly')
+    navigate('/settlements/my/monthly')
   }
 
   return (

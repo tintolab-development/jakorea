@@ -1,6 +1,6 @@
 /**
  * 대시보드 설정 스토어
- * - 바로가기 아이콘 노출 여부 (17개 항목)
+ * - 바로가기 아이콘 노출 여부
  * - 위젯별 프로그램 선택 (4개 위젯 × 프로그램 id[])
  */
 
@@ -24,8 +24,6 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'program-forms', label: '프로그램 양식', path: '/templates/program-forms' },
   { id: 'file-forms', label: '파일 양식', path: '/templates/file-forms' },
   { id: 'sponsors', label: '후원사', path: '/sponsors' },
-  { id: 'performance', label: '실적 현황', path: '/performance' },
-  { id: 'audit-log', label: '보안 설정(로그 관리)', path: '/admin/logs/audit' },
 ]
 
 /** 위젯별 프로그램 설정용 위젯 키 (4개 위젯) */
@@ -55,8 +53,6 @@ const defaultShortcutBadgeCounts: Record<string, number> = {
   'program-forms': 0,
   'file-forms': 0,
   sponsors: 0,
-  performance: 0,
-  'audit-log': 0,
 }
 
 const defaultShortcutEnabled: Record<string, boolean> = Object.fromEntries(

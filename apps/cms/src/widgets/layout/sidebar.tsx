@@ -38,18 +38,11 @@ export function Sidebar() {
     // 관리자용 프로그램 관리 (1뎁스 프로그램 관리 > 2뎁스 교육 프로그램·수강/강의 신청 현황·봉사 프로그램)
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
-      ((path.startsWith('/programs') &&
-        !path.startsWith('/programs/my') &&
-        !path.startsWith('/programs/favorites')) ||
-        path === '/applications' ||
-        path === '/instructor-applications')
+      path.startsWith('/programs') &&
+      !path.startsWith('/programs/my') &&
+      !path.startsWith('/programs/favorites')
     if (isProgramMgmt) {
       keys.push('programs-group')
-    }
-
-    // 관리자용 정산 관리
-    if (path.startsWith('/settlements') && !path.startsWith('/settlements/my')) {
-      keys.push('settlements-group')
     }
 
     // 사용자(INSTRUCTOR, INDIVIDUAL, SCHOOL) 공통 메뉴

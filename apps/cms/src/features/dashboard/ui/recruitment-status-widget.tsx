@@ -109,7 +109,7 @@ export function RecruitmentStatusWidget() {
         <Button
           type="link"
           size="small"
-          onClick={() => navigate('/applications')}
+          onClick={() => navigate('/programs/education/enrollment')}
           className="widget-more-button"
         >
           더보기

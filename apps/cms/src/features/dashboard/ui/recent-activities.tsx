@@ -46,15 +46,15 @@ export function RecentActivities({ limit = 5 }: RecentActivitiesProps) {
     .slice(0, limit)
 
   const handleApplicationClick = () => {
-    navigate(`/applications`)
+    navigate('/programs/education/enrollment')
   }
 
   const handleMatchingClick = () => {
-    navigate(`/matchings`)
+    navigate('/programs/education/instructor-recruitment')
   }
 
   const handleScheduleClick = () => {
-    navigate(`/schedules`)
+    navigate('/schedules/my')
   }
 
   return (

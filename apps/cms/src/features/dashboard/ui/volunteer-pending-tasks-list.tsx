@@ -34,7 +34,7 @@ export function VolunteerPendingTasksList({
   const navigate = useNavigate()
 
   const handleViewAll = () => {
-    navigate('/reports')
+    navigate('/instructor/reports')
   }
 
   const renderTaskItem = (task: PendingTask) => {
@@ -43,7 +43,7 @@ export function VolunteerPendingTasksList({
     return (
       <List.Item
         style={{ padding: '12px 0', cursor: 'pointer' }}
-        onClick={() => navigate(`/reports/${task.id}`)}
+        onClick={() => navigate('/instructor/reports')}
       >
         <List.Item.Meta
           title={

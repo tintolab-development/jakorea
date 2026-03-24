@@ -34,7 +34,7 @@ export function PendingSettlementsCard() {
       value={count}
       prefix={<DollarOutlined />}
       suffix="건"
-      to="/settlements?status=pending"
+      to="/programs/education/enrollment"
       loading={loading}
     />
   )
