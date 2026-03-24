@@ -1,11 +1,4 @@
-/**
- * 사이드바 컴포넌트 (LNB - Left Navigation Bar)
- * Phase 1.1: Ant Design Menu를 활용한 네비게이션
- * Phase 4.2.1: 권한별 메뉴 구성 적용
- * Phase 0.1.5: 역할별 메뉴 필터링 강화 (hidden 처리, 권한별 필터링)
- * 타이틀을 사이드바 최상단에 배치
- *
- */
+/** LNB: `getMenuItemsByRole` 결과를 Ant Design Menu로 렌더링. 헤더는 상단 고정. */
 
 import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -22,17 +15,15 @@ export function Sidebar() {
   const location = useLocation()
   const { user } = useAuthStore()
 
-  // 권한별 메뉴 필터링 (사용자 정보 포함하여 인증 상태 확인)
   const menuItems = useMemo(() => {
     return getMenuItemsByRole(user?.role || null, user)
   }, [user?.role, user])
 
-  // 현재 경로에 따라 열린 서브메뉴 결정
   const openKeys = useMemo(() => {
     const path = location.pathname
     const keys: string[] = []
 
-    // 관리자용 프로그램 관리 (1뎁스 프로그램 관리 > 2뎁스 교육 프로그램·수강/강의 신청 현황·봉사 프로그램)
+    // ADMIN: 프로그램 관리 그룹 (/programs/education, /programs/:id 등)
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
       path.startsWith('/programs') &&
@@ -42,20 +33,16 @@ export function Sidebar() {
       keys.push('programs-group')
     }
 
-    // 관리자용 템플릿 관리 (1뎁스 템플릿 관리 > 2뎁스 프로그램 양식/파일 양식 > 3뎁스 각 카테고리)
     if (user?.role === 'ADMIN' && path.startsWith('/templates')) {
       keys.push('templates-group')
-      // 프로그램 양식 하위 메뉴
       if (path.startsWith('/templates/program-forms')) {
         keys.push('program-forms-group')
       }
-      // 파일 양식 하위 메뉴
       if (path.startsWith('/templates/file-forms')) {
         keys.push('file-forms-group')
       }
     }
 
-    // 관리자용 회원 관리 (전체 회원, 학교/강사단, 관리자 하위 포함)
     if (
       user?.role === 'ADMIN' &&
       (path.startsWith('/users') ||
@@ -70,12 +57,10 @@ export function Sidebar() {
       }
     }
 
-    // 관리자용 게시글 관리
     if (user?.role === 'ADMIN' && (path.startsWith('/admin/posts') || path.startsWith('/posts'))) {
       keys.push('posts-group')
     }
 
-    // 관리자용 보안 설정(로그 관리)
     if (user?.role === 'ADMIN' && path.startsWith('/logs')) {
       keys.push('logs-group')
     }
@@ -85,16 +70,14 @@ export function Sidebar() {
 
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
 
-  // 경로가 변경될 때 openKeys를 controlledOpenKeys에 동기화
   useEffect(() => {
     setControlledOpenKeys(openKeys)
   }, [openKeys])
 
-  // 선택된 메뉴 키 결정
   const selectedKeys = useMemo(() => {
     const path = location.pathname
 
-    // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시에도 '프로그램 목록' 카테고리 활성화
+    // ADMIN: 프로그램 상세·수정 URL에서도 일반 교육 프로그램 메뉴 하이라이트
     const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
     if (user?.role === 'ADMIN' && path.startsWith('/programs/')) {
       const rest = path.slice('/programs/'.length)

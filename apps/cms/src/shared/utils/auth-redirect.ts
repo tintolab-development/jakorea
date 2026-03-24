@@ -1,13 +1,8 @@
 /**
- * 인증 후 리다이렉트 유틸리티
- * Phase 0.1.3: 로그인 흐름 개선
+ * 로그인 직후·리다이렉트 파라미터 없을 때 기본 경로. 비관리자는 `IndexPage`가 동일 경로로 다시 보냄.
  */
-
 import type { User } from '@/types/user'
 
-/**
- * 사용자 역할에 따른 리다이렉트 경로 반환
- */
 export function getRedirectPathByRole(user: Omit<User, 'password'> | null): string {
   if (!user) {
     return '/login'
@@ -15,13 +10,13 @@ export function getRedirectPathByRole(user: Omit<User, 'password'> | null): stri
 
   switch (user.role) {
     case 'ADMIN':
-      return '/' // 관리자는 관리자 홈(Dashboard)으로
+      return '/'
     case 'INSTRUCTOR':
-      return '/instructor/schedule' // 강사는 교육 일정 페이지로
+      return '/instructor/schedule'
     case 'INDIVIDUAL':
-      return '/schedules/my' // 학생은 내 일정 페이지로
+      return '/schedules/my'
     case 'SCHOOL':
-      return '/school/my-learning' // 학교는 내 학습 관리 페이지로
+      return '/school/my-learning'
     default:
       return '/'
   }
