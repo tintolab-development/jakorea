@@ -142,6 +142,20 @@ The admin home **menu shortcut** widget uses `SHORTCUT_ITEMS` in `features/dashb
 
 ---
 
+## Aggressive cleanup — Phase B (commit checkpoint)
+
+**Goal:** Remove route trees and lazy imports for pages targeted by the cleanup plan; keep `/schedules/my*`, `/settlements/my*`, auth, and error routes.
+
+- **Removed route modules** from [`app/router/index.tsx`](apps/cms/src/app/router/index.tsx): `/applications`, role-scoped `*/applications` (replaced with `Navigate` to `/programs/my` or enrollment), `/instructor-applications`, `/application-paths`, `/education-records-v2`, `/performance`, `/schedule-negotiations`, `/matchings`, `/interviews`, `/todos`, `/reports`, `/lectures`, `/volunteers`, `/histories`, admin `/admin/settlements`, `/admin/permission-requests`, `/admin/logs/audit` (page components removed from router).
+- **Settlements (ops):** `/settlements` index and admin branches redirect to `/programs/education/enrollment`; **`/settlements/my/**` unchanged**.
+- **Schedules:** index `/schedules` redirects to `/programs/education/schedule`; **`/schedules/my`, `my/calendar`, `:id` unchanged**.
+- **Redirects:** `/mypage` index → `/mypage/profile`; `/admin/posts` index → `/admin/posts/notices`; legacy `posts` root redirect for admin → `/admin/posts/notices`.
+- **Bookmark redirects:** Added `Navigate` routes for removed top-level paths (e.g. `applications/*`, `volunteers/*`, `performance`, …) where practical.
+
+`pnpm run typecheck` in `apps/cms` passes after Phase B.
+
+---
+
 ## Source files referenced
 
 - `apps/cms/src/widgets/layout/sidebar.tsx`
