@@ -239,8 +239,6 @@
 
   /* 사이드바 — 다크 틸 면 계층(기본 / 활성·펼침 행 / 서브 패널) */
   --color-sidebar-bg: #2a6374;
-  --color-sidebar-parent-open-bg: #234e5e;
-  --color-sidebar-submenu-panel: #172f33;
   --color-sidebar-item-selected: rgba(0, 0, 0, 0.22);
   --color-sidebar-text: #ffffff;
   --color-sidebar-overlay-06: rgba(255, 255, 255, 0.06);
@@ -248,13 +246,6 @@
   --color-sidebar-overlay-10: rgba(255, 255, 255, 0.1);
   --color-sidebar-overlay-12: rgba(255, 255, 255, 0.12);
   --color-sidebar-overlay-15: rgba(255, 255, 255, 0.15);
-  --color-sidebar-text-65: rgba(255, 255, 255, 0.65);
-  --color-sidebar-text-70: rgba(255, 255, 255, 0.7);
-  --color-sidebar-text-75: rgba(255, 255, 255, 0.75);
-  --color-sidebar-text-85: rgba(255, 255, 255, 0.85);
-  --color-sidebar-text-90: rgba(255, 255, 255, 0.9);
-  --color-sidebar-text-95: rgba(255, 255, 255, 0.95);
-  --color-sidebar-sub-bg: var(--color-sidebar-submenu-panel);
   --color-sidebar-border: rgba(255, 255, 255, 0.2);
   --color-sidebar-scrollbar-track: rgba(255, 255, 255, 0.1);
   --color-sidebar-scrollbar-thumb: rgba(255, 255, 255, 0.3);
@@ -264,7 +255,7 @@
   --spacing-48: 48px;
   --spacing-64: 64px;
   --header-height: 64px;
-  --sidebar-width: 220px;
+  --sidebar-width: 270px;
   --height-widget-stage: 114px;
   --min-width-widget-stage: 140px;
   --min-width-widget-total: 160px;

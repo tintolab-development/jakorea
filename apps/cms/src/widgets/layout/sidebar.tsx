@@ -2,7 +2,7 @@
 
 import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
 import './sidebar.css'
@@ -99,16 +99,23 @@ export function Sidebar() {
     return [path]
   }, [location.pathname, user?.role])
 
+  const sidebarWidth = 'var(--sidebar-width)'
+  const sidebarChrome: CSSProperties = {
+    background: 'var(--color-sidebar-bg)',
+    color: 'var(--color-sidebar-text)',
+  }
+
   return (
-    <Sider width={270} className="sidebar-container">
+    <Sider width={sidebarWidth} className="sidebar-container" style={sidebarChrome}>
       <Header />
-      <div className="sidebar-menu-wrapper">
+      <div className="sidebar-menu-wrapper" style={sidebarChrome}>
         <Menu
           mode="inline"
           selectedKeys={selectedKeys}
           openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : openKeys}
           onOpenChange={setControlledOpenKeys}
           className="sidebar-menu"
+          style={sidebarChrome}
           items={menuItems}
           onClick={({ key }) => {
             if (typeof key === 'string' && key.startsWith('/')) navigate(key)
