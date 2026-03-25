@@ -21,8 +21,6 @@ import {
   ProfileOutlined,
   FileOutlined,
   HeartOutlined,
-  BarChartOutlined,
-  AuditOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
@@ -53,8 +51,6 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
   'program-forms': <ProfileOutlined />,
   'file-forms': <FileOutlined />,
   sponsors: <HeartOutlined />,
-  performance: <BarChartOutlined />,
-  'audit-log': <AuditOutlined />,
 }
 
 export function MenuShortcutWidget() {

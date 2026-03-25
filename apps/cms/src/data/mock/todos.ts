@@ -53,7 +53,7 @@ const todoTemplates: Array<Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>> = [
     label: '신청 검토',
     description: '새로운 신청이 접수되었습니다. 신청 내용을 검토해주세요.',
     expectedResult: '신청 검토 완료 후 승인 또는 반려 처리가 진행됩니다.',
-    targetUrl: '/applications/app-001',
+    targetUrl: '/programs/education/enrollment',
     priority: 1,
     completed: false,
   },

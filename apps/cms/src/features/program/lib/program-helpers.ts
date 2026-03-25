@@ -121,8 +121,7 @@ export function getApplicationUnavailableReason(
  * @returns 신청 URL 또는 undefined
  */
 export function getApplicationUrl(programId: string): string | undefined {
-  // 실제로는 프로그램의 applicationAvailable 필드를 확인해야 함
-  return `/applications/new?programId=${programId}`
+  return `/programs/${programId}/apply`
 }
 
 /**

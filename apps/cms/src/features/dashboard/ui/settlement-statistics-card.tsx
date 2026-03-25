@@ -32,7 +32,7 @@ export function SettlementStatisticsCard({
         { color: 'blue', label: `승인: ${approved}` },
         { color: 'green', label: `지급완료: ${paid}` },
       ]}
-      to="/settlements"
+      to="/programs/education/enrollment"
       loading={loading}
     />
   )

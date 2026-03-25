@@ -38,7 +38,7 @@ import {
   getSlotHeight,
 } from '@/features/dashboard'
 import './dashboard.css'
-import '@/features/widget-editor/ui/widget-card.css'
+import '@/features/dashboard/ui/widget-card.css'
 
 /** rectSortingStrategy에서 scaleX/scaleY를 항상 1로 고정 — 위젯 크기 변형 없이 위치만 이동 */
 const noScaleRectSortingStrategy: SortingStrategy = args => {

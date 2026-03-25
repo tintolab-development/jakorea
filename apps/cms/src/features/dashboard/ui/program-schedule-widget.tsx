@@ -233,13 +233,13 @@ export function ProgramScheduleWidget() {
     }
   }
 
-  const handleViewAll = () => navigate('/schedules')
+  const handleViewAll = () => navigate('/programs/education/schedule')
 
   const handleEventClick = (event: ScheduleEvent) => {
     if (event.type === 'education') {
       navigate(`/schedules/${event.id}`)
     } else {
-      navigate('/schedules')
+      navigate('/programs/education/schedule')
     }
   }
 

@@ -37,19 +37,9 @@ export function ProgramApplicationCompletePage() {
   const program = programs.find(p => p.id === programId)
   const programName = program?.title || '프로그램'
 
-  // 역할별 신청 내역 경로
   const getApplicationListPath = () => {
-    if (!user) return '/programs'
-    switch (user.role) {
-      case 'SCHOOL':
-        return '/school/applications'
-      case 'INSTRUCTOR':
-        return '/instructor/applications'
-      case 'INDIVIDUAL':
-        return '/my/applications'
-      default:
-        return '/programs'
-    }
+    if (!user || user.role === 'ADMIN') return '/programs'
+    return '/programs/my'
   }
 
   if (loading) {

@@ -5,11 +5,9 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Card, Table, Space, Empty, Tabs, Button } from 'antd'
+import { Card, Table, Space, Empty, Tabs, Button, Modal, Descriptions } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useApplicationStore } from '@/features/application/model/application-store'
-import { ApplicationDetailDrawer } from '@/features/application/ui/application-detail-drawer'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
@@ -33,10 +31,10 @@ export function MyProgramApplicationsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { getByIdSync: getProgramByIdSync } = useProgramService()
-  const { selectedApplication, setSelectedApplication, updateStatus } = useApplicationStore()
   const [myApplications, setMyApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [activeTab, setActiveTab] = useState<ApplicationStatus | 'all'>('all')
 
   // 카테고리명 가져오기
@@ -102,15 +100,11 @@ export function MyProgramApplicationsPage() {
   }, [myApplications])
 
   const handleView = (application: Application) => {
-    // Phase 0.2.4: 진행상황 조회 페이지로 이동
     if (application.status === 'approved') {
-      navigate(
-        `/${user?.role === 'SCHOOL' ? 'school' : user?.role === 'INSTRUCTOR' ? 'instructor' : 'my'}/applications/${application.id}`
-      )
+      navigate(`/programs/my/${application.programId}`)
     } else {
-      // 승인되지 않은 경우 기존 drawer 사용
       setSelectedApplication(application)
-      setDrawerOpen(true)
+      setDetailModalOpen(true)
     }
   }
 
@@ -231,41 +225,47 @@ export function MyProgramApplicationsPage() {
         />
       </Card>
 
-      <ApplicationDetailDrawer
-        open={drawerOpen}
-        application={selectedApplication}
-        onClose={() => {
-          setDrawerOpen(false)
+      <Modal
+        title="신청 상세"
+        open={detailModalOpen}
+        onCancel={() => {
+          setDetailModalOpen(false)
           setSelectedApplication(null)
         }}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onStatusChange={async status => {
-          if (selectedApplication) {
-            try {
-              await updateStatus(selectedApplication.id, status)
-              // 목록 새로고침
-              if (user) {
-                let subjectType: Application['subjectType'] | undefined
-                let userId = user.id
-                if (user.role === 'INSTRUCTOR' && user.instructorId) {
-                  subjectType = 'instructor'
-                  userId = user.instructorId
-                } else if (user.role === 'SCHOOL') {
-                  subjectType = 'school'
-                }
-                const applications = await applicationService.getByUserId(userId, subjectType)
-                setMyApplications(applications)
-              }
-            } catch (error) {
-              console.error('신청 상태 변경 실패:', error)
-            }
-          }
-        }}
-        loading={loading}
-        isAdmin={false}
-        currentUser={user}
-      />
+        footer={null}
+        width={560}
+        destroyOnClose
+      >
+        {selectedApplication && (
+          <Descriptions column={1} bordered size="small">
+            <Descriptions.Item label="프로그램">
+              {getProgramByIdSync(selectedApplication.programId)?.title ?? '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="상태">
+              <StatusBadge
+                status={selectedApplication.status}
+                statusConfig={applicationStatusStatusConfig}
+              />
+            </Descriptions.Item>
+            <Descriptions.Item label="신청일">
+              {dayjs(selectedApplication.submittedAt).format('YYYY-MM-DD HH:mm')}
+            </Descriptions.Item>
+            <Descriptions.Item label="검토일">
+              {selectedApplication.reviewedAt
+                ? dayjs(selectedApplication.reviewedAt).format('YYYY-MM-DD HH:mm')
+                : '-'}
+            </Descriptions.Item>
+            {selectedApplication.rejectionReason ? (
+              <Descriptions.Item label="반려 사유">
+                {selectedApplication.rejectionReason}
+              </Descriptions.Item>
+            ) : null}
+            {selectedApplication.notes ? (
+              <Descriptions.Item label="비고">{selectedApplication.notes}</Descriptions.Item>
+            ) : null}
+          </Descriptions>
+        )}
+      </Modal>
     </div>
   )
 }

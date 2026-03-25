@@ -46,7 +46,7 @@ export function UpcomingSchedulesList({
   }
 
   const handleViewAll = () => {
-    navigate('/schedules')
+    navigate('/schedules/my')
   }
 
   return (
