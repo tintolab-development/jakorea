@@ -76,6 +76,7 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
         type={type}
         danger={isVariantDanger ? true : antDanger}
         size={antSize}
+        style={{ outline: 'none' }}
         className={cn}
         {...rest}
       />

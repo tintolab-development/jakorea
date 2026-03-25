@@ -79,6 +79,22 @@
   flex-shrink: 0;
 }
 
+/* 대시보드 설정: 필터 버튼 line-height(150%)로 라벨 박스가 커져 아이콘이 위로 보이는 현상 보정 */
+.dashboard-toolbar-settings-btn.app-button.ant-btn {
+  line-height: 1.2;
+}
+
+.dashboard-toolbar-settings-btn.ant-btn .ant-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.dashboard-toolbar-settings-btn.ant-btn .ant-btn-icon svg {
+  display: block;
+}
+
 .dashboard-widgets-left,
 .dashboard-widgets-right {
   width: 100%;

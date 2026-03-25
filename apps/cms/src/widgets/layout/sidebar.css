@@ -132,6 +132,11 @@
   color: var(--color-sidebar-text) !important;
 }
 
+/* children 있는 메뉴가 펼쳐진(open) 때 타이틀 행 하단 구분선 */
+.sidebar-menu .ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
+  border-bottom: 1px solid var(--color-sidebar-border);
+}
+
 /* ---- 공통 호버: 흰색 15% 오버레이 ---- */
 .sidebar-menu .ant-menu-item:hover,
 .sidebar-menu .ant-menu-submenu-title:hover {
@@ -272,8 +277,15 @@
   padding-left: 48px !important;
 }
 
-/* 2뎁스(자식 있는 행) 타이틀 — 패딩만(타이포는 위 2뎁스 규칙과 동일) */
-.sidebar-menu .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title {
+/* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 좌 24px / 우 18px */
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title {
+  padding-left: 24px !important;
+  padding-right: 18px !important;
+}
+
+/* 3뎁스 이하 패널의 서브메뉴 타이틀(자식 있는 행) — 좌우 24px 유지 */
+.sidebar-menu .ant-menu-sub .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title {
   padding: 0 24px !important;
 }
 
