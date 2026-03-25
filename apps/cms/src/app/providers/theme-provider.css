@@ -260,4 +260,7 @@
   --min-width-widget-stage: 140px;
   --min-width-widget-total: 160px;
   --shadow-header: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* 작업 중 추가되는 색상 (추후 정리) */
+  --table-line: #e0e0e0;
 }

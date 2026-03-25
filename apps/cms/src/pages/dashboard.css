@@ -33,14 +33,9 @@
   box-shadow: none !important;
 }
 
-/* 위젯 카드: 햄버거 아이콘 하단 디바이더 제거 */
-.dashboard-container .ant-card .ant-card-head {
-  border-bottom: none;
-}
-
 /* 위젯 타이틀 폰트 스펙 */
 .dashboard-container .ant-card .widget-card-title {
-  color: var(--default-BK, #3D3D3D);
+  color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 18px;
   font-style: normal;
@@ -155,6 +150,17 @@
   flex-direction: column;
 }
 
+/* 주간 탭: 피그마 패딩 20px 유지 + 본문 위쪽 정렬 */
+.dashboard-widgets-right .program-schedule-widget--week-view .ant-card-body {
+  justify-content: flex-start;
+  padding: 0 20px 20px !important;
+}
+
+.dashboard-widgets-right .program-schedule-widget--week-view .program-schedule-widget__content {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
 /* 프로그램 일정 위젯: 캘린더/일정 비율은 program-schedule-widget.css 반응형 규칙 사용 */
 
 /* DnD 슬롯: 위젯 바깥 래퍼, 기존 위젯 레이아웃 변경 없음. 높이는 인라인 스타일로 제어(기본 338px) */
@@ -175,14 +181,14 @@
 }
 
 /* 메뉴 바로가기 위젯이 50% 사이즈(colSpan 12)일 때 위젯 높이 최대 340px, 퀵메뉴 영역만 스크롤 */
-.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) {
   max-height: 340px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) > .ant-card {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) > .ant-card {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -190,7 +196,7 @@
   flex-direction: column;
 }
 
-.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -198,7 +204,9 @@
   flex-direction: column;
 }
 
-.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget .ant-card-body {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget)
+  .menu-shortcut-widget
+  .ant-card-body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -206,7 +214,7 @@
   flex-direction: column;
 }
 
-.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -215,7 +223,7 @@
 }
 
 /* 퀵메뉴 그리드만 스크롤 */
-.dashboard-widget-slot[data-col-span="12"]:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -259,21 +267,26 @@
 }
 
 /* 모집 신청 현황 위젯 50%일 때: 카드·본문·테이블이 콘텐츠 높이만 사용해 하단 빈 공간 제거, 컨테이너 radius 유지 */
-.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) > .ant-card {
+.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget) > .ant-card {
   flex: 0 0 auto;
   height: auto;
   border-radius: var(--radius-8);
   overflow: hidden;
 }
-.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) .recruitment-status-widget .ant-card-body {
+.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget)
+  .recruitment-status-widget
+  .ant-card-body {
   flex: 0 1 auto;
 }
-.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget) .recruitment-status-widget .ant-card-body .ant-table-wrapper {
+.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget)
+  .recruitment-status-widget
+  .ant-card-body
+  .ant-table-wrapper {
   flex: 0 1 auto;
 }
 
 /* 50% 너비 슬롯: 긴 헤더 라벨 한 줄 유지를 위해 좌우 패딩 축소 */
-.dashboard-widget-slot[data-col-span="12"]:has(.recruitment-status-widget)
+.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget)
   .recruitment-status-widget__table
   .ant-table-thead
   > tr
@@ -355,4 +368,3 @@
 .dashboard-widget-row-wrapper[data-dragging] .ant-col {
   will-change: transform;
 }
-

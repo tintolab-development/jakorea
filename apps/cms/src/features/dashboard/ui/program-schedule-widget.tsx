@@ -7,7 +7,7 @@
 import { Card, List, Button, Empty } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useLayoutEffect } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import { mockSchedules, mockPrograms } from '@/data/mock'
@@ -112,13 +112,9 @@ function buildEventsForDate(
     }
   })
 
-  const programs = programIdSet
-    ? mockPrograms.filter(p => programIdSet.has(p.id))
-    : mockPrograms
+  const programs = programIdSet ? mockPrograms.filter(p => programIdSet.has(p.id)) : mockPrograms
   programs.forEach(program => {
-    const applicationEndDate = program.applicationEndDate
-      ? dayjs(program.applicationEndDate)
-      : null
+    const applicationEndDate = program.applicationEndDate ? dayjs(program.applicationEndDate) : null
     const applicationStartDate = program.applicationStartDate
       ? dayjs(program.applicationStartDate)
       : null
@@ -155,8 +151,35 @@ function buildEventsForDate(
   })
 }
 
+/** 대시보드 SortableWidgetSlot의 data-col-span(50% = 12) — CSS만으로는 적용이 어긋날 수 있어 DOM으로 동기화 */
+function useDashboardHalfColumnSlot() {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [halfColumn, setHalfColumn] = useState(false)
+
+  useLayoutEffect(() => {
+    const root = cardRef.current
+    if (!root) {
+      setHalfColumn(false)
+      return
+    }
+    const slot = root.closest('.dashboard-widget-slot')
+    if (!slot) {
+      setHalfColumn(false)
+      return
+    }
+    const sync = () => setHalfColumn(slot.getAttribute('data-col-span') === '12')
+    sync()
+    const mo = new MutationObserver(sync)
+    mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
+    return () => mo.disconnect()
+  }, [])
+
+  return { cardRef, halfColumn }
+}
+
 export function ProgramScheduleWidget() {
   const navigate = useNavigate()
+  const { cardRef, halfColumn } = useDashboardHalfColumnSlot()
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
@@ -333,11 +356,7 @@ export function ProgramScheduleWidget() {
               <tr key={row}>
                 {[0, 1, 2, 3, 4, 5, 6].map(col => {
                   const date = monthDates[row * 7 + col]
-                  return (
-                    <td key={col}>
-                      {date ? renderMonthCell(date) : null}
-                    </td>
-                  )
+                  return <td key={col}>{date ? renderMonthCell(date) : null}</td>
                 })}
               </tr>
             ))}
@@ -394,8 +413,14 @@ export function ProgramScheduleWidget() {
                         }
                       }}
                     >
-                      <span className="program-schedule-widget__week-event-time">{ev.time}</span>
-                      <span className="program-schedule-widget__week-event-title">{ev.title}</span>
+                      <span className="program-schedule-widget__week-event-title">
+                        {ev.programTitle}
+                        <span className="program-schedule-widget__week-event-time">
+                          {' '}
+                          | {ev.time}
+                        </span>
+                      </span>
+                      <span className="program-schedule-widget__week-event-desc">{ev.title}</span>
                     </div>
                   ))}
                   {hasMore && (
@@ -446,8 +471,17 @@ export function ProgramScheduleWidget() {
     </div>
   )
 
+  const cardClassName = [
+    'program-schedule-widget',
+    viewMode === 'week' ? 'program-schedule-widget--week-view' : '',
+    halfColumn ? 'program-schedule-widget--dashboard-half' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <Card
+      ref={cardRef}
       title={
         <div className="program-schedule-widget__head-row">
           <div className="program-schedule-widget__head-left">
@@ -501,7 +535,7 @@ export function ProgramScheduleWidget() {
           </div>
         </div>
       }
-      className="program-schedule-widget"
+      className={cardClassName}
     >
       <div className="program-schedule-widget__content">
         {/* 하위 영역: viewMode에 따라 캘린더 형식만 변경 */}
