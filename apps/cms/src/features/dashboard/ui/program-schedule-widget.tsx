@@ -51,7 +51,24 @@ const LIFECYCLE_STATUS_BG: Record<ProgramLifecycleStatus, string> = {
   document_processing_completed: '#f5f5f5',
   participant_instructor_recruitment_completed: '#f2f3f5',
 }
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = hex.replace('#', '')
 
+  const r = parseInt(normalized.substring(0, 2), 16)
+  const g = parseInt(normalized.substring(2, 4), 16)
+  const b = parseInt(normalized.substring(4, 6), 16)
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+const LIFECYCLE_STATUS_COLOR = Object.fromEntries(
+  Object.entries(LIFECYCLE_STATUS_BG).map(([key, color]) => [
+    key,
+    {
+      border: color,
+      bg: hexToRgba(color, 0.6),
+    },
+  ])
+) as Record<ProgramLifecycleStatus, { bg: string; border: string }>
 function getEventTypeLabel(type: ScheduleEvent['type']) {
   switch (type) {
     case 'education':
@@ -68,7 +85,9 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
 function getLifecycleBg(status: ProgramLifecycleStatus): string {
   return LIFECYCLE_STATUS_BG[status] ?? '#f0f0f0'
 }
-
+function getLifecycleBgBorder(status: ProgramLifecycleStatus, target: 'bg' | 'border'): string {
+  return LIFECYCLE_STATUS_COLOR[status][target] ?? '#f0f0f0'
+}
 /** 같은 날 일정에서 상이한 프로그램 진행현황 최대 2개만 추출 (표시용) */
 function getDisplayStatuses(dayEvents: ScheduleEvent[]): ProgramLifecycleStatus[] {
   const seen = new Set<ProgramLifecycleStatus>()
@@ -450,22 +469,28 @@ export function ProgramScheduleWidget() {
           dataSource={selectedDateEvents}
           split={false}
           className="program-schedule-widget__event-list"
-          renderItem={event => (
-            <List.Item
-              className="program-schedule-widget__event-item"
-              onClick={() => handleEventClick(event)}
-            >
-              <div className="program-schedule-widget__event-column">
-                <div className="program-schedule-widget__event-head">
-                  <span className="program-schedule-widget__event-type">
-                    {getEventTypeLabel(event.type)}
-                  </span>
-                  <span className="program-schedule-widget__event-time">| {event.time}</span>
+          renderItem={event => {
+            const lifecycleBg = getLifecycleBgBorder(event.lifecycleStatus, 'bg')
+            const lifecycleBorder = getLifecycleBgBorder(event.lifecycleStatus, 'border')
+            return (
+              <List.Item
+                className="program-schedule-widget__event-item"
+                style={{
+                  backgroundColor: lifecycleBg,
+                  borderColor: lifecycleBorder,
+                }}
+                onClick={() => handleEventClick(event)}
+              >
+                <div className="program-schedule-widget__event-column">
+                  <div className="program-schedule-widget__event-title">{event.title}</div>
+                  <div className="program-schedule-widget__event-desc">
+                    <span>{getEventTypeLabel(event.type)}</span>
+                    <span> | {event.time}</span>
+                  </div>
                 </div>
-                <div className="program-schedule-widget__event-desc">{event.title}</div>
-              </div>
-            </List.Item>
-          )}
+              </List.Item>
+            )
+          }}
         />
       )}
     </div>
