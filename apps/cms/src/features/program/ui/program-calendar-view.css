@@ -198,6 +198,72 @@
   align-items: center;
 }
 
+/* 캘린더 셀 호버: 해당 날짜 일정 미리보기 (Popover) */
+.program-calendar-cell-preview-popover .ant-popover-inner {
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+}
+
+.program-calendar-cell-preview-popover .ant-popover-inner-content {
+  padding: 0;
+}
+
+.program-calendar-cell-preview {
+  display: flex;
+  width: 333px;
+  max-width: min(400px, 92vw);
+  padding: 12px 16px 12px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.program-calendar-cell-preview__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.program-calendar-cell-preview__item + .program-calendar-cell-preview__item {
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.program-calendar-cell-preview__title {
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 130%;
+  word-break: break-word;
+}
+
+.program-calendar-cell-preview__desc {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.program-calendar-cell-preview__item:hover .program-calendar-cell-preview__title,
+.program-calendar-cell-preview__item:hover .program-calendar-cell-preview__desc {
+  opacity: 0.85;
+}
+
 /* 메인 캘린더 셀: 배지는 셀 안에서만 노출 */
 .program-calendar-cell {
   min-height: 120px;
@@ -214,20 +280,32 @@
 }
 
 .program-calendar-cell:hover {
-  border-color: #d9d9d9;
-  background-color: #fafafa;
+  background: #f5f6f7;
 }
 
+/* 캘린더 > 월간 : 선택된 셀 스타일 */
 .program-calendar-cell--selected {
-  border: 1px solid var(--color-brand-primary) !important;
-  background-color: rgba(1, 161, 175, 0.04);
+  background: #f5f6f7;
+}
+.program-calendar-cell--selected .program-calendar-cell-date {
+  display: flex;
+  width: 25px;
+  height: 25px;
+  padding: 0 10px;
+  color: var(--default-WT) !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1/1;
+  border-radius: 60px;
+  background: var(--JA-mint-01, #01a1af);
 }
 
 .program-calendar-cell--today .program-calendar-cell-date {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
@@ -595,24 +673,30 @@
   min-height: 300px;
 }
 
-/* 일정 항목: 프로그램별 팔레트 태그 (border/bg는 --schedule-item-* 로 주입) */
+/* 일정 항목: applicant-schedule-list와 동일 팔레트·인라인 bg/border (program-schedule-list.tsx) */
 .program-schedule-item {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   padding: 10px 20px;
-  border: 1px solid var(--schedule-item-border, #373530);
-  background: var(--schedule-item-bg, #ffffff);
+  border: 1px solid #f0f0f0;
+  background: #fcfcfc;
   cursor: pointer;
   transition:
     outline-color 0.15s ease,
-    outline-width 0.15s ease;
+    outline-width 0.15s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
   border-radius: 6px;
 }
 
 .program-schedule-item:hover {
-  border: 2px solid var(--JA-mint-01, #01a1af);
-  background: var(--default-WT, #fff);
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 .program-schedule-item:last-child {
