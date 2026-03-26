@@ -236,7 +236,7 @@ export function ParticipatingInstructorsSection({
 
   const handleInfoDetailClick = () => {
     if (selectedInstructorRowKeys.length !== 1) {
-      message.warning('정보 상세 보기를 하려면 강사를 1명 선택해 주세요.')
+      message.warning('개인정보 상세보기를 하려면 강사를 1명 선택해 주세요.')
       return
     }
     const row = filteredInstructors.find(r => r.id === selectedInstructorRowKeys[0])
@@ -457,12 +457,12 @@ export function ParticipatingInstructorsSection({
             {viewMode === 'list' && (
               <AppButton
                 variant="primary"
-                size="filter"
+                size="filter-wide"
                 icon={<InfoCircleOutlined />}
                 onClick={handleInfoDetailClick}
                 disabled={selectedInstructorRowKeys.length !== 1}
               >
-                정보 상세 보기
+                개인정보 상세보기
               </AppButton>
             )}
           </div>

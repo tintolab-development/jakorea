@@ -76,16 +76,16 @@ export function ApplicantsDetailContents({
   const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
 
-  /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [정보상세 보기] */
+  /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
 
-  /** 신청 강사 승인 완료: [승인 취소] [정보상세 보기] */
+  /** 신청 강사 승인 완료: [승인 취소] [개인정보 상세보기] */
   const isApprovedInstructor = isInstructor && instructorData?.approvalStatus === 'approved'
 
-  /** 신청 기관 반려: [반려 취소] [정보상세 보기] */
+  /** 신청 기관 반려: [반려 취소] [개인정보 상세보기] */
   const isRejectedInstitution = isInstitution && institutionData?.approvalStatus === 'rejected'
 
-  /** 신청 강사 반려: [반려 취소] [정보상세 보기] */
+  /** 신청 강사 반려: [반려 취소] [개인정보 상세보기] */
   const isRejectedInstructor = isInstructor && instructorData?.approvalStatus === 'rejected'
 
   const renderInstitutionInfo = () => {
@@ -150,8 +150,8 @@ export function ApplicantsDetailContents({
           <AppButton variant="primary" size="filter" disabled>
             정보 수정
           </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
+          <AppButton variant="primary" size="filter-wide" onClick={onBack}>
+            개인정보 상세보기
           </AppButton>
         </Space>
       )
@@ -167,8 +167,8 @@ export function ApplicantsDetailContents({
           >
             승인 취소
           </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
+          <AppButton variant="primary" size="filter-wide" onClick={onBack}>
+            개인정보 상세보기
           </AppButton>
         </Space>
       )
@@ -184,8 +184,8 @@ export function ApplicantsDetailContents({
           >
             반려 취소
           </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
+          <AppButton variant="primary" size="filter-wide" onClick={onBack}>
+            개인정보 상세보기
           </AppButton>
         </Space>
       )
@@ -199,8 +199,8 @@ export function ApplicantsDetailContents({
           <AppButton variant="cancel" size="filter" onClick={() => onApprove(data.id)}>
             참여 승인
           </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
+          <AppButton variant="primary" size="filter-wide" onClick={onBack}>
+            개인정보 상세보기
           </AppButton>
         </Space>
       )
@@ -214,8 +214,8 @@ export function ApplicantsDetailContents({
           <AppButton variant="cancel" size="filter" onClick={() => onApprove(data.id)}>
             참여 승인
           </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
+          <AppButton variant="primary" size="filter-wide" onClick={onBack}>
+            개인정보 상세보기
           </AppButton>
         </Space>
       )

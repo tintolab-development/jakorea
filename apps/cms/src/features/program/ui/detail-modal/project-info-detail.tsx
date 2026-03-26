@@ -72,13 +72,13 @@ function ProjectInfoDetailTabsRow({
           {activeTab === 'info' ? (
             <>
               {isEditModeInfo && (
-                <AppButton variant="danger" size="large" onClick={onInfoCancelEdit}>
+                <AppButton variant="danger" size="filter" onClick={onInfoCancelEdit}>
                   수정 취소
                 </AppButton>
               )}
               <AppButton
                 variant="primary"
-                size="large"
+                size="filter"
                 onClick={isEditModeInfo ? onInfoSave : onInfoEdit}
               >
                 {isEditModeInfo ? '수정사항 저장' : '정보 수정'}
@@ -87,13 +87,13 @@ function ProjectInfoDetailTabsRow({
           ) : activeTab === 'institutions' ? (
             <>
               {isEditModeInstitutions && (
-                <AppButton variant="danger" size="large" onClick={onInstitutionsCancelEdit}>
+                <AppButton variant="danger" size="filter" onClick={onInstitutionsCancelEdit}>
                   수정 취소
                 </AppButton>
               )}
               <AppButton
                 variant="primary"
-                size="large"
+                size="filter"
                 onClick={isEditModeInstitutions ? onInstitutionsSave : onInfoEdit}
               >
                 {isEditModeInstitutions ? '수정사항 저장' : '정보 수정'}
@@ -102,13 +102,13 @@ function ProjectInfoDetailTabsRow({
           ) : activeTab === 'volunteers' ? (
             <>
               {isEditModeVolunteers && (
-                <AppButton variant="danger" size="large" onClick={onVolunteersCancelEdit}>
+                <AppButton variant="danger" size="filter" onClick={onVolunteersCancelEdit}>
                   수정 취소
                 </AppButton>
               )}
               <AppButton
                 variant="primary"
-                size="large"
+                size="filter"
                 onClick={isEditModeVolunteers ? onVolunteersSave : onInfoEdit}
               >
                 {isEditModeVolunteers ? '수정사항 저장' : '정보 수정'}
@@ -117,20 +117,20 @@ function ProjectInfoDetailTabsRow({
           ) : activeTab === 'instructors' ? (
             <>
               {isEditModeInstructors && (
-                <AppButton variant="danger" size="large" onClick={onInstructorsCancelEdit}>
+                <AppButton variant="danger" size="filter" onClick={onInstructorsCancelEdit}>
                   수정 취소
                 </AppButton>
               )}
               <AppButton
                 variant="primary"
-                size="large"
+                size="filter"
                 onClick={isEditModeInstructors ? onInstructorsSave : onInfoEdit}
               >
                 {isEditModeInstructors ? '수정사항 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : null}
-          <AppButton variant="primary" size="large" onClick={onPreview}>
+          <AppButton variant="primary" size="filter" onClick={onPreview}>
             프로그램 상세 미리보기
           </AppButton>
         </div>

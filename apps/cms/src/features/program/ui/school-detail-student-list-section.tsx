@@ -84,7 +84,7 @@ function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStude
 export interface SchoolDetailStudentListSectionProps {
   schoolId: string
   studentCount: number
-  /** 풀페이지 등에서 상단에 이미 정보 수정/정보상세 보기 있을 때 버튼만 숨기거나 콜백으로 위임 */
+  /** 풀페이지 등에서 상단에 이미 정보 수정/개인정보 상세보기 있을 때 버튼만 숨기거나 콜백으로 위임 */
   readOnly?: boolean
   onIssueCertificates?: () => void
   onEditInfo?: () => void
@@ -520,11 +520,11 @@ export function SchoolDetailStudentListSection({
                 )}
                 <AppButton
                   variant="primary"
-                  size="filter"
+                  size="filter-wide"
                   modalTeal
                   onClick={() => onViewDetail?.()}
                 >
-                  정보상세 보기
+                  개인정보 상세보기
                 </AppButton>
               </>
             )}
