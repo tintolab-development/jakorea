@@ -10,23 +10,18 @@ import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
-import { useProgramDetailEditForm } from '../hooks/use-program-detail-edit-form'
-import { useProgramDetailInfoSave } from '../hooks/use-program-detail-info-save'
+import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
+import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
 import { MESSAGES } from '@/shared/constants'
-import { ParticipatingInstitutionsSection } from './participating-institutions-section'
-import { ParticipatingInstructorsSection } from './participating-instructors-section'
-import { ApplicantDetails } from './detail-modal/applicants-detail'
-import { ProjectInfoDetailPanels } from './detail-modal/project-info-detail'
-import { ProgramManagersTab } from './program-managers-tab'
+import { ParticipatingInstitutionsSection } from '../participating-institutions-section'
+import { ParticipatingInstructorsSection } from '../participating-instructors-section'
+import { ApplicantDetails } from './applicants/applicants-detail'
+import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
+import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
-import {
-  DetailModalSidebar,
-  TAB_KEYS,
-  type TabKey,
-  type LnbKey,
-} from './detail-modal/detail-modal-sidebar'
+import { DetailModalSidebar, TAB_KEYS, type TabKey, type LnbKey } from './detail-modal-sidebar'
 import '@toast-ui/editor/dist/toastui-editor.css'
-import './program-detail-info-tab.css'
+// import './program-detail-info-tab.css'
 import './program-detail-fullpage-modal.css'
 
 export interface ProgramDetailFullPageModalProps {

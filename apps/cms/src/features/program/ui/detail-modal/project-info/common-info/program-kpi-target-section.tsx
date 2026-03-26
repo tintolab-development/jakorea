@@ -12,7 +12,7 @@ import { Controller } from 'react-hook-form'
 import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
 import type { KpiMetric } from '@/features/dashboard/api/admin-dashboard-service'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import './program-kpi-target-section.css'
 
 export interface ProgramKpiTargetSectionProps {
@@ -23,7 +23,22 @@ export interface ProgramKpiTargetSectionProps {
 
 const EDUCATION_INSTRUCTOR_LABEL = '교육진행자 최종 인원'
 
-/** td 내용 중 숫자만 볼드 처리 (예: "감사: 80 봉사자 : 80" → 감사: **80** 봉사자 : **80**) */
+const KPI_SEGMENT_REGEX = /([^:]+?):\s*(\d+(?:\.\d+)?)/g
+
+function boldNumbersInSegment(segment: string, keyPrefix: string): ReactNode[] {
+  const parts = segment.split(/(\d+)/)
+  return parts.map((part, i) =>
+    /^\d+$/.test(part) ? (
+      <span key={`${keyPrefix}-${i}`} className="program-kpi-target-section__value">
+        {part}
+      </span>
+    ) : (
+      <span key={`${keyPrefix}-${i}`}>{part}</span>
+    )
+  )
+}
+
+/** td 내용 중 숫자만 볼드 처리. 여러 "라벨: 숫자" 구간은 ` | ` 구분자로 연결 */
 function formatKpiValueWithBoldNumbers(value: string | number | undefined): ReactNode {
   if (value === undefined || value === null || value === '') return '-'
   const str = String(value).trim()
@@ -31,16 +46,33 @@ function formatKpiValueWithBoldNumbers(value: string | number | undefined): Reac
   if (/^\d+(\.\d+)?$/.test(str)) {
     return <span className="program-kpi-target-section__value">{str}</span>
   }
-  const parts = str.split(/(\d+)/)
-  return parts.map((part, i) =>
-    /^\d+$/.test(part) ? (
-      <span key={i} className="program-kpi-target-section__value">
-        {part}
-      </span>
-    ) : (
-      part
-    )
-  )
+
+  const matches = [...str.matchAll(KPI_SEGMENT_REGEX)]
+
+  if (matches.length >= 2) {
+    const nodes: ReactNode[] = []
+    matches.forEach((m, idx) => {
+      if (idx > 0) {
+        nodes.push(
+          <span key={`kpi-sep-${idx}`} className="program-detail-info-tab__separator">
+            {' | '}
+          </span>
+        )
+      }
+      nodes.push(...boldNumbersInSegment(m[0], `kpi-seg-${idx}`))
+    })
+    return <>{nodes}</>
+  }
+
+  if (matches.length === 1) {
+    const [first] = matches
+    const rest = str.slice(first.index! + first[0].length).trim()
+    if (!rest) {
+      return <>{boldNumbersInSegment(first[0], 'kpi-seg-0')}</>
+    }
+  }
+
+  return <>{boldNumbersInSegment(str, 'kpi-flat')}</>
 }
 
 export function ProgramKpiTargetSection({
@@ -86,9 +118,7 @@ export function ProgramKpiTargetSection({
   const participantsRow = kpis?.find(k => k.key === 'finalParticipants')
   const schoolsRow = kpis?.find(k => k.key === 'finalSchools')
   const classesRow = kpis?.find(k => k.key === 'finalClasses')
-  const instructorDisplay: string | undefined = isFormEdit
-    ? undefined
-    : '강사: 80 봉사자 : 80'
+  const instructorDisplay: string | undefined = isFormEdit ? undefined : '강사: 80 봉사자 : 80'
 
   if (!isFormEdit && (!kpis || kpis.length === 0)) {
     return (
@@ -111,7 +141,7 @@ export function ProgramKpiTargetSection({
 
   return (
     <section className="program-kpi-target-section">
-      <h3 className="program-detail-info-tab__section-title">사업 KPI 목표</h3>
+      <div className="program-detail-info-tab__section-title">사업 KPI 목표</div>
       <div className="program-kpi-target-section__table-wrap">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-kpi-target-section__table">
           <colgroup>
@@ -123,7 +153,8 @@ export function ProgramKpiTargetSection({
           <tbody>
             <tr>
               <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                참여자 최종 인원{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                참여자 최종 인원
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -157,7 +188,8 @@ export function ProgramKpiTargetSection({
                 )}
               </td>
               <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                {EDUCATION_INSTRUCTOR_LABEL}{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                {EDUCATION_INSTRUCTOR_LABEL}
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -181,9 +213,7 @@ export function ProgramKpiTargetSection({
                         />
                       )}
                     />
-                    <span className="program-kpi-target-section__instructor-divider" aria-hidden>
-                      |
-                    </span>
+                    <span className="program-detail-info-tab__separator"> | </span>
                     <span className="program-kpi-target-section__instructor-label">봉사자</span>
                     <Controller
                       name="kpiVolunteerCount"
@@ -218,7 +248,8 @@ export function ProgramKpiTargetSection({
             </tr>
             <tr>
               <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                최종 파견 학교 수{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                최종 파견 학교 수
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -252,7 +283,8 @@ export function ProgramKpiTargetSection({
                 )}
               </td>
               <th className={isFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                최종 파견 학급 수{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                최종 파견 학급 수
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (

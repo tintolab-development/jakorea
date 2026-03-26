@@ -12,7 +12,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import {
   formatDateOnly,
   formatDateRange,
@@ -20,8 +20,8 @@ import {
   RECRUITMENT_RADIO_OPTIONS,
   INTERVIEW_METHOD_OPTIONS,
   VOLUNTEER_TARGET_OPTIONS,
-} from './program-detail-info-constants'
-import './program-detail-info-tab.css'
+} from '../program-detail-info-constants'
+import '../program-detail-info-tab.css'
 
 const { TextArea } = Input
 
@@ -51,9 +51,9 @@ export function VolunteerRecruitmentSection({
   const recruitmentStatus = getVolunteerRecruitmentStatus(program)
   const recruitmentStatusLabel =
     recruitmentStatus != null
-      ? VOLUNTEER_RECRUITMENT_LABELS[recruitmentStatus] ??
+      ? (VOLUNTEER_RECRUITMENT_LABELS[recruitmentStatus] ??
         RECRUITMENT_RADIO_OPTIONS.find(o => o.value === recruitmentStatus)?.label ??
-        '-'
+        '-')
       : '-'
 
   const volunteerTarget = program.volunteerTarget ?? '대학(원)생'

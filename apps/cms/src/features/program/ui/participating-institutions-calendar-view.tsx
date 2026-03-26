@@ -13,7 +13,7 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
-import { ApplicantScheduleList } from './detail-modal/applicant-schedule-list'
+import { ApplicantScheduleList } from './detail-modal/applicants/applicant-schedule-list'
 import { SCHEDULE_COLORS } from './program-schedule-colors'
 import './participating-institutions-calendar-view.css'
 

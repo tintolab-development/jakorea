@@ -17,10 +17,10 @@ import {
   INSTRUCTOR_TARGET_OPTIONS,
   INTERVIEW_METHOD_OPTIONS,
   RECRUITMENT_RADIO_OPTIONS,
-} from './program-detail-info-constants'
+} from './detail-modal/project-info/program-detail-info-constants'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import './program-detail-info-tab.css'
+import './detail-modal/project-info/program-detail-info-tab.css'
 
 const { TextArea } = Input
 
@@ -49,9 +49,9 @@ export function InstructorRecruitmentSection({
   const recruitmentStatus = getInstructorRecruitmentStatus(program)
   const recruitmentStatusLabel =
     recruitmentStatus != null
-      ? INSTRUCTOR_RECRUITMENT_LABELS[recruitmentStatus] ??
+      ? (INSTRUCTOR_RECRUITMENT_LABELS[recruitmentStatus] ??
         RECRUITMENT_RADIO_OPTIONS.find(o => o.value === recruitmentStatus)?.label ??
-        '-'
+        '-')
       : '-'
 
   const instructorTarget = program.instructorTarget ?? '성인'
@@ -154,18 +154,18 @@ export function InstructorRecruitmentSection({
               </th>
               <td>
                 {isFormEdit ? (
-                    <Controller
-                      name="instructorTarget"
-                      control={form.control}
-                      render={({ field }) => (
-                        <Select
-                          {...field}
-                          value={field.value ?? '성인'}
-                          options={INSTRUCTOR_TARGET_OPTIONS}
-                          className="program-detail-info-tab__select program-detail-info-tab__select--instructor-target"
-                        />
-                      )}
-                    />
+                  <Controller
+                    name="instructorTarget"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        value={field.value ?? '성인'}
+                        options={INSTRUCTOR_TARGET_OPTIONS}
+                        className="program-detail-info-tab__select program-detail-info-tab__select--instructor-target"
+                      />
+                    )}
+                  />
                 ) : (
                   instructorTarget
                 )}

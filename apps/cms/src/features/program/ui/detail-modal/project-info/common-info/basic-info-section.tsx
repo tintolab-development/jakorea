@@ -14,7 +14,7 @@ import { Controller } from 'react-hook-form'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import {
   formatDate,
@@ -38,7 +38,7 @@ import {
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
   PROGRAM_CHANNEL_OPTIONS,
-} from './program-detail-info-constants'
+} from '../program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import dayjs from 'dayjs'
@@ -82,9 +82,10 @@ export function BasicInfoSection({
 
   const isFormEdit = isEditMode && form
   // 수정 모드: 폼 값만 사용(삭제 시 program으로 되돌아가지 않도록). 비수정 모드: program 값
-  const thumbnailUrlFromFormOrProgram = isFormEdit && form
-    ? (form.watch('keyVisualImage') ?? form.watch('posterImage') ?? '') || undefined
-    : program.keyVisualImage || program.posterImage
+  const thumbnailUrlFromFormOrProgram =
+    isFormEdit && form
+      ? (form.watch('keyVisualImage') ?? form.watch('posterImage') ?? '') || undefined
+      : program.keyVisualImage || program.posterImage
   const thumbnailFilename = thumbnailUrlFromFormOrProgram
     ? getThumbnailFilename(thumbnailUrlFromFormOrProgram)
     : ''
@@ -121,7 +122,12 @@ export function BasicInfoSection({
 
   /* 공통 정보 탭 전용: 스크린샷 구조 — 상단 블록(등록일/대표·세부 프로그램명/사업 운영 기간/참여자·후원사) + 하단 블록(팀구분/교육 과정/IP·IPS 등). 수정 모드 시 수정 가능 필드만 입력 컴포넌트로. */
   if (displayMode === 'commonInfo') {
-    const partnerLabel = program.partnerInvolvement === true ? 'Yes' : program.partnerInvolvement === false ? 'No' : '-'
+    const partnerLabel =
+      program.partnerInvolvement === true
+        ? 'Yes'
+        : program.partnerInvolvement === false
+          ? 'No'
+          : '-'
     const courseDeliveredLabel =
       program.courseDeliveredBy === 'JA'
         ? 'JA'
@@ -129,13 +135,12 @@ export function BasicInfoSection({
           ? 'Jointly'
           : program.courseDeliveredBy === 'Partner'
             ? 'Partner'
-            : program.courseDeliveredBy ?? '-'
-    const sponsorManagerLine = [program.managerName, program.contactPhone].filter(Boolean).join(' | ') || '-'
+            : (program.courseDeliveredBy ?? '-')
     const commonInfoFormEdit = isFormEdit && form
 
     return (
       <>
-        <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
+        <div className="program-detail-info-tab__section-title">기본 정보</div>
         {/* 수정 불가: 최초 등록일·마지막 수정일만 단일 행 테이블 */}
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--dates">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--dates">
@@ -149,11 +154,15 @@ export function BasicInfoSection({
               <tr>
                 <th>최초 등록일</th>
                 <td>
-                  {formatDate(program.createdAt)} | {createdByName ?? '-'}
+                  {formatDate(program.createdAt)}
+                  <span className="program-detail-info-tab__separator"> | </span>
+                  {createdByName ?? '-'}
                 </td>
                 <th>마지막 수정일</th>
                 <td>
-                  {formatDate(program.updatedAt)} | {updatedByName ?? '-'}
+                  {formatDate(program.updatedAt)}
+                  <span className="program-detail-info-tab__separator"> | </span>
+                  {updatedByName ?? '-'}
                 </td>
               </tr>
             </tbody>
@@ -169,8 +178,15 @@ export function BasicInfoSection({
             </colgroup>
             <tbody>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  대표 프로그램명{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  대표 프로그램명
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -179,7 +195,11 @@ export function BasicInfoSection({
                         name="mainTitle"
                         control={form.control}
                         render={({ field }) => (
-                          <Input {...field} value={field.value ?? ''} placeholder="대표 프로그램명" />
+                          <Input
+                            {...field}
+                            value={field.value ?? ''}
+                            placeholder="대표 프로그램명"
+                          />
                         )}
                       />
                       {form.formState.errors.mainTitle?.message && (
@@ -189,11 +209,18 @@ export function BasicInfoSection({
                       )}
                     </>
                   ) : (
-                    program.mainTitle ?? '-'
+                    (program.mainTitle ?? '-')
                   )}
                 </td>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  세부 프로그램명{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  세부 프로그램명
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -222,8 +249,15 @@ export function BasicInfoSection({
                 </td>
               </tr>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  사업 운영 기간{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  사업 운영 기간
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -271,8 +305,15 @@ export function BasicInfoSection({
                 </td>
               </tr>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  참여자 유형{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  참여자 유형
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -292,8 +333,15 @@ export function BasicInfoSection({
                     categoryLabel
                   )}
                 </td>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  사업 분야{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  사업 분야
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -311,13 +359,20 @@ export function BasicInfoSection({
                       )}
                     />
                   ) : (
-                    program.businessArea ?? '-'
+                    (program.businessArea ?? '-')
                   )}
                 </td>
               </tr>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  후원사{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  후원사
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -353,11 +408,18 @@ export function BasicInfoSection({
                       {sponsorName ?? '-'}
                     </Link>
                   ) : (
-                    sponsorName ?? '-'
+                    (sponsorName ?? '-')
                   )}
                 </td>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  후원사 담당자{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  후원사 담당자
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td className="program-detail-info-tab__sponsor-manager-cell">
                   {commonInfoFormEdit ? (
@@ -367,57 +429,70 @@ export function BasicInfoSection({
                       const managers = selectedSponsor?.managers ?? []
                       return (
                         <>
-                        <div className="program-detail-info-tab__sponsor-manager-inputs">
-                          <Controller
-                            name="managerName"
-                            control={form.control}
-                            render={({ field }) => {
-                              const currentName = field.value ?? ''
-                              const currentPhone = form.watch('contactPhone') ?? ''
-                              const selectedIndex =
-                                managers.length > 0
-                                  ? managers.findIndex(
-                                      m => m.name === currentName || m.phone === currentPhone
-                                    )
-                                  : -1
-                              return (
-                                <Select<number>
-                                  placeholder="담당자 선택"
-                                  allowClear
-                                  value={selectedIndex >= 0 ? selectedIndex : undefined}
-                                  options={managers.map((m, i) => ({ value: i, label: m.name }))}
-                                  onChange={idx => {
-                                    if (idx !== undefined && idx >= 0 && managers[idx]) {
-                                      form.setValue('managerName', managers[idx].name)
-                                      form.setValue('contactPhone', managers[idx].phone)
-                                    } else {
-                                      form.setValue('managerName', '')
-                                      form.setValue('contactPhone', undefined)
-                                    }
-                                  }}
-                                  className="program-detail-info-tab__manager-select"
-                                  status={form.formState.errors.managerName ? 'error' : undefined}
-                                />
-                              )
-                            }}
-                          />
-                          <span className="program-detail-info-tab__contact-divider" aria-hidden>
-                            |
-                          </span>
-                          <span className="program-detail-info-tab__contact-phone-readonly">
-                            {form.watch('contactPhone') || '-'}
-                          </span>
-                        </div>
-                        {form.formState.errors.managerName?.message && (
-                          <span className="program-detail-info-tab__field-error">
-                            {form.formState.errors.managerName.message}
-                          </span>
-                        )}
-                      </>
+                          <div className="program-detail-info-tab__sponsor-manager-inputs">
+                            <Controller
+                              name="managerName"
+                              control={form.control}
+                              render={({ field }) => {
+                                const currentName = field.value ?? ''
+                                const currentPhone = form.watch('contactPhone') ?? ''
+                                const selectedIndex =
+                                  managers.length > 0
+                                    ? managers.findIndex(
+                                        m => m.name === currentName || m.phone === currentPhone
+                                      )
+                                    : -1
+                                return (
+                                  <Select<number>
+                                    placeholder="담당자 선택"
+                                    allowClear
+                                    value={selectedIndex >= 0 ? selectedIndex : undefined}
+                                    options={managers.map((m, i) => ({
+                                      value: i,
+                                      label: m.name,
+                                    }))}
+                                    onChange={idx => {
+                                      if (idx !== undefined && idx >= 0 && managers[idx]) {
+                                        form.setValue('managerName', managers[idx].name)
+                                        form.setValue('contactPhone', managers[idx].phone)
+                                      } else {
+                                        form.setValue('managerName', '')
+                                        form.setValue('contactPhone', undefined)
+                                      }
+                                    }}
+                                    className="program-detail-info-tab__manager-select"
+                                    status={form.formState.errors.managerName ? 'error' : undefined}
+                                  />
+                                )
+                              }}
+                            />
+                            <span className="program-detail-info-tab__separator"> | </span>
+                            <span className="program-detail-info-tab__contact-phone-readonly">
+                              {form.watch('contactPhone') || '-'}
+                            </span>
+                          </div>
+                          {form.formState.errors.managerName?.message && (
+                            <span className="program-detail-info-tab__field-error">
+                              {form.formState.errors.managerName.message}
+                            </span>
+                          )}
+                        </>
                       )
                     })()
+                  ) : program.managerName || program.contactPhone ? (
+                    <>
+                      {program.managerName ?? ''}
+                      {program.managerName && program.contactPhone ? (
+                        <span className="program-detail-info-tab__separator"> | </span>
+                      ) : null}
+                      {program.contactPhone ? (
+                        <span className="program-detail-info-tab__contact-phone-readonly">
+                          {program.contactPhone}
+                        </span>
+                      ) : null}
+                    </>
                   ) : (
-                    sponsorManagerLine
+                    '-'
                   )}
                 </td>
               </tr>
@@ -434,8 +509,15 @@ export function BasicInfoSection({
             </colgroup>
             <tbody>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  팀구분{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  팀구분
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -454,11 +536,18 @@ export function BasicInfoSection({
                       )}
                     />
                   ) : (
-                    program.teamDivision ?? '-'
+                    (program.teamDivision ?? '-')
                   )}
                 </td>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  교육 과정{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  교육 과정
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -477,13 +566,20 @@ export function BasicInfoSection({
                       )}
                     />
                   ) : (
-                    program.educationProcess ?? '-'
+                    (program.educationProcess ?? '-')
                   )}
                 </td>
               </tr>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  IP Owned{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  IP Owned
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -502,11 +598,18 @@ export function BasicInfoSection({
                       )}
                     />
                   ) : (
-                    program.ipOwned ?? 'JA'
+                    (program.ipOwned ?? 'JA')
                   )}
                 </td>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  Course Delivered By{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  Course Delivered By
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -530,8 +633,15 @@ export function BasicInfoSection({
                 </td>
               </tr>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  Partner Involvement{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  Partner Involvement
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -550,8 +660,15 @@ export function BasicInfoSection({
                     partnerLabel
                   )}
                 </td>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  IPS{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  IPS
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -567,13 +684,20 @@ export function BasicInfoSection({
                       )}
                     />
                   ) : (
-                    program.ips ?? '-'
+                    (program.ips ?? '-')
                   )}
                 </td>
               </tr>
               <tr>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  프로그램 종류{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  프로그램 종류
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -592,12 +716,21 @@ export function BasicInfoSection({
                         />
                       )}
                     />
+                  ) : program.ips === 'Succeed' ? (
+                    (program.programCategory ?? '-')
                   ) : (
-                    program.ips === 'Succeed' ? (program.programCategory ?? '-') : '-'
+                    '-'
                   )}
                 </td>
-                <th className={commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined}>
-                  프로그램 채널{commonInfoFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                <th
+                  className={
+                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
+                  }
+                >
+                  프로그램 채널
+                  {commonInfoFormEdit ? (
+                    <span className="program-detail-info-tab__required">*</span>
+                  ) : null}
                 </th>
                 <td>
                   {commonInfoFormEdit ? (
@@ -653,7 +786,7 @@ export function BasicInfoSection({
                       )}
                     </div>
                   ) : program.ips === 'Inspire' ? (
-                    program.programChannel ?? '-'
+                    (program.programChannel ?? '-')
                   ) : (
                     '-'
                   )}
@@ -668,7 +801,7 @@ export function BasicInfoSection({
 
   return (
     <>
-      <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
+      <div className="program-detail-info-tab__section-title">기본 정보</div>
 
       <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--top">
@@ -682,16 +815,21 @@ export function BasicInfoSection({
             <tr>
               <th>최초 등록일</th>
               <td>
-                {formatDate(program.createdAt)} | {createdByName ?? '-'}
+                {formatDate(program.createdAt)}
+                <span className="program-detail-info-tab__separator"> | </span>
+                {createdByName ?? '-'}
               </td>
               <th>마지막 수정일</th>
               <td>
-                {formatDate(program.updatedAt)} | {updatedByName ?? '-'}
+                {formatDate(program.updatedAt)}
+                <span className="program-detail-info-tab__separator"> | </span>
+                {updatedByName ?? '-'}
               </td>
             </tr>
             <tr>
               <th>
-                프로그램 진행 방식{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                프로그램 진행 방식
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -715,7 +853,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                프로그램 진행 상태{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                프로그램 진행 상태
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -759,7 +898,8 @@ export function BasicInfoSection({
           <tbody>
             <tr>
               <th>
-                썸네일 이미지{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                썸네일 이미지
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td colSpan={3} className="program-detail-info-tab__cell--thumbnail">
                 <div className="program-detail-info-tab__thumbnail-wrap">
@@ -820,7 +960,8 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                프로그램명{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                프로그램명
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -847,7 +988,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                프로그램 운영 기간{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                프로그램 운영 기간
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -884,7 +1026,8 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                수강자 유형{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                수강자 유형
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -905,7 +1048,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                교육 분야{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                교육 분야
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -975,7 +1119,8 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                후원사{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                후원사
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -1015,7 +1160,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                후원사 담당자{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                후원사 담당자
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td className="program-detail-info-tab__sponsor-manager-cell">
                 {isFormEdit ? (
@@ -1059,9 +1205,7 @@ export function BasicInfoSection({
                               )
                             }}
                           />
-                          <span className="program-detail-info-tab__contact-divider" aria-hidden>
-                            |
-                          </span>
+                          <span className="program-detail-info-tab__separator"> | </span>
                           <span className="program-detail-info-tab__contact-phone-readonly">
                             {form.watch('contactPhone') || '-'}
                           </span>
@@ -1074,14 +1218,27 @@ export function BasicInfoSection({
                       </>
                     )
                   })()
+                ) : program.managerName || program.contactPhone ? (
+                  <>
+                    {program.managerName ?? ''}
+                    {program.managerName && program.contactPhone ? (
+                      <span className="program-detail-info-tab__separator"> | </span>
+                    ) : null}
+                    {program.contactPhone ? (
+                      <span className="program-detail-info-tab__contact-phone-readonly">
+                        {program.contactPhone}
+                      </span>
+                    ) : null}
+                  </>
                 ) : (
-                  [program.managerName, program.contactPhone].filter(Boolean).join(' | ') || '-'
+                  '-'
                 )}
               </td>
             </tr>
             <tr>
               <th>
-                문의처{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                문의처
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td colSpan={3} className="program-detail-info-tab__contact-cell">
                 {isFormEdit ? (
@@ -1092,9 +1249,7 @@ export function BasicInfoSection({
                       readOnly
                       className="program-detail-info-tab__contact-name-readonly"
                     />
-                    <span className="program-detail-info-tab__contact-divider" aria-hidden>
-                      |
-                    </span>
+                    <span className="program-detail-info-tab__separator"> | </span>
                     <span className="program-detail-info-tab__contact-label">Tel</span>
                     <Controller
                       name="contactPhone"
@@ -1108,9 +1263,7 @@ export function BasicInfoSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__contact-divider" aria-hidden>
-                      |
-                    </span>
+                    <span className="program-detail-info-tab__separator"> | </span>
                     <span className="program-detail-info-tab__contact-label">E-mail</span>
                     <Controller
                       name="contactEmail"
@@ -1151,7 +1304,7 @@ export function BasicInfoSection({
       </div>
 
       {/* 수강자 모집 */}
-      <h3 className="program-detail-info-tab__section-title">수강자 모집</h3>
+      <div className="program-detail-info-tab__section-title">수강자 모집</div>
       <div className="program-detail-info-tab__table-wrapper">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
           <colgroup>
@@ -1163,7 +1316,8 @@ export function BasicInfoSection({
           <tbody>
             <tr>
               <th>
-                수강자 모집 인원{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                수강자 모집 인원
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -1200,7 +1354,9 @@ export function BasicInfoSection({
                   </div>
                 ) : totalCapacity > 0 ? (
                   <>
-                    {program.approvedStudentCount != null ? `${program.approvedStudentCount} / ` : null}
+                    {program.approvedStudentCount != null
+                      ? `${program.approvedStudentCount} / `
+                      : null}
                     <strong>{totalCapacity}건</strong>
                     {' (신청자가 아닌 승인된 수강자 기준)'}
                   </>
@@ -1209,7 +1365,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                수강자 모집 현황{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                수강자 모집 현황
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -1231,7 +1388,8 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                수강자 모집 기간{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                수강자 모집 기간
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -1269,7 +1427,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                결과 발표일 및 방법{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                결과 발표일 및 방법
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -1311,7 +1470,7 @@ export function BasicInfoSection({
       </div>
 
       {/* 강사 모집 */}
-      <h3 className="program-detail-info-tab__section-title">강사 모집</h3>
+      <div className="program-detail-info-tab__section-title">강사 모집</div>
       <div className="program-detail-info-tab__table-wrapper">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
           <colgroup>
@@ -1323,7 +1482,8 @@ export function BasicInfoSection({
           <tbody>
             <tr>
               <th>
-                강사 모집 인원{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                강사 모집 인원
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form ? (
@@ -1355,7 +1515,11 @@ export function BasicInfoSection({
                 ) : program.instructors != null ? (
                   <>
                     {program.instructorCapacity != null ? `${program.instructors} / ` : null}
-                    <strong>{program.instructorCapacity != null ? `${program.instructorCapacity}건` : `${program.instructors}건`}</strong>
+                    <strong>
+                      {program.instructorCapacity != null
+                        ? `${program.instructorCapacity}건`
+                        : `${program.instructors}건`}
+                    </strong>
                     {' (신청자가 아닌 승인된 강사 기준)'}
                   </>
                 ) : (
@@ -1363,7 +1527,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                강사 모집 현황{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                강사 모집 현황
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -1373,13 +1538,17 @@ export function BasicInfoSection({
                     className="program-detail-info-tab__recruitment-radio"
                   />
                 ) : (
-                  <RecruitmentStatusBadge status={getInstructorRecruitmentStatus(program)} size="fixed" />
+                  <RecruitmentStatusBadge
+                    status={getInstructorRecruitmentStatus(program)}
+                    size="fixed"
+                  />
                 )}
               </td>
             </tr>
             <tr>
               <th>
-                강사 모집 기간{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                강사 모집 기간
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -1421,7 +1590,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                1차 서류 합격자 발표{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                1차 서류 합격자 발표
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -1460,7 +1630,8 @@ export function BasicInfoSection({
             </tr>
             <tr>
               <th>
-                2차 면접 심사{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                2차 면접 심사
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -1498,7 +1669,8 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                최종 합격자 발표{isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
+                최종 합격자 발표
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (

@@ -6,7 +6,7 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { ApplicantScheduleList } from './applicant-schedule-list'
-import { SCHEDULE_COLORS, type ScheduleColorPair } from '../program-schedule-colors'
+import { SCHEDULE_COLORS, type ScheduleColorPair } from '../../program-schedule-colors'
 import './applicant-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
