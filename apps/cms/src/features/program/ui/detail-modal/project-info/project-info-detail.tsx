@@ -1,16 +1,20 @@
 import { Spin, Typography } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
-import './program-detail-info-tab.css'
 import type { Program } from '@/types/domain'
 import { BasicInfoSection } from './common-info/basic-info-section'
 import { CurriculumSection } from './common-info/curriculum-section'
 import { ProgramKpiTargetSection } from './common-info/program-kpi-target-section'
-import { ParticipantRecruitmentSection } from './participant-info/participant-recruitment-section'
-import { DetailInfoSection } from './participant-info/detail-info-section'
-import { InstructorRecruitmentSection } from '../../instructor-recruitment-section'
-import { InstructorDetailInfoSection } from './instructor-info/instructor-detail-info-section'
-import { VolunteerRecruitmentSection } from './volunteer-info/volunteer-recruitment-section'
-import { VolunteerDetailInfoSection } from './volunteer-info/volunteer-detail-info-section'
+import {
+  InstructorRecruitmentSection,
+  ParticipantRecruitmentSection,
+  ProjectInfoRecruitmentSection,
+  VolunteerRecruitmentSection,
+} from './project-info-recruitment-section'
+import {
+  DetailInfoSection,
+  InstructorDetailInfoSection,
+  VolunteerDetailInfoSection,
+} from './project-info-detail-info-section'
 import { TAB_KEYS, TAB_LABELS, type TabKey } from '../detail-modal-sidebar'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
@@ -250,14 +254,16 @@ export function ProjectInfoDetailPanels({
             </div>
           )}
           {activeTab === 'institutions' && (
-            <div className="program-detail-fullpage-modal__info-tab">
-              <ParticipantRecruitmentSection
-                program={program}
-                sponsorName={sponsorName}
-                isEditMode={isEditModeInstitutions}
-                form={isEditModeInstitutions ? institutionsForm : undefined}
-              />
-              <div className="program-detail-fullpage-modal__info-tab-block">
+            <ProjectInfoRecruitmentSection
+              recruitment={
+                <ParticipantRecruitmentSection
+                  program={program}
+                  sponsorName={sponsorName}
+                  isEditMode={isEditModeInstitutions}
+                  form={isEditModeInstitutions ? institutionsForm : undefined}
+                />
+              }
+              detail={
                 <DetailInfoSection
                   program={program}
                   isEditMode={isEditModeInstitutions}
@@ -265,44 +271,48 @@ export function ProjectInfoDetailPanels({
                   onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
                   showThumbnail
                 />
-              </div>
-            </div>
+              }
+            />
           )}
           {activeTab === 'instructors' && (
-            <div className="program-detail-fullpage-modal__info-tab">
-              <InstructorRecruitmentSection
-                program={program}
-                sponsorName={sponsorName}
-                isEditMode={isEditModeInstructors}
-                form={isEditModeInstructors ? instructorsForm : undefined}
-              />
-              <div className="program-detail-fullpage-modal__info-tab-block">
+            <ProjectInfoRecruitmentSection
+              recruitment={
+                <InstructorRecruitmentSection
+                  program={program}
+                  sponsorName={sponsorName}
+                  isEditMode={isEditModeInstructors}
+                  form={isEditModeInstructors ? instructorsForm : undefined}
+                />
+              }
+              detail={
                 <InstructorDetailInfoSection
                   program={program}
                   isEditMode={isEditModeInstructors}
                   form={isEditModeInstructors ? instructorsForm : undefined}
                   onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
                 />
-              </div>
-            </div>
+              }
+            />
           )}
           {activeTab === 'volunteers' && (
-            <div className="program-detail-fullpage-modal__info-tab">
-              <VolunteerRecruitmentSection
-                program={program}
-                sponsorName={sponsorName}
-                isEditMode={isEditModeVolunteers}
-                form={isEditModeVolunteers ? volunteersForm : undefined}
-              />
-              <div className="program-detail-fullpage-modal__info-tab-block">
+            <ProjectInfoRecruitmentSection
+              recruitment={
+                <VolunteerRecruitmentSection
+                  program={program}
+                  sponsorName={sponsorName}
+                  isEditMode={isEditModeVolunteers}
+                  form={isEditModeVolunteers ? volunteersForm : undefined}
+                />
+              }
+              detail={
                 <VolunteerDetailInfoSection
                   program={program}
                   isEditMode={isEditModeVolunteers}
                   form={isEditModeVolunteers ? volunteersForm : undefined}
                   onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
                 />
-              </div>
-            </div>
+              }
+            />
           )}
         </>
       ) : (

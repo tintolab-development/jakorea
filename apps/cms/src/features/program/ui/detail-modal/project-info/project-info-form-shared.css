@@ -1,25 +1,7 @@
 /**
- * 프로그램 상세 정보 탭 (관리자 상세 페이지)
- * 디자이너 시안: 라벨 연한회색(#F9F9F9)·가운데정렬 / 값 흰색 / 구분선 #E0E0E0 / 썸네일 86×86
+ * 프로그램 프로젝트 정보 폼 — 공통 테이블·입력 UI (기존 program-detail-info-tab BEM)
+ * 각 섹션 TSX의 동명 CSS에서 @import 로 로드
  */
-
-.program-detail-info-tab {
-  width: 100%;
-}
-
-.program-detail-info-tab__card {
-  background: var(--color-bg-base);
-  border-radius: var(--radius-8);
-  border: 1px solid var(--color-border-light);
-}
-
-.program-detail-info-tab__section {
-  padding: var(--spacing-20) var(--spacing-24);
-}
-
-.program-detail-info-tab__section + .program-detail-info-tab__section {
-  border-top: 1px solid var(--color-border-light);
-}
 
 /* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬, 좌측 정렬 */
 .program-detail-info-tab__section-header-row {
@@ -46,17 +28,19 @@
 .program-detail-info-tab__section-title {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard;
-  font-size: 18px;
+  font-size: 20px;
   font-style: normal;
   font-weight: 700;
   line-height: 140%; /* 25.2px */
 }
 
 .program-detail-info-tab__detail-note {
-  font-size: var(--font-size-13);
-  color: #3d3d3d;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
   opacity: 0.6;
-  margin-bottom: 0;
 }
 
 /* 테이블 래퍼: radius + 외곽선(셀 border가 클립/서브픽셀에서 사라지는 현상 보완), 내부 격자는 셀 border 유지 */
@@ -148,6 +132,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 24px */
+  min-width: 400px !important;
 }
 
 .program-detail-info-tab__separator {
@@ -155,32 +140,11 @@
   padding: 0 6px;
 }
 
-/* 필수 영역일 때만 옆에 붙는 필수 표시(*): 빨간색, 텍스트와 2px 간격 */
-.program-detail-info-tab__table th .program-detail-info-tab__required {
-  color: var(--color-red, #c32f4a);
-  margin-left: 2px;
-}
-
-/* 필수 필드 검증 에러 메시지 (강사 정보 등) */
-.program-detail-info-tab__field-error {
-  display: block;
-  margin-top: var(--spacing-4);
-  font-size: var(--font-size-12);
-  color: var(--color-red, #ff4d4f);
-}
-
 /* 값 셀: 흰색 배경, 검정 텍스트 */
 .program-detail-info-tab__table td {
   width: 34%;
   color: var(--color-text-primary);
   background: var(--color-bg-base);
-}
-
-/* 기본 정보 상단·하위 테이블 헤더(라벨) 200px 고정 (공통 규칙과 동일, 명시용) */
-.program-detail-info-tab__table--basic th {
-  width: 200px !important;
-  min-width: 200px !important;
-  max-width: 200px !important;
 }
 
 .program-detail-info-tab__table--basic td {
@@ -254,7 +218,7 @@
   box-sizing: border-box;
   text-align: center;
   color: var(--color-text-primary);
-  background: F5F6F7;
+  background: #f5f6f7;
   vertical-align: middle;
   font-size: 16px;
   font-weight: 700;
@@ -395,42 +359,15 @@
 }
 
 .program-detail-info-tab__file-select .file-select-field__guide {
-  font-size: 12px;
-  color: #999;
-  line-height: 1.5;
-}
-
-.program-detail-info-tab__file-select
-  .file-select-field__guide-line
-  + .file-select-field__guide-line {
-  margin-top: 6px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+  opacity: 0.6;
 }
 
 .program-detail-info-tab__contact-cell {
   word-break: break-word;
-}
-
-/* 조회/수정 공통: 테이블 박스 사이즈 유지 (인풋 전환 시에도 동일 높이) */
-.program-detail-info-tab__content-block {
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 160px;
-  padding: 8px 0;
-  box-sizing: border-box;
-}
-
-.program-detail-info-tab__content-block.program-detail-info-tab__content-block--sm {
-  min-height: 120px;
-}
-
-.program-detail-info-tab__content-block ul {
-  margin: 0.5em 0;
-  padding-left: 1.2em;
-}
-
-.program-detail-info-tab__content-block ol {
-  margin: 0.5em 0;
-  padding-left: 1.2em;
 }
 
 /* 추가 내용: 임시 이미지 + Toast UI Editor 출력 영역 */
@@ -457,27 +394,6 @@
 
 .program-detail-info-tab__editor-host .toast-ui-editor-main-container {
   border-radius: 0 0 6px 6px;
-}
-
-/* 수정 모드 텍스트 필드: 테이블 박스 높이 유지 + 필요시 확장 가능 */
-.program-detail-info-tab__content-textarea {
-  width: 100%;
-  min-height: 160px;
-  border-radius: 6px;
-  resize: vertical;
-  border: 1px solid #d9d9d9;
-}
-
-.program-detail-info-tab__content-textarea.ant-input {
-  min-height: 160px;
-}
-
-.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm {
-  min-height: 120px;
-}
-
-.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm.ant-input {
-  min-height: 120px;
 }
 
 /* 추가 내용 td 이미지 래퍼: 확대보기 마스크 영역까지 200px로 제한 */
@@ -602,7 +518,6 @@
 
 .program-detail-info-tab__curriculum-inputs .program-detail-info-tab__curriculum-remarks-input {
   flex: 1;
-  min-width: 0;
   border-radius: 6px;
 }
 
@@ -617,13 +532,6 @@
 
 .program-detail-info-tab__table--basic .program-detail-info-tab__lifecycle-select {
   width: 100%;
-  max-width: 240px;
-}
-
-.program-detail-info-tab__table .ant-radio-group,
-.program-detail-info-tab__table .ant-select {
-  width: 100%;
-  max-width: 320px;
 }
 
 /* 셀렉트·입력 요소 radius 유지 */
@@ -638,8 +546,7 @@
 /* 수정 모드: 날짜 범위·입력 행 */
 .program-detail-info-tab__date-range {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
 }
 
@@ -648,27 +555,37 @@
   font-weight: 400;
   user-select: none;
   padding: 0 4px;
+  flex-shrink: 0;
 }
 
-.program-detail-info-tab__date-picker {
-  width: 160px;
+/* 2차 면접 심사: 날짜 ~ 날짜 | 면접 방식 */
+.program-detail-info-tab__date-range--interview {
+  width: 100%;
+  max-width: 100%;
 }
 
-.program-detail-info-tab__date-picker .ant-picker {
-  border-radius: 6px;
+.program-detail-info-tab__date-range--interview .program-detail-info-tab__date-picker {
+  flex: 0 0 auto;
+  width: 35% !important;
+}
+
+.program-detail-info-tab__date-range--interview .program-detail-info-tab__select--interview-method {
+  width: 20% !important;
+  flex: 0 0 auto;
+  margin-top: 0 !important;
 }
 
 .program-detail-info-tab__result-row {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
 
+.program-detail-info-tab__date-picker {
+  width: 35% !important;
+}
 .program-detail-info-tab__result-method-input {
-  flex: 1;
-  min-width: 180px;
-  border-radius: 6px;
+  width: 65% !important;
 }
 
 /* 강사 정보 탭: 문의처 3필드 행 */
@@ -699,12 +616,6 @@
   margin-top: 8px;
 }
 
-/* 봉사자 모집 2차 면접 방식 Select */
-.program-detail-info-tab__interview-method-select {
-  min-width: 100px;
-  margin-left: 8px;
-}
-
 /* 수강자/강사 모집 인원: 승인수 / 정원 입력 (시안: "30 / 30") */
 .program-detail-info-tab__capacity-row {
   display: flex;
@@ -728,7 +639,7 @@
   border-radius: 6px;
 }
 
-.program-detail-info-tab__capacity-input.ant-input {
+.program-detail-info-tab__capacity-input.app-input {
   border-radius: 6px;
 }
 
@@ -761,16 +672,15 @@
 /* 후원사 Select — 테이블 내 너비·radius */
 .program-detail-info-tab__sponsor-select {
   width: 100%;
-  max-width: 320px;
-}
-
-.program-detail-info-tab__sponsor-select.ant-select .ant-select-selector {
-  border-radius: 6px;
 }
 
 /* 후원사 담당자 셀: 담당자명 입력 + 구분선 + 전화번호(읽기 전용) */
 .program-detail-info-tab__sponsor-manager-cell {
   vertical-align: middle;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
 }
 
 /* 공통 정보 탭: 프로그램 채널 셀 (Select + 파일선택 버튼) */
@@ -783,11 +693,27 @@
 
 .program-detail-info-tab__sponsor-manager-inputs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
 }
 
+/* 행 안에서 AppSelect 기본 width:100%를 끄고, 전화번호 구간이 한 줄로 남도록 */
+.program-detail-info-tab__sponsor-manager-inputs > .app-select {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.program-detail-info-tab__sponsor-manager-phone-wrapper {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+}
 .program-detail-info-tab__manager-name-input {
   flex: 1;
   min-width: 180px;
@@ -810,7 +736,7 @@
   align-items: center;
 }
 
-.program-detail-info-tab__contact-inputs .ant-input {
+.program-detail-info-tab__contact-inputs .app-input {
   border-radius: 6px;
   width: 190px;
   height: 40px;
@@ -822,10 +748,10 @@
 }
 
 .program-detail-info-tab__contact-label {
-  font-size: var(--font-size-13);
-  color: var(--color-text-primary);
+  color: var(--default-BK, #3d3d3d);
+
   font-weight: 500;
-  margin-right: 2px;
+  line-height: 150%; /* 24px */
 }
 
 .program-detail-info-tab__contact-phone-input {
@@ -843,7 +769,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 24px */
-  min-width: 100px;
+  white-space: nowrap;
 }
 
 .program-detail-info-tab__contact-email-input {
@@ -873,7 +799,7 @@
   flex-shrink: 0;
 }
 
-.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group .ant-input {
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group .app-input {
   width: 190px;
   height: 40px;
   flex: 0 0 190px;
@@ -885,4 +811,54 @@
 .program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-email-input {
   width: 190px;
   max-width: 190px;
+}
+
+/* 상세 정보 탭: 읽기 전용 블록 / TextArea (TextAreaFieldRow 와 동일 규칙) */
+.program-detail-info-tab__table th .program-detail-info-tab__required {
+  color: var(--color-red, #c32f4a);
+  margin-left: 2px;
+}
+
+.program-detail-info-tab__field-error {
+  display: block;
+  margin-top: var(--spacing-4);
+  font-size: var(--font-size-12);
+  color: var(--color-red, #ff4d4f);
+}
+
+.program-detail-info-tab__content-block {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
+
+.program-detail-info-tab__content-block.program-detail-info-tab__content-block--sm {
+  min-height: 120px;
+}
+
+.program-detail-info-tab__content-block ul,
+.program-detail-info-tab__content-block ol {
+  margin: 0.5em 0;
+  padding-left: 1.2em;
+}
+
+.program-detail-info-tab__content-textarea {
+  width: 100%;
+  min-height: 160px;
+  border-radius: 6px;
+  resize: vertical;
+  border: 1px solid #d9d9d9;
+}
+
+.program-detail-info-tab__content-textarea.ant-input {
+  min-height: 160px;
+}
+
+.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm {
+  min-height: 120px;
+}
+
+.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm.ant-input {
+  min-height: 120px;
 }

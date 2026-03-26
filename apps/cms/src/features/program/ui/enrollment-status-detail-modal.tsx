@@ -4,7 +4,7 @@
  * 섹션: 프로그램 정보(포스터+상세), 수강자 모집, 수강 신청 학교 목록 테이블.
  */
 
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Image, message } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -40,6 +40,7 @@ import type { ApprovalStatusKey } from '@/shared/components/approval-status-badg
 import { StatusDropdownCell } from './status-dropdown-cell'
 import { SchoolDetailModal } from './school-detail-modal'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import './enrollment-status-detail-modal.css'
 
 export interface EnrollmentStatusDetailModalProps {
@@ -62,6 +63,7 @@ export function EnrollmentStatusDetailModal({
   program,
 }: EnrollmentStatusDetailModalProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [schoolList, setSchoolList] = useState<ApplicantSchoolRow[]>([])
   const [selectedSchoolForDetail, setSelectedSchoolForDetail] = useState<ApplicantSchoolRow | null>(
     null
@@ -81,7 +83,7 @@ export function EnrollmentStatusDetailModal({
   const handleGoToDetail = () => {
     if (program?.id) {
       onCancel()
-      navigate(`/programs/${program.id}`)
+      navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname))
     }
   }
 

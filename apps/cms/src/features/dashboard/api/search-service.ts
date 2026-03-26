@@ -6,6 +6,7 @@
 
 import type { UUID } from '@/types'
 import { mockPrograms, mockSchedules, mockMatchings, mockUsers, mockSchools, mockInstructors } from '@/data/mock'
+import { getProgramAdminDetailUrlDefault } from '@/features/program/lib/program-admin-detail-url'
 
 export type SearchResultType = 'program' | 'schedule' | 'user' | 'school' | 'instructor' | 'application'
 
@@ -49,7 +50,7 @@ export async function searchInstructorContent(
         id: program.id,
         title: program.title,
         description: program.description,
-        link: `/programs/${program.id}`,
+        link: getProgramAdminDetailUrlDefault(program.id),
       })
     }
   })
@@ -99,7 +100,7 @@ export async function searchAdminContent(query: string): Promise<SearchResult[]>
         id: program.id,
         title: program.title,
         description: program.description,
-        link: `/programs/${program.id}`,
+        link: getProgramAdminDetailUrlDefault(program.id),
       })
     }
   })

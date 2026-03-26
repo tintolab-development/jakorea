@@ -16,6 +16,7 @@ import { StatusBadge } from '@/shared/ui/status-badge'
 import { applicationService } from '@/entities/application/api/application-service'
 import dayjs from 'dayjs'
 import type { Application, ApplicationStatus } from '@/types/domain'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 
 const statusTabs: Array<{ key: ApplicationStatus | 'all'; label: string }> = [
   { key: 'all', label: '전체' },
@@ -109,7 +110,7 @@ export function MyProgramApplicationsPage() {
   }
 
   const handleViewProgram = (programId: string) => {
-    navigate(`/programs/${programId}`)
+    navigate(getProgramAdminDetailUrlFromPathname(programId, location.pathname))
   }
 
   const columns = [

@@ -9,13 +9,18 @@
 
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Image, Input, Radio, Select, DatePicker } from 'antd'
+import { Image, Input } from 'antd'
+import { AppInput } from '@/shared/ui/app-input'
+import { AppRadio } from '@/shared/ui/app-radio'
+import { AppSelect } from '@/shared/ui/app-select'
+import { AppDatePicker } from '@/shared/ui/app-datepicker'
 import { Controller } from 'react-hook-form'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import './basic-info-section.css'
 import {
   formatDate,
   formatDateOnly,
@@ -195,7 +200,7 @@ export function BasicInfoSection({
                         name="mainTitle"
                         control={form.control}
                         render={({ field }) => (
-                          <Input
+                          <AppInput
                             {...field}
                             value={field.value ?? ''}
                             placeholder="대표 프로그램명"
@@ -229,7 +234,7 @@ export function BasicInfoSection({
                         name="title"
                         control={form.control}
                         render={({ field }) => (
-                          <Input
+                          <AppInput
                             {...field}
                             value={field.value ?? ''}
                             placeholder="세부 프로그램명"
@@ -266,7 +271,7 @@ export function BasicInfoSection({
                         name="startDate"
                         control={form.control}
                         render={({ field }) => (
-                          <DatePicker
+                          <AppDatePicker
                             value={toDayjs(field.value)}
                             onChange={d => field.onChange(toIso(d))}
                             format="YYYY. MM. DD"
@@ -274,11 +279,12 @@ export function BasicInfoSection({
                           />
                         )}
                       />
+                      <span>~</span>
                       <Controller
                         name="endDate"
                         control={form.control}
                         render={({ field }) => (
-                          <DatePicker
+                          <AppDatePicker
                             value={toDayjs(field.value)}
                             onChange={d => field.onChange(toIso(d))}
                             format="YYYY. MM. DD"
@@ -321,7 +327,7 @@ export function BasicInfoSection({
                       name="category"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           {...field}
                           options={CATEGORY_OPTIONS}
                           style={{ width: '100%' }}
@@ -349,7 +355,7 @@ export function BasicInfoSection({
                       name="businessArea"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           value={field.value ?? undefined}
                           options={BUSINESS_AREA_OPTIONS}
                           onChange={v => field.onChange(v ?? undefined)}
@@ -381,7 +387,7 @@ export function BasicInfoSection({
                         name="sponsorId"
                         control={form.control}
                         render={({ field }) => (
-                          <Select
+                          <AppSelect
                             {...field}
                             placeholder="후원사 선택"
                             allowClear={false}
@@ -443,7 +449,7 @@ export function BasicInfoSection({
                                       )
                                     : -1
                                 return (
-                                  <Select<number>
+                                  <AppSelect
                                     placeholder="담당자 선택"
                                     allowClear
                                     value={selectedIndex >= 0 ? selectedIndex : undefined}
@@ -466,10 +472,12 @@ export function BasicInfoSection({
                                 )
                               }}
                             />
-                            <span className="program-detail-info-tab__separator"> | </span>
-                            <span className="program-detail-info-tab__contact-phone-readonly">
-                              {form.watch('contactPhone') || '-'}
-                            </span>
+                            <div className="program-detail-info-tab__sponsor-manager-phone-wrapper">
+                              <span className="program-detail-info-tab__separator"> | </span>
+                              <span className="program-detail-info-tab__contact-phone-readonly">
+                                {form.watch('contactPhone') || '-'}
+                              </span>
+                            </div>
                           </div>
                           {form.formState.errors.managerName?.message && (
                             <span className="program-detail-info-tab__field-error">
@@ -525,7 +533,7 @@ export function BasicInfoSection({
                       name="teamDivision"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           value={field.value ?? undefined}
                           options={TEAM_DIVISION_OPTIONS}
                           onChange={v => field.onChange(v ?? undefined)}
@@ -555,7 +563,7 @@ export function BasicInfoSection({
                       name="educationProcess"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           value={field.value ?? undefined}
                           options={EDUCATION_PROCESS_OPTIONS}
                           onChange={v => field.onChange(v ?? undefined)}
@@ -587,7 +595,7 @@ export function BasicInfoSection({
                       name="ipOwned"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           value={field.value ?? undefined}
                           options={IP_OWNED_OPTIONS}
                           onChange={v => field.onChange(v ?? undefined)}
@@ -617,7 +625,7 @@ export function BasicInfoSection({
                       name="courseDeliveredBy"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           value={field.value ?? undefined}
                           options={COURSE_DELIVERED_BY_OPTIONS}
                           onChange={v => field.onChange(v ?? undefined)}
@@ -649,7 +657,7 @@ export function BasicInfoSection({
                       name="partnerInvolvement"
                       control={form.control}
                       render={({ field }) => (
-                        <Radio.Group
+                        <AppRadio.Group
                           value={field.value}
                           options={PARTNER_INVOLVEMENT_OPTIONS}
                           onChange={e => field.onChange(e.target.value)}
@@ -676,7 +684,7 @@ export function BasicInfoSection({
                       name="ips"
                       control={form.control}
                       render={({ field }) => (
-                        <Radio.Group
+                        <AppRadio.Group
                           value={field.value}
                           options={IPS_OPTIONS}
                           onChange={e => field.onChange(e.target.value)}
@@ -705,7 +713,7 @@ export function BasicInfoSection({
                       name="programCategory"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           value={field.value ?? undefined}
                           options={PROGRAM_CATEGORY_OPTIONS}
                           onChange={v => field.onChange(v ?? undefined)}
@@ -739,7 +747,7 @@ export function BasicInfoSection({
                         name="programChannel"
                         control={form.control}
                         render={({ field }) => (
-                          <Select
+                          <AppSelect
                             value={field.value ?? undefined}
                             options={PROGRAM_CHANNEL_OPTIONS}
                             onChange={v => field.onChange(v ?? undefined)}
@@ -837,7 +845,7 @@ export function BasicInfoSection({
                     name="type"
                     control={form.control}
                     render={({ field }) => (
-                      <Radio.Group
+                      <AppRadio.Group
                         value={field.value}
                         options={[
                           { value: 'online', label: '온라인' },
@@ -862,7 +870,7 @@ export function BasicInfoSection({
                     name="lifecycleStatus"
                     control={form.control}
                     render={({ field }) => (
-                      <Select<ProgramLifecycleStatus>
+                      <AppSelect
                         {...field}
                         value={field.value ?? undefined}
                         options={LIFECYCLE_OPTIONS}
@@ -970,7 +978,7 @@ export function BasicInfoSection({
                       name="title"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           {...field}
                           placeholder="프로그램명"
                           status={form.formState.errors.title ? 'error' : undefined}
@@ -998,7 +1006,7 @@ export function BasicInfoSection({
                       name="startDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(toIso(d))}
                           format="YYYY. MM. DD"
@@ -1010,7 +1018,7 @@ export function BasicInfoSection({
                       name="endDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(toIso(d))}
                           format="YYYY. MM. DD"
@@ -1035,7 +1043,7 @@ export function BasicInfoSection({
                     name="category"
                     control={form.control}
                     render={({ field }) => (
-                      <Select
+                      <AppSelect
                         {...field}
                         options={CATEGORY_OPTIONS}
                         style={{ width: '100%' }}
@@ -1057,7 +1065,7 @@ export function BasicInfoSection({
                     name="businessArea"
                     control={form.control}
                     render={({ field }) => (
-                      <Select
+                      <AppSelect
                         value={field.value ?? undefined}
                         options={BUSINESS_AREA_OPTIONS}
                         onChange={v => field.onChange(v ?? undefined)}
@@ -1079,7 +1087,7 @@ export function BasicInfoSection({
                     name="targetLevel"
                     control={form.control}
                     render={({ field }) => (
-                      <Select
+                      <AppSelect
                         value={field.value ?? undefined}
                         options={Object.entries(TARGET_LEVEL_LABEL).map(([value, label]) => ({
                           value,
@@ -1105,7 +1113,7 @@ export function BasicInfoSection({
                     name="district"
                     control={form.control}
                     render={({ field }) => (
-                      <Input
+                      <AppInput
                         value={field.value ?? ''}
                         onChange={e => field.onChange(e.target.value || undefined)}
                         placeholder="경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역"
@@ -1129,7 +1137,7 @@ export function BasicInfoSection({
                       name="sponsorId"
                       control={form.control}
                       render={({ field }) => (
-                        <Select
+                        <AppSelect
                           {...field}
                           placeholder="후원사 선택"
                           allowClear={false}
@@ -1185,7 +1193,7 @@ export function BasicInfoSection({
                                     )
                                   : -1
                               return (
-                                <Select<number>
+                                <AppSelect
                                   placeholder="담당자 선택"
                                   allowClear
                                   value={selectedIndex >= 0 ? selectedIndex : undefined}
@@ -1243,7 +1251,7 @@ export function BasicInfoSection({
               <td colSpan={3} className="program-detail-info-tab__contact-cell">
                 {isFormEdit ? (
                   <div className="program-detail-info-tab__contact-inputs">
-                    <Input
+                    <AppInput
                       placeholder="문의처명"
                       value={sponsorName ?? ''}
                       readOnly
@@ -1255,7 +1263,7 @@ export function BasicInfoSection({
                       name="contactPhone"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="02-6085-6028"
@@ -1269,7 +1277,7 @@ export function BasicInfoSection({
                       name="contactEmail"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="ujat@jakorea.org"
@@ -1332,7 +1340,7 @@ export function BasicInfoSection({
                       render={({ field }) => {
                         const cap = field.value?.[0]?.capacity ?? 0
                         return (
-                          <Input
+                          <AppInput
                             type="number"
                             min={0}
                             value={cap || ''}
@@ -1370,7 +1378,7 @@ export function BasicInfoSection({
               </th>
               <td>
                 {isFormEdit && form ? (
-                  <Radio.Group
+                  <AppRadio.Group
                     value={
                       getRecruitmentStatus({
                         ...program,
@@ -1398,7 +1406,7 @@ export function BasicInfoSection({
                       name="applicationStartDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(toIso(d))}
                           format="YYYY. MM. DD"
@@ -1411,7 +1419,7 @@ export function BasicInfoSection({
                       name="applicationEndDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(toIso(d))}
                           format="YYYY. MM. DD"
@@ -1437,7 +1445,7 @@ export function BasicInfoSection({
                       name="resultAnnouncementDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
@@ -1449,7 +1457,7 @@ export function BasicInfoSection({
                       name="resultAnnouncementMethod"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="홈페이지 공지 및 담당교사 개별 안내"
@@ -1496,7 +1504,7 @@ export function BasicInfoSection({
                       name="instructorCapacity"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           type="number"
                           min={0}
                           value={field.value ?? ''}
@@ -1532,7 +1540,7 @@ export function BasicInfoSection({
               </th>
               <td>
                 {isFormEdit ? (
-                  <Radio.Group
+                  <AppRadio.Group
                     value={getInstructorRecruitmentStatus(program) ?? 'scheduled'}
                     options={RECRUITMENT_RADIO_OPTIONS}
                     className="program-detail-info-tab__recruitment-radio"
@@ -1557,7 +1565,7 @@ export function BasicInfoSection({
                       name="instructorApplicationStartDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
@@ -1570,7 +1578,7 @@ export function BasicInfoSection({
                       name="instructorApplicationEndDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
@@ -1600,7 +1608,7 @@ export function BasicInfoSection({
                       name="documentPassAnnouncementDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
@@ -1612,7 +1620,7 @@ export function BasicInfoSection({
                       name="documentPassAnnouncementMethod"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="합격자 개별 안내"
@@ -1640,7 +1648,7 @@ export function BasicInfoSection({
                       name="interviewStartDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
@@ -1653,7 +1661,7 @@ export function BasicInfoSection({
                       name="interviewEndDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
@@ -1679,7 +1687,7 @@ export function BasicInfoSection({
                       name="finalPassAnnouncementDate"
                       control={form.control}
                       render={({ field }) => (
-                        <DatePicker
+                        <AppDatePicker
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
@@ -1691,7 +1699,7 @@ export function BasicInfoSection({
                       name="finalPassAnnouncementMethod"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="합격자 개별 안내"

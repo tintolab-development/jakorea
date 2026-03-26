@@ -81,7 +81,6 @@ const EducationEnrollmentPage = lazyLoad(
       default: m.EducationEnrollmentPage,
     }))
 )
-const ProgramDetailPage = lazyLoad(() => import('@/pages/programs/program-detail-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
@@ -263,7 +262,6 @@ export const router = createBrowserRouter([
           { path: 'favorites', element: <MyFavoriteProgramsPage /> },
           { path: 'new', element: <ProgramFormPage /> },
           { path: ':id/edit', element: <ProgramFormPage /> },
-          { path: ':id', element: <ProgramDetailPage /> }, // 프로그램 상세 (관리자)
         ],
       },
       {

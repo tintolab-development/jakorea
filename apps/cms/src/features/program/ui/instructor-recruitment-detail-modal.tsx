@@ -4,7 +4,7 @@
  * 섹션: 프로그램 정보(테이블), 강사 모집(테이블), 강의 신청 강사 목록(테이블).
  */
 
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, message } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -38,6 +38,7 @@ import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { StatusDropdownCell } from './status-dropdown-cell'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import './instructor-recruitment-detail-modal.css'
 
 export interface InstructorRecruitmentDetailModalProps {
@@ -60,6 +61,7 @@ export function InstructorRecruitmentDetailModal({
   program,
 }: InstructorRecruitmentDetailModalProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>([])
   const [selectedInstructor, setSelectedInstructor] = useState<ApplicantInstructorRow | null>(null)
 
@@ -79,9 +81,9 @@ export function InstructorRecruitmentDetailModal({
   const handleGoToDetail = useCallback(() => {
     if (program?.id) {
       onCancel()
-      navigate(`/programs/${program.id}`)
+      navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname))
     }
-  }, [program?.id, onCancel, navigate])
+  }, [program?.id, onCancel, navigate, location.pathname])
 
   const handleInstructorApprovalStatusChange = useCallback(
     (instructorId: string, status: ApprovalStatusKey) => {

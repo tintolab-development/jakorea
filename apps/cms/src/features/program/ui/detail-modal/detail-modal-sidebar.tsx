@@ -7,7 +7,7 @@ export type TabKey = (typeof TAB_KEYS)[number]
 /** 탭 카테고리 라벨 (공통 정보 / 기관 정보 / 강사 정보 / 봉사자 정보) */
 export const TAB_LABELS: Record<TabKey, string> = {
   info: '공통 정보',
-  institutions: '기관 정보',
+  institutions: '참여자 정보',
   instructors: '강사 정보',
   volunteers: '봉사자 정보',
 }
@@ -363,7 +363,9 @@ export function DetailModalSidebar({
                   }}
                 >
                   <span className="program-detail-fullpage-modal__lnb-item-icon">{item.icon}</span>
-                  <span className="program-detail-fullpage-modal__lnb-item-label">{item.label}</span>
+                  <span className="program-detail-fullpage-modal__lnb-item-label">
+                    {item.label}
+                  </span>
                   {item.hasDropdown && (
                     <LnbArrowDown
                       className={`program-detail-fullpage-modal__lnb-item-arrow ${progressExpanded ? 'program-detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}

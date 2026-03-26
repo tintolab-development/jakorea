@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -19,9 +19,9 @@ import { ApplicantDetails } from './applicants/applicants-detail'
 import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import { DetailModalSidebar, TAB_KEYS, type TabKey, type LnbKey } from './detail-modal-sidebar'
 import '@toast-ui/editor/dist/toastui-editor.css'
-// import './program-detail-info-tab.css'
 import './program-detail-fullpage-modal.css'
 
 export interface ProgramDetailFullPageModalProps {
@@ -88,6 +88,7 @@ export function ProgramDetailFullPageModal({
   program,
 }: ProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id
   const {
@@ -381,7 +382,7 @@ export function ProgramDetailFullPageModal({
     }
     if (displayProgram) {
       onClose()
-      navigate(`/programs/${displayProgram.id}`)
+      navigate(getProgramAdminDetailUrlFromPathname(displayProgram.id, location.pathname))
     }
   }
 
@@ -451,7 +452,10 @@ export function ProgramDetailFullPageModal({
 
   const handlePreview = () => {
     if (displayProgram) {
-      window.open(`/programs/${displayProgram.id}`, '_blank')
+      window.open(
+        getProgramAdminDetailUrlFromPathname(displayProgram.id, location.pathname),
+        '_blank'
+      )
     }
   }
 
