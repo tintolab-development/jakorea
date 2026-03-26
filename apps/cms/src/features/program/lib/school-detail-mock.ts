@@ -16,8 +16,10 @@ import type {
   LectureAttendanceSession,
   LectureAttendanceStatusKey,
   AssignmentSubmissionDetail,
-  AssignmentSubmissionSession,
-  AssignmentSubmissionStatusKey,
+  AssignmentSubmissionTableRow,
+  AssignmentTeamRoleKey,
+  LectureProgressDisplayKey,
+  AssignmentSubmissionRowStatusKey,
 } from '../model/school-detail-types'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Application } from '@/types/domain'
@@ -96,7 +98,13 @@ export function getInstructorRowsForSchool(
   instructorRows: ParticipatingInstructorRow[]
 ): SchoolDetailInstructorRow[] {
   const forSchool = instructorRows.filter(r => r.schoolName === schoolName)
-  return forSchool.map((r, i) => toDetailInstructor(r, i))
+  const rows = forSchool.map((r, i) => toDetailInstructor(r, i))
+  /** 배정된 강사 목록 데모: 정산 대기 1건 → 일부 정산 완료 */
+  const firstPendingIdx = rows.findIndex(r => r.settlementStatus === 'pending')
+  if (firstPendingIdx < 0) return rows
+  return rows.map((r, i) =>
+    i === firstPendingIdx ? { ...r, settlementStatus: 'partial' satisfies SettlementStatusKey } : r
+  )
 }
 
 /** 배정된 강사 목록 테이블용 확장 필드 목 데이터 */
@@ -130,11 +138,12 @@ export interface AssignedInstructorDisplayRowMock extends SchoolDetailInstructor
 export function getAssignedInstructorDisplayRows(
   instructors: SchoolDetailInstructorRow[]
 ): AssignedInstructorDisplayRowMock[] {
+  const n = instructors.length
   return instructors.map((inv, idx) => {
     const seed = hash(inv.id)
     return {
       ...inv,
-      no: idx + 1,
+      no: n - idx,
       homeAddress: pick(ASSIGNED_DISPLAY_HOME_ADDRESSES, seed),
       distanceToSchool: pick(ASSIGNED_DISPLAY_DISTANCES, seed + idx),
       assignedDate: pick(ASSIGNED_DISPLAY_DATES, seed % 3),
@@ -145,7 +154,16 @@ export function getAssignedInstructorDisplayRows(
 }
 
 /** 배정 대기 강사 목록용 배정 현황·희망 일정 목 데이터 */
-const WAITING_ASSIGNMENT_STATUSES = ['waiting', 'waiting', 'cancelled', 'assigned', 'waiting'] as const
+/** 배정 대기 목록 목업: 일부는 배정 완료(다른 기관 배정 등)로 표시 */
+const WAITING_ASSIGNMENT_STATUSES = [
+  'waiting',
+  'assigned',
+  'waiting',
+  'assigned',
+  'cancelled',
+  'assigned',
+  'waiting',
+] as const
 const WAITING_HOPE_DATES = ['2026. 01. 10(토)', '2026. 01. 11(일)', '2026. 01. 12(일)']
 const WAITING_HOPE_TIMES = [
   '1교시 (9:20 ~ 10:10)',
@@ -180,11 +198,13 @@ export function getWaitingInstructorRows(
   instructorList: ParticipatingInstructorRow[]
 ): WaitingInstructorRowMock[] {
   const notAssignedToThisSchool = instructorList.filter(r => r.schoolName !== schoolName)
-  return notAssignedToThisSchool.slice(0, 12).map((r, idx) => {
+  const slice = notAssignedToThisSchool.slice(0, 12)
+  const n = slice.length
+  return slice.map((r, idx) => {
     const seed = hash(r.id)
     return {
       id: r.id,
-      no: idx + 1,
+      no: n - idx,
       instructorName: r.instructorName,
       homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + idx),
       distanceToSchool: pick(WAITING_DISTANCES, seed % 5),
@@ -334,36 +354,101 @@ export function getLectureAttendanceDetail(
   }
 }
 
+const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function formatEducationLine(date: Date, round: number): string {
+  const y = date.getFullYear()
+  const m = pad2(date.getMonth() + 1)
+  const d = pad2(date.getDate())
+  const w = WEEKDAY_KO[date.getDay()] ?? ''
+  return `${y}. ${m}. ${d} (${w}) | ${round}차시`
+}
+
+function formatShortYmdWithWeekday(date: Date): string {
+  const yy = String(date.getFullYear()).slice(-2)
+  const m = pad2(date.getMonth() + 1)
+  const d = pad2(date.getDate())
+  const w = WEEKDAY_KO[date.getDay()] ?? ''
+  return `${yy}. ${m}. ${d} (${w})`
+}
+
+function addDays(base: Date, days: number): Date {
+  const next = new Date(base)
+  next.setDate(next.getDate() + days)
+  return next
+}
+
+function buildAssignmentSubmissionRows(
+  entityId: string,
+  studentName: string,
+  programTitle: string
+): AssignmentSubmissionDetail {
+  const seed = hash(entityId)
+  const baseSessionDate = new Date(2026, 0, 5)
+  const count = 4
+  const rolePattern: AssignmentTeamRoleKey[] = ['leader', 'member', 'member', 'individual']
+  const roleOffset = seed % count
+  const rows: AssignmentSubmissionTableRow[] = []
+  for (let i = 0; i < count; i++) {
+    const r = (seed + i * 13) % 5
+    let lecture: LectureProgressDisplayKey
+    let submission: AssignmentSubmissionRowStatusKey
+    let canView: boolean
+    if (r === 0) {
+      lecture = 'completed'
+      submission = 'submitted'
+      canView = true
+    } else if (r === 1) {
+      lecture = 'completed'
+      submission = 'none'
+      canView = false
+    } else if (r === 2) {
+      lecture = 'scheduled'
+      submission = 'not_submitted'
+      canView = false
+    } else if (r === 3) {
+      lecture = 'scheduled'
+      submission = 'scheduled'
+      canView = false
+    } else {
+      lecture = 'completed'
+      submission = 'scheduled'
+      canView = false
+    }
+    const sessionDate = addDays(baseSessionDate, i * 7)
+    const periodStart = addDays(sessionDate, -4)
+    const periodEnd = addDays(sessionDate, -1)
+    rows.push({
+      id: `${entityId}-assignment-row-${i}`,
+      roundNumber: i + 1,
+      teamRole: rolePattern[(i + roleOffset) % rolePattern.length]!,
+      educationDateLabel: formatEducationLine(sessionDate, i + 1),
+      assignmentPeriodLabel: `${formatShortYmdWithWeekday(periodStart)} ~ ${formatShortYmdWithWeekday(periodEnd)}`,
+      lectureProgress: lecture,
+      submissionStatus: submission,
+      canViewAssignment: canView,
+    })
+  }
+  return {
+    programTitle,
+    studentName,
+    rows,
+  }
+}
+
 /**
- * 과제 제출 내역 모달용 데이터
- * 학생명·제출률·회차별 상태(제출완료/미제출/강의 미진행) 목업 생성
+ * 과제·설문 제출 내역 모달용 데이터 (학교 상세 > 학생 명단)
  */
 export function getAssignmentSubmissionDetail(
   student: SchoolDetailStudentRow,
-  _schoolId: string
+  _schoolId: string,
+  programTitle: string
 ): AssignmentSubmissionDetail {
-  const seed = hash(student.id)
-  const totalRounds = 4
-  const statuses: AssignmentSubmissionStatusKey[] = []
-  for (let i = 0; i < totalRounds; i++) {
-    const r = (seed + i * 7) % 3
-    if (r === 0) statuses.push('submitted')
-    else if (r === 1) statuses.push('not_submitted')
-    else statuses.push('not_started')
-  }
-  const sessions: AssignmentSubmissionSession[] = statuses.map((status, i) => ({
-    roundNumber: i + 1,
-    status,
-  }))
-  const submittedCount = statuses.filter(s => s === 'submitted').length
-  const heldCount = statuses.filter(s => s !== 'not_started').length
-  const submissionRatePercent =
-    heldCount === 0 ? 0 : Math.round((submittedCount / heldCount) * 100)
-  return {
-    studentName: student.name,
-    submissionRatePercent,
-    sessions,
-  }
+  return buildAssignmentSubmissionRows(student.id, student.name, programTitle)
 }
 
 /**
@@ -402,34 +487,14 @@ export function getLectureAttendanceDetailForApplication(
 }
 
 /**
- * 회원 상세 탭: Application + 회원명 기준 과제 제출 내역 모달용 데이터
+ * 회원 상세 탭: Application + 회원명 기준 과제·설문 제출 내역 모달용 데이터
  */
 export function getAssignmentSubmissionDetailForApplication(
   application: Application,
-  userName: string
+  userName: string,
+  programTitle: string
 ): AssignmentSubmissionDetail {
-  const seed = hash(application.id)
-  const totalRounds = 4
-  const statuses: AssignmentSubmissionStatusKey[] = []
-  for (let i = 0; i < totalRounds; i++) {
-    const r = (seed + i * 7) % 3
-    if (r === 0) statuses.push('submitted')
-    else if (r === 1) statuses.push('not_submitted')
-    else statuses.push('not_started')
-  }
-  const sessions: AssignmentSubmissionSession[] = statuses.map((status, i) => ({
-    roundNumber: i + 1,
-    status,
-  }))
-  const submittedCount = statuses.filter(s => s === 'submitted').length
-  const heldCount = statuses.filter(s => s !== 'not_started').length
-  const submissionRatePercent =
-    heldCount === 0 ? 0 : Math.round((submittedCount / heldCount) * 100)
-  return {
-    studentName: userName,
-    submissionRatePercent,
-    sessions,
-  }
+  return buildAssignmentSubmissionRows(application.id, userName, programTitle)
 }
 
 /**

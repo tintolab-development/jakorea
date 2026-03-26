@@ -37,6 +37,7 @@ import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
+import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../lib/instructor-assign-session-options'
 import {
   SchoolDetailAddInstructorAssignModal,
   type AddInstructorAssignOption,
@@ -46,6 +47,7 @@ import {
   DeleteGuideModal,
   buildSchoolCancelApprovalMessageLines,
 } from './manager-delete-guide-modal'
+import './instructor-assignment-role-tag.css'
 import './school-detail-modal.css'
 
 const { TextArea } = Input
@@ -220,11 +222,16 @@ export function SchoolDetailModal({
     }))
   }, [detail])
 
+  const addInstructorAssignSessionOptions = useMemo(
+    () => MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
+    []
+  )
+
   const handleAddInstructorAssign = (
     instructorId: string,
     role: InstructorRoleKey,
     option: AddInstructorAssignOption,
-    _meta?: { isNewApproval: boolean }
+    _meta?: { isNewApproval?: boolean; sessionIds?: string[] }
   ) => {
     if (!detail) return
     let currentList: InstructorListFormInstructor[] = isInstructorEditMode
@@ -256,12 +263,17 @@ export function SchoolDetailModal({
         key: 'role',
         width: 100,
         align: 'center',
-        render: (r: InstructorRoleKey) =>
-          r === 'lead' ? (
-            <span className="school-detail-modal__role-lead">{INSTRUCTOR_ROLE_LABELS[r]}</span>
-          ) : (
-            INSTRUCTOR_ROLE_LABELS[r]
-          ),
+        render: (r: InstructorRoleKey) => (
+          <span
+            className={
+              r === 'lead'
+                ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
+                : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
+            }
+          >
+            {INSTRUCTOR_ROLE_LABELS[r]}
+          </span>
+        ),
       },
       {
         title: '강사명',
@@ -921,6 +933,7 @@ export function SchoolDetailModal({
         onCancel={() => setAddInstructorAssignModalOpen(false)}
         schoolName={detail?.schoolName ?? ''}
         instructorOptions={addInstructorAssignOptions}
+        assignmentSessionOptions={addInstructorAssignSessionOptions}
         currentLeadInstructorName={
           detail?.instructors.find(i => i.role === 'lead')?.instructorName ?? null
         }

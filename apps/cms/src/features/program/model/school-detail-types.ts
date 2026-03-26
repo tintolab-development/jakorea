@@ -147,25 +147,55 @@ export const LECTURE_ATTENDANCE_STATUS_LABELS: Record<LectureAttendanceStatusKey
   not_held: '강의 미진행',
 }
 
-/** 과제 제출 내역 모달: 회차별 제출 상태 */
-export type AssignmentSubmissionStatusKey = 'submitted' | 'not_submitted' | 'not_started'
+/** 과제·설문 제출 내역 모달: 팀 역할 (팀장 1명 제한은 UI에서 전환 시 처리) */
+export type AssignmentTeamRoleKey = 'leader' | 'member' | 'individual'
 
-export interface AssignmentSubmissionSession {
+/** 강의 진행 여부 표시 */
+export type LectureProgressDisplayKey = 'completed' | 'scheduled'
+
+/** 제출 현황 셀 표시 */
+export type AssignmentSubmissionRowStatusKey =
+  | 'submitted'
+  | 'not_submitted'
+  | 'scheduled'
+  | 'none'
+
+export interface AssignmentSubmissionTableRow {
+  id: string
   roundNumber: number
-  status: AssignmentSubmissionStatusKey
+  teamRole: AssignmentTeamRoleKey
+  /** 예: 2026. 01. 05 (월) | 1차시 */
+  educationDateLabel: string
+  /** 예: 26. 01. 01 (수) ~ 26. 01. 07 (화) */
+  assignmentPeriodLabel: string
+  lectureProgress: LectureProgressDisplayKey
+  submissionStatus: AssignmentSubmissionRowStatusKey
+  canViewAssignment: boolean
 }
 
 export interface AssignmentSubmissionDetail {
+  programTitle: string
   studentName: string
-  submissionRatePercent: number
-  sessions: AssignmentSubmissionSession[]
+  rows: AssignmentSubmissionTableRow[]
 }
 
-export const ASSIGNMENT_SUBMISSION_STATUS_LABELS: Record<
-  AssignmentSubmissionStatusKey,
+export const ASSIGNMENT_TEAM_ROLE_LABELS: Record<AssignmentTeamRoleKey, string> = {
+  leader: '팀장',
+  member: '팀원',
+  individual: '개인',
+}
+
+export const LECTURE_PROGRESS_DISPLAY_LABELS: Record<LectureProgressDisplayKey, string> = {
+  completed: '진행 완료',
+  scheduled: '진행 예정',
+}
+
+export const ASSIGNMENT_SUBMISSION_ROW_STATUS_LABELS: Record<
+  AssignmentSubmissionRowStatusKey,
   string
 > = {
-  submitted: '제출완료',
+  submitted: '제출 완료',
   not_submitted: '미제출',
-  not_started: '강의 미진행',
+  scheduled: '진행 예정',
+  none: '-',
 }

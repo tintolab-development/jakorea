@@ -191,6 +191,20 @@
   gap: 32px;
 }
 
+/* 배정 취소·추가 배정·선택 배정: 120×40 고정 */
+.school-detail-fullpage-view__instructor-tab
+  .participating-institutions-section__table-actions
+  .app-button.app-button--large {
+  box-sizing: border-box;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  padding: 0 8px;
+}
+
 /* 테이블 헤더(타이틀 영역)와 테이블 간 gap 10px */
 .school-detail-fullpage-view__instructor-tab .participating-institutions-section__table-header {
   margin-bottom: 10px;
@@ -293,97 +307,8 @@
   padding-bottom: 0 !important;
 }
 
-/* 배정된 강사 목록 — 역할 태그 (정산 현황 배지 UI 참고) */
-.school-detail-fullpage-view__role-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  min-width: 120px;
-  max-width: 120px;
-  height: 33px;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-}
-
-.school-detail-fullpage-view__role-tag--lead {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.school-detail-fullpage-view__role-tag--assistant {
-  background: #f2f3f5;
-  color: #464646;
-}
-
-/* 정산 현황 — 상태값 텍스트만, 상태별 색상: 정산대기 초록 / 일부 정산 완료 보라 / 정산 완료 파랑 / 해당 없음 검정 */
-.school-detail-fullpage-view__settlement-text {
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-}
-
-.school-detail-fullpage-view__settlement-text--pending {
-  color: #1e8c29; /* 정산 대기 — 초록 */
-}
-
-.school-detail-fullpage-view__settlement-text--partial {
-  color: #8457ce; /* 일부 정산 완료 — 보라 */
-}
-
-.school-detail-fullpage-view__settlement-text--completed {
-  color: #1976d2; /* 정산 완료 — 파랑 */
-}
-
-.school-detail-fullpage-view__settlement-text--reviewing {
-  color: #e67e22;
-}
-
-.school-detail-fullpage-view__settlement-text--rejected {
-  color: #d32f2f;
-}
-
-.school-detail-fullpage-view__settlement-text--na {
-  color: #000; /* 해당 없음 — 검정 */
-}
-
-/* 배정 대기 목록 — 배정 현황 (동일 텍스트 스펙) */
-.school-detail-fullpage-view__assignment-status {
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-}
-
-.school-detail-fullpage-view__assignment-status--waiting {
-  color: #1890ff;
-}
-
-.school-detail-fullpage-view__assignment-status--cancelled {
-  color: #ff4d4f;
-}
-
-.school-detail-fullpage-view__assignment-status--assigned {
-  color: var(--color-text-tertiary, #8c8c8c);
-}
-
-/* 배정 완료된 행: 회색 처리(비활성 느낌) */
-.school-detail-fullpage-view__waiting-row--assigned.ant-table-row {
-  color: var(--color-text-tertiary, #8c8c8c);
-}
-
-.school-detail-fullpage-view__waiting-row--assigned.ant-table-row td {
-  color: inherit;
+/* 배정 완료된 행: 셀 텍스트 전부 default-BK @ 60% */
+.school-detail-fullpage-view__waiting-row--assigned.ant-table-row > td {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
 }

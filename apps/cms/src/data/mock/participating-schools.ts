@@ -155,7 +155,8 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
     const d = new Date(2026, 0, 9 + dayOffset)
     const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-    const status = SESSION_STATUSES[(rowIndex + s) % 3]
+    /** +1 오프셋: rowIndex 0 등 단일 회차 학교도 pending/not_planned가 섞이도록(강사 배정일 태그 선택 가능 목데이터) */
+    const status = SESSION_STATUSES[(rowIndex + s + 1) % 3]
     sessions.push({
       round: s + 1,
       date: dateStr,

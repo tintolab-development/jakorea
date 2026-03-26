@@ -31,6 +31,7 @@ import {
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
 } from '../lib/school-detail-mock'
+import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../lib/instructor-assign-session-options'
 import {
   maskEmailLocalAfterTwoChars,
   maskMobilePhoneMiddleStars,
@@ -56,6 +57,8 @@ import {
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
 import './detail-modal/project-info/program-detail-info-tab.css'
 import './participating-institutions-section.css'
+import './instructor-assignment-role-tag.css'
+import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
 
 const SCHOOL_DETAIL_TAB_KEYS = ['application', 'students', 'instructors', 'posts'] as const
@@ -253,6 +256,11 @@ export function SchoolDetailFullpageView({
         initialApproval: r.initialApproval ?? true,
       }))
   }, [instructorList, instructors])
+
+  const addAssignSessionOptions = useMemo(
+    () => MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
+    []
+  )
 
   const currentLeadName =
     instructors.find((i: { role: InstructorRoleKey }) => i.role === 'lead')?.instructorName ?? null
@@ -947,6 +955,7 @@ export function SchoolDetailFullpageView({
               }}
               schoolName={row.schoolName}
               instructorOptions={addAssignInstructorOptions}
+              assignmentSessionOptions={addAssignSessionOptions}
               currentLeadInstructorName={currentLeadName}
               currentAssignedCount={instructors.length}
               requiredInstructorCount={MOCK_REQUIRED_INSTRUCTORS}

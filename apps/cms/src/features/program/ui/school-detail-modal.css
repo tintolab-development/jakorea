@@ -287,11 +287,6 @@
     vertical-align: middle;
 }
 
-/* 대표 강사 역할 텍스트 볼드 */
-.school-detail-modal__role-lead {
-    font-weight: 700;
-}
-
 /* 체크박스 열 고정 너비 */
 .school-detail-modal__instructor-table .ant-table-thead>tr>th:first-child,
 .school-detail-modal__instructor-table .ant-table-tbody>tr>td:first-child {

@@ -11,7 +11,9 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { AppButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { formatLectureAttendanceCellDisplay } from '@/shared/lib/format-lecture-attendance-display'
 import type {
+  LectureAttendanceSession,
   SchoolDetailStudentRow,
   StudentListFormValues,
   StudentListFormStudent,
@@ -19,6 +21,7 @@ import type {
 } from '../model/school-detail-types'
 import { STUDENT_GENDER_LABELS } from '../model/school-detail-types'
 import { getSchoolDetailStudents } from '../lib/school-detail-mock'
+import { lectureAttendanceStringFromSessions } from '../lib/lecture-attendance-from-sessions'
 import type { AddStudentFormValues } from '../model/school-detail-add-student-schema'
 import { LectureAttendanceModal } from './lecture-attendance-modal'
 import { AssignmentSubmissionModal } from './assignment-submission-modal'
@@ -84,6 +87,8 @@ function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStude
 export interface SchoolDetailStudentListSectionProps {
   schoolId: string
   studentCount: number
+  /** 과제·설문 제출 내역 모달 설명에 사용하는 프로그램명 */
+  programTitle?: string
   /** 풀페이지 등에서 상단에 이미 정보 수정/개인정보 상세보기 있을 때 버튼만 숨기거나 콜백으로 위임 */
   readOnly?: boolean
   onIssueCertificates?: () => void
@@ -96,6 +101,7 @@ export interface SchoolDetailStudentListSectionProps {
 export function SchoolDetailStudentListSection({
   schoolId,
   studentCount,
+  programTitle,
   readOnly = false,
   onIssueCertificates,
   onEditInfo,
@@ -115,6 +121,9 @@ export function SchoolDetailStudentListSection({
   const [lectureAttendanceModalOpen, setLectureAttendanceModalOpen] = useState(false)
   const [lectureAttendanceStudent, setLectureAttendanceStudent] =
     useState<SchoolDetailStudentRow | null>(null)
+  const [attendanceSessionsByStudentId, setAttendanceSessionsByStudentId] = useState<
+    Record<string, LectureAttendanceSession[]>
+  >({})
   const [assignmentSubmissionModalOpen, setAssignmentSubmissionModalOpen] = useState(false)
   const [assignmentSubmissionStudent, setAssignmentSubmissionStudent] =
     useState<SchoolDetailStudentRow | null>(null)
@@ -124,10 +133,17 @@ export function SchoolDetailStudentListSection({
     () => getSchoolDetailStudents(schoolId, studentCount),
     [schoolId, studentCount]
   )
-  const mergedStudentList = useMemo(
-    () => [...studentList, ...addedStudents],
-    [studentList, addedStudents]
-  )
+  const mergedStudentList = useMemo(() => {
+    const patchRow = (row: SchoolDetailStudentRow): SchoolDetailStudentRow => {
+      const saved = attendanceSessionsByStudentId[row.id]
+      if (!saved?.length) return row
+      return {
+        ...row,
+        lectureAttendance: lectureAttendanceStringFromSessions(saved),
+      }
+    }
+    return [...studentList.map(patchRow), ...addedStudents.map(patchRow)]
+  }, [studentList, addedStudents, attendanceSessionsByStudentId])
   const filteredStudentList = useMemo(() => {
     return mergedStudentList.filter(row => {
       const matchName =
@@ -202,6 +218,15 @@ export function SchoolDetailStudentListSection({
     setLectureAttendanceModalOpen(true)
   }, [])
 
+  const handleSaveLectureAttendance = useCallback(
+    (sessions: LectureAttendanceSession[]) => {
+      const id = lectureAttendanceStudent?.id
+      if (!id) return
+      setAttendanceSessionsByStudentId(prev => ({ ...prev, [id]: sessions }))
+    },
+    [lectureAttendanceStudent?.id]
+  )
+
   const openAssignmentSubmission = useCallback((record: SchoolDetailStudentRow) => {
     setAssignmentSubmissionStudent(record)
     setAssignmentSubmissionModalOpen(true)
@@ -254,19 +279,19 @@ export function SchoolDetailStudentListSection({
             className="school-detail-modal__link-button"
             onClick={() => openLectureAttendance(record)}
           >
-            {v ?? '0/0'}
+            {formatLectureAttendanceCellDisplay(v)}
           </button>
         ),
       },
       {
         title: '과제 제출 내역',
         key: 'assignment',
-        width: 120,
+        width: 152,
         align: 'center',
         render: (_: unknown, record: SchoolDetailStudentRow) => (
           <AppButton
             variant="viewDetails"
-            size="small"
+            size="large"
             onClick={() => openAssignmentSubmission(record)}
           >
             내역 보기
@@ -377,17 +402,17 @@ export function SchoolDetailStudentListSection({
             onClick={() => {}}
             disabled
           >
-            {v ?? '0/0'}
+            {formatLectureAttendanceCellDisplay(v)}
           </button>
         ),
       },
       {
         title: '과제 제출 내역',
         key: 'assignment',
-        width: 120,
+        width: 152,
         align: 'center',
         render: () => (
-          <AppButton variant="viewDetails" size="small" disabled>
+          <AppButton variant="viewDetails" size="large" disabled>
             내역 보기
           </AppButton>
         ),
@@ -567,6 +592,12 @@ export function SchoolDetailStudentListSection({
         }}
         student={lectureAttendanceStudent}
         schoolId={schoolId}
+        savedSessions={
+          lectureAttendanceStudent?.id
+            ? attendanceSessionsByStudentId[lectureAttendanceStudent.id]
+            : undefined
+        }
+        onSaveAttendance={handleSaveLectureAttendance}
       />
       <AssignmentSubmissionModal
         open={assignmentSubmissionModalOpen}
@@ -574,6 +605,7 @@ export function SchoolDetailStudentListSection({
           setAssignmentSubmissionModalOpen(false)
           setAssignmentSubmissionStudent(null)
         }}
+        programTitle={programTitle}
         student={assignmentSubmissionStudent}
         schoolId={schoolId}
       />

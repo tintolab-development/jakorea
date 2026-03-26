@@ -1,0 +1,57 @@
+/**
+ * 강사 배정 현황 테이블 — 정산·배정 현황 td 텍스트 (상태별 color만 추가)
+ */
+
+.school-detail-fullpage-view__settlement-text {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.school-detail-fullpage-view__settlement-text--pending {
+  color: var(--color-green, #1e8c29);
+}
+
+.school-detail-fullpage-view__settlement-text--partial {
+  color: var(--color-purple, #8457ce);
+}
+
+.school-detail-fullpage-view__settlement-text--completed {
+  color: var(--color-blue, #017eaf);
+}
+
+.school-detail-fullpage-view__settlement-text--reviewing {
+  color: #e67e22;
+}
+
+.school-detail-fullpage-view__settlement-text--rejected {
+  color: #d32f2f;
+}
+
+.school-detail-fullpage-view__settlement-text--na {
+  color: #000;
+}
+
+.school-detail-fullpage-view__assignment-status {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.school-detail-fullpage-view__assignment-status--waiting {
+  color: var(--color-blue, #017eaf);
+}
+
+.school-detail-fullpage-view__assignment-status--cancelled {
+  color: var(--color-red, #c32f4a);
+}
+
+.school-detail-fullpage-view__assignment-status--assigned {
+  color: var(--default-BK, #3d3d3d);
+}

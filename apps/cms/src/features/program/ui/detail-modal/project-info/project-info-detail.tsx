@@ -131,7 +131,12 @@ function ProjectInfoDetailTabsRow({
               </AppButton>
             </>
           ) : null}
-          <AppButton variant="primary" size="filter" onClick={onPreview}>
+          <AppButton
+            variant="primary"
+            size="filter-wide"
+            className="program-detail-fullpage-modal__program-preview-btn"
+            onClick={onPreview}
+          >
             프로그램 상세 미리보기
           </AppButton>
         </div>

@@ -23,7 +23,7 @@
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 150%;
 }
 
@@ -31,12 +31,12 @@
   color: var(--color-green, #1e8c29);
 }
 
-.participating-instructors-section__settlement-text--completed {
-  color: var(--color-blue, #017eaf);
-}
-
 .participating-instructors-section__settlement-text--partial {
   color: var(--color-purple, #8457ce);
+}
+
+.participating-instructors-section__settlement-text--completed {
+  color: var(--color-blue, #017eaf);
 }
 
 .participating-instructors-section__settlement-text--na {
