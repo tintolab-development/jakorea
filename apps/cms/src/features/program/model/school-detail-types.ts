@@ -20,6 +20,8 @@ export interface SchoolDetailInstructorRow {
 export interface SchoolDetailForModal {
   id: string
   schoolName: string
+  /** 관리자 코멘트 (신청 정보 탭 기본 정보 상단 표시) */
+  adminComment?: string
   /** 일정 변경&취소 이력 횟수 (0이면 배지 미표시) */
   scheduleChangeCancelCount?: number
   region: string
@@ -54,7 +56,7 @@ export interface SchoolDetailForModal {
   criminalCheckRequest?: string
   lectureRound: string
   textbookName?: string
-  /** 키드 수 (표시: n키드 (n권)용) */
+  /** 키트 수 (표시: n키트 (n권)용) */
   textbookKits?: number
   textbookStatus: TextbookStatusKey
   textbookQuantity?: number

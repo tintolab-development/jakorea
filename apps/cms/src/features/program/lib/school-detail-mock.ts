@@ -41,6 +41,14 @@ const OTHER_REQUESTS = [
   '혹시 다른 학년도 동일하게 추가 신청이 가능할까요?',
   '없습니다.',
 ]
+
+/** 관리자 코멘트 목업 (빈 문자열 = 미등록) */
+const ADMIN_COMMENTS = [
+  '정산 계좌 정보 재확인 필요. 입금자명이 다르네요.',
+  '다음 주까지 강사진 명단 확정 요청드립니다.',
+  '',
+  '교재 배송지 주소 변경 요청이 접수되었습니다. 배송 전 확인 부탁드립니다.',
+]
 const PREVIOUS_YEAR = ['참여 X', '참여 O']
 const COMPUTER_IN_ROOM = ['1대 사용 가능 | USB 사용 불가', '2대 사용 가능', '없음']
 const PARKING_INFO = ['있음 | 학교 정문 앞 주차장 사용 가능', '있음 | 후문 주차장', '없음']
@@ -205,9 +213,11 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     : `초등학교 ${row.educationGrade}`
 
   const sessionCount = row.sessions?.length ?? 2
+  const adminCommentRaw = pick(ADMIN_COMMENTS, seed)
   return {
     id: row.id,
     schoolName: row.schoolName,
+    adminComment: adminCommentRaw.trim() ? adminCommentRaw : undefined,
     region: row.region,
     addressDetail: pick(ADDRESS_DETAILS, seed),
     educationGrade: educationGradeLabel,
@@ -432,10 +442,12 @@ export function getApplicantSchoolDetail(row: ApplicantSchoolRow): SchoolDetailF
     ? row.educationGrade
     : `초등학교 ${row.educationGrade}`
 
+  const adminCommentRaw = pick(ADMIN_COMMENTS, seed)
   return {
     id: row.id,
     schoolName: row.schoolName,
     scheduleChangeCancelCount: row.scheduleChangeCancelCount,
+    adminComment: adminCommentRaw.trim() ? adminCommentRaw : undefined,
     region: row.region,
     educationGrade: educationGradeLabel,
     venue: pick(VENUES, seed),
