@@ -4,6 +4,30 @@
  */
 
 /* 교육기관 상세: 탭 행 패딩 제거, 하단만 32px */
+/* 관리자 코멘트: 기본 정보 상단. 시안 1546×64 기준, padding 20/24, 폭 반응형 */
+.school-detail-fullpage-view__admin-comment-box {
+  width: 100%;
+  max-width: 1546px;
+  box-sizing: border-box;
+  min-height: 64px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 6px;
+  background: var(--color-bg-base, #fff);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  color: var(--color-text-primary, #3d3d3d);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.school-detail-fullpage-view__admin-comment-box--empty {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
 .school-detail-fullpage-view .program-detail-fullpage-modal__tabs-row {
   padding: 0 0 32px 0;
 }
@@ -47,6 +71,18 @@
   flex-shrink: 0;
 }
 
+/* 필드 td 내 세로 디바이더: w1 h13, default-BK @ 50% */
+.school-detail-fullpage-view__td-divider {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3D3D3D);
+  vertical-align: middle;
+}
+
 /* 프로그램 승인 현황 — 알림 발송 버튼 */
 .school-detail-fullpage-view__notification-btn {
   display: inline-flex;
@@ -75,22 +111,15 @@
   background: #f5f5f5;
 }
 
-/* td 내 디바이더( | ) 양옆 12px 간격 (기본 정보·안내 사항 등 공통) */
+/* td 내 디바이더 양옆 12px gap (기본 정보·안내 사항·담당 교사 등 공통) */
 .school-detail-fullpage-view .program-detail-info-tab__table-wrapper .program-detail-info-tab__table td .school-detail-fullpage-view__td-divider {
   margin-left: 12px;
   margin-right: 12px;
 }
 
-/* 안내 사항 항목 내 테이블 td 디바이더 양옆 12px */
 .school-detail-fullpage-view__guidance-block .program-detail-info-tab__table td .school-detail-fullpage-view__td-divider {
   margin-left: 12px;
   margin-right: 12px;
-}
-
-/* 담당 교사 정보 td 내 디바이더만 양옆 16px */
-.school-detail-fullpage-view .program-detail-info-tab__table-wrapper .program-detail-info-tab__table td .school-detail-fullpage-view__td-divider--teacher {
-  margin-left: 16px;
-  margin-right: 16px;
 }
 
 /* 강의 회차별 교육 진행 현황 테이블 — 2열(회차 th | 내용 td), 좌측 200px */
@@ -122,14 +151,14 @@
   line-height: 150%; /* 24px */
 }
 
-/* 진행 완료: 대표색 파랑 */
+/* 진행 완료 */
 .school-detail-fullpage-view__session-status--completed {
-  color: #1890ff;
+  color: var(--color-blue, #017eaf);
 }
 
-/* 진행 대기: 대표색 초록 */
+/* 진행 대기 */
 .school-detail-fullpage-view__session-status--pending {
-  color: #52c41a;
+  color: var(--color-green, #1e8c29);
 }
 
 /* 미진행 희망: 대표색 */

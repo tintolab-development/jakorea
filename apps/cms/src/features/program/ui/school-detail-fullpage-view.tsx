@@ -1,7 +1,7 @@
 /**
  * 교육기관 상세 풀페이지 인라인 뷰
  * LNB 제외 메인 영역에서만 렌더. 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 게시글
- * 액션: 승인 취소 | 정보 수정 | 정보 상세 보기
+ * 액션: 승인 취소 | 정보 수정 | 개인정보 상세보기
  */
 
 import type { ReactNode } from 'react'
@@ -28,6 +28,10 @@ import {
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
 } from '../lib/school-detail-mock'
+import {
+  maskEmailLocalAfterTwoChars,
+  maskMobilePhoneMiddleStars,
+} from '../lib/teacher-contact-display-mask'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
   StatusDropdownCell,
@@ -101,28 +105,17 @@ const SESSION_STATUS_LABELS: Record<string, string> = {
   not_planned: '미진행 희망',
 }
 
-/** td 내 디바이더( | ) — 양옆 gap 12px(담당 교사는 16px) */
-function TdDivider({ variant }: { variant?: 'teacher' }) {
-  return (
-    <span
-      className={
-        variant === 'teacher'
-          ? 'school-detail-fullpage-view__td-divider school-detail-fullpage-view__td-divider--teacher'
-          : 'school-detail-fullpage-view__td-divider'
-      }
-      aria-hidden
-    >
-      {' | '}
-    </span>
-  )
+/** td 내 세로 디바이더 — 1×13px, default-BK @ 50%, 양옆 gap 12px */
+function TdDivider() {
+  return <span className="school-detail-fullpage-view__td-divider" aria-hidden />
 }
 
-/** 세그먼트 배열을 디바이더로 이어서 반환 (variant: teacher 시 양옆 16px) */
-function withTdDivider(segments: ReactNode[], variant?: 'teacher') {
+/** 세그먼트 배열을 디바이더로 이어서 반환 */
+function withTdDivider(segments: ReactNode[]) {
   return (
     <>
       {segments.reduce<ReactNode[]>((acc, seg, i) => {
-        if (i > 0) acc.push(<TdDivider key={`d-${i}`} variant={variant} />)
+        if (i > 0) acc.push(<TdDivider key={`d-${i}`} />)
         acc.push(<span key={i}>{seg}</span>)
         return acc
       }, [])}
@@ -198,12 +191,12 @@ export function SchoolDetailFullpageView({
         }))
       : getInstructorRowsForSchool(row.schoolName, instructorList)
 
-  /** 담당 교사 정보: 교사명 | Tel | M | E-mail (스크린샷 형식) */
+  /** 담당 교사 정보: 교사명 | Tel | M | E-mail (스크린샷 형식). M·E-mail은 TD 표시용 마스킹 */
   const teacherDisplay = [
     mergedDetail.teacherName && `교사명: ${mergedDetail.teacherName}`,
     mergedDetail.teacherPhone && `Tel: ${mergedDetail.teacherPhone}`,
-    mergedDetail.teacherMobile && `M: ${mergedDetail.teacherMobile}`,
-    mergedDetail.teacherEmail && `E-mail: ${mergedDetail.teacherEmail}`,
+    mergedDetail.teacherMobile && `M: ${maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)}`,
+    mergedDetail.teacherEmail && `E-mail: ${maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)}`,
   ]
     .filter(Boolean)
     .join(' | ') || '-'
@@ -218,6 +211,20 @@ export function SchoolDetailFullpageView({
     mergedDetail.totalEducationHours != null && mergedDetail.totalSessions != null
       ? `${mergedDetail.totalEducationHours}시간 (총 ${mergedDetail.totalSessions}회차)`
       : '-'
+
+  /** 기획: 수업 진행 이후 — 회차 중 [진행 완료]가 하나라도 있으면 승인 취소 불가 */
+  const isCancelApprovalDisabledAfterClassStarted = (row.sessions ?? []).some(
+    s => s.status === 'completed'
+  )
+  /** 버튼은 항상 노출, 조건부 비활성화 */
+  const cancelApprovalDisabledReason = (() => {
+    if (!onCancelApproval) return '현재 승인 취소를 처리할 수 없습니다.'
+    if (row.approvalStatus !== 'approved') return '승인 완료 상태에서만 승인 취소할 수 있습니다.'
+    if (isCancelApprovalDisabledAfterClassStarted)
+      return '진행 완료된 회차가 있어 승인 취소할 수 없습니다.'
+    return null
+  })()
+  const isCancelApprovalDisabled = cancelApprovalDisabledReason !== null
 
   /** 배정된 강사 테이블용 행 (목 데이터 연동) */
   const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
@@ -535,7 +542,7 @@ export function SchoolDetailFullpageView({
         const name = mergedDetail.textbookName ?? '-'
         const kitsAndQty =
           mergedDetail.textbookKits != null && mergedDetail.textbookQuantity != null
-            ? `${mergedDetail.textbookKits}키드 (${mergedDetail.textbookQuantity}권)`
+            ? `${mergedDetail.textbookKits}키트 (${mergedDetail.textbookQuantity}권)`
             : mergedDetail.textbookQuantity != null
               ? `${mergedDetail.textbookQuantity}권`
               : '-'
@@ -561,10 +568,7 @@ export function SchoolDetailFullpageView({
     {
       key: 'teacher',
       label: '담당 교사 정보',
-      children: withTdDivider(
-        teacherDisplay === '-' ? ['-'] : teacherDisplay.split(' | '),
-        'teacher'
-      ),
+      children: withTdDivider(teacherDisplay === '-' ? ['-'] : teacherDisplay.split(' | ')),
       span: 2,
     },
     {
@@ -690,26 +694,26 @@ export function SchoolDetailFullpageView({
         </div>
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            {row.approvalStatus === 'approved' && (
-              <AppButton
-                variant="danger"
-                size="large"
-                onClick={() => setCancelApprovalConfirmOpen(true)}
-              >
-                승인 취소
-              </AppButton>
-            )}
-            <AppButton variant="primary" size="large" onClick={() => {}}>
+            <AppButton
+              variant="danger"
+              size="filter"
+              disabled={isCancelApprovalDisabled}
+              title={cancelApprovalDisabledReason ?? undefined}
+              onClick={() => setCancelApprovalConfirmOpen(true)}
+            >
+              승인 취소
+            </AppButton>
+            <AppButton variant="primary" size="filter" onClick={() => {}}>
               정보 수정
             </AppButton>
-            <AppButton variant="primary" size="large" onClick={() => {}}>
-              정보 상세 보기
+            <AppButton variant="primary" size="filter-wide" onClick={() => {}}>
+              개인정보 상세보기
             </AppButton>
           </div>
         )}
         {activeTab === 'posts' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton variant="primary" size="large" onClick={() => setPostWriteModalOpen(true)}>
+            <AppButton variant="primary" size="filter" onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
             </AppButton>
           </div>
@@ -719,6 +723,22 @@ export function SchoolDetailFullpageView({
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab">
+            <div className="program-detail-fullpage-modal__info-tab-block school-detail-fullpage-view__admin-comment-section">
+              <h3 className="program-detail-info-tab__section-title">관리자 코멘트</h3>
+              <div
+                className={`school-detail-fullpage-view__admin-comment-box ${
+                  !mergedDetail.adminComment?.trim()
+                    ? 'school-detail-fullpage-view__admin-comment-box--empty'
+                    : ''
+                }`}
+                role="region"
+                aria-label="관리자 코멘트"
+              >
+                {mergedDetail.adminComment?.trim()
+                  ? mergedDetail.adminComment
+                  : '등록된 코멘트가 없습니다.'}
+              </div>
+            </div>
             <div className="program-detail-fullpage-modal__info-tab-block">
               <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
               <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
