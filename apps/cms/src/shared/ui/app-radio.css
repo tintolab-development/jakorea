@@ -1,0 +1,107 @@
+/**
+ * 앱 공통 라디오 (AppRadio / AppRadio.Group)
+ * options로 그룹을 쓸 때는 자식 Radio에 app-radio 클래스가 없음 → .app-radio-group 하위로 동일 스타일 적용
+ */
+
+.app-radio-group.ant-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.app-radio-group .ant-radio-wrapper {
+  margin-inline-end: 0;
+}
+
+.app-radio-group.ant-radio-group .ant-radio-wrapper,
+.app-radio.ant-radio-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-end: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.app-radio-group .ant-radio,
+.app-radio .ant-radio {
+  align-self: center;
+  top: 0;
+}
+
+.app-radio-group .ant-radio-inner,
+.app-radio .ant-radio-inner {
+  width: 16px;
+  height: 16px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #c4cdd1;
+  background-color: #fff;
+}
+
+.app-radio-group .ant-radio-checked .ant-radio-inner,
+.app-radio .ant-radio-checked .ant-radio-inner {
+  border-color: #4da1af;
+  background-color: #fff;
+}
+
+.app-radio-group .ant-radio-checked .ant-radio-inner::after,
+.app-radio .ant-radio-checked .ant-radio-inner::after {
+  background-color: #4da1af;
+  transform: scale(0.45) !important;
+}
+
+.app-radio-group.ant-radio-group
+  .ant-radio-wrapper:not(.ant-radio-wrapper-checked):hover
+  .ant-radio-inner,
+.app-radio.ant-radio-wrapper:not(.ant-radio-wrapper-checked):hover .ant-radio-inner {
+  border-color: #a8b4b9;
+}
+
+.app-radio-group .ant-radio-wrapper-checked,
+.app-radio.ant-radio-wrapper-checked {
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+.app-radio-group .ant-radio-wrapper-checked:hover,
+.app-radio.ant-radio-wrapper-checked:hover {
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+.app-radio-group .ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner,
+.app-radio.ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner {
+  border-color: #4da1af;
+}
+
+.app-radio-group .ant-radio-wrapper-disabled,
+.app-radio.ant-radio-wrapper-disabled {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.app-radio-group .ant-radio-wrapper-disabled .ant-radio-inner,
+.app-radio.ant-radio-wrapper-disabled .ant-radio-inner {
+  border-color: #d9d9d9;
+  background-color: #f5f5f5;
+}
+
+.app-radio-group .ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after,
+.app-radio.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+/* Ant 기본 span.ant-radio + * { padding-inline: 8px } 제거 — 원·텍스트 간격은 wrapper gap만 사용 */
+.app-radio-group .ant-radio-wrapper span.ant-radio + *,
+.app-radio.ant-radio-wrapper span.ant-radio + * {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+}
+
+.app-radio-group .ant-radio-wrapper span.ant-radio,
+.app-radio.ant-radio-wrapper span.ant-radio {
+  padding: 0 !important;
+}
