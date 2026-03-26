@@ -170,6 +170,7 @@ export function EnrollmentProgramDetailPostsTab({
   const setPostWriteModalOpen = isWriteModalControlled ? onWriteModalOpenChange! : setInternalWriteModalOpen
 
   const [detailPost, setDetailPost] = useState<ProgramPost | null>(null)
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [postsVersion, setPostsVersion] = useState(0)
   const posts = useMemo(() => {
     const list = schoolId
@@ -206,6 +207,12 @@ export function EnrollmentProgramDetailPostsTab({
     const q = fileSearchDebounced.trim().toLowerCase()
     return allFiles.filter(f => f.fileName.toLowerCase().includes(q))
   }, [allFiles, fileSearchDebounced])
+
+  useEffect(() => {
+    if (!selectedFileId) return
+    const exists = filteredFiles.some(file => file.id === selectedFileId)
+    if (!exists) setSelectedFileId(null)
+  }, [filteredFiles, selectedFileId])
 
   const makeFileMenuItems = (file: ProgramFile): MenuProps['items'] => [
     { key: 'download', label: '다운로드', onClick: () => downloadFile(file.fileName, file.fileUrl) },
@@ -338,7 +345,11 @@ export function EnrollmentProgramDetailPostsTab({
             <p className="enrollment-program-detail-modal__placeholder">검색 결과가 없습니다.</p>
           ) : (
             filteredFiles.map(file => (
-              <div key={file.id} className="enrollment-program-detail-modal__file-item">
+              <div
+                key={file.id}
+                className={`enrollment-program-detail-modal__file-item ${selectedFileId === file.id ? 'enrollment-program-detail-modal__file-item--selected' : ''}`}
+                onClick={() => setSelectedFileId(file.id)}
+              >
                 <div className="enrollment-program-detail-modal__file-icon" data-type={file.fileType || 'file'}>
                   {getFileTypeLabel(file) || null}
                 </div>

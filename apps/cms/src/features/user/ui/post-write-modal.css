@@ -34,7 +34,7 @@
 /* 푸터: 본문과 간격 24px, 좌우·하단 24px */
 .post-write-modal.ant-modal .ant-modal-footer {
   padding: 24px 24px 24px;
-  border-top: 1px solid var(--color-border-light, #e8e8e8);
+  border-top: none;
 }
 
 .post-write-modal__footer-actions {
@@ -42,6 +42,12 @@
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
+}
+
+.post-write-modal__footer-actions .app-button--large {
+  width: 120px;
+  min-width: 120px;
+  height: 40px;
 }
 
 .post-write-modal__body {
@@ -66,9 +72,12 @@
 }
 
 .post-write-modal__label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-label, #3d3d3d);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
   margin: 0;
 }
 
@@ -87,6 +96,15 @@
 
 .post-write-modal__checkbox-group .ant-checkbox-wrapper {
   margin-inline-start: 0;
+}
+
+.post-write-modal__checkbox-group .ant-checkbox-wrapper > span:last-child {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .post-write-modal__checkbox-group .ant-checkbox-checked .ant-checkbox-inner {
@@ -119,15 +137,26 @@
   box-shadow: 0 0 0 1px var(--color-modal-header, #01a1af);
 }
 
-/* 첨부 파일: 116px 고정, border-radius 6px (하단 디바이더 없음) */
+.post-write-modal__textarea::placeholder,
+.post-write-modal__textarea.ant-input::placeholder {
+  overflow: hidden;
+  color: #85969d;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 첨부 파일: 132px 고정, 좌측 라벨 포함 래퍼 보더 */
 .post-write-modal__attachment {
   width: 100%;
-  height: 116px;
-  border: 1px solid var(--color-border-light, #e8e8e8);
-  border-bottom: none;
-  border-radius: 6px;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+  height: 132px;
+  min-height: 132px;
+  max-height: 132px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -156,18 +185,51 @@
   flex: 1;
   min-width: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   padding: 16px;
   box-sizing: border-box;
   overflow: hidden;
 }
 
 .post-write-modal__file-select.file-select-field {
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+.post-write-modal__file-select .file-select-field__names {
+  flex: 1 1 auto;
+}
+
 .post-write-modal__file-select .file-select-field__actions {
   margin-top: auto;
+}
+
+.post-write-modal__file-select.file-select-field--edit .file-select-field__btn:not(:disabled) {
+  display: flex;
+  width: 120px;
+  min-width: 120px;
+  height: 40px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--JA-mint-01, #01a1af) !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff !important;
+  color: var(--JA-mint-01, #01a1af) !important;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
 }
