@@ -1,6 +1,6 @@
 import { Empty, Checkbox } from 'antd'
 import type { Dayjs } from 'dayjs'
-import type { ScheduleColorPair } from '../program-schedule-colors'
+import type { ScheduleColorPair } from '../../program-schedule-colors'
 import './applicant-calendar-view.css'
 
 interface ApplicantScheduleListProps {

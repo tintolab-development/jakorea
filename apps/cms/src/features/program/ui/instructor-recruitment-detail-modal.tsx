@@ -17,7 +17,7 @@ import {
   formatDateOnly,
   formatDateRange,
   getInstructorRecruitmentStatus,
-} from './program-detail-info-constants'
+} from './detail-modal/project-info/program-detail-info-constants'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
@@ -87,9 +87,7 @@ export function InstructorRecruitmentDetailModal({
     (instructorId: string, status: ApprovalStatusKey) => {
       const nextStatus = status as ApplicantInstructorApprovalStatusKey
       setInstructorList(prev =>
-        prev.map(row =>
-          row.id === instructorId ? { ...row, approvalStatus: nextStatus } : row
-        )
+        prev.map(row => (row.id === instructorId ? { ...row, approvalStatus: nextStatus } : row))
       )
       updateApplicantInstructorApprovalStatus(instructorId, nextStatus)
       message.success('결재 현황이 변경되었습니다.')
@@ -219,74 +217,77 @@ export function InstructorRecruitmentDetailModal({
             <div className="instructor-recruitment-detail-modal__program-fields">
               <div className="instructor-recruitment-detail-modal__table-wrap">
                 <table className="instructor-recruitment-detail-modal__info-table">
-              <tbody>
-                <tr>
-                  <th>프로그램명</th>
-                  <td>{program.title || '-'}</td>
-                  <th>프로그램 운영 기간</th>
-                  <td>{formatDateRange(program.startDate, program.endDate)}</td>
-                </tr>
-                <tr>
-                  <th>프로그램 진행 방식</th>
-                  <td>
-                    {program.type
-                      ? programTypes.find(t => t.value === program.type)?.label ?? program.type
-                      : '-'}
-                  </td>
-                  <th>프로그램 진행 상태</th>
-                  <td>
-                    {program.lifecycleStatus
-                      ? getProgramLifecycleLabel(program.lifecycleStatus)
-                      : '-'}
-                  </td>
-                </tr>
-                <tr>
-                  <th>수강자 유형</th>
-                  <td>
-                    {program.category
-                      ? categoryOptions.find(o => o.value === program.category)?.label ??
-                        program.category
-                      : '-'}
-                  </td>
-                  <th>교육 분야</th>
-                  <td>
-                    {program.businessArea
-                      ? businessAreaOptions.find(o => o.value === program.businessArea)?.label ??
-                        program.businessArea
-                      : '-'}
-                  </td>
-                </tr>
-                <tr>
-                  <th>교육 대상</th>
-                  <td>
-                    {program.targetLevel
-                      ? targetLevelOptions.find(o => o.value === program.targetLevel)?.label ??
-                        program.targetLevel
-                      : '-'}
-                  </td>
-                  <th>교육 대상 상세</th>
-                  <td>{program.district ?? '-'}</td>
-                </tr>
-                <tr>
-                  <th>후원사</th>
-                  <td>{sponsorName ?? '-'}</td>
-                  <th>후원사 담당자</th>
-                  <td>{program.managerName ? `${program.managerName} | 010-1234-5678` : '-'}</td>
-                </tr>
-                <tr className="instructor-recruitment-detail-modal__info-table-row-full">
-                  <th>문의처</th>
-                  <td colSpan={3}>
-                    {program.contactPhone || program.contactEmail
-                      ? `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
-                      : '-'}
-                  </td>
-                </tr>
-                <tr className="instructor-recruitment-detail-modal__info-table-row-full">
-                  <th>비고</th>
-                  <td colSpan={3}>{program.recruitmentGuide ?? '-'}</td>
-                </tr>
-              </tbody>
-            </table>
+                  <tbody>
+                    <tr>
+                      <th>프로그램명</th>
+                      <td>{program.title || '-'}</td>
+                      <th>프로그램 운영 기간</th>
+                      <td>{formatDateRange(program.startDate, program.endDate)}</td>
+                    </tr>
+                    <tr>
+                      <th>프로그램 진행 방식</th>
+                      <td>
+                        {program.type
+                          ? (programTypes.find(t => t.value === program.type)?.label ??
+                            program.type)
+                          : '-'}
+                      </td>
+                      <th>프로그램 진행 상태</th>
+                      <td>
+                        {program.lifecycleStatus
+                          ? getProgramLifecycleLabel(program.lifecycleStatus)
+                          : '-'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>수강자 유형</th>
+                      <td>
+                        {program.category
+                          ? (categoryOptions.find(o => o.value === program.category)?.label ??
+                            program.category)
+                          : '-'}
+                      </td>
+                      <th>교육 분야</th>
+                      <td>
+                        {program.businessArea
+                          ? (businessAreaOptions.find(o => o.value === program.businessArea)
+                              ?.label ?? program.businessArea)
+                          : '-'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>교육 대상</th>
+                      <td>
+                        {program.targetLevel
+                          ? (targetLevelOptions.find(o => o.value === program.targetLevel)?.label ??
+                            program.targetLevel)
+                          : '-'}
+                      </td>
+                      <th>교육 대상 상세</th>
+                      <td>{program.district ?? '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>후원사</th>
+                      <td>{sponsorName ?? '-'}</td>
+                      <th>후원사 담당자</th>
+                      <td>
+                        {program.managerName ? `${program.managerName} | 010-1234-5678` : '-'}
+                      </td>
+                    </tr>
+                    <tr className="instructor-recruitment-detail-modal__info-table-row-full">
+                      <th>문의처</th>
+                      <td colSpan={3}>
+                        {program.contactPhone || program.contactEmail
+                          ? `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                          : '-'}
+                      </td>
+                    </tr>
+                    <tr className="instructor-recruitment-detail-modal__info-table-row-full">
+                      <th>비고</th>
+                      <td colSpan={3}>{program.recruitmentGuide ?? '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -378,8 +379,12 @@ export function InstructorRecruitmentDetailModal({
                 onClick: event => {
                   const target = event.target as HTMLElement
                   if (
-                    target.closest('.instructor-recruitment-detail-modal__approval-dropdown-cell') ||
-                    target.closest('.instructor-recruitment-detail-modal__approval-dropdown-trigger')
+                    target.closest(
+                      '.instructor-recruitment-detail-modal__approval-dropdown-cell'
+                    ) ||
+                    target.closest(
+                      '.instructor-recruitment-detail-modal__approval-dropdown-trigger'
+                    )
                   )
                     return
                   setSelectedInstructor(record)

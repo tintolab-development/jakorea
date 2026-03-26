@@ -16,7 +16,10 @@ import type {
   InstructorRoleKey,
 } from '../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../model/school-detail-types'
-import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type {
+  ParticipatingSchoolRow,
+  ParticipatingSchoolSession,
+} from '@/data/mock/participating-schools'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
@@ -51,7 +54,7 @@ import {
   buildSchoolCancelApprovalMessageLines,
 } from './manager-delete-guide-modal'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
-import './program-detail-info-tab.css'
+import './detail-modal/project-info/program-detail-info-tab.css'
 import './participating-institutions-section.css'
 import './school-detail-fullpage-view.css'
 
@@ -158,9 +161,7 @@ export function SchoolDetailFullpageView({
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
   const activeTab =
-    activeTabFromUrl !== undefined && activeTabFromUrl !== null
-      ? activeTabFromUrl
-      : internalTab
+    activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
   const setActiveTab = (key: SchoolDetailTabKey) => {
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
@@ -322,10 +323,7 @@ export function SchoolDetailFullpageView({
     (instructorId: string, newRole: InstructorRoleKey) => {
       const updated = instructors.map(inv => ({
         ...inv,
-        role:
-          inv.id === instructorId
-            ? newRole
-            : (newRole === 'lead' ? 'assistant' : inv.role),
+        role: inv.id === instructorId ? newRole : newRole === 'lead' ? 'assistant' : inv.role,
       }))
       const formList: InstructorListFormInstructor[] = updated.map(
         ({ id, role, instructorName, contact, email }) => ({
@@ -596,9 +594,7 @@ export function SchoolDetailFullpageView({
       key: 'waitingRoom',
       label: '대기실 여부 및 위치',
       children: withTdDivider(
-        waitingDisplay.includes(' | ')
-          ? waitingDisplay.split(' | ')
-          : [waitingDisplay]
+        waitingDisplay.includes(' | ') ? waitingDisplay.split(' | ') : [waitingDisplay]
       ),
     },
     {
@@ -770,9 +766,7 @@ export function SchoolDetailFullpageView({
             </div>
 
             <div className="program-detail-fullpage-modal__info-tab-block">
-              <h3 className="program-detail-info-tab__section-title">
-                강의 회차별 교육 진행 현황
-              </h3>
+              <h3 className="program-detail-info-tab__section-title">강의 회차별 교육 진행 현황</h3>
               <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
                 <table className="program-detail-info-tab__table program-detail-info-tab__table--basic school-detail-fullpage-view__sessions-table">
                   <colgroup>
@@ -1071,7 +1065,9 @@ function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
   const datePart = `${session.date.replace(/\./g, '. ')}(${session.dayOfWeek})`
   const durationFormat = `${session.duration} (${session.format})`
   const periodTime = `${session.classNum} (${session.timeRange.replace('~', ' ~ ')})`
-  const statusLabel = session.status ? SESSION_STATUS_LABELS[session.status] ?? session.status : '미진행 희망'
+  const statusLabel = session.status
+    ? (SESSION_STATUS_LABELS[session.status] ?? session.status)
+    : '미진행 희망'
   const statusClass =
     session.status === 'completed'
       ? 'school-detail-fullpage-view__session-status--completed'
@@ -1079,11 +1075,9 @@ function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
         ? 'school-detail-fullpage-view__session-status--pending'
         : 'school-detail-fullpage-view__session-status--not_planned'
 
-  const contentCell =
-    isNotPlanned ? (
-      '미진행 희망'
-    ) : (
-      withTdDivider([
+  const contentCell = isNotPlanned
+    ? '미진행 희망'
+    : withTdDivider([
         datePart,
         durationFormat,
         periodTime,
@@ -1091,7 +1085,6 @@ function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
           {statusLabel}
         </span>,
       ])
-    )
 
   return (
     <tr>

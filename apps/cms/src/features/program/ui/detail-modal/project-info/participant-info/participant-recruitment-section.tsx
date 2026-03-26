@@ -10,17 +10,17 @@ import { Controller } from 'react-hook-form'
 import { Input, Select, DatePicker, Radio } from 'antd'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
-import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import {
   formatDateOnly,
   formatDateRange,
   getRecruitmentStatus,
   RECRUITMENT_RADIO_OPTIONS,
   TARGET_LEVEL_LABEL,
-} from './program-detail-info-constants'
+} from '../program-detail-info-constants'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import './program-detail-info-tab.css'
+import '../program-detail-info-tab.css'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 const toIso = (d: Dayjs | null) => (d ? d.toISOString() : undefined)
@@ -58,7 +58,7 @@ export function ParticipantRecruitmentSection({
     : getRecruitmentStatus(program)
   const recruitmentStatusLabel =
     recruitmentStatus != null
-      ? RECRUITMENT_RADIO_OPTIONS.find(o => o.value === recruitmentStatus)?.label ?? '-'
+      ? (RECRUITMENT_RADIO_OPTIONS.find(o => o.value === recruitmentStatus)?.label ?? '-')
       : '-'
   const targetLabel = program.targetLevel
     ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
@@ -70,11 +70,8 @@ export function ParticipantRecruitmentSection({
   ].filter(Boolean)
   const contactLine = contactParts.length > 0 ? contactParts.join(' | ') : '-'
   const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
-  const resultMethod =
-    program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
-  const resultLine = resultDate
-    ? `${formatDateOnly(resultDate)} | ${resultMethod}`
-    : '-'
+  const resultMethod = program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
+  const resultLine = resultDate ? `${formatDateOnly(resultDate)} | ${resultMethod}` : '-'
   const maxClassCount = program.rounds?.[0]?.classCount
   const maxClassLabel = maxClassCount != null ? `${maxClassCount}개` : '-'
   const notes = program.oneLineIntroduction ?? '-'
@@ -83,7 +80,7 @@ export function ParticipantRecruitmentSection({
     : program.studentListRequired
   const studentListLabel =
     studentListValue != null
-      ? STUDENT_LIST_OPTIONS.find(o => o.value === studentListValue)?.label ?? '-'
+      ? (STUDENT_LIST_OPTIONS.find(o => o.value === studentListValue)?.label ?? '-')
       : '-'
 
   return (
@@ -101,9 +98,7 @@ export function ParticipantRecruitmentSection({
             <tr>
               <th>
                 프로그램 운영 기간
-                {isFormEdit ? (
-                  <span className="program-detail-info-tab__required">*</span>
-                ) : null}
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -154,9 +149,7 @@ export function ParticipantRecruitmentSection({
             <tr>
               <th>
                 교육 대상
-                {isFormEdit ? (
-                  <span className="program-detail-info-tab__required">*</span>
-                ) : null}
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -168,9 +161,7 @@ export function ParticipantRecruitmentSection({
                         value={field.value ?? undefined}
                         options={TARGET_LEVEL_OPTIONS}
                         onChange={v =>
-                          field.onChange(
-                            (v as 'elementary' | 'middle' | 'high') || undefined
-                          )
+                          field.onChange((v as 'elementary' | 'middle' | 'high') || undefined)
                         }
                         placeholder="대상"
                         style={{ width: '100%' }}
@@ -185,9 +176,7 @@ export function ParticipantRecruitmentSection({
               </td>
               <th>
                 교육 대상 상세
-                {isFormEdit ? (
-                  <span className="program-detail-info-tab__required">*</span>
-                ) : null}
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -204,7 +193,7 @@ export function ParticipantRecruitmentSection({
                     )}
                   />
                 ) : (
-                  program.district ?? '-'
+                  (program.district ?? '-')
                 )}
               </td>
             </tr>
@@ -240,10 +229,7 @@ export function ParticipantRecruitmentSection({
                     />
                   </div>
                 ) : (
-                  formatDateRange(
-                    program.applicationStartDate,
-                    program.applicationEndDate
-                  )
+                  formatDateRange(program.applicationStartDate, program.applicationEndDate)
                 )}
               </td>
               <th>결과 발표일 및 방법</th>
@@ -256,9 +242,7 @@ export function ParticipantRecruitmentSection({
                       render={({ field }) => (
                         <DatePicker
                           value={toDayjs(field.value)}
-                          onChange={d =>
-                            field.onChange(d ? d.toISOString() : undefined)
-                          }
+                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           format="YYYY. MM. DD"
                           className="program-detail-info-tab__date-picker"
                         />
@@ -285,9 +269,7 @@ export function ParticipantRecruitmentSection({
             <tr>
               <th>
                 신청 가능 최대 학급 수
-                {isFormEdit ? (
-                  <span className="program-detail-info-tab__required">*</span>
-                ) : null}
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit && form.watch('rounds.0') != null ? (
@@ -313,9 +295,7 @@ export function ParticipantRecruitmentSection({
               </td>
               <th>
                 학생 명단 제출 여부
-                {isFormEdit ? (
-                  <span className="program-detail-info-tab__required">*</span>
-                ) : null}
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
                 {isFormEdit ? (
@@ -340,9 +320,7 @@ export function ParticipantRecruitmentSection({
             <tr>
               <th>
                 문의처
-                {isFormEdit ? (
-                  <span className="program-detail-info-tab__required">*</span>
-                ) : null}
+                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td colSpan={3}>
                 {isFormEdit ? (

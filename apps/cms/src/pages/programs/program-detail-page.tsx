@@ -1,4 +1,5 @@
 /**
+ * ‼️‼️ 삭제여부 확인 필요
  * 프로그램 상세 페이지 (관리자)
  * - 헤더: 프로그램 타이틀
  * - 해당 프로그램 진행 상태 위젯
@@ -14,7 +15,7 @@ import { PageHeader } from '@/shared/ui/page-header'
 import { AppButton } from '@/shared/ui/app-button'
 import { MESSAGES } from '@/shared/constants'
 import { ProgramDetailProgressWidget } from '@/features/dashboard/ui/program-detail-progress-widget'
-import { ProgramDetailInfoTab } from '@/features/program/ui/program-detail-info-tab'
+import { ProgramDetailInfoTab } from '@/features/program/ui/detail-modal/project-info/program-detail-info-tab'
 import { ProgramProgressTab } from '@/features/program/ui/program-progress-tab'
 import { ProgramManagersTab } from '@/features/program/ui/program-managers-tab'
 import { ProgramApplicantsTab } from '@/features/program/ui/program-applicants-tab'

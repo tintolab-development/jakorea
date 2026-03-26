@@ -15,10 +15,10 @@ import {
   getInstructorRowsForSchool,
   getWaitingInstructorRows,
   type AssignedInstructorDisplayRowMock,
-} from '../../lib/school-detail-mock'
-import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '../../model/school-detail-types'
-import '../participating-institutions-section.css'
-import '../school-detail-fullpage-view.css'
+} from '../../../lib/school-detail-mock'
+import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '../../../model/school-detail-types'
+// import '../participating-institutions-section.css'
+// import '../school-detail-fullpage-view.css'
 
 const MOCK_REQUIRED_INSTRUCTORS = 4
 
@@ -190,7 +190,9 @@ export function ApplicantInstitutionInstructorAssignTab({
       <div className="school-detail-fullpage-view__instructor-section">
         <div className="participating-institutions-section__table-header">
           <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">배정된 강사 목록</span>
+            <span className="participating-institutions-section__table-title">
+              배정된 강사 목록
+            </span>
             <span className="participating-institutions-section__table-description">
               {assignedRows.length} / {MOCK_REQUIRED_INSTRUCTORS}명
             </span>
@@ -222,7 +224,9 @@ export function ApplicantInstitutionInstructorAssignTab({
       <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
         <div className="participating-institutions-section__table-header">
           <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">배정 대기 강사 목록</span>
+            <span className="participating-institutions-section__table-title">
+              배정 대기 강사 목록
+            </span>
             <span className="participating-institutions-section__table-description">
               {waitingRows.length}건
             </span>

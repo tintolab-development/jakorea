@@ -7,7 +7,7 @@
 import { Input, Radio } from 'antd'
 import type { Program, RoundDeliveryType } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 
 const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'online', label: '온라인' },
@@ -59,16 +59,27 @@ function getRoundCurriculumContent(
   return defaultDesc ? `1시간 | ${defaultDesc}` : '1시간 | (상세 내용 없음)'
 }
 
-/** 조회 모드: 시간 + (온라인|오프라인|온/오프라인) + 설명 */
-function formatCurriculumDisplay(
-  content: string,
+/** 조회 모드: 시간 + (온라인|오프라인|온/오프라인) + 설명; `|`는 구분선 스타일 span */
+function CurriculumReadonlyDisplay({
+  content,
+  deliveryType,
+}: {
+  content: string
   deliveryType: RoundDeliveryType | undefined
-): string {
+}) {
   const { duration, description } = parseCurriculumContent(content)
   const deliveryLabel = ROUND_DELIVERY_LABELS[deliveryType ?? 'offline']
-  return description
-    ? `${duration} (${deliveryLabel}) | ${description}`
-    : `${duration} (${deliveryLabel})`
+  return (
+    <>
+      {duration} ({deliveryLabel})
+      {description ? (
+        <>
+          <span className="program-detail-info-tab__separator"> | </span>
+          {description}
+        </>
+      ) : null}
+    </>
+  )
 }
 
 export interface CurriculumSectionProps {
@@ -98,23 +109,19 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
   const updateRoundDeliveryType = (roundIndex: number, deliveryType: RoundDeliveryType) => {
     if (!form) return
     const current = form.getValues('rounds') ?? []
-    const nextRounds = current.map((r, i) =>
-      i === roundIndex ? { ...r, deliveryType } : r
-    )
+    const nextRounds = current.map((r, i) => (i === roundIndex ? { ...r, deliveryType } : r))
     form.setValue('rounds', nextRounds)
   }
 
   const CurriculumDivider = () => (
-    <span
-      className="program-detail-info-tab__curriculum-divider"
-      role="presentation"
-      aria-hidden
-    />
+    <span className="program-detail-info-tab__curriculum-divider" role="presentation" aria-hidden />
   )
 
   return (
     <>
-      <h3 className="program-detail-info-tab__section-title program-detail-info-tab__section-title--block-start">교육 커리큘럼</h3>
+      <div className="program-detail-info-tab__section-title program-detail-info-tab__section-title--block-start">
+        교육 커리큘럼
+      </div>
       <div className="program-detail-info-tab__table-wrapper">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__curriculum-table">
           <colgroup>
@@ -155,9 +162,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                           <Radio.Group
                             value={round.deliveryType ?? 'offline'}
                             options={ROUND_DELIVERY_OPTIONS}
-                            onChange={e =>
-                              updateRoundDeliveryType(roundIndex, e.target.value)
-                            }
+                            onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
                             className="program-detail-info-tab__curriculum-radio"
                           />
                           <CurriculumDivider />
@@ -180,7 +185,10 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                           />
                         </div>
                       ) : (
-                        formatCurriculumDisplay(content, round.deliveryType)
+                        <CurriculumReadonlyDisplay
+                          content={content}
+                          deliveryType={round.deliveryType}
+                        />
                       )}
                     </td>
                   </tr>

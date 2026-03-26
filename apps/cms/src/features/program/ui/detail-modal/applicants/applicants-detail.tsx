@@ -12,12 +12,12 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import type { TabKey } from './detail-modal-sidebar'
+import type { TabKey } from '../detail-modal-sidebar'
 import {
   institutionFilterFields,
   instructorFilterFields,
   volunteerFilterFields,
-} from '../table/applicant-filter-fields'
+} from '../../table/applicant-filter-fields'
 import {
   MOCK_APPLICANT_INSTITUTIONS,
   updateApplicantSchoolApprovalStatus,

@@ -11,10 +11,13 @@ import {
   formatDateRange,
   TYPE_LABEL,
   TARGET_LEVEL_LABEL,
-} from '@/features/program/ui/program-detail-info-constants'
+} from '@/features/program/ui/detail-modal/project-info/program-detail-info-constants'
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
-import { getProgramLifecycleLabel, getApplicationEnrollmentDisplayStatus } from '@/shared/constants/status'
+import {
+  getProgramLifecycleLabel,
+  getApplicationEnrollmentDisplayStatus,
+} from '@/shared/constants/status'
 import { AppButton } from '@/shared/ui/app-button'
 import dayjs from 'dayjs'
 import './enrollment-program-detail-modal.css'
@@ -40,18 +43,26 @@ function formatCurriculumDisplay(
 }
 
 function formatLectureRoundDisplay(program: Program): string {
-  const rounds = program.rounds?.length ? [...program.rounds].sort((a, b) => a.roundNumber - b.roundNumber) : []
+  const rounds = program.rounds?.length
+    ? [...program.rounds].sort((a, b) => a.roundNumber - b.roundNumber)
+    : []
   if (rounds.length === 0) return '-'
   const last = rounds[rounds.length - 1]
   const lastDate = last?.endDate || last?.startDate || program.endDate
   const dateStr = lastDate ? dayjs(lastDate).format('YY.MM.DD') : ''
-  const completed = program.lifecycleStatus === 'education_completed' || program.lifecycleStatus === 'document_processing_completed'
+  const completed =
+    program.lifecycleStatus === 'education_completed' ||
+    program.lifecycleStatus === 'document_processing_completed'
   return `${dateStr} / ${rounds.length}회차 (${completed ? '완료' : '진행 중'})`
 }
 
 function formatContactDisplay(program: Program, application?: Application | null): string {
   const parts = [
-    application?.managerName ? `담당자 : ${application.managerName}` : program.managerName ? `담당자 : ${program.managerName}` : null,
+    application?.managerName
+      ? `담당자 : ${application.managerName}`
+      : program.managerName
+        ? `담당자 : ${program.managerName}`
+        : null,
     program.contactPhone ? `Tel: ${program.contactPhone}` : null,
     program.contactEmail ? `E-mail: ${program.contactEmail}` : null,
   ].filter(Boolean)
@@ -90,13 +101,16 @@ export function EnrollmentProgramDetailView({
       : '-'
     const lifecycleStatus = program.lifecycleStatus
     const programCompleted =
-      lifecycleStatus === 'education_completed' || lifecycleStatus === 'document_processing_completed'
+      lifecycleStatus === 'education_completed' ||
+      lifecycleStatus === 'document_processing_completed'
     const enrollmentEnded =
       application?.status &&
-      getApplicationEnrollmentDisplayStatus(application.status, application.progressStatus) === 'PROGRAM_ENDED'
+      getApplicationEnrollmentDisplayStatus(application.status, application.progressStatus) ===
+        'PROGRAM_ENDED'
     const showEndedTag = programCompleted || enrollmentEnded
-    const statusLabelText =
-      lifecycleStatus ? getProgramLifecycleLabel(lifecycleStatus) : '봉사자 모집 완료'
+    const statusLabelText = lifecycleStatus
+      ? getProgramLifecycleLabel(lifecycleStatus)
+      : '봉사자 모집 완료'
 
     return [
       { key: 'title', label: '프로그램명', children: program.title ?? '-' },

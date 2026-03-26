@@ -11,7 +11,7 @@ import { Image, Input, message } from 'antd'
 import { Controller } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
@@ -20,8 +20,7 @@ import {
   DEFAULT_PROGRAM_DESCRIPTION,
   DEFAULT_RECRUITMENT_GUIDE,
   getThumbnailFilename,
-} from './program-detail-info-constants'
-import './program-detail-info-tab.css'
+} from '../program-detail-info-constants'
 
 const { TextArea } = Input
 
@@ -168,7 +167,9 @@ export function VolunteerDetailInfoSection({
                                   URL.revokeObjectURL(blobUrl)
                                   setThumbnailPreviewBlobUrl(null)
                                   message.error(
-                                    e instanceof Error ? e.message : '썸네일 이미지 업로드에 실패했습니다.'
+                                    e instanceof Error
+                                      ? e.message
+                                      : '썸네일 이미지 업로드에 실패했습니다.'
                                   )
                                 } finally {
                                   setUploadingThumbnail(false)
@@ -292,9 +293,7 @@ export function VolunteerDetailInfoSection({
                     )}
                   </>
                 ) : (
-                  <div className="program-detail-info-tab__content-block">
-                    {applicationMethod}
-                  </div>
+                  <div className="program-detail-info-tab__content-block">{applicationMethod}</div>
                 )}
               </td>
             </tr>
@@ -363,9 +362,7 @@ export function VolunteerDetailInfoSection({
                     )}
                   </>
                 ) : (
-                  <div className="program-detail-info-tab__content-block">
-                    {otherNotes}
-                  </div>
+                  <div className="program-detail-info-tab__content-block">{otherNotes}</div>
                 )}
               </td>
             </tr>
@@ -407,9 +404,7 @@ export function VolunteerDetailInfoSection({
                   />
                 ) : (
                   <div className="program-detail-info-tab__content-block">
-                    {displayFileNames.length > 0
-                      ? displayFileNames.join(', ')
-                      : '-'}
+                    {displayFileNames.length > 0 ? displayFileNames.join(', ') : '-'}
                   </div>
                 )}
               </td>

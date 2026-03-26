@@ -7,7 +7,7 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
-import { SchoolDetailStudentListSection } from '../school-detail-student-list-section'
+import { SchoolDetailStudentListSection } from '../../school-detail-student-list-section'
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
 

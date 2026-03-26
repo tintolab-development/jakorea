@@ -1,4 +1,5 @@
 /**
+ * ‼️ 삭제 여부 확인 필요
  * 프로그램 상세 정보 탭 (관리자 상세 페이지)
  * 3개 섹션 컴포넌트를 조합하는 컨테이너
  * 수정 모드: react-hook-form + zod, 기존 프로그램 값으로 defaultValues 채움
@@ -7,11 +8,11 @@
 import { forwardRef, useImperativeHandle } from 'react'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { Card } from 'antd'
-import { BasicInfoSection } from './basic-info-section'
-import { DetailInfoSection } from './detail-info-section'
-import { CurriculumSection } from './curriculum-section'
-import { useProgramDetailEditForm } from '../hooks/use-program-detail-edit-form'
-import { useProgramDetailInfoSave } from '../hooks/use-program-detail-info-save'
+import { BasicInfoSection } from './common-info/basic-info-section'
+import { DetailInfoSection } from './participant-info/detail-info-section'
+import { CurriculumSection } from './common-info/curriculum-section'
+import { useProgramDetailEditForm } from '../../../hooks/use-program-detail-edit-form'
+import { useProgramDetailInfoSave } from '../../../hooks/use-program-detail-info-save'
 import './program-detail-info-tab.css'
 
 export interface ProgramDetailInfoTabProps {
