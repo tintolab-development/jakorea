@@ -3,16 +3,27 @@
  * 수강 프로그램 상세 > 게시글 탭 > 게시글 카드 클릭 시 노출
  */
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useId } from 'react'
 import { message, Popover } from 'antd'
-import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui'
 import type { ProgramPost, ProgramFile } from '@/types/domain'
 import dayjs from 'dayjs'
-import { ProfileAvatarIcon } from '@/shared/components/profile-avatar-icon'
-import { getCommentsByPostId, markPostAsRead, createProgramPostComment, incrementPostCommentCount } from '@/data/mock'
+import { ProfileAvatarIcon } from '@/shared/ui/icons'
+import {
+  getCommentsByPostId,
+  getReactionsByPostId,
+  getReactionUsersByPostId,
+  getReactionTotalCountByPostId,
+  getPostViewCountByPostId,
+  markPostAsRead,
+  createProgramPostComment,
+  incrementPostCommentCount,
+} from '@/data/mock'
 import { downloadFile } from '@/shared/lib/file-download'
+import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
+import { POST_DETAIL_EMOJI_BAR_ITEMS } from './post-detail-emoji-bar-icons'
+import { PostReadStatusPopoverContent } from './post-read-status-popover'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -22,21 +33,38 @@ function formatKoDate(date: string | Date): string {
   return d.format(`YYYY년 M월 D일 ${ampm} ${hour}:mm`)
 }
 
-/** 인풋 문자열에 이모지가 포함되어 있는지 여부 */
-function hasEmoji(str: string): boolean {
-  return /\p{Extended_Pictographic}/u.test(str)
+const REACTION_EMOJI_TYPE_TO_INDEX: Record<string, number> = {
+  smile: 0,
+  laugh: 1,
+  loveFace: 2,
+  surprised: 3,
+  cry: 4,
+  angry: 5,
+  scream: 6,
+  heart: 7,
+  clap: 8,
+  thumbsUp: 9,
+  check: 10,
+}
+
+function getEmojiItemByType(emojiType: string) {
+  const idx = REACTION_EMOJI_TYPE_TO_INDEX[emojiType]
+  return idx == null ? null : POST_DETAIL_EMOJI_BAR_ITEMS[idx]
 }
 
 // ── 아이콘 ───────────────────────────────────────────
 
-function EyeIcon() {
+function EyeIcon({ maskId }: { maskId: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
-      <mask id="post-detail-modal-eye-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+      <mask id={maskId} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
         <rect width="22" height="22" fill="#D9D9D9" />
       </mask>
-      <g mask="url(#post-detail-modal-eye-mask)">
-        <path d="M13.6493 13.6513C14.375 12.9256 14.7379 12.0427 14.7379 11.0026C14.7379 9.96249 14.375 9.07959 13.6493 8.3539C12.9236 7.6282 12.0407 7.26535 11.0006 7.26535C9.96052 7.26535 9.07762 7.6282 8.35192 8.3539C7.62623 9.07959 7.26338 9.96249 7.26338 11.0026C7.26338 12.0427 7.62623 12.9256 8.35192 13.6513C9.07762 14.377 9.96052 14.7399 11.0006 14.7399C12.0407 14.7399 12.9236 14.377 13.6493 13.6513ZM9.24751 12.7557C8.76625 12.2745 8.52563 11.6901 8.52563 11.0026C8.52563 10.3151 8.76625 9.73073 9.24751 9.24948C9.72875 8.76823 10.3131 8.5276 11.0006 8.5276C11.6881 8.5276 12.2725 8.76823 12.7538 9.24948C13.235 9.73073 13.4756 10.3151 13.4756 11.0026C13.4756 11.6901 13.235 12.2745 12.7538 12.7557C12.2725 13.237 11.6881 13.4776 11.0006 13.4776C10.3131 13.4776 9.72875 13.237 9.24751 12.7557ZM5.70596 15.8749C4.10592 14.8455 2.82878 13.4911 1.87453 11.8118C1.79814 11.6801 1.7423 11.5476 1.70701 11.4142C1.67187 11.2808 1.6543 11.1436 1.6543 11.0026C1.6543 10.8616 1.67187 10.7244 1.70701 10.591C1.7423 10.4576 1.79814 10.3251 1.87453 10.1934C2.82878 8.51408 4.10592 7.15971 5.70596 6.13029C7.30601 5.10072 9.07089 4.58594 11.0006 4.58594C12.9304 4.58594 14.6953 5.10072 16.2953 6.13029C17.8953 7.15971 19.1725 8.51408 20.1267 10.1934C20.2031 10.3251 20.259 10.4576 20.2943 10.591C20.3294 10.7244 20.347 10.8616 20.347 11.0026C20.347 11.1436 20.3294 11.2808 20.2943 11.4142C20.259 11.5476 20.2031 11.6801 20.1267 11.8118C19.1725 13.4911 17.8953 14.8455 16.2953 15.8749C14.6953 16.9045 12.9304 17.4193 11.0006 17.4193C9.07089 17.4193 7.30601 16.9045 5.70596 15.8749ZM15.7558 14.6807C17.1996 13.7717 18.3034 12.5457 19.0673 11.0026C18.3034 9.45955 17.1996 8.23351 15.7558 7.32448C14.3121 6.41545 12.727 5.96094 11.0006 5.96094C9.27424 5.96094 7.68917 6.41545 6.24542 7.32448C4.80167 8.23351 3.69785 9.45955 2.93396 11.0026C3.69785 12.5457 4.80167 13.7717 6.24542 14.6807C7.68917 15.5898 9.27424 16.0443 11.0006 16.0443C12.727 16.0443 14.3121 15.5898 15.7558 14.6807Z" fill="currentColor" />
+      <g mask={`url(#${maskId})`}>
+        <path
+          d="M13.6493 13.6513C14.375 12.9256 14.7379 12.0427 14.7379 11.0026C14.7379 9.96249 14.375 9.07959 13.6493 8.3539C12.9236 7.6282 12.0407 7.26535 11.0006 7.26535C9.96052 7.26535 9.07762 7.6282 8.35192 8.3539C7.62623 9.07959 7.26338 9.96249 7.26338 11.0026C7.26338 12.0427 7.62623 12.9256 8.35192 13.6513C9.07762 14.377 9.96052 14.7399 11.0006 14.7399C12.0407 14.7399 12.9236 14.377 13.6493 13.6513ZM9.24751 12.7557C8.76625 12.2745 8.52563 11.6901 8.52563 11.0026C8.52563 10.3151 8.76625 9.73073 9.24751 9.24948C9.72875 8.76823 10.3131 8.5276 11.0006 8.5276C11.6881 8.5276 12.2725 8.76823 12.7538 9.24948C13.235 9.73073 13.4756 10.3151 13.4756 11.0026C13.4756 11.6901 13.235 12.2745 12.7538 12.7557C12.2725 13.237 11.6881 13.4776 11.0006 13.4776C10.3131 13.4776 9.72875 13.237 9.24751 12.7557ZM5.70596 15.8749C4.10592 14.8455 2.82878 13.4911 1.87453 11.8118C1.79814 11.6801 1.7423 11.5476 1.70701 11.4142C1.67187 11.2808 1.6543 11.1436 1.6543 11.0026C1.6543 10.8616 1.67187 10.7244 1.70701 10.591C1.7423 10.4576 1.79814 10.3251 1.87453 10.1934C2.82878 8.51408 4.10592 7.15971 5.70596 6.13029C7.30601 5.10072 9.07089 4.58594 11.0006 4.58594C12.9304 4.58594 14.6953 5.10072 16.2953 6.13029C17.8953 7.15971 19.1725 8.51408 20.1267 10.1934C20.2031 10.3251 20.259 10.4576 20.2943 10.591C20.3294 10.7244 20.347 10.8616 20.347 11.0026C20.347 11.1436 20.3294 11.2808 20.2943 11.4142C20.259 11.5476 20.2031 11.6801 20.1267 11.8118C19.1725 13.4911 17.8953 14.8455 16.2953 15.8749C14.6953 16.9045 12.9304 17.4193 11.0006 17.4193C9.07089 17.4193 7.30601 16.9045 5.70596 15.8749ZM15.7558 14.6807C17.1996 13.7717 18.3034 12.5457 19.0673 11.0026C18.3034 9.45955 17.1996 8.23351 15.7558 7.32448C14.3121 6.41545 12.727 5.96094 11.0006 5.96094C9.27424 5.96094 7.68917 6.41545 6.24542 7.32448C4.80167 8.23351 3.69785 9.45955 2.93396 11.0026C3.69785 12.5457 4.80167 13.7717 6.24542 14.6807C7.68917 15.5898 9.27424 16.0443 11.0006 16.0443C12.727 16.0443 14.3121 15.5898 15.7558 14.6807Z"
+          fill="currentColor"
+        />
       </g>
     </svg>
   )
@@ -75,14 +103,18 @@ function DownloadIcon() {
 }
 
 function EmojiIcon({ active }: { active?: boolean }) {
+  const emojiOpenMaskId = useId().replace(/:/g, '')
   if (active) {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
-        <mask id="mask-emoji-active" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
-          <rect width="30" height="30" fill="#D9D9D9"/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+        <mask id={emojiOpenMaskId} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+          <rect width="22" height="22" fill="#D9D9D9" />
         </mask>
-        <g mask="url(#mask-emoji-active)">
-          <path d="M19.2575 13.5097C19.7125 13.5097 20.0982 13.3504 20.4147 13.0319C20.7311 12.7135 20.8894 12.327 20.8894 11.8722C20.8894 11.4174 20.7302 11.0318 20.4119 10.7153C20.0935 10.3986 19.7069 10.2403 19.2519 10.2403C18.7971 10.2403 18.4115 10.3996 18.095 10.7181C17.7785 11.0365 17.6203 11.423 17.6203 11.8778C17.6203 12.3326 17.7795 12.7182 18.0978 13.0347C18.4161 13.3514 18.8027 13.5097 19.2575 13.5097ZM10.7481 13.5097C11.2029 13.5097 11.5885 13.3504 11.905 13.0319C12.2215 12.7135 12.3797 12.327 12.3797 11.8722C12.3797 11.4174 12.2205 11.0318 11.9022 10.7153C11.5839 10.3986 11.1973 10.2403 10.7425 10.2403C10.2875 10.2403 9.90177 10.3996 9.58531 10.7181C9.26886 11.0365 9.11063 11.423 9.11063 11.8778C9.11063 12.3326 9.26979 12.7182 9.58813 13.0347C9.90646 13.3514 10.2931 13.5097 10.7481 13.5097ZM18.5769 20.3953C19.6571 19.6653 20.4535 18.7002 20.9662 17.5H19.3125C18.8542 18.2708 18.2448 18.8802 17.4844 19.3281C16.724 19.776 15.8958 20 15 20C14.1042 20 13.276 19.776 12.5156 19.3281C11.7552 18.8802 11.1458 18.2708 10.6875 17.5H9.03375C9.54646 18.7002 10.3429 19.6653 11.4231 20.3953C12.5033 21.1253 13.6956 21.4903 15 21.4903C16.3044 21.4903 17.4967 21.1253 18.5769 20.3953ZM10.3706 25.94C8.92542 25.3167 7.66833 24.4707 6.59937 23.4022C5.53042 22.3336 4.68406 21.0771 4.06031 19.6325C3.43677 18.1879 3.125 16.6445 3.125 15.0022C3.125 13.3597 3.43667 11.8158 4.06 10.3706C4.68333 8.92542 5.52927 7.66833 6.59781 6.59937C7.66635 5.53042 8.92292 4.68406 10.3675 4.06031C11.8121 3.43677 13.3555 3.125 14.9978 3.125C16.6403 3.125 18.1842 3.43667 19.6294 4.06C21.0746 4.68333 22.3317 5.52927 23.4006 6.59781C24.4696 7.66635 25.3159 8.92292 25.9397 10.3675C26.5632 11.8121 26.875 13.3555 26.875 14.9978C26.875 16.6403 26.5633 18.1842 25.94 19.6294C25.3167 21.0746 24.4707 22.3317 23.4022 23.4006C22.3336 24.4696 21.0771 25.3159 19.6325 25.9397C18.1879 26.5632 16.6445 26.875 15.0022 26.875C13.3597 26.875 11.8158 26.5633 10.3706 25.94Z" fill="#01A1AF"/>
+        <g mask={`url(#${emojiOpenMaskId})`}>
+          <path
+            d="M14.1215 9.9045C14.4552 9.9045 14.7381 9.7877 14.9701 9.5541C15.2022 9.32066 15.3182 9.03718 15.3182 8.70367C15.3182 8.37015 15.2015 8.08736 14.9681 7.85529C14.7346 7.62307 14.4511 7.50696 14.1174 7.50696C13.7839 7.50696 13.5011 7.62376 13.269 7.85735C13.0369 8.0908 12.9209 8.37428 12.9209 8.70779C12.9209 9.04131 13.0376 9.3241 13.2711 9.55617C13.5045 9.78839 13.788 9.9045 14.1215 9.9045ZM7.88131 9.9045C8.21482 9.9045 8.49761 9.7877 8.72968 9.5541C8.96175 9.32066 9.07779 9.03718 9.07779 8.70367C9.07779 8.37015 8.96106 8.08736 8.72762 7.85529C8.49417 7.62307 8.2107 7.50696 7.87718 7.50696C7.54352 7.50696 7.26065 7.62376 7.02858 7.85735C6.79651 8.0908 6.68047 8.37428 6.68047 8.70779C6.68047 9.04131 6.7972 9.3241 7.03064 9.55617C7.26409 9.78839 7.54764 9.9045 7.88131 9.9045ZM13.6224 14.954C14.4145 14.4186 14.9986 13.7109 15.3746 12.8307H14.1618C13.8257 13.396 13.3789 13.8429 12.8212 14.1714C12.2636 14.4998 11.6563 14.6641 10.9993 14.6641C10.3424 14.6641 9.73511 14.4998 9.17747 14.1714C8.61983 13.8429 8.17296 13.396 7.83685 12.8307H6.6241C7.00008 13.7109 7.58415 14.4186 8.37631 14.954C9.16846 15.4893 10.0428 15.757 10.9993 15.757C11.9559 15.757 12.8302 15.4893 13.6224 14.954ZM7.60447 19.0201C6.54465 18.563 5.62279 17.9426 4.83889 17.159C4.05499 16.3754 3.43433 15.4539 2.97691 14.3946C2.51965 13.3352 2.29102 12.2033 2.29102 10.999C2.29102 9.7945 2.51957 8.66234 2.97668 7.60252C3.43379 6.5427 4.05415 5.62084 4.83774 4.83694C5.62134 4.05303 6.54282 3.43237 7.60218 2.97496C8.66154 2.51769 9.7934 2.28906 10.9977 2.28906C12.2022 2.28906 13.3344 2.51762 14.3942 2.97473C15.454 3.43184 16.3759 4.05219 17.1598 4.83579C17.9437 5.61939 18.5644 6.54087 19.0218 7.60023C19.479 8.65959 19.7077 9.79144 19.7077 10.9958C19.7077 12.2003 19.4791 13.3325 19.022 14.3923C18.5649 15.4521 17.9445 16.374 17.161 17.1579C16.3774 17.9418 15.4559 18.5624 14.3965 19.0198C13.3372 19.4771 12.2053 19.7057 11.001 19.7057C9.79645 19.7057 8.66429 19.4772 7.60447 19.0201Z"
+            fill="#3D3D3D"
+          />
         </g>
       </svg>
     )
@@ -140,8 +172,18 @@ export interface PostDetailModalProps {
 }
 
 export function PostDetailModal({ open, onCancel, post, files, commentAuthorName }: PostDetailModalProps) {
+  const emojiBtnClipId = useId().replace(/:/g, '')
+  const reactionClipBaseId = useId().replace(/:/g, '')
+  const eyeIconMaskId = useId().replace(/:/g, '')
   const [commentInput, setCommentInput] = useState('')
   const [emojiActive, setEmojiActive] = useState(false)
+  const [reactionPopoverOpen, setReactionPopoverOpen] = useState(false)
+  const [readStatusPopoverOpen, setReadStatusPopoverOpen] = useState(false)
+  /**
+   * 피커에서 선택한 이모지(단일). 버튼에만 SVG로 표시. 댓글 본문에는 넣지 않음.
+   * TODO(향후): 게시글 상단 이모지 영역에 누가 어떤 이모지를 남겼는지 반영 (API·UI 별도 구현).
+   */
+  const [selectedEmojiIndex, setSelectedEmojiIndex] = useState<number | null>(null)
   const [commentsVersion, setCommentsVersion] = useState(0)
   const sendActive = commentInput.trim().length > 0
 
@@ -149,12 +191,47 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
     () => (post ? getCommentsByPostId(post.id) : []),
     [post?.id, commentsVersion]
   )
+  const reactions = useMemo(
+    () =>
+      post
+        ? getReactionsByPostId(post.id).sort((a, b) => b.count - a.count)
+        : [],
+    [post?.id]
+  )
+  const reactionTotalCount = useMemo(
+    () => (post ? getReactionTotalCountByPostId(post.id) : 0),
+    [post?.id]
+  )
+  const viewReadCount = useMemo(
+    () => (post ? getPostViewCountByPostId(post.id) : 0),
+    [post?.id]
+  )
+  const reactionUsers = useMemo(
+    () => (post ? getReactionUsersByPostId(post.id) : []),
+    [post?.id]
+  )
   useEffect(() => {
     if (open && post) markPostAsRead(post.id)
   }, [open, post?.id])
 
-  const handleEmojiClick = (emojiData: EmojiClickData) => {
-    setCommentInput(prev => prev + emojiData.emoji)
+  useEffect(() => {
+    if (!open) {
+      setSelectedEmojiIndex(null)
+      setEmojiActive(false)
+      setReactionPopoverOpen(false)
+      setReadStatusPopoverOpen(false)
+    }
+  }, [open])
+
+  useEffect(() => {
+    setSelectedEmojiIndex(null)
+    setReactionPopoverOpen(false)
+    setReadStatusPopoverOpen(false)
+  }, [post?.id])
+
+  const handleEmojiSelect = (index: number) => {
+    setSelectedEmojiIndex(prev => (prev === index ? null : index))
+    setEmojiActive(false)
   }
 
   const handleSubmitComment = () => {
@@ -168,6 +245,7 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
     incrementPostCommentCount(post.id)
     setCommentsVersion(v => v + 1)
     setCommentInput('')
+    setSelectedEmojiIndex(null)
     message.success('댓글이 등록되었습니다.')
   }
 
@@ -205,12 +283,118 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
                   <div className="post-detail-modal__author-meta">
                     <span className="post-detail-modal__date">{dateStr}</span>
                     <span className="post-detail-modal__meta-divider">|</span>
-                    <span className="post-detail-modal__meta-item">
-                      <EyeIcon /> {post.viewCount}
-                    </span>
-                    <span className="post-detail-modal__meta-item">
-                      <EmoticonIcon /> {post.reactionCount}
-                    </span>
+                    <Popover
+                      trigger="click"
+                      arrow={false}
+                      open={readStatusPopoverOpen}
+                      onOpenChange={setReadStatusPopoverOpen}
+                      overlayClassName="post-read-status-popover"
+                      overlayStyle={{ transition: 'none' }}
+                      overlayInnerStyle={{ transition: 'none' }}
+                      getPopupContainer={trigger =>
+                        trigger.closest('.post-detail-modal__card') ?? document.body
+                      }
+                      content={
+                        post ? (
+                          <PostReadStatusPopoverContent
+                            postId={post.id}
+                            programId={post.programId}
+                            postSchoolId={post.schoolId}
+                          />
+                        ) : null
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="post-detail-modal__meta-item post-detail-modal__meta-item--view"
+                        aria-label="게시글 읽음 현황"
+                      >
+                        <EyeIcon maskId={eyeIconMaskId} /> {viewReadCount}
+                      </button>
+                    </Popover>
+                    <Popover
+                      trigger="click"
+                      arrow={false}
+                      open={reactionPopoverOpen}
+                      onOpenChange={setReactionPopoverOpen}
+                      overlayClassName="post-detail-modal__reaction-popover"
+                      getPopupContainer={trigger =>
+                        trigger.closest('.post-detail-modal__card') ?? document.body
+                      }
+                      content={
+                        <div className="post-detail-modal__reaction-popup">
+                          <div
+                            className="post-detail-modal__reaction-popup-header"
+                            role="group"
+                            aria-label="이모지별 반응 수"
+                          >
+                            {reactions.slice(0, 5).map((reaction, i) => {
+                              const item = getEmojiItemByType(reaction.emojiType)
+                              if (!item) return null
+                              const clipId = `${reactionClipBaseId}-header-${i}`
+                              return (
+                                <div
+                                  key={`header-${reaction.emojiType}`}
+                                  className="post-detail-modal__reaction-popup-header-stat"
+                                >
+                                  <span className="post-detail-modal__reaction-popup-header-emoji" aria-hidden>
+                                    {item.renderIcon(clipId)}
+                                  </span>
+                                  <span className="post-detail-modal__reaction-popup-header-count">
+                                    {reaction.count}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                            {reactions.length > 5 && (
+                              <span className="post-detail-modal__reaction-popup-header-ellipsis" aria-hidden>
+                                ...
+                              </span>
+                            )}
+                          </div>
+                          <div className="post-detail-modal__reaction-popup-body">
+                            {reactionUsers.map((row, index) => {
+                              const item = getEmojiItemByType(row.emojiType)
+                              if (!item) return null
+                              const clipId = `${reactionClipBaseId}-row-${index}`
+                              return (
+                                <div key={row.id} className="post-detail-modal__reaction-user-row">
+                                  <ProfileAvatarIcon className="post-detail-modal__reaction-user-avatar" />
+                                  <div className="post-detail-modal__reaction-user-meta">
+                                    <span
+                                      className="post-detail-modal__reaction-user-name"
+                                      title={row.authorName}
+                                    >
+                                      {truncateDisplayNameForList(row.authorName)}
+                                    </span>
+                                    <span className="post-detail-modal__reaction-user-divider">|</span>
+                                    <span className="post-detail-modal__reaction-user-role">
+                                      {row.roleLabel}
+                                    </span>
+                                  </div>
+                                  <span className="post-detail-modal__reaction-user-emoji" aria-hidden>
+                                    {item.renderIcon(clipId)}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                            {reactionUsers.length === 0 && (
+                              <div className="post-detail-modal__reaction-popup-empty">
+                                아직 반응이 없습니다.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      }
+                      placement="bottomLeft"
+                    >
+                      <button
+                        type="button"
+                        className="post-detail-modal__meta-item post-detail-modal__meta-item--reaction"
+                      >
+                        <EmoticonIcon /> {reactionTotalCount}
+                      </button>
+                    </Popover>
                     <span className="post-detail-modal__meta-item">
                       <CommentIcon /> {post.commentCount}
                     </span>
@@ -290,26 +474,57 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
               trigger="click"
               open={emojiActive}
               onOpenChange={setEmojiActive}
+              arrow={false}
               overlayClassName="post-detail-modal__emoji-popover"
+              getPopupContainer={trigger =>
+                trigger.closest('.post-detail-modal__comments-card') ?? document.body
+              }
               content={
-                <div className="post-detail-modal__emoji-picker-wrap">
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiClick}
-                    width="100%"
-                    height={360}
-                    searchPlaceHolder="이모지 검색"
-                    previewConfig={{ showPreview: false }}
-                  />
+                <div className="post-detail-modal__emoji-picker-panel">
+                  <div
+                    className="post-detail-modal__emoji-bar"
+                    role="toolbar"
+                    aria-label="이모티콘 선택"
+                  >
+                    {POST_DETAIL_EMOJI_BAR_ITEMS.map((item, index) => {
+                      const clipId = `post-detail-emoji-clip-${index}`
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          className="post-detail-modal__emoji-bar-btn"
+                          aria-label={item.label}
+                          onClick={() => handleEmojiSelect(index)}
+                        >
+                          {item.renderIcon(clipId)}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               }
               placement="topRight"
             >
               <button
                 type="button"
-                className="post-detail-modal__comment-btn"
+                className={[
+                  'post-detail-modal__comment-btn',
+                  emojiActive && 'post-detail-modal__comment-btn--emoji-picker-open',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 aria-label="이모티콘"
+                aria-expanded={emojiActive}
               >
-                <EmojiIcon active={emojiActive || hasEmoji(commentInput)} />
+                {selectedEmojiIndex != null ? (
+                  <span className="post-detail-modal__emoji-btn-preview" aria-hidden>
+                    {POST_DETAIL_EMOJI_BAR_ITEMS[selectedEmojiIndex].renderIcon(
+                      `${emojiBtnClipId}-sel`
+                    )}
+                  </span>
+                ) : (
+                  <EmojiIcon active={emojiActive} />
+                )}
               </button>
             </Popover>
             <button
