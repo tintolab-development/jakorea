@@ -5,7 +5,11 @@
 
 import { useId } from 'react'
 
-export function ProfileAvatarIcon({ className }: { className?: string }) {
+export interface ProfileAvatarIconProps {
+  className?: string
+}
+
+export function ProfileAvatarIcon({ className }: ProfileAvatarIconProps) {
   const id = useId().replace(/:/g, '')
   const clipId = `profile-avatar-clip-${id}`
   return (
