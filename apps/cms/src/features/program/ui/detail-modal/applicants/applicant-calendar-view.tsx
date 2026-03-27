@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from 'react'
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { Calendar, Button, Spin, Tooltip } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -6,8 +6,12 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { ApplicantScheduleList } from './applicant-schedule-list'
-import { SCHEDULE_COLORS, type ScheduleColorPair } from '../../program-schedule-colors'
+import {
+  SCHEDULE_COLORS,
+  type ScheduleColorPair,
+} from '../../program-schedule-colors'
 import './applicant-calendar-view.css'
+import { AppButton, AppMultiSelect, APP_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -17,6 +21,87 @@ function getEntityKey(event: any): string {
   if (item?.schoolName) return item.schoolName
   if (item?.instructorName) return item.instructorName
   return event?.title?.replace(/^\[.*?\]\s*/, '') ?? ''
+}
+
+/** 기관: 학교명 | 지역(첫 토큰) | 신청 n명 · 강사: 성명 | 신청학교 등 | 신청 1명 */
+function getPopoverRowParts(item: any): { title: string; location: string; countLabel: string } | null {
+  if (!item) return null
+  const summary = item.calendarInstitutionSummary as
+    | { applicantCount: number; regionDisplay: string }
+    | undefined
+  if (summary && typeof item.schoolName === 'string') {
+    return {
+      title: item.schoolName,
+      location: summary.regionDisplay || '-',
+      countLabel: `신청 : ${summary.applicantCount}명`,
+    }
+  }
+  if (typeof item.schoolName === 'string' && 'region' in item && item.region != null) {
+    const regionStr = String(item.region).trim()
+    const location = regionStr.split(/\s+/)[0] ?? regionStr
+    const n = typeof item.studentCount === 'number' ? item.studentCount : 0
+    return {
+      title: item.schoolName,
+      location: location || '-',
+      countLabel: `신청 : ${n}명`,
+    }
+  }
+  if (typeof item.instructorName === 'string') {
+    const location =
+      typeof item.schoolName === 'string' && item.schoolName
+        ? item.schoolName
+        : typeof item.address === 'string'
+          ? item.address.split(/\s+/).slice(0, 2).join(' ') || '-'
+          : '-'
+    return {
+      title: item.instructorName,
+      location,
+      countLabel: '신청 : 1명',
+    }
+  }
+  return null
+}
+
+function ApplicantCalendarEventPopoverContent({
+  events,
+  colorMap,
+}: {
+  events: any[]
+  colorMap: Map<string | number, ScheduleColorPair>
+}) {
+  return (
+    <div className="applicant-calendar-popover">
+      {events.map(ev => {
+        const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
+        const parts = getPopoverRowParts(ev.originalItem)
+        const fallbackTitle = String(ev.title ?? '').replace(/^\[.*?\]\s*/, '')
+        if (!parts) {
+          return (
+            <div key={ev.id} className="applicant-calendar-popover__row">
+              <span className="applicant-calendar-popover__title" style={{ color: colors.text }}>
+                {fallbackTitle || '-'}
+              </span>
+            </div>
+          )
+        }
+        return (
+          <div key={ev.id} className="applicant-calendar-popover__row">
+            <span className="applicant-calendar-popover__title" style={{ color: colors.text }}>
+              {parts.title}
+            </span>
+            <span className="applicant-calendar-popover__sep" aria-hidden>
+              |
+            </span>
+            <span className="applicant-calendar-popover__text">{parts.location}</span>
+            <span className="applicant-calendar-popover__sep" aria-hidden>
+              |
+            </span>
+            <span className="applicant-calendar-popover__text">{parts.countLabel}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 interface ApplicantCalendarViewProps {
@@ -37,6 +122,7 @@ export function ApplicantCalendarView({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  const [selectedSchools, setSelectedSchools] = useState<string[]>([])
   const mainCalendarRef = useRef<HTMLDivElement>(null)
 
   const weekDates = useMemo(() => {
@@ -106,9 +192,34 @@ export function ApplicantCalendarView({
   }
 
   const dayEvents = useMemo(() => getEventsForDate(selectedDate), [events, selectedDate])
+  const schoolFilterOptions = useMemo(() => {
+    const uniqueSchools = Array.from(
+      new Set(
+        dayEvents
+          .map(ev => String(ev?.originalItem?.schoolName ?? '').trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b, 'ko'))
+    return uniqueSchools.map((school, i) => ({
+      value: school,
+      label: school,
+      tagColor: APP_MULTI_SELECT_TAG_COLORS[i % APP_MULTI_SELECT_TAG_COLORS.length],
+    }))
+  }, [dayEvents])
+  useEffect(() => {
+    setSelectedSchools(prev => prev.filter(v => schoolFilterOptions.some(opt => opt.value === v)))
+  }, [schoolFilterOptions])
+  const filteredDayEvents = useMemo(() => {
+    if (selectedSchools.length === 0) return dayEvents
+    const selectedSet = new Set(selectedSchools)
+    return dayEvents.filter(ev => {
+      const schoolName = String(ev?.originalItem?.schoolName ?? '').trim()
+      return schoolName !== '' && selectedSet.has(schoolName)
+    })
+  }, [dayEvents, selectedSchools])
   const scheduleListColorMap = useMemo(
-    () => buildResolvedColorMap(dayEvents),
-    [dayEvents, buildResolvedColorMap]
+    () => buildResolvedColorMap(filteredDayEvents),
+    [filteredDayEvents, buildResolvedColorMap]
   )
   const getColorForScheduleList = useCallback(
     (event: any) => scheduleListColorMap.get(event.id) ?? colorPalette[0],
@@ -148,23 +259,6 @@ export function ApplicantCalendarView({
     setCurrentMonth(today.startOf('month'))
   }
 
-  /** 이벤트 툴팁용 미리보기 텍스트 */
-  const getEventPreviewContent = useCallback((event: any): string => {
-    const displayTitle = event?.title?.replace(/^\[.*?\]\s*/, '') ?? ''
-    const item = event?.originalItem
-    const lines = [displayTitle]
-    if (item?.educationGrade) {
-      const grade = item.educationGrade.endsWith('학년')
-        ? item.educationGrade
-        : `${item.educationGrade}학년`
-      lines.push(grade)
-    }
-    if (item?.desiredEducationPeriod) {
-      lines.push(item.desiredEducationPeriod)
-    }
-    return lines.join('\n')
-  }, [])
-
   // 메인 캘린더 헤더 렌더링
   const headerRender = () => {
     const headerTitle =
@@ -176,9 +270,9 @@ export function ApplicantCalendarView({
       <div className="applicant-calendar-header">
         <div className="applicant-calendar-header-left">
           <span className="applicant-calendar-header-title">{headerTitle}</span>
-          <Button size="small" className="applicant-calendar-today-btn" onClick={handleToday}>
+          <AppButton size="small" className="applicant-calendar-today-btn" onClick={handleToday}>
             오늘
-          </Button>
+          </AppButton>
           <div className="applicant-calendar-nav">
             <Button
               type="text"
@@ -231,19 +325,17 @@ export function ApplicantCalendarView({
   // 메인 캘린더 셀 렌더링
   const dateFullCellRender = (date: Dayjs) => {
     const isCurrentMonth = date.isSame(currentMonth, 'month')
-    const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
     const dayEvents = getEventsForDate(date)
     const hasEvents = dayEvents.length > 0
     const resolvedColors = buildResolvedColorMap(dayEvents)
 
-    return (
-      <div
-        className={`applicant-calendar-cell ${!isCurrentMonth ? 'applicant-calendar-cell--other-month' : ''} ${isSelected ? 'applicant-calendar-cell--selected' : ''} ${isToday ? 'applicant-calendar-cell--today' : ''}`}
-        onClick={() => handleDateSelect(date)}
-      >
+    const cellBody = (
+      <>
         <div className="applicant-calendar-cell-date">
-          <span className={isToday ? 'applicant-calendar-cell-date-today' : ''}>{date.date()}</span>
+          <span className={isSelected ? 'applicant-calendar-cell-date-selected' : ''}>
+            {date.date()}
+          </span>
         </div>
         {hasEvents && (
           <div className="applicant-calendar-cell-events">
@@ -252,48 +344,52 @@ export function ApplicantCalendarView({
               const isEventSelected = selectedRowKeys.includes(event.id)
               const colors = resolvedColors.get(event.id) ?? SCHEDULE_COLORS[0]
               return (
-                <Tooltip
+                <div
                   key={event.id}
-                  title={
-                    <pre className="applicant-calendar-event-tooltip">
-                      {getEventPreviewContent(event)}
-                    </pre>
-                  }
-                  placement="topLeft"
-                  mouseEnterDelay={0.2}
+                  className={`applicant-calendar-event ${isEventSelected ? 'applicant-calendar-event--selected' : ''}`}
+                  style={{
+                    backgroundColor: colors.bg,
+                    border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                  }}
+                  onClick={e => e.stopPropagation()}
                 >
-                  <div
-                    className={`applicant-calendar-event ${isEventSelected ? 'applicant-calendar-event--selected' : ''}`}
-                    style={{
-                      backgroundColor: colors.bg,
-                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                    }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className="applicant-calendar-event-title">{displayTitle}</span>
-                  </div>
-                </Tooltip>
+                  <span className="applicant-calendar-event-title">{displayTitle}</span>
+                </div>
               )
             })}
             {dayEvents.length > 2 && (
-              <Tooltip
-                title={
-                  <pre className="applicant-calendar-event-tooltip">
-                    {dayEvents
-                      .slice(2)
-                      .map(ev => getEventPreviewContent(ev))
-                      .join('\n\n')}
-                  </pre>
-                }
-                placement="topLeft"
-                mouseEnterDelay={0.2}
-              >
-                <div className="applicant-calendar-event-more">
-                  외 {dayEvents.length - 2}개의 일정
-                </div>
-              </Tooltip>
+              <div className="applicant-calendar-event-more">
+                외 {dayEvents.length - 2}개의 일정
+              </div>
             )}
           </div>
+        )}
+      </>
+    )
+
+    return (
+      <div
+        className={`applicant-calendar-cell ${!isCurrentMonth ? 'applicant-calendar-cell--other-month' : ''} ${isSelected ? 'applicant-calendar-cell--selected' : ''}`}
+        onClick={() => handleDateSelect(date)}
+      >
+        {hasEvents ? (
+          <Tooltip
+            arrow={false}
+            overlayClassName="applicant-calendar-tooltip-overlay"
+            title={
+              <ApplicantCalendarEventPopoverContent
+                events={dayEvents}
+                colorMap={resolvedColors}
+              />
+            }
+            placement="bottomLeft"
+            mouseEnterDelay={0.15}
+            destroyTooltipOnHide
+          >
+            <div className="applicant-calendar-cell-tooltip-trigger">{cellBody}</div>
+          </Tooltip>
+        ) : (
+          cellBody
         )}
       </div>
     )
@@ -313,66 +409,70 @@ export function ApplicantCalendarView({
         </div>
         <div className="applicant-calendar-week-body">
           {weekDates.map(d => {
-            const isToday = d.isSame(dayjs(), 'day')
             const isSelected = d.isSame(selectedDate, 'day')
             const dayEvents = getEventsForDate(d)
             const hasEvents = dayEvents.length > 0
             const resolvedWeekColors = buildResolvedColorMap(dayEvents)
-            return (
-              <div
-                key={d.format('YYYY-MM-DD')}
-                className={`applicant-calendar-week-cell ${isSelected ? 'applicant-calendar-week-cell--selected' : ''} ${isToday ? 'applicant-calendar-week-cell--today' : ''}`}
-                onClick={() => handleDateSelect(d)}
-              >
-                <div className="applicant-calendar-week-cell-date">{d.date()}</div>
+            const weekCellBody = (
+              <>
+                <div
+                  className={`applicant-calendar-week-cell-date ${isSelected ? 'applicant-calendar-week-cell-date--selected' : ''}`}
+                >
+                  {d.date()}
+                </div>
                 {hasEvents && (
                   <div className="applicant-calendar-week-cell-events">
                     {dayEvents.slice(0, 2).map(event => {
                       const displayTitle = event.title.replace(/^\[.*?\]\s*/, '')
                       const colors = resolvedWeekColors.get(event.id) ?? SCHEDULE_COLORS[0]
                       return (
-                        <Tooltip
+                        <div
                           key={event.id}
-                          title={
-                            <pre className="applicant-calendar-event-tooltip">
-                              {getEventPreviewContent(event)}
-                            </pre>
-                          }
-                          placement="topLeft"
-                          mouseEnterDelay={0.2}
+                          className="applicant-calendar-event"
+                          style={{
+                            backgroundColor: colors.bg,
+                            border: `1px solid ${colors.border}`,
+                          }}
+                          onClick={e => e.stopPropagation()}
                         >
-                          <div
-                            className="applicant-calendar-event"
-                            style={{
-                              backgroundColor: colors.bg,
-                              border: `1px solid ${colors.border}`,
-                            }}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <span className="applicant-calendar-event-title">{displayTitle}</span>
-                          </div>
-                        </Tooltip>
+                          <span className="applicant-calendar-event-title">{displayTitle}</span>
+                        </div>
                       )
                     })}
                     {dayEvents.length > 2 && (
-                      <Tooltip
-                        title={
-                          <pre className="applicant-calendar-event-tooltip">
-                            {dayEvents
-                              .slice(2)
-                              .map(ev => getEventPreviewContent(ev))
-                              .join('\n\n')}
-                          </pre>
-                        }
-                        placement="topLeft"
-                        mouseEnterDelay={0.2}
-                      >
-                        <div className="applicant-calendar-event-more">
-                          외 {dayEvents.length - 2}개의 일정
-                        </div>
-                      </Tooltip>
+                      <div className="applicant-calendar-event-more">
+                        외 {dayEvents.length - 2}개의 일정
+                      </div>
                     )}
                   </div>
+                )}
+              </>
+            )
+
+            return (
+              <div
+                key={d.format('YYYY-MM-DD')}
+                className={`applicant-calendar-week-cell ${isSelected ? 'applicant-calendar-week-cell--selected' : ''}`}
+                onClick={() => handleDateSelect(d)}
+              >
+                {hasEvents ? (
+                  <Tooltip
+                    arrow={false}
+                    overlayClassName="applicant-calendar-tooltip-overlay"
+                    title={
+                      <ApplicantCalendarEventPopoverContent
+                        events={dayEvents}
+                        colorMap={resolvedWeekColors}
+                      />
+                    }
+                    placement="bottomLeft"
+                    mouseEnterDelay={0.15}
+                    destroyTooltipOnHide
+                  >
+                    <div className="applicant-calendar-week-cell-tooltip-trigger">{weekCellBody}</div>
+                  </Tooltip>
+                ) : (
+                  weekCellBody
                 )}
               </div>
             )
@@ -408,9 +508,17 @@ export function ApplicantCalendarView({
 
       {/* 우측: 선택일 일정 리스트 */}
       <div className="applicant-calendar-right">
+        <div className="applicant-calendar-right__school-filter">
+          <AppMultiSelect
+            value={selectedSchools}
+            onChange={setSelectedSchools}
+            options={schoolFilterOptions}
+            placeholder="기관 선택"
+          />
+        </div>
         <ApplicantScheduleList
           selectedDate={selectedDate}
-          events={dayEvents}
+          events={filteredDayEvents}
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={onSelectionChange}
           onEventClick={onItemClick}

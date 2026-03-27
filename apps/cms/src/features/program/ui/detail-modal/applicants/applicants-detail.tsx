@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import { APP_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/app-multi-select'
 import { AppButton } from '@/shared/ui/app-button'
 import {
   ApprovalStatusBadge,
@@ -37,9 +39,100 @@ import { ApplicationApprovalModal } from '../components/application-approval-mod
 import './applicants-detail.css'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Divider } from '@/shared/components/divider'
+import dayjs from 'dayjs'
 
 const APPLICANT_ID_PARAM = 'applicantId'
 const DETAIL_TAB_PARAM = 'detailTab'
+
+/** 강사 캘린더 집계 이벤트용 — `calendarInstitutionSummary` 있으면 팝오버는 기관·인원, 우측 목록은 `calendarInstitutionInstructors`로 강사별 행 */
+export type ApplicantInstructorCalendarEventItem = ApplicantInstructorRow & {
+  calendarInstitutionSummary?: {
+    applicantCount: number
+    regionDisplay: string
+  }
+  /** 해당 일·기관에 포함된 강사 전원(우측 일정 목록 N줄용) */
+  calendarInstitutionInstructors?: ApplicantInstructorRow[]
+}
+
+function regionTokenFromAddress(address: string): string {
+  const t = address.trim()
+  if (!t) return '-'
+  return t.split(/\s+/)[0] ?? '-'
+}
+
+function parseInstructorPreferredDateRange(
+  row: ApplicantInstructorRow
+): { start: dayjs.Dayjs; end: dayjs.Dayjs } | null {
+  const dateRange = row.preferredSchools?.[0]?.dateRange
+  if (!dateRange) return null
+  const period = dateRange.trim()
+  const dateMatch = period.match(/^(\d{4})\.(\d{2})\.(\d{2}).*~\s*(\d{4})\.(\d{2})\.(\d{2})/)
+  if (!dateMatch) return null
+  const start = dayjs(`${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`).startOf('day')
+  const end = dayjs(`${dateMatch[4]}-${dateMatch[5]}-${dateMatch[6]}`).startOf('day')
+  return { start, end }
+}
+
+function buildInstructorInstitutionCalendarEvents(rows: ApplicantInstructorRow[]) {
+  type Bucket = { schoolName: string; dateKey: string; instructors: ApplicantInstructorRow[] }
+  const buckets = new Map<string, Bucket>()
+
+  for (const row of rows) {
+    const range = parseInstructorPreferredDateRange(row)
+    if (!range) continue
+    const schoolName = row.schoolName?.trim()
+    if (!schoolName) continue
+
+    let d = range.start
+    const end = range.end
+    while (d.valueOf() <= end.valueOf()) {
+      const dateKey = d.format('YYYY-MM-DD')
+      const key = `${dateKey}|${schoolName}`
+      const prev = buckets.get(key)
+      if (prev) {
+        prev.instructors.push(row)
+      } else {
+        buckets.set(key, { schoolName, dateKey, instructors: [row] })
+      }
+      d = d.add(1, 'day')
+    }
+  }
+
+  const events: Array<{
+    id: string
+    title: string
+    startDate: string
+    endDate: string
+    originalItem: ApplicantInstructorCalendarEventItem
+  }> = []
+
+  for (const [key, bucket] of buckets) {
+    const sorted = [...bucket.instructors].sort((a, b) => a.id.localeCompare(b.id))
+    const representative = sorted[0]!
+    const regionShort = regionTokenFromAddress(representative.address)
+    const count = bucket.instructors.length
+    const dayIso = `${bucket.dateKey}T00:00:00`
+
+    const originalItem: ApplicantInstructorCalendarEventItem = {
+      ...representative,
+      calendarInstitutionSummary: {
+        applicantCount: count,
+        regionDisplay: regionShort,
+      },
+      calendarInstitutionInstructors: sorted,
+    }
+
+    events.push({
+      id: key,
+      title: `[참여기관] ${bucket.schoolName} | ${regionShort}`,
+      startDate: dayIso,
+      endDate: dayIso,
+      originalItem,
+    })
+  }
+
+  return events
+}
 
 export interface ApplicantDetailsProps {
   menu: TabKey | ''
@@ -149,19 +242,33 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
     }
   }, [menu, searchParams, institutionList, instructorList])
 
-  // 현재 메뉴에 따른 필터 필드 설정
-  const fields = useMemo(() => {
+  // 현재 메뉴에 따른 필터 필드 설정 (강사: 기관명 옵션은 목록에서 유도)
+  const fields = useMemo((): FilterFieldConfig[] => {
     switch (menu) {
       case 'institutions':
         return institutionFilterFields
-      case 'instructors':
-        return instructorFilterFields
+      case 'instructors': {
+        const uniqueNames = Array.from(
+          new Set(instructorList.map(r => r.schoolName).filter(Boolean))
+        ).sort((a, b) => a.localeCompare(b, 'ko'))
+        return instructorFilterFields.map(field => {
+          if (field.type !== 'multiSelect' || field.key !== 'schoolNames') return field
+          return {
+            ...field,
+            multiSelectOptions: uniqueNames.map((name, i) => ({
+              value: name,
+              label: name,
+              tagColor: APP_MULTI_SELECT_TAG_COLORS[i % APP_MULTI_SELECT_TAG_COLORS.length],
+            })),
+          }
+        })
+      }
       case 'volunteers':
         return volunteerFilterFields
       default:
         return []
     }
-  }, [menu])
+  }, [menu, instructorList])
 
   const approvalStatusKeys = useMemo<ApprovalStatusKey[]>(
     () => ['pending', 'rejected', 'approved'] as ApprovalStatusKey[],
@@ -561,7 +668,7 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
       case 'institutions':
         return '교육 신청 기관 목록'
       case 'instructors':
-        return '강의 신청 강사 목록'
+        return '교육 신청 강사 목록'
       case 'volunteers':
         return '신청 봉사자 목록'
       default:
@@ -591,12 +698,15 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
     if (menu === 'instructors') {
       return instructorList.filter(item => {
         const {
+          schoolNames,
           instructorName,
           residenceRegion,
           evaluationGrade,
           teachingExperience,
           approvalStatus,
         } = appliedFilters
+        const names = Array.isArray(schoolNames) ? (schoolNames as string[]) : []
+        if (names.length > 0 && !names.includes(item.schoolName)) return false
         if (
           instructorName &&
           instructorName.trim() !== '' &&
@@ -642,6 +752,10 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
     data: ApplicantSchoolRow[] | ApplicantInstructorRow[],
     currentMenu: TabKey | ''
   ): any[] => {
+    if (currentMenu === 'instructors') {
+      return buildInstructorInstitutionCalendarEvents(data as ApplicantInstructorRow[])
+    }
+
     return data.map((item, index) => {
       let title = ''
       let startDate = null
@@ -678,24 +792,6 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
               startDate = `20${rangeMatch[1]}-${rangeMatch[2]}-${rangeMatch[3]}T00:00:00`
               endDate = `20${rangeMatch[4]}-${rangeMatch[5]}-${rangeMatch[6]}T23:59:59`
             }
-          }
-        }
-      } else if (currentMenu === 'instructors' && 'instructorName' in item) {
-        const applicant = item as ApplicantInstructorRow
-        title = `[강사] ${applicant.instructorName}`
-        // For instructors, use the first preferred school's dateRange
-        const dateRange = applicant.preferredSchools?.[0]?.dateRange
-        if (dateRange) {
-          const period = dateRange.trim()
-          // Regex to capture YYYY.MM.DD and handle optional (요일)
-          // Format: 2026.01.09 (금) ~ 2026.01.30 (금)
-          const dateMatch = period.match(
-            /^(\d{4})\.(\d{2})\.(\d{2}).*~\s*(\d{4})\.(\d{2})\.(\d{2})/
-          )
-
-          if (dateMatch) {
-            startDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T00:00:00`
-            endDate = `${dateMatch[4]}-${dateMatch[5]}-${dateMatch[6]}T23:59:59`
           }
         }
       }
