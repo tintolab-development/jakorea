@@ -684,6 +684,17 @@
   opacity: 0.6;
 }
 
+.enrollment-program-detail-modal__post-meta-trigger {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  opacity: inherit;
+}
+
 .enrollment-program-detail-modal__post-meta-icon {
   width: 20px;
   height: 20px;
@@ -692,7 +703,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--color-text-muted, #8c8c8c);
 }
 
 .enrollment-program-detail-modal__post-meta-icon svg {
@@ -717,13 +728,22 @@
   background: #F5F6F7;
   box-sizing: border-box;
   min-height: 82px;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .enrollment-program-detail-modal__file-item--selected {
-  border-color: #d4d4d4;
+  border-radius: 8px;
+  border: 2px solid var(--JA-mint-01, #01A1AF);
+  background: var(--default-WT, #FFF);
+  /* shadow/hover */
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 .enrollment-program-detail-modal__file-icon {

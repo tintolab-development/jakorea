@@ -6,9 +6,16 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { AppButton } from '@/shared/ui/app-button'
-import { Input, Dropdown, type MenuProps } from 'antd'
+import { Input, Dropdown, Popover, type MenuProps } from 'antd'
 import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
-import { getProgramPostsByProgramId, getProgramPostsByProgramIdAndSchoolId, getProgramFilesByProgramId } from '@/data/mock'
+import {
+  getProgramPostsByProgramId,
+  getProgramPostsByProgramIdAndSchoolId,
+  getProgramFilesByProgramId,
+  getReactionTotalCountByPostId,
+  getPostViewCountForContext,
+} from '@/data/mock'
+import { PostReadStatusPopoverContent } from './post-read-status-popover'
 import { downloadFile } from '@/shared/lib/file-download'
 import dayjs from 'dayjs'
 
@@ -43,7 +50,7 @@ function formatFileDate(date: string | Date): string {
 }
 import { PostWriteModal } from './post-write-modal'
 import { PostDetailModal } from './post-detail-modal'
-import { ProfileAvatarIcon } from '@/shared/components/profile-avatar-icon'
+import { ProfileAvatarIcon } from '@/shared/ui/icons'
 import './enrollment-program-detail-modal.css'
 
 /** 파일 리스트 옵션 아이콘 (세로 점 세 개) — 30×30 */
@@ -170,6 +177,7 @@ export function EnrollmentProgramDetailPostsTab({
   const setPostWriteModalOpen = isWriteModalControlled ? onWriteModalOpenChange! : setInternalWriteModalOpen
 
   const [detailPost, setDetailPost] = useState<ProgramPost | null>(null)
+  const [readPopoverPostId, setReadPopoverPostId] = useState<string | null>(null)
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [postsVersion, setPostsVersion] = useState(0)
   const posts = useMemo(() => {
@@ -302,13 +310,41 @@ export function EnrollmentProgramDetailPostsTab({
                     </span>
                   )}
                   <div className="enrollment-program-detail-modal__post-meta-right">
-                    <span className="enrollment-program-detail-modal__post-meta-item">
-                      <PostMetaEyeIcon postId={post.id} />
-                      <span>{post.viewCount}</span>
-                    </span>
+                    <Popover
+                      trigger="click"
+                      arrow={false}
+                      open={readPopoverPostId === post.id}
+                      onOpenChange={open => setReadPopoverPostId(open ? post.id : null)}
+                      overlayClassName="post-read-status-popover"
+                      overlayStyle={{ transition: 'none' }}
+                      overlayInnerStyle={{ transition: 'none' }}
+                      getPopupContainer={trigger =>
+                        trigger.closest('.enrollment-program-detail-modal__posts-list') ?? document.body
+                      }
+                      content={
+                        <PostReadStatusPopoverContent
+                          postId={post.id}
+                          programId={program.id}
+                          postSchoolId={post.schoolId}
+                          tabSchoolId={schoolId}
+                        />
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="enrollment-program-detail-modal__post-meta-item enrollment-program-detail-modal__post-meta-trigger"
+                        onClick={e => e.stopPropagation()}
+                        aria-label="게시글 읽음 현황"
+                      >
+                        <PostMetaEyeIcon postId={post.id} />
+                        <span>
+                          {getPostViewCountForContext(post.id, program.id, post.schoolId, schoolId)}
+                        </span>
+                      </button>
+                    </Popover>
                     <span className="enrollment-program-detail-modal__post-meta-item">
                       <PostMetaEmoticonIcon postId={post.id} />
-                      <span>{post.reactionCount}</span>
+                      <span>{getReactionTotalCountByPostId(post.id)}</span>
                     </span>
                     <span className="enrollment-program-detail-modal__post-meta-item">
                       <PostMetaCommentIcon postId={post.id} />
