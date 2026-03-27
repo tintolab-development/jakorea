@@ -7,7 +7,7 @@ import { useState, useMemo, useEffect, useId } from 'react'
 import { message, Popover } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui'
-import type { ProgramPost, ProgramFile } from '@/types/domain'
+import type { ProgramPost, ProgramFile, ProgramPostReactionUser } from '@/types/domain'
 import dayjs from 'dayjs'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
 import {
@@ -18,7 +18,9 @@ import {
   getPostViewCountByPostId,
   markPostAsRead,
   createProgramPostComment,
+  getReactionEmojiTypeForBarIndex,
   incrementPostCommentCount,
+  removeProgramPostReactionUser,
 } from '@/data/mock'
 import { downloadFile } from '@/shared/lib/file-download'
 import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
@@ -169,9 +171,32 @@ export interface PostDetailModalProps {
   files: ProgramFile[]
   /** 댓글 등록 시 표시할 작성자명 (미입력 시 '나') */
   commentAuthorName?: string
+  /** 댓글·반응 행에 쓰는 역할(반응 목록에서 '내 행' 판별). 기본 '학생' */
+  commentAuthorRoleLabel?: string
+  /** mock 반응/댓글 수 변경 시 상위(게시글 목록 카드 등) 카운트 갱신용 */
+  onPostStatsChanged?: () => void
 }
 
-export function PostDetailModal({ open, onCancel, post, files, commentAuthorName }: PostDetailModalProps) {
+function reactionRowIsCurrentUser(
+  row: ProgramPostReactionUser,
+  displayName: string,
+  roleLabel: string
+): boolean {
+  return (
+    row.authorName.trim() === displayName.trim() &&
+    row.roleLabel.trim() === roleLabel.trim()
+  )
+}
+
+export function PostDetailModal({
+  open,
+  onCancel,
+  post,
+  files,
+  commentAuthorName,
+  commentAuthorRoleLabel,
+  onPostStatsChanged,
+}: PostDetailModalProps) {
   const emojiBtnClipId = useId().replace(/:/g, '')
   const reactionClipBaseId = useId().replace(/:/g, '')
   const eyeIconMaskId = useId().replace(/:/g, '')
@@ -179,12 +204,10 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
   const [emojiActive, setEmojiActive] = useState(false)
   const [reactionPopoverOpen, setReactionPopoverOpen] = useState(false)
   const [readStatusPopoverOpen, setReadStatusPopoverOpen] = useState(false)
-  /**
-   * 피커에서 선택한 이모지(단일). 버튼에만 SVG로 표시. 댓글 본문에는 넣지 않음.
-   * TODO(향후): 게시글 상단 이모지 영역에 누가 어떤 이모지를 남겼는지 반영 (API·UI 별도 구현).
-   */
+  /** 피커 선택 이모지(단일). 전송 시 댓글 본문에는 넣지 않고 상단 게시글 반응 집계만 반영 */
   const [selectedEmojiIndex, setSelectedEmojiIndex] = useState<number | null>(null)
   const [commentsVersion, setCommentsVersion] = useState(0)
+  const [reactionsVersion, setReactionsVersion] = useState(0)
   const sendActive = commentInput.trim().length > 0
 
   const comments = useMemo(
@@ -196,11 +219,11 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
       post
         ? getReactionsByPostId(post.id).sort((a, b) => b.count - a.count)
         : [],
-    [post?.id]
+    [post?.id, reactionsVersion]
   )
   const reactionTotalCount = useMemo(
     () => (post ? getReactionTotalCountByPostId(post.id) : 0),
-    [post?.id]
+    [post?.id, reactionsVersion]
   )
   const viewReadCount = useMemo(
     () => (post ? getPostViewCountByPostId(post.id) : 0),
@@ -208,7 +231,7 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
   )
   const reactionUsers = useMemo(
     () => (post ? getReactionUsersByPostId(post.id) : []),
-    [post?.id]
+    [post?.id, reactionsVersion]
   )
   useEffect(() => {
     if (open && post) markPostAsRead(post.id)
@@ -227,11 +250,24 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
     setSelectedEmojiIndex(null)
     setReactionPopoverOpen(false)
     setReadStatusPopoverOpen(false)
+    setReactionsVersion(0)
   }, [post?.id])
 
   const handleEmojiSelect = (index: number) => {
     setSelectedEmojiIndex(prev => (prev === index ? null : index))
     setEmojiActive(false)
+  }
+
+  const viewerDisplayName = (commentAuthorName ?? '나').trim()
+  const viewerRoleLabel = (commentAuthorRoleLabel ?? '학생').trim()
+
+  const handleRemoveOwnReaction = (reactionUserId: string) => {
+    if (!post) return
+    const ok = removeProgramPostReactionUser(post.id, reactionUserId)
+    if (!ok) return
+    message.success('반응을 취소했습니다.')
+    setReactionsVersion(v => v + 1)
+    onPostStatsChanged?.()
   }
 
   const handleSubmitComment = () => {
@@ -241,11 +277,18 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
       message.warning('댓글 내용을 입력해 주세요.')
       return
     }
-    createProgramPostComment(post.id, commentAuthorName ?? '나', trimmed)
+    const emojiType =
+      selectedEmojiIndex != null ? getReactionEmojiTypeForBarIndex(selectedEmojiIndex) : undefined
+    createProgramPostComment(post.id, commentAuthorName ?? '나', trimmed, {
+      ...(emojiType ? { emojiType } : {}),
+      reactionRoleLabel: viewerRoleLabel,
+    })
     incrementPostCommentCount(post.id)
     setCommentsVersion(v => v + 1)
+    if (emojiType) setReactionsVersion(v => v + 1)
     setCommentInput('')
     setSelectedEmojiIndex(null)
+    onPostStatsChanged?.()
     message.success('댓글이 등록되었습니다.')
   }
 
@@ -357,6 +400,11 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
                               const item = getEmojiItemByType(row.emojiType)
                               if (!item) return null
                               const clipId = `${reactionClipBaseId}-row-${index}`
+                              const isOwnRow = reactionRowIsCurrentUser(
+                                row,
+                                viewerDisplayName,
+                                viewerRoleLabel
+                              )
                               return (
                                 <div key={row.id} className="post-detail-modal__reaction-user-row">
                                   <ProfileAvatarIcon className="post-detail-modal__reaction-user-avatar" />
@@ -365,16 +413,29 @@ export function PostDetailModal({ open, onCancel, post, files, commentAuthorName
                                       className="post-detail-modal__reaction-user-name"
                                       title={row.authorName}
                                     >
-                                      {truncateDisplayNameForList(row.authorName)}
+                                      {truncateDisplayNameForList(row.authorName, 3)}
                                     </span>
                                     <span className="post-detail-modal__reaction-user-divider">|</span>
                                     <span className="post-detail-modal__reaction-user-role">
                                       {row.roleLabel}
                                     </span>
                                   </div>
-                                  <span className="post-detail-modal__reaction-user-emoji" aria-hidden>
-                                    {item.renderIcon(clipId)}
-                                  </span>
+                                  {isOwnRow ? (
+                                    <button
+                                      type="button"
+                                      className="post-detail-modal__reaction-user-emoji-btn"
+                                      aria-label="내 반응 취소"
+                                      onClick={() => handleRemoveOwnReaction(row.id)}
+                                    >
+                                      <span className="post-detail-modal__reaction-user-emoji" aria-hidden>
+                                        {item.renderIcon(clipId)}
+                                      </span>
+                                    </button>
+                                  ) : (
+                                    <span className="post-detail-modal__reaction-user-emoji" aria-hidden>
+                                      {item.renderIcon(clipId)}
+                                    </span>
+                                  )}
                                 </div>
                               )
                             })}
