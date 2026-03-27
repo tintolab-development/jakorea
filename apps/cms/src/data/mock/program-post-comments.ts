@@ -43,7 +43,8 @@ function buildComments(): ProgramPostComment[] {
 }
 
 const REACTION_ROLE_LABELS = ['학생', '관리자', '강사', '대표 강사', '담당교사'] as const
-const REACTION_EMOJI_TYPES = [
+/** 이모지 바(Figma 순)와 동일 — 댓글·반응 집계에서 공통 키로 사용 */
+export const REACTION_EMOJI_TYPES = [
   'smile',
   'laugh',
   'loveFace',
@@ -56,6 +57,13 @@ const REACTION_EMOJI_TYPES = [
   'thumbsUp',
   'check',
 ] as const
+
+export function getReactionEmojiTypeForBarIndex(index: number): string | undefined {
+  if (!Number.isInteger(index) || index < 0 || index >= REACTION_EMOJI_TYPES.length) {
+    return undefined
+  }
+  return REACTION_EMOJI_TYPES[index]
+}
 
 /** postId별 반응 사용자 목록 생성 (합 = reactionCount) */
 function buildReactionUsers(): ProgramPostReactionUser[] {
@@ -151,14 +159,64 @@ export function getCommentsByPostId(postId: UUID): ProgramPostComment[] {
   return (commentsByPostId.get(postId) ?? []).slice()
 }
 
+export interface CreateProgramPostCommentOptions {
+  /** 선택 이모지 — 댓글 본문에는 넣지 않고, 상단 게시글 반응 영역 집계만 반영 */
+  emojiType?: string
+  /** 반응 팝업에 표시할 역할 라벨 */
+  reactionRoleLabel?: string
+}
+
+function appendReactionUserForPost(
+  postId: UUID,
+  authorName: string,
+  emojiType: string,
+  roleLabel: string
+): UUID {
+  const now = new Date().toISOString()
+  const id = `preaction-user-${Date.now()}-${Math.random().toString(36).slice(2, 9)}` as UUID
+  const row: ProgramPostReactionUser = {
+    id,
+    postId,
+    authorName: authorName.trim(),
+    roleLabel,
+    emojiType,
+    createdAt: now,
+  }
+  mockProgramPostReactionUsers.push(row)
+  const ulist = reactionUsersByPostId.get(postId) ?? []
+  ulist.push(row)
+  reactionUsersByPostId.set(postId, ulist)
+  ulist.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+
+  const rlist = reactionsByPostId.get(postId) ?? []
+  const existing = rlist.find(r => r.emojiType === emojiType)
+  if (existing) {
+    existing.count += 1
+  } else {
+    const rid = `preaction-${Date.now()}-${Math.random().toString(36).slice(2, 9)}` as UUID
+    rlist.push({ id: rid, postId, emojiType, count: 1 })
+  }
+  rlist.sort((a, b) => b.count - a.count)
+  reactionsByPostId.set(postId, rlist)
+
+  const post = mockProgramPosts.find(p => p.id === postId)
+  if (post) {
+    post.reactionCount = ulist.length
+    post.updatedAt = now
+  }
+  return id
+}
+
 /** 댓글 등록 (Mock: in-memory 추가 후 목록에 반영) */
 export function createProgramPostComment(
   postId: UUID,
   authorName: string,
-  content: string
+  content: string,
+  options?: CreateProgramPostCommentOptions
 ): ProgramPostComment {
   const now = new Date().toISOString()
   const id = `pcomment-${Date.now()}-${Math.random().toString(36).slice(2, 9)}` as UUID
+  const emojiType = options?.emojiType?.trim()
   const comment: ProgramPostComment = {
     id,
     postId,
@@ -166,12 +224,54 @@ export function createProgramPostComment(
     content: content.trim(),
     createdAt: now,
   }
+  if (emojiType) {
+    appendReactionUserForPost(
+      postId,
+      comment.authorName,
+      emojiType,
+      options?.reactionRoleLabel?.trim() || '학생'
+    )
+  }
   mockProgramPostComments.push(comment)
   const list = commentsByPostId.get(postId) ?? []
   list.push(comment)
   commentsByPostId.set(postId, list)
   list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   return comment
+}
+
+/** 반응 목록에서 한 행 제거(본인 행만 UI에서 호출). 집계만 갱신 */
+export function removeProgramPostReactionUser(postId: UUID, reactionUserId: UUID): boolean {
+  const idx = mockProgramPostReactionUsers.findIndex(r => r.id === reactionUserId && r.postId === postId)
+  if (idx === -1) return false
+  const removed = mockProgramPostReactionUsers[idx]!
+  mockProgramPostReactionUsers.splice(idx, 1)
+
+  const ulist = reactionUsersByPostId.get(postId) ?? []
+  const ui = ulist.findIndex(r => r.id === reactionUserId)
+  if (ui !== -1) ulist.splice(ui, 1)
+  reactionUsersByPostId.set(postId, ulist)
+
+  const rlist = reactionsByPostId.get(postId) ?? []
+  const agg = rlist.find(r => r.emojiType === removed.emojiType)
+  if (agg) {
+    agg.count -= 1
+    if (agg.count <= 0) {
+      const ri = rlist.indexOf(agg)
+      if (ri !== -1) rlist.splice(ri, 1)
+    }
+  }
+  rlist.sort((a, b) => b.count - a.count)
+  reactionsByPostId.set(postId, rlist)
+
+  const updatedAt = new Date().toISOString()
+  const post = mockProgramPosts.find(p => p.id === postId)
+  if (post) {
+    post.reactionCount = ulist.length
+    post.updatedAt = updatedAt
+  }
+
+  return true
 }
 
 /** 게시글 ID로 반응(이모지) 목록 조회 */

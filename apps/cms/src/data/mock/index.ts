@@ -25,6 +25,9 @@ export {
   getReactionTotalCountByPostId,
   getReactionUsersByPostId,
   createProgramPostComment,
+  getReactionEmojiTypeForBarIndex,
+  removeProgramPostReactionUser,
+  type CreateProgramPostCommentOptions,
 } from './program-post-comments'
 export {
   getPostReadRows,
