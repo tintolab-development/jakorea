@@ -25,7 +25,15 @@ function ProgramApprovalStatusValue({ instructor }: { instructor: ApplicantInstr
       <div className="applicant-instructor-basic-info__approval-status-row">
         <span>{APPROVAL_STATUS_LABELS.approved}</span>
         <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton />
+        <SendNotiButton mode="resend" />
+        {instructor.approvalNotificationSentAt ? (
+          <>
+            <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
+            <span className="applicant-instructor-basic-info__approval-notification-sent-at">
+              {instructor.approvalNotificationSentAt}
+            </span>
+          </>
+        ) : null}
       </div>
     )
   }
@@ -176,6 +184,8 @@ export function ApplicantInstructorBasicInfo({
       instructor.instructorName
     )
 
+  const showPostApprovalFields = instructor.approvalStatus === 'approved'
+
   return (
     <section className="applicant-instructor-basic-info">
       {showManagerComment ? (
@@ -305,6 +315,36 @@ export function ApplicantInstructorBasicInfo({
           </tbody>
         </table>
       </div>
+      {showPostApprovalFields ? (
+        <div className="applicant-instructor-basic-info__table-wrap applicant-instructor-basic-info__post-approval-wrap">
+          <table
+            className="applicant-instructor-basic-info__table applicant-instructor-basic-info__table--post-approval"
+          >
+            <colgroup>
+              <col style={{ width: '200px' }} />
+              <col />
+              <col style={{ width: '200px' }} />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                  강의비 책정 기준
+                </td>
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+                  {instructor.lectureFeeBasisDisplay ?? '-'}
+                </td>
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                  사업소득자 여부
+                </td>
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+                  {instructor.businessIncomeEarnerStatus ?? '-'}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </section>
   )
 }

@@ -146,6 +146,42 @@
   flex-shrink: 0;
 }
 
+.applicant-instructor-basic-info__approval-notification-sent-at {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  color: var(--color-text-secondary, #595959);
+}
+
+/* 승인 완료 전용: 강의비·사업소득자 1행 테이블 (메인 기본 정보 바로 아래) */
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell:first-child {
+  border-left: none;
+}
+
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell:last-child {
+  border-right: none;
+}
+
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell {
+  border-top: none;
+}
+
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:last-child
+  .applicant-instructor-basic-info__cell {
+  border-bottom: none;
+}
+
 /* 자택 주소: 읍·면·동(행정동)까지 표시, 이후 구간 블러 */
 .applicant-instructor-basic-info__address-blur {
   filter: blur(5px);

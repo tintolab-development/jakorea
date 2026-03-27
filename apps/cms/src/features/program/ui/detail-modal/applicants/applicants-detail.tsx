@@ -26,6 +26,7 @@ import {
 } from '@/data/mock/applicant-institutions'
 import {
   MOCK_APPLICANT_INSTRUCTORS,
+  patchApplicantInstructorForApprovalStatus,
   updateApplicantInstructorApprovalStatus,
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
@@ -188,11 +189,13 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
     (recordId: string, status: ApprovalStatusKey) => {
       const next = status as ApplicantInstructorApprovalStatusKey
       setInstructorList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
+        prev.map(row =>
+          row.id === recordId ? patchApplicantInstructorForApprovalStatus(row, next) : row
+        )
       )
       setSelectedItem(prev =>
         prev && 'instructorName' in prev && prev.id === recordId
-          ? { ...prev, approvalStatus: next }
+          ? patchApplicantInstructorForApprovalStatus(prev, next)
           : prev
       )
       updateApplicantInstructorApprovalStatus(recordId, next)
@@ -452,7 +455,7 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
     } else if (menu === 'instructors') {
       setInstructorList(prev =>
         prev.map(row =>
-          keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
+          keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
         )
       )
       keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'rejected'))
@@ -481,7 +484,7 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
     } else if (menu === 'instructors') {
       setInstructorList(prev =>
         prev.map(row =>
-          keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
+          keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
         )
       )
       keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'approved'))
@@ -508,11 +511,13 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
 
   const handleCancelApprovalInstructor = (id: string) => {
     setInstructorList(prev =>
-      prev.map(row => (row.id === id ? { ...row, approvalStatus: 'pending' as const } : row))
+      prev.map(row =>
+        row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
+      )
     )
     setSelectedItem(prev =>
       prev && 'instructorName' in prev && prev.id === id
-        ? { ...prev, approvalStatus: 'pending' as const }
+        ? patchApplicantInstructorForApprovalStatus(prev, 'pending')
         : prev
     )
     updateApplicantInstructorApprovalStatus(id, 'pending')
@@ -521,11 +526,13 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
 
   const handleCancelRejectInstructor = (id: string) => {
     setInstructorList(prev =>
-      prev.map(row => (row.id === id ? { ...row, approvalStatus: 'pending' as const } : row))
+      prev.map(row =>
+        row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
+      )
     )
     setSelectedItem(prev =>
       prev && 'instructorName' in prev && prev.id === id
-        ? { ...prev, approvalStatus: 'pending' as const }
+        ? patchApplicantInstructorForApprovalStatus(prev, 'pending')
         : prev
     )
     updateApplicantInstructorApprovalStatus(id, 'pending')
@@ -742,12 +749,12 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
             } else if (menu === 'instructors') {
               setInstructorList(prev =>
                 prev.map(row =>
-                  row.id === id ? { ...row, approvalStatus: 'rejected' as const } : row
+                  row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
                 )
               )
               setSelectedItem(prev =>
                 prev && 'instructorName' in prev && prev.id === id
-                  ? { ...prev, approvalStatus: 'rejected' as const }
+                  ? patchApplicantInstructorForApprovalStatus(prev, 'rejected')
                   : prev
               )
               updateApplicantInstructorApprovalStatus(id, 'rejected')
@@ -780,12 +787,12 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
           setInstructorApprovalTarget(null)
           setInstructorList(prev =>
             prev.map(row =>
-              row.id === id ? { ...row, approvalStatus: 'approved' as const } : row
+              row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
             )
           )
           setSelectedItem(prev =>
             prev && 'instructorName' in prev && prev.id === id
-              ? { ...prev, approvalStatus: 'approved' as const }
+              ? patchApplicantInstructorForApprovalStatus(prev, 'approved')
               : prev
           )
           updateApplicantInstructorApprovalStatus(id, 'approved')
