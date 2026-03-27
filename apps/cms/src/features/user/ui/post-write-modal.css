@@ -86,16 +86,18 @@
   margin-left: 2px;
 }
 
-/* 공개 범위: 체크박스 가로 배치, 청록(teal) 체크 스타일 */
+/* 공개 범위: 항목당 간격 16px (가로·줄바꿈 시 동일), antd 인접 마진 제거 */
 .post-write-modal__checkbox-group {
   display: flex;
   flex-direction: row;
-  gap: var(--spacing-16);
   flex-wrap: wrap;
+  gap: 16px;
+  row-gap: 16px;
+  column-gap: 16px;
 }
 
-.post-write-modal__checkbox-group .ant-checkbox-wrapper {
-  margin-inline-start: 0;
+.post-write-modal__checkbox-group.ant-checkbox-group .ant-checkbox-wrapper {
+  margin-inline: 0;
 }
 
 .post-write-modal__checkbox-group .ant-checkbox-wrapper > span:last-child {
