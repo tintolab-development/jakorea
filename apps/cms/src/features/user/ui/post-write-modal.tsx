@@ -16,8 +16,10 @@ import './post-write-modal.css'
 const { TextArea } = Input
 
 const AUDIENCE_OPTIONS = [
+  { label: '전체', value: 'all' },
   { label: '담당교사', value: 'teacher' },
   { label: '강사진', value: 'instructor' },
+  { label: '봉사자', value: 'volunteer' },
   { label: '학생', value: 'student' },
 ]
 
@@ -25,13 +27,10 @@ const MAX_FILE_SIZE = 15 * 1024 * 1024 // 15MB
 
 const ALLOWED_EXTENSIONS: string[] = [
   '.jpg', '.jpeg', '.png',
-  '.pdf',
-  '.doc', '.docx',
-  '.xls', '.xlsx',
 ]
 
 function getAllowedExtensionsDescription(): string {
-  return 'JPG, PNG, PDF, Word(doc, docx), Excel(xls, xlsx)'
+  return 'JPG, PNG'
 }
 
 export interface PostWriteModalProps {
@@ -52,7 +51,7 @@ function resetForm(
   setContent: (v: string) => void,
   setFiles: (v: File[]) => void
 ) {
-  setAudience(['teacher', 'instructor', 'student'])
+  setAudience(['all', 'teacher', 'instructor', 'volunteer', 'student'])
   setContent('')
   setFiles([])
 }
@@ -65,7 +64,13 @@ export function PostWriteModal({
   authorName,
   onSuccess,
 }: PostWriteModalProps) {
-  const [audience, setAudience] = useState<string[]>(['teacher', 'instructor', 'student'])
+  const [audience, setAudience] = useState<string[]>([
+    'all',
+    'teacher',
+    'instructor',
+    'volunteer',
+    'student',
+  ])
   const [content, setContent] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
@@ -190,7 +195,7 @@ export function PostWriteModal({
               <span className="post-write-modal__attachment-label">첨부 파일</span>
               <div className="post-write-modal__attachment-body">
                 <FileSelectField
-                  accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx"
+                  accept=".jpg,.jpeg,.png"
                   multiple
                   fileNames={fileNames}
                   onFilesChange={handleFilesChange}
@@ -199,7 +204,7 @@ export function PostWriteModal({
                   buttonLabel="파일 선택"
                   emptyPlaceholder="파일을 업로드 해주세요"
                   guideLines={[
-                    `- 파일은 최대 15MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
+                    `-  파일은 최대 15M까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
                     '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
                   ]}
                   className="post-write-modal__file-select file-select-field--edit"

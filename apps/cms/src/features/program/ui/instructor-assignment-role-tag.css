@@ -1,0 +1,47 @@
+/**
+ * 강사 배정 현황 — 역할(주강사/부강사) 태그 공통 스펙
+ */
+
+.school-detail-fullpage-view__role-tag {
+  box-sizing: border-box;
+  display: flex;
+  width: 132px;
+  min-width: 132px;
+  max-width: 132px;
+  height: 33px;
+  min-height: 33px;
+  max-height: 33px;
+  padding: 6px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: none;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.school-detail-fullpage-view__role-tag--lead {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.school-detail-fullpage-view__role-tag--assistant {
+  background: #f2f3f5;
+  color: #464646;
+}
+
+/* 드롭다운 열림 시에도 태그 치수 유지 */
+.school-detail-fullpage-view .status-dropdown-cell__status-trigger--open .school-detail-fullpage-view__role-tag {
+  width: 132px;
+  min-width: 132px;
+  max-width: 132px;
+  height: 33px;
+  min-height: 33px;
+  max-height: 33px;
+}

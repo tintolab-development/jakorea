@@ -221,9 +221,16 @@ export function ApplicantsDetailContents({
   const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
 
+  /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
+
+  /** 신청 강사 승인 완료: [승인 취소] [개인정보 상세보기] */
   const isApprovedInstructor = isInstructor && instructorData?.approvalStatus === 'approved'
+
+  /** 신청 기관 반려: [반려 취소] [개인정보 상세보기] */
   const isRejectedInstitution = isInstitution && institutionData?.approvalStatus === 'rejected'
+
+  /** 신청 강사 반려: [반려 취소] [개인정보 상세보기] */
   const isRejectedInstructor = isInstructor && instructorData?.approvalStatus === 'rejected'
 
   const applicantId = data.id

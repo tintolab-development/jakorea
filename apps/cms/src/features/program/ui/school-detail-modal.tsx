@@ -34,13 +34,20 @@ import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import {
   TEXTBOOK_STATUS_LABELS,
+  type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
+import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../lib/instructor-assign-session-options'
 import {
   SchoolDetailAddInstructorAssignModal,
   type AddInstructorAssignOption,
 } from './school-detail-add-instructor-assign-modal'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
+import {
+  DeleteGuideModal,
+  buildSchoolCancelApprovalMessageLines,
+} from './manager-delete-guide-modal'
+import './instructor-assignment-role-tag.css'
 import './school-detail-modal.css'
 
 const { TextArea } = Input
@@ -75,6 +82,10 @@ export interface SchoolDetailModalProps {
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
   /** 강사진 정보 저장 시 호출 (mock/API 연동 시 부모에서 detail 갱신용) */
   onSaveInstructorInfo?: (schoolId: string, instructors: InstructorListFormInstructor[]) => void
+  /** 진행현황: 참여 학교 목록 행 — 승인 취소 노출·회차 완료 비활성 판단 (onCancelApproval과 함께 전달) */
+  participatingRow?: ParticipatingSchoolRow | null
+  /** 승인 취소 확인 후 호출 (프로그램 승인 현황 → 승인 취소) */
+  onCancelApproval?: (schoolId: string) => void
 }
 
 export function SchoolDetailModal({
@@ -85,15 +96,32 @@ export function SchoolDetailModal({
   variant = 'progress',
   onSaveBasicInfo,
   onSaveInstructorInfo,
+  participatingRow,
+  onCancelApproval,
 }: SchoolDetailModalProps) {
   const title =
     titleProp ?? (variant === 'applicant' ? '수강 신청 학교 상세 정보' : '학교 상세 정보')
   const isApplicant = variant === 'applicant'
+  /** 기획: 수업 진행 이후(회차 중 진행 완료)에는 승인 취소 비활성화 */
+  const isCancelApprovalDisabledAfterClassStarted = (participatingRow?.sessions ?? []).some(
+    s => s.status === 'completed'
+  )
+  /** 진행현황·기본 정보 탭: 승인 취소 버튼 항상 노출, 조건부 비활성화 */
+  const cancelApprovalDisabledReason = (() => {
+    if (!onCancelApproval) return '현재 승인 취소를 처리할 수 없습니다.'
+    if (!participatingRow || participatingRow.approvalStatus !== 'approved')
+      return '승인 완료 상태에서만 승인 취소할 수 있습니다.'
+    if (isCancelApprovalDisabledAfterClassStarted)
+      return '진행 완료된 회차가 있어 승인 취소할 수 없습니다.'
+    return null
+  })()
+  const isCancelApprovalDisabled = cancelApprovalDisabledReason !== null
   const [activeTab, setActiveTab] = useState<string>(TAB_BASIC)
   const [selectedInstructorKeys, setSelectedInstructorKeys] = useState<React.Key[]>([])
   const [isBasicEditMode, setIsBasicEditMode] = useState(false)
   const [isInstructorEditMode, setIsInstructorEditMode] = useState(false)
   const [addInstructorAssignModalOpen, setAddInstructorAssignModalOpen] = useState(false)
+  const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
 
   const defaultBasicValues = useMemo<SchoolDetailBasicFormValues>(
     () => (detail ? detailToBasicFormValues(detail) : EMPTY_BASIC_FORM_VALUES),
@@ -116,6 +144,10 @@ export function SchoolDetailModal({
 
   useEffect(() => {
     if (!open) setIsBasicEditMode(false)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) setCancelApprovalConfirmOpen(false)
   }, [open])
 
   const handleBasicEditStart = () => {
@@ -190,11 +222,16 @@ export function SchoolDetailModal({
     }))
   }, [detail])
 
+  const addInstructorAssignSessionOptions = useMemo(
+    () => MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
+    []
+  )
+
   const handleAddInstructorAssign = (
     instructorId: string,
     role: InstructorRoleKey,
     option: AddInstructorAssignOption,
-    _meta?: { isNewApproval: boolean }
+    _meta?: { isNewApproval?: boolean; sessionIds?: string[] }
   ) => {
     if (!detail) return
     let currentList: InstructorListFormInstructor[] = isInstructorEditMode
@@ -226,12 +263,17 @@ export function SchoolDetailModal({
         key: 'role',
         width: 100,
         align: 'center',
-        render: (r: InstructorRoleKey) =>
-          r === 'lead' ? (
-            <span className="school-detail-modal__role-lead">{INSTRUCTOR_ROLE_LABELS[r]}</span>
-          ) : (
-            INSTRUCTOR_ROLE_LABELS[r]
-          ),
+        render: (r: InstructorRoleKey) => (
+          <span
+            className={
+              r === 'lead'
+                ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
+                : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
+            }
+          >
+            {INSTRUCTOR_ROLE_LABELS[r]}
+          </span>
+        ),
       },
       {
         title: '강사명',
@@ -842,11 +884,24 @@ export function SchoolDetailModal({
                   <DefaultTabBar {...tabBarProps} className="school-detail-modal__tabs-nav" />
                   {isApplicant && activeTab !== TAB_STUDENTS && (
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions school-detail-modal__basic-actions--approval">
-                      <AppButton variant="danger" size="middle" onClick={() => {}}>
+                      <AppButton variant="danger" size="filter" onClick={() => {}}>
                         반려
                       </AppButton>
-                      <AppButton variant="primary" size="middle" modalTeal onClick={() => {}}>
+                      <AppButton variant="primary" size="filter" modalTeal onClick={() => {}}>
                         승인
+                      </AppButton>
+                    </div>
+                  )}
+                  {!isApplicant && activeTab === TAB_BASIC && (
+                    <div className="school-detail-modal__top-actions school-detail-modal__basic-actions">
+                      <AppButton
+                        variant="danger"
+                        size="filter"
+                        disabled={isCancelApprovalDisabled}
+                        title={cancelApprovalDisabledReason ?? undefined}
+                        onClick={() => setCancelApprovalConfirmOpen(true)}
+                      >
+                        승인 취소
                       </AppButton>
                     </div>
                   )}
@@ -856,11 +911,29 @@ export function SchoolDetailModal({
           />
         </div>
       </TealHeaderModal>
+      {cancelApprovalConfirmOpen && detail && onCancelApproval && (
+        <DeleteGuideModal
+          open={cancelApprovalConfirmOpen}
+          onCancel={() => setCancelApprovalConfirmOpen(false)}
+          onConfirm={() => {
+            onCancelApproval(detail.id)
+            setCancelApprovalConfirmOpen(false)
+          }}
+          title="승인 취소 안내"
+          lines={buildSchoolCancelApprovalMessageLines(
+            participatingRow?.schoolName ?? detail.schoolName
+          )}
+          confirmText="취소"
+          confirmVariant="danger"
+          zIndex={1100}
+        />
+      )}
       <SchoolDetailAddInstructorAssignModal
         open={addInstructorAssignModalOpen}
         onCancel={() => setAddInstructorAssignModalOpen(false)}
         schoolName={detail?.schoolName ?? ''}
         instructorOptions={addInstructorAssignOptions}
+        assignmentSessionOptions={addInstructorAssignSessionOptions}
         currentLeadInstructorName={
           detail?.instructors.find(i => i.role === 'lead')?.instructorName ?? null
         }

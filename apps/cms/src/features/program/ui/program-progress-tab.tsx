@@ -139,6 +139,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     handleTextbookStatusChange,
     handleSchoolDeleteClick,
     handleSchoolDeleteConfirm,
+    handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
   } = schoolHook
 
@@ -684,6 +685,8 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
               })()
             : null
         }
+        participatingRow={selectedSchoolForDetail}
+        onCancelApproval={handleSchoolApprovalCancel}
         onSaveBasicInfo={patch => {
           setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))
         }}

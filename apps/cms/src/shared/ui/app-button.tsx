@@ -20,7 +20,7 @@ export type AppButtonSize = 'small' | 'middle' | 'large' | 'tableAction' | 'filt
 export interface AppButtonProps extends Omit<ButtonProps, 'size' | 'variant'> {
   /** 스타일 변형 */
   variant?: AppButtonVariant
-  /** 크기: large = 120×40, tableAction = 160×40 (테이블용), filter = 140×44 (필터 박스 조회 버튼) */
+  /** 크기: large = 120×40, tableAction = 160×40 (테이블용), filter = 140×44 (필터 박스 조회 버튼). viewDetails는 기본 100×32이며 large와 조합 시 120×40(app-button.css). */
   size?: AppButtonSize
   /** danger variant에서만: hover 시 배경 채움 (삭제 버튼 등) */
   dangerFillOnHover?: boolean

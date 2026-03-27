@@ -9,11 +9,21 @@
 }
 
 .labeled-search-input__label {
-  display: block;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-height: var(--filter-label-height, 27px);
+  height: var(--filter-label-height, 27px);
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-500);
   color: var(--color-text-label);
   margin-bottom: 0;
+}
+
+/* Typography.Text: className이 루트에 합쳐져 .labeled-search-input__label.ant-typography 가 됨 */
+.labeled-search-input__label.ant-typography {
+  margin: 0 !important;
+  line-height: 1.4 !important;
 }
 
 .labeled-search-input__input {

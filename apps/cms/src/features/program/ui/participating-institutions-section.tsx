@@ -1,6 +1,6 @@
 /**
  * 참여 기관 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여 기관)
- * 필터 + 테이블(교육 참여 기관 목록, 선택 반려/승인, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
+ * 필터 + 테이블(교육 참여 기관 목록, 선택 삭제/승인, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
  */
 
 import { useMemo, useState, useEffect, useRef } from 'react'
@@ -11,7 +11,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { message } from 'antd'
 import {
   DeleteGuideModal,
-  buildSchoolRejectMessageLines,
+  buildParticipatingInstitutionDeleteMessageLines,
   buildSchoolApproveMessageLines,
 } from './manager-delete-guide-modal'
 import {
@@ -122,7 +122,7 @@ export function ParticipatingInstitutionsSection({
   const [localSchoolName, setLocalSchoolName] = useState(() => filters.schoolName)
   const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName)
   const [openTextbookDropdownId, setOpenTextbookDropdownId] = useState<string | null>(null)
-  const [bulkConfirmModal, setBulkConfirmModal] = useState<'reject' | 'approve' | null>(null)
+  const [bulkConfirmModal, setBulkConfirmModal] = useState<'delete' | 'approve' | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   /** 쿼리 파라미터(URL)와 로컬 입력 동기화 */
@@ -165,7 +165,8 @@ export function ParticipatingInstitutionsSection({
     schoolDetailModalOpen,
     setSchoolDetailModalOpen,
     handleTextbookStatusChange,
-    handleBulkRejectConfirm: hookBulkRejectConfirm,
+    handleBulkDeleteConfirm: hookBulkDeleteConfirm,
+    schoolNamesToDelete,
     handleBulkApproveConfirm: hookBulkApproveConfirm,
     handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
@@ -197,12 +198,12 @@ export function ParticipatingInstitutionsSection({
     applyFilters({ schoolName: localSchoolName, teacherName: localTeacherName })
   }
 
-  const handleBulkReject = () => {
+  const handleBulkDelete = () => {
     if (selectedSchoolRowKeys.length === 0) {
-      message.warning('반려할 기관을 선택해 주세요.')
+      message.warning('삭제할 기관을 선택해 주세요.')
       return
     }
-    setBulkConfirmModal('reject')
+    setBulkConfirmModal('delete')
   }
 
   const handleBulkApprove = () => {
@@ -213,8 +214,8 @@ export function ParticipatingInstitutionsSection({
     setBulkConfirmModal('approve')
   }
 
-  const handleBulkRejectConfirm = () => {
-    hookBulkRejectConfirm()
+  const handleBulkDeleteConfirm = () => {
+    hookBulkDeleteConfirm()
     setBulkConfirmModal(null)
   }
 
@@ -496,8 +497,8 @@ export function ParticipatingInstitutionsSection({
             </span>
           </div>
           <div className="participating-institutions-section__table-actions">
-            <AppButton variant="danger" size="filter" onClick={handleBulkReject}>
-              선택 반려
+            <AppButton variant="danger" size="filter" onClick={handleBulkDelete}>
+              선택 삭제
             </AppButton>
             <AppButton
               variant="primary"
@@ -618,18 +619,21 @@ export function ParticipatingInstitutionsSection({
           onSaveInstructorInfo={(schoolId, instructors) => {
             setSavedInstructorPatches(prev => ({ ...prev, [schoolId]: instructors }))
           }}
+          participatingRow={selectedSchoolForDetail}
+          onCancelApproval={handleSchoolApprovalCancel}
         />
       )}
 
-      {bulkConfirmModal === 'reject' && (
+      {bulkConfirmModal === 'delete' && (
         <DeleteGuideModal
           open
           onCancel={() => setBulkConfirmModal(null)}
-          onConfirm={handleBulkRejectConfirm}
-          title="선택 반려 안내"
-          lines={buildSchoolRejectMessageLines(selectedSchoolRowKeys.length)}
-          confirmText="반려"
+          onConfirm={handleBulkDeleteConfirm}
+          title="참여 기관 삭제 안내"
+          lines={buildParticipatingInstitutionDeleteMessageLines(schoolNamesToDelete)}
+          confirmText="삭제"
           confirmVariant="danger"
+          requiredConfirmInput="삭제"
         />
       )}
       {bulkConfirmModal === 'approve' && (

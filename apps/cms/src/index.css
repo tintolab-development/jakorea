@@ -62,9 +62,13 @@ button:hover {
   border-color: var(--color-link);
 }
 
-button:focus,
+/* 마우스 클릭 포커스는 링 숨김, 키보드(:focus-visible)만 표시 */
+button:focus {
+  outline: none;
+}
+
 button:focus-visible {
-  /* 접근성 포커스 링크: 픽셀 값 유지 (예외) */
+  /* 접근성 포커스 링: 픽셀 값 유지 (예외) */
   outline: 4px auto -webkit-focus-ring-color;
 }
 

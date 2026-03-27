@@ -19,10 +19,24 @@ export {
 export {
   mockProgramPostComments,
   mockProgramPostReactions,
+  mockProgramPostReactionUsers,
   getCommentsByPostId,
   getReactionsByPostId,
+  getReactionTotalCountByPostId,
+  getReactionUsersByPostId,
   createProgramPostComment,
+  getReactionEmojiTypeForBarIndex,
+  removeProgramPostReactionUser,
+  type CreateProgramPostCommentOptions,
 } from './program-post-comments'
+export {
+  getPostReadRows,
+  getReadUnreadCountsByPostId,
+  getReadUnreadCountsForPost,
+  getPostViewCountByPostId,
+  getPostViewCountForContext,
+  resolveSchoolScopeName,
+} from './program-post-reads'
 export {
   mockProgramFiles,
   mockProgramFilesMap,

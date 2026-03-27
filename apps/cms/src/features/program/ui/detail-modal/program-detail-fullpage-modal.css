@@ -119,6 +119,31 @@
   flex-shrink: 0;
 }
 
+/* 프로젝트 정보 탭 헤더 — 프로그램 상세 미리보기 (180×44, JA-mint-01, 연한 보더) */
+.program-detail-fullpage-modal .program-detail-fullpage-modal__program-preview-btn.app-button.ant-btn {
+  display: flex;
+  width: 180px;
+  min-width: 180px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 31px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: var(--JA-mint-01, #01a1af) !important;
+}
+
+.program-detail-fullpage-modal
+  .program-detail-fullpage-modal__program-preview-btn.app-button--primary.ant-btn-primary:hover:not(:disabled) {
+  background: var(--color-focus-teal-hover) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  color: var(--default-WT) !important;
+}
+
 /* 탭 버튼: 스펙 — flex, padding 6 16 10 16, center/flex-start, gap 10, 활성 시 하단 보더 */
 .program-detail-fullpage-modal button.program-detail-fullpage-modal__tab {
   display: flex;

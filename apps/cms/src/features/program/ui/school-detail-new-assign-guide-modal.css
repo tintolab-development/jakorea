@@ -3,7 +3,8 @@
  */
 
 .school-detail-new-assign-guide-modal .teal-header-modal__body {
-  padding: 0;
+  /* 헤더 타이틀 ↔ 본문 16px (ContentModal 타이틀–디스크립션 간격과 동일) */
+  padding: 16px 0 0;
 }
 
 .school-detail-new-assign-guide-modal__body {

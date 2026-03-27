@@ -1,6 +1,6 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/정보상세·권한 수정
+ * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/개인정보 상세보기·권한 수정
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
@@ -121,7 +121,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
 
   const handleViewDetailClick = () => {
     if (selectedRowKeys.length !== 1) {
-      message.warning('정보 상세를 보려면 담당자를 한 명 선택해 주세요.')
+      message.warning('개인정보 상세보기를 하려면 담당자를 한 명 선택해 주세요.')
       return
     }
     const id = String(selectedRowKeys[0])
@@ -367,17 +367,17 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
           <div className="program-managers-tab__table-actions">
             <AppButton
               variant="danger"
-              size="large"
+              size="filter"
               dangerFillOnHover
               onClick={handleDeleteClick}
             >
               담당자 삭제
             </AppButton>
-            <AppButton variant="primary" size="large" onClick={() => setAddModalOpen(true)}>
+            <AppButton variant="primary" size="filter" onClick={() => setAddModalOpen(true)}>
               담당자 등록
             </AppButton>
-            <AppButton variant="primary" size="large" onClick={handleViewDetailClick}>
-              정보상세 보기
+            <AppButton variant="primary" size="filter-wide" onClick={handleViewDetailClick}>
+              개인정보 상세보기
             </AppButton>
           </div>
         </div>

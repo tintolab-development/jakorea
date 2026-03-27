@@ -451,20 +451,34 @@
   min-width: 0;
   padding: 20px;
   border-radius: 10px;
-  border: 1px solid #D4D4D4;
+  border: 1px solid #d4d4d4;
   background: var(--default-WT, #FFF);
   max-height: 248px;
   box-sizing: border-box;
   overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-/* 선택된 게시글에만 활성 보더 */
+/* 선택 상태는 기본 보더 유지 */
 .enrollment-program-detail-modal__post-card--selected {
-  border-color: var(--JA-mint-01, #01a1af);
+  border-color: #d4d4d4;
 }
 
 .enrollment-program-detail-modal__post-card {
   cursor: pointer;
+}
+
+.enrollment-program-detail-modal__post-card:hover {
+  border-radius: 10px;
+  border: 1px solid var(--JA-mint-01, #01A1AF);
+  background: var(--default-WT, #FFF);
+  /* 레이아웃 변화 없이 2px stroke 효과 */
+  box-shadow:
+    inset 0 0 0 1px var(--JA-mint-01, #01A1AF),
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 .enrollment-program-detail-modal__post-header {
@@ -670,6 +684,17 @@
   opacity: 0.6;
 }
 
+.enrollment-program-detail-modal__post-meta-trigger {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  opacity: inherit;
+}
+
 .enrollment-program-detail-modal__post-meta-icon {
   width: 20px;
   height: 20px;
@@ -678,7 +703,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--color-text-muted, #8c8c8c);
 }
 
 .enrollment-program-detail-modal__post-meta-icon svg {
@@ -703,6 +728,22 @@
   background: #F5F6F7;
   box-sizing: border-box;
   min-height: 82px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.enrollment-program-detail-modal__file-item--selected {
+  border-radius: 8px;
+  border: 2px solid var(--JA-mint-01, #01A1AF);
+  background: var(--default-WT, #FFF);
+  /* shadow/hover */
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 .enrollment-program-detail-modal__file-icon {

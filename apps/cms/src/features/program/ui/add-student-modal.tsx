@@ -64,11 +64,13 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
       width={800}
       footer={footer}
       className="add-student-modal"
-    >
-      <div className="add-student-modal__body">
+      description={
         <p className="add-student-modal__description">
           프로그램에 참여하는 학생 정보를 추가 등록합니다.
         </p>
+      }
+    >
+      <div className="add-student-modal__body">
         <form
           className="add-student-modal__form"
           onSubmit={e => {

@@ -6,7 +6,7 @@
 import { Button, Space, message } from 'antd'
 import { useState } from 'react'
 import { SOCIAL_PROVIDER_LABEL, type SocialProvider } from '@/entities/user/api/auth-service'
-import { GoogleMarkIcon } from '@/shared/components/google-mark-icon'
+import { GoogleMarkIcon } from '@/shared/ui/icons'
 import './social-register-form.css'
 
 interface SocialRegisterFormProps {
