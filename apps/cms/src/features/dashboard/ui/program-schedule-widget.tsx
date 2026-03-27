@@ -4,17 +4,22 @@
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
 
-import { Card, List, Button, Empty } from 'antd'
+import { Card, List, Button, Empty, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { useState, useMemo, useRef, useLayoutEffect } from 'react'
+import { useState, useMemo, useRef, useLayoutEffect, Fragment } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import { mockSchedules, mockPrograms } from '@/data/mock'
 import { programService } from '@/entities/program/api/program-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import type { Schedule } from '@/types'
-import type { ProgramLifecycleStatus } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import {
+  SCHEDULE_COLORS,
+  buildResolvedScheduleColorMapForPrograms,
+  type ScheduleColorPair,
+} from '@/features/program/ui/program-schedule-colors'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
 import '@/features/program/ui/program-calendar-view.css'
@@ -33,42 +38,6 @@ interface ScheduleEvent {
   lifecycleStatus: ProgramLifecycleStatus
 }
 
-/** 프로그램 진행 현황 배지 배경색 (program-lifecycle-status-badge.css와 동기화) */
-const LIFECYCLE_STATUS_BG: Record<ProgramLifecycleStatus, string> = {
-  planned: '#f5f5f5',
-  instructor_recruitment_planned: '#f5f5f5',
-  volunteer_recruitment_planned: '#f5f5f5',
-  participant_instructor_recruitment_planned: '#fef5f7',
-  recruiting_students: '#eaf7ec',
-  recruiting_instructors: '#f4f0f9',
-  recruiting_volunteers: '#f4f0f9',
-  participant_instructor_recruiting: '#e6f2f7',
-  education_in_progress: '#e6f4ff',
-  education_before_textbook: '#e6f4ff',
-  education_after_textbook: '#e6f4ff',
-  matching_completed: '#fff5e9',
-  education_completed: '#fdeef1',
-  document_processing_completed: '#f5f5f5',
-  participant_instructor_recruitment_completed: '#f2f3f5',
-}
-const hexToRgba = (hex: string, alpha: number) => {
-  const normalized = hex.replace('#', '')
-
-  const r = parseInt(normalized.substring(0, 2), 16)
-  const g = parseInt(normalized.substring(2, 4), 16)
-  const b = parseInt(normalized.substring(4, 6), 16)
-
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-const LIFECYCLE_STATUS_COLOR = Object.fromEntries(
-  Object.entries(LIFECYCLE_STATUS_BG).map(([key, color]) => [
-    key,
-    {
-      border: color,
-      bg: hexToRgba(color, 0.6),
-    },
-  ])
-) as Record<ProgramLifecycleStatus, { bg: string; border: string }>
 function getEventTypeLabel(type: ScheduleEvent['type']) {
   switch (type) {
     case 'education':
@@ -82,24 +51,72 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
   }
 }
 
-function getLifecycleBg(status: ProgramLifecycleStatus): string {
-  return LIFECYCLE_STATUS_BG[status] ?? '#f0f0f0'
+/** 일정 목록·캘린더·팝오버에서 동일한 SCHEDULE_COLORS 매핑 */
+function buildScheduleColorMapForWidgetEvents(events: ScheduleEvent[]): Map<string, ScheduleColorPair> {
+  const seen = new Set<string>()
+  const programs: Program[] = []
+  for (const ev of events) {
+    if (seen.has(ev.programId)) continue
+    seen.add(ev.programId)
+    const p = programService.getByIdSync(ev.programId)
+    if (p) programs.push(p)
+  }
+  return buildResolvedScheduleColorMapForPrograms(programs)
 }
-function getLifecycleBgBorder(status: ProgramLifecycleStatus, target: 'bg' | 'border'): string {
-  return LIFECYCLE_STATUS_COLOR[status][target] ?? '#f0f0f0'
-}
-/** 같은 날 일정에서 상이한 프로그램 진행현황 최대 2개만 추출 (표시용) */
-function getDisplayStatuses(dayEvents: ScheduleEvent[]): ProgramLifecycleStatus[] {
-  const seen = new Set<ProgramLifecycleStatus>()
-  const result: ProgramLifecycleStatus[] = []
+
+/** 같은 날 일정에서 서로 다른 programId 최대 2개 (월간 셀 배지용, 등장 순) */
+function getDisplayProgramIds(dayEvents: ScheduleEvent[], max = 2): string[] {
+  const seen = new Set<string>()
+  const ids: string[] = []
   for (const ev of dayEvents) {
-    if (result.length >= 2) break
-    if (!seen.has(ev.lifecycleStatus)) {
-      seen.add(ev.lifecycleStatus)
-      result.push(ev.lifecycleStatus)
+    if (ids.length >= max) break
+    if (!seen.has(ev.programId)) {
+      seen.add(ev.programId)
+      ids.push(ev.programId)
     }
   }
-  return result
+  return ids
+}
+
+/** program-calendar-view Popover 미리보기와 동일 마크업·클래스 (제목만 SCHEDULE_COLORS.text) */
+function ScheduleWidgetWeekCellPreview({
+  dayEvents,
+  onEventClick,
+}: {
+  dayEvents: ScheduleEvent[]
+  onEventClick: (ev: ScheduleEvent) => void
+}) {
+  const scheduleColorMap = useMemo(
+    () => buildScheduleColorMapForWidgetEvents(dayEvents),
+    [dayEvents]
+  )
+
+  return (
+    <div className="program-calendar-cell-preview">
+      {dayEvents.map(ev => {
+        const colorPair = scheduleColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
+        return (
+          <button
+            key={ev.id}
+            type="button"
+            className="program-calendar-cell-preview__item"
+            onClick={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              onEventClick(ev)
+            }}
+          >
+            <span className="program-calendar-cell-preview__title" style={{ color: colorPair.text }}>
+              [{ev.programTitle}]
+            </span>
+            <span className="program-calendar-cell-preview__desc">
+              {getEventTypeLabel(ev.type)} | {ev.time}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 const WIDGET_KEY = 'program-schedule-widget'
@@ -247,6 +264,11 @@ export function ProgramScheduleWidget() {
     return eventsByDate[dateKey] ?? []
   }, [selectedDate, eventsByDate])
 
+  const selectedDayScheduleColorMap = useMemo(
+    () => buildScheduleColorMapForWidgetEvents(selectedDateEvents),
+    [selectedDateEvents]
+  )
+
   const weekDates = useMemo(() => {
     const startOfWeek = currentMonth.startOf('week')
     return Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, 'day'))
@@ -296,13 +318,13 @@ export function ProgramScheduleWidget() {
     const isSelected = date.isSame(selectedDate, 'day')
     const dateKey = date.format('YYYY-MM-DD')
     const dayEvents = eventsByDate[dateKey] || []
-    const displayStatuses = getDisplayStatuses(dayEvents)
-    const hasEvents = displayStatuses.length > 0
-    const isSingleBlock = displayStatuses.length === 1
+    const dayColorMap = buildScheduleColorMapForWidgetEvents(dayEvents)
+    const programIds = getDisplayProgramIds(dayEvents, 2)
+    const hasEvents = programIds.length > 0
+    const isSingleBlock = programIds.length === 1
 
-    return (
+    const monthCell = (
       <div
-        key={dateKey}
         className={`program-calendar-cell ${!isCurrentMonth ? 'program-calendar-cell--other-month' : ''} ${isSelected ? 'program-calendar-cell--selected' : ''} ${isToday ? 'program-calendar-cell--today' : ''}`}
         onClick={() => handleDateSelect(date)}
       >
@@ -312,10 +334,13 @@ export function ProgramScheduleWidget() {
             {isSingleBlock ? (
               <div
                 className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--single"
-                style={{ backgroundColor: getLifecycleBg(displayStatuses[0]) }}
+                style={{
+                  backgroundColor: (dayColorMap.get(programIds[0]) ?? SCHEDULE_COLORS[0]).bg,
+                }}
                 onClick={e => {
                   e.stopPropagation()
-                  if (dayEvents[0]) handleEventClick(dayEvents[0])
+                  const ev = dayEvents.find(x => x.programId === programIds[0])
+                  if (ev) handleEventClick(ev)
                 }}
                 role="button"
                 tabIndex={0}
@@ -323,35 +348,65 @@ export function ProgramScheduleWidget() {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     e.stopPropagation()
-                    if (dayEvents[0]) handleEventClick(dayEvents[0])
+                    const ev = dayEvents.find(x => x.programId === programIds[0])
+                    if (ev) handleEventClick(ev)
                   }
                 }}
               />
             ) : (
-              displayStatuses.map((status, i) => (
-                <div
-                  key={`${status}-${i}`}
-                  className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--multi"
-                  style={{ backgroundColor: getLifecycleBg(status) }}
-                  onClick={e => {
-                    e.stopPropagation()
-                    if (dayEvents[i]) handleEventClick(dayEvents[i])
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
+              programIds.map(pid => {
+                const pair = dayColorMap.get(pid) ?? SCHEDULE_COLORS[0]
+                return (
+                  <div
+                    key={pid}
+                    className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--multi"
+                    style={{
+                      backgroundColor: pair.bg,
+                    }}
+                    onClick={e => {
                       e.stopPropagation()
-                      if (dayEvents[i]) handleEventClick(dayEvents[i])
-                    }
-                  }}
-                />
-              ))
+                      const ev = dayEvents.find(x => x.programId === pid)
+                      if (ev) handleEventClick(ev)
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        const ev = dayEvents.find(x => x.programId === pid)
+                        if (ev) handleEventClick(ev)
+                      }
+                    }}
+                  />
+                )
+              })
             )}
           </div>
         )}
       </div>
+    )
+
+    if (dayEvents.length === 0) {
+      return <Fragment key={dateKey}>{monthCell}</Fragment>
+    }
+
+    return (
+      <Popover
+        key={dateKey}
+        arrow={false}
+        overlayClassName="program-calendar-cell-preview-popover"
+        trigger="hover"
+        placement="bottomLeft"
+        mouseEnterDelay={0.12}
+        mouseLeaveDelay={0.08}
+        getPopupContainer={() => document.body}
+        content={
+          <ScheduleWidgetWeekCellPreview dayEvents={dayEvents} onEventClick={handleEventClick} />
+        }
+      >
+        {monthCell}
+      </Popover>
     )
   }
 
@@ -400,13 +455,13 @@ export function ProgramScheduleWidget() {
           const isSelected = date.isSame(selectedDate, 'day')
           const dateKey = date.format('YYYY-MM-DD')
           const dayEvents = eventsByDate[dateKey] || []
+          const dayColorMap = buildScheduleColorMapForWidgetEvents(dayEvents)
           const visibleEvents = dayEvents.slice(0, 3)
           const hasMore = dayEvents.length > 3
           const moreCount = dayEvents.length - 3
 
-          return (
+          const weekCell = (
             <div
-              key={dateKey}
               className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''} ${isToday ? 'program-calendar-week-cell--today' : ''}`}
               onClick={() => handleDateSelect(date)}
             >
@@ -417,7 +472,10 @@ export function ProgramScheduleWidget() {
                     <div
                       key={ev.id}
                       className="program-schedule-widget__week-event-card"
-                      style={{ backgroundColor: getLifecycleBg(ev.lifecycleStatus) }}
+                      style={{
+                        backgroundColor:
+                          (dayColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]).bg,
+                      }}
                       onClick={e => {
                         e.stopPropagation()
                         handleEventClick(ev)
@@ -451,6 +509,32 @@ export function ProgramScheduleWidget() {
               )}
             </div>
           )
+
+          if (dayEvents.length === 0) {
+            return (
+              <Fragment key={dateKey}>
+                {weekCell}
+              </Fragment>
+            )
+          }
+
+          return (
+            <Popover
+              key={dateKey}
+              arrow={false}
+              overlayClassName="program-calendar-cell-preview-popover"
+              trigger="hover"
+              placement="bottomLeft"
+              mouseEnterDelay={0.12}
+              mouseLeaveDelay={0.08}
+              getPopupContainer={() => document.body}
+              content={
+                <ScheduleWidgetWeekCellPreview dayEvents={dayEvents} onEventClick={handleEventClick} />
+              }
+            >
+              {weekCell}
+            </Popover>
+          )
         })}
       </div>
     </div>
@@ -470,14 +554,13 @@ export function ProgramScheduleWidget() {
           split={false}
           className="program-schedule-widget__event-list"
           renderItem={event => {
-            const lifecycleBg = getLifecycleBgBorder(event.lifecycleStatus, 'bg')
-            const lifecycleBorder = getLifecycleBgBorder(event.lifecycleStatus, 'border')
+            const pair = selectedDayScheduleColorMap.get(event.programId) ?? SCHEDULE_COLORS[0]
             return (
               <List.Item
                 className="program-schedule-widget__event-item"
                 style={{
-                  backgroundColor: lifecycleBg,
-                  borderColor: lifecycleBorder,
+                  backgroundColor: pair.bg,
+                  border: `1px solid ${pair.border}`,
                 }}
                 onClick={() => handleEventClick(event)}
               >

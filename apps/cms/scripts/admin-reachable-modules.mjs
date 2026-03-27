@@ -25,7 +25,6 @@ const SEED_FILES = [
   'pages/programs/program-list-page.tsx',
   'pages/programs/education-program-layout.tsx',
   'pages/programs/education-enrollment-page.tsx',
-  'pages/programs/program-detail-page.tsx',
   'pages/programs/program-form-page.tsx',
   'pages/programs/program-application-page.tsx',
   'pages/programs/program-application-complete-page.tsx',

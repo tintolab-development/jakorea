@@ -623,8 +623,7 @@
   line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
   line-height: 1.35;
   min-width: 0;
   width: 100%;
@@ -639,8 +638,7 @@
   line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
   line-height: 1.35;
   min-width: 0;
   width: 100%;
@@ -774,12 +772,11 @@
 .program-schedule-widget__event-list .ant-list-item {
   margin-block: 0;
   padding: 8px 14px;
-  border: 1px solid;
   border-radius: 6px;
   box-sizing: border-box;
-  border-block-end: none;
   cursor: pointer;
   transition: opacity 0.2s;
+  /* 테두리 색·스타일은 TS에서 SCHEDULE_COLORS.border + 1px solid 로 지정 */
 }
 
 .program-schedule-widget__event-list .ant-list-item:hover {

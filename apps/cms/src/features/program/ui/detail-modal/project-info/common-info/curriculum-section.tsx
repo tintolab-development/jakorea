@@ -4,10 +4,12 @@
  * 수정 모드: react-hook-form 연동, 기존 회차·커리큘럼 값이 default로 채워짐
  */
 
-import { Input, Radio } from 'antd'
+import { AppInput } from '@/shared/ui/app-input'
+import { AppRadio } from '@/shared/ui/app-radio'
 import type { Program, RoundDeliveryType } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
+import './curriculum-section.css'
 
 const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'online', label: '온라인' },
@@ -159,14 +161,14 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                     <td>
                       {isFormEdit ? (
                         <div className="program-detail-info-tab__curriculum-inputs">
-                          <Radio.Group
+                          <AppRadio.Group
                             value={round.deliveryType ?? 'offline'}
                             options={ROUND_DELIVERY_OPTIONS}
                             onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
                             className="program-detail-info-tab__curriculum-radio"
                           />
                           <CurriculumDivider />
-                          <Input
+                          <AppInput
                             value={duration}
                             onChange={e =>
                               updateRoundCurriculum(roundIndex, e.target.value, description)
@@ -175,7 +177,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                             className="program-detail-info-tab__curriculum-time-input"
                           />
                           <CurriculumDivider />
-                          <Input
+                          <AppInput
                             value={description}
                             onChange={e =>
                               updateRoundCurriculum(roundIndex, duration, e.target.value)

@@ -4,17 +4,53 @@
  * 강의 회차 표시: 프로그램 진행 현황 참여 기관과 동일 형식 (ParticipatingSchoolSession)
  */
 
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ReactNode } from 'react'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import type {
+  ApplicantInstitutionDetailExtend,
+  ApplicantSchoolRow,
+} from '@/data/mock/applicant-institutions'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
+import { FileSelectField } from '@/shared/ui/file-select-field'
 import './applicant-institution-basic-info.css'
 
-const SESSION_STATUS_LABELS: Record<
-  NonNullable<ParticipatingSchoolSession['status']>,
-  string
-> = {
-  completed: '진행 완료',
-  pending: '진행 대기',
-  not_planned: '미진행 희망',
+/** 담당 교사 정보 한 줄 — Tel / M / E-mail 구간만 마스킹 */
+function maskInstitutionTeacherInfoLine(text: string): string {
+  return text
+    .replace(/(Tel\s*:\s*)([\d-]+)/gi, (_, prefix: string, num: string) => {
+      const cleaned = num.replace(/\s/g, '')
+      const masked = MASKING_POLICY.phone(cleaned)
+      return prefix + (masked || num)
+    })
+    .replace(/(^|\s|\|)(M\s*:\s*)([\d-]+)/g, (_, lead: string, prefix: string, num: string) => {
+      const cleaned = num.replace(/\s/g, '')
+      const masked = MASKING_POLICY.phone(cleaned)
+      return lead + prefix + (masked || num)
+    })
+    .replace(
+      /(E-mail\s*:\s*)(\S+)/gi,
+      (_, prefix: string, em: string) => prefix + MASKING_POLICY.email(em)
+    )
+}
+
+/** detail 없을 때 `이름 | 연락처` 폴백 — 연락처만 전화 마스킹 */
+function maskInstitutionContactOnly(phone: string): string {
+  const cleaned = phone.replace(/\s/g, '')
+  return MASKING_POLICY.phone(cleaned) || phone
+}
+
+/** 성범죄 조회 요청 행: ID·검증번호 가림 */
+function maskSexOffenseCheckRequestLine(text: string): string {
+  return text
+    .replace(/\bID\s*:\s*(\S+)/gi, (_, id: string) => {
+      if (id.length <= 1) return 'ID : *'
+      return `ID : ${id[0]}***`
+    })
+    .replace(/\b검증번호\s*:\s*(\d+)/gi, (_, n: string) => {
+      if (n.length <= 2) return '검증번호 : **'
+      return `검증번호 : ${n[0]}${'*'.repeat(Math.max(0, n.length - 2))}${n[n.length - 1]}`
+    })
 }
 
 const APPROVAL_STATUS_LABELS: Record<ApplicantSchoolRow['approvalStatus'], string> = {
@@ -23,28 +59,45 @@ const APPROVAL_STATUS_LABELS: Record<ApplicantSchoolRow['approvalStatus'], strin
   rejected: '신청 반려',
 }
 
-export interface ApplicantInstitutionDetailExtend {
-  addressDetail?: string
-  educationLocation?: string
-  educationType?: string
-  textbookName?: string
-  totalHoursAndSessions?: string
-  previousYearParticipation?: string
-  affiliatedFinancialCompany?: string
-  /** 담당 교사 정보 (교사명 | Tel | M | E-mail) */
-  teacherInfo?: string
-  applicationReason?: string
-  otherRequests?: string
-  computerInSpace?: string
-  waitingRoom?: string
-  parkingInfo?: string
-  mealInfo?: string
-  sexOffenseCheckRequest?: string
-}
+export type { ApplicantInstitutionDetailExtend } from '@/data/mock/applicant-institutions'
 
 export interface ApplicantInstitutionBasicInfoProps {
   institution: ApplicantSchoolRow
   detail?: ApplicantInstitutionDetailExtend
+  /**
+   * false면 연락처·이메일 등 마스킹 없이 표시(개인정보 상세보기 후).
+   * true이고 승인 완료가 아니면 Tel/M/E-mail·조회 ID 등 마스킹.
+   */
+  maskSensitive?: boolean
+}
+
+function ProgramApprovalStatusValue({ institution }: { institution: ApplicantSchoolRow }) {
+  const status = institution.approvalStatus
+  if (status === 'pending') {
+    return <>{APPROVAL_STATUS_LABELS.pending}</>
+  }
+  if (status === 'approved') {
+    return (
+      <div className="applicant-institution-basic-info__approval-status-row">
+        <span>{APPROVAL_STATUS_LABELS.approved}</span>
+        <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+        <SendNotiButton />
+      </div>
+    )
+  }
+  if (status === 'rejected') {
+    const reason = institution.participationRejectionReason ?? '-'
+    return (
+      <div className="applicant-institution-basic-info__approval-status-row">
+        <span>참여 반려</span>
+        <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+        <span>사유 : {reason}</span>
+        <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+        <SendNotiButton />
+      </div>
+    )
+  }
+  return <>-</>
 }
 
 function TableRowTwoCols({
@@ -54,9 +107,9 @@ function TableRowTwoCols({
   value2,
 }: {
   label1: string
-  value1: string
+  value1: ReactNode
   label2: string
-  value2: string
+  value2: ReactNode
 }) {
   return (
     <tr>
@@ -79,8 +132,12 @@ function TableRowTwoCols({
 export function ApplicantInstitutionBasicInfo({
   institution,
   detail,
+  maskSensitive = true,
 }: ApplicantInstitutionBasicInfoProps) {
-  const approvalLabel = APPROVAL_STATUS_LABELS[institution.approvalStatus] ?? '-'
+  const managerComment = '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.'
+  const showManagerComment = institution.approvalStatus === 'approved'
+  const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
+
   const address = institution.region ?? '-'
   const addressDetail = detail?.addressDetail ?? '-'
   const gradeDisplay = institution.educationGrade ? `초등학교 ${institution.educationGrade}` : '-'
@@ -88,9 +145,30 @@ export function ApplicantInstitutionBasicInfo({
     institution.classCount != null && institution.studentCount != null
       ? `${institution.classCount}개 학급 | 총 ${institution.studentCount}명`
       : '-'
-  const teacherInfo =
+
+  const teacherInfoRaw =
     detail?.teacherInfo ??
     ([institution.teacherName, institution.contact].filter(Boolean).join(' | ') || '-')
+  const teacherInfo =
+    shouldMask && teacherInfoRaw !== '-'
+      ? detail?.teacherInfo
+        ? maskInstitutionTeacherInfoLine(detail.teacherInfo)
+        : (() => {
+            const parts = [institution.teacherName, institution.contact].filter(Boolean)
+            if (parts.length === 0) return '-'
+            if (parts.length === 1) return parts[0]!
+            const name = parts[0]!
+            const phone = parts[1]!
+            return `${name} | ${maskInstitutionContactOnly(phone)}`
+          })()
+      : teacherInfoRaw
+
+  const sexOffenseRequestDisplay =
+    detail?.sexOffenseCheckRequest == null || detail.sexOffenseCheckRequest === ''
+      ? '-'
+      : shouldMask
+        ? maskSexOffenseCheckRequestLine(detail.sexOffenseCheckRequest)
+        : detail.sexOffenseCheckRequest
 
   const sessions = institution.sessions ?? []
 
@@ -98,6 +176,14 @@ export function ApplicantInstitutionBasicInfo({
     <div className="applicant-institution-basic-info">
       {/* 기본 정보 */}
       <section className="applicant-institution-basic-info__section">
+        {showManagerComment ? (
+          <div className="applicant-institution-basic-info__manager-comment">
+            <div className="applicant-institution-basic-info__title">관리자 코멘트</div>
+            <div className="applicant-institution-basic-info__manager-comment-content">
+              {managerComment}
+            </div>
+          </div>
+        ) : null}
         <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
@@ -112,7 +198,7 @@ export function ApplicantInstitutionBasicInfo({
                 label1="신청 기관명"
                 value1={institution.schoolName ?? '-'}
                 label2="프로그램 승인 현황"
-                value2={approvalLabel}
+                value2={<ProgramApprovalStatusValue institution={institution} />}
               />
               <TableRowTwoCols
                 label1="기관 주소"
@@ -215,20 +301,27 @@ export function ApplicantInstitutionBasicInfo({
                 label2="식사 제공 여부 및 안내"
                 value2={detail?.mealInfo ?? '-'}
               />
-              <tr>
-                <td
-                  colSpan={1}
-                  className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label"
-                >
-                  성범죄 경력 조회서 요청
-                </td>
-                <td
-                  colSpan={3}
-                  className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-                >
-                  {detail?.sexOffenseCheckRequest ?? '-'}
-                </td>
-              </tr>
+              <TableRowTwoCols
+                label1="성범죄 경력 조회서 요청"
+                value1={sexOffenseRequestDisplay}
+                label2="성범죄 경력 조회서"
+                value2={
+                  <div className="applicant-institution-basic-info__attachment-file-select">
+                    <FileSelectField
+                      accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                      multiple
+                      disabled
+                      buttonLabel="파일 선택"
+                      fileNames={
+                        detail?.sexOffenseRecordAttachmentFileName
+                          ? [detail.sexOffenseRecordAttachmentFileName]
+                          : []
+                      }
+                      emptyPlaceholder="파일을 선택해주세요"
+                    />
+                  </div>
+                }
+              />
             </tbody>
           </table>
         </div>
@@ -256,9 +349,7 @@ export function ApplicantInstitutionBasicInfo({
                   </td>
                 </tr>
               ) : (
-                sessions.map(session => (
-                  <SessionTableRow key={session.round} session={session} />
-                ))
+                sessions.map(session => <SessionTableRow key={session.round} session={session} />)
               )}
             </tbody>
           </table>
@@ -273,14 +364,6 @@ function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
   const datePart = `${session.date.replace(/\./g, '. ')}(${session.dayOfWeek})`
   const durationFormat = `${session.duration} (${session.format})`
   const periodTime = `${session.classNum} (${session.timeRange.replace('~', ' ~ ')})`
-  const statusLabel =
-    session.status ? SESSION_STATUS_LABELS[session.status] ?? session.status : '미진행 희망'
-  const statusClass =
-    session.status === 'completed'
-      ? 'applicant-institution-basic-info__session-status--completed'
-      : session.status === 'pending'
-        ? 'applicant-institution-basic-info__session-status--pending'
-        : 'applicant-institution-basic-info__session-status--not_planned'
 
   const contentCell = isNotPlanned ? (
     '미진행 희망'
@@ -291,20 +374,12 @@ function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
       {durationFormat}
       <span className="applicant-institution-basic-info__session-divider" aria-hidden />
       {periodTime}
-      <span className="applicant-institution-basic-info__session-divider" aria-hidden />
-      <span
-        className={`applicant-institution-basic-info__session-status ${statusClass}`}
-      >
-        {statusLabel}
-      </span>
     </span>
   )
 
   return (
     <tr>
-      <td
-        className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label"
-      >
+      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
         {session.round}차시 강의
       </td>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">

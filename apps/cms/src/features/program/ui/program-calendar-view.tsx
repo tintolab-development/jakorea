@@ -82,11 +82,14 @@ function CalendarCellSchedulePreview({
   programs: Program[]
   onProgramClick: (program: Program) => void
 }) {
+  const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(programs)
+
   return (
     <div className="program-calendar-cell-preview">
       {programs.map(program => {
         const { statusLabel, time } = getProgramDayScheduleLine(program, date)
         const title = program.title ?? ''
+        const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
         return (
           <button
             key={program.id}
@@ -98,7 +101,12 @@ function CalendarCellSchedulePreview({
               onProgramClick(program)
             }}
           >
-            <span className="program-calendar-cell-preview__title">[{title}]</span>
+            <span
+              className="program-calendar-cell-preview__title"
+              style={{ color: colorPair.text }}
+            >
+              [{title}]
+            </span>
             <span className="program-calendar-cell-preview__desc">
               {statusLabel} | {time}
             </span>
@@ -334,7 +342,7 @@ export function ProgramCalendarView({
         arrow={false}
         overlayClassName="program-calendar-cell-preview-popover"
         trigger="hover"
-        placement="topLeft"
+        placement="bottomLeft"
         mouseEnterDelay={0.12}
         mouseLeaveDelay={0.08}
         getPopupContainer={() => document.body}
@@ -428,7 +436,7 @@ export function ProgramCalendarView({
                 arrow={false}
                 overlayClassName="program-calendar-cell-preview-popover"
                 trigger="hover"
-                placement="topLeft"
+                placement="bottomLeft"
                 mouseEnterDelay={0.12}
                 mouseLeaveDelay={0.08}
                 getPopupContainer={() => document.body}

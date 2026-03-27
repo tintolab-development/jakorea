@@ -19,6 +19,7 @@ import {
   type ProgramProgressStageKey,
 } from '@/shared/config/program-progress-stages'
 import type { Program, ProgramCategory, ProgramLifecycleStatus } from '@/types/domain'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 
 // Local Hooks & Components
 import { useProgramListFilters } from './use-program-list-filters'
@@ -173,10 +174,19 @@ export function ProgramListPage() {
       const program = programs.find(p => p.id === programId)
       if (program) {
         setParam('programId', null)
-        navigate(`/programs/${programId}`)
+        navigate(getProgramAdminDetailUrlFromPathname(programId, location.pathname), { replace: true })
       }
     }
-  }, [isFullPageModalPath, params.programId, user, isAuthenticated, programs, setParam, navigate])
+  }, [
+    isFullPageModalPath,
+    params.programId,
+    user,
+    isAuthenticated,
+    programs,
+    setParam,
+    navigate,
+    location.pathname,
+  ])
 
   // 5. Handlers (role/action 플래그 — statusFilter, filteredPrograms는 useProgramListFilters에서 제공)
   const isAdmin = user?.role === 'ADMIN'
@@ -210,7 +220,7 @@ export function ProgramListPage() {
 
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
-      const redirectPath = `/programs/${program.id}`
+      const redirectPath = getProgramAdminDetailUrlFromPathname(program.id, location.pathname)
       navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`)
       return
     }
@@ -236,7 +246,7 @@ export function ProgramListPage() {
       return
     }
 
-    navigate(`/programs/${program.id}`)
+    navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname))
   }
 
   const handleEdit = (program: Program) => {

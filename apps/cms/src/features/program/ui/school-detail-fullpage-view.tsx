@@ -55,7 +55,6 @@ import {
   buildSchoolCancelApprovalMessageLines,
 } from './manager-delete-guide-modal'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
-import './detail-modal/project-info/program-detail-info-tab.css'
 import './participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'

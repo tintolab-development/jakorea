@@ -7,7 +7,7 @@
 
 import type { ReactNode } from 'react'
 import { useState, useEffect } from 'react'
-import { Input } from 'antd'
+import { AppInput } from '@/shared/ui/app-input'
 import { Controller } from 'react-hook-form'
 import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
 import type { KpiMetric } from '@/features/dashboard/api/admin-dashboard-service'
@@ -163,7 +163,7 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalParticipants"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           type="number"
                           min={0}
                           {...field}
@@ -199,7 +199,7 @@ export function ProgramKpiTargetSection({
                       name="kpiInstructorCount"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           type="number"
                           min={0}
                           {...field}
@@ -219,7 +219,7 @@ export function ProgramKpiTargetSection({
                       name="kpiVolunteerCount"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           type="number"
                           min={0}
                           {...field}
@@ -258,7 +258,7 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalSchools"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           type="number"
                           min={0}
                           {...field}
@@ -293,7 +293,7 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalClasses"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
+                        <AppInput
                           type="number"
                           min={0}
                           {...field}
