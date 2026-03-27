@@ -115,6 +115,8 @@ export interface ApplicantInstructorRow {
   freeWriting3?: string
   /** 4. 교육 중 예기치 않은 상황... */
   freeWriting4?: string
+  /** 승인 완료 시 기본 정보 상단 노출 관리자 코멘트 */
+  managerComment?: string
 }
 
 const INSTRUCTOR_NAMES = [
@@ -454,6 +456,8 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
             assignedSchoolName: PREFERRED_SCHOOL_OPTIONS[0].schoolName,
           }
         : {}
+    const managerComment =
+      status === 'approved' ? '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.' : undefined
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
     const resumeSample = getResumeSample(i)
     const evaluationGrades = ['A', 'B', 'C']
@@ -490,6 +494,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       accountNumber: ACCOUNT_NUMBERS[i % ACCOUNT_NUMBERS.length],
       accountHolder: name,
       preferredSchools,
+      managerComment,
       ...resumeSample,
     })
   }

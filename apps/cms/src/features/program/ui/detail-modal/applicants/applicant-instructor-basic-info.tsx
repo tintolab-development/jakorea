@@ -6,12 +6,42 @@
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import './applicant-instructor-basic-info.css'
 
 const APPROVAL_STATUS_LABELS: Record<ApplicantInstructorRow['approvalStatus'], string> = {
   pending: '대기 중',
   approved: '승인 완료',
   rejected: '참여 반려',
+}
+
+function ProgramApprovalStatusValue({ instructor }: { instructor: ApplicantInstructorRow }) {
+  const status = instructor.approvalStatus
+  if (status === 'pending') {
+    return <>{APPROVAL_STATUS_LABELS.pending}</>
+  }
+  if (status === 'approved') {
+    return (
+      <div className="applicant-instructor-basic-info__approval-status-row">
+        <span>{APPROVAL_STATUS_LABELS.approved}</span>
+        <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
+        <SendNotiButton />
+      </div>
+    )
+  }
+  if (status === 'rejected') {
+    const reason = instructor.rejectionReason ?? '-'
+    return (
+      <div className="applicant-instructor-basic-info__approval-status-row">
+        <span>{APPROVAL_STATUS_LABELS.rejected}</span>
+        <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
+        <span>사유 : {reason}</span>
+        <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
+        <SendNotiButton />
+      </div>
+    )
+  }
+  return <>-</>
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
@@ -101,6 +131,8 @@ export function ApplicantInstructorBasicInfo({
   instructor,
   maskSensitive = true,
 }: ApplicantInstructorBasicInfoProps) {
+  const managerComment = instructor.managerComment
+  const showManagerComment = instructor.approvalStatus === 'approved' && !!managerComment
   const mask = maskSensitive && instructor.approvalStatus !== 'approved'
   const contactDisplay = instructor.contact
     ? mask
@@ -144,11 +176,19 @@ export function ApplicantInstructorBasicInfo({
       instructor.instructorName
     )
 
-  const approvalStatusLabel = APPROVAL_STATUS_LABELS[instructor.approvalStatus] ?? '-'
-
   return (
     <section className="applicant-instructor-basic-info">
-      <h3 className="applicant-instructor-basic-info__title">기본 정보</h3>
+      {showManagerComment ? (
+        <div className="applicant-instructor-basic-info__manager-comment">
+          <div className="applicant-instructor-basic-info__manager-comment-title">
+            관리자 코멘트
+          </div>
+          <div className="applicant-instructor-basic-info__manager-comment-content">
+            {managerComment}
+          </div>
+        </div>
+      ) : null}
+      <div className="applicant-instructor-basic-info__title">기본 정보</div>
       <div className="applicant-instructor-basic-info__table-wrap">
         <table className="applicant-instructor-basic-info__table">
           <colgroup>
@@ -176,7 +216,7 @@ export function ApplicantInstructorBasicInfo({
                 프로그램 승인 현황
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {approvalStatusLabel}
+                <ProgramApprovalStatusValue instructor={instructor} />
               </td>
             </tr>
             <tr>

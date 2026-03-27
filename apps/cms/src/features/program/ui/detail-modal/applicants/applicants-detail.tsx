@@ -41,9 +41,11 @@ const DETAIL_TAB_PARAM = 'detailTab'
 
 export interface ApplicantDetailsProps {
   menu: TabKey | ''
+  /** 풀페이지 모달 X: 상세가 열려 있으면 목록으로만 돌아가도록 등록 (true면 모달은 닫지 않음) */
+  onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
 }
 
-export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
+export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: ApplicantDetailsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   // 필터 상태 관리
   const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({})
@@ -61,6 +63,21 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
   const [selectedItem, setSelectedItem] = useState<
     ApplicantSchoolRow | ApplicantInstructorRow | null
   >(null)
+  const selectedItemRef = useRef(selectedItem)
+  selectedItemRef.current = selectedItem
+
+  useEffect(() => {
+    if (!onRegisterApplicantCloseHandler) return
+    const handler = () => {
+      if (selectedItemRef.current) {
+        setSelectedItem(null)
+        return true
+      }
+      return false
+    }
+    onRegisterApplicantCloseHandler(handler)
+    return () => onRegisterApplicantCloseHandler(null)
+  }, [onRegisterApplicantCloseHandler])
 
   // 뷰 모드 상태 관리
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
@@ -241,7 +258,7 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
       {
         title: '강의 회차 별 희망 교육 날짜 및 시간',
         key: 'sessions',
-        width: 520,
+        width: 480,
         onCell: () => ({ className: 'applicant-details__td-sessions' }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
           const sessions = record.sessions ?? []
@@ -255,7 +272,6 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
                 const { datePart, durationPart, periodPart } = getSessionLineParts(s)
                 return (
                   <div key={s.round} className="applicant-details__session-line">
-                    <span className="applicant-details__session-round-tag">{s.round}차시</span>
                     {datePart}
                     <span className="applicant-details__session-divider" aria-hidden />
                     {durationPart}
@@ -502,6 +518,19 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
     message.success('반려가 취소되었습니다.')
   }
 
+  const handleCancelRejectInstitution = (id: string) => {
+    setInstitutionList(prev =>
+      prev.map(row => (row.id === id ? { ...row, approvalStatus: 'pending' as const } : row))
+    )
+    setSelectedItem(prev =>
+      prev && 'schoolName' in prev && prev.id === id
+        ? { ...prev, approvalStatus: 'pending' as const }
+        : prev
+    )
+    updateApplicantSchoolApprovalStatus(id, 'pending')
+    message.success('반려가 취소되었습니다.')
+  }
+
   const handleViewCalendar = () => {
     setViewMode('calendar')
   }
@@ -726,7 +755,13 @@ export function ApplicantDetails({ menu }: ApplicantDetailsProps) {
                 ? handleCancelApprovalInstructor
                 : undefined
           }
-          onCancelReject={menu === 'instructors' ? handleCancelRejectInstructor : undefined}
+          onCancelReject={
+            menu === 'instructors'
+              ? handleCancelRejectInstructor
+              : menu === 'institutions'
+                ? handleCancelRejectInstitution
+                : undefined
+          }
         />
       ) : (
         <>

@@ -135,9 +135,14 @@
   min-width: 400px !important;
 }
 
-.program-detail-info-tab__separator {
+/* 구분자 | 텍스트 — 공통 (색·양쪽 패딩) */
+.program-detail-info-tab__separator,
+.program-detail-info-tab__contact-divider {
   color: #9d9d9d;
   padding: 0 6px;
+  font-weight: 400;
+  user-select: none;
+  flex-shrink: 0;
 }
 
 /* 값 셀: 흰색 배경, 검정 텍스트 */
@@ -719,13 +724,6 @@
   min-width: 180px;
   max-width: 280px;
   border-radius: 6px;
-}
-
-.program-detail-info-tab__contact-divider {
-  color: var(--color-border);
-  font-weight: 400;
-  user-select: none;
-  padding: 0 4px;
 }
 
 /* 문의처 행: 문의처명 | Tel 입력 | E-mail 입력 (레이블·구분선 디자인 시안) */

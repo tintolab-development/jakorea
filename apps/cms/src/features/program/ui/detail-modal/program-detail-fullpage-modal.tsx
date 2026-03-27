@@ -4,7 +4,7 @@
  * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
  */
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
@@ -252,6 +252,19 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
+  const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+
+  const handleHeaderCloseClick = () => {
+    if (schoolIdFromUrl) {
+      setSchoolId(null)
+      return
+    }
+    if (activeLnb === 'applicants' && applicantCloseHandlerRef.current?.()) {
+      return
+    }
+    onClose()
+  }
+
   const setActiveTab = (key: TabKey) => {
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'info')
@@ -488,7 +501,7 @@ export function ProgramDetailFullPageModal({
             <button
               type="button"
               className="program-detail-fullpage-modal__close"
-              onClick={schoolIdFromUrl ? () => setSchoolId(null) : onClose}
+              onClick={handleHeaderCloseClick}
               aria-label={schoolIdFromUrl ? '목록으로' : '닫기'}
             >
               <CloseOutlined />
@@ -533,7 +546,14 @@ export function ProgramDetailFullPageModal({
                   />
                 )}
 
-                {activeLnb === 'applicants' && <ApplicantDetails menu={activeChildMenu} />}
+                {activeLnb === 'applicants' && (
+                  <ApplicantDetails
+                    menu={activeChildMenu}
+                    onRegisterApplicantCloseHandler={fn => {
+                      applicantCloseHandlerRef.current = fn
+                    }}
+                  />
+                )}
 
                 {activeLnb === 'managers' && displayProgram?.id && (
                   <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">

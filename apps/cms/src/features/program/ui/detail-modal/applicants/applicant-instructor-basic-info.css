@@ -4,12 +4,47 @@
  * 라벨: 연한 회색 배경·가운데 정렬, 값: 흰색 배경·좌측 정렬, 구분선 #E0E0E0
  */
 
+.applicant-instructor-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .applicant-instructor-basic-info__title {
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 18px;
   font-weight: 700;
   line-height: 140%;
   color: #3d3d3d;
+}
+
+.applicant-instructor-basic-info__manager-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.applicant-instructor-basic-info__manager-comment-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+.applicant-instructor-basic-info__manager-comment-content {
+  display: flex;
+  padding: 20px 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 /**
@@ -41,7 +76,10 @@
 }
 
 /* 외곽 한 줄은 래퍼 border만 보이도록 (곡선 구간 색 끊김 방지) */
-.applicant-instructor-basic-info__table tbody tr:first-child .applicant-instructor-basic-info__cell {
+.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell {
   border-top: none;
 }
 
@@ -53,11 +91,17 @@
   border-right: none;
 }
 
-.applicant-instructor-basic-info__table tbody tr:first-child .applicant-instructor-basic-info__cell:first-child {
+.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell:first-child {
   border-left: none;
 }
 
-.applicant-instructor-basic-info__table tbody tr:nth-child(n + 3) .applicant-instructor-basic-info__cell:first-child {
+.applicant-instructor-basic-info__table
+  tbody
+  tr:nth-child(n + 3)
+  .applicant-instructor-basic-info__cell:first-child {
   border-left: none;
 }
 
@@ -84,6 +128,22 @@
   font-size: 16px;
   font-weight: 500;
   line-height: 140%;
+}
+
+/* 프로그램 승인 현황: 승인·참여 반려 + 알림 발송 (기관 상세와 동일 한 줄) */
+.applicant-instructor-basic-info__approval-status-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.applicant-instructor-basic-info__approval-status-vbar {
+  width: 1px;
+  height: 13px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
 }
 
 /* 자택 주소: 읍·면·동(행정동)까지 표시, 이후 구간 블러 */

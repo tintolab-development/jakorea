@@ -285,7 +285,7 @@ export function ParticipantRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__date-separator">|</span>
+                    <span className="program-detail-info-tab__separator"> | </span>
                     <Controller
                       name="resultAnnouncementMethod"
                       control={form.control}
@@ -707,8 +707,9 @@ export function InstructorRecruitmentSection({
                           />
                         )}
                       />
-                      <span className="program-detail-info-tab__date-separator" aria-hidden="true">
-                        |
+                      <span className="program-detail-info-tab__separator" aria-hidden="true">
+                        {' '}
+                        |{' '}
                       </span>
                       <Controller
                         name="interviewMethod"
@@ -1125,8 +1126,9 @@ export function VolunteerRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__date-separator" aria-hidden="true">
-                      |
+                    <span className="program-detail-info-tab__separator" aria-hidden="true">
+                      {' '}
+                      |{' '}
                     </span>
                     <Controller
                       name="interviewMethod"

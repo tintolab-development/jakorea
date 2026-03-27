@@ -1,7 +1,7 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Tabs, Space, Empty } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { AppButton, type AppButtonSize, type AppButtonVariant } from '@/shared/ui/app-button'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
@@ -28,6 +28,151 @@ function parseDetailTabFromSearch(searchParams: URLSearchParams, type: Applicant
   return 'info'
 }
 
+type ApplicantHeaderActionItem = {
+  key: string
+  variant: AppButtonVariant
+  label: string
+  disabled?: boolean
+  onClick?: () => void
+  /** 기본 `filter` — 개인정보 상세보기 등은 `filter-wide` */
+  size?: AppButtonSize
+}
+
+function ApplicantHeaderActionsExtra({ items }: { items: ApplicantHeaderActionItem[] }) {
+  return (
+    <Space size="small" className="applicant-contents__header-actions">
+      {items.map(a => (
+        <AppButton
+          key={a.key}
+          variant={a.variant}
+          size={a.size ?? 'filter'}
+          disabled={a.disabled}
+          onClick={a.onClick}
+        >
+          {a.label}
+        </AppButton>
+      ))}
+    </Space>
+  )
+}
+
+/** 클릭 시 신청자 상세 화면에서 마스킹된 개인정보를 원문 그대로 표시 */
+function headerBtnPrivacy(onRevealPersonalInfo: () => void): ApplicantHeaderActionItem {
+  return {
+    key: 'privacy',
+    variant: 'primary',
+    label: '개인정보 상세보기',
+    size: 'filter-wide',
+    onClick: onRevealPersonalInfo,
+  }
+}
+
+function headerBtnCancelApproval(
+  applicantId: string,
+  onCancelApproval?: (id: string) => void
+): ApplicantHeaderActionItem {
+  return {
+    key: 'cancel-approval',
+    variant: 'danger',
+    label: '승인 취소',
+    disabled: !onCancelApproval,
+    onClick: () => onCancelApproval?.(applicantId),
+  }
+}
+
+function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
+  return {
+    key: 'edit-info',
+    variant: 'primary',
+    label: '정보 수정',
+    disabled: true,
+  }
+}
+
+function headerBtnCancelReject(
+  applicantId: string,
+  onCancelReject?: (id: string) => void
+): ApplicantHeaderActionItem {
+  return {
+    key: 'cancel-reject',
+    variant: 'danger',
+    label: '반려 취소',
+    disabled: !onCancelReject,
+    onClick: () => onCancelReject?.(applicantId),
+  }
+}
+
+function headerBtnsPendingParticipation(
+  applicantId: string,
+  onApprove: (id: string) => void,
+  onReject: (id: string) => void,
+  onRevealPersonalInfo: () => void
+): ApplicantHeaderActionItem[] {
+  return [
+    {
+      key: 'reject',
+      variant: 'danger',
+      label: '참여 반려',
+      onClick: () => onReject(applicantId),
+    },
+    {
+      key: 'approve',
+      variant: 'cancel',
+      label: '참여 승인',
+      onClick: () => onApprove(applicantId),
+    },
+    headerBtnPrivacy(onRevealPersonalInfo),
+  ]
+}
+
+function resolveApplicantHeaderItems(params: {
+  applicantId: string
+  isApprovedInstitution: boolean
+  isApprovedInstructor: boolean
+  isRejectedInstitution: boolean
+  isRejectedInstructor: boolean
+  isInstitution: boolean
+  isInstructor: boolean
+  onRevealPersonalInfo: () => void
+  onApprove: (id: string) => void
+  onReject: (id: string) => void
+  onCancelApproval?: (id: string) => void
+  onCancelReject?: (id: string) => void
+}): ApplicantHeaderActionItem[] | null {
+  const {
+    applicantId,
+    isApprovedInstitution,
+    isApprovedInstructor,
+    isRejectedInstitution,
+    isRejectedInstructor,
+    isInstitution,
+    isInstructor,
+    onRevealPersonalInfo,
+    onApprove,
+    onReject,
+    onCancelApproval,
+    onCancelReject,
+  } = params
+
+  if (isApprovedInstitution) {
+    return [
+      headerBtnCancelApproval(applicantId, onCancelApproval),
+      headerBtnEditInfoDisabled(),
+      headerBtnPrivacy(onRevealPersonalInfo),
+    ]
+  }
+  if (isApprovedInstructor) {
+    return [headerBtnCancelApproval(applicantId, onCancelApproval), headerBtnPrivacy(onRevealPersonalInfo)]
+  }
+  if (isRejectedInstructor || isRejectedInstitution) {
+    return [headerBtnCancelReject(applicantId, onCancelReject), headerBtnPrivacy(onRevealPersonalInfo)]
+  }
+  if (isInstitution || isInstructor) {
+    return headerBtnsPendingParticipation(applicantId, onApprove, onReject, onRevealPersonalInfo)
+  }
+  return null
+}
+
 interface ApplicantsDetailContentsProps {
   type: ApplicantType
   data: ApplicantSchoolRow | ApplicantInstructorRow
@@ -43,7 +188,7 @@ interface ApplicantsDetailContentsProps {
 export function ApplicantsDetailContents({
   type,
   data,
-  onBack,
+  onBack: _onBack,
   onApprove,
   onReject,
   onCancelApproval,
@@ -76,152 +221,130 @@ export function ApplicantsDetailContents({
   const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
 
-  /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [정보상세 보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
-
-  /** 신청 강사 승인 완료: [승인 취소] [정보상세 보기] */
   const isApprovedInstructor = isInstructor && instructorData?.approvalStatus === 'approved'
-
-  /** 신청 기관 반려: [반려 취소] [정보상세 보기] */
   const isRejectedInstitution = isInstitution && institutionData?.approvalStatus === 'rejected'
-
-  /** 신청 강사 반려: [반려 취소] [정보상세 보기] */
   const isRejectedInstructor = isInstructor && instructorData?.approvalStatus === 'rejected'
 
-  const renderInstitutionInfo = () => {
-    if (!institutionData) return null
-    return <ApplicantInstitutionBasicInfo institution={institutionData} />
-  }
+  const applicantId = data.id
 
-  const renderInstitutionStudentList = () => {
-    if (!institutionData) return null
-    return (
-      <div className="extra-tab-content applicant-contents__student-list-tab">
-        <SchoolDetailStudentListSection
-          schoolId={institutionData.id}
-          studentCount={institutionData.studentCount}
-          readOnly={false}
-          onViewDetail={() => {}}
-          onSaveEdit={() => {}}
-        />
-      </div>
-    )
-  }
+  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
 
-  const renderInstructorInfo = () => {
-    if (!instructorData) return null
+  useEffect(() => {
+    setPersonalInfoRevealed(false)
+  }, [applicantId])
+
+  const onRevealPersonalInfo = useCallback(() => {
+    setPersonalInfoRevealed(true)
+  }, [])
+
+  const headerExtraContent = useMemo(() => {
+    const items = resolveApplicantHeaderItems({
+      applicantId,
+      isApprovedInstitution,
+      isApprovedInstructor,
+      isRejectedInstitution,
+      isRejectedInstructor,
+      isInstitution,
+      isInstructor,
+      onRevealPersonalInfo,
+      onApprove,
+      onReject,
+      onCancelApproval,
+      onCancelReject,
+    })
+    if (!items) return null
+    return <ApplicantHeaderActionsExtra items={items} />
+  }, [
+    applicantId,
+    isApprovedInstitution,
+    isApprovedInstructor,
+    isRejectedInstitution,
+    isRejectedInstructor,
+    isInstitution,
+    isInstructor,
+    onRevealPersonalInfo,
+    onApprove,
+    onReject,
+    onCancelApproval,
+    onCancelReject,
+  ])
+
+  const institutionTabItems = useMemo(() => {
+    if (!institutionData) return []
+    const d = institutionData
+    return [
+      {
+        key: 'info',
+        label: '기본 정보',
+        children: (
+          <ApplicantInstitutionBasicInfo
+            institution={d}
+            detail={d.detail}
+            maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+          />
+        ),
+      },
+      {
+        key: 'students',
+        label: '학생 명단',
+        children: (
+          <div className="extra-tab-content applicant-contents__student-list-tab">
+            <SchoolDetailStudentListSection
+              schoolId={d.id}
+              studentCount={d.studentCount}
+              readOnly={false}
+              onViewDetail={() => {}}
+              onSaveEdit={() => {}}
+            />
+          </div>
+        ),
+        disabled: true,
+      },
+      {
+        key: 'assign',
+        label: '강사 배정 현황',
+        children: <ApplicantInstitutionInstructorAssignTab schoolName={d.schoolName} />,
+        disabled: true,
+      },
+    ]
+  }, [institutionData, personalInfoRevealed])
+
+  const instructorTabItems = useMemo(() => {
+    if (!instructorData) return []
     const d = instructorData
-    return (
-      <div className="applicant-info-section applicant-info-section--instructor">
-        <ApplicantInstructorBasicInfo
-          instructor={d}
-          maskSensitive={d.approvalStatus !== 'approved'}
-        />
-        <ApplicantInstructorResume instructor={d} />
-      </div>
-    )
-  }
-
-  const renderInstructorResumeTab = () => {
-    return (
-      <div className="extra-tab-content">
-        <div className="section-header">
-          <h3 className="section-title">강사 이력서</h3>
-        </div>
-        <div className="resume-placeholder">
-          <Empty description="강사 이력서 내용이 없습니다." />
-        </div>
-      </div>
-    )
-  }
-
-  const renderHeaderButtons = () => {
-    if (isApprovedInstitution) {
-      return (
-        <Space size="small" className="applicant-contents__header-actions">
-          <AppButton
-            variant="danger"
-            onClick={() => onCancelApproval?.(data.id)}
-            disabled={!onCancelApproval}
-            size="filter"
-          >
-            승인 취소
-          </AppButton>
-          <AppButton variant="primary" size="filter" disabled>
-            정보 수정
-          </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
-          </AppButton>
-        </Space>
-      )
-    }
-    if (isApprovedInstructor) {
-      return (
-        <Space size="small" className="applicant-contents__header-actions">
-          <AppButton
-            variant="danger"
-            onClick={() => onCancelApproval?.(data.id)}
-            disabled={!onCancelApproval}
-            size="filter"
-          >
-            승인 취소
-          </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
-          </AppButton>
-        </Space>
-      )
-    }
-    if (isRejectedInstructor || isRejectedInstitution) {
-      return (
-        <Space size="small" className="applicant-contents__header-actions">
-          <AppButton
-            variant="danger"
-            onClick={() => onCancelReject?.(data.id)}
-            disabled={!onCancelReject}
-            size="filter"
-          >
-            반려 취소
-          </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
-          </AppButton>
-        </Space>
-      )
-    }
-    if (isInstitution) {
-      return (
-        <Space size="small" className="applicant-contents__header-actions">
-          <AppButton variant="danger" size="filter" onClick={() => onReject(data.id)}>
-            참여 반려
-          </AppButton>
-          <AppButton variant="cancel" size="filter" onClick={() => onApprove(data.id)}>
-            참여 승인
-          </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
-          </AppButton>
-        </Space>
-      )
-    }
-    if (isInstructor) {
-      return (
-        <Space size="small" className="applicant-contents__header-actions">
-          <AppButton variant="danger" size="filter" onClick={() => onReject(data.id)}>
-            참여 반려
-          </AppButton>
-          <AppButton variant="cancel" size="filter" onClick={() => onApprove(data.id)}>
-            참여 승인
-          </AppButton>
-          <AppButton variant="primary" size="filter" onClick={onBack}>
-            정보상세 보기
-          </AppButton>
-        </Space>
-      )
-    }
-    return null
-  }
+    return [
+      {
+        key: 'info',
+        label: '기본 정보',
+        children: (
+          <div className="applicant-info-section applicant-info-section--instructor">
+            <ApplicantInstructorBasicInfo
+              instructor={d}
+              maskSensitive={
+                !personalInfoRevealed && d.approvalStatus !== 'approved'
+              }
+            />
+            <ApplicantInstructorResume instructor={d} />
+          </div>
+        ),
+      },
+      {
+        key: 'extra',
+        label: '강사 이력서',
+        children: (
+          <div className="extra-tab-content">
+            <div className="section-header">
+              <h3 className="section-title">강사 이력서</h3>
+            </div>
+            <div className="resume-placeholder">
+              <Empty description="강사 이력서 내용이 없습니다." />
+            </div>
+          </div>
+        ),
+      },
+    ]
+  }, [instructorData, personalInfoRevealed])
 
   if (isVolunteer) {
     return (
@@ -247,44 +370,6 @@ export function ApplicantsDetailContents({
     )
   }
 
-  const institutionTabItems =
-    institutionData != null
-      ? [
-          {
-            key: 'info',
-            label: '기본 정보',
-            children: renderInstitutionInfo(),
-          },
-          {
-            key: 'students',
-            label: '학생 명단',
-            children: renderInstitutionStudentList(),
-            disabled: true,
-          },
-          {
-            key: 'assign',
-            label: '강사 배정 현황',
-            children: (
-              <ApplicantInstitutionInstructorAssignTab schoolName={institutionData.schoolName} />
-            ),
-            disabled: true,
-          },
-        ]
-      : []
-
-  const instructorTabItems = [
-    {
-      key: 'info',
-      label: '기본 정보',
-      children: renderInstructorInfo(),
-    },
-    {
-      key: 'extra',
-      label: '강사 이력서',
-      children: renderInstructorResumeTab(),
-    },
-  ]
-
   return (
     <div className="applicant-contents">
       <div className="applicant-contents__tabs-wrap">
@@ -292,7 +377,7 @@ export function ApplicantsDetailContents({
           activeKey={activeTab}
           onChange={setActiveTab}
           className="applicant-contents__tabs"
-          tabBarExtraContent={renderHeaderButtons()}
+          tabBarExtraContent={headerExtraContent}
           items={isInstitution ? institutionTabItems : instructorTabItems}
         />
       </div>
