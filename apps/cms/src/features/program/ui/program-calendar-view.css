@@ -205,10 +205,15 @@
   border: 1px solid #d4d4d4;
   background: #fff;
   box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  width: 333px;
 }
 
 .program-calendar-cell-preview-popover .ant-popover-inner-content {
   padding: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .program-calendar-cell-preview {
