@@ -187,7 +187,7 @@
 - `shared/components/app-status-badge.tsx`
 - `shared/components/approval-status-badge.tsx`
 - `shared/components/divider.tsx`
-- `shared/components/profile-avatar-icon.tsx`
+- `shared/ui/icons/ProfileAvatarIcon.tsx`
 - `shared/components/program-lifecycle-status-badge.tsx`
 - `shared/components/program-lifecycle-status-text.tsx`
 - `shared/components/schedule-change-history-badge.tsx`
@@ -449,7 +449,7 @@
 
 ### `shared/components/`
 
-- `shared/components/google-mark-icon.tsx`
+- `shared/ui/icons/GoogleMarkIcon.tsx`
 - `shared/components/interview-status-badge.tsx`
 - `shared/components/permission-button.tsx`
 - `shared/components/program-category-badge.tsx`
