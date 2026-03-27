@@ -32,6 +32,7 @@ import {
 } from '@/data/mock/applicant-instructors'
 import { ApplicantCalendarView } from './applicant-calendar-view'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
+import { ApplicationApprovalModal } from '../components/application-approval-modal'
 import './applicants-detail.css'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Divider } from '@/shared/components/divider'
@@ -88,6 +89,18 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
   // 프로그램 승인 현황 드롭다운 열림 상태 (participating-institutions-section과 동일 스타일)
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
 
+  /** 강사 탭: 헤더 참여 승인 클릭 시 강사비 책정 모달 */
+  const [instructorApprovalTarget, setInstructorApprovalTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (!selectedItem) {
+      setInstructorApprovalTarget(null)
+    }
+  }, [selectedItem])
+
   // 메뉴 변경 시에만 상태 초기화 + URL에서 applicantId/detailTab 제거 (초기 마운트 시 복원 방지)
   const prevMenuRef = useRef<TabKey | ''>(menu)
   useEffect(() => {
@@ -98,6 +111,7 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
       setSelectedRowKeys([])
       setSelectedItem(null)
       setOpenApprovalDropdownId(null)
+      setInstructorApprovalTarget(null)
       const next = new URLSearchParams(searchParams)
       if (next.has(APPLICANT_ID_PARAM)) {
         next.delete(APPLICANT_ID_PARAM)
@@ -709,18 +723,10 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
               message.success('승인되었습니다.')
               setSelectedItem(null)
             } else if (menu === 'instructors') {
-              setInstructorList(prev =>
-                prev.map(row =>
-                  row.id === id ? { ...row, approvalStatus: 'approved' as const } : row
-                )
-              )
-              setSelectedItem(prev =>
-                prev && 'instructorName' in prev && prev.id === id
-                  ? { ...prev, approvalStatus: 'approved' as const }
-                  : prev
-              )
-              updateApplicantInstructorApprovalStatus(id, 'approved')
-              message.success('참여 승인되었습니다.')
+              const row = selectedItem
+              if (row && 'instructorName' in row && row.id === id) {
+                setInstructorApprovalTarget({ id, name: row.instructorName })
+              }
             }
           }}
           onReject={id => {
@@ -763,7 +769,30 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
                 : undefined
           }
         />
-      ) : (
+      ) : null}
+      <ApplicationApprovalModal
+        open={instructorApprovalTarget != null && menu === 'instructors'}
+        instructorName={instructorApprovalTarget?.name ?? ''}
+        onCancel={() => setInstructorApprovalTarget(null)}
+        onConfirm={() => {
+          if (!instructorApprovalTarget) return
+          const { id } = instructorApprovalTarget
+          setInstructorApprovalTarget(null)
+          setInstructorList(prev =>
+            prev.map(row =>
+              row.id === id ? { ...row, approvalStatus: 'approved' as const } : row
+            )
+          )
+          setSelectedItem(prev =>
+            prev && 'instructorName' in prev && prev.id === id
+              ? { ...prev, approvalStatus: 'approved' as const }
+              : prev
+          )
+          updateApplicantInstructorApprovalStatus(id, 'approved')
+          message.success('참여 승인되었습니다.')
+        }}
+      />
+      {!selectedItem ? (
         <>
           {fields.length > 0 && (
             <UnifiedFilterCard
@@ -865,7 +894,7 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
             </div>
           )}
         </>
-      )}
+      ) : null}
     </div>
   )
 }
