@@ -427,6 +427,7 @@ export function EnrollmentProgramDetailPostsTab({
         onCancel={() => setDetailPost(null)}
         post={detailPost}
         files={detailPost ? allFiles.filter(f => f.postId === detailPost.id) : []}
+        onPostStatsChanged={() => setPostsVersion(v => v + 1)}
       />
     </div>
   )
