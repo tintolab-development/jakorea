@@ -217,6 +217,34 @@
   gap: 8px;
 }
 
+/* 본인 행: 반응 취소 클릭은 이모지 버튼에만 (행 전체 button 사용 시 레이아웃 깨짐 방지) */
+.post-detail-modal__reaction-user-emoji-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  box-sizing: border-box;
+  line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.post-detail-modal__reaction-user-emoji-btn:hover {
+  background: rgba(1, 161, 175, 0.12);
+}
+
+.post-detail-modal__reaction-user-emoji-btn:focus-visible {
+  outline: 2px solid var(--color-primary, #01a1af);
+  outline-offset: 2px;
+}
+
 .post-detail-modal__reaction-user-avatar {
   width: 30px;
   height: 30px;
@@ -230,9 +258,13 @@
   flex: 1;
 }
 
+/* 남겨진 이모지 모달(반응 목록) — 최소 너비만, 말줄임은 3글자 초과 시(JS)만 */
 .post-detail-modal__reaction-user-name {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  min-width: 34px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
   white-space: nowrap;
   word-break: keep-all;
   color: var(--default-BK, #3d3d3d);
@@ -436,6 +468,8 @@
   color: var(--color-text-primary, #3d3d3d);
   line-height: 1.5;
   margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ── 댓글 입력 ──────────────────────────────────── */
@@ -562,39 +596,29 @@
 .post-detail-modal__emoji-popover .ant-popover-inner {
   overflow: visible;
   padding: 0;
+  max-width: none;
+  width: max-content;
   background: transparent !important;
   box-shadow: none !important;
-  border-radius: 10px;
+  border-radius: 8px;
+}
+
+.post-detail-modal__emoji-popover .ant-popover-inner-content {
+  padding: 0;
 }
 
 .post-detail-modal__emoji-popover .ant-popover-content {
   overflow: visible;
 }
 
-/* 이모티콘 피커 카드 267×290 (기본), 안쪽 바는 줄바꿈 그리드 */
+/* 댓글 이모지 피커: 528×60, 단일 카드 (Figma 머지 스펙) */
 .post-detail-modal__emoji-picker-panel {
   box-sizing: border-box;
-  width: 267px;
-  min-height: 290px;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #d4d4d4;
-  background: var(--default-WT, #fff);
-  box-shadow: 0 4px 24px 0 rgba(32, 32, 33, 0.16);
+  width: 528px;
+  height: 60px;
+  padding: 10px 14px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.post-detail-modal__emoji-bar {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 10px 8px;
+  align-items: flex-start;
   gap: 6px;
   border-radius: 8px;
   border: 1px solid var(--JA-mint-01, #01a1af);
@@ -602,6 +626,21 @@
   box-shadow:
     0 0 4px 0 rgba(0, 136, 148, 0.06),
     0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
+.post-detail-modal__emoji-bar {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
   overflow: visible;
 }
 
