@@ -689,6 +689,28 @@ export interface ProgramPostReaction {
   count: number
 }
 
+// 프로그램 게시글 반응 사용자 row (게시글 상세 — 반응 상세 팝업)
+export interface ProgramPostReactionUser {
+  id: UUID
+  postId: UUID
+  authorName: string
+  roleLabel: string
+  /** 이모지 타입 (post-detail-emoji-bar-icons 순서 기반 키) */
+  emojiType: string
+  createdAt: DateValue
+}
+
+/** 게시글 읽음/안읽음 뷰어 팝업 행 (프로그램·학교 범위 할당 인원 기준) */
+export interface ProgramPostReadRow {
+  id: UUID
+  postId: UUID
+  displayName: string
+  roleLabel: string
+  hasRead: boolean
+  /** 읽음 처리 시각 (mock: hasRead일 때만 결정론적 값) */
+  readAt?: DateValue
+}
+
 // 프로그램 첨부 파일 (수강 프로그램 상세 모달 — 파일 및 사진 탭)
 export interface ProgramFile {
   id: UUID
