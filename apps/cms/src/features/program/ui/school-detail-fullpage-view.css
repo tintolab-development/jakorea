@@ -45,6 +45,12 @@
 }
 
 /* 게시글 탭: 2컬럼이 content 영역 높이를 채우도록 */
+.school-detail-fullpage-view__tab-placeholder {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
 .school-detail-fullpage-view__posts-tab-wrap {
   flex: 1;
   min-height: 0;

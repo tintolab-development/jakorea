@@ -1,6 +1,6 @@
 /**
  * 교육기관 상세 풀페이지 인라인 뷰
- * LNB 제외 메인 영역에서만 렌더. 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 게시글
+ * LNB 제외 메인 영역에서만 렌더. 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 출석 관리 | 과제 관리 | 게시글
  * 액션: 승인 취소 | 정보 수정 | 개인정보 상세보기
  */
 
@@ -61,13 +61,22 @@ import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
 
-const SCHOOL_DETAIL_TAB_KEYS = ['application', 'students', 'instructors', 'posts'] as const
+export const SCHOOL_DETAIL_TAB_KEYS = [
+  'application',
+  'students',
+  'instructors',
+  'attendance',
+  'assignments',
+  'posts',
+] as const
 export type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS)[number]
 
 const SCHOOL_DETAIL_TAB_LABELS: Record<SchoolDetailTabKey, string> = {
   application: '신청 정보',
   students: '학생 명단',
   instructors: '강사 배정 현황',
+  attendance: '출석 관리',
+  assignments: '과제 관리',
   posts: '게시글',
 }
 
@@ -809,6 +818,18 @@ export function SchoolDetailFullpageView({
               onViewDetail={() => {}}
               onSaveEdit={() => {}}
             />
+          </div>
+        )}
+
+        {activeTab === 'attendance' && (
+          <div className="program-detail-fullpage-modal__info-tab">
+            <p className="school-detail-fullpage-view__tab-placeholder">출석 관리 화면은 준비 중입니다.</p>
+          </div>
+        )}
+
+        {activeTab === 'assignments' && (
+          <div className="program-detail-fullpage-modal__info-tab">
+            <p className="school-detail-fullpage-view__tab-placeholder">과제 관리 화면은 준비 중입니다.</p>
           </div>
         )}
 

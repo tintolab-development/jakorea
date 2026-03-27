@@ -14,6 +14,10 @@ import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-fo
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
 import { MESSAGES } from '@/shared/constants'
 import { ParticipatingInstitutionsSection } from '../participating-institutions-section'
+import {
+  SCHOOL_DETAIL_TAB_KEYS,
+  type SchoolDetailTabKey,
+} from '../school-detail-fullpage-view'
 import { ParticipatingInstructorsSection } from '../participating-instructors-section'
 import { ApplicantDetails } from './applicants/applicants-detail'
 import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
@@ -45,14 +49,10 @@ const SUB_TAB_PARAM = 'subTab'
  */
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
 
-/** 학교 상세 뷰 내 탭(신청 정보 | 학생 명단 | 강사 배정 현황 | 게시글) */
-const SCHOOL_DETAIL_TAB_KEYS_READONLY = ['application', 'students', 'instructors', 'posts'] as const
-type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS_READONLY)[number]
-
+/** 학교 상세 뷰 내 탭 — 키 목록은 `school-detail-fullpage-view`의 SCHOOL_DETAIL_TAB_KEYS와 동일 */
 function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
-  if (t && SCHOOL_DETAIL_TAB_KEYS_READONLY.includes(t as SchoolDetailTabKey))
-    return t as SchoolDetailTabKey
+  if (t && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(t)) return t as SchoolDetailTabKey
   return 'application'
 }
 
@@ -184,7 +184,7 @@ export function ProgramDetailFullPageModal({
   useEffect(() => {
     if (!open || !schoolIdFromUrl) return
     const raw = searchParams.get(SCHOOL_TAB_PARAM)
-    if (raw && SCHOOL_DETAIL_TAB_KEYS_READONLY.includes(raw as SchoolDetailTabKey)) return
+    if (raw && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(raw)) return
     const next = new URLSearchParams(searchParams)
     next.set(SCHOOL_TAB_PARAM, 'application')
     if (programId) next.set('programId', programId)
