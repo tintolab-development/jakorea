@@ -254,19 +254,25 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/users', label: '전체 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/schools', label: '학교(교사) 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/instructors', label: '강사단 관리', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
       {
-        key: 'admin-group',
-        label: '관리자',
+        key: 'member-list-group',
+        label: '회원 목록',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
         children: [
+          { key: '/users', label: '전체회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
+          { key: '/schools', label: '학교(교사) 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
+          { key: '/instructors', label: '강사 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
           { key: '/admin/members', label: '관리자 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
-          { key: '/admin/settings/permissions', label: '관리 권한 설정', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
         ],
+      },
+      {
+        key: '/admin/settings/permissions',
+        label: '회원 권한 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
       },
     ],
   },
@@ -470,12 +476,13 @@ export function filterMenuByRole(
         return { type: 'divider' as const }
       }
 
-      // 1뎁스: 카테고리 아이콘 표시(지정된 아이콘 또는 기본 CategoryIcon), 2뎁스 이상: 불릿(•) 아이콘
+      // 1뎁스: 카테고리 아이콘 표시(지정된 아이콘 또는 기본 CategoryIcon)
+      // 2뎁스: 불릿(•) 아이콘, 3뎁스 이상: 아이콘 없음
       const showIcon = depth === 0 && item.icon != null
       const menuItem: any = {
         key: item.key,
         label: item.label,
-        icon: showIcon ? (item.icon ?? <CategoryIcon />) : depth >= 1 ? <BulletIcon /> : undefined,
+        icon: showIcon ? (item.icon ?? <CategoryIcon />) : depth === 1 ? <BulletIcon /> : undefined,
       }
 
       // Phase 0.1.5: 자식 메뉴가 있는 경우 재귀적으로 필터링 (강화)
