@@ -90,16 +90,16 @@
   /* Ant small */
 }
 
-/* ----- variant: primary (청록 채움) ----- */
+/* ----- variant: primary (JA-mint-01 채움, 참여 강사 등 시안과 동일) ----- */
 .app-button--primary.ant-btn-primary {
-  background: var(--color-focus-teal) !important;
-  border-color: var(--color-focus-teal) !important;
+  background: var(--JA-mint-01, #01a1af) !important;
+  border-color: var(--JA-mint-01, #01a1af) !important;
   color: var(--default-WT) !important;
 }
 
 .app-button--primary.ant-btn-primary:hover:not(:disabled) {
-  background: var(--color-focus-teal-hover) !important;
-  border-color: var(--color-focus-teal-hover) !important;
+  background: color-mix(in srgb, var(--JA-mint-01, #01a1af) 88%, #000) !important;
+  border-color: color-mix(in srgb, var(--JA-mint-01, #01a1af) 88%, #000) !important;
   color: var(--default-WT) !important;
 }
 

@@ -142,7 +142,7 @@
   .program-detail-fullpage-modal__program-preview-btn.app-button--primary.ant-btn-primary:hover:not(
     :disabled
   ) {
-  background: var(--color-focus-teal-hover) !important;
+  background: color-mix(in srgb, var(--JA-mint-01, #01a1af) 88%, #000) !important;
   border-color: rgba(0, 0, 0, 0.06) !important;
   color: var(--default-WT) !important;
 }
