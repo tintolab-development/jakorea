@@ -1,0 +1,28 @@
+/**
+ * 지급조서 확인 — 기본 정보·목록 테이블용 상태 문구(색만)
+ * 행 단위 변경이 있는 상세 목록 테이블의 태그 UI는 TextbookStatusBadge 계열(PaymentOrderLineProcessingStatusBadge) 사용
+ */
+
+/* 기본 정보·지급조서 확인 목록 테이블: 태그 없이 문구 + 상태색만 */
+.payment-order-admin__status-text {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.payment-order-admin__status-text--pending {
+  color: #389e0d;
+}
+
+.payment-order-admin__status-text--confirmed {
+  color: #01a1af;
+}
+
+.payment-order-admin__status-text--correction {
+  color: #cf1322;
+}
+
+.payment-order-admin__status-text--rejected {
+  color: #595959;
+}
