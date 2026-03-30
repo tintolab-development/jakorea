@@ -1,10 +1,20 @@
 /**
- * 참여 강사 페이지(풀페이지 모달) 필터 쿼리 파라미터 연동
+ * 참여 강사 페이지(풀페이지 모달) 필터·뷰 쿼리 파라미터 연동
  * lnb=progress&tab=instructors 일 때 강사명·거주지역·JA강의이력·JA평가등급·교육예정현황
+ * instructorView=list|calendar — 리스트/캘린더 뷰 (생략 시 list)
  */
 
 import { useMemo, useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+
+export const PARTICIPATING_INSTRUCTORS_VIEW_PARAM = 'instructorView'
+
+export type ParticipatingInstructorsViewMode = 'list' | 'calendar'
+
+function parseViewMode(searchParams: URLSearchParams): ParticipatingInstructorsViewMode {
+  const v = searchParams.get(PARTICIPATING_INSTRUCTORS_VIEW_PARAM)
+  return v === 'calendar' ? 'calendar' : 'list'
+}
 
 export interface ParticipatingInstructorsFilters {
   instructorName: string
@@ -78,6 +88,24 @@ export function useParticipatingInstructorsParams() {
     [setFilters]
   )
 
+  const viewMode = useMemo(
+    (): ParticipatingInstructorsViewMode => parseViewMode(searchParams),
+    [searchParams]
+  )
+
+  const setViewMode = useCallback(
+    (mode: ParticipatingInstructorsViewMode) => {
+      const next = new URLSearchParams(searchParams)
+      if (mode === 'list') {
+        next.delete(PARTICIPATING_INSTRUCTORS_VIEW_PARAM)
+      } else {
+        next.set(PARTICIPATING_INSTRUCTORS_VIEW_PARAM, 'calendar')
+      }
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
   /** 조회 버튼 클릭 시 전달한 값으로 URL 갱신 후 appliedFilters 반영 */
   const applyFilters = useCallback(
     (overrides?: Partial<ParticipatingInstructorsFilters>) => {
@@ -112,5 +140,7 @@ export function useParticipatingInstructorsParams() {
     setFilters,
     setFilter,
     applyFilters,
+    viewMode,
+    setViewMode,
   }
 }
