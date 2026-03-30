@@ -1,7 +1,7 @@
 /**
  * 담당자 등록 모달 — ContentModal
  * 패딩: 상 26px · 좌우 30px · 하 34px (권한 수정 모달과 동일)
- * 타이틀↔본문 30px · 라벨↔컨트롤 6px · 필드 블록 간 30px
+ * 타이틀 영역↔첫 필드 30px(teal-header-modal__body margin-top) · 라벨↔컨트롤 6px · 필드 블록 간 30px
  */
 
 .content-modal.add-manager-modal.ant-modal .ant-modal-content {
@@ -33,14 +33,14 @@
     flex-direction: column;
     align-items: stretch;
     background: var(--color-bg-base);
-    margin-top: 30px;
+    margin-top: var(--spacing-30);
 }
 
 .add-manager-modal .teal-header-modal__footer {
     flex-shrink: 0;
     justify-content: flex-end;
     padding-top: 0;
-    margin-top: 30px;
+    margin-top: var(--spacing-30);
 }
 
 .add-manager-modal__body {

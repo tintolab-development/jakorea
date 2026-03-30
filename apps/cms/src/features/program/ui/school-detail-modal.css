@@ -425,12 +425,14 @@
     min-width: 0;
 }
 
-/* 세로 디바이더: 1×13 고정 (w 1px, h 13px) */
+/* 세로 디바이더: 1×13, default-BK @ 50% (양옆 간격은 form-row gap 12px) */
 .school-detail-modal__divider-v {
     width: 1px;
     height: 13px;
     flex-shrink: 0;
-    background: var(--detail-divider-color, #e8e8e8);
+    box-sizing: border-box;
+    opacity: 0.5;
+    background: var(--default-BK, #3d3d3d);
 }
 
 /* 수정 가능 필드 row 정렬: 라디오/인풋 한 줄 + 디바이더 */
