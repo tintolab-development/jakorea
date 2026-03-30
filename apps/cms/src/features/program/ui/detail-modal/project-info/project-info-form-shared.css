@@ -135,14 +135,32 @@
   min-width: 400px !important;
 }
 
-/* 구분자 | 텍스트 — 공통 (색·양쪽 패딩) */
+/* 테이블·셀 내 세로 디바이더: 1×13, default-BK @ 50%, 양옆 12px (margin) */
 .program-detail-info-tab__separator,
 .program-detail-info-tab__contact-divider {
-  color: #9d9d9d;
-  padding: 0 6px;
-  font-weight: 400;
-  user-select: none;
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  margin: 0 12px;
+  padding: 0;
+  box-sizing: border-box;
   flex-shrink: 0;
+  align-self: center;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+  color: transparent;
+  user-select: none;
+}
+
+/* flex 행에서 디바이더 margin과 이중 간격 방지 */
+.program-detail-info-tab__result-row:has(.program-detail-info-tab__separator),
+.program-detail-info-tab__contact-inputs:has(.program-detail-info-tab__separator),
+.program-detail-info-tab__sponsor-manager-phone-wrapper:has(.program-detail-info-tab__separator) {
+  gap: 0;
 }
 
 /* 값 셀: 흰색 배경, 검정 텍스트 */
@@ -563,6 +581,11 @@
   flex-shrink: 0;
 }
 
+/* 날짜 범위 행에 세로 디바이더가 있을 때: flex gap 제거, 디바이더 margin 12px로 간격 */
+.program-detail-info-tab__date-range:has(.program-detail-info-tab__separator) {
+  gap: 0;
+}
+
 /* 2차 면접 심사: 날짜 ~ 날짜 | 면접 방식 */
 .program-detail-info-tab__date-range--interview {
   width: 100%;
@@ -775,12 +798,16 @@
   max-width: 190px;
 }
 
-/* 문의처: 문의처 | Tel | E-mail 세 그룹, 항목별 갭 16px(디바이더 양옆). 그룹은 콘텐츠 너비만 사용(균등 넓힘 제거) */
+/* 문의처: 문의처 | Tel | E-mail 세 그룹, 디바이더 양옆 12px */
 .program-detail-info-tab__contact-inputs--even {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0 16px;
+  gap: 0 12px;
+}
+
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-divider {
+  margin: 0;
 }
 
 .program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group {
