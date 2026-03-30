@@ -6,6 +6,12 @@
 
 import { useMemo, useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import {
+  PROGRESS_CALENDAR_RANGE_PARAM,
+  parseCalendarRangeParam,
+  applyCalendarRangeParam,
+  type CalendarGranularity,
+} from './progress-calendar-range'
 
 export const PARTICIPATING_INSTRUCTORS_VIEW_PARAM = 'instructorView'
 
@@ -106,6 +112,20 @@ export function useParticipatingInstructorsParams() {
     [searchParams, setSearchParams]
   )
 
+  const progressCalendarGranularity = useMemo(
+    (): CalendarGranularity => parseCalendarRangeParam(searchParams, PROGRESS_CALENDAR_RANGE_PARAM),
+    [searchParams]
+  )
+
+  const setProgressCalendarGranularity = useCallback(
+    (granularity: CalendarGranularity) => {
+      const next = new URLSearchParams(searchParams)
+      applyCalendarRangeParam(next, PROGRESS_CALENDAR_RANGE_PARAM, granularity)
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
   /** 조회 버튼 클릭 시 전달한 값으로 URL 갱신 후 appliedFilters 반영 */
   const applyFilters = useCallback(
     (overrides?: Partial<ParticipatingInstructorsFilters>) => {
@@ -142,5 +162,7 @@ export function useParticipatingInstructorsParams() {
     applyFilters,
     viewMode,
     setViewMode,
+    progressCalendarGranularity,
+    setProgressCalendarGranularity,
   }
 }
