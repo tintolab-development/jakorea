@@ -3,7 +3,7 @@
  * Phase 0.5.1: MFA/OTP UX — TOTP (Microsoft Authenticator)
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Form, message } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -32,6 +32,8 @@ interface UseMfaVerificationResult {
   lockUntil: string | null
   verifying: boolean
   handleVerify: (values?: { otpCode?: string }) => Promise<void>
+  /** OTP 입력 변경 — 6자리 완성 시 자동 검증 */
+  onOtpCodeChange: (value: string) => void
   refreshProvisioning: () => Promise<void>
   lockMessage: string | null
 }
@@ -49,6 +51,7 @@ export function useMfaVerification({
   const [provisioning, setProvisioning] = useState<TotpProvisioning | null>(null)
   const [provisioningLoading, setProvisioningLoading] = useState(false)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
+  const verifyInFlightRef = useRef(false)
 
   const msg = messageApi || message
 
@@ -110,68 +113,90 @@ export function useMfaVerification({
 
   const verifyAndComplete = useCallback(
     async (codeToVerify: string) => {
-      if (!user?.email) {
-        msg.error('사용자 정보를 찾을 수 없습니다.')
-        return
-      }
-
-      if (codeToVerify.length !== OTP_LENGTH) {
-        try {
-          form.setFields([
-            { name: 'otpCode', errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`] },
-          ])
-        } catch {
-          msg.error(`인증번호는 ${OTP_LENGTH}자리입니다.`)
-        }
-        return
-      }
-
-      if (!/^\d+$/.test(codeToVerify)) {
-        try {
-          form.setFields([{ name: 'otpCode', errors: ['인증번호는 숫자만 입력 가능합니다.'] }])
-        } catch {
-          msg.error('인증번호는 숫자만 입력 가능합니다.')
-        }
-        return
-      }
-
+      if (verifyInFlightRef.current) return
+      verifyInFlightRef.current = true
       try {
-        const verified = await verifyTotpCode({
-          email: user.email,
-          otpCode: codeToVerify,
-        })
+        if (!user?.email) {
+          msg.error('사용자 정보를 찾을 수 없습니다.')
+          return
+        }
 
-        if (verified) {
-          completeMfa()
-          setMfaVerified()
-          msg.success(MESSAGES.success.authenticated)
+        if (codeToVerify.length !== OTP_LENGTH) {
           try {
-            form.resetFields()
+            form.setFields([
+              { name: 'otpCode', errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`] },
+            ])
           } catch {
-            console.debug('Form not connected, skipping resetFields')
+            msg.error(`인증번호는 ${OTP_LENGTH}자리입니다.`)
           }
-          setOtpCode('')
-        } else {
+          return
+        }
+
+        if (!/^\d+$/.test(codeToVerify)) {
           try {
-            form.setFields([{ name: 'otpCode', errors: ['인증번호가 올바르지 않습니다.'] }])
+            form.setFields([{ name: 'otpCode', errors: ['인증번호는 숫자만 입력 가능합니다.'] }])
+          } catch {
+            msg.error('인증번호는 숫자만 입력 가능합니다.')
+          }
+          return
+        }
+
+        try {
+          const verified = await verifyTotpCode({
+            email: user.email,
+            otpCode: codeToVerify,
+          })
+
+          if (verified) {
+            completeMfa()
+            setMfaVerified()
+            msg.success(MESSAGES.success.authenticated)
+            try {
+              form.resetFields()
+            } catch {
+              console.debug('Form not connected, skipping resetFields')
+            }
+            setOtpCode('')
+          } else {
+            try {
+              form.setFields([{ name: 'otpCode', errors: ['인증번호가 올바르지 않습니다.'] }])
+              form.setFieldsValue({ otpCode: '' })
+            } catch {
+              msg.error('인증번호가 올바르지 않습니다.')
+            }
+            setOtpCode('')
+          }
+        } catch (error: unknown) {
+          const errMsg = error instanceof Error ? error.message : '인증에 실패했습니다.'
+          try {
+            form.setFields([{ name: 'otpCode', errors: [errMsg] }])
             form.setFieldsValue({ otpCode: '' })
           } catch {
-            msg.error('인증번호가 올바르지 않습니다.')
+            msg.error(errMsg)
           }
           setOtpCode('')
         }
-      } catch (error: unknown) {
-        const errMsg = error instanceof Error ? error.message : '인증에 실패했습니다.'
-        try {
-          form.setFields([{ name: 'otpCode', errors: [errMsg] }])
-          form.setFieldsValue({ otpCode: '' })
-        } catch {
-          msg.error(errMsg)
-        }
-        setOtpCode('')
+      } finally {
+        verifyInFlightRef.current = false
       }
     },
     [user, verifyTotpCode, completeMfa, setMfaVerified, form, msg]
+  )
+
+  const onOtpCodeChange = useCallback(
+    (value: string) => {
+      setOtpCode(value)
+      if (
+        value.length === OTP_LENGTH &&
+        !isLocked &&
+        !verifying &&
+        user?.email &&
+        /^\d+$/.test(value)
+      ) {
+        void verifyAndComplete(value)
+      }
+    },
+    [isLocked, verifying, user?.email, verifyAndComplete]
   )
 
   const handleVerify = useCallback(
@@ -211,6 +236,7 @@ export function useMfaVerification({
     lockUntil,
     verifying,
     handleVerify,
+    onOtpCodeChange,
     refreshProvisioning,
     lockMessage,
   }
