@@ -4,7 +4,7 @@
  * 명세: docs/design/applicant-instructor-detail-modal-spec.md
  */
 
-import { useState, useEffect, Fragment } from 'react'
+import { useState, useEffect, Fragment, type ReactNode } from 'react'
 import { Tabs, Radio, Select } from 'antd'
 import { UserOutlined } from '@ant-design/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -21,6 +21,11 @@ import type {
   ApplicantInstructorCareerDetail,
   ApplicantInstructorEducationItem,
 } from '@/data/mock/applicant-instructors'
+import {
+  ProgramDetailTdDivider,
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+} from '@/features/program/ui/program-detail-td-divider'
 import './applicant-instructor-detail-modal.css'
 
 const TAB_BASIC = 'basic'
@@ -95,18 +100,17 @@ function getTotalCareerYears(items: ApplicantInstructorCareerDetail[] | undefine
   return Math.floor(totalMonths / 12)
 }
 
-function formatBirthDateAndAge(birthDate?: string, age?: number): string {
+function formatBirthDateAndAgeContent(birthDate?: string, age?: number): ReactNode {
   if (!birthDate && age == null) return '-'
-  if (birthDate && age != null) return `${birthDate} | 만 ${age}세`
+  if (birthDate && age != null) {
+    return withProgramDetailTdDivider([birthDate, `만 ${age}세`])
+  }
   if (birthDate) return birthDate
   if (age != null) return `만 ${age}세`
   return '-'
 }
 
-function formatAccountDisplay(
-  instructor: ApplicantInstructorRow,
-  mask: boolean
-): string {
+function formatAccountDisplayContent(instructor: ApplicantInstructorRow, mask: boolean): ReactNode {
   const bank = instructor.bankName ?? ''
   const num = instructor.accountNumber ?? ''
   const holder = instructor.accountHolder ?? ''
@@ -114,9 +118,15 @@ function formatAccountDisplay(
   if (mask) {
     const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
     const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
-    return [bank, maskedNum].filter(Boolean).join(' ') + (maskedHolder ? ` | ${maskedHolder}` : '')
+    const left = [bank, maskedNum].filter(Boolean).join(' ')
+    if (!maskedHolder) return left || '-'
+    if (!left) return maskedHolder
+    return withProgramDetailTdDivider([left, maskedHolder])
   }
-  return [bank, num].filter(Boolean).join(' ') + (holder ? ` | ${holder}` : '')
+  const left = [bank, num].filter(Boolean).join(' ')
+  if (!holder) return left || '-'
+  if (!left) return holder
+  return withProgramDetailTdDivider([left, holder])
 }
 
 export interface ApplicantInstructorDetailModalProps {
@@ -178,9 +188,11 @@ export function ApplicantInstructorDetailModal({
 
   if (!instructor) return null
 
-  const educationDisplay = `${instructor.educationLevel} | ${instructor.educationSchoolName}`
-  const birthDisplay = formatBirthDateAndAge(instructor.birthDate, instructor.age)
-  const accountDisplay = formatAccountDisplay(
+  const educationDisplay = withProgramDetailTdDivider(
+    [instructor.educationLevel, instructor.educationSchoolName].filter(Boolean) as string[]
+  )
+  const birthDisplay = formatBirthDateAndAgeContent(instructor.birthDate, instructor.age)
+  const accountDisplay = formatAccountDisplayContent(
     instructor,
     instructor.approvalStatus !== 'approved'
   )
@@ -283,7 +295,7 @@ export function ApplicantInstructorDetailModal({
                   </span>
                 </td>
                 <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input">
-                  {birthDisplay}
+                  <ProgramDetailTdSegmentWrap>{birthDisplay}</ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
               {/* 2행: 성명(영문) | 값 · 성별 및 병역사항 | 값 */}
@@ -302,9 +314,11 @@ export function ApplicantInstructorDetailModal({
                   </span>
                 </td>
                 <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input">
-                  {[instructor.gender, instructor.militaryStatus]
-                    .filter(Boolean)
-                    .join(' | ') || '-'}
+                  <ProgramDetailTdSegmentWrap>
+                    {withProgramDetailTdDivider(
+                      [instructor.gender, instructor.militaryStatus].filter(Boolean) as string[]
+                    )}
+                  </ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
               {/* 3행: 연락처 | 값 · 이메일 | 값 */}
@@ -348,7 +362,7 @@ export function ApplicantInstructorDetailModal({
                   </span>
                 </td>
                 <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input">
-                  {accountDisplay}
+                  <ProgramDetailTdSegmentWrap>{accountDisplay}</ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
               {/* 5행: 최종 학력 | 값 · 강사 경력 | N년 */}
@@ -362,7 +376,7 @@ export function ApplicantInstructorDetailModal({
                   </span>
                 </td>
                 <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input applicant-instructor-detail-modal__basic-table-cell--before-divider">
-                  {educationDisplay}
+                  <ProgramDetailTdSegmentWrap>{educationDisplay}</ProgramDetailTdSegmentWrap>
                 </td>
                 <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--label applicant-instructor-detail-modal__basic-table-cell--label-right applicant-instructor-detail-modal__basic-table-cell--divider-left">
                   <span className="applicant-instructor-detail-modal__basic-table-label">
@@ -589,7 +603,6 @@ export function ApplicantInstructorDetailModal({
                     const schoolLabel = item.schoolName
                       ? [item.schoolName, item.schoolType ? `(${getEducationLevelBadge(undefined, item.schoolType)})` : ''].filter(Boolean).join(' ')
                       : NO_DATA
-                    const majorPart = item.major ? ` | ${item.major}` : ''
                     return (
                       <div
                         key={idx}
@@ -602,10 +615,13 @@ export function ApplicantInstructorDetailModal({
                           <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">
                             {schoolLabel}
                           </span>
-                          {majorPart ? (
-                            <span className="applicant-instructor-detail-modal__resume-role">
-                              {majorPart}
-                            </span>
+                          {item.major ? (
+                            <>
+                              <ProgramDetailTdDivider />
+                              <span className="applicant-instructor-detail-modal__resume-role">
+                                {item.major}
+                              </span>
+                            </>
                           ) : null}
                         </span>
                       </div>
@@ -616,7 +632,11 @@ export function ApplicantInstructorDetailModal({
                     <span className="applicant-instructor-detail-modal__resume-row-left">-</span>
                     <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--with-divider">
                       <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">
-                        {[instructor.educationLevel, instructor.educationSchoolName].filter(Boolean).join(' | ') || NO_DATA}
+                        {withProgramDetailTdDivider(
+                          [instructor.educationLevel, instructor.educationSchoolName].filter(
+                            Boolean
+                          ) as string[]
+                        )}
                       </span>
                     </span>
                   </div>
@@ -662,7 +682,7 @@ export function ApplicantInstructorDetailModal({
                                   {item.companyName}
                                 </span>
                               )}
-                              {item.companyName && item.role ? ' | ' : ''}
+                              {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
                               {item.role != null && item.role !== '' ? (
                                 <span className="applicant-instructor-detail-modal__resume-role">
                                   {item.role}

@@ -31,6 +31,7 @@ import {
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
+import type { Program } from '@/types/domain'
 import { ApplicantCalendarView } from './applicant-calendar-view'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
 import { ApplicationApprovalModal } from '../components/application-approval-modal'
@@ -43,11 +44,17 @@ const DETAIL_TAB_PARAM = 'detailTab'
 
 export interface ApplicantDetailsProps {
   menu: TabKey | ''
+  /** 신청 강사 상세 게시글 탭 등에 사용 */
+  program?: Program | null
   /** 풀페이지 모달 X: 상세가 열려 있으면 목록으로만 돌아가도록 등록 (true면 모달은 닫지 않음) */
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
 }
 
-export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: ApplicantDetailsProps) {
+export function ApplicantDetails({
+  menu,
+  program = null,
+  onRegisterApplicantCloseHandler,
+}: ApplicantDetailsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   // 필터 상태 관리
   const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({})
@@ -718,6 +725,7 @@ export function ApplicantDetails({ menu, onRegisterApplicantCloseHandler }: Appl
         <ApplicantsDetailContents
           type={menu as ApplicantType}
           data={selectedItem}
+          program={program}
           onBack={() => setSelectedItem(null)}
           onApprove={id => {
             if (menu === 'institutions') {

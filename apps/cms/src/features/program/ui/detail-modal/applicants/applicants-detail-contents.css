@@ -307,3 +307,13 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.applicant-contents__tab-placeholder {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.applicant-contents__tab-placeholder + .applicant-contents__tab-placeholder {
+  margin-top: 8px;
+}

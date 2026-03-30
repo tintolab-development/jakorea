@@ -125,12 +125,13 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 }
 
 .applicant-institution-basic-info__approval-status-vbar {
   width: 1px;
   height: 13px;
+  box-sizing: border-box;
   background: var(--default-BK, #3d3d3d);
   opacity: 0.5;
   flex-shrink: 0;
@@ -140,13 +141,14 @@
 .applicant-institution-basic-info__session-value {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .applicant-institution-basic-info__session-value
   .applicant-institution-basic-info__session-divider {
   width: 1px;
   height: 13px;
+  box-sizing: border-box;
   background: var(--default-BK, #3d3d3d);
   opacity: 0.5;
   flex-shrink: 0;

@@ -1,6 +1,8 @@
 import { useMemo, useCallback, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Tabs, Space, Empty } from 'antd'
+import { Tabs, Space, Empty, Table } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import type { Program } from '@/types/domain'
 import { AppButton, type AppButtonSize, type AppButtonVariant } from '@/shared/ui/app-button'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
@@ -9,11 +11,20 @@ import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-inf
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { SchoolDetailStudentListSection } from '../../school-detail-student-list-section'
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
+import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
 import './applicants-detail-contents.css'
 
 export type ApplicantType = 'institutions' | 'instructors' | 'volunteers'
 
 const DETAIL_TAB_PARAM = 'detailTab'
+
+/** 신청 강사 상세 — 참여 강사 풀페이지와 동일 라벨·쿼리 키 */
+const INSTRUCTOR_DETAIL_TAB_LABELS = {
+  application: '신청 정보',
+  institutionAssignment: '기관 배정 현황',
+  settlement: '정산 현황',
+  posts: '게시글',
+} as const
 
 function parseDetailTabFromSearch(searchParams: URLSearchParams, type: ApplicantType): string {
   const t = searchParams.get(DETAIL_TAB_PARAM)
@@ -22,8 +33,16 @@ function parseDetailTabFromSearch(searchParams: URLSearchParams, type: Applicant
     return 'info'
   }
   if (type === 'instructors') {
-    if (t === 'extra') return 'extra'
-    return 'info'
+    if (
+      t === 'application' ||
+      t === 'institutionAssignment' ||
+      t === 'settlement' ||
+      t === 'posts'
+    ) {
+      return t
+    }
+    /** 이전 URL: detailTab=info | extra → 신청 정보 */
+    return 'application'
   }
   return 'info'
 }
@@ -176,6 +195,8 @@ function resolveApplicantHeaderItems(params: {
 interface ApplicantsDetailContentsProps {
   type: ApplicantType
   data: ApplicantSchoolRow | ApplicantInstructorRow
+  /** 신청 강사 게시글 탭용 (없으면 안내 문구만 표시) */
+  program?: Program | null
   onBack: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
@@ -188,6 +209,7 @@ interface ApplicantsDetailContentsProps {
 export function ApplicantsDetailContents({
   type,
   data,
+  program = null,
   onBack: _onBack,
   onApprove,
   onReject,
@@ -195,6 +217,7 @@ export function ApplicantsDetailContents({
   onCancelReject,
 }: ApplicantsDetailContentsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [instructorPostWriteOpen, setInstructorPostWriteOpen] = useState(false)
 
   const activeTab = useMemo(
     () => parseDetailTabFromSearch(searchParams, type),
@@ -204,14 +227,16 @@ export function ApplicantsDetailContents({
   const setActiveTab = useCallback(
     (key: string) => {
       const next = new URLSearchParams(searchParams)
-      if (key === 'info') {
+      const defaultInstructor = type === 'instructors' && key === 'application'
+      const defaultInstitution = type === 'institutions' && key === 'info'
+      if (defaultInstructor || defaultInstitution) {
         next.delete(DETAIL_TAB_PARAM)
       } else {
         next.set(DETAIL_TAB_PARAM, key)
       }
       setSearchParams(next, { replace: true })
     },
-    [searchParams, setSearchParams]
+    [searchParams, setSearchParams, type]
   )
 
   const isInstitution = type === 'institutions'
@@ -239,6 +264,7 @@ export function ApplicantsDetailContents({
 
   useEffect(() => {
     setPersonalInfoRevealed(false)
+    setInstructorPostWriteOpen(false)
   }, [applicantId])
 
   const onRevealPersonalInfo = useCallback(() => {
@@ -276,6 +302,25 @@ export function ApplicantsDetailContents({
     onCancelApproval,
     onCancelReject,
   ])
+
+  const tabBarExtraContent = useMemo(() => {
+    if (isInstructor) {
+      if (activeTab === 'application') return headerExtraContent
+      if (activeTab === 'posts' && program) {
+        return (
+          <AppButton
+            variant="primary"
+            size="filter"
+            onClick={() => setInstructorPostWriteOpen(true)}
+          >
+            게시글 등록
+          </AppButton>
+        )
+      }
+      return null
+    }
+    return headerExtraContent
+  }, [isInstructor, activeTab, headerExtraContent, program])
 
   const institutionTabItems = useMemo(() => {
     if (!institutionData) return []
@@ -320,10 +365,35 @@ export function ApplicantsDetailContents({
   const instructorTabItems = useMemo(() => {
     if (!instructorData) return []
     const d = instructorData
+    const assignedSchoolDisplay =
+      d.assignedSchoolName ||
+      d.preferredSchools?.[0]?.schoolName ||
+      d.schoolName ||
+      '-'
+    const assignmentColumns: ColumnsType<{
+      key: string
+      schoolName: string
+      lectureRound: string
+    }> = [
+      { title: '배정 기관', dataIndex: 'schoolName', key: 'schoolName' },
+      {
+        title: '교육 예정 현황',
+        dataIndex: 'lectureRound',
+        key: 'lectureRound',
+        width: 140,
+      },
+    ]
+    const assignmentData = [
+      {
+        key: '1',
+        schoolName: assignedSchoolDisplay,
+        lectureRound: '-',
+      },
+    ]
     return [
       {
-        key: 'info',
-        label: '기본 정보',
+        key: 'application',
+        label: INSTRUCTOR_DETAIL_TAB_LABELS.application,
         children: (
           <div className="applicant-info-section applicant-info-section--instructor">
             <ApplicantInstructorBasicInfo
@@ -337,21 +407,54 @@ export function ApplicantsDetailContents({
         ),
       },
       {
-        key: 'extra',
-        label: '강사 이력서',
+        key: 'institutionAssignment',
+        label: INSTRUCTOR_DETAIL_TAB_LABELS.institutionAssignment,
         children: (
-          <div className="extra-tab-content">
-            <div className="section-header">
-              <h3 className="section-title">강사 이력서</h3>
-            </div>
-            <div className="resume-placeholder">
-              <Empty description="강사 이력서 내용이 없습니다." />
-            </div>
+          <div className="extra-tab-content applicant-contents__instructor-assignment-tab">
+            <Table
+              columns={assignmentColumns}
+              dataSource={assignmentData}
+              pagination={false}
+              rowKey="key"
+              size="middle"
+            />
+          </div>
+        ),
+      },
+      {
+        key: 'settlement',
+        label: INSTRUCTOR_DETAIL_TAB_LABELS.settlement,
+        children: (
+          <div className="extra-tab-content applicant-contents__instructor-settlement-tab">
+            <p className="applicant-contents__tab-placeholder">
+              정산 현황은 승인·배정 이후 연동됩니다.
+            </p>
+            <p className="applicant-contents__tab-placeholder">
+              상세 정산 내역 화면은 준비 중입니다.
+            </p>
+          </div>
+        ),
+      },
+      {
+        key: 'posts',
+        label: INSTRUCTOR_DETAIL_TAB_LABELS.posts,
+        children: (
+          <div className="extra-tab-content applicant-contents__instructor-posts-tab">
+            {program ? (
+              <EnrollmentProgramDetailPostsTab
+                program={program}
+                showWriteButtonInSection={false}
+                writeModalOpen={instructorPostWriteOpen}
+                onWriteModalOpenChange={setInstructorPostWriteOpen}
+              />
+            ) : (
+              <Empty description="프로그램 정보가 없어 게시글을 불러올 수 없습니다." />
+            )}
           </div>
         ),
       },
     ]
-  }, [instructorData, personalInfoRevealed])
+  }, [instructorData, personalInfoRevealed, program, instructorPostWriteOpen])
 
   if (isVolunteer) {
     return (
@@ -384,7 +487,7 @@ export function ApplicantsDetailContents({
           activeKey={activeTab}
           onChange={setActiveTab}
           className="applicant-contents__tabs"
-          tabBarExtraContent={headerExtraContent}
+          tabBarExtraContent={tabBarExtraContent}
           items={isInstitution ? institutionTabItems : instructorTabItems}
         />
       </div>
