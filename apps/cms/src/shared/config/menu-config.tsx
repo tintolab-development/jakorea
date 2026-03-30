@@ -8,13 +8,25 @@ import type { UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
+import {
+  DEFAULT_MEMBER_LIST_KIND,
+  isMemberListKind,
+  memberListHref,
+} from '@/shared/config/member-list-kinds'
 
 const svgStyle = { display: 'block' } as const
 
 /** LNB 카테고리 아이콘: 대시보드 홈 (18x18, 시각적으로 다른 1뎁스보다 작게) */
 function IconDashboardHome() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 14 14" fill="none" style={svgStyle}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18}
+      viewBox="0 0 14 14"
+      fill="none"
+      style={svgStyle}
+    >
       <path
         d="M8 3.25V0.729167C8 0.5225 8.06986 0.349306 8.20958 0.209583C8.34944 0.0698611 8.52264 0 8.72917 0H13.2623C13.4763 0 13.6528 0.0698611 13.7917 0.209583C13.9306 0.349306 14 0.5225 14 0.729167V3.25C14 3.4625 13.9301 3.64063 13.7904 3.78438C13.6507 3.92813 13.4775 4 13.2708 4H8.73771C8.52368 4 8.34722 3.92813 8.20833 3.78438C8.06944 3.64063 8 3.4625 8 3.25ZM0 7.27083V0.729167C0 0.5225 0.0721528 0.349306 0.216458 0.209583C0.360764 0.0698611 0.539583 0 0.752917 0H5.27083C5.46528 0 5.63542 0.0698611 5.78125 0.209583C5.92708 0.349306 6 0.5225 6 0.729167V7.27083C6 7.46528 5.92708 7.63542 5.78125 7.78125C5.63542 7.92708 5.46528 8 5.27083 8H0.752917C0.539583 8 0.360764 7.92708 0.216458 7.78125C0.0721528 7.63542 0 7.46528 0 7.27083ZM8 13.25V6.75C8 6.5375 8.06986 6.35938 8.20958 6.21562C8.34944 6.07187 8.52264 6 8.72917 6H13.2623C13.4763 6 13.6528 6.07187 13.7917 6.21562C13.9306 6.35938 14 6.5375 14 6.75V13.25C14 13.4625 13.9301 13.6406 13.7904 13.7844C13.6507 13.9281 13.4775 14 13.2708 14H8.73771C8.52368 14 8.34722 13.9281 8.20833 13.7844C8.06944 13.6406 8 13.4625 8 13.25ZM0 13.25V10.7083C0 10.5017 0.0721528 10.3285 0.216458 10.1888C0.360764 10.049 0.539583 9.97917 0.752917 9.97917H5.27083C5.46528 9.97917 5.63542 10.049 5.78125 10.1888C5.92708 10.3285 6 10.5017 6 10.7083V13.25C6 13.4625 5.92708 13.6406 5.78125 13.7844C5.63542 13.9281 5.46528 14 5.27083 14H0.752917C0.539583 14 0.360764 13.9281 0.216458 13.7844C0.0721528 13.6406 0 13.4625 0 13.25ZM1.5 6.5H4.5V1.5H1.5V6.5ZM9.5 12.5H12.5V7.5H9.5V12.5ZM9.5 2.52083H12.5V1.5H9.5V2.52083ZM1.5 12.5H4.5V11.4792H1.5V12.5Z"
         fill="currentColor"
@@ -26,8 +38,23 @@ function IconDashboardHome() {
 /** LNB 카테고리 아이콘: 프로그램 관리 (20x20) */
 function IconPrograms() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-programs-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-programs-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-programs-mask)">
@@ -43,8 +70,23 @@ function IconPrograms() {
 /** LNB 카테고리 아이콘: 회원 관리 (20x20) */
 function IconMembers() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-members-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-members-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-members-mask)">
@@ -60,8 +102,23 @@ function IconMembers() {
 /** LNB 카테고리 아이콘: 템플릿 관리 (20x20) */
 function IconTemplate() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-template-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-template-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-template-mask)">
@@ -77,8 +134,23 @@ function IconTemplate() {
 /** LNB 카테고리 아이콘: 게시글 관리 (20x20) */
 function IconPosts() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-posts-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-posts-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-posts-mask)">
@@ -94,8 +166,23 @@ function IconPosts() {
 /** LNB 카테고리 아이콘: 후원사 관리 (20x20) */
 function IconSponsors() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-sponsors-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-sponsors-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-sponsors-mask)">
@@ -111,7 +198,14 @@ function IconSponsors() {
 /** LNB 카테고리 아이콘: 실적 관리 (18x18) */
 function IconEducationRecords() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 16 14" fill="none" style={svgStyle}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18}
+      viewBox="0 0 16 14"
+      fill="none"
+      style={svgStyle}
+    >
       <path
         d="M0.75 14C0.5375 14 0.359375 13.9285 0.215625 13.7856C0.071875 13.6427 0 13.4656 0 13.2544C0 13.0431 0.071875 12.8646 0.215625 12.7188C0.359375 12.5729 0.5375 12.5 0.75 12.5H15.25C15.4625 12.5 15.6406 12.5715 15.7844 12.7144C15.9281 12.8573 16 13.0344 16 13.2456C16 13.4569 15.9281 13.6354 15.7844 13.7812C15.6406 13.9271 15.4625 14 15.25 14H0.75ZM1.29167 11.2083C1.09722 11.0139 1 10.7778 1 10.5V7C1 6.72222 1.09722 6.48611 1.29167 6.29167C1.48611 6.09722 1.72222 6 2 6C2.27778 6 2.51389 6.09722 2.70833 6.29167C2.90278 6.48611 3 6.72222 3 7V10.5C3 10.7778 2.90278 11.0139 2.70833 11.2083C2.51389 11.4028 2.27778 11.5 2 11.5C1.72222 11.5 1.48611 11.4028 1.29167 11.2083ZM5.29167 11.2083C5.09722 11.0139 5 10.7778 5 10.5V3C5 2.72222 5.09722 2.48611 5.29167 2.29167C5.48611 2.09722 5.72222 2 6 2C6.27778 2 6.51389 2.09722 6.70833 2.29167C6.90278 2.48611 7 2.72222 7 3V10.5C7 10.7778 6.90278 11.0139 6.70833 11.2083C6.51389 11.4028 6.27778 11.5 6 11.5C5.72222 11.5 5.48611 11.4028 5.29167 11.2083ZM9.29167 11.2083C9.09722 11.0139 9 10.7778 9 10.5V5.5C9 5.22222 9.09722 4.98611 9.29167 4.79167C9.48611 4.59722 9.72222 4.5 10 4.5C10.2778 4.5 10.5139 4.59722 10.7083 4.79167C10.9028 4.98611 11 5.22222 11 5.5V10.5C11 10.7778 10.9028 11.0139 10.7083 11.2083C10.5139 11.4028 10.2778 11.5 10 11.5C9.72222 11.5 9.48611 11.4028 9.29167 11.2083ZM13.2917 11.2083C13.0972 11.0139 13 10.7778 13 10.5V1C13 0.722222 13.0972 0.486111 13.2917 0.291667C13.4861 0.0972222 13.7222 0 14 0C14.2778 0 14.5139 0.0972222 14.7083 0.291667C14.9028 0.486111 15 0.722222 15 1V10.5C15 10.7778 14.9028 11.0139 14.7083 11.2083C14.5139 11.4028 14.2778 11.5 14 11.5C13.7222 11.5 13.4861 11.4028 13.2917 11.2083Z"
         fill="currentColor"
@@ -123,7 +217,14 @@ function IconEducationRecords() {
 /** LNB 카테고리 아이콘: 보안 설정(로그 관리) (18x18) */
 function IconSecurityLogs() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 13 16" fill="none" style={svgStyle}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18}
+      viewBox="0 0 13 16"
+      fill="none"
+      style={svgStyle}
+    >
       <path
         d="M6.25 15.8021C6.16667 15.7951 6.09028 15.7778 6.02083 15.75C4.20139 15.1528 2.74306 14.0486 1.64583 12.4375C0.548611 10.8264 0 9.06944 0 7.16667V3.41667C0 3.10153 0.0868056 2.81785 0.260417 2.56563C0.434028 2.31354 0.666667 2.13194 0.958333 2.02083L5.95833 0.104167C6.13889 0.0347222 6.31944 0 6.5 0C6.68056 0 6.86111 0.0347222 7.04167 0.104167L12.0417 2.02083C12.3333 2.13194 12.566 2.31354 12.7396 2.56563C12.9132 2.81785 13 3.10153 13 3.41667V7.16667C13 9.06944 12.4514 10.8264 11.3542 12.4375C10.2569 14.0486 8.79861 15.1528 6.97917 15.75C6.90972 15.7778 6.83333 15.7951 6.75 15.8021C6.66667 15.809 6.58333 15.8125 6.5 15.8125C6.41667 15.8125 6.33333 15.809 6.25 15.8021ZM6.5 14.3333C7.94444 13.8854 9.13889 12.9896 10.0833 11.6458C11.0278 10.3021 11.5 8.80903 11.5 7.16667V3.41667L6.5 1.5L1.5 3.41667V7.16667C1.5 8.80903 1.97222 10.3021 2.91667 11.6458C3.86111 12.9896 5.05556 13.8854 6.5 14.3333Z"
         fill="currentColor"
@@ -134,7 +235,14 @@ function IconSecurityLogs() {
 
 /** 1뎁스 메뉴에 지정된 아이콘이 없을 때 사용하는 기본 아이콘 (20x20) */
 const CategoryIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 19 14" fill="none" style={svgStyle}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={20}
+    height={20}
+    viewBox="0 0 19 14"
+    fill="none"
+    style={svgStyle}
+  >
     <path
       d="M4.33333 11C5.01972 11 5.68785 11.0764 6.33771 11.2292C6.98757 11.3819 7.625 11.5972 8.25 11.875V2.41667C7.65278 2.09722 7.03104 1.86458 6.38479 1.71875C5.73868 1.57292 5.08549 1.5 4.42521 1.5C3.91951 1.5 3.41667 1.54167 2.91667 1.625C2.41667 1.70833 1.94444 1.86097 1.5 2.08292V11.5C1.94444 11.3056 2.40625 11.1736 2.88542 11.1042C3.36458 11.0347 3.84722 11 4.33333 11ZM9.75 11.875C10.375 11.5972 11.0124 11.3819 11.6623 11.2292C12.3122 11.0764 12.9803 11 13.6667 11C14.1528 11 14.6354 11.0347 15.1146 11.1042C15.5938 11.1736 16.0556 11.3056 16.5 11.5V2.08333C16.0139 1.90278 15.5105 1.76042 14.9898 1.65625C14.4691 1.55208 13.9447 1.5 13.4167 1.5C12.7778 1.5 12.1528 1.57986 11.5417 1.73958C10.9306 1.89931 10.3333 2.125 9.75 2.41667V11.875ZM8.51042 13.7292C8.36458 13.6458 8.21375 13.5625 8.05792 13.4792C7.50542 13.1597 6.92375 12.9167 6.31292 12.75C5.70194 12.5833 5.07681 12.5 4.4375 12.5C3.99306 12.5 3.54514 12.5278 3.09375 12.5833C2.64236 12.6389 2.20833 12.7569 1.79167 12.9375C1.36111 13.1319 0.954861 13.1562 0.572917 13.0104C0.190972 12.8646 0 12.6042 0 12.2292V1.75C0 1.55556 0.0555556 1.37847 0.166667 1.21875C0.277778 1.05903 0.416667 0.930556 0.583333 0.833333C1.16667 0.5 1.78042 0.277778 2.42458 0.166667C3.06875 0.0555556 3.72583 0 4.39583 0C5.20139 0 5.96875 0.0833333 6.69792 0.25C7.42708 0.416667 8.19444 0.708333 9 1.125C9.80556 0.708333 10.5729 0.416667 11.3021 0.25C12.0313 0.0833333 12.7986 0 13.6042 0C14.2218 0 14.8276 0.0520833 15.4217 0.15625C16.0156 0.260417 16.5833 0.4375 17.125 0.6875C17.3611 0.798611 17.5694 0.940972 17.75 1.11458C17.9306 1.28819 18.0208 1.5 18.0208 1.75V12.2292C18.0208 12.5625 17.8576 12.8056 17.5312 12.9583C17.2049 13.1111 16.8542 13.1181 16.4792 12.9792C15.9931 12.7986 15.4965 12.6736 14.9896 12.6042C14.4826 12.5347 13.9722 12.5 13.4583 12.5C12.8381 12.5 12.2316 12.5799 11.639 12.7396C11.0463 12.8993 10.4861 13.1458 9.95833 13.4792C9.80556 13.5764 9.65278 13.6632 9.5 13.7396C9.34722 13.816 9.18056 13.8542 9 13.8542C8.81944 13.8542 8.65625 13.8125 8.51042 13.7292ZM10.75 4.02083C10.75 3.82639 10.809 3.65278 10.9271 3.5C11.0451 3.34722 11.2014 3.25 11.3958 3.20833C11.7431 3.13889 12.0851 3.08333 12.4219 3.04167C12.7588 3 13.1131 2.97917 13.4848 2.97917C13.7172 2.97917 13.9571 2.99076 14.2046 3.01396C14.4521 3.03701 14.6964 3.06708 14.9375 3.10417C15.1042 3.13194 15.2396 3.21208 15.3438 3.34458C15.4479 3.47708 15.5 3.62611 15.5 3.79167C15.5 4.02778 15.4167 4.22222 15.25 4.375C15.0833 4.52778 14.8819 4.58826 14.6458 4.55646C14.4514 4.53271 14.2583 4.51042 14.0667 4.48958C13.875 4.46875 13.6802 4.45833 13.4823 4.45833C13.1608 4.45833 12.8507 4.47569 12.5521 4.51042C12.2535 4.54514 11.9522 4.60326 11.6483 4.68479C11.4106 4.75604 11.2014 4.72222 11.0208 4.58333C10.8403 4.44444 10.75 4.25694 10.75 4.02083ZM10.7917 8.91667C10.7917 8.72222 10.8507 8.54861 10.9688 8.39583C11.0868 8.24306 11.2431 8.14583 11.4375 8.10417C11.7847 8.03472 12.1267 7.97917 12.4635 7.9375C12.8005 7.89583 13.1548 7.875 13.5265 7.875C13.7588 7.875 13.9987 7.8866 14.2463 7.90979C14.4938 7.93285 14.7381 7.96292 14.9792 8C15.1458 8.02778 15.2812 8.10792 15.3854 8.24042C15.4896 8.37292 15.5417 8.52194 15.5417 8.6875C15.5417 8.92361 15.4583 9.11806 15.2917 9.27083C15.125 9.42361 14.9236 9.4841 14.6875 9.45229C14.4931 9.42854 14.3 9.40625 14.1083 9.38542C13.9167 9.36458 13.7219 9.35417 13.524 9.35417C13.2024 9.35417 12.8924 9.37153 12.5938 9.40625C12.2951 9.44097 11.9939 9.4991 11.69 9.58063C11.4522 9.65188 11.2431 9.61806 11.0625 9.47917C10.8819 9.34028 10.7917 9.15278 10.7917 8.91667ZM10.7917 6.47917C10.7917 6.28472 10.8507 6.11111 10.9688 5.95833C11.0868 5.80556 11.2431 5.70833 11.4375 5.66667C11.7847 5.59722 12.1267 5.54167 12.4635 5.5C12.8005 5.45833 13.1548 5.4375 13.5265 5.4375C13.7588 5.4375 13.9987 5.4491 14.2463 5.47229C14.4938 5.49535 14.7381 5.52542 14.9792 5.5625C15.1458 5.59028 15.2812 5.67042 15.3854 5.80292C15.4896 5.93542 15.5417 6.08444 15.5417 6.25C15.5417 6.48611 15.4583 6.68056 15.2917 6.83333C15.125 6.98611 14.9236 7.0466 14.6875 7.01479C14.4931 6.99104 14.3 6.96875 14.1083 6.94792C13.9167 6.92708 13.7219 6.91667 13.524 6.91667C13.2024 6.91667 12.8924 6.93403 12.5938 6.96875C12.2951 7.00347 11.9939 7.0616 11.69 7.14313C11.4522 7.21438 11.2431 7.18056 11.0625 7.04167C10.8819 6.90278 10.7917 6.71528 10.7917 6.47917Z"
       fill="currentColor"
@@ -261,10 +369,34 @@ const allMenuItems: MenuItemConfig[] = [
         enabled: true,
         allowedRoles: ['ADMIN'],
         children: [
-          { key: '/users', label: '전체회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
-          { key: '/schools', label: '학교(교사) 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
-          { key: '/instructors', label: '강사 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
-          { key: '/admin/members', label: '관리자 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
+          {
+            key: memberListHref('all'),
+            label: '전체 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: memberListHref('institutions'),
+            label: '학교(교사) 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: memberListHref('instructors'),
+            label: '강사 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: memberListHref('admins'),
+            label: '관리자 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
         ],
       },
       {
@@ -353,9 +485,27 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/admin/posts/notices', label: '공지사항', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/admin/posts/faq', label: 'FAQ', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/admin/posts/inquiries', label: '문의하기', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      {
+        key: '/admin/posts/notices',
+        label: '공지사항',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/admin/posts/faq',
+        label: 'FAQ',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/admin/posts/inquiries',
+        label: '문의하기',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
     ],
   },
   {
@@ -379,8 +529,20 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/logs/bug', label: '버그', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/logs/issue', label: '이슈', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      {
+        key: '/logs/bug',
+        label: '버그',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/logs/issue',
+        label: '이슈',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
     ],
   },
   { key: 'divider-bottom', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
@@ -415,9 +577,7 @@ const allMenuItems: MenuItemConfig[] = [
     icon: <TeamOutlined />,
     enabled: false,
     allowedRoles: ['ADMIN'],
-    children: [
-      { key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] },
-    ],
+    children: [{ key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] }],
   },
   {
     key: 'reports-group',
@@ -425,9 +585,7 @@ const allMenuItems: MenuItemConfig[] = [
     icon: <FileTextOutlined />,
     enabled: false,
     allowedRoles: ['ADMIN'],
-    children: [
-      { key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] },
-    ],
+    children: [{ key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] }],
   },
 ]
 
@@ -558,8 +716,8 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
   // 경로 정규화 (끝에 있는 / 제거)
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
 
-  // Phase 0.1.5: 관리자 레벨별 접근 제어
-  // 임시: ADMIN은 관리자 홈, 일반 교육 프로그램, 경제 교육 프로그램만 접근 가능 (이외 Coming Soon)
+  // Phase 0.1.5: 관리자 — 프로그램 영역은 아래 예외 규칙으로 먼저 허용
+  // 그 외(회원 목록 `/users/list`, 템플릿, 게시글 등)는 하단 `findAllMenuItemsByPath`와 동일 규칙으로 판단
   if (userRole === 'ADMIN') {
     if (normalizedPath === '/') return true
     if (normalizedPath.startsWith('/programs/education')) return true
@@ -579,7 +737,6 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
       const firstSegment = segments[0]
       if (firstSegment && !programsReserved.includes(firstSegment)) return true // 프로그램 상세/수정/신청 등
     }
-    return false
   }
 
   // 역할별 내 학습 관리 경로는 항상 허용 (index 라우팅용)
@@ -861,12 +1018,14 @@ function toBreadcrumbItem(menuItem: MenuItemConfig): BreadcrumbItem {
  * @param pathname 경로
  * @param userRole 사용자 권한
  * @param user 사용자 정보 (동적 라벨 변경용, 선택적)
+ * @param search location.search (`/users/list?kind=…` 메뉴 키 매칭용)
  * @returns 브레드크럼 아이템 배열
  */
 export function getBreadcrumbByPath(
   pathname: string,
   userRole: UserRole | null,
-  user?: Omit<import('@/types/user').User, 'password'> | null
+  user?: Omit<import('@/types/user').User, 'password'> | null,
+  search: string = ''
 ): BreadcrumbItem[] {
   const n = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
 
@@ -908,16 +1067,32 @@ export function getBreadcrumbByPath(
       enabled: true, // 이미 필터링됨
     }))
 
+  const pathForMenuMatch =
+    userRole === 'ADMIN' && n === '/users/list'
+      ? memberListHref(
+          (() => {
+            const raw = (
+              new URLSearchParams(search).get('kind') || DEFAULT_MEMBER_LIST_KIND
+            ).toLowerCase()
+            return isMemberListKind(raw) ? raw : DEFAULT_MEMBER_LIST_KIND
+          })()
+        )
+      : n
+
   // 권한별 필터링된 메뉴에서 매칭 찾기
-  let match = findMenuMatchInItems(n, filteredItems)
+  let match = findMenuMatchInItems(pathForMenuMatch, filteredItems)
 
   // 필터링된 메뉴에서 찾지 못한 경우, 원본 메뉴에서도 검색 (하위 호환성)
   if (!match) {
-    match = findMenuMatch(n)
+    match = findMenuMatch(pathForMenuMatch)
   }
 
   // 관리자: 교육 프로그램 하위 경로 (전체 프로그램 / 수강자 모집 / 수강 신청 현황) 브레드크럼
-  if (!match && userRole === 'ADMIN' && (n === '/programs/education' || n.startsWith('/programs/education/'))) {
+  if (
+    !match &&
+    userRole === 'ADMIN' &&
+    (n === '/programs/education' || n.startsWith('/programs/education/'))
+  ) {
     const listMatch =
       findMenuMatchInItems('/programs/education', filteredItems) ||
       findMenuMatch('/programs/education')
@@ -934,7 +1109,8 @@ export function getBreadcrumbByPath(
       } else if (n === '/programs/education/schedule') {
         thirdLabel = '프로그램 일정'
       } else {
-        thirdLabel = typeof listMatch.item.label === 'string' ? listMatch.item.label : '교육 프로그램'
+        thirdLabel =
+          typeof listMatch.item.label === 'string' ? listMatch.item.label : '교육 프로그램'
       }
       return [
         toBreadcrumbItem(listMatch.parent),
@@ -945,7 +1121,15 @@ export function getBreadcrumbByPath(
   }
 
   // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시 브레드크럼 연동
-  const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
+  const programsReserved = [
+    'my',
+    'favorites',
+    'volunteer',
+    'education',
+    'economy-education',
+    'new',
+    'satisfaction',
+  ]
   if (!match && userRole === 'ADMIN' && n.startsWith('/programs/')) {
     const rest = n.slice('/programs/'.length)
     const segments = rest.split('/').filter(Boolean)

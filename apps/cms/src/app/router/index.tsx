@@ -51,7 +51,6 @@ import { IndexPage } from '@/pages/home/index-page'
 const MyLearningPage = lazyLoad(() => import('@/pages/my-learning/my-learning-page'))
 
 // 나머지 페이지들은 lazy loading
-const InstructorListPage = lazyLoad(() => import('@/pages/instructors/instructor-list-page'))
 const InstructorDetailPage = lazyLoad(() => import('@/pages/instructors/instructor-detail-page'))
 const InstructorFormPage = lazyLoad(() => import('@/pages/instructors/instructor-form-page'))
 const InstructorMypagePage = lazyLoad(() => import('@/pages/instructors/instructor-mypage-page'))
@@ -65,21 +64,18 @@ const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instruc
 const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
 const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
 const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-page'))
-const SchoolListPage = lazyLoad(() => import('@/pages/schools/school-list-page'))
 const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
-const EducationProgramLayout = lazyLoad(
-  () =>
-    import('@/pages/programs/education-program-layout').then(m => ({
-      default: m.EducationProgramLayout,
-    }))
+const EducationProgramLayout = lazyLoad(() =>
+  import('@/pages/programs/education-program-layout').then(m => ({
+    default: m.EducationProgramLayout,
+  }))
 )
-const EducationEnrollmentPage = lazyLoad(
-  () =>
-    import('@/pages/programs/education-enrollment-page').then(m => ({
-      default: m.EducationEnrollmentPage,
-    }))
+const EducationEnrollmentPage = lazyLoad(() =>
+  import('@/pages/programs/education-enrollment-page').then(m => ({
+    default: m.EducationEnrollmentPage,
+  }))
 )
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
@@ -114,7 +110,6 @@ const EducationRecordListPage = lazyLoad(
 )
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
-const AdminInstructorListPage = lazyLoad(() => import('@/pages/users/instructor-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
 const TemplateProgramFormsPage = lazyLoad(
@@ -210,7 +205,7 @@ export const router = createBrowserRouter([
       {
         path: 'instructors',
         children: [
-          { index: true, element: <InstructorListPage /> },
+          { index: true, element: <Navigate to="/users/list?kind=instructors" replace /> },
           { path: 'new', element: <InstructorFormPage /> },
           { path: ':id', element: <InstructorDetailPage /> },
           { path: ':id/edit', element: <InstructorFormPage /> },
@@ -228,7 +223,7 @@ export const router = createBrowserRouter([
       {
         path: 'schools',
         children: [
-          { index: true, element: <SchoolListPage /> },
+          { index: true, element: <Navigate to="/users/list?kind=institutions" replace /> },
           { path: 'new', element: <SchoolFormPage /> },
           { path: ':id', element: <SchoolDetailPage /> },
           { path: ':id/edit', element: <SchoolFormPage /> },
@@ -337,9 +332,13 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         children: [
-          { index: true, element: <UserListPage /> },
+          { index: true, element: <Navigate to="/users/list?kind=all" replace /> },
+          { path: 'list', element: <UserListPage /> },
           { path: 'participants', element: <ParticipantListPage /> },
-          { path: 'instructors', element: <AdminInstructorListPage /> },
+          {
+            path: 'instructors',
+            element: <Navigate to="/users/list?kind=instructors" replace />,
+          },
         ],
       },
       {
@@ -445,7 +444,9 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'activity-confirmation',
-                element: <Navigate to="/templates/file-forms?category=activity-confirmation" replace />,
+                element: (
+                  <Navigate to="/templates/file-forms?category=activity-confirmation" replace />
+                ),
               },
               {
                 path: 'receipt',
@@ -457,7 +458,9 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'employment-certificate',
-                element: <Navigate to="/templates/file-forms?category=employment-certificate" replace />,
+                element: (
+                  <Navigate to="/templates/file-forms?category=employment-certificate" replace />
+                ),
               },
             ],
           },
@@ -502,14 +505,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: 'members',
-            element: (
-              <ProtectedRoute requiredRoles={['ADMIN']}>
-                <ComingSoonPage
-                  title="관리자 회원"
-                  description="관리자 회원 관리 기능은 현재 준비 중입니다."
-                />
-              </ProtectedRoute>
-            ),
+            element: <Navigate to="/users/list?kind=admins" replace />,
           },
           {
             path: 'posts',

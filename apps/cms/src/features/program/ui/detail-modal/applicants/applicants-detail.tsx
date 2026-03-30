@@ -14,7 +14,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import type { TabKey } from '../detail-modal-sidebar'
+import type { TabKey } from '../program-detail-nav-types'
 import {
   institutionFilterFields,
   instructorFilterFields,

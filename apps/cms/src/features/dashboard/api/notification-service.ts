@@ -89,7 +89,7 @@ export async function getNotifications(
         'matching',
         '매칭 완료',
         '대표 강사 김틴토님이 게시글을 작성하였습니다.',
-        '/instructors',
+        '/users/list?kind=instructors',
         false,
         8,
         'HSBC/HKU Business Case Competition 2026'

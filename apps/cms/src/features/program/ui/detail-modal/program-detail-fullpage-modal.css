@@ -120,7 +120,8 @@
 }
 
 /* 프로젝트 정보 탭 헤더 — 프로그램 상세 미리보기 (180×44, JA-mint-01, 연한 보더) */
-.program-detail-fullpage-modal .program-detail-fullpage-modal__program-preview-btn.app-button.ant-btn {
+.program-detail-fullpage-modal
+  .program-detail-fullpage-modal__program-preview-btn.app-button.ant-btn {
   display: flex;
   width: 180px;
   min-width: 180px;
@@ -138,7 +139,9 @@
 }
 
 .program-detail-fullpage-modal
-  .program-detail-fullpage-modal__program-preview-btn.app-button--primary.ant-btn-primary:hover:not(:disabled) {
+  .program-detail-fullpage-modal__program-preview-btn.app-button--primary.ant-btn-primary:hover:not(
+    :disabled
+  ) {
   background: var(--color-focus-teal-hover) !important;
   border-color: rgba(0, 0, 0, 0.06) !important;
   color: var(--default-WT) !important;
@@ -200,7 +203,6 @@
   padding: 0;
 }
 
-
 .program-detail-fullpage-modal__loading {
   display: flex;
   align-items: center;
@@ -221,7 +223,8 @@
 }
 
 /* 첫 번째 블록(기본 정보): 상단 여백 제거 */
-.program-detail-fullpage-modal__info-tab > .program-detail-fullpage-modal__info-tab-block:first-child {
+.program-detail-fullpage-modal__info-tab
+  > .program-detail-fullpage-modal__info-tab-block:first-child {
   margin-top: 0;
   padding-top: 0;
 }

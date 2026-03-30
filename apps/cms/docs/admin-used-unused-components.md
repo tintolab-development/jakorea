@@ -105,7 +105,7 @@
 - `features/program/ui/detail-modal/applicant-schedule-list.tsx`
 - `features/program/ui/detail-modal/applicants-detail-contents.tsx`
 - `features/program/ui/detail-modal/applicants-detail.tsx`
-- `features/program/ui/detail-modal/detail-modal-sidebar.tsx`
+- `shared/ui/detail-modal-sidebar.tsx`
 - `features/program/ui/edit-manager-role-modal.tsx`
 - `features/program/ui/enrollment-status-detail-modal.tsx`
 - `features/program/ui/enrollment-status-table.tsx`
@@ -341,7 +341,7 @@
 - `features/user/ui/enrollment-program-detail-submissions-tab.tsx`
 - `features/user/ui/enrollment-program-detail-view.tsx`
 - `features/user/ui/user-create-form.tsx`
-- `features/user/ui/user-detail-modal.tsx`
+- `features/user/ui/user-detail-fullpage-modal.tsx`
 - `features/user/ui/user-list.tsx`
 - `features/user/ui/user-role-change-modal.tsx`
 

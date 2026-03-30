@@ -15,7 +15,7 @@ import {
   InstructorDetailInfoSection,
   VolunteerDetailInfoSection,
 } from './project-info-detail-info-section'
-import { TAB_KEYS, TAB_LABELS, type TabKey } from '../detail-modal-sidebar'
+import { TAB_KEYS, TAB_LABELS, type TabKey } from '../program-detail-nav-types'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 
