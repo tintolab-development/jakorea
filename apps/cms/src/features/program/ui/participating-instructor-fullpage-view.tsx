@@ -150,17 +150,77 @@ function formatBirthGenderAgeContent(d: ParticipatingInstructorRow): ReactNode {
   return withProgramDetailTdDivider(parts)
 }
 
-function formatAccountContent(d: ParticipatingInstructorRow): ReactNode {
+function formatAccountContent(d: ParticipatingInstructorRow, mask: boolean): ReactNode {
   const bank = d.bankName ?? ''
   const num = d.accountNumber ?? ''
   const holder = d.accountHolder ?? ''
   if (!bank && !num && !holder) return '-'
-  const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
-  const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
-  const left = [bank, maskedNum].filter(Boolean).join(' ')
-  if (!maskedHolder) return left || '-'
-  if (!left) return maskedHolder
-  return withProgramDetailTdDivider([left, maskedHolder])
+  if (mask) {
+    const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
+    const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
+    const left = [bank, maskedNum].filter(Boolean).join(' ')
+    if (!maskedHolder) return left || '-'
+    if (!left) return maskedHolder
+    return withProgramDetailTdDivider([left, maskedHolder])
+  }
+  const left = [bank, num].filter(Boolean).join(' ')
+  if (!holder) return left || '-'
+  if (!left) return holder
+  return withProgramDetailTdDivider([left, holder])
+}
+
+/** 읍·면·동 단위까지 노출, 그 이후는 블러(마스킹 모드). 신청 강사 기본 정보와 동일 */
+function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
+  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
+  const m = address.match(re)
+  if (!m) return null
+  const dong = m[1]
+  const i = address.indexOf(dong)
+  if (i === -1) return null
+  const end = i + dong.length
+  return { head: address.slice(0, end), tail: address.slice(end) }
+}
+
+function maskEducationSchoolName(name: string): string {
+  const suffixes = [
+    '교육대학교',
+    '전문대학교',
+    '초등학교',
+    '고등학교',
+    '중학교',
+    '대학교',
+    '대학원',
+    '대학',
+    '전문대',
+  ].sort((a, b) => b.length - a.length)
+  for (const suf of suffixes) {
+    if (name.endsWith(suf)) {
+      return `***${suf}`
+    }
+  }
+  if (name.length <= 2) return '**'
+  return `***${name.slice(-2)}`
+}
+
+function ParticipatingAddressDisplay({ address, mask }: { address: string; mask: boolean }) {
+  if (!address) return <>-</>
+  if (!mask) return <>{address}</>
+  const split = splitAddressAfterDong(address)
+  if (!split) {
+    return <>{MASKING_POLICY.address(address)}</>
+  }
+  const { head, tail } = split
+  if (!tail.trim()) {
+    return <>{head}</>
+  }
+  return (
+    <>
+      {head}
+      <span className="participating-instructor-fullpage-view__address-blur" aria-hidden="true">
+        {tail}
+      </span>
+    </>
+  )
 }
 
 function lectureFeeCriteriaContent(d: ParticipatingInstructorRow): ReactNode {
@@ -204,6 +264,7 @@ export function ParticipatingInstructorFullpageView({
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
+  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
 
   const activeTab =
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
@@ -221,6 +282,7 @@ export function ParticipatingInstructorFullpageView({
     setSelectedAssignedSchoolKeys([])
     setSelectedWaitingSchoolKeys([])
     setOpenRoleDropdownId(null)
+    setPersonalInfoRevealed(false)
   }, [d.id, schoolRows, instructorList])
 
   const handleRoleChange = useCallback(
@@ -474,6 +536,19 @@ export function ParticipatingInstructorFullpageView({
     [waitingSchools, selectedWaitingSchoolKeys]
   )
 
+  const privacyMasked = !personalInfoRevealed
+
+  const educationCell = useMemo(() => {
+    const schoolPart = d.educationSchoolName
+      ? privacyMasked
+        ? maskEducationSchoolName(d.educationSchoolName)
+        : d.educationSchoolName
+      : ''
+    return withProgramDetailTdDivider(
+      [d.educationLevel, schoolPart].filter(s => Boolean(s)) as string[]
+    )
+  }, [d.educationLevel, d.educationSchoolName, privacyMasked])
+
   const educationSummary =
     d.educations?.[0]?.schoolType != null
       ? getEducationLevelBadge(undefined, d.educations[0].schoolType)
@@ -482,10 +557,6 @@ export function ParticipatingInstructorFullpageView({
   const careerSummaryYears =
     careerYearsFromDetails > 0 ? careerYearsFromDetails : (d.lectureExperienceYears ?? 0)
   const qualificationCount = d.qualifications?.length ?? 0
-
-  const educationCell = withProgramDetailTdDivider(
-    [d.educationLevel, d.educationSchoolName].filter(s => Boolean(s)) as string[]
-  )
   const affiliationCell = withProgramDetailTdDivider(
     ['JA강사단', d.lectureExperienceYears != null ? `${d.lectureExperienceYears}년` : null, d.jaEvaluationGrade].filter(
       (x): x is string => Boolean(x)
@@ -536,7 +607,13 @@ export function ParticipatingInstructorFullpageView({
               </tr>
               <tr>
                 <th scope="row">연락처</th>
-                <td>{d.contact ?? '-'}</td>
+                <td>
+                  {d.contact
+                    ? privacyMasked
+                      ? MASKING_POLICY.phone(d.contact)
+                      : d.contact
+                    : '-'}
+                </td>
                 <th scope="row">성별 및 생년월일</th>
                 <td>
                   <ProgramDetailTdSegmentWrap>{formatBirthGenderAgeContent(d)}</ProgramDetailTdSegmentWrap>
@@ -544,9 +621,21 @@ export function ParticipatingInstructorFullpageView({
               </tr>
               <tr>
                 <th scope="row">자택 주소</th>
-                <td>{d.address ?? '-'}</td>
+                <td>
+                  {d.address ? (
+                    <ParticipatingAddressDisplay address={d.address} mask={privacyMasked} />
+                  ) : (
+                    '-'
+                  )}
+                </td>
                 <th scope="row">이메일</th>
-                <td>{d.email ? MASKING_POLICY.email(d.email) : '-'}</td>
+                <td>
+                  {d.email
+                    ? privacyMasked
+                      ? MASKING_POLICY.email(d.email)
+                      : d.email
+                    : '-'}
+                </td>
               </tr>
               <tr>
                 <th scope="row">최종 학력</th>
@@ -555,7 +644,9 @@ export function ParticipatingInstructorFullpageView({
                 </td>
                 <th scope="row">정산 계좌 정보</th>
                 <td>
-                  <ProgramDetailTdSegmentWrap>{formatAccountContent(d)}</ProgramDetailTdSegmentWrap>
+                  <ProgramDetailTdSegmentWrap>
+                    {formatAccountContent(d, privacyMasked)}
+                  </ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
               <tr>
@@ -703,7 +794,11 @@ export function ParticipatingInstructorFullpageView({
             <AppButton variant="primary" size="filter" onClick={() => message.info('정보 수정 기능 준비 중입니다.')}>
               정보 수정
             </AppButton>
-            <AppButton variant="primary" size="filter-wide" onClick={() => message.info('개인정보 상세보기 준비 중입니다.')}>
+            <AppButton
+              variant="primary"
+              size="filter-wide"
+              onClick={() => setPersonalInfoRevealed(true)}
+            >
               개인정보 상세보기
             </AppButton>
           </div>
@@ -713,7 +808,11 @@ export function ParticipatingInstructorFullpageView({
             <AppButton variant="danger" size="filter" onClick={() => message.info('승인 취소 기능 준비 중입니다.')}>
               승인 취소
             </AppButton>
-            <AppButton variant="primary" size="filter-wide" onClick={() => message.info('개인정보 상세보기 준비 중입니다.')}>
+            <AppButton
+              variant="primary"
+              size="filter-wide"
+              onClick={() => setPersonalInfoRevealed(true)}
+            >
               개인정보 상세보기
             </AppButton>
           </div>

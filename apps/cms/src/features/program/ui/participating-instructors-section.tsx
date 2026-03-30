@@ -7,13 +7,9 @@ import { useMemo, useState, useEffect, useRef, type CSSProperties } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { Table, Row, Col, Select, Input, Checkbox } from 'antd'
-import {
-  CalendarOutlined,
-  UnorderedListOutlined,
-  DownloadOutlined,
-  InfoCircleOutlined,
-} from '@ant-design/icons'
+import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
+import { AppMultiSelect } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { message } from 'antd'
 import {
@@ -23,6 +19,7 @@ import {
   MOCK_PARTICIPATING_INSTRUCTORS,
 } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { useParticipatingInstructorsParams } from '../hooks/use-participating-instructors-params'
 import type { ProgressFilters } from '../hooks/use-program-progress-params'
 import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
@@ -35,7 +32,11 @@ import {
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
-import { getScheduleColorPair, SCHEDULE_COLORS } from './program-schedule-colors'
+import {
+  getScheduleColorPair,
+  SCHEDULE_COLORS,
+  type ScheduleColorPair,
+} from './program-schedule-colors'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 import './participating-instructors-section.css'
@@ -136,15 +137,34 @@ export function ParticipatingInstructorsSection({
   onInstructorDetailOpen,
   onInstructorDetailClose,
 }: ParticipatingInstructorsSectionProps) {
-  const { filters, appliedFilters, setFilter, applyFilters, viewMode, setViewMode } =
-    useParticipatingInstructorsParams()
+  const {
+    filters,
+    appliedFilters,
+    setFilter,
+    applyFilters,
+    viewMode,
+    setViewMode,
+    progressCalendarGranularity,
+    setProgressCalendarGranularity,
+  } = useParticipatingInstructorsParams()
 
   const programScheduleColors = useMemo(
     () => (programId ? getScheduleColorPair(programId) : SCHEDULE_COLORS[0]),
     [programId]
   )
+  /** 좌측 캘린더 학교 일정 태그와 동일: 참여 학교명 가나다순 → SCHEDULE_COLORS 순환 */
+  const schoolNameToScheduleColor = useMemo(() => {
+    const sorted = Array.from(new Set(MOCK_PARTICIPATING_SCHOOLS.map(s => s.schoolName))).sort()
+    const map = new Map<string, ScheduleColorPair>()
+    sorted.forEach((name, i) => {
+      map.set(name, SCHEDULE_COLORS[i % SCHEDULE_COLORS.length])
+    })
+    return map
+  }, [])
   const [localInstructorName, setLocalInstructorName] = useState(() => filters.instructorName)
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<Dayjs>(() => dayjs())
+  /** 캘린더 우측 기관 멀티셀렉트 — 날짜별 옵션과 동기화 시 전체 선택이 기본, []는 사용자가 모두 해제한 경우 */
+  const [calendarSelectedSchools, setCalendarSelectedSchools] = useState<string[]>([])
 
   useEffect(() => {
     setLocalInstructorName(filters.instructorName)
@@ -236,15 +256,39 @@ export function ParticipatingInstructorsSection({
     onInstructorDetailClose,
   ])
 
+  const schoolNamesOnCalendarDate = useMemo(
+    () => getSchoolNamesForDate(MOCK_PARTICIPATING_SCHOOLS, calendarSelectedDate),
+    [calendarSelectedDate]
+  )
+
   /** 캘린더에서 선택한 날짜에 교육이 있는 학교에 배정된 강사만 우측 카드에 표시 */
   const instructorsForCalendarDate = useMemo(() => {
-    const schoolNamesOnDate = getSchoolNamesForDate(
-      MOCK_PARTICIPATING_SCHOOLS,
-      calendarSelectedDate
-    )
-    if (schoolNamesOnDate.length === 0) return []
-    return filteredInstructors.filter(row => schoolNamesOnDate.includes(row.schoolName))
-  }, [filteredInstructors, calendarSelectedDate])
+    if (schoolNamesOnCalendarDate.length === 0) return []
+    return filteredInstructors.filter(row => schoolNamesOnCalendarDate.includes(row.schoolName))
+  }, [filteredInstructors, schoolNamesOnCalendarDate])
+
+  const calendarSchoolFilterOptions = useMemo(() => {
+    const names = [...schoolNamesOnCalendarDate].sort((a, b) => a.localeCompare(b, 'ko'))
+    return names.map(school => {
+      const pair = schoolNameToScheduleColor.get(school) ?? programScheduleColors
+      return {
+        value: school,
+        label: school,
+        tagColor: pair.bg,
+        tagTextColor: pair.text,
+      }
+    })
+  }, [schoolNamesOnCalendarDate, schoolNameToScheduleColor, programScheduleColors])
+
+  useEffect(() => {
+    setCalendarSelectedSchools(calendarSchoolFilterOptions.map(o => o.value))
+  }, [calendarSchoolFilterOptions])
+
+  const instructorsForCalendarDateFiltered = useMemo(() => {
+    if (calendarSelectedSchools.length === 0) return []
+    const selected = new Set(calendarSelectedSchools)
+    return instructorsForCalendarDate.filter(row => selected.has(row.schoolName))
+  }, [instructorsForCalendarDate, calendarSelectedSchools])
 
   const handleSearch = () => {
     applyFilters({ instructorName: localInstructorName })
@@ -254,8 +298,12 @@ export function ParticipatingInstructorsSection({
   const handleListView = () => setViewMode('list')
 
   const handleInfoDetailClick = () => {
-    if (selectedInstructorRowKeys.length !== 1) {
-      message.warning('개인정보 상세보기를 하려면 강사를 1명 선택해 주세요.')
+    if (selectedInstructorRowKeys.length === 0) {
+      message.warning('개인정보 상세보기를 하려면 강사를 1명 선택하거나 목록에서 강사 행을 눌러 주세요.')
+      return
+    }
+    if (selectedInstructorRowKeys.length > 1) {
+      message.warning('개인정보 상세보기는 강사 1명만 선택해 주세요.')
       return
     }
     const row = filteredInstructors.find(r => r.id === selectedInstructorRowKeys[0])
@@ -283,8 +331,11 @@ export function ParticipatingInstructorsSection({
         title: '거주 지역',
         key: 'region',
         width: 140,
-        render: (_: unknown, record: ParticipatingInstructorRow) =>
-          record.region ?? record.address ?? '-',
+        render: (_: unknown, record: ParticipatingInstructorRow) => {
+          if (record.region) return record.region
+          if (record.address) return MASKING_POLICY.address(record.address)
+          return '-'
+        },
       },
       {
         title: '참여 학교',
@@ -314,7 +365,7 @@ export function ParticipatingInstructorsSection({
         dataIndex: 'contact',
         key: 'contact',
         width: 120,
-        render: (v: string) => v ?? '-',
+        render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v) : '-'),
       },
       {
         title: '이메일',
@@ -322,7 +373,7 @@ export function ParticipatingInstructorsSection({
         key: 'email',
         width: 140,
         ellipsis: true,
-        render: (v: string) => v ?? '-',
+        render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
       },
       {
         title: '정산현황',
@@ -503,17 +554,14 @@ export function ParticipatingInstructorsSection({
             >
               강사 등록
             </AppButton>
-            {viewMode === 'list' && (
-              <AppButton
-                variant="primary"
-                size="filter-wide"
-                icon={<InfoCircleOutlined />}
-                onClick={handleInfoDetailClick}
-                disabled={selectedInstructorRowKeys.length !== 1}
-              >
-                개인정보 상세보기
-              </AppButton>
-            )}
+            <AppButton
+              variant="primary"
+              size="filter-wide"
+              className="participating-instructors-section__btn-privacy-detail"
+              onClick={handleInfoDetailClick}
+            >
+              개인정보 상세보기
+            </AppButton>
           </div>
         </div>
 
@@ -539,6 +587,7 @@ export function ParticipatingInstructorsSection({
                     target.closest('.ant-checkbox-wrapper')
                   )
                     return
+                  setSelectedInstructorRowKeys([record.id])
                   onInstructorRowClick?.(record)
                 },
                 style: { cursor: 'pointer' },
@@ -552,87 +601,107 @@ export function ParticipatingInstructorsSection({
             onSelectionChange={() => {}}
             onSchoolClick={() => {}}
             onDateSelect={setCalendarSelectedDate}
+            calendarGranularity={progressCalendarGranularity}
+            onCalendarGranularityChange={setProgressCalendarGranularity}
             rightContent={
-              <div className="participating-instructors-section__calendar-right-cards">
-                {instructorsForCalendarDate.map(row => (
-                  <div
-                    key={row.id}
-                    className="participating-instructors-section__calendar-card"
-                    role="button"
-                    tabIndex={0}
-                    style={
-                      {
-                        '--calendar-card-bg': programScheduleColors.bg,
-                        '--calendar-card-border': programScheduleColors.border,
-                      } as CSSProperties
-                    }
-                    onClick={e => {
-                      const target = e.target as HTMLElement
-                      if (
-                        target.closest('.participating-instructors-section__calendar-card-checkbox-wrap')
-                      )
-                        return
-                      onInstructorRowClick?.(row)
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        onInstructorRowClick?.(row)
-                      }
-                    }}
-                  >
-                    <div className="participating-instructors-section__calendar-card-main">
-                      <div className="participating-instructors-section__calendar-card-body">
-                        <div className="participating-instructors-section__calendar-card-header">
-                          <span className="participating-instructors-section__calendar-card-school">
-                            {row.schoolName}
-                          </span>
-                          <span
-                            className="participating-instructors-section__calendar-card-divider"
-                            aria-hidden
-                          />
-                          <span className="participating-instructors-section__calendar-card-name">
-                            {row.instructorName}
-                          </span>
-                        </div>
-                        <div className="participating-instructors-section__calendar-card-tags">
-                          <span
-                            className={
-                              'participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--settlement participating-instructors-section__calendar-card-tag--' +
-                              row.settlementStatus
-                            }
-                          >
-                            {SETTLEMENT_STATUS_LABELS[row.settlementStatus]}
-                          </span>
-                          <span
-                            className={`participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--report${
-                              row.lectureReportSubmitted
-                                ? ' participating-instructors-section__calendar-card-tag--report-submitted'
-                                : ''
-                            }`}
-                          >
-                            강의보고서 :{' '}
-                            {row.lectureReportSubmitted ? '제출' : '미제출'}
-                          </span>
+              <div className="participating-instructors-section__calendar-right">
+                <div className="participating-instructors-section__calendar-right__school-filter">
+                  <AppMultiSelect
+                    value={calendarSelectedSchools}
+                    onChange={setCalendarSelectedSchools}
+                    options={calendarSchoolFilterOptions}
+                    placeholder="기관 선택"
+                  />
+                </div>
+                <div className="participating-instructors-section__calendar-right-cards">
+                  {instructorsForCalendarDateFiltered.map(row => {
+                    const schoolColors =
+                      schoolNameToScheduleColor.get(row.schoolName) ?? programScheduleColors
+                    return (
+                      <div
+                        key={row.id}
+                        className="participating-instructors-section__calendar-card"
+                        role="button"
+                        tabIndex={0}
+                        style={
+                          {
+                            '--calendar-card-bg': schoolColors.bg,
+                            '--calendar-card-border': schoolColors.border,
+                          } as CSSProperties
+                        }
+                        onClick={e => {
+                          const target = e.target as HTMLElement
+                          if (
+                            target.closest(
+                              '.participating-instructors-section__calendar-card-checkbox-wrap'
+                            )
+                          )
+                            return
+                          setSelectedInstructorRowKeys([row.id])
+                          onInstructorRowClick?.(row)
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setSelectedInstructorRowKeys([row.id])
+                            onInstructorRowClick?.(row)
+                          }
+                        }}
+                      >
+                        <div className="participating-instructors-section__calendar-card-main">
+                          <div className="participating-instructors-section__calendar-card-body">
+                            <div className="participating-instructors-section__calendar-card-header">
+                              <span className="participating-instructors-section__calendar-card-school">
+                                {row.schoolName}
+                              </span>
+                              <span
+                                className="participating-instructors-section__calendar-card-divider"
+                                aria-hidden
+                              />
+                              <span className="participating-instructors-section__calendar-card-name">
+                                {row.instructorName}
+                              </span>
+                            </div>
+                            <div className="participating-instructors-section__calendar-card-tags">
+                              <span
+                                className={
+                                  'participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--settlement participating-instructors-section__calendar-card-tag--' +
+                                  row.settlementStatus
+                                }
+                              >
+                                {SETTLEMENT_STATUS_LABELS[row.settlementStatus]}
+                              </span>
+                              <span
+                                className={`participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--report${
+                                  row.lectureReportSubmitted
+                                    ? ' participating-instructors-section__calendar-card-tag--report-submitted'
+                                    : ''
+                                }`}
+                              >
+                                강의보고서 :{' '}
+                                {row.lectureReportSubmitted ? '제출' : '미제출'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="participating-instructors-section__calendar-card-checkbox-wrap">
+                            <Checkbox
+                              checked={selectedInstructorRowKeys.includes(row.id)}
+                              onChange={e => {
+                                e.stopPropagation()
+                                const next = e.target.checked
+                                  ? [...selectedInstructorRowKeys, row.id]
+                                  : selectedInstructorRowKeys.filter(k => k !== row.id)
+                                setSelectedInstructorRowKeys(next)
+                              }}
+                              onClick={e => e.stopPropagation()}
+                              className="participating-instructors-section__calendar-card-checkbox"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div className="participating-instructors-section__calendar-card-checkbox-wrap">
-                        <Checkbox
-                          checked={selectedInstructorRowKeys.includes(row.id)}
-                          onChange={e => {
-                            e.stopPropagation()
-                            const next = e.target.checked
-                              ? [...selectedInstructorRowKeys, row.id]
-                              : selectedInstructorRowKeys.filter(k => k !== row.id)
-                            setSelectedInstructorRowKeys(next)
-                          }}
-                          onClick={e => e.stopPropagation()}
-                          className="participating-instructors-section__calendar-card-checkbox"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    )
+                  })}
+                </div>
               </div>
             }
           />

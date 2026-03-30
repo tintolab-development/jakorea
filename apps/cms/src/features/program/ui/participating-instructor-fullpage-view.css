@@ -57,3 +57,10 @@
   line-height: 140%;
   margin-left: 8px;
 }
+
+/* 자택 주소: 읍·면·동까지 표시 후 이하 구간 블러 (신청 강사 기본 정보와 동일) */
+.participating-instructor-fullpage-view__address-blur {
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}
