@@ -42,7 +42,11 @@ export { TealHeaderModal } from './teal-header-modal'
 export type { TealHeaderModalProps } from './teal-header-modal'
 export { ContentModal } from './content-modal'
 export type { ContentModalProps } from './content-modal'
-export { AppDatePicker, AppDateRangePicker } from './app-datepicker'
+export {
+  AppDatePicker,
+  AppDateRangePicker,
+  DEFAULT_APP_DATE_PLACEHOLDER,
+} from './app-datepicker'
 export type { AppDatePickerProps, AppDateRangePickerProps } from './app-datepicker'
 export { AppButton } from './app-button'
 export type { AppButtonProps, AppButtonVariant, AppButtonSize } from './app-button'

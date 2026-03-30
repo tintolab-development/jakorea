@@ -110,8 +110,8 @@ export function UnifiedFilterCard({
 
     if (field.type === 'select') {
       return (
-        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
-          <div className="unified-filter-card__field">
+        <Col key={field.key} flex={field.flex ?? '1 1 300px'}>
+          <div className="unified-filter-card__field unified-filter-card__field--select">
             <span className="unified-filter-card__label">{field.label}</span>
             <AppSelect
               uiVariant="filter"
@@ -121,6 +121,7 @@ export function UnifiedFilterCard({
               selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(field.key, value)}
               allowClear={field.allowClear !== false}
+              popupMatchSelectWidth
               style={{ width: '100%', ...field.style }}
               options={field.options?.map(opt => ({
                 label: opt.label,
@@ -134,7 +135,7 @@ export function UnifiedFilterCard({
 
     if (field.type === 'dateRange') {
       return (
-        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
+        <Col key={field.key} flex={field.flex ?? '1 1 360px'}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
             <AppDateRangePicker

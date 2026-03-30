@@ -1,0 +1,342 @@
+/**
+ * 관리자 회원 상세 — 담당 프로그램 이력 (필터 + 테이블)
+ */
+
+import { useCallback, useMemo, useState, type Key } from 'react'
+import { Card, Table, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import type { Program, TargetLevel } from '@/types/domain'
+import type { User } from '@/types/user'
+import { programService } from '@/entities/program/api/program-service'
+import { mockPrograms } from '@/data/mock'
+import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
+import { FilterListLayout } from '@/shared/ui/filter-list-layout'
+import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import { AppButton } from '@/shared/ui/app-button'
+import { Divider } from '@/shared/components/divider'
+import '@/features/program/ui/program-list.css'
+import '@/pages/programs/program-list-page.css'
+import '@/pages/users/user-list-page.css'
+import './admin-managed-program-history.css'
+
+type AdminUser = Omit<User, 'password'>
+
+type PendingFilters = {
+  title: string
+  year: string
+  lifecycle: string
+  participantType: string
+  targetLevel: string
+}
+
+const ALL = ''
+
+const TARGET_LEVEL_OPTIONS: { label: string; value: string }[] = [
+  { label: '전체', value: ALL },
+  { label: '초등학생', value: 'elementary' },
+  { label: '중학생', value: 'middle' },
+  { label: '고등학생', value: 'high' },
+]
+
+const PARTICIPANT_OPTIONS: { label: string; value: string }[] = [
+  { label: '전체', value: ALL },
+  { label: '학교/기관', value: 'school' },
+  { label: '봉사자', value: 'volunteer' },
+  { label: '개인 학습자', value: 'individual' },
+]
+
+function yearOfProgram(p: Program): number {
+  return new Date(p.startDate).getFullYear()
+}
+
+function participantTypeKey(p: Program): 'school' | 'volunteer' | 'individual' {
+  const ls = p.lifecycleStatus
+  if (ls === 'recruiting_volunteers' || ls === 'volunteer_recruitment_planned') {
+    return 'volunteer'
+  }
+  if (p.category === 'school') return 'school'
+  return 'individual'
+}
+
+function participantTypeLabel(p: Program): string {
+  const k = participantTypeKey(p)
+  if (k === 'school') return '학교/기관'
+  if (k === 'volunteer') return '봉사자'
+  return '개인 학습자'
+}
+
+function targetLevelLabel(p: Program): string {
+  const map: Record<TargetLevel, string> = {
+    elementary: '초등학생',
+    middle: '중학생',
+    high: '고등학생',
+  }
+  if (!p.targetLevel) return '-'
+  return map[p.targetLevel] ?? '-'
+}
+
+function recruitmentCountDisplay(p: Program): string {
+  const cap = p.rounds[0]?.capacity ?? 30
+  const n = p.approvedStudentCount ?? 0
+  return `${n} / ${cap}`
+}
+
+function resolveManagedPrograms(user: AdminUser): Program[] {
+  const keys = user.programRoles ? Object.keys(user.programRoles) : []
+  const fromRoles = keys
+    .map(id => programService.getByIdSync(id))
+    .filter((p): p is Program => Boolean(p))
+  if (fromRoles.length > 0) return fromRoles
+  return mockPrograms.slice(0, 5)
+}
+
+export interface AdminManagedProgramHistoryProps {
+  user: AdminUser
+}
+
+export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryProps) {
+  const sourcePrograms = useMemo(() => resolveManagedPrograms(user), [user])
+
+  const yearOptions = useMemo(() => {
+    const years = new Set<number>()
+    sourcePrograms.forEach(p => years.add(yearOfProgram(p)))
+    const sorted = [...years].sort((a, b) => b - a)
+    return [
+      { label: '전체', value: ALL },
+      ...sorted.map(y => ({ label: `${y}년`, value: String(y) })),
+    ]
+  }, [sourcePrograms])
+
+  const lifecycleOptions = useMemo(() => {
+    const set = new Set<string>()
+    sourcePrograms.forEach(p => {
+      if (p.lifecycleStatus) set.add(p.lifecycleStatus)
+    })
+    const ordered = [
+      'planned',
+      'recruiting_students',
+      'education_in_progress',
+      'matching_completed',
+      'education_completed',
+    ] as const
+    const opts: { label: string; value: string }[] = [{ label: '전체', value: ALL }]
+    ordered.forEach(k => {
+      if (set.has(k)) opts.push({ label: getProgramLifecycleLabel(k), value: k })
+    })
+    set.forEach(k => {
+      if (!opts.some(o => o.value === k))
+        opts.push({ label: getProgramLifecycleLabel(k), value: k })
+    })
+    return opts
+  }, [sourcePrograms])
+
+  const filterFields = useMemo((): FilterFieldConfig[] => {
+    return [
+      {
+        key: 'title',
+        type: 'search',
+        label: '프로그램명',
+        placeholder: '프로그램명을 입력하세요',
+        flex: '1 1 min(100%, 280px)',
+      },
+      {
+        key: 'year',
+        type: 'select',
+        label: '진행년도',
+        placeholder: '전체',
+        options: yearOptions,
+        flex: '0 1 152px',
+      },
+      {
+        key: 'lifecycle',
+        type: 'select',
+        label: '프로그램 진행 현황',
+        placeholder: '전체',
+        options: lifecycleOptions,
+        flex: '1 1 200px',
+      },
+      {
+        key: 'participantType',
+        type: 'select',
+        label: '참여자 유형',
+        placeholder: '전체',
+        options: PARTICIPANT_OPTIONS,
+        flex: '0 1 168px',
+      },
+      {
+        key: 'targetLevel',
+        type: 'select',
+        label: '교육 대상',
+        placeholder: '전체',
+        options: TARGET_LEVEL_OPTIONS,
+        flex: '0 1 168px',
+      },
+    ]
+  }, [yearOptions, lifecycleOptions])
+
+  const [pendingFilters, setPendingFilters] = useState<PendingFilters>({
+    title: '',
+    year: ALL,
+    lifecycle: ALL,
+    participantType: ALL,
+    targetLevel: ALL,
+  })
+
+  const [activeFilters, setActiveFilters] = useState<PendingFilters>(pendingFilters)
+
+  const handleSearch = useCallback(() => {
+    setActiveFilters({ ...pendingFilters })
+  }, [pendingFilters])
+
+  const filteredPrograms = useMemo(() => {
+    return sourcePrograms.filter(p => {
+      if (activeFilters.title.trim() && !p.title.includes(activeFilters.title.trim())) return false
+      if (activeFilters.year && String(yearOfProgram(p)) !== activeFilters.year) return false
+      if (activeFilters.lifecycle && p.lifecycleStatus !== activeFilters.lifecycle) return false
+      if (
+        activeFilters.participantType &&
+        participantTypeKey(p) !== activeFilters.participantType
+      ) {
+        return false
+      }
+      if (activeFilters.targetLevel && p.targetLevel !== activeFilters.targetLevel) return false
+      return true
+    })
+  }, [sourcePrograms, activeFilters])
+
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+
+  const columns: ColumnsType<Program> = useMemo(
+    () => [
+      {
+        title: 'No.',
+        key: 'no',
+        width: 56,
+        align: 'center',
+        render: (_: unknown, __: Program, index: number) => index + 1,
+      },
+      {
+        title: '프로그램명',
+        dataIndex: 'title',
+        key: 'title',
+        width: 260,
+        ellipsis: true,
+        align: 'center',
+        render: (t: string) => t,
+      },
+      {
+        title: '진행년도',
+        key: 'year',
+        width: 100,
+        align: 'center',
+        render: (_: unknown, p: Program) => `${yearOfProgram(p)}년`,
+      },
+      {
+        title: '프로그램 진행 현황',
+        key: 'lifecycle',
+        width: 160,
+        align: 'center',
+        render: (_: unknown, p: Program) =>
+          p.lifecycleStatus ? <ProgramLifecycleStatusBadge status={p.lifecycleStatus} /> : '-',
+      },
+      {
+        title: '참여자 모집 인원',
+        key: 'recruitment',
+        width: 130,
+        align: 'center',
+        render: (_: unknown, p: Program) => recruitmentCountDisplay(p),
+      },
+      {
+        title: '참여자 유형',
+        key: 'ptype',
+        width: 120,
+        align: 'center',
+        render: (_: unknown, p: Program) => participantTypeLabel(p),
+      },
+      {
+        title: '교육 대상',
+        key: 'target',
+        width: 120,
+        align: 'center',
+        render: (_: unknown, p: Program) => targetLevelLabel(p),
+      },
+    ],
+    []
+  )
+
+  const listHeader = (
+    <>
+      <div className="program-list-page__divider-wrapper">
+        <Divider />
+      </div>
+      <div className="program-list-page__filter-info">
+        <div className="program-list-page__filter-info-texts">
+          <div className="program-list-page__filter-info-title">프로그램 진행 이력</div>
+          <div className="program-list-page__filter-info-count">총 {filteredPrograms.length}건</div>
+        </div>
+        <div className="program-list-page__widget-header-actions">
+          <AppButton
+            variant="danger"
+            size="filter"
+            dangerFillOnHover
+            className="program-list-page__bulk-delete-button"
+            disabled={selectedRowKeys.length === 0}
+            onClick={() => {
+              message.info('이력 삭제는 추후 연결됩니다.')
+            }}
+          >
+            이력 삭제
+          </AppButton>
+        </div>
+      </div>
+    </>
+  )
+
+  return (
+    <div className="admin-managed-program-history">
+      <div className="user-list-page__filter-wrap">
+        <FilterListLayout
+          className="program-list-content-wrapper admin-managed-program-history__layout"
+          bordered={false}
+          fields={filterFields}
+          filters={{
+            title: pendingFilters.title,
+            year: pendingFilters.year || undefined,
+            lifecycle: pendingFilters.lifecycle || undefined,
+            participantType: pendingFilters.participantType || undefined,
+            targetLevel: pendingFilters.targetLevel || undefined,
+          }}
+          onFilterChange={(key, value) => {
+            setPendingFilters(prev => ({ ...prev, [key]: value ?? ALL }))
+          }}
+          onSearch={handleSearch}
+          listHeader={listHeader}
+        >
+          <div className="program-list-content-wrapper__table">
+            <Card
+              className="program-list-card program-list-card--in-wrapper program-list-card--no-border"
+              style={{ border: 'none', boxShadow: 'none' }}
+            >
+              <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
+                <Table<Program>
+                  rowSelection={{
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys),
+                  }}
+                  dataSource={filteredPrograms}
+                  columns={columns}
+                  rowKey="id"
+                  tableLayout="fixed"
+                  pagination={false}
+                  size="small"
+                  scroll={{ x: 1100, y: 'calc(100vh - 420px)' }}
+                />
+              </div>
+            </Card>
+          </div>
+        </FilterListLayout>
+      </div>
+    </div>
+  )
+}

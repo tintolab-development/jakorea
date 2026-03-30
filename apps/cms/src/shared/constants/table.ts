@@ -7,6 +7,7 @@ export const TABLE_COLUMN_WIDTHS = {
   status: 110,
   date: 120,
   action: 72,
+  /** 선택 열 — `user-list-table.css`에서 동일 60px 고정과 맞출 것 */
   checkbox: 60,
   index: 60,
   name: 120,

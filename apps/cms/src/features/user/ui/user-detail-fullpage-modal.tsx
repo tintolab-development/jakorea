@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Table, Empty, Dropdown, Tag, message } from 'antd'
 import type { MenuProps } from 'antd'
-import { BulbOutlined, FolderOpenOutlined } from '@ant-design/icons'
+import { AccountBookOutlined, BulbOutlined, FolderOpenOutlined } from '@ant-design/icons'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import {
   DetailModalSidebar,
@@ -34,10 +34,23 @@ import {
 import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
 import { EnrollmentProgramDetailModal } from './enrollment-program-detail-modal'
+import {
+  UserBasicInfoSection,
+  type UserBasicInfoEntrySource,
+} from './user-basic-info-section'
+import { UserConsentAgreementSection } from './user-consent-agreement-section'
+import { AdminManagedProgramHistory } from './admin-managed-program-history'
 import './user-detail-modal.css'
 import './user-detail-fullpage-modal.css'
 
-export type UserDetailLnbKey = 'basic' | 'programs'
+export type UserDetailLnbKey = 'basic' | 'programs' | 'settlement'
+
+/** 프로그램 참여 이력 LNB 하위 (전체·강사 회원) */
+export type UserDetailProgramsChildKey = 'enrollment' | 'lecture' | 'volunteer'
+
+function programsHistoryHasChildMenu(role: User['role']): boolean {
+  return role === 'INDIVIDUAL' || role === 'INSTRUCTOR'
+}
 
 export interface UserDetailFullPageModalProps {
   open: boolean
@@ -45,6 +58,8 @@ export interface UserDetailFullPageModalProps {
   onClose: () => void
   onEdit?: (user: Omit<User, 'password'>) => void
   onWithdraw?: (user: Omit<User, 'password'>) => void
+  /** 기본 정보 테이블 분기 — 미지정 시 URL `userDetailEntry` 또는 회원 역할로 도출 */
+  basicInfoEntrySource?: UserBasicInfoEntrySource
 }
 
 export function UserDetailFullPageModal({
@@ -53,37 +68,67 @@ export function UserDetailFullPageModal({
   onClose,
   onEdit,
   onWithdraw,
+  basicInfoEntrySource,
 }: UserDetailFullPageModalProps) {
   const displayUser = user
 
   const [activeLnb, setActiveLnb] = useState<UserDetailLnbKey>('basic')
+  const [activeProgramsChild, setActiveProgramsChild] =
+    useState<UserDetailProgramsChildKey>('enrollment')
   const [applications, setApplications] = useState<Application[]>([])
+  /** 강사 회원 — 프로그램 수강 이력(학생 신청) 전용 */
+  const [enrollmentApplications, setEnrollmentApplications] = useState<Application[]>([])
   const [applicationsLoading, setApplicationsLoading] = useState(false)
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [lectureAttendanceModalOpen, setLectureAttendanceModalOpen] = useState(false)
-  const [lectureAttendanceApplication, setLectureAttendanceApplication] = useState<Application | null>(null)
+  const [lectureAttendanceApplication, setLectureAttendanceApplication] =
+    useState<Application | null>(null)
   const [assignmentSubmissionModalOpen, setAssignmentSubmissionModalOpen] = useState(false)
-  const [assignmentSubmissionApplication, setAssignmentSubmissionApplication] = useState<Application | null>(null)
+  const [assignmentSubmissionApplication, setAssignmentSubmissionApplication] =
+    useState<Application | null>(null)
   const [programDetailModalOpen, setProgramDetailModalOpen] = useState(false)
-  const [selectedApplicationForProgramDetail, setSelectedApplicationForProgramDetail] = useState<Application | null>(null)
+  const [selectedApplicationForProgramDetail, setSelectedApplicationForProgramDetail] =
+    useState<Application | null>(null)
+  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+
+  useEffect(() => {
+    if (!open) setPersonalInfoRevealed(false)
+  }, [open])
+
+  useEffect(() => {
+    setPersonalInfoRevealed(false)
+  }, [displayUser?.id])
 
   useEffect(() => {
     if (open && displayUser) {
       const loadApplications = async () => {
         setApplicationsLoading(true)
         try {
-          let subjectType: Application['subjectType'] | undefined
-          if (displayUser.role === 'INSTRUCTOR') subjectType = 'instructor'
-          else if (displayUser.role === 'SCHOOL') subjectType = 'school'
-          else if (displayUser.role === 'INDIVIDUAL') subjectType = 'student'
+          if (displayUser.role === 'INSTRUCTOR') {
+            const [instructorApps, studentApps] = await Promise.all([
+              applicationService.getByUserId(displayUser.id, 'instructor'),
+              applicationService.getByUserId(displayUser.id, 'student'),
+            ])
+            setApplications(instructorApps)
+            setEnrollmentApplications(studentApps)
+          } else {
+            let subjectType: Application['subjectType'] | undefined
+            if (displayUser.role === 'SCHOOL') subjectType = 'school'
+            else if (displayUser.role === 'INDIVIDUAL') subjectType = 'student'
 
-          const userApplications = await applicationService.getByUserId(displayUser.id, subjectType)
-          setApplications(userApplications)
+            const userApplications = await applicationService.getByUserId(
+              displayUser.id,
+              subjectType
+            )
+            setApplications(userApplications)
+            setEnrollmentApplications([])
+          }
         } catch (error) {
           console.error('Failed to load applications:', error)
           setApplications([])
+          setEnrollmentApplications([])
         } finally {
           setApplicationsLoading(false)
         }
@@ -91,6 +136,7 @@ export function UserDetailFullPageModal({
       loadApplications()
     } else {
       setApplications([])
+      setEnrollmentApplications([])
     }
   }, [open, displayUser])
 
@@ -115,7 +161,10 @@ export function UserDetailFullPageModal({
   }, [open, displayUser])
 
   useEffect(() => {
-    if (open && displayUser) setActiveLnb('basic')
+    if (open && displayUser) {
+      setActiveLnb('basic')
+      setActiveProgramsChild('enrollment')
+    }
   }, [open, displayUser?.id])
 
   const handleProgressStatusChange = useCallback(
@@ -140,12 +189,20 @@ export function UserDetailFullPageModal({
             progressStatus: progressMap[displayStatus],
           })
         }
-        let subjectType: Application['subjectType'] | undefined
-        if (displayUser.role === 'INSTRUCTOR') subjectType = 'instructor'
-        else if (displayUser.role === 'SCHOOL') subjectType = 'school'
-        else if (displayUser.role === 'INDIVIDUAL') subjectType = 'student'
-        const list = await applicationService.getByUserId(displayUser.id, subjectType)
-        setApplications(list)
+        if (displayUser.role === 'INSTRUCTOR') {
+          const [inst, stu] = await Promise.all([
+            applicationService.getByUserId(displayUser.id, 'instructor'),
+            applicationService.getByUserId(displayUser.id, 'student'),
+          ])
+          setApplications(inst)
+          setEnrollmentApplications(stu)
+        } else {
+          let subjectType: Application['subjectType'] | undefined
+          if (displayUser.role === 'SCHOOL') subjectType = 'school'
+          else if (displayUser.role === 'INDIVIDUAL') subjectType = 'student'
+          const list = await applicationService.getByUserId(displayUser.id, subjectType)
+          setApplications(list)
+        }
       } catch (e) {
         console.error('Failed to update progress status:', e)
       }
@@ -153,21 +210,92 @@ export function UserDetailFullPageModal({
     [displayUser]
   )
 
-  const userSidebarItems = useMemo<DetailModalSidebarNavItem[]>(
-    () => [
+  const userSidebarItems = useMemo<DetailModalSidebarNavItem[]>(() => {
+    const role = displayUser?.role
+    const programsLabel =
+      role === 'ADMIN' ? '담당 프로그램 이력' : '프로그램 참여 이력'
+    const programsIcon = (
+      <FolderOpenOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />
+    )
+
+    const programsItem: DetailModalSidebarNavItem =
+      role === 'INDIVIDUAL'
+        ? {
+            key: 'programs',
+            label: programsLabel,
+            icon: programsIcon,
+            children: [
+              { key: 'enrollment', label: '프로그램 수강 이력' },
+              { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
+            ],
+          }
+        : role === 'INSTRUCTOR'
+          ? {
+              key: 'programs',
+              label: programsLabel,
+              icon: programsIcon,
+              children: [
+                { key: 'enrollment', label: '프로그램 수강 이력' },
+                { key: 'lecture', label: '프로그램 강의 이력' },
+                { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
+              ],
+            }
+          : {
+              key: 'programs',
+              label: programsLabel,
+              icon: programsIcon,
+            }
+
+    const items: DetailModalSidebarNavItem[] = [
       {
         key: 'basic',
-        label: '회원 상세 정보',
+        label: role === 'ADMIN' ? '관리자 상세 정보' : '회원 상세 정보',
         icon: <BulbOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
       },
-      {
-        key: 'programs',
-        label: '프로그램 참여 이력',
-        icon: <FolderOpenOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
-      },
-    ],
-    []
-  )
+      programsItem,
+    ]
+
+    if (role === 'INSTRUCTOR') {
+      items.push({
+        key: 'settlement',
+        label: '정산 현황',
+        icon: (
+          <AccountBookOutlined
+            className="detail-fullpage-modal__lnb-icon"
+            style={{ fontSize: 20 }}
+          />
+        ),
+      })
+    }
+
+    return items
+  }, [displayUser?.role])
+
+  const sidebarExpandedGroupKeys = useMemo(() => {
+    if (activeLnb !== 'programs' || !displayUser) return [] as const
+    if (!programsHistoryHasChildMenu(displayUser.role)) return [] as const
+    return ['programs'] as const
+  }, [activeLnb, displayUser])
+
+  const sidebarActiveChildKey =
+    activeLnb === 'programs' && displayUser && programsHistoryHasChildMenu(displayUser.role)
+      ? activeProgramsChild
+      : ''
+
+  const handleSidebarSelectTop = (key: string) => {
+    const k = key as UserDetailLnbKey
+    if (k === 'programs' && displayUser && programsHistoryHasChildMenu(displayUser.role)) {
+      setActiveLnb('programs')
+      setActiveProgramsChild('enrollment')
+      return
+    }
+    setActiveLnb(k)
+  }
+
+  const handleSidebarSelectChild = (_groupKey: string, childKey: string) => {
+    setActiveProgramsChild(childKey as UserDetailProgramsChildKey)
+    setActiveLnb('programs')
+  }
 
   if (!open) {
     return null
@@ -206,17 +334,20 @@ export function UserDetailFullPageModal({
           program?.lifecycleStatus
         )
         const menuItems: MenuProps['items'] = (
-          ['WAITING_RESULT', 'REJECTED', 'EDUCATION_SCHEDULED', 'EDUCATION_IN_PROGRESS', 'PROGRAM_ENDED'] as const
+          [
+            'WAITING_RESULT',
+            'REJECTED',
+            'EDUCATION_SCHEDULED',
+            'EDUCATION_IN_PROGRESS',
+            'PROGRAM_ENDED',
+          ] as const
         ).map(key => ({
           key,
           label: <ProgramEnrollmentStatusBadge status={key} />,
           onClick: () => handleProgressStatusChange(record, key),
         }))
         return (
-          <span
-            className="user-detail-modal__progress-cell"
-            onClick={e => e.stopPropagation()}
-          >
+          <span className="user-detail-modal__progress-cell" onClick={e => e.stopPropagation()}>
             <Dropdown menu={{ items: menuItems }} trigger={['click']}>
               <span className="user-detail-modal__progress-dropdown-trigger">
                 <ProgramEnrollmentStatusBadge status={displayStatus} />
@@ -329,193 +460,143 @@ export function UserDetailFullPageModal({
     },
   ]
 
+  const basicInfoCaption = '*관리자에 의해 등록된 회원입니다.'
+  const basicInfoExternalId1365 =
+    displayUser.role === 'INDIVIDUAL' || displayUser.role === 'SCHOOL'
+      ? {
+          maskedLabel: '0915***',
+          fullLabel: '0915123456',
+          onOpen: () => message.info('1365 바로가기는 추후 연결됩니다.'),
+        }
+      : undefined
+
   const basicInfoContent = (
     <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
-      <div className="user-detail-modal__basic-inner">
-        <div className="user-detail-modal__profile-wrap">
-          <div className="user-detail-modal__profile-placeholder">
-            사진 없음
-          </div>
-        </div>
-        <div className="user-detail-modal__basic-table-wrap">
-          <table className="user-detail-modal__basic-table">
-            <colgroup>
-              <col className="user-detail-modal__basic-table-col-label-left" />
-              <col className="user-detail-modal__basic-table-col-name-sub" />
-              <col className="user-detail-modal__basic-table-col-input-left" />
-              <col className="user-detail-modal__basic-table-col-label-right" />
-              <col className="user-detail-modal__basic-table-col-input-right" />
-            </colgroup>
-            <tbody>
-              {/* 1행: 성명(한글) | 값 · 생년월일 | 값 (참여 강사 상세 기본정보 탭 테이블 구조 참고) */}
-              <tr>
-                <td
-                  rowSpan={2}
-                  className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name"
-                >
-                  <span className="user-detail-modal__basic-table-label">성명</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-                  <span className="user-detail-modal__basic-table-label">한글</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-                  {displayUser!.name}
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-                  <span className="user-detail-modal__basic-table-label">생년월일</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-                  {displayUser!.birthDate
-                    ? `${formatDate(new Date(displayUser!.birthDate))} | 만 ${Math.floor((Date.now() - new Date(displayUser!.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))}세`
-                    : '-'}
-                </td>
-              </tr>
-              {/* 2행: 성명(영문) | 값 · 성별 | 값 */}
-              <tr>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-                  <span className="user-detail-modal__basic-table-label">영문</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider user-detail-modal__name-eng">
-                  {displayUser!.nameEn ?? '-'}
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-                  <span className="user-detail-modal__basic-table-label">성별</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-                  {displayUser!.gender ?? '-'}
-                </td>
-              </tr>
-              {/* 3행: 연락처 | 값 · 이메일 | 값 */}
-              <tr>
-                <td
-                  colSpan={2}
-                  className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-                >
-                  <span className="user-detail-modal__basic-table-label">연락처</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-                  {displayUser!.phone ?? '-'}
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-                  <span className="user-detail-modal__basic-table-label">이메일</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-                  {displayUser!.email}
-                </td>
-              </tr>
-              {/* 4행: 주소 | 값 · 소속 | 값 */}
-              <tr>
-                <td
-                  colSpan={2}
-                  className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-                >
-                  <span className="user-detail-modal__basic-table-label">주소</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-                  {displayUser!.schoolInfo?.address ??
-                    displayUser!.detailAddress ??
-                    '-'}
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-                  <span className="user-detail-modal__basic-table-label">소속</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-                  {displayUser!.affiliation ??
-                    (displayUser!.schoolInfo
-                      ? `${displayUser!.schoolInfo.schoolName}${displayUser!.schoolInfo.position ? ` | ${displayUser!.schoolInfo.position}` : ''}`
-                      : '-')}
-                </td>
-              </tr>
-              {/* 5행: 연동된 소셜 계정 | 값 · 가입일 | 값 */}
-              <tr>
-                <td
-                  colSpan={2}
-                  className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-                >
-                  <span className="user-detail-modal__basic-table-label">연동된 소셜 계정</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-                  {displayUser!.socialAccounts?.length ? displayUser!.socialAccounts.join(' | ') : '-'}
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-                  <span className="user-detail-modal__basic-table-label">가입일</span>
-                </td>
-                <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-                  {formatDate(new Date(displayUser!.createdAt))}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <UserBasicInfoSection
+        user={displayUser}
+        entrySource={basicInfoEntrySource}
+        caption={basicInfoCaption}
+        externalId1365={basicInfoExternalId1365}
+        personalInfoRevealed={personalInfoRevealed}
+      />
+      <UserConsentAgreementSection />
     </div>
   )
 
-  const programsHistoryContent = (
+  const role = displayUser.role
+  const programsChildMode = programsHistoryHasChildMenu(role)
+
+  const enrollmentTableRows = role === 'INSTRUCTOR' ? enrollmentApplications : applications
+  const lectureTableRows = applications
+
+  const enrollmentSectionTitle =
+    role === 'ADMIN' ? '담당 프로그램 이력' : '프로그램 수강 이력'
+
+  const renderApplicationTable = (
+    rows: Application[],
+    summaryLabel: string,
+    emptyDescription: string
+  ) => (
+    <div className="user-detail-modal__program-tab">
+      {applicationsLoading ? (
+        <div className="user-detail-modal__loading">로딩 중...</div>
+      ) : rows.length > 0 ? (
+        <>
+          <p className="user-detail-modal__program-tab-summary">
+            {summaryLabel} 총 {rows.length}건
+          </p>
+          <Table
+            className="user-detail-modal__program-table"
+            columns={programHistoryColumns}
+            dataSource={rows}
+            rowKey="id"
+            pagination={false}
+            scroll={{ y: 'calc(100vh - 480px)' }}
+            size="small"
+            onRow={record => ({
+              onClick: e => {
+                const target = e.target as HTMLElement
+                if (
+                  target.closest('.user-detail-modal__progress-cell') ||
+                  target.closest('.user-detail-modal__attendance-link') ||
+                  target.closest('.user-detail-modal__assignment-cell')
+                )
+                  return
+                setSelectedApplicationForProgramDetail(record)
+                setProgramDetailModalOpen(true)
+              },
+              style: { cursor: 'pointer' },
+            })}
+          />
+        </>
+      ) : (
+        <div className="user-detail-modal__program-tab-empty">
+          <Empty description={emptyDescription} />
+        </div>
+      )}
+    </div>
+  )
+
+  const enrollmentEmptyDescription =
+    role === 'INSTRUCTOR' ? '프로그램 수강 이력이 없습니다.' : '프로그램 신청 이력이 없습니다.'
+
+  const enrollmentSection = (
+    <section className="user-detail-fullpage-modal__program-section">
+      <h3 className="user-detail-fullpage-modal__section-title">
+        {enrollmentSectionTitle} ({enrollmentTableRows.length})
+      </h3>
+      {renderApplicationTable(enrollmentTableRows, enrollmentSectionTitle, enrollmentEmptyDescription)}
+    </section>
+  )
+
+  const lectureSection = (
+    <section className="user-detail-fullpage-modal__program-section">
+      <h3 className="user-detail-fullpage-modal__section-title">
+        프로그램 강의 이력 ({lectureTableRows.length})
+      </h3>
+      {renderApplicationTable(lectureTableRows, '프로그램 강의 이력', '프로그램 강의 이력이 없습니다.')}
+    </section>
+  )
+
+  const volunteerSection = (
+    <section className="user-detail-fullpage-modal__program-section">
+      <h3 className="user-detail-fullpage-modal__section-title">
+        봉사 프로그램 참여 이력 ({volunteerHistories.length})
+      </h3>
+      <div>
+        {volunteerHistoriesLoading ? (
+          <div className="user-detail-modal__loading">로딩 중...</div>
+        ) : volunteerHistories.length > 0 ? (
+          <Table
+            columns={volunteerHistoryColumns}
+            dataSource={volunteerHistories}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}
+            size="small"
+          />
+        ) : (
+          <Empty description="참여 이력이 없습니다." />
+        )}
+      </div>
+    </section>
+  )
+
+  const programsHistoryContent = programsChildMode ? (
     <div className="user-detail-fullpage-modal__programs">
-      <section className="user-detail-fullpage-modal__program-section">
-        <h3 className="user-detail-fullpage-modal__section-title">
-          프로그램 수강 이력 ({applications.length})
-        </h3>
-        <div className="user-detail-modal__program-tab">
-          {applicationsLoading ? (
-            <div className="user-detail-modal__loading">로딩 중...</div>
-          ) : applications.length > 0 ? (
-            <>
-              <p className="user-detail-modal__program-tab-summary">
-                프로그램 수강 이력 총 {applications.length}건
-              </p>
-              <Table
-                className="user-detail-modal__program-table"
-                columns={programHistoryColumns}
-                dataSource={applications}
-                rowKey="id"
-                pagination={false}
-                scroll={{ y: 'calc(100vh - 480px)' }}
-                size="small"
-                onRow={record => ({
-                  onClick: e => {
-                    const target = e.target as HTMLElement
-                    if (
-                      target.closest('.user-detail-modal__progress-cell') ||
-                      target.closest('.user-detail-modal__attendance-link') ||
-                      target.closest('.user-detail-modal__assignment-cell')
-                    )
-                      return
-                    setSelectedApplicationForProgramDetail(record)
-                    setProgramDetailModalOpen(true)
-                  },
-                  style: { cursor: 'pointer' },
-                })}
-              />
-            </>
-          ) : (
-            <div className="user-detail-modal__program-tab-empty">
-              <Empty description="프로그램 신청 이력이 없습니다." />
-            </div>
-          )}
-        </div>
-      </section>
-      <section className="user-detail-fullpage-modal__program-section">
-        <h3 className="user-detail-fullpage-modal__section-title">
-          봉사 프로그램 참여 이력 ({volunteerHistories.length})
-        </h3>
-        <div>
-          {volunteerHistoriesLoading ? (
-            <div className="user-detail-modal__loading">로딩 중...</div>
-          ) : volunteerHistories.length > 0 ? (
-            <Table
-              columns={volunteerHistoryColumns}
-              dataSource={volunteerHistories}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-              size="small"
-            />
-          ) : (
-            <Empty description="참여 이력이 없습니다." />
-          )}
-        </div>
-      </section>
+      {activeProgramsChild === 'enrollment' && enrollmentSection}
+      {activeProgramsChild === 'lecture' && role === 'INSTRUCTOR' && lectureSection}
+      {activeProgramsChild === 'volunteer' && volunteerSection}
+    </div>
+  ) : (
+    <div className="user-detail-fullpage-modal__programs">
+      {enrollmentSection}
+      {volunteerSection}
+    </div>
+  )
+
+  const settlementContent = (
+    <div className="user-detail-fullpage-modal__programs user-detail-fullpage-modal__settlement">
+      <Empty description="정산 현황은 추후 연결됩니다." />
     </div>
   )
 
@@ -532,17 +613,23 @@ export function UserDetailFullPageModal({
       <DetailFullPageModal
         open={open}
         onClose={onClose}
-        title={`회원 상세_${displayUser.name}`}
+        title={
+          displayUser.role === 'ADMIN'
+            ? `관리자 상세_${displayUser.name}`
+            : `회원 상세_${displayUser.name}`
+        }
         className="user-detail-fullpage-modal"
         sidebar={
           <DetailModalSidebar
-            navAriaLabel="회원 상세 메뉴"
+            navAriaLabel={
+              displayUser.role === 'ADMIN' ? '관리자 상세 메뉴' : '회원 상세 메뉴'
+            }
             items={userSidebarItems}
             activeKey={activeLnb}
-            activeChildKey=""
-            expandedGroupKeys={[]}
-            onSelectTop={key => setActiveLnb(key as UserDetailLnbKey)}
-            onSelectChild={() => {}}
+            activeChildKey={sidebarActiveChildKey}
+            expandedGroupKeys={sidebarExpandedGroupKeys}
+            onSelectTop={handleSidebarSelectTop}
+            onSelectChild={handleSidebarSelectChild}
           />
         }
         headerExtra={
@@ -550,7 +637,7 @@ export function UserDetailFullPageModal({
             {onWithdraw && (
               <AppButton
                 variant="default"
-                size="middle"
+                size="filter"
                 onClick={() => setWithdrawConfirmOpen(true)}
                 className="user-detail-modal__btn-withdraw"
               >
@@ -560,7 +647,7 @@ export function UserDetailFullPageModal({
             {onEdit && (
               <AppButton
                 variant="default"
-                size="middle"
+                size="filter"
                 onClick={() => onEdit(displayUser)}
                 className="user-detail-modal__btn-edit"
               >
@@ -568,16 +655,25 @@ export function UserDetailFullPageModal({
               </AppButton>
             )}
             <AppButton
-              variant="primary"
-              size="middle"
-              onClick={() => message.info('개인정보 상세보기는 추후 연결됩니다.')}
+              variant={personalInfoRevealed ? 'default' : 'primary'}
+              size="filter-wide"
+              onClick={() => setPersonalInfoRevealed(v => !v)}
             >
-              개인정보 상세보기
+              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
             </AppButton>
           </div>
         }
       >
-        {activeLnb === 'basic' ? basicInfoContent : programsHistoryContent}
+        {activeLnb === 'basic' && basicInfoContent}
+        {activeLnb === 'programs' &&
+          (displayUser.role === 'ADMIN' ? (
+            <div className="user-detail-fullpage-modal__admin-programs">
+              <AdminManagedProgramHistory user={displayUser} />
+            </div>
+          ) : (
+            programsHistoryContent
+          ))}
+        {activeLnb === 'settlement' && settlementContent}
       </DetailFullPageModal>
 
       {withdrawConfirmOpen && (

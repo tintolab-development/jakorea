@@ -93,6 +93,29 @@ export interface User {
   gender?: string
   affiliation?: string
   socialAccounts?: string[]
+
+  /**
+   * 회원 목록 테이블 전용 지표 (API가 내려주면 표시, 없으면 '-' 또는 기존 필드로 추론)
+   */
+  listMetrics?: UserListRowMetrics
+}
+
+/** 목록 화면 열별 부가 데이터 */
+export interface UserListRowMetrics {
+  /** 학교(기관): 프로그램 수강 횟수 */
+  institutionProgramAttendanceCount?: number
+  /** 학교(기관): 등록된 교사 수 */
+  institutionRegisteredTeacherCount?: number
+  /** 강사: 유형 라벨 */
+  instructorTypeLabel?: string
+  /** 강사: JA 평가 등급 */
+  jaEvaluationGrade?: string
+  /** 강사: 정산 현황 라벨 */
+  settlementStatusLabel?: string
+  /** 관리자: 담당 프로그램 수 (없으면 programRoles 키 개수 사용) */
+  managedProgramCount?: number
+  /** 관리자 목록: 권한 유형 태그 (없으면 programRoles로 추론) */
+  adminPermissionVariant?: 'manager' | 'partner' | 'viewer'
 }
 
 // 로그인 요청

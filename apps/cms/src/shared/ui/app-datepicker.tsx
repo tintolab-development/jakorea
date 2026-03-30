@@ -5,6 +5,8 @@
 
 import {
   forwardRef,
+  useImperativeHandle,
+  useRef,
   type ComponentProps,
   type ComponentRef,
   type ForwardRefExoticComponent,
@@ -26,14 +28,23 @@ export type AppDatePickerRef = {
 }
 
 type InternalDatePickerRef = ComponentRef<typeof DatePicker>
-type InternalRangePickerRef = ComponentRef<typeof DatePicker.RangePicker>
+type RangePickerProps = ComponentProps<typeof DatePicker.RangePicker>
 
 /** 일~토 한 글자 요일 (표시용) */
 const WEEKDAY_KO_MIN = ['일', '월', '화', '수', '목', '금', '토'] as const
 
+/** placeholder 미지정 시 공통 기본값 */
+export const DEFAULT_APP_DATE_PLACEHOLDER = '날짜를 선택하세요'
+
 export function formatAppDatepickerDisplay(value: Dayjs | null | undefined): string {
   if (value == null) return ''
   return `${value.format('YYYY. MM. DD')}(${WEEKDAY_KO_MIN[value.day()]})`
+}
+
+/** 기간 필터 등: 요일 없이 YYYY. MM. DD (시안과 동일) */
+export function formatAppDatepickerRangePlain(value: Dayjs | null | undefined): string {
+  if (value == null) return ''
+  return value.format('YYYY. MM. DD')
 }
 
 export interface AppDatePickerProps extends Omit<DatePickerProps, 'variant' | 'className'> {
@@ -54,6 +65,7 @@ const AppDatePickerRender: ForwardRefRenderFunction<AppDatePickerRef, AppDatePic
     suffixIcon,
     inputReadOnly,
     uiVariant = 'default',
+    placeholder,
     ...rest
   },
   ref
@@ -79,6 +91,7 @@ const AppDatePickerRender: ForwardRefRenderFunction<AppDatePickerRef, AppDatePic
         }
         suffixIcon={suffixIcon ?? null}
         inputReadOnly={inputReadOnly ?? true}
+        placeholder={placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER}
         {...rest}
       />
     </span>
@@ -90,8 +103,6 @@ export const AppDatePicker: ForwardRefExoticComponent<
 > = forwardRef(AppDatePickerRender)
 
 AppDatePicker.displayName = 'AppDatePicker'
-
-type RangePickerProps = ComponentProps<typeof DatePicker.RangePicker>
 
 export interface AppDateRangePickerProps extends Omit<RangePickerProps, 'variant' | 'className'> {
   className?: string
@@ -111,39 +122,144 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
     suffixIcon,
     inputReadOnly,
     uiVariant = 'default',
-    separator,
+    separator: _separator,
+    value,
+    onChange,
+    allowClear,
+    disabled,
+    size,
+    style,
+    placeholder,
+    id: rangeId,
+    defaultPickerValue,
+    onCalendarChange: _onCalendarChange,
+    order: _order,
     ...rest
   },
   ref
 ) => {
+  const startPickerRef = useRef<InternalDatePickerRef>(null)
+  const pickerCn = ['app-datepicker__picker', pickerClassName].filter(Boolean).join(' ')
+  const fmt = formatProp ?? formatAppDatepickerRangePlain
+
+  const start = value?.[0] ?? null
+  const end = value?.[1] ?? null
+
+  const disabledStart = typeof disabled === 'boolean' ? disabled : disabled?.[0] ?? false
+  const disabledEnd = typeof disabled === 'boolean' ? disabled : disabled?.[1] ?? false
+
+  const placeholderTuple: [string, string] = Array.isArray(placeholder)
+    ? [
+        placeholder[0] ?? DEFAULT_APP_DATE_PLACEHOLDER,
+        placeholder[1] ?? DEFAULT_APP_DATE_PLACEHOLDER,
+      ]
+    : [placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER, placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER]
+
+  useImperativeHandle(ref, () => ({
+    get nativeElement() {
+      return startPickerRef.current?.nativeElement ?? document.createElement('span')
+    },
+    focus: (options?: FocusOptions) => {
+      startPickerRef.current?.focus?.(options)
+    },
+    blur: () => {
+      startPickerRef.current?.blur?.()
+    },
+  }))
+
+  const handleStartChange = (d: Dayjs | null) => {
+    if (d && end && d.isAfter(end)) {
+      onChange?.([d, d], ['', ''])
+    } else {
+      onChange?.([d, end], ['', ''])
+    }
+  }
+
+  const handleEndChange = (d: Dayjs | null) => {
+    if (d && start && d.isBefore(start)) {
+      onChange?.([d, start], ['', ''])
+    } else {
+      onChange?.([start, d], ['', ''])
+    }
+  }
+
   const wrapperCn = [
     'app-datepicker',
-    'app-datepicker--range',
+    'app-datepicker--range-split',
     uiVariant === 'filter' && 'app-datepicker--filter',
     className,
   ]
     .filter(Boolean)
     .join(' ')
-  const pickerCn = ['app-datepicker__picker', pickerClassName].filter(Boolean).join(' ')
 
-  const rangeSeparator =
-    separator ?? <span className="app-datepicker__range-separator">~</span>
+  const startId =
+    typeof rangeId === 'object' && rangeId != null ? rangeId.start : undefined
+  const endId = typeof rangeId === 'object' && rangeId != null ? rangeId.end : undefined
+
+  const defaultStart =
+    Array.isArray(defaultPickerValue) && defaultPickerValue[0]
+      ? defaultPickerValue[0]
+      : !Array.isArray(defaultPickerValue)
+        ? defaultPickerValue
+        : undefined
+  const defaultEnd =
+    Array.isArray(defaultPickerValue) && defaultPickerValue[1]
+      ? defaultPickerValue[1]
+      : undefined
+
+  const sharedPickerProps = rest as Omit<
+    DatePickerProps,
+    'variant' | 'className' | 'value' | 'onChange' | 'placeholder'
+  >
 
   return (
-    <span className={wrapperCn}>
-      <DatePicker.RangePicker
-        ref={ref as Ref<InternalRangePickerRef>}
-        variant="borderless"
-        className={pickerCn}
-        format={formatProp ?? formatAppDatepickerDisplay}
-        prefix={
-          prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
-        }
-        suffixIcon={suffixIcon ?? null}
-        inputReadOnly={inputReadOnly ?? true}
-        separator={rangeSeparator}
-        {...rest}
-      />
+    <span className={wrapperCn} style={style}>
+      <span className="app-datepicker__segment">
+        <DatePicker
+          ref={startPickerRef}
+          variant="borderless"
+          className={pickerCn}
+          format={fmt}
+          prefix={
+            prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
+          }
+          suffixIcon={suffixIcon ?? null}
+          inputReadOnly={inputReadOnly ?? true}
+          value={start}
+          onChange={handleStartChange}
+          allowClear={allowClear}
+          disabled={disabledStart}
+          size={size}
+          placeholder={placeholderTuple[0]}
+          id={startId}
+          defaultPickerValue={defaultStart}
+          {...sharedPickerProps}
+        />
+      </span>
+      <span className="app-datepicker__range-separator" aria-hidden>
+        ~
+      </span>
+      <span className="app-datepicker__segment">
+        <DatePicker
+          variant="borderless"
+          className={pickerCn}
+          format={fmt}
+          prefix={
+            prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
+          }
+          suffixIcon={suffixIcon ?? null}
+          inputReadOnly={inputReadOnly ?? true}
+          value={end}
+          onChange={handleEndChange}
+          allowClear={allowClear}
+          disabled={disabledEnd}
+          size={size}
+          placeholder={placeholderTuple[1]}
+          id={endId}
+          defaultPickerValue={defaultEnd}
+          {...sharedPickerProps}
+        />
+      </span>
     </span>
   )
 }

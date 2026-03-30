@@ -160,6 +160,12 @@
   display: none;
 }
 
+/* 라벨 래퍼는 배경 없음 — 행(.ant-menu-item / .ant-menu-submenu-title)만 선택·호버 면 적용 (텍스트만 어둡게 남는 현상 방지) */
+.sidebar-menu .ant-menu-item .ant-menu-title-content,
+.sidebar-menu .ant-menu-submenu-title .ant-menu-title-content {
+  background: transparent !important;
+}
+
 /* ---- 서브 패널 ---- */
 .sidebar-menu .ant-menu-sub {
   margin: 0 !important;
@@ -316,12 +322,15 @@
   opacity: 0.6;
 }
 
-/* 3뎁스 선택: 700 + selected 배경 */
-.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected,
+/* 3뎁스 선택: 700 (배경은 li.ant-menu-item에만 — title-content 배경 금지) */
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected {
+  font-weight: var(--font-weight-700) !important;
+  opacity: 1 !important;
+}
+
 .sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected > .ant-menu-title-content {
   font-weight: var(--font-weight-700) !important;
   opacity: 1 !important;
-  background: var(--sidebar-selected-bg) !important;
 }
 
 /* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 좌 24px / 우 18px */

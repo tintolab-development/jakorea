@@ -28,17 +28,17 @@
 }
 
 .app-status-badge.program-lifecycle-status-badge--economy-scheduled {
-  color: #007bff;
+  color: #017eaf;
   background-color: transparent !important;
 }
 
 .app-status-badge.program-lifecycle-status-badge--economy-in-progress {
-  color: #28a745;
+  color: #1e8c29;
   background-color: transparent !important;
 }
 
 .app-status-badge.program-lifecycle-status-badge--economy-completed {
-  color: #6c757d;
+  color: #3d3d3d;
   background-color: transparent !important;
 }
 
@@ -79,14 +79,14 @@
 .program-lifecycle-status-text--instructor-recruitment-planned,
 .program-lifecycle-status-text--volunteer-recruitment-planned,
 .program-lifecycle-status-text--participant-instructor-recruitment-planned {
-  color: #E44970;
+  color: #e44970;
 }
 
 .program-lifecycle-status-text--recruiting-students,
 .program-lifecycle-status-text--recruiting-instructors,
 .program-lifecycle-status-text--recruiting-volunteers,
 .program-lifecycle-status-text--participant-instructor-recruiting {
-  color: #017EAF;
+  color: #017eaf;
 }
 
 .program-lifecycle-status-text--matching-completed,

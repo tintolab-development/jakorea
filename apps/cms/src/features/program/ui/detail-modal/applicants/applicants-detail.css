@@ -66,9 +66,9 @@
   box-sizing: border-box;
 }
 
-/* 테이블 영역 */
+/* 테이블 영역 — 좌우는 공통 .detail-fullpage-modal__content 패딩 사용 */
 .applicant-details__below-divider {
-  padding: 0 24px 24px 42px;
+  padding: 0 0 24px;
 }
 
 .applicant-details__table-header {

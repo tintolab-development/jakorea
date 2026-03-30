@@ -4,7 +4,7 @@
  * 회원 목록: React Query useInfiniteQuery + 15명씩 무한 스크롤
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Card, Modal } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
@@ -30,10 +30,21 @@ import {
   buildMemberDeleteMessageLines,
 } from '@/features/program/ui/manager-delete-guide-modal'
 import { Divider } from '@/shared/components/divider'
+import {
+  memberListKindToBasicInfoEntrySource,
+  memberListKindToPendingRole,
+  memberListPageTitle,
+  normalizeMemberListKind,
+  pendingRoleToMemberListKind,
+  resolveRoleFilterFromMemberListParams,
+  userRoleToBasicInfoEntrySource,
+} from '@/shared/config/member-list-kinds'
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
 
 interface UserListQueryParams extends Record<string, string | undefined> {
+  /** 전체·학교·강사·관리자 등 목록 맥락 (`member-list-kinds` 참고) */
+  kind?: string
   role?: UserRole | 'ALL'
   search?: string
   id?: string
@@ -48,13 +59,21 @@ type ApiFilters = {
   createdAtTo?: string
 }
 
+function pendingRoleFromParams(params: UserListQueryParams): UserRole | 'ALL' {
+  if (params.kind !== undefined && params.kind !== '') {
+    return memberListKindToPendingRole(normalizeMemberListKind(params.kind))
+  }
+  if (params.role && params.role !== 'ALL') {
+    return params.role as UserRole
+  }
+  return 'ALL'
+}
+
 function pendingToApiFilters(pending: {
   search: string
-  role: UserRole | 'ALL'
   createdAtRange: [Dayjs | null, Dayjs | null] | null
 }): ApiFilters {
   const api: ApiFilters = {}
-  if (pending.role !== 'ALL') api.role = pending.role
   if (pending.search) api.search = pending.search
   if (pending.createdAtRange?.[0] && pending.createdAtRange[1]) {
     api.createdAtFrom = pending.createdAtRange[0].format('YYYY-MM-DD')
@@ -74,7 +93,6 @@ export function UserListPage() {
     const from = params.createdAtFrom
     const to = params.createdAtTo
     const api: ApiFilters = {}
-    if (params.role && params.role !== 'ALL') api.role = params.role as UserRole
     if (params.search) api.search = params.search
     if (from && to) {
       api.createdAtFrom = from
@@ -83,6 +101,17 @@ export function UserListPage() {
     return api
   })
 
+  const listQueryFilters = useMemo((): ApiFilters => {
+    const role = resolveRoleFilterFromMemberListParams({
+      kind: params.kind,
+      role: params.role,
+    })
+    return {
+      ...activeFilters,
+      ...(role ? { role } : {}),
+    }
+  }, [activeFilters, params.kind, params.role])
+
   const {
     users: listUsers,
     total: listTotal,
@@ -90,7 +119,7 @@ export function UserListPage() {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteUserList(activeFilters)
+  } = useInfiniteUserList(listQueryFilters)
 
   // 무한 스크롤: 하단 센티넬이 보이면 다음 페이지 로드
   const { ref: loadMoreRef, inView } = useInView({ rootMargin: '200px', threshold: 0 })
@@ -158,7 +187,7 @@ export function UserListPage() {
     }
     return {
       search: params.search || '',
-      role: (params.role || 'ALL') as UserRole | 'ALL',
+      role: pendingRoleFromParams(params),
       createdAtRange,
     }
   })
@@ -175,20 +204,36 @@ export function UserListPage() {
     }
     setPendingFilters({
       search: params.search || '',
-      role: (params.role || 'ALL') as UserRole | 'ALL',
+      role: pendingRoleFromParams(params),
       createdAtRange,
     })
-  }, [params.search, params.role, params.createdAtFrom, params.createdAtTo])
+  }, [params.kind, params.search, params.role, params.createdAtFrom, params.createdAtTo])
 
   // 선택된 사용자 (드로어용)
   const selectedUser = useUserStore(state => selectSelectedUser(state))
+
+  const resolvedMemberListKind = useMemo(
+    () => normalizeMemberListKind(params.kind),
+    [params.kind]
+  )
+
+  const modalDetailUser = drawerUser ?? selectedUser
+
+  /** 열려 있는 상세 대상이 있으면 그 회원 역할 기준(전체 회원 혼합 목록 대응), 없으면 목록 kind 기준 */
+  const basicInfoEntrySource = useMemo(() => {
+    if (modalDetailUser) {
+      return userRoleToBasicInfoEntrySource(modalDetailUser.role)
+    }
+    return memberListKindToBasicInfoEntrySource(resolvedMemberListKind)
+  }, [modalDetailUser?.id, modalDetailUser?.role, resolvedMemberListKind])
 
   // 조회 버튼 클릭 시: URL·스토어 동기화 + React Query 키 변경으로 자동 재조회
   const handleSearch = () => {
     const api = pendingToApiFilters(pendingFilters)
     setActiveFilters(api)
     setParam('search', pendingFilters.search || null)
-    setParam('role', pendingFilters.role === 'ALL' ? null : pendingFilters.role)
+    setParam('kind', pendingRoleToMemberListKind(pendingFilters.role))
+    setParam('role', null)
     if (pendingFilters.createdAtRange?.[0] && pendingFilters.createdAtRange[1]) {
       setParam('createdAtFrom', pendingFilters.createdAtRange[0].format('YYYY-MM-DD'))
       setParam('createdAtTo', pendingFilters.createdAtRange[1].format('YYYY-MM-DD'))
@@ -196,7 +241,9 @@ export function UserListPage() {
       setParam('createdAtFrom', null)
       setParam('createdAtTo', null)
     }
-    setFilters(api)
+    const roleForStore =
+      pendingFilters.role === 'ALL' ? undefined : (pendingFilters.role as UserRole)
+    setFilters({ ...api, role: roleForStore })
   }
 
   const invalidateList = useCallback(() => {
@@ -348,7 +395,9 @@ export function UserListPage() {
               </div>
               <div className="program-list-page__filter-info">
                 <div className="program-list-page__filter-info-texts">
-                  <div className="program-list-page__filter-info-title">전체 회원 목록</div>
+                  <div className="program-list-page__filter-info-title">
+                    {memberListPageTitle(resolvedMemberListKind)}
+                  </div>
                   <div className="program-list-page__filter-info-count">
                     총 {listTotal.toLocaleString()}건
                   </div>
@@ -391,6 +440,7 @@ export function UserListPage() {
               style={{ border: 'none', boxShadow: 'none' }}
             >
               <UserList
+                listKind={resolvedMemberListKind}
                 data={listUsers}
                 loading={false}
                 onView={handleView}
@@ -414,6 +464,7 @@ export function UserListPage() {
       <UserDetailFullPageModal
         open={drawerOpen}
         user={drawerUser ?? selectedUser}
+        basicInfoEntrySource={basicInfoEntrySource}
         onClose={handleDrawerClose}
         onEdit={
           (drawerUser ?? selectedUser) ? () => handleEdit(drawerUser ?? selectedUser!) : undefined

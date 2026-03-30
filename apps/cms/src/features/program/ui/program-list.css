@@ -507,25 +507,65 @@
   overflow-x: auto !important;
 }
 
-/* 테이블 스타일 */
-.ant-table-thead {
+/* 테이블 스타일 — 목록 카드 내 테이블 (프로그램·전체 회원·학교 회원 등, 가로 스크롤 유지) */
+.program-list-card .ant-table-thead,
+.member-table-card .ant-table-thead {
   background: var(--color-table-head-bg) !important;
 }
-.ant-table-cell {
+
+.program-list-card .ant-table-cell:not(.ant-table-selection-column),
+.member-table-card .ant-table-cell:not(.ant-table-selection-column) {
   padding: 12px 16px !important;
-  max-height: 50px !important;
+  white-space: nowrap;
+  vertical-align: middle;
   border-bottom: 1px solid var(--color-border) !important;
   border-right: 1px solid var(--color-border) !important;
-
   font-size: var(--font-size-16) !important;
   font-weight: var(--font-weight-500) !important;
   color: var(--color-text-label) !important;
 }
-.ant-table-thead > tr > th {
-  height: 30px !important;
+
+/* 체크박스 열: 공통 12px 16px 제외 — 단축 padding 이 selection 열 width 를 깨뜨리지 않게 */
+.program-list-card .ant-table-wrapper .ant-table-cell.ant-table-selection-column,
+.member-table-card .ant-table-wrapper .ant-table-cell.ant-table-selection-column {
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
+  box-sizing: border-box !important;
+  padding-block: 12px !important;
+  padding-inline: 4px !important;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-border) !important;
+  border-right: 1px solid var(--color-border) !important;
+  font-size: var(--font-size-16) !important;
+  font-weight: var(--font-weight-500) !important;
+  color: var(--color-text-label) !important;
+}
+
+.program-list-card .ant-table-wrapper col.ant-table-selection-col,
+.member-table-card .ant-table-wrapper col.ant-table-selection-col {
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
+}
+
+.program-list-card .ant-table-cell.ant-table-cell-ellipsis,
+.member-table-card .ant-table-cell.ant-table-cell-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.program-list-card .ant-table-thead > tr > th.ant-table-cell,
+.member-table-card .ant-table-thead > tr > th.ant-table-cell {
+  min-height: 44px;
+  height: auto !important;
   font-weight: var(--font-weight-700) !important;
 }
-.ant-table-cell:last-child {
+
+.program-list-card .ant-table-cell:last-child,
+.member-table-card .ant-table-cell:last-child {
   border-right: none !important;
 }
 
@@ -535,14 +575,19 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* 프로그램 목록 테이블 셀별 구분선 */
-.program-list-card .ant-table-thead > tr > th {
-  border-right: 1px solid var(--color-bg-base);
-  border-bottom: 1px solid var(--color-bg-base);
+/* 프로그램 목록 테이블: 헤더·본문 동일 구분선 토큰 (--color-border-light) */
+.program-list-card .ant-table-thead > tr > th.ant-table-cell {
+  border-right: 1px solid var(--color-border-light) !important;
+  border-bottom: 1px solid var(--color-border-light) !important;
 }
 
-.program-list-card .ant-table-thead > tr > th:last-child {
-  border-right: none;
+.program-list-card .ant-table-thead > tr > th.ant-table-cell:last-child {
+  border-right: none !important;
+}
+
+/* Ant Design Table: th::before 기본 컬럼 구분선이 border-right와 겹쳐 이중선처럼 보임 */
+.program-list-card .ant-table-thead > tr > th.ant-table-cell::before {
+  display: none !important;
 }
 
 .program-list-card .ant-table-tbody > tr > td {

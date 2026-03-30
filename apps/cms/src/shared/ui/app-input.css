@@ -26,6 +26,7 @@
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  font-size: 15px;
 }
 
 .app-input .ant-input-affix-wrapper > input.ant-input {

@@ -129,7 +129,7 @@
   height: 100% !important;
   min-height: 0 !important;
   line-height: 1 !important;
-  padding: 0 11px !important;
+  padding: 0 !important;
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -139,11 +139,11 @@
   margin-inline-end: 0;
 }
 
-/* prefix 없음(filter 검색): borderless 단일 input */
+/* prefix 없음(filter 검색): borderless 단일 input — 가로 패딩은 span.app-input(14px/16px)에서만 */
 .unified-filter-card .labeled-search-input .app-input > .ant-input:not(.ant-input-affix-wrapper) {
   height: var(--filter-control-height) !important;
   line-height: 1 !important;
-  padding: 0 11px !important;
+  padding: 0 !important;
 }
 
 /* 통일 필터 카드 - 운영기간 등 DatePicker / RangePicker */
@@ -408,13 +408,18 @@
   justify-content: center;
 }
 
-.member-table-card .user-list-table .ant-table-thead > tr > th {
-  border-right: 1px solid var(--color-bg-base);
-  border-bottom: 1px solid var(--color-bg-base);
+.member-table-card .user-list-table .ant-table-thead > tr > th.ant-table-cell {
+  border-right: 1px solid var(--color-border-light) !important;
+  border-bottom: 1px solid var(--color-border-light) !important;
 }
 
-.member-table-card .user-list-table .ant-table-thead > tr > th:last-child {
-  border-right: none;
+.member-table-card .user-list-table .ant-table-thead > tr > th.ant-table-cell:last-child {
+  border-right: none !important;
+}
+
+/* Ant Design Table: th::before 구분선 + border-right 이중선 방지 */
+.member-table-card .user-list-table .ant-table-thead > tr > th.ant-table-cell::before {
+  display: none !important;
 }
 
 .member-table-card .user-list-table .ant-table-tbody > tr > td {
@@ -493,7 +498,9 @@
   width: var(--table-selection-column-width) !important;
   min-width: var(--table-selection-column-width) !important;
   max-width: var(--table-selection-column-width) !important;
-  box-sizing: border-box;
-  padding-inline: 14px !important;
+  box-sizing: border-box !important;
+  /* 60px 열 전체(border-box). 가로 패딩 크면 실측 ~96px — padding 단축 속성에 덮이지 않게 block/inline 분리 */
+  padding-block: 12px !important;
+  padding-inline: 4px !important;
   vertical-align: middle !important;
 }

@@ -1,7 +1,7 @@
 /**
  * 회원 목록 테이블
- * program-list.css 전역 규칙(.ant-table-thead > tr > th height: 30px, .ant-table-cell max-height)과
- * padding이 맞물리면 scroll.y 고정 헤더에서 세로 구분선이 셀 상단에서 끊겨 보일 수 있음 → 헤더만 완화
+ * program-list.css의 `.program-list-card` / `.member-table-card` 셀 규칙과 함께 사용.
+ * 열 너비는 TSX 컬럼 정의가 아니라 이 파일에서 `listKind`별로 관리 (체크박스 60px 고정).
  */
 .user-list-table .ant-table-thead > tr > th.ant-table-cell {
   height: auto !important;
@@ -9,4 +9,161 @@
   min-height: 48px;
   box-sizing: border-box;
   vertical-align: middle;
+}
+
+/*
+ * 체크박스 열: `scroll.x` 를 숫자로 둬야 rc-table colgroup width(60) 가 유지됨.
+ * `scroll.x: 'max-content'` 는 테이블 width:max-content 로 열 너비를 깨뜨림.
+ */
+.user-list-table col.ant-table-selection-col {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+}
+
+.user-list-table .ant-table-content table {
+  table-layout: fixed;
+}
+
+/**
+ * 아래 규칙은 `rowSelection`이 있을 때만 유효 (체크박스가 1열).
+ * `UserList`는 현재 목록 페이지에서 항상 선택 열을 씀.
+ */
+/* --- 전체·개인 회원 (No. ~ 가입일) --- */
+.user-list-table--kind-all .ant-table-thead > tr > th:nth-child(2),
+.user-list-table--kind-all .ant-table-tbody > tr > td:nth-child(2) {
+  width: 56px;
+}
+
+.user-list-table--kind-all .ant-table-thead > tr > th:nth-child(3),
+.user-list-table--kind-all .ant-table-tbody > tr > td:nth-child(3) {
+  width: 120px;
+}
+
+.user-list-table--kind-all .ant-table-thead > tr > th:nth-child(4),
+.user-list-table--kind-all .ant-table-tbody > tr > td:nth-child(4) {
+  width: 172px;
+}
+
+.user-list-table--kind-all .ant-table-thead > tr > th:nth-child(5),
+.user-list-table--kind-all .ant-table-tbody > tr > td:nth-child(5) {
+  width: 200px;
+}
+
+.user-list-table--kind-all .ant-table-thead > tr > th:nth-child(6),
+.user-list-table--kind-all .ant-table-tbody > tr > td:nth-child(6) {
+  width: 124px;
+}
+
+.user-list-table--kind-all .ant-table-thead > tr > th:nth-child(7),
+.user-list-table--kind-all .ant-table-tbody > tr > td:nth-child(7) {
+  width: 120px;
+}
+
+/* --- 기관(학교) 목록 --- */
+.user-list-table--kind-institutions .ant-table-thead > tr > th:nth-child(2),
+.user-list-table--kind-institutions .ant-table-tbody > tr > td:nth-child(2) {
+  width: 56px;
+}
+
+.user-list-table--kind-institutions .ant-table-thead > tr > th:nth-child(3),
+.user-list-table--kind-institutions .ant-table-tbody > tr > td:nth-child(3) {
+  width: 200px;
+}
+
+.user-list-table--kind-institutions .ant-table-thead > tr > th:nth-child(4),
+.user-list-table--kind-institutions .ant-table-tbody > tr > td:nth-child(4) {
+  width: 260px;
+}
+
+.user-list-table--kind-institutions .ant-table-thead > tr > th:nth-child(5),
+.user-list-table--kind-institutions .ant-table-tbody > tr > td:nth-child(5) {
+  width: 130px;
+}
+
+.user-list-table--kind-institutions .ant-table-thead > tr > th:nth-child(6),
+.user-list-table--kind-institutions .ant-table-tbody > tr > td:nth-child(6) {
+  width: 120px;
+}
+
+.user-list-table--kind-institutions .ant-table-thead > tr > th:nth-child(7),
+.user-list-table--kind-institutions .ant-table-tbody > tr > td:nth-child(7) {
+  width: 120px;
+}
+
+/* --- 강사 목록 --- */
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(2),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(2) {
+  width: 56px;
+}
+
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(3),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(3) {
+  width: 120px;
+}
+
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(4),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(4) {
+  width: 168px;
+}
+
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(5),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(5) {
+  width: 200px;
+}
+
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(6),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(6) {
+  width: 110px;
+}
+
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(7),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(7) {
+  width: 120px;
+}
+
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(8),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(8) {
+  width: 110px;
+}
+
+.user-list-table--kind-instructors .ant-table-thead > tr > th:nth-child(9),
+.user-list-table--kind-instructors .ant-table-tbody > tr > td:nth-child(9) {
+  width: 120px;
+}
+
+/* --- 관리자 목록 --- */
+.user-list-table--kind-admins .ant-table-thead > tr > th:nth-child(2),
+.user-list-table--kind-admins .ant-table-tbody > tr > td:nth-child(2) {
+  width: 56px;
+}
+
+.user-list-table--kind-admins .ant-table-thead > tr > th:nth-child(3),
+.user-list-table--kind-admins .ant-table-tbody > tr > td:nth-child(3) {
+  width: 120px;
+}
+
+.user-list-table--kind-admins .ant-table-thead > tr > th:nth-child(4),
+.user-list-table--kind-admins .ant-table-tbody > tr > td:nth-child(4) {
+  width: 168px;
+}
+
+.user-list-table--kind-admins .ant-table-thead > tr > th:nth-child(5),
+.user-list-table--kind-admins .ant-table-tbody > tr > td:nth-child(5) {
+  width: 200px;
+}
+
+.user-list-table--kind-admins .ant-table-thead > tr > th:nth-child(6),
+.user-list-table--kind-admins .ant-table-tbody > tr > td:nth-child(6) {
+  width: 140px;
+}
+
+.user-list-table--kind-admins .ant-table-thead > tr > th:nth-child(7),
+.user-list-table--kind-admins .ant-table-tbody > tr > td:nth-child(7) {
+  width: 130px;
+}
+
+.user-list-table--kind-admins .ant-table-thead > tr > th:nth-child(8),
+.user-list-table--kind-admins .ant-table-tbody > tr > td:nth-child(8) {
+  width: 120px;
 }

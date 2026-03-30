@@ -48,18 +48,20 @@ export function DetailFullPageModal({
         {sidebar}
         <div className="detail-fullpage-modal__main">
           <header className="detail-fullpage-modal__header">
-            <h2 className="detail-fullpage-modal__title">{title}</h2>
+            <div className="detail-fullpage-modal__header-top">
+              <h2 className="detail-fullpage-modal__title">{title}</h2>
+              <button
+                type="button"
+                className="detail-fullpage-modal__close"
+                onClick={handleClose}
+                aria-label={closeAriaLabel}
+              >
+                <CloseOutlined />
+              </button>
+            </div>
             {headerExtra ? (
-              <div className="detail-fullpage-modal__header-extra">{headerExtra}</div>
+              <div className="detail-fullpage-modal__header-extra-slot">{headerExtra}</div>
             ) : null}
-            <button
-              type="button"
-              className="detail-fullpage-modal__close"
-              onClick={handleClose}
-              aria-label={closeAriaLabel}
-            >
-              <CloseOutlined />
-            </button>
           </header>
           <div className="detail-fullpage-modal__content">{children}</div>
         </div>

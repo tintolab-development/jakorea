@@ -2,8 +2,46 @@
  * 회원 상세 풀페이지 — 본문·헤더 액션 보조 스타일 (테이블 등은 user-detail-modal.css)
  */
 
-.user-detail-fullpage-modal .detail-fullpage-modal__content {
-  padding: 0 52px 32px;
+/* Ant 모달 본문: 가로 오버플로 차단 (풀페이지 폭 = 뷰포트) */
+.user-detail-fullpage-modal.ant-modal .ant-modal-content {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.user-detail-fullpage-modal.ant-modal .ant-modal-body {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/*
+ * teal-header-modal__body 기본 align-items: center 때문에
+ * detail-fullpage 레이아웃이 가로로 수축·밀림될 수 있음 → 풀페이지 회원 상세에서만 끝까지 늘림
+ */
+.user-detail-fullpage-modal.teal-header-modal .teal-header-modal__body {
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.user-detail-fullpage-modal .detail-fullpage-modal__layout,
+.user-detail-fullpage-modal .detail-fullpage-modal__main {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/*
+ * 프로그램·정산·관리자 담당 이력 탭: 필터·테이블 전폭 사용
+ * (.detail-fullpage-modal__content 기본 좌·우·하 52px — 기본 정보 탭은 :has 미매칭으로 유지)
+ */
+.user-detail-fullpage-modal .detail-fullpage-modal__content:has(.user-detail-fullpage-modal__programs),
+.user-detail-fullpage-modal .detail-fullpage-modal__content:has(.user-detail-fullpage-modal__admin-programs) {
+  padding: 0;
 }
 
 .user-detail-fullpage-modal__header-actions {
@@ -12,18 +50,63 @@
   gap: var(--spacing-8, 8px);
   flex-wrap: wrap;
   justify-content: flex-end;
-  max-width: min(720px, 55vw);
+  width: 100%;
+  margin-top: 33px;
 }
 
+/* 기본 정보 블록 — 기본 정보 + 정보 제공 동의 섹션 세로 스택 */
 .user-detail-fullpage-modal__basic {
-  padding-top: var(--spacing-8, 8px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.user-detail-fullpage-modal .user-detail-modal__basic-tab-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.user-detail-fullpage-modal .user-detail-modal__basic-inner {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 테이블 래퍼는 applicant-institution-basic-info 와 같이 overflow:hidden 으로 모서리 클립 — 가로 스크롤은 .basic-inner */
+.user-detail-fullpage-modal .user-detail-modal__basic-table-wrap {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* 긴 이메일·주소 등으로 테이블이 부모 폭을 밀지 않도록 */
+.user-detail-fullpage-modal .user-detail-modal__basic-table td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .user-detail-fullpage-modal__programs {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-32, 32px);
-  padding-top: var(--spacing-8, 8px);
+  gap: var(--detail-fullpage-section-gap, 32px);
+  padding-top: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 관리자 담당 프로그램 이력 — FilterListLayout + 테이블 */
+.user-detail-fullpage-modal__admin-programs {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .user-detail-fullpage-modal__program-section {
