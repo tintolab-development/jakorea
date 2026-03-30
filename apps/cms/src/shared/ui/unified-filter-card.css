@@ -66,31 +66,7 @@
   gap: var(--spacing-6);
 }
 
-/* Select 스타일 */
-.unified-filter-card__select.ant-select .ant-select-selector {
-  border-radius: 8px;
-  border: 1px solid #c4cdd1;
-  padding: 0 14px 0 16px !important;
-}
-
-.unified-filter-card__select.ant-select .ant-select-selection-placeholder {
-  overflow: hidden;
-  color: #85969d;
-  text-overflow: ellipsis;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.unified-filter-card__select.ant-select .ant-select-selection-item {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
+/* Select: 테두리·타이포는 AppSelect uiVariant=filter(.app-select--filter)에서 처리 */
 
 .unified-filter-card__label {
   box-sizing: border-box;
@@ -98,11 +74,19 @@
   align-items: center;
   min-height: var(--filter-label-height, 27px);
   height: var(--filter-label-height, 27px);
-  font-size: var(--font-size-14);
+  font-size: 16px;
   font-weight: var(--font-weight-500);
   color: var(--color-text-label);
   margin-bottom: 0;
   white-space: nowrap;
+}
+
+.unified-filter-card .labeled-search-input__label {
+  font-size: 16px;
+}
+
+.unified-filter-card .app-multi-select__trigger-text {
+  font-size: 16px;
 }
 
 /* 한 줄 모드: 필드 최소 너비 축소 */
@@ -110,15 +94,18 @@
   min-width: 0;
 }
 
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-select {
+.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-select,
+.unified-filter-card--single-row .unified-filter-card__row .ant-col .app-select {
   min-width: var(--filter-control-width, 240px);
 }
 
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-picker-range {
+.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-picker-range,
+.unified-filter-card--single-row .unified-filter-card__row .ant-col .app-datepicker {
   min-width: var(--filter-control-width, 240px);
 }
 
-.unified-filter-card--single-row .labeled-search-input__input {
+.unified-filter-card--single-row .labeled-search-input__input,
+.unified-filter-card--single-row .labeled-search-input .app-input {
   min-width: var(--filter-control-width, 240px);
 }
 

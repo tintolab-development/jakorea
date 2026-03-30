@@ -58,3 +58,47 @@
   color: #444;
   font-size: 16px;
 }
+
+.app-datepicker.app-datepicker--filter {
+  height: var(--filter-control-height, 44px);
+  min-height: var(--filter-control-height, 44px);
+  border-radius: 8px;
+}
+
+.app-datepicker.app-datepicker--filter .ant-picker.app-datepicker__picker .ant-picker-input > input {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.app-datepicker.app-datepicker--filter .ant-picker.app-datepicker__picker .ant-picker-input > input::placeholder {
+  font-size: 16px;
+  font-weight: 500;
+  color: #85969d;
+}
+
+/* Range: 두 입력이 래퍼 안에서 한 줄 */
+.app-datepicker--range .ant-picker.app-datepicker__picker.ant-picker-range {
+  flex-wrap: nowrap;
+}
+
+.app-datepicker--range .ant-picker.app-datepicker__picker.ant-picker-range .ant-picker-input > input {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* 구분자 ~ : 양쪽 6px 간격, 스펙 타이포 */
+.app-datepicker--range .ant-picker-range .app-datepicker__range-separator,
+.app-datepicker--range .ant-picker-range .ant-picker-separator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: 0 6px;
+  padding: 0;
+  color: var(--blue-gray-85929-d, #85969d);
+  font-family: Pretendard, var(--font-family-sans, system-ui), sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

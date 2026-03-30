@@ -60,3 +60,19 @@
 .app-select .ant-select-open .ant-select-selector {
   box-shadow: none !important;
 }
+
+/* 통일 필터 카드 등 — 토큰 높이·모서리 */
+.app-select.app-select--filter {
+  height: var(--filter-control-height, 44px);
+  min-height: var(--filter-control-height, 44px);
+  border-radius: 8px;
+}
+
+.app-select.app-select--filter .ant-select-selection-item,
+.app-select.app-select--filter .ant-select-selection-placeholder {
+  font-size: 16px;
+}
+
+.app-select.app-select--filter .ant-select-selection-placeholder {
+  color: #85969d;
+}

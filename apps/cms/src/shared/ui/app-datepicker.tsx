@@ -5,6 +5,7 @@
 
 import {
   forwardRef,
+  type ComponentProps,
   type ComponentRef,
   type ForwardRefExoticComponent,
   type ForwardRefRenderFunction,
@@ -25,6 +26,7 @@ export type AppDatePickerRef = {
 }
 
 type InternalDatePickerRef = ComponentRef<typeof DatePicker>
+type InternalRangePickerRef = ComponentRef<typeof DatePicker.RangePicker>
 
 /** 일~토 한 글자 요일 (표시용) */
 const WEEKDAY_KO_MIN = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -39,13 +41,30 @@ export interface AppDatePickerProps extends Omit<DatePickerProps, 'variant' | 'c
   className?: string
   /** Ant DatePicker(.ant-picker) 루트 클래스 */
   pickerClassName?: string
+  /** filter: 44px·8px radius 등 통일 필터 토큰 */
+  uiVariant?: 'default' | 'filter'
 }
 
 const AppDatePickerRender: ForwardRefRenderFunction<AppDatePickerRef, AppDatePickerProps> = (
-  { className, pickerClassName, format: formatProp, prefix, suffixIcon, inputReadOnly, ...rest },
+  {
+    className,
+    pickerClassName,
+    format: formatProp,
+    prefix,
+    suffixIcon,
+    inputReadOnly,
+    uiVariant = 'default',
+    ...rest
+  },
   ref
 ) => {
-  const wrapperCn = ['app-datepicker', className].filter(Boolean).join(' ')
+  const wrapperCn = [
+    'app-datepicker',
+    uiVariant === 'filter' && 'app-datepicker--filter',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
   const pickerCn = ['app-datepicker__picker', pickerClassName].filter(Boolean).join(' ')
 
   return (
@@ -71,3 +90,66 @@ export const AppDatePicker: ForwardRefExoticComponent<
 > = forwardRef(AppDatePickerRender)
 
 AppDatePicker.displayName = 'AppDatePicker'
+
+type RangePickerProps = ComponentProps<typeof DatePicker.RangePicker>
+
+export interface AppDateRangePickerProps extends Omit<RangePickerProps, 'variant' | 'className'> {
+  className?: string
+  pickerClassName?: string
+  uiVariant?: 'default' | 'filter'
+}
+
+const AppDateRangePickerRender: ForwardRefRenderFunction<
+  AppDatePickerRef,
+  AppDateRangePickerProps
+> = (
+  {
+    className,
+    pickerClassName,
+    format: formatProp,
+    prefix,
+    suffixIcon,
+    inputReadOnly,
+    uiVariant = 'default',
+    separator,
+    ...rest
+  },
+  ref
+) => {
+  const wrapperCn = [
+    'app-datepicker',
+    'app-datepicker--range',
+    uiVariant === 'filter' && 'app-datepicker--filter',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const pickerCn = ['app-datepicker__picker', pickerClassName].filter(Boolean).join(' ')
+
+  const rangeSeparator =
+    separator ?? <span className="app-datepicker__range-separator">~</span>
+
+  return (
+    <span className={wrapperCn}>
+      <DatePicker.RangePicker
+        ref={ref as Ref<InternalRangePickerRef>}
+        variant="borderless"
+        className={pickerCn}
+        format={formatProp ?? formatAppDatepickerDisplay}
+        prefix={
+          prefix ?? <CalendarOutlined className="app-datepicker__calendar-icon" aria-hidden />
+        }
+        suffixIcon={suffixIcon ?? null}
+        inputReadOnly={inputReadOnly ?? true}
+        separator={rangeSeparator}
+        {...rest}
+      />
+    </span>
+  )
+}
+
+export const AppDateRangePicker: ForwardRefExoticComponent<
+  AppDateRangePickerProps & RefAttributes<AppDatePickerRef>
+> = forwardRef(AppDateRangePickerRender)
+
+AppDateRangePicker.displayName = 'AppDateRangePicker'

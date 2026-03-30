@@ -5,6 +5,7 @@
 
 import { Table, Button, Image, Tag, Card } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { FilterListLayout } from '@/shared/ui/filter-list-layout'
 import { message } from 'antd'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
@@ -777,31 +778,31 @@ export function ProgramList({
 
       {/* 관리자 목록 뷰: 필터, tableButtonSection, 테이블을 단일 배경 컨테이너로 감쌈 */}
       {!isParticipant && viewMode === 'list' ? (
-        <div className={`program-list-content-wrapper`}>
-          <UnifiedFilterCard
-            fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
-            filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
-            onFilterChange={(key, value) => {
-              if (key === 'operationPeriod') {
-                const dates = value as [Dayjs, Dayjs] | null
-                setPendingFilters(prev => ({
-                  ...prev,
-                  operationStartDate: dates?.[0] || null,
-                  operationEndDate: dates?.[1] || null,
-                }))
-              } else if (readOnlyLifecycleStatus && (key === 'category' || key === 'targetLevel')) {
-                setPendingFilters(prev => ({
-                  ...prev,
-                  [key]: value && String(value).trim() ? value : undefined,
-                }))
-              } else {
-                setPendingFilters(prev => ({ ...prev, [key]: value }))
-              }
-            }}
-            onSearch={handleSearch}
-            bordered={false}
-          />
-          {children}
+        <FilterListLayout
+          className="program-list-content-wrapper"
+          fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
+          filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
+          onFilterChange={(key, value) => {
+            if (key === 'operationPeriod') {
+              const dates = value as [Dayjs, Dayjs] | null
+              setPendingFilters(prev => ({
+                ...prev,
+                operationStartDate: dates?.[0] || null,
+                operationEndDate: dates?.[1] || null,
+              }))
+            } else if (readOnlyLifecycleStatus && (key === 'category' || key === 'targetLevel')) {
+              setPendingFilters(prev => ({
+                ...prev,
+                [key]: value && String(value).trim() ? value : undefined,
+              }))
+            } else {
+              setPendingFilters(prev => ({ ...prev, [key]: value }))
+            }
+          }}
+          onSearch={handleSearch}
+          bordered={false}
+          listHeader={children}
+        >
           <div className="program-list-content-wrapper__table">
             <Card
               loading={loading}
@@ -833,7 +834,7 @@ export function ProgramList({
               </div>
             </Card>
           </div>
-        </div>
+        </FilterListLayout>
       ) : null}
 
       {!isParticipant && showCalendarView && viewMode === 'calendar' ? (

@@ -7,16 +7,16 @@
  * - 쿼리 파라미터 연동 지원
  */
 
-import { Card, Row, Col, Select, Space, DatePicker } from 'antd'
+import { Card, Row, Col, Space } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { LAYOUT_CONSTANTS } from '@/shared/constants/layout'
 import { LabeledSearchInput } from './labeled-search-input'
 import { AppButton } from './app-button'
 import { AppMultiSelect } from './app-multi-select'
 import type { AppMultiSelectOption } from './app-multi-select'
+import { AppSelect } from './app-select'
+import { AppDateRangePicker } from './app-datepicker'
 import './unified-filter-card.css'
-
-const { RangePicker } = DatePicker
 
 export interface FilterFieldConfig {
   /** 필터 키 */
@@ -96,6 +96,7 @@ export function UnifiedFilterCard({
       return (
         <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
           <LabeledSearchInput
+            uiVariant="filter"
             label={field.label}
             placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
             value={filters[field.key] || ''}
@@ -112,11 +113,12 @@ export function UnifiedFilterCard({
         <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
-            <Select
+            <AppSelect
+              uiVariant="filter"
               size="small"
               placeholder={field.placeholder || '전체'}
               value={filters[field.key]}
-              className="unified-filter-card__select"
+              selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(field.key, value)}
               allowClear={field.allowClear !== false}
               style={{ width: '100%', ...field.style }}
@@ -135,7 +137,8 @@ export function UnifiedFilterCard({
         <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
-            <RangePicker
+            <AppDateRangePicker
+              uiVariant="filter"
               size="small"
               style={{ width: '100%', ...field.style }}
               value={filters[field.key]}

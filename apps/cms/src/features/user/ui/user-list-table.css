@@ -1,0 +1,12 @@
+/**
+ * 회원 목록 테이블
+ * program-list.css 전역 규칙(.ant-table-thead > tr > th height: 30px, .ant-table-cell max-height)과
+ * padding이 맞물리면 scroll.y 고정 헤더에서 세로 구분선이 셀 상단에서 끊겨 보일 수 있음 → 헤더만 완화
+ */
+.user-list-table .ant-table-thead > tr > th.ant-table-cell {
+  height: auto !important;
+  max-height: none !important;
+  min-height: 48px;
+  box-sizing: border-box;
+  vertical-align: middle;
+}

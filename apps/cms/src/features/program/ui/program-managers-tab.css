@@ -44,8 +44,7 @@
     min-width: 0;
 }
 
-/* Typography.Text — 레이블은 입력 위, 한 줄 높이만 차지 */
-.program-managers-tab__filter-grow .labeled-search-input__label.ant-typography,
+/* 레이블은 입력 위, 한 줄 높이만 차지 */
 .program-managers-tab__filter-grow .labeled-search-input__label {
     flex: 0 0 auto;
     margin: 0 !important;
@@ -58,6 +57,16 @@
     color: var(--color-text-heading);
     line-height: 1.5 !important;
     height: auto;
+}
+
+/* LabeledSearchInput: 테두리는 내부 affix에만 (AppInput 래퍼는 투명) */
+.program-managers-tab__filter-grow .labeled-search-input .app-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    height: auto !important;
+    min-height: 0 !important;
 }
 
 .program-managers-tab__filter-grow .labeled-search-input__input.ant-input-affix-wrapper {

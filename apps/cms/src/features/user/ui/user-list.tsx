@@ -8,10 +8,12 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/ui/program-list.css'
+import './user-list-table.css'
 import type { User, UserRole } from '@/types/user'
 import { getRoleLabel } from '@/shared/ui'
 import { formatDate } from '@/shared/utils'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 interface UserListProps {
   data: Omit<User, 'password'>[]
@@ -113,6 +115,7 @@ export function UserList({
         rowSelection={
           onSelectionChange
             ? {
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
                 onChange: keys => onSelectionChange(keys as string[]),
               }

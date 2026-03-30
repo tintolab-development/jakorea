@@ -71,19 +71,16 @@ const columns: ColumnsType<MyRow> = useMemo(
 ## 3. 체크박스(행 선택) 열
 
 - `rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}` 사용.
-- **첫 번째 열(체크박스) 고정 너비**:
-  - **페이지/카드 내 테이블**: `40px` (예: program-progress-tab)
-  - **모달 내 테이블**: `48px` (예: school-detail-modal 강사/학생 테이블)
-- CSS로 첫 번째 `th`/`td`에 `width`, `min-width`, `max-width` 동일하게 지정하고, 필요 시 `padding-left/right: 8px` 조정.
+- **첫 번째 열(체크박스) 고정 너비**: 전역 `filter-controls-common.css`의 `--table-selection-column-width`(기본 **60px**) 및 `.ant-table-selection-column` 규칙을 따른다. `rowSelection.columnWidth`는 `TABLE_COLUMN_WIDTHS.checkbox`(60)와 맞출 것.
+- 예외적으로 셀 패딩·행 높이만 로컬 CSS로 덮는 경우(예: 신청자 상세 테이블)는 너비 토큰은 유지한다.
 
 ```css
-.my-feature__table .ant-table-thead > tr > th:first-child,
-.my-feature__table .ant-table-tbody > tr > td:first-child {
-  width: 40px;
-  min-width: 40px;
-  max-width: 40px;
-  padding-left: 8px;
-  padding-right: 8px;
+/* 로컬 오버라이드 예시 — 너비는 토큰 사용 권장 */
+.my-feature__table .ant-table-thead > tr > th.ant-table-selection-column,
+.my-feature__table .ant-table-tbody > tr > td.ant-table-selection-column {
+  width: var(--table-selection-column-width, 60px);
+  min-width: var(--table-selection-column-width, 60px);
+  max-width: var(--table-selection-column-width, 60px);
 }
 ```
 

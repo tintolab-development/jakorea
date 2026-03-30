@@ -7,7 +7,7 @@ export const TABLE_COLUMN_WIDTHS = {
   status: 110,
   date: 120,
   action: 72,
-  checkbox: 50,
+  checkbox: 60,
   index: 60,
   name: 120,
   email: 200,
