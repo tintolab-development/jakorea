@@ -7,6 +7,10 @@ import type {
   ApplicantInstructorCareerDetail,
   ApplicantInstructorEducationItem,
 } from '@/data/mock/applicant-instructors'
+import {
+  ProgramDetailTdDivider,
+  withProgramDetailTdDivider,
+} from '@/features/program/ui/program-detail-td-divider'
 import './applicant-instructor-resume.css'
 
 const NO_DATA = '데이터 없음'
@@ -113,13 +117,17 @@ export function ApplicantInstructorResume({ instructor: d }: ApplicantInstructor
                     .filter(Boolean)
                     .join(' ')
                 : NO_DATA
-              const majorPart = item.major ? ` | ${item.major}` : ''
               return (
                 <div key={idx} className="instructor-resume-row instructor-resume-row--career">
                   <span className="instructor-resume-row-left">{period || NO_DATA}</span>
                   <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
                     <span className="instructor-resume-emphasis">{schoolLabel}</span>
-                    {majorPart ? <span className="instructor-resume-role">{majorPart}</span> : null}
+                    {item.major ? (
+                      <>
+                        <ProgramDetailTdDivider />
+                        <span className="instructor-resume-role">{item.major}</span>
+                      </>
+                    ) : null}
                   </span>
                 </div>
               )
@@ -127,9 +135,11 @@ export function ApplicantInstructorResume({ instructor: d }: ApplicantInstructor
           ) : hasEducation ? (
             <div className="instructor-resume-row instructor-resume-row--career">
               <span className="instructor-resume-row-left">-</span>
-              <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
+                <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
                 <span className="instructor-resume-emphasis">
-                  {[d.educationLevel, d.educationSchoolName].filter(Boolean).join(' | ') || NO_DATA}
+                  {withProgramDetailTdDivider(
+                    [d.educationLevel, d.educationSchoolName].filter(Boolean) as string[]
+                  )}
                 </span>
               </span>
             </div>
@@ -165,7 +175,7 @@ export function ApplicantInstructorResume({ instructor: d }: ApplicantInstructor
                         {item.companyName && (
                           <span className="instructor-resume-emphasis">{item.companyName}</span>
                         )}
-                        {item.companyName && item.role ? ' | ' : ''}
+                        {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
                         {item.role != null && item.role !== '' ? (
                           <span className="instructor-resume-role">{item.role}</span>
                         ) : null}

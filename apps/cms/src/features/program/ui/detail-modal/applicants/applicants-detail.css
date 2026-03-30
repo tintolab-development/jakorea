@@ -58,6 +58,14 @@
   padding-right: 0 !important;
 }
 
+/* 캘린더 뷰: 풀페이지 메인 안에서 가로 100%·flex 축소 시에도 비율 유지 */
+.applicant-calendar-view-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 /* 테이블 영역 */
 .applicant-details__below-divider {
   padding: 0 24px 24px 42px;
@@ -232,7 +240,7 @@
 .applicant-details__session-line {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   font-size: 16px;
   font-weight: 500;
@@ -266,6 +274,7 @@
 .applicant-details__session-divider {
   width: 1px;
   height: 13px;
+  box-sizing: border-box;
   background: var(--default-BK, #3d3d3d);
   opacity: 0.5;
   flex-shrink: 0;

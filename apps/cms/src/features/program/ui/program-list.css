@@ -88,10 +88,6 @@
   margin-bottom: var(--spacing-16);
 }
 
-.program-list-content-wrapper__table {
-  margin-top: var(--spacing-16);
-}
-
 .program-list-content-wrapper .program-list-card--in-wrapper {
   margin-top: 0;
   margin-bottom: 0;

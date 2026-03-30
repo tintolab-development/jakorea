@@ -3,10 +3,15 @@
  * 학력사항 위에 배치, 이미지 시안과 동일한 4열 그리드(성명 한글/영문, 프로그램 승인 현황, 성별 및 생년월일 등)
  */
 
+import { type ReactNode } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+} from '@/features/program/ui/program-detail-td-divider'
 import './applicant-instructor-basic-info.css'
 
 const APPROVAL_STATUS_LABELS: Record<ApplicantInstructorRow['approvalStatus'], string> = {
@@ -61,7 +66,7 @@ function formatBirthDateAndAge(birthDate?: string, age?: number): string {
   return '-'
 }
 
-function formatAccountDisplay(instructor: ApplicantInstructorRow, mask: boolean): string {
+function formatAccountDisplayContent(instructor: ApplicantInstructorRow, mask: boolean): ReactNode {
   const bank = instructor.bankName ?? ''
   const num = instructor.accountNumber ?? ''
   const holder = instructor.accountHolder ?? ''
@@ -69,9 +74,15 @@ function formatAccountDisplay(instructor: ApplicantInstructorRow, mask: boolean)
   if (mask) {
     const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
     const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
-    return [bank, maskedNum].filter(Boolean).join(' ') + (maskedHolder ? ` | ${maskedHolder}` : '')
+    const left = [bank, maskedNum].filter(Boolean).join(' ')
+    if (!maskedHolder) return left || '-'
+    if (!left) return maskedHolder
+    return withProgramDetailTdDivider([left, maskedHolder])
   }
-  return [bank, num].filter(Boolean).join(' ') + (holder ? ` | ${holder}` : '')
+  const left = [bank, num].filter(Boolean).join(' ')
+  if (!holder) return left || '-'
+  if (!left) return holder
+  return withProgramDetailTdDivider([left, holder])
 }
 
 /** 읍·면·동 단위까지 노출, 그 이후는 블러(마스킹 모드). 'OO동' 형태만 매칭(동작구 등 제외). */
@@ -152,24 +163,26 @@ export function ApplicantInstructorBasicInfo({
       ? MASKING_POLICY.email(instructor.email)
       : instructor.email
     : '-'
-  const accountDisplay = formatAccountDisplay(instructor, mask)
+  const accountDisplay = formatAccountDisplayContent(instructor, mask)
   const birthDisplay = formatBirthDateAndAge(instructor.birthDate, instructor.age)
-  const genderBirthDisplay = [instructor.gender, birthDisplay].filter(Boolean).join(' | ') || '-'
+  const genderBirthDisplay = withProgramDetailTdDivider(
+    [instructor.gender, birthDisplay].filter(Boolean) as string[]
+  )
   const schoolPart = instructor.educationSchoolName
     ? mask
       ? maskEducationSchoolName(instructor.educationSchoolName)
       : instructor.educationSchoolName
     : ''
-  const educationDisplay =
-    [instructor.educationLevel, schoolPart].filter(Boolean).join(' | ') || '-'
-  const affiliationDisplay =
+  const educationDisplay = withProgramDetailTdDivider(
+    [instructor.educationLevel, schoolPart].filter(Boolean) as string[]
+  )
+  const affiliationDisplay = withProgramDetailTdDivider(
     [
       instructor.affiliation ?? '',
       instructor.lectureExperienceYears != null ? `${instructor.lectureExperienceYears}년` : '',
       instructor.evaluationGrade ? `${instructor.evaluationGrade}등급` : '',
-    ]
-      .filter(Boolean)
-      .join(' | ') || '-'
+    ].filter(Boolean) as string[]
+  )
 
   const nameKoreanCell =
     instructor.scheduleChangeCancelCount != null && instructor.scheduleChangeCancelCount > 0 ? (
@@ -240,7 +253,7 @@ export function ApplicantInstructorBasicInfo({
                 성별 및 생년월일
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {genderBirthDisplay}
+                <ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>
               </td>
             </tr>
             <tr>
@@ -278,7 +291,7 @@ export function ApplicantInstructorBasicInfo({
                 정산 계좌 정보
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {accountDisplay}
+                <ProgramDetailTdSegmentWrap>{accountDisplay}</ProgramDetailTdSegmentWrap>
               </td>
             </tr>
             <tr>
@@ -289,13 +302,13 @@ export function ApplicantInstructorBasicInfo({
                 최종 학력
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {educationDisplay}
+                <ProgramDetailTdSegmentWrap>{educationDisplay}</ProgramDetailTdSegmentWrap>
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 소속 및 강사 경력
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {affiliationDisplay}
+                <ProgramDetailTdSegmentWrap>{affiliationDisplay}</ProgramDetailTdSegmentWrap>
               </td>
             </tr>
             <tr>

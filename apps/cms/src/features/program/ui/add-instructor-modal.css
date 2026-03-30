@@ -236,11 +236,13 @@
   min-width: 0;
 }
 
-/* 디바이더 1×13 */
+/* 테이블·행 내 세로 디바이더 1×13, default-BK @ 50% (양옆은 부모 gap 또는 margin) */
 .add-instructor-modal__divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -488,7 +490,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0;
+  gap: 12px;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -548,9 +550,11 @@
 .add-instructor-modal__gender-military-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 /* 정산 계좌 정보: Select·input 세로 정렬 통일 (높이 40px, baseline 맞춤) */
@@ -599,7 +603,9 @@
 .add-instructor-modal__bank-account-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -663,7 +669,9 @@
 .add-instructor-modal__education-level-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -1015,7 +1023,9 @@
 .add-instructor-modal__education-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
 }
 
@@ -1107,15 +1117,26 @@
 }
 
 .add-instructor-modal__consent-table tbody tr {
-  height: 50px;
+  height: auto;
+}
+
+/* 1행: 개인정보 수집 동의 · 마케팅 제공 동의 (필드 높이 50px) */
+.add-instructor-modal__consent-table tbody tr:first-child > td {
+  height: 50px !important;
+  min-height: 50px !important;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__consent-table tbody tr:first-child > td.add-instructor-modal__basic-table-cell--input {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .add-instructor-modal__consent-table .add-instructor-modal__basic-table-cell--label {
   width: 240px !important;
   min-width: 240px !important;
   max-width: 240px !important;
-  height: 50px !important;
-  min-height: 50px !important;
 }
 
 .add-instructor-modal__consent-radio-group {
@@ -1309,9 +1330,11 @@
 .add-instructor-modal__career-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 .add-instructor-modal__career-date-sep {
@@ -1439,9 +1462,11 @@
 .add-instructor-modal__qualification-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__remove-row--icon {
@@ -1553,7 +1578,9 @@
 .add-instructor-modal__ja-activity-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -1677,9 +1704,11 @@
 .add-instructor-modal__award-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 .add-instructor-modal__award-row-inputs .add-instructor-modal__remove-row--icon {
@@ -1822,6 +1851,12 @@
 .add-instructor-modal__free-writing-head .add-instructor-modal__free-writing-title {
   margin: 0;
   flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
 }
 
 .add-instructor-modal__free-writing-description {
@@ -1852,12 +1887,12 @@
 
 .add-instructor-modal__free-writing-question-bar {
   padding: 12px 16px;
-  font-family: var(--font-family-primary), sans-serif;
-  font-size: var(--font-size-15);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
   font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  color: #333333;
+  font-weight: 700;
+  line-height: 140%;
   background: #f5f6f7;
   border-radius: 6px 6px 0 0;
   border-top: 1px solid var(--table-line, #e0e0e0);
@@ -1977,7 +2012,9 @@
 .add-instructor-modal__address-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
 }
 
@@ -2127,7 +2164,7 @@
   font-size: 14px;
 }
 
-/* 공통 규칙: 모든 디바이더 양옆 간격 12px */
+/* 세로 디바이더: margin 0 (양옆 12px는 행 flex gap 등으로 확보), 주민번호 구간 `-`는 제외 */
 .add-instructor-modal__divider,
 .add-instructor-modal__gender-military-divider,
 .add-instructor-modal__bank-account-divider,

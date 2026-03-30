@@ -83,6 +83,15 @@ export interface ParticipatingInstructorRow {
   region?: string
   /** JA 평가 등급 (참여 강사 목록 필터·테이블용) */
   jaEvaluationGrade?: string
+  /** 강의 보고서 제출 여부 (캘린더 카드 태그 등) */
+  lectureReportSubmitted?: boolean
+  /** CMS에서 강사 등록으로 추가된 경우 등 */
+  registeredByAdmin?: boolean
+  /** 기본 정보 하단 — 강의비 책정 기준(유형·금액, 셀 내 디바이더로 구분) */
+  lectureFeeCategory?: string
+  lectureFeeAmount?: string
+  /** 사업소득자 여부 표시 문구 */
+  businessIncomeEarnerStatus?: string
 }
 
 export const SETTLEMENT_STATUS_LABELS: Record<SettlementStatusKey, string> = {
@@ -227,6 +236,9 @@ function getDetailExtension(
     | 'freeWriting2'
     | 'freeWriting3'
     | 'freeWriting4'
+    | 'lectureFeeCategory'
+    | 'lectureFeeAmount'
+    | 'businessIncomeEarnerStatus'
   >
 > {
   if (index > 1) return {}
@@ -268,6 +280,9 @@ function getDetailExtension(
       freeWriting2: '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
       freeWriting3: '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
       freeWriting4: '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
+      lectureFeeCategory: '특강 강사비',
+      lectureFeeAmount: '915,000원',
+      businessIncomeEarnerStatus: '해당 없음',
     }
   }
   return {
@@ -302,6 +317,9 @@ function getDetailExtension(
     freeWriting2: '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
     freeWriting3: '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
     freeWriting4: '-',
+    lectureFeeCategory: '정규 강의',
+    lectureFeeAmount: '680,000원',
+    businessIncomeEarnerStatus: '해당',
   }
 }
 
@@ -318,6 +336,7 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
       no: count - i,
       instructorName: INSTRUCTOR_NAMES[i % INSTRUCTOR_NAMES.length],
       schoolName: SCHOOL_NAMES[i % SCHOOL_NAMES.length],
+      lectureReportSubmitted: i % 3 === 0,
       educationGrade: GRADES[i % GRADES.length],
       classCount: 2 + (i % 4),
       studentCount: 40 + (i % 85),
@@ -329,6 +348,10 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
       region,
       jaEvaluationGrade: jaGrade,
       lectureExperienceYears: extension.lectureExperienceYears ?? lectureYears,
+      registeredByAdmin: i % 7 === 0,
+      lectureFeeCategory: i % 2 === 0 ? '특강 강사비' : '정규 강의',
+      lectureFeeAmount: `${(800000 + (i % 8) * 25000).toLocaleString('ko-KR')}원`,
+      businessIncomeEarnerStatus: i % 5 === 0 ? '해당' : '해당 없음',
       ...extension,
     })
   }

@@ -47,6 +47,10 @@
   flex-wrap: wrap;
 }
 
+.program-kpi-target-section__instructor-row:has(.program-detail-info-tab__separator) {
+  gap: 0;
+}
+
 /* 강사/봉사자 라벨: #3D3D3D, Pretendard 16px 500, line-height 150% */
 .program-kpi-target-section__instructor-label {
   color: var(--default-BK, #3d3d3d);
@@ -57,11 +61,19 @@
   line-height: 150%;
 }
 
-/* 강사 인풋과 봉사자 인풋 사이 디바이더 */
+/* (예비) 테이블 내 세로 디바이더 — program-detail-info-tab__separator 와 동일 규격 */
 .program-kpi-target-section__instructor-divider {
-  color: var(--color-border, #d9d9d9);
-  font-weight: 400;
-  padding: 0 4px;
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  margin: 0 12px;
+  padding: 0;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
   user-select: none;
-  -webkit-user-select: none;
 }

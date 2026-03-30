@@ -21,6 +21,10 @@ import {
   SCHOOL_DETAIL_TAB_KEYS,
   type SchoolDetailTabKey,
 } from '../school-detail-fullpage-view'
+import {
+  INSTRUCTOR_DETAIL_TAB_KEYS,
+  type InstructorDetailTabKey,
+} from '../participating-instructor-fullpage-view'
 import { ParticipatingInstructorsSection } from '../participating-instructors-section'
 import { ApplicantDetails } from './applicants/applicants-detail'
 import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
@@ -48,6 +52,8 @@ const EDIT_PARAM = 'edit'
 const LNB_PARAM = 'lnb'
 const SCHOOL_ID_PARAM = 'schoolId'
 const SCHOOL_TAB_PARAM = 'schoolTab'
+const INSTRUCTOR_ID_PARAM = 'instructorId'
+const INSTRUCTOR_TAB_PARAM = 'instructorTab'
 const SUB_TAB_PARAM = 'subTab'
 
 /** 프로그램 상세 모달 LNB 카테고리
@@ -62,6 +68,12 @@ const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 
 function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
   if (t && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(t)) return t as SchoolDetailTabKey
+  return 'application'
+}
+
+function parseInstructorTabFromSearch(searchParams: URLSearchParams): InstructorDetailTabKey {
+  const t = searchParams.get(INSTRUCTOR_TAB_PARAM)
+  if (t && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(t)) return t as InstructorDetailTabKey
   return 'application'
 }
 
@@ -122,6 +134,8 @@ export function ProgramDetailFullPageModal({
 
   const schoolIdFromUrl = searchParams.get(SCHOOL_ID_PARAM)
   const activeSchoolTab = schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams) : 'application'
+  const instructorIdFromUrl = searchParams.get(INSTRUCTOR_ID_PARAM)
+  const activeInstructorTab = instructorIdFromUrl ? parseInstructorTabFromSearch(searchParams) : 'application'
 
   // 모달이 열릴 때: URL에 유효한 lnb·tab이 있으면 유지(새로고침 복원), 없으면 info 또는 해당 카테고리 기본 탭으로 보정
   // programId는 모달이 열려 있는 동안 항상 유지(클릭/새로고침 타이밍 이슈 방지)
@@ -199,6 +213,26 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId])
 
+  useEffect(() => {
+    if (!open || !instructorIdFromUrl) return
+    const raw = searchParams.get(INSTRUCTOR_TAB_PARAM)
+    if (raw && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(raw)) return
+    const next = new URLSearchParams(searchParams)
+    next.set(INSTRUCTOR_TAB_PARAM, 'application')
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, instructorIdFromUrl, searchParams, setSearchParams, programId])
+
+  useEffect(() => {
+    if (!open || !instructorIdFromUrl) return
+    if (activeLnb === 'progress' && activeProgressChild === 'instructors') return
+    const next = new URLSearchParams(searchParams)
+    next.delete(INSTRUCTOR_ID_PARAM)
+    next.delete(INSTRUCTOR_TAB_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, activeProgressChild, instructorIdFromUrl, programId, searchParams, setSearchParams])
+
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, key)
@@ -238,6 +272,9 @@ export function ProgramDetailFullPageModal({
     else next.delete(SUB_TAB_PARAM)
     if (programId) next.set('programId', programId)
     next.delete(SCHOOL_ID_PARAM)
+    next.delete(SCHOOL_TAB_PARAM)
+    next.delete(INSTRUCTOR_ID_PARAM)
+    next.delete(INSTRUCTOR_TAB_PARAM)
     setSearchParams(next, { replace: true })
   }
 
@@ -306,10 +343,34 @@ export function ProgramDetailFullPageModal({
     if (id) {
       next.set(SCHOOL_ID_PARAM, id)
       next.set(SCHOOL_TAB_PARAM, 'application')
+      next.delete(INSTRUCTOR_ID_PARAM)
+      next.delete(INSTRUCTOR_TAB_PARAM)
     } else {
       next.delete(SCHOOL_ID_PARAM)
       next.delete(SCHOOL_TAB_PARAM)
     }
+    setSearchParams(next, { replace: true })
+  }
+
+  const setInstructorId = (id: string | null) => {
+    const next = new URLSearchParams(searchParams)
+    if (id) {
+      next.set(INSTRUCTOR_ID_PARAM, id)
+      next.set(INSTRUCTOR_TAB_PARAM, 'application')
+      next.delete(SCHOOL_ID_PARAM)
+      next.delete(SCHOOL_TAB_PARAM)
+    } else {
+      next.delete(INSTRUCTOR_ID_PARAM)
+      next.delete(INSTRUCTOR_TAB_PARAM)
+    }
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }
+
+  const setInstructorTab = (tab: InstructorDetailTabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(INSTRUCTOR_TAB_PARAM, tab)
+    if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
   }
 
@@ -324,6 +385,10 @@ export function ProgramDetailFullPageModal({
   const handleHeaderCloseClick = () => {
     if (schoolIdFromUrl) {
       setSchoolId(null)
+      return
+    }
+    if (instructorIdFromUrl) {
+      setInstructorId(null)
       return
     }
     if (activeLnb === 'applicants' && applicantCloseHandlerRef.current?.()) {
@@ -349,15 +414,22 @@ export function ProgramDetailFullPageModal({
 
   const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
+  const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
 
   useEffect(() => {
     if (!schoolIdFromUrl) setSchoolDetailTitle(null)
   }, [schoolIdFromUrl])
 
+  useEffect(() => {
+    if (!instructorIdFromUrl) setInstructorDetailTitle(null)
+  }, [instructorIdFromUrl])
+
   const title =
     schoolDetailTitle != null && displayProgram
       ? `${displayProgram.title}_${schoolDetailTitle}`
-      : (displayProgram?.title ?? '프로그램 상세')
+      : instructorDetailTitle != null && displayProgram
+        ? `${displayProgram.title}_${instructorDetailTitle}`
+        : (displayProgram?.title ?? '프로그램 상세')
 
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
   const infoForm = useProgramDetailEditForm({
@@ -548,7 +620,9 @@ export function ProgramDetailFullPageModal({
       onHeaderClose={handleHeaderCloseClick}
       title={title}
       className="program-detail-fullpage-modal"
-      closeAriaLabel={schoolIdFromUrl ? '목록으로' : '닫기'}
+      closeAriaLabel={
+        schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : '닫기'
+      }
       sidebar={
         <DetailModalSidebar
           navAriaLabel="프로그램 상세 메뉴"
@@ -601,6 +675,7 @@ export function ProgramDetailFullPageModal({
                 {activeLnb === 'applicants' && (
                   <ApplicantDetails
                     menu={activeChildMenu}
+                    program={displayProgram ?? null}
                     onRegisterApplicantCloseHandler={fn => {
                       applicantCloseHandlerRef.current = fn
                     }}
@@ -629,7 +704,17 @@ export function ProgramDetailFullPageModal({
                       />
                     )}
                     {activeProgressChild === 'instructors' && (
-                      <ParticipatingInstructorsSection programId={displayProgram?.id} />
+                      <ParticipatingInstructorsSection
+                        programId={displayProgram?.id}
+                        program={displayProgram}
+                        instructorIdFromUrl={instructorIdFromUrl}
+                        instructorTabFromUrl={activeInstructorTab}
+                        onInstructorTabChange={setInstructorTab}
+                        onInstructorRowClick={row => setInstructorId(row.id)}
+                        onClearInstructorId={() => setInstructorId(null)}
+                        onInstructorDetailOpen={name => setInstructorDetailTitle(name)}
+                        onInstructorDetailClose={() => setInstructorDetailTitle(null)}
+                      />
                     )}
                     {activeProgressChild === 'volunteers' && (
                       <div className="program-detail-fullpage-modal__progress-section">

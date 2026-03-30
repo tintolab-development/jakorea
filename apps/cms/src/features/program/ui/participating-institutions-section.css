@@ -198,7 +198,7 @@
 .participating-institutions-section__calendar-wrap {
   width: 100%;
   overflow-x: auto;
-  min-height: 742px;
+  min-height: 900px;
 }
 
 .participating-institutions-section__table-header {
@@ -335,7 +335,7 @@
 .participating-institutions-section__session-line {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   font-size: 16px;
   font-weight: 500;
@@ -371,6 +371,7 @@
 .participating-institutions-section__session-divider {
   width: 1px;
   height: 13px;
+  box-sizing: border-box;
   background: var(--default-BK, #3d3d3d);
   opacity: 0.5;
   flex-shrink: 0;

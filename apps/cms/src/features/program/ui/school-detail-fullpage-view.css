@@ -91,34 +91,6 @@
   vertical-align: middle;
 }
 
-/* 프로그램 승인 현황 — 알림 발송 버튼 */
-.school-detail-fullpage-view__notification-btn {
-  display: inline-flex;
-  width: 120px;
-  height: 40px;
-  padding: 0 16px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background: var(--default-WT, #fff);
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.school-detail-fullpage-view__notification-btn:hover {
-  background: #f5f5f5;
-}
-
 /* td 내 디바이더 양옆 12px gap (기본 정보·안내 사항·담당 교사 등 공통) */
 .school-detail-fullpage-view .program-detail-info-tab__table-wrapper .program-detail-info-tab__table td .school-detail-fullpage-view__td-divider {
   margin-left: 12px;

@@ -13,6 +13,10 @@ import type {
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+} from '@/features/program/ui/program-detail-td-divider'
 import './applicant-institution-basic-info.css'
 
 /** 담당 교사 정보 한 줄 — Tel / M / E-mail 구간만 마스킹 */
@@ -129,6 +133,38 @@ function TableRowTwoCols({
   )
 }
 
+function buildTeacherInfoCell(
+  institution: ApplicantSchoolRow,
+  detail: ApplicantInstitutionDetailExtend | undefined,
+  shouldMask: boolean
+): ReactNode {
+  const raw = detail?.teacherInfo?.trim()
+  if (raw) {
+    const text = shouldMask ? maskInstitutionTeacherInfoLine(raw) : raw
+    const parts = text
+      .split(' | ')
+      .map(s => s.trim())
+      .filter(Boolean)
+    if (parts.length === 0) return '-'
+    return (
+      <ProgramDetailTdSegmentWrap>
+        {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
+      </ProgramDetailTdSegmentWrap>
+    )
+  }
+  const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
+  if (parts.length === 0) return '-'
+  if (parts.length === 1) return parts[0]
+  const name = parts[0]!
+  const phone = parts[1]!
+  const phoneShown = shouldMask ? maskInstitutionContactOnly(phone) : phone
+  return (
+    <ProgramDetailTdSegmentWrap>
+      {withProgramDetailTdDivider([name, phoneShown])}
+    </ProgramDetailTdSegmentWrap>
+  )
+}
+
 export function ApplicantInstitutionBasicInfo({
   institution,
   detail,
@@ -141,27 +177,19 @@ export function ApplicantInstitutionBasicInfo({
   const address = institution.region ?? '-'
   const addressDetail = detail?.addressDetail ?? '-'
   const gradeDisplay = institution.educationGrade ? `초등학교 ${institution.educationGrade}` : '-'
-  const classAndCount =
-    institution.classCount != null && institution.studentCount != null
-      ? `${institution.classCount}개 학급 | 총 ${institution.studentCount}명`
-      : '-'
+  const classAndCount: ReactNode =
+    institution.classCount != null && institution.studentCount != null ? (
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider([
+          `${institution.classCount}개 학급`,
+          `총 ${institution.studentCount}명`,
+        ])}
+      </ProgramDetailTdSegmentWrap>
+    ) : (
+      '-'
+    )
 
-  const teacherInfoRaw =
-    detail?.teacherInfo ??
-    ([institution.teacherName, institution.contact].filter(Boolean).join(' | ') || '-')
-  const teacherInfo =
-    shouldMask && teacherInfoRaw !== '-'
-      ? detail?.teacherInfo
-        ? maskInstitutionTeacherInfoLine(detail.teacherInfo)
-        : (() => {
-            const parts = [institution.teacherName, institution.contact].filter(Boolean)
-            if (parts.length === 0) return '-'
-            if (parts.length === 1) return parts[0]!
-            const name = parts[0]!
-            const phone = parts[1]!
-            return `${name} | ${maskInstitutionContactOnly(phone)}`
-          })()
-      : teacherInfoRaw
+  const teacherInfo = buildTeacherInfoCell(institution, detail, shouldMask)
 
   const sexOffenseRequestDisplay =
     detail?.sexOffenseCheckRequest == null || detail.sexOffenseCheckRequest === ''

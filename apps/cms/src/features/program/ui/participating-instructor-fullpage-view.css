@@ -1,0 +1,66 @@
+/**
+ * 참여 강사 상세 인라인 뷰 — 학력/경력/자격 카드는 신청 강사 이력서와 동일 클래스 사용
+ */
+
+@import './detail-modal/project-info/project-info-form-shared.css';
+@import './detail-modal/applicants/applicant-instructor-resume.css';
+
+.participating-instructor-fullpage-view .program-detail-fullpage-modal__tabs-row {
+  padding: 0 0 32px 0;
+}
+
+.participating-instructor-fullpage-view .program-detail-fullpage-modal__info-tab {
+  padding: 0;
+}
+
+.participating-instructor-fullpage-view__posts-tab-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.participating-instructor-fullpage-view__posts-tab-wrap .enrollment-program-detail-modal__posts-tab {
+  flex: 1;
+  min-height: 0;
+}
+
+.participating-instructor-fullpage-view__section-block {
+  margin-bottom: var(--spacing-24);
+}
+
+.participating-instructor-fullpage-view__admin-note {
+  margin: 0 0 var(--spacing-12) 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+/* 기본 정보 메인 테이블과 동일 table 스펙, 상단 간격 16px */
+.participating-instructor-fullpage-view__fee-table-wrap {
+  margin-top: 16px;
+}
+
+.participating-instructor-fullpage-view__tab-placeholder {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.participating-instructor-fullpage-view__summary-mint {
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  margin-left: 8px;
+}
+
+/* 자택 주소: 읍·면·동까지 표시 후 이하 구간 블러 (신청 강사 기본 정보와 동일) */
+.participating-instructor-fullpage-view__address-blur {
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}

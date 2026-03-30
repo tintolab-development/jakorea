@@ -13,6 +13,8 @@ export interface AppMultiSelectOption {
   label: string
   /** 드롭다운 라벨 배경 (예: #f0f0f0). 없으면 인덱스 기본 팔레트 */
   tagColor?: string
+  /** 라벨 글자색 (학교 대표색 등). 없으면 기본 #3d3d3d */
+  tagTextColor?: string
 }
 
 export interface AppMultiSelectProps {
@@ -41,7 +43,9 @@ export const APP_MULTI_SELECT_TAG_COLORS = [
 
 function labelStyleForOption(opt: AppMultiSelectOption, index: number): CSSProperties {
   const bg = opt.tagColor ?? APP_MULTI_SELECT_TAG_COLORS[index % APP_MULTI_SELECT_TAG_COLORS.length]
-  return { backgroundColor: bg }
+  const style: CSSProperties = { backgroundColor: bg }
+  if (opt.tagTextColor) style.color = opt.tagTextColor
+  return style
 }
 
 export function AppMultiSelect({
