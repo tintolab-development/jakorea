@@ -2,7 +2,7 @@
 priority: high
 always_include: false
 category: coding
-globs: ["**/shared/components/status-dropdown-cell*.tsx", "**/shared/components/program-lifecycle-status*.tsx", "**/*program-list*.tsx", "**/recruitment-status-widget*"]
+globs: ["**/shared/components/status-dropdown-cell*.tsx", "**/shared/components/program-lifecycle-status*.tsx", "**/*program-list*.tsx", "**/recruitment-status-widget*", "**/settlement-management/payment-order-*-status-detail-fullpage-modal.tsx"]
 ---
 
 # 테이블용 상태 드롭다운 셀 (StatusDropdownCell) 아키텍처
@@ -57,7 +57,7 @@ import {
 
 ### 2.3 테이블 컬럼에 적용
 
-- 컬럼 `className`에 **`STATUS_DROPDOWN_CELL_CLASSNAME`** 사용(행 높이·패딩 등 레이아웃 스타일 적용용).
+- **데이터 셀(td)**에 클래스를 주려면 컬럼 **`onCell`**으로 `className: STATUS_DROPDOWN_CELL_CLASSNAME`을 넘깁니다. (`Column.className`만 쓰면 헤더에만 걸리는 경우가 있어, 신청자 목록·참여기관 테이블과 동일하게 `onCell`을 권장합니다.)
 
 ```tsx
 {
@@ -65,7 +65,7 @@ import {
   key: 'lifecycleStatus',
   width: 140,
   align: 'center',
-  className: STATUS_DROPDOWN_CELL_CLASSNAME,
+  onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
   render: (_, record) => (
     <ProgramLifecycleStatusCell
       record={record}
@@ -84,8 +84,8 @@ import {
 
 다른 테이블에 상태 드롭다운 셀을 넣을 때는 아래를 적용합니다.
 
-1. **컬럼 className**  
-   `className: STATUS_DROPDOWN_CELL_CLASSNAME` 지정.
+1. **컬럼 onCell**  
+   `onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME })` 지정.
 
 2. **테이블 CSS에 행 높이 고정**  
    드롭다운 열어도 행 높이가 바뀌지 않도록 다음 규칙 추가.
@@ -181,8 +181,24 @@ export function SettlementStatusCell({ record, onChange, ... }) {
 
 ## 6. 체크리스트 (상태 드롭다운 셀 추가 시)
 
-- [ ] 컬럼에 `className: STATUS_DROPDOWN_CELL_CLASSNAME` 지정
+- [ ] 컬럼에 `onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME })` 지정 (또는 동일 효과로 td에 해당 클래스가 확실히 붙는 방식)
 - [ ] 테이블 CSS에 `tr:has(td.status-dropdown-cell__cell-status)`, `tr:has(td .status-dropdown-cell__status-trigger--open)` 행 높이 고정 규칙 추가
 - [ ] 행 클릭으로 상세 이동 시 `.status-dropdown-cell__status-trigger` 클릭은 제외
 - [ ] 새 도메인 배지는 `AppStatusBadge` 기반으로 추가; 필요 시 `status-dropdown-cell.css`에 드롭다운 내 배지 색상 추가
 - [ ] 새 도메인 셀은 `StatusDropdownCell` 직접 사용하거나, 동일 패턴의 얇은 래퍼만 추가
+
+---
+
+## 7. 지급 조서 처리 현황 (정산 관리 · 풀페이지 모달 내 목록)
+
+강사별/프로그램별 **정산 목록** 테이블에서 행 단위로 지급 조서 처리 현황을 바꿀 때는, 풀페이지 모달 **신청자 목록**의 **프로그램 승인 현황** 열과 **같은 배지 계열**을 씁니다.
+
+| 항목 | 규칙 |
+|------|------|
+| 셀 | `@/shared/components/status-dropdown-cell`의 `StatusDropdownCell` + `STATUS_DROPDOWN_CELL_CLASSNAME` (`onCell`) |
+| 배지 | `PaymentOrderLineProcessingStatusBadge` → 내부적으로 `TextbookStatusBadge` `variant="payment-order-line"` (`app-status-badge` + `textbook-status-badge--*` 색상) |
+| 현재값 비활성화 | `isItemDisabled={(cur, opt) => cur === opt}` (신청자 목록 프로그램 승인 현황과 동일) |
+| 행 클릭 전파 차단 | 셀을 `<div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-block' }}>` 로 감싸기 |
+| 너비 | 신청자 프로그램 승인 현황과 동일: 컬럼·`td.status-dropdown-cell__cell-status` **152px**, 배지 **120px**(`app-status-badge`). 드롭다운 오버레이는 `body`에 붙으므로 전역 `status-dropdown-cell.css`(152px)와 맞출 것 — 배지만 넓히면 메뉴·트리거와 어긋남. |
+
+참고 구현: `pages/settlement-management/payment-order-program-status-detail-fullpage-modal.tsx`, `payment-order-instructor-status-detail-fullpage-modal.tsx`, 배지 `shared/components/payment-order-line-processing-status-badge.tsx` · `textbook-status-badge.css`(confirmed / correction; 라인 변형은 말줄임만).

@@ -57,8 +57,19 @@ pnpm --filter cms typecheck  # 특정 앱만 타입 체크
 - 커밋/병합 전 반드시 `pnpm typecheck`, `pnpm lint`를 실행하고, 에러가 없을 때만 커밋한다.
 - 자세한 내용: [commit-verify-required.md](./commit-verify-required.md)
 
+## Component reuse (UI)
 
+- **Prefer existing components first**: Before adding new UI, search the repo for shared building blocks (`shared/ui`, `shared/components`, feature `widgets`, design-system primitives, and packages such as `@jakorea/ui` where applicable).
+- **Compose and extend** existing components instead of duplicating markup, styles, or behavior.
+- **Add new primitives only** when no suitable component exists or the use case is genuinely different; align naming, props, and patterns with nearby code.
 
+### Table: status change via dropdown (StatusDropdownCell)
 
+- Use **`StatusDropdownCell`** and **`STATUS_DROPDOWN_CELL_CLASSNAME`** from `@/shared/components/status-dropdown-cell` (not the legacy `features/program/ui/status-dropdown-cell`).
+- Put **`STATUS_DROPDOWN_CELL_CLASSNAME` on the data cell** via the column’s **`onCell`**, matching **applicants-detail** (program 승인 현황) and **participating-institutions-section** (교재 배송 현황).
+- **`renderBadge`** must use the same badge family as those screens: **`ApprovalStatusBadge`** (program approval) or **`PaymentOrderLineProcessingStatusBadge`** (settlement payment-order line status), both built on **`TextbookStatusBadge`** + **`app-status-badge`** — do not invent one-off tag markup/CSS for the same UX.
+- When the current status must not be re-selectable: **`isItemDisabled={(cur, opt) => cur === opt}`**.
+- When the table row has a click handler (e.g. open detail), wrap the cell in **`<div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-block' }}>`** around `StatusDropdownCell`.
+- For row-height / dropdown width overrides, scope CSS with **`:has(td.status-dropdown-cell__cell-status)`** like `applicants-detail.css`; see **`apps/cms/.cursor/rules/coding/status-dropdown-cell.md`** (section 7 for settlement payment-order modals).
 
 
