@@ -58,6 +58,14 @@
   padding-right: 0 !important;
 }
 
+/* 캘린더 뷰: 풀페이지 메인 안에서 가로 100%·flex 축소 시에도 비율 유지 */
+.applicant-calendar-view-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 /* 테이블 영역 */
 .applicant-details__below-divider {
   padding: 0 24px 24px 42px;

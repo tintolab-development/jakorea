@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
+import { useState, useRef, useMemo, useCallback, useEffect, useLayoutEffect } from 'react'
 import { Calendar, Button, Spin, Tooltip } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -110,6 +110,9 @@ interface ApplicantCalendarViewProps {
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
   onItemClick: (item: any) => void
+  /** 월간/주간 — onCalendarGranularityChange와 함께 전달 시 쿼리스트링 등과 동기화 */
+  calendarGranularity?: 'month' | 'week'
+  onCalendarGranularityChange?: (mode: 'month' | 'week') => void
 }
 
 export function ApplicantCalendarView({
@@ -118,10 +121,20 @@ export function ApplicantCalendarView({
   selectedRowKeys,
   onSelectionChange,
   onItemClick,
+  calendarGranularity: calendarGranularityProp,
+  onCalendarGranularityChange,
 }: ApplicantCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
-  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
+  const calendarControlled =
+    calendarGranularityProp !== undefined && onCalendarGranularityChange !== undefined
+  const calendarMode = calendarControlled ? calendarGranularityProp : fallbackCalendarMode
+  const setCalendarMode = (mode: 'month' | 'week') => {
+    if (calendarControlled) onCalendarGranularityChange(mode)
+    else setFallbackCalendarMode(mode)
+  }
+  /** 날짜별 필터 옵션과 동기화 시 전체 선택이 기본, []는 사용자가 모두 해제한 경우 */
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
   const mainCalendarRef = useRef<HTMLDivElement>(null)
 
@@ -207,10 +220,59 @@ export function ApplicantCalendarView({
     }))
   }, [dayEvents])
   useEffect(() => {
-    setSelectedSchools(prev => prev.filter(v => schoolFilterOptions.some(opt => opt.value === v)))
+    setSelectedSchools(schoolFilterOptions.map(o => o.value))
   }, [schoolFilterOptions])
+
+  /**
+   * Ant fullscreen 캘린더는 패널이 display:block 이라 flex로 남은 높이를 못 받는 경우가 많음.
+   * 테이블 % 높이는 부모 높이가 0에 가깝게 잡혀 실패하므로, 좌측 카드 기준으로 픽셀 행 높이를 직접 넣는다.
+   */
+  useLayoutEffect(() => {
+    const main = mainCalendarRef.current
+    if (!main || loading) return
+
+    const ROWS = 6
+    const MIN_ROW = 124.2
+    /** tbody 아래 ant-picker-body 패딩·보더 여유 */
+    const BOTTOM_RESERVE = 12
+
+    const applyMonthRowHeight = () => {
+      if (calendarMode !== 'month') {
+        main.style.removeProperty('--applicant-cal-row-height')
+        return
+      }
+
+      const thead = main.querySelector('.ant-picker-content thead')
+      if (!thead) {
+        main.style.removeProperty('--applicant-cal-row-height')
+        return
+      }
+
+      const mainRect = main.getBoundingClientRect()
+      const padBottom = parseFloat(getComputedStyle(main).paddingBottom) || 0
+      const innerBottom = mainRect.bottom - padBottom
+      const tbodyTop = thead.getBoundingClientRect().bottom
+      const forBody = Math.max(0, innerBottom - tbodyTop - BOTTOM_RESERVE)
+      const rowPx = Math.max(MIN_ROW, forBody / ROWS)
+      main.style.setProperty('--applicant-cal-row-height', `${Math.round(rowPx * 10) / 10}px`)
+    }
+
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(applyMonthRowHeight)
+    })
+    ro.observe(main)
+    const parent = main.parentElement
+    if (parent) ro.observe(parent)
+
+    requestAnimationFrame(applyMonthRowHeight)
+    return () => {
+      ro.disconnect()
+      main.style.removeProperty('--applicant-cal-row-height')
+    }
+  }, [calendarMode, loading, currentMonth])
+
   const filteredDayEvents = useMemo(() => {
-    if (selectedSchools.length === 0) return dayEvents
+    if (selectedSchools.length === 0) return []
     const selectedSet = new Set(selectedSchools)
     return dayEvents.filter(ev => {
       const schoolName = String(ev?.originalItem?.schoolName ?? '').trim()

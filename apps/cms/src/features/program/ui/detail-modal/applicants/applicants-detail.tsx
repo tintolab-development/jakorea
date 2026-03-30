@@ -21,6 +21,11 @@ import {
   volunteerFilterFields,
 } from '../../table/applicant-filter-fields'
 import {
+  APPLICANTS_CALENDAR_RANGE_PARAM,
+  parseCalendarRangeParam,
+  applyCalendarRangeParam,
+} from '../../../hooks/progress-calendar-range'
+import {
   MOCK_APPLICANT_INSTITUTIONS,
   updateApplicantSchoolApprovalStatus,
   type ApplicantApprovalStatusKey,
@@ -149,6 +154,21 @@ export function ApplicantDetails({
   onRegisterApplicantCloseHandler,
 }: ApplicantDetailsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
+
+  const applicantsCalendarGranularity = useMemo(
+    () => parseCalendarRangeParam(searchParams, APPLICANTS_CALENDAR_RANGE_PARAM),
+    [searchParams]
+  )
+
+  const setApplicantsCalendarGranularity = useCallback(
+    (mode: 'month' | 'week') => {
+      const next = new URLSearchParams(searchParams)
+      applyCalendarRangeParam(next, APPLICANTS_CALENDAR_RANGE_PARAM, mode)
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
   // 필터 상태 관리
   const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({})
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({})
@@ -999,6 +1019,8 @@ export function ApplicantDetails({
                     selectedRowKeys={selectedRowKeys}
                     onSelectionChange={setSelectedRowKeys}
                     onItemClick={setSelectedItem}
+                    calendarGranularity={applicantsCalendarGranularity}
+                    onCalendarGranularityChange={setApplicantsCalendarGranularity}
                   />
                 </div>
               )}
