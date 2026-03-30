@@ -195,6 +195,38 @@ function IconSponsors() {
   )
 }
 
+/** LNB 카테고리 아이콘: 정산 관리 (20x20) */
+function IconSettlementManagement() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-settlement-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
+        <rect width={20} height={20} fill="#D9D9D9" />
+      </mask>
+      <g mask="url(#lnb-settlement-mask)">
+        <path
+          d="M4.5 17C4.0875 17 3.73437 16.8531 3.44062 16.5594C3.14687 16.2656 3 15.9125 3 15.5V4.5C3 4.0875 3.14687 3.73438 3.44062 3.44063C3.73437 3.14688 4.0875 3 4.5 3H15.5C15.9125 3 16.2656 3.14688 16.5594 3.44063C16.8531 3.73438 17 4.0875 17 4.5V6.54167H15.5V4.5H4.5V15.5H15.5V13.4375H17V15.5C17 15.9125 16.8531 16.2656 16.5594 16.5594C16.2656 16.8531 15.9125 17 15.5 17H4.5ZM10.5 14C10.0875 14 9.73438 13.8531 9.44063 13.5594C9.14688 13.2656 9 12.9125 9 12.5V7.5C9 7.0875 9.14688 6.73438 9.44063 6.44063C9.73438 6.14688 10.0875 6 10.5 6H16.5C16.9125 6 17.2656 6.14688 17.5594 6.44063C17.8531 6.73438 18 7.0875 18 7.5V12.5C18 12.9125 17.8531 13.2656 17.5594 13.5594C17.2656 13.8531 16.9125 14 16.5 14H10.5ZM16.5 12.5V7.5H10.5V12.5H16.5ZM14.3854 10.8854C14.6285 10.6424 14.75 10.3472 14.75 10C14.75 9.65278 14.6285 9.35764 14.3854 9.11458C14.1424 8.87153 13.8472 8.75 13.5 8.75C13.1528 8.75 12.8576 8.87153 12.6146 9.11458C12.3715 9.35764 12.25 9.65278 12.25 10C12.25 10.3472 12.3715 10.6424 12.6146 10.8854C12.8576 11.1285 13.1528 11.25 13.5 11.25C13.8472 11.25 14.1424 11.1285 14.3854 10.8854Z"
+          fill="currentColor"
+        />
+      </g>
+    </svg>
+  )
+}
+
 /** LNB 카테고리 아이콘: 실적 관리 (18x18) */
 function IconEducationRecords() {
   return (
@@ -405,6 +437,32 @@ const allMenuItems: MenuItemConfig[] = [
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
+      },
+    ],
+  },
+  {
+    key: 'settlement-management-group',
+    label: '정산 관리',
+    icon: <IconSettlementManagement />,
+    enabled: true,
+    children: [
+      {
+        key: '/settlement-management/payment-orders',
+        label: '지급조서 확인',
+        icon: <FolderOutlined />,
+        enabled: true,
+      },
+      {
+        key: '/settlement-management/account-payments',
+        label: '계좌 지급 확인',
+        icon: <FolderOutlined />,
+        enabled: true,
+      },
+      {
+        key: '/settlement-management/item-settings',
+        label: '정산 항목 설정',
+        icon: <FolderOutlined />,
+        enabled: true,
       },
     ],
   },

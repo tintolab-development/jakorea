@@ -77,6 +77,10 @@ export function Sidebar() {
       keys.push('logs-group')
     }
 
+    if (path.startsWith('/settlement-management')) {
+      keys.push('settlement-management-group')
+    }
+
     return keys
   }, [location.pathname, user?.role])
 

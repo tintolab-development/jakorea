@@ -297,7 +297,7 @@
 }
 
 .sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item {
-  padding-left: 52px !important;
+  padding-left: 66px !important;
 }
 
 /* 3뎁스 비선택: opacity 0.6 */
@@ -324,16 +324,19 @@
   background: var(--sidebar-selected-bg) !important;
 }
 
-/* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 좌 24px / 우 18px */
+/* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 높이 44px, 세로 패딩 12px, 좌 38px, 우 18px */
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title {
-  padding-left: 24px !important;
-  padding-right: 18px !important;
+  padding: 12px 18px 12px 38px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  box-sizing: border-box;
 }
 
-/* 3뎁스 이하 패널의 서브메뉴 타이틀(자식 있는 행) — 좌우 24px 유지 */
+/* 3뎁스 이하 패널의 서브메뉴 타이틀(자식 있는 행) — 2뎁스 대비 동일 상대 들여쓰기 유지 */
 .sidebar-menu .ant-menu-sub .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title {
-  padding: 0 24px !important;
+  padding: 0 18px 0 66px !important;
 }
 
 /* ---- 아이콘(기본 20px, 일부 18px) ---- */
