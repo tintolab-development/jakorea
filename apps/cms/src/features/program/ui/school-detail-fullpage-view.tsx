@@ -55,6 +55,7 @@ import {
   buildSchoolCancelApprovalMessageLines,
 } from './manager-delete-guide-modal'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
+import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import './participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
@@ -517,13 +518,7 @@ export function SchoolDetailFullpageView({
         <div className="school-detail-fullpage-view__approval-cell">
           {withTdDivider([
             '승인 완료',
-            <button
-              key="notification"
-              type="button"
-              className="school-detail-fullpage-view__notification-btn"
-            >
-              알림 발송
-            </button>,
+            <SendNotiButton key="notification" />,
           ])}
         </div>
       ),
