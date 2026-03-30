@@ -323,15 +323,16 @@
   content: 'Sat';
 }
 
-/* Ant Design Calendar 셀 구분선, 셀 영역 154×124.2px (사방 보더) */
+/* 월간 그리드: 7열 균등 — 고정 154px×7은 좌측 flex 영역보다 넓어질 때 우측 열이 overflow:hidden에 잘림 */
 .participating-institutions-calendar-card--left .ant-picker-content table {
   table-layout: fixed;
   border-collapse: collapse;
+  width: 100%;
 }
 
 .participating-institutions-calendar-card--left .ant-picker-content thead th,
 .participating-institutions-calendar-card--left .ant-picker-content tbody td {
-  width: 154px;
+  width: calc(100% / 7);
 }
 
 .participating-institutions-calendar-card--left .ant-picker-content tbody tr {
@@ -339,11 +340,13 @@
 }
 
 .participating-institutions-calendar-card--left .ant-picker-cell {
-  width: 154px;
+  width: calc(100% / 7);
+  max-width: calc(100% / 7);
   height: 124.2px;
   border: 1px solid #f0f0f0;
   padding: 0;
   vertical-align: top;
+  box-sizing: border-box;
 }
 
 /* Ant 기본 셀 inner 가운데 정렬 → 일정 태그 텍스트까지 상속되므로 좌측 고정 */
@@ -351,7 +354,7 @@
   text-align: left !important;
 }
 
-/* Calendar cells: 154×124.2px, padding 8px */
+/* Calendar cells: 가로는 열에 맞춤, 세로 최소 124.2px, padding 8px */
 .participating-institutions-calendar-cell {
   width: 100%;
   height: 100%;
@@ -435,6 +438,8 @@
   box-sizing: border-box;
   text-align: left;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .participating-institutions-calendar-event--selected {
@@ -472,6 +477,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
+  min-width: 0;
 }
 
 /* Week view */
@@ -485,7 +491,7 @@
 /* 주간 뷰 요일 헤더: 삼글자, 가운데 정렬, 폰트 스펙 */
 .participating-institutions-calendar-week-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0;
   border-bottom: 1px solid #f0f0f0;
   padding: 0 0 9px 0;
@@ -506,9 +512,10 @@
 
 .participating-institutions-calendar-week-body {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   flex: 1;
   min-height: 0;
+  min-width: 0;
 }
 
 .participating-institutions-calendar-week-cell {
@@ -519,6 +526,8 @@
   flex-direction: column;
   cursor: pointer;
   min-height: 100px;
+  min-width: 0;
+  overflow: hidden;
   box-sizing: border-box;
   text-align: left;
 }
@@ -574,14 +583,70 @@
   align-items: stretch;
   text-align: left;
   width: 100%;
+  min-width: 0;
+}
+
+/* 참여 기관 기본 우측: 기관 선택 + 일정 목록 */
+.participating-institutions-calendar-default-right {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-default-right__school-filter {
+  flex-shrink: 0;
+  margin-bottom: 12px;
 }
 
 /* Right panel: reuse applicant-calendar-view list styles inside card */
 .participating-institutions-calendar-card--right .applicant-schedule-list {
   padding: 0;
-  height: 100%;
-  overflow-y: auto;
+  flex: 1 1 0;
   min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-card--right
+  .participating-institutions-calendar-default-right
+  .applicant-schedule-list {
+  padding-bottom: 8px;
+}
+
+/* 참여 강사 캘린더 우측: 기관 선택 + 목록 (신청기관 ApplicantCalendarView 우측과 동일 레이아웃) */
+.participating-institutions-calendar-card--right .participating-instructors-section__calendar-right {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-card--right
+  .participating-instructors-section__calendar-right__school-filter {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+/* 참여 강사 캘린더 우측 카드 목록만 스크롤 */
+.participating-institutions-calendar-card--right .participating-instructors-section__calendar-right-cards {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 8px;
 }
 
 /* 우측 카드 태그: 선택 시 백그라운드 제거(기본/학교색 유지), 체크박스 세로 중앙 */

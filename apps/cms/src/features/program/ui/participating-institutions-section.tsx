@@ -118,7 +118,14 @@ export function ParticipatingInstitutionsSection({
   onSchoolDetailClose,
 }: ParticipatingInstitutionsSectionProps) {
   const prevSchoolIdFromUrl = useRef<string | null>(null)
-  const { filters, appliedFilters, setFilter, applyFilters } = useParticipatingInstitutionsParams()
+  const {
+    filters,
+    appliedFilters,
+    setFilter,
+    applyFilters,
+    progressCalendarGranularity,
+    setProgressCalendarGranularity,
+  } = useParticipatingInstitutionsParams()
   const [localSchoolName, setLocalSchoolName] = useState(() => filters.schoolName)
   const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName)
   const [openTextbookDropdownId, setOpenTextbookDropdownId] = useState<string | null>(null)
@@ -579,6 +586,8 @@ export function ParticipatingInstitutionsSection({
                   setSchoolDetailModalOpen(true)
                 }
               }}
+              calendarGranularity={progressCalendarGranularity}
+              onCalendarGranularityChange={setProgressCalendarGranularity}
             />
           </div>
         )}
