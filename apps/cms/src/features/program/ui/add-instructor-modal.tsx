@@ -177,6 +177,8 @@ export interface AddInstructorFormValues {
   consentWithholdingTax?: 'agree' | 'disagree'
   consentCriminalRecord?: 'agree' | 'disagree'
   consentAdministrativeInfo?: 'agree' | 'disagree'
+  /** 교육 진행자 동의 서약 (행정정보 공동이용과 동일 UI) */
+  consentEducationFacilitatorPledge?: 'agree' | 'disagree'
 }
 
 interface AddInstructorModalProps {
@@ -238,6 +240,7 @@ const INITIAL_FORM_VALUES: AddInstructorFormValues = {
   consentWithholdingTax: 'agree',
   consentCriminalRecord: 'disagree',
   consentAdministrativeInfo: 'agree',
+  consentEducationFacilitatorPledge: 'agree',
 }
 
 export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModalProps) {
@@ -266,6 +269,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
   const consentWithholdingTax = Form.useWatch('consentWithholdingTax', form)
   const consentCriminalRecord = Form.useWatch('consentCriminalRecord', form)
   const consentAdministrativeInfo = Form.useWatch('consentAdministrativeInfo', form)
+  const consentEducationFacilitatorPledge = Form.useWatch('consentEducationFacilitatorPledge', form)
   const jaProgramCount = countRows(jaKoreaExperiences)
   const qualificationCount = countRows(qualifications)
   const awardCount = countRows(awards)
@@ -731,6 +735,38 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         className={`add-instructor-modal__consent-complete ${consentAdministrativeInfo === 'agree' ? '' : 'add-instructor-modal__consent-complete--disabled'}`}
                       >
                         {consentAdministrativeInfo === 'agree' ? '제출 완료' : '미제출'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
+                    <span className="add-instructor-modal__basic-table-label">교육 진행자 동의 서약</span>
+                  </td>
+                  <td
+                    className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input"
+                    colSpan={3}
+                  >
+                    <div className="add-instructor-modal__consent-action-row">
+                      <Form.Item name="consentEducationFacilitatorPledge" noStyle>
+                        <Radio.Group
+                          options={CONSENT_RADIO_OPTIONS}
+                          className="add-instructor-modal__consent-radio-group"
+                        />
+                      </Form.Item>
+                      <AppButton
+                        variant="primary"
+                        size="middle"
+                        modalTeal
+                        className="add-instructor-modal__consent-btn"
+                        disabled={consentEducationFacilitatorPledge !== 'agree'}
+                      >
+                        동의서 수정
+                      </AppButton>
+                      <span
+                        className={`add-instructor-modal__consent-complete ${consentEducationFacilitatorPledge === 'agree' ? '' : 'add-instructor-modal__consent-complete--disabled'}`}
+                      >
+                        {consentEducationFacilitatorPledge === 'agree' ? '제출 완료' : '미제출'}
                       </span>
                     </div>
                   </td>
@@ -1288,5 +1324,6 @@ export function buildInstructorRowFromForm(
     freeWriting2: values.freeWriting2,
     freeWriting3: values.freeWriting3,
     freeWriting4: values.freeWriting4,
+    registeredByAdmin: true,
   }
 }
