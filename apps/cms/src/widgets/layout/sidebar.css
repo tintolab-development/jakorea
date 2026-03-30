@@ -66,8 +66,10 @@
 }
 
 .sidebar-menu.ant-menu {
+  --sidebar-open-bg: #1d4352;
+  --sidebar-selected-bg: #345663;
   --sidebar-selected-stack:
-    linear-gradient(var(--color-sidebar-item-selected), var(--color-sidebar-item-selected)),
+    linear-gradient(var(--sidebar-selected-bg), var(--sidebar-selected-bg)),
     var(--color-sidebar-bg);
   --sidebar-hover-overlay: linear-gradient(var(--color-sidebar-overlay-15), var(--color-sidebar-overlay-15));
   --sidebar-hover-on-base: var(--sidebar-hover-overlay), var(--color-sidebar-bg);
@@ -126,15 +128,25 @@
 }
 
 /* ---- 상태(open 등) — 기본 면 ---- */
-.sidebar-menu .ant-menu-submenu-open > .ant-menu-submenu-title,
-.sidebar-menu.ant-menu > .ant-menu-submenu-selected > .ant-menu-submenu-title {
+.sidebar-menu .ant-menu-submenu-open > .ant-menu-submenu-title {
   background: var(--color-sidebar-bg) !important;
+  color: var(--color-sidebar-text) !important;
+}
+
+/* 2·3뎁스 항목 선택 시 1뎁스 부모 타이틀 행 */
+.sidebar-menu.ant-menu > li.ant-menu-submenu.ant-menu-submenu-selected > .ant-menu-submenu-title {
+  background: var(--sidebar-open-bg) !important;
   color: var(--color-sidebar-text) !important;
 }
 
 /* children 있는 메뉴가 펼쳐진(open) 때 타이틀 행 하단 구분선 */
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
   border-bottom: 1px solid var(--color-sidebar-border);
+}
+
+/* 2뎁스 open 행(회원 목록 등)은 하단 보더 제거 */
+.sidebar-menu .ant-menu-sub > li.ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
+  border-bottom: none !important;
 }
 
 /* ---- 공통 호버: 흰색 15% 오버레이 ---- */
@@ -235,13 +247,11 @@
 }
 
 /* ---- 선택 항목이 속한 그룹: 1·2·3뎁스 어두운 면 ---- */
-.sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected,
-.sidebar-menu.ant-menu > li.ant-menu-submenu.ant-menu-submenu-selected > .ant-menu-submenu-title,
 .sidebar-menu li.ant-menu-submenu-selected .ant-menu-sub,
 .sidebar-menu li.ant-menu-submenu-selected .ant-menu-sub .ant-menu-item,
 .sidebar-menu li.ant-menu-submenu-selected .ant-menu-sub .ant-menu-submenu-title,
 .sidebar-menu li.ant-menu-submenu-selected .ant-menu-sub .ant-menu-submenu {
-  background: var(--sidebar-selected-stack) !important;
+  background: var(--sidebar-open-bg) !important;
   color: var(--color-sidebar-text) !important;
 }
 
@@ -251,7 +261,7 @@
   .ant-menu-sub
   .ant-menu-submenu-open
   > .ant-menu-submenu-title {
-  background: var(--sidebar-selected-stack) !important;
+  background: var(--sidebar-open-bg) !important;
   color: var(--color-sidebar-text) !important;
 }
 
@@ -265,16 +275,53 @@
   color: var(--color-sidebar-text) !important;
 }
 
-/* ---- 타이포: 3뎁스 16px / 500 ---- */
+/* 선택된 항목(자기 자신)은 #345663 */
+.sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected,
+.sidebar-menu .ant-menu-sub .ant-menu-item.ant-menu-item-selected {
+  background: var(--sidebar-selected-bg) !important;
+}
+
+/* 2뎁스 리프(자식 없는 메뉴) 선택 배경 명시 적용 */
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item.ant-menu-item-selected {
+  background: var(--sidebar-selected-bg) !important;
+}
+
+/* ---- 타이포: 3뎁스 16px / 500(비선택), 700(선택) ---- */
 .sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item,
 .sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-submenu-title,
 .sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-submenu-title > .ant-menu-title-content {
   font-size: 16px !important;
   font-weight: var(--font-weight-500) !important;
+  line-height: 120% !important;
+  color: #fff !important;
 }
 
 .sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item {
-  padding-left: 48px !important;
+  padding-left: 52px !important;
+}
+
+/* 3뎁스 비선택: opacity 0.6 */
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item:not(.ant-menu-item-selected),
+.sidebar-menu
+  .ant-menu-sub
+  .ant-menu-sub
+  > li.ant-menu-submenu:not(.ant-menu-submenu-selected)
+  > .ant-menu-submenu-title,
+.sidebar-menu
+  .ant-menu-sub
+  .ant-menu-sub
+  > li.ant-menu-submenu:not(.ant-menu-submenu-selected)
+  > .ant-menu-submenu-title
+  > .ant-menu-title-content {
+  opacity: 0.6;
+}
+
+/* 3뎁스 선택: 700 + selected 배경 */
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected,
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected > .ant-menu-title-content {
+  font-weight: var(--font-weight-700) !important;
+  opacity: 1 !important;
+  background: var(--sidebar-selected-bg) !important;
 }
 
 /* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 좌 24px / 우 18px */
@@ -363,16 +410,25 @@
   color: var(--color-sidebar-text) !important;
 }
 
-/* ---- 2·3뎁스: 불릿↔텍스트 8px, 닷 3×3 (SVG 아이콘 제외) ---- */
-.sidebar-menu .ant-menu-sub .ant-menu-item,
-.sidebar-menu .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title,
-.sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item,
-.sidebar-menu .ant-menu-sub .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title {
+/* ---- 2뎁스(루트 바로 하위)만: 불릿↔텍스트 8px, 닷 3x3 ---- */
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title
+  > .ant-menu-title-content {
   gap: 8px !important;
 }
 
-.sidebar-menu .ant-menu-sub .ant-menu-item-icon:not(:has(svg)),
-.sidebar-menu .ant-menu-sub .ant-menu-submenu-title .ant-menu-item-icon:not(:has(svg)) {
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item .ant-menu-item-icon,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title
+  .ant-menu-item-icon {
   width: 3px !important;
   min-width: 3px !important;
   max-width: 3px !important;
@@ -383,10 +439,19 @@
   line-height: 0 !important;
   flex-shrink: 0;
   padding: 0 !important;
+  margin-left: 6px !important;
+  margin-right: 0 !important;
+  transform: translateY(1px);
 }
 
-.sidebar-menu .ant-menu-sub .ant-menu-item-icon:not(:has(svg)) > span,
-.sidebar-menu .ant-menu-sub .ant-menu-submenu-title .ant-menu-item-icon:not(:has(svg)) > span {
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item .ant-menu-item-icon > span,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title
+  .ant-menu-item-icon
+  > span {
   display: block;
   box-sizing: border-box;
   width: 3px !important;
@@ -399,6 +464,22 @@
   overflow: hidden;
   font-size: 0 !important;
   line-height: 0 !important;
+  margin: 0 !important;
+}
+
+/* 3뎁스: 불릿 아이콘 제거 (스크린샷 기준) */
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub .ant-menu-sub .ant-menu-item .ant-menu-item-icon,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title
+  .ant-menu-item-icon,
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub .ant-menu-sub .ant-menu-item-icon {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
   margin: 0 !important;
 }
 

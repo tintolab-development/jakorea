@@ -7,6 +7,7 @@
 
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import '@/features/program/ui/program-list.css'
 import type { User, UserRole } from '@/types/user'
 import { getRoleLabel } from '@/shared/ui'
 import { formatDate } from '@/shared/utils'
@@ -89,40 +90,43 @@ export function UserList({
   ]
 
   return (
-    <Table
-      className="user-list-table"
-      columns={columns}
-      dataSource={data}
-      loading={loading}
-      rowKey="id"
-      tableLayout="fixed"
-      onRow={
-        onView
-          ? record => ({
-              onClick: (e: React.MouseEvent<HTMLElement>) => {
-                if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-                onView(record)
-              },
-              style: { cursor: 'pointer' },
-            })
-          : undefined
-      }
-      rowSelection={
-        onSelectionChange
-          ? {
-              selectedRowKeys,
-              onChange: keys => onSelectionChange(keys as string[]),
-            }
-          : undefined
-      }
-      pagination={
-        pagination
-          ? {
-              ...PAGINATION_CONFIG,
-              showTotal: (total: number) => `총 ${total}명`,
-            }
-          : false
-      }
-    />
+    <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
+      <Table
+        className="user-list-table"
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        rowKey="id"
+        tableLayout="fixed"
+        scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
+        onRow={
+          onView
+            ? record => ({
+                onClick: (e: React.MouseEvent<HTMLElement>) => {
+                  if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                  onView(record)
+                },
+                style: { cursor: 'pointer' },
+              })
+            : undefined
+        }
+        rowSelection={
+          onSelectionChange
+            ? {
+                selectedRowKeys,
+                onChange: keys => onSelectionChange(keys as string[]),
+              }
+            : undefined
+        }
+        pagination={
+          pagination
+            ? {
+                ...PAGINATION_CONFIG,
+                showTotal: (total: number) => `총 ${total}명`,
+              }
+            : false
+        }
+      />
+    </div>
   )
 }

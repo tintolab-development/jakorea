@@ -240,7 +240,8 @@
 
   /* 사이드바 — 다크 틸 면 계층(기본 / 활성·펼침 행 / 서브 패널) */
   --color-sidebar-bg: #2a6374;
-  --color-sidebar-item-selected: rgba(0, 0, 0, 0.22);
+  --color-sidebar-item-selected: #1d4352;
+  --color-sidebar-item-selected-one: #345663;
   --color-sidebar-text: #ffffff;
   --color-sidebar-overlay-06: rgba(255, 255, 255, 0.06);
   --color-sidebar-overlay-08: rgba(255, 255, 255, 0.08);

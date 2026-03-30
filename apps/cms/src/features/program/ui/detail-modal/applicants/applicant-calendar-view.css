@@ -90,7 +90,8 @@
 
 .applicant-calendar-today-btn {
   display: flex;
-  width: 60px;
+  width: 60px !important;
+  min-width: 60px !important;
   height: 34px;
   padding: 0;
   flex-direction: column;
@@ -340,18 +341,14 @@
 }
 
 .applicant-calendar-cell:hover {
-  /* 배경 변경 없음 (텍스트 색상 등만 유지) */
+  background: #f5f6f7;
 }
 
 .applicant-calendar-cell--other-month {
   color: #bfbfbf;
 }
 
-.applicant-calendar-cell--selected {
-  /* 배경 변경 제거, 텍스트/강조 색상만 유지 */
-}
-
-.applicant-calendar-cell--today .applicant-calendar-cell-date-today {
+.applicant-calendar-cell-date-selected {
   display: inline-flex;
   width: 24px;
   height: 24px;
@@ -394,6 +391,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
   color: #595959;
   box-sizing: border-box;
 }
@@ -406,6 +404,7 @@
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
 }
 
 /* 외 n개의 일정 텍스트 스펙 */
@@ -424,14 +423,80 @@
   text-align: left;
 }
 
-.applicant-calendar-event-tooltip {
-  margin: 0;
+/* 날짜 셀 hover — 단일 툴팁, 화살표(삼각형) 미표시 */
+.applicant-calendar-tooltip-overlay .ant-tooltip-arrow {
+  display: none !important;
+}
+
+.applicant-calendar-tooltip-overlay .ant-tooltip-inner {
   padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* 툴팁 트리거: 셀 안에서 영역 전체를 호버 가능하게 */
+.applicant-calendar-cell-tooltip-trigger {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.applicant-calendar-week-cell-tooltip-trigger {
+  display: block;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.applicant-calendar-popover {
+  display: flex;
+  width: 350px;
+  max-width: min(350px, calc(100vw - 24px));
+  max-height: 250px;
+  padding: 11px 16px 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.applicant-calendar-popover__row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.applicant-calendar-popover__title {
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+.applicant-calendar-popover__text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.applicant-calendar-popover__sep {
+  color: #d4d4d4;
   font-size: 12px;
-  line-height: 1.5;
-  color: inherit;
-  white-space: pre-wrap;
-  font-family: inherit;
+  font-weight: 300;
+  line-height: 1;
+  user-select: none;
 }
 
 /* Week view */
@@ -490,14 +555,14 @@
 }
 
 .applicant-calendar-week-cell:hover {
-  background: #fcfcfc;
+  background: #f5f6f7;
 }
 
 .applicant-calendar-week-cell--selected {
   background: #e6f7ff;
 }
 
-.applicant-calendar-week-cell--today .applicant-calendar-week-cell-date {
+.applicant-calendar-week-cell-date--selected {
   background: var(--JA-mint-01, #01a1af);
   color: #fff;
   border-radius: 50%;
@@ -529,9 +594,15 @@
 }
 
 /* Right panel: schedule list */
+.applicant-calendar-right__school-filter {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
 .applicant-calendar-right .applicant-schedule-list {
   padding: 0;
-  height: 100%;
+  height: auto;
+  flex: 1 1 auto;
   overflow-y: auto;
   min-height: 0;
 }
@@ -557,13 +628,25 @@
   overflow-y: auto;
 }
 
+/* 신청 강사 캘린더: 기관·일자 집계 시 강사별 N줄 */
+.applicant-schedule-list__institution-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.applicant-schedule-list__institution-group .applicant-schedule-item {
+  margin-bottom: 0;
+}
+
 .applicant-schedule-item {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px 10px 16px;
-  border-radius: 6px;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 10px;
   margin-bottom: 10px;
   cursor: pointer;
   transition: all 0.2s;
@@ -597,16 +680,79 @@
   font-style: normal;
   font-weight: 700;
   line-height: 150%; /* 24px */
+}
+
+.applicant-schedule-item-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.applicant-schedule-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 4px;
+}
+
+.applicant-schedule-item-title-divider {
+  color: #d4d4d4;
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.applicant-schedule-item-session {
+  color: #8c8c8c;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.applicant-schedule-item-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.applicant-schedule-item-tag {
+  display: flex;
+  padding: 3px 8px 2px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--default-WT, #fff);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.applicant-schedule-item-tag--mint {
+  border-color: var(--JA-mint-01, #01a1af);
+  color: var(--JA-mint-01, #01a1af);
+  background: #fff;
 }
 
 .applicant-schedule-item-checkbox {
   flex-shrink: 0;
-  padding: 12px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  align-self: center;
+  border-radius: 10px;
+  transition: background-color 0.2s;
 }
 .applicant-schedule-item-checkbox:hover {
-  border-radius: 6px;
-  background: rgba(1, 161, 175, 0.06);
+  background: rgba(1, 161, 175, 0.14);
 }
 
 .applicant-schedule-item-checkbox .ant-checkbox-wrapper {
@@ -627,20 +773,6 @@
 
 .applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner::after {
   inset-block-start: 45%;
-}
-
-.applicant-schedule-item-detail {
-  font-size: 16px;
-  color: #8c8c8c;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.applicant-schedule-item-detail-divider {
-  color: #d9d9d9;
-  flex-shrink: 0;
-  margin: 0 0;
 }
 
 .applicant-schedule-item-checkbox {

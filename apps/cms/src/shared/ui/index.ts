@@ -42,6 +42,11 @@ export { ContentModal } from './content-modal'
 export type { ContentModalProps } from './content-modal'
 export { AppButton } from './app-button'
 export type { AppButtonProps, AppButtonVariant, AppButtonSize } from './app-button'
+export {
+  AppMultiSelect,
+  APP_MULTI_SELECT_TAG_COLORS,
+} from './app-multi-select'
+export type { AppMultiSelectProps, AppMultiSelectOption } from './app-multi-select'
 export { SegmentedTab } from './segmented-tab'
 export type { SegmentedTabOption } from './segmented-tab'
 export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'

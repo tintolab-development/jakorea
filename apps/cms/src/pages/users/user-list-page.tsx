@@ -12,7 +12,7 @@ import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useInView } from '@/shared/hooks/use-in-view'
 import { UserList } from '@/features/user/ui/user-list'
-import { UserDetailModal } from '@/features/user/ui/user-detail-modal'
+import { UserDetailFullPageModal } from '@/features/user/ui/user-detail-fullpage-modal'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
 import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
@@ -393,7 +393,7 @@ export function UserListPage() {
         </div>
       </Card>
 
-      <UserDetailModal
+      <UserDetailFullPageModal
         open={drawerOpen}
         user={drawerUser ?? selectedUser}
         onClose={handleDrawerClose}

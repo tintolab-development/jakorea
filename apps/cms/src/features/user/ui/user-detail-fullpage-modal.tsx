@@ -1,13 +1,17 @@
 /**
- * 회원 상세 Modal
- * 전체 회원 페이지: 행 클릭 시 팝업 모달로 노출 (Drawer 미사용)
- * 스펙: apps/cms/.cursor/rules/process/member-detail-modal-spec.md
+ * 회원 상세 풀페이지 모달
+ * 전체 회원 목록 행 클릭 시 프로그램 상세와 동일한 LNB+메인 레이아웃으로 노출
  */
 
-import { useState, useEffect, useCallback } from 'react'
-import { Tabs, Table, Empty, Dropdown, Tag } from 'antd'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Table, Empty, Dropdown, Tag, message } from 'antd'
 import type { MenuProps } from 'antd'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { BulbOutlined, FolderOpenOutlined } from '@ant-design/icons'
+import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import {
+  DetailModalSidebar,
+  type DetailModalSidebarNavItem,
+} from '@/shared/ui/detail-modal-sidebar'
 import { AppButton } from '@/shared/ui/app-button'
 import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
 import type { ColumnsType } from 'antd/es/table'
@@ -31,8 +35,11 @@ import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
 import { EnrollmentProgramDetailModal } from './enrollment-program-detail-modal'
 import './user-detail-modal.css'
+import './user-detail-fullpage-modal.css'
 
-export interface UserDetailModalProps {
+export type UserDetailLnbKey = 'basic' | 'programs'
+
+export interface UserDetailFullPageModalProps {
   open: boolean
   user: Omit<User, 'password'> | null
   onClose: () => void
@@ -40,9 +47,16 @@ export interface UserDetailModalProps {
   onWithdraw?: (user: Omit<User, 'password'>) => void
 }
 
-export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: UserDetailModalProps) {
+export function UserDetailFullPageModal({
+  open,
+  user,
+  onClose,
+  onEdit,
+  onWithdraw,
+}: UserDetailFullPageModalProps) {
   const displayUser = user
 
+  const [activeLnb, setActiveLnb] = useState<UserDetailLnbKey>('basic')
   const [applications, setApplications] = useState<Application[]>([])
   const [applicationsLoading, setApplicationsLoading] = useState(false)
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
@@ -100,6 +114,10 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
     }
   }, [open, displayUser])
 
+  useEffect(() => {
+    if (open && displayUser) setActiveLnb('basic')
+  }, [open, displayUser?.id])
+
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {
       if (!displayUser) return
@@ -135,6 +153,25 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
     [displayUser]
   )
 
+  const userSidebarItems = useMemo<DetailModalSidebarNavItem[]>(
+    () => [
+      {
+        key: 'basic',
+        label: '회원 상세 정보',
+        icon: <BulbOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
+      },
+      {
+        key: 'programs',
+        label: '프로그램 참여 이력',
+        icon: <FolderOpenOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
+      },
+    ],
+    []
+  )
+
+  if (!open) {
+    return null
+  }
   if (!displayUser) {
     return null
   }
@@ -293,36 +330,7 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
   ]
 
   const basicInfoContent = (
-    <div className="user-detail-modal__basic-tab-content">
-      {(onEdit || onWithdraw) && (
-        <div className="user-detail-modal__actions-row">
-          <span className="user-detail-modal__permission-msg">
-            회원 본인 및 관리자만 작성/수정이 가능합니다.
-          </span>
-          <div className="user-detail-modal__actions-buttons">
-            {onWithdraw && (
-              <AppButton
-                variant="default"
-                size="middle"
-                onClick={() => setWithdrawConfirmOpen(true)}
-                className="user-detail-modal__btn-withdraw"
-              >
-                탈퇴
-              </AppButton>
-            )}
-            {onEdit && (
-              <AppButton
-                variant="default"
-                size="middle"
-                onClick={() => onEdit(displayUser)}
-                className="user-detail-modal__btn-edit"
-              >
-                수정
-              </AppButton>
-            )}
-          </div>
-        </div>
-      )}
+    <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
       <div className="user-detail-modal__basic-inner">
         <div className="user-detail-modal__profile-wrap">
           <div className="user-detail-modal__profile-placeholder">
@@ -443,16 +451,12 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
     </div>
   )
 
-  const tabItems = [
-    {
-      key: 'basic',
-      label: '기본 정보',
-      children: basicInfoContent,
-    },
-    {
-      key: 'programs',
-      label: `프로그램 수강 이력 (${applications.length})`,
-      children: (
+  const programsHistoryContent = (
+    <div className="user-detail-fullpage-modal__programs">
+      <section className="user-detail-fullpage-modal__program-section">
+        <h3 className="user-detail-fullpage-modal__section-title">
+          프로그램 수강 이력 ({applications.length})
+        </h3>
         <div className="user-detail-modal__program-tab">
           {applicationsLoading ? (
             <div className="user-detail-modal__loading">로딩 중...</div>
@@ -467,7 +471,7 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
                 dataSource={applications}
                 rowKey="id"
                 pagination={false}
-                scroll={{ y: 360 }}
+                scroll={{ y: 'calc(100vh - 480px)' }}
                 size="small"
                 onRow={record => ({
                   onClick: e => {
@@ -491,12 +495,11 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
             </div>
           )}
         </div>
-      ),
-    },
-    {
-      key: 'volunteer',
-      label: `봉사 프로그램 참여 이력 (${volunteerHistories.length})`,
-      children: (
+      </section>
+      <section className="user-detail-fullpage-modal__program-section">
+        <h3 className="user-detail-fullpage-modal__section-title">
+          봉사 프로그램 참여 이력 ({volunteerHistories.length})
+        </h3>
         <div>
           {volunteerHistoriesLoading ? (
             <div className="user-detail-modal__loading">로딩 중...</div>
@@ -512,9 +515,9 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
             <Empty description="참여 이력이 없습니다." />
           )}
         </div>
-      ),
-    },
-  ]
+      </section>
+    </div>
+  )
 
   const handleWithdrawConfirm = () => {
     if (displayUser && onWithdraw) {
@@ -526,23 +529,56 @@ export function UserDetailModal({ open, user, onClose, onEdit, onWithdraw }: Use
 
   return (
     <>
-      <TealHeaderModal
+      <DetailFullPageModal
         open={open}
-        onCancel={onClose}
-        title="회원 상세 정보"
-        size="large"
-        width={1400}
-        className="teal-header-modal--user-detail"
-        footer={
-          <AppButton variant="cancel" size="large" onClick={onClose}>
-            닫기
-          </AppButton>
+        onClose={onClose}
+        title={`회원 상세_${displayUser.name}`}
+        className="user-detail-fullpage-modal"
+        sidebar={
+          <DetailModalSidebar
+            navAriaLabel="회원 상세 메뉴"
+            items={userSidebarItems}
+            activeKey={activeLnb}
+            activeChildKey=""
+            expandedGroupKeys={[]}
+            onSelectTop={key => setActiveLnb(key as UserDetailLnbKey)}
+            onSelectChild={() => {}}
+          />
+        }
+        headerExtra={
+          <div className="user-detail-fullpage-modal__header-actions">
+            {onWithdraw && (
+              <AppButton
+                variant="default"
+                size="middle"
+                onClick={() => setWithdrawConfirmOpen(true)}
+                className="user-detail-modal__btn-withdraw"
+              >
+                회원 탈퇴
+              </AppButton>
+            )}
+            {onEdit && (
+              <AppButton
+                variant="default"
+                size="middle"
+                onClick={() => onEdit(displayUser)}
+                className="user-detail-modal__btn-edit"
+              >
+                정보 수정
+              </AppButton>
+            )}
+            <AppButton
+              variant="primary"
+              size="middle"
+              onClick={() => message.info('개인정보 상세보기는 추후 연결됩니다.')}
+            >
+              개인정보 상세보기
+            </AppButton>
+          </div>
         }
       >
-        <div className="user-detail-modal__body">
-          <Tabs defaultActiveKey="basic" items={tabItems} />
-        </div>
-      </TealHeaderModal>
+        {activeLnb === 'basic' ? basicInfoContent : programsHistoryContent}
+      </DetailFullPageModal>
 
       {withdrawConfirmOpen && (
         <DeleteGuideModal

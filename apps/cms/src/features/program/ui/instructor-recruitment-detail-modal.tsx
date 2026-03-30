@@ -175,7 +175,7 @@ export function InstructorRecruitmentDetailModal({
     <TealHeaderModal
       open={open}
       onCancel={onCancel}
-      title="강의 신청 강사 목록"
+      title="교육 신청 강사 목록"
       size="large"
       width={1400}
       className="teal-header-modal--instructor-recruitment-detail"
@@ -362,7 +362,7 @@ export function InstructorRecruitmentDetailModal({
         <section className="instructor-recruitment-detail-modal__section instructor-recruitment-detail-modal__section--table">
           <div className="instructor-recruitment-detail-modal__table-header">
             <span className="instructor-recruitment-detail-modal__table-title">
-              강의 신청 강사 목록
+              교육 신청 강사 목록
             </span>
             <span className="instructor-recruitment-detail-modal__table-description">
               총 {instructorList.length}건

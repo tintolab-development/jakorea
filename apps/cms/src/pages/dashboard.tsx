@@ -96,7 +96,7 @@ export function Dashboard() {
     })
 
   const handleInstructorCardClick = useCallback(() => {
-    navigate('/instructors')
+    navigate('/users/list?kind=instructors')
   }, [navigate])
 
   const widgetRendererProps = useMemo(

@@ -12,6 +12,8 @@ import type { Dayjs } from 'dayjs'
 import { LAYOUT_CONSTANTS } from '@/shared/constants/layout'
 import { LabeledSearchInput } from './labeled-search-input'
 import { AppButton } from './app-button'
+import { AppMultiSelect } from './app-multi-select'
+import type { AppMultiSelectOption } from './app-multi-select'
 import './unified-filter-card.css'
 
 const { RangePicker } = DatePicker
@@ -20,13 +22,15 @@ export interface FilterFieldConfig {
   /** 필터 키 */
   key: string
   /** 필터 타입 */
-  type: 'search' | 'select' | 'dateRange'
+  type: 'search' | 'select' | 'dateRange' | 'multiSelect'
   /** 레이블 텍스트 */
   label: string
   /** placeholder 텍스트 */
   placeholder?: string
   /** Select 옵션 (type이 'select'일 때) */
   options?: Array<{ label: string; value: string | number }>
+  /** 다중 선택 옵션 (type이 'multiSelect'일 때). value는 문자열 */
+  multiSelectOptions?: AppMultiSelectOption[]
   /** 기본값 */
   defaultValue?: string | number | [Dayjs, Dayjs] | null
   /** allowClear 옵션 */
@@ -137,6 +141,27 @@ export function UnifiedFilterCard({
               value={filters[field.key]}
               onChange={dates => onFilterChange(field.key, dates)}
               allowClear={field.allowClear !== false}
+            />
+          </div>
+        </Col>
+      )
+    }
+
+    if (field.type === 'multiSelect') {
+      const raw = filters[field.key]
+      const arr = Array.isArray(raw) ? (raw as string[]) : []
+      return (
+        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
+          <div className="unified-filter-card__field">
+            <span className="unified-filter-card__label">{field.label}</span>
+            <AppMultiSelect
+              className="unified-filter-card__multi-select"
+              placeholder={field.placeholder || '선택하세요'}
+              value={arr}
+              onChange={next => onFilterChange(field.key, next)}
+              options={field.multiSelectOptions ?? []}
+              allowClear={field.allowClear !== false}
+              style={{ width: '100%', ...field.style }}
             />
           </div>
         </Col>

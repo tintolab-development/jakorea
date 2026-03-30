@@ -13,7 +13,7 @@ export interface ApplicantInstructorPreferredSchool {
   assignable: boolean
   /** 희망 학년 (예: 5학년) */
   grade?: string
-  /** 희망 진행 일자 (예: 2026.01.09 (금) ~ 2026.01.30 (금)) */
+  /** 희망 진행 일자 (예: 2026.04.09 (목) ~ 2026.04.30 (목)) */
   dateRange?: string
 }
 
@@ -235,28 +235,28 @@ const PREFERRED_SCHOOL_OPTIONS = [
     schoolName: '강서초등학교',
     rank: 1,
     grade: '5학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
   {
     schoolId: 'school-2',
     schoolName: '우장초등학교',
     rank: 2,
     grade: '3학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
   {
     schoolId: 'school-3',
     schoolName: '마포초등학교',
     rank: 3,
     grade: '6학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
   {
     schoolId: 'school-4',
     schoolName: '서이초등학교',
     rank: 4,
     grade: '5학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
 ]
 

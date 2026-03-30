@@ -1,0 +1,38 @@
+/**
+ * 회원 상세 풀페이지 — 본문·헤더 액션 보조 스타일 (테이블 등은 user-detail-modal.css)
+ */
+
+.user-detail-fullpage-modal .detail-fullpage-modal__content {
+  padding: 0 52px 32px;
+}
+
+.user-detail-fullpage-modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: min(720px, 55vw);
+}
+
+.user-detail-fullpage-modal__basic {
+  padding-top: var(--spacing-8, 8px);
+}
+
+.user-detail-fullpage-modal__programs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-32, 32px);
+  padding-top: var(--spacing-8, 8px);
+}
+
+.user-detail-fullpage-modal__program-section {
+  min-width: 0;
+}
+
+.user-detail-fullpage-modal__section-title {
+  margin: 0 0 var(--spacing-12, 12px);
+  font-size: var(--font-size-18, 18px);
+  font-weight: var(--font-weight-600, 600);
+  color: var(--color-text-label, #3d3d3d);
+}

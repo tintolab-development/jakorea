@@ -7,8 +7,11 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography, message } from 'antd'
-import { CloseOutlined } from '@ant-design/icons'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import {
+  DetailModalSidebar,
+  type DetailModalSidebarNavItem,
+} from '@/shared/ui/detail-modal-sidebar'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
@@ -28,7 +31,13 @@ import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
-import { DetailModalSidebar, TAB_KEYS, type TabKey, type LnbKey } from './detail-modal-sidebar'
+import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
+import {
+  LnbIconApplicants,
+  LnbIconManagers,
+  LnbIconProgress,
+  LnbIconProjectInfo,
+} from './program-detail-lnb-icons'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import './program-detail-fullpage-modal.css'
 
@@ -112,10 +121,8 @@ export function ProgramDetailFullPageModal({
   const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
   const editTab = open ? parseEditTabFromSearch(searchParams) : null
   const activeLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
-  const applicantsExpanded = activeLnb === 'applicants'
   const activeChildMenu: TabKey | '' =
     activeLnb === 'applicants' ? parseApplicantsChildTabFromSearch(searchParams) : ''
-  const progressExpanded = activeLnb === 'progress'
   const progressTab = parseTabFromSearch(searchParams)
   const activeProgressChild: TabKey | '' =
     activeLnb === 'progress' && ['institutions', 'instructors', 'volunteers'].includes(progressTab)
@@ -269,6 +276,66 @@ export function ProgramDetailFullPageModal({
     next.delete(INSTRUCTOR_ID_PARAM)
     next.delete(INSTRUCTOR_TAB_PARAM)
     setSearchParams(next, { replace: true })
+  }
+
+  const programSidebarItems = useMemo<DetailModalSidebarNavItem[]>(
+    () => [
+      { key: 'info', label: '프로젝트 정보', icon: <LnbIconProjectInfo /> },
+      {
+        key: 'applicants',
+        label: '신청자 목록',
+        icon: <LnbIconApplicants />,
+        children: [
+          { key: 'institutions', label: '신청 기관' },
+          { key: 'instructors', label: '신청 강사' },
+          { key: 'volunteers', label: '신청 봉사자' },
+        ],
+      },
+      {
+        key: 'progress',
+        label: '프로그램 진행 현황',
+        icon: <LnbIconProgress />,
+        children: [
+          { key: 'institutions', label: '참여 기관' },
+          { key: 'instructors', label: '참여 강사' },
+          { key: 'volunteers', label: '참여 봉사자' },
+        ],
+      },
+      { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
+    ],
+    []
+  )
+
+  const sidebarExpandedGroups = useMemo(
+    () =>
+      activeLnb === 'applicants'
+        ? (['applicants'] as const)
+        : activeLnb === 'progress'
+          ? (['progress'] as const)
+          : ([] as const),
+    [activeLnb]
+  )
+
+  const sidebarActiveChildKey =
+    activeLnb === 'applicants' ? activeChildMenu : activeLnb === 'progress' ? activeProgressChild : ''
+
+  const handleSidebarSelectTop = (key: string) => {
+    const k = key as LnbKey
+    if (k === 'applicants') {
+      setLnb('applicants')
+    } else if (k === 'progress') {
+      setLnb(
+        'progress',
+        activeLnb === 'progress' ? activeProgressChild || 'institutions' : 'institutions'
+      )
+    } else {
+      setLnb(k)
+    }
+  }
+
+  const handleSidebarSelectChild = (groupKey: string, childKey: string) => {
+    if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
+    else if (groupKey === 'progress') setProgressChild(childKey as TabKey)
   }
 
   const setSchoolId = (id: string | null) => {
@@ -547,47 +614,32 @@ export function ProgramDetailFullPageModal({
   if (!open) return null
 
   return (
-    <TealHeaderModal
+    <DetailFullPageModal
       open={open}
-      onCancel={onClose}
-      title=""
-      size="full"
-      hideHeader
+      onClose={onClose}
+      onHeaderClose={handleHeaderCloseClick}
+      title={title}
       className="program-detail-fullpage-modal"
-    >
-      <div className="program-detail-fullpage-modal__layout">
+      closeAriaLabel={
+        schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : '닫기'
+      }
+      sidebar={
         <DetailModalSidebar
-          activeLnb={activeLnb}
-          onSelectLnb={setLnb}
-          applicantsExpanded={applicantsExpanded}
-          onSelectApplicantsChild={setApplicantsChild}
-          activeChildMenu={activeChildMenu}
-          progressExpanded={progressExpanded}
-          onSelectProgressChild={setProgressChild}
-          activeProgressChild={activeProgressChild}
+          navAriaLabel="프로그램 상세 메뉴"
+          items={programSidebarItems}
+          activeKey={activeLnb}
+          activeChildKey={sidebarActiveChildKey}
+          expandedGroupKeys={sidebarExpandedGroups}
+          onSelectTop={handleSidebarSelectTop}
+          onSelectChild={handleSidebarSelectChild}
         />
-
-        <div className="program-detail-fullpage-modal__main">
-          <header className="program-detail-fullpage-modal__header">
-            <h2 className="program-detail-fullpage-modal__title">{title}</h2>
-            <button
-              type="button"
-              className="program-detail-fullpage-modal__close"
-              onClick={handleHeaderCloseClick}
-              aria-label={
-                schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : '닫기'
-              }
-            >
-              <CloseOutlined />
-            </button>
-          </header>
-
-          <div className="program-detail-fullpage-modal__content">
-            {loading && !displayProgram ? (
-              <div className="program-detail-fullpage-modal__loading">
-                <Spin size="large" />
-              </div>
-            ) : displayProgram ? (
+      }
+    >
+      {loading && !displayProgram ? (
+        <div className="detail-fullpage-modal__loading">
+          <Spin size="large" />
+        </div>
+      ) : displayProgram ? (
               <>
                 {activeLnb === 'info' && (
                   <ProjectInfoDetailPanels
@@ -678,9 +730,6 @@ export function ProgramDetailFullPageModal({
             ) : (
               <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
             )}
-          </div>
-        </div>
-      </div>
-    </TealHeaderModal>
+    </DetailFullPageModal>
   )
 }

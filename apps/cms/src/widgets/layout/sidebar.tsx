@@ -5,6 +5,11 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
+import {
+  isMemberListKind,
+  memberListHref,
+  DEFAULT_MEMBER_LIST_KIND,
+} from '@/shared/config/member-list-kinds'
 import './sidebar.css'
 import { Header } from './header'
 
@@ -45,15 +50,22 @@ export function Sidebar() {
 
     if (
       user?.role === 'ADMIN' &&
-      (path.startsWith('/users') ||
+      (path.startsWith('/users/list') ||
+        path.startsWith('/users/participants') ||
         path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members') ||
         path.startsWith('/admin/settings/permissions'))
     ) {
       keys.push('members-group')
-      if (path.startsWith('/admin/members') || path.startsWith('/admin/settings/permissions')) {
-        keys.push('admin-group')
+      // 회원 목록(2뎁스) 아래 3뎁스 — `member-list-group` 없으면 네비 후 서브메뉴가 닫힘
+      if (
+        path.startsWith('/users/list') ||
+        path.startsWith('/schools') ||
+        path.startsWith('/instructors') ||
+        path.startsWith('/admin/members')
+      ) {
+        keys.push('member-list-group')
       }
     }
 
@@ -77,6 +89,22 @@ export function Sidebar() {
   const selectedKeys = useMemo(() => {
     const path = location.pathname
 
+    if (user?.role === 'ADMIN' && path === '/users/list') {
+      const raw = (
+        new URLSearchParams(location.search).get('kind') || DEFAULT_MEMBER_LIST_KIND
+      ).toLowerCase()
+      const kind = isMemberListKind(raw) ? raw : DEFAULT_MEMBER_LIST_KIND
+      return [memberListHref(kind)]
+    }
+
+    if (user?.role === 'ADMIN' && path.startsWith('/schools')) {
+      return [memberListHref('institutions')]
+    }
+
+    if (user?.role === 'ADMIN' && path.startsWith('/instructors')) {
+      return [memberListHref('instructors')]
+    }
+
     // ADMIN: 프로그램 상세·수정 URL에서도 일반 교육 프로그램 메뉴 하이라이트
     const programsReserved = [
       'my',
@@ -97,7 +125,7 @@ export function Sidebar() {
     }
 
     return [path]
-  }, [location.pathname, user?.role])
+  }, [location.pathname, location.search, user?.role])
 
   const sidebarWidth = 'var(--sidebar-width)'
   const sidebarChrome: CSSProperties = {
