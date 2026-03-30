@@ -14,6 +14,7 @@ import {
 } from '@/shared/ui/detail-modal-sidebar'
 import { AppButton } from '@/shared/ui/app-button'
 import {
+  getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
   getMockPaymentOrderInstructorDetail,
   PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
   PAYMENT_ORDER_ADMIN_STATUS_LABELS,
@@ -21,6 +22,7 @@ import {
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminLineProcessingStatus,
   type PaymentOrderAdminProcessingStatus,
+  type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
@@ -32,6 +34,7 @@ import '@/features/program/ui/participating-institutions-section.css'
 import '@/features/program/ui/program-progress-tab.css'
 import '@/features/program/ui/detail-modal/applicants/applicant-instructor-basic-info.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
+import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
 import './payment-order-instructor-status-detail-fullpage-modal.css'
 
 const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -178,6 +181,9 @@ export function PaymentOrderInstructorStatusDetailFullPageModal({
     PaymentOrderAdminInstructorDetailProgramRow[]
   >([])
   const [openStatusRowId, setOpenStatusRowId] = useState<string | null>(null)
+  const [calcStatementOpen, setCalcStatementOpen] = useState(false)
+  const [calcStatementData, setCalcStatementData] =
+    useState<PaymentOrderProgramCalculationStatement | null>(null)
 
   const detail = useMemo(
     () => (instructorRow ? getMockPaymentOrderInstructorDetail(instructorRow) : null),
@@ -200,8 +206,21 @@ export function PaymentOrderInstructorStatusDetailFullPageModal({
       setSelectedRowKeys([])
       setProgramRowsState(d.programRows.map(r => ({ ...r })))
       setOpenStatusRowId(null)
+      setCalcStatementOpen(false)
+      setCalcStatementData(null)
     }
   }, [open, instructorRow?.no])
+
+  const openCalculationStatement = useCallback(
+    (row: PaymentOrderAdminInstructorDetailProgramRow) => {
+      if (!detail || !instructorRow) return
+      setCalcStatementData(
+        getMockPaymentOrderCalculationStatementFromInstructorDetailPage(instructorRow, detail, row)
+      )
+      setCalcStatementOpen(true)
+    },
+    [detail, instructorRow]
+  )
 
   const handleSearch = useCallback(() => {
     setApplied({
@@ -304,14 +323,14 @@ export function PaymentOrderInstructorStatusDetailFullPageModal({
         key: 'breakdown',
         width: 196,
         align: 'center',
-        render: () => (
+        render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (
           <AppButton
             variant="default"
             size="small"
             className="payment-order-program-status-detail__detail-btn"
             onClick={e => {
               e.stopPropagation()
-              message.info('산출 내역 상세는 추후 연결됩니다.')
+              openCalculationStatement(row)
             }}
           >
             상세 보기
@@ -319,7 +338,7 @@ export function PaymentOrderInstructorStatusDetailFullPageModal({
         ),
       },
     ],
-    [openStatusRowId]
+    [openCalculationStatement, openStatusRowId]
   )
 
   if (!open || !instructorRow || !detail) {
@@ -338,9 +357,22 @@ export function PaymentOrderInstructorStatusDetailFullPageModal({
       : maskedAccountLeft || maskedHolder || '-'
 
   return (
-    <DetailFullPageModal
+    <>
+      <PaymentOrderProgramCalculationStatementModal
+        open={calcStatementOpen}
+        onCancel={() => {
+          setCalcStatementOpen(false)
+          setCalcStatementData(null)
+        }}
+        data={calcStatementData}
+      />
+      <DetailFullPageModal
       open={open}
-      onClose={onClose}
+      onClose={() => {
+        setCalcStatementOpen(false)
+        setCalcStatementData(null)
+        onClose()
+      }}
       title={`지급 현황 상세_${detail.nameKo}`}
       className="payment-order-instructor-status-detail-fullpage-modal"
       sidebar={
@@ -582,5 +614,6 @@ export function PaymentOrderInstructorStatusDetailFullPageModal({
         </div>
       </div>
     </DetailFullPageModal>
+    </>
   )
 }

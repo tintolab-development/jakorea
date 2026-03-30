@@ -29,6 +29,8 @@ export interface TealHeaderModalProps {
   hideHeader?: boolean
   /** 닫기 버튼 커스텀 아이콘 (미지정 시 CloseOutlined) */
   closeIcon?: React.ReactNode
+  /** 다른 모달 위에 겹칠 때 스택 순서 (예: 산출 내역서 위 확인 모달) */
+  zIndex?: number
 }
 
 const SIZE_WIDTH = { default: 800, large: 1400, full: undefined }
@@ -45,6 +47,7 @@ export function TealHeaderModal({
   className: classNameProp,
   hideHeader = false,
   closeIcon,
+  zIndex,
 }: TealHeaderModalProps) {
   const width = widthProp ?? SIZE_WIDTH[size]
   const bodyScrollable = size === 'large' || size === 'full'
@@ -72,6 +75,7 @@ export function TealHeaderModal({
       destroyOnClose
       maskClosable
       centered={!isFull}
+      zIndex={zIndex}
     >
       {!hideHeader && (
         <div className="teal-header-modal__header">

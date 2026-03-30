@@ -3,6 +3,8 @@
  * (화면 전용; domain PaymentStatement와 별개)
  */
 
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
+
 export type PaymentOrderAdminProcessingStatus =
   | 'pending'
   | 'confirmed'
@@ -92,6 +94,86 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
 }
+
+/** 산출 내역서 모달 — 산정 행 구분(합계 수식·표시용) */
+export type PaymentOrderCalculationLineKind =
+  | 'lecture_fee'
+  | 'travel'
+  | 'lodging'
+  | 'withholding'
+
+/** 산출 내역서 모달 — 기본 정보(프로그램 맥락 4열 `program-detail-info-tab`) */
+export interface PaymentOrderCalculationStatementProgramBasicInfo {
+  programName: string
+  /** 확인 모달 본문 등에 쓰는 강사명 */
+  instructorNameKo: string
+  /** 사업 운영 기간 한 줄 (예: `2025. 12. 08(월) ~ 2026. 12. 30(수)`) */
+  businessPeriodDisplay: string
+  /** 프로그램 진행 회차 (예: `4 / 16`) */
+  programSessionProgressDisplay: string
+  /** 해당 강사 라인의 지급조서 처리 현황 문구 */
+  processingStatusDisplay: string
+  processingStatusClass: PaymentOrderAdminLineProcessingStatus
+  /** 지급 반려 시 「사유 : …」에 표시할 본문 */
+  processingRejectionReason?: string
+  lectureFeeStandardTitle: string
+  lectureFeeStandardAmount: string
+  businessIncomeEarnerLabel: string
+}
+
+/** 산출 내역서 모달 — 기본 정보(강사 맥락 `applicant-instructor-basic-info` 5열·2블록) */
+export interface PaymentOrderCalculationStatementInstructorBasicInfo {
+  nameKo: string
+  nameEn: string
+  phoneDisplay: string
+  emailDisplay: string
+  addressDisplay: string
+  addressBlurredTail?: string
+  settlementAccountBankNumberPart: string
+  settlementAccountHolderPart: string
+  processingStatusDisplay: string
+  processingStatusClass: PaymentOrderAdminLineProcessingStatus
+  processingRejectionReason?: string
+  lectureFeeStandardTitle: string
+  lectureFeeStandardAmount: string
+  businessIncomeEarnerLabel: string
+}
+
+export interface PaymentOrderCalculationStatementLine {
+  id: string
+  itemLabel: string
+  description: string
+  /** 양수: 가산, 음수: 차감 */
+  amount: number
+  kind: PaymentOrderCalculationLineKind
+  /** 시안 마스킹 등 — 있으면 정산 금액 열에 이 문자열을 표시 */
+  amountDisplayOverride?: string
+}
+
+export interface PaymentOrderCalculationStatementSessionBlock {
+  institutionName: string
+  /** 강의 진행 일자 — 날짜(요일) 구간 (테이블에서 디바이더로 회차와 구분) */
+  lectureDateDisplay: string
+  /** 예: 2 ~ 3차시 */
+  lectureSessionDisplay: string
+  lines: PaymentOrderCalculationStatementLine[]
+}
+
+export type PaymentOrderProgramCalculationStatement =
+  | {
+      context: 'program'
+      basic: PaymentOrderCalculationStatementProgramBasicInfo
+      blocks: PaymentOrderCalculationStatementSessionBlock[]
+      formulaLabel: string
+      totalAmount: number
+    }
+  | {
+      context: 'instructor'
+      basic: PaymentOrderCalculationStatementInstructorBasicInfo
+      blocks: PaymentOrderCalculationStatementSessionBlock[]
+      formulaLabel: string
+      totalAmount: number
+    }
 
 /** 강사 집계 행 기준 상세(기본 정보 + 프로그램별 정산 목록) mock 원본 */
 export interface PaymentOrderAdminInstructorDetail {
@@ -364,4 +446,381 @@ export function getMockPaymentOrderInstructorDetail(
     totalEstimatedAmount: instructorRow.estimatedAmount,
     programRows,
   }
+}
+
+const KO_DOW_CALC = ['일', '월', '화', '수', '목', '금', '토'] as const
+
+function formatIsoToKoreanWeekday(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  const dow = KO_DOW_CALC[date.getDay()]
+  return `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}(${dow})`
+}
+
+function splitAddressAfterDongForStatement(address: string): { head: string; tail: string } | null {
+  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
+  const m = address.match(re)
+  if (!m) return null
+  const dong = m[1]
+  const i = address.indexOf(dong)
+  if (i === -1) return null
+  const end = i + dong.length
+  const tail = address.slice(end).trimStart()
+  if (!tail) return null
+  return { head: address.slice(0, end), tail }
+}
+
+function addressDisplayForStatementBlur(address: string): {
+  addressDisplay: string
+  addressBlurredTail?: string
+} {
+  const split = splitAddressAfterDongForStatement(address)
+  if (split) {
+    return { addressDisplay: split.head, addressBlurredTail: split.tail }
+  }
+  const headLen = Math.min(14, address.length)
+  const head = address.slice(0, headLen)
+  const tail = address.slice(headLen).trimStart()
+  if (!tail) {
+    return { addressDisplay: head }
+  }
+  return { addressDisplay: head, addressBlurredTail: tail }
+}
+
+function lineStatusToCalculationDisplay(
+  status: PaymentOrderAdminLineProcessingStatus
+): string {
+  if (status === 'pending') return '확인 대기 중'
+  /** 산출 내역서 시안: 반려 문구는 「지급 반려」 */
+  if (status === 'rejected') return '지급 반려'
+  return PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[status]
+}
+
+/** 프로그램 지급 현황 상세 풀페이지 기본정보와 동일한 사업 기간 표기 */
+function formatPaymentOrderBusinessPeriodLabel(startIso: string, endIso: string): string {
+  return `${formatIsoToKoreanWeekday(startIso)} ~ ${formatIsoToKoreanWeekday(endIso)}`
+}
+
+/**
+ * 프로그램 지급 현황 상세 — 강사 행 기준 산출 내역서(산출 내역서 ContentModal) mock
+ */
+export function getMockPaymentOrderProgramCalculationStatement(
+  programRow: PaymentOrderAdminProgramRow,
+  instructorLineRow: PaymentOrderAdminProgramDetailInstructorRow,
+  programName: string
+): PaymentOrderProgramCalculationStatement {
+  const n = programRow.no
+  const seed =
+    mixSeed(n, instructorLineRow.no * 31) +
+    mixSeed(instructorLineRow.sessionOrdinal, instructorLineRow.institutionName.length + 17)
+
+  const programDetail = getMockPaymentOrderProgramDetail(programRow)
+  const businessPeriodDisplay = formatPaymentOrderBusinessPeriodLabel(
+    programDetail.businessPeriodStart,
+    programDetail.businessPeriodEnd
+  )
+  const programSessionProgressDisplay = `${programDetail.sessionCompleted} / ${programDetail.sessionTotal}`
+
+  const isSpecialLecture = seed % 3 !== 0
+  const lectureFee = instructorLineRow.estimatedAmount > 0 ? instructorLineRow.estimatedAmount : 915000
+  const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
+  const lectureFeeStandardTitle = isSpecialLecture
+    ? '특강 강의비'
+    : '프로그램 1회 강의비 (3급 강사)'
+
+  const sessionStart = Math.max(1, instructorLineRow.sessionOrdinal)
+  const sessionEnd = sessionStart + 1 + (seed % 2)
+  const lectureDateDisplay = formatIsoToKoreanWeekday(instructorLineRow.lectureDate)
+  const lectureSessionDisplay = `${sessionStart} ~ ${sessionEnd}차시`
+
+  const includeTravel = seed % 5 !== 0
+  const includeLodging = seed % 7 !== 0
+
+  const travelAmount = 31500
+  const lodgingAmount = 80000
+  const travelDesc = '대전 중구 -> 서울 강서구 이동 (146.8km)'
+
+  const subtotalBeforeTax = lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
+  const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
+
+  const lines: PaymentOrderCalculationStatementLine[] = [
+    {
+      id: `calc-line-${instructorLineRow.id}-lecture`,
+      itemLabel: '강의비',
+      description: isSpecialLecture
+        ? '프로그램 1회 강의비 (특강 강사)'
+        : '프로그램 1회 강의비 (3급 강사)',
+      amount: lectureFee,
+      kind: 'lecture_fee',
+    },
+  ]
+
+  if (includeTravel) {
+    lines.push({
+      id: `calc-line-${instructorLineRow.id}-travel`,
+      itemLabel: '교통비',
+      description: travelDesc,
+      amount: travelAmount,
+      kind: 'travel',
+    })
+  }
+
+  if (includeLodging) {
+    lines.push({
+      id: `calc-line-${instructorLineRow.id}-lodging`,
+      itemLabel: '숙박비',
+      description: '8만원 고정 지급',
+      amount: lodgingAmount,
+      kind: 'lodging',
+    })
+  }
+
+  lines.push({
+    id: `calc-line-${instructorLineRow.id}-tax`,
+    itemLabel: '원천징수',
+    description: '원천징수 8.8%',
+    amount: withholdingAmount,
+    kind: 'withholding',
+    amountDisplayOverride: '-NN,NNN원',
+  })
+
+  const formulaParts: string[] = ['강의비']
+  if (includeTravel) formulaParts.push('교통비')
+  if (includeLodging) formulaParts.push('숙박비')
+  formulaParts.push('원천징수')
+  const formulaLabel =
+    formulaParts.length === 2
+      ? `${formulaParts[0]} - ${formulaParts[1]}`
+      : `${formulaParts.slice(0, -1).join(' + ')} - ${formulaParts[formulaParts.length - 1]}`
+
+  const totalAmount = lines.reduce((s, l) => s + l.amount, 0)
+
+  const block: PaymentOrderCalculationStatementSessionBlock = {
+    institutionName: instructorLineRow.institutionName,
+    lectureDateDisplay,
+    lectureSessionDisplay,
+    lines,
+  }
+
+  return {
+    context: 'program',
+    basic: {
+      programName,
+      instructorNameKo: instructorLineRow.instructorName,
+      businessPeriodDisplay,
+      programSessionProgressDisplay,
+      processingStatusDisplay: lineStatusToCalculationDisplay(instructorLineRow.processingStatus),
+      processingStatusClass: instructorLineRow.processingStatus,
+      processingRejectionReason:
+        instructorLineRow.processingStatus === 'rejected'
+          ? seed % 2 === 0
+            ? '인원 초과'
+            : '기준 미달'
+          : undefined,
+      lectureFeeStandardTitle,
+      lectureFeeStandardAmount: lectureFeeAmountLabel,
+      businessIncomeEarnerLabel: '해당 없음',
+    },
+    blocks: [block],
+    formulaLabel,
+    totalAmount,
+  }
+}
+
+/**
+ * 강사 지급 현황 상세 — 프로그램 정산 행 기준 산출 내역서(강사 맥락 기본정보)
+ */
+export function getMockPaymentOrderInstructorCalculationStatement(
+  instructorDetail: PaymentOrderAdminInstructorDetail,
+  programLineRow: PaymentOrderAdminInstructorDetailProgramRow
+): PaymentOrderProgramCalculationStatement {
+  const n = instructorDetail.instructorNo
+  const seed =
+    mixSeed(n, programLineRow.no * 31) +
+    mixSeed(programLineRow.sessionOrdinal, programLineRow.institutionName.length + 17)
+
+  const { addressDisplay, addressBlurredTail } = addressDisplayForStatementBlur(instructorDetail.address)
+
+  const isSpecialLecture = seed % 3 !== 0
+  const lectureFee = programLineRow.estimatedAmount > 0 ? programLineRow.estimatedAmount : 915000
+  const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
+  const lectureFeeStandardTitle = isSpecialLecture
+    ? '특강 강의비'
+    : '프로그램 1회 강의비 (3급 강사)'
+
+  const sessionStart = Math.max(1, programLineRow.sessionOrdinal)
+  const sessionEnd = sessionStart + 1 + (seed % 2)
+  const lectureDateDisplay = formatIsoToKoreanWeekday(programLineRow.lectureDate)
+  const lectureSessionDisplay = `${sessionStart} ~ ${sessionEnd}차시`
+
+  const includeTravel = seed % 5 !== 0
+  const includeLodging = seed % 7 !== 0
+
+  const travelAmount = 31500
+  const lodgingAmount = 80000
+  const travelDesc = '대전 중구 -> 서울 강서구 이동 (146.8km)'
+
+  const subtotalBeforeTax = lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
+  const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
+
+  const lines: PaymentOrderCalculationStatementLine[] = [
+    {
+      id: `calc-line-${programLineRow.id}-lecture`,
+      itemLabel: '강의비',
+      description: isSpecialLecture
+        ? '프로그램 1회 강의비 (특강 강사)'
+        : '프로그램 1회 강의비 (3급 강사)',
+      amount: lectureFee,
+      kind: 'lecture_fee',
+    },
+  ]
+
+  if (includeTravel) {
+    lines.push({
+      id: `calc-line-${programLineRow.id}-travel`,
+      itemLabel: '교통비',
+      description: travelDesc,
+      amount: travelAmount,
+      kind: 'travel',
+    })
+  }
+
+  if (includeLodging) {
+    lines.push({
+      id: `calc-line-${programLineRow.id}-lodging`,
+      itemLabel: '숙박비',
+      description: '8만원 고정 지급',
+      amount: lodgingAmount,
+      kind: 'lodging',
+    })
+  }
+
+  lines.push({
+    id: `calc-line-${programLineRow.id}-tax`,
+    itemLabel: '원천징수',
+    description: '원천징수 8.8%',
+    amount: withholdingAmount,
+    kind: 'withholding',
+    amountDisplayOverride: '-NN,NNN원',
+  })
+
+  const formulaParts: string[] = ['강의비']
+  if (includeTravel) formulaParts.push('교통비')
+  if (includeLodging) formulaParts.push('숙박비')
+  formulaParts.push('원천징수')
+  const formulaLabel =
+    formulaParts.length === 2
+      ? `${formulaParts[0]} - ${formulaParts[1]}`
+      : `${formulaParts.slice(0, -1).join(' + ')} - ${formulaParts[formulaParts.length - 1]}`
+
+  const totalAmount = lines.reduce((s, l) => s + l.amount, 0)
+
+  const block: PaymentOrderCalculationStatementSessionBlock = {
+    institutionName: programLineRow.institutionName,
+    lectureDateDisplay,
+    lectureSessionDisplay,
+    lines,
+  }
+
+  const settlementBankPart = [
+    instructorDetail.bankName,
+    MASKING_POLICY.accountNumber(instructorDetail.accountNumber),
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  return {
+    context: 'instructor',
+    basic: {
+      nameKo: instructorDetail.nameKo,
+      nameEn: instructorDetail.nameEn,
+      phoneDisplay: MASKING_POLICY.phone(instructorDetail.phone),
+      emailDisplay: MASKING_POLICY.email(instructorDetail.email),
+      addressDisplay,
+      addressBlurredTail,
+      settlementAccountBankNumberPart: settlementBankPart,
+      settlementAccountHolderPart: MASKING_POLICY.accountHolderName(instructorDetail.accountHolder),
+      processingStatusDisplay: lineStatusToCalculationDisplay(programLineRow.processingStatus),
+      processingStatusClass: programLineRow.processingStatus,
+      processingRejectionReason:
+        programLineRow.processingStatus === 'rejected'
+          ? seed % 2 === 0
+            ? '인원 초과'
+            : '기준 미달'
+          : undefined,
+      lectureFeeStandardTitle,
+      lectureFeeStandardAmount: lectureFeeAmountLabel,
+      businessIncomeEarnerLabel: '해당 없음',
+    },
+    blocks: [block],
+    formulaLabel,
+    totalAmount,
+  }
+}
+
+/**
+ * 프로그램 지급 현황 상세에서 산출 내역서를 열 때 — 강사 기준(context: instructor) 기본정보·블록으로 표시
+ */
+export function getMockPaymentOrderCalculationStatementFromProgramDetailPage(
+  programRow: PaymentOrderAdminProgramRow,
+  programDetail: PaymentOrderAdminProgramDetail,
+  lineRow: PaymentOrderAdminProgramDetailInstructorRow
+): PaymentOrderProgramCalculationStatement {
+  const instructorStub: PaymentOrderAdminInstructorRow = {
+    no: lineRow.no,
+    instructorName: lineRow.instructorName,
+    programCount: programRow.instructorCount,
+    processingStatus: programRow.processingStatus,
+    estimatedAmount: lineRow.estimatedAmount,
+    relatedProgramNames: [programDetail.programName],
+    referenceDate: programRow.referenceDate,
+  }
+  const instructorDetail = getMockPaymentOrderInstructorDetail(instructorStub)
+  const programLineRow: PaymentOrderAdminInstructorDetailProgramRow = {
+    id: lineRow.id,
+    no: lineRow.no,
+    programName: programDetail.programName,
+    institutionName: lineRow.institutionName,
+    lectureDate: lineRow.lectureDate,
+    sessionOrdinal: lineRow.sessionOrdinal,
+    processingStatus: lineRow.processingStatus,
+    estimatedAmount: lineRow.estimatedAmount,
+  }
+  return getMockPaymentOrderInstructorCalculationStatement(instructorDetail, programLineRow)
+}
+
+/**
+ * 강사 지급 현황 상세에서 산출 내역서를 열 때 — 프로그램 기준(context: program) 기본정보·블록으로 표시
+ */
+export function getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
+  instructorRow: PaymentOrderAdminInstructorRow,
+  instructorDetail: PaymentOrderAdminInstructorDetail,
+  programLineRow: PaymentOrderAdminInstructorDetailProgramRow
+): PaymentOrderProgramCalculationStatement {
+  const programRow =
+    mockPaymentOrderAdminProgramList.find(p => p.programName === programLineRow.programName) ?? {
+      no: instructorRow.no + 500,
+      programName: programLineRow.programName,
+      instructorCount: instructorRow.programCount,
+      processingStatus: instructorRow.processingStatus,
+      estimatedAmount: instructorRow.estimatedAmount,
+      referenceDate: instructorRow.referenceDate,
+    }
+
+  const programDetailLine: PaymentOrderAdminProgramDetailInstructorRow = {
+    id: programLineRow.id,
+    no: programLineRow.no,
+    instructorName: instructorDetail.nameKo,
+    institutionName: programLineRow.institutionName,
+    lectureDate: programLineRow.lectureDate,
+    sessionOrdinal: programLineRow.sessionOrdinal,
+    processingStatus: programLineRow.processingStatus,
+    estimatedAmount: programLineRow.estimatedAmount,
+  }
+
+  return getMockPaymentOrderProgramCalculationStatement(
+    programRow,
+    programDetailLine,
+    programLineRow.programName
+  )
 }

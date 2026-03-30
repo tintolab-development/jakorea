@@ -19,6 +19,7 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import {
+  getMockPaymentOrderCalculationStatementFromProgramDetailPage,
   getMockPaymentOrderProgramDetail,
   PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
   PAYMENT_ORDER_ADMIN_STATUS_LABELS,
@@ -26,10 +27,12 @@ import {
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
+  type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
 import '@/features/program/ui/participating-institutions-section.css'
 import '@/features/program/ui/program-progress-tab.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
+import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
 import './payment-order-program-status-detail-fullpage-modal.css'
 
 const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -144,6 +147,9 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
     PaymentOrderAdminProgramDetailInstructorRow[]
   >([])
   const [openStatusRowId, setOpenStatusRowId] = useState<string | null>(null)
+  const [calcStatementOpen, setCalcStatementOpen] = useState(false)
+  const [calcStatementData, setCalcStatementData] =
+    useState<PaymentOrderProgramCalculationStatement | null>(null)
 
   const detail = useMemo(
     () => (programRow ? getMockPaymentOrderProgramDetail(programRow) : null),
@@ -166,6 +172,8 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
       const d = getMockPaymentOrderProgramDetail(programRow)
       setInstructorRowsState(d.instructorRows.map(r => ({ ...r })))
       setOpenStatusRowId(null)
+      setCalcStatementOpen(false)
+      setCalcStatementData(null)
     }
   }, [open, programRow?.no])
 
@@ -197,6 +205,17 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
       },
     ],
     []
+  )
+
+  const openCalculationStatement = useCallback(
+    (row: PaymentOrderAdminProgramDetailInstructorRow) => {
+      if (!programRow || !detail) return
+      setCalcStatementData(
+        getMockPaymentOrderCalculationStatementFromProgramDetailPage(programRow, detail, row)
+      )
+      setCalcStatementOpen(true)
+    },
+    [detail, programRow]
   )
 
   const columns: ColumnsType<PaymentOrderAdminProgramDetailInstructorRow> = useMemo(
@@ -270,14 +289,14 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
         key: 'breakdown',
         width: 196,
         align: 'center',
-        render: () => (
+        render: (_: unknown, row: PaymentOrderAdminProgramDetailInstructorRow) => (
           <AppButton
             variant="default"
             size="small"
             className="payment-order-program-status-detail__detail-btn"
             onClick={e => {
               e.stopPropagation()
-              message.info('산출 내역 상세는 추후 연결됩니다.')
+              openCalculationStatement(row)
             }}
           >
             상세 보기
@@ -285,7 +304,7 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
         ),
       },
     ],
-    [openStatusRowId]
+    [openCalculationStatement, openStatusRowId]
   )
 
   if (!open || !programRow || !detail) {
@@ -296,9 +315,22 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
   const sessionLabel = `${detail.sessionCompleted} / ${detail.sessionTotal}`
 
   return (
-    <DetailFullPageModal
+    <>
+      <PaymentOrderProgramCalculationStatementModal
+        open={calcStatementOpen}
+        onCancel={() => {
+          setCalcStatementOpen(false)
+          setCalcStatementData(null)
+        }}
+        data={calcStatementData}
+      />
+      <DetailFullPageModal
       open={open}
-      onClose={onClose}
+      onClose={() => {
+        setCalcStatementOpen(false)
+        setCalcStatementData(null)
+        onClose()
+      }}
       title={`지급 현황 상세_${detail.programName}`}
       className="payment-order-program-status-detail-fullpage-modal"
       sidebar={
@@ -479,5 +511,6 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
         </div>
       </div>
     </DetailFullPageModal>
+    </>
   )
 }
