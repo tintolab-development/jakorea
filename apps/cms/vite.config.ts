@@ -5,6 +5,14 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: [
+      '@fortune-sheet/react',
+      '@fortune-sheet/core',
+      'lodash',
+      'immer',
+    ],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
