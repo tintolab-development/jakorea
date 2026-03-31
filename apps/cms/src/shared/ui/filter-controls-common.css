@@ -483,24 +483,3 @@
     min-width: var(--filter-control-min-width);
   }
 }
-
-/* ==========================================
- * 테이블 행 선택(체크박스) 열 — 고정 너비
- * ========================================== */
-
-.ant-table-wrapper col.ant-table-selection-col {
-  width: var(--table-selection-column-width) !important;
-  min-width: var(--table-selection-column-width) !important;
-}
-
-.ant-table-wrapper .ant-table-thead > tr > th.ant-table-selection-column,
-.ant-table-wrapper .ant-table-tbody > tr > td.ant-table-selection-column {
-  width: var(--table-selection-column-width) !important;
-  min-width: var(--table-selection-column-width) !important;
-  max-width: var(--table-selection-column-width) !important;
-  box-sizing: border-box !important;
-  /* 60px 열 전체(border-box). 가로 패딩 크면 실측 ~96px — padding 단축 속성에 덮이지 않게 block/inline 분리 */
-  padding-block: 12px !important;
-  padding-inline: 4px !important;
-  vertical-align: middle !important;
-}

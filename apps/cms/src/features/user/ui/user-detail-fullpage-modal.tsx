@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Table, Empty, Dropdown, Tag, message } from 'antd'
 import type { MenuProps } from 'antd'
 import { AccountBookOutlined, BulbOutlined, FolderOpenOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import {
   DetailModalSidebar,
@@ -39,11 +40,14 @@ import {
   type UserBasicInfoEntrySource,
 } from './user-basic-info-section'
 import { UserConsentAgreementSection } from './user-consent-agreement-section'
+import { InstructorBasicInfo } from './instructor-basic-info'
+import { InstructorSettlementTab } from './instructor-settlement-tab'
 import { AdminManagedProgramHistory } from './admin-managed-program-history'
+import { MemberProgramLectureHistory } from './member-program-lecture-history'
 import './user-detail-modal.css'
 import './user-detail-fullpage-modal.css'
 
-export type UserDetailLnbKey = 'basic' | 'programs' | 'settlement'
+export type UserDetailLnbKey = 'detail-info' | 'history' | 'payment-status'
 
 /** 프로그램 참여 이력 LNB 하위 (전체·강사 회원) */
 export type UserDetailProgramsChildKey = 'enrollment' | 'lecture' | 'volunteer'
@@ -71,13 +75,18 @@ export function UserDetailFullPageModal({
   basicInfoEntrySource,
 }: UserDetailFullPageModalProps) {
   const displayUser = user
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [activeLnb, setActiveLnb] = useState<UserDetailLnbKey>('basic')
+  const [activeLnb, setActiveLnb] = useState<UserDetailLnbKey>('detail-info')
   const [activeProgramsChild, setActiveProgramsChild] =
     useState<UserDetailProgramsChildKey>('enrollment')
   const [applications, setApplications] = useState<Application[]>([])
   /** 강사 회원 — 프로그램 수강 이력(학생 신청) 전용 */
   const [enrollmentApplications, setEnrollmentApplications] = useState<Application[]>([])
+  /** 개인 회원 — 프로그램 강의 이력(강사 신청) 전용 */
+  const [instructorLectureApplications, setInstructorLectureApplications] = useState<
+    Application[]
+  >([])
   const [applicationsLoading, setApplicationsLoading] = useState(false)
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
@@ -113,10 +122,18 @@ export function UserDetailFullPageModal({
             ])
             setApplications(instructorApps)
             setEnrollmentApplications(studentApps)
+            setInstructorLectureApplications([])
+          } else if (displayUser.role === 'INDIVIDUAL') {
+            const [studentApps, instructorApps] = await Promise.all([
+              applicationService.getByUserId(displayUser.id, 'student'),
+              applicationService.getByUserId(displayUser.id, 'instructor'),
+            ])
+            setApplications(studentApps)
+            setEnrollmentApplications([])
+            setInstructorLectureApplications(instructorApps)
           } else {
             let subjectType: Application['subjectType'] | undefined
             if (displayUser.role === 'SCHOOL') subjectType = 'school'
-            else if (displayUser.role === 'INDIVIDUAL') subjectType = 'student'
 
             const userApplications = await applicationService.getByUserId(
               displayUser.id,
@@ -124,11 +141,13 @@ export function UserDetailFullPageModal({
             )
             setApplications(userApplications)
             setEnrollmentApplications([])
+            setInstructorLectureApplications([])
           }
         } catch (error) {
           console.error('Failed to load applications:', error)
           setApplications([])
           setEnrollmentApplications([])
+          setInstructorLectureApplications([])
         } finally {
           setApplicationsLoading(false)
         }
@@ -137,6 +156,7 @@ export function UserDetailFullPageModal({
     } else {
       setApplications([])
       setEnrollmentApplications([])
+      setInstructorLectureApplications([])
     }
   }, [open, displayUser])
 
@@ -162,10 +182,33 @@ export function UserDetailFullPageModal({
 
   useEffect(() => {
     if (open && displayUser) {
-      setActiveLnb('basic')
+      setActiveLnb('detail-info')
       setActiveProgramsChild('enrollment')
     }
   }, [open, displayUser?.id])
+
+  useEffect(() => {
+    if (!open || !displayUser) return
+
+    const rawLnb = searchParams.get('lnb')
+    const isInstructor = displayUser.role === 'INSTRUCTOR'
+    const nextLnb: UserDetailLnbKey =
+      rawLnb === 'history'
+        ? 'history'
+        : rawLnb === 'payment-status' && isInstructor
+          ? 'payment-status'
+          : 'detail-info'
+
+    if (activeLnb !== nextLnb) {
+      setActiveLnb(nextLnb)
+    }
+
+    if (rawLnb !== nextLnb) {
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.set('lnb', nextLnb)
+      setSearchParams(nextParams, { replace: true })
+    }
+  }, [open, displayUser?.id, displayUser?.role, searchParams, setSearchParams, activeLnb])
 
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {
@@ -196,10 +239,16 @@ export function UserDetailFullPageModal({
           ])
           setApplications(inst)
           setEnrollmentApplications(stu)
+        } else if (displayUser.role === 'INDIVIDUAL') {
+          const [stu, inst] = await Promise.all([
+            applicationService.getByUserId(displayUser.id, 'student'),
+            applicationService.getByUserId(displayUser.id, 'instructor'),
+          ])
+          setApplications(stu)
+          setInstructorLectureApplications(inst)
         } else {
           let subjectType: Application['subjectType'] | undefined
           if (displayUser.role === 'SCHOOL') subjectType = 'school'
-          else if (displayUser.role === 'INDIVIDUAL') subjectType = 'student'
           const list = await applicationService.getByUserId(displayUser.id, subjectType)
           setApplications(list)
         }
@@ -221,17 +270,18 @@ export function UserDetailFullPageModal({
     const programsItem: DetailModalSidebarNavItem =
       role === 'INDIVIDUAL'
         ? {
-            key: 'programs',
+            key: 'history',
             label: programsLabel,
             icon: programsIcon,
             children: [
               { key: 'enrollment', label: '프로그램 수강 이력' },
+              { key: 'lecture', label: '프로그램 강의 이력' },
               { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
             ],
           }
         : role === 'INSTRUCTOR'
           ? {
-              key: 'programs',
+              key: 'history',
               label: programsLabel,
               icon: programsIcon,
               children: [
@@ -241,15 +291,20 @@ export function UserDetailFullPageModal({
               ],
             }
           : {
-              key: 'programs',
+              key: 'history',
               label: programsLabel,
               icon: programsIcon,
             }
 
     const items: DetailModalSidebarNavItem[] = [
       {
-        key: 'basic',
-        label: role === 'ADMIN' ? '관리자 상세 정보' : '회원 상세 정보',
+        key: 'detail-info',
+        label:
+          role === 'ADMIN'
+            ? '관리자 상세 정보'
+            : role === 'INSTRUCTOR'
+              ? '강사 상세 정보'
+              : '회원 상세 정보',
         icon: <BulbOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
       },
       programsItem,
@@ -257,7 +312,7 @@ export function UserDetailFullPageModal({
 
     if (role === 'INSTRUCTOR') {
       items.push({
-        key: 'settlement',
+        key: 'payment-status',
         label: '정산 현황',
         icon: (
           <AccountBookOutlined
@@ -272,29 +327,38 @@ export function UserDetailFullPageModal({
   }, [displayUser?.role])
 
   const sidebarExpandedGroupKeys = useMemo(() => {
-    if (activeLnb !== 'programs' || !displayUser) return [] as const
+    if (activeLnb !== 'history' || !displayUser) return [] as const
     if (!programsHistoryHasChildMenu(displayUser.role)) return [] as const
-    return ['programs'] as const
+    return ['history'] as const
   }, [activeLnb, displayUser])
 
   const sidebarActiveChildKey =
-    activeLnb === 'programs' && displayUser && programsHistoryHasChildMenu(displayUser.role)
+    activeLnb === 'history' && displayUser && programsHistoryHasChildMenu(displayUser.role)
       ? activeProgramsChild
       : ''
 
   const handleSidebarSelectTop = (key: string) => {
     const k = key as UserDetailLnbKey
-    if (k === 'programs' && displayUser && programsHistoryHasChildMenu(displayUser.role)) {
-      setActiveLnb('programs')
+    if (k === 'history' && displayUser && programsHistoryHasChildMenu(displayUser.role)) {
+      setActiveLnb('history')
       setActiveProgramsChild('enrollment')
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.set('lnb', 'history')
+      setSearchParams(nextParams, { replace: true })
       return
     }
     setActiveLnb(k)
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('lnb', k)
+    setSearchParams(nextParams, { replace: true })
   }
 
   const handleSidebarSelectChild = (_groupKey: string, childKey: string) => {
     setActiveProgramsChild(childKey as UserDetailProgramsChildKey)
-    setActiveLnb('programs')
+    setActiveLnb('history')
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('lnb', 'history')
+    setSearchParams(nextParams, { replace: true })
   }
 
   if (!open) {
@@ -470,24 +534,28 @@ export function UserDetailFullPageModal({
         }
       : undefined
 
-  const basicInfoContent = (
-    <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
-      <UserBasicInfoSection
-        user={displayUser}
-        entrySource={basicInfoEntrySource}
-        caption={basicInfoCaption}
-        externalId1365={basicInfoExternalId1365}
-        personalInfoRevealed={personalInfoRevealed}
-      />
-      <UserConsentAgreementSection />
-    </div>
-  )
-
   const role = displayUser.role
+  const basicInfoContent =
+    role === 'INSTRUCTOR' ? (
+      <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
+        <InstructorBasicInfo user={displayUser} personalInfoRevealed={personalInfoRevealed} />
+      </div>
+    ) : (
+      <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
+        <UserBasicInfoSection
+          user={displayUser}
+          entrySource={basicInfoEntrySource}
+          caption={basicInfoCaption}
+          externalId1365={basicInfoExternalId1365}
+          personalInfoRevealed={personalInfoRevealed}
+        />
+        <UserConsentAgreementSection />
+      </div>
+    )
+
   const programsChildMode = programsHistoryHasChildMenu(role)
 
   const enrollmentTableRows = role === 'INSTRUCTOR' ? enrollmentApplications : applications
-  const lectureTableRows = applications
 
   const enrollmentSectionTitle =
     role === 'ADMIN' ? '담당 프로그램 이력' : '프로그램 수강 이력'
@@ -549,15 +617,6 @@ export function UserDetailFullPageModal({
     </section>
   )
 
-  const lectureSection = (
-    <section className="user-detail-fullpage-modal__program-section">
-      <h3 className="user-detail-fullpage-modal__section-title">
-        프로그램 강의 이력 ({lectureTableRows.length})
-      </h3>
-      {renderApplicationTable(lectureTableRows, '프로그램 강의 이력', '프로그램 강의 이력이 없습니다.')}
-    </section>
-  )
-
   const volunteerSection = (
     <section className="user-detail-fullpage-modal__program-section">
       <h3 className="user-detail-fullpage-modal__section-title">
@@ -584,7 +643,16 @@ export function UserDetailFullPageModal({
   const programsHistoryContent = programsChildMode ? (
     <div className="user-detail-fullpage-modal__programs">
       {activeProgramsChild === 'enrollment' && enrollmentSection}
-      {activeProgramsChild === 'lecture' && role === 'INSTRUCTOR' && lectureSection}
+      {activeProgramsChild === 'lecture' && (role === 'INSTRUCTOR' || role === 'INDIVIDUAL') && (
+        <MemberProgramLectureHistory
+          applications={role === 'INSTRUCTOR' ? applications : instructorLectureApplications}
+          loading={applicationsLoading}
+          onRowClick={record => {
+            setSelectedApplicationForProgramDetail(record)
+            setProgramDetailModalOpen(true)
+          }}
+        />
+      )}
       {activeProgramsChild === 'volunteer' && volunteerSection}
     </div>
   ) : (
@@ -594,11 +662,19 @@ export function UserDetailFullPageModal({
     </div>
   )
 
-  const settlementContent = (
-    <div className="user-detail-fullpage-modal__programs user-detail-fullpage-modal__settlement">
-      <Empty description="정산 현황은 추후 연결됩니다." />
-    </div>
-  )
+  const settlementContent =
+    displayUser.role === 'INSTRUCTOR' ? (
+      <div className="user-detail-fullpage-modal__programs user-detail-fullpage-modal__settlement">
+        <InstructorSettlementTab
+          instructorUserId={displayUser.id}
+          instructorName={displayUser.name}
+        />
+      </div>
+    ) : (
+      <div className="user-detail-fullpage-modal__programs user-detail-fullpage-modal__settlement">
+        <Empty description="정산 현황은 강사 회원에서만 제공됩니다." />
+      </div>
+    )
 
   const handleWithdrawConfirm = () => {
     if (displayUser && onWithdraw) {
@@ -616,13 +692,19 @@ export function UserDetailFullPageModal({
         title={
           displayUser.role === 'ADMIN'
             ? `관리자 상세_${displayUser.name}`
-            : `회원 상세_${displayUser.name}`
+            : displayUser.role === 'INSTRUCTOR'
+              ? `강사 상세_${displayUser.name}`
+              : `회원 상세_${displayUser.name}`
         }
         className="user-detail-fullpage-modal"
         sidebar={
           <DetailModalSidebar
             navAriaLabel={
-              displayUser.role === 'ADMIN' ? '관리자 상세 메뉴' : '회원 상세 메뉴'
+              displayUser.role === 'ADMIN'
+                ? '관리자 상세 메뉴'
+                : displayUser.role === 'INSTRUCTOR'
+                  ? '강사 상세 메뉴'
+                  : '회원 상세 메뉴'
             }
             items={userSidebarItems}
             activeKey={activeLnb}
@@ -664,8 +746,8 @@ export function UserDetailFullPageModal({
           </div>
         }
       >
-        {activeLnb === 'basic' && basicInfoContent}
-        {activeLnb === 'programs' &&
+        {activeLnb === 'detail-info' && basicInfoContent}
+        {activeLnb === 'history' &&
           (displayUser.role === 'ADMIN' ? (
             <div className="user-detail-fullpage-modal__admin-programs">
               <AdminManagedProgramHistory user={displayUser} />
@@ -673,7 +755,7 @@ export function UserDetailFullPageModal({
           ) : (
             programsHistoryContent
           ))}
-        {activeLnb === 'settlement' && settlementContent}
+        {activeLnb === 'payment-status' && settlementContent}
       </DetailFullPageModal>
 
       {withdrawConfirmOpen && (

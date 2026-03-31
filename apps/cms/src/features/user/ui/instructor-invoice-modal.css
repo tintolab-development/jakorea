@@ -1,0 +1,105 @@
+.instructor-invoice-modal .instructor-invoice-modal__section-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #3d3d3d;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__section-caption {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__basic-table,
+.instructor-invoice-modal .instructor-invoice-modal__detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__basic-table th,
+.instructor-invoice-modal .instructor-invoice-modal__basic-table td,
+.instructor-invoice-modal .instructor-invoice-modal__detail-table th,
+.instructor-invoice-modal .instructor-invoice-modal__detail-table td {
+  border: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__basic-table th,
+.instructor-invoice-modal .instructor-invoice-modal__detail-table thead th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #3d3d3d;
+  text-align: center;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__basic-table td {
+  background: #fff;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__basic-table .instructor-invoice-modal__cell-label {
+  width: 200px;
+  background: #f9fafb;
+  font-weight: 600;
+  text-align: center;
+  color: #4b5563;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__status-purple {
+  color: #7b61c8;
+  font-weight: 600;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__status-mint {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__payment-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__detail-table tbody td {
+  background: #fff;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__detail-table .instructor-invoice-modal__amount--plus {
+  color: #3d3d3d;
+  font-weight: 500;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__detail-table .instructor-invoice-modal__amount--minus {
+  color: #c32f4a;
+  font-weight: 500;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__footer-row td {
+  background: rgba(1, 161, 175, 0.08);
+  font-weight: 700;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__footer-row .instructor-invoice-modal__total-amount {
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 16px;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}

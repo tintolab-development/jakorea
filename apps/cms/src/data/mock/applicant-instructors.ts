@@ -123,6 +123,8 @@ export interface ApplicantInstructorRow {
   businessIncomeEarnerStatus?: string
   /** 승인 완료 시 알림 발송 일시 (프로그램 승인 현황 옆 표시) */
   approvalNotificationSentAt?: string
+  /** 회원 관리 강사 상세 기본 정보: 정산 현황 셀 (프로그램 신청 강사 플로우에서는 미사용) */
+  settlementStatusLabel?: string
 }
 
 const INSTRUCTOR_NAMES = [

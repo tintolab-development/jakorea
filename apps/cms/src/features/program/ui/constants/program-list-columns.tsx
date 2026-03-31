@@ -8,7 +8,7 @@ import {
   targetLevelOptions,
   categoryOptions,
 } from './program-list-constants'
-import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
+import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
 
 export const studentRecruitmentTableColumns = [
   {
@@ -33,12 +33,9 @@ export const studentRecruitmentTableColumns = [
     width: 140,
     align: 'center' as const,
     className: undefined,
-    render: (_: unknown, record: Program) =>
-      record.lifecycleStatus ? (
-        <ProgramLifecycleStatusBadge status={record.lifecycleStatus} />
-      ) : (
-        '-'
-      ),
+    render: (_: unknown, record: Program) => (
+      <ProgramLifecycleStatusTableCell status={record.lifecycleStatus} />
+    ),
   },
   {
     title: '지원자 수',
@@ -148,12 +145,9 @@ export const instructorRecruitmentTableColumns = [
     width: 140,
     align: 'center' as const,
     className: undefined,
-    render: (_: unknown, record: Program) =>
-      record.lifecycleStatus ? (
-        <ProgramLifecycleStatusBadge status={record.lifecycleStatus} />
-      ) : (
-        '-'
-      ),
+    render: (_: unknown, record: Program) => (
+      <ProgramLifecycleStatusTableCell status={record.lifecycleStatus} />
+    ),
   },
   {
     title: '지원자 수',

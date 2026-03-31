@@ -19,6 +19,17 @@
  *   프로그램 진행 완료: background #F0F0F0, color #6C757D
  */
 
+/* ===== 테이블 컬럼 variant (`ProgramLifecycleStatusBadge` variant="table") =====
+ * app-status-badge.css 의 고정 120×30 을 해제해 긴 라벨·경제 3단계 라벨이 잘리지 않도록 함 */
+.app-status-badge.program-lifecycle-status-badge.program-lifecycle-status-badge--table {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 30px;
+  white-space: nowrap;
+}
+
 /* ===== 경제 교육 페이지 3단계 (스크린샷 색상) ===== */
 .app-status-badge.program-lifecycle-status-badge--economy-scheduled,
 .app-status-badge.program-lifecycle-status-badge--economy-in-progress,

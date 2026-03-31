@@ -11,6 +11,7 @@ import { mockSchools } from './schools'
 import { mockInstructors } from './instructors'
 import { mockUsers } from './users'
 import { getApplicationPathByProgramId } from './application-paths'
+import { programLectureHistoryDemoApplications } from './program-lecture-history-demo'
 
 const mockIndividualUsers = mockUsers.filter(u => u.role === 'INDIVIDUAL')
 const mockSchoolUsers = mockUsers.filter(u => u.role === 'SCHOOL')
@@ -247,6 +248,7 @@ const rawApplications: Application[] = [
   ...participantApplications,
   ...memberEnrollmentApplications,
   ...schoolDetailApplications,
+  ...programLectureHistoryDemoApplications,
 ]
 export const mockApplications: Application[] = rawApplications.map((app, index) => {
   if (app.status !== 'approved') return app

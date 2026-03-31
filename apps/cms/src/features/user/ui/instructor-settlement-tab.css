@@ -1,0 +1,118 @@
+.instructor-settlement-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.instructor-settlement-tab__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 24px 0;
+}
+
+.instructor-settlement-tab__month-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.instructor-settlement-tab__month-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: #3d3d3d;
+  min-width: 88px;
+}
+
+.instructor-settlement-tab__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.instructor-settlement-tab__summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.instructor-settlement-tab__summary-card {
+  flex: 1;
+  min-width: 200px;
+  padding: 20px 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.instructor-settlement-tab__summary-label {
+  display: block;
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.instructor-settlement-tab__summary-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.instructor-settlement-tab__summary-value--mint {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.instructor-settlement-tab__content {
+  padding: 0 24px 24px;
+  min-width: 0;
+}
+
+.instructor-settlement-tab__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.instructor-settlement-tab__table-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3d3d3d;
+}
+
+.instructor-settlement-tab__table-meta {
+  font-size: 14px;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+.instructor-settlement-schedule-list__open {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.instructor-settlement-schedule-list__open:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.instructor-settlement-tab .applicant-calendar-view-container {
+  min-height: 520px;
+}

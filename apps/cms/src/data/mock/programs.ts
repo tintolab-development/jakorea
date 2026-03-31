@@ -12,6 +12,7 @@ import type {
 } from '../../types/domain'
 import { mockSponsors } from './sponsors'
 import { mockSchools } from './schools'
+import { programLectureHistoryDemoPrograms } from './program-lecture-history-demo'
 
 const getDate = (daysAgo: number): string => {
   const date = new Date()
@@ -1188,7 +1189,7 @@ const updateSponsors = () => {
 
 updateSponsors()
 
-export const mockPrograms: Program[] = educationRecords.map((record, index) => {
+const educationPrograms: Program[] = educationRecords.map((record, index) => {
   const sponsorId = findSponsorId(record.sponsorNameKr)
   const schoolId = findSchoolId(record.schoolName)
   const startDate = getDateFromMonth(record.month, index)
@@ -1416,5 +1417,10 @@ export const mockPrograms: Program[] = educationRecords.map((record, index) => {
 
   return base
 })
+
+export const mockPrograms: Program[] = [
+  ...educationPrograms,
+  ...programLectureHistoryDemoPrograms,
+]
 
 export const mockProgramsMap = new Map(mockPrograms.map(program => [program.id, program]))

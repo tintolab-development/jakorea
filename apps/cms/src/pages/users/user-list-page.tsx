@@ -48,6 +48,7 @@ interface UserListQueryParams extends Record<string, string | undefined> {
   role?: UserRole | 'ALL'
   search?: string
   id?: string
+  lnb?: string
   createdAtFrom?: string
   createdAtTo?: string
 }
@@ -83,7 +84,7 @@ function pendingToApiFilters(pending: {
 }
 
 export function UserListPage() {
-  const { params, setParam } = useQueryParams<UserListQueryParams>()
+  const { params, setParam, setParams } = useQueryParams<UserListQueryParams>()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
@@ -133,6 +134,7 @@ export function UserListPage() {
   const createUser = useUserStore(state => state.createUser)
   const deleteUser = useUserStore(state => state.deleteUser)
   const changeUserRole = useUserStore(state => state.changeUserRole)
+  const fetchUserById = useUserStore(state => state.fetchUserById)
   const setSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const setFilters = useUserStore(state => state.setFilters)
   const clearSelectedUserId = useUserStore(state => state.setSelectedUserId)
@@ -217,7 +219,67 @@ export function UserListPage() {
     [params.kind]
   )
 
+  // URL(id) 기반 모달 상태 복원: 새로고침/직접 진입 시 상세 모달 유지
+  useEffect(() => {
+    let cancelled = false
+    const targetId = params.id?.trim()
+
+    if (!targetId) {
+      if (drawerOpen || drawerUser || selectedUser) {
+        closeDrawer()
+        clearSelectedUserId(null)
+      }
+      return
+    }
+
+    if (selectedUser?.id !== targetId) {
+      setSelectedUserId(targetId)
+    }
+
+    if (drawerOpen && drawerUser?.id === targetId) return
+
+    const listMatched = listUsers.find(u => u.id === targetId)
+    if (listMatched) {
+      openDrawer(listMatched)
+      return
+    }
+
+    if (selectedUser?.id === targetId) {
+      openDrawer(selectedUser)
+      return
+    }
+
+    ;(async () => {
+      try {
+        await fetchUserById(targetId)
+        if (cancelled) return
+        const fetched = useUserStore.getState().usersById[targetId]
+        if (!fetched) return
+        setSelectedUserId(targetId)
+        openDrawer(fetched)
+      } catch {
+        // 잘못된 id 또는 조회 실패 시 모달을 강제로 열지 않음
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    params.id,
+    drawerOpen,
+    drawerUser,
+    selectedUser,
+    listUsers,
+    closeDrawer,
+    clearSelectedUserId,
+    setSelectedUserId,
+    openDrawer,
+    fetchUserById,
+  ])
+
   const modalDetailUser = drawerUser ?? selectedUser
+  const userDetailModalOpen = drawerOpen || Boolean(params.id && modalDetailUser)
 
   /** 열려 있는 상세 대상이 있으면 그 회원 역할 기준(전체 회원 혼합 목록 대응), 없으면 목록 kind 기준 */
   const basicInfoEntrySource = useMemo(() => {
@@ -254,14 +316,20 @@ export function UserListPage() {
   const handleView = (user: Omit<User, 'password'>) => {
     setSelectedUserId(user.id) // 스토어에 ID만 저장
     openDrawer(user)
-    setParam('id', user.id)
+    setParams({
+      id: user.id,
+      lnb: 'detail-info',
+    })
   }
 
   // Drawer 닫기
   const handleDrawerClose = () => {
     closeDrawer()
     clearSelectedUserId(null) // 스토어에서 선택 해제
-    setParam('id', null)
+    setParams({
+      id: undefined,
+      lnb: undefined,
+    })
   }
 
   // 권한 변경
@@ -462,15 +530,15 @@ export function UserListPage() {
       </div>
 
       <UserDetailFullPageModal
-        open={drawerOpen}
-        user={drawerUser ?? selectedUser}
+        open={userDetailModalOpen}
+        user={modalDetailUser}
         basicInfoEntrySource={basicInfoEntrySource}
         onClose={handleDrawerClose}
         onEdit={
-          (drawerUser ?? selectedUser) ? () => handleEdit(drawerUser ?? selectedUser!) : undefined
+          modalDetailUser ? () => handleEdit(modalDetailUser) : undefined
         }
         onWithdraw={
-          canWrite && (drawerUser ?? selectedUser)
+          canWrite && modalDetailUser
             ? (u: Omit<User, 'password'>) => {
                 handleDrawerClose()
                 setDeletingUser(u)

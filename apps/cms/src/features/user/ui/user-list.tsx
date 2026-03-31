@@ -8,7 +8,6 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/ui/program-list.css'
 import './admin-permission-tag.css'
-import './user-list-table.css'
 import type { User, UserRole } from '@/types/user'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
@@ -273,11 +272,6 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
   ]
 }
 
-/** `individual`은 `all`과 동일 열 → CSS 클래스도 all과 통일 */
-function userListLayoutKindClass(kind: MemberListKind): string {
-  return kind === 'individual' ? 'all' : kind
-}
-
 /**
  * rc-table: `scroll.x`가 `'max-content'`이면 테이블에 width:max-content 가 걸려
  * colgroup/selection 열 너비(60px)가 깨짐 — 최소 가로폭을 숫자로 고정 (user-list-table.css 열 합 + 여유).
@@ -306,13 +300,12 @@ export function UserList({
   listKind = DEFAULT_MEMBER_LIST_KIND,
 }: UserListProps) {
   const columns = useMemo(() => columnsForKind(listKind), [listKind])
-  const layoutKindClass = useMemo(() => userListLayoutKindClass(listKind), [listKind])
   const scrollX = useMemo(() => scrollXMinForKind(listKind), [listKind])
 
   return (
     <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
       <Table
-        className={`user-list-table user-list-table--kind-${layoutKindClass}`}
+        className={`cms-data-table`}
         columns={columns}
         dataSource={data}
         loading={loading}

@@ -20,27 +20,61 @@
   box-shadow: none !important;
 }
 
-.unified-filter-card__row {
-  width: 100%;
+/* 필터 영역 ↔ 조회 버튼: gap 대신 margin (gap + % flex-basis 합 초과 방지) */
+.unified-filter-card__toolbar {
+  box-sizing: border-box;
   display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+.unified-filter-card__fields-shell {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  margin-right: 12px;
+}
+
+.unified-filter-card__fields-inner.ant-row {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   flex-wrap: nowrap;
   align-items: flex-end;
-  gap: 12px;
+}
+
+/* 필터 칸 사이: gap 대신 margin — 4×25% + gap 오버플로우 방지 */
+.unified-filter-card__fields-inner > .ant-col:not(:last-child) {
+  margin-right: 12px;
 }
 
 @media (max-width: 768px) {
-  .unified-filter-card__row {
+  .unified-filter-card__toolbar {
     flex-wrap: wrap;
-    gap: var(--spacing-8);
   }
-  .unified-filter-card__row .ant-col {
+  .unified-filter-card__fields-shell {
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin-right: 0;
+    margin-bottom: var(--spacing-8);
+  }
+  .unified-filter-card__fields-inner {
+    flex-wrap: wrap !important;
+  }
+  .unified-filter-card__fields-inner .ant-col {
     flex: 1 1 100% !important;
     max-width: 100%;
     min-width: var(--filter-control-min-width, 0);
   }
+  .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
+    margin-right: 0;
+    margin-bottom: var(--spacing-8);
+  }
   .unified-filter-card__actions {
-    margin-left: 0;
     width: 100%;
+    justify-content: flex-start;
   }
 }
 
@@ -56,8 +90,58 @@
 }
 
 /* 필터 필드: 기본 240×44 반응형 — 각 컬럼 최소 너비 적용 */
-.unified-filter-card__row .ant-col:not(.unified-filter-card__actions) {
+.unified-filter-card__fields-inner .ant-col {
   min-width: var(--filter-control-width, 240px);
+}
+
+/* FilterFieldConfig.width: 열 flex-basis에 맞추고 select/input 전역 min-width와 충돌 방지 */
+.unified-filter-card__fields-inner .ant-col.unified-filter-card__col--explicit-width {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .unified-filter-card__field--select,
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .unified-filter-card__field--select {
+  min-width: 0 !important;
+}
+
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .ant-select,
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .app-select {
+  min-width: 0 !important;
+}
+
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .labeled-search-input__input,
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .labeled-search-input
+  .app-input {
+  min-width: 0 !important;
+}
+
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .ant-picker-range,
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width
+  .app-datepicker {
+  min-width: 0 !important;
 }
 
 .unified-filter-card__field {
@@ -72,7 +156,10 @@
   min-width: var(--filter-select-min-width, 280px);
 }
 
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .unified-filter-card__field--select {
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col
+  .unified-filter-card__field--select {
   min-width: var(--filter-select-min-width, 280px);
 }
 
@@ -105,17 +192,20 @@
 }
 
 /* 한 줄 모드: 필드 최소 너비 축소 */
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .unified-filter-card__field {
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col
+  .unified-filter-card__field {
   min-width: 0;
 }
 
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-select,
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .app-select {
+.unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .ant-select,
+.unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .app-select {
   min-width: var(--filter-select-min-width, 280px);
 }
 
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .ant-picker-range,
-.unified-filter-card--single-row .unified-filter-card__row .ant-col .app-datepicker {
+.unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .ant-picker-range,
+.unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .app-datepicker {
   min-width: var(--filter-control-width, 240px);
 }
 
@@ -125,8 +215,9 @@
 }
 
 .unified-filter-card__actions {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   flex-shrink: 0;
-  margin-left: auto !important;
 }

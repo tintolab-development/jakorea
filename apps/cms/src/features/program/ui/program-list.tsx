@@ -44,6 +44,7 @@ import {
 import dayjs, { type Dayjs } from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
@@ -814,11 +815,13 @@ export function ProgramList({
                   rowSelection={
                     showRowSelection && onBulkDelete
                       ? {
+                          columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                           selectedRowKeys: effectiveSelectedRowKeys,
                           onChange: handleSelectionChange,
                         }
                       : undefined
                   }
+                  className="cms-data-table"
                   dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
                   columns={columnsAdmin}
                   rowKey="id"
@@ -961,7 +964,7 @@ export function ProgramList({
                     const lifecycle = record.lifecycleStatus
 
                     const badge = lifecycle ? (
-                      <ProgramLifecycleStatusBadge status={lifecycle} />
+                      <ProgramLifecycleStatusBadge status={lifecycle} variant="table" />
                     ) : (
                       <StatusBadge
                         status={record.status}

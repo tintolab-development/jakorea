@@ -7,6 +7,11 @@ export { mockSchools, mockSchoolsMap } from './schools'
 export { mockInstructors, mockInstructorsMap } from './instructors'
 export { mockPrograms, mockProgramsMap } from './programs'
 export {
+  PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID,
+  programLectureHistoryDemoPrograms,
+  programLectureHistoryDemoApplications,
+} from './program-lecture-history-demo'
+export {
   mockProgramPosts,
   mockProgramPostsMap,
   getProgramPostsByProgramId,

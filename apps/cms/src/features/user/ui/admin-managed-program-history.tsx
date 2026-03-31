@@ -10,7 +10,7 @@ import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
 import { mockPrograms } from '@/data/mock'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
+import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
 import { FilterListLayout } from '@/shared/ui/filter-list-layout'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { AppButton } from '@/shared/ui/app-button'
@@ -238,7 +238,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         width: 160,
         align: 'center',
         render: (_: unknown, p: Program) =>
-          p.lifecycleStatus ? <ProgramLifecycleStatusBadge status={p.lifecycleStatus} /> : '-',
+          <ProgramLifecycleStatusTableCell status={p.lifecycleStatus} />,
       },
       {
         title: '참여자 모집 인원',

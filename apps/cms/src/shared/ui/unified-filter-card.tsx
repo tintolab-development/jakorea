@@ -39,6 +39,12 @@ export interface FilterFieldConfig {
   style?: React.CSSProperties
   /** 너비 (flex 값 또는 숫자) */
   flex?: number | string
+  /**
+   * 열 기준 너비(예: 200, '25%', 'min(280px, 30%)').
+   * 지정 시 Col에 `flex: 0 0 <width>`를 쓰고, 좁은 select의 전역 min-width를 완화한다.
+   * `%`는 조회 버튼 영역을 뺀 필터 전용 가로 폭(내부 행) 기준이다.
+   */
+  width?: string | number
 }
 
 export interface UnifiedFilterCardProps {
@@ -90,11 +96,32 @@ export function UnifiedFilterCard({
   // 필터 한 줄 배치 (사이즈 조정으로 단일 행 표현)
   const filterRowFields = fields
 
+  /** 필드 칸 사이 margin 12px — % basis는 gap 없이도 (100% - margin 합) 안에서만 잡히게 calc */
+  const interFieldGapPx = 12
+
+  const colFlex = (field: FilterFieldConfig, defaultFlex: string) => {
+    if (field.width != null) {
+      if (typeof field.width === 'string' && field.width.trim().endsWith('%')) {
+        const pct = parseFloat(field.width) / 100
+        if (!Number.isNaN(pct)) {
+          const totalGaps = Math.max(0, filterRowFields.length - 1) * interFieldGapPx
+          return `0 0 calc((100% - ${totalGaps}px) * ${pct})`
+        }
+      }
+      const w = typeof field.width === 'number' ? `${field.width}px` : field.width
+      return `0 0 ${w}`
+    }
+    return field.flex ?? defaultFlex
+  }
+
+  const colClassFor = (field: FilterFieldConfig) =>
+    field.width != null ? 'unified-filter-card__col--explicit-width' : undefined
+
   // 필터 렌더링 함수
   const renderField = (field: FilterFieldConfig) => {
     if (field.type === 'search') {
       return (
-        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
+        <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>
           <LabeledSearchInput
             uiVariant="filter"
             label={field.label}
@@ -110,7 +137,7 @@ export function UnifiedFilterCard({
 
     if (field.type === 'select') {
       return (
-        <Col key={field.key} flex={field.flex ?? '1 1 300px'}>
+        <Col key={field.key} flex={colFlex(field, '1 1 300px')} className={colClassFor(field)}>
           <div className="unified-filter-card__field unified-filter-card__field--select">
             <span className="unified-filter-card__label">{field.label}</span>
             <AppSelect
@@ -135,7 +162,7 @@ export function UnifiedFilterCard({
 
     if (field.type === 'dateRange') {
       return (
-        <Col key={field.key} flex={field.flex ?? '1 1 360px'}>
+        <Col key={field.key} flex={colFlex(field, '1 1 360px')} className={colClassFor(field)}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
             <AppDateRangePicker
@@ -155,7 +182,7 @@ export function UnifiedFilterCard({
       const raw = filters[field.key]
       const arr = Array.isArray(raw) ? (raw as string[]) : []
       return (
-        <Col key={field.key} flex={field.flex ?? '0 0 240px'}>
+        <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
             <AppMultiSelect
@@ -200,12 +227,14 @@ export function UnifiedFilterCard({
       }}
       bordered={bordered}
     >
-      <Row gutter={0} className="unified-filter-card__row" align="bottom">
-        {filterRowFields.map(renderField)}
-        <Col flex="none" className="unified-filter-card__actions">
-          {actionButtons}
-        </Col>
-      </Row>
+      <div className="unified-filter-card__toolbar">
+        <div className="unified-filter-card__fields-shell">
+          <Row gutter={0} className="unified-filter-card__fields-inner" align="bottom" wrap={false}>
+            {filterRowFields.map(renderField)}
+          </Row>
+        </div>
+        <div className="unified-filter-card__actions">{actionButtons}</div>
+      </div>
     </Card>
   )
 }

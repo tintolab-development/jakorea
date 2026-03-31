@@ -1,0 +1,117 @@
+/**
+ * CMS 모달·풀페이지 섹션·대시보드 위젯용 Ant Design Table 스코프.
+ * 목록 페이지(.program-list-card / .member-table-card)는 program-list.css 유지.
+ */
+
+.cms-data-table {
+  min-width: 0;
+}
+
+/* scroll.x(숫자)·고정 열 합계용 — 기본은 fixed */
+.cms-data-table table.ant-table {
+  table-layout: fixed;
+}
+
+/* scroll.x 없이 컨테이너 너비 100%·열 자동 분배 (상세/모달 등) */
+.cms-data-table.cms-data-table--fluid .ant-table-container {
+  width: 100%;
+  min-width: 1080px;
+}
+
+.cms-data-table.cms-data-table--fluid table.ant-table {
+  table-layout: auto;
+  width: 100%;
+}
+
+.cms-data-table col.ant-table-selection-col {
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+}
+
+/*
+ * scroll.y 시 마지막 th는 스크롤바 맞춤용(ant-table-cell-scrollbar) — 패딩·높이 주면 헤더/본문 열이 어긋남
+ * 선택 열(th.ant-table-selection-column)은 아래 전용 블록의 패딩을 써야 함(구체성이 낮으면 12×16이 이김)
+ */
+.cms-data-table
+  .ant-table-thead
+  .ant-table-cell:not(.ant-table-cell-scrollbar):not(.ant-table-selection-column) {
+  box-sizing: border-box !important;
+  white-space: nowrap;
+  height: 54px !important;
+  padding: 12px 16px !important;
+}
+
+.cms-data-table .ant-table-thead > tr > th.ant-table-cell-scrollbar {
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+/* rowSelection.columnWidth·colgroup 과 동일 폭 유지, 가로 패딩 축소 */
+.cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
+.cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column {
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
+  box-sizing: border-box !important;
+  padding: 12px 4px !important;
+  vertical-align: middle !important;
+}
+
+.cms-data-table .ant-table-thead > tr > th.ant-table-cell:not(.ant-table-cell-scrollbar)::before {
+  display: none !important;
+}
+
+.cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar) {
+  box-sizing: border-box !important;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center !important;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  height: 54px !important;
+}
+
+.cms-data-table .ant-table-tbody > tr > td {
+  box-sizing: border-box !important;
+  padding: 12px 16px !important;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  height: 54px !important;
+}
+/* 마지막 열: scroll.y 시 thead 마지막 th는 스크롤바 맞춤 셀 — 우측 보더 없음 */
+.cms-data-table .ant-table-thead > tr > th:last-child,
+.cms-data-table .ant-table-tbody > tr > td:last-child {
+  border-right: none !important;
+}
+
+/* 대시보드: 전체 프로그램 진행 현황 탭 테이블 */
+.cms-data-table.cms-data-table--widget .ant-table-cell {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.cms-data-table.cms-data-table--widget .ant-table-thead > tr > th:last-child,
+.cms-data-table.cms-data-table--widget .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.cms-data-table.cms-data-table--widget .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar) {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border-light);
+  background: #edf0f2;
+}
+
+.cms-data-table.cms-data-table--widget .ant-table-tbody > tr:last-child > td {
+  border-bottom: none !important;
+}

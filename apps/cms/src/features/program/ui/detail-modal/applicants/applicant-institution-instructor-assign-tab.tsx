@@ -209,7 +209,7 @@ export function ApplicantInstitutionInstructorAssignTab({
             </div>
           ) : (
             <Table<AssignedInstructorDisplayRowMock>
-              className="participating-institutions-section__table"
+              className="participating-institutions-section__table cms-data-table"
               rowKey="id"
               size="middle"
               pagination={false}
@@ -234,7 +234,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         </div>
         <div className="participating-institutions-section__table-wrap">
           <Table<WaitingRow>
-            className="participating-institutions-section__table"
+            className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"
             pagination={false}
