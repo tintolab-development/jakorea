@@ -9,16 +9,18 @@ import type { InputProps, InputRef } from 'antd'
 import './app-input.css'
 
 export interface AppInputProps extends Omit<InputProps, 'variant'> {
-  /** Ant Input 루트(affix 래퍼)에만 붙는 클래스 */
-  inputClassName?: string
+  /** filter: 44px·8px radius 등 통일 필터 토큰 */
+  uiVariant?: 'default' | 'filter'
 }
 
 export const AppInput = forwardRef<InputRef, AppInputProps>(
-  ({ className, inputClassName, ...rest }, ref) => {
-    const wrapperCn = ['app-input', className].filter(Boolean).join(' ')
+  ({ className, uiVariant = 'default', ...rest }, ref) => {
+    const wrapperCn = ['app-input', uiVariant === 'filter' && 'app-input--filter', className]
+      .filter(Boolean)
+      .join(' ')
     return (
       <span className={wrapperCn}>
-        <Input ref={ref} variant="borderless" className={inputClassName} {...rest} />
+        <Input ref={ref} {...rest} variant="borderless" />
       </span>
     )
   }

@@ -3,11 +3,9 @@
  * 모든 검색 필터를 통일된 UI로 제공
  */
 
-import { Input, Typography } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
+import { AppInput } from './app-input'
 import './labeled-search-input.css'
-
-const { Text } = Typography
 
 export interface LabeledSearchInputProps {
   /** 레이블 텍스트 */
@@ -32,21 +30,13 @@ export interface LabeledSearchInputProps {
   showLabel?: boolean
   /** 포커스 해제 시 콜백 (한글 IME 등 입력 완료 후 URL 동기화용) */
   onBlur?: () => void
+  /** default: 일반 폼 높이. filter: 통일 필터 카드(44px 등) */
+  uiVariant?: 'default' | 'filter'
 }
 
 /**
  * 레이블이 있는 검색 인풋 컴포넌트
  * 오른쪽 돋보기 아이콘 영역 없이 왼쪽에만 아이콘 표시
- *
- * @example
- * ```tsx
- * <LabeledSearchInput
- *   label="프로그램명"
- *   placeholder="프로그램명을 입력하세요"
- *   value={searchValue}
- *   onChange={setSearchValue}
- * />
- * ```
  */
 export function LabeledSearchInput({
   label,
@@ -60,14 +50,24 @@ export function LabeledSearchInput({
   disabled = false,
   showPrefixIcon = false,
   showLabel = true,
+  uiVariant = 'default',
 }: LabeledSearchInputProps) {
   return (
     <div
-      className={`labeled-search-input ${showPrefixIcon ? '' : 'labeled-search-input--no-icon'} ${!showLabel ? 'labeled-search-input--no-label' : ''}`}
+      className={[
+        'labeled-search-input',
+        showPrefixIcon ? '' : 'labeled-search-input--no-icon',
+        !showLabel ? 'labeled-search-input--no-label' : '',
+        uiVariant === 'filter' ? 'labeled-search-input--filter' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={style}
     >
-      {showLabel && <Text className="labeled-search-input__label">{label}</Text>}
-      <Input
+      {showLabel && <span className="labeled-search-input__label">{label}</span>}
+      <AppInput
+        uiVariant={uiVariant}
+        className="labeled-search-input__control"
         placeholder={placeholder}
         value={value}
         onChange={e => onChange?.(e.target.value)}
@@ -78,7 +78,6 @@ export function LabeledSearchInput({
         prefix={
           showPrefixIcon ? <SearchOutlined className="labeled-search-input__icon" /> : undefined
         }
-        className="labeled-search-input__input"
       />
     </div>
   )

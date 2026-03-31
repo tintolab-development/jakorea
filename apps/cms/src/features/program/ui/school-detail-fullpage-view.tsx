@@ -881,7 +881,7 @@ export function SchoolDetailFullpageView({
                   </div>
                 ) : (
                   <Table<AssignedInstructorDisplayRow>
-                    className="participating-institutions-section__table"
+                    className="participating-institutions-section__table cms-data-table"
                     rowKey="id"
                     size="middle"
                     pagination={false}
@@ -927,7 +927,7 @@ export function SchoolDetailFullpageView({
               </div>
               <div className="participating-institutions-section__table-wrap">
                 <Table<WaitingInstructorRow>
-                  className="participating-institutions-section__table"
+                  className="participating-institutions-section__table cms-data-table"
                   rowKey="id"
                   size="middle"
                   pagination={false}

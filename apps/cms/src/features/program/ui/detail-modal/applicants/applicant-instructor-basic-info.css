@@ -18,6 +18,12 @@
   color: #3d3d3d;
 }
 
+/* 회원 관리 강사 상세: 정산 현황 값 (회원 기본 정보 민트 톤과 동일) */
+.applicant-instructor-basic-info__cell--settlement-status {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 500;
+}
+
 .applicant-instructor-basic-info__manager-comment {
   display: flex;
   flex-direction: column;
@@ -182,7 +188,7 @@
   border-bottom: none;
 }
 
-/* 자택 주소: 읍·면·동(행정동)까지 표시, 이후 구간 블러 */
+/* 자택 주소: 동까지(또는 동 없으면 OO구까지) 표시, 이후 구간 블러 */
 .applicant-instructor-basic-info__address-blur {
   filter: blur(5px);
   -webkit-filter: blur(5px);

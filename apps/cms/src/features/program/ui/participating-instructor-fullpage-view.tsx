@@ -181,6 +181,22 @@ function splitAddressAfterDong(address: string): { head: string; tail: string } 
   return { head: address.slice(0, end), tail: address.slice(end) }
 }
 
+/** 동 미매칭 시: 행정구(OO구)까지 노출, 그 이후 블러 */
+function splitAddressAfterGu(address: string): { head: string; tail: string } | null {
+  const re = /(?:^|\s)([가-힣]{1,12}구)(?=\s|$)/u
+  const m = address.match(re)
+  if (!m) return null
+  const gu = m[1]
+  const i = address.indexOf(gu)
+  if (i === -1) return null
+  const end = i + gu.length
+  return { head: address.slice(0, end), tail: address.slice(end) }
+}
+
+function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
+  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
+}
+
 function maskEducationSchoolName(name: string): string {
   const suffixes = [
     '교육대학교',
@@ -205,9 +221,13 @@ function maskEducationSchoolName(name: string): string {
 function ParticipatingAddressDisplay({ address, mask }: { address: string; mask: boolean }) {
   if (!address) return <>-</>
   if (!mask) return <>{address}</>
-  const split = splitAddressAfterDong(address)
+  const split = splitAddressForPrivacyBlur(address)
   if (!split) {
-    return <>{MASKING_POLICY.address(address)}</>
+    return (
+      <span className="participating-instructor-fullpage-view__address-blur" aria-hidden="true">
+        {address}
+      </span>
+    )
   }
   const { head, tail } = split
   if (!tail.trim()) {
@@ -882,7 +902,7 @@ export function ParticipatingInstructorFullpageView({
                   </div>
                 ) : (
                   <Table<InstructorAssignedSchoolRow>
-                    className="participating-institutions-section__table"
+                    className="participating-institutions-section__table cms-data-table"
                     rowKey="id"
                     size="middle"
                     pagination={false}
@@ -934,7 +954,7 @@ export function ParticipatingInstructorFullpageView({
               </div>
               <div className="participating-institutions-section__table-wrap">
                 <Table<InstructorWaitingSchoolRow>
-                  className="participating-institutions-section__table"
+                  className="participating-institutions-section__table cms-data-table"
                   rowKey="id"
                   size="middle"
                   pagination={false}

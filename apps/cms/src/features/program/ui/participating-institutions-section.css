@@ -258,48 +258,6 @@
   width: 100%;
 }
 
-.participating-institutions-section__table {
-  min-width: 0;
-}
-
-/* 컬럼 너비 고정 → 화면 넘어가면 가로 스크롤 (컬럼 압축·헤더 두 줄 방지) */
-.participating-institutions-section__table table.ant-table {
-  table-layout: fixed;
-}
-
-/* thead 컬럼 한 줄 유지 (두 줄 처리 방지) */
-.participating-institutions-section__table .ant-table-thead .ant-table-cell {
-  white-space: nowrap;
-}
-
-/* th 텍스트 스펙 */
-.participating-institutions-section__table .ant-table-thead > tr > th {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-  white-space: nowrap;
-}
-
-/* td 텍스트 스펙 */
-.participating-institutions-section__table .ant-table-tbody > tr > td {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-/* 컬럼 내용 한 줄 유지(강의 회차 셀 제외), 스크롤로 전체 확인 */
-.participating-institutions-section__table .ant-table-tbody > tr > td {
-  white-space: nowrap;
-}
-
 /* 강의 회차 td: 셀 내 줄바꿈 없음. 회차별 한 줄, 영역은 텍스트 길이만큼(480px). 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
 .participating-institutions-section__table
   .ant-table-tbody

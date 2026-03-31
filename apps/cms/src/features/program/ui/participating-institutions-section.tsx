@@ -540,7 +540,7 @@ export function ParticipatingInstitutionsSection({
         {viewMode === 'list' ? (
           <div className="participating-institutions-section__table-wrap">
             <Table<ParticipatingSchoolRow>
-              className="participating-institutions-section__table participating-institutions-section__table--clickable"
+              className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}

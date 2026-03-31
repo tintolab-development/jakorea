@@ -231,11 +231,16 @@ function enrichApplicationForMemberDetail(app: Application, userId: string): App
   const attended = hash(`${app.id}-${userId}`) % (totalRounds + 1)
   const lectureAttendance = `${attended}/${totalRounds}`
   const hasAssignmentSubmission = hash(`${app.id}-${userId}-sub`) % 2 === 0
-  const managerName = MOCK_MANAGER_NAMES[hash(app.programId) % MOCK_MANAGER_NAMES.length]
+  const hasLectureReportSubmission =
+    app.hasLectureReportSubmission ?? hash(`${app.id}-${userId}-lec`) % 3 !== 0
+  const managerName =
+    app.managerName?.trim() ||
+    MOCK_MANAGER_NAMES[hash(app.programId) % MOCK_MANAGER_NAMES.length]
   return {
     ...app,
     lectureAttendance,
     hasAssignmentSubmission,
+    hasLectureReportSubmission,
     managerName,
   }
 }

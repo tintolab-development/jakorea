@@ -287,6 +287,8 @@ export interface Application {
   lectureAttendance?: string
   /** 회원 상세 탭: 과제 제출 내역 존재 여부 */
   hasAssignmentSubmission?: boolean
+  /** 회원 상세 > 프로그램 강의 이력: 강의보고서 제출 여부 (목업·API 연동용) */
+  hasLectureReportSubmission?: boolean
   /** 회원 상세 탭: 담당자명 (예: "이순신 매니저") */
   managerName?: string
   submittedAt: DateValue

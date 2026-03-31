@@ -97,6 +97,22 @@ function splitAddressAfterDong(address: string): { head: string; tail: string } 
   return { head: address.slice(0, end), tail: address.slice(end) }
 }
 
+/** 동 미매칭 시: 행정구(OO구)까지 노출, 그 이후 블러 */
+function splitAddressAfterGu(address: string): { head: string; tail: string } | null {
+  const re = /(?:^|\s)([가-힣]{1,12}구)(?=\s|$)/u
+  const m = address.match(re)
+  if (!m) return null
+  const gu = m[1]
+  const i = address.indexOf(gu)
+  if (i === -1) return null
+  const end = i + gu.length
+  return { head: address.slice(0, end), tail: address.slice(end) }
+}
+
+function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
+  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
+}
+
 /** 최종 학력 학교명: 접미사(대학교·고등학교 등)만 남기고 앞은 *** (예: 동서울대학교 → ***대학교) */
 function maskEducationSchoolName(name: string): string {
   const suffixes = [
@@ -122,9 +138,13 @@ function maskEducationSchoolName(name: string): string {
 function AddressDisplay({ address, mask }: { address: string; mask: boolean }) {
   if (!address) return <>-</>
   if (!mask) return <>{address}</>
-  const split = splitAddressAfterDong(address)
+  const split = splitAddressForPrivacyBlur(address)
   if (!split) {
-    return <>{MASKING_POLICY.address(address)}</>
+    return (
+      <span className="applicant-instructor-basic-info__address-blur" aria-hidden="true">
+        {address}
+      </span>
+    )
   }
   const { head, tail } = split
   if (!tail.trim()) {
@@ -144,15 +164,37 @@ export interface ApplicantInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
   /** true면 연락처·이메일·주소·정산 계좌 마스킹 (승인 완료가 아닐 때) */
   maskSensitive?: boolean
+  /** 승인 상태 행(프로그램 승인 현황) 표시 여부 */
+  showApprovalStatus?: boolean
+  /** 한 줄 소개 행 표시 여부 */
+  showOneLineIntro?: boolean
+  /** 승인 완료 하단 테이블(강의비/사업소득자) 표시 여부. 미지정 시 승인 완료일 때만 표시 */
+  showPostApprovalFields?: boolean
+  /** 회원 관리 강사 상세 등: 기본 정보 테이블 맨 아래 가입일·연동 소셜 행 */
+  memberBasicInfoFooter?: {
+    joinDate: string
+    linkedSocial: string
+  }
+  /**
+   * 승인 완료 등으로 신청 맥락 마스킹이 꺼져 있어도 주소만 읍·면·동 이후 블러 처리
+   * (개인정보 미공개 시 회원 상세 강사 탭)
+   */
+  privacyMaskAddress?: boolean
 }
 
 export function ApplicantInstructorBasicInfo({
   instructor,
   maskSensitive = true,
+  showApprovalStatus = true,
+  showOneLineIntro = true,
+  showPostApprovalFields,
+  memberBasicInfoFooter,
+  privacyMaskAddress = false,
 }: ApplicantInstructorBasicInfoProps) {
   const managerComment = instructor.managerComment
   const showManagerComment = instructor.approvalStatus === 'approved' && !!managerComment
   const mask = maskSensitive && instructor.approvalStatus !== 'approved'
+  const addressMask = mask || privacyMaskAddress
   const contactDisplay = instructor.contact
     ? mask
       ? MASKING_POLICY.phone(instructor.contact)
@@ -197,7 +239,7 @@ export function ApplicantInstructorBasicInfo({
       instructor.instructorName
     )
 
-  const showPostApprovalFields = instructor.approvalStatus === 'approved'
+  const shouldShowPostApprovalFields = showPostApprovalFields ?? instructor.approvalStatus === 'approved'
 
   return (
     <section className="applicant-instructor-basic-info">
@@ -235,12 +277,27 @@ export function ApplicantInstructorBasicInfo({
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                 {nameKoreanCell}
               </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                프로그램 승인 현황
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                <ProgramApprovalStatusValue instructor={instructor} />
-              </td>
+              {showApprovalStatus ? (
+                <>
+                  <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                    프로그램 승인 현황
+                  </td>
+                  <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+                    <ProgramApprovalStatusValue instructor={instructor} />
+                  </td>
+                </>
+              ) : (
+                <>
+                  <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                    정산 현황
+                  </td>
+                  <td
+                    className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value applicant-instructor-basic-info__cell--settlement-status"
+                  >
+                    {instructor.settlementStatusLabel?.trim() || '-'}
+                  </td>
+                </>
+              )}
             </tr>
             <tr>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
@@ -282,7 +339,7 @@ export function ApplicantInstructorBasicInfo({
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                 {instructor.address ? (
-                  <AddressDisplay address={instructor.address} mask={mask} />
+                  <AddressDisplay address={instructor.address} mask={addressMask} />
                 ) : (
                   '-'
                 )}
@@ -311,24 +368,45 @@ export function ApplicantInstructorBasicInfo({
                 <ProgramDetailTdSegmentWrap>{affiliationDisplay}</ProgramDetailTdSegmentWrap>
               </td>
             </tr>
-            <tr>
-              <td
-                colSpan={2}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-              >
-                한 줄 소개
-              </td>
-              <td
-                colSpan={3}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value applicant-instructor-basic-info__cell--one-line"
-              >
-                {instructor.oneLineIntro ?? '-'}
-              </td>
-            </tr>
+            {showOneLineIntro ? (
+              <tr>
+                <td
+                  colSpan={2}
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
+                >
+                  한 줄 소개
+                </td>
+                <td
+                  colSpan={3}
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value applicant-instructor-basic-info__cell--one-line"
+                >
+                  {instructor.oneLineIntro ?? '-'}
+                </td>
+              </tr>
+            ) : null}
+            {memberBasicInfoFooter ? (
+              <tr>
+                <td
+                  colSpan={2}
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
+                >
+                  가입일
+                </td>
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+                  {memberBasicInfoFooter.joinDate}
+                </td>
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                  연동된 소셜 계정
+                </td>
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+                  {memberBasicInfoFooter.linkedSocial}
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
-      {showPostApprovalFields ? (
+      {shouldShowPostApprovalFields ? (
         <div className="applicant-instructor-basic-info__table-wrap applicant-instructor-basic-info__post-approval-wrap">
           <table
             className="applicant-instructor-basic-info__table applicant-instructor-basic-info__table--post-approval"

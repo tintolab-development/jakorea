@@ -26,6 +26,7 @@
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  font-size: 15px;
 }
 
 .app-input .ant-input-affix-wrapper > input.ant-input {
@@ -35,4 +36,25 @@
 .app-input .ant-input-affix-wrapper:focus,
 .app-input .ant-input-affix-wrapper-focused {
   box-shadow: none !important;
+}
+
+/* 통일 필터 카드 등 */
+.app-input.app-input--filter {
+  height: var(--filter-control-height, 44px);
+  min-height: var(--filter-control-height, 44px);
+  border-radius: 8px;
+}
+
+.app-input.app-input--filter .ant-input,
+.app-input.app-input--filter .ant-input-affix-wrapper .ant-input {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.app-input.app-input--filter .ant-input::placeholder,
+.app-input.app-input--filter .ant-input-affix-wrapper .ant-input::placeholder {
+  font-size: 16px;
+  font-weight: 500;
+  color: #85969d;
 }

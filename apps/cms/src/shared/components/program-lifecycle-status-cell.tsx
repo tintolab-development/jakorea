@@ -55,7 +55,7 @@ export function ProgramLifecycleStatusCell({
     <StatusDropdownCell<ProgramLifecycleStatus>
       status={status ?? null}
       statusOptions={LIFECYCLE_STATUS_ORDER}
-      renderBadge={s => <ProgramLifecycleStatusBadge status={s} />}
+      renderBadge={s => <ProgramLifecycleStatusBadge status={s} variant="table" />}
       isItemDisabled={(cur, opt) => cur === opt}
       getItemClassName={opt =>
         DROPDOWN_GROUP_START_KEYS.has(opt) ? 'status-dropdown-cell__dropdown-group-start' : undefined

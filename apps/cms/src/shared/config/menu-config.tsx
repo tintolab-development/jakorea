@@ -9,9 +9,8 @@ import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
 import {
-  DEFAULT_MEMBER_LIST_KIND,
-  isMemberListKind,
   memberListHref,
+  normalizeMemberListKind,
 } from '@/shared/config/member-list-kinds'
 
 const svgStyle = { display: 'block' } as const
@@ -1135,10 +1134,8 @@ export function getBreadcrumbByPath(
     userRole === 'ADMIN' && n === '/users/list'
       ? memberListHref(
           (() => {
-            const raw = (
-              new URLSearchParams(search).get('kind') || DEFAULT_MEMBER_LIST_KIND
-            ).toLowerCase()
-            return isMemberListKind(raw) ? raw : DEFAULT_MEMBER_LIST_KIND
+            const raw = new URLSearchParams(search).get('kind')
+            return normalizeMemberListKind(raw)
           })()
         )
       : n

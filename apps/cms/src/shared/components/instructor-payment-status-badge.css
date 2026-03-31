@@ -1,0 +1,67 @@
+/**
+ * 강사 정산 현황 배지 (리스트·필터 등 공통)
+ */
+
+.instructor-payment-status-badge {
+  display: flex;
+  width: 140px;
+  padding: 6px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  border-radius: 4px;
+}
+
+/* 지급조서 확인 완료 */
+.instructor-payment-status-badge--payment-statement-verified {
+  color: var(--color-purple, #8457ce);
+  border: 1px solid rgba(132, 87, 206, 0.06);
+  background:
+    linear-gradient(0deg, rgba(132, 87, 206, 0.06) 0%, rgba(132, 87, 206, 0.06) 100%), #fff;
+}
+
+/* 신청 반려 */
+.instructor-payment-status-badge--application-rejected {
+  border: 1px solid rgba(70, 70, 70, 0.06);
+  background: #f2f3f5;
+  color: #464646;
+}
+
+/* 확인 대기 중 */
+.instructor-payment-status-badge--awaiting-confirmation {
+  border: 1px solid rgba(30, 140, 41, 0.06);
+  background: var(
+    --color-bg-green,
+    linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%),
+    #fff
+  );
+  color: var(--color-green, #1e8c29);
+}
+
+/* 지급 정정 요청 */
+.instructor-payment-status-badge--payment-correction-requested {
+  border: 1px solid rgba(195, 47, 74, 0.06);
+  background: #f9eaed;
+  color: #c32f4a;
+}
+
+/* 계좌 지급 완료 */
+.instructor-payment-status-badge--account-paid {
+  border: 1px solid rgba(1, 126, 175, 0.06);
+  background: #e6f2f7;
+  color: var(--color-blue, #017eaf);
+}
+
+/* 미분류 / 없음 */
+.instructor-payment-status-badge--none {
+  border: 1px solid rgba(107, 114, 128, 0.12);
+  background: #f9fafb;
+  color: #9ca3af;
+  font-weight: 500;
+}

@@ -181,10 +181,16 @@ function resolveApplicantHeaderItems(params: {
     ]
   }
   if (isApprovedInstructor) {
-    return [headerBtnCancelApproval(applicantId, onCancelApproval), headerBtnPrivacy(onRevealPersonalInfo)]
+    return [
+      headerBtnCancelApproval(applicantId, onCancelApproval),
+      headerBtnPrivacy(onRevealPersonalInfo),
+    ]
   }
   if (isRejectedInstructor || isRejectedInstitution) {
-    return [headerBtnCancelReject(applicantId, onCancelReject), headerBtnPrivacy(onRevealPersonalInfo)]
+    return [
+      headerBtnCancelReject(applicantId, onCancelReject),
+      headerBtnPrivacy(onRevealPersonalInfo),
+    ]
   }
   if (isInstitution || isInstructor) {
     return headerBtnsPendingParticipation(applicantId, onApprove, onReject, onRevealPersonalInfo)
@@ -366,10 +372,7 @@ export function ApplicantsDetailContents({
     if (!instructorData) return []
     const d = instructorData
     const assignedSchoolDisplay =
-      d.assignedSchoolName ||
-      d.preferredSchools?.[0]?.schoolName ||
-      d.schoolName ||
-      '-'
+      d.assignedSchoolName || d.preferredSchools?.[0]?.schoolName || d.schoolName || '-'
     const assignmentColumns: ColumnsType<{
       key: string
       schoolName: string
@@ -398,9 +401,7 @@ export function ApplicantsDetailContents({
           <div className="applicant-info-section applicant-info-section--instructor">
             <ApplicantInstructorBasicInfo
               instructor={d}
-              maskSensitive={
-                !personalInfoRevealed && d.approvalStatus !== 'approved'
-              }
+              maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
             />
             <ApplicantInstructorResume instructor={d} />
           </div>
@@ -425,7 +426,7 @@ export function ApplicantsDetailContents({
         key: 'settlement',
         label: INSTRUCTOR_DETAIL_TAB_LABELS.settlement,
         children: (
-          <div className="extra-tab-content applicant-contents__instructor-settlement-tab">
+          <div className="extra-tab-content applicant-contents__instructor-payment-tab">
             <p className="applicant-contents__tab-placeholder">
               정산 현황은 승인·배정 이후 연동됩니다.
             </p>

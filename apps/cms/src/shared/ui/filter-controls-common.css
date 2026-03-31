@@ -11,6 +11,8 @@
   --filter-control-height: 44px;
   --filter-control-min-width: 180px;
   --filter-label-height: 27px;
+  /** Ant Table rowSelection 체크박스 열 */
+  --table-selection-column-width: 60px;
 }
 
 @media (max-width: 1200px) {
@@ -36,6 +38,29 @@
 }
 
 /* 통일 필터 카드 (flex 컬럼 내에서는 min-width + 높이만 고정) */
+.unified-filter-card .app-select,
+.unified-filter-card .unified-filter-card__field .app-select,
+.unified-filter-card .labeled-search-input .app-input,
+.unified-filter-card .unified-filter-card__field .app-datepicker,
+.unified-filter-card .app-datepicker {
+  min-width: var(--filter-control-width);
+  width: 100%;
+  height: var(--filter-control-height) !important;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.unified-filter-card .app-select > .ant-select,
+.unified-filter-card .app-datepicker > .ant-picker,
+.unified-filter-card .app-datepicker > .ant-picker-range {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100% !important;
+}
+
 .unified-filter-card .ant-select,
 .unified-filter-card .unified-filter-card__field .ant-select {
   min-width: var(--filter-control-width);
@@ -61,25 +86,64 @@
   align-items: center !important;
 }
 
-.unified-filter-card .labeled-search-input__input,
-.unified-filter-card .ant-input-affix-wrapper {
-  min-width: var(--filter-control-width);
+/* LabeledSearchInput + AppInput: 래퍼 패딩 안에 맞추고 allowClear 아이콘이 박스 밖으로 나가지 않게 */
+.unified-filter-card .labeled-search-input {
+  max-width: none !important;
   width: 100%;
-  height: var(--filter-control-height) !important;
-  min-height: var(--filter-control-height) !important;
+  min-width: 0;
 }
 
-.unified-filter-card .labeled-search-input__input .ant-input {
+.unified-filter-card .labeled-search-input .app-input {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #c4cdd1 !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow: none !important;
+}
+
+/* Ant Input borderless/underlined 내부 장식 제거 — 박스는 span.app-input 테두리만 사용 */
+.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper,
+.unified-filter-card .labeled-search-input .app-input .ant-input {
+  box-shadow: none !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper::before,
+.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper::after {
+  display: none !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: var(--filter-control-height) !important;
+  min-height: var(--filter-control-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  box-sizing: border-box !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper .ant-input {
   height: 100% !important;
   min-height: 0 !important;
   line-height: 1 !important;
-  /* Ant Design Input 기본 패딩 11px — 오버라이드 예외 */
-  padding: 0 11px !important;
+  padding: 0 !important;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.unified-filter-card .labeled-search-input__input.ant-input-affix-wrapper {
-  display: inline-flex !important;
-  align-items: center !important;
+.unified-filter-card .labeled-search-input .app-input .ant-input-clear-icon {
+  flex-shrink: 0;
+  margin-inline-end: 0;
+}
+
+/* prefix 없음(filter 검색): borderless 단일 input — 가로 패딩은 span.app-input(14px/16px)에서만 */
+.unified-filter-card .labeled-search-input .app-input > .ant-input:not(.ant-input-affix-wrapper) {
+  height: var(--filter-control-height) !important;
+  line-height: 1 !important;
+  padding: 0 !important;
 }
 
 /* 통일 필터 카드 - 운영기간 등 DatePicker / RangePicker */
@@ -344,13 +408,18 @@
   justify-content: center;
 }
 
-.member-table-card .user-list-table .ant-table-thead > tr > th {
-  border-right: 1px solid var(--color-bg-base);
-  border-bottom: 1px solid var(--color-bg-base);
+.member-table-card .user-list-table .ant-table-thead > tr > th.ant-table-cell {
+  border-right: 1px solid var(--color-border-light) !important;
+  border-bottom: 1px solid var(--color-border-light) !important;
 }
 
-.member-table-card .user-list-table .ant-table-thead > tr > th:last-child {
-  border-right: none;
+.member-table-card .user-list-table .ant-table-thead > tr > th.ant-table-cell:last-child {
+  border-right: none !important;
+}
+
+/* Ant Design Table: th::before 구분선 + border-right 이중선 방지 */
+.member-table-card .user-list-table .ant-table-thead > tr > th.ant-table-cell::before {
+  display: none !important;
 }
 
 .member-table-card .user-list-table .ant-table-tbody > tr > td {
@@ -389,9 +458,17 @@
   }
 
   .unified-filter-card .labeled-search-input__input,
-  .unified-filter-card .ant-input-affix-wrapper,
+  .unified-filter-card .labeled-search-input .app-input,
+  .unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper,
   .program-progress-tab__filters .labeled-search-input__input,
   .list-page-filters .labeled-search-input__input {
+    width: 100% !important;
+    min-width: var(--filter-control-min-width);
+  }
+
+  .unified-filter-card .app-select,
+  .unified-filter-card .app-datepicker,
+  .unified-filter-card .labeled-search-input .app-input {
     width: 100% !important;
     min-width: var(--filter-control-min-width);
   }

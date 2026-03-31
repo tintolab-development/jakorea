@@ -14,10 +14,7 @@ import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
 import { getRoleLabel, AppBreadcrumb, LogoutIcon } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import {
-  DEFAULT_MEMBER_LIST_KIND,
-  isMemberListKind,
-} from '@/shared/config/member-list-kinds'
+import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
 import type { Notification } from '@/features/dashboard/api/notification-service'
 import { NotificationDropdown } from '@/features/dashboard/ui/notification-dropdown'
@@ -61,13 +58,11 @@ export function MainHeader() {
 
     // 관리자: 회원 목록 통합 `/users/list?kind=…`
     if (user?.role === 'ADMIN' && location.pathname === '/users/list') {
-      const raw = (
-        new URLSearchParams(location.search).get('kind') || DEFAULT_MEMBER_LIST_KIND
-      ).toLowerCase()
-      const kind = isMemberListKind(raw) ? raw : DEFAULT_MEMBER_LIST_KIND
+      const kind = normalizeMemberListKind(new URLSearchParams(location.search).get('kind'))
       if (kind === 'institutions') return '학교(교사) 회원 관리'
       if (kind === 'instructors') return '강사 회원 관리'
       if (kind === 'admins') return '관리자 회원 관리'
+      if (kind === 'individual') return '개인 회원 관리'
       return '전체 회원 관리'
     }
 

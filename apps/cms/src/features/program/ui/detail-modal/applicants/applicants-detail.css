@@ -66,9 +66,9 @@
   box-sizing: border-box;
 }
 
-/* 테이블 영역 */
+/* 테이블 영역 — 좌우는 공통 .detail-fullpage-modal__content 패딩 사용 */
 .applicant-details__below-divider {
-  padding: 0 24px 24px 42px;
+  padding: 0 0 24px;
 }
 
 .applicant-details__table-header {
@@ -122,15 +122,15 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* 체크박스 열: 49×49 셀 크기 고정 */
+/* 체크박스 열: 너비 60px 고정, 행 높이는 시안 49px 유지 */
 .applicant-details__table col.ant-table-selection-col {
-  width: 49px !important;
-  min-width: 49px !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
 }
 .applicant-details__table .ant-table-thead > tr > th.ant-table-selection-column {
-  width: 49px !important;
-  min-width: 49px !important;
-  max-width: 49px !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
   height: 49px !important;
   min-height: 49px !important;
   padding: 0 !important;
@@ -139,55 +139,14 @@
   box-sizing: border-box !important;
 }
 .applicant-details__table .ant-table-tbody > tr > td.ant-table-selection-column {
-  width: 49px !important;
-  min-width: 49px !important;
-  max-width: 49px !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
   min-height: 49px !important;
   padding: 0 !important;
   text-align: center !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
-}
-
-/* 프로그램 진행 현황(참여 기관) 테이블과 동일: 고정 레이아웃, 가로 스크롤로 컬럼 한 줄 유지 */
-.applicant-details__table {
-  min-width: 0;
-}
-
-.applicant-details__table table.ant-table {
-  table-layout: fixed;
-}
-
-/* thead 컬럼 한 줄 유지 */
-.applicant-details__table .ant-table-thead .ant-table-cell {
-  white-space: nowrap;
-}
-
-/* th 텍스트 스펙 (participating-institutions-section과 동일) */
-.applicant-details__table .ant-table-thead > tr > th {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-  white-space: nowrap;
-}
-
-/* td 텍스트 스펙 */
-.applicant-details__table .ant-table-tbody > tr > td {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.applicant-details__table .ant-table-body {
-  overflow-y: auto !important;
 }
 
 .applicant-details__divider-wrapper {
@@ -197,11 +156,6 @@
 .applicant-details__table--clickable .ant-table-row {
   cursor: pointer;
   transition: background 0.3s;
-}
-
-/* 컬럼 내용 한 줄 유지(강의 회차 셀 제외), 스크롤로 전체 확인 — 참여 기관 테이블과 동일 */
-.applicant-details__table .ant-table-tbody > tr > td {
-  white-space: nowrap;
 }
 
 .applicant-details__table--clickable .ant-table-tbody > tr {

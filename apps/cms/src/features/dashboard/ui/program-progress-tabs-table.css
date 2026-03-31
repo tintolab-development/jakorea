@@ -120,45 +120,7 @@
     display: none;
 }
 
+/* 테이블 본문: shared/cms-data-table.css — .cms-data-table--widget */
 .program-progress-tabs-table__table {
     margin-top: 0;
-}
-
-.program-progress-tabs-table__table .ant-table {
-    table-layout: fixed;
-}
-
-.program-progress-tabs-table__table .ant-table-cell {
-    vertical-align: middle;
-    text-align: center;
-}
-
-.program-progress-tabs-table__table .ant-table-tbody>tr>td {
-    text-align: center;
-}
-
-.program-progress-tabs-table__table .ant-table-thead>tr>th,
-.program-progress-tabs-table__table .ant-table-tbody>tr>td {
-    border-right: 1px solid var(--color-border-light);
-}
-
-.program-progress-tabs-table__table .ant-table-thead>tr>th:last-child,
-.program-progress-tabs-table__table .ant-table-tbody>tr>td:last-child {
-    border-right: none;
-}
-
-.program-progress-tabs-table__table .ant-table-thead>tr>th {
-    font-size: 14px;
-    font-weight: 700;
-    text-align: center;
-    border-bottom: 1px solid var(--color-border-light);
-    background: #edf0f2;
-}
-
-.program-progress-tabs-table__table .ant-table-tbody>tr>td {
-    border-bottom: 1px solid var(--color-border-light);
-}
-
-.program-progress-tabs-table__table .ant-table-tbody>tr:last-child>td {
-    border-bottom: none;
 }

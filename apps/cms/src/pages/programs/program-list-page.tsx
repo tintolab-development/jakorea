@@ -262,6 +262,54 @@ export function ProgramListPage() {
     setSearchParams(nextParams, { replace: true })
   }
 
+  const programListHeader = (
+    <>
+      {viewMode === 'list' && (
+        <div className="program-list-page__divider-wrapper">
+          <Divider />
+        </div>
+      )}
+      {isAdmin && (programType === 'education' || programType === 'economy') && (
+        <div className="program-list-page__filter-info">
+          <div className="program-list-page__filter-info-texts">
+            <div className="program-list-page__filter-info-title">{headerTitle}</div>
+            {displayCount !== null && (
+              <div className="program-list-page__filter-info-count">
+                총 {displayCount.toLocaleString()}건
+              </div>
+            )}
+          </div>
+          <div className="program-list-page__widget-header-actions">
+            {isScheduledFilter && (
+              <AppButton
+                variant="cancel"
+                size="filter"
+                onClick={handleBulkDeleteClick}
+                disabled={selectedRowKeys.length === 0}
+                className="program-list-page__bulk-delete-button"
+              >
+                선택 삭제
+              </AppButton>
+            )}
+            <AppButton
+              variant="cancel"
+              size="filter-wide"
+              icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+              onClick={handleViewModeToggle}
+            >
+              {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
+            </AppButton>
+            {showEducationActions && (
+              <AppButton variant="primary" size="filter-wide" onClick={() => openFormModal()}>
+                프로그램 신규 등록
+              </AppButton>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+
   return (
     <div>
       {/* 위젯 영역 */}
@@ -335,49 +383,7 @@ export function ProgramListPage() {
               : (statusFilter as ProgramLifecycleStatus | null)
         }
       >
-        {viewMode === 'list' && (
-          <div className="program-list-page__divider-wrapper">
-            <Divider />
-          </div>
-        )}
-        {isAdmin && (programType === 'education' || programType === 'economy') && (
-          <div className="program-list-page__filter-info">
-            <div className="program-list-page__filter-info-texts">
-              <div className="program-list-page__filter-info-title">{headerTitle}</div>
-              {displayCount !== null && (
-                <div className="program-list-page__filter-info-count">
-                  총 {displayCount.toLocaleString()}건
-                </div>
-              )}
-            </div>
-            <div className="program-list-page__widget-header-actions">
-              {isScheduledFilter && (
-                <AppButton
-                  variant="cancel"
-                  size="filter"
-                  onClick={handleBulkDeleteClick}
-                  disabled={selectedRowKeys.length === 0}
-                  className="program-list-page__bulk-delete-button"
-                >
-                  선택 삭제
-                </AppButton>
-              )}
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
-                icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
-                onClick={handleViewModeToggle}
-              >
-                {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-              </AppButton>
-              {showEducationActions && (
-                <AppButton variant="primary" size="filter-wide" onClick={() => openFormModal()}>
-                  프로그램 신규 등록
-                </AppButton>
-              )}
-            </div>
-          </div>
-        )}
+        {programListHeader}
       </ProgramList>
 
       <ProgramListModals

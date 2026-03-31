@@ -63,6 +63,16 @@
     line-height: 1.5 !important;
 }
 
+/* LabeledSearchInput: 테두리는 내부 affix에만 (AppInput 래퍼는 투명) */
+.program-managers-tab__filter-grow .labeled-search-input .app-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
 .program-managers-tab__filter-grow .labeled-search-input__input.ant-input-affix-wrapper {
     flex: 1 1 0;
     min-width: 0;

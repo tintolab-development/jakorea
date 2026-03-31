@@ -988,7 +988,7 @@ export function ApplicantDetails({
                     columns={columns as ColumnsType<ApplicantSchoolRow | ApplicantInstructorRow>}
                     dataSource={tableData}
                     size="middle"
-                    className="applicant-details__table applicant-details__table--clickable"
+                    className="applicant-details__table cms-data-table applicant-details__table--clickable"
                     onRow={record => ({
                       onClick: e => {
                         const target = e.target as HTMLElement

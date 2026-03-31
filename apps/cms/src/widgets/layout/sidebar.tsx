@@ -5,11 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
-import {
-  isMemberListKind,
-  memberListHref,
-  DEFAULT_MEMBER_LIST_KIND,
-} from '@/shared/config/member-list-kinds'
+import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import './sidebar.css'
 import { Header } from './header'
 
@@ -94,10 +90,7 @@ export function Sidebar() {
     const path = location.pathname
 
     if (user?.role === 'ADMIN' && path === '/users/list') {
-      const raw = (
-        new URLSearchParams(location.search).get('kind') || DEFAULT_MEMBER_LIST_KIND
-      ).toLowerCase()
-      const kind = isMemberListKind(raw) ? raw : DEFAULT_MEMBER_LIST_KIND
+      const kind = normalizeMemberListKind(new URLSearchParams(location.search).get('kind'))
       return [memberListHref(kind)]
     }
 

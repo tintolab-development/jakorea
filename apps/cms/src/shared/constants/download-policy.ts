@@ -30,11 +30,28 @@ export const DOWNLOAD_LIMITS = {
  */
 export const MASKING_POLICY = {
   /**
-   * 전화번호 마스킹: 010-****-1234
+   * 전화번호 마스킹: 가운데 국 번호·일련번호 구간을 `*` 처리
+   * - 휴대폰 010-****-1234
+   * - 유선 02-****-5678, 02-***-4567, 지역 031-***-4567 등
    */
   phone: (value: string): string => {
     if (!value) return value
-    return value.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3')
+    const v = value.trim()
+
+    const hyphenRules: Array<[RegExp, string]> = [
+      [/^(\d{3})-(\d{4})-(\d{4})$/, '$1-****-$3'],
+      [/^(\d{2})-(\d{4})-(\d{4})$/, '$1-****-$3'],
+      [/^(\d{2})-(\d{3})-(\d{4})$/, '$1-***-$3'],
+      [/^(\d{3})-(\d{3})-(\d{4})$/, '$1-***-$3'],
+    ]
+    for (const [re, repl] of hyphenRules) {
+      if (re.test(v)) return v.replace(re, repl)
+    }
+
+    const looseMobile = v.replace(/^(\d{3})-?(\d{4})-?(\d{4})$/, '$1-****-$3')
+    if (looseMobile !== v) return looseMobile
+
+    return v.replace(/(\d{3})-?(\d{4})-?(\d{4})/, '$1-****-$3')
   },
 
   /**
