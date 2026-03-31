@@ -1,0 +1,248 @@
+/* 신청 기관 화면 전체 가로 스크롤 방지: 컨테이너를 부모 너비로 제한, 테이블만 래퍼 내에서 가로 스크롤 */
+.applicant-details {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
+/* 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
+.applicant-details .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 */
+.applicant-details
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+/* 선택된 태그 오버레이(트리거) 152px 고정 */
+.applicant-details .status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 152px !important;
+  min-width: 152px !important;
+  max-width: 152px !important;
+}
+
+/* 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
+.applicant-details .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+/* 해당 셀 padding 0 — vertical shifting 방지, 152px 트리거가 셀 밖으로 넘지 않도록 */
+.applicant-details
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 캘린더 뷰: 풀페이지 메인 안에서 가로 100%·flex 축소 시에도 비율 유지 */
+.applicant-calendar-view-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 테이블 영역 — 좌우는 공통 .detail-fullpage-modal__content 패딩 사용 */
+.applicant-details__below-divider {
+  padding: 0 0 24px;
+}
+
+.applicant-details__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-16, 16px);
+  margin-bottom: var(--spacing-16, 16px);
+}
+
+.applicant-details__table-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-8, 8px);
+}
+
+.applicant-details__table-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--default-BK);
+}
+
+.applicant-details__table-description {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+}
+
+.applicant-details__table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  flex-shrink: 0;
+}
+
+.applicant-details__table-actions .app-button {
+  border-radius: 8px !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* 테이블 가로 스크롤 */
+.applicant-details__table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 체크박스 열: 너비 60px 고정, 행 높이는 시안 49px 유지 */
+.applicant-details__table col.ant-table-selection-col {
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+}
+.applicant-details__table .ant-table-thead > tr > th.ant-table-selection-column {
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
+  height: 49px !important;
+  min-height: 49px !important;
+  padding: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+.applicant-details__table .ant-table-tbody > tr > td.ant-table-selection-column {
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
+  min-height: 49px !important;
+  padding: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+
+.applicant-details__divider-wrapper {
+  padding: 12px 32px 32px 42px;
+}
+
+.applicant-details__table--clickable .ant-table-row {
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.applicant-details__table--clickable .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+/* 강의 회차 td: 좌우 24px·상하 10px 패딩 명시, 텍스트가 셀 밖으로 나가지 않도록 */
+.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
+  width: 520px;
+  min-width: 520px;
+  white-space: normal;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  vertical-align: top;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.applicant-details__sessions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  line-height: 150%;
+  overflow: hidden;
+}
+
+/* 강의 회차 라인: 회차별 한 줄 처리, 셀 내 줄바꿈 없음 */
+.applicant-details__session-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.applicant-details__session-round-tag {
+  display: inline-flex;
+  width: 47px;
+  height: 26px;
+  padding: 3px 8px 2px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  flex-shrink: 0;
+}
+
+.applicant-details__session-divider {
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.applicant-details__session-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  margin-top: 0;
+}

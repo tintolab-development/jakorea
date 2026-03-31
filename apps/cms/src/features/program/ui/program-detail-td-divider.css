@@ -1,0 +1,23 @@
+/**
+ * 프로그램 상세·강사 기본정보 등 테이블 td 내부 세로 구분 (1×13, default-BK 50%, 양옆 12px)
+ */
+.program-detail-td-divider {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-self: center;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+  margin: 0 12px;
+}
+
+.program-detail-td-segment-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}

@@ -1,0 +1,28 @@
+/**
+ * 회원 상세 공통 — 섹션 제목 + 캡션 (기본 정보 / 정보 제공 동의 등)
+ */
+.user-detail-section__head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: var(--spacing-12, 12px);
+}
+
+.user-detail-section__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+.user-detail-section__caption {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+}

@@ -21,15 +21,10 @@ import {
   ProfileOutlined,
   FileOutlined,
   HeartOutlined,
-  BarChartOutlined,
-  AuditOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
-import {
-  SHORTCUT_ITEMS,
-  useDashboardSettingsStore,
-} from '../model/dashboard-settings-store'
+import { SHORTCUT_ITEMS, useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
@@ -53,8 +48,6 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
   'program-forms': <ProfileOutlined />,
   'file-forms': <FileOutlined />,
   sponsors: <HeartOutlined />,
-  performance: <BarChartOutlined />,
-  'audit-log': <AuditOutlined />,
 }
 
 export function MenuShortcutWidget() {
@@ -75,35 +68,32 @@ export function MenuShortcutWidget() {
           <span className="widget-card-title">메뉴 바로가기</span>
         </WidgetTitleWithHandle>
       }
-      bodyStyle={{ paddingBottom: 20 }}
     >
       <div className="menu-shortcut-widget__body">
         <div className="menu-shortcut-widget__grid">
-        {visibleItems.map(item => {
-          const count = badgeCounts[item.id] ?? 0
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className="menu-shortcut-widget__item"
-              onClick={() => {
-                setShortcutBadgeCount(item.id, 0)
-                navigate(item.path)
-              }}
-            >
-              <span className="menu-shortcut-widget__item-left">
-                <span className="menu-shortcut-widget__icon">
-                  {SHORTCUT_ICON_MAP[item.id]}
+          {visibleItems.map(item => {
+            const count = badgeCounts[item.id] ?? 0
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="menu-shortcut-widget__item"
+                onClick={() => {
+                  setShortcutBadgeCount(item.id, 0)
+                  navigate(item.path)
+                }}
+              >
+                <span className="menu-shortcut-widget__item-left">
+                  <span className="menu-shortcut-widget__icon">{SHORTCUT_ICON_MAP[item.id]}</span>
+                  <span className="menu-shortcut-widget__label">{item.label}</span>
                 </span>
-                <span className="menu-shortcut-widget__label">{item.label}</span>
-              </span>
-              {count > 0 && (
-                <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+                {count > 0 && (
+                  <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </Card>
   )

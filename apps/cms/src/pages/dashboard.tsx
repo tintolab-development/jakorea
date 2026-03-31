@@ -9,16 +9,8 @@
 import { useMemo, useCallback, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Row, message } from 'antd'
-import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-} from '@dnd-kit/core'
-import {
-  SortableContext,
-  rectSortingStrategy,
-  type SortingStrategy,
-} from '@dnd-kit/sortable'
+import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core'
+import { SortableContext, rectSortingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
 import { isWidgetResizable } from '@/shared/config/dashboard-config'
@@ -27,7 +19,6 @@ import { mockInstructors } from '@/data/mock'
 import {
   useDashboardData,
   useDashboardLayout,
-  useDashboardWidgetOrderStore,
   SortableWidgetSlot,
   DashboardSettingsModal,
   DashboardToolbar,
@@ -38,7 +29,7 @@ import {
   getSlotHeight,
 } from '@/features/dashboard'
 import './dashboard.css'
-import '@/features/widget-editor/ui/widget-card.css'
+import '@/features/dashboard/ui/widget-card.css'
 
 /** rectSortingStrategy에서 scaleX/scaleY를 항상 1로 고정 — 위젯 크기 변형 없이 위치만 이동 */
 const noScaleRectSortingStrategy: SortingStrategy = args => {
@@ -65,15 +56,15 @@ export function Dashboard() {
   const isInstructorOrIndividual =
     (user?.role === 'INSTRUCTOR' || user?.role === 'INDIVIDUAL') && !!user?.instructorId
 
-  const { data: overallStatistics, loading: statisticsLoading } =
-    useOverallStatistics(!!isAdmin)
-  const { data: instructorActivity, loading: instructorActivityLoading } =
-    useInstructorActivity(!!isInstructorOrIndividual, user?.instructorId)
+  const { data: overallStatistics, loading: statisticsLoading } = useOverallStatistics(!!isAdmin)
+  const { data: instructorActivity, loading: instructorActivityLoading } = useInstructorActivity(
+    !!isInstructorOrIndividual,
+    user?.instructorId
+  )
 
   const {
     displayOrder,
     displayItemsMeta,
-    defaultIds,
     roleWidths,
     setOrderedIds,
     setWidgetWidth,
@@ -83,15 +74,6 @@ export function Dashboard() {
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-  const resetLayoutForRole = useDashboardWidgetOrderStore(s => s.resetLayoutForRole)
-
-  const handleResetLayout = useCallback(() => {
-    if (user?.role) {
-      resetLayoutForRole(user.role, defaultIds)
-      message.success('기본 레이아웃으로 되돌렸습니다.')
-      setSettingsModalOpen(false)
-    }
-  }, [user?.role, defaultIds, resetLayoutForRole])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -101,26 +83,20 @@ export function Dashboard() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  const {
-    activeId,
-    sensors,
-    handleDragStart,
-    handleDragMove,
-    handleDragEnd,
-    handleDragCancel,
-  } = useDashboardDnd({
-    orderedIds: displayOrder,
-    setOrderedIds,
-    userRole: user?.role ?? null,
-    roleWidths: roleWidths as Record<string, 12 | 24>,
-    displayItemsMeta,
-    setWidgetWidth,
-    getSlotRects,
-    onLayoutSaved: () => message.success('위젯 위치가 저장되었습니다.'),
-  })
+  const { activeId, sensors, handleDragStart, handleDragMove, handleDragEnd, handleDragCancel } =
+    useDashboardDnd({
+      orderedIds: displayOrder,
+      setOrderedIds,
+      userRole: user?.role ?? null,
+      roleWidths: roleWidths as Record<string, 12 | 24>,
+      displayItemsMeta,
+      setWidgetWidth,
+      getSlotRects,
+      onLayoutSaved: () => message.success('위젯 위치가 저장되었습니다.'),
+    })
 
   const handleInstructorCardClick = useCallback(() => {
-    navigate('/instructors')
+    navigate('/users/list?kind=instructors')
   }, [navigate])
 
   const widgetRendererProps = useMemo(
@@ -156,7 +132,6 @@ export function Dashboard() {
       <DashboardSettingsModal
         open={settingsModalOpen}
         onCancel={() => setSettingsModalOpen(false)}
-        onResetLayout={handleResetLayout}
       />
 
       <DndContext
@@ -174,34 +149,31 @@ export function Dashboard() {
             data-dragging={activeId ? 'true' : undefined}
           >
             <Row gutter={[16, 20]} align="stretch">
-            {displayOrder.flatMap((id: string) => {
-              const meta = displayItemsMeta.find((m) => m.id === id)
-              if (!meta) return []
+              {displayOrder.flatMap((id: string) => {
+                const meta = displayItemsMeta.find(m => m.id === id)
+                if (!meta) return []
 
-              const effectiveColSpan =
-                (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
-              const slotHeight = getSlotHeight(id, effectiveColSpan, meta)
+                const effectiveColSpan =
+                  (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
+                const slotHeight = getSlotHeight(id, effectiveColSpan, meta)
 
-              return [
-                <SortableWidgetSlot
-                  key={id}
-                  id={id}
-                  colSpan={effectiveColSpan}
-                  hasBuiltInHandle={meta.hasBuiltInHandle}
-                  height={slotHeight}
-                  onResizeWidth={
-                    user?.role && isWidgetResizable(id)
-                      ? (newColSpan) => setWidgetWidth(user.role, id, newColSpan)
-                      : undefined
-                  }
-                >
-                  <DashboardWidgetRenderer
-                    widgetType={id}
-                    {...widgetRendererProps}
-                  />
-                </SortableWidgetSlot>,
-              ]
-            })}
+                return [
+                  <SortableWidgetSlot
+                    key={id}
+                    id={id}
+                    colSpan={effectiveColSpan}
+                    hasBuiltInHandle={meta.hasBuiltInHandle}
+                    height={slotHeight}
+                    onResizeWidth={
+                      user?.role && isWidgetResizable(id)
+                        ? newColSpan => setWidgetWidth(user.role, id, newColSpan)
+                        : undefined
+                    }
+                  >
+                    <DashboardWidgetRenderer widgetType={id} {...widgetRendererProps} />
+                  </SortableWidgetSlot>,
+                ]
+              })}
             </Row>
           </div>
         </SortableContext>
@@ -218,10 +190,7 @@ export function Dashboard() {
         >
           {activeId ? (
             <div className="dashboard-widget-drag-overlay">
-              <DashboardWidgetRenderer
-                widgetType={activeId}
-                {...widgetRendererProps}
-              />
+              <DashboardWidgetRenderer widgetType={activeId} {...widgetRendererProps} />
             </div>
           ) : null}
         </DragOverlay>

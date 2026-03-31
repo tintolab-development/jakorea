@@ -6,7 +6,7 @@
  * - size="large"(width 1400) 시 모달 전체 최대 높이 840px, 바디만 스크롤
  */
 
-import { useId } from 'react'
+import { useId, type ReactNode } from 'react'
 import { Modal } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import './teal-header-modal.css'
@@ -15,6 +15,8 @@ export interface TealHeaderModalProps {
   open: boolean
   onCancel: () => void
   title: string
+  /** 타이틀 문자열 앞에 노출 (예: 항목 아이콘) */
+  titlePrefix?: ReactNode
   children: React.ReactNode
   footer?: React.ReactNode
   /** 헤더 우측에 X 버튼 앞에 노출할 추가 내용 (예: 닫기 버튼) */
@@ -29,6 +31,8 @@ export interface TealHeaderModalProps {
   hideHeader?: boolean
   /** 닫기 버튼 커스텀 아이콘 (미지정 시 CloseOutlined) */
   closeIcon?: React.ReactNode
+  /** 다른 모달 위에 겹칠 때 스택 순서 (예: 산출 내역서 위 확인 모달) */
+  zIndex?: number
 }
 
 const SIZE_WIDTH = { default: 800, large: 1400, full: undefined }
@@ -37,6 +41,7 @@ export function TealHeaderModal({
   open,
   onCancel,
   title,
+  titlePrefix,
   children,
   footer,
   headerExtra,
@@ -45,6 +50,7 @@ export function TealHeaderModal({
   className: classNameProp,
   hideHeader = false,
   closeIcon,
+  zIndex,
 }: TealHeaderModalProps) {
   const width = widthProp ?? SIZE_WIDTH[size]
   const bodyScrollable = size === 'large' || size === 'full'
@@ -72,11 +78,15 @@ export function TealHeaderModal({
       destroyOnClose
       maskClosable
       centered={!isFull}
+      zIndex={zIndex}
     >
       {!hideHeader && (
         <div className="teal-header-modal__header">
           <h2 id={titleId} className="teal-header-modal__title">
-            {title}
+            {titlePrefix != null ? (
+              <span className="teal-header-modal__title-prefix">{titlePrefix}</span>
+            ) : null}
+            <span className="teal-header-modal__title-text">{title}</span>
           </h2>
           <div className="teal-header-modal__header-actions">
             {headerExtra}

@@ -39,19 +39,20 @@ export function useDashboardLayout({
 }: UseDashboardLayoutParams): UseDashboardLayoutResult {
   const rowRef = useRef<HTMLDivElement | null>(null)
 
-  const widgets = useMemo(
-    () => getDashboardWidgetsByRole(userRole),
-    [userRole]
-  )
+  const widgets = useMemo(() => getDashboardWidgetsByRole(userRole), [userRole])
   const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
   const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
 
   const orderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) =>
     s.getOrderedIds(userRole, defaultIds)
   )
-  const setOrderedIdsRaw = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setOrderedIds)
+  const setOrderedIdsRaw = useDashboardWidgetOrderStore(
+    (s: DashboardWidgetOrderState) => s.setOrderedIds
+  )
   const widthByRole = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.widthByRole)
-  const setWidgetWidth = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.setWidgetWidth)
+  const setWidgetWidth = useDashboardWidgetOrderStore(
+    (s: DashboardWidgetOrderState) => s.setWidgetWidth
+  )
   const roleWidths = (widthByRole[userRole ?? ''] ?? {}) as Record<string, 12 | 24>
 
   const getColSpanForId = useCallback(

@@ -155,7 +155,8 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
     const d = new Date(2026, 0, 9 + dayOffset)
     const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-    const status = SESSION_STATUSES[(rowIndex + s) % 3]
+    /** +1 오프셋: rowIndex 0 등 단일 회차 학교도 pending/not_planned가 섞이도록(강사 배정일 태그 선택 가능 목데이터) */
+    const status = SESSION_STATUSES[(rowIndex + s + 1) % 3]
     sessions.push({
       round: s + 1,
       date: dateStr,
@@ -170,7 +171,7 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   return sessions
 }
 
-/** 3월 12일 한 날에 4개 학교 일정 추가 (월간 캘린더 "외 n개의 일정" 노출용) */
+/** 3월 12일 한 날에 처음 4개 학교에 일정 1건 추가 (월간 캘린더 "외 n개의 일정" 노출용) */
 function addMarchMultiDaySessions(
   sessions: ParticipatingSchoolSession[],
   rowIndex: number,
@@ -179,13 +180,27 @@ function addMarchMultiDaySessions(
   if (!marchDaySchools.includes(rowIndex)) return sessions
   const d = new Date(2026, 2, 12)
   const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
-  const extra: ParticipatingSchoolSession[] = [
-    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '오프라인', classNum: '1', timeRange: '9:20~10:10', status: 'pending' },
-    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '온라인', classNum: '2', timeRange: '10:20~11:10', status: 'pending' },
-    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '오프라인', classNum: '3', timeRange: '11:20~12:10', status: 'pending' },
-    { round: 99, date: MARCH_MULTI_DAY, dayOfWeek, duration: '1시간', format: '온라인', classNum: '4', timeRange: '14:00~14:50', status: 'pending' },
+  /** 기존 회차(1…N) 다음 회차 — 99 등 비연속 round 제거 */
+  const nextRound = sessions.length + 1
+  /** 같은 날짜·다 학교 겹침을 보이기 위해 행별 시작 시각만 다르게 */
+  const marchSlotByRow: Array<Pick<ParticipatingSchoolSession, 'format' | 'classNum' | 'timeRange'>> = [
+    { format: '오프라인', classNum: '1교시', timeRange: '9:20~10:10' },
+    { format: '온라인', classNum: '1교시', timeRange: '10:20~11:10' },
+    { format: '오프라인', classNum: '1교시', timeRange: '11:20~12:10' },
+    { format: '온라인', classNum: '1교시', timeRange: '14:00~14:50' },
   ]
-  return [...sessions, extra[rowIndex]]
+  const slot = marchSlotByRow[rowIndex]
+  const extra: ParticipatingSchoolSession = {
+    round: nextRound,
+    date: MARCH_MULTI_DAY,
+    dayOfWeek,
+    duration: '1시간',
+    format: slot.format,
+    classNum: slot.classNum,
+    timeRange: slot.timeRange,
+    status: 'pending',
+  }
+  return [...sessions, extra]
 }
 
 function buildMockList(count: number): ParticipatingSchoolRow[] {

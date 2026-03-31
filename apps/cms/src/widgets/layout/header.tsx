@@ -18,7 +18,12 @@ export function Header() {
   return (
     <AntHeader className="app-header sidebar-header">
       <div className="sidebar-logo-container" onClick={() => navigate('/')}>
-        <img src={logoImage} alt="JA Korea" className="sidebar-logo" />
+        <img
+          src={logoImage}
+          style={{ width: '182px', height: 'auto' }}
+          alt="JA Korea"
+          className="sidebar-logo"
+        />
       </div>
       {/* 유저 로그인 정보: 헤더(MainHeader)로 이동 – 임시 주석 처리 */}
       {/* {user && (

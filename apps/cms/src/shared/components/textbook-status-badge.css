@@ -29,8 +29,16 @@
 
 /* 신청 반려 */
 .app-status-badge.textbook-status-badge--rejected {
-    background: #ffebee;
-    color: #c62828;
+    border-radius: 4px;
+    border: 1px solid rgba(70, 70, 70, 0.06);
+    background: #f2f3f5;
+    color: #464646;
+    text-align: center;
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 150%;
 }
 
 /* 승인 완료 */
@@ -43,4 +51,36 @@
 .app-status-badge.textbook-status-badge--cancelled {
     background: #fff3e0;
     color: #e65100;
+}
+
+/* ===== 지급 조서 라인 처리 현황 ===== */
+/* 제출 및 대기(확인 대기 중 톤) — 승인 대기(pending 단독)와 구분: .payment-order-line 병기 시만 적용 */
+.app-status-badge.textbook-status-badge--pending.textbook-status-badge--payment-order-line {
+    color: var(--color-green, #1e8c29);
+    border-radius: 4px;
+    border: 1px solid rgba(30, 140, 41, 0.06);
+    background: linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff;
+}
+
+/* 지급 조서 확인 완료 */
+.app-status-badge.textbook-status-badge--confirmed {
+    color: var(--color-blue, #017eaf);
+    border-radius: 4px;
+    border: 1px solid rgba(1, 126, 175, 0.06);
+    background: #e6f2f7;
+}
+
+/* 지급 정정 요청 */
+.app-status-badge.textbook-status-badge--correction {
+    color: #c32f4a;
+    border-radius: 4px;
+    border: 1px solid rgba(195, 47, 74, 0.06);
+    background: #f9eaed;
+}
+
+/* 지급 조서 라인: 레이아웃은 신청자 프로그램 승인 현황과 동일 120×30(app-status-badge), 긴 라벨만 말줄임 */
+.app-status-badge.textbook-status-badge--payment-order-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

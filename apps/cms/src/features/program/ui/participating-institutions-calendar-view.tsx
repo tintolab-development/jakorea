@@ -3,7 +3,7 @@
  * 좌측 캘린더 7 : 우측 추등학교 리스트 3, 기존 Calendar·ApplicantScheduleList 활용
  */
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Calendar, Button, Tooltip } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -13,8 +13,9 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
-import { ApplicantScheduleList } from './detail-modal/applicant-schedule-list'
+import { ApplicantScheduleList } from './detail-modal/applicants/applicant-schedule-list'
 import { SCHEDULE_COLORS } from './program-schedule-colors'
+import { AppMultiSelect } from '@/shared/ui'
 import './participating-institutions-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
@@ -129,6 +130,9 @@ export interface ParticipatingInstitutionsCalendarViewProps {
   rightContent?: React.ReactNode
   /** 날짜 셀 클릭 시 호출 (참여 강사 캘린더에서 우측 강사 목록 필터용) */
   onDateSelect?: (date: Dayjs) => void
+  /** 월간/주간 — onCalendarGranularityChange와 함께 전달 시 쿼리스트링 등과 동기화 */
+  calendarGranularity?: 'month' | 'week'
+  onCalendarGranularityChange?: (mode: 'month' | 'week') => void
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -138,10 +142,21 @@ export function ParticipatingInstitutionsCalendarView({
   onSchoolClick,
   rightContent,
   onDateSelect,
+  calendarGranularity: calendarGranularityProp,
+  onCalendarGranularityChange,
 }: ParticipatingInstitutionsCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
-  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  /** 기본 우측(참여 기관) 기관 멀티셀렉트 — 옵션 동기화 시 전체 선택 */
+  const [defaultRightSelectedSchools, setDefaultRightSelectedSchools] = useState<string[]>([])
+  const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
+  const calendarControlled =
+    calendarGranularityProp !== undefined && onCalendarGranularityChange !== undefined
+  const calendarMode = calendarControlled ? calendarGranularityProp : fallbackCalendarMode
+  const setCalendarMode = (mode: 'month' | 'week') => {
+    if (calendarControlled) onCalendarGranularityChange(mode)
+    else setFallbackCalendarMode(mode)
+  }
   const mainCalendarRef = useRef<HTMLDivElement>(null)
 
   const events = useMemo(() => buildEventsFromSchools(schools), [schools])
@@ -165,6 +180,62 @@ export function ParticipatingInstitutionsCalendarView({
       ev => date.isSameOrAfter(ev.startDate, 'day') && date.isSameOrBefore(ev.endDate, 'day')
     )
   }
+
+  const eventsForSelectedDate = useMemo(
+    () =>
+      events.filter(
+        ev =>
+          selectedDate.isSameOrAfter(ev.startDate, 'day') &&
+          selectedDate.isSameOrBefore(ev.endDate, 'day')
+      ),
+    [events, selectedDate]
+  )
+
+  const institutionSchoolFilterOptions = useMemo(() => {
+    const names = Array.from(
+      new Set(
+        eventsForSelectedDate
+          .map(ev => ev.originalItem.row.schoolName.trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b, 'ko'))
+    return names.map(school => {
+      const idx = entityToColorIndex.get(school) ?? 0
+      const pair = SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length]
+      return {
+        value: school,
+        label: school,
+        tagColor: pair.bg,
+        tagTextColor: pair.text,
+      }
+    })
+  }, [eventsForSelectedDate, entityToColorIndex])
+
+  useEffect(() => {
+    setDefaultRightSelectedSchools(institutionSchoolFilterOptions.map(o => o.value))
+  }, [institutionSchoolFilterOptions])
+
+  const filteredEventsForDefaultRight = useMemo(() => {
+    if (defaultRightSelectedSchools.length === 0) return []
+    const sel = new Set(defaultRightSelectedSchools)
+    return eventsForSelectedDate.filter(ev => {
+      const n = ev.originalItem.row.schoolName.trim()
+      return n !== '' && sel.has(n)
+    })
+  }, [eventsForSelectedDate, defaultRightSelectedSchools])
+
+  const eventListForList = useMemo(
+    () =>
+      filteredEventsForDefaultRight.map(ev => ({
+        ...ev,
+        originalItem: {
+          ...ev.originalItem,
+          educationGrade: ev.originalItem.educationGrade,
+          desiredEducationPeriod: ev.originalItem.desiredEducationPeriod,
+        },
+      })),
+    [filteredEventsForDefaultRight]
+  )
 
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date)
@@ -430,16 +501,6 @@ export function ParticipatingInstitutionsCalendarView({
     )
   }
 
-  const eventsForSelectedDate = getEventsForDate(selectedDate)
-  const eventListForList = eventsForSelectedDate.map(ev => ({
-    ...ev,
-    originalItem: {
-      ...ev.originalItem,
-      educationGrade: ev.originalItem.educationGrade,
-      desiredEducationPeriod: ev.originalItem.desiredEducationPeriod,
-    },
-  }))
-
   return (
     <div className="participating-institutions-calendar-layout">
       <div
@@ -461,14 +522,24 @@ export function ParticipatingInstitutionsCalendarView({
         {rightContent !== undefined ? (
           rightContent
         ) : (
-          <ApplicantScheduleList
-            selectedDate={selectedDate}
-            events={eventListForList}
-            selectedRowKeys={selectedRowKeys}
-            onSelectionChange={onSelectionChange}
-            onEventClick={item => item?.row && onSchoolClick(item.row)}
-            getColorForEvent={e => getColorForEvent(e as CalendarEvent)}
-          />
+          <div className="participating-institutions-calendar-default-right">
+            <div className="participating-institutions-calendar-default-right__school-filter">
+              <AppMultiSelect
+                value={defaultRightSelectedSchools}
+                onChange={setDefaultRightSelectedSchools}
+                options={institutionSchoolFilterOptions}
+                placeholder="기관 선택"
+              />
+            </div>
+            <ApplicantScheduleList
+              selectedDate={selectedDate}
+              events={eventListForList}
+              selectedRowKeys={selectedRowKeys}
+              onSelectionChange={onSelectionChange}
+              onEventClick={item => item?.row && onSchoolClick(item.row)}
+              getColorForEvent={e => getColorForEvent(e as CalendarEvent)}
+            />
+          </div>
         )}
       </div>
     </div>

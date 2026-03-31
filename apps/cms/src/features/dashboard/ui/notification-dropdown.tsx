@@ -122,9 +122,7 @@ export function NotificationDropdown({
                   </Text>
                 </div>
                 {notification.programName && (
-                  <Text className="notification-dropdown-item-sub">
-                    {notification.programName}
-                  </Text>
+                  <Text className="notification-dropdown-item-sub">{notification.programName}</Text>
                 )}
                 <Text className="notification-dropdown-item-date">
                   {formatNotificationDate(notification.createdAt)}

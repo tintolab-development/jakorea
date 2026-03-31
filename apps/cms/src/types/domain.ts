@@ -287,6 +287,8 @@ export interface Application {
   lectureAttendance?: string
   /** 회원 상세 탭: 과제 제출 내역 존재 여부 */
   hasAssignmentSubmission?: boolean
+  /** 회원 상세 > 프로그램 강의 이력: 강의보고서 제출 여부 (목업·API 연동용) */
+  hasLectureReportSubmission?: boolean
   /** 회원 상세 탭: 담당자명 (예: "이순신 매니저") */
   managerName?: string
   submittedAt: DateValue
@@ -687,6 +689,28 @@ export interface ProgramPostReaction {
   emojiType: string
   /** 반응한 사용자 수 또는 사용자 ID 목록 */
   count: number
+}
+
+// 프로그램 게시글 반응 사용자 row (게시글 상세 — 반응 상세 팝업)
+export interface ProgramPostReactionUser {
+  id: UUID
+  postId: UUID
+  authorName: string
+  roleLabel: string
+  /** 이모지 타입 (post-detail-emoji-bar-icons 순서 기반 키) */
+  emojiType: string
+  createdAt: DateValue
+}
+
+/** 게시글 읽음/안읽음 뷰어 팝업 행 (프로그램·학교 범위 할당 인원 기준) */
+export interface ProgramPostReadRow {
+  id: UUID
+  postId: UUID
+  displayName: string
+  roleLabel: string
+  hasRead: boolean
+  /** 읽음 처리 시각 (mock: hasRead일 때만 결정론적 값) */
+  readAt?: DateValue
 }
 
 // 프로그램 첨부 파일 (수강 프로그램 상세 모달 — 파일 및 사진 탭)

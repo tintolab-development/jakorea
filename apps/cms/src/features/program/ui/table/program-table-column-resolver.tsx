@@ -1,5 +1,5 @@
 import { STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components/status-dropdown-cell'
-import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
+import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
 import { optionalColumns } from '../constants/program-list-columns'
 import { categoryOptions } from '../constants/program-list-constants'
 import type { Program, ProgramCategory } from '@/types/domain'
@@ -61,12 +61,9 @@ export function resolveEducationColumns({
       width: 140,
       align: 'center' as const,
       className: readOnlyLifecycleStatus ? undefined : STATUS_DROPDOWN_CELL_CLASSNAME,
-      render: (_: unknown, record: Program) =>
-        record.lifecycleStatus ? (
-          <ProgramLifecycleStatusBadge status={record.lifecycleStatus} />
-        ) : (
-          '-'
-        ),
+      render: (_: unknown, record: Program) => (
+        <ProgramLifecycleStatusTableCell status={record.lifecycleStatus} />
+      ),
     },
 
     // safe spread

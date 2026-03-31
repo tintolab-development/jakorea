@@ -5,6 +5,8 @@
  */
 
 import { Tag } from 'antd'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import { PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS } from '@/data/mock/payment-order-admin-list'
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
 import { TEXTBOOK_STATUS_LABELS } from '@/data/mock/participating-schools'
 import './app-status-badge.css'
@@ -22,30 +24,27 @@ export const APPROVAL_STATUS_LABELS: Record<ApprovalStatusKey, string> = {
   cancelled: '승인 취소',
 }
 
-type StatusBadgeVariant = 'textbook' | 'approval'
-type StatusKey = TextbookStatusKey | ApprovalStatusKey
+export type TextbookStatusBadgeProps =
+  | { variant?: 'textbook'; status: TextbookStatusKey; className?: string }
+  | { variant: 'approval'; status: ApprovalStatusKey; className?: string }
+  | { variant: 'payment-order-line'; status: PaymentOrderAdminLineProcessingStatus; className?: string }
 
-interface TextbookStatusBadgeProps {
-  /** 교재 현황(기본) / 결재 현황 */
-  variant?: StatusBadgeVariant
-  status: StatusKey
-  className?: string
+function getLabel(props: TextbookStatusBadgeProps): string {
+  if (props.variant === 'approval') return APPROVAL_STATUS_LABELS[props.status]
+  if (props.variant === 'payment-order-line')
+    return PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[props.status]
+  return TEXTBOOK_STATUS_LABELS[props.status]
 }
 
-function getLabel(variant: StatusBadgeVariant, status: StatusKey): string {
-  if (variant === 'approval') return APPROVAL_STATUS_LABELS[status as ApprovalStatusKey]
-  return TEXTBOOK_STATUS_LABELS[status as TextbookStatusKey]
-}
-
-export function TextbookStatusBadge({
-  variant = 'textbook',
-  status,
-  className,
-}: TextbookStatusBadgeProps) {
-  const label = getLabel(variant, status)
+export function TextbookStatusBadge(props: TextbookStatusBadgeProps) {
+  const variant = props.variant ?? 'textbook'
+  const { status, className } = props
+  const label = getLabel(props)
+  const variantClass =
+    variant === 'payment-order-line' ? ' textbook-status-badge--payment-order-line' : ''
   return (
     <Tag
-      className={`app-status-badge textbook-status-badge--${status} ${className ?? ''}`.trim()}
+      className={`app-status-badge textbook-status-badge--${status}${variantClass} ${className ?? ''}`.trim()}
       style={{ margin: 0 }}
     >
       {label}

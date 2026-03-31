@@ -34,7 +34,7 @@ export function PendingApplicationsCard() {
       value={count}
       prefix={<FileTextOutlined />}
       suffix="건"
-      to="/applications?status=submitted"
+      to="/programs/education/enrollment"
       loading={loading}
     />
   )

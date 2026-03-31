@@ -26,7 +26,6 @@
 .add-student-modal .teal-header-modal__body {
   flex-shrink: 0;
   width: 100%;
-  padding: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

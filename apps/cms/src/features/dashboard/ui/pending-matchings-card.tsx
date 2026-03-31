@@ -34,7 +34,7 @@ export function PendingMatchingsCard() {
       value={count}
       prefix={<TeamOutlined />}
       suffix="건"
-      to="/matchings"
+      to="/programs/education/instructor-recruitment"
       loading={loading}
     />
   )

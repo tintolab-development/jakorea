@@ -1,0 +1,32 @@
+/**
+ * 필터 + 리스트 헤더 + 테이블 공통 컨테이너
+ * 프로그램 목록과 동일 톤(program-list-content-wrapper) 기준
+ */
+
+.filter-list-layout {
+  width: 100%;
+  background: var(--color-bg-base);
+  margin-bottom: var(--spacing-24);
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
+}
+
+.filter-list-layout .unified-filter-card {
+  margin-bottom: var(--spacing-16);
+}
+
+/* 리스트 헤더(제목·건수·버튼)와 테이블 본문 사이: 16px */
+.filter-list-layout__header {
+  margin-bottom: var(--spacing-16);
+}
+
+/*
+ * program-list-card는 .ant-card-body에 padding 24가 들어가 헤더 margin(16)과 합쳐 간격이 커짐.
+ * 래퍼 안 목록 테이블은 상단 패딩을 제거해 "헤더 하단 ↔ 테이블 헤더" 합계를 16px로 맞춘다.
+ */
+.filter-list-layout__body .program-list-card--in-wrapper .ant-card-body {
+  padding-top: 0;
+}
+
+/* 헤더·본문 패딩은 페이지별로 지정 (프로그램 목록은 기존 BEM, 회원은 user-list-page.css) */

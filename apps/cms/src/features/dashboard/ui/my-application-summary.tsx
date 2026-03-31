@@ -139,7 +139,7 @@ export function MyApplicationSummary() {
     <Card
       title="내 프로그램 현황"
       extra={
-        <Button type="link" onClick={() => navigate('/applications')}>
+        <Button type="link" onClick={() => navigate('/programs/my')}>
           전체 보기
         </Button>
       }

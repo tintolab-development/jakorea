@@ -211,6 +211,18 @@ export const programEnrollmentDisplayConfig = {
   } as Record<ProgramEnrollmentDisplayStatus, string>,
 }
 
+/**
+ * 경제 교육 프로그램 목록과 동일 톤(텍스트 컬러 위주)으로 쓰는 5단계 라벨
+ * — 강사 상세 > 프로그램 강의 이력 등
+ */
+export const programEnrollmentEconomyListLabels = {
+  WAITING_RESULT: '신청 결과 대기 중',
+  REJECTED: '신청 반려',
+  EDUCATION_SCHEDULED: '프로그램 진행 예정',
+  EDUCATION_IN_PROGRESS: '프로그램 진행 중',
+  PROGRAM_ENDED: '프로그램 진행 완료',
+} as const satisfies Record<ProgramEnrollmentDisplayStatus, string>
+
 export function getProgramEnrollmentDisplayLabel(
   status: ProgramEnrollmentDisplayStatus | string
 ): string {

@@ -1,0 +1,219 @@
+/**
+ * 신청 강사 상세 - 기본 정보 테이블
+ * program-detail-info-tab / applicant-instructor-detail-modal 기본 정보 테이블 스타일 참고
+ * 라벨: 연한 회색 배경·가운데 정렬, 값: 흰색 배경·좌측 정렬, 구분선 #E0E0E0
+ */
+
+.applicant-instructor-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.applicant-instructor-basic-info__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+/* 회원 관리 강사 상세: 정산 현황 값 (회원 기본 정보 민트 톤과 동일) */
+.applicant-instructor-basic-info__cell--settlement-status {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 500;
+}
+
+.applicant-instructor-basic-info__manager-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.applicant-instructor-basic-info__manager-comment-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+.applicant-instructor-basic-info__manager-comment-content {
+  display: flex;
+  padding: 20px 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/**
+ * 외곽: 학력사항 `.instructor-resume-card`와 동일하게 border + radius로 곡선 구간까지 선 유지.
+ * 내부 셀은 바깥 한 줄의 top/right/bottom/left를 제거해 이중 테두리 방지.
+ */
+.applicant-instructor-basic-info__table-wrap {
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.applicant-instructor-basic-info__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.applicant-instructor-basic-info__table tbody tr {
+  min-height: 48px;
+}
+
+.applicant-instructor-basic-info__table .applicant-instructor-basic-info__cell {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+/* 외곽 한 줄은 래퍼 border만 보이도록 (곡선 구간 색 끊김 방지) */
+.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell {
+  border-top: none;
+}
+
+.applicant-instructor-basic-info__table tbody tr:last-child .applicant-instructor-basic-info__cell {
+  border-bottom: none;
+}
+
+.applicant-instructor-basic-info__table tbody tr .applicant-instructor-basic-info__cell:last-child {
+  border-right: none;
+}
+
+.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell:first-child {
+  border-left: none;
+}
+
+.applicant-instructor-basic-info__table
+  tbody
+  tr:nth-child(n + 3)
+  .applicant-instructor-basic-info__cell:first-child {
+  border-left: none;
+}
+
+.applicant-instructor-basic-info__cell--label {
+  background: #f9f9f9;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.applicant-instructor-basic-info__cell--label .applicant-instructor-basic-info__cell--name {
+  vertical-align: middle;
+}
+
+.applicant-instructor-basic-info__cell--sub {
+  background: #f9f9f9;
+  font-weight: 00;
+}
+
+.applicant-instructor-basic-info__cell--value {
+  background: #fff;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+/* 프로그램 승인 현황: 승인·참여 반려 + 알림 발송 (기관 상세와 동일 한 줄) */
+.applicant-instructor-basic-info__approval-status-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.applicant-instructor-basic-info__approval-status-vbar {
+  width: 1px;
+  height: 13px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.applicant-instructor-basic-info__approval-notification-sent-at {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  color: var(--color-text-secondary, #595959);
+}
+
+/* 승인 완료 전용: 강의비·사업소득자 1행 테이블 (메인 기본 정보 바로 아래) */
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell:first-child {
+  border-left: none;
+}
+
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell:last-child {
+  border-right: none;
+}
+
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-instructor-basic-info__cell {
+  border-top: none;
+}
+
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
+  tbody
+  tr:last-child
+  .applicant-instructor-basic-info__cell {
+  border-bottom: none;
+}
+
+/* 자택 주소: 동까지(또는 동 없으면 OO구까지) 표시, 이후 구간 블러 */
+.applicant-instructor-basic-info__address-blur {
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}
+
+.applicant-instructor-basic-info__cell--one-line {
+  vertical-align: top;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  max-height: 72px;
+  overflow-y: auto;
+}
+
+.applicant-instructor-basic-info__name-badge {
+  margin-left: 8px;
+  vertical-align: middle;
+
+  color: var(--default-BK) !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(195, 47, 74, 0.1) !important;
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.06) 0%, rgba(195, 47, 74, 0.06) 100%),
+    #fff
+  ) !important;
+}

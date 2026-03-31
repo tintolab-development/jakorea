@@ -12,6 +12,7 @@
   border: none !important;
   box-shadow: none !important;
   height: auto !important;
+  outline: none !important;
 }
 
 .widget-more-button:hover,

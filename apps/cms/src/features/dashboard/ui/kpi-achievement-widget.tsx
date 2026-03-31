@@ -121,7 +121,7 @@ export function KpiAchievementWidget() {
         <Button
           type="link"
           size="small"
-          onClick={() => navigate('/performance')}
+          onClick={() => navigate('/education-records')}
           className="widget-more-button"
         >
           더보기

@@ -1,0 +1,93 @@
+.instructor-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--detail-fullpage-section-gap, 32px);
+}
+
+.instructor-basic-info .applicant-instructor-basic-info__title {
+  display: block;
+}
+
+.instructor-basic-info .instructor-resume-section-title {
+  color: var(--color-text-label, #3d3d3d);
+}
+
+.instructor-basic-info__action-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 기본 정보 테이블: 라벨 200px, 성명 하위 라벨 100px */
+.instructor-basic-info
+  .applicant-instructor-basic-info__table:not(.applicant-instructor-basic-info__table--post-approval)
+  colgroup
+  col:nth-child(1) {
+  width: 200px !important;
+}
+
+.instructor-basic-info
+  .applicant-instructor-basic-info__table:not(.applicant-instructor-basic-info__table--post-approval)
+  colgroup
+  col:nth-child(2) {
+  width: 100px !important;
+}
+
+.instructor-basic-info
+  .applicant-instructor-basic-info__table:not(.applicant-instructor-basic-info__table--post-approval)
+  colgroup
+  col:nth-child(4) {
+  width: 200px !important;
+}
+
+.instructor-basic-info__consent-value-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.instructor-basic-info__consent-separator {
+  color: #d0d0d0;
+  user-select: none;
+}
+
+.instructor-basic-info__consent-date {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+/* 정보 제공 동의: 래퍼 왼쪽 border + 첫 열 셀 border-left 가 겹쳐 이중선 — 전역은 1행만 제거하므로 여기서 전 행 통일 */
+.instructor-basic-info
+  .user-consent-agreement-section
+  .user-detail-modal__basic-table-wrap
+  .user-detail-modal__basic-table
+  tbody
+  tr
+  > td:first-child {
+  border-left: none !important;
+}
+
+/* 강의비 책정 기준 / 사업소득자 여부 라벨: 200px 고정 */
+.instructor-basic-info
+  .applicant-instructor-basic-info__table--post-approval
+  colgroup
+  col:nth-child(1),
+.instructor-basic-info
+  .applicant-instructor-basic-info__table--post-approval
+  colgroup
+  col:nth-child(3) {
+  width: 200px !important;
+}
+
+.instructor-basic-info
+  .applicant-instructor-basic-info__table--post-approval
+  tbody
+  tr
+  .applicant-instructor-basic-info__cell--label {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}

@@ -24,6 +24,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 ## 🎨 UI/UX
 
 - [UI 원칙](./design/ui-principles.md) - 상태 표시 원칙 등
+- 모달 구현 원칙: **`ContentModal` 우선 사용**, **`TealHeaderModal` 직접 사용은 deprecated**
 - [이벤트 처리](./design/event-handling.md) - 이벤트 버블링 및 전파 방지
 - [색상 시스템](./design/color-system.md) - 색상 시스템 가이드
 - [색상 팔레트](./design/color-palette.md) - 색상 팔레트
@@ -54,7 +55,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 
 ## 📋 테이블
 
-- [테이블 구현 컨텍스트](./tables/table-implementation.md) - Ant Design Table 컬럼·CSS·필터 패턴 (새 테이블 구현 시 참고)
+- [테이블 구현 컨텍스트](./tables/table-implementation.md) - Ant Design Table 컬럼·CSS·필터 패턴, 산출 내역서 4열 기본정보·모달 가로 오버플로·디바이더·프롬프트 §12 (새 테이블 구현 시 참고)
 - [테이블 관리](./tables/table-management.md) - @tanstack/react-table 및 Query Parameter 동기화
 - [상태 드롭다운 셀](./coding/status-dropdown-cell.md) - 테이블에서 상태 배지+드롭다운 컬럼 사용 시 공통 컴포넌트(StatusDropdownCell) 및 UI shifting 방지
 

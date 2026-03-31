@@ -161,9 +161,14 @@
 
 .program-progress-widget__stages > .program-progress-widget__arrow {
   flex: 0 0 auto;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-12);
-  margin: 0 var(--spacing-2);
+  color: #464646;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px;
 }
 
 /* 카드 기본: 디폴트 보더(연한 회색), 디폴트 텍스트(검정) */
@@ -312,6 +317,10 @@
   font-size: var(--font-size-20);
   font-weight: bold;
   color: var(--color-bg-base);
+}
+
+.program-progress-widget__divider-vertical--wrapper {
+  margin: 0 20px;
 }
 
 /* 반응형: 작은 화면에서는 세로 배치 */

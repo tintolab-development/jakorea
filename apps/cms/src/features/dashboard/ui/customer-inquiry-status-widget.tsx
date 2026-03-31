@@ -24,11 +24,41 @@ interface ProgramInquiryRow {
 }
 
 const MOCK_PROGRAM_INQUIRIES: ProgramInquiryRow[] = [
-  { key: '1', programName: 'HSBC/HKU Business Case Competition 2026 모집 안내', pending: 1, answered: 30, total: 31 },
-  { key: '2', programName: '2026 JA Korea 대학생경제교육봉사단 UJAT 36기 모집', pending: 0, answered: 9, total: 9 },
-  { key: '3', programName: 'EY한영-JA Korea Growth to Professional 2026 대학생 참가자 모집', pending: 2, answered: 15, total: 17 },
-  { key: '4', programName: '2026년 JA Korea 초등 경제교육 대상학교 모집', pending: 5, answered: 6, total: 11 },
-  { key: '5', programName: '2026 SAP-함께 성장하는AI 참여 고등학생 모집 안내 (IT, SW 멘토링)', pending: 0, answered: 2, total: 2 },
+  {
+    key: '1',
+    programName: 'HSBC/HKU Business Case Competition 2026 모집 안내',
+    pending: 1,
+    answered: 30,
+    total: 31,
+  },
+  {
+    key: '2',
+    programName: '2026 JA Korea 대학생경제교육봉사단 UJAT 36기 모집',
+    pending: 0,
+    answered: 9,
+    total: 9,
+  },
+  {
+    key: '3',
+    programName: 'EY한영-JA Korea Growth to Professional 2026 대학생 참가자 모집',
+    pending: 2,
+    answered: 15,
+    total: 17,
+  },
+  {
+    key: '4',
+    programName: '2026년 JA Korea 초등 경제교육 대상학교 모집',
+    pending: 5,
+    answered: 6,
+    total: 11,
+  },
+  {
+    key: '5',
+    programName: '2026 SAP-함께 성장하는AI 참여 고등학생 모집 안내 (IT, SW 멘토링)',
+    pending: 0,
+    answered: 2,
+    total: 2,
+  },
 ]
 
 export function CustomerInquiryStatusWidget() {
@@ -111,22 +141,17 @@ export function CustomerInquiryStatusWidget() {
 
   return (
     <Card
+      className="customer-inquiry-status-widget"
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">프로그램 별 문의 현황</span>
         </WidgetTitleWithHandle>
       }
       extra={
-        <Button
-          type="link"
-          size="small"
-          onClick={handleMoreClick}
-          className="widget-more-button"
-        >
+        <Button type="link" size="small" onClick={handleMoreClick} className="widget-more-button">
           더보기
         </Button>
       }
-      className="customer-inquiry-status-widget"
     >
       <Table<ProgramInquiryRow>
         columns={columns}

@@ -88,10 +88,6 @@
   margin-bottom: var(--spacing-16);
 }
 
-.program-list-content-wrapper__table {
-  margin-top: var(--spacing-16);
-}
-
 .program-list-content-wrapper .program-list-card--in-wrapper {
   margin-top: 0;
   margin-bottom: 0;
@@ -493,73 +489,6 @@
   margin-bottom: var(--spacing-24);
   margin-top: var(--spacing-24);
   /* 상단 여백 추가 */
-}
-
-/* 테이블 가로 스크롤 (반응형: 컬럼이 화면을 넘을 때 스크롤) */
-.program-list-table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  min-width: 0;
-}
-
-/* Ant Design Table scroll.x 사용 시 스크롤 영역이 보이도록 */
-.program-list-table-wrapper .ant-table-wrapper {
-  min-width: 0;
-}
-
-.program-list-table-wrapper .ant-table-content {
-  overflow-x: auto !important;
-}
-
-/* 테이블 스타일 */
-.ant-table-thead {
-  background: var(--color-table-head-bg) !important;
-}
-.ant-table-cell {
-  padding: 12px 16px !important;
-  max-height: 50px !important;
-  border-bottom: 1px solid var(--color-border) !important;
-  border-right: 1px solid var(--color-border) !important;
-
-  font-size: var(--font-size-16) !important;
-  font-weight: var(--font-weight-500) !important;
-  color: var(--color-text-label) !important;
-}
-.ant-table-thead > tr > th {
-  height: 30px !important;
-  font-weight: var(--font-weight-700) !important;
-}
-.ant-table-cell:last-child {
-  border-right: none !important;
-}
-
-/* 교육 프로그램/수강자 모집: 전체 프로그램과 동일하게 가로 스크롤 적용 */
-.program-list-table-wrapper--scroll-x {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 프로그램 목록 테이블 셀별 구분선 */
-.program-list-card .ant-table-thead > tr > th {
-  border-right: 1px solid var(--color-bg-base);
-  border-bottom: 1px solid var(--color-bg-base);
-}
-
-.program-list-card .ant-table-thead > tr > th:last-child {
-  border-right: none;
-}
-
-.program-list-card .ant-table-tbody > tr > td {
-  border-right: 1px solid var(--color-border-light);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.program-list-card .ant-table-tbody > tr > td:last-child {
-  border-right: none;
-}
-
-.program-list-card .ant-table-tbody > tr:last-child > td {
-  border-bottom: none;
 }
 
 .program-list-card .ant-card-head {

@@ -2,11 +2,12 @@
  * 컨텐츠 모달 (공통 레이아웃)
  * - 컨테이너 padding: top 28, bottom 34, horizontal 30
  * - 헤더: 보더 없음, padding 제거, 타이틀 24px Bold
- * - 바디: padding 제거
+ * - 바디: padding 제거. description prop이 있으면 타이틀–디스크립션 간격 16px(content-modal.css)
  * - 푸터: 상단 디바이더 없음, margin-top 30px, 버튼 래퍼 100% + 우측 정렬
  * 다른 모달에서 이 컴포넌트를 위주로 사용할 수 있도록 공통화함.
  */
 
+import type { ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import './content-modal.css'
 
@@ -24,7 +25,9 @@ export interface ContentModalProps {
   open: boolean
   onCancel: () => void
   title: string
-  children: React.ReactNode
+  /** 헤더 타이틀 앞 접두사 (예: 아이콘) */
+  titlePrefix?: ReactNode
+  children: ReactNode
   /** 푸터 영역. 전달 시 100% 너비 래퍼 안에서 우측 정렬됨 */
   footer?: React.ReactNode
   /** 기본 800, large 시 1400 */
@@ -33,19 +36,23 @@ export interface ContentModalProps {
   /** 모달 루트에 붙는 추가 클래스 (공통으로 content-modal 포함) */
   className?: string
   /** 닫기 버튼 아이콘 (미지정 시 기본 X 아이콘) */
-  closeIcon?: React.ReactNode
+  closeIcon?: ReactNode
+  /** 헤더 타이틀 바로 아래 설명. 전달 시 타이틀–설명 간격 16px 공통 적용 */
+  description?: ReactNode
 }
 
 export function ContentModal({
   open,
   onCancel,
   title,
+  titlePrefix,
   children,
   footer,
   size = 'default',
   width,
   className,
   closeIcon = DEFAULT_CLOSE_ICON,
+  description,
 }: ContentModalProps) {
   const resolvedClassName = ['content-modal', className].filter(Boolean).join(' ')
 
@@ -59,12 +66,16 @@ export function ContentModal({
       open={open}
       onCancel={onCancel}
       title={title}
+      titlePrefix={titlePrefix}
       size={size}
       width={width}
       footer={wrappedFooter}
       className={resolvedClassName}
       closeIcon={closeIcon}
     >
+      {description != null ? (
+        <div className="content-modal__description">{description}</div>
+      ) : null}
       {children}
     </TealHeaderModal>
   )

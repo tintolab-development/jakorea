@@ -13,7 +13,7 @@ export interface ApplicantInstructorPreferredSchool {
   assignable: boolean
   /** 희망 학년 (예: 5학년) */
   grade?: string
-  /** 희망 진행 일자 (예: 2026.01.09 (금) ~ 2026.01.30 (금)) */
+  /** 희망 진행 일자 (예: 2026.04.09 (목) ~ 2026.04.30 (목)) */
   dateRange?: string
 }
 
@@ -115,6 +115,16 @@ export interface ApplicantInstructorRow {
   freeWriting3?: string
   /** 4. 교육 중 예기치 않은 상황... */
   freeWriting4?: string
+  /** 승인 완료 시 기본 정보 상단 노출 관리자 코멘트 */
+  managerComment?: string
+  /** 승인 완료 시 기본 정보 하단: 강의비 책정 기준 (예: 특강 강사비 | 915,000원) */
+  lectureFeeBasisDisplay?: string
+  /** 승인 완료 시 기본 정보 하단: 사업소득자 여부 (예: 해당 없음) */
+  businessIncomeEarnerStatus?: string
+  /** 승인 완료 시 알림 발송 일시 (프로그램 승인 현황 옆 표시) */
+  approvalNotificationSentAt?: string
+  /** 회원 관리 강사 상세 기본 정보: 정산 현황 셀 (프로그램 신청 강사 플로우에서는 미사용) */
+  settlementStatusLabel?: string
 }
 
 const INSTRUCTOR_NAMES = [
@@ -227,28 +237,28 @@ const PREFERRED_SCHOOL_OPTIONS = [
     schoolName: '강서초등학교',
     rank: 1,
     grade: '5학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
   {
     schoolId: 'school-2',
     schoolName: '우장초등학교',
     rank: 2,
     grade: '3학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
   {
     schoolId: 'school-3',
     schoolName: '마포초등학교',
     rank: 3,
     grade: '6학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
   {
     schoolId: 'school-4',
     schoolName: '서이초등학교',
     rank: 4,
     grade: '5학년',
-    dateRange: '2026.01.09 (금) ~ 2026.01.30 (금)',
+    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
   },
 ]
 
@@ -454,7 +464,14 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
             assignedSchoolName: PREFERRED_SCHOOL_OPTIONS[0].schoolName,
           }
         : {}
+    const managerComment =
+      status === 'approved' ? '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.' : undefined
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
+    const lectureFeeBasisDisplay =
+      status === 'approved' ? '특강 강사비 | 915,000원' : undefined
+    const businessIncomeEarnerStatus = status === 'approved' ? '해당 없음' : undefined
+    const approvalNotificationSentAt =
+      status === 'approved' ? '2026.01.15 09:15:42' : undefined
     const resumeSample = getResumeSample(i)
     const evaluationGrades = ['A', 'B', 'C']
     const teachingExperiences = ['신규', '1년 미만', '1~3년', '3년 이상']
@@ -490,6 +507,10 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       accountNumber: ACCOUNT_NUMBERS[i % ACCOUNT_NUMBERS.length],
       accountHolder: name,
       preferredSchools,
+      managerComment,
+      lectureFeeBasisDisplay,
+      businessIncomeEarnerStatus,
+      approvalNotificationSentAt,
       ...resumeSample,
     })
   }
@@ -511,6 +532,41 @@ export function getApplicantInstructorsByProgramId(programId: string): Applicant
   }))
 }
 
+function formatApprovalNotificationSentAt(d = new Date()): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${y}.${m}.${day} ${hh}:${mm}:${ss}`
+}
+
+/**
+ * 결재 상태에 맞게 강사 행 정규화 (승인 시 강의비·알림일시 등, 그 외에는 해당 필드 제거)
+ */
+export function patchApplicantInstructorForApprovalStatus(
+  row: ApplicantInstructorRow,
+  approvalStatus: ApplicantInstructorApprovalStatusKey
+): ApplicantInstructorRow {
+  if (approvalStatus === 'approved') {
+    return {
+      ...row,
+      approvalStatus,
+      lectureFeeBasisDisplay: row.lectureFeeBasisDisplay ?? '특강 강사비 | 915,000원',
+      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+      approvalNotificationSentAt: formatApprovalNotificationSentAt(),
+    }
+  }
+  return {
+    ...row,
+    approvalStatus,
+    lectureFeeBasisDisplay: undefined,
+    businessIncomeEarnerStatus: undefined,
+    approvalNotificationSentAt: undefined,
+  }
+}
+
 /**
  * 강의 신청 강사 결재 현황 변경 (mock 동기화).
  * 모달에서 상태 변경 시 호출하면 MOCK_APPLICANT_INSTRUCTORS에 반영됨.
@@ -521,6 +577,6 @@ export function updateApplicantInstructorApprovalStatus(
 ): void {
   const row = MOCK_APPLICANT_INSTRUCTORS.find(i => i.id === instructorId)
   if (row) {
-    row.approvalStatus = approvalStatus
+    Object.assign(row, patchApplicantInstructorForApprovalStatus(row, approvalStatus))
   }
 }

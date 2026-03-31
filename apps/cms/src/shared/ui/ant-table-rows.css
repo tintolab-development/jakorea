@@ -1,0 +1,24 @@
+/**
+ * Ant Design Table: 첫 데이터 행 + 행 hover 시에만 6px 라운드 (양 끝 td)
+ */
+.ant-table-wrapper .ant-table-container table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.ant-table-tbody > tr:first-child > td:first-child,
+.ant-table-tbody > tr:hover > td:first-child {
+  border-top-left-radius: var(--radius-6, 6px);
+  border-bottom-left-radius: var(--radius-6, 6px);
+}
+
+.ant-table-tbody > tr:first-child > td:last-child,
+.ant-table-tbody > tr:hover > td:last-child {
+  border-top-right-radius: var(--radius-6, 6px);
+  border-bottom-right-radius: var(--radius-6, 6px);
+}
+
+.ant-table-tbody > tr.ant-table-measure-row > td,
+.ant-table-tbody > tr.ant-table-placeholder > td {
+  border-radius: 0 !important;
+}

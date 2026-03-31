@@ -288,7 +288,7 @@ export function markPostAsRead(postId: UUID): void {
   const post = byPostId.get(postId)
   if (post) {
     post.read = true
-    post.viewCount = (post.viewCount || 0) + 1
+    /** 조회수는 program-post-reads 집계(getPostViewCountByPostId)와 동기화 — 여기서 증가시키지 않음 */
     post.updatedAt = new Date().toISOString()
   }
 }

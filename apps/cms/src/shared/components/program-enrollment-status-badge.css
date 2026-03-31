@@ -6,9 +6,7 @@
 .app-status-badge.program-enrollment-status-badge {
   border-radius: 4px;
   text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 12px;
-  font-style: normal;
+  font-size: 16px;
   font-weight: 600;
   line-height: 150%;
 }
@@ -46,4 +44,41 @@
   border: 1px solid rgba(126, 138, 150, 0.06);
   background: #f2f3f5;
   color: #464646;
+}
+
+/* ===== economyList variant — 경제 교육 프로그램 목록과 동일 톤(배경·테두리 없이 글자색만) ===== */
+.app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--waiting-result {
+  color: #7b4de8;
+}
+
+.app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--rejected {
+  color: #e44970;
+}
+
+.app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--education-scheduled {
+  color: #1e8c29;
+}
+
+.app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--education-in-progress {
+  color: #017eaf;
+}
+
+.app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--program-ended {
+  color: #3d3d3d;
 }

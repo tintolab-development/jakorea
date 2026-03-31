@@ -236,11 +236,13 @@
   min-width: 0;
 }
 
-/* 디바이더 1×13 */
+/* 테이블·행 내 세로 디바이더 1×13, default-BK @ 50% (양옆은 부모 gap 또는 margin) */
 .add-instructor-modal__divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -488,7 +490,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0;
+  gap: 12px;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -548,9 +550,11 @@
 .add-instructor-modal__gender-military-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 /* 정산 계좌 정보: Select·input 세로 정렬 통일 (높이 40px, baseline 맞춤) */
@@ -599,7 +603,9 @@
 .add-instructor-modal__bank-account-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -663,7 +669,9 @@
 .add-instructor-modal__education-level-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -765,6 +773,26 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
+}
+
+.add-instructor-modal__address-search-btn {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-input-secondary);
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.add-instructor-modal__address-search-btn:hover {
+  border-color: var(--color-modal-header);
+  color: var(--color-modal-header);
 }
 
 .add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input:hover,
@@ -995,7 +1023,9 @@
 .add-instructor-modal__education-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
 }
 
@@ -1087,15 +1117,26 @@
 }
 
 .add-instructor-modal__consent-table tbody tr {
-  height: 50px;
+  height: auto;
+}
+
+/* 1행: 개인정보 수집 동의 · 마케팅 제공 동의 (필드 높이 50px) */
+.add-instructor-modal__consent-table tbody tr:first-child > td {
+  height: 50px !important;
+  min-height: 50px !important;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.add-instructor-modal__consent-table tbody tr:first-child > td.add-instructor-modal__basic-table-cell--input {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .add-instructor-modal__consent-table .add-instructor-modal__basic-table-cell--label {
   width: 240px !important;
   min-width: 240px !important;
   max-width: 240px !important;
-  height: 50px !important;
-  min-height: 50px !important;
 }
 
 .add-instructor-modal__consent-radio-group {
@@ -1289,9 +1330,11 @@
 .add-instructor-modal__career-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 .add-instructor-modal__career-date-sep {
@@ -1419,9 +1462,11 @@
 .add-instructor-modal__qualification-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 .add-instructor-modal__qualification-row-inputs .add-instructor-modal__remove-row--icon {
@@ -1533,7 +1578,9 @@
 .add-instructor-modal__ja-activity-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
   margin: 0;
 }
@@ -1657,9 +1704,11 @@
 .add-instructor-modal__award-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  margin: 0 var(--spacing-12);
+  margin: 0;
 }
 
 .add-instructor-modal__award-row-inputs .add-instructor-modal__remove-row--icon {
@@ -1802,6 +1851,12 @@
 .add-instructor-modal__free-writing-head .add-instructor-modal__free-writing-title {
   margin: 0;
   flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
 }
 
 .add-instructor-modal__free-writing-description {
@@ -1832,12 +1887,12 @@
 
 .add-instructor-modal__free-writing-question-bar {
   padding: 12px 16px;
-  font-family: var(--font-family-primary), sans-serif;
-  font-size: var(--font-size-15);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
   font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  color: #333333;
+  font-weight: 700;
+  line-height: 140%;
   background: #f5f6f7;
   border-radius: 6px 6px 0 0;
   border-top: 1px solid var(--table-line, #e0e0e0);
@@ -1957,7 +2012,9 @@
 .add-instructor-modal__address-divider {
   width: 1px;
   height: 13px;
-  background: var(--color-border);
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
 }
 
@@ -1974,7 +2031,140 @@
   max-width: none !important;
 }
 
-/* 공통 규칙: 모든 디바이더 양옆 간격 12px */
+.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input-wrap--with-prefix {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.add-instructor-modal__address-popup-modal .ant-modal-content {
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.add-instructor-modal__address-popup.pop-address-search {
+  background-color: #ececec;
+}
+
+.add-instructor-modal__address-popup-inner.pop-address-search-inner {
+  padding: 20px;
+}
+
+.add-instructor-modal__address-popup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.add-instructor-modal__address-popup-title {
+  color: #222;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.add-instructor-modal__address-popup-logo.logo {
+  color: #6f7f85;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.add-instructor-modal__address-popup-search.wrap {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 6px;
+  border: 1px solid #d5dde1;
+}
+
+.add-instructor-modal__address-popup-search.wrap input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #c4cdd1;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #222;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.add-instructor-modal__address-popup-search-btn {
+  min-width: 72px !important;
+  height: 40px !important;
+}
+
+.add-instructor-modal__address-popup-result.result {
+  margin-top: 12px;
+  border: 1px solid #d5dde1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.add-instructor-modal__address-popup-result-count {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8eb;
+  color: #4b5a60;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.add-instructor-modal__address-popup-table.data-col {
+  width: 100%;
+  border-collapse: collapse;
+  color: #333;
+}
+
+.add-instructor-modal__address-popup-table.data-col th {
+  background: #f5f7f8;
+  color: #56656b;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8eb;
+}
+
+.add-instructor-modal__address-popup-table.data-col td {
+  color: #333;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f4;
+  font-size: 14px;
+  vertical-align: top;
+}
+
+.add-instructor-modal__address-popup-table.data-col tbody tr:nth-child(odd) td {
+  background: #fff;
+}
+
+.add-instructor-modal__address-popup-table.data-col tbody tr:nth-child(even) td {
+  background: #fff;
+}
+
+.add-instructor-modal__address-popup-table.data-col tbody tr {
+  cursor: pointer;
+}
+
+.add-instructor-modal__address-popup-table.data-col tbody tr:hover td {
+  background: #f0f9fa;
+}
+
+.add-instructor-modal__address-popup-table.data-col tbody tr td.subj {
+  color: #333;
+  font-weight: 600;
+}
+
+.add-instructor-modal__address-popup-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: #6f7f85;
+  font-size: 14px;
+}
+
+/* 세로 디바이더: margin 0 (양옆 12px는 행 flex gap 등으로 확보), 주민번호 구간 `-`는 제외 */
 .add-instructor-modal__divider,
 .add-instructor-modal__gender-military-divider,
 .add-instructor-modal__bank-account-divider,

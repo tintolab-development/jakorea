@@ -40,7 +40,7 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
       type: 'warning',
       message: `정산 승인 대기 ${settlementApprovalPending}건`,
       description: '승인이 필요한 정산이 있습니다.',
-      path: '/settlements',
+      path: '/programs/education/enrollment',
       icon: <DollarOutlined />,
     })
   }
@@ -50,7 +50,7 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
       type: 'info',
       message: `신청 검토 대기 ${applicationReviewPending}건`,
       description: '검토가 필요한 신청이 있습니다.',
-      path: '/applications',
+      path: '/programs/education/enrollment',
       icon: <FileTextOutlined />,
     })
   }
@@ -60,7 +60,7 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
       type: 'error',
       message: `일정 중복 경고 ${scheduleConflictCount}건`,
       description: '중복된 일정이 감지되었습니다.',
-      path: '/schedules',
+      path: '/programs/education/schedule',
       icon: <CalendarOutlined />,
     })
   }

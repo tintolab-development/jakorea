@@ -1,0 +1,86 @@
+/**
+ * 대량이체 양식 미리보기 — 1400×880 (large 모달 기본 840px max-height 덮어씀)
+ */
+
+.bulk-transfer-preview-modal.teal-header-modal--large.ant-modal {
+  max-width: calc(100vw - var(--spacing-32, 32px));
+}
+
+.bulk-transfer-preview-modal.teal-header-modal--large .ant-modal-content {
+  max-height: 880px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bulk-transfer-preview-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.bulk-transfer-preview-modal .content-modal__description {
+  color: var(--color-text-secondary, #8c8c8c);
+  font-size: 14px;
+  line-height: 150%;
+  flex-shrink: 0;
+}
+
+/* 푸터: 파일 다운로드 — 아이콘·텍스트 한 줄 가로 정렬 */
+.bulk-transfer-preview-modal__download-btn.ant-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px;
+  min-width: 168px !important;
+  width: auto !important;
+}
+
+.bulk-transfer-preview-modal__download-btn.ant-btn .ant-btn-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  margin-inline-end: 0 !important;
+}
+
+.bulk-transfer-preview-modal__sheet-host {
+  flex: 1 1 auto;
+  min-height: 400px;
+  height: 620px;
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.bulk-transfer-preview-modal__sheet-host .fortune-container {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+
+/* 시트 본문 영역이 가로로 꽉 차도록 */
+.bulk-transfer-preview-modal__sheet-host .fortune-sheet-container,
+.bulk-transfer-preview-modal__sheet-host .fortune-col-body {
+  width: 100%;
+  min-width: 0;
+}
+
+.bulk-transfer-preview-modal__sheet-host .fortune-sheet-area {
+  width: 100%;
+  min-width: 0;
+}
+
+.bulk-transfer-preview-modal__sheet-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}

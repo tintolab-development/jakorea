@@ -237,6 +237,7 @@ export function SchoolListPage() {
         </div>
 
         <UserList
+          listKind="institutions"
           data={schoolUsers}
           loading={false}
           onView={handleView}

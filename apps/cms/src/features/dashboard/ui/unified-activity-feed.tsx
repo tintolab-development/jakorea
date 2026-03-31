@@ -68,7 +68,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           createdAt: typeof application.createdAt === 'string' ? application.createdAt : application.createdAt.toISOString(),
           icon: <FileTextOutlined />,
           color: applicationStatusStatusConfig[application.status]?.color || 'default',
-          path: `/applications`,
+          path: '/programs/education/enrollment',
         }
       })
 
@@ -90,7 +90,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           createdAt: typeof matching.createdAt === 'string' ? matching.createdAt : matching.createdAt.toISOString(),
           icon: <TeamOutlined />,
           color: commonStatusStatusConfig[matching.status]?.color || 'default',
-          path: `/matchings`,
+          path: '/programs/education/instructor-recruitment',
         }
       })
 
@@ -120,7 +120,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           createdAt: typeof schedule.createdAt === 'string' ? schedule.createdAt : schedule.createdAt.toISOString(),
           icon: <CalendarOutlined />,
           color: domainColorsHex.schedule.primary,
-          path: `/schedules`,
+          path: '/schedules/my',
         }
       })
 
@@ -141,7 +141,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           createdAt: typeof settlement.createdAt === 'string' ? settlement.createdAt : settlement.createdAt.toISOString(),
           icon: <DollarOutlined />,
           color: settlementStatusStatusConfig[settlement.status]?.color || 'default',
-          path: `/settlements`,
+          path: '/programs/education/enrollment',
         }
       })
 

@@ -54,6 +54,28 @@
   box-shadow: none;
 }
 
+/* 열린 트리거에서도 지급/결재 배지 보더·radius 스펙 유지(공통 규칙의 border:none 덮어씀) */
+.status-dropdown-cell__status-trigger--open .app-status-badge.textbook-status-badge--rejected {
+  border-radius: 4px !important;
+  border: 1px solid rgba(70, 70, 70, 0.06) !important;
+}
+
+.status-dropdown-cell__status-trigger--open
+  .app-status-badge.textbook-status-badge--pending.textbook-status-badge--payment-order-line {
+  border-radius: 4px !important;
+  border: 1px solid rgba(30, 140, 41, 0.06) !important;
+}
+
+.status-dropdown-cell__status-trigger--open .app-status-badge.textbook-status-badge--confirmed {
+  border-radius: 4px !important;
+  border: 1px solid rgba(1, 126, 175, 0.06) !important;
+}
+
+.status-dropdown-cell__status-trigger--open .app-status-badge.textbook-status-badge--correction {
+  border-radius: 4px !important;
+  border: 1px solid rgba(195, 47, 74, 0.06) !important;
+}
+
 .status-dropdown-cell__status-updating {
   color: var(--color-text-tertiary, #8c8c8c);
   font-size: 12px;

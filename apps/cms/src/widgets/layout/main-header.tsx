@@ -14,6 +14,7 @@ import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
 import { getRoleLabel, AppBreadcrumb, LogoutIcon } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
 import type { Notification } from '@/features/dashboard/api/notification-service'
 import { NotificationDropdown } from '@/features/dashboard/ui/notification-dropdown'
@@ -55,8 +56,13 @@ export function MainHeader() {
       return '관리자 홈'
     }
 
-    // 관리자: 전체 회원 페이지 — 레이아웃 타이틀 '전체 회원 관리'
-    if (user?.role === 'ADMIN' && location.pathname === '/users') {
+    // 관리자: 회원 목록 통합 `/users/list?kind=…`
+    if (user?.role === 'ADMIN' && location.pathname === '/users/list') {
+      const kind = normalizeMemberListKind(new URLSearchParams(location.search).get('kind'))
+      if (kind === 'institutions') return '학교(교사) 회원 관리'
+      if (kind === 'instructors') return '강사 회원 관리'
+      if (kind === 'admins') return '관리자 회원 관리'
+      if (kind === 'individual') return '개인 회원 관리'
       return '전체 회원 관리'
     }
 
@@ -122,7 +128,7 @@ export function MainHeader() {
 
     // 기본값
     return user?.role === 'ADMIN' ? '관리자 홈' : '메인 홈'
-  }, [location.pathname, user?.role, user])
+  }, [location.pathname, location.search, user?.role, user])
 
   const handleLogout = () => {
     logout()

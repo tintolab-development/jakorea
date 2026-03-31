@@ -3,12 +3,15 @@
  * 선택된 날짜의 프로그램 일정을 리스트로 표시
  */
 
-import { useMemo, type CSSProperties } from 'react'
+import { useMemo } from 'react'
 import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
-import { getScheduleColorPair } from './program-schedule-colors'
+import {
+  SCHEDULE_COLORS,
+  buildResolvedScheduleColorMapForPrograms,
+} from './program-schedule-colors'
 import './program-calendar-view.css'
 
 interface ProgramScheduleListProps {
@@ -72,6 +75,18 @@ function getEventStatus(program: Program, date: Dayjs): EventStatus {
   return 'education_ongoing'
 }
 
+/** 캘린더 셀 호버 미리보기, 우측 리스트 등에서 동일 문구 사용 */
+export function getProgramDayScheduleLine(program: Program, date: Dayjs): {
+  statusLabel: string
+  time: string
+} {
+  const status = getEventStatus(program, date)
+  return {
+    statusLabel: statusConfig[status].label,
+    time: getEventTime(program, date),
+  }
+}
+
 function getEventTime(program: Program, date: Dayjs): string {
   // 신청 시작일인 경우
   if (program.applicationStartDate && date.isSame(dayjs(program.applicationStartDate), 'day')) {
@@ -117,6 +132,11 @@ export function ProgramScheduleList({
     })
   }, [programs, selectedDate])
 
+  const scheduleListColorMap = useMemo(
+    () => buildResolvedScheduleColorMapForPrograms(dayPrograms),
+    [dayPrograms]
+  )
+
   return (
     <div className="program-schedule-list">
       {dayPrograms.length === 0 ? (
@@ -126,18 +146,17 @@ export function ProgramScheduleList({
           const status = getEventStatus(program, selectedDate)
           const time = getEventTime(program, selectedDate)
           const config = statusConfig[status]
-          const colorPair = getScheduleColorPair(program.id)
+          const color = scheduleListColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
 
           return (
             <div
               key={program.id}
               className="program-schedule-item"
-              style={
-                {
-                  '--schedule-item-border': colorPair.border,
-                  '--schedule-item-bg': colorPair.bg,
-                } as CSSProperties
-              }
+              data-has-color="true"
+              style={{
+                backgroundColor: color.bg,
+                border: `1px solid ${color.border}`,
+              }}
               onClick={() => onProgramClick(program)}
             >
               <div className="program-schedule-list__event-column">

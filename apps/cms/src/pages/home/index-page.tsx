@@ -1,6 +1,5 @@
 /**
- * Index 페이지
- * 역할에 따라 관리자는 Dashboard, 일반 사용자는 역할별 내 학습 관리 페이지로 리다이렉트
+ * `/` 인덱스: ADMIN은 대시보드, 그 외 역할은 역할별 기본 경로로 즉시 이동(LNB가 비어도 홈·로그인 동선 유지).
  */
 
 import { useEffect } from 'react'
@@ -19,7 +18,6 @@ export function IndexPage() {
       return
     }
 
-    // 일반 사용자는 역할별 내 학습 관리 페이지로 바로 리다이렉트
     if (user.role !== 'ADMIN') {
       switch (user.role) {
         case 'INSTRUCTOR':
@@ -38,12 +36,10 @@ export function IndexPage() {
     }
   }, [user, navigate])
 
-  // 관리자는 Dashboard 표시
   if (user?.role === 'ADMIN') {
     return <Dashboard />
   }
 
-  // 일반 사용자는 리다이렉트 중이므로 로딩 표시
   return (
     <div
       style={{
