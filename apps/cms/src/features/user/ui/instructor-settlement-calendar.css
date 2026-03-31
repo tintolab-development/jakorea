@@ -1,0 +1,22 @@
+/**
+ * 강사 정산 캘린더 툴팁 — 공통 applicant-calendar-popover 좌측 패딩·행 정렬 보정
+ */
+
+.applicant-calendar-tooltip-overlay--settlement .applicant-calendar-popover {
+  padding-left: 0;
+  padding-right: 16px;
+}
+
+.applicant-calendar-tooltip-overlay--settlement .applicant-calendar-popover__row {
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+}
+
+.applicant-calendar-tooltip-overlay--settlement .applicant-calendar-popover__row > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0;
+}

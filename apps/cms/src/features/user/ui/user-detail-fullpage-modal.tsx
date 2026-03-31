@@ -41,7 +41,7 @@ import {
 } from './user-basic-info-section'
 import { UserConsentAgreementSection } from './user-consent-agreement-section'
 import { InstructorBasicInfo } from './instructor-basic-info'
-import { InstructorSettlementTab } from './instructor-settlement-tab'
+import { InstructorPaymentTab } from './instructor-payment-tab'
 import { AdminManagedProgramHistory } from './admin-managed-program-history'
 import { MemberProgramLectureHistory } from './member-program-lecture-history'
 import './user-detail-modal.css'
@@ -665,7 +665,7 @@ export function UserDetailFullPageModal({
   const settlementContent =
     displayUser.role === 'INSTRUCTOR' ? (
       <div className="user-detail-fullpage-modal__programs user-detail-fullpage-modal__settlement">
-        <InstructorSettlementTab
+        <InstructorPaymentTab
           instructorUserId={displayUser.id}
           instructorName={displayUser.name}
         />
@@ -715,35 +715,37 @@ export function UserDetailFullPageModal({
           />
         }
         headerExtra={
-          <div className="user-detail-fullpage-modal__header-actions">
-            {onWithdraw && (
+          activeLnb === 'payment-status' ? null : (
+            <div className="user-detail-fullpage-modal__header-actions">
+              {onWithdraw && (
+                <AppButton
+                  variant="default"
+                  size="filter"
+                  onClick={() => setWithdrawConfirmOpen(true)}
+                  className="user-detail-modal__btn-withdraw"
+                >
+                  회원 탈퇴
+                </AppButton>
+              )}
+              {onEdit && (
+                <AppButton
+                  variant="default"
+                  size="filter"
+                  onClick={() => onEdit(displayUser)}
+                  className="user-detail-modal__btn-edit"
+                >
+                  정보 수정
+                </AppButton>
+              )}
               <AppButton
-                variant="default"
-                size="filter"
-                onClick={() => setWithdrawConfirmOpen(true)}
-                className="user-detail-modal__btn-withdraw"
+                variant={personalInfoRevealed ? 'default' : 'primary'}
+                size="filter-wide"
+                onClick={() => setPersonalInfoRevealed(v => !v)}
               >
-                회원 탈퇴
+                {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
               </AppButton>
-            )}
-            {onEdit && (
-              <AppButton
-                variant="default"
-                size="filter"
-                onClick={() => onEdit(displayUser)}
-                className="user-detail-modal__btn-edit"
-              >
-                정보 수정
-              </AppButton>
-            )}
-            <AppButton
-              variant={personalInfoRevealed ? 'default' : 'primary'}
-              size="filter-wide"
-              onClick={() => setPersonalInfoRevealed(v => !v)}
-            >
-              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-            </AppButton>
-          </div>
+            </div>
+          )
         }
       >
         {activeLnb === 'detail-info' && basicInfoContent}

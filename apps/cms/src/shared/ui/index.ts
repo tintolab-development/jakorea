@@ -40,6 +40,8 @@ export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
 export { TealHeaderModal } from './teal-header-modal'
 export type { TealHeaderModalProps } from './teal-header-modal'
+export { PlainHeaderModal } from './plain-header-modal'
+export type { PlainHeaderModalProps } from './plain-header-modal'
 export { ContentModal } from './content-modal'
 export type { ContentModalProps } from './content-modal'
 export {

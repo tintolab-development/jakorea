@@ -100,17 +100,19 @@ export interface InstructorSettlementListRow {
   invoice: InstructorSettlementInvoiceDetail
 }
 
-const sampleInvoice = (partial: Partial<InstructorSettlementInvoiceDetail>): InstructorSettlementInvoiceDetail => ({
+const sampleInvoice = (
+  partial: Partial<InstructorSettlementInvoiceDetail>
+): InstructorSettlementInvoiceDetail => ({
   programName: '2026년 JA Korea 초등 경제교육',
   sessionProgress: '4 / 16',
   operationPeriod: '2025. 12. 08(월) ~ 2026. 12. 30(수)',
   paymentStatementStatusLabel: '지급조서 확인 완료',
   paymentStatementStatusTone: 'purple',
-  expectedTransferDate: '2026. 02. 24(화)',
+  expectedTransferDate: '2026. 05. 24(일)',
   lectureFeeBasis: '특강 강의비 915,000원',
   businessIncomeEarner: '해당 없음',
   institutionName: '강서초등학교',
-  lectureDateSessions: '2026. 01. 28(수) | 2 ~ 3차시',
+  lectureDateSessions: '2026. 04. 28(화) | 2 ~ 3차시',
   lineItems: [
     {
       key: 'lecture',
@@ -148,8 +150,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 8,
     programName: "2026 SAP-함께 성장하JA! 경제교육 프로그램 '함께'",
     institutionName: '강서초등학교',
-    lectureDateDisplay: '2026. 01. 22(목) 2차시',
-    calendarDate: '2026-01-22',
+    lectureDateDisplay: '2026. 04. 22(수) 2차시',
+    calendarDate: '2026-04-22',
     status: 'payment_statement_verified',
     scheduledAmount: 300_000,
     detailAvailable: false,
@@ -164,8 +166,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 7,
     programName: '2026 JA Korea 대학생경제교육봉사단 UJAT 36기',
     institutionName: '대구수성초등학교',
-    lectureDateDisplay: '2026. 01. 19(월) 1차시',
-    calendarDate: '2026-01-19',
+    lectureDateDisplay: '2026. 04. 19(일) 1차시',
+    calendarDate: '2026-04-19',
     status: 'awaiting_confirmation',
     scheduledAmount: 52_788,
     detailAvailable: true,
@@ -184,8 +186,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 6,
     programName: "미래 리더를 위한 여중생 자립심 향상 프로그램 'Goal'",
     institutionName: '강서초등학교',
-    lectureDateDisplay: '2026. 01. 18(일) 3차시',
-    calendarDate: '2026-01-18',
+    lectureDateDisplay: '2026. 04. 18(토) 3차시',
+    calendarDate: '2026-04-18',
     status: 'payment_statement_verified',
     scheduledAmount: 91_500,
     detailAvailable: true,
@@ -198,8 +200,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 5,
     programName: '청소년 금융 리터러시 특강 시리즈',
     institutionName: '수원중학교',
-    lectureDateDisplay: '2026. 01. 12(월) 4차시',
-    calendarDate: '2026-01-12',
+    lectureDateDisplay: '2026. 04. 12(일) 4차시',
+    calendarDate: '2026-04-12',
     status: 'payment_correction_requested',
     scheduledAmount: 450_000,
     detailAvailable: true,
@@ -215,8 +217,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 4,
     programName: 'JA 코리아 창업 시뮬레이션 캠프',
     institutionName: '인천남중학교',
-    lectureDateDisplay: '2026. 01. 23(금) 1차시',
-    calendarDate: '2026-01-23',
+    lectureDateDisplay: '2026. 04. 23(목) 1차시',
+    calendarDate: '2026-04-23',
     status: 'account_paid',
     scheduledAmount: 620_000,
     detailAvailable: true,
@@ -232,8 +234,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 3,
     programName: '지역 연계 경제교육 파트너십',
     institutionName: '광주동초등학교',
-    lectureDateDisplay: '2026. 01. 21(수) 2차시',
-    calendarDate: '2026-01-21',
+    lectureDateDisplay: '2026. 04. 21(화) 2차시',
+    calendarDate: '2026-04-21',
     status: 'awaiting_confirmation',
     scheduledAmount: 280_000,
     detailAvailable: true,
@@ -247,8 +249,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 2,
     programName: '겨울방학 직업 체험 경제 캠프',
     institutionName: '대전중앙고등학교',
-    lectureDateDisplay: '2026. 01. 07(수) 1차시',
-    calendarDate: '2026-01-07',
+    lectureDateDisplay: '2026. 04. 07(화) 1차시',
+    calendarDate: '2026-04-07',
     status: 'application_rejected',
     scheduledAmount: 0,
     detailAvailable: true,
@@ -267,8 +269,8 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     no: 1,
     programName: '2026년 JA Korea 초등 경제교육',
     institutionName: '강서초등학교',
-    lectureDateDisplay: '2026. 01. 28(수) 2차시',
-    calendarDate: '2026-01-28',
+    lectureDateDisplay: '2026. 04. 28(화) 2차시',
+    calendarDate: '2026-04-28',
     status: 'account_paid',
     scheduledAmount: 915_000,
     detailAvailable: true,
@@ -276,7 +278,9 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
   },
 ]
 
-export function getInstructorSettlementRows(_instructorUserId: string): InstructorSettlementListRow[] {
+export function getInstructorSettlementRows(
+  _instructorUserId: string
+): InstructorSettlementListRow[] {
   return ALL_MOCK_ROWS
 }
 
@@ -292,15 +296,20 @@ export function filterRowsByMonth(
   })
 }
 
-/**
- * 요약 카드: 총 정산 완료금은 누적 데모값, 월·예정은 해당 월 필터된 행 기준
- */
-export function summarizeSettlementRows(rowsInMonth: InstructorSettlementListRow[]) {
-  const monthCompleted = rowsInMonth.reduce(
-    (s, r) => s + (r.status === 'account_paid' ? r.scheduledAmount : 0),
-    0
-  )
-  const scheduled = rowsInMonth.reduce((s, r) => {
+export interface SummarizeSettlementRowsOptions {
+  /**
+   * 총 정산 완료금 계산에 쓸 전체 행(필터·표시 월과 무관한 누적).
+   * 생략 시 `rowsInMonth`만으로 합산(동일 집합이면 총·월 완료금이 같아짐).
+   */
+  allRowsForTotal?: InstructorSettlementListRow[]
+}
+
+function sumCompletedAmount(rows: InstructorSettlementListRow[]) {
+  return rows.reduce((s, r) => s + (r.status === 'account_paid' ? r.scheduledAmount : 0), 0)
+}
+
+function sumScheduledPending(rows: InstructorSettlementListRow[]) {
+  return rows.reduce((s, r) => {
     if (
       r.status === 'awaiting_confirmation' ||
       r.status === 'payment_statement_verified' ||
@@ -310,13 +319,21 @@ export function summarizeSettlementRows(rowsInMonth: InstructorSettlementListRow
     }
     return s
   }, 0)
+}
 
-  const hasData = rowsInMonth.length > 0
+/**
+ * 요약 카드: 월 정산 완료·정산 예정은 `rowsInMonth`(해당 월 + 검색 필터) 기준,
+ * 총 정산 완료금은 `allRowsForTotal`이 있으면 그 전체 행 기준 누적.
+ */
+export function summarizeSettlementRows(
+  rowsInMonth: InstructorSettlementListRow[],
+  options?: SummarizeSettlementRowsOptions
+) {
+  const rowsForTotal = options?.allRowsForTotal ?? rowsInMonth
   return {
-    /** 시안: 누적 완료금(데모 고정) */
-    totalCompleted: 109_150_000,
-    monthCompleted: hasData ? monthCompleted : 9_150_000,
-    scheduled: hasData ? scheduled : 2_915_000,
+    totalCompleted: sumCompletedAmount(rowsForTotal),
+    monthCompleted: sumCompletedAmount(rowsInMonth),
+    scheduled: sumScheduledPending(rowsInMonth),
   }
 }
 

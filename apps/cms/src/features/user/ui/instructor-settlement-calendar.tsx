@@ -17,6 +17,7 @@ import {
 } from '@/data/mock/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
 import '@/features/program/ui/detail-modal/applicants/applicant-calendar-view.css'
+import './instructor-settlement-calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -84,7 +85,7 @@ function InstructorSettlementScheduleList({
               >
                 <button
                   type="button"
-                  className="applicant-schedule-item-info instructor-settlement-schedule-list__open"
+                  className="applicant-schedule-item-info instructor-payment-schedule-list__open"
                   onClick={() => onRowClick(row)}
                 >
                   <div className="applicant-schedule-item-title-row">
@@ -98,17 +99,16 @@ function InstructorSettlementScheduleList({
                       +{row.scheduledAmount.toLocaleString()}원
                     </span>
                   </div>
-                  <div className="applicant-schedule-item-session">{row.programName}</div>
+                  <div className="applicant-schedule-item-session" style={{ marginBottom: 0 }}>
+                    {row.programName}
+                  </div>
                 </button>
                 <div
                   className="applicant-schedule-item-checkbox"
                   onClick={e => e.stopPropagation()}
                   onKeyDown={e => e.stopPropagation()}
                 >
-                  <Checkbox
-                    checked={checked}
-                    onChange={e => toggleKey(row.id, e.target.checked)}
-                  />
+                  <Checkbox checked={checked} onChange={e => toggleKey(row.id, e.target.checked)} />
                 </div>
               </div>
             )
@@ -205,6 +205,7 @@ export function InstructorSettlementCalendarView({
     const dayEvents = getEventsForDate(date)
     const hasEvents = dayEvents.length > 0
 
+    /* 캘린더 셀 한칸 스타일 */
     const cellBody = (
       <>
         <div className="applicant-calendar-cell-date">
@@ -224,12 +225,11 @@ export function InstructorSettlementCalendarView({
                   className="applicant-calendar-event"
                   style={{
                     backgroundColor: colors.bg,
-                    border: `1px solid ${colors.border}`,
                   }}
                   onClick={e => e.stopPropagation()}
                 >
                   <span className="applicant-calendar-event-title" style={{ color: colors.text }}>
-                    {short} +{row.scheduledAmount.toLocaleString()}원
+                    +{row.scheduledAmount.toLocaleString()}원 | {short}
                   </span>
                 </div>
               )
@@ -242,6 +242,7 @@ export function InstructorSettlementCalendarView({
       </>
     )
 
+    /* 툴팁 스타일 */
     const tooltipTitle = (
       <div className="applicant-calendar-popover">
         {dayEvents.map(ev => {
@@ -249,12 +250,16 @@ export function InstructorSettlementCalendarView({
           const colors = statusToColor(row.status)
           return (
             <div key={ev.id} className="applicant-calendar-popover__row">
-              <span className="applicant-calendar-popover__title" style={{ color: colors.text }}>
-                [{row.programName.slice(0, 32)}
-                {row.programName.length > 32 ? '…' : ''}]{' '}
-                {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]} | +
-                {row.scheduledAmount.toLocaleString()}원
-              </span>
+              <div className="applicant-calendar-popover__title">[{row.programName}]</div>
+              <div>
+                <span style={{ color: colors.text }}>
+                  {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]}
+                </span>
+                <span className="applicant-calendar-popover__text">
+                  <span className="applicant-calendar-popover__sep">|</span> +
+                  {row.scheduledAmount.toLocaleString()}원
+                </span>
+              </div>
             </div>
           )
         })}
@@ -269,7 +274,7 @@ export function InstructorSettlementCalendarView({
         {hasEvents ? (
           <Tooltip
             arrow={false}
-            overlayClassName="applicant-calendar-tooltip-overlay"
+            overlayClassName="applicant-calendar-tooltip-overlay applicant-calendar-tooltip-overlay--settlement"
             title={tooltipTitle}
             placement="bottomLeft"
             mouseEnterDelay={0.15}

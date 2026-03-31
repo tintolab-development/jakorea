@@ -19,7 +19,7 @@
 }
 
 .cms-data-table.cms-data-table--fluid table.ant-table {
-  table-layout: auto;
+  table-layout: auto !important;
   width: 100%;
 }
 
