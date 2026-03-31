@@ -457,6 +457,7 @@ const allMenuItems: MenuItemConfig[] = [
         label: '계좌 지급 확인',
         icon: <FolderOutlined />,
         enabled: true,
+        allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
       },
       {
         key: '/settlement-management/item-settings',
@@ -813,6 +814,11 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     !normalizedPath.startsWith('/settlements/my')
   ) {
     return false
+  }
+
+  // 계좌 지급 확인: 로그인한 모든 역할 URL 접근 허용 (LNB는 메뉴 항목 allowedRoles로 제어)
+  if (normalizedPath === '/settlement-management/account-payments') {
+    return true
   }
 
   const matches = findAllMenuItemsByPath(allMenuItems, normalizedPath)

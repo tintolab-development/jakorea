@@ -104,6 +104,10 @@ const MySettlementSubmissionPage = lazyLoad(
   () => import('@/pages/settlements/my-settlement-submission-page')
 )
 const PaymentOrdersPage = lazyLoad(() => import('@/pages/settlement-management/payment-orders-page'))
+const AccountPaymentsPage = lazyLoad(() => import('@/pages/settlement-management/account-payments-page'))
+const SettlementItemSettingsPage = lazyLoad(
+  () => import('@/pages/settlement-management/settlement-item-settings-page')
+)
 const ProfilePage = lazyLoad(() => import('@/pages/mypage/profile-page'))
 const NoticeListPage = lazyLoad(() => import('@/pages/notices/notice-list-page'))
 const EducationRecordListPage = lazyLoad(
@@ -296,21 +300,11 @@ export const router = createBrowserRouter([
           },
           {
             path: 'account-payments',
-            element: (
-              <ComingSoonPage
-                title="계좌 지급 확인"
-                description="계좌 지급 확인 화면은 준비 중입니다."
-              />
-            ),
+            element: <AccountPaymentsPage />,
           },
           {
             path: 'item-settings',
-            element: (
-              <ComingSoonPage
-                title="정산 항목 설정"
-                description="정산 항목 설정 화면은 준비 중입니다."
-              />
-            ),
+            element: <SettlementItemSettingsPage />,
           },
         ],
       },
