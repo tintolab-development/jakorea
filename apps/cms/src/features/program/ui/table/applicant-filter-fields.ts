@@ -58,6 +58,13 @@ export const institutionFilterFields: FilterFieldConfig[] = [
 /** 신청 강사(Instructors) 필터 필드 */
 export const instructorFilterFields: FilterFieldConfig[] = [
   {
+    key: 'schoolNames',
+    type: 'multiSelect',
+    label: '기관명',
+    placeholder: '기관명을 선택하세요',
+    multiSelectOptions: [],
+  },
+  {
     key: 'instructorName',
     type: 'search',
     label: '강사명',

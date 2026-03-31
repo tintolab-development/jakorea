@@ -1,5 +1,7 @@
 /* 필터 Select·검색바 공통 크기 180×44px 및 반응형 */
 @import './shared/ui/filter-controls-common.css';
+@import './shared/ui/ant-table-rows.css';
+@import './shared/ui/cms-data-table.css';
 
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
 :root {
@@ -61,9 +63,13 @@ button:hover {
   border-color: var(--color-link);
 }
 
-button:focus,
+/* 마우스 클릭 포커스는 링 숨김, 키보드(:focus-visible)만 표시 */
+button:focus {
+  outline: none;
+}
+
 button:focus-visible {
-  /* 접근성 포커스 링크: 픽셀 값 유지 (예외) */
+  /* 접근성 포커스 링: 픽셀 값 유지 (예외) */
   outline: 4px auto -webkit-focus-ring-color;
 }
 
@@ -124,9 +130,4 @@ body
   font-family: SimSun, sans-serif;
   line-height: 1;
   content: '*' !important;
-}
-
-/* 테이블 행 호버 및 선택: 전체 영역 통일 (#01A1AF opacity 0.06) */
-table:not(.ant-picker-content) tr:hover {
-  background: var(--color-table-row-hover) !important;
 }

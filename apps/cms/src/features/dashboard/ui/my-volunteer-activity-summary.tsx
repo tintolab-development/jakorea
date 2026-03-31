@@ -95,7 +95,7 @@ export function MyVolunteerActivitySummary() {
       title="내 봉사 현황"
       loading={loading}
       hoverable
-      onClick={() => navigate('/volunteers/my/programs')}
+      onClick={() => navigate('/programs/volunteer')}
       style={{ cursor: 'pointer', height: '100%' }}
     >
       <Row gutter={[16, 16]}>

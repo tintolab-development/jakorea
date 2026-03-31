@@ -3,9 +3,9 @@
  * 레이아웃(컨테이너/헤더/푸터)은 ContentModal(content-modal.css) 사용
  */
 
-/* 디스크립션: 타이틀–디스크립션 16px, 디스크립션–테이블 30px */
+/* 디스크립션–테이블 30px (타이틀–디스크립션 16px는 ContentModal 공통) */
 .lecture-attendance-modal__description {
-  margin: 16px 0 30px 0;
+  margin: 0 0 30px 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
@@ -67,28 +67,26 @@
 /* 값 셀: 흰 배경 */
 .lecture-attendance-modal__table .lecture-attendance-modal__cell--value {
   background: #fff;
-  user-select: none;
 }
 
-/* 결석: 빨간 텍스트 */
-.lecture-attendance-modal__table .lecture-attendance-modal__cell--status-absent {
-  color: var(--color-danger-primary, #ff4d4f);
-  font-weight: 600;
+/* 출석률: n/n건 + (강의 진행 회차 기준), 텍스트 사이 gap 4px */
+.lecture-attendance-modal__rate-wrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
 }
 
-/* 강의 미진행 상태 텍스트 스펙 */
-.lecture-attendance-modal__table .lecture-attendance-modal__cell--status-not_held {
+.lecture-attendance-modal__rate-count {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 150%; /* 21px */
-  opacity: 0.5;
 }
 
-/* '(강의 진행 회차 기준)' 텍스트 스펙 */
-.lecture-attendance-modal__attendance-rate-note {
+.lecture-attendance-modal__rate-note {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 12px;
@@ -96,4 +94,50 @@
   font-weight: 500;
   line-height: 150%; /* 18px */
   opacity: 0.6;
+}
+
+/* 회차 상태 텍스트 — 출석(기본) */
+.lecture-attendance-modal__status-text--attended {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 결석 상태 텍스트 스펙 */
+.lecture-attendance-modal__status-text--absent {
+  color: var(--color-red, #c32f4a);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}
+
+/* 강의 미진행 */
+.lecture-attendance-modal__status-text--not_held {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+}
+
+/* 출석 정정: 회차별 라디오 */
+.lecture-attendance-modal__session-radios {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-16, 16px);
+}
+
+.lecture-attendance-modal__session-radios.ant-radio-group {
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
 }

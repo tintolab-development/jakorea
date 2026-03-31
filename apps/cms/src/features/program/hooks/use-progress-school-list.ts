@@ -118,13 +118,13 @@ export function useProgressSchoolList({
     message.success(`${count}건의 학교가 삭제되었습니다.`)
   }, [selectedSchoolRowKeys])
 
-  /** 선택 반려 확인 시: 선택된 참여 기관을 리스트에서 제거 */
-  const handleBulkRejectConfirm = useCallback(() => {
+  /** 선택 삭제 확인 시: 선택된 참여 기관을 리스트에서 제거 */
+  const handleBulkDeleteConfirm = useCallback(() => {
     const keysSet = new Set(selectedSchoolRowKeys.map(String))
     const count = keysSet.size
     setSchoolList(prev => prev.filter(row => !keysSet.has(row.id)))
     setSelectedSchoolRowKeys([])
-    message.success(`선택한 ${count}건의 참여 기관이 반려되어 목록에서 제거되었습니다.`)
+    message.success(`선택한 ${count}건의 참여 기관이 삭제되었습니다.`)
   }, [selectedSchoolRowKeys])
 
   /** 선택 승인 확인 시: 선택된 참여 기관 approvalStatus → approved */
@@ -189,7 +189,7 @@ export function useProgressSchoolList({
     handleTextbookStatusChange,
     handleSchoolDeleteClick,
     handleSchoolDeleteConfirm,
-    handleBulkRejectConfirm,
+    handleBulkDeleteConfirm,
     handleBulkApproveConfirm,
     handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,

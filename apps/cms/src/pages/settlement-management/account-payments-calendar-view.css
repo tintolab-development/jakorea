@@ -1,0 +1,21 @@
+/**
+ * 계좌 지급 확인 캘린더 — 레이아웃은 participating + payment-orders 캘린더 CSS 재사용
+ */
+
+/* 계좌 지급 완료 — 블루 (#017EAF) */
+.account-payments-calendar__card--account-completed {
+  border: 1px solid rgba(1, 126, 175, 0.12);
+  background: rgba(1, 126, 175, 0.06);
+}
+
+.account-payments-calendar-event-tag--completed .payment-orders-calendar-event-tag__amount,
+.account-payments-calendar-event-tag--completed .payment-orders-calendar-event-tag__status,
+.account-payments-calendar-event-tag--completed .payment-orders-calendar-event-tag__sep {
+  color: var(--color-blue, #017eaf) !important;
+}
+
+.account-payments-calendar-event-tag--pending .payment-orders-calendar-event-tag__amount,
+.account-payments-calendar-event-tag--pending .payment-orders-calendar-event-tag__status,
+.account-payments-calendar-event-tag--pending .payment-orders-calendar-event-tag__sep {
+  color: var(--color-green, #1e8c29) !important;
+}

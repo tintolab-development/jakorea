@@ -5,10 +5,14 @@
  */
 
 import type { User } from '../../types/user'
+import { PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID } from './program-lecture-history-demo'
 
 function generateUUID(): string {
-  return `user-${Math.random().toString(36).substr(2, 9)}-${Date.now()}`
+  // 새로고침마다 동일한 mock ID를 보장해 URL 딥링크(id=...)를 안정적으로 복원한다.
+  mockUserSequence += 1
+  return `user-${String(mockUserSequence).padStart(4, '0')}`
 }
+let mockUserSequence = 0
 
 function generatePastDate(daysAgo: number = 30): string {
   const date = new Date()
@@ -105,7 +109,7 @@ const mockInstructors: User[] = [
     createdAt: generatePastDate(180),
     updatedAt: generatePastDate(2),
     phone: '010-1234-5678',
-    detailAddress: 'JA빌딩 10층',
+    detailAddress: '서울특별시 서초구 서초길 123-22 JA빌딩 10층',
     zipCode: '06611',
     bio: '안녕하세요, 경제교육 전문 강사 최강사입니다.',
     birthDate: '1985-03-20',
@@ -117,6 +121,10 @@ const mockInstructors: User[] = [
       accountHolder: '최강사',
       accountNumber: '123-456-789012',
       isBusinessIncome: false,
+    },
+    listMetrics: {
+      settlementStatusLabel: '계좌 지급 완료',
+      jaEvaluationGrade: 'A',
     },
   },
   {
@@ -474,6 +482,33 @@ const mockIndividuals: User[] = [
 // ============================================
 
 const extraMockUsers: User[] = [
+  // 프로그램 강의 이력 UI 개발용 (고정 ID — mock 신청 5건 연결)
+  {
+    id: PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID,
+    email: 'instructor.parktinto.dev@jakorea.org',
+    password: 'instructor123!',
+    name: '박틴토',
+    nameEn: 'Park Tinto',
+    role: 'INSTRUCTOR',
+    instructorId: 'instructor-dev-parktinto',
+    interviewStatus: 'APPROVED',
+    participationHistory: 5,
+    isActive: true,
+    lastLoginAt: generatePastDate(1),
+    createdAt: generatePastDate(200),
+    updatedAt: generatePastDate(1),
+    phone: '010-0000-1111',
+    gender: '남성',
+    birthDate: '1988-01-15',
+    detailAddress: '서울특별시 강남구 테헤란로',
+    affiliation: 'JA 강사 | 강의 이력 데모',
+    instructorInfo: {
+      bankName: '국민은행',
+      accountHolder: '박틴토',
+      accountNumber: '110-123-456789',
+      isBusinessIncome: false,
+    },
+  },
   // 비활성 관리자
   {
     id: generateUUID(),

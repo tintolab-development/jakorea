@@ -4,7 +4,13 @@
  */
 
 .customer-inquiry-status-widget {
-  height: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
 .customer-inquiry-status-widget .ant-card-body {
@@ -63,7 +69,7 @@
 
 /* 본문 컬럼 구분선: 연한 회색 */
 .inquiry-table .ant-table-tbody > tr > td:not(:last-child) {
-  border-right: 1px solid #EEF0F0;
+  border-right: 1px solid #eef0f0;
 }
 
 .inquiry-table .ant-table-tbody > tr:hover > td {

@@ -69,7 +69,7 @@ export async function getNotifications(
         'matching',
         '매칭 요청',
         '신규 참여 신청자가 있습니다.',
-        '/volunteers/programs',
+        '/programs/volunteer',
         false,
         4,
         'HSBC/HKU Business Case Competition 2026'
@@ -79,7 +79,7 @@ export async function getNotifications(
         'settlement',
         '정산 승인 대기',
         '정산 승인 대기 건이 있습니다.',
-        '/settlements',
+        '/programs/education/enrollment',
         false,
         6,
         '1사1교 경제금융교육 1차'
@@ -89,7 +89,7 @@ export async function getNotifications(
         'matching',
         '매칭 완료',
         '대표 강사 김틴토님이 게시글을 작성하였습니다.',
-        '/instructors',
+        '/users/list?kind=instructors',
         false,
         8,
         'HSBC/HKU Business Case Competition 2026'
@@ -109,7 +109,7 @@ export async function getNotifications(
         'settlement',
         '정산 요청',
         '새로운 정산 신청이 접수되었습니다.',
-        '/settlements',
+        '/programs/education/enrollment',
         false,
         15,
         '그램 역사 특강 2차시'
@@ -139,7 +139,7 @@ export async function getNotifications(
         'settlement',
         '정산 완료',
         '정산 승인이 완료되었습니다.',
-        '/settlements',
+        '/programs/education/enrollment',
         true,
         30,
         '1사1교 경제금융교육 1차'
@@ -149,7 +149,7 @@ export async function getNotifications(
         'matching',
         '매칭 알림',
         '박틴토 담당교사님이 정보를 수정하였습니다.',
-        '/volunteers',
+        '/programs/volunteer',
         true,
         36,
         'HSBC/HKU Business Case Competition 2026'

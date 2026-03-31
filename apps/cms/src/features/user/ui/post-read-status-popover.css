@@ -1,0 +1,350 @@
+/*
+ * 읽음/안읽음 뷰어 팝업
+ * 읽음·안읽음 활성 공통: 본문 border-top 한 줄 + 헤더 투명·z-index 겹침 + 활성 탭 1px 겹침.
+ * 비활성 탭·스페이서: 하단 1px 투명 그라데이션으로 본문 상단선만 노출. body ::before 미사용.
+ */
+
+/* Ant Popover: 테마 기본 테두리 제거 */
+.post-read-status-popover.ant-popover .ant-popover-inner,
+.post-read-status-popover.ant-popover .ant-popover-inner-content,
+.post-read-status-popover.ant-popover .ant-popover-content {
+  border: none !important;
+}
+
+.post-read-status-popover.ant-popover .ant-popover-inner {
+  padding: 0;
+  border-radius: 10px;
+  overflow: visible;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+.post-read-status-popover.ant-popover .ant-popover-inner-content {
+  padding: 0;
+  transition: none !important;
+}
+
+.post-read-status-popover .ant-zoom-big-enter,
+.post-read-status-popover .ant-zoom-big-enter-active,
+.post-read-status-popover .ant-zoom-big-appear,
+.post-read-status-popover .ant-zoom-big-appear-active {
+  animation: none !important;
+}
+
+.post-read-status-popup {
+  box-sizing: border-box;
+  width: 260px;
+  max-width: min(260px, 92vw);
+  min-height: 340px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #d4d4d4;
+  background: var(--default-WT, #fff);
+  box-shadow: 0 4px 24px 0 rgba(32, 32, 33, 0.16);
+  display: flex;
+  flex-direction: column;
+}
+
+.post-read-status-popup__frame {
+  /* 헤더 좌우 패딩 없음 — 탭 줄과 바디 외곽선 x 정렬 */
+  --pr-head-pad-x: 0px;
+  --pr-card-radius: 8px;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  overflow: hidden;
+  border-radius: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 보더 없음 — 탭·스페이서·바디만으로 외곽선 구성 */
+.post-read-status-popup__header {
+  box-sizing: border-box;
+  padding: 0;
+  background: var(--default-WT, #fff);
+  flex-shrink: 0;
+}
+
+.post-read-status-popup__tabs {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0;
+  position: relative;
+  isolation: isolate;
+}
+
+/* 오른쪽 빈 영역: 활성 탭이 있을 때 본문 border-top과 동일 패턴(그라데이션으로 하단 1px만 선 노출) */
+.post-read-status-popup__tab-row-spacer {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 33px;
+  align-self: flex-end;
+  box-sizing: border-box;
+  border: none;
+  background: var(--default-WT, #fff);
+}
+
+.post-read-status-popup__frame[data-active-tab='read'] .post-read-status-popup__tab-row-spacer,
+.post-read-status-popup__frame[data-active-tab='unread'] .post-read-status-popup__tab-row-spacer {
+  background: linear-gradient(to bottom, #fff 0%, #fff calc(100% - 1px), transparent calc(100% - 1px));
+}
+
+.post-read-status-popup__tab {
+  box-sizing: border-box;
+  display: flex;
+  padding: 6px 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-bottom-color: transparent;
+  cursor: pointer;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  text-align: center;
+  border-radius: 6px 6px 0 0;
+  background: var(--default-WT, #fff);
+  flex-shrink: 0;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  /* 전역 button border-color 트랜지션 제거 — 탭 전환 시 테두리가 깜빡이는 것 방지 */
+  transition: none;
+}
+
+.post-read-status-popup__tab:hover,
+.post-read-status-popup__tab:focus,
+.post-read-status-popup__tab:focus-visible,
+.post-read-status-popup__tab:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.post-read-status-popup__tab--read {
+  min-width: 80px;
+  min-height: 33px;
+}
+
+.post-read-status-popup__tab--unread {
+  min-width: 97px;
+  min-height: 33px;
+}
+
+.post-read-status-popup__tab--inactive {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+  background: var(--default-WT, #fff);
+}
+
+/* 읽음 활성: 폴더 탭 — 하단 흰색, 본문 border-top과 한 줄로 이어지게 1px 겹침 */
+.post-read-status-popup__tab--read.post-read-status-popup__tab--active {
+  color: var(--JA-mint-01, #01a1af);
+  opacity: 1;
+  border-color: #d4d4d4;
+  border-bottom-color: var(--default-WT, #fff);
+  position: relative;
+  z-index: 2;
+  box-shadow: none !important;
+}
+
+/*
+ * 읽음 활성: 헤더/탭 행 배경 투명 → 겹침 1px에서 본문 border-top이 비활성 탭·스페이서 구간에 보임.
+ * 비활성 안읽음·스페이서는 하단 1px만 투명(위쪽은 흰색 유지).
+ */
+.post-read-status-popup__frame[data-active-tab='read'] .post-read-status-popup__header {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.post-read-status-popup__frame[data-active-tab='read'] .post-read-status-popup__tabs {
+  background: transparent;
+  /* isolate는 바디 border와 서브픽셀 어긋남 유발 가능 */
+  isolation: auto;
+}
+
+/* 좌상단 radius + 탭–바디 1px 겹침 (::after 보강 제거 — 세로선이 가로선 아래로 삐져 나옴) */
+.post-read-status-popup__frame[data-active-tab='read'] .post-read-status-popup__tab--read.post-read-status-popup__tab--active {
+  margin-bottom: -1px;
+  border-radius: var(--pr-card-radius) 6px 0 0;
+}
+
+/* 안읽음 활성: 폴더 탭 */
+.post-read-status-popup__tab--unread.post-read-status-popup__tab--active {
+  color: var(--JA-mint-01, #01a1af);
+  opacity: 1;
+  border-color: #d4d4d4;
+  border-bottom-color: var(--default-WT, #fff);
+  position: relative;
+  z-index: 2;
+  box-shadow: none !important;
+}
+
+/* 읽음 활성: 비활성 안읽음 */
+.post-read-status-popup__frame[data-active-tab='read'] .post-read-status-popup__tab--unread.post-read-status-popup__tab--inactive {
+  opacity: 0.6;
+  border: none;
+  border-radius: 0;
+  z-index: 0;
+  background: linear-gradient(to bottom, #fff 0%, #fff calc(100% - 1px), transparent calc(100% - 1px));
+}
+
+.post-read-status-popup__frame[data-active-tab='unread'] .post-read-status-popup__header {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.post-read-status-popup__frame[data-active-tab='unread'] .post-read-status-popup__tabs {
+  background: transparent;
+  isolation: auto;
+}
+
+/* 우상단 카드 radius + 탭–바디 1px 겹침 (읽음 활성은 좌상 8px, 안읽음 활성은 우상 8px) */
+.post-read-status-popup__frame[data-active-tab='unread'] .post-read-status-popup__tab--unread.post-read-status-popup__tab--active {
+  margin-bottom: -1px;
+  border-radius: 6px var(--pr-card-radius) 0 0;
+}
+
+/* 안읽음 활성: 비활성 읽음 — 읽음 활성 시 비활성 안읽음과 동일(하단 1px만 투명) */
+.post-read-status-popup__frame[data-active-tab='unread'] .post-read-status-popup__tab--read.post-read-status-popup__tab--inactive {
+  opacity: 0.6;
+  border: none;
+  border-radius: 0;
+  z-index: 0;
+  background: linear-gradient(to bottom, #fff 0%, #fff calc(100% - 1px), transparent calc(100% - 1px));
+}
+
+/* 본문: 좌·하·우. 읽음/안읽음 활성 시 상단 border-top 한 줄 + 좌상 1px radius(::before 미사용) */
+.post-read-status-popup__body-wrap {
+  position: relative;
+  z-index: 0;
+  border: 1px solid #d4d4d4;
+  border-top: none;
+  border-radius: 0 0 var(--pr-card-radius) var(--pr-card-radius);
+  background: var(--default-WT, #fff);
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-read-status-popup__frame[data-active-tab='read'] .post-read-status-popup__body-wrap,
+.post-read-status-popup__frame[data-active-tab='unread'] .post-read-status-popup__body-wrap {
+  border-top: 1px solid #d4d4d4;
+  /* 좌상 1px: 상·좌선 삐짐 완화 */
+  border-radius: 1px var(--pr-card-radius) var(--pr-card-radius) var(--pr-card-radius);
+}
+
+.post-read-status-popup__body-wrap::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 1px;
+  background: #d4d4d4;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.post-read-status-popup__frame[data-active-tab='read'] .post-read-status-popup__body-wrap::before,
+.post-read-status-popup__frame[data-active-tab='unread'] .post-read-status-popup__body-wrap::before {
+  display: none;
+}
+
+.post-read-status-popup__body {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 14px 14px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.post-read-status-popup__row {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  gap: 8px;
+}
+
+.post-read-status-popup__avatar {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.post-read-status-popup__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+/*
+ * 이름에 flex-grow를 주면 메타 박스 안에서 이름만 늘어나 |·직함이 오른쪽으로 밀림.
+ * grow 없음 + nowrap: 이름·구분선·직함은 붙어 있고, 여백은 직함과 배지 사이(행 끝)로만 감.
+ */
+.post-read-status-popup__name {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.post-read-status-popup__divider {
+  flex-shrink: 0;
+  margin: 0 8px;
+  color: #9ca3a8;
+  font-weight: 500;
+}
+
+.post-read-status-popup__role {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.5;
+  font-weight: 500;
+}
+
+.post-read-status-popup__badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.post-read-status-popup__badge--muted {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.45;
+}
+
+.post-read-status-popup__empty {
+  padding: 16px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #8c8c8c;
+}

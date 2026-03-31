@@ -20,12 +20,14 @@ import {
   Radio,
   Row,
   Col,
+  Modal,
 } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
 import type { Settlement, Matching, Program } from '@/types/domain'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
-import { SettlementDetailDrawer } from '@/features/settlement/ui/settlement-detail-drawer'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { programService } from '@/entities/program/api/program-service'
 import { mockMatchings, mockSchedules } from '@/data/mock'
@@ -600,30 +602,72 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
     >
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
 
-      <SettlementDetailDrawer
+      <Modal
+        title="정산 상세"
         open={drawerOpen}
-        settlement={selectedSettlement}
-        onClose={() => {
+        onCancel={() => {
           setDrawerOpen(false)
           setSelectedSettlement(null)
         }}
-        onEdit={() => {
-          if (selectedSettlement) {
-            // 정산 수정 페이지로 이동
-            window.location.href = `/settlements/${selectedSettlement.id}/edit`
-          }
-        }}
-        onDelete={() => {}}
-        onStatusChange={async status => {
-          if (selectedSettlement) {
-            const { updateStatus } = useSettlementStore.getState()
-            await updateStatus(selectedSettlement.id, status)
-            fetchSettlements()
-          }
-        }}
-        loading={loading}
+        width={640}
         zIndex={1001}
-      />
+        destroyOnClose
+        footer={
+          <Space>
+            <Button
+              onClick={() => {
+                setDrawerOpen(false)
+                setSelectedSettlement(null)
+              }}
+            >
+              닫기
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => {
+                if (selectedSettlement) {
+                  window.location.href = `/settlements/${selectedSettlement.id}/edit`
+                }
+              }}
+            >
+              수정
+            </Button>
+          </Space>
+        }
+      >
+        {selectedSettlement && (
+          <Descriptions column={1} bordered size="small">
+            <Descriptions.Item label="정산 ID">{selectedSettlement.id}</Descriptions.Item>
+            <Descriptions.Item label="상태">
+              <StatusBadge
+                status={selectedSettlement.status}
+                statusConfig={settlementStatusStatusConfig}
+              />
+            </Descriptions.Item>
+            <Descriptions.Item label="기간">{selectedSettlement.period}</Descriptions.Item>
+            <Descriptions.Item label="프로그램">
+              {programService.getByIdSync(selectedSettlement.programId)?.title ?? '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="정산 금액">
+              {selectedSettlement.totalAmount.toLocaleString()}원
+            </Descriptions.Item>
+            <Descriptions.Item label="항목 요약">
+              {selectedSettlement.items
+                .map(i => `${i.description}: ${i.amount.toLocaleString()}원`)
+                .join(' / ') || '-'}
+            </Descriptions.Item>
+            {selectedSettlement.notes ? (
+              <Descriptions.Item label="비고">{selectedSettlement.notes}</Descriptions.Item>
+            ) : null}
+            <Descriptions.Item label="생성일">
+              {dayjs(selectedSettlement.createdAt).format('YYYY-MM-DD HH:mm')}
+            </Descriptions.Item>
+            <Descriptions.Item label="수정일">
+              {dayjs(selectedSettlement.updatedAt).format('YYYY-MM-DD HH:mm')}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
     </Card>
   )
 }

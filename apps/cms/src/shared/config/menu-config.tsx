@@ -8,13 +8,24 @@ import type { UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
+import {
+  memberListHref,
+  normalizeMemberListKind,
+} from '@/shared/config/member-list-kinds'
 
 const svgStyle = { display: 'block' } as const
 
-/** LNB 카테고리 아이콘: 대시보드 홈 (20x20) */
+/** LNB 카테고리 아이콘: 대시보드 홈 (18x18, 시각적으로 다른 1뎁스보다 작게) */
 function IconDashboardHome() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 14 14" fill="none" style={svgStyle}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18}
+      viewBox="0 0 14 14"
+      fill="none"
+      style={svgStyle}
+    >
       <path
         d="M8 3.25V0.729167C8 0.5225 8.06986 0.349306 8.20958 0.209583C8.34944 0.0698611 8.52264 0 8.72917 0H13.2623C13.4763 0 13.6528 0.0698611 13.7917 0.209583C13.9306 0.349306 14 0.5225 14 0.729167V3.25C14 3.4625 13.9301 3.64063 13.7904 3.78438C13.6507 3.92813 13.4775 4 13.2708 4H8.73771C8.52368 4 8.34722 3.92813 8.20833 3.78438C8.06944 3.64063 8 3.4625 8 3.25ZM0 7.27083V0.729167C0 0.5225 0.0721528 0.349306 0.216458 0.209583C0.360764 0.0698611 0.539583 0 0.752917 0H5.27083C5.46528 0 5.63542 0.0698611 5.78125 0.209583C5.92708 0.349306 6 0.5225 6 0.729167V7.27083C6 7.46528 5.92708 7.63542 5.78125 7.78125C5.63542 7.92708 5.46528 8 5.27083 8H0.752917C0.539583 8 0.360764 7.92708 0.216458 7.78125C0.0721528 7.63542 0 7.46528 0 7.27083ZM8 13.25V6.75C8 6.5375 8.06986 6.35938 8.20958 6.21562C8.34944 6.07187 8.52264 6 8.72917 6H13.2623C13.4763 6 13.6528 6.07187 13.7917 6.21562C13.9306 6.35938 14 6.5375 14 6.75V13.25C14 13.4625 13.9301 13.6406 13.7904 13.7844C13.6507 13.9281 13.4775 14 13.2708 14H8.73771C8.52368 14 8.34722 13.9281 8.20833 13.7844C8.06944 13.6406 8 13.4625 8 13.25ZM0 13.25V10.7083C0 10.5017 0.0721528 10.3285 0.216458 10.1888C0.360764 10.049 0.539583 9.97917 0.752917 9.97917H5.27083C5.46528 9.97917 5.63542 10.049 5.78125 10.1888C5.92708 10.3285 6 10.5017 6 10.7083V13.25C6 13.4625 5.92708 13.6406 5.78125 13.7844C5.63542 13.9281 5.46528 14 5.27083 14H0.752917C0.539583 14 0.360764 13.9281 0.216458 13.7844C0.0721528 13.6406 0 13.4625 0 13.25ZM1.5 6.5H4.5V1.5H1.5V6.5ZM9.5 12.5H12.5V7.5H9.5V12.5ZM9.5 2.52083H12.5V1.5H9.5V2.52083ZM1.5 12.5H4.5V11.4792H1.5V12.5Z"
         fill="currentColor"
@@ -26,8 +37,23 @@ function IconDashboardHome() {
 /** LNB 카테고리 아이콘: 프로그램 관리 (20x20) */
 function IconPrograms() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-programs-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-programs-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-programs-mask)">
@@ -43,8 +69,23 @@ function IconPrograms() {
 /** LNB 카테고리 아이콘: 회원 관리 (20x20) */
 function IconMembers() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-members-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-members-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-members-mask)">
@@ -60,8 +101,23 @@ function IconMembers() {
 /** LNB 카테고리 아이콘: 템플릿 관리 (20x20) */
 function IconTemplate() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-template-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-template-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-template-mask)">
@@ -77,8 +133,23 @@ function IconTemplate() {
 /** LNB 카테고리 아이콘: 게시글 관리 (20x20) */
 function IconPosts() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-posts-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-posts-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-posts-mask)">
@@ -94,8 +165,23 @@ function IconPosts() {
 /** LNB 카테고리 아이콘: 후원사 관리 (20x20) */
 function IconSponsors() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 20 20" fill="none" style={svgStyle}>
-      <mask id="lnb-sponsors-mask" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x={0} y={0} width={20} height={20}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-sponsors-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
         <rect width={20} height={20} fill="#D9D9D9" />
       </mask>
       <g mask="url(#lnb-sponsors-mask)">
@@ -108,10 +194,49 @@ function IconSponsors() {
   )
 }
 
-/** LNB 카테고리 아이콘: 실적 관리 (20x20) */
+/** LNB 카테고리 아이콘: 정산 관리 (20x20) */
+function IconSettlementManagement() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-settlement-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={0}
+        y={0}
+        width={20}
+        height={20}
+      >
+        <rect width={20} height={20} fill="#D9D9D9" />
+      </mask>
+      <g mask="url(#lnb-settlement-mask)">
+        <path
+          d="M4.5 17C4.0875 17 3.73437 16.8531 3.44062 16.5594C3.14687 16.2656 3 15.9125 3 15.5V4.5C3 4.0875 3.14687 3.73438 3.44062 3.44063C3.73437 3.14688 4.0875 3 4.5 3H15.5C15.9125 3 16.2656 3.14688 16.5594 3.44063C16.8531 3.73438 17 4.0875 17 4.5V6.54167H15.5V4.5H4.5V15.5H15.5V13.4375H17V15.5C17 15.9125 16.8531 16.2656 16.5594 16.5594C16.2656 16.8531 15.9125 17 15.5 17H4.5ZM10.5 14C10.0875 14 9.73438 13.8531 9.44063 13.5594C9.14688 13.2656 9 12.9125 9 12.5V7.5C9 7.0875 9.14688 6.73438 9.44063 6.44063C9.73438 6.14688 10.0875 6 10.5 6H16.5C16.9125 6 17.2656 6.14688 17.5594 6.44063C17.8531 6.73438 18 7.0875 18 7.5V12.5C18 12.9125 17.8531 13.2656 17.5594 13.5594C17.2656 13.8531 16.9125 14 16.5 14H10.5ZM16.5 12.5V7.5H10.5V12.5H16.5ZM14.3854 10.8854C14.6285 10.6424 14.75 10.3472 14.75 10C14.75 9.65278 14.6285 9.35764 14.3854 9.11458C14.1424 8.87153 13.8472 8.75 13.5 8.75C13.1528 8.75 12.8576 8.87153 12.6146 9.11458C12.3715 9.35764 12.25 9.65278 12.25 10C12.25 10.3472 12.3715 10.6424 12.6146 10.8854C12.8576 11.1285 13.1528 11.25 13.5 11.25C13.8472 11.25 14.1424 11.1285 14.3854 10.8854Z"
+          fill="currentColor"
+        />
+      </g>
+    </svg>
+  )
+}
+
+/** LNB 카테고리 아이콘: 실적 관리 (18x18) */
 function IconEducationRecords() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 16 14" fill="none" style={svgStyle}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18}
+      viewBox="0 0 16 14"
+      fill="none"
+      style={svgStyle}
+    >
       <path
         d="M0.75 14C0.5375 14 0.359375 13.9285 0.215625 13.7856C0.071875 13.6427 0 13.4656 0 13.2544C0 13.0431 0.071875 12.8646 0.215625 12.7188C0.359375 12.5729 0.5375 12.5 0.75 12.5H15.25C15.4625 12.5 15.6406 12.5715 15.7844 12.7144C15.9281 12.8573 16 13.0344 16 13.2456C16 13.4569 15.9281 13.6354 15.7844 13.7812C15.6406 13.9271 15.4625 14 15.25 14H0.75ZM1.29167 11.2083C1.09722 11.0139 1 10.7778 1 10.5V7C1 6.72222 1.09722 6.48611 1.29167 6.29167C1.48611 6.09722 1.72222 6 2 6C2.27778 6 2.51389 6.09722 2.70833 6.29167C2.90278 6.48611 3 6.72222 3 7V10.5C3 10.7778 2.90278 11.0139 2.70833 11.2083C2.51389 11.4028 2.27778 11.5 2 11.5C1.72222 11.5 1.48611 11.4028 1.29167 11.2083ZM5.29167 11.2083C5.09722 11.0139 5 10.7778 5 10.5V3C5 2.72222 5.09722 2.48611 5.29167 2.29167C5.48611 2.09722 5.72222 2 6 2C6.27778 2 6.51389 2.09722 6.70833 2.29167C6.90278 2.48611 7 2.72222 7 3V10.5C7 10.7778 6.90278 11.0139 6.70833 11.2083C6.51389 11.4028 6.27778 11.5 6 11.5C5.72222 11.5 5.48611 11.4028 5.29167 11.2083ZM9.29167 11.2083C9.09722 11.0139 9 10.7778 9 10.5V5.5C9 5.22222 9.09722 4.98611 9.29167 4.79167C9.48611 4.59722 9.72222 4.5 10 4.5C10.2778 4.5 10.5139 4.59722 10.7083 4.79167C10.9028 4.98611 11 5.22222 11 5.5V10.5C11 10.7778 10.9028 11.0139 10.7083 11.2083C10.5139 11.4028 10.2778 11.5 10 11.5C9.72222 11.5 9.48611 11.4028 9.29167 11.2083ZM13.2917 11.2083C13.0972 11.0139 13 10.7778 13 10.5V1C13 0.722222 13.0972 0.486111 13.2917 0.291667C13.4861 0.0972222 13.7222 0 14 0C14.2778 0 14.5139 0.0972222 14.7083 0.291667C14.9028 0.486111 15 0.722222 15 1V10.5C15 10.7778 14.9028 11.0139 14.7083 11.2083C14.5139 11.4028 14.2778 11.5 14 11.5C13.7222 11.5 13.4861 11.4028 13.2917 11.2083Z"
         fill="currentColor"
@@ -120,10 +245,17 @@ function IconEducationRecords() {
   )
 }
 
-/** LNB 카테고리 아이콘: 보안 설정(로그 관리) (20x20) */
+/** LNB 카테고리 아이콘: 보안 설정(로그 관리) (18x18) */
 function IconSecurityLogs() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 13 16" fill="none" style={svgStyle}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18}
+      viewBox="0 0 13 16"
+      fill="none"
+      style={svgStyle}
+    >
       <path
         d="M6.25 15.8021C6.16667 15.7951 6.09028 15.7778 6.02083 15.75C4.20139 15.1528 2.74306 14.0486 1.64583 12.4375C0.548611 10.8264 0 9.06944 0 7.16667V3.41667C0 3.10153 0.0868056 2.81785 0.260417 2.56563C0.434028 2.31354 0.666667 2.13194 0.958333 2.02083L5.95833 0.104167C6.13889 0.0347222 6.31944 0 6.5 0C6.68056 0 6.86111 0.0347222 7.04167 0.104167L12.0417 2.02083C12.3333 2.13194 12.566 2.31354 12.7396 2.56563C12.9132 2.81785 13 3.10153 13 3.41667V7.16667C13 9.06944 12.4514 10.8264 11.3542 12.4375C10.2569 14.0486 8.79861 15.1528 6.97917 15.75C6.90972 15.7778 6.83333 15.7951 6.75 15.8021C6.66667 15.809 6.58333 15.8125 6.5 15.8125C6.41667 15.8125 6.33333 15.809 6.25 15.8021ZM6.5 14.3333C7.94444 13.8854 9.13889 12.9896 10.0833 11.6458C11.0278 10.3021 11.5 8.80903 11.5 7.16667V3.41667L6.5 1.5L1.5 3.41667V7.16667C1.5 8.80903 1.97222 10.3021 2.91667 11.6458C3.86111 12.9896 5.05556 13.8854 6.5 14.3333Z"
         fill="currentColor"
@@ -134,7 +266,14 @@ function IconSecurityLogs() {
 
 /** 1뎁스 메뉴에 지정된 아이콘이 없을 때 사용하는 기본 아이콘 (20x20) */
 const CategoryIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 19 14" fill="none" style={svgStyle}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={20}
+    height={20}
+    viewBox="0 0 19 14"
+    fill="none"
+    style={svgStyle}
+  >
     <path
       d="M4.33333 11C5.01972 11 5.68785 11.0764 6.33771 11.2292C6.98757 11.3819 7.625 11.5972 8.25 11.875V2.41667C7.65278 2.09722 7.03104 1.86458 6.38479 1.71875C5.73868 1.57292 5.08549 1.5 4.42521 1.5C3.91951 1.5 3.41667 1.54167 2.91667 1.625C2.41667 1.70833 1.94444 1.86097 1.5 2.08292V11.5C1.94444 11.3056 2.40625 11.1736 2.88542 11.1042C3.36458 11.0347 3.84722 11 4.33333 11ZM9.75 11.875C10.375 11.5972 11.0124 11.3819 11.6623 11.2292C12.3122 11.0764 12.9803 11 13.6667 11C14.1528 11 14.6354 11.0347 15.1146 11.1042C15.5938 11.1736 16.0556 11.3056 16.5 11.5V2.08333C16.0139 1.90278 15.5105 1.76042 14.9898 1.65625C14.4691 1.55208 13.9447 1.5 13.4167 1.5C12.7778 1.5 12.1528 1.57986 11.5417 1.73958C10.9306 1.89931 10.3333 2.125 9.75 2.41667V11.875ZM8.51042 13.7292C8.36458 13.6458 8.21375 13.5625 8.05792 13.4792C7.50542 13.1597 6.92375 12.9167 6.31292 12.75C5.70194 12.5833 5.07681 12.5 4.4375 12.5C3.99306 12.5 3.54514 12.5278 3.09375 12.5833C2.64236 12.6389 2.20833 12.7569 1.79167 12.9375C1.36111 13.1319 0.954861 13.1562 0.572917 13.0104C0.190972 12.8646 0 12.6042 0 12.2292V1.75C0 1.55556 0.0555556 1.37847 0.166667 1.21875C0.277778 1.05903 0.416667 0.930556 0.583333 0.833333C1.16667 0.5 1.78042 0.277778 2.42458 0.166667C3.06875 0.0555556 3.72583 0 4.39583 0C5.20139 0 5.96875 0.0833333 6.69792 0.25C7.42708 0.416667 8.19444 0.708333 9 1.125C9.80556 0.708333 10.5729 0.416667 11.3021 0.25C12.0313 0.0833333 12.7986 0 13.6042 0C14.2218 0 14.8276 0.0520833 15.4217 0.15625C16.0156 0.260417 16.5833 0.4375 17.125 0.6875C17.3611 0.798611 17.5694 0.940972 17.75 1.11458C17.9306 1.28819 18.0208 1.5 18.0208 1.75V12.2292C18.0208 12.5625 17.8576 12.8056 17.5312 12.9583C17.2049 13.1111 16.8542 13.1181 16.4792 12.9792C15.9931 12.7986 15.4965 12.6736 14.9896 12.6042C14.4826 12.5347 13.9722 12.5 13.4583 12.5C12.8381 12.5 12.2316 12.5799 11.639 12.7396C11.0463 12.8993 10.4861 13.1458 9.95833 13.4792C9.80556 13.5764 9.65278 13.6632 9.5 13.7396C9.34722 13.816 9.18056 13.8542 9 13.8542C8.81944 13.8542 8.65625 13.8125 8.51042 13.7292ZM10.75 4.02083C10.75 3.82639 10.809 3.65278 10.9271 3.5C11.0451 3.34722 11.2014 3.25 11.3958 3.20833C11.7431 3.13889 12.0851 3.08333 12.4219 3.04167C12.7588 3 13.1131 2.97917 13.4848 2.97917C13.7172 2.97917 13.9571 2.99076 14.2046 3.01396C14.4521 3.03701 14.6964 3.06708 14.9375 3.10417C15.1042 3.13194 15.2396 3.21208 15.3438 3.34458C15.4479 3.47708 15.5 3.62611 15.5 3.79167C15.5 4.02778 15.4167 4.22222 15.25 4.375C15.0833 4.52778 14.8819 4.58826 14.6458 4.55646C14.4514 4.53271 14.2583 4.51042 14.0667 4.48958C13.875 4.46875 13.6802 4.45833 13.4823 4.45833C13.1608 4.45833 12.8507 4.47569 12.5521 4.51042C12.2535 4.54514 11.9522 4.60326 11.6483 4.68479C11.4106 4.75604 11.2014 4.72222 11.0208 4.58333C10.8403 4.44444 10.75 4.25694 10.75 4.02083ZM10.7917 8.91667C10.7917 8.72222 10.8507 8.54861 10.9688 8.39583C11.0868 8.24306 11.2431 8.14583 11.4375 8.10417C11.7847 8.03472 12.1267 7.97917 12.4635 7.9375C12.8005 7.89583 13.1548 7.875 13.5265 7.875C13.7588 7.875 13.9987 7.8866 14.2463 7.90979C14.4938 7.93285 14.7381 7.96292 14.9792 8C15.1458 8.02778 15.2812 8.10792 15.3854 8.24042C15.4896 8.37292 15.5417 8.52194 15.5417 8.6875C15.5417 8.92361 15.4583 9.11806 15.2917 9.27083C15.125 9.42361 14.9236 9.4841 14.6875 9.45229C14.4931 9.42854 14.3 9.40625 14.1083 9.38542C13.9167 9.36458 13.7219 9.35417 13.524 9.35417C13.2024 9.35417 12.8924 9.37153 12.5938 9.40625C12.2951 9.44097 11.9939 9.4991 11.69 9.58063C11.4522 9.65188 11.2431 9.61806 11.0625 9.47917C10.8819 9.34028 10.7917 9.15278 10.7917 8.91667ZM10.7917 6.47917C10.7917 6.28472 10.8507 6.11111 10.9688 5.95833C11.0868 5.80556 11.2431 5.70833 11.4375 5.66667C11.7847 5.59722 12.1267 5.54167 12.4635 5.5C12.8005 5.45833 13.1548 5.4375 13.5265 5.4375C13.7588 5.4375 13.9987 5.4491 14.2463 5.47229C14.4938 5.49535 14.7381 5.52542 14.9792 5.5625C15.1458 5.59028 15.2812 5.67042 15.3854 5.80292C15.4896 5.93542 15.5417 6.08444 15.5417 6.25C15.5417 6.48611 15.4583 6.68056 15.2917 6.83333C15.125 6.98611 14.9236 7.0466 14.6875 7.01479C14.4931 6.99104 14.3 6.96875 14.1083 6.94792C13.9167 6.92708 13.7219 6.91667 13.524 6.91667C13.2024 6.91667 12.8924 6.93403 12.5938 6.96875C12.2951 7.00347 11.9939 7.0616 11.69 7.14313C11.4522 7.21438 11.2431 7.18056 11.0625 7.04167C10.8819 6.90278 10.7917 6.71528 10.7917 6.47917Z"
       fill="currentColor"
@@ -217,20 +356,6 @@ const allMenuItems: MenuItemConfig[] = [
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
-      // {
-      //   key: '/applications',
-      //   label: '수강 신청 현황',
-      //   icon: <DotIcon />,
-      //   enabled: true,
-      //   allowedRoles: ['ADMIN'],
-      // },
-      // {
-      //   key: '/instructor-applications',
-      //   label: '강의 신청 현황',
-      //   icon: <DotIcon />,
-      //   enabled: true,
-      //   allowedRoles: ['ADMIN'],
-      // },
       {
         key: '/programs/economy-education',
         label: '경제 교육 프로그램',
@@ -241,500 +366,8 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
 
-  { key: 'divider-user', type: 'divider', enabled: true },
-
-  // ============================================
-  // 사용자(INSTRUCTOR, INDIVIDUAL, SCHOOL) 공통 1뎁스 메뉴
-  // ============================================
-
-  // 1. 내 학습 관리 (1뎁스)
-  {
-    key: '/my-learning',
-    label: '내 학습 관리',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 2. 교육 프로그램 (1뎁스)
-  {
-    key: '/programs',
-    label: '교육 프로그램',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 3. 봉사 프로그램 (1뎁스)
-  {
-    key: '/programs/volunteer',
-    label: '봉사 프로그램',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 4. 마이페이지 (1뎁스) - 2뎁스 구조
-  {
-    key: 'mypage-group',
-    label: '마이페이지',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      // 개인정보 관리 (2뎁스) - 3뎁스 확장 가능
-      {
-        key: 'personal-info-group',
-        label: '개인정보 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-        children: [
-          {
-            key: '/mypage/profile',
-            label: '내 정보',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-          },
-          // 학교(교사) 인증 / 교사 정보 (SCHOOL 권한에서만, 인증 상태에 따라 라벨 변경)
-          {
-            key: '/mypage/school-auth',
-            label: '학교(교사) 인증',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['SCHOOL'],
-          },
-          // 강사 인증 / 강사 정보 (INSTRUCTOR, INDIVIDUAL 권한에서만, 인증 상태에 따라 라벨 변경)
-          {
-            key: '/mypage/instructor-auth',
-            label: '강사 인증',
-            icon: <DotIcon />,
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL'],
-          },
-        ],
-      },
-      // 내 프로그램 일정 (2뎁스)
-      {
-        key: '/mypage/program-schedule',
-        label: '내 프로그램 일정',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-      // 강의료 정산 (2뎁스) - 강사(INSTRUCTOR) 권한에서만
-      {
-        key: '/settlements/my',
-        label: '강의료 정산',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      // 서류 발급 이력 (2뎁스)
-      {
-        key: '/mypage/documents',
-        label: '서류 발급 이력',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-      // 내 문의 내역 (2뎁스)
-      {
-        key: '/notices/inquiries/my',
-        label: '내 문의 내역',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-    ],
-  },
-
-  // 5. 공지사항 (1뎁스)
-  {
-    key: '/notices',
-    label: '공지사항',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 6. FAQ (1뎁스)
-  {
-    key: '/notices/faq',
-    label: 'FAQ',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // 7. 문의하기 (1뎁스)
-  {
-    key: '/notices/inquiries',
-    label: '문의하기',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-  },
-
-  // ============================================
-  // 주석 처리된 메뉴 (일반 사용자용)
-  // ============================================
-
-  /* 
-  // 1. 내 학습 관리 (권한별로 다른 페이지로 연결) - 주석 처리
-  {
-    key: 'my-learning-group',
-    label: '내 학습 관리',
-    icon: <FileTextOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      {
-        key: '/instructor/schedule',
-        label: '교육 일정',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      {
-        key: '/schedules/my',
-        label: '내 일정',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-      },
-      {
-        key: '/school/my-learning',
-        label: '내 학습 관리',
-        enabled: true,
-        allowedRoles: ['SCHOOL'],
-      },
-    ],
-  },
-  
-  // 2. 교육 프로그램 (하위 메뉴) - 주석 처리
-  {
-    key: 'education-programs-group',
-    label: '교육 프로그램',
-    icon: <FolderOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      {
-        key: '/programs',
-        label: '프로그램 리스트',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-    ],
-  },
-  
-  // 3. 봉사 프로그램 (하위 메뉴) - 주석 처리
-  {
-    key: 'volunteer-programs-group',
-    label: '봉사 프로그램',
-    icon: <HeartOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      {
-        key: '/programs/volunteer',
-        label: '봉사 프로그램',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-    ],
-  },
-  
-  // 강사 마이페이지 (하위 메뉴) - 주석 처리
-  {
-    key: 'instructor-mypage-group',
-    label: '마이페이지',
-    icon: <UserSwitchOutlined />,
-    enabled: true,
-    allowedRoles: ['INSTRUCTOR'],
-    children: [
-      {
-        key: 'instructor-personal-info-group',
-        label: '개인정보 관리',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-        children: [
-          {
-            key: '/mypage/profile',
-            label: '내 정보',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-          {
-            key: '/mypage/school-auth',
-            label: '학교(교사) 인증',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-          {
-            key: '/mypage/instructor-auth',
-            label: '강사 인증',
-            enabled: true,
-            allowedRoles: ['INSTRUCTOR'],
-          },
-        ],
-      },
-      {
-        key: '/mypage/program-schedule',
-        label: '내 프로그램 일정',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      {
-        key: '/settlements/my',
-        label: '강의료 정산',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      {
-        key: '/mypage/documents',
-        label: '서류 발급 이력',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      {
-        key: '/notices/inquiries/my',
-        label: '내 문의 내역',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-    ],
-  },
-  */
-
-  // ============================================
-  // 주석 처리된 메뉴 (역할별 전용 메뉴)
-  // ============================================
-
-  /* 
-  { key: 'divider-mypage', type: 'divider', enabled: true },
-  
-  // 학생(INDIVIDUAL) 전용 - 봉사단
-  {
-    key: 'individual-volunteers-group',
-    label: '봉사단',
-    icon: <HeartOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['INDIVIDUAL'],
-    children: [
-      {
-        key: '/interviews/apply',
-        label: '봉사자 신청',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-      },
-      {
-        key: 'volunteer-info-group',
-        label: '봉사 정보',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-        children: [
-          {
-            key: '/volunteers/my/schedules',
-            label: '진행 상세정보',
-            enabled: true,
-            allowedRoles: ['INDIVIDUAL'],
-          },
-          {
-            key: '/volunteers/education-plan',
-            label: '교육 계획서 작성',
-            enabled: true,
-            allowedRoles: ['INDIVIDUAL'],
-          },
-        ],
-      },
-    ],
-  },
-  
-  // 학생(INDIVIDUAL) 전용 - 마이페이지 (하위 메뉴)
-  {
-    key: 'individual-mypage-group',
-    label: '마이페이지',
-    icon: <UserSwitchOutlined />,
-    enabled: true,
-    allowedRoles: ['INDIVIDUAL'],
-    children: [
-      {
-        key: 'individual-personal-info-group',
-        label: '개인정보 관리',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-        children: [
-          {
-            key: '/mypage/profile',
-            label: '내 정보',
-            enabled: true,
-            allowedRoles: ['INDIVIDUAL'],
-          },
-          {
-            key: '/mypage/instructor-auth',
-            label: '강사 인증',
-            enabled: true,
-            allowedRoles: ['INDIVIDUAL'],
-          },
-        ],
-      },
-      {
-        key: '/mypage/program-schedule',
-        label: '내 프로그램 일정',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-      },
-      {
-        key: '/mypage/documents',
-        label: '서류 발급 이력',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-      },
-      {
-        key: '/notices/inquiries/my',
-        label: '내 문의 내역',
-        enabled: true,
-        allowedRoles: ['INDIVIDUAL'],
-      },
-    ],
-  },
-  
-  // 학생(INDIVIDUAL) 전용 - 추가 메뉴
-  {
-    key: '/assignments',
-    label: '과제',
-    icon: <FileTextOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['INDIVIDUAL'],
-  },
-  {
-    key: '/certificates',
-    label: '수료증',
-    icon: <FileOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['INDIVIDUAL'],
-  },
-  
-  // 학교(SCHOOL) 전용 - 마이페이지 (하위 메뉴)
-  {
-    key: 'school-mypage-group',
-    label: '마이페이지',
-    icon: <UserSwitchOutlined />,
-    enabled: true,
-    allowedRoles: ['SCHOOL'],
-    children: [
-      {
-        key: 'school-personal-info-group',
-        label: '개인정보 관리',
-        enabled: true,
-        allowedRoles: ['SCHOOL'],
-        children: [
-          {
-            key: '/mypage/profile',
-            label: '내 정보',
-            enabled: true,
-            allowedRoles: ['SCHOOL'],
-          },
-          {
-            key: '/mypage/school-auth',
-            label: '학교(교사) 인증',
-            enabled: true,
-            allowedRoles: ['SCHOOL'],
-          },
-        ],
-      },
-      {
-        key: '/mypage/program-schedule',
-        label: '내 프로그램 일정',
-        enabled: true,
-        allowedRoles: ['SCHOOL'],
-      },
-      {
-        key: '/mypage/documents',
-        label: '서류 발급 이력',
-        enabled: true,
-        allowedRoles: ['SCHOOL'],
-      },
-      {
-        key: '/notices/inquiries/my',
-        label: '내 문의 내역',
-        enabled: true,
-        allowedRoles: ['SCHOOL'],
-      },
-    ],
-  },
-  {
-    key: '/school/my-learning',
-    label: '만족도설문',
-    icon: <FileTextOutlined />,
-    enabled: true,
-    allowedRoles: ['SCHOOL'],
-  },
-  
-  // 교사(SCHOOL) 전용 - 추가 메뉴
-  {
-    key: '/community',
-    label: '커뮤니티',
-    icon: <TeamOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['SCHOOL'],
-  },
-  {
-    key: '/certificates-school',
-    label: '수료증',
-    icon: <FileOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['SCHOOL'],
-  },
-  
-  // 강사(INSTRUCTOR) 전용 - 추가 메뉴
-  {
-    key: '/instructor/reports',
-    label: '강의보고서',
-    icon: <FileTextOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['INSTRUCTOR'],
-  },
-  {
-    key: '/instructor/settlements',
-    label: '강사비신청',
-    icon: <FileTextOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['INSTRUCTOR'],
-    children: [
-      {
-        key: '/settlements/my',
-        label: '강사비 신청',
-        enabled: true,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-    ],
-  },
-  {
-    key: '/community-instructor',
-    label: '커뮤니티',
-    icon: <TeamOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['INSTRUCTOR'],
-  },
-  {
-    key: '/instructor/certificates',
-    label: '경력증명서',
-    icon: <FileOutlined />,
-    enabled: false,
-    hidden: true,
-    allowedRoles: ['INSTRUCTOR'],
-  },
-  */
+  // Non-admin LNB: 기획 확정 후 `allMenuItems`에 항목을 추가하고 `allowedRoles`에
+  // 'INSTRUCTOR' | 'INDIVIDUAL' | 'SCHOOL' 을 지정하면 된다. (과거 스펙은 Git 히스토리 참고)
 
   // legacy support paths (호환/리다이렉트 용도 - 메뉴에는 노출하지 않음)
   { key: '/posts', enabled: false, allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'] },
@@ -760,67 +393,79 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/users', label: '전체 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/schools', label: '학교(교사) 회원', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/instructors', label: '강사단 관리', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
       {
-        key: 'admin-group',
-        label: '관리자',
+        key: 'member-list-group',
+        label: '회원 목록',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
         children: [
-          { key: '/admin/members', label: '관리자 회원', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
-          { key: '/admin/settings/permissions', label: '관리 권한 설정', icon: <DotIcon />, enabled: true, allowedRoles: ['ADMIN'] },
+          {
+            key: memberListHref('all'),
+            label: '전체 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: memberListHref('institutions'),
+            label: '학교(교사) 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: memberListHref('instructors'),
+            label: '강사 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: memberListHref('admins'),
+            label: '관리자 회원',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
         ],
+      },
+      {
+        key: '/admin/settings/permissions',
+        label: '회원 권한 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
       },
     ],
   },
-  // {
-  //   key: 'applications-group',
-  //   label: '신청 관리',
-  //   icon: <FileTextOutlined />,
-  //   enabled: true,
-  //   allowedRoles: ['ADMIN'],
-  //   children: [
-  //     { key: '/applications', label: '신청 승인/반려', enabled: true, allowedRoles: ['ADMIN'] },
-  //   ],
-  // },
-  // {
-  //   key: 'instructors-group',
-  //   label: '강사단 관리',
-  //   icon: <UserOutlined />,
-  //   enabled: true,
-  //   allowedRoles: ['ADMIN'],
-  //   children: [
-  //     { key: '/instructors', label: '강사진', enabled: true, allowedRoles: ['ADMIN'] },
-  //     { key: '/instructor-applications', label: '강의 신청 관리', enabled: true, allowedRoles: ['ADMIN'] },
-  //     { key: '/matchings', label: '매칭 관리', enabled: true, allowedRoles: ['ADMIN'] },
-  //     { key: '/settlements', label: '정산', enabled: true, allowedRoles: ['ADMIN'] },
-  //     { key: '/settlements/payment-statements', label: '지급조서/이체리스트', enabled: true, allowedRoles: ['ADMIN'] },
-  //   ],
-  // },
-  // {
-  //   key: 'volunteers-group',
-  //   label: '봉사단 관리',
-  //   icon: <HeartOutlined />,
-  //   enabled: true,
-  //   allowedRoles: ['ADMIN'],
-  //   children: [
-  //     { key: '/volunteers', label: '봉사자', enabled: true, allowedRoles: ['ADMIN'] },
-  //     { key: '/volunteers/programs', label: '봉사 프로그램', enabled: true, allowedRoles: ['ADMIN'] },
-  //   ],
-  // },
-  // {
-  //   key: 'admin-system-group',
-  //   label: '시스템 관리',
-  //   icon: <DatabaseOutlined />,
-  //   enabled: true,
-  //   allowedRoles: ['ADMIN'],
-  //   children: [
-  //     { key: '/admin/permission-requests', label: '권한 요청 관리', enabled: true, allowedRoles: ['ADMIN'] },
-  //   ],
-  // },
+  {
+    key: 'settlement-management-group',
+    label: '정산 관리',
+    icon: <IconSettlementManagement />,
+    enabled: true,
+    children: [
+      {
+        key: '/settlement-management/payment-orders',
+        label: '지급조서 확인',
+        icon: <FolderOutlined />,
+        enabled: true,
+      },
+      {
+        key: '/settlement-management/account-payments',
+        label: '계좌 지급 확인',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+      },
+      {
+        key: '/settlement-management/item-settings',
+        label: '정산 항목 설정',
+        icon: <FolderOutlined />,
+        enabled: true,
+      },
+    ],
+  },
   {
     key: 'templates-group',
     label: '템플릿 관리',
@@ -898,9 +543,27 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/admin/posts/notices', label: '공지사항', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/admin/posts/faq', label: 'FAQ', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/admin/posts/inquiries', label: '문의하기', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      {
+        key: '/admin/posts/notices',
+        label: '공지사항',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/admin/posts/faq',
+        label: 'FAQ',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/admin/posts/inquiries',
+        label: '문의하기',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
     ],
   },
   {
@@ -910,7 +573,6 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
   },
-  // { key: '/surveys', label: '설문 관리', icon: <FileTextOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   {
     key: '/education-records',
     label: '실적 관리',
@@ -918,8 +580,6 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
   },
-  // { key: '/education-records-v2', label: '실적 통계 (v2)', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-  // { key: '/performance', label: '실적 통계', icon: <BarChartOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
   {
     key: 'logs-group',
     label: '보안 설정(로그 관리)',
@@ -927,21 +587,25 @@ const allMenuItems: MenuItemConfig[] = [
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
-      { key: '/logs/bug', label: '버그', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
-      { key: '/logs/issue', label: '이슈', icon: <FolderOutlined />, enabled: true, allowedRoles: ['ADMIN'] },
+      {
+        key: '/logs/bug',
+        label: '버그',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/logs/issue',
+        label: '이슈',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
     ],
   },
-  // {
-  //   key: '/admin/settings/permissions',
-  //   label: '시스템 설정',
-  //   icon: <SettingOutlined />,
-  //   enabled: true,
-  //   allowedRoles: ['ADMIN'],
-  //   // P2: 마스터 관리자만 접근 가능 (ProtectedRoute에서 체크)
-  // },
   { key: 'divider-bottom', type: 'divider', enabled: true, allowedRoles: ['ADMIN'] },
 
-  // 기타 (비활성)
+  // LNB 비활성 플레이스홀더: `canAccessPath` / `findAllMenuItemsByPath`가 경로 키를 참조하므로 유지한다(삭제 시 접근 판정이 달라질 수 있음).
   {
     key: '/application-paths',
     label: '신청 경로 관리',
@@ -954,20 +618,9 @@ const allMenuItems: MenuItemConfig[] = [
     label: '일정 관리',
     icon: <CalendarOutlined />,
     enabled: false,
+    allowedRoles: ['ADMIN'],
     children: [
-      { key: '/schedules', label: '일정 캘린더', enabled: false },
-      {
-        key: '/schedules/my',
-        label: '본인 일정 목록',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-      {
-        key: '/schedules/my/calendar',
-        label: '본인 일정 캘린더',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
+      { key: '/schedules', label: '일정 캘린더', enabled: false, allowedRoles: ['ADMIN'] },
       {
         key: '/schedule-negotiations',
         label: '일정 협의 관리',
@@ -981,53 +634,26 @@ const allMenuItems: MenuItemConfig[] = [
     label: '면접 관리',
     icon: <TeamOutlined />,
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      { key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] },
-      {
-        key: '/interviews/apply',
-        label: '강사 신청',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR'],
-      },
-      {
-        key: '/interviews/my',
-        label: '내 면접 일정',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-    ],
+    allowedRoles: ['ADMIN'],
+    children: [{ key: '/interviews', label: '면접 관리', enabled: false, allowedRoles: ['ADMIN'] }],
   },
   {
     key: 'reports-group',
     label: '보고서',
     icon: <FileTextOutlined />,
     enabled: false,
-    allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-    children: [
-      { key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] },
-      {
-        key: '/reports/new',
-        label: '보고서 작성',
-        enabled: false,
-        allowedRoles: ['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
-      },
-    ],
+    allowedRoles: ['ADMIN'],
+    children: [{ key: '/reports', label: '보고서 관리', enabled: false, allowedRoles: ['ADMIN'] }],
   },
 ]
 
 /**
  * 권한별 메뉴 필터링
  *
- * 참고사항:
- * - 각 권한(INSTRUCTOR/INDIVIDUAL/SCHOOL)별로 완전히 분리된 메뉴 구조
- * - 공통 메뉴 없이 권한별로 독립적으로 관리
- * - allowedRoles로 접근 가능한 메뉴만 필터링하여 표시
- * - 인증 상태에 따라 메뉴 라벨이 동적으로 변경됨
- *
+ * - `allowedRoles`로 LNB에 노출할 항목을 제한한다.
  * @param userRole 사용자 권한
  * @param items 메뉴 아이템 목록
- * @param user 사용자 정보 (인증 상태 확인용, 선택적)
+ * @param user 사용자 정보 (선택, 하위 호환용)
  * @returns 필터링된 메뉴 아이템 목록
  */
 export function filterMenuByRole(
@@ -1066,46 +692,13 @@ export function filterMenuByRole(
         return { type: 'divider' as const }
       }
 
-      // 1뎁스: 카테고리 아이콘 표시(지정된 아이콘 또는 기본 CategoryIcon), 2뎁스 이상: 불릿(•) 아이콘
+      // 1뎁스: 카테고리 아이콘 표시(지정된 아이콘 또는 기본 CategoryIcon)
+      // 2뎁스: 불릿(•) 아이콘, 3뎁스 이상: 아이콘 없음
       const showIcon = depth === 0 && item.icon != null
       const menuItem: any = {
         key: item.key,
         label: item.label,
-        icon: showIcon ? (item.icon ?? <CategoryIcon />) : depth >= 1 ? <BulletIcon /> : undefined,
-      }
-
-      // 인증 상태에 따른 동적 메뉴 라벨 변경 (재귀적으로 모든 뎁스에서 적용)
-      // 권한별 렌더링 확실히: 인증 상태에 따라 메뉴 라벨과 경로 동적 변경
-      if (user) {
-        // 학교(교사) 인증 / 교사 정보 (SCHOOL 권한에서만)
-        // 케이스 1: 교사 인증이 안 되어있으면 "교사 인증"으로 메뉴 노출 + 진입 시 교사 인증 프로세스
-        // 케이스 2: 인증된 교사인 경우, "교사 정보"로 메뉴 노출 + 진입 시 교사 정보 노출
-        if (item.key === '/mypage/school-auth' || item.key === '/mypage/school-info') {
-          if (user.schoolInfo) {
-            // 인증된 교사: "교사 정보"로 표시
-            menuItem.label = '교사 정보'
-            menuItem.key = '/mypage/school-info'
-          } else {
-            // 인증 안 된 교사: "학교(교사) 인증"으로 표시
-            menuItem.label = '학교(교사) 인증'
-            menuItem.key = '/mypage/school-auth'
-          }
-        }
-
-        // 강사 인증 / 강사 정보 (INSTRUCTOR, INDIVIDUAL 권한에서만)
-        // 케이스 1: 강사 인증이 안 되어있으면 "강사 인증"으로 메뉴 노출 + 진입 시 강사 인증 프로세스
-        // 케이스 2: 인증된 강사인 경우, "강사 정보"로 메뉴 노출 + 진입 시 강사 정보 노출
-        if (item.key === '/mypage/instructor-auth' || item.key === '/mypage/instructor-info') {
-          if (user.instructorId) {
-            // 인증된 강사: "강사 정보"로 표시
-            menuItem.label = '강사 정보'
-            menuItem.key = '/mypage/instructor-info'
-          } else {
-            // 인증 안 된 강사: "강사 인증"으로 표시
-            menuItem.label = '강사 인증'
-            menuItem.key = '/mypage/instructor-auth'
-          }
-        }
+        icon: showIcon ? (item.icon ?? <CategoryIcon />) : depth === 1 ? <BulletIcon /> : undefined,
       }
 
       // Phase 0.1.5: 자식 메뉴가 있는 경우 재귀적으로 필터링 (강화)
@@ -1181,8 +774,8 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
   // 경로 정규화 (끝에 있는 / 제거)
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
 
-  // Phase 0.1.5: 관리자 레벨별 접근 제어
-  // 임시: ADMIN은 관리자 홈, 일반 교육 프로그램, 경제 교육 프로그램만 접근 가능 (이외 Coming Soon)
+  // Phase 0.1.5: 관리자 — 프로그램 영역은 아래 예외 규칙으로 먼저 허용
+  // 그 외(회원 목록 `/users/list`, 템플릿, 게시글 등)는 하단 `findAllMenuItemsByPath`와 동일 규칙으로 판단
   if (userRole === 'ADMIN') {
     if (normalizedPath === '/') return true
     if (normalizedPath.startsWith('/programs/education')) return true
@@ -1202,7 +795,6 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
       const firstSegment = segments[0]
       if (firstSegment && !programsReserved.includes(firstSegment)) return true // 프로그램 상세/수정/신청 등
     }
-    return false
   }
 
   // 역할별 내 학습 관리 경로는 항상 허용 (index 라우팅용)
@@ -1221,6 +813,11 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     !normalizedPath.startsWith('/settlements/my')
   ) {
     return false
+  }
+
+  // 계좌 지급 확인: 로그인한 모든 역할 URL 접근 허용 (LNB는 메뉴 항목 allowedRoles로 제어)
+  if (normalizedPath === '/settlement-management/account-payments') {
+    return true
   }
 
   const matches = findAllMenuItemsByPath(allMenuItems, normalizedPath)
@@ -1484,12 +1081,14 @@ function toBreadcrumbItem(menuItem: MenuItemConfig): BreadcrumbItem {
  * @param pathname 경로
  * @param userRole 사용자 권한
  * @param user 사용자 정보 (동적 라벨 변경용, 선택적)
+ * @param search location.search (`/users/list?kind=…` 메뉴 키 매칭용)
  * @returns 브레드크럼 아이템 배열
  */
 export function getBreadcrumbByPath(
   pathname: string,
   userRole: UserRole | null,
-  user?: Omit<import('@/types/user').User, 'password'> | null
+  user?: Omit<import('@/types/user').User, 'password'> | null,
+  search: string = ''
 ): BreadcrumbItem[] {
   const n = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
 
@@ -1531,16 +1130,30 @@ export function getBreadcrumbByPath(
       enabled: true, // 이미 필터링됨
     }))
 
+  const pathForMenuMatch =
+    userRole === 'ADMIN' && n === '/users/list'
+      ? memberListHref(
+          (() => {
+            const raw = new URLSearchParams(search).get('kind')
+            return normalizeMemberListKind(raw)
+          })()
+        )
+      : n
+
   // 권한별 필터링된 메뉴에서 매칭 찾기
-  let match = findMenuMatchInItems(n, filteredItems)
+  let match = findMenuMatchInItems(pathForMenuMatch, filteredItems)
 
   // 필터링된 메뉴에서 찾지 못한 경우, 원본 메뉴에서도 검색 (하위 호환성)
   if (!match) {
-    match = findMenuMatch(n)
+    match = findMenuMatch(pathForMenuMatch)
   }
 
   // 관리자: 교육 프로그램 하위 경로 (전체 프로그램 / 수강자 모집 / 수강 신청 현황) 브레드크럼
-  if (!match && userRole === 'ADMIN' && (n === '/programs/education' || n.startsWith('/programs/education/'))) {
+  if (
+    !match &&
+    userRole === 'ADMIN' &&
+    (n === '/programs/education' || n.startsWith('/programs/education/'))
+  ) {
     const listMatch =
       findMenuMatchInItems('/programs/education', filteredItems) ||
       findMenuMatch('/programs/education')
@@ -1557,7 +1170,8 @@ export function getBreadcrumbByPath(
       } else if (n === '/programs/education/schedule') {
         thirdLabel = '프로그램 일정'
       } else {
-        thirdLabel = typeof listMatch.item.label === 'string' ? listMatch.item.label : '교육 프로그램'
+        thirdLabel =
+          typeof listMatch.item.label === 'string' ? listMatch.item.label : '교육 프로그램'
       }
       return [
         toBreadcrumbItem(listMatch.parent),
@@ -1568,7 +1182,15 @@ export function getBreadcrumbByPath(
   }
 
   // 관리자: 프로그램 상세(/programs/:id) 또는 수정(/programs/:id/edit) 접근 시 브레드크럼 연동
-  const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
+  const programsReserved = [
+    'my',
+    'favorites',
+    'volunteer',
+    'education',
+    'economy-education',
+    'new',
+    'satisfaction',
+  ]
   if (!match && userRole === 'ADMIN' && n.startsWith('/programs/')) {
     const rest = n.slice('/programs/'.length)
     const segments = rest.split('/').filter(Boolean)

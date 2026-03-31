@@ -3,8 +3,8 @@
  * 3단: 좌측(미니 캘린더 + 검색 + 유형 필터) | 중앙(메인 캘린더) | 우측(선택일 일정 리스트)
  */
 
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { Calendar, Button, Spin, Input, Checkbox } from 'antd'
+import { useState, useMemo, useRef, useEffect, Fragment } from 'react'
+import { Calendar, Button, Spin, Input, Checkbox, Popover } from 'antd'
 import { LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -12,8 +12,11 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
 import { ProgramMiniCalendar } from './program-mini-calendar'
-import { ProgramScheduleList } from './program-schedule-list'
-import { getScheduleColorPair } from './program-schedule-colors'
+import { ProgramScheduleList, getProgramDayScheduleLine } from './program-schedule-list'
+import {
+  SCHEDULE_COLORS,
+  buildResolvedScheduleColorMapForPrograms,
+} from './program-schedule-colors'
 import { businessAreaOptions } from './constants/program-list-constants'
 import { SegmentedTab } from '@/shared/ui'
 import './program-calendar-view.css'
@@ -68,6 +71,50 @@ function getProgramSpanRole(program: Program, date: Dayjs): SpanRole {
   if (date.isSame(rangeStart, 'day')) return 'start'
   if (date.isSame(rangeEnd, 'day')) return 'end'
   return 'middle'
+}
+
+function CalendarCellSchedulePreview({
+  date,
+  programs,
+  onProgramClick,
+}: {
+  date: Dayjs
+  programs: Program[]
+  onProgramClick: (program: Program) => void
+}) {
+  const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(programs)
+
+  return (
+    <div className="program-calendar-cell-preview">
+      {programs.map(program => {
+        const { statusLabel, time } = getProgramDayScheduleLine(program, date)
+        const title = program.title ?? ''
+        const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
+        return (
+          <button
+            key={program.id}
+            type="button"
+            className="program-calendar-cell-preview__item"
+            onClick={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              onProgramClick(program)
+            }}
+          >
+            <span
+              className="program-calendar-cell-preview__title"
+              style={{ color: colorPair.text }}
+            >
+              [{title}]
+            </span>
+            <span className="program-calendar-cell-preview__desc">
+              {statusLabel} | {time}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 export function ProgramCalendarView({
@@ -248,12 +295,10 @@ export function ProgramCalendarView({
     const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
     const dayPrograms = getProgramsForDate(date)
-    const sortedDayPrograms = [...dayPrograms].sort((a, b) =>
-      String(a.id).localeCompare(String(b.id))
-    )
-    const hasPrograms = sortedDayPrograms.length > 0
+    const hasPrograms = dayPrograms.length > 0
+    const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(dayPrograms)
 
-    return (
+    const cellEl = (
       <div
         className={`program-calendar-cell ${!isCurrentMonth ? 'program-calendar-cell--other-month' : ''} ${isSelected ? 'program-calendar-cell--selected' : ''} ${isToday ? 'program-calendar-cell--today' : ''}`}
         onClick={() => handleDateSelect(date)}
@@ -261,14 +306,14 @@ export function ProgramCalendarView({
         <div className="program-calendar-cell-date">{date.date()}</div>
         {hasPrograms && (
           <div className="program-calendar-cell-events">
-            {sortedDayPrograms.slice(0, 2).map(program => {
+            {dayPrograms.slice(0, 2).map(program => {
               const spanRole = getProgramSpanRole(program, date)
-              const colors = getScheduleColorPair(String(program.id))
+              const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
               return (
                 <div
                   key={program.id}
                   className={`program-calendar-event program-calendar-event--span-${spanRole}`}
-                  style={{ backgroundColor: colors.bg }}
+                  style={{ backgroundColor: colorPair.bg }}
                   onClick={e => {
                     e.stopPropagation()
                     onProgramClick(program)
@@ -278,14 +323,39 @@ export function ProgramCalendarView({
                 </div>
               )
             })}
-            {sortedDayPrograms.length > 2 && (
+            {dayPrograms.length > 2 && (
               <div className="program-calendar-event-more">
-                외 {sortedDayPrograms.length - 2}개의 일정
+                외 {dayPrograms.length - 2}개의 일정
               </div>
             )}
           </div>
         )}
       </div>
+    )
+
+    if (!hasPrograms) {
+      return cellEl
+    }
+
+    return (
+      <Popover
+        arrow={false}
+        overlayClassName="program-calendar-cell-preview-popover"
+        trigger="hover"
+        placement="bottomLeft"
+        mouseEnterDelay={0.12}
+        mouseLeaveDelay={0.08}
+        getPopupContainer={() => document.body}
+        content={
+          <CalendarCellSchedulePreview
+            date={date}
+            programs={dayPrograms}
+            onProgramClick={onProgramClick}
+          />
+        }
+      >
+        {cellEl}
+      </Popover>
     )
   }
 
@@ -317,28 +387,26 @@ export function ProgramCalendarView({
             const isToday = date.isSame(dayjs(), 'day')
             const isSelected = date.isSame(selectedDate, 'day')
             const dayPrograms = getProgramsForDate(date)
-            const sortedDayPrograms = [...dayPrograms].sort((a, b) =>
-              String(a.id).localeCompare(String(b.id))
-            )
-            const hasPrograms = sortedDayPrograms.length > 0
+            const hasPrograms = dayPrograms.length > 0
+            const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(dayPrograms)
 
-            return (
+            const weekCellEl = (
               <div
-                key={date.format('YYYY-MM-DD')}
                 className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''} ${isToday ? 'program-calendar-week-cell--today' : ''}`}
                 onClick={() => handleDateSelect(date)}
               >
                 <div className="program-calendar-week-cell-date">{date.date()}</div>
                 {hasPrograms && (
                   <div className="program-calendar-week-cell-events">
-                    {sortedDayPrograms.slice(0, 2).map(program => {
+                    {dayPrograms.slice(0, 2).map(program => {
                       const spanRole = getProgramSpanRole(program, date)
-                      const colors = getScheduleColorPair(String(program.id))
+                      const colorPair =
+                        scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
                       return (
                         <div
                           key={program.id}
                           className={`program-calendar-event program-calendar-event--span-${spanRole}`}
-                          style={{ backgroundColor: colors.bg }}
+                          style={{ backgroundColor: colorPair.bg }}
                           onClick={e => {
                             e.stopPropagation()
                             onProgramClick(program)
@@ -348,14 +416,40 @@ export function ProgramCalendarView({
                         </div>
                       )
                     })}
-                    {sortedDayPrograms.length > 2 && (
+                    {dayPrograms.length > 2 && (
                       <div className="program-calendar-event-more">
-                        외 {sortedDayPrograms.length - 2}개의 일정
+                        외 {dayPrograms.length - 2}개의 일정
                       </div>
                     )}
                   </div>
                 )}
               </div>
+            )
+
+            if (!hasPrograms) {
+              return <Fragment key={date.format('YYYY-MM-DD')}>{weekCellEl}</Fragment>
+            }
+
+            return (
+              <Popover
+                key={date.format('YYYY-MM-DD')}
+                arrow={false}
+                overlayClassName="program-calendar-cell-preview-popover"
+                trigger="hover"
+                placement="bottomLeft"
+                mouseEnterDelay={0.12}
+                mouseLeaveDelay={0.08}
+                getPopupContainer={() => document.body}
+                content={
+                  <CalendarCellSchedulePreview
+                    date={date}
+                    programs={dayPrograms}
+                    onProgramClick={onProgramClick}
+                  />
+                }
+              >
+                {weekCellEl}
+              </Popover>
             )
           })}
         </div>

@@ -3,7 +3,7 @@
  * Phase 0.5.1: MFA/OTP UX — TOTP (Microsoft Authenticator)
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Form, Input, Button, Card, message, Typography, Space, Alert, Spin } from 'antd'
 import { SafetyOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -28,6 +28,7 @@ export function MfaPage() {
   const [provisioning, setProvisioning] = useState<TotpProvisioning | null>(null)
   const [provisioningLoading, setProvisioningLoading] = useState(false)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
+  const verifyInFlightRef = useRef(false)
 
   const loadProvisioning = useCallback(async () => {
     if (!user?.email) return
@@ -63,16 +64,23 @@ export function MfaPage() {
     }
   }, [user?.email, mfaState, loadProvisioning])
 
-  const handleVerify = async () => {
-    if (!user?.email || !otpCode || otpCode.length !== OTP_LENGTH) {
+  const handleVerify = async (code?: string) => {
+    const effectiveCode = (code ?? otpCode).trim()
+    if (verifyInFlightRef.current || verifying) return
+    if (!user?.email || !effectiveCode || effectiveCode.length !== OTP_LENGTH) {
+      message.error(MESSAGES.error.enterOtpCode)
+      return
+    }
+    if (!/^\d+$/.test(effectiveCode)) {
       message.error(MESSAGES.error.enterOtpCode)
       return
     }
 
+    verifyInFlightRef.current = true
     try {
       const verified = await verifyTotpCode({
         email: user.email,
-        otpCode,
+        otpCode: effectiveCode,
       })
 
       if (verified) {
@@ -89,6 +97,22 @@ export function MfaPage() {
       message.error(error instanceof Error ? error.message : MESSAGES.error.authenticationFailed)
       form.setFieldsValue({ otpCode: '' })
       setOtpCode('')
+    } finally {
+      verifyInFlightRef.current = false
+    }
+  }
+
+  const handleOtpChange = (value: string) => {
+    setOtpCode(value)
+    form.setFieldsValue({ otpCode: value })
+    if (
+      value.length === OTP_LENGTH &&
+      !isLocked &&
+      !verifying &&
+      user?.email &&
+      /^\d+$/.test(value)
+    ) {
+      void handleVerify(value)
     }
   }
 
@@ -165,7 +189,7 @@ export function MfaPage() {
             <Input.OTP
               length={OTP_LENGTH}
               value={otpCode}
-              onChange={setOtpCode}
+              onChange={handleOtpChange}
               disabled={isLocked}
               size="large"
             />

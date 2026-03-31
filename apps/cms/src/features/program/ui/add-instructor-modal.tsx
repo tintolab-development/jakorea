@@ -5,13 +5,18 @@
  * 섹션: 기본 정보(프로필 사진 + 2열 필드), 최종 학력, 경력 상세, 자격 및 면허, 수상 및 수료 내역
  */
 
-import { useEffect } from 'react'
-import { Form, Input, Radio, DatePicker } from 'antd'
+import { useEffect, useRef, useState } from 'react'
+import { Form, Input, Radio, DatePicker, Modal } from 'antd'
 import type { InputHTMLAttributes } from 'react'
 import { useForm, type Path } from 'react-hook-form'
+import { useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
 
 /** 주소 검색용: 아이콘 + 네이티브 input 한 묶음 220×40, Form.Item value/onChange는 input에 전달 */
-function AddressSearchInput(props: InputHTMLAttributes<HTMLInputElement>) {
+interface AddressSearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
+  onSearchClick: () => void
+}
+
+function AddressSearchInput({ onSearchClick, ...props }: AddressSearchInputProps) {
   return (
     <div className="add-instructor-modal__table-input-wrap add-instructor-modal__table-input-wrap--with-prefix">
       <svg
@@ -31,6 +36,13 @@ function AddressSearchInput(props: InputHTMLAttributes<HTMLInputElement>) {
         />
       </svg>
       <input className="add-instructor-modal__table-input" {...props} />
+      <button
+        type="button"
+        className="add-instructor-modal__address-search-btn"
+        onClick={onSearchClick}
+      >
+        주소검색
+      </button>
     </div>
   )
 }
@@ -165,6 +177,8 @@ export interface AddInstructorFormValues {
   consentWithholdingTax?: 'agree' | 'disagree'
   consentCriminalRecord?: 'agree' | 'disagree'
   consentAdministrativeInfo?: 'agree' | 'disagree'
+  /** 교육 진행자 동의 서약 (행정정보 공동이용과 동일 UI) */
+  consentEducationFacilitatorPledge?: 'agree' | 'disagree'
 }
 
 interface AddInstructorModalProps {
@@ -226,13 +240,28 @@ const INITIAL_FORM_VALUES: AddInstructorFormValues = {
   consentWithholdingTax: 'agree',
   consentCriminalRecord: 'disagree',
   consentAdministrativeInfo: 'agree',
+  consentEducationFacilitatorPledge: 'agree',
 }
 
 export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModalProps) {
   const [form] = Form.useForm<AddInstructorFormValues>()
+  const [isAddressPopupOpen, setIsAddressPopupOpen] = useState(false)
+  const [addressKeyword, setAddressKeyword] = useState('')
+  const detailAddressInputRef = useRef<HTMLInputElement | null>(null)
   const rhfForm = useForm<AddInstructorFormValues>({
     defaultValues: INITIAL_FORM_VALUES,
     mode: 'onChange',
+  })
+  const {
+    addresses,
+    totalCount,
+    loading: addressLoading,
+    error: addressError,
+    search: searchAddress,
+    reset: resetAddressSearch,
+  } = useJusoAddressSearch({
+    confmKey: import.meta.env.VITE_ADDRESS_API_KEY ?? '',
+    countPerPage: 10,
   })
   const jaKoreaExperiences = Form.useWatch('jaKoreaExperiences', form) ?? []
   const qualifications = Form.useWatch('qualifications', form) ?? []
@@ -240,6 +269,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
   const consentWithholdingTax = Form.useWatch('consentWithholdingTax', form)
   const consentCriminalRecord = Form.useWatch('consentCriminalRecord', form)
   const consentAdministrativeInfo = Form.useWatch('consentAdministrativeInfo', form)
+  const consentEducationFacilitatorPledge = Form.useWatch('consentEducationFacilitatorPledge', form)
   const jaProgramCount = countRows(jaKoreaExperiences)
   const qualificationCount = countRows(qualifications)
   const awardCount = countRows(awards)
@@ -281,6 +311,29 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
       rhfForm.reset(INITIAL_FORM_VALUES)
     }
   }, [open, form, rhfForm])
+
+  const openAddressPopup = () => {
+    setAddressKeyword((form.getFieldValue('address') ?? '').trim())
+    setIsAddressPopupOpen(true)
+  }
+
+  const closeAddressPopup = () => {
+    setIsAddressPopupOpen(false)
+    setAddressKeyword('')
+    resetAddressSearch()
+  }
+
+  const handleAddressSearch = async () => {
+    await searchAddress(addressKeyword, 1)
+  }
+
+  const handleAddressSelect = (addressItem: JusoAddressItem) => {
+    const selectedAddress = addressItem.roadAddr || addressItem.jibunAddr
+    form.setFieldValue('address', selectedAddress)
+    rhfForm.setValue('address', selectedAddress)
+    closeAddressPopup()
+    window.setTimeout(() => detailAddressInputRef.current?.focus(), 0)
+  }
 
   const handleSubmit = (values: AddInstructorFormValues) => {
     syncToReactHookForm(values)
@@ -489,11 +542,17 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           rules={[{ required: true, message: '주소를 입력해주세요' }]}
                           noStyle
                         >
-                          <AddressSearchInput placeholder="건물명, 도로명 또는 지번" />
+                          <AddressSearchInput
+                            placeholder="건물명, 도로명 또는 지번"
+                            readOnly
+                            onSearchClick={openAddressPopup}
+                            onClick={openAddressPopup}
+                          />
                         </Form.Item>
                         <span className="add-instructor-modal__address-divider" aria-hidden />
                         <Form.Item name="detailAddress" noStyle>
                           <input
+                            ref={detailAddressInputRef}
                             className="add-instructor-modal__table-input"
                             placeholder="상세 주소"
                           />
@@ -676,6 +735,38 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         className={`add-instructor-modal__consent-complete ${consentAdministrativeInfo === 'agree' ? '' : 'add-instructor-modal__consent-complete--disabled'}`}
                       >
                         {consentAdministrativeInfo === 'agree' ? '제출 완료' : '미제출'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
+                    <span className="add-instructor-modal__basic-table-label">교육 진행자 동의 서약</span>
+                  </td>
+                  <td
+                    className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input"
+                    colSpan={3}
+                  >
+                    <div className="add-instructor-modal__consent-action-row">
+                      <Form.Item name="consentEducationFacilitatorPledge" noStyle>
+                        <Radio.Group
+                          options={CONSENT_RADIO_OPTIONS}
+                          className="add-instructor-modal__consent-radio-group"
+                        />
+                      </Form.Item>
+                      <AppButton
+                        variant="primary"
+                        size="middle"
+                        modalTeal
+                        className="add-instructor-modal__consent-btn"
+                        disabled={consentEducationFacilitatorPledge !== 'agree'}
+                      >
+                        동의서 수정
+                      </AppButton>
+                      <span
+                        className={`add-instructor-modal__consent-complete ${consentEducationFacilitatorPledge === 'agree' ? '' : 'add-instructor-modal__consent-complete--disabled'}`}
+                      >
+                        {consentEducationFacilitatorPledge === 'agree' ? '제출 완료' : '미제출'}
                       </span>
                     </div>
                   </td>
@@ -1087,6 +1178,87 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
           </div>
         </section>
       </Form>
+      <Modal
+        open={isAddressPopupOpen}
+        onCancel={closeAddressPopup}
+        footer={null}
+        title={null}
+        width={760}
+        className="add-instructor-modal__address-popup-modal"
+        destroyOnHidden
+      >
+        <div className="add-instructor-modal__address-popup pop-address-search">
+          <div className="add-instructor-modal__address-popup-inner pop-address-search-inner">
+            <div className="add-instructor-modal__address-popup-head">
+              <strong className="add-instructor-modal__address-popup-title">주소검색</strong>
+              <span className="add-instructor-modal__address-popup-logo logo" aria-hidden>
+                JA Korea
+              </span>
+            </div>
+            <div className="add-instructor-modal__address-popup-search wrap">
+              <input
+                value={addressKeyword}
+                onChange={(event) => setAddressKeyword(event.target.value)}
+                placeholder="건물명, 도로명 또는 지번을 입력하세요"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    void handleAddressSearch()
+                  }
+                }}
+              />
+              <AppButton
+                htmlType="button"
+                variant="primary"
+                size="middle"
+                modalTeal
+                className="add-instructor-modal__address-popup-search-btn"
+                onClick={() => void handleAddressSearch()}
+              >
+                검색
+              </AppButton>
+            </div>
+            <div className="add-instructor-modal__address-popup-result result">
+              <div className="add-instructor-modal__address-popup-result-count">
+                검색 결과 {totalCount.toLocaleString()}건
+              </div>
+              {addressError ? (
+                <div className="add-instructor-modal__address-popup-empty">
+                  {addressError.message}
+                </div>
+              ) : addressLoading ? (
+                <div className="add-instructor-modal__address-popup-empty">검색 중...</div>
+              ) : addresses.length === 0 ? (
+                <div className="add-instructor-modal__address-popup-empty">
+                  검색어를 입력하고 주소를 조회해주세요.
+                </div>
+              ) : (
+                <table className="add-instructor-modal__address-popup-table data-col">
+                  <thead>
+                    <tr>
+                      <th>도로명주소</th>
+                      <th>지번주소</th>
+                      <th>우편번호</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {addresses.map(addressItem => (
+                      <tr
+                        key={`${addressItem.roadAddr}-${addressItem.zipNo}`}
+                        onClick={() => handleAddressSelect(addressItem)}
+                      >
+                        <td className="subj">{addressItem.roadAddr || '-'}</td>
+                        <td>{addressItem.jibunAddr || '-'}</td>
+                        <td>{addressItem.zipNo || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      </Modal>
     </ContentModal>
   )
 }
@@ -1152,5 +1324,6 @@ export function buildInstructorRowFromForm(
     freeWriting2: values.freeWriting2,
     freeWriting3: values.freeWriting3,
     freeWriting4: values.freeWriting4,
+    registeredByAdmin: true,
   }
 }

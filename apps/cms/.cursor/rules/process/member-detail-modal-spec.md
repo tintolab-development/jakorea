@@ -109,7 +109,7 @@ category: process
 
 ## 8. 참고 구현·파일
 
-- 회원 상세 모달: [UserDetailModal](apps/cms/src/features/user/ui/user-detail-modal.tsx) — TealHeaderModal 사용, 1400×458. **프로필 사진 영역·테이블 2열 레이아웃**은 본 스펙(5·6절) 반영하여 보강.
+- 회원 상세: [UserDetailFullPageModal](apps/cms/src/features/user/ui/user-detail-fullpage-modal.tsx) — 공통 [DetailFullPageModal](apps/cms/src/shared/ui/detail-fullpage-modal.tsx) 풀페이지 셸 + LNB. **프로필 사진 영역·테이블 2열 레이아웃**은 본 스펙(5·6절) 반영하여 보강(스타일은 `user-detail-modal.css` 클래스 재사용).
 - [persona.md](./persona.md) — 시니어 개발자 역할 및 디자인 시스템 준수.
 - [member-list-table-spec.md](./member-list-table-spec.md) — 동일 회원관리 흐름(테이블 → 상세).
 - 프로그램 목록 UI 참고: [TealHeaderModal](apps/cms/src/shared/ui/teal-header-modal.tsx), [enrollment-status-detail-modal](apps/cms/src/features/program/ui/enrollment-status-detail-modal.tsx).

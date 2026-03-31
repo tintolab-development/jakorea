@@ -4,7 +4,7 @@
  * 섹션: 프로그램 정보(포스터+상세), 수강자 모집, 수강 신청 학교 목록 테이블.
  */
 
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Image, message } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -18,7 +18,7 @@ import {
   getRecruitmentStatus,
   formatDateOnly,
   formatDateRange,
-} from './program-detail-info-constants'
+} from './detail-modal/project-info/program-detail-info-constants'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
@@ -27,13 +27,20 @@ import {
   targetLevelOptions,
   categoryOptions,
 } from './constants/program-list-constants'
-import { getApplicantSchoolsByProgramId, updateApplicantSchoolApprovalStatus, } from '@/data/mock/applicant-institutions'
-import type { ApplicantSchoolRow, ApplicantApprovalStatusKey } from '@/data/mock/applicant-institutions'
+import {
+  getApplicantSchoolsByProgramId,
+  updateApplicantSchoolApprovalStatus,
+} from '@/data/mock/applicant-institutions'
+import type {
+  ApplicantSchoolRow,
+  ApplicantApprovalStatusKey,
+} from '@/data/mock/applicant-institutions'
 import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { StatusDropdownCell } from './status-dropdown-cell'
 import { SchoolDetailModal } from './school-detail-modal'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import './enrollment-status-detail-modal.css'
 
 export interface EnrollmentStatusDetailModalProps {
@@ -56,6 +63,7 @@ export function EnrollmentStatusDetailModal({
   program,
 }: EnrollmentStatusDetailModalProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [schoolList, setSchoolList] = useState<ApplicantSchoolRow[]>([])
   const [selectedSchoolForDetail, setSelectedSchoolForDetail] = useState<ApplicantSchoolRow | null>(
     null
@@ -75,13 +83,12 @@ export function EnrollmentStatusDetailModal({
   const handleGoToDetail = () => {
     if (program?.id) {
       onCancel()
-      navigate(`/programs/${program.id}`)
+      navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname))
     }
   }
 
   const schoolDetailForModal = useMemo(
-    () =>
-      selectedSchoolForDetail ? getApplicantSchoolDetail(selectedSchoolForDetail) : null,
+    () => (selectedSchoolForDetail ? getApplicantSchoolDetail(selectedSchoolForDetail) : null),
     [selectedSchoolForDetail]
   )
 
@@ -89,9 +96,7 @@ export function EnrollmentStatusDetailModal({
     (recordId: string, status: ApprovalStatusKey) => {
       const nextStatus = status as ApplicantApprovalStatusKey
       setSchoolList(prev =>
-        prev.map(row =>
-          row.id === recordId ? { ...row, approvalStatus: nextStatus } : row
-        )
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: nextStatus } : row))
       )
       updateApplicantSchoolApprovalStatus(recordId, nextStatus)
       message.success('결재 현황이 변경되었습니다.')
@@ -99,73 +104,83 @@ export function EnrollmentStatusDetailModal({
     []
   )
 
-  const schoolColumns: ColumnsType<ApplicantSchoolRow> = useMemo(() => [
-    { title: 'No.', dataIndex: 'no', key: 'no', width: '6%', align: 'center' },
-    {
-      title: '참여 학교명',
-      dataIndex: 'schoolName',
-      key: 'schoolName',
-      width: '17%',
-      align: 'center',
-      ellipsis: true,
-    },
-    { title: '지역', dataIndex: 'region', key: 'region', width: '11%', align: 'center', ellipsis: true },
-    {
-      title: '희망 교육 진행 기간',
-      dataIndex: 'desiredEducationPeriod',
-      key: 'desiredEducationPeriod',
-      width: '17%',
-      align: 'center',
-      render: (v: string | undefined) => v ?? '-',
-    },
-    {
-      title: '대상 학년',
-      dataIndex: 'educationGrade',
-      key: 'educationGrade',
-      width: '8%',
-      align: 'center',
-    },
-    {
-      title: '대상 학급 수',
-      dataIndex: 'classCount',
-      key: 'classCount',
-      width: '8%',
-      align: 'center',
-      render: (v: number) => (v != null ? `${v}개` : '-'),
-    },
-    {
-      title: '총 학생 수',
-      dataIndex: 'studentCount',
-      key: 'studentCount',
-      width: '8%',
-      align: 'center',
-      render: (v: number) => (v != null ? `${v}명` : '-'),
-    },
-    {
-      title: '담당교사',
-      dataIndex: 'teacherName',
-      key: 'teacherName',
-      width: '11%',
-      align: 'center',
-    },
-    {
-      title: '결재 현황',
-      dataIndex: 'approvalStatus',
-      key: 'approvalStatus',
-      width: '14%',
-      align: 'center',
-      render: (status: ApplicantApprovalStatusKey, record: ApplicantSchoolRow) => (
-        <StatusDropdownCell<ApprovalStatusKey>
-          status={APPROVAL_STATUS_MAP[status]}
-          statusKeys={APPROVAL_STATUS_KEYS}
-          renderBadge={s => <ApprovalStatusBadge status={s} />}
-          onChange={key => handleSchoolApprovalStatusChange(record.id, key)}
-          cellClassName="enrollment-status-detail-modal__approval-dropdown-cell"
-          triggerClassName="enrollment-status-detail-modal__approval-dropdown-trigger"
-        />
-      ),
-    },
-  ], [handleSchoolApprovalStatusChange])
+  const schoolColumns: ColumnsType<ApplicantSchoolRow> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no', width: '6%', align: 'center' },
+      {
+        title: '참여 학교명',
+        dataIndex: 'schoolName',
+        key: 'schoolName',
+        width: '17%',
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '지역',
+        dataIndex: 'region',
+        key: 'region',
+        width: '11%',
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '희망 교육 진행 기간',
+        dataIndex: 'desiredEducationPeriod',
+        key: 'desiredEducationPeriod',
+        width: '17%',
+        align: 'center',
+        render: (v: string | undefined) => v ?? '-',
+      },
+      {
+        title: '대상 학년',
+        dataIndex: 'educationGrade',
+        key: 'educationGrade',
+        width: '8%',
+        align: 'center',
+      },
+      {
+        title: '대상 학급 수',
+        dataIndex: 'classCount',
+        key: 'classCount',
+        width: '8%',
+        align: 'center',
+        render: (v: number) => (v != null ? `${v}개` : '-'),
+      },
+      {
+        title: '총 학생 수',
+        dataIndex: 'studentCount',
+        key: 'studentCount',
+        width: '8%',
+        align: 'center',
+        render: (v: number) => (v != null ? `${v}명` : '-'),
+      },
+      {
+        title: '담당교사',
+        dataIndex: 'teacherName',
+        key: 'teacherName',
+        width: '11%',
+        align: 'center',
+      },
+      {
+        title: '결재 현황',
+        dataIndex: 'approvalStatus',
+        key: 'approvalStatus',
+        width: '14%',
+        align: 'center',
+        render: (status: ApplicantApprovalStatusKey, record: ApplicantSchoolRow) => (
+          <StatusDropdownCell<ApprovalStatusKey>
+            status={APPROVAL_STATUS_MAP[status]}
+            statusKeys={APPROVAL_STATUS_KEYS}
+            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            onChange={key => handleSchoolApprovalStatusChange(record.id, key)}
+            cellClassName="enrollment-status-detail-modal__approval-dropdown-cell"
+            triggerClassName="enrollment-status-detail-modal__approval-dropdown-trigger"
+          />
+        ),
+      },
+    ],
+    [handleSchoolApprovalStatusChange]
+  )
 
   if (!program) return null
 
@@ -217,73 +232,77 @@ export function EnrollmentStatusDetailModal({
             <div className="enrollment-status-detail-modal__program-fields">
               <div className="enrollment-status-detail-modal__info-table-wrap">
                 <table className="enrollment-status-detail-modal__info-table">
-                <tbody>
-                  <tr>
-                    <th>프로그램명</th>
-                    <td>{program.title || '-'}</td>
-                    <th>프로그램 운영 기간</th>
-                    <td>{formatDateRange(program.startDate, program.endDate)}</td>
-                  </tr>
-                  <tr>
-                    <th>프로그램 진행 방식</th>
-                    <td>
-                      {program.type
-                        ? programTypes.find(t => t.value === program.type)?.label ?? program.type
-                        : '-'}
-                    </td>
-                    <th>프로그램 진행 상태</th>
-                    <td>
-                      {program.lifecycleStatus
-                        ? getProgramLifecycleLabel(program.lifecycleStatus)
-                        : '-'}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>수강자 유형</th>
-                    <td>
-                      {program.category
-                        ? categoryOptions.find(o => o.value === program.category)?.label ?? program.category
-                        : '-'}
-                    </td>
-                    <th>교육 분야</th>
-                    <td>
-                      {program.businessArea
-                        ? businessAreaOptions.find(o => o.value === program.businessArea)?.label ??
-                          program.businessArea
-                        : '-'}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>교육 대상</th>
-                    <td>
-                      {program.targetLevel
-                        ? targetLevelOptions.find(o => o.value === program.targetLevel)?.label ??
-                          program.targetLevel
-                        : '-'}
-                    </td>
-                    <th>교육 대상 상세</th>
-                    <td>{program.district ?? '-'}</td>
-                  </tr>
-                  <tr>
-                    <th>후원사</th>
-                    <td>{sponsorName ?? '-'}</td>
-                    <th>후원사 담당자</th>
-                    <td>{program.managerName ? `${program.managerName} | 010-1234-5678` : '-'}</td>
-                  </tr>
-                  <tr className="enrollment-status-detail-modal__info-table-row-full">
-                    <th>문의처</th>
-                    <td colSpan={3}>
-                      {program.contactPhone || program.contactEmail
-                        ? `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
-                        : '-'}
-                    </td>
-                  </tr>
-                  <tr className="enrollment-status-detail-modal__info-table-row-full">
-                    <th>비고</th>
-                    <td colSpan={3}>{program.recruitmentGuide ?? '-'}</td>
-                  </tr>
-                </tbody>
-              </table>
+                  <tbody>
+                    <tr>
+                      <th>프로그램명</th>
+                      <td>{program.title || '-'}</td>
+                      <th>프로그램 운영 기간</th>
+                      <td>{formatDateRange(program.startDate, program.endDate)}</td>
+                    </tr>
+                    <tr>
+                      <th>프로그램 진행 방식</th>
+                      <td>
+                        {program.type
+                          ? (programTypes.find(t => t.value === program.type)?.label ??
+                            program.type)
+                          : '-'}
+                      </td>
+                      <th>프로그램 진행 상태</th>
+                      <td>
+                        {program.lifecycleStatus
+                          ? getProgramLifecycleLabel(program.lifecycleStatus)
+                          : '-'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>수강자 유형</th>
+                      <td>
+                        {program.category
+                          ? (categoryOptions.find(o => o.value === program.category)?.label ??
+                            program.category)
+                          : '-'}
+                      </td>
+                      <th>교육 분야</th>
+                      <td>
+                        {program.businessArea
+                          ? (businessAreaOptions.find(o => o.value === program.businessArea)
+                              ?.label ?? program.businessArea)
+                          : '-'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>교육 대상</th>
+                      <td>
+                        {program.targetLevel
+                          ? (targetLevelOptions.find(o => o.value === program.targetLevel)?.label ??
+                            program.targetLevel)
+                          : '-'}
+                      </td>
+                      <th>교육 대상 상세</th>
+                      <td>{program.district ?? '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>후원사</th>
+                      <td>{sponsorName ?? '-'}</td>
+                      <th>후원사 담당자</th>
+                      <td>
+                        {program.managerName ? `${program.managerName} | 010-1234-5678` : '-'}
+                      </td>
+                    </tr>
+                    <tr className="enrollment-status-detail-modal__info-table-row-full">
+                      <th>문의처</th>
+                      <td colSpan={3}>
+                        {program.contactPhone || program.contactEmail
+                          ? `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                          : '-'}
+                      </td>
+                    </tr>
+                    <tr className="enrollment-status-detail-modal__info-table-row-full">
+                      <th>비고</th>
+                      <td colSpan={3}>{program.recruitmentGuide ?? '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -298,17 +317,17 @@ export function EnrollmentStatusDetailModal({
                 <tr>
                   <th>수강자 모집 인원</th>
                   <td>
-                    {totalCapacity != null
-                      ? (
-                          <>
-                            {program.approvedStudentCount ?? 0} /{' '}
-                            <span className="enrollment-status-detail-modal__recruitment-count">
-                              {totalCapacity}건
-                            </span>
-                            {' (신청자가 아닌 승인된 수강자 기준)'}
-                          </>
-                        )
-                      : '-'}
+                    {totalCapacity != null ? (
+                      <>
+                        {program.approvedStudentCount ?? 0} /{' '}
+                        <span className="enrollment-status-detail-modal__recruitment-count">
+                          {totalCapacity}건
+                        </span>
+                        {' (신청자가 아닌 승인된 수강자 기준)'}
+                      </>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   <th>수강자 모집 현황</th>
                   <td>
@@ -339,10 +358,10 @@ export function EnrollmentStatusDetailModal({
         {/* 섹션 3: 수강 신청 학교 목록 */}
         <section className="enrollment-status-detail-modal__section enrollment-status-detail-modal__section--table">
           <div className="enrollment-status-detail-modal__table-header">
-            <span className="enrollment-status-detail-modal__table-title">
-              수강 신청 학교 목록
+            <span className="enrollment-status-detail-modal__table-title">수강 신청 학교 목록</span>
+            <span className="enrollment-status-detail-modal__table-description">
+              총 {schoolList.length}건
             </span>
-            <span className="enrollment-status-detail-modal__table-description">총 {schoolList.length}건</span>
           </div>
           <div className="enrollment-status-detail-modal__table-wrap">
             <Table<ApplicantSchoolRow>

@@ -1,30 +1,30 @@
 .app-layout {
-    min-height: 100vh;
-    min-width: 1920px;
-    overflow: hidden;
-    /* 전체 레이아웃 스크롤 방지 */
+  min-height: 100vh;
+  min-width: 1920px;
+  overflow: hidden;
+  /* 전체 레이아웃 스크롤 방지 */
 }
 
 /* 메인 콘텐츠 영역 배경 (사이드바 제외) */
-.app-layout>.ant-layout {
-    background: var(--color-bg-tertiary);
-    margin-left: 220px;
-    /* 사이드바 너비만큼 왼쪽 마진 추가 */
-    height: 100vh;
-    overflow: hidden;
-    /* 메인 레이아웃 스크롤 방지 */
+.app-layout > .ant-layout {
+  background: var(--color-bg-tertiary);
+  margin-left: var(--sidebar-width);
+  /* 사이드바 너비만큼 왼쪽 마진 추가 */
+  height: 100vh;
+  overflow: hidden;
+  /* 메인 레이아웃 스크롤 방지 */
 }
 
 .layout-content {
-    position: relative;
-    margin: 0;
-    padding: var(--spacing-24);
-    background: transparent;
-    min-height: calc(100vh - 64px);
-    margin-top: 64px;
-    /* 헤더 높이만큼 상단 마진 추가 */
-    overflow-y: auto;
-    /* 콘텐츠 영역만 스크롤 가능 */
-    height: calc(100vh - 64px);
-    /* 헤더 높이를 제외한 전체 높이 */
+  position: relative;
+  margin: 0;
+  padding: var(--spacing-24);
+  background: transparent;
+  min-height: calc(100vh - 64px);
+  margin-top: 64px;
+  /* 헤더 높이만큼 상단 마진 추가 */
+  overflow-y: auto;
+  /* 콘텐츠 영역만 스크롤 가능 */
+  height: calc(100vh - 64px);
+  /* 헤더 높이를 제외한 전체 높이 */
 }

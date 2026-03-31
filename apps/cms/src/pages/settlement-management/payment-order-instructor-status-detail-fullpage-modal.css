@@ -1,0 +1,32 @@
+/**
+ * 강사 기준 지급 현황 상세 — 프로그램 모달과 동일 토큰 재사용 + 강사 기본정보 전용
+ */
+@import './payment-order-program-status-detail-fullpage-modal.css';
+
+.payment-order-instructor-status-detail-fullpage-modal.detail-fullpage-modal
+  .detail-fullpage-modal__content {
+  padding: 24px 32px 32px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+/* 기본 정보 테이블 ↔ 필터 영역 간격 32px (강사 지급 현황 상세 전용 블록) */
+.payment-order-program-status-detail__basic-block.payment-order-instructor-status-detail__basic-block {
+  margin-bottom: 32px;
+}
+
+/* 신청 강사 기본정보 탭과 동일: applicant-instructor-basic-info__title 간격은 부모 .applicant-instructor-basic-info gap */
+
+.payment-order-instructor-status-detail__total-amount-cell {
+  font-weight: 700;
+}
+
+.payment-order-instructor-status-detail__summary-row .applicant-instructor-basic-info__cell {
+  vertical-align: middle;
+}
+
+/* 집계 지급조서 처리 현황 문구 좌측 정렬 */
+.payment-order-instructor-status-detail__summary-row
+  .applicant-instructor-basic-info__cell--value:has(.payment-order-admin__status-text) {
+  text-align: left;
+}

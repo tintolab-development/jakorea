@@ -5,3 +5,7 @@
 
 export { LogoutIcon } from './LogoutIcon'
 export type { LogoutIconProps } from './LogoutIcon'
+export { GoogleMarkIcon } from './GoogleMarkIcon'
+export type { GoogleMarkIconProps } from './GoogleMarkIcon'
+export { ProfileAvatarIcon } from './ProfileAvatarIcon'
+export type { ProfileAvatarIconProps } from './ProfileAvatarIcon'

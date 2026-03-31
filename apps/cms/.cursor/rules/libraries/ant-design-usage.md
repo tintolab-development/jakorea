@@ -38,6 +38,7 @@ Ant Design 테마 커스터마이징은 `ConfigProvider`의 `theme` prop을 통�
 
 ## 관련 규칙
 
+- [커스텀 SVG 아이콘](../design/svg-icons.md) — Ant Design에 없는 디자인 전용 SVG는 `shared/ui/icons`에서 관리
 - [UI 원칙](../design/ui-principles.md)
 - [컴포넌트 패턴](../coding/component-patterns.md)
 - [이벤트 처리](../design/event-handling.md)

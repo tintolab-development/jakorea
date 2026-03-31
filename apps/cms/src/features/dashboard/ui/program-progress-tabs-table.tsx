@@ -34,7 +34,7 @@ export function ProgramProgressTabsTable() {
           columns={columns}
           pagination={false}
           size="middle"
-          className="program-progress-tabs-table__table"
+          className="program-progress-tabs-table__table cms-data-table cms-data-table--widget"
         />
       ),
     }

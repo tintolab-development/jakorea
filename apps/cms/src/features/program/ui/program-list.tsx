@@ -5,6 +5,7 @@
 
 import { Table, Button, Image, Tag, Card } from 'antd'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { FilterListLayout } from '@/shared/ui/filter-list-layout'
 import { message } from 'antd'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
@@ -43,6 +44,7 @@ import {
 import dayjs, { type Dayjs } from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
@@ -330,9 +332,7 @@ export function ProgramList({
     }
 
     if (progressStatusFilter !== 'all') {
-      filtered = filtered.filter(
-        program => program.lifecycleStatus === progressStatusFilter
-      )
+      filtered = filtered.filter(program => program.lifecycleStatus === progressStatusFilter)
     }
 
     return filtered
@@ -779,33 +779,31 @@ export function ProgramList({
 
       {/* 관리자 목록 뷰: 필터, tableButtonSection, 테이블을 단일 배경 컨테이너로 감쌈 */}
       {!isParticipant && viewMode === 'list' ? (
-        <div
-          className={`program-list-content-wrapper${tableVariant === 'education' ? ' program-list-content-wrapper--no-shadow' : ''}`}
+        <FilterListLayout
+          className="program-list-content-wrapper"
+          fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
+          filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
+          onFilterChange={(key, value) => {
+            if (key === 'operationPeriod') {
+              const dates = value as [Dayjs, Dayjs] | null
+              setPendingFilters(prev => ({
+                ...prev,
+                operationStartDate: dates?.[0] || null,
+                operationEndDate: dates?.[1] || null,
+              }))
+            } else if (readOnlyLifecycleStatus && (key === 'category' || key === 'targetLevel')) {
+              setPendingFilters(prev => ({
+                ...prev,
+                [key]: value && String(value).trim() ? value : undefined,
+              }))
+            } else {
+              setPendingFilters(prev => ({ ...prev, [key]: value }))
+            }
+          }}
+          onSearch={handleSearch}
+          bordered={false}
+          listHeader={children}
         >
-          <UnifiedFilterCard
-            fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
-            filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
-            onFilterChange={(key, value) => {
-              if (key === 'operationPeriod') {
-                const dates = value as [Dayjs, Dayjs] | null
-                setPendingFilters(prev => ({
-                  ...prev,
-                  operationStartDate: dates?.[0] || null,
-                  operationEndDate: dates?.[1] || null,
-                }))
-              } else if (readOnlyLifecycleStatus && (key === 'category' || key === 'targetLevel')) {
-                setPendingFilters(prev => ({
-                  ...prev,
-                  [key]: value && String(value).trim() ? value : undefined,
-                }))
-              } else {
-                setPendingFilters(prev => ({ ...prev, [key]: value }))
-              }
-            }}
-            onSearch={handleSearch}
-            bordered={false}
-          />
-          {children}
           <div className="program-list-content-wrapper__table">
             <Card
               loading={loading}
@@ -817,11 +815,13 @@ export function ProgramList({
                   rowSelection={
                     showRowSelection && onBulkDelete
                       ? {
+                          columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                           selectedRowKeys: effectiveSelectedRowKeys,
                           onChange: handleSelectionChange,
                         }
                       : undefined
                   }
+                  className="cms-data-table"
                   dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
                   columns={columnsAdmin}
                   rowKey="id"
@@ -837,7 +837,7 @@ export function ProgramList({
               </div>
             </Card>
           </div>
-        </div>
+        </FilterListLayout>
       ) : null}
 
       {!isParticipant && showCalendarView && viewMode === 'calendar' ? (
@@ -964,7 +964,7 @@ export function ProgramList({
                     const lifecycle = record.lifecycleStatus
 
                     const badge = lifecycle ? (
-                      <ProgramLifecycleStatusBadge status={lifecycle} />
+                      <ProgramLifecycleStatusBadge status={lifecycle} variant="table" />
                     ) : (
                       <StatusBadge
                         status={record.status}

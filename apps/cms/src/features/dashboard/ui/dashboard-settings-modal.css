@@ -10,7 +10,7 @@
   gap: var(--spacing-24);
   width: 100%;
   align-items: stretch;
-  color: var(--default-BK, #3D3D3D);
+  color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 15px;
   font-style: normal;
@@ -25,11 +25,11 @@
 }
 
 .dashboard-settings-modal__section-title {
-  margin: 0;
-  font-size: var(--font-size-14);
-  font-weight: var(--font-weight-700);
-  line-height: 1.4;
-  color: var(--color-text-label);
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
 }
 
 .dashboard-settings-modal__shortcuts {
@@ -64,21 +64,31 @@
 }
 
 .dashboard-settings-modal__table .ant-table-cell:first-child {
-  background: var(--color-bg-subtle, #fafafa);
-  font-weight: 500;
-  width: 180px;
+  border-right: 1px solid #d4d4d4;
+  background: #f5f6f7;
+  color: var(--default-BK, #3d3d3d);
+
+  text-align: center;
+  vertical-align: middle;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 21px */
 }
 
-.dashboard-settings-modal__widget-label {
-  display: block;
-  padding: var(--spacing-4) 0;
+/* 이 모달 전용: 테이블 행 호버 하이라이트 제거 */
+.dashboard-settings-modal__table .ant-table-tbody > tr:hover > td:first-child {
+  background: #f5f6f7 !important;
+}
+
+.dashboard-settings-modal__table .ant-table-tbody > tr:hover > td:nth-child(2) {
+  background: var(--color-bg-base, #fff) !important;
 }
 
 .dashboard-settings-modal__program-checks {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  padding: var(--spacing-8) 0;
 }
 
 .dashboard-settings-modal__program-checks .ant-checkbox-wrapper {

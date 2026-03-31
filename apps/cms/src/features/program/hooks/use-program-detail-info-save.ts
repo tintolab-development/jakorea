@@ -2,7 +2,7 @@
  * 프로그램 상세 정보 탭 저장/리셋 및 추가 내용 HTML 수집
  * triggerSave: 폼 값 + 스키마 변환 + additionalContentHtml getter → onSaveEdit 호출
  * resetToProgram: 폼을 현재 program 값으로 리셋
- * registerGetAdditionalContentHtml: DetailInfoSection(에디터)에서 HTML 수집 getter 등록
+ * registerGetAdditionalContentHtml: project-info-detail-info-section(에디터)에서 HTML 수집 getter 등록
  */
 
 import { useCallback, useRef } from 'react'

@@ -187,12 +187,12 @@
   border-bottom: none;
 }
 
-/* 체크박스 열 고정 너비 */
+/* 체크박스 열 고정 너비 (전역 --table-selection-column-width 와 동일) */
 .school-detail-modal__table .ant-table-thead > tr > th.ant-table-selection-column,
 .school-detail-modal__table .ant-table-tbody > tr > td.ant-table-selection-column {
-  width: 48px;
-  min-width: 48px;
-  max-width: 48px;
+  width: var(--table-selection-column-width, 60px);
+  min-width: var(--table-selection-column-width, 60px);
+  max-width: var(--table-selection-column-width, 60px);
 }
 
 .school-detail-modal__table .ant-table-cell {

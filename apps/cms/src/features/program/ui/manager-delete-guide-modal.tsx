@@ -3,7 +3,8 @@
  * 패딩 26/30/34 · 타이틀 24px 700 · 본문 16px 500 좌측 · [이름] 볼드
  */
 
-import { Modal } from 'antd'
+import { useState, useEffect } from 'react'
+import { Modal, Input } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import './manager-delete-guide-modal.css'
@@ -19,6 +20,10 @@ export interface DeleteGuideModalProps {
   confirmText?: string
   /** 확인 버튼 스타일 (기본: danger) */
   confirmVariant?: 'danger' | 'primary'
+  /** 설정 시 해당 문자열과 정확히 일치할 때만 확인 버튼 활성화 */
+  requiredConfirmInput?: string
+  /** 확인 입력란 placeholder */
+  confirmInputPlaceholder?: string
   /** TealHeaderModal·풀페이지·중첩 모달 위 표시 (antd 스택 z-index보다 높게) */
   zIndex?: number
 }
@@ -68,6 +73,28 @@ export function buildSchoolMessageLines(names: string[]): string[] {
     `선택한 ${count}건의 학교(${nameList})를 해당 프로그램 참여 학교 목록에서 삭제하시겠습니까?`,
     `삭제 시 해당 학교들은 프로그램 참여가 해제됩니다.`,
     '정말로 삭제하시겠습니까?',
+  ]
+}
+
+/** 프로그램 진행 현황 > 참여 기관 — 선택 삭제 확인 본문 */
+export function buildParticipatingInstitutionDeleteMessageLines(schoolNames: string[]): string[] {
+  if (schoolNames.length === 0) return []
+  const line2 = '삭제 시 승인 철회 처리되며, 등록된 정보는 모두 삭제됩니다.'
+  const line3 = '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?'
+  if (schoolNames.length === 1) {
+    const name = schoolNames[0]
+    return [
+      `[${name}]를 참여 기관 목록에서 삭제하시겠습니까?`,
+      line2,
+      line3,
+    ]
+  }
+  const count = schoolNames.length
+  const nameList = schoolNames.map(n => `[${n}]`).join(', ')
+  return [
+    `선택한 ${count}건의 참여 기관(${nameList})을 참여 기관 목록에서 삭제하시겠습니까?`,
+    line2,
+    line3,
   ]
 }
 
@@ -198,8 +225,18 @@ export function DeleteGuideModal({
   lines,
   confirmText = '삭제',
   confirmVariant = 'danger',
+  requiredConfirmInput,
+  confirmInputPlaceholder = '삭제하시려면 해당란에 [삭제]를 입력해 주세요.',
   zIndex = 2500,
 }: DeleteGuideModalProps) {
+  const [confirmInput, setConfirmInput] = useState('')
+  const needsTypedConfirm = Boolean(requiredConfirmInput)
+  const canConfirm = !needsTypedConfirm || confirmInput.trim() === requiredConfirmInput
+
+  useEffect(() => {
+    if (open) setConfirmInput('')
+  }, [open])
+
   return (
     <Modal
       open={open}
@@ -233,11 +270,30 @@ export function DeleteGuideModal({
           ))}
         </div>
 
+        {needsTypedConfirm && (
+          <div className="manager-delete-guide-modal__confirm-input-wrap">
+            <Input
+              className="manager-delete-guide-modal__confirm-input"
+              placeholder={confirmInputPlaceholder}
+              value={confirmInput}
+              onChange={e => setConfirmInput(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+        )}
+
         <div className="manager-delete-guide-modal__footer">
           <AppButton variant="cancel" size="large" onClick={onCancel}>
             취소
           </AppButton>
-          <AppButton variant={confirmVariant} size="large" onClick={onConfirm}>
+          <AppButton
+            variant={confirmVariant}
+            size="large"
+            disabled={!canConfirm}
+            onClick={() => {
+              if (canConfirm) onConfirm()
+            }}
+          >
             {confirmText}
           </AppButton>
         </div>

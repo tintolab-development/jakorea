@@ -23,7 +23,7 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
   const {
     form,
     otpCode,
-    setOtpCode,
+    onOtpCodeChange,
     mfaState,
     provisioning,
     provisioningLoading,
@@ -91,7 +91,7 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
       </div>
 
       <Form form={form} layout="vertical" onFinish={handleVerify}>
-        <MfaOtpInput onChange={setOtpCode} disabled={isLocked} />
+        <MfaOtpInput onChange={onOtpCodeChange} disabled={isLocked} />
 
         <MfaOtpStatus failedAttempts={failedAttempts} />
 

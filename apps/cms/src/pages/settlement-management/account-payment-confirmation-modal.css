@@ -1,0 +1,175 @@
+/**
+ * 계좌 지급 확인 모달 — 800×404, 요약 표 + 푸터
+ */
+
+.account-payment-confirm-modal.content-modal.ant-modal .ant-modal-content {
+  width: 800px !important;
+  max-width: min(800px, calc(100vw - 32px));
+  height: 404px;
+  min-height: 404px;
+  max-height: 404px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.account-payment-confirm-modal.content-modal.ant-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+  height: 100%;
+}
+
+.account-payment-confirm-modal .teal-header-modal__header {
+  flex-shrink: 0;
+}
+
+.account-payment-confirm-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+  padding-top: 16px;
+}
+
+.account-payment-confirm-modal.content-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 20px;
+  padding-top: 0;
+  padding-bottom: 0;
+  justify-content: flex-end;
+}
+
+.account-payment-confirm-modal__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  width: 100%;
+}
+
+.account-payment-confirm-modal__footer-actions .app-button--large {
+  min-width: 120px;
+  width: auto;
+}
+
+/* teal-header-modal 푸터 기본 120×40 오버라이드 — 계좌 지급 완료 160×40 */
+.account-payment-confirm-modal.content-modal .teal-header-modal__footer .account-payment-confirm-modal__submit-btn.app-button {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  box-sizing: border-box;
+}
+
+.account-payment-confirm-modal__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.account-payment-confirm-modal__intro {
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.account-payment-confirm-modal__line {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+/* 두 디스크립션 줄 사이: 과한 갭으로 바디 스크롤 방지 */
+.account-payment-confirm-modal__line + .account-payment-confirm-modal__line {
+  margin-top: 8px;
+}
+
+.account-payment-confirm-modal__strong {
+  font-weight: 700;
+}
+
+/* 요약: 3행 2열 — flex-shrink 금지(정산 금액 행 잘림 방지) */
+.account-payment-confirm-modal__summary {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border-light, #e8e8e8);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.account-payment-confirm-modal__summary-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+.account-payment-confirm-modal__summary-row:not(:last-child) {
+  border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+.account-payment-confirm-modal__summary-th {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background: #f9f9fb;
+  border-right: 1px solid var(--color-border-light, #e8e8e8);
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.account-payment-confirm-modal__summary-td {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--color-bg-base, #fff);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-family: Pretendard, sans-serif;
+  line-height: 140%;
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+.account-payment-confirm-modal__summary-td--amount {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 700;
+}
+
+/* ProgramDetailTdDivider + 두 세그먼트 가로 배치(줄바꿈 시에도 정렬 유지) */
+.account-payment-confirm-modal__summary-td--divider-inline {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}

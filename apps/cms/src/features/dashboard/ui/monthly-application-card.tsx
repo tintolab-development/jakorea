@@ -22,7 +22,7 @@ export function MonthlyApplicationCard() {
   const isDecrease = changeCount < 0
 
   const handleClick = () => {
-    navigate('/applications')
+    navigate('/programs/education/enrollment')
   }
 
   return (

@@ -107,16 +107,6 @@ export function EditManagerRoleModal({
             initialValues={{ role: manager?.role ?? 'ASSISTANT' }}
             requiredMark={false}
           >
-            {manager && (
-              <Form.Item label="담당자명" className="edit-manager-role-modal__field">
-                <Input
-                  value={manager.name}
-                  readOnly
-                  size="large"
-                  className="edit-manager-role-modal__name-input"
-                />
-              </Form.Item>
-            )}
             <Form.Item
               name="role"
               label="권한 설정"
@@ -137,6 +127,16 @@ export function EditManagerRoleModal({
                 })}
               </Radio.Group>
             </Form.Item>
+            {manager && (
+              <Form.Item label="담당자명" className="edit-manager-role-modal__field">
+                <Input
+                  value={manager.name}
+                  readOnly
+                  size="large"
+                  className="edit-manager-role-modal__name-input"
+                />
+              </Form.Item>
+            )}
             {manager && onDeleteRequest && (
               <div className="edit-manager-role-modal__delete-wrap">
                 <button

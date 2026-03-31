@@ -1,0 +1,60 @@
+/**
+ * 앱 공통 텍스트 인풋 (AppInput)
+ * 필터·폼 등 CMS 전역에서 동일한 높이·테두리·배경 사용
+ */
+
+.app-input {
+  display: flex;
+  height: 40px;
+  padding: 0 14px 0 16px;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid #c4cdd1;
+  background: var(--default-WT, #fff);
+}
+
+/* Ant Input(affix 포함)이 래퍼 안에서 남는 공간을 채우도록 */
+.app-input .ant-input-affix-wrapper,
+.app-input .ant-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 15px;
+}
+
+.app-input .ant-input-affix-wrapper > input.ant-input {
+  background: transparent;
+}
+
+.app-input .ant-input-affix-wrapper:focus,
+.app-input .ant-input-affix-wrapper-focused {
+  box-shadow: none !important;
+}
+
+/* 통일 필터 카드 등 */
+.app-input.app-input--filter {
+  height: var(--filter-control-height, 44px);
+  min-height: var(--filter-control-height, 44px);
+  border-radius: 8px;
+}
+
+.app-input.app-input--filter .ant-input,
+.app-input.app-input--filter .ant-input-affix-wrapper .ant-input {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.app-input.app-input--filter .ant-input::placeholder,
+.app-input.app-input--filter .ant-input-affix-wrapper .ant-input::placeholder {
+  font-size: 16px;
+  font-weight: 500;
+  color: #85969d;
+}

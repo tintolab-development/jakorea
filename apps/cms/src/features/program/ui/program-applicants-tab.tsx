@@ -274,7 +274,9 @@ export function ProgramApplicantsTab({
   const handleInstructorDetailReject = useCallback((instructor: ApplicantInstructorRow) => {
     setInstructorList(prev =>
       prev.map(row =>
-        row.id === instructor.id ? { ...row, approvalStatus: 'rejected' as ApplicantInstructorApprovalStatusKey } : row
+        row.id === instructor.id
+          ? { ...row, approvalStatus: 'rejected' as ApplicantInstructorApprovalStatusKey }
+          : row
       )
     )
     setInstructorDetailModalOpen(false)
@@ -743,7 +745,7 @@ export function ProgramApplicantsTab({
             <div className="program-applicants-tab__below-divider">
               <div className="program-applicants-tab__table-header">
                 <div className="program-applicants-tab__table-heading">
-                  <span className="program-applicants-tab__table-title">강의 신청 강사 목록</span>
+                  <span className="program-applicants-tab__table-title">교육 신청 강사 목록</span>
                   <span className="program-applicants-tab__table-description">
                     총 {filteredInstructors.length}건
                   </span>

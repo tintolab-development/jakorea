@@ -5,6 +5,12 @@
 
 import { useMemo, useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import {
+  PROGRESS_CALENDAR_RANGE_PARAM,
+  parseCalendarRangeParam,
+  applyCalendarRangeParam,
+  type CalendarGranularity,
+} from './progress-calendar-range'
 
 export interface ParticipatingInstitutionsFilters {
   schoolName: string
@@ -107,11 +113,27 @@ export function useParticipatingInstitutionsParams() {
     [searchParams, setSearchParams, filters]
   )
 
+  const progressCalendarGranularity = useMemo(
+    (): CalendarGranularity => parseCalendarRangeParam(searchParams, PROGRESS_CALENDAR_RANGE_PARAM),
+    [searchParams]
+  )
+
+  const setProgressCalendarGranularity = useCallback(
+    (granularity: CalendarGranularity) => {
+      const next = new URLSearchParams(searchParams)
+      applyCalendarRangeParam(next, PROGRESS_CALENDAR_RANGE_PARAM, granularity)
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
   return {
     filters,
     appliedFilters,
     setFilters,
     setFilter,
     applyFilters,
+    progressCalendarGranularity,
+    setProgressCalendarGranularity,
   }
 }

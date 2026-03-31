@@ -32,7 +32,7 @@ export function ApplicationStatisticsCard({
         { color: 'green', label: `승인: ${approved}` },
         { color: 'red', label: `반려: ${rejected}` },
       ]}
-      to="/applications"
+      to="/programs/education/enrollment"
       loading={loading}
     />
   )

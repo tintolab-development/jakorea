@@ -4,7 +4,13 @@
  */
 
 .kpi-achievement-widget {
-  height: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
 .kpi-achievement-widget__total-count {
@@ -61,7 +67,7 @@
 
 /* 프로그램명 타이틀: 한 줄, 초과 시 말줄임(...) */
 .kpi-achievement-widget__card-title {
-  color: var(--default-BK, #3D3D3D);
+  color: var(--default-BK, #3d3d3d);
   text-align: center;
   overflow: hidden;
   font-family: Pretendard, sans-serif;
@@ -102,7 +108,7 @@
 /* 최종 달성 인원 텍스트 스펙 */
 .kpi-achievement-widget__kpi-label-main {
   overflow: hidden;
-  color: var(--default-BK, #3D3D3D);
+  color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
   font-family: Pretendard, sans-serif;
   font-size: 14px;
@@ -120,7 +126,7 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
-  color: rgba(61, 61, 61, 0.60);
+  color: rgba(61, 61, 61, 0.6);
   text-overflow: ellipsis;
   font-family: Pretendard, sans-serif;
   font-size: 12px;
@@ -155,11 +161,11 @@
   max-width: 100%;
   border-radius: 4px;
   transition: width 0.2s ease;
-  background: var(--JA-mint-01, #01A1AF);
+  background: var(--JA-mint-01, #01a1af);
 }
 
 .kpi-achievement-widget__bar-fill--achieved {
-  background: var(--JA-mint-01, #01A1AF);
+  background: var(--JA-mint-01, #01a1af);
 }
 
 .kpi-achievement-widget__bar-fill--under {
@@ -206,7 +212,7 @@
 }
 
 .kpi-achievement-widget__rate-badge--achieved {
-  background: var(--JA-mint-01, #01A1AF);
+  background: var(--JA-mint-01, #01a1af);
   color: #fff;
 }
 

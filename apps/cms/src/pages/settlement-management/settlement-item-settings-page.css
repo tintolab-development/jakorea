@@ -1,0 +1,187 @@
+/**
+ * 정산 관리 > 정산 항목 설정
+ */
+.settlement-item-settings-page {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/* 카테고리(임금·지급·공제)별 흰 래퍼만 쌓고, 바깥은 layout 배경(회색)이 보이도록 단일 대형 카드 래퍼는 두지 않음 */
+.settlement-item-settings-page__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.settlement-item-settings__section {
+  background: var(--default-WT, #fff);
+  border-radius: 12px;
+  padding: var(--spacing-24);
+  box-sizing: border-box;
+  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
+}
+
+.settlement-item-settings__section-head {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--spacing-24);
+}
+
+.settlement-item-settings__section-title {
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  line-height: 1.5;
+}
+
+.settlement-item-settings__section-count {
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+  line-height: 1.5;
+}
+
+.settlement-item-settings__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .settlement-item-settings__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .settlement-item-settings__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.settlement-item-settings__card {
+  display: flex;
+  box-sizing: border-box;
+  min-width: 130px;
+  max-width: 498px;
+  width: 100%;
+  padding: 26px 30px;
+  align-items: center;
+  gap: 24px;
+  flex: 1 0 0;
+  border-radius: 12px;
+  border: 1px solid #d4d4d4;
+  background: var(--default-WT, #fff);
+}
+
+.settlement-item-settings__card-hit {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.settlement-item-settings__card-hit:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.settlement-item-settings__card-more-wrap {
+  flex-shrink: 0;
+}
+
+.settlement-item-settings__card-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settlement-item-settings__icon-img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.settlement-item-settings__card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settlement-item-settings__card-title-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.settlement-item-settings__card-title {
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: normal;
+  color: var(--default-BK, #3d3d3d);
+  margin: 0;
+  min-width: 0;
+}
+
+.settlement-item-settings__card-more {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.settlement-item-settings__card-more:hover {
+  opacity: 0.85;
+}
+
+.settlement-item-settings__card-desc {
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  font-style: normal;
+  line-height: normal;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}

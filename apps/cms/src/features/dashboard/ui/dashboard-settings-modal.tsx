@@ -5,7 +5,7 @@
  * TealHeaderModal 재사용, 800×720px, 바디 스크롤
  */
 
-import { Button, Checkbox, Table } from 'antd'
+import { Checkbox, Table } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { useCallback } from 'react'
 import {
@@ -15,6 +15,7 @@ import {
 } from '../model/dashboard-settings-store'
 import { mockPrograms } from '@/data/mock'
 import './dashboard-settings-modal.css'
+import { AppButton } from '@/shared/ui'
 
 export interface DashboardSettingsModalProps {
   open: boolean
@@ -26,11 +27,7 @@ export interface DashboardSettingsModalProps {
 const programList = mockPrograms.map(p => ({ id: p.id, title: p.title }))
 const allProgramIds = programList.map(p => p.id)
 
-export function DashboardSettingsModal({
-  open,
-  onCancel,
-  onResetLayout,
-}: DashboardSettingsModalProps) {
+export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const setShortcutEnabled = useDashboardSettingsStore(s => s.setShortcutEnabled)
   const setWidgetProgramIds = useDashboardSettingsStore(s => s.setWidgetProgramIds)
@@ -69,14 +66,12 @@ export function DashboardSettingsModal({
 
   const footer = (
     <>
-      {onResetLayout && (
-        <Button onClick={onResetLayout} style={{ marginRight: 8 }}>
-          기본 레이아웃으로 되돌리기
-        </Button>
-      )}
-      <Button type="primary" onClick={onCancel}>
+      <AppButton variant="cancel" onClick={onCancel}>
         닫기
-      </Button>
+      </AppButton>
+      <AppButton variant="primary" onClick={onCancel}>
+        저장
+      </AppButton>
     </>
   )
 
@@ -92,7 +87,7 @@ export function DashboardSettingsModal({
       <div className="dashboard-settings-modal__content">
         {/* 섹션 1: 바로가기 아이콘 설정 */}
         <section className="dashboard-settings-modal__section">
-          <h3 className="dashboard-settings-modal__section-title">바로가기 아이콘 설정</h3>
+          <div className="dashboard-settings-modal__section-title">바로가기 아이콘 설정</div>
           <div className="dashboard-settings-modal__shortcuts">
             {SHORTCUT_ITEMS.map(item => (
               <Checkbox
@@ -108,7 +103,7 @@ export function DashboardSettingsModal({
 
         {/* 섹션 2: 위젯 별 프로그램 설정 */}
         <section className="dashboard-settings-modal__section">
-          <h3 className="dashboard-settings-modal__section-title">위젯 별 프로그램 설정</h3>
+          <div className="dashboard-settings-modal__section-title">위젯 별 프로그램 설정</div>
           <Table
             className="dashboard-settings-modal__table"
             dataSource={WIDGET_PROGRAM_KEYS.map((w, index) => ({

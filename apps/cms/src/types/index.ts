@@ -29,7 +29,6 @@ export interface PaginatedResponse<T> {
 // 도메인 타입 re-export
 export * from './domain'
 export * from './user'
-export * from './volunteer'
 export * from './download-log'
 export * from './consent'
 export * from './register'

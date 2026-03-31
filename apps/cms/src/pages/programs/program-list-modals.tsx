@@ -1,6 +1,6 @@
 import { Modal } from 'antd'
 import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
-import { ProgramDetailFullPageModal } from '@/features/program/ui/program-detail-fullpage-modal'
+import { ProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/program-detail-fullpage-modal'
 import { ProgramForm } from '@/features/program/ui/program-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { EnrollmentStatusDetailModal } from '@/features/program/ui/enrollment-status-detail-modal'

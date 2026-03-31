@@ -5,21 +5,17 @@
 
 import { Button, Space, message } from 'antd'
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  loginWithSocial,
   SOCIAL_PROVIDER_LABEL,
   type SocialProvider,
 } from '@/entities/user/api/auth-service'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { GoogleMarkIcon } from '@/shared/components/google-mark-icon'
-import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
-import { MESSAGES } from '@/shared/constants'
+import { GoogleMarkIcon } from '@/shared/ui/icons'
+import { buildOAuthAuthorizeUrl } from '@/features/auth/lib/oauth-client'
 import './social-login-form.css'
 
-interface SocialLoginFormProps {
-  onSuccess?: () => void
-}
+// interface SocialLoginFormProps {
+//   onSuccess?: () => void
+// }
 
 /**
  * 카카오 로그인 버튼 스타일
@@ -67,58 +63,18 @@ const googleButtonStyle: React.CSSProperties = {
   gap: '10px',
 }
 
-export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const authStore = useAuthStore()
-  const { setAuth } = authStore
-  const redirectPath = searchParams.get('redirect')
-
+export function SocialLoginForm() {
   const [loading, setLoading] = useState<SocialProvider | null>(null)
 
-  // 소셜 로그인 처리
   const handleSocialLogin = async (provider: SocialProvider) => {
     setLoading(provider)
     try {
-      // Mock: 소셜 토큰 생성 (실제로는 OAuth 인증 플로우를 거쳐야 함)
-      const mockSocialToken = `mock-${provider}-token-${Date.now()}`
-
-      const response = await loginWithSocial(provider, mockSocialToken)
-
-      // 인증 상태 저장
-      setAuth({
-        user: response.user,
-        token: response.token,
-        expiresAt:
-          typeof response.expiresAt === 'string'
-            ? response.expiresAt
-            : response.expiresAt.toString(),
-      })
-
-      // MFA 필요 시 처리 (관리자)
-      if (response.requiresMfa && response.mfaState) {
-        // MFA는 별도 모달에서 처리되므로 여기서는 성공으로 간주
-        message.success(MESSAGES.success.loginSuccess)
-        if (onSuccess) {
-          onSuccess()
-        }
-        return
-      }
-
-      // 역할별 리다이렉트
-      const finalRedirectPath = redirectPath || getRedirectPathByRole(response.user)
-      message.success(MESSAGES.success.loginSuccess)
-      navigate(finalRedirectPath, { replace: true })
-
-      if (onSuccess) {
-        onSuccess()
-      }
+      const authorizeUrl = buildOAuthAuthorizeUrl(provider)
+      window.location.href = authorizeUrl
     } catch (error: any) {
-      message.error(
-        error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 로그인에 실패했습니다.`
-      )
-    } finally {
+      message.error(error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 로그인에 실패했습니다.`)
       setLoading(null)
+      return
     }
   }
 
@@ -163,13 +119,6 @@ export function SocialLoginForm({ onSuccess }: SocialLoginFormProps) {
         </Button>
       </Space>
 
-      <div style={{ marginTop: '16px', textAlign: 'center' }}>
-        <span style={{ fontSize: '12px', color: '#8c8c8c' }}>
-          소셜 로그인은 Mock으로 구현되었습니다.
-          <br />
-          실제 OAuth 연동은 백엔드 연동 시 구현됩니다.
-        </span>
-      </div>
     </div>
   )
 }

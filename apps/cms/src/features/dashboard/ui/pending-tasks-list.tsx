@@ -46,9 +46,9 @@ export function PendingTasksList({
 
   const handleViewAll = (type: 'report' | 'settlement') => {
     if (type === 'report') {
-      navigate('/reports')
+      navigate('/instructor/reports')
     } else {
-      navigate('/settlements')
+      navigate('/settlements/my')
     }
   }
 
@@ -60,10 +60,10 @@ export function PendingTasksList({
         style={{ padding: '12px 0', cursor: 'pointer' }}
         onClick={() => {
           if (task.type === 'report') {
-            navigate(`/reports/${task.id}`)
+            navigate('/instructor/reports')
           } else {
-            // 정산 제출 페이지로 이동 (매칭 ID 기반)
-            navigate(`/settlements/new?matchingId=${task.matchingId || task.id}`)
+            const q = task.matchingId ? `?matchingId=${task.matchingId}` : ''
+            navigate(`/settlements/my/submit${q}`)
           }
         }}
       >

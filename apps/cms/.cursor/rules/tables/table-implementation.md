@@ -71,19 +71,16 @@ const columns: ColumnsType<MyRow> = useMemo(
 ## 3. 체크박스(행 선택) 열
 
 - `rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}` 사용.
-- **첫 번째 열(체크박스) 고정 너비**:
-  - **페이지/카드 내 테이블**: `40px` (예: program-progress-tab)
-  - **모달 내 테이블**: `48px` (예: school-detail-modal 강사/학생 테이블)
-- CSS로 첫 번째 `th`/`td`에 `width`, `min-width`, `max-width` 동일하게 지정하고, 필요 시 `padding-left/right: 8px` 조정.
+- **첫 번째 열(체크박스) 고정 너비**: 전역 `filter-controls-common.css`의 `--table-selection-column-width`(기본 **60px**) 및 `.ant-table-selection-column` 규칙을 따른다. `rowSelection.columnWidth`는 `TABLE_COLUMN_WIDTHS.checkbox`(60)와 맞출 것.
+- 예외적으로 셀 패딩·행 높이만 로컬 CSS로 덮는 경우(예: 신청자 상세 테이블)는 너비 토큰은 유지한다.
 
 ```css
-.my-feature__table .ant-table-thead > tr > th:first-child,
-.my-feature__table .ant-table-tbody > tr > td:first-child {
-  width: 40px;
-  min-width: 40px;
-  max-width: 40px;
-  padding-left: 8px;
-  padding-right: 8px;
+/* 로컬 오버라이드 예시 — 너비는 토큰 사용 권장 */
+.my-feature__table .ant-table-thead > tr > th.ant-table-selection-column,
+.my-feature__table .ant-table-tbody > tr > td.ant-table-selection-column {
+  width: var(--table-selection-column-width, 60px);
+  min-width: var(--table-selection-column-width, 60px);
+  max-width: var(--table-selection-column-width, 60px);
 }
 ```
 
@@ -170,9 +167,11 @@ const columns: ColumnsType<MyRow> = useMemo(
 
 ## 7. 모달 내 테이블
 
-- **TealHeaderModal** 사용 시, 푸터(닫기 버튼) 위에 **30px 여백**이 있도록 이미 공통 스타일 적용됨 (`teal-header-modal.css` → `.teal-header-modal__footer` padding-top: 30px). 테이블이 스크롤되어도 닫기 버튼과 겹치지 않습니다.
+- 모달 구현은 **`ContentModal` 우선**을 원칙으로 한다. **`TealHeaderModal` 직접 사용은 deprecated**.
+- `ContentModal` 사용 시, 푸터(닫기 버튼) 위에 **30px 여백**이 있도록 공통 스타일 적용됨 (`content-modal.css` → `.content-modal .teal-header-modal__footer` margin-top: 30px). 테이블이 스크롤되어도 닫기 버튼과 겹치지 않습니다.
 - 모달 내 테이블은 **체크박스 열 48px** 사용 (school-detail-modal 참고).
 - **모달 내 디바이더**: 디바이더가 쓰인 곳은 **양옆 gap 12px**로 통일한다. flex 컨테이너면 `gap: 12px`(또는 `var(--spacing-12)`), 또는 디바이더에 `margin: 0 12px` 적용.
+- **기본정보를 위·아래 두 개의 native `<table>`로 나누는 경우** 열 정렬·가로 잘림·디바이더는 [§12 복수 블록 기본정보 테이블](#12-복수-블록-기본정보-테이블-모달-가로-오버플로-명세-프롬프트)을 따른다.
 
 ---
 
@@ -195,7 +194,7 @@ const columns: ColumnsType<MyRow> = useMemo(
 | 탭+필터+테이블, 조회 버튼 필터, 행 선택  | `features/program/ui/program-progress-tab.tsx` / `.css`          |
 | 모달 내 탭+필터+테이블, 강사/학생 테이블 | `features/program/ui/school-detail-modal.tsx` / `.css`           |
 | 탭별 테이블(단순, 체크박스 없음)         | `features/dashboard/ui/program-progress-tabs-table.tsx` / `.css` |
-| 모달 공통(푸터 여백)                     | `shared/ui/teal-header-modal.css`                                |
+| 모달 공통(푸터 여백)                     | `shared/ui/content-modal.css`                                    |
 | 필터·조회 룰                             | `design/ui-principles.md`                                        |
 
 ---
@@ -242,3 +241,60 @@ const columns: ColumnsType<MyRow> = useMemo(
 - [ ] 필터가 있으면 조회 버튼 시에만 적용되도록 입력/적용 상태 분리
 - [ ] 모달 내 테이블은 푸터 여백 확인(이미 30px 적용됨)
 - [ ] **모달 내 기본정보/상세 native table** 사용 시: 디바이더 갭 12px(양옆), tr 높이 48px, 값 셀 353×48, 라벨/순위 셀 180×48 적용 ([§10 모달 내 기본정보·상세 테이블 정량 스펙](#10-모달-내-기본정보상세-테이블native-table-정량-스펙) 참고)
+- [ ] **산출 내역서 모달 기본정보**는 §12 단일 4열 `program-detail-info-tab` 패턴; **위·아래 두 블록 5열 applicant** 패턴을 쓸 때는 동일 `colgroup`·`table-layout: fixed` 등 §12.1 후반 참고 ([§12](#12-산출-내역서-기본정보-모달-가로-오버플로-명세프롬프트))
+
+---
+
+## 12. 산출 내역서 기본정보 · 모달 가로 오버플로 · 명세(프롬프트)
+
+### 12.0 산출 내역서 ContentModal — 기본 정보(프로그램 맥락)
+
+- **단일** native 테이블: 지급 현황 상세 **프로그램** 풀페이지와 동일하게 **`program-detail-info-tab__table-wrapper`** + **`program-detail-info-tab__table--basic`**, `colgroup` **`200px` / 가변 / `200px` / 가변**, `th`·`td` 4열 × **3행** (1행: 프로그램명·사업 운영 기간 / 2행: 프로그램 진행 회차·지급 조서 처리 현황 / 3행: 강의비 책정 기준·사업소득자 여부).
+- 스타일 베이스: `apps/cms/src/features/program/ui/detail-modal/project-info/project-info-form-shared.css` 참고; 모달에서는 해당 파일 import 후 **`.payment-order-calc-statement-modal__basic--program-info` 스코프**로 `table-layout: fixed`, 값 셀 `min-width: 0` 등 보정 (`apps/cms/src/pages/settlement-management/payment-order-program-calculation-statement-modal.css`).
+- 데이터: `context: 'program'`일 때 `PaymentOrderCalculationStatementProgramBasicInfo`(`businessPeriodDisplay`, `programSessionProgressDisplay` 등); mock은 `getMockPaymentOrderProgramDetail(programRow)`와 동일 시드로 기간·회차를 채운다. 강사 풀페이지에서는 `context: 'instructor'` + `getMockPaymentOrderInstructorCalculationStatement`.
+
+### 12.1 복수 블록 5열 applicant 패턴(참고)
+
+다른 화면에서 기본정보가 **2개 이상의 native `<table>` 블록**으로 나뉘고 `applicant-instructor-basic-info`와 동기해야 할 때:
+
+- **`colgroup`를 블록마다 동일**하게 둔다 (예: `140px`, `80px`, 가변, `160px`, 가변).
+- **`table-layout: fixed`** + **테이블 `width: 100%`**, **`max-width: 100%`**.  
+  - **`width: max-content`만으로 두 테이블을 각각 맞추면** 가변 열 비율이 테이블마다 달라져 세로 열이 **어긋날 수 있음**.
+- 행별 **`colspan`/`rowspan`**으로 **같은 5열 그리드**를 공유하도록 맞춘다.
+- **래퍼**는 `overflow-x: auto`로 두어 좁은 뷰포트에서 잘림 대신 스크롤 가능하게 할 수 있다.
+
+### 12.2 모달 가로 잘림(ContentModal large)
+
+- `ContentModal`도 내부적으로 모달 바디에 레이아웃 제약이 있으므로, 테이블·인라인 버튼 등으로 가로가 넘치면 **우측이 잘릴 수 있음**.
+- 해당 UX가 필요한 모달에서는 **스코프 한정**으로 `.ant-modal-body`에 `overflow-x: auto`, `.teal-header-modal__body`에 `overflow-x: auto` 및 `min-width: 0` 등을 검토한다.
+- 값 셀에 **`overflow-wrap: break-word`**, **`word-break: break-word`**, **`min-width: 0`**을 주어 `table-layout: fixed`에서 긴 문자열이 셀 밖으로 밀리지 않게 한다.
+
+### 12.3 값 셀 안 구분선(파이프 문자 금지)
+
+- **은행·계좌 | 예금주**, **강의비 항목 | 금액** 등은 **`|` 문자열로 붙이지 않는다.**
+- 공통으로 **`withProgramDetailTdDivider`** + **`ProgramDetailTdDivider`**(또는 동일 시각 스펙의 세로 1×13 디바이더)를 쓰고, 필요 시 **`payment-order-calc-statement-modal__td-divider-wrap`** 같은 flex 래퍼로 정렬한다 ([§10.1](#101-디바이더-갭-모달-내-공통) 갭 12px와 함께).
+
+### 12.4 지급 반려(또는 반려 계열) 값 셀
+
+- **상태 문구 → 세로 바 → `사유 : …` → 세로 바 → 알림 버튼** 한 줄 패턴: 산출 내역서에서는 **`payment-order-calc-statement-modal__processing-status-row`** / **`__processing-vbar`**; 다른 화면에서는 `applicant-instructor-basic-info__approval-status-row` 등과 동일 시각.
+- 알림 버튼은 **`SendNotiButton`** (`detail-modal/components/send-noti-button.tsx`) 사용.
+
+### 12.5 기획·디자인·AI 프롬프트로 이 레이아웃을 전달할 때(권장 순서)
+
+스크린샷만으로는 열 병합이 빠지기 쉬우므로, 아래 순서로 적으면 구현·리뷰가 수월하다.
+
+1. **블록 구조**: 산출 내역서는 **단일 4열 `program-detail-info-tab` 3행**; 그 외는 표 덩어리 수·라벨/값 셀 역할(`th`/`td`) 명시.
+2. **열 수·고정 폭**: 산출 내역서 예: **200 / 가변 / 200 / 가변**; 5열 applicant 패턴 예: 140 / 80 / … / 160 / … + **`table-layout: fixed`**.
+3. **행별 병합 표**: 병합이 있으면 행 단위로 적는다 (산출 내역서 현재 버전은 병합 없음).
+4. **값 셀 UI**: 디바이더는 `withProgramDetailTdDivider`, 반려 시 상태|사유|버튼(`SendNotiButton`).
+5. **상태 색**: `payment-order-admin__status-text--*` 등.
+6. **레이아웃 제약**: 모달 가로 스크롤(`minWidth` 산출 테이블과 맞춤), 하단 Ant `Table`과 기본정보 블록 가로 정렬.
+
+**피할 것**: 산출 내역서를 5열 applicant 말로만 설명하기; `program-detail-info-tab__table--basic td`의 전역 `min-width: 400px`를 모달에서 오버라이드하지 않아 레이아웃이 깨지게 두기.
+
+### 12.6 참고 구현
+
+| 용도 | 파일 |
+| --- | --- |
+| 강사 지급 상세 기본정보(단일 테이블) | `pages/settlement-management/payment-order-instructor-status-detail-fullpage-modal.tsx` |
+| 산출 내역서 기본정보(4열 program-detail-info-tab·3행·디바이더·반려) | `pages/settlement-management/payment-order-program-calculation-statement-modal.tsx` / `.css` |

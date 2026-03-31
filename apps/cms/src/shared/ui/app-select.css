@@ -1,0 +1,78 @@
+/**
+ * 앱 공통 셀렉트 (AppSelect)
+ * 폼·필터 등 CMS 전역에서 동일한 크기·테두리·배경 사용
+ */
+
+.app-select {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 14px 0 16px;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid #c4cdd1;
+  background: var(--default-WT, #fff);
+}
+
+/* 루트가 전체 너비를 쓰지 않으면 화살표가 텍스트 옆(중앙처럼 보임)에 붙음 → flex로 끝으로 밀기 */
+.app-select .ant-select {
+  display: flex !important;
+  align-items: center;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+}
+
+.app-select .ant-select-selector {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Ant 기본 inset-inline-end(패딩 토큰) 때문에 화살표가 오른쪽 패딩 안쪽으로 들어감 → 입력 박스 오른쪽 끝에 맞춤 */
+.app-select .ant-select-arrow {
+  flex-shrink: 0;
+  inset-inline-end: 0 !important;
+}
+
+.app-select .ant-select-selection-item,
+.app-select .ant-select-selection-placeholder {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: pre;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 22.5px */
+}
+
+.app-select .ant-select-focused .ant-select-selector,
+.app-select .ant-select-open .ant-select-selector {
+  box-shadow: none !important;
+}
+
+/* 통일 필터 카드 등 — 토큰 높이·모서리 */
+.app-select.app-select--filter {
+  height: var(--filter-control-height, 44px);
+  min-height: var(--filter-control-height, 44px);
+  border-radius: 8px;
+}
+
+.app-select.app-select--filter .ant-select-selection-item,
+.app-select.app-select--filter .ant-select-selection-placeholder {
+  font-size: 16px;
+}
+
+.app-select.app-select--filter .ant-select-selection-placeholder {
+  color: #85969d;
+}

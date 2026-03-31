@@ -9,23 +9,24 @@
   display: flex;
   flex-direction: column;
   overflow: visible;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* 타이틀~메뉴 갭 16px: 헤더 하단 여백 제거 후 body padding-top 16px로만 간격 확보 */
-.menu-shortcut-widget .ant-card-head {
-  padding-bottom: 0 !important;
-  border-bottom: 1px solid var(--color-border-light);
+.dashboard-container .ant-card .ant-card-head {
+  padding: 0 20px;
+  border-bottom: none;
 }
 
 /* 항목 많을 때 카드 body 영역 확장, 하단 20px 패딩 유지, 스크롤 없음 */
 .menu-shortcut-widget .ant-card-body {
-  padding: 16px var(--spacing-20) 20px !important;
-  padding-top: 16px !important;
-  padding-bottom: 20px !important;
   display: flex;
   flex-direction: column;
   overflow: visible;
   box-sizing: border-box;
+  padding: 0 20px 16px 20px;
 }
 
 .menu-shortcut-widget__body {
@@ -58,7 +59,10 @@
   border: var(--spacing-2) solid var(--color-brand-primary-overlay-10);
   background: var(--color-brand-primary-overlay-04);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
   -webkit-user-select: none;
   user-select: none;
   box-sizing: border-box;
@@ -91,7 +95,7 @@
   width: var(--spacing-24);
   height: var(--spacing-24);
   font-size: var(--font-size-24);
-  color: var(--default-BK);
+  color: var(--color-brand-primary);
 }
 
 .menu-shortcut-widget__label {
@@ -100,7 +104,7 @@
   font-size: var(--font-size-16);
   font-style: normal;
   font-weight: var(--font-weight-600);
-  line-height: 140%;
+  line-height: 120%;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -124,7 +128,9 @@
   flex-shrink: 0;
   color: var(--default-WT, #fff);
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-family: Outfit, var(--font-family-number), sans-serif;
   font-size: 12px;
   font-style: normal;

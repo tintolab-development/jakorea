@@ -1,0 +1,43 @@
+/**
+ * 회원 상세 — 프로그램 강의 이력 (필터+테이블) 요약·각주
+ */
+
+.member-program-lecture-history__summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8, 8px);
+  min-width: 0;
+}
+
+.member-program-lecture-history__footnote {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
+  margin-left: 4px;
+}
+
+.member-program-lecture-history .program-list-page__filter-info {
+  align-items: flex-start;
+}
+
+.member-program-lecture-history .program-list-page__widget-header-actions {
+  padding-top: 4px;
+}
+
+/* 테이블이 카드 너비를 채우고, 내용이 넓을 때만 가로 스크롤 */
+.member-program-lecture-history__table-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.member-program-lecture-history__table-wrap.program-list-table-wrapper--scroll-x {
+  overflow-x: auto;
+}
+
+.member-program-lecture-history .cms-data-table--fluid.ant-table-wrapper {
+  width: 100%;
+}

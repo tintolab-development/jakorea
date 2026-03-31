@@ -8,23 +8,43 @@
   padding: 28px 30px 34px;
 }
 
-/* 헤더: 흰 배경, 보더 없음, padding 제거 */
+/* 헤더: 흰 배경, 타이틀 영역 높이 36px */
 .content-modal .teal-header-modal__header {
   flex-shrink: 0;
+  box-sizing: border-box;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
   background: #fff;
   border-top: none;
   border-bottom: none;
   padding: 0;
+  align-items: center;
 }
 
-/* 타이틀: 24px Bold, default-BK */
+/* 타이틀: 24px Bold, default-BK (+ 선택적 titlePrefix와 가로 정렬) */
 .content-modal .teal-header-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 24px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
+}
+
+.content-modal .teal-header-modal__title-prefix {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.content-modal .teal-header-modal__title-text {
+  min-width: 0;
 }
 
 .content-modal .teal-header-modal__close {
@@ -39,6 +59,11 @@
   flex-direction: column;
   align-items: stretch;
   padding: 0;
+}
+
+/* 헤더 타이틀 ↔ 디스크립션(description prop) 16px */
+.content-modal .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 16px;
 }
 
 /* 푸터: 테이블–버튼 갭 30px, padding/보더 없음, 전체 너비 */

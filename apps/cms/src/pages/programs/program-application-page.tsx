@@ -5,6 +5,7 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom'
+import { getProgramAdminDetailUrlDefault } from '@/features/program/lib/program-admin-detail-url'
 import { useEffect, useState } from 'react'
 import { Card, Spin, message, Typography } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -110,7 +111,7 @@ export function ProgramApplicationPage() {
 
   const handleCancel = () => {
     if (programId) {
-      navigate(`/programs/${programId}`, { replace: true })
+      navigate(getProgramAdminDetailUrlDefault(programId), { replace: true })
     } else {
       navigate('/programs', { replace: true })
     }

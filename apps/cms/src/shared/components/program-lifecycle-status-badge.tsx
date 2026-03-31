@@ -51,19 +51,29 @@ function getEconomyModifier(status: ProgramLifecycleStatus): string {
 export interface ProgramLifecycleStatusBadgeProps {
   status: ProgramLifecycleStatus
   className?: string
+  /**
+   * `table`: 목록/테이블 컬럼용 — `AppStatusBadge` 기본 고정 폭(120px)을 풀고 라벨 길이에 맞춤.
+   * 카드·요약 위젯 등은 기본값(`default`) 유지.
+   */
+  variant?: 'default' | 'table'
 }
 
-export function ProgramLifecycleStatusBadge({ status, className }: ProgramLifecycleStatusBadgeProps) {
+export function ProgramLifecycleStatusBadge({
+  status,
+  className,
+  variant = 'default',
+}: ProgramLifecycleStatusBadgeProps) {
   const location = useLocation()
   const isEconomyPage = location.pathname === '/programs/economy-education'
 
   const label = isEconomyPage ? getEconomyDisplayLabel(status) : getProgramLifecycleLabel(status)
   const modifier = isEconomyPage ? getEconomyModifier(status) : `program-lifecycle-status-badge--${status.replace(/_/g, '-')}`
+  const variantClass = variant === 'table' ? ' program-lifecycle-status-badge--table' : ''
 
   return (
     <AppStatusBadge
       label={label}
-      className={`program-lifecycle-status-badge ${modifier} ${className ?? ''}`.trim()}
+      className={`program-lifecycle-status-badge ${modifier}${variantClass} ${className ?? ''}`.trim()}
     />
   )
 }

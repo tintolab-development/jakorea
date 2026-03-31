@@ -1,0 +1,369 @@
+/**
+ * 지급 현황 상세 풀페이지 — 기본 정보 테이블·본문 여백
+ */
+@import '../../features/program/ui/detail-modal/project-info/project-info-form-shared.css';
+@import './payment-order-admin-status-tag.css';
+
+.payment-order-program-status-detail-fullpage-modal.detail-fullpage-modal
+  .detail-fullpage-modal__content {
+  padding: 24px 32px 32px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.payment-order-program-status-detail__root {
+  max-width: 100%;
+}
+
+.payment-order-program-status-detail__basic-block {
+  margin-bottom: 32px;
+}
+
+/* program-detail-fullpage-modal__info-tab-block 단독 사용 시 상단 32px 마진 제거 */
+.payment-order-program-status-detail__basic-block.program-detail-fullpage-modal__info-tab-block {
+  margin-top: 0;
+}
+
+.payment-order-program-status-detail__basic-block .program-detail-info-tab__section-title {
+  margin-bottom: 10px;
+}
+
+.payment-order-program-status-detail__basic-block .program-detail-info-tab__table-wrapper--top {
+  margin-bottom: 0;
+}
+
+.payment-order-program-status-detail__filters.participating-institutions-section__filters {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+/* 필터 행: 전체 너비, 4개 필터 컬럼 균등 분배 */
+.payment-order-program-status-detail__filters .payment-order-program-status-detail__filter-row {
+  width: 100%;
+  flex-wrap: nowrap !important;
+}
+
+.payment-order-program-status-detail__filters
+  .payment-order-program-status-detail__filter-row
+  > .ant-col.payment-order-program-status-detail__filter-col {
+  flex: 1 1 0 !important;
+  min-width: 0;
+  max-width: none;
+  align-items: stretch;
+}
+
+.payment-order-program-status-detail__filters
+  .payment-order-program-status-detail__filter-row
+  > .ant-col.payment-order-program-status-detail__filter-col
+  > .program-progress-tab__filter-field {
+  width: 100%;
+  min-width: 0;
+  align-self: flex-end;
+}
+
+.payment-order-program-status-detail__filters
+  .payment-order-program-status-detail__filter-row
+  > .ant-col.payment-order-program-status-detail__filter-col--btn {
+  flex: 0 0 auto !important;
+}
+
+/* 필터 스택·컨트롤이 컬럼 너비 100% 채움 */
+.payment-order-program-status-detail__root .payment-order-program-status-detail__filter-stack {
+  width: 100%;
+  min-width: 0;
+}
+
+.payment-order-program-status-detail__root
+  .payment-order-program-status-detail__filter-stack
+  .participating-institutions-section__filter-input,
+.payment-order-program-status-detail__root
+  .payment-order-program-status-detail__filter-stack
+  .ant-input-affix-wrapper {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.payment-order-program-status-detail__root .payment-order-program-status-detail__filter-stack .ant-select {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.payment-order-program-status-detail__root
+  .payment-order-program-status-detail__filter-stack
+  .ant-select
+  .ant-select-selector {
+  width: 100% !important;
+}
+
+.payment-order-program-status-detail__root
+  .participating-institutions-section__filters
+  .payment-order-program-status-detail__filter-stack.program-progress-tab__filter-field {
+  height: 71px;
+  min-height: 71px;
+  max-height: 71px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 6px;
+  overflow: visible;
+}
+
+.payment-order-program-status-detail__root
+  .participating-institutions-section__filters
+  .payment-order-program-status-detail__filter-stack
+  > .program-progress-tab__filter-label {
+  flex: 0 0 21px !important;
+  height: 21px !important;
+  min-height: 21px !important;
+  max-height: 21px !important;
+  line-height: 21px !important;
+  display: flex !important;
+  align-items: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.payment-order-program-status-detail__root
+  .participating-institutions-section__filters
+  .payment-order-program-status-detail__filter-stack
+  > *:not(.program-progress-tab__filter-label) {
+  flex: 0 0 44px;
+  min-height: 44px;
+  max-height: 44px;
+  margin: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.payment-order-program-status-detail__table-wrap.participating-institutions-section__table-wrap {
+  margin-top: 0;
+  flex: 1;
+  min-height: 280px;
+  overflow: auto;
+}
+
+.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-container {
+  border-inline-start: none !important;
+  border-inline-end: none !important;
+}
+
+.payment-order-program-status-detail__table.participating-institutions-section__table table.ant-table {
+  border-inline: none !important;
+}
+
+.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-thead > tr > th,
+.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-tbody > tr > td {
+  border-inline-start: none;
+  border-inline-end: none;
+}
+
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th:not(:first-child),
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td:not(:first-child) {
+  border-inline-start: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-thead > tr > th {
+  border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+/*
+ * 지급 현황 상세 풀페이지(프로그램별·강사별) — 목록 테이블 행 높이 54px 공통.
+ * participating-institutions-section.css 의 53px !important 규칙보다 모달 루트로 특이도 우선.
+ * 세로 padding 0 + vertical-align middle → 40px 산출 내역 버튼·한 줄 텍스트 모두 54px 안에 수직 정렬.
+ */
+.payment-order-program-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th,
+.payment-order-program-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td,
+.payment-order-instructor-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th,
+.payment-order-instructor-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.payment-order-program-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status),
+.payment-order-instructor-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+.payment-order-program-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td,
+.payment-order-instructor-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+.payment-order-program-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status,
+.payment-order-instructor-status-detail-fullpage-modal
+  .payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr.ant-table-row:hover
+  > td {
+  background: #f0f8ff !important;
+}
+
+/* 산출 내역 「상세 보기」 — 시안 180×40, 회색 보더, 14px/600 */
+/* display:flex 로 블록화되어 td의 text-align만으로는 가운데 오지 않음 → margin auto로 셀 내 수평 중앙 */
+/* 스펙의 padding: 32px 31px는 height: 40px과 함께 쓸 수 없어 가로 31px만 반영, 세로는 flex 중앙 정렬 */
+.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 180px !important;
+  height: 40px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  padding: 0 31px !important;
+  box-sizing: border-box !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  background: #fff !important;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 150% !important;
+  text-align: center !important;
+  box-shadow: none !important;
+}
+
+.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.22) !important;
+  color: var(--default-BK, #3d3d3d) !important;
+  background: #fff !important;
+}
+
+.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm:focus-visible {
+  border-color: rgba(0, 0, 0, 0.25) !important;
+  color: var(--default-BK, #3d3d3d) !important;
+  background: #fff !important;
+}
+
+/* 필터: 조회 버튼 슬롯 높이 (지급조서 확인 페이지와 동일) */
+.payment-order-program-status-detail__filter-btn-slot {
+  height: 71px;
+  min-height: 71px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.payment-order-program-status-detail__range-picker.ant-picker {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 14px 0 16px;
+  border-radius: 8px;
+  border: 1px solid #c4cdd1;
+  background: var(--default-WT, #fff);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.payment-order-program-status-detail__range-picker .ant-picker-input > input {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.payment-order-program-status-detail__below-divider.participating-institutions-section__below-divider {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  margin-top: 0;
+}
+
+/* 필터 ↔ 목록 사이 디바이더: 위·아래 각 32px (below-divider 기본 margin-top은 제거해 중복 방지) */
+.payment-order-program-status-detail__section-divider.participating-institutions-section__divider {
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+
+/* 기본 정보 표: 집계 상태 문구 좌측 정렬 */
+.payment-order-program-status-detail__basic-block .program-detail-info-tab__table td:has(.payment-order-admin__status-text) {
+  text-align: left;
+  vertical-align: middle;
+}

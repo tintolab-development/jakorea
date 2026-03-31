@@ -6,624 +6,811 @@
 
 /* 컨테이너 쿼리: 위젯 너비(50%/100%) 기준 반응형 */
 .program-schedule-widget {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    container-type: inline-size;
-    container-name: program-schedule;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+  container-name: program-schedule;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* 카드 헤더 영역 전체를 한 줄로 사용 */
 .program-schedule-widget .ant-card-head {
-    min-height: var(--spacing-48);
+  min-height: var(--spacing-48);
 }
 
 .program-schedule-widget .ant-card-head-title {
-    flex: 1;
-    min-width: 0;
-    padding: 0;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
 }
 
 .program-schedule-widget .ant-card-extra {
-    display: none;
+  display: none;
 }
 
 /* 헤더 한 줄: 좌(타이틀 + 날짜 네비) | 우(탭 + 더보기) */
 .program-schedule-widget__head-row {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-width: 0;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding-top: 10px;
 }
 
 .program-schedule-widget__head-left {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-16);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-16);
 }
 
 /* 날짜 네비: 타이틀 우측에 배치 */
 .program-schedule-widget__head-nav {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-8);
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-shrink: 0;
 }
 
 .program-schedule-widget__head-date {
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-600);
-    color: var(--color-text-label);
-    min-width: 7em;
-    text-align: center;
-    letter-spacing: 0.02em;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-700);
+  color: var(--color-text-label);
+  min-width: 7em;
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 
 /* 날짜 네비 버튼: 모서리 둥근 사각형, 테두리·호버 시 브랜드 컬러 */
 .program-schedule-widget__head-nav-btn {
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--color-border-skeleton);
-    border-radius: var(--radius-6);
-    background: var(--color-bg-base);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: var(--radius-6);
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
 }
 
 .program-schedule-widget__head-nav-btn:hover {
-    border-color: var(--color-brand-primary);
-    color: var(--color-brand-primary);
-    background: var(--color-brand-primary-overlay-04);
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
+  background: var(--color-brand-primary-overlay-04);
 }
 
 .program-schedule-widget__head-right {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--spacing-12);
-    min-width: 0;
-    z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-12);
+  min-width: 0;
+  z-index: 1;
 }
 
 .program-schedule-widget__head-more {
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 /* 헤더와 캘린더 사이 갭 없음 (캘린더 한 번에 보이도록) */
 .program-schedule-widget .ant-card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    padding: 0 var(--spacing-24) 20px;
-    overflow: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 20px 20px;
+  overflow: auto;
 }
 
 /* 콘텐츠: 캘린더 한 번에 보이도록 높이만 필요 최소로 (스크롤 없이) */
 .program-schedule-widget__content {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    flex: 1;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
 }
 
 /* 하위 영역: 월간은 캘린더+구분선+리스트, 주간은 주간 그리드만 */
 .program-schedule-widget__body {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 !important;
 }
 
 /* 캘린더 + 일정상세 전체 높이 254px, 갭 16px, 디바이더 없음 */
 .program-schedule-widget__body--month {
-    flex-direction: row;
-    align-items: stretch;
-    gap: var(--spacing-16);
-    max-height: 254px;
-    height: 254px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--spacing-16);
+  max-height: 254px;
+  height: 254px;
 }
 
 /* 월간 캘린더 래퍼: 캘린더·일정 상세 1:1(50%), min-width 0으로 축소 허용 */
 .program-schedule-widget__body--month .program-schedule-widget__calendar-main {
-    flex: 1 1 50%;
-    min-width: 0;
-    min-height: 0;
-    max-height: 254px;
-    display: flex;
-    flex-direction: column;
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    background: transparent;
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 254px;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
 }
 
 /* 월간 35셀(5×7) 그리드: 래퍼 254px 맞춤, 테이블이 전체 채워 하단 여백 없음 */
 .program-schedule-widget__month-grid-wrap {
-    flex: 1;
-    min-height: 0;
-    height: 254px;
+  flex: 1;
+  min-height: 0;
+  height: 254px;
 }
 
 .program-schedule-widget__body--month .program-schedule-widget__month-grid {
-    table-layout: fixed;
-    width: 100%;
-    max-width: 100%;
-    height: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
+  table-layout: fixed;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
 
 .program-schedule-widget__body--month .program-schedule-widget__month-grid thead th {
-    width: 14.28%; /* 1/7 */
-    min-width: 36px;
-    padding: 6px 0;
-    height: 32px;
-    box-sizing: border-box;
-    font-size: var(--font-size-12);
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-secondary);
-    text-align: center;
+  width: 14.28%; /* 1/7 */
+  min-width: 36px;
+  padding: 6px 0;
+  height: 32px;
+  box-sizing: border-box;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-secondary);
+  text-align: center;
 }
 
 /* 5행이 254px 전체를 채우도록: (254 - 32) / 5 ≈ 44.4px */
 .program-schedule-widget__body--month .program-schedule-widget__month-grid tbody td {
-    width: 14.28%;
-    min-width: 36px;
-    height: calc((254px - 32px) / 5);
-    vertical-align: top;
-    padding: 0;
-    box-sizing: border-box;
-    border: none;
+  width: 14.28%;
+  min-width: 36px;
+  height: calc((254px - 32px) / 5);
+  vertical-align: top;
+  padding: 0;
+  box-sizing: border-box;
+  border: none;
 }
 
 /* 위젯 내 월간 셀: 셀 높이 = tbody 행 높이로 하단 여백 없음, min-width로 축소 한계 */
 .program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell {
-    width: 100%;
-    min-width: 36px;
-    height: calc((254px - 32px) / 5);
-    min-height: 0;
-    padding: var(--spacing-2) var(--spacing-4);
-    box-sizing: border-box;
-    border: none;
-    border-right: 1px solid var(--color-border-light);
-    border-bottom: 1px solid var(--color-border-light);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
+  width: 100%;
+  min-width: 36px;
+  height: calc((254px - 32px) / 5);
+  min-height: 0;
+  padding: var(--spacing-2) var(--spacing-4);
+  box-sizing: border-box;
+  border: none;
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
-.program-schedule-widget__body--month .program-schedule-widget__month-grid tbody td:first-child .program-calendar-cell {
-    border-left: 1px solid var(--color-border-light);
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  tbody
+  td:first-child
+  .program-calendar-cell {
+  border-left: 1px solid var(--color-border-light);
 }
 
-.program-schedule-widget__body--month .program-schedule-widget__month-grid tbody tr:first-child .program-calendar-cell {
-    border-top: 1px solid var(--color-border-light);
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  tbody
+  tr:first-child
+  .program-calendar-cell {
+  border-top: 1px solid var(--color-border-light);
 }
 
-.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell--selected {
-    border: 2px solid var(--color-brand-primary) !important;
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--selected {
+  border: 2px solid var(--color-brand-primary) !important;
 }
 
 /* 현재 날짜 셀: 보더 없음, 텍스트 색상만 변경 */
-.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell--today {
-    border: none !important;
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--today {
+  border: none !important;
 }
 
 /* 날짜 숫자: 셀 내 좌측 정렬 */
-.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell .program-calendar-cell-date {
-    align-self: flex-start;
-    text-align: left;
-    margin-bottom: var(--spacing-2);
-    color: var(--default-BK);
-    font-size: var(--font-size-12);
-    font-weight: var(--font-weight-500);
-    line-height: 130%;
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell
+  .program-calendar-cell-date {
+  align-self: flex-start;
+  text-align: left;
+  margin-bottom: var(--spacing-2);
+  color: var(--default-BK);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-500);
+  line-height: 130%;
 }
 
 /* 현재 일자만: 스크린샷과 동일 — 원형 배지 24×24, #01A1AF, 텍스트 #fff */
-.program-schedule-widget__body--month .program-schedule-widget__month-grid .program-calendar-cell--today .program-calendar-cell-date {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 10px !important;
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-    padding: 0 10px !important;
-    aspect-ratio: 1 / 1 !important;
-    border-radius: 60px !important;
-    background: #01A1AF !important;
-    border: none !important;
-    color: #fff !important;
-    font-family: var(--font-family-number), sans-serif !important;
-    font-size: var(--font-size-12) !important;
-    font-weight: 500 !important;
-    line-height: 130% !important;
-    box-sizing: border-box !important;
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--today
+  .program-calendar-cell-date {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  padding: 0 10px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 60px !important;
+  background: #01a1af !important;
+  border: none !important;
+  color: #fff !important;
+  font-family: var(--font-family-number), sans-serif !important;
+  font-size: var(--font-size-12) !important;
+  font-weight: 500 !important;
+  line-height: 130% !important;
+  box-sizing: border-box !important;
 }
 
 /* 캘린더 셀 내 일정 표시: 텍스트 없이 색상 블록만, 배지 영역은 셀 내 가운데 정렬 (위젯 50%/100% 반응형 공통) */
 .program-schedule-widget__cell-badges {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-4);
-    flex-wrap: wrap;
-    margin-top: var(--spacing-2);
-    min-height: 0;
-    width: 100%;
-    box-sizing: border-box;
-    align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-2);
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  align-self: center;
 }
 
 .program-schedule-widget__cell-badge {
-    border-radius: var(--radius-8);
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: opacity 0.2s;
+  border-radius: var(--radius-8);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .program-schedule-widget__cell-badge:hover {
-    opacity: 0.85;
+  opacity: 0.85;
 }
 
 /* 같은 프로그램 진행현황만 있을 때: 40×12px */
 .program-schedule-widget__cell-badge--single {
-    width: 40px;
-    height: 12px;
+  width: 40px;
+  height: 12px;
 }
 
 /* 서로 다른 프로그램 진행현황 2개: 각 19×12px */
 .program-schedule-widget__cell-badge--multi {
-    width: 19px;
-    height: 12px;
+  width: 19px;
+  height: 12px;
 }
 
 /* 우측 일정 박스: 캘린더·일정 상세 1:1(50%), min-width로 가독성 확보, 스크롤 가능·스크롤바 숨김 */
 .program-schedule-widget__body--month .program-schedule-widget__events {
-    flex: 1 1 50%;
-    min-width: 0;
-    width: auto;
-    height: 100%;
-    min-height: 0;
-    max-height: 254px;
-    padding: var(--spacing-16);
-    box-sizing: border-box;
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-8);
-    overflow-y: auto;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  flex: 1 1 50%;
+  min-width: 0;
+  width: auto;
+  height: 100%;
+  min-height: 0;
+  max-height: 254px;
+  padding: var(--spacing-16);
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-8);
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .program-schedule-widget__body--month .program-schedule-widget__events::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 /* 컨테이너 좁을 때(예: 위젯 50% + 창 축소): 세로 쌓기 */
 @container program-schedule (max-width: 599px) {
-    .program-schedule-widget__body--month {
-        flex-direction: column;
-        height: auto;
-        max-height: none;
-    }
-    .program-schedule-widget__body--month .program-schedule-widget__calendar-main {
-        flex: 1 1 auto;
-        max-height: 220px;
-        min-height: 180px;
-    }
-    .program-schedule-widget__body--month .program-schedule-widget__month-grid-wrap {
-        height: 100%;
-    }
-    .program-schedule-widget__body--month .program-schedule-widget__events {
-        flex: 1 1 auto;
-        min-height: 120px;
-        max-height: 200px;
-    }
+  .program-schedule-widget__body--month {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+  }
+  .program-schedule-widget__body--month .program-schedule-widget__calendar-main {
+    flex: 1 1 auto;
+    max-height: 220px;
+    min-height: 180px;
+  }
+  .program-schedule-widget__body--month .program-schedule-widget__month-grid-wrap {
+    height: 100%;
+  }
+  .program-schedule-widget__body--month .program-schedule-widget__events {
+    flex: 1 1 auto;
+    min-height: 120px;
+    max-height: 200px;
+  }
+
+  /* 주간: 위젯 자체가 매우 좁을 때에도 시간(| HH:mm) 숨김 */
+  .program-schedule-widget__week-event-time {
+    display: none;
+  }
+}
+
+/*
+ * 주간 뷰만 DOM에 카드 존재. 위젯 카드 너비가 좁을 때(전체 너비 50%가 아니어도) col12 미매칭 대비.
+ * `.program-schedule-widget__week-event-desc` 기본 nowrap보다 특이도 높게.
+ */
+@container program-schedule (max-width: 880px) {
+  .program-schedule-widget.program-schedule-widget--week-view
+    .program-schedule-widget__week-event-time {
+    display: none;
+  }
+
+  .program-schedule-widget.program-schedule-widget--week-view
+    .program-schedule-widget__week-event-card {
+    height: auto !important;
+    min-height: 47px;
+    max-height: none;
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+
+  .program-schedule-widget.program-schedule-widget--week-view
+    .program-schedule-widget__week-event-title,
+  .program-schedule-widget.program-schedule-widget--week-view
+    .program-schedule-widget__week-event-desc {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.35;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 /* 넓은 화면: 1:1 비율 유지(각 50%), 동일 max-width로 균형 */
 @container program-schedule (min-width: 960px) {
-    .program-schedule-widget__body--month .program-schedule-widget__calendar-main,
-    .program-schedule-widget__body--month .program-schedule-widget__events {
-        flex: 1 1 50%;
-        max-width: 50%;
-    }
+  .program-schedule-widget__body--month .program-schedule-widget__calendar-main,
+  .program-schedule-widget__body--month .program-schedule-widget__events {
+    flex: 1 1 50%;
+    max-width: 50%;
+  }
+}
+
+/* 주간: 캘린더 래퍼 높이를 헤더+그리드에 맞춤 → 하단 보더와 셀 하단 일직선 */
+.program-schedule-widget__body--week {
+  flex: 0 0 auto;
+  min-height: 0;
+  justify-content: flex-start;
+}
+
+/*
+ * 주간: 카드 본문 하단 패딩(보라색 영역) + flex 늘림 제거.
+ * 대시보드 `.dashboard-widgets-right .program-schedule-widget__content { flex: 1 }` 등보다 우선.
+ */
+.program-schedule-widget.program-schedule-widget--week-view .ant-card-body {
+  padding-bottom: 0 !important;
+  justify-content: flex-start;
+}
+
+.program-schedule-widget.program-schedule-widget--week-view .program-schedule-widget__content {
+  flex: 0 0 auto !important;
+  min-height: 0;
 }
 
 .program-schedule-widget__body--week .program-schedule-widget__calendar-main {
-    flex: 1;
-    min-height: 0;
-    width: 100%;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  flex: 0 1 auto !important;
+  height: auto;
+  min-height: 0;
+  padding: 0 !important;
+  /* 헤더(Sun~Sat) 위 가로선 제거 — 본문 그리드만 테두리 유지 */
+  border: none;
+  border-bottom: 1px solid var(--color-border-light);
+  border-radius: 0 !important;
 }
 
-/* 주간 그리드: 위젯 높이에 맞춤 — 한 행이 남은 높이만 쓰고 셀은 넘치지 않음 */
+.program-schedule-widget .program-calendar-week {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+/* 주간 그리드: 고정 행 높이로 늘어나는 잉여 영역 제거 */
 .program-schedule-widget .program-calendar-week-body {
-    min-height: 0;
-    grid-template-rows: 1fr;
+  flex: 0 0 auto !important;
+  min-height: 0;
+  height: 224px;
+  max-height: 224px;
+  border: 1px solid var(--table-line, #e0e0e0) !important;
+  border-top: none !important;
+  border-radius: 0 !important;
+  gap: 0 !important;
+  align-items: stretch;
 }
 
-/* 주간 뷰: 요일 헤더와 셀 그리드 사이 디바이더 제거 */
+/* 주간 요일 행(Sun~Sat): 테두리 없음 (program-calendar-view 기본 border-bottom 등 무력화) */
 .program-schedule-widget .program-calendar-week-header {
-    border-bottom: none;
-    margin-bottom: 0;
+  margin-bottom: 0;
+  border: none !important;
+  box-shadow: none;
 }
 
+/* 주간 뷰: 요일 셀 — 테두리 없음 + 타이포 (위젯 한정) */
+.program-schedule-widget .program-calendar-week-header-cell {
+  border: none !important;
+  box-shadow: none;
+  color: #9faebb;
+  text-align: center;
+  font-family: Outfit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px; /* 171.429% */
+  letter-spacing: -0.312px;
+  padding: 6px 0;
+}
 /* 주간 뷰: 셀은 그리드 높이 안에서만 표시, 넘치면 셀 내부 스크롤 */
 .program-schedule-widget .program-calendar-week-cell {
-    align-items: flex-start;
-    overflow: hidden;
-    min-height: 0;
-    height: 100%;
+  align-items: flex-start;
+  gap: 10px;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  border-radius: 0 !important;
+  border-width: 1px 1px 0 0;
+  border-color: var(--table-line, #e0e0e0);
+  padding: 4px 8px 6px 8px;
+}
+.program-schedule-widget .program-calendar-week-cell:last-child {
+  border-right: none;
 }
 
 .program-schedule-widget .program-calendar-week-cell .program-schedule-widget__week-events {
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0;
-    flex: 1;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* 주간 뷰: 오늘 셀 — 기본은 보더 제거. 현재일자 선택 시에는 선택 보더 적용 */
-.program-schedule-widget .program-calendar-week-cell--today {
-    border: none !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
 }
 
 .program-schedule-widget .program-calendar-week-cell--today.program-calendar-week-cell--selected {
-    border: 2px solid var(--color-brand-primary) !important;
-    background-color: var(--color-brand-primary-overlay-04);
+  border: 2px solid var(--color-brand-primary) !important;
+  background-color: var(--color-brand-primary-overlay-04);
 }
 
 .program-schedule-widget .program-calendar-week-cell .program-calendar-week-cell-date {
-    align-self: flex-start;
-    text-align: left;
+  align-self: flex-start;
+  text-align: left;
+  margin-bottom: 0 !important;
 }
 
 /* 주간 뷰: 현재 날짜 — 스크린샷 스펙: 원형 배지 24×24, #01A1AF, 텍스트 #fff (program-calendar-view.css 오버라이드) */
 .program-schedule-widget .program-calendar-week-cell--today .program-calendar-week-cell-date {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 10px !important;
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-    padding: 0 10px !important;
-    aspect-ratio: 1 / 1 !important;
-    border-radius: 60px !important;
-    background: #01A1AF !important;
-    border: none !important;
-    color: #fff !important;
-    font-family: var(--font-family-number), sans-serif !important;
-    font-size: var(--font-size-14) !important;
-    font-weight: 500 !important;
-    box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  padding: 0 10px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 60px !important;
+  background: #01a1af !important;
+  border: none !important;
+  color: #fff !important;
+  font-family: var(--font-family-number), sans-serif !important;
+  font-size: var(--font-size-14) !important;
+  font-weight: 500 !important;
+  box-sizing: border-box !important;
 }
 
 /* 주간 뷰: 일정 카드 목록 (최대 3개 + 외 n개 텍스트), 날짜와 첫 태그 간격 10px */
 .program-schedule-widget__week-events {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-6);
-    width: 100%;
-    min-width: 0;
-    margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  width: 100%;
+  min-width: 0;
 }
 
 /* 주간 뷰: 일정 카드 — 셀 영역 width 전체 사용(패딩 제외), 높이 47px, radius 2px, 반응형 */
 .program-schedule-widget__week-event-card {
-    width: 100%;
-    min-width: 0;
-    height: 47px;
-    border-radius: var(--spacing-2);
-    padding: var(--spacing-6) var(--spacing-8);
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--spacing-2);
-    cursor: pointer;
-    transition: opacity 0.2s;
-    flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  height: 47px;
+  border-radius: var(--spacing-2);
+  padding: var(--spacing-6) var(--spacing-8);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
 }
 
 .program-schedule-widget__week-event-card:hover {
-    opacity: 0.9;
-}
-
-.program-schedule-widget__week-event-time {
-    font-size: var(--font-size-11);
-    font-weight: 500;
-    color: var(--default-BK);
-    line-height: 130%;
+  opacity: 0.9;
 }
 
 .program-schedule-widget__week-event-title {
-    font-size: var(--font-size-11);
-    font-weight: 500;
-    color: var(--default-BK);
-    line-height: 130%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 130%; /* 15.6px */
+}
+
+.program-schedule-widget__week-event-time {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%; /* 15.6px */
+  opacity: 0.6;
+}
+
+/*
+ * 대시보드 50% 너비(col 12): TS에서 `program-schedule-widget--dashboard-half` 부여(ref + data-col-span 감시).
+ * 카드 height:47px + justify-content:center 는 줄바꿈 시 겹쳐 보이므로 해제, 제목·설명 각 2줄 말줄임.
+ */
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__week-event-time {
+  display: none;
+}
+
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__week-event-card {
+  height: auto !important;
+  min-height: 47px;
+  max-height: none;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__week-event-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.35;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__week-event-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.35;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.program-schedule-widget__week-event-desc {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%; /* 15.6px */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 주간 뷰: "외 n개의 일정" 텍스트 스펙 */
 .program-schedule-widget__week-event-more {
-    overflow: hidden;
-    color: var(--default-BK, #3D3D3D);
-    text-overflow: ellipsis;
-    font-family: Pretendard, var(--font-family-primary), sans-serif;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 130%;
-    opacity: 0.6;
-    margin-top: var(--spacing-2);
-}
-
-/* 레거시: 이전 주차 스트립용 클래스 (주간 뷰는 program-calendar-week 사용) */
-.program-schedule-widget__calendar {
-    padding: 0 0 var(--spacing-12);
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  opacity: 0.6;
+  margin-top: var(--spacing-2);
 }
 
 .program-schedule-widget__week-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: var(--spacing-8);
-    margin-bottom: var(--spacing-8);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-8);
+  margin-bottom: var(--spacing-8);
 }
 
 .program-schedule-widget__week-day-label {
-    text-align: center;
-    font-size: var(--font-size-12);
-    color: var(--color-text-secondary);
-    font-weight: var(--font-weight-500);
+  text-align: center;
+  font-size: var(--font-size-12);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-500);
 }
 
 .program-schedule-widget__week-dates {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: var(--spacing-6);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-6);
 }
 
 .program-schedule-widget__week-dates .program-schedule-widget__week-date {
-    max-width: 28px;
-    max-height: 28px;
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
-    justify-self: center;
-    aspect-ratio: 1;
+  max-width: 28px;
+  max-height: 28px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  justify-self: center;
+  aspect-ratio: 1;
 }
 
 .program-schedule-widget__week-date {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: var(--font-size-12);
-    font-weight: var(--font-weight-500);
-    transition: all 0.2s;
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--color-text-body);
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    line-height: 1;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-500);
+  transition: all 0.2s;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-body);
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
 }
 
 .program-schedule-widget__week-date:hover {
-    background: var(--color-bg-hover);
-    color: var(--color-text-label);
+  background: var(--color-bg-hover);
+  color: var(--color-text-label);
 }
 
 .program-schedule-widget__week-date--selected {
-    background: var(--color-brand-primary);
-    color: var(--color-bg-base);
-    border-color: var(--color-brand-primary);
-    font-weight: var(--font-weight-600);
-    font-size: var(--font-size-12);
+  background: var(--color-brand-primary);
+  color: var(--color-bg-base);
+  border-color: var(--color-brand-primary);
+  font-weight: var(--font-weight-600);
+  font-size: var(--font-size-12);
 }
 
 /* 현재 날짜: 동그란 보더 없음, 텍스트 색상만 변경 */
 .program-schedule-widget__week-date--today:not(.program-schedule-widget__week-date--selected) {
-    border: none;
-    background: transparent;
-    color: var(--color-brand-primary);
+  border: none;
+  background: transparent;
+  color: var(--color-brand-primary);
 }
 
 /* 구분선 */
 .program-schedule-widget__divider {
-    height: 1px;
-    background: var(--color-border-light);
-    margin: 0 0 var(--spacing-12);
+  height: 1px;
+  background: var(--color-border-light);
+  margin: 0 0 var(--spacing-12);
 }
 
 /* 일정 리스트 (column 형식) */
 .program-schedule-widget__events {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .program-schedule-widget__empty {
-    padding: var(--spacing-20) 0;
+  padding: var(--spacing-20) 0;
 }
 
 .program-schedule-widget__event-list {
-    padding: 0;
+  padding: 0;
+}
+
+.program-schedule-widget__event-list .ant-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
 }
 
 .program-schedule-widget__event-list .ant-list-item {
-    padding: var(--spacing-10) 0;
-    border-block-end: none;
-    cursor: pointer;
+  margin-block: 0;
+  padding: 8px 14px;
+  border-radius: 6px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  /* 테두리 색·스타일은 TS에서 SCHEDULE_COLORS.border + 1px solid 로 지정 */
 }
 
 .program-schedule-widget__event-list .ant-list-item:hover {
-    background: var(--color-bg-secondary);
+  opacity: 0.9;
 }
 
 .program-schedule-widget__event-item {
-    display: block;
-    min-width: 0;
+  display: block;
+  min-width: 0;
 }
 
 .program-schedule-widget__event-column {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-4);
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-width: 0;
 }
 
-.program-schedule-widget__event-head {
-    font-size: var(--font-size-13);
-    color: var(--color-brand-primary);
-    font-weight: var(--font-weight-500);
-}
-
-.program-schedule-widget__event-type {
-    margin-right: var(--spacing-4);
-}
-
-.program-schedule-widget__event-time {
-    color: var(--color-text-secondary);
-    font-weight: normal;
+.program-schedule-widget__event-title {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 21px */
 }
 
 .program-schedule-widget__event-desc {
-    font-size: var(--font-size-13);
-    color: var(--color-text-label);
-    line-height: 1.4;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+  opacity: 0.6;
 }

@@ -1,7 +1,7 @@
 /**
  * 담당자 등록 모달
  * 프로그램 상세 > 담당자 정보 탭 > 등록 버튼
- * ContentModal 레이아웃(패딩 28/30/34) · 담당자명 Select · 권한 설정 Radio
+ * ContentModal 레이아웃(패딩 28/30/34) · 권한 설정 Radio · 담당자명 Select
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -130,6 +130,27 @@ export function AddManagerModal({
             requiredMark={false}
           >
             <Form.Item
+              name="role"
+              label="권한 설정"
+              rules={[{ required: true, message: '권한을 선택해주세요' }]}
+              className="add-manager-modal__field"
+            >
+              <Radio.Group className="add-manager-modal__role-radios" size="large">
+                {ROLE_OPTIONS.map(opt => (
+                  <Radio
+                    key={opt.value}
+                    value={opt.value}
+                    disabled={
+                      opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)
+                    }
+                  >
+                    {opt.label}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+
+            <Form.Item
               name="managerPreset"
               label="담당자명"
               rules={[{ required: true, message: '담당자를 선택해주세요' }]}
@@ -149,27 +170,6 @@ export function AddManagerModal({
                 }
                 getPopupContainer={() => document.body}
               />
-            </Form.Item>
-
-            <Form.Item
-              name="role"
-              label="권한 설정"
-              rules={[{ required: true, message: '권한을 선택해주세요' }]}
-              className="add-manager-modal__field"
-            >
-              <Radio.Group className="add-manager-modal__role-radios" size="large">
-                {ROLE_OPTIONS.map(opt => (
-                  <Radio
-                    key={opt.value}
-                    value={opt.value}
-                    disabled={
-                      opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)
-                    }
-                  >
-                    {opt.label}
-                  </Radio>
-                ))}
-              </Radio.Group>
             </Form.Item>
           </Form>
         </div>

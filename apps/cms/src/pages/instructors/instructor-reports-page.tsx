@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Table, Tag, Button, Space, Typography, Empty, Tabs } from 'antd'
+import { Card, Table, Tag, Button, Space, Typography, Empty, Tabs, Modal, Descriptions } from 'antd'
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
@@ -16,7 +16,9 @@ import { schoolService } from '@/entities/school/api/school-service'
 import { mockLectureActivities } from '@/data/mock'
 import { mockApplications } from '@/data/mock'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { ReportDetailDrawer } from '@/features/report/ui/report-detail-drawer'
+import { reportStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/ui/status-badge'
+import { getReportTypeLabel, getReportTypeColor } from '@/shared/constants/domain-status'
 import dayjs from 'dayjs'
 import type { Schedule, Report } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
@@ -68,7 +70,7 @@ export function InstructorReportsPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<LectureReportStatus | 'all'>('all')
-  const [detailDrawerOpen, setDetailDrawerOpen] = useState(false)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
 
   useEffect(() => {
@@ -195,7 +197,7 @@ export function InstructorReportsPage() {
       try {
         const report = await getReportById(item.reportId)
         setSelectedReport(report)
-        setDetailDrawerOpen(true)
+        setDetailModalOpen(true)
       } catch (e) {
         console.error('보고서 조회 실패:', e)
       }
@@ -317,15 +319,59 @@ export function InstructorReportsPage() {
         />
       </Card>
 
-      <ReportDetailDrawer
-        open={detailDrawerOpen}
-        report={selectedReport}
-        onClose={() => {
-          setDetailDrawerOpen(false)
+      <Modal
+        title="보고서 상세"
+        open={detailModalOpen}
+        onCancel={() => {
+          setDetailModalOpen(false)
           setSelectedReport(null)
         }}
-        showReviewActions={false}
-      />
+        footer={null}
+        width={640}
+        destroyOnClose
+      >
+        {selectedReport && (
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Descriptions title="기본 정보" bordered column={1} size="small">
+              <Descriptions.Item label="보고서 ID">{selectedReport.id}</Descriptions.Item>
+              <Descriptions.Item label="타입">
+                <Tag color={getReportTypeColor(selectedReport.type)}>
+                  {getReportTypeLabel(selectedReport.type)}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="상태">
+                <StatusBadge
+                  status={selectedReport.status}
+                  statusConfig={reportStatusStatusConfig}
+                />
+              </Descriptions.Item>
+              {selectedReport.programId && (
+                <Descriptions.Item label="프로그램">
+                  {getProgramByIdSync(selectedReport.programId)?.title ?? '-'}
+                </Descriptions.Item>
+              )}
+              <Descriptions.Item label="제출일">
+                {dayjs(selectedReport.submittedAt).format('YYYY-MM-DD HH:mm')}
+              </Descriptions.Item>
+              {selectedReport.reviewedAt ? (
+                <Descriptions.Item label="검토일">
+                  {dayjs(selectedReport.reviewedAt).format('YYYY-MM-DD HH:mm')}
+                </Descriptions.Item>
+              ) : null}
+              {selectedReport.reviewNotes ? (
+                <Descriptions.Item label="검토 사유">{selectedReport.reviewNotes}</Descriptions.Item>
+              ) : null}
+            </Descriptions>
+            <Descriptions title="보고서 내용" bordered column={1} size="small">
+              {Object.entries(selectedReport.fields).map(([key, value]) => (
+                <Descriptions.Item key={key} label={key}>
+                  {typeof value === 'number' ? value.toLocaleString() : String(value)}
+                </Descriptions.Item>
+              ))}
+            </Descriptions>
+          </Space>
+        )}
+      </Modal>
     </div>
   )
 }

@@ -3,7 +3,7 @@
  * 모달 열림/닫힘, 선택된 항목, Form 초기화 로직 통합
  */
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 export interface UseModalStateOptions<T> {
   /** 초기 데이터 (편집 모드용) */
@@ -82,12 +82,14 @@ export function useModalState<T>({
 
   const isEditing = selectedItem != null
 
-  // initialData가 변경되면 selectedItem도 업데이트
-  useEffect(() => {
+  // initialData가 바뀌면 selectedItem 동기화 (effect 대신 렌더 중 조정 — set-state-in-effect 회피)
+  const prevInitialData = useRef(initialData)
+  if (initialData !== prevInitialData.current) {
+    prevInitialData.current = initialData
     if (initialData !== undefined) {
       setSelectedItem(initialData)
     }
-  }, [initialData])
+  }
 
   return {
     open,

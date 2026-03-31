@@ -1,0 +1,23 @@
+.user-basic-info-section {
+  width: 100%;
+  min-width: 0;
+}
+
+.user-basic-info-section__name-with-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-8, 8px);
+}
+
+.user-basic-info-section__id1365-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-8, 8px);
+}
+
+.user-basic-info-section__text-mint {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 500;
+}
