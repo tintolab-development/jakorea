@@ -1,17 +1,15 @@
 /**
  * 지급조서 확인 페이지
  * - 참여기관 테이블 베이스 + program-list 스타일 토큰 래퍼
- * - 루트: layout-content 패딩·헤더 제외 영역 width/height 100% (뷰포트 기준)
- * - 흰 카드·테이블: flex로 높이 분배, 테이블 래퍼만 스크롤
+ * - 루트: 높이는 콘텐츠에 맞춤 — 세로 스크롤은 layout-content
+ * - 흰 카드·테이블: 테이블 래퍼는 가로 스크롤만(넓은 컬럼), 세로는 페이지 스크롤
  */
 .payment-orders-page {
   width: 100%;
-  height: calc(100vh - var(--header-height, 64px) - 2 * var(--spacing-24));
-  max-height: calc(100vh - var(--header-height, 64px) - 2 * var(--spacing-24));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* 목록·캘린더 공통: 테이블 타이틀 + 디스크립션(총 n건) 한 줄 정렬, 간격 8px */
@@ -31,7 +29,7 @@
 
 .payment-orders-page__content-wrapper {
   background: var(--color-bg-base);
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -40,16 +38,16 @@
   border-radius: 12px;
   box-shadow: 0 0 16px 0 var(--shadow-card-soft);
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .payment-orders-page__content-wrapper > .participating-institutions-section {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .payment-orders-page__content-wrapper .participating-institutions-section__filters {
@@ -61,11 +59,11 @@
 }
 
 .payment-orders-page__content-wrapper .participating-institutions-section__below-divider {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .payment-orders-page__content-wrapper .participating-institutions-section__table-header {
@@ -73,16 +71,19 @@
 }
 
 .payment-orders-page__content-wrapper .participating-institutions-section__table-wrap {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   width: 100%;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
-/* 테이블·캘린더 영역: 세로 스크롤 루트 */
+/* 테이블·캘린더 영역: 세로는 layout-content 스크롤 */
 .payment-orders-page__table-scroll-root {
   display: flex;
   flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
 }
 
 /* 필터: 노출 기준(레이블+라디오) 합산 71px — 동일 블록 높이로 나머지 필터·조회 버튼 하단 정렬 */

@@ -2,10 +2,8 @@
  * 정산 관리 > 지급 현황 상세(프로그램) — 산출 내역서 ContentModal
  */
 
-import { useEffect, useMemo, useState } from 'react'
-import { Table, message } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
+import { useEffect, useState } from 'react'
+import { message } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
@@ -18,62 +16,18 @@ import './payment-order-program-calculation-statement-modal.css'
 import { PaymentOrderPaymentConfirmationModal } from './payment-order-payment-confirmation-modal'
 import { PaymentOrderPaymentRejectionModal } from './payment-order-payment-rejection-modal'
 import { PaymentOrderPaymentRejectionResultModal } from './payment-order-payment-rejection-result-modal'
+import {
+  PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH,
+  PaymentOrderCalculationBreakdownTable,
+} from './payment-order-calculation-breakdown-table'
 
-/** 산출 내역 `Table`의 `scroll.x`와 동일 — 기본정보 블록 가로 폭을 하단 테이블과 맞춤 */
-const CALC_STATEMENT_CONTENT_MIN_WIDTH = 1200
+/** 기본정보 블록 가로 폭을 하단 테이블과 맞춤 */
+const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH
 
 export interface PaymentOrderProgramCalculationStatementModalProps {
   open: boolean
   onCancel: () => void
   data: PaymentOrderProgramCalculationStatement | null
-}
-
-interface CalcTableRow {
-  key: string
-  blockRowSpan: number
-  isFirstInBlock: boolean
-  institutionName: string
-  lectureDateDisplay: string
-  lectureSessionDisplay: string
-  itemLabel: string
-  description: string
-  amount: number
-  lineId: string
-  amountDisplayOverride?: string
-}
-
-function buildTableRows(
-  blocks: PaymentOrderProgramCalculationStatement['blocks']
-): CalcTableRow[] {
-  const out: CalcTableRow[] = []
-  blocks.forEach((block, bi) => {
-    const span = block.lines.length
-    block.lines.forEach((line, li) => {
-      out.push({
-        key: `${bi}-${line.id}`,
-        blockRowSpan: span,
-        isFirstInBlock: li === 0,
-        institutionName: block.institutionName,
-        lectureDateDisplay: block.lectureDateDisplay,
-        lectureSessionDisplay: block.lectureSessionDisplay,
-        itemLabel: line.itemLabel,
-        description: line.description,
-        amount: line.amount,
-        lineId: line.id,
-        amountDisplayOverride: line.amountDisplayOverride,
-      })
-    })
-  })
-  return out
-}
-
-function formatSignedWon(n: number): string {
-  const sign = n >= 0 ? '+' : ''
-  return `${sign}${n.toLocaleString('ko-KR')}원`
-}
-
-function formatWonPlain(n: number): string {
-  return `${n.toLocaleString('ko-KR')}원`
 }
 
 export function PaymentOrderProgramCalculationStatementModal({
@@ -95,101 +49,9 @@ export function PaymentOrderProgramCalculationStatementModal({
     }
   }, [open])
 
-  const tableRows = useMemo(() => {
-    if (!data) return []
-    return buildTableRows(data.blocks)
-  }, [data])
-
-  const columns: ColumnsType<CalcTableRow> = useMemo(
-    () => [
-      {
-        title: '참여 기관명',
-        dataIndex: 'institutionName',
-        key: 'institutionName',
-        width: 160,
-        align: 'center',
-        onCell: (record: CalcTableRow) => ({
-          rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
-        }),
-      },
-      {
-        title: '강의 진행 일자',
-        key: 'lectureProgress',
-        width: 268,
-        align: 'center',
-        onCell: (record: CalcTableRow) => ({
-          rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
-        }),
-        render: (_: unknown, row: CalcTableRow) => (
-          <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--center">
-            {withProgramDetailTdDivider([row.lectureDateDisplay, row.lectureSessionDisplay])}
-          </div>
-        ),
-      },
-      {
-        title: '산정 항목',
-        dataIndex: 'itemLabel',
-        key: 'itemLabel',
-        width: 120,
-        align: 'center',
-      },
-      {
-        title: '항목 설명',
-        dataIndex: 'description',
-        key: 'description',
-        width: 320,
-        ellipsis: { showTitle: true },
-        align: 'center',
-      },
-      {
-        title: '정산 금액',
-        dataIndex: 'amount',
-        key: 'amount',
-        width: 152,
-        align: 'center',
-        render: (amount: number, row: CalcTableRow) =>
-          row.amountDisplayOverride ? (
-            <span className="payment-order-calc-statement-modal__amount--negative">
-              {row.amountDisplayOverride}
-            </span>
-          ) : (
-            <span
-              className={
-                amount >= 0
-                  ? 'payment-order-calc-statement-modal__amount--positive'
-                  : 'payment-order-calc-statement-modal__amount--negative'
-              }
-            >
-              {formatSignedWon(amount)}
-            </span>
-          ),
-      },
-      {
-        title: '산정 기준 상세',
-        key: 'detail',
-        width: 176,
-        align: 'center',
-        render: (_: unknown, _record: CalcTableRow) => (
-          <div className="payment-order-calc-statement-modal__detail-btn-wrap">
-            <AppButton
-              variant="default"
-              className="payment-order-calc-statement-modal__detail-btn"
-              onClick={() => message.info('산정 기준 상세는 추후 연결됩니다.')}
-            >
-              상세 보기
-            </AppButton>
-          </div>
-        ),
-      },
-    ],
-    []
-  )
-
   if (!data) {
     return null
   }
-
-  const { formulaLabel } = data
 
   return (
     <>
@@ -453,27 +315,13 @@ export function PaymentOrderProgramCalculationStatementModal({
         </div>
       )}
 
-      <div
-        className="payment-order-calc-statement-modal__detail-section"
-        style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
-      >
-        <div className="payment-order-calc-statement-modal__detail-header">
-          <div className="payment-order-calc-statement-modal__detail-header-left">
-            <div className="payment-order-calc-statement-modal__detail-title-row">
-              <h3 className="payment-order-calc-statement-modal__section-title payment-order-calc-statement-modal__section-title--detail-inline">
-                산출 내역 상세
-              </h3>
-              <p className="payment-order-calc-statement-modal__detail-desc">
-                교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.
-              </p>
-            </div>
-          </div>
-          <div className="payment-order-calc-statement-modal__detail-actions">
-            <AppButton
-              variant="danger"
-              size="filter"
-              onClick={() => setPaymentRejectOpen(true)}
-            >
+      <PaymentOrderCalculationBreakdownTable
+        blocks={data.blocks}
+        formulaLabel={data.formulaLabel}
+        totalAmount={data.totalAmount}
+        headerActions={
+          <>
+            <AppButton variant="danger" size="filter" onClick={() => setPaymentRejectOpen(true)}>
               신청 반려
             </AppButton>
             <AppButton
@@ -484,51 +332,9 @@ export function PaymentOrderProgramCalculationStatementModal({
             >
               확인 처리
             </AppButton>
-          </div>
-        </div>
-
-        <Table<CalcTableRow>
-          className="payment-order-calc-statement-modal__table participating-institutions-section__table"
-          rowKey="key"
-          columns={columns}
-          dataSource={tableRows}
-          pagination={false}
-          size="middle"
-          tableLayout="fixed"
-          rowHoverable={false}
-          scroll={{ x: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
-          summary={() => (
-            <Table.Summary fixed="bottom">
-              <Table.Summary.Row className="payment-order-calc-statement-modal__summary-row">
-                <Table.Summary.Cell index={0} colSpan={2} align="center">
-                  <span className="payment-order-calc-statement-modal__summary-label">합계</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={2} colSpan={2} align="center">
-                  <span className="payment-order-calc-statement-modal__summary-formula">
-                    {formulaLabel}
-                  </span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={4} align="center">
-                  <span className="payment-order-calc-statement-modal__summary-total">
-                    {formatWonPlain(data.totalAmount)}
-                  </span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={5} align="center">
-                  <AppButton
-                    variant="primary"
-                    icon={<DownloadOutlined />}
-                    modalTeal
-                    className="payment-order-calc-statement-modal__download-btn"
-                    onClick={() => message.info('지급조서 다운로드는 추후 연결됩니다.')}
-                  >
-                    지급조서 다운로드
-                  </AppButton>
-                </Table.Summary.Cell>
-              </Table.Summary.Row>
-            </Table.Summary>
-          )}
-        />
-      </div>
+          </>
+        }
+      />
     </ContentModal>
     <PaymentOrderPaymentConfirmationModal
       open={paymentConfirmOpen}

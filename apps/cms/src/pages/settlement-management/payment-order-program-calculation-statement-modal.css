@@ -257,7 +257,16 @@
   overflow: hidden;
 }
 
+/* fixed summary 기본 box-shadow + 본문 마지막 행 border가 겹쳐 이중 선처럼 보임 → 제거 */
+.payment-order-calc-statement-modal__table.ant-table-wrapper div.ant-table-summary {
+  box-shadow: none !important;
+}
+
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-thead > tr > th {
+  height: 54px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  vertical-align: middle;
   background: #fafafa;
   color: var(--default-BK, #3d3d3d);
   text-align: center;
@@ -274,7 +283,39 @@
   border-inline-end: none;
 }
 
+/* antd size=middle 은 wrapper가 아니라 내부 .ant-table 에 붙음; 세로 패딩이 tr 높이를 밀어 올려 !important 로 덮음 */
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table.ant-table-middle
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell,
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table.ant-table-middle
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell {
+  padding-block: 0 !important;
+  padding-inline: 16px !important;
+}
+
+/* 본문: 데이터 행만 54px (tbody 첫 줄 ant-table-measure-row 는 측정용 — 높이 주면 빈 한 줄로 보임) */
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row) {
+  height: 54px;
+  min-height: 54px;
+}
+
+.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr.ant-table-measure-row {
+  height: 0 !important;
+  min-height: 0 !important;
+  line-height: 0;
+  font-size: 0;
+}
+
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr > td {
+  padding: 0 16px;
+  box-sizing: border-box;
   border-inline-end: 1px solid rgba(0, 0, 0, 0.06);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   vertical-align: middle;
@@ -291,18 +332,23 @@
   border-inline-end: none;
 }
 
-.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr:last-child > td {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr > td:nth-child(5) {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
+.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-summary > tr {
+  height: 54px;
+}
+
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-summary .ant-table-cell {
+  height: 54px;
+  min-height: 54px;
+  padding-block: 0 !important;
+  padding-inline: 16px !important;
+  box-sizing: border-box;
   border-inline-end: 1px solid rgba(0, 0, 0, 0.06);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: none;
   text-align: center;
   vertical-align: middle;
   color: var(--default-BK, #3d3d3d);
@@ -319,6 +365,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 54px;
+  height: 54px;
 }
 
 /* 정산 금액: 기존 색 유지, 타이포는 테이블과 동일 */
