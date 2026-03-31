@@ -12,7 +12,8 @@ export interface DetailFullPageModalProps {
   title: React.ReactNode
   /** 메인 헤더: 타이틀과 닫기 사이 (예: 회원 상세 액션 버튼) */
   headerExtra?: React.ReactNode
-  sidebar: React.ReactNode
+  /** 미지정 시 LNB 없이 메인만 풀폭 */
+  sidebar?: React.ReactNode
   children: React.ReactNode
   /** 닫기(X) 동작 — 미지정 시 onClose */
   onHeaderClose?: () => void
@@ -33,7 +34,13 @@ export function DetailFullPageModal({
   closeAriaLabel = '닫기',
 }: DetailFullPageModalProps) {
   const handleClose = onHeaderClose ?? onClose
-  const rootClass = ['detail-fullpage-modal', classNameProp].filter(Boolean).join(' ')
+  const rootClass = [
+    'detail-fullpage-modal',
+    sidebar == null ? 'detail-fullpage-modal--no-sidebar' : '',
+    classNameProp,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <TealHeaderModal
@@ -45,7 +52,7 @@ export function DetailFullPageModal({
       className={rootClass}
     >
       <div className="detail-fullpage-modal__layout">
-        {sidebar}
+        {sidebar ?? null}
         <div className="detail-fullpage-modal__main">
           <header className="detail-fullpage-modal__header">
             <h2 className="detail-fullpage-modal__title">{title}</h2>

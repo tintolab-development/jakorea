@@ -7,6 +7,7 @@
  * 다른 모달에서 이 컴포넌트를 위주로 사용할 수 있도록 공통화함.
  */
 
+import type { ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import './content-modal.css'
 
@@ -24,7 +25,9 @@ export interface ContentModalProps {
   open: boolean
   onCancel: () => void
   title: string
-  children: React.ReactNode
+  /** 헤더 타이틀 앞 접두사 (예: 아이콘) */
+  titlePrefix?: ReactNode
+  children: ReactNode
   /** 푸터 영역. 전달 시 100% 너비 래퍼 안에서 우측 정렬됨 */
   footer?: React.ReactNode
   /** 기본 800, large 시 1400 */
@@ -33,15 +36,16 @@ export interface ContentModalProps {
   /** 모달 루트에 붙는 추가 클래스 (공통으로 content-modal 포함) */
   className?: string
   /** 닫기 버튼 아이콘 (미지정 시 기본 X 아이콘) */
-  closeIcon?: React.ReactNode
+  closeIcon?: ReactNode
   /** 헤더 타이틀 바로 아래 설명. 전달 시 타이틀–설명 간격 16px 공통 적용 */
-  description?: React.ReactNode
+  description?: ReactNode
 }
 
 export function ContentModal({
   open,
   onCancel,
   title,
+  titlePrefix,
   children,
   footer,
   size = 'default',
@@ -62,6 +66,7 @@ export function ContentModal({
       open={open}
       onCancel={onCancel}
       title={title}
+      titlePrefix={titlePrefix}
       size={size}
       width={width}
       footer={wrappedFooter}

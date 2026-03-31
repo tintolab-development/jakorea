@@ -104,6 +104,11 @@
   padding: 0 24px 24px 0;
 }
 
+/* LNB 없을 때 본문을 헤더 타이틀과 동일 좌측 기준선(60px)에 맞춤 */
+.detail-fullpage-modal--no-sidebar .detail-fullpage-modal__content {
+  padding-left: 60px;
+}
+
 .detail-fullpage-modal__loading {
   display: flex;
   align-items: center;

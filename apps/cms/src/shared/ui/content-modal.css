@@ -22,14 +22,29 @@
   align-items: center;
 }
 
-/* 타이틀: 24px Bold, default-BK */
+/* 타이틀: 24px Bold, default-BK (+ 선택적 titlePrefix와 가로 정렬) */
 .content-modal .teal-header-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 24px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
+}
+
+.content-modal .teal-header-modal__title-prefix {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.content-modal .teal-header-modal__title-text {
+  min-width: 0;
 }
 
 .content-modal .teal-header-modal__close {
