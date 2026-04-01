@@ -295,15 +295,18 @@
   background: var(--color-bg-base);
 }
 
+/* 아이콘+라벨은 가로 한 줄(AppButton·Ant 기본). column+고정 120×40은 아이콘을 위·텍스트를 아래로 밀고 잘림 유발 */
 .teal-header-modal__footer .ant-btn,
 .teal-header-modal__footer button {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 120px;
+  gap: 8px;
+  width: auto;
   min-width: 120px;
-  height: 40px;
+  height: auto;
+  min-height: 40px;
   box-sizing: border-box;
 }
 

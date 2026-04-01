@@ -52,22 +52,21 @@ export function LabeledSearchInput({
   showLabel = true,
   uiVariant = 'default',
 }: LabeledSearchInputProps) {
+  const wrapperClassName = [
+    'labeled-search-input',
+    !showPrefixIcon && 'labeled-search-input--no-icon',
+    !showLabel && 'labeled-search-input--no-label',
+    uiVariant === 'filter' && 'labeled-search-input--filter',
+  ]
+    .filter((className): className is string => Boolean(className))
+    .join(' ')
+
   return (
-    <div
-      className={[
-        'labeled-search-input',
-        showPrefixIcon ? '' : 'labeled-search-input--no-icon',
-        !showLabel ? 'labeled-search-input--no-label' : '',
-        uiVariant === 'filter' ? 'labeled-search-input--filter' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      style={style}
-    >
+    <div className={wrapperClassName} style={style}>
       {showLabel && <span className="labeled-search-input__label">{label}</span>}
       <AppInput
         uiVariant={uiVariant}
-        className="labeled-search-input__control"
+        className="labeled-search-input__control labeled-search-input__input"
         placeholder={placeholder}
         value={value}
         onChange={e => onChange?.(e.target.value)}

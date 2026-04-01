@@ -8,4 +8,5 @@ export * from './certificate-download'
 export * from './error-handler'
 export * from './permissions'
 export * from './date'
+export * from './lecture-attendance-display'
 

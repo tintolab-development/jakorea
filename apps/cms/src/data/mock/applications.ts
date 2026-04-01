@@ -9,7 +9,13 @@ import { APPLICATION_PROGRESS_ORDER } from '../../types/application-progress'
 import { mockPrograms } from './programs'
 import { mockSchools } from './schools'
 import { mockInstructors } from './instructors'
-import { mockUsers } from './users'
+import {
+  mockUsers,
+  MOCK_SCHOOL_SEOUL_USER_ID,
+  MOCK_SCHOOL_BUSAN_USER_ID,
+  MOCK_SCHOOL_DAEGU_USER_ID,
+  MOCK_SCHOOL_INCHEON_USER_ID,
+} from './users'
 import { getApplicationPathByProgramId } from './application-paths'
 import { programLectureHistoryDemoApplications } from './program-lecture-history-demo'
 
@@ -206,11 +212,20 @@ const memberEnrollmentApplications: Application[] = memberEnrollmentUser
     })()
   : []
 
-// 학교 상세 모달용: 고정 학교 ID별 프로그램 신청 이력
+// 학교 상세 모달용: 고정 학교 ID별 프로그램 신청 이력 (1~4행은 회원 mock User.id와 동일)
 const fixedSchoolIds = [
-  'school-fixed-01', 'school-fixed-02', 'school-fixed-03', 'school-fixed-04',
-  'school-fixed-05', 'school-fixed-06', 'school-fixed-07', 'school-fixed-08',
-  'school-fixed-09', 'school-fixed-10', 'school-fixed-11', 'school-fixed-12',
+  MOCK_SCHOOL_SEOUL_USER_ID,
+  MOCK_SCHOOL_BUSAN_USER_ID,
+  MOCK_SCHOOL_DAEGU_USER_ID,
+  MOCK_SCHOOL_INCHEON_USER_ID,
+  'school-fixed-05',
+  'school-fixed-06',
+  'school-fixed-07',
+  'school-fixed-08',
+  'school-fixed-09',
+  'school-fixed-10',
+  'school-fixed-11',
+  'school-fixed-12',
 ]
 const schoolApprovalStatuses: Application['status'][] = ['approved', 'approved', 'submitted', 'reviewing', 'approved']
 const schoolDetailApplications: Application[] = fixedSchoolIds.flatMap((schoolId, sIdx) => {

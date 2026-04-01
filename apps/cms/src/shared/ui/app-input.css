@@ -5,10 +5,34 @@
 
 .app-input {
   display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.app-input__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.app-input__label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.app-input__control {
+  display: flex;
   height: 40px;
   padding: 0 14px 0 16px;
   align-items: center;
-  gap: 8px;
   flex: 1 0 0;
   min-width: 0;
   box-sizing: border-box;
@@ -18,8 +42,8 @@
 }
 
 /* Ant Input(affix 포함)이 래퍼 안에서 남는 공간을 채우도록 */
-.app-input .ant-input-affix-wrapper,
-.app-input .ant-input {
+.app-input__control .ant-input-affix-wrapper,
+.app-input__control .ant-input {
   flex: 1 1 auto;
   min-width: 0;
   background: transparent !important;
@@ -29,17 +53,17 @@
   font-size: 15px;
 }
 
-.app-input .ant-input-affix-wrapper > input.ant-input {
+.app-input__control .ant-input-affix-wrapper > input.ant-input {
   background: transparent;
 }
 
-.app-input .ant-input-affix-wrapper:focus,
-.app-input .ant-input-affix-wrapper-focused {
+.app-input__control .ant-input-affix-wrapper:focus,
+.app-input__control .ant-input-affix-wrapper-focused {
   box-shadow: none !important;
 }
 
 /* 통일 필터 카드 등 */
-.app-input.app-input--filter {
+.app-input.app-input--filter .app-input__control {
   height: var(--filter-control-height, 44px);
   min-height: var(--filter-control-height, 44px);
   border-radius: 8px;
@@ -57,4 +81,14 @@
   font-size: 16px;
   font-weight: 500;
   color: #85969d;
+}
+
+.app-input__suffix {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }

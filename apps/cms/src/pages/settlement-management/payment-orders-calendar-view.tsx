@@ -15,7 +15,7 @@ import {
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
-import '@/features/program/ui/participating-institutions-calendar-view.css'
+import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
 import './payment-orders-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)

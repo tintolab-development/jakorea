@@ -6,7 +6,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-6);
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
+}
+
+.labeled-search-input--filter {
+  min-height: calc(
+    var(--filter-label-height, 27px) + var(--spacing-6, 6px) + var(--filter-control-height, 44px)
+  );
 }
 
 .labeled-search-input__label {
@@ -45,6 +53,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  min-height: var(--filter-control-height, 44px);
 }
 
 .labeled-search-input--no-label .labeled-search-input__control {

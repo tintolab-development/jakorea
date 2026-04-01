@@ -22,151 +22,24 @@
   max-height: none !important;
 }
 
-/* 특강(w-4)·교통비(p-1): 산정 Select · 최대 한도 인풋 공통 180×44 */
-.settlement-item-setting-detail-modal--special-lecture .settlement-item-setting-detail-modal__basis-row--simple .ant-select,
-.settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-row .ant-select {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px;
-}
-
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  .ant-select
-  .ant-select-selector,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-row
-  .ant-select
-  .ant-select-selector {
-  box-sizing: border-box !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  position: relative !important;
-  overflow: visible !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* 특강·교통비: Select 루트 높이 고정 → 화살표 top:50% 기준이 박스와 일치 */
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  > .ant-select.ant-select-single,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-controls
-  > .ant-select.ant-select-single {
-  height: 44px !important;
-  min-height: 44px !important;
-  display: inline-flex !important;
-  align-items: stretch !important;
-  vertical-align: middle;
-}
-
-/* 선택값·플레이스홀더 라인하이트로 화살표·텍스트가 어긋나 보이는 현상 보정 */
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-search,
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-item,
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-placeholder,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-row
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-search,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-row
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-item,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-row
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-placeholder {
-  line-height: 1 !important;
-  height: auto !important;
-  display: flex !important;
-  align-items: center !important;
-  margin: 0 !important;
-  /* padding 제거 금지: show-arrow용 paddingInlineEnd 유지 */
-}
-
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-item,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-row
-  .ant-select-single
-  .ant-select-selector
-  .ant-select-selection-item {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 드롭다운 화살표: 셀렉트 박스 안에서 세로 중앙 */
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  .ant-select
-  .ant-select-arrow,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-row
-  .ant-select
-  .ant-select-arrow {
-  position: absolute !important;
-  top: 50% !important;
-  bottom: auto !important;
-  inset-inline-end: 10px !important;
-  inset-inline-start: auto !important;
-  margin: 0 !important;
-  transform: translateY(-50%) !important;
-  width: 12px !important;
-  height: 12px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  pointer-events: none;
-}
-
-.settlement-item-setting-detail-modal--special-lecture
-  .settlement-item-setting-detail-modal__basis-row--simple
-  .ant-select
-  .ant-select-arrow
-  .anticon,
-.settlement-item-setting-detail-modal--transport
-  .settlement-item-setting-detail-modal__basis-row
-  .ant-select
-  .ant-select-arrow
-  .anticon {
-  display: block;
-  line-height: 0;
-  font-size: 12px;
-}
-
 /* 교통비: 산정 행 인풋·셀렉트·라디오 한 줄 세로 중앙 정렬 */
 .settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-row {
   align-items: center;
 }
 
-.settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-controls {
+.settlement-item-setting-detail-modal--transport
+  .settlement-item-setting-detail-modal__basis-controls {
   align-items: center;
 }
 
-.settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-radios.app-radio-group {
+.settlement-item-setting-detail-modal--transport
+  .settlement-item-setting-detail-modal__basis-radios.app-radio-group {
   align-self: center;
 }
 
-.settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-radios .ant-radio-wrapper {
+.settlement-item-setting-detail-modal--transport
+  .settlement-item-setting-detail-modal__basis-radios
+  .ant-radio-wrapper {
   margin-block: 0 !important;
 }
 
@@ -198,7 +71,8 @@
 }
 
 /* 교통비(p-1)만: 산정 거리(km) 숫자 인풋 180×44 */
-.settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-hours.ant-input-affix-wrapper {
+.settlement-item-setting-detail-modal--transport
+  .settlement-item-setting-detail-modal__basis-hours.ant-input-affix-wrapper {
   width: 180px !important;
   min-width: 180px !important;
   max-width: 180px;
@@ -232,7 +106,9 @@
   max-height: 36px;
 }
 
-.settlement-item-setting-detail-modal .teal-header-modal__title-prefix .settlement-item-setting-detail-modal__header-icon {
+.settlement-item-setting-detail-modal
+  .teal-header-modal__title-prefix
+  .settlement-item-setting-detail-modal__header-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -240,8 +116,14 @@
   height: 30px;
 }
 
-.settlement-item-setting-detail-modal .teal-header-modal__title-prefix .settlement-item-setting-detail-modal__header-icon svg,
-.settlement-item-setting-detail-modal .teal-header-modal__title-prefix .settlement-item-setting-detail-modal__header-icon img {
+.settlement-item-setting-detail-modal
+  .teal-header-modal__title-prefix
+  .settlement-item-setting-detail-modal__header-icon
+  svg,
+.settlement-item-setting-detail-modal
+  .teal-header-modal__title-prefix
+  .settlement-item-setting-detail-modal__header-icon
+  img {
   width: 30px;
   height: 30px;
   display: block;
@@ -285,7 +167,6 @@
 
 .settlement-item-setting-detail-modal__basis-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
   width: 100%;
@@ -293,8 +174,8 @@
 
 .settlement-item-setting-detail-modal__basis-controls {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
 }
@@ -304,9 +185,9 @@
 }
 
 /* 1급 강사비(tier1): 산정 기준 첫번째 Select 180×44 */
-.settlement-item-setting-detail-modal:not(.settlement-item-setting-detail-modal--special-lecture):not(
-    .settlement-item-setting-detail-modal--transport
-  )
+.settlement-item-setting-detail-modal:not(
+    .settlement-item-setting-detail-modal--special-lecture
+  ):not(.settlement-item-setting-detail-modal--transport)
   .settlement-item-setting-detail-modal__basis-controls
   > .ant-select {
   width: 180px !important;
@@ -316,9 +197,9 @@
   min-height: 44px !important;
 }
 
-.settlement-item-setting-detail-modal:not(.settlement-item-setting-detail-modal--special-lecture):not(
-    .settlement-item-setting-detail-modal--transport
-  )
+.settlement-item-setting-detail-modal:not(
+    .settlement-item-setting-detail-modal--special-lecture
+  ):not(.settlement-item-setting-detail-modal--transport)
   .settlement-item-setting-detail-modal__basis-controls
   > .ant-select
   .ant-select-selector {
@@ -347,9 +228,9 @@
 }
 
 /* 1급 강사비(tier1): 산정 기준 두번째 Input 100×44 */
-.settlement-item-setting-detail-modal:not(.settlement-item-setting-detail-modal--special-lecture):not(
-    .settlement-item-setting-detail-modal--transport
-  )
+.settlement-item-setting-detail-modal:not(
+    .settlement-item-setting-detail-modal--special-lecture
+  ):not(.settlement-item-setting-detail-modal--transport)
   .settlement-item-setting-detail-modal__basis-hours.ant-input-affix-wrapper {
   width: 100px !important;
   min-width: 100px !important;
@@ -441,7 +322,8 @@
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
-.settlement-item-setting-detail-modal__basis-radios.app-radio-group .ant-radio-wrapper-checked:hover {
+.settlement-item-setting-detail-modal__basis-radios.app-radio-group
+  .ant-radio-wrapper-checked:hover {
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
@@ -462,7 +344,8 @@
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
-.settlement-item-setting-detail-modal__evidence-radios.app-radio-group .ant-radio-wrapper-checked:hover {
+.settlement-item-setting-detail-modal__evidence-radios.app-radio-group
+  .ant-radio-wrapper-checked:hover {
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
@@ -496,7 +379,7 @@
   height: 32px;
   flex-shrink: 0;
   align-self: center;
-  margin: 0 12px;
+  margin: 0 33px;
   opacity: 0.5;
   background: var(--default-BK, #3d3d3d);
 }
@@ -506,17 +389,18 @@
   width: 100%;
 }
 
-.settlement-item-setting-detail-modal__fee-row--simple .settlement-item-setting-detail-modal__fee-col {
+.settlement-item-setting-detail-modal__fee-row--simple
+  .settlement-item-setting-detail-modal__fee-col {
   flex: 1 1 100%;
   max-width: 100%;
 }
 
-/* 1급 강사비(tier1): 최대 한도 금액 Input 높이 44px */
-.settlement-item-setting-detail-modal:not(.settlement-item-setting-detail-modal--special-lecture):not(
-    .settlement-item-setting-detail-modal--transport
-  )
+/* 1급 강사비(tier1) 등: 금액 행의 모든 Input(suffix 원) 동일 높이 44px */
+.settlement-item-setting-detail-modal:not(
+    .settlement-item-setting-detail-modal--special-lecture
+  ):not(.settlement-item-setting-detail-modal--transport)
   .settlement-item-setting-detail-modal__fee-row
-  .settlement-item-setting-detail-modal__fee-col:first-child
+  .settlement-item-setting-detail-modal__fee-col
   .ant-input-affix-wrapper {
   height: 44px !important;
   min-height: 44px !important;
@@ -535,13 +419,10 @@
   border-radius: 8px;
   border: 1px solid #c4cdd1;
   background: #fff;
-}
-
-/* 1급 등 tier1: 자격 요건 740×152 */
-.settlement-item-setting-detail-modal__richtext--qual152 {
-  height: 152px;
-  min-height: 152px;
-  overflow-y: auto;
+  color: #464646;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
 }
 
 /* 특강 등 simple: 자격 요건 740×56 */
@@ -572,8 +453,7 @@
 .settlement-item-setting-detail-modal__richtext ul {
   margin: 0;
   padding-left: 1.25em;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  min-height: 0;
   line-height: 1.55;
   color: var(--default-BK, #3d3d3d);
 }

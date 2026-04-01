@@ -1,6 +1,6 @@
 /**
  * 기본 정보 섹션 (프로그램 상세 정보 탭)
- * - 상단 테이블: 최초 등록일, 마지막 수정일, 프로그램 진행 방식, 프로그램 진행 상태
+ * - 상단 테이블: 최초 등록일, 마지막 수정일, 프로그램 진행 방식, 프로그램 진행 현황
  * - 하위 테이블: 썸네일, 프로그램명, 운영 기간, 수강자 유형, 교육 분야, 교육 대상, 교육 대상 상세, 후원사, 후원사 담당자, 문의처, 비고
  * - 수강자 모집 테이블: 모집 인원, 모집 현황, 모집 기간, 결과 발표일 및 방법
  * - 강사 모집 테이블: 모집 인원, 모집 현황, 기간, 1차/2차/최종 발표 (표시)
@@ -35,14 +35,12 @@ import {
   TYPE_LABEL,
   LIFECYCLE_OPTIONS,
   BUSINESS_AREA_OPTIONS,
-  TEAM_DIVISION_OPTIONS,
   EDUCATION_PROCESS_OPTIONS,
   IP_OWNED_OPTIONS,
   COURSE_DELIVERED_BY_OPTIONS,
   PARTNER_INVOLVEMENT_OPTIONS,
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
-  PROGRAM_CHANNEL_OPTIONS,
 } from '../program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
@@ -297,7 +295,7 @@ export function BasicInfoSection({
                     formatDateRange(program.startDate, program.endDate)
                   )}
                 </td>
-                <th>프로그램 진행 상태</th>
+                <th>프로그램 진행 현황</th>
                 <td>
                   {lifecycleStatus ? (
                     <span
@@ -428,7 +426,8 @@ export function BasicInfoSection({
                   ) : null}
                 </th>
                 <td className="program-detail-info-tab__sponsor-manager-cell">
-                  {commonInfoFormEdit ? (
+                  <div className="program-detail-info-tab__sponsor-manager-inner">
+                    {commonInfoFormEdit ? (
                     (() => {
                       const sponsorId = form.watch('sponsorId')
                       const selectedSponsor = sponsors.find(s => s.id === sponsorId)
@@ -502,6 +501,7 @@ export function BasicInfoSection({
                   ) : (
                     '-'
                   )}
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -517,36 +517,6 @@ export function BasicInfoSection({
             </colgroup>
             <tbody>
               <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  팀구분
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="teamDivision"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          value={field.value ?? undefined}
-                          options={TEAM_DIVISION_OPTIONS}
-                          onChange={v => field.onChange(v ?? undefined)}
-                          style={{ width: '100%' }}
-                          allowClear
-                          placeholder="팀구분 선택"
-                        />
-                      )}
-                    />
-                  ) : (
-                    (program.teamDivision ?? '-')
-                  )}
-                </td>
                 <th
                   className={
                     commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
@@ -577,8 +547,6 @@ export function BasicInfoSection({
                     (program.educationProcess ?? '-')
                   )}
                 </td>
-              </tr>
-              <tr>
                 <th
                   className={
                     commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
@@ -609,6 +577,8 @@ export function BasicInfoSection({
                     (program.ipOwned ?? 'JA')
                   )}
                 </td>
+              </tr>
+              <tr>
                 <th
                   className={
                     commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
@@ -639,8 +609,6 @@ export function BasicInfoSection({
                     courseDeliveredLabel
                   )}
                 </td>
-              </tr>
-              <tr>
                 <th
                   className={
                     commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
@@ -668,6 +636,8 @@ export function BasicInfoSection({
                     partnerLabel
                   )}
                 </td>
+              </tr>
+              <tr>
                 <th
                   className={
                     commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
@@ -695,8 +665,6 @@ export function BasicInfoSection({
                     (program.ips ?? '-')
                   )}
                 </td>
-              </tr>
-              <tr>
                 <th
                   className={
                     commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
@@ -726,75 +694,6 @@ export function BasicInfoSection({
                     />
                   ) : program.ips === 'Succeed' ? (
                     (program.programCategory ?? '-')
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  프로그램 채널
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <div className="program-detail-info-tab__program-channel-cell">
-                      <Controller
-                        name="programChannel"
-                        control={form.control}
-                        render={({ field }) => (
-                          <AppSelect
-                            value={field.value ?? undefined}
-                            options={PROGRAM_CHANNEL_OPTIONS}
-                            onChange={v => field.onChange(v ?? undefined)}
-                            style={{ width: '100%' }}
-                            allowClear
-                            placeholder="프로그램 채널 선택"
-                            disabled={form.watch('ips') !== 'Inspire'}
-                          />
-                        )}
-                      />
-                      {form.watch('ips') === 'Inspire' && (
-                        <FileSelectField
-                          accept=".pdf,.doc,.docx,image/*"
-                          disabled={!isEditMode}
-                          className={
-                            isEditMode
-                              ? 'file-select-field--edit program-detail-info-tab__file-select'
-                              : 'program-detail-info-tab__file-select'
-                          }
-                          fileNames={form.watch('attachmentFileNames') ?? []}
-                          emptyPlaceholder="파일을 선택해주세요"
-                          guideLines={['다운받을 자료를 선택하세요.']}
-                          onFilesChange={files => {
-                            const file = files[0]
-                            if (file && form) {
-                              form.setValue('attachmentFileNames', [
-                                ...(form.getValues('attachmentFileNames') ?? []),
-                                file.name,
-                              ])
-                            }
-                          }}
-                          onRemoveFile={
-                            isEditMode
-                              ? index => {
-                                  const list = form.getValues('attachmentFileNames') ?? []
-                                  form.setValue(
-                                    'attachmentFileNames',
-                                    list.filter((_, i) => i !== index)
-                                  )
-                                }
-                              : undefined
-                          }
-                        />
-                      )}
-                    </div>
-                  ) : program.ips === 'Inspire' ? (
-                    (program.programChannel ?? '-')
                   ) : (
                     '-'
                   )}
@@ -861,7 +760,7 @@ export function BasicInfoSection({
                 )}
               </td>
               <th>
-                프로그램 진행 상태
+                프로그램 진행 현황
                 {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td>
@@ -1172,7 +1071,8 @@ export function BasicInfoSection({
                 {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
               </th>
               <td className="program-detail-info-tab__sponsor-manager-cell">
-                {isFormEdit ? (
+                <div className="program-detail-info-tab__sponsor-manager-inner">
+                  {isFormEdit ? (
                   (() => {
                     const sponsorId = form.watch('sponsorId')
                     const selectedSponsor = sponsors.find(s => s.id === sponsorId)
@@ -1241,6 +1141,7 @@ export function BasicInfoSection({
                 ) : (
                   '-'
                 )}
+                </div>
               </td>
             </tr>
             <tr>

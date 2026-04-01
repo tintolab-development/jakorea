@@ -4,6 +4,7 @@ import type { Program } from '@/types/domain'
 import { BasicInfoSection } from './common-info/basic-info-section'
 import { CurriculumSection } from './common-info/curriculum-section'
 import { ProgramKpiTargetSection } from './common-info/program-kpi-target-section'
+import { ProgramWageInfoSection } from './common-info/program-wage-info-section'
 import {
   InstructorRecruitmentSection,
   ParticipantRecruitmentSection,
@@ -246,13 +247,18 @@ export function ProjectInfoDetailPanels({
                 form={isEditModeInfo ? infoForm : undefined}
                 displayMode="commonInfo"
               />
-              <CurriculumSection
-                program={program}
+              <ProgramKpiTargetSection
+                programId={program.id}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
               />
-              <ProgramKpiTargetSection
+              <ProgramWageInfoSection
                 programId={program.id}
+                isEditMode={isEditModeInfo}
+                form={isEditModeInfo ? infoForm : undefined}
+              />
+              <CurriculumSection
+                program={program}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
               />

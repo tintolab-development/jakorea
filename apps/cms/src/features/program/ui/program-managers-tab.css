@@ -1,356 +1,100 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터: 그리드 1fr·1fr(담당자명/권한) + 조회, 컨트롤 44px · StatusDropdownCell(권한) · 테이블
+ * 상단 필터: UnifiedFilterCard · StatusDropdownCell(권한) · 테이블
  */
 
 .program-managers-tab {
-    width: 100%;
+  width: 100%;
 }
 
 .program-managers-tab__top {
-    margin-bottom: 0;
-    width: 100%;
-}
-
-.program-managers-tab__filters {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-}
-
-/* 담당자명·권한: 레이블 상단 + 입력(프로그램 목록 필터 카드와 동일 패턴), 조회는 입력 행과 수직 정렬 */
-.program-managers-tab__filter-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-    gap: var(--spacing-16);
-    /* 레이블 높이 차이가 있어도 담당자명·권한 인풋·조회 버튼 하단선 정렬 */
-    align-items: end;
-    width: 100%;
-    min-width: 0;
-}
-
-.program-managers-tab__filter-grow {
-    min-width: 0;
-    width: 100%;
-    display: flex;
-    align-items: stretch;
-}
-
-.program-managers-tab__filter-grow .labeled-search-input {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-8);
-    width: 100%;
-    min-width: 0;
-}
-
-/* Typography.Text — 권한 필드 레이블과 동일 높이(--filter-label-height)로 인풋 행 정렬 */
-.program-managers-tab__filter-grow .labeled-search-input__label.ant-typography,
-.program-managers-tab__filter-grow .labeled-search-input__label {
-    flex: 0 0 auto;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center;
-    align-self: flex-start;
-    box-sizing: border-box;
-    min-height: var(--filter-label-height, 27px);
-    white-space: nowrap;
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-heading);
-    line-height: 1.5 !important;
-}
-
-/* LabeledSearchInput: 테두리는 내부 affix에만 (AppInput 래퍼는 투명) */
-.program-managers-tab__filter-grow .labeled-search-input .app-input {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    height: auto !important;
-    min-height: 0 !important;
-}
-
-.program-managers-tab__filter-grow .labeled-search-input__input.ant-input-affix-wrapper {
-    flex: 1 1 0;
-    min-width: 0;
-    width: auto !important;
-    max-width: none;
-    min-height: var(--filter-control-height, 44px) !important;
-    height: var(--filter-control-height, 44px) !important;
-    padding: 0 11px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    box-sizing: border-box !important;
-    border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-4) !important;
-    box-shadow: none !important;
-}
-
-.program-managers-tab__filter-grow .labeled-search-input__input.ant-input-affix-wrapper .ant-input {
-    height: auto !important;
-    min-height: 0 !important;
-    line-height: 22px !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-}
-
-.program-managers-tab__filter-grow .labeled-search-input__input:focus-within,
-.program-managers-tab__filter-field .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
-    border-color: var(--color-tab-active) !important;
-    box-shadow: var(--shadow-focus-teal) !important;
-}
-
-.program-managers-tab__filter-field {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-8);
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-}
-
-.program-managers-tab__filter-label {
-    flex: 0 0 auto;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: flex;
-    align-items: center;
-    align-self: flex-start;
-    box-sizing: border-box;
-    min-height: var(--filter-label-height, 27px);
-    white-space: nowrap;
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-heading);
-    line-height: 1.5 !important;
-}
-
-.program-managers-tab__role-filter-select.ant-select {
-    flex: 1 1 0;
-    min-width: 0;
-    width: 100% !important;
-    max-width: none;
-    height: var(--filter-control-height, 44px) !important;
-}
-
-.program-managers-tab__role-filter-select.ant-select .ant-select-selector {
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
-    display: flex !important;
-    align-items: center !important;
-    box-sizing: border-box !important;
-    border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-4) !important;
-}
-
-/* 그리드 align-items: end로 인풋·셀렉터와 하단 정렬; 터치 높이만 유지 */
-.program-managers-tab__filter-actions {
-    display: inline-flex;
-    align-items: center;
-    height: var(--filter-control-height, 44px);
-    min-height: var(--filter-control-height, 44px);
-}
-
-.program-managers-tab__filter-actions .app-button {
-    border-radius: var(--radius-8);
+  margin-bottom: 0;
+  width: 100%;
 }
 
 .program-managers-tab__divider {
-    height: 0;
-    border: none;
-    border-top: 1px solid var(--color-border-light);
-    margin: var(--spacing-32) 0 0;
+  height: 0;
+  border: none;
+  border-top: 1px solid var(--color-border-light);
+  margin: var(--spacing-32) 0 0;
 }
 
 .program-managers-tab__below-divider {
-    padding-top: var(--spacing-32);
-    margin-top: 0;
+  padding-top: var(--spacing-32);
+  margin-top: 0;
 }
 
 .program-managers-tab__table-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-12);
-    gap: var(--spacing-12);
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-12);
+  gap: var(--spacing-12);
+  flex-wrap: wrap;
 }
 
 .program-managers-tab__table-heading {
-    display: inline-flex;
-    align-items: baseline;
-    gap: var(--spacing-8);
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--spacing-8);
 }
 
 .program-managers-tab__table-title {
-    color: var(--color-text-heading);
-    font-size: var(--font-size-18);
-    font-weight: var(--font-weight-700);
-    line-height: 1.4;
+  color: var(--color-text-heading);
+  font-size: 20px;
+  font-weight: var(--font-weight-700);
+  line-height: 1.4;
 }
 
 .program-managers-tab__table-description {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-500);
-    line-height: 1.5;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
 }
 
 .program-managers-tab__table-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-8);
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-wrap: wrap;
 }
 
 .program-managers-tab__table {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 /* 권한 태그 (테이블·드롭다운 공통) */
 .program-managers-tab__role-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    min-width: 120px;
-    max-width: 120px;
-    height: 30px;
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 150%;
+  display: flex;
+  box-sizing: border-box;
+  width: 132px;
+  padding: 6px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 21px */
 }
 
 .program-managers-tab__role-badge--owner {
-    background: #e6f2f7;
-    color: #017eaf;
+  border: 1px solid rgba(1, 126, 175, 0.06);
+  background: #e6f2f7;
+  color: #017eaf;
 }
 
 .program-managers-tab__role-badge--partner,
 .program-managers-tab__role-badge--assistant {
-    background: #f2f3f5;
-    color: #464646;
-}
-
-/* StatusDropdownCell — 권한 열 행·셀 고정 (school-detail-fullpage-view 패턴) */
-.program-managers-tab__table .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
-    height: 53px;
-    min-height: 53px;
-    max-height: 53px;
-    overflow: visible;
-}
-
-.program-managers-tab__table .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-    width: 152px;
-    min-width: 152px;
-    max-width: 152px;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: visible;
-    box-sizing: border-box;
-}
-
-.program-managers-tab__table .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
-    height: 53px !important;
-    min-height: 53px !important;
-    max-height: 53px !important;
-}
-
-.program-managers-tab__table .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-}
-
-/* 열림 시 민트 스트로크 + 내부 태그 크기 (app-status-badge 대신 role-badge) */
-.program-managers-tab__table .status-dropdown-cell__status-trigger--open {
-    box-sizing: border-box;
-    width: 152px;
-    min-width: 152px;
-    max-width: 152px;
-    height: 44px;
-    min-height: 44px;
-    background: #fff;
-    border: none;
-    box-shadow: inset 0 0 0 1px var(--JA-mint-01, #01a1af), 0 4px 16px 0 rgba(32, 32, 33, 0.10);
-    border-radius: 6px;
-    padding: 0 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.program-managers-tab__table .status-dropdown-cell__status-trigger--open .program-managers-tab__role-badge {
-    min-width: 120px;
-    max-width: 120px;
-    height: 30px;
-}
-
-.program-managers-tab__table .status-dropdown-cell__dropdown-item .program-managers-tab__role-badge {
-    pointer-events: none;
-}
-
-.program-managers-tab__table .ant-table-thead>tr>th:first-child,
-.program-managers-tab__table .ant-table-tbody>tr>td:first-child {
-    width: var(--spacing-48);
-    min-width: var(--spacing-48);
-    max-width: var(--spacing-48);
-    padding-left: var(--spacing-8);
-    padding-right: var(--spacing-8);
-}
-
-.program-managers-tab__table .ant-table-thead>tr>th,
-.program-managers-tab__table .ant-table-tbody>tr>td {
-    text-align: center;
-    vertical-align: middle;
-    border-right: 1px solid var(--color-border-light);
-}
-
-.program-managers-tab__table .ant-table-thead>tr>th:last-child,
-.program-managers-tab__table .ant-table-tbody>tr>td:last-child {
-    border-right: none;
-}
-
-.program-managers-tab__table .ant-table-thead>tr>th {
-    background: var(--color-bg-secondary);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-700);
-    color: var(--color-text-heading);
-    text-align: center;
-}
-
-.program-managers-tab__table .ant-table-tbody>tr.ant-table-row-selected>td {
-    background: var(--color-bg-accent) !important;
-}
-
-@media (max-width: 1200px) {
-    .program-managers-tab__filter-row {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto;
-    }
-
-    .program-managers-tab__filter-grow {
-        max-width: none;
-    }
-
-    .program-managers-tab__filter-actions {
-        margin-top: 0;
-        justify-self: end;
-        width: auto;
-    }
+  color: #464646;
+  border: 1px solid rgba(126, 138, 150, 0.06);
+  background: #f2f3f5;
 }

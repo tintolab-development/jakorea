@@ -7,6 +7,22 @@
 import type { User } from '../../types/user'
 import { PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID } from './program-lecture-history-demo'
 
+/** 진월초등학교 — 고정 user id (소속 교사 mock·강사 `affiliatedSchoolUserId` 연결) */
+export const MOCK_SCHOOL_JINWOL_USER_ID = 'mock-school-jinwol-001'
+
+/** 최강사(instructor1) — 고정 CMS User.id (소속 교사 `linkedUserId`·딥링크 안정화) */
+export const MOCK_INSTRUCTOR_CHOI_USER_ID = 'mock-instructor-choi-001'
+
+/** 강사 mock 2·3 — 고정 id (소속 교사 `linkedUserId` 연동) */
+export const MOCK_INSTRUCTOR_JUNG_USER_ID = 'mock-instructor-jung-001'
+export const MOCK_INSTRUCTOR_KANG_USER_ID = 'mock-instructor-kang-001'
+
+/** 학교(교사) 회원 목록 1~4행 — 고정 id (소속 교사·프로그램 신청 mock 연동) */
+export const MOCK_SCHOOL_SEOUL_USER_ID = 'mock-school-seoul-001'
+export const MOCK_SCHOOL_BUSAN_USER_ID = 'mock-school-busan-001'
+export const MOCK_SCHOOL_DAEGU_USER_ID = 'mock-school-daegu-001'
+export const MOCK_SCHOOL_INCHEON_USER_ID = 'mock-school-incheon-001'
+
 function generateUUID(): string {
   // 새로고침마다 동일한 mock ID를 보장해 URL 딥링크(id=...)를 안정적으로 복원한다.
   mockUserSequence += 1
@@ -95,7 +111,7 @@ const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
 
 const mockInstructors: User[] = [
   {
-    id: generateUUID(),
+    id: MOCK_INSTRUCTOR_CHOI_USER_ID,
     email: 'instructor1@example.com',
     password: 'instructor123!',
     name: '최강사',
@@ -126,15 +142,16 @@ const mockInstructors: User[] = [
       settlementStatusLabel: '계좌 지급 완료',
       jaEvaluationGrade: 'A',
     },
+    affiliatedSchoolUserId: MOCK_SCHOOL_JINWOL_USER_ID,
   },
   {
-    id: generateUUID(),
+    id: MOCK_INSTRUCTOR_JUNG_USER_ID,
     email: 'instructor2@example.com',
     password: 'instructor123!',
     name: '정멘토',
     nameEn: 'Jung Mentor',
     role: 'INSTRUCTOR',
-    instructorId: generateUUID(),
+    instructorId: 'instructor-2-fixed-id-for-testing',
     interviewStatus: 'APPROVED',
     participationHistory: 3,
     isActive: true,
@@ -149,13 +166,13 @@ const mockInstructors: User[] = [
     socialAccounts: ['카카오'],
   },
   {
-    id: generateUUID(),
+    id: MOCK_INSTRUCTOR_KANG_USER_ID,
     email: 'instructor3@example.com',
     password: 'instructor123!',
     name: '강선생',
     nameEn: 'Kang Sun-saeng',
     role: 'INSTRUCTOR',
-    instructorId: generateUUID(),
+    instructorId: 'instructor-3-fixed-id-for-testing',
     interviewStatus: 'PENDING', // 면접 대기 중
     participationHistory: 0, // 참여이력 없음
     isActive: true,
@@ -176,7 +193,7 @@ const mockInstructors: User[] = [
 
 const mockSchools: User[] = [
   {
-    id: generateUUID(),
+    id: MOCK_SCHOOL_SEOUL_USER_ID,
     email: 'school1@example.com',
     password: 'school123!',
     name: '서울초등학교',
@@ -185,6 +202,38 @@ const mockSchools: User[] = [
       schoolName: '서울초등학교',
       address: '서울특별시 마포구 월드컵북로 456',
       position: '교사',
+      affiliatedTeachers: [
+        {
+          id: 'aff-seoul-1',
+          name: '한서울',
+          assignedGrade: '3학년',
+          phone: '010-2001-0001',
+          email: 'han.seoul@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2024-03-01T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-001',
+        },
+        {
+          id: 'aff-seoul-2',
+          name: '김마포',
+          assignedGrade: '5학년',
+          phone: '010-2001-0002',
+          email: 'kim.mapo@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2024-04-12T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-002',
+        },
+        {
+          id: 'aff-seoul-3',
+          name: '이월드',
+          assignedGrade: '1학년',
+          phone: '010-2001-0003',
+          email: 'lee.world@school.kr',
+          employmentStatus: 'TRANSFERRED',
+          joinedAt: '2023-09-01T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-003',
+        },
+      ],
     },
     affiliation: '서울초등학교 | 교사',
     isActive: true,
@@ -194,9 +243,14 @@ const mockSchools: User[] = [
     phone: '02-1234-5678',
     detailAddress: '서울특별시 마포구 월드컵북로 456',
     socialAccounts: ['구글'],
+    listMetrics: {
+      institutionProgramApplicationCount: 3,
+      institutionProgramAttendanceCount: 2,
+      institutionRegisteredTeacherCount: 3,
+    },
   },
   {
-    id: generateUUID(),
+    id: MOCK_SCHOOL_BUSAN_USER_ID,
     email: 'school2@example.com',
     password: 'school123!',
     name: '부산중학교',
@@ -205,6 +259,48 @@ const mockSchools: User[] = [
       schoolName: '부산중학교',
       address: '부산광역시 해운대구 센텀중앙로 123',
       position: '담당교사',
+      affiliatedTeachers: [
+        {
+          id: 'aff-busan-1',
+          name: '박해운',
+          assignedGrade: '2학년',
+          phone: '010-2002-0001',
+          email: 'park.busan@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2024-02-15T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-004',
+        },
+        {
+          id: 'aff-busan-2',
+          name: '정센텀',
+          assignedGrade: '3학년',
+          phone: '010-2002-0002',
+          email: 'jung.centum@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2024-05-20T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-005',
+        },
+        {
+          id: 'aff-busan-3',
+          name: '최중앙',
+          assignedGrade: '1학년',
+          phone: '010-2002-0003',
+          email: 'choi.mid@school.kr',
+          employmentStatus: 'WITHDRAWN',
+          joinedAt: '2023-11-01T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-006',
+        },
+        {
+          id: 'aff-busan-4',
+          name: '강동래',
+          assignedGrade: '2학년',
+          phone: '010-2002-0004',
+          email: 'kang.dong@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2025-01-08T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-007',
+        },
+      ],
     },
     affiliation: '부산중학교 | 담당교사',
     isActive: true,
@@ -214,9 +310,14 @@ const mockSchools: User[] = [
     phone: '051-2345-6789',
     detailAddress: '부산광역시 해운대구 센텀중앙로 123',
     socialAccounts: ['구글'],
+    listMetrics: {
+      institutionProgramApplicationCount: 4,
+      institutionProgramAttendanceCount: 3,
+      institutionRegisteredTeacherCount: 4,
+    },
   },
   {
-    id: generateUUID(),
+    id: MOCK_SCHOOL_DAEGU_USER_ID,
     email: 'school3@example.com',
     password: 'school123!',
     name: '대구고등학교',
@@ -225,6 +326,38 @@ const mockSchools: User[] = [
       schoolName: '대구고등학교',
       address: '대구광역시 수성구 범어천로 789',
       position: '교감',
+      affiliatedTeachers: [
+        {
+          id: 'aff-daegu-1',
+          name: '윤수성',
+          assignedGrade: '2학년',
+          phone: '010-2003-0001',
+          email: 'yoon.suseong@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2023-08-21T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-008',
+        },
+        {
+          id: 'aff-daegu-2',
+          name: '조범어',
+          assignedGrade: '1학년',
+          phone: '010-2003-0002',
+          email: 'jo.beomeo@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2024-01-10T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-009',
+        },
+        {
+          id: 'aff-daegu-3',
+          name: '임교감',
+          assignedGrade: '3학년',
+          phone: '010-2003-0003',
+          email: 'im.vice@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2022-04-01T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-010',
+        },
+      ],
     },
     affiliation: '대구고등학교 | 교감',
     isActive: true,
@@ -234,9 +367,14 @@ const mockSchools: User[] = [
     phone: '053-3456-7890',
     detailAddress: '대구광역시 수성구 범어천로 789',
     socialAccounts: ['카카오', '구글'],
+    listMetrics: {
+      institutionProgramApplicationCount: 5,
+      institutionProgramAttendanceCount: 4,
+      institutionRegisteredTeacherCount: 3,
+    },
   },
   {
-    id: generateUUID(),
+    id: MOCK_SCHOOL_INCHEON_USER_ID,
     email: 'school4@example.com',
     password: 'school123!',
     name: '인천남중학교',
@@ -245,6 +383,48 @@ const mockSchools: User[] = [
       schoolName: '인천남중학교',
       address: '인천광역시 남동구 구월로 112',
       position: '교사',
+      affiliatedTeachers: [
+        {
+          id: 'aff-incheon-1',
+          name: '송구월',
+          assignedGrade: '2학년',
+          phone: '010-2004-0001',
+          email: 'song.guwol@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2024-06-01T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-011',
+        },
+        {
+          id: 'aff-incheon-2',
+          name: '황남동',
+          assignedGrade: '1학년',
+          phone: '010-2004-0002',
+          email: 'hwang.namdong@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2024-09-12T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-012',
+        },
+        {
+          id: 'aff-incheon-3',
+          name: '배중학',
+          assignedGrade: '3학년',
+          phone: '010-2004-0003',
+          email: 'bae.mid@school.kr',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2023-12-01T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-013',
+        },
+        {
+          id: 'aff-incheon-4',
+          name: '신인천',
+          assignedGrade: '2학년',
+          phone: '010-2004-0004',
+          email: 'shin.ic@school.kr',
+          employmentStatus: 'TRANSFERRED',
+          joinedAt: '2023-04-15T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-014',
+        },
+      ],
     },
     affiliation: '인천남중학교 | 교사',
     isActive: true,
@@ -254,26 +434,87 @@ const mockSchools: User[] = [
     phone: '032-4567-8901',
     detailAddress: '인천광역시 남동구 구월로 112',
     socialAccounts: ['구글'],
+    listMetrics: {
+      institutionProgramApplicationCount: 6,
+      institutionProgramAttendanceCount: 5,
+      institutionRegisteredTeacherCount: 4,
+    },
   },
   {
-    id: generateUUID(),
-    email: 'school5@example.com',
+    id: MOCK_SCHOOL_JINWOL_USER_ID,
+    email: 'jinwol.school@example.com',
     password: 'school123!',
-    name: '광주동초등학교',
+    name: '진월초등학교',
     role: 'SCHOOL',
     schoolInfo: {
-      schoolName: '광주동초등학교',
-      address: '광주광역시 동구 금남로 88',
+      schoolName: '진월초등학교',
+      address: '광주광역시 남구 광복마을4길 40',
       position: '교사',
+      affiliatedTeachers: [
+        {
+          id: 'aff-teacher-jw-1',
+          name: '김틴토',
+          assignedGrade: '5학년',
+          phone: '010-1001-0001',
+          email: 'kimtinto@naver.com',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2025-09-15T00:00:00.000Z',
+          linkedUserId: MOCK_INSTRUCTOR_CHOI_USER_ID,
+        },
+        {
+          id: 'aff-teacher-jw-2',
+          name: '박틴토',
+          assignedGrade: '1학년',
+          phone: '010-1002-0002',
+          email: 'parktinto@naver.com',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2025-09-15T00:00:00.000Z',
+          linkedUserId: PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID,
+        },
+        {
+          id: 'aff-teacher-jw-3',
+          name: '이교사',
+          assignedGrade: '3학년',
+          phone: '010-1003-0003',
+          email: 'lee@naver.com',
+          employmentStatus: 'TRANSFERRED',
+          joinedAt: '2025-09-15T00:00:00.000Z',
+          linkedUserId: MOCK_INSTRUCTOR_JUNG_USER_ID,
+        },
+        {
+          id: 'aff-teacher-jw-4',
+          name: '최교사',
+          assignedGrade: '2학년',
+          phone: '010-1004-0004',
+          email: 'choi@naver.com',
+          employmentStatus: 'WITHDRAWN',
+          joinedAt: '2025-09-15T00:00:00.000Z',
+          linkedUserId: MOCK_INSTRUCTOR_KANG_USER_ID,
+        },
+        {
+          id: 'aff-teacher-jw-5',
+          name: '정교사',
+          assignedGrade: '4학년',
+          phone: '010-1005-0005',
+          email: 'jung@naver.com',
+          employmentStatus: 'ACTIVE',
+          joinedAt: '2025-09-15T00:00:00.000Z',
+          linkedUserId: 'mock-aff-link-015',
+        },
+      ],
     },
-    affiliation: '광주동초등학교 | 교사',
+    affiliation: '진월초등학교 | 교사',
     isActive: true,
     lastLoginAt: generatePastDate(5),
-    createdAt: generatePastDate(90),
+    createdAt: '2025-09-15T00:00:00.000Z',
     updatedAt: generatePastDate(5),
     phone: '062-5678-9012',
-    detailAddress: '광주광역시 동구 금남로 88',
+    detailAddress: '광주광역시 남구 광복마을4길 40',
     socialAccounts: ['카카오'],
+    listMetrics: {
+      institutionProgramApplicationCount: 8,
+      institutionProgramAttendanceCount: 5,
+    },
   },
   {
     id: generateUUID(),
@@ -477,6 +718,28 @@ const mockIndividuals: User[] = [
   },
 ]
 
+/** 소속 교사 `linkedUserId` 전용 — 참여자(개인) 회원 `mock-aff-link-001` ~ `015` */
+const mockAffiliatedTeacherLinkUsers: User[] = Array.from({ length: 15 }, (_, i) => {
+  const n = i + 1
+  const id = `mock-aff-link-${String(n).padStart(3, '0')}`
+  return {
+    id,
+    email: `aff.link.${n}@mock.jakorea.org`,
+    password: 'individual123!',
+    name: `연결교사${n}`,
+    role: 'INDIVIDUAL' as const,
+    isActive: true,
+    lastLoginAt: generatePastDate(10 + n),
+    createdAt: generatePastDate(120 + n),
+    updatedAt: generatePastDate(1),
+    phone: `010-9${String(n).padStart(3, '0')}-0000`,
+    birthDate: '1990-01-15',
+    gender: n % 2 === 0 ? '여성' : '남성',
+    detailAddress: '서울특별시',
+    affiliation: '소속 교사 연결용 mock',
+  }
+})
+
 // ============================================
 // 추가 전체 회원 샘플 (필터/검색 테스트용)
 // ============================================
@@ -639,6 +902,7 @@ export const mockUsers: User[] = [
   ...mockInstructors,
   ...mockSchools,
   ...mockIndividuals,
+  ...mockAffiliatedTeacherLinkUsers,
   ...extraMockUsers,
 ]
 
