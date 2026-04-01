@@ -23,10 +23,21 @@
   border-bottom: none;
 }
 
+.applicant-contents__tabs.ant-tabs .ant-tabs-nav-list {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .applicant-contents__tabs.ant-tabs .ant-tabs-tab {
-  padding: 12px 0;
-  margin-right: 24px;
+  display: flex;
+  padding: 6px 16px 10px 16px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
   font-size: 18px;
+  border-bottom: 2px solid transparent;
 }
 
 .applicant-contents__tabs.ant-tabs .ant-tabs-ink-bar {
@@ -36,6 +47,10 @@
 .applicant-contents__tabs.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
   color: var(--color-primary, #01a1af);
   font-weight: 600;
+}
+
+.applicant-contents__tabs.ant-tabs .ant-tabs-tab.ant-tabs-tab-active {
+  border-bottom-color: var(--JA-mint-01, #01a1af);
 }
 
 .applicant-contents__header-actions {
