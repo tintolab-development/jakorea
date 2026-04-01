@@ -135,12 +135,11 @@
 .program-status-participating__table-description,
 .participating-institutions-section__table-description,
 .program-progress-tab__table-description {
-  font-size: var(--font-size-14, 14px);
-  color: var(--color-text-secondary, #666);
-  font-family: Pretendard, sans-serif;
-  font-style: normal;
-  font-weight: var(--font-weight-500, 500);
-  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
 }
 
 .program-status-participating__table-actions,
@@ -181,6 +180,133 @@
 .program-status-participating__table--clickable .ant-table-tbody > tr,
 .participating-institutions-section__table--clickable .ant-table-tbody > tr {
   cursor: pointer;
+}
+
+/* 정산관리 페이지 공통 컨테이너/헤더 레이아웃 */
+.payment-orders-page .participating-institutions-section__table-heading {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-orders-page .participating-institutions-section__table-title,
+.payment-orders-page .participating-institutions-section__table-description {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.payment-orders-page__content-wrapper > .participating-institutions-section {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: visible;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__filters {
+  flex-shrink: 0;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__divider {
+  flex-shrink: 0;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__below-divider {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__table-header {
+  flex-shrink: 0;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__table-wrap {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.account-payments-page .participating-institutions-section__table-header {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.account-payments-page .participating-institutions-section__table-heading {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.account-payments-page .participating-institutions-section__table-actions {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-8, 8px);
+}
+
+/* StatusDropdownCell 사용 시 행/셀 53px 고정 (정산 상세 override의 기준 규칙) */
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.participating-institutions-section .status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 152px !important;
+  min-width: 152px !important;
+  max-width: 152px !important;
+}
+
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* 참여 봉사자 탭(플레이스홀더) — 이후 목록·필터와 동일 셸 */

@@ -97,12 +97,12 @@
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #c4cdd1 !important;
-  background: var(--default-WT, #fff) !important;
+  border: none !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 
-/* Ant Input borderless/underlined 내부 장식 제거 — 박스는 span.app-input 테두리만 사용 */
+/* Ant Input borderless/underlined 내부 장식 제거 — 박스는 .app-input__control 테두리만 사용 */
 .unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper,
 .unified-filter-card .labeled-search-input .app-input .ant-input {
   box-shadow: none !important;
@@ -123,6 +123,15 @@
   align-items: center !important;
   flex: 1 1 auto !important;
   box-sizing: border-box !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input .app-input__control {
+  height: var(--filter-control-height) !important;
+  min-height: var(--filter-control-height) !important;
+  border: 1px solid #c4cdd1 !important;
+  border-radius: 8px !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow: none !important;
 }
 
 .unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper .ant-input {

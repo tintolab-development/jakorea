@@ -30,7 +30,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import '@/features/program/ui/detail-modal/program-status/participating-institutions-section.css'
+import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
 import '@/features/program/ui/detail-modal/applicants/applicant-instructor-basic-info.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
