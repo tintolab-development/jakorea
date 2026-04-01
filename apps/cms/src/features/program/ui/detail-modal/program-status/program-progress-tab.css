@@ -281,14 +281,38 @@
 }
 
 @media (max-width: 1200px) {
-  .program-progress-tab__filters .ant-row {
-    flex-wrap: wrap;
+  .program-progress-tab__filters .ant-row.program-progress-tab__filter-row {
+    flex-wrap: wrap !important;
   }
 
-  .program-progress-tab__filter-col,
+  .program-progress-tab__filter-col:not(.program-progress-tab__filter-col--btn),
   .program-progress-tab__filter-col--search {
-    flex: 1 1 120px !important;
+    flex: 1 1 calc((100% - 24px) / 3) !important;
     max-width: none;
+    min-width: 0;
+  }
+
+  .program-progress-tab__filter-col--btn {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 960px) {
+  .program-progress-tab__filter-col:not(.program-progress-tab__filter-col--btn),
+  .program-progress-tab__filter-col--search {
+    flex: 1 1 calc((100% - 12px) / 2) !important;
+  }
+
+  .program-progress-tab__filter-col--btn {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .program-progress-tab__filter-col:not(.program-progress-tab__filter-col--btn),
+  .program-progress-tab__filter-col--search,
+  .program-progress-tab__filter-col--btn {
+    flex: 1 1 100% !important;
   }
 }
 
@@ -303,13 +327,13 @@
   height: 0;
   border: none;
   border-top: 1px solid var(--color-border-skeleton);
-  margin: var(--spacing-16) 0 0;
+  margin: 32px 0 0;
 }
 
 /* 디바이더 하위: 테이블 영역 */
 .program-progress-tab__below-divider {
-  padding-top: var(--spacing-16);
-  margin-top: 0;
+  padding-top: 0;
+  margin-top: 32px;
 }
 
 /* 테이블: 헤더·셀 가운데 정렬, 구분선 */

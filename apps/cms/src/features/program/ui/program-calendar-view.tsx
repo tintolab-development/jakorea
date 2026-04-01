@@ -143,16 +143,26 @@ export function ProgramCalendarView({
     return list
   }, [programs, calendarSearchKeyword, calendarBusinessAreaKeys])
 
-  // 메인 캘린더 높이 측정하여 우측 패널에 적용
+  // 메인 캘린더 높이 측정하여 우측 패널에 적용 (주·월 전환·6주 달력 등 레이아웃 변화 시 시프트 완화)
   useEffect(() => {
+    const el = mainCalendarRef.current
+    if (!el) return
+
     const updateHeight = () => {
-      if (mainCalendarRef.current) {
-        setSidebarHeight(mainCalendarRef.current.offsetHeight)
-      }
+      setSidebarHeight(el.offsetHeight)
     }
     updateHeight()
+
+    let ro: ResizeObserver | undefined
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(updateHeight)
+      ro.observe(el)
+    }
     window.addEventListener('resize', updateHeight)
-    return () => window.removeEventListener('resize', updateHeight)
+    return () => {
+      ro?.disconnect()
+      window.removeEventListener('resize', updateHeight)
+    }
   }, [calendarMode])
 
   // 일정이 있는 날짜들 (미니 캘린더용) — 필터된 목록 기준

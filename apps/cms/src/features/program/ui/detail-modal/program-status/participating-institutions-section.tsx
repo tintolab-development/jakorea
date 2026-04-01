@@ -29,6 +29,7 @@ import {
 import { useParticipatingInstitutionsParams } from '../../../hooks/use-participating-institutions-params'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import { Divider } from '@/shared/components/divider'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { SchoolDetailModal } from '../../school-detail-modal'
 import {
@@ -492,7 +493,7 @@ export function ParticipatingInstitutionsSection({
         onSearch={handleUnifiedFilterSearch}
       />
 
-      <div className="participating-institutions-section__divider" />
+      <Divider className="participating-institutions-section__divider" />
 
       <div className="participating-institutions-section__below-divider">
         <div className="participating-institutions-section__table-header">

@@ -135,13 +135,22 @@ function getTotalCareerYears(items: ParticipatingInstructorCareerDetail[] | unde
   return Math.floor(totalMonths / 12)
 }
 
-function formatBirthGenderAgeContent(d: ParticipatingInstructorRow): ReactNode {
+function maskBirthDate(value: string): string {
+  const digits = value.replace(/\D/g, '')
+  if (digits.length !== 8) return value
+  const yy = digits.slice(0, 4)
+  const mm = digits.slice(4, 6)
+  return `${yy}.${mm}.**`
+}
+
+function formatBirthGenderAgeContent(d: ParticipatingInstructorRow, mask: boolean): ReactNode {
   /** 생년월일과 (만 n세)는 한 문자열로 묶어 flex 분리 시 공백이 사라지지 않도록 함 */
+  const birthValue = d.birthDate ? (mask ? maskBirthDate(d.birthDate) : d.birthDate) : null
   const birthAgeStr =
-    d.birthDate && d.age != null
-      ? `${d.birthDate} (만 ${d.age}세)`
-      : d.birthDate
-        ? d.birthDate
+    birthValue && d.age != null
+      ? `${birthValue} (만 ${d.age}세)`
+      : birthValue
+        ? birthValue
         : d.age != null
           ? `만 ${d.age}세`
           : null
@@ -633,7 +642,9 @@ export function ParticipatingInstructorFullpageView({
                 </td>
                 <th scope="row">성별 및 생년월일</th>
                 <td>
-                  <ProgramDetailTdSegmentWrap>{formatBirthGenderAgeContent(d)}</ProgramDetailTdSegmentWrap>
+                  <ProgramDetailTdSegmentWrap>
+                    {formatBirthGenderAgeContent(d, privacyMasked)}
+                  </ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
               <tr>

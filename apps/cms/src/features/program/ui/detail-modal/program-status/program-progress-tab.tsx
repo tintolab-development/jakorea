@@ -40,6 +40,7 @@ import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/s
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import { StatusDropdownCell } from '../../status-dropdown-cell'
+import { Divider } from '@/shared/components/divider'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
@@ -402,7 +403,6 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
               <Row
                 gutter={[12, 12]}
                 align="middle"
-                wrap={false}
                 className="program-progress-tab__filter-row"
               >
                 {subTab === PARTICIPATING_SCHOOL_TAB && (
@@ -502,7 +502,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
 
         {subTab === PARTICIPATING_SCHOOL_TAB && (
           <>
-            <div className="program-progress-tab__divider" />
+            <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
               <div className="program-progress-tab__table-header">
                 <div className="program-progress-tab__table-heading">
@@ -553,7 +553,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
 
         {subTab === INSTRUCTOR_TAB && (
           <>
-            <div className="program-progress-tab__divider" />
+            <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
               <div className="program-progress-tab__table-header">
                 <div className="program-progress-tab__table-heading">

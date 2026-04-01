@@ -18,9 +18,74 @@
   padding-left: 0 !important;
 }
 
+/* 참여 기관/강사 필터: 데스크톱에서도 필드 폭 균등 분배 */
+.program-status-participating .unified-filter-card__fields-inner > .ant-col {
+  flex: 1 1 0 !important;
+  min-width: 0;
+}
+
+/* 참여 기관/강사 필터: 반응형 너비 분배 (갭 12px 유지) */
+@media (max-width: 1280px) {
+  .program-status-participating .unified-filter-card__toolbar {
+    flex-wrap: wrap;
+  }
+
+  .program-status-participating .unified-filter-card__fields-shell {
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .program-status-participating .unified-filter-card__fields-inner.ant-row {
+    flex-wrap: wrap !important;
+  }
+
+  .program-status-participating .unified-filter-card__fields-inner > .ant-col {
+    flex: 1 1 calc((100% - 24px) / 3) !important;
+    min-width: 0;
+  }
+
+  .program-status-participating
+    .unified-filter-card__fields-inner
+    > .ant-col:nth-child(3n) {
+    margin-right: 0 !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .program-status-participating .unified-filter-card__fields-inner > .ant-col {
+    flex: 1 1 calc((100% - 12px) / 2) !important;
+  }
+
+  .program-status-participating
+    .unified-filter-card__fields-inner
+    > .ant-col:nth-child(3n) {
+    margin-right: 12px !important;
+  }
+
+  .program-status-participating
+    .unified-filter-card__fields-inner
+    > .ant-col:nth-child(2n) {
+    margin-right: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .program-status-participating .unified-filter-card__fields-inner > .ant-col {
+    flex: 1 1 100% !important;
+    margin-right: 0 !important;
+  }
+
+  .program-status-participating .unified-filter-card__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 .program-status-participating__divider,
 .participating-institutions-section__divider {
-  margin: 0;
+  margin: 32px 0 0;
   border-top: 1px solid var(--color-border-light, #e8e8e8);
 }
 
