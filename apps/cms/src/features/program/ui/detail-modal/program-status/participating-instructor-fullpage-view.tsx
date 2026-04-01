@@ -51,9 +51,9 @@ import {
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/lib/instructor-institution-assignment-mock'
 import './participating-institutions-section.css'
-import './instructor-assignment-role-tag.css'
-import './instructor-assignment-status-text.css'
-import './school-detail-fullpage-view.css'
+import '../../instructor-assignment-role-tag.css'
+import '../../instructor-assignment-status-text.css'
+import '../../school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
 
 const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {
@@ -135,13 +135,22 @@ function getTotalCareerYears(items: ParticipatingInstructorCareerDetail[] | unde
   return Math.floor(totalMonths / 12)
 }
 
-function formatBirthGenderAgeContent(d: ParticipatingInstructorRow): ReactNode {
+function maskBirthDate(value: string): string {
+  const digits = value.replace(/\D/g, '')
+  if (digits.length !== 8) return value
+  const yy = digits.slice(0, 4)
+  const mm = digits.slice(4, 6)
+  return `${yy}.${mm}.**`
+}
+
+function formatBirthGenderAgeContent(d: ParticipatingInstructorRow, mask: boolean): ReactNode {
   /** 생년월일과 (만 n세)는 한 문자열로 묶어 flex 분리 시 공백이 사라지지 않도록 함 */
+  const birthValue = d.birthDate ? (mask ? maskBirthDate(d.birthDate) : d.birthDate) : null
   const birthAgeStr =
-    d.birthDate && d.age != null
-      ? `${d.birthDate} (만 ${d.age}세)`
-      : d.birthDate
-        ? d.birthDate
+    birthValue && d.age != null
+      ? `${birthValue} (만 ${d.age}세)`
+      : birthValue
+        ? birthValue
         : d.age != null
           ? `만 ${d.age}세`
           : null
@@ -588,9 +597,6 @@ export function ParticipatingInstructorFullpageView({
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block">
         <div className="program-detail-info-tab__section-header-row">
           <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
-          {d.registeredByAdmin ? (
-            <p className="program-detail-info-tab__detail-note">*관리자에 의해 등록된 회원입니다</p>
-          ) : null}
         </div>
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
@@ -636,7 +642,9 @@ export function ParticipatingInstructorFullpageView({
                 </td>
                 <th scope="row">성별 및 생년월일</th>
                 <td>
-                  <ProgramDetailTdSegmentWrap>{formatBirthGenderAgeContent(d)}</ProgramDetailTdSegmentWrap>
+                  <ProgramDetailTdSegmentWrap>
+                    {formatBirthGenderAgeContent(d, privacyMasked)}
+                  </ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
               <tr>

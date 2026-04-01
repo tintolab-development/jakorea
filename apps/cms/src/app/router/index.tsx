@@ -130,6 +130,9 @@ const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page
 const PermissionCustomizationPage = lazyLoad(
   () => import('@/pages/admin/settings/permission-customization-page')
 )
+const PermissionRequestListPage = lazyLoad(
+  () => import('@/pages/admin/permission-request-list-page')
+)
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
@@ -566,11 +569,19 @@ export const router = createBrowserRouter([
           },
           {
             path: 'permission-requests',
-            element: <Navigate to="/admin/settings/permissions" replace />,
+            element: (
+              <ProtectedRoute requiredRoles={['ADMIN']}>
+                <PermissionRequestListPage />
+              </ProtectedRoute>
+            ),
           },
           {
             path: 'permission-requests/*',
-            element: <Navigate to="/admin/settings/permissions" replace />,
+            element: (
+              <ProtectedRoute requiredRoles={['ADMIN']}>
+                <PermissionRequestListPage />
+              </ProtectedRoute>
+            ),
           },
           {
             path: 'logs',

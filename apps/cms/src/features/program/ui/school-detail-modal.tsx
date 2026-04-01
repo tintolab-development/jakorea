@@ -494,7 +494,9 @@ export function SchoolDetailModal({
   /**
    * 수정 모드 기본 정보: 기획 시안과 동일한 필드 순서 (1행 참여학교명|지역, 2행 대상학년|학급수, 3행 진행장소|대기실, 풀폭 식사·담당교사)
    */
-  function getBasicInfoEditModeItems(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
+  function getBasicInfoEditModeItems(
+    form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>
+  ) {
     const editableItems = basicInfoEditableItems(form)
     const byKey = (key: string) => editableItems.find(item => item.key === key)!
     return [

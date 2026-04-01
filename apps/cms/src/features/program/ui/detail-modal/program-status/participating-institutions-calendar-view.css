@@ -462,14 +462,99 @@
   text-align: left;
 }
 
-.participating-institutions-calendar-event-tooltip {
-  margin: 0;
+/* 날짜 셀 hover 팝오버: 신청자 캘린더와 동일 형태 */
+.participating-institutions-calendar-tooltip-overlay .ant-tooltip-arrow {
+  display: none !important;
+}
+
+.participating-institutions-calendar-tooltip-overlay .ant-tooltip-inner {
   padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.participating-institutions-calendar-popover {
+  display: inline-flex;
+  width: auto;
+  min-width: 360px;
+  max-width: min(460px, calc(100vw - 24px));
+  max-height: 250px;
+  padding: 11px 16px 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.participating-institutions-calendar-popover__row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 21px minmax(92px, auto) 21px minmax(100px, auto);
+  align-items: center;
+  column-gap: 0;
+  width: 100%;
+}
+
+.participating-institutions-calendar-popover__title {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.participating-institutions-calendar-popover__text {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.participating-institutions-calendar-popover__text--pending {
+  color: #01a1af;
+}
+
+.participating-institutions-calendar-popover__text--partial {
+  color: #017eaf;
+}
+
+.participating-institutions-calendar-popover__text--completed {
+  color: #2d9f4d;
+}
+
+.participating-institutions-calendar-popover__text--na {
+  color: #8c8c8c;
+}
+
+.participating-institutions-calendar-popover__text--rejected {
+  color: #e44970;
+}
+
+.participating-institutions-calendar-popover__sep {
+  display: inline-flex;
+  width: 21px;
+  justify-content: center;
+  color: #d4d4d4;
   font-size: 12px;
-  line-height: 1.5;
-  color: inherit;
-  white-space: pre-wrap;
-  font-family: inherit;
+  font-weight: 300;
+  line-height: 1;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .participating-institutions-calendar-event-title {

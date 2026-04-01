@@ -12,7 +12,7 @@ import {
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
-import '@/features/program/ui/participating-institutions-calendar-view.css'
+import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
 import './payment-orders-calendar-view.css'
 import './account-payments-calendar-view.css'
 

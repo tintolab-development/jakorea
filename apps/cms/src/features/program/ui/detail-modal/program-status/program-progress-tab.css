@@ -2,7 +2,10 @@
  * 프로그램 진행현황 탭 (참여 학교 정보 / 강사 정보)
  * 디자이너 스펙: 활성 탭 흰 배경·청록 테두리·청록 텍스트, 비활성 탭 밝은 회색 배경·회색 텍스트
  * 필터 인풋: 반응형 동일 너비
+ * 목록 상단(제목·건수·버튼)은 program-status-participating-shared.css 와 통합
  */
+
+@import './program-status-participating-shared.css';
 
 .program-progress-tab {
   width: 100%;
@@ -278,14 +281,38 @@
 }
 
 @media (max-width: 1200px) {
-  .program-progress-tab__filters .ant-row {
-    flex-wrap: wrap;
+  .program-progress-tab__filters .ant-row.program-progress-tab__filter-row {
+    flex-wrap: wrap !important;
   }
 
-  .program-progress-tab__filter-col,
+  .program-progress-tab__filter-col:not(.program-progress-tab__filter-col--btn),
   .program-progress-tab__filter-col--search {
-    flex: 1 1 120px !important;
+    flex: 1 1 calc((100% - 24px) / 3) !important;
     max-width: none;
+    min-width: 0;
+  }
+
+  .program-progress-tab__filter-col--btn {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 960px) {
+  .program-progress-tab__filter-col:not(.program-progress-tab__filter-col--btn),
+  .program-progress-tab__filter-col--search {
+    flex: 1 1 calc((100% - 12px) / 2) !important;
+  }
+
+  .program-progress-tab__filter-col--btn {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .program-progress-tab__filter-col:not(.program-progress-tab__filter-col--btn),
+  .program-progress-tab__filter-col--search,
+  .program-progress-tab__filter-col--btn {
+    flex: 1 1 100% !important;
   }
 }
 
@@ -300,56 +327,13 @@
   height: 0;
   border: none;
   border-top: 1px solid var(--color-border-skeleton);
-  margin: var(--spacing-16) 0 0;
+  margin: 32px 0 0;
 }
 
 /* 디바이더 하위: 테이블 영역 */
 .program-progress-tab__below-divider {
-  padding-top: var(--spacing-16);
-  margin-top: 0;
-}
-
-/* 디바이더 바로 아래: 목록 요약(왼쪽) + 학교 삭제(오른쪽) */
-.program-progress-tab__table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-12);
-}
-
-.program-progress-tab__table-heading {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--spacing-6);
-}
-
-/* 테이블 헤더 타이틀: 굵게, 큰 제목, 진한 회색 */
-/* 테이블 헤더 타이틀 */
-.program-progress-tab__table-title {
-  color: var(--default-BK);
-  font-family: var(--font-family-primary), sans-serif;
-  font-size: var(--font-size-18);
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-/* 테이블 헤더 디스크립션: 총 N건 */
-.program-progress-tab__table-description {
-  color: var(--default-BK);
-  opacity: 0.6;
-  font-family: Pretendard, sans-serif;
-  font-size: var(--font-size-14);
-  font-style: normal;
-  font-weight: var(--font-weight-500);
-  line-height: 150%;
-}
-
-/* 강사 탭: 테이블 헤더 오른쪽 버튼 그룹 (강사 삭제 + 강사 추가) */
-.program-progress-tab__table-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8);
+  padding-top: 0;
+  margin-top: 32px;
 }
 
 /* 테이블: 헤더·셀 가운데 정렬, 구분선 */

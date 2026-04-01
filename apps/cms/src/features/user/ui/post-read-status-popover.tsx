@@ -20,62 +20,6 @@ export interface PostReadStatusPopoverContentProps {
   tabSchoolId?: string | null
 }
 
-/** 읽음 탭 — 보더는 CSS에서 활성/비활성·data-active-tab으로만 처리 (헤더 박스 보더 없음) */
-function PostReadStatusTab({
-  active,
-  count,
-  onSelect,
-}: {
-  active: boolean
-  count: number
-  onSelect: () => void
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      className={[
-        'post-read-status-popup__tab',
-        'post-read-status-popup__tab--read',
-        active ? 'post-read-status-popup__tab--active' : 'post-read-status-popup__tab--inactive',
-      ].join(' ')}
-      onMouseDown={e => e.preventDefault()}
-      onClick={onSelect}
-    >
-      읽음({count})
-    </button>
-  )
-}
-
-/** 안읽음 탭 */
-function PostUnreadStatusTab({
-  active,
-  count,
-  onSelect,
-}: {
-  active: boolean
-  count: number
-  onSelect: () => void
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      className={[
-        'post-read-status-popup__tab',
-        'post-read-status-popup__tab--unread',
-        active ? 'post-read-status-popup__tab--active' : 'post-read-status-popup__tab--inactive',
-      ].join(' ')}
-      onMouseDown={e => e.preventDefault()}
-      onClick={onSelect}
-    >
-      안읽음({count})
-    </button>
-  )
-}
-
 export function PostReadStatusPopoverContent({
   postId,
   programId,
@@ -83,6 +27,7 @@ export function PostReadStatusPopoverContent({
   tabSchoolId,
 }: PostReadStatusPopoverContentProps) {
   const [tab, setTab] = useState<PostReadStatusTab>('read')
+  const [selectedUnreadIds, setSelectedUnreadIds] = useState<string[]>([])
 
   const schoolScope = tabSchoolId ?? postSchoolId ?? null
 
@@ -101,27 +46,67 @@ export function PostReadStatusPopoverContent({
 
   const list = tab === 'read' ? readRows : unreadRows
 
+  const toggleUnreadChecked = (id: string, checked: boolean) => {
+    setSelectedUnreadIds(prev => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id]
+      return prev.filter(x => x !== id)
+    })
+  }
+
   return (
-    <div className="post-read-status-popup">
+    <div className={`post-read-status-popup post-read-status-popup--${tab}`}>
       <div className="post-read-status-popup__frame" data-active-tab={tab}>
         <div className="post-read-status-popup__header">
-          <div className="post-read-status-popup__tabs" role="tablist" aria-label="읽음 상태">
-            <PostReadStatusTab
-              active={tab === 'read'}
-              count={readN}
-              onSelect={() => setTab('read')}
-            />
-            <PostUnreadStatusTab
-              active={tab === 'unread'}
-              count={unreadN}
-              onSelect={() => setTab('unread')}
-            />
+          <div className="post-read-status-popup__tabs">
+            <button
+              type="button"
+              className={[
+                'post-read-status-popup__tab',
+                'post-read-status-popup__tab--read',
+                tab === 'read'
+                  ? 'post-read-status-popup__tab--active'
+                  : 'post-read-status-popup__tab--inactive',
+              ].join(' ')}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => setTab('read')}
+            >
+              읽음({readN})
+            </button>
+            <button
+              type="button"
+              className={[
+                'post-read-status-popup__tab',
+                'post-read-status-popup__tab--unread',
+                tab === 'unread'
+                  ? 'post-read-status-popup__tab--active'
+                  : 'post-read-status-popup__tab--inactive',
+              ].join(' ')}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => setTab('unread')}
+            >
+              안읽음({unreadN})
+            </button>
             <div className="post-read-status-popup__tab-row-spacer" aria-hidden />
           </div>
         </div>
 
         <div className="post-read-status-popup__body-wrap">
           <div className="post-read-status-popup__body">
+            {tab === 'unread' ? (
+              <div className="post-read-status-popup__unread-actions">
+                <span className="post-read-status-popup__notify-title-text">알림 발송</span>
+                <button
+                  type="button"
+                  className="post-read-status-popup__action-btn"
+                  disabled={selectedUnreadIds.length === 0}
+                >
+                  선택 발송
+                </button>
+                <button type="button" className="post-read-status-popup__action-btn post-read-status-popup__action-btn--primary">
+                  전체 발송
+                </button>
+              </div>
+            ) : null}
             {list.length === 0 ? (
               <div className="post-read-status-popup__empty">표시할 인원이 없습니다.</div>
             ) : (
@@ -135,15 +120,22 @@ export function PostReadStatusPopoverContent({
                     >
                       {truncateDisplayNameForList(row.displayName)}
                     </span>
-                    <span className="post-read-status-popup__divider">|</span>
+                    <span className="post-read-status-popup__name-role-divider" aria-hidden>
+                      |
+                    </span>
                     <span className="post-read-status-popup__role">{row.roleLabel}</span>
                   </div>
                   {tab === 'read' ? (
                     <span className="post-read-status-popup__badge">읽음</span>
                   ) : (
-                    <span className="post-read-status-popup__badge post-read-status-popup__badge--muted">
-                      안읽음
-                    </span>
+                    <label className="post-read-status-popup__checkbox-wrap" aria-label="안읽음 선택">
+                      <input
+                        type="checkbox"
+                        className="post-read-status-popup__checkbox"
+                        checked={selectedUnreadIds.includes(row.id)}
+                        onChange={e => toggleUnreadChecked(row.id, e.target.checked)}
+                      />
+                    </label>
                   )}
                 </div>
               ))

@@ -8,6 +8,35 @@
   width: 100%;
 }
 
+/* 기본 정보 테이블 col(100+80+180)을 덮어써, 동의 섹션 라벨 열을 240px로 통일 */
+.user-consent-agreement-section .user-detail-modal__basic-table-col-label-left {
+  width: 120px;
+  min-width: 120px;
+}
+
+.user-consent-agreement-section .user-detail-modal__basic-table-col-name-sub {
+  width: 120px;
+  min-width: 120px;
+}
+
+.user-consent-agreement-section .user-detail-modal__basic-table-cell--row-label {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+}
+
+.user-consent-agreement-section .user-detail-modal__basic-table-col-label-right {
+  width: 240px;
+  min-width: 240px;
+}
+
+.user-consent-agreement-section
+  .user-detail-modal__basic-table-cell--label.user-detail-modal__basic-table-cell--label-right {
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+}
+
 .user-consent-agreement-section__action-cell {
   text-align: center;
   vertical-align: middle;

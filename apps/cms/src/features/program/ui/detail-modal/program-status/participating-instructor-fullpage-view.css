@@ -2,8 +2,8 @@
  * 참여 강사 상세 인라인 뷰 — 학력/경력/자격 카드는 신청 강사 이력서와 동일 클래스 사용
  */
 
-@import './detail-modal/project-info/project-info-form-shared.css';
-@import './detail-modal/applicants/applicant-instructor-resume.css';
+@import '../project-info/project-info-form-shared.css';
+@import '../applicants/applicant-instructor-resume.css';
 
 .participating-instructor-fullpage-view .program-detail-fullpage-modal__tabs-row {
   padding: 0 0 32px 0;

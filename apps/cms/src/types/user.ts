@@ -27,6 +27,21 @@ export type InterviewStatus =
   | 'APPROVED' // 승인 완료
   | 'REJECTED' // 반려
 
+/** 소속 교사 목록 행 (학교 상세 mock/API) */
+export type SchoolTeacherEmploymentStatus = 'ACTIVE' | 'WITHDRAWN' | 'TRANSFERRED'
+
+export interface SchoolAffiliatedTeacherRow {
+  id: UUID
+  name: string
+  assignedGrade: string
+  phone: string
+  email: string
+  employmentStatus: SchoolTeacherEmploymentStatus
+  joinedAt: DateValue
+  /** 연결된 CMS 회원 id — 있으면 행 클릭 시 해당 회원 상세로 이동 */
+  linkedUserId?: UUID
+}
+
 // ===== 사용자 인터페이스 =====
 
 export interface User {
@@ -53,10 +68,15 @@ export interface User {
     schoolName: string
     address: string
     position?: string // 담당자 직책
+    /** CMS mock/상세 — 소속 교사 목록 */
+    affiliatedTeachers?: SchoolAffiliatedTeacherRow[]
     // 학생명단 업로드
     // 학교단위 수료증 다운로드
     // 강사 대기실, 급식 가능 여부 등
   }
+
+  /** 강사 — 소속 학교(학교 회원) user id (mock/CMS 연동) */
+  affiliatedSchoolUserId?: UUID
 
   // 강사 전용 (§2.1)
   instructorInfo?: {
@@ -102,6 +122,8 @@ export interface User {
 
 /** 목록 화면 열별 부가 데이터 */
 export interface UserListRowMetrics {
+  /** 학교(기관): 프로그램 신청 횟수 */
+  institutionProgramApplicationCount?: number
   /** 학교(기관): 프로그램 수강 횟수 */
   institutionProgramAttendanceCount?: number
   /** 학교(기관): 등록된 교사 수 */

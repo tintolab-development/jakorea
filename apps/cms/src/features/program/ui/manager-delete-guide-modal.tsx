@@ -202,6 +202,19 @@ export function buildMemberWithdrawMessageLines(singleUser: {
   ]
 }
 
+/** 학교(기관) 상세 > 학교 삭제 확인 문구 */
+export function buildSchoolDeleteMessageLines(singleUser: {
+  name: string
+  email: string
+} | null): string[] {
+  if (!singleUser) return []
+  return [
+    `[${singleUser.name}] (${singleUser.email}) 학교(기관) 계정을 삭제하시겠습니까?`,
+    '삭제된 계정은 복구할 수 없습니다.',
+    '정말로 삭제하시겠습니까?',
+  ]
+}
+
 /** 문장에서 [xxx] 부분을 볼드(700)로 감싸서 React 노드로 반환 */
 function renderLineWithBoldBrackets(line: string) {
   const parts = line.split(/(\[[^\]]+\])/g)

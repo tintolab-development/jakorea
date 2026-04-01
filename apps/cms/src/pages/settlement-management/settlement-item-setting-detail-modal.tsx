@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react'
-import { Input, Select, message } from 'antd'
+import { message } from 'antd'
 import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
 import {
   getSettlementItemSettingDetail,
@@ -15,6 +15,8 @@ import { AppButton } from '@/shared/ui/app-button'
 import { AppRadio } from '@/shared/ui/app-radio'
 import { SettlementItemSettingIcon } from './settlement-item-setting-icons'
 import './settlement-item-setting-detail-modal.css'
+import { AppInput } from '@/shared/ui/app-input'
+import { AppSelect } from '@/shared/ui/app-select'
 
 const BASIS_UNIT_OPTIONS_TIER1 = [{ value: '시간', label: '시간' }]
 const BASIS_UNIT_OPTIONS_TRANSPORT = [{ value: '거리', label: '거리' }]
@@ -39,9 +41,9 @@ function buildInitialFormState(itemId: string) {
     compareKind: d.compareKind,
     maxLimitStr: formatWonDisplay(d.maxLimitWon),
     basicFeeStr: d.basicFeeWon != null ? formatWonDisplay(d.basicFeeWon) : '',
-    longDistanceFeeStr:
-      d.longDistanceFeeWon != null ? formatWonDisplay(d.longDistanceFeeWon) : '',
-    evidenceSubmission: (d.evidenceSubmission ?? 'not_required') as SettlementItemEvidenceSubmission,
+    longDistanceFeeStr: d.longDistanceFeeWon != null ? formatWonDisplay(d.longDistanceFeeWon) : '',
+    evidenceSubmission: (d.evidenceSubmission ??
+      'not_required') as SettlementItemEvidenceSubmission,
   }
 }
 
@@ -50,7 +52,9 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
   const initial = buildInitialFormState(itemId)
   const [basisUnit, setBasisUnit] = useState(initial.basisUnit)
   const [basisHoursStr, setBasisHoursStr] = useState(initial.basisHoursStr)
-  const [compareKind, setCompareKind] = useState<SettlementItemSettingCompareKind>(initial.compareKind)
+  const [compareKind, setCompareKind] = useState<SettlementItemSettingCompareKind>(
+    initial.compareKind
+  )
   const [maxLimitStr, setMaxLimitStr] = useState(initial.maxLimitStr)
   const [basicFeeStr, setBasicFeeStr] = useState(initial.basicFeeStr)
   const [longDistanceFeeStr, setLongDistanceFeeStr] = useState(initial.longDistanceFeeStr)
@@ -79,28 +83,31 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
   return (
     <>
       <section aria-labelledby="settlement-detail-basis-label">
-        <h3 id="settlement-detail-basis-label" className="settlement-item-setting-detail-modal__section-label">
+        <h3
+          id="settlement-detail-basis-label"
+          className="settlement-item-setting-detail-modal__section-label"
+        >
           산정 기준
         </h3>
         {showTier1Basis ? (
           <div className="settlement-item-setting-detail-modal__basis-row">
             <div className="settlement-item-setting-detail-modal__basis-controls">
-              <Select
-                value={basisUnit}
-                onChange={v => setBasisUnit(v)}
-                options={isTransport ? BASIS_UNIT_OPTIONS_TRANSPORT : BASIS_UNIT_OPTIONS_TIER1}
-              />
-              <Input
-                className="settlement-item-setting-detail-modal__basis-hours"
-                value={basisHoursStr}
-                onChange={e => handleHoursChange(e.target.value)}
-                inputMode="numeric"
-                suffix={
-                  <span className="settlement-item-setting-detail-modal__basis-unit-text">
-                    {isTransport ? 'km' : '시간'}
-                  </span>
-                }
-              />
+              <div style={{ width: '50%' }}>
+                <AppSelect
+                  value={basisUnit}
+                  onChange={v => setBasisUnit(v)}
+                  options={isTransport ? BASIS_UNIT_OPTIONS_TRANSPORT : BASIS_UNIT_OPTIONS_TIER1}
+                />
+              </div>
+              <div style={{ width: '50%' }}>
+                <AppInput
+                  className="settlement-item-setting-detail-modal__basis-hours"
+                  value={basisHoursStr}
+                  onChange={e => handleHoursChange(e.target.value)}
+                  inputMode="numeric"
+                  suffix={isTransport ? 'km' : '시간'}
+                />
+              </div>
             </div>
             <AppRadio.Group
               className="settlement-item-setting-detail-modal__basis-radios"
@@ -114,7 +121,7 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
           </div>
         ) : (
           <div className="settlement-item-setting-detail-modal__basis-row settlement-item-setting-detail-modal__basis-row--simple">
-            <Select
+            <AppSelect
               value={basisUnit}
               onChange={v => setBasisUnit(v)}
               options={BASIS_UNIT_OPTIONS_SIMPLE}
@@ -127,8 +134,8 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
         {isTier1 ? (
           <div className="settlement-item-setting-detail-modal__fee-row">
             <div className="settlement-item-setting-detail-modal__fee-col">
-              <span className="settlement-item-setting-detail-modal__fee-label">최대 한도 금액</span>
-              <Input
+              <AppInput
+                label="최대 한도 금액"
                 suffix="원"
                 value={maxLimitStr}
                 onChange={e => setMaxLimitStr(parseWonInput(e.target.value))}
@@ -137,8 +144,8 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
             </div>
             <div className="settlement-item-setting-detail-modal__fee-divider" aria-hidden />
             <div className="settlement-item-setting-detail-modal__fee-col">
-              <span className="settlement-item-setting-detail-modal__fee-label">기본 강사비</span>
-              <Input
+              <AppInput
+                label="기본 강사비"
                 suffix="원"
                 placeholder="직접 입력"
                 value={basicFeeStr}
@@ -148,8 +155,8 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
             </div>
             <div className="settlement-item-setting-detail-modal__fee-divider" aria-hidden />
             <div className="settlement-item-setting-detail-modal__fee-col">
-              <span className="settlement-item-setting-detail-modal__fee-label">장거리 강사비</span>
-              <Input
+              <AppInput
+                label="장거리 강사비"
                 suffix="원"
                 placeholder="직접 입력"
                 value={longDistanceFeeStr}
@@ -161,8 +168,8 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
         ) : (
           <div className="settlement-item-setting-detail-modal__fee-row settlement-item-setting-detail-modal__fee-row--simple">
             <div className="settlement-item-setting-detail-modal__fee-col">
-              <span className="settlement-item-setting-detail-modal__fee-label">최대 한도 금액</span>
-              <Input
+              <AppInput
+                label="최대 한도 금액"
                 suffix="원"
                 placeholder="직접 입력"
                 value={maxLimitStr}
@@ -200,7 +207,10 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
         </section>
       ) : (
         <section aria-labelledby="settlement-detail-qual-label">
-          <h3 id="settlement-detail-qual-label" className="settlement-item-setting-detail-modal__section-label">
+          <h3
+            id="settlement-detail-qual-label"
+            className="settlement-item-setting-detail-modal__section-label"
+          >
             자격 요건
           </h3>
           <div
@@ -222,7 +232,10 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
       )}
 
       <section aria-labelledby="settlement-detail-remark-label">
-        <h3 id="settlement-detail-remark-label" className="settlement-item-setting-detail-modal__section-label">
+        <h3
+          id="settlement-detail-remark-label"
+          className="settlement-item-setting-detail-modal__section-label"
+        >
           비고
         </h3>
         <div

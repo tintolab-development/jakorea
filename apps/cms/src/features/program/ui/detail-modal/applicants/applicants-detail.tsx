@@ -933,15 +933,12 @@ export function ApplicantDetails({
               onSearch={handleSearch}
               bordered={false}
               cardStyle={{
-                paddingLeft: '24px',
                 marginBottom: 0,
                 background: 'transparent',
               }}
             />
           )}
-          <div className="applicant-details__divider-wrapper">
-            <Divider />
-          </div>
+          <Divider className="applicant-details__divider" />
           {menu && (
             <div className="applicant-details__below-divider">
               <div className="applicant-details__table-header">

@@ -2,6 +2,10 @@
  * 회원 상세 — 프로그램 강의 이력 (필터+테이블) 요약·각주
  */
 
+.member-program-lecture-history {
+  padding: 0 24px;
+}
+
 .member-program-lecture-history__summary {
   display: flex;
   flex-direction: column;
@@ -40,4 +44,44 @@
 
 .member-program-lecture-history .cms-data-table--fluid.ant-table-wrapper {
   width: 100%;
+}
+
+/* 수강 이력 출석 링크 — user-detail-modal__attendance-link 와 동일 스펙 */
+.member-program-lecture-history .user-detail-modal__attendance-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+  color: #0070e7;
+  text-align: center;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.42px;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+}
+
+.member-program-lecture-history .user-detail-modal__attendance-link:hover {
+  color: #0070e7;
+}
+
+.member-program-lecture-history .user-detail-modal__attendance-link:focus,
+.member-program-lecture-history .user-detail-modal__attendance-link:active {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
 }

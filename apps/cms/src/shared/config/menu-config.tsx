@@ -431,11 +431,27 @@ const allMenuItems: MenuItemConfig[] = [
         ],
       },
       {
-        key: '/admin/settings/permissions',
+        key: 'member-permissions-group',
         label: '회원 권한 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
+        children: [
+          {
+            key: '/admin/permission-requests',
+            label: '권한 승인',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/admin/settings/permissions',
+            label: '관리자 권한 설정',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+        ],
       },
     ],
   },
@@ -773,6 +789,16 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
 
   // 경로 정규화 (끝에 있는 / 제거)
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
+
+  // LNB 접근 차단: 특정 관리 카테고리는 하위 경로 포함 접근 불가
+  const blockedPathPrefixes = ['/templates/', '/admin/posts/', '/logs/']
+  if (blockedPathPrefixes.some(prefix => normalizedPath.startsWith(prefix))) {
+    return false
+  }
+  const blockedExactPaths = ['/sponsors', '/education-records']
+  if (blockedExactPaths.includes(normalizedPath)) {
+    return false
+  }
 
   // Phase 0.1.5: 관리자 — 프로그램 영역은 아래 예외 규칙으로 먼저 허용
   // 그 외(회원 목록 `/users/list`, 템플릿, 게시글 등)는 하단 `findAllMenuItemsByPath`와 동일 규칙으로 판단

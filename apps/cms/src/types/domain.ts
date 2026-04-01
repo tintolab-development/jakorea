@@ -600,6 +600,8 @@ export interface UserHistory {
   role: ParticipationRole
   completedAt: DateValue
   finalStatus: FinalStatus
+  /** CMS 봉사·참여 이력 목록 필터/표시용 (API 연동 시) */
+  managerName?: string
   // 강사인 경우
   paymentStatus?: PaymentStatus
   paymentAmount?: number

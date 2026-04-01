@@ -292,6 +292,19 @@
   background: var(--sidebar-selected-bg) !important;
 }
 
+/*
+ * 3뎁스 리프 선택: 1·2뎁스와 동일 #345663
+ * 상위 `li.ant-menu-submenu-selected .ant-menu-sub .ant-menu-item { open-bg }` 가
+ * 중첩된 .ant-menu-sub 안 선택 행까지 덮어쓰므로, 이중 서브 + selected 조합으로 우선합니다.
+ */
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected {
+  background: var(--sidebar-selected-bg) !important;
+}
+
+.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected:hover {
+  background: var(--sidebar-hover-on-selected) !important;
+}
+
 /* ---- 타이포: 3뎁스 16px / 500(비선택), 700(선택) ---- */
 .sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-item,
 .sidebar-menu .ant-menu-sub .ant-menu-sub .ant-menu-submenu-title,

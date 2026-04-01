@@ -13,8 +13,8 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
-import { ApplicantScheduleList } from './detail-modal/applicants/applicant-schedule-list'
-import { SCHEDULE_COLORS } from './program-schedule-colors'
+import { ApplicantScheduleList } from '../applicants/applicant-schedule-list'
+import { SCHEDULE_COLORS } from '../../program-schedule-colors'
 import { AppMultiSelect } from '@/shared/ui'
 import './participating-institutions-calendar-view.css'
 
@@ -80,6 +80,69 @@ interface CalendarEvent {
   }
 }
 
+type CalendarPopoverRowParts = {
+  title: string
+  location: string
+  valueLabel: string
+  valueTone?: 'default' | 'pending' | 'partial' | 'completed' | 'na' | 'rejected'
+}
+
+function getPopoverRowParts(ev: CalendarEvent): CalendarPopoverRowParts {
+  const row = ev.originalItem.row
+  const settlementByApproval: Record<
+    ParticipatingSchoolRow['approvalStatus'],
+    { label: string; tone: CalendarPopoverRowParts['valueTone'] }
+  > = {
+    pending: { label: '정산 대기', tone: 'pending' },
+    approved: { label: '정산 완료', tone: 'completed' },
+    rejected: { label: '정산 반려', tone: 'rejected' },
+    cancelled: { label: '해당 없음', tone: 'na' },
+  }
+  const settlement = settlementByApproval[row.approvalStatus] ?? {
+    label: '정산 대기',
+    tone: 'pending' as const,
+  }
+  return {
+    title: row.schoolName || '-',
+    location: row.region || '-',
+    valueLabel: settlement.label,
+    valueTone: settlement.tone,
+  }
+}
+
+function ParticipatingCalendarEventPopoverContent({
+  events,
+  resolvePopoverRowParts,
+}: {
+  events: CalendarEvent[]
+  resolvePopoverRowParts?: (ev: CalendarEvent) => CalendarPopoverRowParts
+}) {
+  return (
+    <div className="participating-institutions-calendar-popover">
+      {events.map(ev => {
+        const parts = resolvePopoverRowParts ? resolvePopoverRowParts(ev) : getPopoverRowParts(ev)
+        return (
+          <div key={ev.id} className="participating-institutions-calendar-popover__row">
+            <span className="participating-institutions-calendar-popover__title">{parts.title}</span>
+            <span className="participating-institutions-calendar-popover__sep" aria-hidden>
+              |
+            </span>
+            <span className="participating-institutions-calendar-popover__text">{parts.location}</span>
+            <span className="participating-institutions-calendar-popover__sep" aria-hidden>
+              |
+            </span>
+            <span
+              className={`participating-institutions-calendar-popover__text participating-institutions-calendar-popover__text--${parts.valueTone ?? 'default'}`}
+            >
+              {parts.valueLabel}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function buildEventsFromSchools(schools: ParticipatingSchoolRow[]): CalendarEvent[] {
   const byDateAndSchool = new Map<
     string,
@@ -133,6 +196,11 @@ export interface ParticipatingInstitutionsCalendarViewProps {
   /** 월간/주간 — onCalendarGranularityChange와 함께 전달 시 쿼리스트링 등과 동기화 */
   calendarGranularity?: 'month' | 'week'
   onCalendarGranularityChange?: (mode: 'month' | 'week') => void
+  /** 셀 hover 팝오버 한 줄 내용 커스터마이징 (탭별 대표 정보 유지) */
+  resolvePopoverRowParts?: (args: {
+    schoolRow: ParticipatingSchoolRow
+    date: Dayjs
+  }) => CalendarPopoverRowParts
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -144,6 +212,7 @@ export function ParticipatingInstitutionsCalendarView({
   onDateSelect,
   calendarGranularity: calendarGranularityProp,
   onCalendarGranularityChange,
+  resolvePopoverRowParts,
 }: ParticipatingInstitutionsCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
@@ -358,13 +427,24 @@ export function ParticipatingInstitutionsCalendarView({
               return (
                 <Tooltip
                   key={ev.id}
+                  overlayClassName="participating-institutions-calendar-tooltip-overlay"
                   title={
-                    <pre className="participating-institutions-calendar-event-tooltip">
-                      {getEventPreviewContent(ev)}
-                    </pre>
+                    <ParticipatingCalendarEventPopoverContent
+                      events={[ev]}
+                      resolvePopoverRowParts={
+                        resolvePopoverRowParts
+                          ? event =>
+                              resolvePopoverRowParts({
+                                schoolRow: event.originalItem.row,
+                                date: event.startDate,
+                              })
+                          : undefined
+                      }
+                    />
                   }
                   placement="topLeft"
                   mouseEnterDelay={0.2}
+                  arrow={false}
                 >
                   <div
                     className={`participating-institutions-calendar-event ${isEventSelected ? 'participating-institutions-calendar-event--selected' : ''}`}
@@ -383,16 +463,24 @@ export function ParticipatingInstitutionsCalendarView({
             })}
             {dayEvents.length > 2 && (
               <Tooltip
+                overlayClassName="participating-institutions-calendar-tooltip-overlay"
                 title={
-                  <pre className="participating-institutions-calendar-event-tooltip">
-                    {dayEvents
-                      .slice(2)
-                      .map(ev => getEventPreviewContent(ev))
-                      .join('\n\n')}
-                  </pre>
+                  <ParticipatingCalendarEventPopoverContent
+                    events={dayEvents.slice(2)}
+                    resolvePopoverRowParts={
+                      resolvePopoverRowParts
+                        ? event =>
+                            resolvePopoverRowParts({
+                              schoolRow: event.originalItem.row,
+                              date: event.startDate,
+                            })
+                        : undefined
+                    }
+                  />
                 }
                 placement="topLeft"
                 mouseEnterDelay={0.2}
+                arrow={false}
               >
                 <div className="participating-institutions-calendar-event-more">
                   외 {dayEvents.length - 2}개의 일정
@@ -403,19 +491,6 @@ export function ParticipatingInstitutionsCalendarView({
         )}
       </div>
     )
-  }
-
-  /** 태그 호버 시 미리보기용 텍스트 (학교명, 지역, 해당일 세션 요약) */
-  function getEventPreviewContent(ev: CalendarEvent): string {
-    const { row, sessionsOnDate, educationGrade } = ev.originalItem
-    const lines = [`${row.schoolName} | ${row.region}`]
-    if (sessionsOnDate.length > 0) {
-      const sessionLines = sessionsOnDate.map(
-        s => `${s.classNum} (${s.timeRange.replace(/~/g, ' ~ ')}) | ${educationGrade}`
-      )
-      lines.push(...sessionLines)
-    }
-    return lines.join('\n')
   }
 
   const renderWeekView = () => {
@@ -450,13 +525,24 @@ export function ParticipatingInstitutionsCalendarView({
                       return (
                         <Tooltip
                           key={ev.id}
+                          overlayClassName="participating-institutions-calendar-tooltip-overlay"
                           title={
-                            <pre className="participating-institutions-calendar-event-tooltip">
-                              {getEventPreviewContent(ev)}
-                            </pre>
+                            <ParticipatingCalendarEventPopoverContent
+                              events={[ev]}
+                              resolvePopoverRowParts={
+                                resolvePopoverRowParts
+                                  ? event =>
+                                      resolvePopoverRowParts({
+                                        schoolRow: event.originalItem.row,
+                                        date: event.startDate,
+                                      })
+                                  : undefined
+                              }
+                            />
                           }
                           placement="topLeft"
                           mouseEnterDelay={0.2}
+                          arrow={false}
                         >
                           <div
                             className="participating-institutions-calendar-event"
@@ -475,16 +561,24 @@ export function ParticipatingInstitutionsCalendarView({
                     })}
                     {dayEvents.length > 2 && (
                       <Tooltip
+                        overlayClassName="participating-institutions-calendar-tooltip-overlay"
                         title={
-                          <pre className="participating-institutions-calendar-event-tooltip">
-                            {dayEvents
-                              .slice(2)
-                              .map(ev => getEventPreviewContent(ev))
-                              .join('\n\n')}
-                          </pre>
+                          <ParticipatingCalendarEventPopoverContent
+                            events={dayEvents.slice(2)}
+                            resolvePopoverRowParts={
+                              resolvePopoverRowParts
+                                ? event =>
+                                    resolvePopoverRowParts({
+                                      schoolRow: event.originalItem.row,
+                                      date: event.startDate,
+                                    })
+                                : undefined
+                            }
+                          />
                         }
                         placement="topLeft"
                         mouseEnterDelay={0.2}
+                        arrow={false}
                       >
                         <div className="participating-institutions-calendar-event-more">
                           외 {dayEvents.length - 2}개의 일정
