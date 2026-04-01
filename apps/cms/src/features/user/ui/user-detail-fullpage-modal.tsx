@@ -72,7 +72,11 @@ function clampProgramsChildForRole(
     if (child === 'lecture') return 'enrollment'
     return child
   }
-  if (role === 'INSTRUCTOR') return child
+  if (role === 'INSTRUCTOR') {
+    // TODO: 강사 상세 > 프로그램 수강 이력은 개발 완료 후 재오픈 예정
+    if (child === 'enrollment') return 'lecture'
+    return child
+  }
   return 'enrollment'
 }
 
@@ -421,10 +425,15 @@ export function UserDetailFullPageModal({
           ? 'payment-status'
           : 'detail-info'
 
-    let nextChild: UserDetailProgramsChildKey = 'enrollment'
+    let nextChild: UserDetailProgramsChildKey =
+      displayUser.role === 'INSTRUCTOR' ? 'lecture' : 'enrollment'
     if (nextLnb === 'history' && hasChildMenu) {
       const parsed = parseProgramsChildParam(sp.get(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY))
-      nextChild = parsed ? clampProgramsChildForRole(displayUser.role, parsed) : 'enrollment'
+      nextChild = parsed
+        ? clampProgramsChildForRole(displayUser.role, parsed)
+        : displayUser.role === 'INSTRUCTOR'
+          ? 'lecture'
+          : 'enrollment'
     }
 
     setActiveLnb(nextLnb)
@@ -540,7 +549,8 @@ export function UserDetailFullPageModal({
               label: programsLabel,
               icon: programsIcon,
               children: [
-                { key: 'enrollment', label: '프로그램 수강 이력' },
+                // TODO: 강사 상세 > 프로그램 수강 이력은 개발 완료 후 주석 해제 예정
+                // { key: 'enrollment', label: '프로그램 수강 이력' },
                 { key: 'lecture', label: '프로그램 강의 이력' },
                 { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
               ],
@@ -602,7 +612,7 @@ export function UserDetailFullPageModal({
     const k = key as UserDetailLnbKey
     if (k === 'history' && displayUser && programsHistoryHasChildMenu(displayUser.role)) {
       setActiveLnb('history')
-      setActiveProgramsChild('enrollment')
+      setActiveProgramsChild(displayUser.role === 'INSTRUCTOR' ? 'lecture' : 'enrollment')
     } else {
       setActiveLnb(k)
     }
@@ -613,7 +623,10 @@ export function UserDetailFullPageModal({
         if (displayUser?.id) nextParams.set('id', displayUser.id)
         nextParams.set('lnb', k)
         if (k === 'history' && displayUser && programsHistoryHasChildMenu(displayUser.role)) {
-          nextParams.set(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, 'enrollment')
+          nextParams.set(
+            USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
+            displayUser.role === 'INSTRUCTOR' ? 'lecture' : 'enrollment'
+          )
         } else {
           nextParams.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
         }
@@ -625,7 +638,8 @@ export function UserDetailFullPageModal({
 
   const handleSidebarSelectChild = (_groupKey: string, childKey: string) => {
     if (mode === 'permission') return
-    const child = childKey as UserDetailProgramsChildKey
+    if (!displayUser) return
+    const child = clampProgramsChildForRole(displayUser.role, childKey as UserDetailProgramsChildKey)
     setActiveProgramsChild(child)
     setActiveLnb('history')
     setSearchParams(

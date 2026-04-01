@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useCallback, useMemo, useState, type Key } from 'react'
-import { DatePicker, Input, Select, Spin, Table, message } from 'antd'
+import { Spin, Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -16,9 +16,9 @@ import {
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
 import { AppButton } from '@/shared/ui/app-button'
-import '@/features/program/ui/detail-modal/program-status/participating-institutions-section.css'
+import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
-import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import {
@@ -43,8 +43,6 @@ interface AppliedFilters {
   accountStatus: AppliedAccountStatus
   transferDateRange: [Dayjs, Dayjs] | null
 }
-
-const DATE_DISPLAY_FORMAT = 'YYYY. MM. DD'
 
 /** 기획: 전년도 12월 ~ 금년도 12월(말일) — 페이지 진입·초기 조회 기본 구간 */
 function getDefaultTransferDateRange(reference: Dayjs = dayjs()): [Dayjs, Dayjs] {
@@ -77,7 +75,8 @@ function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): Account
   return rows.filter(row => {
     if (qi && !row.instructorName.includes(qi)) return false
     if (qp && !row.programName.includes(qp)) return false
-    if (applied.accountStatus !== 'all' && row.accountPaymentStatus !== applied.accountStatus) return false
+    if (applied.accountStatus !== 'all' && row.accountPaymentStatus !== applied.accountStatus)
+      return false
     if (!matchesDateRange(row.transferScheduledDate, applied.transferDateRange)) return false
     return true
   })
@@ -117,6 +116,68 @@ export default function AccountPaymentsPage() {
   const [accountPaymentDetailRow, setAccountPaymentDetailRow] = useState<AccountPaymentRow | null>(
     null
   )
+  const accountFilterFields = useMemo((): FilterFieldConfig[] => {
+    const colWidth = '25%'
+    return [
+      {
+        key: 'instructorName',
+        type: 'search',
+        label: '강사명',
+        placeholder: '강사명을 입력하세요',
+        width: colWidth,
+      },
+      {
+        key: 'programName',
+        type: 'search',
+        label: '프로그램명',
+        placeholder: '프로그램명을 입력하세요',
+        width: colWidth,
+      },
+      {
+        key: 'accountStatus',
+        type: 'select',
+        label: '계좌 지급 현황',
+        placeholder: '전체',
+        options: statusSelectOptions,
+        width: colWidth,
+      },
+      {
+        key: 'transferDateRange',
+        type: 'dateRange',
+        label: '이체 예정일',
+        width: colWidth,
+      },
+    ]
+  }, [])
+  const unifiedFilterValues = useMemo(
+    () => ({
+      instructorName: draftInstructor,
+      programName: draftProgram,
+      accountStatus: draftAccountStatus === 'all' ? undefined : draftAccountStatus,
+      transferDateRange: draftDateRange,
+    }),
+    [draftAccountStatus, draftDateRange, draftInstructor, draftProgram]
+  )
+  const handleUnifiedFilterChange = useCallback((key: string, value: unknown) => {
+    if (key === 'instructorName') {
+      setDraftInstructor(String(value ?? ''))
+      return
+    }
+    if (key === 'programName') {
+      setDraftProgram(String(value ?? ''))
+      return
+    }
+    if (key === 'accountStatus') {
+      setDraftAccountStatus((value == null || value === '' ? 'all' : value) as AppliedAccountStatus)
+      return
+    }
+    if (key === 'transferDateRange') {
+      const range = Array.isArray(value) ? value : null
+      setDraftDateRange(
+        (range?.[0] && range?.[1] ? [range[0], range[1]] : null) as [Dayjs, Dayjs] | null
+      )
+    }
+  }, [])
 
   const appliedResetKey = useMemo(
     () =>
@@ -342,80 +403,16 @@ export default function AccountPaymentsPage() {
         </div>
       </div>
 
-      <div className="payment-orders-page__content-wrapper account-payments-page__filter-table-surface">
+      <div className="payment-orders-page__content-wrapper">
         <div className="participating-institutions-section">
-          <div className="participating-institutions-section__filters program-progress-tab__filters account-payments-page__filters">
-            <div
-              className="account-payments-page__filter-grid"
-              role="group"
-              aria-label="검색 조건"
-            >
-              <div className="account-payments-page__filter-cell">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top account-payments-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">강사명</span>
-                  <Input
-                    placeholder="강사명을 입력하세요"
-                    value={draftInstructor}
-                    onChange={e => setDraftInstructor(e.target.value)}
-                    allowClear
-                    className="participating-institutions-section__filter-input"
-                  />
-                </div>
-              </div>
-              <div className="account-payments-page__filter-cell">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top account-payments-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">프로그램명</span>
-                  <Input
-                    placeholder="프로그램명을 입력하세요"
-                    value={draftProgram}
-                    onChange={e => setDraftProgram(e.target.value)}
-                    allowClear
-                    className="participating-institutions-section__filter-input"
-                  />
-                </div>
-              </div>
-              <div className="account-payments-page__filter-cell">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top account-payments-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">계좌 지급 현황</span>
-                  <Select<AppliedAccountStatus>
-                    placeholder="전체"
-                    value={draftAccountStatus === 'all' ? undefined : draftAccountStatus}
-                    onChange={v => setDraftAccountStatus((v ?? 'all') as AppliedAccountStatus)}
-                    allowClear
-                    options={statusSelectOptions.filter(o => o.value !== 'all')}
-                    getPopupContainer={() => document.body}
-                  />
-                </div>
-              </div>
-              <div className="account-payments-page__filter-cell">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top account-payments-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">이체 예정일</span>
-                  <DatePicker.RangePicker
-                    className="payment-orders-page__range-picker account-payments-page__range-picker"
-                    value={draftDateRange}
-                    onChange={dates =>
-                      setDraftDateRange(dates?.[0] && dates?.[1] ? [dates[0], dates[1]] : null)
-                    }
-                    format={DATE_DISPLAY_FORMAT}
-                    allowClear
-                    getPopupContainer={() => document.body}
-                  />
-                </div>
-              </div>
-              <div className="account-payments-page__filter-cell account-payments-page__filter-cell--submit">
-                <div className="account-payments-page__filter-btn-slot">
-                  <AppButton
-                    variant="primary"
-                    size="filter"
-                    className="account-payments-page__filter-submit"
-                    onClick={handleSearch}
-                  >
-                    조회
-                  </AppButton>
-                </div>
-              </div>
-            </div>
-          </div>
+          <UnifiedFilterCard
+            bordered={false}
+            cardStyle={{ marginBottom: 0 }}
+            fields={accountFilterFields}
+            filters={unifiedFilterValues}
+            onFilterChange={handleUnifiedFilterChange}
+            onSearch={handleSearch}
+          />
 
           <div className="participating-institutions-section__divider" />
 
@@ -428,19 +425,8 @@ export default function AccountPaymentsPage() {
                     : 'participating-institutions-section__table-heading'
                 }
               >
-                {viewMode === 'calendar' ? (
-                  <>
-                    <span className="payment-orders-page__calendar-title">계좌 지급 대상 목록</span>
-                    <span className="payment-orders-page__calendar-description">총 {total}건</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="participating-institutions-section__table-title">
-                      계좌 지급 대상 목록
-                    </span>
-                    <span className="participating-institutions-section__table-description">총 {total}건</span>
-                  </>
-                )}
+                <span className="payment-orders-page__calendar-title">계좌 지급 대상 목록</span>
+                <span className="payment-orders-page__calendar-description">총 {total}건</span>
               </div>
               <div className="participating-institutions-section__table-actions">
                 {viewMode === 'list' ? (
@@ -494,14 +480,11 @@ export default function AccountPaymentsPage() {
                 <AccountPaymentsCalendarView key={appliedResetKey} rows={filteredRows} />
               ) : (
                 <Table<AccountPaymentRow>
-                  className="participating-institutions-section__table payment-orders-page__table account-payments-page__table"
+                  className="cms-data-table"
                   rowKey="id"
                   columns={columns}
                   dataSource={filteredRows}
                   pagination={false}
-                  size="middle"
-                  tableLayout="fixed"
-                  scroll={{ x: 1200 }}
                   rowSelection={rowSelection}
                   rowClassName={() => 'account-payments-page__table-row--clickable'}
                   onRow={record => ({
@@ -538,11 +521,7 @@ export default function AccountPaymentsPage() {
             </div>
           }
         >
-          <BulkTransferPreviewModal
-            open
-            onCancel={closeBulkTransferPreview}
-            rows={filteredRows}
-          />
+          <BulkTransferPreviewModal open onCancel={closeBulkTransferPreview} rows={filteredRows} />
         </Suspense>
       ) : null}
 
