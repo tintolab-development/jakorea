@@ -431,11 +431,27 @@ const allMenuItems: MenuItemConfig[] = [
         ],
       },
       {
-        key: '/admin/settings/permissions',
+        key: 'member-permissions-group',
         label: '회원 권한 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
+        children: [
+          {
+            key: '/admin/permission-requests',
+            label: '권한 승인',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/admin/settings/permissions',
+            label: '관리자 권한 설정',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+        ],
       },
     ],
   },

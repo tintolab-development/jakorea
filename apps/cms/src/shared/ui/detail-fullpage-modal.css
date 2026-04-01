@@ -10,7 +10,7 @@
 .detail-fullpage-modal.ant-modal {
   --detail-fullpage-padding-x: 52px;
   --detail-fullpage-padding-bottom: 52px;
-  --detail-fullpage-header-padding-top: 60px;
+  --detail-fullpage-header-padding-top: 30px;
   --detail-fullpage-header-padding-x: 52px;
   --detail-fullpage-header-padding-bottom: 16px;
   --detail-fullpage-section-gap: 32px;
@@ -62,7 +62,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: var(--spacing-12);
-  padding: var(--detail-fullpage-header-padding-top, 60px)
+  padding: var(--detail-fullpage-header-padding-top, 30px)
     var(--detail-fullpage-header-padding-x, 52px) var(--detail-fullpage-header-padding-bottom, 16px)
     var(--detail-fullpage-header-padding-x, 52px);
   min-height: 90px;

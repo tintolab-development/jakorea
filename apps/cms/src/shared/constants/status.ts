@@ -308,6 +308,29 @@ export function isProgramLifecycleEnded(
 }
 
 /**
+ * 프로그램 엔티티의 lifecycle → 회원 상세·경제 목록과 동일한 5단계 배지용 상태
+ * (담당 프로그램 이력 등 Program 행 표시)
+ */
+export function getEnrollmentDisplayStatusFromProgramLifecycle(
+  lifecycleStatus: ProgramLifecycleStatus | undefined | null
+): ProgramEnrollmentDisplayStatus {
+  if (lifecycleStatus == null) {
+    return 'EDUCATION_SCHEDULED'
+  }
+  if (isProgramLifecycleEnded(lifecycleStatus)) {
+    return 'PROGRAM_ENDED'
+  }
+  if (
+    lifecycleStatus === 'education_in_progress' ||
+    lifecycleStatus === 'education_before_textbook' ||
+    lifecycleStatus === 'education_after_textbook'
+  ) {
+    return 'EDUCATION_IN_PROGRESS'
+  }
+  return 'EDUCATION_SCHEDULED'
+}
+
+/**
  * 수강 이력 표시용 진행 현황 (추론 연동)
  * Application 기준으로 계산한 뒤, 프로그램이 종료 단계면 PROGRAM_ENDED로 통일
  */

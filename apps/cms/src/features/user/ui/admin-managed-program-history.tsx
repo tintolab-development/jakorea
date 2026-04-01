@@ -9,8 +9,11 @@ import type { Program, TargetLevel } from '@/types/domain'
 import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
 import { mockPrograms } from '@/data/mock'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
+import {
+  getEnrollmentDisplayStatusFromProgramLifecycle,
+  getProgramLifecycleLabel,
+} from '@/shared/constants/status'
+import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
 import { FilterListLayout } from '@/shared/ui/filter-list-layout'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { AppButton } from '@/shared/ui/app-button'
@@ -18,7 +21,6 @@ import { Divider } from '@/shared/components/divider'
 import '@/features/program/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import './admin-managed-program-history.css'
 
 type AdminUser = Omit<User, 'password'>
 
@@ -237,8 +239,12 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         key: 'lifecycle',
         width: 160,
         align: 'center',
-        render: (_: unknown, p: Program) =>
-          <ProgramLifecycleStatusTableCell status={p.lifecycleStatus} />,
+        render: (_: unknown, p: Program) => (
+          <ProgramEnrollmentStatusBadge
+            status={getEnrollmentDisplayStatusFromProgramLifecycle(p.lifecycleStatus)}
+            variant="economyList"
+          />
+        ),
       },
       {
         title: '참여자 모집 인원',
@@ -295,7 +301,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
 
   return (
     <div className="admin-managed-program-history">
-      <div className="user-list-page__filter-wrap">
+      <div>
         <FilterListLayout
           className="program-list-content-wrapper admin-managed-program-history__layout"
           bordered={false}
@@ -318,7 +324,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
               className="program-list-card program-list-card--in-wrapper program-list-card--no-border"
               style={{ border: 'none', boxShadow: 'none' }}
             >
-              <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
+              <div>
                 <Table<Program>
                   rowSelection={{
                     selectedRowKeys,
@@ -329,8 +335,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
                   rowKey="id"
                   tableLayout="fixed"
                   pagination={false}
-                  size="small"
-                  scroll={{ x: 1100, y: 'calc(100vh - 420px)' }}
+                  className="cms-data-table cms-data-table--fluid user-list-table"
                 />
               </div>
             </Card>

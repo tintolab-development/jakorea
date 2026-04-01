@@ -1,0 +1,136 @@
+/* 스코프: 관리자 권한 설정 (틸 계열, Ant Design 기본과 충돌 최소화) */
+
+.permission-customization-page {
+  padding: 0 24px;
+  min-height: 100%;
+}
+
+/* 본문은 Tabs 밖에서 렌더 — 빈 패널 영역 숨김 */
+.permission-customization-page .permission-customization-page__tabs .ant-tabs-content-holder {
+  display: none;
+}
+
+.permission-customization-page .permission-customization-page__tabs .ant-tabs-tab {
+  color: #7d7d7d;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.permission-customization-page
+  .permission-customization-page__tabs
+  .ant-tabs-tab.ant-tabs-tab-active
+  .ant-tabs-tab-btn {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.permission-customization-page__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 1599px) {
+  .permission-customization-page__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991px) {
+  .permission-customization-page__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575px) {
+  .permission-customization-page__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 카테고리 블록: 헤더(틸) + 세부 권한(흰 패널) */
+.permission-customization-page__category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* 전체 체크박스 영역 */
+.permission-customization-page__card-head {
+  display: flex;
+  padding: 14px 24px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  box-sizing: border-box;
+  color: var(--default-WT, #fff);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  background: var(--JA-mint-02, #296075);
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.permission-customization-page__card-head-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.permission-customization-page__card-head-checkbox.ant-checkbox-wrapper {
+  color: var(--default-WT, #fff);
+}
+
+.permission-customization-page__card-head-checkbox .ant-checkbox .ant-checkbox-inner {
+  border-color: rgba(255, 255, 255, 0.85);
+  background: transparent;
+}
+
+.permission-customization-page__card-head-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #20b2aa;
+  border-color: #20b2aa;
+}
+
+/* 세부 권한 영역 */
+.permission-customization-page__card-body {
+  display: flex;
+  padding: 22px 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-radius: 0 0 10px 10px;
+  background: var(--default-WT, #fff);
+  box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.05);
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  border-radius: 8px;
+}
+
+.permission-customization-page__item-row {
+  width: 100%;
+  text-align: left;
+}
+
+.permission-customization-page__item-checkbox.ant-checkbox-wrapper {
+  width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.permission-customization-page__item-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #20b2aa;
+  border-color: #20b2aa;
+}
