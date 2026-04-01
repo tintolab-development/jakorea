@@ -538,8 +538,7 @@ export function MemberProgramLectureHistory({
           title: '교육 학년',
           key: 'educationGrade',
           align: 'center',
-          render: (_: unknown, record: Application) =>
-            schoolEducationGrade(record, applications),
+          render: (_: unknown, record: Application) => schoolEducationGrade(record, applications),
         },
         managerColumn,
       ]
@@ -675,10 +674,10 @@ export function MemberProgramLectureHistory({
   )
 
   return (
-    <div className="member-program-lecture-history admin-managed-program-history">
+    <div className="member-program-lecture-history">
       <div className="user-list-page__filter-wrap">
         <FilterListLayout
-          className="program-list-content-wrapper admin-managed-program-history__layout"
+          className="program-list-content-wrapper"
           bordered={false}
           fields={filterFields}
           filters={{

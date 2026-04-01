@@ -56,7 +56,7 @@ import {
 } from './manager-delete-guide-modal'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
-import './participating-institutions-section.css'
+import './detail-modal/program-status/participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'

@@ -894,10 +894,7 @@ export function UserDetailFullPageModal({
           enrollmentSection
         ))}
       {activeProgramsChild === 'lecture' && role === 'INSTRUCTOR' && (
-        <MemberProgramLectureHistory
-          applications={applications}
-          loading={applicationsLoading}
-        />
+        <MemberProgramLectureHistory applications={applications} loading={applicationsLoading} />
       )}
       {activeProgramsChild === 'volunteer' && volunteerProgramHistory}
     </div>

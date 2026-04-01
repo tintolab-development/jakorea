@@ -1,11 +1,157 @@
+@import './program-status-participating-shared.css';
+
 /**
- * 참여 강사 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여 강사)
- * 필터·테이블 헤더·테이블 스타일. 정산현황 텍스트 컬러.
+ * 참여 기관 전용 (풀페이지 모달 > 프로그램 진행 현황)
+ * 강의 회차 셀·교재 드롭다운 행 높이·StatusDropdownCell 정렬
+ * + 참여 강사 전용(하단): 버튼·정산 텍스트·캘린더 우측 카드
  */
 
-.participating-instructors-section {
-  width: 100%;
+/* 강의 회차 td: 셀 내 줄바꿈 없음. 회차별 한 줄, 영역은 텍스트 길이만큼(480px). 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
+.participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions {
+  width: 480px;
+  min-width: 480px;
+  white-space: normal;
+  padding: 12px 24px !important;
+  vertical-align: top;
+  box-sizing: border-box;
 }
+
+/* 강의 회차 별 교육 진행 날짜 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
+.participating-institutions-section__sessions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  line-height: 150%;
+}
+
+/* 강의 회차 라인: 회차별 한 줄 처리 */
+.participating-institutions-section__session-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* n차시 배지: 47*26 고정, 배지 내 텍스트 스펙 */
+.participating-institutions-section__session-round-tag {
+  display: inline-flex;
+  width: 47px;
+  height: 26px;
+  padding: 3px 8px 2px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  flex-shrink: 0;
+}
+
+/* 날짜 | 시간 | 교시 구분 디바이더 */
+.participating-institutions-section__session-divider {
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* 외 n개의 교육 일정 텍스트: opacity 0.5 */
+.participating-institutions-section__session-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  margin-top: 0;
+}
+
+/* 교재 배송 현황: 공통 StatusDropdownCell 사용 — 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 (트리거/래퍼 152px와 동일).
+ * 좌우 패딩 0으로 해야 152px 트리거가 셀을 넘지 않음 (100% 배율에서 Ant Design td 기본 패딩 시 내용 영역 < 152px 되어 overflow 발생) */
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+/* 선택된 태그 오버레이(트리거) 152px 고정 — 드롭다운 래퍼와 동일 */
+.participating-institutions-section .status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 152px !important;
+  min-width: 152px !important;
+  max-width: 152px !important;
+}
+
+/* 테이블 셀 높이 53px인 경우: 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+/* 테이블 셀 높이 53px인 경우 해당 셀 padding 0 — vertical shifting 방지, 좌우 0으로 152px 트리거가 셀 밖으로 넘지 않도록 */
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+ * 참여 강사 전용 (같은 레이아웃·테이블 토큰 재사용, 루트에 --instructors 수정자)
+ * -------------------------------------------------------------------------- */
 
 /* 강사 등록 · 개인정보 상세보기: JA-mint-01 (#01A1AF) 채움 + 연한 테두리 */
 .participating-instructors-section__btn-add-instructor.app-button.ant-btn-primary,
@@ -30,8 +176,9 @@
   color: var(--color-text-disabled) !important;
 }
 
-/* 테이블 헤더 타이틀 스펙 */
-.participating-instructors-section .participating-institutions-section__table-title {
+/* 테이블 헤더 타이틀 스펙 (참여 강사 뷰) */
+.participating-institutions-section--instructors .participating-institutions-section__table-title,
+.program-status-participating--instructors .program-status-participating__table-title {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 20px;

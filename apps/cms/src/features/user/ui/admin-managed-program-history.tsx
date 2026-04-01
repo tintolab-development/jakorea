@@ -134,13 +134,14 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
   }, [sourcePrograms])
 
   const filterFields = useMemo((): FilterFieldConfig[] => {
+    const colWidth = '20%'
     return [
       {
         key: 'title',
         type: 'search',
         label: '프로그램명',
         placeholder: '프로그램명을 입력하세요',
-        flex: '1 1 min(100%, 280px)',
+        width: colWidth,
       },
       {
         key: 'year',
@@ -148,7 +149,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         label: '진행년도',
         placeholder: '전체',
         options: yearOptions,
-        flex: '0 1 152px',
+        width: colWidth,
       },
       {
         key: 'lifecycle',
@@ -156,7 +157,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         label: '프로그램 진행 현황',
         placeholder: '전체',
         options: lifecycleOptions,
-        flex: '1 1 200px',
+        width: colWidth,
       },
       {
         key: 'participantType',
@@ -164,7 +165,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         label: '참여자 유형',
         placeholder: '전체',
         options: PARTICIPANT_OPTIONS,
-        flex: '0 1 168px',
+        width: colWidth,
       },
       {
         key: 'targetLevel',
@@ -172,7 +173,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         label: '교육 대상',
         placeholder: '전체',
         options: TARGET_LEVEL_OPTIONS,
-        flex: '0 1 168px',
+        width: colWidth,
       },
     ]
   }, [yearOptions, lifecycleOptions])
@@ -300,10 +301,10 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
   )
 
   return (
-    <div className="admin-managed-program-history">
+    <div style={{ padding: '0 24px' }}>
       <div>
         <FilterListLayout
-          className="program-list-content-wrapper admin-managed-program-history__layout"
+          className="program-list-content-wrapper"
           bordered={false}
           fields={filterFields}
           filters={{

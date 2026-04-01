@@ -6,10 +6,11 @@
 import { useMemo, useState, useEffect, useRef, type CSSProperties } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { Table, Row, Col, Select, Input, Checkbox } from 'antd'
+import { Table, Checkbox } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import { AppMultiSelect } from '@/shared/ui'
+import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import { message } from 'antd'
 import {
@@ -20,11 +21,14 @@ import {
 } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { useParticipatingInstructorsParams } from '../hooks/use-participating-instructors-params'
-import type { ProgressFilters } from '../hooks/use-program-progress-params'
-import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
-import { DeleteGuideModal, buildInstructorMessageLines } from './manager-delete-guide-modal'
-import { AddInstructorModal, type AddInstructorFormValues } from './add-instructor-modal'
+import {
+  useParticipatingInstructorsParams,
+  type ParticipatingInstructorsFilters,
+} from '../../../hooks/use-participating-instructors-params'
+import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
+import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import { DeleteGuideModal, buildInstructorMessageLines } from '../../manager-delete-guide-modal'
+import { AddInstructorModal, type AddInstructorFormValues } from '../../add-instructor-modal'
 import {
   ParticipatingInstructorFullpageView,
   type InstructorDetailTabKey,
@@ -36,10 +40,9 @@ import {
   getScheduleColorPair,
   SCHEDULE_COLORS,
   type ScheduleColorPair,
-} from './program-schedule-colors'
+} from '../../program-schedule-colors'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
-import './participating-instructors-section.css'
 
 const REGION_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -116,7 +119,9 @@ export interface ParticipatingInstructorsSectionProps {
 }
 
 /** 목록 행 + mock id 병합 (상세·이력서 필드) */
-function mergeParticipatingInstructorRow(row: ParticipatingInstructorRow): ParticipatingInstructorRow {
+function mergeParticipatingInstructorRow(
+  row: ParticipatingInstructorRow
+): ParticipatingInstructorRow {
   const extended = MOCK_PARTICIPATING_INSTRUCTORS.find(m => m.id === row.id) ?? null
   return extended ? { ...row, ...extended } : row
 }
@@ -140,7 +145,6 @@ export function ParticipatingInstructorsSection({
   const {
     filters,
     appliedFilters,
-    setFilter,
     applyFilters,
     viewMode,
     setViewMode,
@@ -161,14 +165,93 @@ export function ParticipatingInstructorsSection({
     })
     return map
   }, [])
-  const [localInstructorName, setLocalInstructorName] = useState(() => filters.instructorName)
+  const [pendingFilters, setPendingFilters] = useState<ParticipatingInstructorsFilters>(() => ({
+    ...filters,
+  }))
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<Dayjs>(() => dayjs())
   /** 캘린더 우측 기관 멀티셀렉트 — 날짜별 옵션과 동기화 시 전체 선택이 기본, []는 사용자가 모두 해제한 경우 */
   const [calendarSelectedSchools, setCalendarSelectedSchools] = useState<string[]>([])
 
   useEffect(() => {
-    setLocalInstructorName(filters.instructorName)
-  }, [filters.instructorName])
+    setPendingFilters({ ...filters })
+  }, [filters])
+
+  const instructorFilterFields = useMemo((): FilterFieldConfig[] => {
+    const colWidth = '18%'
+    return [
+      {
+        key: 'instructorName',
+        type: 'search',
+        label: '강사명',
+        placeholder: '강사명을 입력하세요',
+        width: colWidth,
+      },
+      {
+        key: 'region',
+        type: 'select',
+        label: '거주 지역',
+        placeholder: '전체',
+        options: REGION_OPTIONS,
+        width: colWidth,
+      },
+      {
+        key: 'jaLectureExperience',
+        type: 'select',
+        label: 'JA 강의 이력',
+        placeholder: '전체',
+        options: JA_LECTURE_EXPERIENCE_OPTIONS,
+        width: colWidth,
+      },
+      {
+        key: 'jaEvaluationGrade',
+        type: 'select',
+        label: 'JA 평가 등급',
+        placeholder: '전체',
+        options: JA_EVALUATION_GRADE_OPTIONS,
+        width: colWidth,
+      },
+      {
+        key: 'educationAssignmentStatus',
+        type: 'select',
+        label: '교육 예정 현황',
+        placeholder: '전체',
+        options: EDUCATION_ASSIGNMENT_OPTIONS,
+        width: colWidth,
+      },
+    ]
+  }, [])
+
+  const unifiedFilterCardValues = useMemo(
+    () => ({
+      instructorName: pendingFilters.instructorName,
+      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
+      jaLectureExperience:
+        pendingFilters.jaLectureExperience === 'all'
+          ? undefined
+          : pendingFilters.jaLectureExperience,
+      jaEvaluationGrade:
+        pendingFilters.jaEvaluationGrade === 'all' ? undefined : pendingFilters.jaEvaluationGrade,
+      educationAssignmentStatus:
+        pendingFilters.educationAssignmentStatus === 'all'
+          ? undefined
+          : pendingFilters.educationAssignmentStatus,
+    }),
+    [pendingFilters]
+  )
+
+  const handleUnifiedFilterChange = (key: string, value: unknown) => {
+    if (key === 'instructorName') {
+      setPendingFilters(prev => ({ ...prev, instructorName: String(value ?? '') }))
+      return
+    }
+    const k = key as keyof ParticipatingInstructorsFilters
+    const v = value == null || value === '' ? 'all' : String(value)
+    setPendingFilters(prev => ({ ...prev, [k]: v }))
+  }
+
+  const handleUnifiedFilterSearch = () => {
+    applyFilters(pendingFilters)
+  }
 
   const progressFilters: ProgressFilters = useMemo(
     () => ({
@@ -290,16 +373,14 @@ export function ParticipatingInstructorsSection({
     return instructorsForCalendarDate.filter(row => selected.has(row.schoolName))
   }, [instructorsForCalendarDate, calendarSelectedSchools])
 
-  const handleSearch = () => {
-    applyFilters({ instructorName: localInstructorName })
-  }
-
   const handleCalendarView = () => setViewMode('calendar')
   const handleListView = () => setViewMode('list')
 
   const handleInfoDetailClick = () => {
     if (selectedInstructorRowKeys.length === 0) {
-      message.warning('개인정보 상세보기를 하려면 강사를 1명 선택하거나 목록에서 강사 행을 눌러 주세요.')
+      message.warning(
+        '개인정보 상세보기를 하려면 강사를 1명 선택하거나 목록에서 강사 행을 눌러 주세요.'
+      )
       return
     }
     if (selectedInstructorRowKeys.length > 1) {
@@ -391,7 +472,7 @@ export function ParticipatingInstructorsSection({
 
   if (selectedInstructorFromUrl && program) {
     return (
-      <div className="participating-instructors-section participating-institutions-section">
+      <div className="program-status-participating program-status-participating--instructors participating-institutions-section participating-institutions-section--instructors">
         <ParticipatingInstructorFullpageView
           program={program}
           instructor={selectedInstructorFromUrl}
@@ -423,85 +504,15 @@ export function ParticipatingInstructorsSection({
   }
 
   return (
-    <div className="participating-instructors-section participating-institutions-section">
-      <div className="participating-institutions-section__filters program-progress-tab__filters">
-        <Row
-          gutter={[0, 0]}
-          align="bottom"
-          wrap={false}
-          className="program-progress-tab__filter-row"
-        >
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">강사명</span>
-              <Input
-                placeholder="강사명을 입력하세요"
-                value={localInstructorName}
-                onChange={e => setLocalInstructorName(e.target.value)}
-                allowClear
-                className="participating-institutions-section__filter-input"
-              />
-            </div>
-          </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">거주 지역</span>
-              <Select
-                placeholder="전체"
-                value={filters.region || undefined}
-                onChange={v => setFilter('region', v ?? 'all')}
-                allowClear
-                options={REGION_OPTIONS}
-                getPopupContainer={() => document.body}
-              />
-            </div>
-          </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">JA 강의 이력</span>
-              <Select
-                placeholder="전체"
-                value={filters.jaLectureExperience || undefined}
-                onChange={v => setFilter('jaLectureExperience', v ?? 'all')}
-                allowClear
-                options={JA_LECTURE_EXPERIENCE_OPTIONS}
-                getPopupContainer={() => document.body}
-              />
-            </div>
-          </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">JA 평가 등급</span>
-              <Select
-                placeholder="전체"
-                value={filters.jaEvaluationGrade || undefined}
-                onChange={v => setFilter('jaEvaluationGrade', v ?? 'all')}
-                allowClear
-                options={JA_EVALUATION_GRADE_OPTIONS}
-                getPopupContainer={() => document.body}
-              />
-            </div>
-          </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">교육 예정 현황</span>
-              <Select
-                placeholder="전체"
-                value={filters.educationAssignmentStatus || undefined}
-                onChange={v => setFilter('educationAssignmentStatus', v ?? 'all')}
-                allowClear
-                options={EDUCATION_ASSIGNMENT_OPTIONS}
-                getPopupContainer={() => document.body}
-              />
-            </div>
-          </Col>
-          <Col flex="none" className="program-progress-tab__filter-col--btn">
-            <AppButton variant="primary" size="filter" onClick={handleSearch}>
-              조회
-            </AppButton>
-          </Col>
-        </Row>
-      </div>
+    <div className="program-status-participating program-status-participating--instructors participating-institutions-section participating-institutions-section--instructors">
+      <UnifiedFilterCard
+        bordered={false}
+        cardStyle={{ marginBottom: 0 }}
+        fields={instructorFilterFields}
+        filters={unifiedFilterCardValues}
+        onFilterChange={handleUnifiedFilterChange}
+        onSearch={handleUnifiedFilterSearch}
+      />
 
       <div className="participating-institutions-section__divider" />
 
@@ -678,8 +689,7 @@ export function ParticipatingInstructorsSection({
                                     : ''
                                 }`}
                               >
-                                강의보고서 :{' '}
-                                {row.lectureReportSubmitted ? '제출' : '미제출'}
+                                강의보고서 : {row.lectureReportSubmitted ? '제출' : '미제출'}
                               </span>
                             </div>
                           </div>
@@ -726,7 +736,6 @@ export function ParticipatingInstructorsSection({
         confirmText="삭제"
         confirmVariant="danger"
       />
-
     </div>
   )
 }

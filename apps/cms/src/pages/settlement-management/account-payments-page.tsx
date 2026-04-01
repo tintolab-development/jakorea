@@ -16,8 +16,8 @@ import {
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
 import { AppButton } from '@/shared/ui/app-button'
-import '@/features/program/ui/participating-institutions-section.css'
-import '@/features/program/ui/program-progress-tab.css'
+import '@/features/program/ui/detail-modal/program-status/participating-institutions-section.css'
+import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
 import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
