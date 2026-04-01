@@ -103,15 +103,15 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 (트리거/래퍼 152px와 동일).
- * 좌우 패딩 0으로 해야 152px 트리거가 셀을 넘지 않음 (100% 배율에서 Ant Design td 기본 패딩 시 내용 영역 < 152px 되어 overflow 발생) */
+/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 160px 유지 (트리거/래퍼 160px와 동일).
+ * 좌우 패딩 0으로 해야 160px 트리거가 셀을 넘지 않음 (100% 배율에서 Ant Design td 기본 패딩 시 내용 영역 < 160px 되어 overflow 발생) */
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   padding-top: 0;
   padding-bottom: 0;
   padding-left: 0;
@@ -120,12 +120,12 @@
   box-sizing: border-box;
 }
 
-/* 선택된 태그 오버레이(트리거) 152px 고정 — 드롭다운 래퍼와 동일 */
+/* 선택된 태그 오버레이(트리거) 160px 고정 — 드롭다운 래퍼와 동일 */
 .participating-institutions-section .status-dropdown-cell__status-trigger--open {
   box-sizing: border-box !important;
-  width: 152px !important;
-  min-width: 152px !important;
-  max-width: 152px !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
 }
 
 /* 테이블 셀 높이 53px인 경우: 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
@@ -138,7 +138,7 @@
   max-height: 53px !important;
 }
 
-/* 테이블 셀 높이 53px인 경우 해당 셀 padding 0 — vertical shifting 방지, 좌우 0으로 152px 트리거가 셀 밖으로 넘지 않도록 */
+/* 테이블 셀 높이 53px인 경우 해당 셀 padding 0 — vertical shifting 방지, 좌우 0으로 160px 트리거가 셀 밖으로 넘지 않도록 */
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)

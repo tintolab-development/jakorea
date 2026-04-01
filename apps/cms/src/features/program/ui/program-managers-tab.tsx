@@ -288,7 +288,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 152,
+        width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (

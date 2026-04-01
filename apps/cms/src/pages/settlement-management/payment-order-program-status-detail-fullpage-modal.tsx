@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Col, DatePicker, Input, Row, Select, Table, message } from 'antd'
+import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -13,6 +13,7 @@ import {
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import { AppButton } from '@/shared/ui/app-button'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import {
   StatusDropdownCell,
@@ -30,14 +31,11 @@ import {
   type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
-import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
 import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
 import './payment-order-program-status-detail-fullpage-modal.css'
 
 const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-const DATE_DISPLAY_FORMAT = 'YYYY. MM. DD'
 
 const LINE_STATUS_OPTIONS: readonly PaymentOrderAdminLineProcessingStatus[] = [
   'pending',
@@ -111,7 +109,9 @@ function filterInstructorDetailRows(
 
 function renderAggregateStatus(status: PaymentOrderAdminProcessingStatus) {
   return (
-    <span className={`payment-order-admin__status-text payment-order-admin__status-text--${status}`}>
+    <span
+      className={`payment-order-admin__status-text payment-order-admin__status-text--${status}`}
+    >
       {PAYMENT_ORDER_ADMIN_STATUS_LABELS[status]}
     </span>
   )
@@ -254,7 +254,7 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
       {
         title: '지급 조서 처리 현황',
         key: 'processingStatus',
-        width: 152,
+        width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (_: unknown, row: PaymentOrderAdminProgramDetailInstructorRow) => (
@@ -325,192 +325,165 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
         data={calcStatementData}
       />
       <DetailFullPageModal
-      open={open}
-      onClose={() => {
-        setCalcStatementOpen(false)
-        setCalcStatementData(null)
-        onClose()
-      }}
-      title={`지급 현황 상세_${detail.programName}`}
-      className="payment-order-program-status-detail-fullpage-modal"
-      sidebar={
-        <DetailModalSidebar
-          navAriaLabel="지급 현황 상세 메뉴"
-          items={sidebarItems}
-          activeKey="payment-status-detail"
-          activeChildKey=""
-          expandedGroupKeys={[]}
-          onSelectTop={() => {}}
-          onSelectChild={() => {}}
-        />
-      }
-    >
-      <div className="payment-order-program-status-detail__root participating-institutions-section">
-        <div className="payment-order-program-status-detail__basic-block program-detail-fullpage-modal__info-tab-block">
-          <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
-          <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-            <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-              <colgroup>
-                <col style={{ width: '200px' }} />
-                <col />
-                <col style={{ width: '200px' }} />
-                <col />
-              </colgroup>
-              <tbody>
-                <tr>
-                  <th>프로그램명</th>
-                  <td>{detail.programName}</td>
-                  <th>사업 운영 기간</th>
-                  <td>{businessPeriodLabel}</td>
-                </tr>
-                <tr>
-                  <th>프로그램 진행 회차</th>
-                  <td>{sessionLabel}</td>
-                  <th>지급 조서 처리 현황</th>
-                  <td>{renderAggregateStatus(aggregateStatus)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="payment-order-program-status-detail__filters participating-institutions-section__filters program-progress-tab__filters">
-          <Row
-            gutter={[16, 0]}
-            align="bottom"
-            wrap={false}
-            className="program-progress-tab__filter-row payment-order-program-status-detail__filter-row"
-          >
-            <Col
-              flex="1 1 0"
-              style={{ minWidth: 0 }}
-              className="program-progress-tab__filter-col payment-order-program-status-detail__filter-col"
-            >
-              <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-order-program-status-detail__filter-stack">
-                <span className="program-progress-tab__filter-label">강사명</span>
-                <Input
-                  placeholder="강사명을 입력하세요"
-                  value={draftInstructorName}
-                  onChange={e => setDraftInstructorName(e.target.value)}
-                  allowClear
-                  className="participating-institutions-section__filter-input"
-                />
-              </div>
-            </Col>
-            <Col
-              flex="1 1 0"
-              style={{ minWidth: 0 }}
-              className="program-progress-tab__filter-col payment-order-program-status-detail__filter-col"
-            >
-              <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-order-program-status-detail__filter-stack">
-                <span className="program-progress-tab__filter-label">참여 기관명</span>
-                <Input
-                  placeholder="기관명을 입력하세요"
-                  value={draftInstitutionName}
-                  onChange={e => setDraftInstitutionName(e.target.value)}
-                  allowClear
-                  className="participating-institutions-section__filter-input"
-                />
-              </div>
-            </Col>
-            <Col
-              flex="1 1 0"
-              style={{ minWidth: 0 }}
-              className="program-progress-tab__filter-col payment-order-program-status-detail__filter-col"
-            >
-              <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-order-program-status-detail__filter-stack">
-                <span className="program-progress-tab__filter-label">지급조서 처리 현황</span>
-                <Select<AppliedLineStatus>
-                  placeholder="전체"
-                  value={draftStatus === 'all' ? undefined : draftStatus}
-                  onChange={v => setDraftStatus((v ?? 'all') as AppliedLineStatus)}
-                  allowClear
-                  options={lineStatusSelectOptions.filter(o => o.value !== 'all')}
-                  getPopupContainer={() => document.body}
-                />
-              </div>
-            </Col>
-            <Col
-              flex="1 1 0"
-              style={{ minWidth: 0 }}
-              className="program-progress-tab__filter-col payment-order-program-status-detail__filter-col"
-            >
-              <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-order-program-status-detail__filter-stack">
-                <span className="program-progress-tab__filter-label">기간</span>
-                <DatePicker.RangePicker
-                  className="payment-order-program-status-detail__range-picker"
-                  value={draftDateRange}
-                  onChange={dates =>
-                    setDraftDateRange(dates?.[0] && dates?.[1] ? [dates[0], dates[1]] : null)
-                  }
-                  format={DATE_DISPLAY_FORMAT}
-                  allowClear
-                  getPopupContainer={() => document.body}
-                />
-              </div>
-            </Col>
-            <Col
-              flex="none"
-              className="program-progress-tab__filter-col--btn payment-order-program-status-detail__filter-col--btn"
-            >
-              <div className="payment-order-program-status-detail__filter-btn-slot">
-                <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                  조회
-                </AppButton>
-              </div>
-            </Col>
-          </Row>
-        </div>
-
-        <div className="participating-institutions-section__divider payment-order-program-status-detail__section-divider" />
-
-        <div className="payment-order-program-status-detail__below-divider participating-institutions-section__below-divider">
-          <div className="participating-institutions-section__table-header">
-            <div className="participating-institutions-section__table-heading">
-              <span className="participating-institutions-section__table-title">강사 별 정산 목록</span>
-              <span className="participating-institutions-section__table-description">
-                총 {filteredRows.length}건
-              </span>
-            </div>
-            <div className="participating-institutions-section__table-actions">
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
-                disabled={selectedRowKeys.length === 0}
-                onClick={() => message.info('일괄 확인은 추후 연결됩니다.')}
-              >
-                일괄 확인
-              </AppButton>
-              <AppButton
-                variant="primary"
-                size="filter-wide"
-                icon={<DownloadOutlined />}
-                onClick={() => message.info('지급조서 다운로드는 추후 연결됩니다.')}
-              >
-                지급조서 다운로드
-              </AppButton>
+        open={open}
+        onClose={() => {
+          setCalcStatementOpen(false)
+          setCalcStatementData(null)
+          onClose()
+        }}
+        title={`지급 현황 상세_${detail.programName}`}
+        className="payment-order-program-status-detail-fullpage-modal"
+        sidebar={
+          <DetailModalSidebar
+            navAriaLabel="지급 현황 상세 메뉴"
+            items={sidebarItems}
+            activeKey="payment-status-detail"
+            activeChildKey=""
+            expandedGroupKeys={[]}
+            onSelectTop={() => {}}
+            onSelectChild={() => {}}
+          />
+        }
+      >
+        <div className="payment-order-program-status-detail__root participating-institutions-section">
+          <div className="payment-order-program-status-detail__basic-block program-detail-fullpage-modal__info-tab-block">
+            <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
+            <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
+              <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
+                <colgroup>
+                  <col style={{ width: '200px' }} />
+                  <col />
+                  <col style={{ width: '200px' }} />
+                  <col />
+                </colgroup>
+                <tbody>
+                  <tr>
+                    <th>프로그램명</th>
+                    <td>{detail.programName}</td>
+                    <th>사업 운영 기간</th>
+                    <td>{businessPeriodLabel}</td>
+                  </tr>
+                  <tr>
+                    <th>프로그램 진행 회차</th>
+                    <td>{sessionLabel}</td>
+                    <th>지급 조서 처리 현황</th>
+                    <td>{renderAggregateStatus(aggregateStatus)}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div className="payment-order-program-status-detail__table-wrap participating-institutions-section__table-wrap">
-            <Table<PaymentOrderAdminProgramDetailInstructorRow>
-              className="payment-order-program-status-detail__table participating-institutions-section__table"
-              rowKey="id"
-              columns={columns}
-              dataSource={filteredRows}
-              pagination={false}
-              size="middle"
-              tableLayout="fixed"
-              scroll={{ x: 1180 }}
-              rowSelection={{
-                selectedRowKeys,
-                onChange: keys => setSelectedRowKeys(keys),
+          <div className="payment-order-program-status-detail__filters">
+            <UnifiedFilterCard
+              bordered={false}
+              cardStyle={{ marginBottom: 0 }}
+              fields={[
+                {
+                  key: 'instructorName',
+                  type: 'search',
+                  label: '강사명',
+                  placeholder: '강사명을 입력하세요',
+                  flex: '1 1 0',
+                },
+                {
+                  key: 'institutionName',
+                  type: 'search',
+                  label: '참여 기관명',
+                  placeholder: '기관명을 입력하세요',
+                  flex: '1 1 0',
+                },
+                {
+                  key: 'status',
+                  type: 'select',
+                  label: '지급조서 처리 현황',
+                  placeholder: '전체',
+                  options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
+                  allowClear: true,
+                  flex: '1 1 0',
+                },
+                {
+                  key: 'dateRange',
+                  type: 'dateRange',
+                  label: '기간',
+                  flex: '1 1 0',
+                },
+              ]}
+              filters={{
+                instructorName: draftInstructorName,
+                institutionName: draftInstitutionName,
+                status: draftStatus === 'all' ? undefined : draftStatus,
+                dateRange: draftDateRange,
               }}
+              onFilterChange={(key, value) => {
+                if (key === 'instructorName') {
+                  setDraftInstructorName(value as string)
+                  return
+                }
+                if (key === 'institutionName') {
+                  setDraftInstitutionName(value as string)
+                  return
+                }
+                if (key === 'status') {
+                  setDraftStatus((value ?? 'all') as AppliedLineStatus)
+                  return
+                }
+                if (key === 'dateRange') {
+                  setDraftDateRange(value as [Dayjs, Dayjs] | null)
+                }
+              }}
+              onSearch={handleSearch}
             />
           </div>
+
+          <div className="participating-institutions-section__divider payment-order-program-status-detail__section-divider" />
+
+          <div className="payment-order-program-status-detail__below-divider participating-institutions-section__below-divider">
+            <div className="participating-institutions-section__table-header">
+              <div className="participating-institutions-section__table-heading">
+                <span className="participating-institutions-section__table-title">
+                  강사 별 정산 목록
+                </span>
+                <span className="participating-institutions-section__table-description">
+                  총 {filteredRows.length}건
+                </span>
+              </div>
+              <div className="participating-institutions-section__table-actions">
+                <AppButton
+                  variant="cancel"
+                  size="filter-wide"
+                  disabled={selectedRowKeys.length === 0}
+                  onClick={() => message.info('일괄 확인은 추후 연결됩니다.')}
+                >
+                  일괄 확인
+                </AppButton>
+                <AppButton
+                  variant="primary"
+                  size="filter-wide"
+                  icon={<DownloadOutlined />}
+                  onClick={() => message.info('지급조서 다운로드는 추후 연결됩니다.')}
+                >
+                  지급조서 다운로드
+                </AppButton>
+              </div>
+            </div>
+
+            <div className="payment-order-program-status-detail__table-wrap participating-institutions-section__table-wrap">
+              <Table<PaymentOrderAdminProgramDetailInstructorRow>
+                className="cms-data-table cms-data-table--fluid"
+                rowKey="id"
+                columns={columns}
+                dataSource={filteredRows}
+                pagination={false}
+                rowSelection={{
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys),
+                }}
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </DetailFullPageModal>
+      </DetailFullPageModal>
     </>
   )
 }

@@ -16,14 +16,14 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 */
+/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 160px 유지 */
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   padding-top: 0;
   padding-bottom: 0;
   padding-left: 0;
@@ -32,12 +32,12 @@
   box-sizing: border-box;
 }
 
-/* 선택된 태그 오버레이(트리거) 152px 고정 */
+/* 선택된 태그 오버레이(트리거) 160px 고정 */
 .applicant-details .status-dropdown-cell__status-trigger--open {
   box-sizing: border-box !important;
-  width: 152px !important;
-  min-width: 152px !important;
-  max-width: 152px !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
 }
 
 /* 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
@@ -47,7 +47,7 @@
   max-height: 53px !important;
 }
 
-/* 해당 셀 padding 0 — vertical shifting 방지, 152px 트리거가 셀 밖으로 넘지 않도록 */
+/* 해당 셀 padding 0 — vertical shifting 방지, 160px 트리거가 셀 밖으로 넘지 않도록 */
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)

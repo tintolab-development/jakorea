@@ -435,7 +435,7 @@ export function ProgramApplicantsTab({
         title: '결재 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 152,
+        width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
@@ -509,7 +509,7 @@ export function ProgramApplicantsTab({
         title: '결재 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 152,
+        width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantInstructorRow) => (
