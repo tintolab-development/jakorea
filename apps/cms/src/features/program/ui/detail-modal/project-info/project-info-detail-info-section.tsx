@@ -418,6 +418,7 @@ export function DetailInfoSection({
           name="description"
           rows={6}
           placeholder="프로그램 설명"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
         />
         <TextAreaFieldRow
@@ -428,6 +429,7 @@ export function DetailInfoSection({
           name="recruitmentGuide"
           rows={6}
           placeholder="모집 안내"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
         />
         <TextAreaFieldRow
@@ -438,7 +440,7 @@ export function DetailInfoSection({
           name="learningSupportContent"
           rows={5}
           placeholder="학습 지원 내용"
-          textareaClassName="text-area-field-row__content-textarea text-area-field-row__content-textarea--sm"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContentWrapperClassName="text-area-field-row__content-block text-area-field-row__content-block--sm"
           readContent={program.learningSupportContent || DEFAULT_LEARNING_SUPPORT}
         />
@@ -518,6 +520,7 @@ export function InstructorDetailInfoSection({
           name="description"
           rows={6}
           placeholder="프로그램 설명"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
         />
         <TextAreaFieldRow
@@ -528,6 +531,7 @@ export function InstructorDetailInfoSection({
           name="recruitmentGuide"
           rows={6}
           placeholder="모집 안내"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
         />
         <TextAreaFieldRow
@@ -538,6 +542,7 @@ export function InstructorDetailInfoSection({
           name="applicationMethod"
           rows={5}
           placeholder="지원 방법"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={applicationMethod}
         />
         <AdditionalContentRow
@@ -555,6 +560,7 @@ export function InstructorDetailInfoSection({
           name="otherNotes"
           rows={3}
           placeholder="기타사항"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={otherNotes}
         />
         <AttachmentRowStandard
@@ -629,6 +635,7 @@ export function VolunteerDetailInfoSection({
           name="description"
           rows={6}
           placeholder="프로그램 설명"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
         />
         <TextAreaFieldRow
@@ -639,6 +646,7 @@ export function VolunteerDetailInfoSection({
           name="recruitmentGuide"
           rows={6}
           placeholder="모집 안내"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
         />
         <TextAreaFieldRow
@@ -649,6 +657,7 @@ export function VolunteerDetailInfoSection({
           name="applicationMethod"
           rows={3}
           placeholder="지원 방법"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={applicationMethod}
         />
         <AdditionalContentRow
@@ -666,6 +675,7 @@ export function VolunteerDetailInfoSection({
           name="otherNotes"
           rows={4}
           placeholder="기타사항"
+          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
           readContent={otherNotes}
         />
         <tr>

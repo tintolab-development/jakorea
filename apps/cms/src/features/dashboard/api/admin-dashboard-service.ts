@@ -5,7 +5,7 @@
  */
 
 import type { Program } from '@/types/domain'
-import { mockPrograms } from '@/data/mock/programs'
+import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getEconomyPrograms } from '@/data/mock/economy-programs'
 import { mockApplications } from '@/data/mock/applications'
@@ -78,6 +78,8 @@ export interface ProgramKpiItem {
   programId: string
   programTitle: string
   kpis: KpiMetric[]
+  /** 프로그램 상세 > 사업 KPI: 교육진행자 목표 (강사·봉사자) */
+  educationInstructorTargets?: { instructors: number; volunteers: number }
 }
 
 /**
@@ -333,55 +335,85 @@ const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> =
   finalClasses: { label: '최종 파견 학급 수', description: '개' },
 }
 
+/** 사업 KPI 목표·위젯 공통: 달성/목표 수치 (patternIndex로 목록 간 변주) */
+function buildKpiMetricsForPattern(patternIndex: number): KpiMetric[] {
+  const achievedParticipants = patternIndex % 3 === 0 ? 100 : 80
+  const targetParticipants = patternIndex % 4 === 0 ? 30 : 100
+  const achievedSchools = 100
+  const targetSchools = 100
+  const achievedClasses = patternIndex % 2 === 0 ? 100 : 80
+  const targetClasses = 100
+
+  return [
+    {
+      key: 'finalParticipants',
+      label: KPI_LABELS.finalParticipants.label,
+      description: KPI_LABELS.finalParticipants.description,
+      achieved: achievedParticipants,
+      target: targetParticipants,
+    },
+    {
+      key: 'finalSchools',
+      label: KPI_LABELS.finalSchools.label,
+      description: KPI_LABELS.finalSchools.description,
+      achieved: achievedSchools,
+      target: targetSchools,
+    },
+    {
+      key: 'finalClasses',
+      label: KPI_LABELS.finalClasses.label,
+      description: KPI_LABELS.finalClasses.description,
+      achieved: achievedClasses,
+      target: targetClasses,
+    },
+  ]
+}
+
+function buildProgramKpiItemFromProgram(program: Program, patternIndex: number): ProgramKpiItem {
+  return {
+    programId: program.id,
+    programTitle: program.title ?? '',
+    kpis: buildKpiMetricsForPattern(patternIndex),
+    educationInstructorTargets: { instructors: 80, volunteers: 80 },
+  }
+}
+
+/** 상세 모달 등: id만 알 때 — 목 KPI로 항상 행이 채워지도록 */
+function buildDefaultProgramKpiItem(programId: string, title: string): ProgramKpiItem {
+  return {
+    programId,
+    programTitle: title,
+    kpis: buildKpiMetricsForPattern(0),
+    educationInstructorTargets: { instructors: 80, volunteers: 80 },
+  }
+}
+
 /**
  * 사업 별 KPI 대비 달성률 위젯용 목록
- * programIds 있으면 해당 프로그램만, 없으면 전체(교육 프로그램)
+ * programIds 있으면 해당 id마다 1건씩 반환(교육 목록에 없어도 mockPrograms·기본값으로 채움)
  */
 export async function getKpiAchievementList(options?: {
   programIds?: string[]
 }): Promise<ProgramKpiItem[]> {
   await new Promise(resolve => setTimeout(resolve, 200))
-  const programs = getEducationPrograms()
-  const idSet =
-    options?.programIds && options.programIds.length > 0 ? new Set(options.programIds) : null
-  const filtered = idSet ? programs.filter(p => idSet.has(p.id)) : programs
+  const educationPrograms = getEducationPrograms()
 
-  return filtered.map((program, index) => {
-    // 스크린샷과 유사하게 일부 달성/일부 미달 혼합 (인덱스 기반으로 패턴)
-    const achievedParticipants = index % 3 === 0 ? 100 : 80
-    const targetParticipants = 100
-    const achievedSchools = 100
-    const targetSchools = 100
-    const achievedClasses = index % 2 === 0 ? 100 : 80
-    const targetClasses = 100
+  if (options?.programIds && options.programIds.length > 0) {
+    return options.programIds.map((id, requestIndex) => {
+      const inEducation = educationPrograms.find(p => p.id === id)
+      if (inEducation) {
+        const patternIndex = educationPrograms.indexOf(inEducation)
+        return buildProgramKpiItemFromProgram(inEducation, patternIndex)
+      }
+      const fromRegistry = mockProgramsMap.get(id)
+      if (fromRegistry) {
+        return buildProgramKpiItemFromProgram(fromRegistry, requestIndex)
+      }
+      return buildDefaultProgramKpiItem(id, '프로그램')
+    })
+  }
 
-    const kpis: KpiMetric[] = [
-      {
-        key: 'finalParticipants',
-        label: KPI_LABELS.finalParticipants.label,
-        description: KPI_LABELS.finalParticipants.description,
-        achieved: achievedParticipants,
-        target: targetParticipants,
-      },
-      {
-        key: 'finalSchools',
-        label: KPI_LABELS.finalSchools.label,
-        description: KPI_LABELS.finalSchools.description,
-        achieved: achievedSchools,
-        target: targetSchools,
-      },
-      {
-        key: 'finalClasses',
-        label: KPI_LABELS.finalClasses.label,
-        description: KPI_LABELS.finalClasses.description,
-        achieved: achievedClasses,
-        target: targetClasses,
-      },
-    ]
-    return {
-      programId: program.id,
-      programTitle: program.title,
-      kpis,
-    }
-  })
+  return educationPrograms.map((program, index) =>
+    buildProgramKpiItemFromProgram(program, index)
+  )
 }
