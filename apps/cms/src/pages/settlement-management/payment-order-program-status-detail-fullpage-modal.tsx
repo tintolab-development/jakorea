@@ -29,8 +29,8 @@ import {
   type PaymentOrderAdminProgramRow,
   type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
-import '@/features/program/ui/participating-institutions-section.css'
-import '@/features/program/ui/program-progress-tab.css'
+import '@/features/program/ui/detail-modal/program-status/participating-institutions-section.css'
+import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
 import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
 import './payment-order-program-status-detail-fullpage-modal.css'

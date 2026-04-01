@@ -27,8 +27,8 @@ import { LectureAttendanceModal } from './lecture-attendance-modal'
 import { AssignmentSubmissionModal } from './assignment-submission-modal'
 import { AddStudentModal } from './add-student-modal'
 import './school-detail-modal.css'
-import './program-progress-tab.css'
-import './participating-institutions-section.css'
+import './detail-modal/program-status/program-progress-tab.css'
+import './detail-modal/program-status/participating-institutions-section.css'
 import './school-detail-student-list-section.css'
 
 /** 수료증 발급 버튼용 아이콘 (22×22, JA/mint 01) */

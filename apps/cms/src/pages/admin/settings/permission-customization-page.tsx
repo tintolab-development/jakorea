@@ -1,336 +1,146 @@
 /**
- * 권한 커스터마이징 페이지
- * P2: 마스터 관리자 권한 커스터마이징
+ * 관리자 권한 설정 (UI 미리보기 — 로컬 state만, 저장/API 없음)
  */
 
-import { useState, useEffect, useMemo } from 'react'
-import { Card, Tabs, Table, Switch, Button, message, Space, Typography, Alert, Modal } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import { ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Alert, Checkbox, Tabs, message } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMasterAdmin } from '@/shared/utils/permissions'
-import {
-  fetchPermissionCustomization,
-  updateAdminPermissionCustomization,
-  updateProgramRolePermissionCustomization,
-  resetPermissionCustomizationConfig,
-} from '@/entities/permission-customization/api/permission-customization-service'
 import type {
-  PermissionCustomizationConfig,
-  CustomizedAdminPermission,
-  CustomizedProgramRolePermission,
-} from '@/types/permission-customization'
-import type { AdminLevel, ProgramRole } from '@/types/user'
+  AdminPermissionCategoryDef,
+  AdminPermissionFlags,
+  AdminPermissionRoleTab,
+} from '@/types/admin-permission-settings-ui'
+import { ADMIN_PERMISSION_ROLE_TABS } from '@/types/admin-permission-settings-ui'
+import {
+  ADMIN_PERMISSION_CATEGORIES,
+  ADMIN_PERMISSION_ROLE_LABELS,
+  createInitialPermissionsByRole,
+  isValidRoleTab,
+} from './admin-permission-settings-ui-data'
+import './permission-customization-page.css'
+import { AppButton } from '@/shared/ui/app-button'
 
-const { Title, Text, Paragraph } = Typography
-
-// 테이블 데이터 타입
-interface PermissionTableItem {
-  key: string
-  label: string
+function categoryCheckboxState(category: AdminPermissionCategoryDef, flags: AdminPermissionFlags) {
+  const ids = category.items.map(i => i.id)
+  const values = ids.map(id => flags[id] ?? false)
+  const allChecked = values.length > 0 && values.every(Boolean)
+  const noneChecked = values.every(v => !v)
+  const indeterminate = !allChecked && !noneChecked
+  return { allChecked, indeterminate }
 }
 
-// 권한 항목 정의
-const ADMIN_PERMISSION_ITEMS = [
-  { key: 'canManageUsers', label: '회원 관리', category: 'user' },
-  { key: 'canManageSystemSettings', label: '시스템 설정 관리', category: 'system' },
-  { key: 'canAccessAllPrograms', label: '모든 프로그램 접근', category: 'program' },
-  { key: 'canDeleteUsers', label: '사용자 삭제', category: 'user' },
-  { key: 'canApprovePermissionRequests', label: '권한 요청 승인', category: 'system' },
-  { key: 'canCreateProgram', label: '프로그램 생성', category: 'program' },
-  { key: 'canEditProgram', label: '프로그램 수정', category: 'program' },
-  { key: 'canDeleteProgram', label: '프로그램 삭제', category: 'program' },
-  { key: 'canDownloadData', label: '데이터 다운로드', category: 'program' },
-  { key: 'canManageSettlements', label: '정산 관리', category: 'settlement' },
-] as const
+interface CategoryCardsProps {
+  role: AdminPermissionRoleTab
+  flags: AdminPermissionFlags
+  onItemChange: (itemId: string, checked: boolean) => void
+  onCategorySelectAll: (category: AdminPermissionCategoryDef, checked: boolean) => void
+}
 
-const PROGRAM_ROLE_PERMISSION_ITEMS = [
-  { key: 'canCreate', label: '생성' },
-  { key: 'canUpload', label: '업로드' },
-  { key: 'canDownload', label: '다운로드' },
-  { key: 'canDelete', label: '삭제' },
-  { key: 'canApprove', label: '승인' },
-] as const
+function CategoryCards({ role, flags, onItemChange, onCategorySelectAll }: CategoryCardsProps) {
+  return (
+    <div className="permission-customization-page__grid">
+      {ADMIN_PERMISSION_CATEGORIES.map(category => {
+        const { allChecked, indeterminate } = categoryCheckboxState(category, flags)
+        return (
+          <div
+            key={`${role}-${category.id}`}
+            className="permission-customization-page__category-card"
+          >
+            <div className="permission-customization-page__card-head">
+              <Checkbox
+                className="permission-customization-page__card-head-checkbox"
+                checked={allChecked}
+                indeterminate={indeterminate}
+                onChange={e => onCategorySelectAll(category, e.target.checked)}
+              />
+              <span className="permission-customization-page__card-head-title">
+                {category.title}
+              </span>
+            </div>
+            <div className="permission-customization-page__card-body">
+              {category.items.map(item => (
+                <div key={item.id} className="permission-customization-page__item-row">
+                  <Checkbox
+                    className="permission-customization-page__item-checkbox"
+                    checked={flags[item.id] ?? false}
+                    onChange={e => onItemChange(item.id, e.target.checked)}
+                  >
+                    {item.label}
+                  </Checkbox>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export function PermissionCustomizationPage() {
   const { user } = useAuthStore()
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [config, setConfig] = useState<PermissionCustomizationConfig | null>(null)
-  const [hasChanges, setHasChanges] = useState(false)
-  const [activeTab, setActiveTab] = useState<'admin' | 'program'>('admin')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [permissionsByRole, setPermissionsByRole] = useState(createInitialPermissionsByRole)
 
-  const isMaster = user && isMasterAdmin(user)
+  const activeRole = useMemo((): AdminPermissionRoleTab => {
+    const r = searchParams.get('role')
+    return isValidRoleTab(r) ? r : 'master'
+  }, [searchParams])
+
+  const isMaster = Boolean(user && isMasterAdmin(user))
 
   useEffect(() => {
     if (!isMaster) return
-    loadConfig()
-  }, [isMaster])
-
-  const loadConfig = async () => {
-    setLoading(true)
-    try {
-      const data = await fetchPermissionCustomization()
-      setConfig(data)
-      setHasChanges(false)
-    } catch (error) {
-      message.error('권한 설정을 불러오는데 실패했습니다.')
-    } finally {
-      setLoading(false)
+    if (!searchParams.get('role')) {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set('role', 'master')
+          return next
+        },
+        { replace: true }
+      )
     }
-  }
+  }, [isMaster, searchParams, setSearchParams])
 
-  const handleAdminPermissionChange = (
-    adminLevel: AdminLevel,
-    permissionKey: string,
-    checked: boolean
-  ) => {
-    if (!config) return
+  const setItem = useCallback((role: AdminPermissionRoleTab, itemId: string, checked: boolean) => {
+    setPermissionsByRole(prev => ({
+      ...prev,
+      [role]: { ...prev[role], [itemId]: checked },
+    }))
+  }, [])
 
-    const updated = {
-      ...config,
-      adminPermissions: {
-        ...config.adminPermissions,
-        [adminLevel]: {
-          ...config.adminPermissions[adminLevel],
-          permissions: {
-            ...config.adminPermissions[adminLevel].permissions,
-            [permissionKey]: checked,
-          },
-        },
-      },
-    }
-    setConfig(updated)
-    setHasChanges(true)
-  }
-
-  const handleProgramRolePermissionChange = (
-    programRole: ProgramRole,
-    permissionKey: string,
-    checked: boolean
-  ) => {
-    if (!config) return
-
-    const updated = {
-      ...config,
-      programRolePermissions: {
-        ...config.programRolePermissions,
-        [programRole]: {
-          ...config.programRolePermissions[programRole],
-          permissions: {
-            ...config.programRolePermissions[programRole].permissions,
-            [permissionKey]: checked,
-          },
-        },
-      },
-    }
-    setConfig(updated)
-    setHasChanges(true)
-  }
-
-  const handleSave = async () => {
-    if (!config || !user) return
-
-    setSaving(true)
-    try {
-      // 원본 설정을 한 번만 조회
-      const original = await fetchPermissionCustomization()
-
-      // 변경된 관리자 권한 저장
-      const adminLevels: AdminLevel[] = ['MASTER', 'ADMIN', 'GENERAL']
-      for (const adminLevel of adminLevels) {
-        const current = config.adminPermissions[adminLevel]
-        const originalPerms = original.adminPermissions[adminLevel].permissions
-
-        // 변경사항 확인
-        const hasChanges = Object.keys(current.permissions).some(
-          key =>
-            current.permissions[key as keyof typeof current.permissions] !==
-            originalPerms[key as keyof typeof originalPerms]
-        )
-
-        if (hasChanges) {
-          await updateAdminPermissionCustomization(adminLevel, current.permissions, user.id)
-        }
-      }
-
-      // 변경된 프로그램 역할 권한 저장
-      const programRoles: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
-      for (const programRole of programRoles) {
-        const current = config.programRolePermissions[programRole]
-        const originalPerms = original.programRolePermissions[programRole].permissions
-
-        // 변경사항 확인
-        const hasChanges = Object.keys(current.permissions).some(
-          key =>
-            current.permissions[key as keyof typeof current.permissions] !==
-            originalPerms[key as keyof typeof originalPerms]
-        )
-
-        if (hasChanges) {
-          await updateProgramRolePermissionCustomization(programRole, current.permissions, user.id)
-        }
-      }
-
-      message.success('권한 설정이 저장되었습니다.')
-      setHasChanges(false)
-      await loadConfig()
-    } catch (error) {
-      message.error('권한 설정 저장에 실패했습니다.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleReset = () => {
-    if (!user) return
-
-    Modal.confirm({
-      title: '권한 설정 초기화',
-      content: '모든 권한 설정을 기본값으로 되돌리시겠습니까?',
-      onOk: async () => {
-        try {
-          await resetPermissionCustomizationConfig(user.id)
-          message.success('권한 설정이 기본값으로 초기화되었습니다.')
-          await loadConfig()
-        } catch (error) {
-          message.error('권한 설정 초기화에 실패했습니다.')
-        }
-      },
-    })
-  }
-
-  // 관리자 권한 테이블 컬럼 (useMemo로 최적화) - 훅 규칙 준수를 위해 항상 호출, config 없을 때는 빈 컬럼
-  const adminPermissionColumns: ColumnsType<PermissionTableItem> = useMemo(
-    () => {
-      if (!config) return [{ title: '권한 항목', dataIndex: 'label', key: 'label', width: 200 }]
-      return [
-        {
-          title: '권한 항목',
-          dataIndex: 'label',
-          key: 'label',
-          width: 200,
-        },
-        {
-          title: '마스터 관리자',
-          key: 'MASTER',
-          width: 150,
-          align: 'center',
-          render: (_, record) => (
-            <Switch
-              checked={
-                config.adminPermissions.MASTER.permissions[
-                  record.key as keyof CustomizedAdminPermission['permissions']
-                ]
-              }
-              onChange={checked => handleAdminPermissionChange('MASTER', record.key, checked)}
-            />
-          ),
-        },
-        {
-          title: '중간 관리자',
-          key: 'ADMIN',
-          width: 150,
-          align: 'center',
-          render: (_, record) => (
-            <Switch
-              checked={
-                config.adminPermissions.ADMIN.permissions[
-                  record.key as keyof CustomizedAdminPermission['permissions']
-                ]
-              }
-              onChange={checked => handleAdminPermissionChange('ADMIN', record.key, checked)}
-            />
-          ),
-        },
-        {
-          title: '일반 관리자',
-          key: 'GENERAL',
-          width: 150,
-          align: 'center',
-          render: (_, record) => (
-            <Switch
-              checked={
-                config.adminPermissions.GENERAL.permissions[
-                  record.key as keyof CustomizedAdminPermission['permissions']
-                ]
-              }
-              onChange={checked => handleAdminPermissionChange('GENERAL', record.key, checked)}
-            />
-          ),
-        },
-      ]
+  const setCategoryAll = useCallback(
+    (role: AdminPermissionRoleTab, category: AdminPermissionCategoryDef, checked: boolean) => {
+      const patch = Object.fromEntries(category.items.map(i => [i.id, checked])) as Record<
+        string,
+        boolean
+      >
+      setPermissionsByRole(prev => ({
+        ...prev,
+        [role]: { ...prev[role], ...patch },
+      }))
     },
-    [config, handleAdminPermissionChange]
+    []
   )
 
-  // 프로그램 역할 권한 테이블 컬럼 (useMemo로 최적화) - 훅 규칙 준수를 위해 항상 호출
-  const programRolePermissionColumns: ColumnsType<PermissionTableItem> = useMemo(
-    () => {
-      if (!config) return [{ title: '권한 항목', dataIndex: 'label', key: 'label', width: 200 }]
-      return [
-        {
-          title: '권한 항목',
-          dataIndex: 'label',
-          key: 'label',
-          width: 200,
-        },
-        {
-          title: '담당자 (OWNER)',
-          key: 'OWNER',
-          width: 150,
-          align: 'center',
-          render: (_, record) => (
-            <Switch
-              checked={
-                config.programRolePermissions.OWNER.permissions[
-                  record.key as keyof CustomizedProgramRolePermission['permissions']
-                ]
-              }
-              onChange={checked => handleProgramRolePermissionChange('OWNER', record.key, checked)}
-            />
-          ),
-        },
-        {
-          title: '파트너 (PARTNER)',
-          key: 'PARTNER',
-          width: 150,
-          align: 'center',
-          render: (_, record) => (
-            <Switch
-              checked={
-                config.programRolePermissions.PARTNER.permissions[
-                  record.key as keyof CustomizedProgramRolePermission['permissions']
-                ]
-              }
-              onChange={checked => handleProgramRolePermissionChange('PARTNER', record.key, checked)}
-            />
-          ),
-        },
-        {
-          title: '보조 (ASSISTANT)',
-          key: 'ASSISTANT',
-          width: 150,
-          align: 'center',
-          render: (_, record) => (
-            <Switch
-              checked={
-                config.programRolePermissions.ASSISTANT.permissions[
-                  record.key as keyof CustomizedProgramRolePermission['permissions']
-                ]
-              }
-              onChange={checked =>
-                handleProgramRolePermissionChange('ASSISTANT', record.key, checked)
-              }
-            />
-          ),
-        },
-      ]
-    },
-    [config, handleProgramRolePermissionChange]
-  )
+  const handleTabChange = (key: string) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set('role', key)
+        return next
+      },
+      { replace: true }
+    )
+  }
 
-  // 마스터 관리자 권한 체크 - 모든 훅 호출 후 조건부 반환
+  const handlePersonalDetailClick = () => {
+    message.info('개인정보 상세보기는 추후 연동 예정입니다.')
+  }
+
   if (!user || !isMasterAdmin(user)) {
     return (
       <div style={{ padding: 24 }}>
@@ -344,96 +154,29 @@ export function PermissionCustomizationPage() {
     )
   }
 
-  if (loading || !config) {
-    return <div style={{ padding: 24 }}>로딩 중...</div>
-  }
-
   return (
-    <div style={{ padding: 24 }}>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div>
-          <Title level={2}>권한 설정</Title>
-          <Paragraph type="secondary">
-            마스터 관리자만 접근 가능한 권한 커스터마이징 설정 페이지입니다.
-          </Paragraph>
-        </div>
+    <div className="permission-customization-page">
+      <Tabs
+        className="permission-customization-page__tabs"
+        activeKey={activeRole}
+        onChange={handleTabChange}
+        tabBarExtraContent={
+          <AppButton type="primary" size="filter-wide" onClick={handlePersonalDetailClick}>
+            개인정보 상세보기
+          </AppButton>
+        }
+        items={ADMIN_PERMISSION_ROLE_TABS.map(tab => ({
+          key: tab,
+          label: ADMIN_PERMISSION_ROLE_LABELS[tab],
+        }))}
+      />
 
-        <Alert
-          message="주의사항"
-          description="권한 설정 변경은 즉시 적용되며, 모든 관리자에게 영향을 미칩니다. 변경 전 신중히 검토해주세요."
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-
-        <Card
-          extra={
-            <Space>
-              <Button icon={<ReloadOutlined />} onClick={loadConfig}>
-                새로고침
-              </Button>
-              <Button icon={<ReloadOutlined />} onClick={handleReset} danger>
-                기본값으로 초기화
-              </Button>
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                onClick={handleSave}
-                loading={saving}
-                disabled={!hasChanges}
-              >
-                저장
-              </Button>
-            </Space>
-          }
-        >
-          <Tabs
-            activeKey={activeTab}
-            onChange={key => setActiveTab(key as 'admin' | 'program')}
-            items={[
-              {
-                key: 'admin',
-                label: '관리자 권한',
-                children: (
-                  <Table
-                    columns={adminPermissionColumns}
-                    dataSource={ADMIN_PERMISSION_ITEMS.map(item => ({
-                      key: item.key,
-                      label: item.label,
-                    }))}
-                    rowKey="key"
-                    pagination={false}
-                    size="middle"
-                  />
-                ),
-              },
-              {
-                key: 'program',
-                label: '프로그램 역할 권한',
-                children: (
-                  <Table
-                    columns={programRolePermissionColumns}
-                    dataSource={PROGRAM_ROLE_PERMISSION_ITEMS.map(item => ({
-                      key: item.key,
-                      label: item.label,
-                    }))}
-                    rowKey="key"
-                    pagination={false}
-                    size="middle"
-                  />
-                ),
-              },
-            ]}
-          />
-
-          <div style={{ marginTop: 24, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
-            <Text type="secondary">
-              <strong>설정 정보:</strong> 버전 {config.version} | 최종 수정:{' '}
-              {new Date(config.updatedAt).toLocaleString('ko-KR')} | 수정자: {config.updatedBy}
-            </Text>
-          </div>
-        </Card>
-      </Space>
+      <CategoryCards
+        role={activeRole}
+        flags={permissionsByRole[activeRole]}
+        onItemChange={(itemId, checked) => setItem(activeRole, itemId, checked)}
+        onCategorySelectAll={(cat, checked) => setCategoryAll(activeRole, cat, checked)}
+      />
     </div>
   )
 }

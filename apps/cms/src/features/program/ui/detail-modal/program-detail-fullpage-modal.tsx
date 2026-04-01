@@ -16,7 +16,7 @@ import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
 import { MESSAGES } from '@/shared/constants'
-import { ParticipatingInstitutionsSection } from '../participating-institutions-section'
+import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
   SCHOOL_DETAIL_TAB_KEYS,
   type SchoolDetailTabKey,
@@ -24,8 +24,8 @@ import {
 import {
   INSTRUCTOR_DETAIL_TAB_KEYS,
   type InstructorDetailTabKey,
-} from '../participating-instructor-fullpage-view'
-import { ParticipatingInstructorsSection } from '../participating-instructors-section'
+} from './program-status/participating-instructor-fullpage-view'
+import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantDetails } from './applicants/applicants-detail'
 import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
@@ -717,9 +717,9 @@ export function ProgramDetailFullPageModal({
                       />
                     )}
                     {activeProgressChild === 'volunteers' && (
-                      <div className="program-detail-fullpage-modal__progress-section">
+                      <div className="program-status-participating program-detail-fullpage-modal__progress-section">
                         <Typography.Title level={5}>참여 봉사자</Typography.Title>
-                        <Typography.Text type="secondary">
+                        <Typography.Text className="program-status-participating__placeholder">
                           참여 봉사자 목록 및 현황이 표시됩니다.
                         </Typography.Text>
                       </div>

@@ -51,9 +51,9 @@ import {
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/lib/instructor-institution-assignment-mock'
 import './participating-institutions-section.css'
-import './instructor-assignment-role-tag.css'
-import './instructor-assignment-status-text.css'
-import './school-detail-fullpage-view.css'
+import '../../instructor-assignment-role-tag.css'
+import '../../instructor-assignment-status-text.css'
+import '../../school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
 
 const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {
@@ -588,9 +588,6 @@ export function ParticipatingInstructorFullpageView({
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block">
         <div className="program-detail-info-tab__section-header-row">
           <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
-          {d.registeredByAdmin ? (
-            <p className="program-detail-info-tab__detail-note">*관리자에 의해 등록된 회원입니다</p>
-          ) : null}
         </div>
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">

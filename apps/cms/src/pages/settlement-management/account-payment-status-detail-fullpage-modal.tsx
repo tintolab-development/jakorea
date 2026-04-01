@@ -12,7 +12,7 @@ import {
 } from '@/shared/ui/detail-modal-sidebar'
 import { AppButton } from '@/shared/ui/app-button'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
-import '@/features/program/ui/participating-institutions-section.css'
+import '@/features/program/ui/detail-modal/program-status/participating-institutions-section.css'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import { getMockAccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
 import '@/features/program/ui/detail-modal/applicants/applicant-instructor-basic-info.css'

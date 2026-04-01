@@ -4,6 +4,8 @@
  * 스크린샷 기준: 모달 헤더 없음, LNB 다크 UI, 선택 항목 연한 파란 배경
  */
 
+@import './program-status/program-status-participating-shared.css';
+
 .program-detail-fullpage-modal .teal-header-modal__body {
   padding: 0;
   height: 100%;

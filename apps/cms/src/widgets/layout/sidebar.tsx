@@ -51,7 +51,8 @@ export function Sidebar() {
         path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members') ||
-        path.startsWith('/admin/settings/permissions'))
+        path.startsWith('/admin/settings/permissions') ||
+        path.startsWith('/admin/permission-requests'))
     ) {
       keys.push('members-group')
       // 회원 목록(2뎁스) 아래 3뎁스 — `member-list-group` 없으면 네비 후 서브메뉴가 닫힘
@@ -62,6 +63,12 @@ export function Sidebar() {
         path.startsWith('/admin/members')
       ) {
         keys.push('member-list-group')
+      }
+      if (
+        path.startsWith('/admin/settings/permissions') ||
+        path.startsWith('/admin/permission-requests')
+      ) {
+        keys.push('member-permissions-group')
       }
     }
 

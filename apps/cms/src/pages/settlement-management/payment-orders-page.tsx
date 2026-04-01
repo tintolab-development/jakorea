@@ -17,8 +17,8 @@ import {
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
-import '@/features/program/ui/participating-institutions-section.css'
-import '@/features/program/ui/program-progress-tab.css'
+import '@/features/program/ui/detail-modal/program-status/participating-institutions-section.css'
+import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
 import './payment-order-admin-status-tag.css'
 import './payment-orders-page.css'
 import { PaymentOrdersCalendarView } from './payment-orders-calendar-view'

@@ -4,8 +4,9 @@
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
-import { Table, Select, message } from 'antd'
+import { Table, message } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
+import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -22,7 +23,6 @@ import {
   canSetProgramManagerRole,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import {
   AddManagerModal,
   buildManagerRowFromForm,
@@ -67,15 +67,66 @@ interface ProgramManagersTabProps {
 }
 
 export function ProgramManagersTab({ programId: _programId }: ProgramManagersTabProps) {
-  const { filters, setFilter } = useProgramManagersParams()
-  const [localManagerName, setLocalManagerName] = useState(() => filters.managerName ?? '')
+  const { filters, setFilters } = useProgramManagersParams()
+  const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
+    ...filters,
+  }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
 
   useEffect(() => {
-    setLocalManagerName(filters.managerName ?? '')
-  }, [filters.managerName])
+    setPendingFilters({ ...filters })
+  }, [filters])
+
+  const managerFilterFields = useMemo((): FilterFieldConfig[] => {
+    const colWidth = '40%'
+    return [
+      {
+        key: 'managerName',
+        type: 'search',
+        label: '담당자명',
+        placeholder: '담당자명을 입력하세요',
+        width: colWidth,
+      },
+      {
+        key: 'role',
+        type: 'select',
+        label: '권한',
+        placeholder: '전체',
+        options: ROLE_OPTIONS,
+        width: colWidth,
+      },
+    ]
+  }, [])
+
+  const unifiedFilterCardValues = useMemo(
+    () => ({
+      managerName: pendingFilters.managerName,
+      role: pendingFilters.role === 'all' ? undefined : pendingFilters.role,
+    }),
+    [pendingFilters]
+  )
+
+  const handleUnifiedFilterChange = (key: string, value: unknown) => {
+    if (key === 'managerName') {
+      setPendingFilters(prev => ({ ...prev, managerName: String(value ?? '') }))
+      return
+    }
+    const v = value == null || value === '' ? 'all' : String(value)
+    setPendingFilters(prev => ({ ...prev, role: v }))
+  }
+
+  const handleUnifiedFilterSearch = () => {
+    setFilters({
+      managerName: pendingFilters.managerName,
+      role: pendingFilters.role,
+    })
+    setAppliedFilters({
+      managerName: pendingFilters.managerName,
+      role: pendingFilters.role,
+    })
+  }
   const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() => [
     ...MOCK_PROGRAM_MANAGERS,
   ])
@@ -83,9 +134,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   const [editRoleModalOpen, setEditRoleModalOpen] = useState(false)
   const [managerForEditRole, setManagerForEditRole] = useState<ProgramManagerRow | null>(null)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
-  const [deleteFromEditManager, setDeleteFromEditManager] = useState<ProgramManagerRow | null>(
-    null
-  )
+  const [deleteFromEditManager, setDeleteFromEditManager] = useState<ProgramManagerRow | null>(null)
 
   const filteredManagers = useMemo(() => {
     const list = managerList.filter(row => {
@@ -102,14 +151,6 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
     })
     return [...list].sort((a, b) => b.no - a.no)
   }, [managerList, appliedFilters])
-
-  const handleSearch = () => {
-    setFilter('managerName', localManagerName)
-    setAppliedFilters({
-      managerName: localManagerName,
-      role: filters.role,
-    })
-  }
 
   const handleDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
@@ -230,9 +271,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         : r === 'PARTNER'
           ? 'program-managers-tab__role-badge--partner'
           : 'program-managers-tab__role-badge--assistant'
-    return (
-      <span className={`program-managers-tab__role-badge ${mod}`}>{label}</span>
-    )
+    return <span className={`program-managers-tab__role-badge ${mod}`}>{label}</span>
   }, [])
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -320,39 +359,14 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   return (
     <div className="program-managers-tab">
       <div className="program-managers-tab__top">
-        <div className="program-managers-tab__filters">
-          <div className="program-managers-tab__filter-row">
-            <div className="program-managers-tab__filter-grow">
-              <LabeledSearchInput
-                label="담당자명"
-                placeholder="담당자명을 입력하세요"
-                value={localManagerName}
-                onChange={setLocalManagerName}
-                onBlur={() => setFilter('managerName', localManagerName)}
-                width="100%"
-                showPrefixIcon={false}
-              />
-            </div>
-            <div className="program-managers-tab__filter-grow">
-              <div className="program-managers-tab__filter-field">
-                <span className="program-managers-tab__filter-label">권한</span>
-                <Select
-                  placeholder="전체"
-                  value={filters.role}
-                  onChange={v => setFilter('role', (v as string) ?? 'all')}
-                  options={ROLE_OPTIONS}
-                  getPopupContainer={() => document.body}
-                  className="program-managers-tab__role-filter-select"
-                />
-              </div>
-            </div>
-            <div className="program-managers-tab__filter-actions">
-              <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                조회
-              </AppButton>
-            </div>
-          </div>
-        </div>
+        <UnifiedFilterCard
+          bordered={false}
+          cardStyle={{ marginBottom: 0 }}
+          fields={managerFilterFields}
+          filters={unifiedFilterCardValues}
+          onFilterChange={handleUnifiedFilterChange}
+          onSearch={handleUnifiedFilterSearch}
+        />
       </div>
 
       <div className="program-managers-tab__divider" />
@@ -365,12 +379,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
             </span>
           </div>
           <div className="program-managers-tab__table-actions">
-            <AppButton
-              variant="danger"
-              size="filter"
-              dangerFillOnHover
-              onClick={handleDeleteClick}
-            >
+            <AppButton variant="danger" size="filter" dangerFillOnHover onClick={handleDeleteClick}>
               담당자 삭제
             </AppButton>
             <AppButton variant="primary" size="filter" onClick={() => setAddModalOpen(true)}>
@@ -382,9 +391,8 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
           </div>
         </div>
         <Table<ProgramManagerRow>
-          className="program-managers-tab__table"
+          className="cms-data-table cms-data-table--fluid"
           rowKey="id"
-          size="middle"
           pagination={false}
           rowSelection={{
             selectedRowKeys,

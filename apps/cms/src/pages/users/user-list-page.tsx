@@ -4,15 +4,18 @@
  * 회원 목록: React Query useInfiniteQuery + 15명씩 무한 스크롤
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Card, Modal } from 'antd'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Card, Modal, message } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useInView } from '@/shared/hooks/use-in-view'
 import { UserList } from '@/features/user/ui/user-list'
-import { UserDetailFullPageModal } from '@/features/user/ui/user-detail-fullpage-modal'
+import {
+  UserDetailFullPageModal,
+  USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
+} from '@/features/user/ui/user-detail-fullpage-modal'
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
 import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
@@ -49,6 +52,8 @@ interface UserListQueryParams extends Record<string, string | undefined> {
   search?: string
   id?: string
   lnb?: string
+  /** 회원 상세 풀페이지 — 프로그램 참여 이력 하위 탭 */
+  programsChild?: string
   createdAtFrom?: string
   createdAtTo?: string
 }
@@ -146,6 +151,7 @@ export function UserListPage() {
     openModal: openDrawer,
     closeModal: closeDrawer,
     selectedItem: drawerUser,
+    setSelectedItem: setDrawerUser,
   } = useModalState<Omit<User, 'password'>>()
 
   // 권한 변경 모달 상태 관리 (useModalState 사용)
@@ -167,6 +173,18 @@ export function UserListPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
   const [, setDeleteLoading] = useState(false)
+
+  /**
+   * 행 클릭 직후 URL·drawer·목록 배열이 한 틱 어긋날 때(전체 회원 등)에도 풀페이지가 바로 뜨도록
+   * 클릭한 행 객체를 동기적으로 보관
+   */
+  const [detailBridgeUser, setDetailBridgeUser] = useState<Omit<User, 'password'> | null>(null)
+
+  /**
+   * handleView가 id 쿼리보다 먼저 반영될 때 한 틱 동안 params.id가 이전 회원을 가리키는 경우가 있다.
+   * 이때 URL 동기화 effect가 목록에서 옛 id로 openDrawer를 호출하면 드로어·URL이 서로 덮어써 무한 갱신된다.
+   */
+  const pendingOpenedUserIdRef = useRef<string | null>(null)
 
   // 테이블 행 선택 (일괄 삭제용)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
@@ -214,10 +232,7 @@ export function UserListPage() {
   // 선택된 사용자 (드로어용)
   const selectedUser = useUserStore(state => selectSelectedUser(state))
 
-  const resolvedMemberListKind = useMemo(
-    () => normalizeMemberListKind(params.kind),
-    [params.kind]
-  )
+  const resolvedMemberListKind = useMemo(() => normalizeMemberListKind(params.kind), [params.kind])
 
   // URL(id) 기반 모달 상태 복원: 새로고침/직접 진입 시 상세 모달 유지
   useEffect(() => {
@@ -225,11 +240,28 @@ export function UserListPage() {
     const targetId = params.id?.trim()
 
     if (!targetId) {
+      // 클릭 직후 handleView는 detailBridgeUser·openDrawer를 먼저 반영하고,
+      // React Router의 `id` 쿼리는 다음 틱에 올 수 있음. 이때 !targetId로 닫으면 첫 클릭이 무효화됨.
+      if (detailBridgeUser && (drawerOpen || drawerUser)) {
+        return
+      }
+      setDetailBridgeUser(null)
       if (drawerOpen || drawerUser || selectedUser) {
         closeDrawer()
         clearSelectedUserId(null)
       }
       return
+    }
+
+    if (pendingOpenedUserIdRef.current) {
+      if (targetId === pendingOpenedUserIdRef.current) {
+        pendingOpenedUserIdRef.current = null
+      } else if (
+        drawerUser?.id === pendingOpenedUserIdRef.current &&
+        targetId !== pendingOpenedUserIdRef.current
+      ) {
+        return
+      }
     }
 
     if (selectedUser?.id !== targetId) {
@@ -267,6 +299,7 @@ export function UserListPage() {
     }
   }, [
     params.id,
+    detailBridgeUser,
     drawerOpen,
     drawerUser,
     selectedUser,
@@ -278,8 +311,20 @@ export function UserListPage() {
     fetchUserById,
   ])
 
-  const modalDetailUser = drawerUser ?? selectedUser
-  const userDetailModalOpen = drawerOpen || Boolean(params.id && modalDetailUser)
+  /** URL id만 먼저 반영되고 drawer 상태가 한 틱 늦을 때도 1회 클릭으로 모달이 뜨도록 목록 행으로 보강 */
+  const userFromListByUrlId = useMemo(() => {
+    const tid = params.id?.trim()
+    if (!tid) return null
+    return listUsers.find(u => u.id === tid) ?? null
+  }, [params.id, listUsers])
+
+  const modalDetailUser = drawerUser ?? selectedUser ?? userFromListByUrlId ?? detailBridgeUser
+  /**
+   * `params.id && modalDetailUser`만으로 열림을 두면, 닫기 직후 URL id가 한 틱 남거나
+   * 목록에서 id로 보강된 user가 남아 X로도 닫히지 않는 것처럼 보인다.
+   * URL 복원은 아래 useEffect가 openDrawer로 처리한다.
+   */
+  const userDetailModalOpen = drawerOpen || Boolean(detailBridgeUser)
 
   /** 열려 있는 상세 대상이 있으면 그 회원 역할 기준(전체 회원 혼합 목록 대응), 없으면 목록 kind 기준 */
   const basicInfoEntrySource = useMemo(() => {
@@ -313,22 +358,49 @@ export function UserListPage() {
   }, [queryClient])
 
   // 사용자 상세 보기
-  const handleView = (user: Omit<User, 'password'>) => {
-    setSelectedUserId(user.id) // 스토어에 ID만 저장
-    openDrawer(user)
-    setParams({
-      id: user.id,
-      lnb: 'detail-info',
-    })
-  }
+  const handleView = useCallback(
+    (user: Omit<User, 'password'>) => {
+      pendingOpenedUserIdRef.current = user.id
+      setDetailBridgeUser(user)
+      setSelectedUserId(user.id) // 스토어에 ID만 저장
+      openDrawer(user)
+      setParams({
+        id: user.id,
+        lnb: 'detail-info',
+        [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+      })
+    },
+    [setSelectedUserId, openDrawer, setParams]
+  )
+
+  const handleNavigateToLinkedUser = useCallback(
+    async (userId: string) => {
+      try {
+        await fetchUserById(userId)
+        const u = useUserStore.getState().usersById[userId]
+        if (u) {
+          handleView(u)
+        } else {
+          message.error('회원 정보를 찾을 수 없습니다.')
+        }
+      } catch {
+        message.error('회원 정보를 불러오지 못했습니다.')
+      }
+    },
+    [fetchUserById, handleView]
+  )
 
   // Drawer 닫기
   const handleDrawerClose = () => {
+    pendingOpenedUserIdRef.current = null
+    setDetailBridgeUser(null)
+    setDrawerUser(null)
     closeDrawer()
     clearSelectedUserId(null) // 스토어에서 선택 해제
     setParams({
       id: undefined,
       lnb: undefined,
+      [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
     })
   }
 
@@ -408,7 +480,7 @@ export function UserListPage() {
   }
 
   return (
-    <div>
+    <div style={{ padding: '0 12px' }}>
       <div className="user-list-page__filter-wrap">
         <FilterListLayout
           className="program-list-content-wrapper"
@@ -534,9 +606,7 @@ export function UserListPage() {
         user={modalDetailUser}
         basicInfoEntrySource={basicInfoEntrySource}
         onClose={handleDrawerClose}
-        onEdit={
-          modalDetailUser ? () => handleEdit(modalDetailUser) : undefined
-        }
+        onEdit={modalDetailUser ? () => handleEdit(modalDetailUser) : undefined}
         onWithdraw={
           canWrite && modalDetailUser
             ? (u: Omit<User, 'password'>) => {
@@ -547,6 +617,7 @@ export function UserListPage() {
               }
             : undefined
         }
+        onNavigateToLinkedUser={handleNavigateToLinkedUser}
       />
 
       <UserRoleChangeModal

@@ -283,9 +283,19 @@ function AllUsersBody({
   )
 }
 
-/** 학교(교사) 회원 전용 — 필드는 추후 API·시안에 맞춰 확장 */
+function institutionTimesLabel(n: number | undefined): string {
+  return n != null && !Number.isNaN(n) ? `${n}회` : '-'
+}
+
+/** 학교(교사) 회원 전용 — 기본 정보 */
 function InstitutionBody({ user }: { user: Omit<User, 'password'> }) {
   const schoolName = user.schoolInfo?.schoolName ?? '-'
+  const schoolAddress = user.schoolInfo?.address ?? '-'
+  const applicationCount = institutionTimesLabel(
+    user.listMetrics?.institutionProgramApplicationCount
+  )
+  const attendanceCount = institutionTimesLabel(user.listMetrics?.institutionProgramAttendanceCount)
+
   return (
     <tbody>
       <tr>
@@ -293,21 +303,47 @@ function InstitutionBody({ user }: { user: Omit<User, 'password'> }) {
           colSpan={2}
           className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
         >
-          <span className="user-detail-modal__basic-table-label">학교명</span>
+          <span className="user-detail-modal__basic-table-label">기관명</span>
+        </td>
+        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
+          {schoolName}
+        </td>
+        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
+          <span className="user-detail-modal__basic-table-label">기관 소재지</span>
+        </td>
+        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
+          {schoolAddress}
+        </td>
+      </tr>
+      <tr>
+        <td
+          colSpan={2}
+          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
+        >
+          <span className="user-detail-modal__basic-table-label">프로그램 신청 횟수</span>
+        </td>
+        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
+          {applicationCount}
+        </td>
+        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
+          <span className="user-detail-modal__basic-table-label">프로그램 수강 횟수</span>
+        </td>
+        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
+          {attendanceCount}
+        </td>
+      </tr>
+      <tr>
+        <td
+          colSpan={2}
+          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
+        >
+          <span className="user-detail-modal__basic-table-label">등록일</span>
         </td>
         <td
           colSpan={3}
           className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input"
         >
-          {schoolName}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={5}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input"
-        >
-          학교(교사) 회원 전용 필드는 추후 추가 예정입니다.
+          {formatDate(user.createdAt)}
         </td>
       </tr>
     </tbody>

@@ -155,6 +155,7 @@ export const mockUserHistories: UserHistory[] = [
           role: 'VOLUNTEER' as const,
           completedAt: getPastFriday(2), // 2주 전 금요일
           finalStatus: 'CONFIRMED' as const,
+          managerName: '이순신 매니저',
           volunteerHours: 4,
           certificates: [
             {
@@ -174,6 +175,7 @@ export const mockUserHistories: UserHistory[] = [
           role: 'PARTICIPANT' as const,
           completedAt: getDate(10),
           finalStatus: 'COMPLETED' as const,
+          managerName: '이순신 매니저',
           certificates: [
             {
               id: 'cert-003',
@@ -212,6 +214,7 @@ export const mockUserHistories: UserHistory[] = [
           role: 'VOLUNTEER' as const,
           completedAt: getDate(5),
           finalStatus: 'CONFIRMED' as const,
+          managerName: '홍길동 매니저',
           volunteerHours: 8,
           createdAt: getDate(20),
           updatedAt: getDate(5),

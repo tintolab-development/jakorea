@@ -368,6 +368,15 @@ function formatEducationLine(date: Date, round: number): string {
   return `${y}. ${m}. ${d} (${w}) | ${round}차시`
 }
 
+/** 마지막 행 스크린샷 정렬: 강의 평가 차시 */
+function formatEducationEvaluationLine(date: Date): string {
+  const y = date.getFullYear()
+  const m = pad2(date.getMonth() + 1)
+  const d = pad2(date.getDate())
+  const w = WEEKDAY_KO[date.getDay()] ?? ''
+  return `${y}. ${m}. ${d} (${w}) | 강의 평가`
+}
+
 function formatShortYmdWithWeekday(date: Date): string {
   const yy = String(date.getFullYear()).slice(-2)
   const m = pad2(date.getMonth() + 1)
@@ -422,12 +431,17 @@ function buildAssignmentSubmissionRows(
     const sessionDate = addDays(baseSessionDate, i * 7)
     const periodStart = addDays(sessionDate, -4)
     const periodEnd = addDays(sessionDate, -1)
+    const isLastEvaluationRow = i === count - 1
     rows.push({
       id: `${entityId}-assignment-row-${i}`,
       roundNumber: i + 1,
       teamRole: rolePattern[(i + roleOffset) % rolePattern.length]!,
-      educationDateLabel: formatEducationLine(sessionDate, i + 1),
-      assignmentPeriodLabel: `${formatShortYmdWithWeekday(periodStart)} ~ ${formatShortYmdWithWeekday(periodEnd)}`,
+      educationDateLabel: isLastEvaluationRow
+        ? formatEducationEvaluationLine(sessionDate)
+        : formatEducationLine(sessionDate, i + 1),
+      assignmentPeriodLabel: isLastEvaluationRow
+        ? '-'
+        : `${formatShortYmdWithWeekday(periodStart)} ~ ${formatShortYmdWithWeekday(periodEnd)}`,
       lectureProgress: lecture,
       submissionStatus: submission,
       canViewAssignment: canView,

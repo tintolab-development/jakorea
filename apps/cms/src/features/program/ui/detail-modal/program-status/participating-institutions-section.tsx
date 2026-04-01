@@ -4,16 +4,17 @@
  */
 
 import { useMemo, useState, useEffect, useRef } from 'react'
-import { Table, Row, Col, Select, Input } from 'antd'
+import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
+import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import { message } from 'antd'
 import {
   DeleteGuideModal,
   buildParticipatingInstitutionDeleteMessageLines,
   buildSchoolApproveMessageLines,
-} from './manager-delete-guide-modal'
+} from '../../manager-delete-guide-modal'
 import {
   TEXTBOOK_STATUS_LABELS,
   type ParticipatingSchoolRow,
@@ -25,18 +26,21 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { useParticipatingInstitutionsParams } from '../hooks/use-participating-institutions-params'
-import { useProgressSchoolList } from '../hooks/use-progress-school-list'
-import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
-import type { ProgressFilters } from '../hooks/use-program-progress-params'
-import { SchoolDetailModal } from './school-detail-modal'
-import { SchoolDetailFullpageView, type SchoolDetailTabKey } from './school-detail-fullpage-view'
-import { getSchoolDetailByRow } from '../lib/school-detail-mock'
+import { useParticipatingInstitutionsParams } from '../../../hooks/use-participating-institutions-params'
+import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
+import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
+import { SchoolDetailModal } from '../../school-detail-modal'
+import {
+  SchoolDetailFullpageView,
+  type SchoolDetailTabKey,
+} from '../../school-detail-fullpage-view'
+import { getSchoolDetailByRow } from '../../../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
+import type { ParticipatingInstitutionsFilters } from '../../../hooks/use-participating-institutions-params'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import './participating-institutions-section.css'
-import './program-progress-tab.css'
 
 const REGION_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -121,28 +125,100 @@ export function ParticipatingInstitutionsSection({
   const {
     filters,
     appliedFilters,
-    setFilter,
     applyFilters,
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingInstitutionsParams()
-  const [localSchoolName, setLocalSchoolName] = useState(() => filters.schoolName)
-  const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName)
+  const [pendingFilters, setPendingFilters] = useState<ParticipatingInstitutionsFilters>(() => ({
+    ...filters,
+  }))
   const [openTextbookDropdownId, setOpenTextbookDropdownId] = useState<string | null>(null)
   const [bulkConfirmModal, setBulkConfirmModal] = useState<'delete' | 'approve' | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
-  /** 쿼리 파라미터(URL)와 로컬 입력 동기화 */
   useEffect(() => {
-    setLocalSchoolName(filters.schoolName)
-    setLocalTeacherName(filters.teacherName)
-  }, [filters.schoolName, filters.teacherName])
+    setPendingFilters({ ...filters })
+  }, [filters])
 
   /** 프로그램에 교재 배송 현황 필드가 있을 때만 교재 배송 현황 필터 노출 */
   const showTextbookFilter = useMemo(
     () => !!(program?.textbookName ?? program?.textbookNameEn),
     [program?.textbookName, program?.textbookNameEn]
   )
+
+  const institutionFilterFields = useMemo((): FilterFieldConfig[] => {
+    const colWidth = '18%'
+    const fields: FilterFieldConfig[] = [
+      {
+        key: 'schoolName',
+        type: 'search',
+        label: '기관명',
+        placeholder: '기관명을 입력하세요',
+        width: colWidth,
+      },
+      {
+        key: 'region',
+        type: 'select',
+        label: '기관 지역',
+        placeholder: '전체',
+        options: REGION_OPTIONS,
+        width: colWidth,
+      },
+      {
+        key: 'educationGrade',
+        type: 'select',
+        label: '대상 학년',
+        placeholder: '전체',
+        options: GRADE_OPTIONS,
+        width: colWidth,
+      },
+    ]
+    if (showTextbookFilter) {
+      fields.push({
+        key: 'textbookStatus',
+        type: 'select',
+        label: '교재 배송 현황',
+        placeholder: '전체',
+        options: TEXTBOOK_OPTIONS,
+        width: colWidth,
+      })
+    }
+    fields.push({
+      key: 'teacherName',
+      type: 'search',
+      label: '담당 교사/강사명',
+      placeholder: '교사/강사명을 입력하세요',
+      width: colWidth,
+    })
+    return fields
+  }, [showTextbookFilter])
+
+  const unifiedFilterCardValues = useMemo(
+    () => ({
+      schoolName: pendingFilters.schoolName,
+      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
+      educationGrade:
+        pendingFilters.educationGrade === 'all' ? undefined : pendingFilters.educationGrade,
+      textbookStatus:
+        pendingFilters.textbookStatus === 'all' ? undefined : pendingFilters.textbookStatus,
+      teacherName: pendingFilters.teacherName,
+    }),
+    [pendingFilters]
+  )
+
+  const handleUnifiedFilterChange = (key: string, value: unknown) => {
+    if (key === 'schoolName' || key === 'teacherName') {
+      setPendingFilters(prev => ({ ...prev, [key]: String(value ?? '') }))
+      return
+    }
+    const k = key as keyof ParticipatingInstitutionsFilters
+    const v = value == null || value === '' ? 'all' : String(value)
+    setPendingFilters(prev => ({ ...prev, [k]: v }))
+  }
+
+  const handleUnifiedFilterSearch = () => {
+    applyFilters(pendingFilters)
+  }
 
   const progressFilters: ProgressFilters = useMemo(
     () => ({
@@ -200,10 +276,6 @@ export function ParticipatingInstitutionsSection({
       prevSchoolIdFromUrl.current = null
     }
   }, [selectedRowFromUrl, schoolIdFromUrl, onSchoolDetailOpen, onSchoolDetailClose])
-
-  const handleSearch = () => {
-    applyFilters({ schoolName: localSchoolName, teacherName: localTeacherName })
-  }
 
   const handleBulkDelete = () => {
     if (selectedSchoolRowKeys.length === 0) {
@@ -386,7 +458,7 @@ export function ParticipatingInstitutionsSection({
             ),
     }
     return (
-      <div className="participating-institutions-section">
+      <div className="program-status-participating participating-institutions-section">
         <SchoolDetailFullpageView
           program={program}
           detail={mergedDetail}
@@ -410,86 +482,15 @@ export function ParticipatingInstitutionsSection({
   }
 
   return (
-    <div className="participating-institutions-section">
-      <div className="participating-institutions-section__filters program-progress-tab__filters">
-        <Row
-          gutter={[0, 0]}
-          align="bottom"
-          wrap={false}
-          className="program-progress-tab__filter-row"
-        >
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">기관명</span>
-              <Input
-                placeholder="기관명을 입력하세요"
-                value={localSchoolName}
-                onChange={e => setLocalSchoolName(e.target.value)}
-                allowClear
-                className="participating-institutions-section__filter-input"
-              />
-            </div>
-          </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">기관 지역</span>
-              <Select
-                placeholder="전체"
-                value={filters.region || undefined}
-                onChange={v => setFilter('region', v ?? 'all')}
-                allowClear
-                options={REGION_OPTIONS}
-                getPopupContainer={() => document.body}
-              />
-            </div>
-          </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">대상 학년</span>
-              <Select
-                placeholder="전체"
-                value={filters.educationGrade || undefined}
-                onChange={v => setFilter('educationGrade', v ?? 'all')}
-                allowClear
-                options={GRADE_OPTIONS}
-                getPopupContainer={() => document.body}
-              />
-            </div>
-          </Col>
-          {showTextbookFilter && (
-            <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-              <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-                <span className="program-progress-tab__filter-label">교재 배송 현황</span>
-                <Select
-                  placeholder="전체"
-                  value={filters.textbookStatus || undefined}
-                  onChange={v => setFilter('textbookStatus', v ?? 'all')}
-                  allowClear
-                  options={TEXTBOOK_OPTIONS}
-                  getPopupContainer={() => document.body}
-                />
-              </div>
-            </Col>
-          )}
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">담당 교사/강사명</span>
-              <Input
-                placeholder="교사/강사명을 입력하세요"
-                value={localTeacherName}
-                onChange={e => setLocalTeacherName(e.target.value)}
-                allowClear
-                className="participating-institutions-section__filter-input"
-              />
-            </div>
-          </Col>
-          <Col flex="none" className="program-progress-tab__filter-col--btn">
-            <AppButton variant="primary" size="filter" onClick={handleSearch}>
-              조회
-            </AppButton>
-          </Col>
-        </Row>
-      </div>
+    <div className="program-status-participating participating-institutions-section">
+      <UnifiedFilterCard
+        bordered={false}
+        cardStyle={{ marginBottom: 0 }}
+        fields={institutionFilterFields}
+        filters={unifiedFilterCardValues}
+        onFilterChange={handleUnifiedFilterChange}
+        onSearch={handleUnifiedFilterSearch}
+      />
 
       <div className="participating-institutions-section__divider" />
 

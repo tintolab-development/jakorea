@@ -11,7 +11,7 @@ import type { ColumnsType } from 'antd/es/table'
 import {
   useProgramProgressParams,
   type ProgressFilters,
-} from '../hooks/use-program-progress-params'
+} from '../../../hooks/use-program-progress-params'
 import {
   TEXTBOOK_STATUS_LABELS,
   type ParticipatingSchoolRow,
@@ -27,19 +27,19 @@ import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SegmentedTab } from '@/shared/ui'
-import { AddInstructorModal } from './add-instructor-modal'
-import { SchoolDetailModal } from './school-detail-modal'
-import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
+import { AddInstructorModal } from '../../add-instructor-modal'
+import { SchoolDetailModal } from '../../school-detail-modal'
+import { ApplicantInstructorDetailModal } from '../../applicant-instructor-detail-modal'
 import {
   DeleteGuideModal,
   buildSchoolMessageLines,
   buildInstructorMessageLines,
-} from './manager-delete-guide-modal'
+} from '../../manager-delete-guide-modal'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../lib/school-detail-mock'
-import { useProgressSchoolList } from '../hooks/use-progress-school-list'
-import { useProgressInstructorList } from '../hooks/use-progress-instructor-list'
-import { StatusDropdownCell } from './status-dropdown-cell'
+import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/school-detail-mock'
+import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
+import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import { StatusDropdownCell } from '../../status-dropdown-cell'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
