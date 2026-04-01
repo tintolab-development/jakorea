@@ -18,7 +18,7 @@
 .layout-content {
   position: relative;
   margin: 0;
-  padding: var(--spacing-24);
+  padding: 32px;
   background: transparent;
   min-height: calc(100vh - 64px);
   margin-top: 64px;
