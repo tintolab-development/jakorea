@@ -32,12 +32,18 @@
 }
 
 .program-kpi-target-section__input {
-  width: 100%;
-  max-width: 120px;
+  width: 190px;
+  max-width: 190px;
+  flex: 0 0 190px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
+/* 강사·봉사자: 동일 190×40 (공통 정보 탭 기본 필드와 통일) */
 .program-kpi-target-section__input--sm {
-  max-width: 80px;
+  width: 190px;
+  max-width: 190px;
+  flex: 0 0 190px;
 }
 
 .program-kpi-target-section__instructor-row {

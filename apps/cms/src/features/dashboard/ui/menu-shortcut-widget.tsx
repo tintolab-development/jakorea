@@ -22,6 +22,7 @@ import {
   FileOutlined,
   HeartOutlined,
 } from '@ant-design/icons'
+import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { SHORTCUT_ITEMS, useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import './menu-shortcut-widget.css'
@@ -60,7 +61,7 @@ export function MenuShortcutWidget() {
 
   const navigateHandler = (path: string) => {
     console.log('navigateHandler path', path)
-    window.alert('준비 중입니다.')
+    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
   }
 
   return (

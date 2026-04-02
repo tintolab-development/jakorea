@@ -47,7 +47,8 @@
 
 /* 테이블 래퍼: radius + 외곽선(셀 border가 클립/서브픽셀에서 사라지는 현상 보완), 내부 격자는 셀 border 유지 */
 .program-detail-info-tab__table-wrapper,
-.program-kpi-target-section__table-wrap {
+.program-kpi-target-section__table-wrap,
+.program-wage-info-section__table-wrap {
     border-radius: var(--radius-8);
     overflow: hidden;
     border: 1px solid var(--color-border);
@@ -57,24 +58,29 @@
 
 /* 래퍼 border와 겹치는 바깥쪽 셀 테두리 제거 → 이중 선 방지, 우·좌·상·하 윤곽은 래퍼가 담당 */
 .program-detail-info-tab__table-wrapper>table tr>*:first-child,
-.program-kpi-target-section__table-wrap>table tr>*:first-child {
+.program-kpi-target-section__table-wrap>table tr>*:first-child,
+.program-wage-info-section__table-wrap>table tr>*:first-child {
     border-left: none;
 }
 
 .program-detail-info-tab__table-wrapper>table tr>*:last-child,
-.program-kpi-target-section__table-wrap>table tr>*:last-child {
+.program-kpi-target-section__table-wrap>table tr>*:last-child,
+.program-wage-info-section__table-wrap>table tr>*:last-child {
     border-right: none;
 }
 
 .program-detail-info-tab__table-wrapper>table thead>tr:first-child>*,
 .program-kpi-target-section__table-wrap>table thead>tr:first-child>*,
+.program-wage-info-section__table-wrap>table thead>tr:first-child>*,
 .program-detail-info-tab__table-wrapper>table:not(:has(> thead))>tbody>tr:first-child>*,
-.program-kpi-target-section__table-wrap>table:not(:has(> thead))>tbody>tr:first-child>* {
+.program-kpi-target-section__table-wrap>table:not(:has(> thead))>tbody>tr:first-child>*,
+.program-wage-info-section__table-wrap>table:not(:has(> thead))>tbody>tr:first-child>* {
     border-top: none;
 }
 
 .program-detail-info-tab__table-wrapper>table tbody>tr:last-child>*,
-.program-kpi-target-section__table-wrap>table tbody>tr:last-child>* {
+.program-kpi-target-section__table-wrap>table tbody>tr:last-child>*,
+.program-wage-info-section__table-wrap>table tbody>tr:last-child>* {
     border-bottom: none;
 }
 
@@ -269,9 +275,10 @@
     margin: 0 12px;
 }
 
-/* 썸네일 이미지 td: 패딩 12px */
+/* 썸네일 이미지 td: 패딩 12px — 테이블 td 기본 vertical-align:middle 과 충돌 시 행 내부 정렬이 어긋나지 않도록 상단 기준 */
 .program-detail-info-tab__cell--thumbnail {
     padding: 12px;
+    vertical-align: top;
 }
 
 /* 썸네일 — 86×86 이미지, 오른쪽에 파일명·삭제(X)·버튼·안내 (디자이너 시안: 수직 정렬·버튼 스타일) */
@@ -281,12 +288,17 @@
     gap: 0;
 }
 
-/* 이미지 유무와 관계없이 행 높이 고정 → 삭제 시 파일 선택 UI shifting 방지 (참여자/강사 정보 탭 공통) */
+/* 이미지 86px 하단 ↔ 파일명·버튼·가이드 블록 하단 정렬 (center 시 콘텐츠가 짧을 때 버튼 아래에 빈 여백 발생) */
 .program-detail-info-tab__thumbnail-row {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 16px;
     min-height: 86px;
+}
+
+/* Ant Image 루트(span): 인라인 베이스라인 여백 제거 → 왼쪽 썸네일과 오른쪽 파일 영역 수직 기준 일치 */
+.program-detail-info-tab__thumbnail-img.ant-image {
+    line-height: 0;
 }
 
 /* 썸네일 이미지 86×86 고정 (Ant Design Image 래퍼 + 내부 img 모두 제한) */
@@ -316,14 +328,15 @@
     display: block;
 }
 
-/* 썸네일 오른쪽: 1행 = 파일명 + 삭제(X), 2행 = 파일선택버튼 + 안내 텍스트. 삭제 시 파일명 영역이 사라져도 높이 고정으로 파일 선택 UI shifting 방지 */
+/* 썸네일 오른쪽: 파일명 행 + 파일선택·가이드 (콘텐츠 높이만 사용, 하단 여백 없음) */
 .program-detail-info-tab__thumbnail-meta {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    justify-content: flex-start;
     gap: 10px;
+    flex: 1;
     min-width: 0;
-    min-height: 80px;
 }
 
 .program-detail-info-tab__thumbnail-filename-row {
@@ -369,20 +382,30 @@
 /* 썸네일 영역 내 파일 선택 필드: 버튼 120×40, 연한 청록 */
 .program-detail-info-tab__file-select.file-select-field {
     gap: 10px;
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+}
+
+.program-detail-info-tab__file-select .file-select-field__names,
+.program-detail-info-tab__file-select .file-select-field__actions {
+    width: 100%;
 }
 
 .program-detail-info-tab__file-select .file-select-field__actions {
     gap: var(--spacing-12);
-    align-items: center;
+    align-items: flex-end;
 }
 
-.program-detail-info-tab__file-select .file-select-field__btn {
+/* FileSelectField는 AppButton 사용 — 구버전 __btn 선택자 대신 실제 버튼에 적용 */
+.program-detail-info-tab__file-select .file-select-field__actions .app-button {
     width: 120px;
     min-width: 120px;
     height: 40px;
     padding: 0 12px;
     border-radius: 6px;
     font-size: var(--font-size-13);
+    flex-shrink: 0;
 }
 
 .program-detail-info-tab__file-select .file-select-field__guide {
@@ -392,6 +415,12 @@
     line-height: 150%;
     /* 21px */
     opacity: 0.6;
+    margin: 0;
+    padding: 0;
+}
+
+.program-detail-info-tab__file-select .file-select-field__guide-line:last-child {
+    margin-bottom: 0;
 }
 
 .program-detail-info-tab__contact-cell {
@@ -675,7 +704,9 @@
 }
 
 /* 테이블 값 셀: 텍스트 AppInput — 단독이면 100%, flex 행은 하위에서 덮어씀 */
-.program-detail-info-tab__table td .app-input:not(.program-detail-info-tab__capacity-input):not(.program-detail-info-tab__curriculum-time-input) {
+.program-detail-info-tab__table
+    td
+    .app-input:not(.program-detail-info-tab__capacity-input):not(.program-detail-info-tab__curriculum-time-input):not(.program-detail-info-tab__max-class-count-input) {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0;
@@ -689,6 +720,17 @@
     flex-shrink: 0;
 }
 
+/* 참여자 모집: 신청 가능 최대 학급 수 — 190×40(AppInput 기본 높이) */
+.program-detail-info-tab__table td .app-input.program-detail-info-tab__max-class-count-input,
+.program-detail-info-tab__max-class-count-input.app-input {
+    width: 190px !important;
+    max-width: 190px !important;
+    flex: 0 0 190px;
+    flex-shrink: 0;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
 /* 문의처 행(수정): 공통 정보·참여자·강사·봉사 탭 텍스트 인풋 190px (--basic 포함해 td 100% 규칙보다 우선) */
 .program-detail-info-tab__table.program-detail-info-tab__table--basic td .program-detail-info-tab__contact-fields .app-input,
 .program-detail-info-tab__table.program-detail-info-tab__table--basic td .program-detail-info-tab__contact-inputs .app-input {
@@ -696,6 +738,68 @@
     max-width: 190px !important;
     flex: 0 0 190px;
     min-width: 0;
+    box-sizing: border-box;
+}
+
+/* 사업 KPI 목표(수정): 라벨(th) 옆 값 셀 인풋 공통 190px — 높이 40px는 AppInput 기본(.app-input__control) */
+.program-detail-info-tab__table.program-detail-info-tab__table--basic td .app-input.program-kpi-target-section__input {
+    width: 190px !important;
+    max-width: 190px !important;
+    flex: 0 0 190px !important;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+/* 상단 블록: 세부 프로그램명 — 190×40 (대표 프로그램명 cell-full 과 구분, td 100% 규칙보다 우선) */
+.program-detail-info-tab__table.program-detail-info-tab__table--top.program-detail-info-tab__table--basic td .app-input.program-detail-info-tab__input--detail-program-title {
+    width: 190px !important;
+    max-width: 190px !important;
+    flex: 0 0 190px !important;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+/* 임금 정보: 강사비 유형 셀렉트 190px (td .app-select 와 동일 스펙 명시) */
+.program-detail-info-tab__table.program-detail-info-tab__table--basic
+    td
+    .app-select.program-wage-info-section__wage-type-select {
+    width: 190px !important;
+    max-width: 190px !important;
+    flex: 0 0 190px !important;
+    box-sizing: border-box;
+}
+
+/* 임금 정보: 기본·장거리 강사비 인풋 190px (td 100% 인풋 규칙보다 우선) */
+.program-detail-info-tab__table.program-detail-info-tab__table--basic
+    td
+    .app-input.program-wage-info-section__input--price {
+    width: 190px !important;
+    max-width: 190px !important;
+    flex: 0 0 190px !important;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+/* 임금 책정 기준 행: 단위 셀렉트·수량 인풋 80×40 (td 전역 규칙보다 우선) */
+.program-detail-info-tab__table.program-detail-info-tab__table--basic
+    td
+    .program-wage-info-section__pricing-basis-row
+    > .app-select.program-wage-info-section__measure-select {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    flex: 0 0 80px !important;
+    box-sizing: border-box;
+}
+
+.program-detail-info-tab__table.program-detail-info-tab__table--basic
+    td
+    .program-wage-info-section__pricing-basis-row
+    > .app-input.program-wage-info-section__input--qty {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    flex: 0 0 80px !important;
     box-sizing: border-box;
 }
 

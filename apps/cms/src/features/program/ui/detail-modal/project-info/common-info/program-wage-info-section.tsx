@@ -112,12 +112,18 @@ function syncWagePricingTimeUnit(form: UseFormReturn<ProgramDetailEditFormValues
   )
 }
 
-/** 임금 정보 테이블: 하위 항목 전부 필수 th 스타일(조회·수정 공통) */
-function WageRequiredTh({ children }: { children: ReactNode }) {
+/** 임금 정보 테이블: 필수 표시(*)는 수정 모드(폼 연동)에서만 */
+function WageRequiredTh({
+  children,
+  showRequired,
+}: {
+  children: ReactNode
+  showRequired: boolean
+}) {
   return (
-    <th className="program-detail-info-tab__th--required">
+    <th className={showRequired ? 'program-detail-info-tab__th--required' : undefined}>
       {children}
-      <span className="program-detail-info-tab__required">*</span>
+      {showRequired ? <span className="program-detail-info-tab__required">*</span> : null}
     </th>
   )
 }
@@ -165,7 +171,7 @@ export function ProgramWageInfoSection({
           </colgroup>
           <tbody>
             <tr>
-              <WageRequiredTh>강사비 유형</WageRequiredTh>
+              <WageRequiredTh showRequired={!!isFormEdit}>강사비 유형</WageRequiredTh>
               <td>
                 {isFormEdit && form ? (
                   <Controller
@@ -196,7 +202,7 @@ export function ProgramWageInfoSection({
                   data.wageType
                 )}
               </td>
-              <WageRequiredTh>임금 책정 기준</WageRequiredTh>
+              <WageRequiredTh showRequired={!!isFormEdit}>임금 책정 기준</WageRequiredTh>
               <td className="program-wage-info-section__td-pricing-basis">
                 {isFormEdit && form ? (
                   <div className="program-wage-info-section__pricing-basis-row">
@@ -213,7 +219,6 @@ export function ProgramWageInfoSection({
                           }}
                           allowClear={false}
                           className="program-wage-info-section__measure-select"
-                          uiVariant="filter"
                         />
                       )}
                     />
@@ -233,7 +238,6 @@ export function ProgramWageInfoSection({
                             syncWagePricingTimeUnit(form)
                           }}
                           className="program-wage-info-section__input program-wage-info-section__input--qty"
-                          uiVariant="filter"
                         />
                       )}
                     />
@@ -263,7 +267,7 @@ export function ProgramWageInfoSection({
             </tr>
             {isFormEdit && form ? (
               <tr>
-                <WageRequiredTh>기본 강사비</WageRequiredTh>
+                <WageRequiredTh showRequired>기본 강사비</WageRequiredTh>
                 <td>
                   <div className="program-wage-info-section__amount-row">
                     <Controller
@@ -281,7 +285,7 @@ export function ProgramWageInfoSection({
                     <span className="program-wage-info-section__amount-unit">원</span>
                   </div>
                 </td>
-                <WageRequiredTh>장거리 강사비</WageRequiredTh>
+                <WageRequiredTh showRequired>장거리 강사비</WageRequiredTh>
                 <td>
                   <div className="program-wage-info-section__amount-row">
                     <Controller
@@ -302,11 +306,11 @@ export function ProgramWageInfoSection({
               </tr>
             ) : null}
             <tr>
-              <WageRequiredTh>지급 항목</WageRequiredTh>
+              <WageRequiredTh showRequired={!!isFormEdit}>지급 항목</WageRequiredTh>
               <td>
                 <div className="program-wage-info-section__cell-plain-text">{data.paymentItems}</div>
               </td>
-              <WageRequiredTh>공제 항목</WageRequiredTh>
+              <WageRequiredTh showRequired={!!isFormEdit}>공제 항목</WageRequiredTh>
               <td>
                 <div className="program-wage-info-section__cell-plain-text">{data.deductionItems}</div>
               </td>

@@ -1,3 +1,12 @@
+/**
+ * 프로젝트 정보(공통/참여자·강사·봉사) 패널 — 풀페이지 모달 본문
+ *
+ * 수정 모드에서 넘어오는 `infoForm` | `institutionsForm` | … 는 모두
+ * `UseFormReturn<ProgramDetailEditFormValues>` (react-hook-form + `programDetailEditSchema`).
+ *
+ * 병합 시: `form={isEditModeX ? xForm : undefined}` 패턴을 유지할 것. `form` 만 props 로 받고
+ * 내부에서 새 `useForm` 을 만들면 상위 저장/리셋과 폼 상태가 분리됨.
+ */
 import { Spin, Typography } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { Program } from '@/types/domain'
@@ -19,6 +28,8 @@ import {
 import { TAB_KEYS, TAB_LABELS, type TabKey } from '../program-detail-nav-types'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
+/* 참여자·강사·봉사 탭 상세(썸네일·테이블) 스타일 — 하위 컴포넌트 import에만 의존하지 않도록 고정 */
+import './project-info-form-shared.css'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
