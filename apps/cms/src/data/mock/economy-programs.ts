@@ -142,6 +142,8 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     textbookNameEn: 'Our Region',
     managerName: '사업팀 김담당 매니저',
     contactPhone: '02-6347-6113',
+    participatingSchoolCount: 42,
+    participatingStudentCount: 1280,
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -266,6 +268,8 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     educationTime: 6,
     textbookName: 'Career Discovery Guide',
     textbookNameEn: 'Career Discovery Guide',
+    participatingSchoolCount: 28,
+    participatingStudentCount: 840,
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -296,6 +300,8 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     textbookName: '어린이 금융박사 홈즈',
     textbookNameEn: 'Junior Financial Doctor Holmes',
     educationTime: 3,
+    participatingSchoolCount: 15,
+    participatingStudentCount: 462,
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -328,6 +334,10 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     maleParticipants: 10,
     femaleParticipants: 10,
     totalParticipants: 20,
+    instructors: 24,
+    instructorCapacity: 28,
+    participatingSchoolCount: 8,
+    participatingStudentCount: 356,
   },
 ]
 
@@ -393,7 +403,7 @@ export function getEconomyPrograms(): Program[] {
     } as Program)
   })
 
-  // 나머지 198건 (총 206건) - 위젯 건수: 예정 120, 진행 중 12, 완료 11 (120+12+11=143, 나머지 63은 planned 등)
+  // 나머지 198건 (총 206건) — 예정 위젯 4단계 골고루, 진행·완료는 테이블(학교/학생 수·강사)용 필드 채움
   const scheduledStatuses: ProgramLifecycleStatus[] = [
     'recruiting_students',
     'recruiting_instructors',
@@ -401,11 +411,11 @@ export function getEconomyPrograms(): Program[] {
     'education_before_textbook',
   ]
   const inProgressStatus: ProgramLifecycleStatus = 'education_after_textbook'
-  const completedStatus: ProgramLifecycleStatus = 'education_completed'
   const statusSequence: ProgramLifecycleStatus[] = [
-    ...Array(116).fill(scheduledStatuses[0]),
+    ...Array.from({ length: 116 }, (_, j) => scheduledStatuses[j % scheduledStatuses.length]),
     ...Array(9).fill(inProgressStatus),
-    ...Array(10).fill(completedStatus),
+    ...Array(5).fill('education_completed' as ProgramLifecycleStatus),
+    ...Array(5).fill('document_processing_completed' as ProgramLifecycleStatus),
     ...Array(63).fill('planned' as ProgramLifecycleStatus),
   ]
 
@@ -418,7 +428,25 @@ export function getEconomyPrograms(): Program[] {
     const targetLevel = targetLevels[i % 3]
     const approvedCount = i % 5 === 0 ? 0 : Math.min(30, Math.floor((i * 7) % 31))
     const extras = extraFieldsForGeneratedIndex(i)
+    const instCap = extras.instructorCapacity ?? 40
     const inProgress = lifecycleStatus === 'education_after_textbook'
+    const isCompleted =
+      lifecycleStatus === 'education_completed' ||
+      lifecycleStatus === 'document_processing_completed'
+
+    const participatingSchoolCount =
+      inProgress ? 5 + (i % 15) : isCompleted ? 3 + (i % 22) : undefined
+
+    const participatingStudentCount = inProgress
+      ? 180 + ((i * 97) % 2200)
+      : isCompleted
+        ? 120 + ((i * 53) % 2400)
+        : undefined
+
+    const instructors =
+      inProgress || isCompleted
+        ? Math.min(Math.max(approvedCount, 6), instCap - (i % 4))
+        : undefined
 
     programs.push({
       id,
@@ -443,7 +471,9 @@ export function getEconomyPrograms(): Program[] {
       businessArea: '경제금융',
       targetLevel,
       approvedStudentCount: approvedCount,
-      instructors: inProgress ? Math.min(approvedCount || 15, 30) : undefined,
+      instructors,
+      participatingSchoolCount,
+      participatingStudentCount,
       createdAt: getDate(200 - i),
       updatedAt: getDate(200 - i),
       posterImage: `https://picsum.photos/seed/${id}/400/300`,
