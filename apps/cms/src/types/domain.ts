@@ -155,6 +155,10 @@ export interface Program {
   approvedStudentCount?: number
   /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
   instructorCapacity?: number
+  /** 총 참여 학교 수 (경제 교육 진행 중 목록 등) */
+  participatingSchoolCount?: number
+  /** 총 참여 학생 수 (경제 교육 진행 중·완료 목록 등) */
+  participatingStudentCount?: number
   /** 강사 모집 기간 */
   instructorApplicationStartDate?: DateValue
   instructorApplicationEndDate?: DateValue
