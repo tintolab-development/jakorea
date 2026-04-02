@@ -347,6 +347,10 @@ export function ProgramDetailFullPageModal({
   }
 
   const handleSidebarSelectChild = (groupKey: string, childKey: string) => {
+    if (groupKey === 'applicants' && childKey === 'volunteers') {
+      window.alert('준비 중입니다.')
+      return
+    }
     if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
     else if (groupKey === 'progress') setProgressChild(childKey as TabKey)
   }
