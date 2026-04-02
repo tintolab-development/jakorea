@@ -69,10 +69,11 @@ export const economyFilterFields = [
     width: '28%',
   },
   {
-    key: 'lifecycleStatusText',
-    type: 'search' as const,
+    key: 'lifecycleStatus',
+    type: 'select' as const,
     label: '프로그램 진행 현황',
-    placeholder: '프로그램 진행 현황을 입력하세요',
+    placeholder: '전체',
+    options: statusOptions,
     width: '28%',
   },
   {
@@ -90,6 +91,39 @@ export const economyFilterFields = [
     placeholder: '전체',
     options: economyTargetLevelOptions,
     width: '22%',
+  },
+]
+
+/** 경제 교육 · 위젯 「예정·진행 중·완료 프로그램」 선택 시 — 진행 현황 필터 없음 */
+export const economyScheduledFilterFields = [
+  {
+    key: 'title',
+    type: 'search' as const,
+    label: '프로그램명',
+    placeholder: '프로그램명을 입력하세요',
+    width: '25%',
+  },
+  {
+    key: 'operationPeriod',
+    type: 'dateRange' as const,
+    label: '사업 운영 기간',
+    width: '25%',
+  },
+  {
+    key: 'category',
+    type: 'select' as const,
+    label: '참여자 유형',
+    placeholder: '전체',
+    options: economyParticipantTypeOptions,
+    width: '25%',
+  },
+  {
+    key: 'targetLevel',
+    type: 'select' as const,
+    label: '교육 대상',
+    placeholder: '전체',
+    options: economyTargetLevelOptions,
+    width: '25%',
   },
 ]
 

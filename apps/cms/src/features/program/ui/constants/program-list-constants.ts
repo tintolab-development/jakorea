@@ -69,3 +69,23 @@ export const economyTargetLevelOptions = [
   { value: 'college', label: '대학생' },
   { value: 'adult', label: '성인' },
 ]
+
+/** 경제 교육 목록/필터와 동일한 참여자 유형 표기 (시안: 학교/기관, 개인 학습자 등) */
+export function getEconomyParticipantTypeLabel(value: string | undefined): string {
+  if (value == null || value === '') return '-'
+  const hit = economyParticipantTypeOptions.find(o => o.value === value)
+  return hit?.label ?? value
+}
+
+/** 경제 교육 목록/필터와 동일한 교육 대상 표기 (시안: 초등학생 — 일반 목록 `초등`과 구분) */
+export function getEconomyTargetLevelLabel(value: string | undefined): string {
+  if (value == null || value === '') return '-'
+  const hit = economyTargetLevelOptions.find(o => o.value === value)
+  if (hit) return hit.label
+  const legacyShort: Record<string, string> = {
+    초: '초등학생',
+    중: '중학생',
+    고: '고등학생',
+  }
+  return legacyShort[value] ?? value
+}
