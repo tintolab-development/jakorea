@@ -20,6 +20,8 @@
   --filter-area-label-line-height: 150%;
   /** Ant Table rowSelection 체크박스 열 */
   --table-selection-column-width: 60px;
+  /** Ant Table 내 체크박스 박스 크기 (ant-table-selection-checkbox.css) */
+  --table-checkbox-size: 20px;
 }
 
 @media (max-width: 1200px) {
