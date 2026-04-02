@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
+import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import './sidebar.css'
 import { Header } from './header'
@@ -153,7 +154,7 @@ export function Sidebar() {
             // 기존: if (typeof key === 'string' && key.startsWith('/')) navigate(key)
             if (typeof key !== 'string' || !key.startsWith('/')) return
             if (key === '/programs/education') {
-              window.alert('준비 중 입니다.')
+              window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
               // navigate(key)
               return
             }

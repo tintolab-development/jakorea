@@ -20,6 +20,7 @@ import {
 } from '@/shared/config/program-progress-stages'
 import type { Program, ProgramCategory, ProgramLifecycleStatus } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
+import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 
 // Local Hooks & Components
 import { useProgramListFilters } from './use-program-list-filters'
@@ -214,7 +215,7 @@ export function ProgramListPage() {
   }
 
   const handleProgramCreateClick = () => {
-    window.alert('준비중입니다.')
+    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
   }
 
   // 예정 프로그램 필터 해제 시 선택 초기화
