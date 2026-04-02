@@ -194,48 +194,52 @@ export function ProgramKpiTargetSection({
               <td>
                 {isFormEdit && form ? (
                   <div className="program-kpi-target-section__instructor-row">
-                    <span className="program-kpi-target-section__instructor-label">강사</span>
-                    <Controller
-                      name="kpiInstructorCount"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          type="number"
-                          min={0}
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={e => {
-                            const n = parseInt(e.target.value, 10)
-                            field.onChange(isNaN(n) ? undefined : n)
-                          }}
-                          className="program-kpi-target-section__input program-kpi-target-section__input--sm"
-                          status={form.formState.errors.kpiInstructorCount ? 'error' : undefined}
-                        />
-                      )}
-                    />
+                    <div className="program-kpi-target-section__instructor-field">
+                      <span className="program-kpi-target-section__instructor-label">강사</span>
+                      <Controller
+                        name="kpiInstructorCount"
+                        control={form.control}
+                        render={({ field }) => (
+                          <AppInput
+                            type="number"
+                            min={0}
+                            {...field}
+                            value={field.value ?? ''}
+                            onChange={e => {
+                              const n = parseInt(e.target.value, 10)
+                              field.onChange(isNaN(n) ? undefined : n)
+                            }}
+                            className="program-kpi-target-section__input program-kpi-target-section__input--sm"
+                            status={form.formState.errors.kpiInstructorCount ? 'error' : undefined}
+                          />
+                        )}
+                      />
+                    </div>
                     <span className="program-detail-info-tab__separator"> | </span>
-                    <span className="program-kpi-target-section__instructor-label">봉사자</span>
-                    <Controller
-                      name="kpiVolunteerCount"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          type="number"
-                          min={0}
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={e => {
-                            const n = parseInt(e.target.value, 10)
-                            field.onChange(isNaN(n) ? undefined : n)
-                          }}
-                          className="program-kpi-target-section__input program-kpi-target-section__input--sm"
-                          status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
-                        />
-                      )}
-                    />
+                    <div className="program-kpi-target-section__instructor-field">
+                      <span className="program-kpi-target-section__instructor-label">봉사자</span>
+                      <Controller
+                        name="kpiVolunteerCount"
+                        control={form.control}
+                        render={({ field }) => (
+                          <AppInput
+                            type="number"
+                            min={0}
+                            {...field}
+                            value={field.value ?? ''}
+                            onChange={e => {
+                              const n = parseInt(e.target.value, 10)
+                              field.onChange(isNaN(n) ? undefined : n)
+                            }}
+                            className="program-kpi-target-section__input program-kpi-target-section__input--sm"
+                            status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
+                          />
+                        )}
+                      />
+                    </div>
                     {(form.formState.errors.kpiInstructorCount?.message ||
                       form.formState.errors.kpiVolunteerCount?.message) && (
-                      <span className="program-detail-info-tab__field-error">
+                      <span className="program-detail-info-tab__field-error program-kpi-target-section__instructor-row-error">
                         {form.formState.errors.kpiInstructorCount?.message ||
                           form.formState.errors.kpiVolunteerCount?.message}
                       </span>
