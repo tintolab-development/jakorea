@@ -3,6 +3,20 @@
  * - 비즈니스 규칙: 필수/선택 필드, 검증(Zod), Program ↔ 폼 값 변환
  * - programToDetailEditValues: Program → 폼 기본값 (정보 수정 시 기존 값 채움)
  * - detailEditValuesToProgramPatch: 폼 값 → 저장용 패치 (optional 필드는 existing fallback)
+ *
+ * ─── React Hook Form / Zod 연동 (풀페이지 수정 모드) ─────────────────────────
+ * - 단일 진실 소스: `programDetailEditSchema` → `ProgramDetailEditFormValues` (`z.infer`)
+ * - 폼 인스턴스: `use-program-detail-edit-form.ts` 에서 `zodResolver(programDetailEditSchema)` 로 연결
+ * - 저장 시 검증: `use-program-detail-info-save.ts` → `form.trigger()` 가 이 스키마 기준으로 동작
+ *
+ * ─── 브랜치 병합 시 주의 (연동 깨짐 방지) ───────────────────────────────────
+ * 1) 새 `Controller`/`register` 필드를 추가하면 반드시:
+ *    - 아래 `programDetailEditSchema` 에 동일 키 추가
+ *    - `programToDetailEditValues` 에 Program(또는 mock)에서의 매핑 추가
+ *    - API/도메인에 내려야 하면 `detailEditValuesToProgramPatch` 와 `Program` 타입에도 필드 추가
+ * 2) 스키마 키 이름을 바꾸면 모든 `name="..."` / `setValue` / `watch` 호출부를 함께 수정
+ * 3) 임금(`wage*`)·KPI(`kpi*`) 등은 현재 스키마·폼에는 있으나 `detailEditValuesToProgramPatch` 미반영.
+ *    백엔드 저장이 필요하면 패치 함수와 `Program` 모델을 확장할 것 (그 전까지는 UI 상태만 유지)
  */
 
 import { z } from 'zod'
@@ -237,7 +251,11 @@ export function programToDetailEditValues(
   }
 }
 
-/** 폼 값 → Program 패치 (저장 시 병합용) */
+/**
+ * 폼 값 → Program 패치 (저장 시 병합용)
+ * `useProgramDetailInfoSave` 의 `triggerSave` 에서만 호출 — RHF `getValues()` 결과를 받음.
+ * 병합: 새 폼 필드를 저장하려면 여기와 `@/types/domain` Program 정의를 함께 갱신.
+ */
 export function detailEditValuesToProgramPatch(
   values: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program
