@@ -173,6 +173,16 @@
     color: var(--color-text-primary);
 }
 
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled {
+    color: #bdbdbd;
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled:hover {
+    color: #bdbdbd;
+}
+
 /* 활성 탭 — 동일 specificity로 base 오버라이드 (색상·보더 적용되도록) */
 .program-detail-fullpage-modal button.program-detail-fullpage-modal__tab.program-detail-fullpage-modal__tab--active {
     color: var(--JA-mint-01, #01a1af);

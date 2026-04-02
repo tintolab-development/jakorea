@@ -28,6 +28,7 @@ import { MESSAGES } from '@/shared/constants'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
   SCHOOL_DETAIL_TAB_KEYS,
+  normalizeSchoolDetailTab,
   type SchoolDetailTabKey,
 } from '../school-detail-fullpage-view'
 import {
@@ -77,7 +78,8 @@ const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 
 /** 학교 상세 뷰 내 탭 — 키 목록은 `school-detail-fullpage-view`의 SCHOOL_DETAIL_TAB_KEYS와 동일 */
 function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
-  if (t && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(t)) return t as SchoolDetailTabKey
+  if (t && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(t))
+    return normalizeSchoolDetailTab(t as SchoolDetailTabKey)
   return 'application'
 }
 
@@ -212,13 +214,14 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }, [open, activeLnb, progressTab, searchParams, setSearchParams, programId])
 
-  // 학교 상세 뷰 탭(schoolTab) 유효성 — schoolId 있을 때만
+  // 학교 상세 뷰 탭(schoolTab) 유효성 — schoolId 있을 때만 (비활성 탭·누락 시 정규화된 값으로 URL 동기화)
   useEffect(() => {
     if (!open || !schoolIdFromUrl) return
     const raw = searchParams.get(SCHOOL_TAB_PARAM)
-    if (raw && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(raw)) return
+    const normalized = parseSchoolTabFromSearch(searchParams)
+    if (raw === normalized) return
     const next = new URLSearchParams(searchParams)
-    next.set(SCHOOL_TAB_PARAM, 'application')
+    next.set(SCHOOL_TAB_PARAM, normalized)
     if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
   }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId])
@@ -386,7 +389,7 @@ export function ProgramDetailFullPageModal({
 
   const setSchoolTab = (tab: SchoolDetailTabKey) => {
     const next = new URLSearchParams(searchParams)
-    next.set(SCHOOL_TAB_PARAM, tab)
+    next.set(SCHOOL_TAB_PARAM, normalizeSchoolDetailTab(tab))
     setSearchParams(next, { replace: true })
   }
 
