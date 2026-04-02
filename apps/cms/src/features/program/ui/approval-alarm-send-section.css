@@ -16,8 +16,10 @@
 
 .approval-alarm-send-section__radio-group {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
 }
 
 .approval-alarm-send-section__radio-group .ant-radio-wrapper {

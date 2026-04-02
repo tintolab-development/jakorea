@@ -49,9 +49,12 @@
   align-items: stretch;
 }
 
-/* 디스크립션 폰트 스펙: #3D3D3D, 16px, 500, 150% */
+/*
+ * 디스크립션 ↔ 폼 간격 30px: teal-header-modal__body flex gap(--spacing-30)만 사용.
+ * margin-bottom을 두면 gap과 겹쳐 약 60px이 됨.
+ */
 .add-student-modal__description {
-  margin: 0 0 30px;
+  margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;

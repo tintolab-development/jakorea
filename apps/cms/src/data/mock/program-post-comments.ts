@@ -166,6 +166,10 @@ export interface CreateProgramPostCommentOptions {
   reactionRoleLabel?: string
 }
 
+export interface AddProgramPostReactionOptions {
+  roleLabel?: string
+}
+
 function appendReactionUserForPost(
   postId: UUID,
   authorName: string,
@@ -207,6 +211,23 @@ function appendReactionUserForPost(
   return id
 }
 
+/** 댓글 생성 없이 게시글 반응(이모지)만 추가 */
+export function addProgramPostReaction(
+  postId: UUID,
+  authorName: string,
+  emojiType: string,
+  options?: AddProgramPostReactionOptions
+): UUID | null {
+  const type = emojiType.trim()
+  if (!type) return null
+  return appendReactionUserForPost(
+    postId,
+    authorName,
+    type,
+    options?.roleLabel?.trim() || '학생'
+  )
+}
+
 /** 댓글 등록 (Mock: in-memory 추가 후 목록에 반영) */
 export function createProgramPostComment(
   postId: UUID,
@@ -237,6 +258,11 @@ export function createProgramPostComment(
   list.push(comment)
   commentsByPostId.set(postId, list)
   list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  const post = mockProgramPosts.find(p => p.id === postId)
+  if (post) {
+    post.commentCount = list.length
+    post.updatedAt = now
+  }
   return comment
 }
 

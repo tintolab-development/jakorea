@@ -18,7 +18,7 @@ const { TextArea } = Input
 const AUDIENCE_OPTIONS = [
   { label: '전체', value: 'all' },
   { label: '담당교사', value: 'teacher' },
-  { label: '강사진', value: 'instructor' },
+  { label: '강사', value: 'instructor' },
   { label: '봉사자', value: 'volunteer' },
   { label: '학생', value: 'student' },
 ]
@@ -166,7 +166,7 @@ export function PostWriteModal({
     >
       <div className="post-write-modal__body">
         {/* 게시글 공개 범위 */}
-        <div className="post-write-modal__field">
+        <div className="post-write-modal__field post-write-modal__field--audience">
           <label className="post-write-modal__label">
             게시글 공개 범위 <span className="post-write-modal__required" aria-hidden>*</span>
           </label>

@@ -217,6 +217,9 @@
 .program-detail-fullpage-modal__info-tab {
     padding: 0 0 32px;
     box-sizing: border-box;
+    /* 진행현황 등 넓은 테이블: 내용 폭으로 부모가 밀려나면 가로 스크롤이 사라짐 → 폭 상한·shrink 허용 */
+    min-width: 0;
+    max-width: 100%;
 }
 
 /* 참여자 정보 탭: 항목별 갭 32px (공통 정보 탭과 동일하게 margin-top) */

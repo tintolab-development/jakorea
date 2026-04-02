@@ -185,6 +185,13 @@ export const ASSIGNMENT_TEAM_ROLE_LABELS: Record<AssignmentTeamRoleKey, string> 
   individual: '개인',
 }
 
+/** 과제 제출 내역 모달 역할 드롭다운 옵션 순서 */
+export const ASSIGNMENT_TEAM_ROLE_OPTIONS: readonly AssignmentTeamRoleKey[] = [
+  'leader',
+  'member',
+  'individual',
+]
+
 export const LECTURE_PROGRESS_DISPLAY_LABELS: Record<LectureProgressDisplayKey, string> = {
   completed: '진행 완료',
   scheduled: '진행 예정',

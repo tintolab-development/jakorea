@@ -378,18 +378,7 @@ export function ParticipatingInstructorsSection({
   const handleListView = () => setViewMode('list')
 
   const handleInfoDetailClick = () => {
-    if (selectedInstructorRowKeys.length === 0) {
-      message.warning(
-        '개인정보 상세보기를 하려면 강사를 1명 선택하거나 목록에서 강사 행을 눌러 주세요.'
-      )
-      return
-    }
-    if (selectedInstructorRowKeys.length > 1) {
-      message.warning('개인정보 상세보기는 강사 1명만 선택해 주세요.')
-      return
-    }
-    const row = filteredInstructors.find(r => r.id === selectedInstructorRowKeys[0])
-    if (row) onInstructorRowClick?.(row)
+    window.alert('준비 중입니다.')
   }
 
   const tableScrollX = 48 + 64 + 100 + 140 + 160 + 100 + 100 + 120 + 140 + 120

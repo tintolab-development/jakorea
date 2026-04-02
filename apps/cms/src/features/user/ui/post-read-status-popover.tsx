@@ -99,10 +99,15 @@ export function PostReadStatusPopoverContent({
                   type="button"
                   className="post-read-status-popup__action-btn"
                   disabled={selectedUnreadIds.length === 0}
+                  onClick={() => window.alert('준비 중입니다.')}
                 >
                   선택 발송
                 </button>
-                <button type="button" className="post-read-status-popup__action-btn post-read-status-popup__action-btn--primary">
+                <button
+                  type="button"
+                  className="post-read-status-popup__action-btn post-read-status-popup__action-btn--primary"
+                  onClick={() => window.alert('준비 중입니다.')}
+                >
                   전체 발송
                 </button>
               </div>

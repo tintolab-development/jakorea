@@ -618,7 +618,7 @@ export function ParticipatingInstructorFullpageView({
                   <ProgramDetailTdSegmentWrap>
                     <span>승인 완료</span>
                     <ProgramDetailTdDivider />
-                    <SendNotiButton onClick={() => message.info('알림 발송 기능 준비 중입니다.')} />
+                    <SendNotiButton />
                   </ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
@@ -827,7 +827,7 @@ export function ParticipatingInstructorFullpageView({
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => setPersonalInfoRevealed(true)}
+              onClick={() => window.alert('준비 중입니다.')}
             >
               개인정보 상세보기
             </AppButton>
@@ -845,7 +845,7 @@ export function ParticipatingInstructorFullpageView({
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => setPersonalInfoRevealed(true)}
+              onClick={() => window.alert('준비 중입니다.')}
             >
               개인정보 상세보기
             </AppButton>

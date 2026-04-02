@@ -163,16 +163,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   }
 
   const handleViewDetailClick = () => {
-    if (selectedRowKeys.length !== 1) {
-      message.warning('개인정보 상세보기를 하려면 담당자를 한 명 선택해 주세요.')
-      return
-    }
-    const id = String(selectedRowKeys[0])
-    const row = managerList.find(r => r.id === id)
-    if (row) {
-      setManagerForEditRole(row)
-      setEditRoleModalOpen(true)
-    }
+    window.alert('준비 중입니다.')
   }
 
   const managerNamesToDeleteFromTable = useMemo(() => {

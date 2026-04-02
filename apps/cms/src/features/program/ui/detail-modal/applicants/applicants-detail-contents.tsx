@@ -75,7 +75,7 @@ function ApplicantHeaderActionsExtra({ items }: { items: ApplicantHeaderActionIt
   )
 }
 
-/** 클릭 시 신청자 상세 화면에서 마스킹된 개인정보를 원문 그대로 표시 */
+/** 클릭 시 준비 중 안내(브라우저 alert) */
 function headerBtnPrivacy(onRevealPersonalInfo: () => void): ApplicantHeaderActionItem {
   return {
     key: 'privacy',
@@ -274,7 +274,7 @@ export function ApplicantsDetailContents({
   }, [applicantId])
 
   const onRevealPersonalInfo = useCallback(() => {
-    setPersonalInfoRevealed(true)
+    window.alert('준비 중입니다.')
   }, [])
 
   const headerExtraContent = useMemo(() => {

@@ -4,18 +4,25 @@
  * ContentModal + Ant Table(체크박스·7열), 일괄 다운로드 푸터
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table, Tag, message } from 'antd'
+import { useCallback, useMemo, useState, type Key } from 'react'
+import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
+} from '@/shared/components'
 import { AssignmentPreviewModal } from './assignment-preview-modal'
 import type { Application } from '@/types/domain'
 import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 import {
   ASSIGNMENT_SUBMISSION_ROW_STATUS_LABELS,
   ASSIGNMENT_TEAM_ROLE_LABELS,
+  ASSIGNMENT_TEAM_ROLE_OPTIONS,
   LECTURE_PROGRESS_DISPLAY_LABELS,
   type AssignmentSubmissionDetail,
   type AssignmentSubmissionRowStatusKey,
@@ -26,6 +33,7 @@ import {
 import {
   getAssignmentSubmissionDetail,
   getAssignmentSubmissionDetailForApplication,
+  updateAssignmentSubmissionTeamRole,
 } from '../lib/school-detail-mock'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './assignment-submission-modal.css'
@@ -42,25 +50,27 @@ export interface AssignmentSubmissionModalProps {
 
 const DEFAULT_PROGRAM_TITLE = '프로그램'
 
-function roleTagClass(role: AssignmentTeamRoleKey): string {
-  if (role === 'leader') return 'assignment-submission-modal__role-tag--leader'
-  return 'assignment-submission-modal__role-tag--member'
+function assignmentTeamRoleTagClassName(role: AssignmentTeamRoleKey): string {
+  const base = 'assignment-submission-modal__team-role-tag'
+  if (role === 'leader') return `${base} assignment-submission-modal__team-role-tag--leader`
+  if (role === 'individual') return `${base} assignment-submission-modal__team-role-tag--individual`
+  return `${base} assignment-submission-modal__team-role-tag--member`
 }
 
 type StatusTextKind = 'scheduled' | 'completed' | 'undone'
 
-function statusTextClass(kind: StatusTextKind): string {
-  return `assignment-submission-modal__status-text-${kind}`
+function statusTextClassNames(kind: StatusTextKind): string {
+  return `assignment-submission-modal__status-text assignment-submission-modal__status-text--${kind}`
 }
 
 function lectureProgressClass(key: LectureProgressDisplayKey): string {
-  return key === 'scheduled' ? statusTextClass('scheduled') : statusTextClass('completed')
+  return key === 'scheduled' ? statusTextClassNames('scheduled') : statusTextClassNames('completed')
 }
 
 /** not_submitted → undone, 그 외(구 neutral 포함) → scheduled */
 function submissionStatusClass(key: AssignmentSubmissionRowStatusKey): string {
-  if (key === 'not_submitted') return statusTextClass('undone')
-  return statusTextClass('scheduled')
+  if (key === 'not_submitted') return statusTextClassNames('undone')
+  return statusTextClassNames('scheduled')
 }
 
 export function AssignmentSubmissionModal({
@@ -72,7 +82,9 @@ export function AssignmentSubmissionModal({
   application = null,
   userName = '',
 }: AssignmentSubmissionModalProps) {
+  const [assignmentRoleRevision, setAssignmentRoleRevision] = useState(0)
   const detail: AssignmentSubmissionDetail | null = useMemo(() => {
+    void assignmentRoleRevision
     if (!open) return null
     const title = programTitle.trim() || DEFAULT_PROGRAM_TITLE
     if (application && userName) {
@@ -82,20 +94,32 @@ export function AssignmentSubmissionModal({
       return getAssignmentSubmissionDetail(student, schoolId, title)
     }
     return null
-  }, [open, student, schoolId, application, userName, programTitle])
+  }, [open, student, schoolId, application, userName, programTitle, assignmentRoleRevision])
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewRound, setPreviewRound] = useState<number>(1)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [openTeamRoleDropdownRowId, setOpenTeamRoleDropdownRowId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!open) setSelectedRowKeys([])
-  }, [open])
+  const handleModalCancel = useCallback(() => {
+    setSelectedRowKeys([])
+    setOpenTeamRoleDropdownRowId(null)
+    onCancel()
+  }, [onCancel])
 
   const openPreview = useCallback((roundNumber: number) => {
     setPreviewRound(roundNumber)
     setPreviewOpen(true)
   }, [])
+
+  const handleAssignmentTeamRoleChange = useCallback(
+    (rowId: string, newRole: AssignmentTeamRoleKey) => {
+      updateAssignmentSubmissionTeamRole(rowId, newRole)
+      setAssignmentRoleRevision(n => n + 1)
+      message.success('역할이 변경되었습니다.')
+    },
+    []
+  )
 
   const columns: ColumnsType<AssignmentSubmissionTableRow> = useMemo(
     () => [
@@ -103,11 +127,27 @@ export function AssignmentSubmissionModal({
         title: '역할',
         key: 'role',
         align: 'center',
-        minWidth: 160,
+        width: 150,
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
+        }),
         render: (_: unknown, record: AssignmentSubmissionTableRow) => (
-          <Tag className={`assignment-submission-modal__role-tag ${roleTagClass(record.teamRole)}`}>
-            {ASSIGNMENT_TEAM_ROLE_LABELS[record.teamRole]}
-          </Tag>
+          <StatusDropdownCell<AssignmentTeamRoleKey>
+            status={record.teamRole}
+            statusOptions={ASSIGNMENT_TEAM_ROLE_OPTIONS}
+            renderBadge={r => (
+              <span className={assignmentTeamRoleTagClassName(r)}>
+                {ASSIGNMENT_TEAM_ROLE_LABELS[r]}
+              </span>
+            )}
+            isItemDisabled={(cur, opt) => cur === opt}
+            onChange={newRole => handleAssignmentTeamRoleChange(record.id, newRole)}
+            isOpen={openTeamRoleDropdownRowId === record.id}
+            onOpenChange={open => setOpenTeamRoleDropdownRowId(open ? record.id : null)}
+            emptyPlaceholder="-"
+            tagLayout="tag132"
+          />
         ),
       },
       {
@@ -163,12 +203,12 @@ export function AssignmentSubmissionModal({
         ),
       },
     ],
-    [openPreview]
+    [openPreview, openTeamRoleDropdownRowId, handleAssignmentTeamRoleChange]
   )
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="filter" onClick={onCancel}>
+      <AppButton variant="cancel" size="filter" onClick={handleModalCancel}>
         닫기
       </AppButton>
       <AppButton
@@ -202,7 +242,7 @@ export function AssignmentSubmissionModal({
     <>
       <ContentModal
         open={open}
-        onCancel={onCancel}
+        onCancel={handleModalCancel}
         title="과제 및 설문 제출 내역"
         description={headerDescription}
         footer={footer}

@@ -30,6 +30,7 @@ export {
   getReactionTotalCountByPostId,
   getReactionUsersByPostId,
   createProgramPostComment,
+  addProgramPostReaction,
   getReactionEmojiTypeForBarIndex,
   removeProgramPostReactionUser,
   type CreateProgramPostCommentOptions,

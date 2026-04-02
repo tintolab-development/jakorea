@@ -19,7 +19,7 @@
   box-sizing: border-box;
 }
 
-/* 강의 회차 별 교육 진행 날짜 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
+/* 강의 회차 별 교육 진행 날짜 및 시간 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
 .participating-institutions-section__sessions-cell {
   display: flex;
   flex-direction: column;

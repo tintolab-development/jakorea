@@ -88,7 +88,7 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
                       <AppButton
                         variant="viewDetails"
                         size="large"
-                        onClick={() => message.info('알림 발송은 추후 연동됩니다.')}
+                        onClick={() => window.alert('준비 중입니다.')}
                       >
                         알림 발송
                       </AppButton>
