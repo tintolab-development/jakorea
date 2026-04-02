@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
-import { mockSchedules, getEconomyPrograms } from '@/data/mock'
+import { mockPrograms, mockSchedules, getEconomyPrograms } from '@/data/mock'
 import { programService } from '@/entities/program/api/program-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import type { Schedule } from '@/types'
@@ -54,7 +54,8 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
 
 // ---------------------------------------------------------------------------
 // TEMP: 대시보드「프로그램 일정」위젯은 경제 교육 프로그램만 노출.
-// 설정에 prog-*만 저장된 경우 필터를 무시(effectiveWidgetProgramIdSet)하고,
+// 대시보드 설정은 mockPrograms id(prog-*)를 저장하고, 일정은 economy-prog-* 이므로
+// 선택 id → title → 동일 title 경제 프로그램 id로 매핑한다.
 // 보이는 날짜 구간에 경제 스케줄이 없으면 injectEconomyFallbackSchedules로 보강한다.
 // 일반 교육 연동 시 economy 전용 로직·resolveWidgetProgram 보조를 제거할 것.
 // ---------------------------------------------------------------------------
@@ -137,21 +138,28 @@ function ScheduleWidgetWeekCellPreview({
 }
 
 const WIDGET_KEY = 'program-schedule-widget'
-const EMPTY_IDS: string[] = []
 
 /**
- * 위젯이 경제 프로그램만 쓰는데, 설정에 저장된 id가 mockPrograms(prog-*)뿐이면
- * 스케줄·모집 필터가 서로 배타적이 되어 일정이 0건이 된다 → 겹침 없으면 필터 무시.
+ * 대시보드 설정에 체크된 mock 프로그램 id → 동일 title의 경제 프로그램 id 집합.
+ * 빈/미설정은 null(전체 노출). 선택은 있으나 매칭 title이 없으면 빈 Set.
  */
-function effectiveWidgetProgramIdSet(
-  programIdSet: Set<string> | null,
-  economyProgramIdSet: Set<string>
+function economyProgramIdsFromWidgetSelection(
+  selectedMockProgramIds: string[] | undefined
 ): Set<string> | null {
-  if (!programIdSet) return null
-  for (const id of programIdSet) {
-    if (economyProgramIdSet.has(id)) return programIdSet
+  if (selectedMockProgramIds == null || selectedMockProgramIds.length === 0) return null
+
+  const titleSet = new Set<string>()
+  for (const id of selectedMockProgramIds) {
+    const p = mockPrograms.find(m => m.id === id)
+    if (p) titleSet.add(p.title)
   }
-  return null
+  if (titleSet.size === 0) return new Set()
+
+  const out = new Set<string>()
+  for (const ep of getEconomyPrograms()) {
+    if (titleSet.has(ep.title)) out.add(ep.id)
+  }
+  return out
 }
 
 /** mock 스케줄이 보이는 구간에 경제 일정이 없을 때(달 불일치·필터 등) 대시보드용 보강 */
@@ -194,7 +202,7 @@ function injectEconomyFallbackSchedules(
 function buildEventsForDate(
   date: Dayjs,
   schedulesByDate: Record<string, Schedule[]>,
-  programIdSet: Set<string> | null,
+  allowedEconomyProgramIdSet: Set<string> | null,
   economyProgramIdSet: Set<string>
 ): ScheduleEvent[] {
   const dateKey = date.format('YYYY-MM-DD')
@@ -220,8 +228,8 @@ function buildEventsForDate(
   })
 
   const economyPrograms = getEconomyPrograms()
-  const programs = programIdSet
-    ? economyPrograms.filter(p => programIdSet.has(p.id))
+  const programs = allowedEconomyProgramIdSet
+    ? economyPrograms.filter(p => allowedEconomyProgramIdSet.has(p.id))
     : economyPrograms
   programs.forEach(program => {
     const applicationEndDate = program.applicationEndDate ? dayjs(program.applicationEndDate) : null
@@ -294,22 +302,14 @@ export function ProgramScheduleWidget() {
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
 
-  const selectedIds = useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY])
-  const allowedProgramIds = selectedIds ?? EMPTY_IDS
-  const programIdSet = useMemo(
-    () => (allowedProgramIds.length > 0 ? new Set(allowedProgramIds) : null),
-    [allowedProgramIds]
-  )
+  const selectedMockProgramIds = useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY])
 
   /** TEMP: 경제 교육 프로그램 id만 (원복 시 제거) */
-  const economyProgramIdSet = useMemo(
-    () => new Set(getEconomyPrograms().map(p => p.id)),
-    []
-  )
+  const economyProgramIdSet = useMemo(() => new Set(getEconomyPrograms().map(p => p.id)), [])
 
-  const programIdSetEffective = useMemo(
-    () => effectiveWidgetProgramIdSet(programIdSet, economyProgramIdSet),
-    [programIdSet, economyProgramIdSet]
+  const allowedEconomyProgramIdSet = useMemo(
+    () => economyProgramIdsFromWidgetSelection(selectedMockProgramIds),
+    [selectedMockProgramIds]
   )
 
   // 월간: 이전 달 말일 + 현재 달만 (35셀 고정). 주간: 해당 주 7일
@@ -325,11 +325,10 @@ export function ProgramScheduleWidget() {
 
   const schedulesByDate = useMemo(() => {
     const grouped: Record<string, Schedule[]> = {}
-    let schedules = programIdSetEffective
-      ? mockSchedules.filter(s => programIdSetEffective.has(s.programId))
-      : mockSchedules
-    // TEMP: 교육 일정(스케줄)도 경제 프로그램에 한정
-    schedules = schedules.filter(s => economyProgramIdSet.has(s.programId))
+    let schedules = mockSchedules.filter(s => economyProgramIdSet.has(s.programId))
+    if (allowedEconomyProgramIdSet) {
+      schedules = schedules.filter(s => allowedEconomyProgramIdSet.has(s.programId))
+    }
     schedules.forEach(schedule => {
       const dateKey = dayjs(schedule.date).format('YYYY-MM-DD')
       if (!grouped[dateKey]) grouped[dateKey] = []
@@ -337,13 +336,13 @@ export function ProgramScheduleWidget() {
     })
 
     const economyPrograms = getEconomyPrograms()
-    const pool = programIdSetEffective
-      ? economyPrograms.filter(p => programIdSetEffective.has(p.id))
+    const pool = allowedEconomyProgramIdSet
+      ? economyPrograms.filter(p => allowedEconomyProgramIdSet.has(p.id))
       : economyPrograms
     injectEconomyFallbackSchedules(grouped, visibleDateRange, economyProgramIdSet, pool)
 
     return grouped
-  }, [programIdSetEffective, economyProgramIdSet, visibleDateRange])
+  }, [allowedEconomyProgramIdSet, economyProgramIdSet, visibleDateRange])
 
   const eventsByDate = useMemo(() => {
     const out: Record<string, ScheduleEvent[]> = {}
@@ -351,12 +350,12 @@ export function ProgramScheduleWidget() {
       out[d.format('YYYY-MM-DD')] = buildEventsForDate(
         d,
         schedulesByDate,
-        programIdSetEffective,
+        allowedEconomyProgramIdSet,
         economyProgramIdSet
       )
     })
     return out
-  }, [visibleDateRange, schedulesByDate, programIdSetEffective, economyProgramIdSet])
+  }, [visibleDateRange, schedulesByDate, allowedEconomyProgramIdSet, economyProgramIdSet])
 
   const selectedDateEvents = useMemo(() => {
     const dateKey = selectedDate.format('YYYY-MM-DD')
@@ -452,11 +451,6 @@ export function ProgramScheduleWidget() {
                     className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--multi"
                     style={{
                       backgroundColor: pair.bg,
-                    }}
-                    onClick={e => {
-                      e.stopPropagation()
-                      const ev = dayEvents.find(x => x.programId === pid)
-                      if (ev) handleEventClick(ev)
                     }}
                     role="button"
                     tabIndex={0}

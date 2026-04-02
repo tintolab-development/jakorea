@@ -77,8 +77,10 @@ export function CustomerInquiryStatusWidget() {
   }, [allowedProgramIds])
 
   const handlePendingClick = (programKey: string) => {
-    setInquiryNotificationReadProgramKey(programKey)
-    navigate('/admin/posts/inquiries?status=PENDING')
+    console.log('handlePendingClick programKey', programKey)
+    window.alert('준비 중입니다.')
+    // setInquiryNotificationReadProgramKey(programKey)
+    // navigate('/admin/posts/inquiries?status=PENDING')
   }
 
   const handleMoreClick = () => {
@@ -161,7 +163,6 @@ export function CustomerInquiryStatusWidget() {
         columns={columns}
         dataSource={data}
         pagination={false}
-        size="small"
         className="dashboard-widget-table__data"
       />
     </Card>

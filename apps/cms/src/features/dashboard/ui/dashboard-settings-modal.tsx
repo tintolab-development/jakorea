@@ -24,8 +24,26 @@ export interface DashboardSettingsModalProps {
   onResetLayout?: () => void
 }
 
-const programList = mockPrograms.map(p => ({ id: p.id, title: p.title }))
-const allProgramIds = programList.map(p => p.id)
+const programRows = mockPrograms.map(p => ({ id: p.id, title: p.title }))
+const allProgramIds = programRows.map(p => p.id)
+
+/** 동일 title은 하나의 체크박스로 묶음 (mock 등에서 회차·기관별로 id만 다른 행 대응) */
+function buildProgramTitleGroups(
+  rows: { id: string; title: string }[]
+): { title: string; ids: string[] }[] {
+  const byTitle = new Map<string, string[]>()
+  const order: string[] = []
+  for (const { id, title } of rows) {
+    if (!byTitle.has(title)) {
+      byTitle.set(title, [])
+      order.push(title)
+    }
+    byTitle.get(title)!.push(id)
+  }
+  return order.map(title => ({ title, ids: byTitle.get(title)! }))
+}
+
+const programTitleGroups = buildProgramTitleGroups(programRows)
 
 export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
@@ -34,32 +52,37 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   // widgetProgramIds를 직접 구독해야 변경 시 리렌더 발생
   const widgetProgramIds = useDashboardSettingsStore(s => s.widgetProgramIds)
 
-  const isProgramSelected = useCallback(
-    (widgetKey: string, programId: string) => {
+  const isTitleGroupSelected = useCallback(
+    (widgetKey: string, groupIds: string[]) => {
       const ids = widgetProgramIds[widgetKey]
       if (!ids || ids.length === 0) return true
-      return ids.includes(programId)
+      return groupIds.every(id => ids.includes(id))
     },
     [widgetProgramIds]
   )
 
-  const handleProgramToggle = useCallback(
-    (widgetKey: string, programId: string) => {
+  const handleTitleGroupToggle = useCallback(
+    (widgetKey: string, groupIds: string[]) => {
       const currentIds = widgetProgramIds[widgetKey] ?? []
+      const groupOn = groupIds.every(id => currentIds.includes(id))
 
       if (currentIds.length === 0) {
         setWidgetProgramIds(
           widgetKey,
-          allProgramIds.filter(id => id !== programId)
+          allProgramIds.filter(id => !groupIds.includes(id))
         )
-      } else if (currentIds.includes(programId)) {
-        const remaining = currentIds.filter(id => id !== programId)
-        setWidgetProgramIds(widgetKey, remaining)
-      } else {
-        const next = [...currentIds, programId]
-        const allSelected = allProgramIds.every(id => next.includes(id))
-        setWidgetProgramIds(widgetKey, allSelected ? [] : next)
+        return
       }
+
+      if (groupOn) {
+        const remaining = currentIds.filter(id => !groupIds.includes(id))
+        setWidgetProgramIds(widgetKey, remaining)
+        return
+      }
+
+      const next = [...new Set([...currentIds, ...groupIds])]
+      const allSelected = allProgramIds.every(id => next.includes(id))
+      setWidgetProgramIds(widgetKey, allSelected ? [] : next)
     },
     [widgetProgramIds, setWidgetProgramIds]
   )
@@ -127,13 +150,13 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
                 key: 'programs',
                 render: (_: unknown, record: { widgetKey: string }) => (
                   <div className="dashboard-settings-modal__program-checks">
-                    {programList.map(prog => (
+                    {programTitleGroups.map(group => (
                       <Checkbox
-                        key={prog.id}
-                        checked={isProgramSelected(record.widgetKey, prog.id)}
-                        onChange={() => handleProgramToggle(record.widgetKey, prog.id)}
+                        key={group.title}
+                        checked={isTitleGroupSelected(record.widgetKey, group.ids)}
+                        onChange={() => handleTitleGroupToggle(record.widgetKey, group.ids)}
                       >
-                        {prog.title}
+                        {group.title}
                       </Checkbox>
                     ))}
                   </div>
