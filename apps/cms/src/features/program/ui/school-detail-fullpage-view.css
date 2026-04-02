@@ -185,9 +185,9 @@
   padding: 0 8px;
 }
 
-/* 테이블 헤더(타이틀 영역)와 테이블 간 gap 10px */
+/* 테이블 헤더(타이틀 영역)와 테이블 간 gap 16px */
 .school-detail-fullpage-view__instructor-tab .participating-institutions-section__table-header {
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-16);
 }
 
 .school-detail-fullpage-view__instructor-section {

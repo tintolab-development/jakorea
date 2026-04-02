@@ -43,8 +43,6 @@
 }
 
 .school-detail-modal__filter-label {
-    font-size: 14px;
-    color: var(--color-text-label);
     margin-right: 4px;
 }
 
@@ -300,7 +298,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: var(--spacing-16);
 }
 
 .school-detail-modal__student-table-heading {
