@@ -329,9 +329,9 @@
     gap: 8px;
 }
 
-/* 강의 출석 내역 td: 본문 셀 텍스트 컬러 */
+/* 강의 출석 내역 td: 링크 컬러 — CMS 시안·theme-provider --color-link (#01a1af)와 통일 (#0070E7 폴백 제거) */
 .school-detail-modal__student-table td.school-detail-modal__td-lecture-attendance {
-    color: var(--color-link, #0070E7);
+    color: var(--color-link, #01a1af);
 }
 
 /* 강의 출석 내역 td 텍스트 스펙 (링크 버튼) */
@@ -345,7 +345,7 @@
     font-style: normal;
     font-weight: 500;
     line-height: 150%;
-    color: var(--color-link, #0070E7);
+    color: var(--color-link, #01a1af);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: none;
@@ -359,7 +359,7 @@
 }
 
 .school-detail-modal__link-button:hover {
-    color: var(--color-link, #0070E7);
+    color: var(--color-link-hover, #296075);
 }
 
 .school-detail-modal__link-button:focus,
