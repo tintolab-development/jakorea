@@ -2,6 +2,15 @@
  * 프로그램 상세 풀페이지 모달
  * 경제/일반 교육 프로그램 목록 테이블 행 클릭 시 노출.
  * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
+ *
+ * ─── 수정 모드 ↔ React Hook Form / Zod ─────────────────────────────────────
+ * - URL: `edit` 쿼리(`EDIT_PARAM`)가 현재 `tab` 과 같을 때만 해당 탭이 수정 모드 (예: 공통정보 `edit=info`).
+ * - 폼: 탭마다 `useProgramDetailEditForm` 인스턴스가 분리됨(info / institutions / instructors / volunteers).
+ *   동일 `programDetailEditSchema`·`ProgramDetailEditFormValues` 를 쓰므로 필드 추가 시 스키마 한 곳만 수정하면 됨.
+ * - 저장·취소: 각 탭별 `useProgramDetailInfoSave` — `triggerSave` → Zod `trigger` 후 patch, `resetToProgram` 으로 리셋.
+ * - 하위 UI는 `ProjectInfoDetailPanels` 로 `form` prop 이 전달되며, 수정 중일 때만 `form` 이 정의됨.
+ *
+ * 병합 시 `edit` 파싱·`setEditMode`·폼 훅 호출 순서를 바꾸면 수정 모드와 폼이 엇갈릴 수 있음.
  */
 
 import { useMemo, useState, useEffect, useRef } from 'react'
@@ -31,6 +40,7 @@ import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
+import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import {
   LnbIconApplicants,
@@ -431,6 +441,7 @@ export function ProgramDetailFullPageModal({
         ? `${displayProgram.title}_${instructorDetailTitle}`
         : (displayProgram?.title ?? '프로그램 상세')
 
+  /** 공통정보 탭 수정 모드: 이 때만 `infoForm` 을 자식에 넘김 (RHF + Zod 단일 스키마) */
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
   const infoForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -604,10 +615,7 @@ export function ProgramDetailFullPageModal({
 
   const handlePreview = () => {
     if (displayProgram) {
-      window.open(
-        getProgramAdminDetailUrlFromPathname(displayProgram.id, location.pathname),
-        '_blank'
-      )
+      window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
     }
   }
 
