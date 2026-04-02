@@ -252,6 +252,87 @@
     border-top: none;
 }
 
+/* 수정 모드: 공통 정보 탭 — td 내 AppSelect·AppInput 기본 너비 190px */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-select {
+    width: 190px;
+    max-width: 190px;
+    box-sizing: border-box;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input {
+    width: 190px;
+    max-width: 190px;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+}
+
+/* 대표·세부 프로그램명: td 폭 전체 사용 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input.program-detail-info-tab__input--cell-full {
+    width: 100%;
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.program-detail-fullpage-modal__info-tab .program-kpi-target-section__table td .app-input {
+    width: 190px;
+    max-width: 190px;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+}
+
+/* 후원사 담당자 행 내 셀렉트 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__sponsor-manager-inputs>.app-select {
+    width: auto;
+    min-width: 200px;
+    max-width: 280px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-select.program-detail-info-tab__manager-select,
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-detail-info-tab__manager-select.app-select {
+    width: auto;
+    min-width: 200px;
+    max-width: 280px;
+}
+
+/* 임금: 강사비 유형·단위·수량은 별도 폭 */
+.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.app-select {
+    width: 190px;
+    max-width: 190px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__measure-select.app-select {
+    width: auto;
+    max-width: 88px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__pricing-basis-row>.app-input.program-wage-info-section__input--qty {
+    width: 56px;
+    min-width: 56px;
+    max-width: 72px;
+}
+
+/* 교육 커리큘럼: 시간 입력 120px, 비고는 가변 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__curriculum-inputs .program-detail-info-tab__curriculum-time-input.app-input {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__curriculum-inputs .program-detail-info-tab__curriculum-remarks-input.app-input {
+    width: auto;
+    max-width: none;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* 사업 KPI: 소형 숫자 입력 */
+.program-detail-fullpage-modal__info-tab .program-kpi-target-section__table td .app-input.program-kpi-target-section__input--sm {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
 .program-detail-fullpage-modal__tab-panel {
     min-height: 0;
     width: 100%;
