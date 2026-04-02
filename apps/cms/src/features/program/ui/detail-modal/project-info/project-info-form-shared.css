@@ -706,7 +706,7 @@
 /* 테이블 값 셀: 텍스트 AppInput — 단독이면 100%, flex 행은 하위에서 덮어씀 */
 .program-detail-info-tab__table
     td
-    .app-input:not(.program-detail-info-tab__capacity-input):not(.program-detail-info-tab__curriculum-time-input):not(.program-detail-info-tab__max-class-count-input) {
+    .app-input:not(.program-detail-info-tab__capacity-input):not(.program-detail-info-tab__curriculum-time-input):not(.program-detail-info-tab__max-class-count-input):not(.program-kpi-target-section__input) {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0;
@@ -741,8 +741,29 @@
     box-sizing: border-box;
 }
 
-/* 사업 KPI 목표(수정): 라벨(th) 옆 값 셀 인풋 공통 190px — 높이 40px는 AppInput 기본(.app-input__control) */
-.program-detail-info-tab__table.program-detail-info-tab__table--basic td .app-input.program-kpi-target-section__input {
+/* 사업 KPI 목표(수정): 참여자 최종 인원·최종 파견 학교 수·최종 파견 학급 수 — 190×40px */
+.program-detail-info-tab__table.program-detail-info-tab__table--basic td .app-input.program-kpi-target-section__input--190x40 {
+    width: 190px !important;
+    max-width: 190px !important;
+    flex: 0 0 190px !important;
+    min-width: 0;
+    box-sizing: border-box;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+}
+
+.program-detail-info-tab__table.program-detail-info-tab__table--basic
+    td
+    .app-input.program-kpi-target-section__input--190x40
+    .app-input__control {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+}
+
+/* 사업 KPI: 교육진행자(강사·봉사자) 인풋 너비 190px */
+.program-detail-info-tab__table.program-detail-info-tab__table--basic td .app-input.program-kpi-target-section__input--sm {
     width: 190px !important;
     max-width: 190px !important;
     flex: 0 0 190px !important;
