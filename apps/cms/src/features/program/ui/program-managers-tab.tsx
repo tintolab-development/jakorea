@@ -33,6 +33,8 @@ import { ManagerDeleteGuideModal } from './manager-delete-guide-modal'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import './program-managers-tab.css'
 
@@ -288,9 +290,12 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 160,
+        width: 150,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
+        }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
           <StatusDropdownCell<ProgramRole>
             status={role}
@@ -301,6 +306,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
+            tagLayout="tag132"
           />
         ),
       },
@@ -391,7 +397,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
           </div>
         </div>
         <Table<ProgramManagerRow>
-          className="cms-data-table cms-data-table--fluid"
+          className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
           rowKey="id"
           pagination={false}
           rowSelection={{

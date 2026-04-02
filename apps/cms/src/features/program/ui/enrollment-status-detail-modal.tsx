@@ -37,7 +37,10 @@ import type {
 } from '@/data/mock/applicant-institutions'
 import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import { StatusDropdownCell } from './status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { SchoolDetailModal } from './school-detail-modal'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
@@ -68,6 +71,7 @@ export function EnrollmentStatusDetailModal({
   const [selectedSchoolForDetail, setSelectedSchoolForDetail] = useState<ApplicantSchoolRow | null>(
     null
   )
+  const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
   const sponsorName = program?.sponsorId
     ? sponsorService.getByIdSync(program.sponsorId)?.name
     : undefined
@@ -165,21 +169,25 @@ export function EnrollmentStatusDetailModal({
         title: '결재 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: '14%',
+        width: 136,
         align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApplicantApprovalStatusKey, record: ApplicantSchoolRow) => (
-          <StatusDropdownCell<ApprovalStatusKey>
-            status={APPROVAL_STATUS_MAP[status]}
-            statusKeys={APPROVAL_STATUS_KEYS}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
-            onChange={key => handleSchoolApprovalStatusChange(record.id, key)}
-            cellClassName="enrollment-status-detail-modal__approval-dropdown-cell"
-            triggerClassName="enrollment-status-detail-modal__approval-dropdown-trigger"
-          />
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<ApprovalStatusKey>
+              status={APPROVAL_STATUS_MAP[status]}
+              statusOptions={APPROVAL_STATUS_KEYS}
+              renderBadge={s => <ApprovalStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={key => handleSchoolApprovalStatusChange(record.id, key)}
+              isOpen={openApprovalDropdownId === record.id}
+              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+            />
+          </div>
         ),
       },
     ],
-    [handleSchoolApprovalStatusChange]
+    [handleSchoolApprovalStatusChange, openApprovalDropdownId]
   )
 
   if (!program) return null
@@ -372,7 +380,16 @@ export function EnrollmentStatusDetailModal({
               pagination={false}
               size="middle"
               onRow={record => ({
-                onClick: () => setSelectedSchoolForDetail(record),
+                onClick: e => {
+                  const target = e.target as HTMLElement
+                  if (
+                    target.closest('.status-dropdown-cell__cell-status') ||
+                    target.closest('.status-dropdown-cell__status-trigger')
+                  ) {
+                    return
+                  }
+                  setSelectedSchoolForDetail(record)
+                },
                 style: { cursor: 'pointer' },
               })}
             />

@@ -34,6 +34,8 @@ import { INSTRUCTOR_ROLE_LABELS } from '@/features/program/model/school-detail-t
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import {
   buildInitialAssignedSchoolRows,
@@ -325,9 +327,12 @@ export function ParticipatingInstructorFullpageView({
         title: '역할',
         dataIndex: 'role',
         key: 'role',
-        width: 120,
+        width: 150,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
+        }),
         render: (role: InstructorRoleKey, record: InstructorAssignedSchoolRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
@@ -348,6 +353,7 @@ export function ParticipatingInstructorFullpageView({
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
+            tagLayout="tag132"
           />
         ),
       },

@@ -313,7 +313,7 @@ export function ParticipatingInstitutionsSection({
   }
 
   /** 컬럼 너비 합. 회차 컬럼 480px(한 줄 텍스트 길이만큼) → 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
-  const tableScrollX = 48 + 64 + 180 + 200 + 480 + 96 + 100 + 100 + 152 + 120 + 180
+  const tableScrollX = 48 + 64 + 180 + 200 + 480 + 96 + 100 + 100 + 136 + 120 + 180
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
@@ -406,7 +406,7 @@ export function ParticipatingInstitutionsSection({
         title: '교재 배송 현황',
         dataIndex: 'textbookStatus',
         key: 'textbookStatus',
-        width: 160,
+        width: 136,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (

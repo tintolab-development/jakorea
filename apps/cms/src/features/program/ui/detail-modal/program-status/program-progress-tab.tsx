@@ -39,7 +39,10 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/school-detail-mock'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
-import { StatusDropdownCell } from '../../status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { Divider } from '@/shared/components/divider'
 import './program-progress-tab.css'
 
@@ -106,6 +109,12 @@ interface ProgramProgressTabProps {
 
 export function ProgramProgressTab({ programId: _programId }: ProgramProgressTabProps) {
   const { subTab, filters, setSubTab, setFilter } = useProgramProgressParams()
+  const [openTextbookDropdownSchoolId, setOpenTextbookDropdownSchoolId] = useState<string | null>(
+    null
+  )
+  const [openSettlementDropdownInstructorId, setOpenSettlementDropdownInstructorId] = useState<
+    string | null
+  >(null)
   /** 교사/강사명은 로컬 state로 두고 blur/조회 시에만 URL 동기화 (한글 IME 조합 깨짐 방지) */
   const [localTeacherName, setLocalTeacherName] = useState(() => filters.teacherName ?? '')
   /** 조회 버튼 클릭 시에만 반영되는 필터 (테이블 필터링에 사용) */
@@ -272,15 +281,19 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'textbookStatus',
         width: 140,
         align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
-          <StatusDropdownCell
-            status={status}
-            statusKeys={textbookStatusKeys}
-            renderBadge={s => <TextbookStatusBadge status={s} />}
-            onChange={key => handleTextbookStatusChange(record.id, key)}
-            cellClassName="textbook-status-dropdown-cell"
-            triggerClassName="textbook-status-dropdown-trigger"
-          />
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<TextbookStatusKey>
+              status={status}
+              statusOptions={textbookStatusKeys}
+              renderBadge={s => <TextbookStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={key => handleTextbookStatusChange(record.id, key)}
+              isOpen={openTextbookDropdownSchoolId === record.id}
+              onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
+            />
+          </div>
         ),
       },
       {
@@ -300,7 +313,12 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
           getInstructorDisplayForSchool(record.id, record.schoolName),
       },
     ],
-    [handleTextbookStatusChange, textbookStatusKeys, getInstructorDisplayForSchool]
+    [
+      handleTextbookStatusChange,
+      textbookStatusKeys,
+      getInstructorDisplayForSchool,
+      openTextbookDropdownSchoolId,
+    ]
   )
 
   const instructorColumns: ColumnsType<ParticipatingInstructorRow> = useMemo(
@@ -357,15 +375,19 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         key: 'settlementStatus',
         width: 160,
         align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: SettlementStatusKey, record: ParticipatingInstructorRow) => (
-          <StatusDropdownCell
-            status={status}
-            statusKeys={settlementStatusKeys}
-            renderBadge={s => <SettlementStatusBadge status={s} />}
-            onChange={key => handleSettlementStatusChange(record.id, key)}
-            cellClassName="settlement-status-dropdown-cell"
-            triggerClassName="settlement-status-dropdown-trigger"
-          />
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<SettlementStatusKey>
+              status={status}
+              statusOptions={settlementStatusKeys}
+              renderBadge={s => <SettlementStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={key => handleSettlementStatusChange(record.id, key)}
+              isOpen={openSettlementDropdownInstructorId === record.id}
+              onOpenChange={open => setOpenSettlementDropdownInstructorId(open ? record.id : null)}
+            />
+          </div>
         ),
       },
       {
@@ -376,7 +398,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         align: 'center',
       },
     ],
-    [handleSettlementStatusChange, settlementStatusKeys]
+    [handleSettlementStatusChange, settlementStatusKeys, openSettlementDropdownInstructorId]
   )
 
   return (
@@ -528,8 +550,8 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                     const target = e.target as HTMLElement
                     if (target.closest('.ant-table-selection-column')) return
                     if (
-                      target.closest('.textbook-status-dropdown-cell') ||
-                      target.closest('.textbook-status-dropdown-trigger')
+                      target.closest('.status-dropdown-cell__cell-status') ||
+                      target.closest('.status-dropdown-cell__status-trigger')
                     )
                       return
                     setSelectedSchoolForDetail(record)
@@ -596,8 +618,8 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                     const target = e.target as HTMLElement
                     if (target.closest('.ant-table-selection-column')) return
                     if (
-                      target.closest('.settlement-status-dropdown-cell') ||
-                      target.closest('.settlement-status-dropdown-trigger')
+                      target.closest('.status-dropdown-cell__cell-status') ||
+                      target.closest('.status-dropdown-cell__status-trigger')
                     )
                       return
                     setSelectedInstructorForDetail(record)
