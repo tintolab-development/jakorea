@@ -153,13 +153,14 @@ function economyProgramIdsFromWidgetSelection(
     const p = mockPrograms.find(m => m.id === id)
     if (p) titleSet.add(p.title)
   }
-  if (titleSet.size === 0) return new Set()
+  // 저장 id가 mock과 안 맞거나 매핑 실패 시 빈 Set이면 일정 0건 → 전체 노출로 폴백
+  if (titleSet.size === 0) return null
 
   const out = new Set<string>()
   for (const ep of getEconomyPrograms()) {
     if (titleSet.has(ep.title)) out.add(ep.id)
   }
-  return out
+  return out.size > 0 ? out : null
 }
 
 /** mock 스케줄이 보이는 구간에 경제 일정이 없을 때(달 불일치·필터 등) 대시보드용 보강 */
@@ -597,7 +598,7 @@ export function ProgramScheduleWidget() {
                   ))}
                   {hasMore && (
                     <div className="program-schedule-widget__week-event-more">
-                      외 {moreCount}개의 일정
+                      외 {moreCount}개의 항목
                     </div>
                   )}
                 </div>
