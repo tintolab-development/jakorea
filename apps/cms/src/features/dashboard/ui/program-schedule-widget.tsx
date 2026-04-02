@@ -1,5 +1,5 @@
 /**
- * 프로그램 일정 위젯
+ * 대시보드 - 프로그램 일정 위젯
  * - 월간/주간 탭 전환, 상단 헤더 공유, 하위 캘린더 형식만 전환
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
-import { mockSchedules, mockPrograms } from '@/data/mock'
+import { mockSchedules, getEconomyPrograms } from '@/data/mock'
 import { programService } from '@/entities/program/api/program-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import type { Schedule } from '@/types'
@@ -20,6 +20,7 @@ import {
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
+import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
 import '@/features/program/ui/program-calendar-view.css'
@@ -51,14 +52,27 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// TEMP: 대시보드「프로그램 일정」위젯은 경제 교육 프로그램만 노출.
+// 설정에 prog-*만 저장된 경우 필터를 무시(effectiveWidgetProgramIdSet)하고,
+// 보이는 날짜 구간에 경제 스케줄이 없으면 injectEconomyFallbackSchedules로 보강한다.
+// 일반 교육 연동 시 economy 전용 로직·resolveWidgetProgram 보조를 제거할 것.
+// ---------------------------------------------------------------------------
+
+function resolveWidgetProgram(programId: string): Program | undefined {
+  return programService.getByIdSync(programId) ?? getEconomyPrograms().find(p => p.id === programId)
+}
+
 /** 일정 목록·캘린더·팝오버에서 동일한 SCHEDULE_COLORS 매핑 */
-function buildScheduleColorMapForWidgetEvents(events: ScheduleEvent[]): Map<string, ScheduleColorPair> {
+function buildScheduleColorMapForWidgetEvents(
+  events: ScheduleEvent[]
+): Map<string, ScheduleColorPair> {
   const seen = new Set<string>()
   const programs: Program[] = []
   for (const ev of events) {
     if (seen.has(ev.programId)) continue
     seen.add(ev.programId)
-    const p = programService.getByIdSync(ev.programId)
+    const p = resolveWidgetProgram(ev.programId)
     if (p) programs.push(p)
   }
   return buildResolvedScheduleColorMapForPrograms(programs)
@@ -84,7 +98,7 @@ function ScheduleWidgetWeekCellPreview({
   onEventClick,
 }: {
   dayEvents: ScheduleEvent[]
-  onEventClick: (ev: ScheduleEvent) => void
+  onEventClick?: (ev: ScheduleEvent) => void
 }) {
   const scheduleColorMap = useMemo(
     () => buildScheduleColorMapForWidgetEvents(dayEvents),
@@ -103,10 +117,13 @@ function ScheduleWidgetWeekCellPreview({
             onClick={e => {
               e.preventDefault()
               e.stopPropagation()
-              onEventClick(ev)
+              onEventClick?.(ev)
             }}
           >
-            <span className="program-calendar-cell-preview__title" style={{ color: colorPair.text }}>
+            <span
+              className="program-calendar-cell-preview__title"
+              style={{ color: colorPair.text }}
+            >
               [{ev.programTitle}]
             </span>
             <span className="program-calendar-cell-preview__desc">
@@ -122,10 +139,63 @@ function ScheduleWidgetWeekCellPreview({
 const WIDGET_KEY = 'program-schedule-widget'
 const EMPTY_IDS: string[] = []
 
+/**
+ * 위젯이 경제 프로그램만 쓰는데, 설정에 저장된 id가 mockPrograms(prog-*)뿐이면
+ * 스케줄·모집 필터가 서로 배타적이 되어 일정이 0건이 된다 → 겹침 없으면 필터 무시.
+ */
+function effectiveWidgetProgramIdSet(
+  programIdSet: Set<string> | null,
+  economyProgramIdSet: Set<string>
+): Set<string> | null {
+  if (!programIdSet) return null
+  for (const id of programIdSet) {
+    if (economyProgramIdSet.has(id)) return programIdSet
+  }
+  return null
+}
+
+/** mock 스케줄이 보이는 구간에 경제 일정이 없을 때(달 불일치·필터 등) 대시보드용 보강 */
+function injectEconomyFallbackSchedules(
+  grouped: Record<string, Schedule[]>,
+  visibleDates: Dayjs[],
+  economyProgramIdSet: Set<string>,
+  pool: Program[]
+): void {
+  if (pool.length === 0) return
+  let countInRange = 0
+  for (const d of visibleDates) {
+    const key = d.format('YYYY-MM-DD')
+    for (const s of grouped[key] ?? []) {
+      if (economyProgramIdSet.has(s.programId)) countInRange += 1
+    }
+  }
+  if (countInRange > 0) return
+
+  visibleDates.forEach((d, i) => {
+    const dateKey = d.format('YYYY-MM-DD')
+    const program = pool[i % pool.length]
+    const round = program.rounds?.[0]
+    const startHour = 9 + (i % 7)
+    const row: Schedule = {
+      id: `sch-economy-widget-${dateKey}`,
+      programId: program.id,
+      roundId: round?.id,
+      title: '교육 일정 1차시',
+      date: dateKey,
+      startTime: `${String(startHour).padStart(2, '0')}:00`,
+      endTime: `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`,
+      createdAt: dayjs().toISOString(),
+      updatedAt: dayjs().toISOString(),
+    }
+    grouped[dateKey] = [...(grouped[dateKey] ?? []), row]
+  })
+}
+
 function buildEventsForDate(
   date: Dayjs,
   schedulesByDate: Record<string, Schedule[]>,
-  programIdSet: Set<string> | null
+  programIdSet: Set<string> | null,
+  economyProgramIdSet: Set<string>
 ): ScheduleEvent[] {
   const dateKey = date.format('YYYY-MM-DD')
   const schedules = schedulesByDate[dateKey] || []
@@ -134,7 +204,8 @@ function buildEventsForDate(
   const defaultStatus: ProgramLifecycleStatus = 'education_completed'
 
   schedules.forEach(schedule => {
-    const program = programService.getByIdSync(schedule.programId)
+    if (!economyProgramIdSet.has(schedule.programId)) return
+    const program = resolveWidgetProgram(schedule.programId)
     if (program) {
       events.push({
         id: schedule.id,
@@ -148,7 +219,10 @@ function buildEventsForDate(
     }
   })
 
-  const programs = programIdSet ? mockPrograms.filter(p => programIdSet.has(p.id)) : mockPrograms
+  const economyPrograms = getEconomyPrograms()
+  const programs = programIdSet
+    ? economyPrograms.filter(p => programIdSet.has(p.id))
+    : economyPrograms
   programs.forEach(program => {
     const applicationEndDate = program.applicationEndDate ? dayjs(program.applicationEndDate) : null
     const applicationStartDate = program.applicationStartDate
@@ -227,18 +301,16 @@ export function ProgramScheduleWidget() {
     [allowedProgramIds]
   )
 
-  const schedulesByDate = useMemo(() => {
-    const grouped: Record<string, Schedule[]> = {}
-    const schedules = programIdSet
-      ? mockSchedules.filter(s => programIdSet.has(s.programId))
-      : mockSchedules
-    schedules.forEach(schedule => {
-      const dateKey = dayjs(schedule.date).format('YYYY-MM-DD')
-      if (!grouped[dateKey]) grouped[dateKey] = []
-      grouped[dateKey].push(schedule)
-    })
-    return grouped
-  }, [programIdSet])
+  /** TEMP: 경제 교육 프로그램 id만 (원복 시 제거) */
+  const economyProgramIdSet = useMemo(
+    () => new Set(getEconomyPrograms().map(p => p.id)),
+    []
+  )
+
+  const programIdSetEffective = useMemo(
+    () => effectiveWidgetProgramIdSet(programIdSet, economyProgramIdSet),
+    [programIdSet, economyProgramIdSet]
+  )
 
   // 월간: 이전 달 말일 + 현재 달만 (35셀 고정). 주간: 해당 주 7일
   const visibleDateRange = useMemo(() => {
@@ -251,13 +323,40 @@ export function ProgramScheduleWidget() {
     return Array.from({ length: 35 }, (_, i) => start.add(i, 'day'))
   }, [currentMonth, viewMode])
 
+  const schedulesByDate = useMemo(() => {
+    const grouped: Record<string, Schedule[]> = {}
+    let schedules = programIdSetEffective
+      ? mockSchedules.filter(s => programIdSetEffective.has(s.programId))
+      : mockSchedules
+    // TEMP: 교육 일정(스케줄)도 경제 프로그램에 한정
+    schedules = schedules.filter(s => economyProgramIdSet.has(s.programId))
+    schedules.forEach(schedule => {
+      const dateKey = dayjs(schedule.date).format('YYYY-MM-DD')
+      if (!grouped[dateKey]) grouped[dateKey] = []
+      grouped[dateKey].push(schedule)
+    })
+
+    const economyPrograms = getEconomyPrograms()
+    const pool = programIdSetEffective
+      ? economyPrograms.filter(p => programIdSetEffective.has(p.id))
+      : economyPrograms
+    injectEconomyFallbackSchedules(grouped, visibleDateRange, economyProgramIdSet, pool)
+
+    return grouped
+  }, [programIdSetEffective, economyProgramIdSet, visibleDateRange])
+
   const eventsByDate = useMemo(() => {
     const out: Record<string, ScheduleEvent[]> = {}
     visibleDateRange.forEach(d => {
-      out[d.format('YYYY-MM-DD')] = buildEventsForDate(d, schedulesByDate, programIdSet)
+      out[d.format('YYYY-MM-DD')] = buildEventsForDate(
+        d,
+        schedulesByDate,
+        programIdSetEffective,
+        economyProgramIdSet
+      )
     })
     return out
-  }, [visibleDateRange, schedulesByDate, programIdSet])
+  }, [visibleDateRange, schedulesByDate, programIdSetEffective, economyProgramIdSet])
 
   const selectedDateEvents = useMemo(() => {
     const dateKey = selectedDate.format('YYYY-MM-DD')
@@ -297,14 +396,10 @@ export function ProgramScheduleWidget() {
     }
   }
 
-  const handleViewAll = () => navigate('/programs/education/schedule')
+  const handleViewAll = () => navigate('/programs/economy-education')
 
   const handleEventClick = (event: ScheduleEvent) => {
-    if (event.type === 'education') {
-      navigate(`/schedules/${event.id}`)
-    } else {
-      navigate('/programs/education/schedule')
-    }
+    navigate(getProgramAdminDetailInfoTabUrl(event.programId))
   }
 
   const headerTitle =
@@ -336,11 +431,6 @@ export function ProgramScheduleWidget() {
                 className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--single"
                 style={{
                   backgroundColor: (dayColorMap.get(programIds[0]) ?? SCHEDULE_COLORS[0]).bg,
-                }}
-                onClick={e => {
-                  e.stopPropagation()
-                  const ev = dayEvents.find(x => x.programId === programIds[0])
-                  if (ev) handleEventClick(ev)
                 }}
                 role="button"
                 tabIndex={0}
@@ -401,41 +491,53 @@ export function ProgramScheduleWidget() {
         mouseEnterDelay={0.12}
         mouseLeaveDelay={0.08}
         getPopupContainer={() => document.body}
-        content={
-          <ScheduleWidgetWeekCellPreview dayEvents={dayEvents} onEventClick={handleEventClick} />
-        }
+        content={<ScheduleWidgetWeekCellPreview dayEvents={dayEvents} />}
       >
         {monthCell}
       </Popover>
     )
   }
 
-  /** 월간: 이전 달 말일 + 현재 달만, 35셀(5×7) 고정 그리드 */
+  /* 대시보드 캘린더 — table 대신 CSS Grid로 5행 균등(브라우저별 tr/td % 높이 불안정·Popover 래퍼 이슈 회피) */
   const renderMonthGrid = () => {
     const monthDates = visibleDateRange as Dayjs[]
     return (
       <div className="program-schedule-widget__month-grid-wrap">
-        <table className="program-schedule-widget__month-grid">
-          <thead>
-            <tr>
-              {WEEKDAY_LABELS.map(day => (
-                <th key={day} scope="col">
-                  {day}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {[0, 1, 2, 3, 4].map(row => (
-              <tr key={row}>
-                {[0, 1, 2, 3, 4, 5, 6].map(col => {
-                  const date = monthDates[row * 7 + col]
-                  return <td key={col}>{date ? renderMonthCell(date) : null}</td>
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div
+          className="program-schedule-widget__month-grid program-schedule-widget__month-grid--grid"
+          role="grid"
+          aria-label="월간 일정"
+        >
+          {WEEKDAY_LABELS.map(day => (
+            <div key={day} className="program-schedule-widget__month-grid-dow" role="columnheader">
+              {day}
+            </div>
+          ))}
+          {[0, 1, 2, 3, 4].flatMap(row =>
+            [0, 1, 2, 3, 4, 5, 6].map(col => {
+              const date = monthDates[row * 7 + col]
+              const edgeClass = [
+                col === 0 ? 'program-schedule-widget__month-grid-slot--edge-w' : '',
+                row === 0 ? 'program-schedule-widget__month-grid-slot--edge-t' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')
+              return (
+                <div
+                  key={`${row}-${col}`}
+                  className={`program-schedule-widget__month-grid-slot ${edgeClass}`.trim()}
+                  role="gridcell"
+                >
+                  {date ? (
+                    <div className="program-schedule-widget__month-td-fill">
+                      {renderMonthCell(date)}
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
     )
   }
@@ -451,7 +553,6 @@ export function ProgramScheduleWidget() {
       </div>
       <div className="program-calendar-week-body">
         {weekDates.map(date => {
-          const isToday = date.isSame(dayjs(), 'day')
           const isSelected = date.isSame(selectedDate, 'day')
           const dateKey = date.format('YYYY-MM-DD')
           const dayEvents = eventsByDate[dateKey] || []
@@ -461,11 +562,12 @@ export function ProgramScheduleWidget() {
           const moreCount = dayEvents.length - 3
 
           const weekCell = (
-            <div
-              className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''} ${isToday ? 'program-calendar-week-cell--today' : ''}`}
-              onClick={() => handleDateSelect(date)}
-            >
-              <div className="program-calendar-week-cell-date">{date.date()}</div>
+            <div className={`program-calendar-week-cell`} onClick={() => handleDateSelect(date)}>
+              <div
+                className={`${isSelected ? 'program-calendar-week-cell-date--selected' : 'program-calendar-week-cell-date'}`}
+              >
+                {date.date()}
+              </div>
               {visibleEvents.length > 0 && (
                 <div className="program-schedule-widget__week-events">
                   {visibleEvents.map(ev => (
@@ -473,8 +575,7 @@ export function ProgramScheduleWidget() {
                       key={ev.id}
                       className="program-schedule-widget__week-event-card"
                       style={{
-                        backgroundColor:
-                          (dayColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]).bg,
+                        backgroundColor: (dayColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]).bg,
                       }}
                       onClick={e => {
                         e.stopPropagation()
@@ -511,11 +612,7 @@ export function ProgramScheduleWidget() {
           )
 
           if (dayEvents.length === 0) {
-            return (
-              <Fragment key={dateKey}>
-                {weekCell}
-              </Fragment>
-            )
+            return <Fragment key={dateKey}>{weekCell}</Fragment>
           }
 
           return (
@@ -529,7 +626,10 @@ export function ProgramScheduleWidget() {
               mouseLeaveDelay={0.08}
               getPopupContainer={() => document.body}
               content={
-                <ScheduleWidgetWeekCellPreview dayEvents={dayEvents} onEventClick={handleEventClick} />
+                <ScheduleWidgetWeekCellPreview
+                  dayEvents={dayEvents}
+                  onEventClick={handleEventClick}
+                />
               }
             >
               {weekCell}
@@ -540,6 +640,7 @@ export function ProgramScheduleWidget() {
     </div>
   )
 
+  /* 대시보드 캘린더(월간) - 일정 목록 */
   const eventListSection = (
     <div className="program-schedule-widget__events">
       {selectedDateEvents.length === 0 ? (

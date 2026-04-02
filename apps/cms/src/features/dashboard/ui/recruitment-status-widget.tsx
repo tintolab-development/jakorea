@@ -16,7 +16,7 @@ import { getRecruitmentStatusList } from '../api/admin-dashboard-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import '@/shared/ui/widget-more-button.css'
-import './recruitment-status-widget.css'
+import './dashboard-widget-table.css'
 
 const WIDGET_KEY = 'recruitment-status-widget'
 const EMPTY_IDS: string[] = []
@@ -59,7 +59,7 @@ export function RecruitmentStatusWidget() {
       key: 'lifecycleStatus',
       width: '18%',
       align: 'center',
-      className: 'recruitment-status-widget__cell-status',
+      className: 'dashboard-widget-table__cell--status',
       render: (_: unknown, record: Program) =>
         record.lifecycleStatus ? (
           <ProgramLifecycleStatusText status={record.lifecycleStatus} />
@@ -99,7 +99,7 @@ export function RecruitmentStatusWidget() {
 
   return (
     <Card
-      className="recruitment-status-widget"
+      className="dashboard-widget-table dashboard-widget-table--recruitment"
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">모집 신청 현황</span>
@@ -121,9 +121,8 @@ export function RecruitmentStatusWidget() {
         dataSource={programs}
         rowKey="id"
         pagination={false}
-        size="small"
         loading={loading}
-        className="recruitment-status-widget__table"
+        className="dashboard-widget-table__data"
       />
     </Card>
   )

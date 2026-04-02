@@ -4,401 +4,401 @@
 
 /* ===== 메인 컨테이너 (3단: 좌 패널 | 메인 캘린더 | 우 패널) ===== */
 .program-calendar-view {
-    display: flex;
-    gap: var(--spacing-24);
-    width: 100%;
-    min-height: 600px;
-    margin-top: 16px;
+  display: flex;
+  gap: var(--spacing-24);
+  width: 100%;
+  min-height: 600px;
+  margin-top: 16px;
 }
 
 /* ===== 좌측 패널: 미니 캘린더 + 검색 위젯(캘린더 하단까지 연장) ===== */
 .program-calendar-left {
-    flex: 0 0 auto;
-    min-width: 260px;
-    max-width: 280px;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-16);
-    align-self: stretch;
+  flex: 0 0 auto;
+  min-width: 260px;
+  max-width: 280px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  align-self: stretch;
 }
 
 /* 단일 위젯: 프로그램명 검색 + 체크 영역, 캘린더 하단까지 채움 */
 .program-calendar-left__search-widget {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    /* gap: var(--spacing-16); */
-    padding: var(--spacing-16);
-    background: var(--color-bg-base);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-8);
-    box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* gap: var(--spacing-16); */
+  padding: var(--spacing-16);
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-8);
+  box-sizing: border-box;
 }
 
 .program-calendar-left__search-widget .program-calendar-left__search {
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 /* 프로그램명 입력: 위젯/필터와 동일한 컨트롤 높이 */
 .program-calendar-left__search .ant-input-affix-wrapper {
-    border-radius: var(--radius-8);
-    border: 1px solid var(--color-border-light);
-    height: var(--filter-control-height, 44px) !important;
-    min-height: var(--filter-control-height, 44px) !important;
-    box-sizing: border-box;
+  border-radius: var(--radius-8);
+  border: 1px solid var(--color-border-light);
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box;
 }
 
 .program-calendar-left__search .ant-input-affix-wrapper .ant-input {
-    height: 100% !important;
-    min-height: 0 !important;
-    line-height: 1;
+  height: 100% !important;
+  min-height: 0 !important;
+  line-height: 1;
 }
 
 /* 프로그램 유형 체크 영역 (위젯 내부, 별도 카드 없음) */
 .program-calendar-left__filters {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .program-calendar-left__filters-wrapper {
-    height: 24px;
+  height: 24px;
 }
 
 .program-calendar-left__filter-item.ant-checkbox-wrapper {
-    align-items: center;
-    margin-right: 0;
-    min-height: var(--filter-control-height, 44px);
-    padding: 0 var(--spacing-2);
+  align-items: center;
+  margin-right: 0;
+  min-height: var(--filter-control-height, 44px);
+  padding: 0 var(--spacing-2);
 }
 
-.program-calendar-left__filter-item .ant-checkbox+span {
-    padding-left: var(--spacing-8);
-    color: var(--color-text-label);
+.program-calendar-left__filter-item .ant-checkbox + span {
+  padding-left: var(--spacing-8);
+  color: var(--color-text-label);
 }
 
 /* 사업분야 체크박스 색상 (스크린샷: 항목별 상이) */
 .program-calendar-left__filter-item--cyan .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: var(--color-filter-cyan);
-    border-color: var(--color-filter-cyan);
+  background-color: var(--color-filter-cyan);
+  border-color: var(--color-filter-cyan);
 }
 
 .program-calendar-left__filter-item--red .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: var(--color-filter-red);
-    border-color: var(--color-filter-red);
+  background-color: var(--color-filter-red);
+  border-color: var(--color-filter-red);
 }
 
 .program-calendar-left__filter-item--purple .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: var(--color-filter-purple);
-    border-color: var(--color-filter-purple);
+  background-color: var(--color-filter-purple);
+  border-color: var(--color-filter-purple);
 }
 
 .program-calendar-left__filter-item--green .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: var(--color-filter-green);
-    border-color: var(--color-filter-green);
+  background-color: var(--color-filter-green);
+  border-color: var(--color-filter-green);
 }
 
 .program-calendar-view--loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 600px;
 }
 
 /* ===== 중앙: 메인 캘린더 ===== */
 .program-calendar-main {
-    flex: 1;
-    min-width: 0;
-    background: var(--color-bg-base);
-    border-radius: var(--radius-8);
-    border: 1px solid var(--color-border-light);
-    padding: var(--spacing-16);
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+  flex: 1;
+  min-width: 0;
+  background: var(--color-bg-base);
+  border-radius: var(--radius-8);
+  border: 1px solid var(--color-border-light);
+  padding: var(--spacing-16);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* 메인 캘린더 헤더 (디바이더 없음: 헤더와 캘린더 그리드 구분선 제거) */
 .program-calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0 16px;
-    margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0 16px;
+  margin-bottom: 8px;
 }
 
 .program-calendar-header-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .program-calendar-header-title {
-    font-size: 24px;
-    font-weight: 600;
-    text-align: left;
-    white-space: nowrap;
-    margin-right: 8px;
-    font-family: var(--font-family-number);
+  font-size: 24px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  margin-right: 8px;
+  font-family: var(--font-family-number);
 }
 
 .program-calendar-today-btn {
-    width: 60px;
-    height: 34px;
-    min-width: 60px;
-    min-height: 34px;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    border: 1px solid var(--JA-mint-01, #01a1af);
-    background: var(--default-WT, #fff);
-    color: var(--JA-mint-01, #01a1af);
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 150%;
-    /* 21px */
+  width: 60px;
+  height: 34px;
+  min-width: 60px;
+  min-height: 34px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  /* 21px */
 }
 
 .program-calendar-today-btn:hover {
-    border-color: var(--color-brand-primary);
-    color: var(--color-brand-primary);
-    opacity: 0.8;
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
+  opacity: 0.8;
 }
 
 .program-calendar-nav {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .program-calendar-nav .program-calendar-nav-btn {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    min-height: 34px;
-    padding: 0;
-    border-radius: 8px;
-    border: 1px solid var(--color-border-light);
-    background: var(--color-bg-base);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .program-calendar-nav .program-calendar-nav-btn:hover {
-    border-color: #d9d9d9;
-    color: var(--color-text-label);
+  border-color: #d9d9d9;
+  color: var(--color-text-label);
 }
 
 .program-calendar-header-right {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 /* 캘린더 셀 호버: 해당 날짜 일정 미리보기 (Popover) */
 .program-calendar-cell-preview-popover .ant-popover-inner {
-    padding: 0;
-    border-radius: 8px;
-    border: 1px solid #d4d4d4;
-    background: #fff;
-    box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
-    width: 333px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  width: 333px;
 }
 
 .program-calendar-cell-preview-popover .ant-popover-inner-content {
-    padding: 0;
-    max-height: 250px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+  padding: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .program-calendar-cell-preview {
-    display: flex;
-    width: 333px;
-    max-width: min(400px, 92vw);
-    padding: 12px 16px 12px 14px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    box-sizing: border-box;
+  display: flex;
+  width: 333px;
+  max-width: min(400px, 92vw);
+  padding: 12px 16px 12px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  box-sizing: border-box;
 }
 
 .program-calendar-cell-preview__item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    text-align: left;
-    font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
 }
 
-.program-calendar-cell-preview__item+.program-calendar-cell-preview__item {
-    padding-top: 8px;
-    border-top: 1px solid var(--color-border-light);
+.program-calendar-cell-preview__item + .program-calendar-cell-preview__item {
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-light);
 }
 
 .program-calendar-cell-preview__title {
-    color: var(--JA-mint-01, #01a1af);
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: 130%;
-    word-break: break-word;
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 130%;
+  word-break: break-word;
 }
 
 .program-calendar-cell-preview__desc {
-    color: var(--default-BK, #3d3d3d);
-    font-size: 13px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
 }
 
 .program-calendar-cell-preview__item:hover .program-calendar-cell-preview__title,
 .program-calendar-cell-preview__item:hover .program-calendar-cell-preview__desc {
-    opacity: 0.85;
+  opacity: 0.85;
 }
 
 /* 메인 캘린더 셀: 배지는 셀 안에서만 노출 */
 .program-calendar-cell {
-    min-height: 120px;
-    height: 120px;
-    padding: 4px 8px;
-    border: 1px solid var(--color-border-light);
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--color-bg-base);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
+  min-height: 120px;
+  height: 120px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--color-bg-base);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .program-calendar-cell:hover {
-    background: #f5f6f7;
+  background: #f5f6f7;
 }
 
 /* 캘린더 > 월간 : 선택된 셀 스타일 */
 .program-calendar-cell--selected {
-    background: #f5f6f7;
+  background: #f5f6f7;
 }
 
 .program-calendar-cell--selected .program-calendar-cell-date {
-    display: flex;
-    width: 25px;
-    height: 25px;
-    padding: 0 10px;
-    color: var(--default-WT) !important;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    aspect-ratio: 1/1;
-    border-radius: 60px;
-    background: var(--JA-mint-01, #01a1af);
+  display: flex;
+  width: 25px;
+  height: 25px;
+  padding: 0 10px;
+  color: var(--default-WT) !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1/1;
+  border-radius: 60px;
+  background: var(--JA-mint-01, #01a1af);
 }
 
 .program-calendar-cell--today .program-calendar-cell-date {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 130%;
-    /* 18.2px */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  /* 18.2px */
 }
 
 .program-calendar-cell--other-month {
-    background-color: #fafafa;
+  background-color: #fafafa;
 }
 
 .program-calendar-cell--other-month .program-calendar-cell-date {
-    color: #bfbfbf;
+  color: #bfbfbf;
 }
 
 /* 해당 월이 아닌 날짜는 빈 셀로 표시 (숫자·일정 미표기) */
 .program-calendar-cell--empty {
-    cursor: default;
-    background-color: #fafafa;
+  cursor: default;
+  background-color: #fafafa;
 }
 
 .program-calendar-cell--empty:hover {
-    background-color: #fafafa;
-    border-color: var(--color-border-light);
+  background-color: #fafafa;
+  border-color: var(--color-border-light);
 }
 
 .program-calendar-cell-date {
-    color: var(--default-BK, #3d3d3d);
-    font-family: Outfit, sans-serif;
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 130%;
-    margin-bottom: 4px;
-    text-align: left;
-    align-self: flex-start;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Outfit, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  margin-bottom: 4px;
+  text-align: left;
+  align-self: flex-start;
 }
 
 .program-calendar-cell-events {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    flex: 0 0 auto;
-    min-width: 0;
-    overflow: hidden;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 0 0 auto;
+  min-width: 0;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* 스크롤바 스타일 */
 .program-calendar-cell-events::-webkit-scrollbar {
-    width: 4px;
+  width: 4px;
 }
 
 .program-calendar-cell-events::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .program-calendar-cell-events::-webkit-scrollbar-thumb {
-    background: #d9d9d9;
-    border-radius: 2px;
+  background: #d9d9d9;
+  border-radius: 2px;
 }
 
 .program-calendar-cell-events::-webkit-scrollbar-thumb:hover {
-    background: #bfbfbf;
+  background: #bfbfbf;
 }
 
 /* 셀 내 일정 배지: 24px 높이, ProgramScheduleList와 동일 bg 팔레트(테두리 없음) */
 .program-calendar-event {
-    display: flex;
-    align-items: center;
-    height: 24px;
-    min-height: 24px;
-    padding: 0 8px;
-    box-sizing: border-box;
-    border: none;
-    border-radius: 2px;
-    cursor: pointer;
-    transition: filter 0.2s;
-    min-width: 0;
-    max-width: 100%;
+  display: flex;
+  align-items: center;
+  height: 24px;
+  min-height: 24px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: filter 0.2s;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .program-calendar-event:hover {
-    filter: brightness(0.96);
+  filter: brightness(0.96);
 }
 
 /* 셀 내 배지: 모두 동일한 2px radius (셀 안에서만 노출) */
@@ -406,469 +406,467 @@
 .program-calendar-event--span-start,
 .program-calendar-event--span-middle,
 .program-calendar-event--span-end {
-    border-radius: 2px;
+  border-radius: 2px;
 }
 
 .program-calendar-event-title {
-    flex: 1;
-    min-width: 0;
-    font-size: 12px;
-    color: var(--color-text-body);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--color-text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 외 n개의 일정 */
 .program-calendar-event-more {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    padding: 2px 4px;
-    text-align: left;
-    align-self: flex-start;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding: 2px 4px;
+  text-align: left;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Ant Design Calendar 오버라이드 */
 .program-calendar-main .ant-picker-calendar {
-    background: transparent;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+  background: transparent;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .program-calendar-main .ant-picker-calendar-date {
-    border: none;
-    padding: 0;
+  border: none;
+  padding: 0;
 }
 
 .program-calendar-main .ant-picker-cell {
-    padding: 0;
+  padding: 0;
 }
 
 .program-calendar-main .ant-picker-calendar-date-value {
-    display: none;
+  display: none;
 }
 
 /* fullCellRender 사용 시 기본 date-content는 비어 있거나 보조용이므로 숨김 (의미 없는 빈 UI 제거) */
 .program-calendar-main .ant-picker-calendar-date-content {
-    display: none;
+  display: none;
 }
 
 /* 요일 헤더 센터링 */
 .program-calendar-main .ant-picker-content thead th {
-    text-align: center;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    font-size: 13px;
-    padding: 8px 0;
-    position: relative;
+  text-align: center;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  padding: 8px 0;
+  position: relative;
 }
 
 /* 요일 헤더를 3글자로 변경 (원본 텍스트 숨기고 ::before로 교체) */
 .program-calendar-main .ant-picker-content thead th {
-    font-size: 0;
+  font-size: 0;
 }
 
 .program-calendar-main .ant-picker-content thead th::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
 }
 
 .program-calendar-main .ant-picker-content thead th:nth-child(1)::before {
-    content: 'Sun';
+  content: 'Sun';
 }
 
 .program-calendar-main .ant-picker-content thead th:nth-child(2)::before {
-    content: 'Mon';
+  content: 'Mon';
 }
 
 .program-calendar-main .ant-picker-content thead th:nth-child(3)::before {
-    content: 'Tue';
+  content: 'Tue';
 }
 
 .program-calendar-main .ant-picker-content thead th:nth-child(4)::before {
-    content: 'Wed';
+  content: 'Wed';
 }
 
 .program-calendar-main .ant-picker-content thead th:nth-child(5)::before {
-    content: 'Thu';
+  content: 'Thu';
 }
 
 .program-calendar-main .ant-picker-content thead th:nth-child(6)::before {
-    content: 'Fri';
+  content: 'Fri';
 }
 
 .program-calendar-main .ant-picker-content thead th:nth-child(7)::before {
-    content: 'Sat';
+  content: 'Sat';
 }
 
 /* ===== 우측: 선택일 일정 리스트 ===== */
 .program-calendar-right,
 .program-calendar-sidebar {
-    flex: 0 0 auto;
-    min-width: 320px;
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+  flex: 0 0 auto;
+  min-width: 320px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* ===== 미니 캘린더 ===== */
 .program-mini-calendar {
-    background: var(--color-bg-base);
-    border-radius: 12px;
-    box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
-    padding: 20px;
+  background: var(--color-bg-base);
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  padding: 20px;
 }
 
 .program-mini-calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .program-mini-calendar-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--color-text-label);
-    font-family: var(--font-family-number);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-label);
+  font-family: var(--font-family-number);
 }
 
 .program-mini-calendar-nav-btn {
-    background: none;
-    border: none;
-    padding: 4px 8px;
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    transition: color 0.2s;
-    outline: none !important;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: color 0.2s;
+  outline: none !important;
 }
 
 .program-mini-calendar-nav-btn:hover {
-    color: var(--color-text-label);
+  color: var(--color-text-label);
 }
 
 /* 미니 캘린더 셀 */
 .program-mini-calendar-cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-    position: relative;
-    width: 30px;
-    height: 30px;
-    margin: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  position: relative;
+  width: 30px;
+  height: 30px;
+  margin: 4px;
 }
 
 .program-mini-calendar table tr:hover {
-    background: transparent !important;
+  background: transparent !important;
 }
 
 .program-mini-calendar-cell:hover {
-    background-color: var(--color-border-light) !important;
+  background-color: var(--color-border-light) !important;
 }
 
 .program-mini-calendar-cell--selected {
-    background-color: rgba(1, 161, 175, 0.1);
+  background-color: rgba(1, 161, 175, 0.1);
 }
 
 .program-mini-calendar-cell--today {
-    background-color: var(--color-brand-primary);
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background-color: var(--color-brand-primary);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .program-mini-calendar-cell--today .program-mini-calendar-date {
-    color: var(--default-WT);
+  color: var(--default-WT);
 }
 
 .program-mini-calendar-date {
-    font-size: 13px;
-    color: var(--color-text-label);
+  font-size: 13px;
+  color: var(--color-text-label);
 }
 
 .program-mini-calendar-dot {
-    width: 4px;
-    height: 4px;
-    background-color: var(--color-brand-primary);
-    border-radius: 50%;
-    position: absolute;
-    bottom: 2px;
+  width: 4px;
+  height: 4px;
+  background-color: var(--color-brand-primary);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 2px;
 }
 
 /* 미니 캘린더 Ant Design 오버라이드 */
 .program-mini-calendar .ant-picker-calendar {
-    background: transparent;
+  background: transparent;
 }
 
 .program-mini-calendar .ant-picker-calendar-mini {
-    border: none;
+  border: none;
 }
 
 /* 고정 miniContentHeight 제거 → 실제 행 높이만큼만 차지 */
 .program-mini-calendar .ant-picker-calendar-mini .ant-picker-content {
-    height: auto !important;
-    min-height: 0;
+  height: auto !important;
+  min-height: 0;
 }
 
 .program-mini-calendar .ant-picker-date-panel,
 .program-mini-calendar .ant-picker-panel {
-    height: auto;
+  height: auto;
 }
 
 /* 6행 고정 그리드 중, 표시 월 날짜가 하나도 없는 행은 숨김 (예: 말일 이후 다음 달만 있는 줄) */
 .program-mini-calendar .ant-picker-content tbody tr:not(:has(.ant-picker-cell-in-view)) {
-    display: none;
+  display: none;
 }
 
 /* 헤더 숨김 후에도 패널에 남는 상단 구분선 제거 */
 .program-mini-calendar .ant-picker-calendar .ant-picker-panel {
-    border-top: none;
+  border-top: none;
 }
 
 .program-mini-calendar .ant-picker-calendar-mini .ant-picker-calendar-header {
-    display: none;
+  display: none;
 }
 
 .program-mini-calendar .ant-picker-cell {
-    padding: 0;
+  padding: 0;
 }
 
 .program-mini-calendar .ant-picker-calendar-date {
-    border: none;
-    padding: 0;
+  border: none;
+  padding: 0;
 }
 
 .program-mini-calendar .ant-picker-calendar-date-value,
 .program-mini-calendar .ant-picker-calendar-date-content {
-    display: none;
+  display: none;
 }
 
 /* 현재 표시 월 밖 날짜: rc-picker는 ant-picker-cell-in-view 미부여 — 숫자 숨김·선택 불가 */
 .program-mini-calendar .ant-picker-cell:not(.ant-picker-cell-in-view) {
-    pointer-events: none;
-    visibility: hidden;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 /* ===== 일정 리스트 ===== */
 .program-schedule-list {
-    flex: 1;
-    background: var(--color-bg-base);
-    border-radius: var(--radius-8);
-    border: 1px solid var(--color-border-light);
-    padding: var(--spacing-16);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    overflow-y: auto;
-    min-height: 300px;
+  flex: 1;
+  background: var(--color-bg-base);
+  border-radius: var(--radius-8);
+  border: 1px solid var(--color-border-light);
+  padding: var(--spacing-16);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  overflow-y: auto;
+  min-height: 300px;
 }
 
 /* 일정 항목: applicant-schedule-list와 동일 팔레트·인라인 bg/border (program-schedule-list.tsx) */
 .program-schedule-item {
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    padding: 10px 20px;
-    border: 1px solid #f0f0f0;
-    background: #fcfcfc;
-    cursor: pointer;
-    transition:
-        outline-color 0.15s ease,
-        outline-width 0.15s ease,
-        box-shadow 0.2s ease,
-        border-color 0.2s ease,
-        background 0.2s ease;
-    border-radius: 6px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 20px;
+  border: 1px solid #f0f0f0;
+  background: #fcfcfc;
+  cursor: pointer;
+  transition:
+    outline-color 0.15s ease,
+    outline-width 0.15s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+  border-radius: 6px;
 }
 
 .program-schedule-item:hover {
-    border: 2px solid var(--JA-mint-01, #01a1af) !important;
-    background: var(--default-WT, #fff) !important;
-    box-shadow:
-        0 0 4px 0 rgba(0, 136, 148, 0.06),
-        0 4px 12px 0 rgba(0, 136, 148, 0.14);
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 .program-schedule-item:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .program-schedule-list__event-column {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
 }
 
 .program-schedule-list__event-head {
-    overflow: hidden;
-    max-width: 100%;
-    min-width: 0;
-    color: var(--default-BK, #3d3d3d);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.35;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 /* 일정 상세 일정(제목) 영역 폰트 스펙 */
 .program-schedule-list__event-desc {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-    font-size: var(--font-size-16);
-    color: var(--color-text-secondary);
-    font-style: normal;
-    font-weight: 500;
-    line-height: 150%;
-    /* 24px */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  font-size: var(--font-size-16);
+  color: var(--color-text-secondary);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  /* 24px */
 }
 
 /* Empty 상태 */
 .program-schedule-list .ant-empty {
-    margin: 24px 0;
+  margin: 24px 0;
 }
 
 .program-schedule-list .ant-empty-description {
-    font-size: 13px;
-    color: var(--color-text-secondary);
+  font-size: 13px;
+  color: var(--color-text-secondary);
 }
 
 /* ===== 주간 뷰 ===== */
 .program-calendar-week {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .program-calendar-week-header {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    border-bottom: 1px solid var(--color-border-light);
-    margin-bottom: 8px;
-    flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--color-border-light);
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .program-calendar-week-header-cell {
-    text-align: center;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    font-size: 13px;
-    padding: 12px 0;
+  text-align: center;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  padding: 12px 0;
 }
 
 .program-calendar-week-body {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    flex: 1;
-    min-height: 0;
-    align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
 }
 
 .program-calendar-week-cell {
-    min-height: 0;
-    min-width: 0;
-    height: 100%;
-    padding: 8px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--color-bg-base);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  padding: 8px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--color-bg-base);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .program-calendar-week-cell:hover {
-    border-color: #d9d9d9;
-    background-color: #fafafa;
+  border-color: #d9d9d9;
+  background-color: #fafafa;
 }
 
 .program-calendar-week-cell--selected {
-    border: 1px solid var(--color-brand-primary) !important;
-    background-color: rgba(1, 161, 175, 0.04);
+  border: 1px solid var(--color-brand-primary) !important;
+  background-color: rgba(1, 161, 175, 0.04);
 }
 
 .program-calendar-week-cell--today .program-calendar-week-cell-date {
-    background-color: var(--color-brand-primary);
-    color: var(--color-bg-base);
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .program-calendar-week-cell-date {
-    color: var(--default-BK, #3d3d3d);
-    font-family: Outfit, sans-serif;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 130%;
-    margin-bottom: 8px;
-    text-align: left;
-    align-self: flex-start;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Outfit, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  margin-bottom: 8px;
+  text-align: left;
+  align-self: flex-start;
 }
 
 .program-calendar-week-cell-events {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    flex: 0 0 auto;
-    min-width: 0;
-    overflow: hidden;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* 미니 캘린더 요일 표시 스타일 */
 .program-mini-calendar .ant-picker-calendar .ant-picker-date-panel .ant-picker-content th {
-    color: var(--color-text-secondary);
-    text-align: center;
-    font-family: var(--font-family-number);
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 12px;
-    padding-bottom: 8px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-family: var(--font-family-number);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 12px;
+  padding-bottom: 8px;
 }
 
 .program-mini-calendar-date {
-    color: var(--default-BK, #3d3d3d);
-    text-align: center;
-    font-family: var(--font-family-number);
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 130%;
-    /* 20.8px */
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-number);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  /* 20.8px */
 }

@@ -10,7 +10,7 @@ import { useMemo } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import '@/shared/ui/widget-more-button.css'
-import './customer-inquiry-status-widget.css'
+import './dashboard-widget-table.css'
 
 const WIDGET_KEY = 'customer-inquiry-status-widget'
 const EMPTY_IDS: string[] = []
@@ -105,18 +105,18 @@ export function CustomerInquiryStatusWidget() {
           value > 0 ? (
             <button
               type="button"
-              className="inquiry-table__pending-cell"
+              className="dashboard-widget-table__pending-btn"
               onClick={() => handlePendingClick(record.key)}
             >
-              <span className="inquiry-table__pending-cell-inner">
-                <span className="inquiry-table__pending-cell-text">{value}건</span>
+              <span className="dashboard-widget-table__pending-inner">
+                <span className="dashboard-widget-table__pending-text">{value}건</span>
                 {!inquiryNotificationReadProgramKeys[record.key] && (
-                  <span className="inquiry-table__pending-dot" aria-hidden />
+                  <span className="dashboard-widget-table__pending-dot" aria-hidden />
                 )}
               </span>
             </button>
           ) : (
-            <span className="inquiry-table__count--muted">0건</span>
+            <span className="dashboard-widget-table__count--muted">0건</span>
           ),
       },
       {
@@ -125,7 +125,9 @@ export function CustomerInquiryStatusWidget() {
         key: 'answered',
         width: '17%',
         align: 'center',
-        render: (value: number) => <span className="inquiry-table__count--muted">{value}건</span>,
+        render: (value: number) => (
+          <span className="dashboard-widget-table__count--muted">{value}건</span>
+        ),
       },
       {
         title: '전체',
@@ -133,7 +135,9 @@ export function CustomerInquiryStatusWidget() {
         key: 'total',
         width: '16%',
         align: 'center',
-        render: (value: number) => <span className="inquiry-table__count--muted">{value}건</span>,
+        render: (value: number) => (
+          <span className="dashboard-widget-table__count--muted">{value}건</span>
+        ),
       },
     ],
     [navigate, inquiryNotificationReadProgramKeys, setInquiryNotificationReadProgramKey]
@@ -141,7 +145,7 @@ export function CustomerInquiryStatusWidget() {
 
   return (
     <Card
-      className="customer-inquiry-status-widget"
+      className="dashboard-widget-table dashboard-widget-table--customer-inquiry"
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">프로그램 별 문의 현황</span>
@@ -158,7 +162,7 @@ export function CustomerInquiryStatusWidget() {
         dataSource={data}
         pagination={false}
         size="small"
-        className="inquiry-table"
+        className="dashboard-widget-table__data"
       />
     </Card>
   )

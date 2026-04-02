@@ -174,7 +174,7 @@ export function SettlementStatusCell({ record, onChange, ... }) {
 | 공통 셀 컴포넌트 | `shared/components/status-dropdown-cell.tsx` |
 | 공통 셀 스타일 | `shared/components/status-dropdown-cell.css` |
 | 프로그램 진행 현황 래퍼 | `shared/components/program-lifecycle-status-cell.tsx` |
-| 대시보드 위젯 테이블 | `features/dashboard/ui/recruitment-status-widget.tsx` / `.css` |
+| 대시보드 위젯 테이블 | `features/dashboard/ui/recruitment-status-widget.tsx`, `dashboard-widget-table.css` |
 | 교육 프로그램 테이블 | `features/program/ui/program-list.tsx` / `program-list.css` |
 
 ---
