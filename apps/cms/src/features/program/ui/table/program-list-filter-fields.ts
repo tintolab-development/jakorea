@@ -15,11 +15,13 @@ export const participantFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
+    width: '20%',
   },
   {
     key: 'dateRange',
     type: 'dateRange' as const,
     label: '운영 기간',
+    width: '24%',
   },
   {
     key: 'target',
@@ -31,6 +33,7 @@ export const participantFilterFields = [
       { value: 'individual', label: '개인 학생' },
       { value: 'school', label: '학교(선생님)' },
     ],
+    width: '19%',
   },
   {
     key: 'type',
@@ -41,6 +44,7 @@ export const participantFilterFields = [
       { value: 'all', label: '전체' },
       ...programTypes.map(type => ({ value: type.value, label: type.label })),
     ],
+    width: '19%',
   },
   {
     key: 'status',
@@ -51,6 +55,7 @@ export const participantFilterFields = [
       { value: 'all', label: '전체' },
       ...statusOptions.map(status => ({ value: status.value, label: status.label })),
     ],
+    width: '18%',
   },
 ]
 
@@ -61,12 +66,14 @@ export const economyFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
+    width: '28%',
   },
   {
     key: 'lifecycleStatusText',
     type: 'search' as const,
     label: '프로그램 진행 현황',
     placeholder: '프로그램 진행 현황을 입력하세요',
+    width: '28%',
   },
   {
     key: 'category',
@@ -74,6 +81,7 @@ export const economyFilterFields = [
     label: '참여자 유형',
     placeholder: '전체',
     options: economyParticipantTypeOptions,
+    width: '22%',
   },
   {
     key: 'targetLevel',
@@ -81,6 +89,7 @@ export const economyFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: economyTargetLevelOptions,
+    width: '22%',
   },
 ]
 
@@ -92,6 +101,7 @@ export const programListFilterFields = [
     label: '프로그램 진행현황',
     placeholder: '전체',
     options: statusOptions,
+    width: '15%',
   },
   {
     key: 'category',
@@ -99,6 +109,7 @@ export const programListFilterFields = [
     label: '수강자 유형',
     placeholder: '전체',
     options: categoryOptions,
+    width: '15%',
   },
   {
     key: 'businessArea',
@@ -106,6 +117,7 @@ export const programListFilterFields = [
     label: '교육 분야',
     placeholder: '전체',
     options: businessAreaOptions,
+    width: '15%',
   },
   {
     key: 'targetLevel',
@@ -113,6 +125,7 @@ export const programListFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: targetLevelOptions,
+    width: '15%',
   },
   {
     key: 'type',
@@ -123,10 +136,12 @@ export const programListFilterFields = [
       { value: 'all', label: '전체' },
       ...programTypes.map(t => ({ value: t.value, label: t.label })),
     ],
+    width: '15%',
   },
   {
     key: 'operationPeriod',
     type: 'dateRange' as const,
     label: '운영기간',
+    width: '25%',
   },
 ]
