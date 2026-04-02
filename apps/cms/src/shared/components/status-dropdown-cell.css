@@ -175,7 +175,8 @@
 }
 
 .status-dropdown-cell__status-trigger--tag-132 .program-managers-tab__role-badge,
-.status-dropdown-cell__status-trigger--tag-132 .school-detail-fullpage-view__role-tag {
+.status-dropdown-cell__status-trigger--tag-132 .school-detail-fullpage-view__role-tag,
+.status-dropdown-cell__status-trigger--tag-132 .assignment-submission-modal__team-role-tag {
   width: 132px !important;
   min-width: 132px !important;
   max-width: 132px !important;
@@ -228,7 +229,8 @@
 }
 
 .status-dropdown-cell__dropdown-overlay--tag-132 .program-managers-tab__role-badge,
-.status-dropdown-cell__dropdown-overlay--tag-132 .school-detail-fullpage-view__role-tag {
+.status-dropdown-cell__dropdown-overlay--tag-132 .school-detail-fullpage-view__role-tag,
+.status-dropdown-cell__dropdown-overlay--tag-132 .assignment-submission-modal__team-role-tag {
   width: 132px !important;
   min-width: 132px !important;
   max-width: 132px !important;
@@ -266,7 +268,8 @@
 
 /* 권한·역할 등 커스텀 태그(span) */
 .status-dropdown-cell__status-trigger .program-managers-tab__role-badge,
-.status-dropdown-cell__status-trigger .school-detail-fullpage-view__role-tag {
+.status-dropdown-cell__status-trigger .school-detail-fullpage-view__role-tag,
+.status-dropdown-cell__status-trigger .assignment-submission-modal__team-role-tag {
   box-sizing: border-box;
   width: 120px;
   min-width: 120px;
@@ -343,7 +346,8 @@
 }
 
 .status-dropdown-cell__dropdown-item .program-managers-tab__role-badge,
-.status-dropdown-cell__dropdown-item .school-detail-fullpage-view__role-tag {
+.status-dropdown-cell__dropdown-item .school-detail-fullpage-view__role-tag,
+.status-dropdown-cell__dropdown-item .assignment-submission-modal__team-role-tag {
   pointer-events: none;
   width: 120px;
   min-width: 120px;
