@@ -4,7 +4,7 @@
  * 모달·풀페이지 뷰에서 재사용
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useStudentListFilterParams } from '../hooks/use-student-list-filter-params'
 import { Table, Input, Select, Row, Col } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
@@ -30,6 +30,10 @@ import './school-detail-modal.css'
 import './detail-modal/program-status/program-progress-tab.css'
 import './detail-modal/program-status/participating-institutions-section.css'
 import './school-detail-student-list-section.css'
+import {
+  STUDENT_LIST_TABLE_COL_MIN_WIDTHS,
+  studentListTableDataColumnSize,
+} from './school-detail-student-list-table'
 
 /** 수료증 발급 버튼용 아이콘 (22×22, JA/mint 01) */
 function CertificateIssueIcon() {
@@ -111,7 +115,7 @@ export function SchoolDetailStudentListSection({
 }: SchoolDetailStudentListSectionProps) {
   const { filters, appliedFilters, setFilter, applyFilters } = useStudentListFilterParams()
   const [localStudentName, setLocalStudentName] = useState(() => filters.studentName)
-  const [selectedStudentKeys, setSelectedStudentKeys] = useState<React.Key[]>([])
+  const [selectedStudentKeys, setSelectedStudentKeys] = useState<Key[]>([])
 
   useEffect(() => {
     setLocalStudentName(filters.studentName)
@@ -236,43 +240,59 @@ export function SchoolDetailStudentListSection({
     ? (watch('students')?.length ?? 0)
     : filteredStudentList.length
 
+  const studentTableRowSelection = useMemo(
+    () => ({
+      selectedRowKeys: selectedStudentKeys,
+      onChange: (keys: Key[]) => setSelectedStudentKeys(keys),
+      columnWidth: STUDENT_LIST_TABLE_COL_MIN_WIDTHS[0],
+    }),
+    [selectedStudentKeys]
+  )
+
   const studentColumnsView: ColumnsType<SchoolDetailStudentRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
-      { title: '학생명', dataIndex: 'name', key: 'name', width: 120, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', align: 'center', ...studentListTableDataColumnSize(0) },
+      { title: '학생명', dataIndex: 'name', key: 'name', align: 'center', ...studentListTableDataColumnSize(1) },
       {
         title: '성별',
         dataIndex: 'gender',
         key: 'gender',
-        width: 80,
         align: 'center',
+        ...studentListTableDataColumnSize(2),
         render: (v: StudentGenderKey | undefined) =>
           v ? (STUDENT_GENDER_LABELS[v] ?? '-') : '-',
       },
-      { title: '학급', dataIndex: 'gradeClass', key: 'gradeClass', width: 100, align: 'center' },
+      {
+        title: '학급',
+        dataIndex: 'gradeClass',
+        key: 'gradeClass',
+        align: 'center',
+        ...studentListTableDataColumnSize(3),
+      },
       {
         title: '연락처',
         dataIndex: 'contact',
         key: 'contact',
-        width: 130,
         align: 'center',
+        ...studentListTableDataColumnSize(4),
         render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v) : '-'),
       },
       {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 180,
         align: 'center',
         ellipsis: true,
+        ...studentListTableDataColumnSize(5),
         render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
       },
       {
         title: '강의 출석 내역',
         dataIndex: 'lectureAttendance',
         key: 'lectureAttendance',
-        width: 120,
         align: 'center',
+        ...studentListTableDataColumnSize(6),
+        onCell: () => ({ className: 'school-detail-modal__td-lecture-attendance' }),
         render: (v: string | undefined, record: SchoolDetailStudentRow) => (
           <button
             type="button"
@@ -286,8 +306,8 @@ export function SchoolDetailStudentListSection({
       {
         title: '과제 제출 내역',
         key: 'assignment',
-        width: 152,
         align: 'center',
+        ...studentListTableDataColumnSize(7),
         render: (_: unknown, record: SchoolDetailStudentRow) => (
           <AppButton
             variant="viewDetails"
@@ -304,12 +324,12 @@ export function SchoolDetailStudentListSection({
 
   const studentColumnsEdit: ColumnsType<StudentListFormStudent> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', align: 'center', ...studentListTableDataColumnSize(0) },
       {
         title: '학생명',
         key: 'name',
-        width: 120,
         align: 'center',
+        ...studentListTableDataColumnSize(1),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
@@ -323,8 +343,8 @@ export function SchoolDetailStudentListSection({
       {
         title: '성별',
         key: 'gender',
-        width: 80,
         align: 'center',
+        ...studentListTableDataColumnSize(2),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
@@ -338,7 +358,7 @@ export function SchoolDetailStudentListSection({
                   { value: 'male', label: '남' },
                   { value: 'female', label: '여' },
                 ]}
-                style={{ width: 72 }}
+                classNames={{ root: 'school-detail-modal__student-table-gender-select' }}
               />
             )}
           />
@@ -347,8 +367,8 @@ export function SchoolDetailStudentListSection({
       {
         title: '학급',
         key: 'gradeClass',
-        width: 100,
         align: 'center',
+        ...studentListTableDataColumnSize(3),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
@@ -362,8 +382,8 @@ export function SchoolDetailStudentListSection({
       {
         title: '연락처',
         key: 'contact',
-        width: 130,
         align: 'center',
+        ...studentListTableDataColumnSize(4),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
@@ -377,8 +397,8 @@ export function SchoolDetailStudentListSection({
       {
         title: '이메일',
         key: 'email',
-        width: 180,
         align: 'center',
+        ...studentListTableDataColumnSize(5),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
@@ -393,8 +413,9 @@ export function SchoolDetailStudentListSection({
         title: '강의 출석 내역',
         dataIndex: 'lectureAttendance',
         key: 'lectureAttendance',
-        width: 120,
         align: 'center',
+        ...studentListTableDataColumnSize(6),
+        onCell: () => ({ className: 'school-detail-modal__td-lecture-attendance' }),
         render: (v: string | undefined) => (
           <button
             type="button"
@@ -409,8 +430,8 @@ export function SchoolDetailStudentListSection({
       {
         title: '과제 제출 내역',
         key: 'assignment',
-        width: 152,
         align: 'center',
+        ...studentListTableDataColumnSize(7),
         render: () => (
           <AppButton variant="viewDetails" size="large" disabled>
             내역 보기
@@ -424,8 +445,8 @@ export function SchoolDetailStudentListSection({
   return (
     <div className="school-detail-student-list-section">
       <div className="school-detail-student-list-section__filters participating-institutions-section__filters program-progress-tab__filters">
-        <Row gutter={[0, 0]} align="bottom" wrap={false} className="program-progress-tab__filter-row">
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
+        <Row gutter={[12, 12]} align="bottom" wrap className="program-progress-tab__filter-row">
+          <Col className="program-progress-tab__filter-col school-detail-student-list-section__filter-col school-detail-student-list-section__filter-col--name">
             <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
               <span className="program-progress-tab__filter-label">학생명</span>
               <Input
@@ -433,11 +454,11 @@ export function SchoolDetailStudentListSection({
                 value={localStudentName}
                 onChange={e => setLocalStudentName(e.target.value)}
                 allowClear
-                className="participating-institutions-section__filter-input"
+                className="participating-institutions-section__filter-input school-detail-student-list-section__filter-input"
               />
             </div>
           </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
+          <Col className="program-progress-tab__filter-col school-detail-student-list-section__filter-col school-detail-student-list-section__filter-col--gender">
             <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
               <span className="program-progress-tab__filter-label">성별</span>
               <Select
@@ -447,10 +468,11 @@ export function SchoolDetailStudentListSection({
                 allowClear
                 options={GENDER_FILTER_OPTIONS}
                 getPopupContainer={() => document.body}
+                rootClassName="school-detail-student-list-section__filter-select"
               />
             </div>
           </Col>
-          <Col flex="0 0 auto" className="program-progress-tab__filter-col">
+          <Col className="program-progress-tab__filter-col school-detail-student-list-section__filter-col school-detail-student-list-section__filter-col--class">
             <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
               <span className="program-progress-tab__filter-label">학급</span>
               <Select
@@ -460,10 +482,11 @@ export function SchoolDetailStudentListSection({
                 allowClear
                 options={studentClassOptions}
                 getPopupContainer={() => document.body}
+                rootClassName="school-detail-student-list-section__filter-select"
               />
             </div>
           </Col>
-          <Col flex="none" className="program-progress-tab__filter-col--btn">
+          <Col className="program-progress-tab__filter-col--btn school-detail-student-list-section__filter-col--btn">
             <FilterSearchButton onClick={handleStudentSearch} />
           </Col>
         </Row>
@@ -558,10 +581,8 @@ export function SchoolDetailStudentListSection({
             rowKey="id"
             size="middle"
             pagination={false}
-            rowSelection={{
-              selectedRowKeys: selectedStudentKeys,
-              onChange: keys => setSelectedStudentKeys(keys),
-            }}
+            rowSelection={studentTableRowSelection}
+            scroll={{ x: 'max-content' }}
             columns={studentColumnsEdit}
             dataSource={watch('students') ?? []}
             className="school-detail-modal__student-table"
@@ -571,10 +592,8 @@ export function SchoolDetailStudentListSection({
             rowKey="id"
             size="middle"
             pagination={false}
-            rowSelection={{
-              selectedRowKeys: selectedStudentKeys,
-              onChange: keys => setSelectedStudentKeys(keys),
-            }}
+            rowSelection={studentTableRowSelection}
+            scroll={{ x: 'max-content' }}
             columns={studentColumnsView}
             dataSource={filteredStudentList}
             className="school-detail-modal__student-table"
