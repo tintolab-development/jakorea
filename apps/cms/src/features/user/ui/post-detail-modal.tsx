@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useEffect, useId } from 'react'
+import { flushSync } from 'react-dom'
 import { message, Popover } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui'
@@ -18,8 +19,8 @@ import {
   getPostViewCountByPostId,
   markPostAsRead,
   createProgramPostComment,
+  addProgramPostReaction,
   getReactionEmojiTypeForBarIndex,
-  incrementPostCommentCount,
   removeProgramPostReactionUser,
 } from '@/data/mock'
 import { downloadFile } from '@/shared/lib/file-download'
@@ -72,7 +73,20 @@ function EyeIcon({ maskId }: { maskId: string }) {
   )
 }
 
-function EmoticonIcon() {
+function EmoticonIcon({ active }: { active?: boolean }) {
+  const emoticonMaskId = useId().replace(/:/g, '')
+  if (active) {
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+        <mask id={emoticonMaskId} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
+          <rect width="22" height="22" fill="#D9D9D9"/>
+        </mask>
+        <g mask={`url(#${emoticonMaskId})`}>
+          <path d="M14.1222 9.9045C14.4559 9.9045 14.7388 9.7877 14.9709 9.5541C15.2029 9.32066 15.319 9.03718 15.319 8.70367C15.319 8.37015 15.2022 8.08736 14.9688 7.85529C14.7353 7.62307 14.4518 7.50696 14.1181 7.50696C13.7846 7.50696 13.5018 7.62376 13.2697 7.85735C13.0377 8.0908 12.9216 8.37428 12.9216 8.70779C12.9216 9.04131 13.0384 9.3241 13.2718 9.55617C13.5053 9.78839 13.7887 9.9045 14.1222 9.9045ZM7.88204 9.9045C8.21555 9.9045 8.49834 9.7877 8.73041 9.5541C8.96248 9.32066 9.07852 9.03718 9.07852 8.70367C9.07852 8.37015 8.9618 8.08736 8.72835 7.85529C8.49491 7.62307 8.21143 7.50696 7.87791 7.50696C7.54425 7.50696 7.26138 7.62376 7.02931 7.85735C6.79724 8.0908 6.68121 8.37428 6.68121 8.70779C6.68121 9.04131 6.79793 9.3241 7.03137 9.55617C7.26482 9.78839 7.54837 9.9045 7.88204 9.9045ZM13.6231 14.954C14.4153 14.4186 14.9993 13.7109 15.3753 12.8307H14.1626C13.8265 13.396 13.3796 13.8429 12.822 14.1714C12.2643 14.4998 11.657 14.6641 11.0001 14.6641C10.3431 14.6641 9.73585 14.4998 9.17821 14.1714C8.62057 13.8429 8.17369 13.396 7.83758 12.8307H6.62483C7.00082 13.7109 7.58489 14.4186 8.37704 14.954C9.16919 15.4893 10.0435 15.757 11.0001 15.757C11.9566 15.757 12.831 15.4893 13.6231 14.954ZM7.60521 19.0201C6.54539 18.563 5.62353 17.9426 4.83962 17.159C4.05572 16.3754 3.43506 15.4539 2.97764 14.3946C2.52038 13.3352 2.29175 12.2033 2.29175 10.999C2.29175 9.7945 2.5203 8.66234 2.97741 7.60252C3.43453 6.5427 4.05488 5.62084 4.83848 4.83694C5.62207 4.05303 6.54355 3.43237 7.60291 2.97496C8.66228 2.51769 9.79413 2.28906 10.9985 2.28906C12.203 2.28906 13.3351 2.51762 14.395 2.97473C15.4548 3.43184 16.3766 4.05219 17.1605 4.83579C17.9444 5.61939 18.5651 6.54087 19.0225 7.60023C19.4798 8.65959 19.7084 9.79144 19.7084 10.9958C19.7084 12.2003 19.4799 13.3325 19.0227 14.3923C18.5656 15.4521 17.9453 16.374 17.1617 17.1579C16.3781 17.9418 15.4566 18.5624 14.3972 19.0198C13.3379 19.4771 12.206 19.7057 11.0017 19.7057C9.79719 19.7057 8.66503 19.4772 7.60521 19.0201Z" fill="#3D3D3D"/>
+        </g>
+      </svg>
+    )
+  }
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
       <path d="M12.838 9.007C13.142 9.007 13.399 8.9 13.61 8.688C13.821 8.476 13.926 8.218 13.926 7.915C13.926 7.612 13.82 7.355 13.608 7.144C13.396 6.932 13.138 6.827 12.835 6.827C12.531 6.827 12.274 6.933 12.063 7.145C11.852 7.358 11.747 7.615 11.747 7.919C11.747 8.222 11.853 8.479 12.065 8.69C12.277 8.901 12.535 9.007 12.838 9.007ZM7.165 9.007C7.469 9.007 7.726 8.9 7.937 8.688C8.148 8.476 8.253 8.218 8.253 7.915C8.253 7.612 8.147 7.355 7.935 7.144C7.722 6.932 7.465 6.827 7.162 6.827C6.858 6.827 6.601 6.933 6.39 7.145C6.179 7.358 6.074 7.615 6.074 7.919C6.074 8.222 6.18 8.479 6.392 8.69C6.604 8.901 6.862 9.007 7.165 9.007ZM12.385 13.597C13.105 13.11 13.636 12.467 13.977 11.667H12.875C12.569 12.181 12.163 12.587 11.656 12.886C11.149 13.184 10.597 13.333 10 13.333C9.403 13.333 8.851 13.184 8.344 12.886C7.837 12.587 7.43 12.181 7.125 11.667H6.022C6.364 12.467 6.895 13.11 7.615 13.597C8.335 14.084 9.13 14.327 10 14.327C10.87 14.327 11.664 14.084 12.385 13.597ZM10 17.917C8.906 17.917 7.877 17.709 6.913 17.293C5.95 16.878 5.112 16.314 4.4 15.602C3.687 14.889 3.123 14.051 2.707 13.088C2.291 12.125 2.083 11.096 2.083 10.002C2.083 8.907 2.291 7.877 2.707 6.914C3.122 5.95 3.686 5.112 4.398 4.4C5.111 3.687 5.949 3.123 6.912 2.707C7.875 2.291 8.904 2.083 9.999 2.083C11.094 2.083 12.123 2.291 13.086 2.707C14.05 3.122 14.888 3.686 15.6 4.399C16.313 5.111 16.877 5.949 17.293 6.907C17.709 7.875 17.917 8.945 17.917 9.999C17.917 11.094 17.709 12.123 17.293 13.086C16.878 14.05 16.314 14.888 15.601 15.601C14.889 16.313 14.051 16.877 13.088 17.293C12.125 17.709 11.096 17.917 10 17.917ZM10 16.667C11.861 16.667 13.438 16.021 14.729 14.729C16.021 13.438 16.667 11.861 16.667 10C16.667 8.139 16.021 6.563 14.729 5.271C13.438 3.979 11.861 3.333 10 3.333C8.139 3.333 6.563 3.979 5.271 5.271C3.979 6.563 3.333 8.139 3.333 10C3.333 11.861 3.979 13.438 5.271 14.729C6.563 16.021 8.139 16.667 10 16.667Z" fill="currentColor"/>
@@ -108,14 +122,14 @@ function EmojiIcon({ active }: { active?: boolean }) {
   const emojiOpenMaskId = useId().replace(/:/g, '')
   if (active) {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
-        <mask id={emojiOpenMaskId} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="22" height="22">
-          <rect width="22" height="22" fill="#D9D9D9" />
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
+        <mask id={emojiOpenMaskId} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
+          <rect width="30" height="30" fill="#D9D9D9" />
         </mask>
         <g mask={`url(#${emojiOpenMaskId})`}>
           <path
-            d="M14.1215 9.9045C14.4552 9.9045 14.7381 9.7877 14.9701 9.5541C15.2022 9.32066 15.3182 9.03718 15.3182 8.70367C15.3182 8.37015 15.2015 8.08736 14.9681 7.85529C14.7346 7.62307 14.4511 7.50696 14.1174 7.50696C13.7839 7.50696 13.5011 7.62376 13.269 7.85735C13.0369 8.0908 12.9209 8.37428 12.9209 8.70779C12.9209 9.04131 13.0376 9.3241 13.2711 9.55617C13.5045 9.78839 13.788 9.9045 14.1215 9.9045ZM7.88131 9.9045C8.21482 9.9045 8.49761 9.7877 8.72968 9.5541C8.96175 9.32066 9.07779 9.03718 9.07779 8.70367C9.07779 8.37015 8.96106 8.08736 8.72762 7.85529C8.49417 7.62307 8.2107 7.50696 7.87718 7.50696C7.54352 7.50696 7.26065 7.62376 7.02858 7.85735C6.79651 8.0908 6.68047 8.37428 6.68047 8.70779C6.68047 9.04131 6.7972 9.3241 7.03064 9.55617C7.26409 9.78839 7.54764 9.9045 7.88131 9.9045ZM13.6224 14.954C14.4145 14.4186 14.9986 13.7109 15.3746 12.8307H14.1618C13.8257 13.396 13.3789 13.8429 12.8212 14.1714C12.2636 14.4998 11.6563 14.6641 10.9993 14.6641C10.3424 14.6641 9.73511 14.4998 9.17747 14.1714C8.61983 13.8429 8.17296 13.396 7.83685 12.8307H6.6241C7.00008 13.7109 7.58415 14.4186 8.37631 14.954C9.16846 15.4893 10.0428 15.757 10.9993 15.757C11.9559 15.757 12.8302 15.4893 13.6224 14.954ZM7.60447 19.0201C6.54465 18.563 5.62279 17.9426 4.83889 17.159C4.05499 16.3754 3.43433 15.4539 2.97691 14.3946C2.51965 13.3352 2.29102 12.2033 2.29102 10.999C2.29102 9.7945 2.51957 8.66234 2.97668 7.60252C3.43379 6.5427 4.05415 5.62084 4.83774 4.83694C5.62134 4.05303 6.54282 3.43237 7.60218 2.97496C8.66154 2.51769 9.7934 2.28906 10.9977 2.28906C12.2022 2.28906 13.3344 2.51762 14.3942 2.97473C15.454 3.43184 16.3759 4.05219 17.1598 4.83579C17.9437 5.61939 18.5644 6.54087 19.0218 7.60023C19.479 8.65959 19.7077 9.79144 19.7077 10.9958C19.7077 12.2003 19.4791 13.3325 19.022 14.3923C18.5649 15.4521 17.9445 16.374 17.161 17.1579C16.3774 17.9418 15.4559 18.5624 14.3965 19.0198C13.3372 19.4771 12.2053 19.7057 11.001 19.7057C9.79645 19.7057 8.66429 19.4772 7.60447 19.0201Z"
-            fill="#3D3D3D"
+            d="M19.2575 13.5097C19.7125 13.5097 20.0982 13.3504 20.4147 13.0319C20.7311 12.7135 20.8894 12.327 20.8894 11.8722C20.8894 11.4174 20.7302 11.0318 20.4119 10.7153C20.0935 10.3986 19.7069 10.2403 19.2519 10.2403C18.7971 10.2403 18.4115 10.3996 18.095 10.7181C17.7785 11.0365 17.6203 11.423 17.6203 11.8778C17.6203 12.3326 17.7795 12.7182 18.0978 13.0347C18.4161 13.3514 18.8027 13.5097 19.2575 13.5097ZM10.7481 13.5097C11.2029 13.5097 11.5885 13.3504 11.905 13.0319C12.2215 12.7135 12.3797 12.327 12.3797 11.8722C12.3797 11.4174 12.2205 11.0318 11.9022 10.7153C11.5839 10.3986 11.1973 10.2403 10.7425 10.2403C10.2875 10.2403 9.90177 10.3996 9.58531 10.7181C9.26886 11.0365 9.11063 11.423 9.11063 11.8778C9.11063 12.3326 9.26979 12.7182 9.58813 13.0347C9.90646 13.3514 10.2931 13.5097 10.7481 13.5097ZM18.5769 20.3953C19.6571 19.6653 20.4535 18.7002 20.9662 17.5H19.3125C18.8542 18.2708 18.2448 18.8802 17.4844 19.3281C16.724 19.776 15.8958 20 15 20C14.1042 20 13.276 19.776 12.5156 19.3281C11.7552 18.8802 11.1458 18.2708 10.6875 17.5H9.03375C9.54646 18.7002 10.3429 19.6653 11.4231 20.3953C12.5033 21.1253 13.6956 21.4903 15 21.4903C16.3044 21.4903 17.4967 21.1253 18.5769 20.3953ZM10.3706 25.94C8.92542 25.3167 7.66833 24.4707 6.59937 23.4022C5.53042 22.3336 4.68406 21.0771 4.06031 19.6325C3.43677 18.1879 3.125 16.6445 3.125 15.0022C3.125 13.3597 3.43667 11.8158 4.06 10.3706C4.68333 8.92542 5.52927 7.66833 6.59781 6.59937C7.66635 5.53042 8.92292 4.68406 10.3675 4.06031C11.8121 3.43677 13.3555 3.125 14.9978 3.125C16.6403 3.125 18.1842 3.43667 19.6294 4.06C21.0746 4.68333 22.3317 5.52927 23.4006 6.59781C24.4696 7.66635 25.3159 8.92292 25.9397 10.3675C26.5632 11.8121 26.875 13.3555 26.875 14.9978C26.875 16.6403 26.5633 18.1842 25.94 19.6294C25.3167 21.0746 24.4707 22.3317 23.4022 23.4006C22.3336 24.4696 21.0771 25.3159 19.6325 25.9397C18.1879 26.5632 16.6445 26.875 15.0022 26.875C13.3597 26.875 11.8158 26.5633 10.3706 25.94Z"
+            fill="#01A1AF"
           />
         </g>
       </svg>
@@ -208,7 +222,7 @@ export function PostDetailModal({
   const [selectedEmojiIndex, setSelectedEmojiIndex] = useState<number | null>(null)
   const [commentsVersion, setCommentsVersion] = useState(0)
   const [reactionsVersion, setReactionsVersion] = useState(0)
-  const sendActive = commentInput.trim().length > 0
+  const sendActive = commentInput.trim().length > 0 || selectedEmojiIndex != null
 
   const comments = useMemo(
     () => (post ? getCommentsByPostId(post.id) : []),
@@ -254,7 +268,9 @@ export function PostDetailModal({
   }, [post?.id])
 
   const handleEmojiSelect = (index: number) => {
-    setSelectedEmojiIndex(prev => (prev === index ? null : index))
+    flushSync(() => {
+      setSelectedEmojiIndex(prev => (prev === index ? null : index))
+    })
     setEmojiActive(false)
   }
 
@@ -273,17 +289,28 @@ export function PostDetailModal({
   const handleSubmitComment = () => {
     if (!post) return
     const trimmed = commentInput.trim()
-    if (!trimmed) {
+    const hasEmojiSelection = selectedEmojiIndex != null
+    if (!trimmed && !hasEmojiSelection) {
       message.warning('댓글 내용을 입력해 주세요.')
       return
     }
     const emojiType =
       selectedEmojiIndex != null ? getReactionEmojiTypeForBarIndex(selectedEmojiIndex) : undefined
+    if (!trimmed && emojiType) {
+      addProgramPostReaction(post.id, commentAuthorName ?? '나', emojiType, {
+        roleLabel: viewerRoleLabel,
+      })
+      setReactionsVersion(v => v + 1)
+      setSelectedEmojiIndex(null)
+      onPostStatsChanged?.()
+      message.success('이모지가 등록되었습니다.')
+      return
+    }
+
     createProgramPostComment(post.id, commentAuthorName ?? '나', trimmed, {
       ...(emojiType ? { emojiType } : {}),
       reactionRoleLabel: viewerRoleLabel,
     })
-    incrementPostCommentCount(post.id)
     setCommentsVersion(v => v + 1)
     if (emojiType) setReactionsVersion(v => v + 1)
     setCommentInput('')
@@ -453,7 +480,7 @@ export function PostDetailModal({
                         type="button"
                         className="post-detail-modal__meta-item post-detail-modal__meta-item--reaction"
                       >
-                        <EmoticonIcon /> {reactionTotalCount}
+                        <EmoticonIcon active={reactionPopoverOpen} /> {reactionTotalCount}
                       </button>
                     </Popover>
                     <span className="post-detail-modal__meta-item">
@@ -531,16 +558,30 @@ export function PostDetailModal({
                 }
               }}
             />
-            <Popover
-              trigger="click"
-              open={emojiActive}
-              onOpenChange={setEmojiActive}
-              arrow={false}
-              overlayClassName="post-detail-modal__emoji-popover"
-              getPopupContainer={trigger =>
-                trigger.closest('.post-detail-modal__comments-card') ?? document.body
-              }
-              content={
+            <button
+              type="button"
+              className={[
+                'post-detail-modal__comment-btn',
+                emojiActive && 'post-detail-modal__comment-btn--emoji-picker-open',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              aria-label="이모티콘"
+              aria-expanded={emojiActive}
+              onClick={() => setEmojiActive(prev => !prev)}
+            >
+              {selectedEmojiIndex != null ? (
+                <span className="post-detail-modal__emoji-btn-preview" aria-hidden>
+                  {POST_DETAIL_EMOJI_BAR_ITEMS[selectedEmojiIndex].renderIcon(
+                    `${emojiBtnClipId}-sel`
+                  )}
+                </span>
+              ) : (
+                <EmojiIcon active={emojiActive} />
+              )}
+            </button>
+            {emojiActive && (
+              <div className="post-detail-modal__emoji-popover-inline">
                 <div className="post-detail-modal__emoji-picker-panel">
                   <div
                     className="post-detail-modal__emoji-bar"
@@ -563,31 +604,8 @@ export function PostDetailModal({
                     })}
                   </div>
                 </div>
-              }
-              placement="topRight"
-            >
-              <button
-                type="button"
-                className={[
-                  'post-detail-modal__comment-btn',
-                  emojiActive && 'post-detail-modal__comment-btn--emoji-picker-open',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                aria-label="이모티콘"
-                aria-expanded={emojiActive}
-              >
-                {selectedEmojiIndex != null ? (
-                  <span className="post-detail-modal__emoji-btn-preview" aria-hidden>
-                    {POST_DETAIL_EMOJI_BAR_ITEMS[selectedEmojiIndex].renderIcon(
-                      `${emojiBtnClipId}-sel`
-                    )}
-                  </span>
-                ) : (
-                  <EmojiIcon active={emojiActive} />
-                )}
-              </button>
-            </Popover>
+              </div>
+            )}
             <button
               type="button"
               className="post-detail-modal__comment-btn"

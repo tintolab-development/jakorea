@@ -7,7 +7,11 @@
 .post-detail-modal.ant-modal .ant-modal-content {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible !important;
+}
+
+.post-detail-modal.ant-modal {
+  position: relative;
 }
 
 .post-detail-modal.ant-modal .ant-modal-body {
@@ -15,7 +19,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible !important;
   padding: 0;
 }
 
@@ -23,7 +27,7 @@
 .post-detail-modal.content-modal .teal-header-modal__body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  overflow: visible !important;
   padding: 16px 0 0;
 }
 
@@ -431,7 +435,7 @@
   border: 1px solid var(--color-border-light, #e8e8e8);
   border-radius: var(--radius-8, 8px);
   background: #fff;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .post-detail-modal__comment {
@@ -527,8 +531,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: none;
   background: none;
@@ -568,20 +572,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
 }
 
 .post-detail-modal__emoji-btn-preview svg {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   aspect-ratio: 1 / 1;
   display: block;
 }
 
-/* 이모지 피커: 댓글 래퍼(.comments-card) 우측에서 16px, 하단 기준 세로 위치 */
-.post-detail-modal__comments-card .post-detail-modal__emoji-popover.ant-popover {
+/* 이모지 피커: 모달 기준 우측 16px, 하단 176px */
+.post-detail-modal.ant-modal .post-detail-modal__emoji-popover.ant-popover {
   position: absolute;
   right: 16px;
   bottom: 176px;
@@ -591,6 +595,15 @@
   transform: none !important;
   padding: 0;
   z-index: 2;
+}
+
+.post-detail-modal__emoji-popover-inline {
+  position: absolute;
+  right: -14px;
+  bottom: 72px;
+  margin: 0;
+  padding: 0;
+  z-index: 10;
 }
 
 .post-detail-modal__emoji-popover .ant-popover-inner {
