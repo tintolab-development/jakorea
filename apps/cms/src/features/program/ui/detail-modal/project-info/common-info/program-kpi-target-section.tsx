@@ -172,7 +172,7 @@ export function ProgramKpiTargetSection({
                             const n = parseInt(e.target.value, 10)
                             field.onChange(isNaN(n) ? undefined : n)
                           }}
-                          className="program-kpi-target-section__input"
+                          className="program-kpi-target-section__input program-kpi-target-section__input--190x40"
                           status={form.formState.errors.kpiFinalParticipants ? 'error' : undefined}
                         />
                       )}
@@ -271,7 +271,7 @@ export function ProgramKpiTargetSection({
                             const n = parseInt(e.target.value, 10)
                             field.onChange(isNaN(n) ? undefined : n)
                           }}
-                          className="program-kpi-target-section__input"
+                          className="program-kpi-target-section__input program-kpi-target-section__input--190x40"
                           status={form.formState.errors.kpiFinalSchools ? 'error' : undefined}
                         />
                       )}
@@ -306,7 +306,7 @@ export function ProgramKpiTargetSection({
                             const n = parseInt(e.target.value, 10)
                             field.onChange(isNaN(n) ? undefined : n)
                           }}
-                          className="program-kpi-target-section__input"
+                          className="program-kpi-target-section__input program-kpi-target-section__input--190x40"
                           status={form.formState.errors.kpiFinalClasses ? 'error' : undefined}
                         />
                       )}

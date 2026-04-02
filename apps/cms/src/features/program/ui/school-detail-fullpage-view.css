@@ -47,12 +47,6 @@
 }
 
 /* 게시글 탭: 2컬럼이 content 영역 높이를 채우도록 */
-.school-detail-fullpage-view__tab-placeholder {
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-text-secondary, #8c8c8c);
-}
-
 .school-detail-fullpage-view__posts-tab-wrap {
   flex: 1;
   min-height: 0;
@@ -262,10 +256,10 @@
 
 .school-detail-fullpage-view .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132) {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
   padding-top: 0;
   padding-bottom: 0;
   overflow: visible;
@@ -285,6 +279,19 @@
   > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* 역할 tag132: 136px 규칙보다 150px·좌우 패딩 0 (td는 table-cell 유지 — 공통 status-dropdown-cell.css 참고) */
+.school-detail-fullpage-view .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status--tag-132)
+  > td.status-dropdown-cell__cell-status--tag-132 {
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* 배정 완료된 행: 셀 텍스트 전부 default-BK @ 60% */

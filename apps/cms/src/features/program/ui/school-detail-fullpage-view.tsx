@@ -1,6 +1,6 @@
 /**
  * 교육기관 상세 풀페이지 인라인 뷰
- * LNB 제외 메인 영역에서만 렌더. 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 출석 관리 | 과제 관리 | 게시글
+ * LNB 제외 메인 영역에서만 렌더. 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 출석 관리(비활성) | 과제 관리(비활성) | 게시글
  * 액션: 승인 취소 | 정보 수정 | 개인정보 상세보기
  */
 
@@ -41,6 +41,8 @@ import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import {
@@ -71,6 +73,20 @@ export const SCHOOL_DETAIL_TAB_KEYS = [
   'posts',
 ] as const
 export type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS)[number]
+
+/** 화면 미구현 — 탭 비활성화·URL은 `normalizeSchoolDetailTab`으로 신청 정보로 보정 */
+export const SCHOOL_DETAIL_DISABLED_TAB_KEYS: readonly SchoolDetailTabKey[] = [
+  'attendance',
+  'assignments',
+]
+
+export function normalizeSchoolDetailTab(tab: SchoolDetailTabKey): SchoolDetailTabKey {
+  return SCHOOL_DETAIL_DISABLED_TAB_KEYS.includes(tab) ? 'application' : tab
+}
+
+function isSchoolDetailTabDisabled(key: SchoolDetailTabKey): boolean {
+  return SCHOOL_DETAIL_DISABLED_TAB_KEYS.includes(key)
+}
 
 const SCHOOL_DETAIL_TAB_LABELS: Record<SchoolDetailTabKey, string> = {
   application: '신청 정보',
@@ -173,8 +189,9 @@ export function SchoolDetailFullpageView({
 }: SchoolDetailFullpageViewProps) {
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
-  const activeTab =
+  const activeTab = normalizeSchoolDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
+  )
   const setActiveTab = (key: SchoolDetailTabKey) => {
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
@@ -384,9 +401,12 @@ export function SchoolDetailFullpageView({
         title: '역할',
         dataIndex: 'role',
         key: 'role',
-        width: 120,
+        width: 150,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
+        }),
         render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
@@ -407,6 +427,7 @@ export function SchoolDetailFullpageView({
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
+            tagLayout="tag132"
           />
         ),
       },
@@ -721,18 +742,26 @@ export function SchoolDetailFullpageView({
     <div className="school-detail-fullpage-view">
       <div className="program-detail-fullpage-modal__tabs-row school-detail-fullpage-view__tabs-row">
         <div className="program-detail-fullpage-modal__tabs">
-          {SCHOOL_DETAIL_TAB_KEYS.map(key => (
-            <button
-              key={key}
-              type="button"
-              className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-              onClick={() => setActiveTab(key as SchoolDetailTabKey)}
-            >
-              <span className="program-detail-fullpage-modal__tab-label">
-                {SCHOOL_DETAIL_TAB_LABELS[key]}
-              </span>
-            </button>
-          ))}
+          {SCHOOL_DETAIL_TAB_KEYS.map(key => {
+            const disabled = isSchoolDetailTabDisabled(key)
+            return (
+              <button
+                key={key}
+                type="button"
+                disabled={disabled}
+                className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
+                title={disabled ? '해당 화면은 준비 중입니다.' : undefined}
+                onClick={() => {
+                  if (disabled) return
+                  setActiveTab(key as SchoolDetailTabKey)
+                }}
+              >
+                <span className="program-detail-fullpage-modal__tab-label">
+                  {SCHOOL_DETAIL_TAB_LABELS[key]}
+                </span>
+              </button>
+            )
+          })}
         </div>
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__header-actions">
@@ -851,18 +880,6 @@ export function SchoolDetailFullpageView({
               onViewDetail={() => {}}
               onSaveEdit={() => {}}
             />
-          </div>
-        )}
-
-        {activeTab === 'attendance' && (
-          <div className="program-detail-fullpage-modal__info-tab">
-            <p className="school-detail-fullpage-view__tab-placeholder">출석 관리 화면은 준비 중입니다.</p>
-          </div>
-        )}
-
-        {activeTab === 'assignments' && (
-          <div className="program-detail-fullpage-modal__info-tab">
-            <p className="school-detail-fullpage-view__tab-placeholder">과제 관리 화면은 준비 중입니다.</p>
           </div>
         )}
 

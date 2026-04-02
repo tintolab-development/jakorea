@@ -67,11 +67,22 @@
   margin-top: 0;
 }
 
+/* fluid 기본 table-layout:auto 는 헤더(짧은 텍스트) vs 본문(150px 트리거) 최소 너비가 달라 열이 어긋남 */
+.program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid table.ant-table {
+  table-layout: fixed !important;
+  width: 100%;
+}
+
 /* 권한 태그 (테이블·드롭다운 공통) */
 .program-managers-tab__role-badge {
   display: flex;
   box-sizing: border-box;
   width: 132px;
+  min-width: 132px;
+  max-width: 132px;
+  height: 33px;
+  min-height: 33px;
+  max-height: 33px;
   padding: 6px 10px;
   justify-content: center;
   align-items: center;

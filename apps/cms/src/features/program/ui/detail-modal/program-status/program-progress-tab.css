@@ -374,24 +374,34 @@
   background: var(--color-table-row-selected-hover) !important;
 }
 
-/* 교재 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(학교 상세 모달) 방지 */
-.textbook-status-dropdown-cell {
-  position: relative;
-  z-index: 1;
+/* 교재·정산 현황: 공통 StatusDropdownCell — 행 53px·셀 136px (트리거 외곽과 동일) */
+.program-progress-tab__table .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
 }
 
-.textbook-status-dropdown-trigger {
-  cursor: pointer;
-  display: inline-block;
+.program-progress-tab__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow: visible;
+  box-sizing: border-box;
 }
 
-/* 정산 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(강사 상세 모달) 방지 */
-.settlement-status-dropdown-cell {
-  position: relative;
-  z-index: 1;
-}
-
-.settlement-status-dropdown-trigger {
-  cursor: pointer;
-  display: inline-block;
+.program-progress-tab__table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
 }

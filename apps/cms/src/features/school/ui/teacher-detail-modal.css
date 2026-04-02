@@ -540,6 +540,30 @@
   display: inline-flex;
 }
 
+.teacher-detail-modal__teaching-table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
+}
+
+.settlement-tab__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
+}
+
 /* ==========================================
    정산 현황 탭
    ========================================== */

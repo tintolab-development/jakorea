@@ -277,13 +277,17 @@
   border-bottom: none;
 }
 
-/* 결재 현황 드롭다운: 배지 클릭 시 드롭다운, 행 클릭 이벤트와 분리 */
-.instructor-recruitment-detail-modal__approval-dropdown-cell {
-  position: relative;
-  z-index: 1;
-}
-
-.instructor-recruitment-detail-modal__approval-dropdown-trigger {
-  cursor: pointer;
-  display: inline-block;
+/* 결재 현황: 공통 StatusDropdownCell — 셀 너비 136px */
+.instructor-recruitment-detail-modal__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
 }

@@ -17,6 +17,8 @@ export type { ProgramLifecycleStatusTextProps } from './program-lifecycle-status
 export {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from './status-dropdown-cell'
 export type { StatusDropdownCellProps } from './status-dropdown-cell'
 export { ProgramLifecycleStatusCell } from './program-lifecycle-status-cell'

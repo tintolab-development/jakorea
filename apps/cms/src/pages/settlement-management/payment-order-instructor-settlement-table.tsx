@@ -156,7 +156,7 @@ export function PaymentOrderInstructorSettlementTable({
       {
         title: '지급 조서 처리 현황',
         key: 'processingStatus',
-        width: 160,
+        width: 136,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (

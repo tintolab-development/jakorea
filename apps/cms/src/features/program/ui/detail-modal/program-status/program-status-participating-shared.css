@@ -265,10 +265,10 @@
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132) {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
   padding-top: 0;
   padding-bottom: 0;
   padding-left: 0;
@@ -277,11 +277,12 @@
   box-sizing: border-box;
 }
 
-.participating-institutions-section .status-dropdown-cell__status-trigger--open {
+.participating-institutions-section
+  .status-dropdown-cell__status-trigger--open:not(.status-dropdown-cell__status-trigger--tag-132) {
   box-sizing: border-box !important;
-  width: 152px !important;
-  min-width: 152px !important;
-  max-width: 152px !important;
+  width: 136px !important;
+  min-width: 136px !important;
+  max-width: 136px !important;
 }
 
 .participating-institutions-section

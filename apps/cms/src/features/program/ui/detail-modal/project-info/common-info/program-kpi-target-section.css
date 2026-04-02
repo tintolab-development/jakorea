@@ -39,6 +39,19 @@
   box-sizing: border-box;
 }
 
+/* 참여자 최종 인원·최종 파견 학교 수·최종 파견 학급 수(수정): 래퍼·컨트롤 190×40px */
+.program-kpi-target-section__input--190x40 {
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+}
+
+.program-kpi-target-section__input--190x40 .app-input__control {
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+}
+
 /* 강사·봉사자: 동일 190×40 (공통 정보 탭 기본 필드와 통일) */
 .program-kpi-target-section__input--sm {
   width: 190px;

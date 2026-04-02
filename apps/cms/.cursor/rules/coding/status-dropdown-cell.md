@@ -2,7 +2,7 @@
 priority: high
 always_include: false
 category: coding
-globs: ["**/shared/components/status-dropdown-cell*.tsx", "**/shared/components/program-lifecycle-status*.tsx", "**/*program-list*.tsx", "**/recruitment-status-widget*", "**/settlement-management/payment-order-*-status-detail-fullpage-modal.tsx"]
+globs: ["**/shared/components/status-dropdown-cell*.tsx", "**/shared/components/status-dropdown-cell*.css", "**/shared/components/program-lifecycle-status*.tsx", "**/*program-list*.tsx", "**/recruitment-status-widget*", "**/settlement-management/payment-order-*-status-detail-fullpage-modal.tsx", "**/program-managers-tab.tsx", "**/school-detail-fullpage-view.tsx", "**/participating-instructor-fullpage-view.tsx", "**/participating-institutions-section.css", "**/program-status-participating-shared.css"]
 ---
 
 # 테이블용 상태 드롭다운 셀 (StatusDropdownCell) 아키텍처
@@ -37,6 +37,9 @@ globs: ["**/shared/components/status-dropdown-cell*.tsx", "**/shared/components/
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  // 활성(민트) 래퍼 + 132×33 태그 열(tag132)일 때만 추가
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components'
 ```
 
@@ -54,6 +57,7 @@ import {
 | `isOpen` | `boolean` | 드롭다운 열림 여부(테이블에서는 `openDropdownId === rowId`) |
 | `onOpenChange` | `(open: boolean) => void` | 드롭다운 열기/닫기(테이블에서는 `setOpenId(open ? rowId : null)`) |
 | `emptyPlaceholder` | `ReactNode` | status가 null일 때 표시(기본 `'-'`) |
+| `tagLayout` | `'default' \| 'tag132'` | 선택. **아래 §2.4** — 커스텀 폭 태그(132×33) + 활성 래퍼 스펙 |
 
 ### 2.3 테이블 컬럼에 적용
 
@@ -77,6 +81,58 @@ import {
   ),
 }
 ```
+
+### 2.4 상태 변경 드롭다운 + **활성(민트) 래퍼 태그** (tag132)
+
+테이블에서 **고정 폭 상태 태그(132×33)** 를 쓰고, 열릴 때 **민트 테두리 래퍼**·**동일 폭 드롭다운 패널**이 필요하면 **반드시** 공통 `StatusDropdownCell`의 **`tagLayout="tag132"`** 를 사용합니다. Ant Design `Dropdown`을 화면마다 새로 조합하지 않습니다.
+
+| 항목 | 규칙 |
+|------|------|
+| **컴포넌트** | `@/shared/components/status-dropdown-cell`의 `StatusDropdownCell` 단일 구현만 사용 |
+| **본문 셀(td)** | `onCell`에 `STATUS_DROPDOWN_CELL_CLASSNAME` + `STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME` (문자열 합치기) |
+| **헤더(th)** | `onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME })` — **th/td 세로선·폭 정렬**에 필요 |
+| **컬럼 width** | **150** (`status-dropdown-cell.css`의 tag132 border-box 스펙과 일치) |
+| **셀 안 컴포넌트** | `tagLayout="tag132"` |
+| **배지 마크업** | 태그 루트에 도메인 클래스 유지(예: `program-managers-tab__role-badge`, `school-detail-fullpage-view__role-tag`). 치수는 공통 CSS가 tag132일 때 132×33로 맞춤 |
+
+**예시(컬럼 정의 일부)**
+
+```tsx
+{
+  title: '권한',
+  dataIndex: 'role',
+  key: 'role',
+  width: 150,
+  align: 'center',
+  onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
+  onCell: () => ({
+    className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
+  }),
+  render: (role, record) => (
+    <StatusDropdownCell
+      status={role}
+      statusOptions={...}
+      renderBadge={...}
+      onChange={...}
+      isOpen={openId === record.id}
+      onOpenChange={(open) => setOpenId(open ? record.id : null)}
+      tagLayout="tag132"
+    />
+  ),
+}
+```
+
+**CSS·레이아웃 (지키기)**
+
+- **td에 `display: flex` 금지** — 테이블 열 폭이 깨져 th와 세로선이 어긋남. 본문은 `table-cell` + 트리거만 `inline-flex`(공통 시트에 정의됨).
+- **스코프된 136px 규칙** (`participating-institutions-section`, `school-detail-fullpage-view` 등)을 추가·수정할 때는 **tag132 셀/트리거를 제외**할 것:  
+  `td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132)`,  
+  `.status-dropdown-cell__status-trigger--open:not(.status-dropdown-cell__status-trigger--tag-132)`  
+  (그렇지 않으면 열림 시 트리거가 136px로 강제되어 132 태그 + 패딩이 눌림.)
+- **담당자 목록 등 `cms-data-table--fluid`** 테이블은 열 width가 헤더/본문에 같이 먹도록 해당 테이블에 한해 `table-layout: fixed` 오버라이드가 필요할 수 있음(기존 `program-managers-tab` 참고).
+- 새 도메인 태그 클래스를 tag132 트리거·메뉴에 쓰면 `status-dropdown-cell.css`의 tag132 블록에 **트리거·오버레이 양쪽** 선택자를 추가해 132×33이 일관되게 적용되게 할 것.
+
+**참고 구현**: `features/program/ui/program-managers-tab.tsx`(권한), `school-detail-fullpage-view.tsx` / `participating-instructor-fullpage-view.tsx`(역할).
 
 ---
 
@@ -186,6 +242,7 @@ export function SettlementStatusCell({ record, onChange, ... }) {
 - [ ] 행 클릭으로 상세 이동 시 `.status-dropdown-cell__status-trigger` 클릭은 제외
 - [ ] 새 도메인 배지는 `AppStatusBadge` 기반으로 추가; 필요 시 `status-dropdown-cell.css`에 드롭다운 내 배지 색상 추가
 - [ ] 새 도메인 셀은 `StatusDropdownCell` 직접 사용하거나, 동일 패턴의 얇은 래퍼만 추가
+- [ ] **활성 래퍼 + 132×33 태그 스펙이면** §2.4: `tagLayout="tag132"`, `TAG_132`/`HEADER` 상수, 컬럼 width **150**, 스코프 CSS에서 136px 규칙은 `:not(--tag-132)` 로 분리
 
 ---
 
