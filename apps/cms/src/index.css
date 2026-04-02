@@ -131,3 +131,8 @@ body
   line-height: 1;
   content: '*' !important;
 }
+
+/* 테이블 행 호버 및 선택: 전체 영역 통일 (#01A1AF opacity 0.06) */
+table:not(.ant-picker-content) tr:hover {
+  background: var(--color-table-row-hover) !important;
+}

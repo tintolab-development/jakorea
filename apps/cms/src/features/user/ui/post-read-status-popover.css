@@ -35,8 +35,9 @@
 
 .post-read-status-popup {
   box-sizing: border-box;
-  width: 260px;
-  max-width: min(260px, 92vw);
+  width: 280px;
+  max-width: min(280px, 92vw);
+  height: 340px;
   min-height: 340px;
   padding: 12px;
   border-radius: 10px;
@@ -271,6 +272,60 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: flex-start;
+}
+
+.post-read-status-popup__unread-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.post-read-status-popup__notify-title-text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.post-read-status-popup__action-btn {
+  display: flex;
+  width: 80px;
+  height: 32px;
+  padding: 0 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #fff;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  cursor: pointer;
+  text-align: center;
+}
+
+.post-read-status-popup__action-btn--primary {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: var(--JA-mint-01, #01a1af);
+  color: #fff;
+}
+
+.post-read-status-popup__action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .post-read-status-popup__row {
@@ -278,6 +333,7 @@
   align-items: center;
   min-height: 30px;
   gap: 8px;
+  width: 100%;
 }
 
 .post-read-status-popup__avatar {
@@ -287,11 +343,11 @@
 }
 
 .post-read-status-popup__meta {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  column-gap: 8px;
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-weight: 600;
@@ -304,27 +360,30 @@
  * grow 없음 + nowrap: 이름·구분선·직함은 붙어 있고, 여백은 직함과 배지 사이(행 끝)로만 감.
  */
 .post-read-status-popup__name {
-  flex: 0 1 auto;
+  display: inline-block;
   min-width: 0;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   word-break: keep-all;
 }
 
-.post-read-status-popup__divider {
-  flex-shrink: 0;
-  margin: 0 8px;
-  color: #9ca3a8;
-  font-weight: 500;
-}
-
 .post-read-status-popup__role {
-  flex: 0 1 auto;
+  display: inline-block;
   min-width: 0;
+  max-width: 96px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   opacity: 0.5;
   font-weight: 500;
+}
+
+.post-read-status-popup__name-role-divider {
+  color: #9ca3a8;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 .post-read-status-popup__badge {
@@ -340,6 +399,93 @@
 .post-read-status-popup__badge--muted {
   color: var(--default-BK, #3d3d3d);
   opacity: 0.45;
+}
+
+.post-read-status-popup__notify {
+  display: flex;
+  padding: 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+
+.post-read-status-popup__notify-title {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.post-read-status-popup__notify-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-read-status-popup__notify-btn {
+  display: flex;
+  width: 80px;
+  height: 32px;
+  padding: 0 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  cursor: pointer;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.post-read-status-popup__notify-btn--secondary {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.post-read-status-popup__notify-btn--primary {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--JA-mint-01, #01a1af);
+  color: #fff;
+}
+
+.post-read-status-popup__notify-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.post-read-status-popup__checkbox-wrap {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.post-read-status-popup__checkbox {
+  width: 18px;
+  height: 18px;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  border: 1px solid #c4cdd1;
+  background: #fff;
+  appearance: none;
+  cursor: pointer;
+}
+
+.post-read-status-popup__checkbox:checked {
+  border-color: var(--JA-mint-01, #01a1af);
+  background: var(--JA-mint-01, #01a1af);
+  box-shadow: inset 0 0 0 3px #fff;
 }
 
 .post-read-status-popup__empty {

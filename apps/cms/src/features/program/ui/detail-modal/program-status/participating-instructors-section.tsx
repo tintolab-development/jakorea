@@ -27,6 +27,7 @@ import {
 } from '../../../hooks/use-participating-instructors-params'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import { Divider } from '@/shared/components/divider'
 import { DeleteGuideModal, buildInstructorMessageLines } from '../../manager-delete-guide-modal'
 import { AddInstructorModal, type AddInstructorFormValues } from '../../add-instructor-modal'
 import {
@@ -514,7 +515,7 @@ export function ParticipatingInstructorsSection({
         onSearch={handleUnifiedFilterSearch}
       />
 
-      <div className="participating-institutions-section__divider" />
+      <Divider className="participating-institutions-section__divider" />
 
       <div className="participating-institutions-section__below-divider">
         <div className="participating-institutions-section__table-header">
@@ -614,6 +615,17 @@ export function ParticipatingInstructorsSection({
             onDateSelect={setCalendarSelectedDate}
             calendarGranularity={progressCalendarGranularity}
             onCalendarGranularityChange={setProgressCalendarGranularity}
+            resolvePopoverRowParts={({ schoolRow }) => {
+              const seed = Array.from(schoolRow.schoolName || '')
+                .map(ch => ch.charCodeAt(0))
+                .reduce((acc, v) => acc + v, 0)
+              const distanceKm = 20 + (seed % 81)
+              return {
+                title: schoolRow.schoolName || '-',
+                location: schoolRow.region || '-',
+                valueLabel: `거리 : ${distanceKm}km`,
+              }
+            }}
             rightContent={
               <div className="participating-instructors-section__calendar-right">
                 <div className="participating-instructors-section__calendar-right__school-filter">

@@ -21,9 +21,9 @@ const programLifecycleStatusEnum = z.enum([
   'recruiting_volunteers',
   'participant_instructor_recruiting',
   'education_in_progress',
+  'matching_completed',
   'education_before_textbook',
   'education_after_textbook',
-  'matching_completed',
   'education_completed',
   'document_processing_completed',
   'participant_instructor_recruitment_completed',
@@ -66,15 +66,12 @@ export const programDetailEditSchema = z.object({
     .string()
     .optional()
     .refine(v => v === undefined || (typeof v === 'string' && v.trim().length >= 1), '모집 안내를 입력해주세요'),
-  learningSupportContent: z
-    .string()
-    .min(1, '학습 지원 내용을 입력해주세요'),
+  learningSupportContent: z.string().min(1, '학습 지원 내용을 입력해주세요'),
   attachmentFileNames: z.array(z.string()).optional(),
   rounds: z.array(roundEditSchema),
   // 수강자 모집
   resultAnnouncementDate: z.string().optional(),
   resultAnnouncementMethod: z.string().optional(),
-  /** 학생 명단 제출 여부: 필요 | 불필요 */
   studentListRequired: z.enum(['required', 'not_required']).optional(),
   // 강사 모집
   instructorCapacity: z.number().min(0).optional(),
@@ -89,7 +86,7 @@ export const programDetailEditSchema = z.object({
   finalPassAnnouncementMethod: z.string().optional(),
   instructorTarget: z.string().optional(),
   instructorTargetDetail: z.string().optional(),
-  // 봉사자 정보 탭
+  // 봉사자
   volunteerApplicationStartDate: z.string().optional(),
   volunteerApplicationEndDate: z.string().optional(),
   volunteerTarget: z.string().optional(),
@@ -103,7 +100,7 @@ export const programDetailEditSchema = z.object({
     .optional()
     .refine(v => v === undefined || (typeof v === 'string' && v.trim().length >= 1), '기타사항을 입력해주세요'),
   additionalContentHtml: z.string().optional(),
-  // 공통 정보 탭 전용
+  // 공통 정보
   mainTitle: z.string().optional(),
   teamDivision: z.string().optional(),
   educationProcess: z.string().optional(),
@@ -113,7 +110,14 @@ export const programDetailEditSchema = z.object({
   ips: z.enum(['Inspire', 'Prepare', 'Succeed']).optional(),
   programCategory: z.string().optional(),
   programChannel: z.string().optional(),
-  // 사업 KPI 목표 (폼 전용, API 연동은 별도)
+  // 임금 정보
+  wageType: z.string().optional(),
+  wagePricingTimeUnit: z.string().optional(),
+  wagePricingBase: z.string().optional(),
+  wagePricingLongDistance: z.string().optional(),
+  wagePaymentItems: z.string().optional(),
+  wageDeductionItems: z.string().optional(),
+  // KPI
   kpiFinalParticipants: z.number().min(0).optional(),
   kpiInstructorCount: z.number().min(0).optional(),
   kpiVolunteerCount: z.number().min(0).optional(),
@@ -157,7 +161,6 @@ export function programToDetailEditValues(
       ? toStr(program.resultAnnouncementDate)
       : undefined,
     resultAnnouncementMethod: program.resultAnnouncementMethod ?? undefined,
-    /** 수정 모드 진입 시 미설정이면 '필요'로 기본 체크 */
     studentListRequired: program.studentListRequired ?? 'required',
     instructorCapacity: program.instructorCapacity ?? undefined,
     instructorApplicationStartDate: program.instructorApplicationStartDate
@@ -211,7 +214,12 @@ export function programToDetailEditValues(
     ips: program.ips ?? undefined,
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
-    // 사업 KPI 목표 (폼 전용, 별도 API로 채움 가능)
+    wageType: undefined,
+    wagePricingTimeUnit: undefined,
+    wagePricingBase: undefined,
+    wagePricingLongDistance: undefined,
+    wagePaymentItems: undefined,
+    wageDeductionItems: undefined,
     kpiFinalParticipants: undefined,
     kpiInstructorCount: undefined,
     kpiVolunteerCount: undefined,

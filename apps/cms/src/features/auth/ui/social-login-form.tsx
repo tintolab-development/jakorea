@@ -73,8 +73,8 @@ export function SocialLoginForm() {
       window.location.href = authorizeUrl
     } catch (error: any) {
       message.error(error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 로그인에 실패했습니다.`)
+    } finally {
       setLoading(null)
-      return
     }
   }
 

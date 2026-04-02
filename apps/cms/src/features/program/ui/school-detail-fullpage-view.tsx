@@ -36,6 +36,7 @@ import {
   maskEmailLocalAfterTwoChars,
   maskMobilePhoneMiddleStars,
 } from '../lib/teacher-contact-display-mask'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
   StatusDropdownCell,
@@ -194,6 +195,8 @@ export function SchoolDetailFullpageView({
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
+  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const privacyMasked = !personalInfoRevealed
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const instructors =
@@ -206,10 +209,26 @@ export function SchoolDetailFullpageView({
 
   /** 담당 교사 정보: 교사명 | Tel | M | E-mail (스크린샷 형식). M·E-mail은 TD 표시용 마스킹 */
   const teacherDisplay = [
-    mergedDetail.teacherName && `교사명: ${mergedDetail.teacherName}`,
-    mergedDetail.teacherPhone && `Tel: ${mergedDetail.teacherPhone}`,
-    mergedDetail.teacherMobile && `M: ${maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)}`,
-    mergedDetail.teacherEmail && `E-mail: ${maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)}`,
+    mergedDetail.teacherName &&
+      `교사명: ${
+        privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName
+      }`,
+    mergedDetail.teacherPhone &&
+      `Tel: ${
+        privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone
+      }`,
+    mergedDetail.teacherMobile &&
+      `M: ${
+        privacyMasked
+          ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
+          : mergedDetail.teacherMobile
+      }`,
+    mergedDetail.teacherEmail &&
+      `E-mail: ${
+        privacyMasked
+          ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
+          : mergedDetail.teacherEmail
+      }`,
   ]
     .filter(Boolean)
     .join(' | ') || '-'
@@ -391,13 +410,19 @@ export function SchoolDetailFullpageView({
           />
         ),
       },
-      { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
+      {
+        title: '강사명',
+        dataIndex: 'instructorName',
+        key: 'instructorName',
+        width: 100,
+        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.name(v) : v) : '-'),
+      },
       {
         title: '자택 주소',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => v ?? '-',
+        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.address(v) : v) : '-'),
       },
       {
         title: '기관과의 거리',
@@ -445,19 +470,25 @@ export function SchoolDetailFullpageView({
         ),
       },
     ],
-    [openRoleDropdownId, handleRoleChange]
+    [openRoleDropdownId, handleRoleChange, privacyMasked]
   )
 
   const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
-      { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
+      {
+        title: '강사명',
+        dataIndex: 'instructorName',
+        key: 'instructorName',
+        width: 100,
+        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.name(v) : v) : '-'),
+      },
       {
         title: '자택 주소',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => v ?? '-',
+        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.address(v) : v) : '-'),
       },
       {
         title: '기관과의 거리',
@@ -505,7 +536,7 @@ export function SchoolDetailFullpageView({
         render: (v: string | undefined) => v ?? '-',
       },
     ],
-    []
+    [privacyMasked]
   )
 
   /** 기본 정보: 스크린샷 순서. 2열 배치 후 담당 교사/신청 사유/기타 요청사항은 span 2 */
@@ -527,7 +558,11 @@ export function SchoolDetailFullpageView({
     {
       key: 'addressDetail',
       label: '상세 주소',
-      children: mergedDetail.addressDetail ?? '-',
+      children: mergedDetail.addressDetail
+        ? privacyMasked
+          ? MASKING_POLICY.address(mergedDetail.addressDetail)
+          : mergedDetail.addressDetail
+        : '-',
     },
     { key: 'educationGrade', label: '신청 학년', children: mergedDetail.educationGrade },
     {
@@ -713,7 +748,11 @@ export function SchoolDetailFullpageView({
             <AppButton variant="primary" size="filter" onClick={() => {}}>
               정보 수정
             </AppButton>
-            <AppButton variant="primary" size="filter-wide" onClick={() => {}}>
+            <AppButton
+              variant="primary"
+              size="filter-wide"
+              onClick={() => setPersonalInfoRevealed(true)}
+            >
               개인정보 상세보기
             </AppButton>
           </div>

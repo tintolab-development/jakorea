@@ -40,6 +40,7 @@ import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/s
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import { StatusDropdownCell } from '../../status-dropdown-cell'
+import { Divider } from '@/shared/components/divider'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
@@ -169,14 +170,9 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   }
 
   /** 진행현황 참여 강사 → 모달용 ApplicantInstructorRow 형태로 변환. 목록이 localStorage 기반이면 상세 필드가 없을 수 있으므로 mock에서 같은 id로 보강 */
-  const participatingToApplicantRow = (
-    row: ParticipatingInstructorRow
-  ): ApplicantInstructorRow => {
-    const extended =
-      MOCK_PARTICIPATING_INSTRUCTORS.find(m => m.id === row.id) ?? null
-    const r: ParticipatingInstructorRow = extended
-      ? { ...row, ...extended }
-      : row
+  const participatingToApplicantRow = (row: ParticipatingInstructorRow): ApplicantInstructorRow => {
+    const extended = MOCK_PARTICIPATING_INSTRUCTORS.find(m => m.id === row.id) ?? null
+    const r: ParticipatingInstructorRow = extended ? { ...row, ...extended } : row
     return {
       id: r.id,
       no: r.no,
@@ -395,16 +391,13 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                 { label: '강사 정보', value: INSTRUCTOR_TAB },
               ]}
               value={subTab}
-              onChange={v => setSubTab(v as typeof PARTICIPATING_SCHOOL_TAB | typeof INSTRUCTOR_TAB)}
+              onChange={v =>
+                setSubTab(v as typeof PARTICIPATING_SCHOOL_TAB | typeof INSTRUCTOR_TAB)
+              }
               size="mediumCompact"
             />
             <div className="program-progress-tab__filters">
-              <Row
-                gutter={[12, 12]}
-                align="middle"
-                wrap={false}
-                className="program-progress-tab__filter-row"
-              >
+              <Row gutter={[12, 12]} align="middle" className="program-progress-tab__filter-row">
                 {subTab === PARTICIPATING_SCHOOL_TAB && (
                   <Col flex="0 1 auto" className="program-progress-tab__filter-col">
                     <div className="program-progress-tab__filter-field">
@@ -502,7 +495,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
 
         {subTab === PARTICIPATING_SCHOOL_TAB && (
           <>
-            <div className="program-progress-tab__divider" />
+            <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
               <div className="program-progress-tab__table-header">
                 <div className="program-progress-tab__table-heading">
@@ -553,7 +546,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
 
         {subTab === INSTRUCTOR_TAB && (
           <>
-            <div className="program-progress-tab__divider" />
+            <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
               <div className="program-progress-tab__table-header">
                 <div className="program-progress-tab__table-heading">
