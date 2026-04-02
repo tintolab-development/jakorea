@@ -85,7 +85,8 @@ function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTa
 
 function parseInstructorTabFromSearch(searchParams: URLSearchParams): InstructorDetailTabKey {
   const t = searchParams.get(INSTRUCTOR_TAB_PARAM)
-  if (t && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(t)) return t as InstructorDetailTabKey
+  if (t && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(t))
+    return t as InstructorDetailTabKey
   return 'application'
 }
 
@@ -147,7 +148,9 @@ export function ProgramDetailFullPageModal({
   const schoolIdFromUrl = searchParams.get(SCHOOL_ID_PARAM)
   const activeSchoolTab = schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams) : 'application'
   const instructorIdFromUrl = searchParams.get(INSTRUCTOR_ID_PARAM)
-  const activeInstructorTab = instructorIdFromUrl ? parseInstructorTabFromSearch(searchParams) : 'application'
+  const activeInstructorTab = instructorIdFromUrl
+    ? parseInstructorTabFromSearch(searchParams)
+    : 'application'
 
   // 모달이 열릴 때: URL에 유효한 lnb·tab이 있으면 유지(새로고침 복원), 없으면 info 또는 해당 카테고리 기본 탭으로 보정
   // programId는 모달이 열려 있는 동안 항상 유지(클릭/새로고침 타이밍 이슈 방지)
@@ -244,7 +247,15 @@ export function ProgramDetailFullPageModal({
     next.delete(INSTRUCTOR_TAB_PARAM)
     if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
-  }, [open, activeLnb, activeProgressChild, instructorIdFromUrl, programId, searchParams, setSearchParams])
+  }, [
+    open,
+    activeLnb,
+    activeProgressChild,
+    instructorIdFromUrl,
+    programId,
+    searchParams,
+    setSearchParams,
+  ])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     const next = new URLSearchParams(searchParams)
@@ -330,7 +341,11 @@ export function ProgramDetailFullPageModal({
   )
 
   const sidebarActiveChildKey =
-    activeLnb === 'applicants' ? activeChildMenu : activeLnb === 'progress' ? activeProgressChild : ''
+    activeLnb === 'applicants'
+      ? activeChildMenu
+      : activeLnb === 'progress'
+        ? activeProgressChild
+        : ''
 
   const handleSidebarSelectTop = (key: string) => {
     const k = key as LnbKey
@@ -556,27 +571,13 @@ export function ProgramDetailFullPageModal({
     }
   }
 
-  const handleInfoCancelEdit = () => {
-    infoResetToProgram()
-    setEditMode(null)
-  }
-
   const handleInfoSave = () => {
+    setEditMode(null)
     if (displayProgram) infoTriggerSave()
   }
 
   const handleInstitutionsSave = () => {
     institutionsTriggerSave()
-  }
-
-  const handleInstitutionsCancelEdit = () => {
-    institutionsResetToProgram()
-    setEditMode(null)
-  }
-
-  const handleInstructorsCancelEdit = () => {
-    instructorsResetToProgram()
-    setEditMode(null)
   }
 
   const handleInstructorsSave = () => {
@@ -615,11 +616,6 @@ export function ProgramDetailFullPageModal({
     volunteersTriggerSave()
   }
 
-  const handleVolunteersCancelEdit = () => {
-    volunteersResetToProgram()
-    setEditMode(null)
-  }
-
   const handlePreview = () => {
     if (displayProgram) {
       window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
@@ -628,8 +624,7 @@ export function ProgramDetailFullPageModal({
 
   if (!open) return null
 
-  const isEconomyEducationProgram =
-    location.pathname.includes('/programs/economy-education')
+  const isEconomyEducationProgram = location.pathname.includes('/programs/economy-education')
 
   return (
     <DetailFullPageModal
@@ -643,9 +638,7 @@ export function ProgramDetailFullPageModal({
       ]
         .filter(Boolean)
         .join(' ')}
-      closeAriaLabel={
-        schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : '닫기'
-      }
+      closeAriaLabel={schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : '닫기'}
       sidebar={
         <DetailModalSidebar
           navAriaLabel="프로그램 상세 메뉴"
@@ -663,96 +656,92 @@ export function ProgramDetailFullPageModal({
           <Spin size="large" />
         </div>
       ) : displayProgram ? (
-              <>
-                {activeLnb === 'info' && (
-                  <ProjectInfoDetailPanels
-                    program={displayProgram}
-                    sponsorName={sponsorName}
-                    isBodyLoading={loading && !displayProgram}
-                    activeTab={activeTab}
-                    onSelectTab={setActiveTab}
-                    isEditModeInfo={isEditModeInfo}
-                    infoForm={isEditModeInfo ? infoForm : undefined}
-                    isEditModeInstitutions={isEditModeInstitutions}
-                    institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
-                    registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
-                    isEditModeInstructors={isEditModeInstructors}
-                    instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
-                    registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
-                    isEditModeVolunteers={isEditModeVolunteers}
-                    volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
-                    registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
-                    onInfoEdit={handleInfoEdit}
-                    onInfoCancelEdit={handleInfoCancelEdit}
-                    onInfoSave={handleInfoSave}
-                    onInstitutionsSave={handleInstitutionsSave}
-                    onInstitutionsCancelEdit={handleInstitutionsCancelEdit}
-                    onInstructorsCancelEdit={handleInstructorsCancelEdit}
-                    onInstructorsSave={handleInstructorsSave}
-                    onVolunteersSave={handleVolunteersSave}
-                    onVolunteersCancelEdit={handleVolunteersCancelEdit}
-                    onPreview={handlePreview}
-                  />
-                )}
+        <>
+          {activeLnb === 'info' && (
+            <ProjectInfoDetailPanels
+              program={displayProgram}
+              sponsorName={sponsorName}
+              isBodyLoading={loading && !displayProgram}
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              isEditModeInfo={isEditModeInfo}
+              infoForm={isEditModeInfo ? infoForm : undefined}
+              isEditModeInstitutions={isEditModeInstitutions}
+              institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
+              registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
+              isEditModeInstructors={isEditModeInstructors}
+              instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
+              registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
+              isEditModeVolunteers={isEditModeVolunteers}
+              volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
+              registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
+              onInfoEdit={handleInfoEdit}
+              onInfoSave={handleInfoSave}
+              onInstitutionsSave={handleInstitutionsSave}
+              onInstructorsSave={handleInstructorsSave}
+              onVolunteersSave={handleVolunteersSave}
+              onPreview={handlePreview}
+            />
+          )}
 
-                {activeLnb === 'applicants' && (
-                  <ApplicantDetails
-                    menu={activeChildMenu}
-                    program={displayProgram ?? null}
-                    onRegisterApplicantCloseHandler={fn => {
-                      applicantCloseHandlerRef.current = fn
-                    }}
-                  />
-                )}
+          {activeLnb === 'applicants' && (
+            <ApplicantDetails
+              menu={activeChildMenu}
+              program={displayProgram ?? null}
+              onRegisterApplicantCloseHandler={fn => {
+                applicantCloseHandlerRef.current = fn
+              }}
+            />
+          )}
 
-                {activeLnb === 'managers' && displayProgram?.id && (
-                  <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-                    <ProgramManagersTab programId={displayProgram.id} />
-                  </div>
-                )}
+          {activeLnb === 'managers' && displayProgram?.id && (
+            <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+              <ProgramManagersTab programId={displayProgram.id} />
+            </div>
+          )}
 
-                {activeLnb === 'progress' && (
-                  <div className="program-detail-fullpage-modal__info-tab">
-                    {activeProgressChild === 'institutions' && (
-                      <ParticipatingInstitutionsSection
-                        programId={displayProgram?.id}
-                        program={displayProgram}
-                        schoolIdFromUrl={schoolIdFromUrl}
-                        schoolTabFromUrl={activeSchoolTab}
-                        onSchoolTabChange={setSchoolTab}
-                        onSchoolRowClick={row => setSchoolId(row.id)}
-                        onClearSchoolId={() => setSchoolId(null)}
-                        onSchoolDetailOpen={name => setSchoolDetailTitle(name)}
-                        onSchoolDetailClose={() => setSchoolDetailTitle(null)}
-                      />
-                    )}
-                    {activeProgressChild === 'instructors' && (
-                      <ParticipatingInstructorsSection
-                        programId={displayProgram?.id}
-                        program={displayProgram}
-                        instructorIdFromUrl={instructorIdFromUrl}
-                        instructorTabFromUrl={activeInstructorTab}
-                        onInstructorTabChange={setInstructorTab}
-                        onInstructorRowClick={row => setInstructorId(row.id)}
-                        onClearInstructorId={() => setInstructorId(null)}
-                        onInstructorDetailOpen={name => setInstructorDetailTitle(name)}
-                        onInstructorDetailClose={() => setInstructorDetailTitle(null)}
-                      />
-                    )}
-                    {activeProgressChild === 'volunteers' && (
-                      <div className="program-status-participating program-detail-fullpage-modal__progress-section">
-                        <Typography.Title level={5}>참여 봉사자</Typography.Title>
-                        <Typography.Text className="program-status-participating__placeholder">
-                          참여 봉사자 목록 및 현황이 표시됩니다.
-                        </Typography.Text>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : (
-              <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
-            )}
+          {activeLnb === 'progress' && (
+            <div className="program-detail-fullpage-modal__info-tab">
+              {activeProgressChild === 'institutions' && (
+                <ParticipatingInstitutionsSection
+                  programId={displayProgram?.id}
+                  program={displayProgram}
+                  schoolIdFromUrl={schoolIdFromUrl}
+                  schoolTabFromUrl={activeSchoolTab}
+                  onSchoolTabChange={setSchoolTab}
+                  onSchoolRowClick={row => setSchoolId(row.id)}
+                  onClearSchoolId={() => setSchoolId(null)}
+                  onSchoolDetailOpen={name => setSchoolDetailTitle(name)}
+                  onSchoolDetailClose={() => setSchoolDetailTitle(null)}
+                />
+              )}
+              {activeProgressChild === 'instructors' && (
+                <ParticipatingInstructorsSection
+                  programId={displayProgram?.id}
+                  program={displayProgram}
+                  instructorIdFromUrl={instructorIdFromUrl}
+                  instructorTabFromUrl={activeInstructorTab}
+                  onInstructorTabChange={setInstructorTab}
+                  onInstructorRowClick={row => setInstructorId(row.id)}
+                  onClearInstructorId={() => setInstructorId(null)}
+                  onInstructorDetailOpen={name => setInstructorDetailTitle(name)}
+                  onInstructorDetailClose={() => setInstructorDetailTitle(null)}
+                />
+              )}
+              {activeProgressChild === 'volunteers' && (
+                <div className="program-status-participating program-detail-fullpage-modal__progress-section">
+                  <Typography.Title level={5}>참여 봉사자</Typography.Title>
+                  <Typography.Text className="program-status-participating__placeholder">
+                    참여 봉사자 목록 및 현황이 표시됩니다.
+                  </Typography.Text>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
+      )}
     </DetailFullPageModal>
   )
 }
