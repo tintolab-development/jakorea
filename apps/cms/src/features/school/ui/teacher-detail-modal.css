@@ -617,8 +617,8 @@
 }
 
 .settlement-tab__btn-settle {
-  background: var(--color-modal-header, #4ca0a8) !important;
-  border-color: var(--color-modal-header, #4ca0a8) !important;
+  background: var(--JA-mint-01, #01a1af) !important;
+  border-color: var(--JA-mint-01, #01a1af) !important;
 }
 
 /* 요약 카드 */

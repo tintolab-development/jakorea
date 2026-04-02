@@ -24,7 +24,7 @@ export interface AppButtonProps extends Omit<ButtonProps, 'size' | 'variant'> {
   size?: AppButtonSize
   /** danger variant에서만: hover 시 배경 채움 (삭제 버튼 등) */
   dangerFillOnHover?: boolean
-  /** primary를 모달 청록(--color-modal-header)으로 사용 */
+  /** primary + 필터 슬롯 등 모달 전용 조합용 클래스 (색은 --JA-mint-01 기본 primary와 동일) */
   modalTeal?: boolean
   children?: React.ReactNode
 }
