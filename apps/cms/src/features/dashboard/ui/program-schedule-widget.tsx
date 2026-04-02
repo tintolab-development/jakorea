@@ -21,6 +21,7 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
 import { SegmentedTab } from '@/shared/ui'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import '@/features/program/ui/program-calendar-view.css'
 import './program-schedule-widget.css'
@@ -297,7 +298,7 @@ export function ProgramScheduleWidget() {
     }
   }
 
-  const handleViewAll = () => navigate('/programs/education/schedule')
+  const handleViewAll = () => window.alert(WIDGET_MORE_ALERT_MESSAGE)
 
   const handleEventClick = (event: ScheduleEvent) => {
     if (event.type === 'education') {

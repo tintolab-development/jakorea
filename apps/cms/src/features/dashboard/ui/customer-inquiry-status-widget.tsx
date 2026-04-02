@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './customer-inquiry-status-widget.css'
 
@@ -82,7 +83,7 @@ export function CustomerInquiryStatusWidget() {
   }
 
   const handleMoreClick = () => {
-    navigate('/admin/posts/inquiries')
+    window.alert(WIDGET_MORE_ALERT_MESSAGE)
   }
 
   const columns: ColumnsType<ProgramInquiryRow> = useMemo(
