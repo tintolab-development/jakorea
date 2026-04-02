@@ -22,8 +22,7 @@ import '@/features/program/ui/detail-modal/program-status/program-status-partici
 import './payment-order-admin-status-tag.css'
 import './payment-orders-page.css'
 import { PaymentOrdersCalendarView } from './payment-orders-calendar-view'
-import { PaymentOrderInstructorStatusDetailFullPageModal } from './payment-order-instructor-status-detail-fullpage-modal'
-import { PaymentOrderProgramStatusDetailFullPageModal } from './payment-order-program-status-detail-fullpage-modal'
+import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
 
 type ExposureMode = 'program' | 'instructor'
 
@@ -404,22 +403,24 @@ export default function PaymentOrdersPage() {
         </div>
       </div>
 
-      <PaymentOrderProgramStatusDetailFullPageModal
-        open={programStatusDetailOpen}
+      <PaymentOrderDetailFullPageModal
+        type="program"
+        isOpen={programStatusDetailOpen}
         onClose={() => {
           setProgramStatusDetailOpen(false)
           setSelectedProgramForDetail(null)
         }}
-        programRow={selectedProgramForDetail}
+        data={selectedProgramForDetail}
       />
 
-      <PaymentOrderInstructorStatusDetailFullPageModal
-        open={instructorStatusDetailOpen}
+      <PaymentOrderDetailFullPageModal
+        type="instructor"
+        isOpen={instructorStatusDetailOpen}
         onClose={() => {
           setInstructorStatusDetailOpen(false)
           setSelectedInstructorForDetail(null)
         }}
-        instructorRow={selectedInstructorForDetail}
+        data={selectedInstructorForDetail}
       />
     </div>
   )
