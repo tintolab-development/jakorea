@@ -59,5 +59,7 @@ export {
 export type { AppMultiSelectProps, AppMultiSelectOption } from './app-multi-select'
 export { SegmentedTab } from './segmented-tab'
 export type { SegmentedTabOption } from './segmented-tab'
+export { ProgramCalendar } from './program-calendar'
+export type { ProgramCalendarProps } from './program-calendar'
 export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'

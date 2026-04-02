@@ -19,8 +19,8 @@ dayjs.locale('en')
 
 interface ProgramMiniCalendarProps {
   currentMonth: Dayjs
+  /** 메인 캘린더와 동기화된 선택일 표시용(미니캘린더에서는 날짜 클릭 불가) */
   selectedDate: Dayjs
-  onDateSelect: (date: Dayjs) => void
   onMonthChange: (month: Dayjs) => void
   programDates: Set<string> // 일정 있는 날짜들 (YYYY-MM-DD 형식)
 }
@@ -28,9 +28,8 @@ interface ProgramMiniCalendarProps {
 export function ProgramMiniCalendar({
   currentMonth,
   selectedDate,
-  onDateSelect,
   onMonthChange,
-  programDates: _programDates,
+  programDates,
 }: ProgramMiniCalendarProps) {
   const handlePrevMonth = () => {
     onMonthChange(currentMonth.subtract(1, 'month'))
@@ -61,11 +60,18 @@ export function ProgramMiniCalendar({
 
     const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
+    const hasSchedule = programDates.has(date.format('YYYY-MM-DD'))
 
     return (
       <div
-        className={`program-mini-calendar-cell ${isToday ? 'program-mini-calendar-cell--today' : ''} ${isSelected ? 'program-mini-calendar-cell--selected' : ''}`}
-        onClick={() => onDateSelect(date)}
+        className={[
+          'program-mini-calendar-cell',
+          isToday ? 'program-mini-calendar-cell--today' : '',
+          hasSchedule ? 'program-mini-calendar-cell--has-schedule' : '',
+          isSelected ? 'program-mini-calendar-cell--selected' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         <span className="program-mini-calendar-date">{date.date()}</span>
       </div>
@@ -80,7 +86,6 @@ export function ProgramMiniCalendar({
         value={currentMonth}
         locale={enUS}
         fullCellRender={dateFullCellRender}
-        onSelect={onDateSelect}
         headerRender={() => null}
       />
     </div>

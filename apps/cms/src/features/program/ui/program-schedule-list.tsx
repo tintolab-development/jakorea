@@ -7,12 +7,22 @@ import { useMemo } from 'react'
 import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
+import {
+  PROGRAM_DAY_SCHEDULE_STATUS_CONFIG,
+  getProgramDayScheduleEventStatus,
+  getProgramDayScheduleEventTime,
+} from '@/entities/program/lib/program-day-schedule-line'
 import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
 } from './program-schedule-colors'
 import './program-calendar-view.css'
+
+dayjs.extend(isSameOrAfter)
+dayjs.extend(isSameOrBefore)
 
 interface ProgramScheduleListProps {
   selectedDate: Dayjs
@@ -20,98 +30,11 @@ interface ProgramScheduleListProps {
   onProgramClick: (program: Program) => void
 }
 
-type EventStatus =
-  | 'recruiting_start'
-  | 'recruiting_end'
-  | 'education_scheduled'
-  | 'education_ongoing'
-
-const statusConfig: Record<EventStatus, { label: string; color: string; tagColor: string }> = {
-  recruiting_start: {
-    label: '모집 시작',
-    color: '#52c41a',
-    tagColor: 'success',
-  },
-  recruiting_end: {
-    label: '모집 마감',
-    color: '#ff4d4f',
-    tagColor: 'error',
-  },
-  education_scheduled: {
-    label: '교육 예정',
-    color: '#1890ff',
-    tagColor: 'processing',
-  },
-  education_ongoing: {
-    label: '교육 진행',
-    color: '#01a1af',
-    tagColor: 'cyan',
-  },
-}
-
-function getEventStatus(program: Program, date: Dayjs): EventStatus {
-  const now = dayjs()
-
-  // 1. 모집 기간 체크
-  if (program.applicationStartDate && program.applicationEndDate) {
-    const appStart = dayjs(program.applicationStartDate)
-    const appEnd = dayjs(program.applicationEndDate)
-
-    if (date.isSame(appStart, 'day')) {
-      return 'recruiting_start'
-    }
-    if (date.isSame(appEnd, 'day')) {
-      return 'recruiting_end'
-    }
-  }
-
-  // 2. 교육 기간 체크
-  const startDate = dayjs(program.startDate)
-
-  if (startDate.isAfter(now, 'day')) {
-    return 'education_scheduled'
-  }
-
-  return 'education_ongoing'
-}
-
-/** 캘린더 셀 호버 미리보기, 우측 리스트 등에서 동일 문구 사용 */
-export function getProgramDayScheduleLine(program: Program, date: Dayjs): {
-  statusLabel: string
-  time: string
-} {
-  const status = getEventStatus(program, date)
-  return {
-    statusLabel: statusConfig[status].label,
-    time: getEventTime(program, date),
-  }
-}
-
-function getEventTime(program: Program, date: Dayjs): string {
-  // 신청 시작일인 경우
-  if (program.applicationStartDate && date.isSame(dayjs(program.applicationStartDate), 'day')) {
-    return '00:00'
-  }
-
-  // 신청 마감일인 경우
-  if (program.applicationEndDate && date.isSame(dayjs(program.applicationEndDate), 'day')) {
-    return '24:00'
-  }
-
-  // 교육 시작일인 경우
-  if (date.isSame(dayjs(program.startDate), 'day')) {
-    return '15:00' // 기본값
-  }
-
-  return '00:00'
-}
-
 export function ProgramScheduleList({
   selectedDate,
   programs,
   onProgramClick,
 }: ProgramScheduleListProps) {
-  // 선택된 날짜에 해당하는 프로그램 필터링
   const dayPrograms = useMemo(() => {
     return programs.filter(program => {
       const start = dayjs(program.startDate)
@@ -119,7 +42,6 @@ export function ProgramScheduleList({
       const isInEducationPeriod =
         selectedDate.isSameOrAfter(start, 'day') && selectedDate.isSameOrBefore(end, 'day')
 
-      // 모집 기간 체크
       let isInApplicationPeriod = false
       if (program.applicationStartDate && program.applicationEndDate) {
         const appStart = dayjs(program.applicationStartDate)
@@ -143,9 +65,9 @@ export function ProgramScheduleList({
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
       ) : (
         dayPrograms.map(program => {
-          const status = getEventStatus(program, selectedDate)
-          const time = getEventTime(program, selectedDate)
-          const config = statusConfig[status]
+          const status = getProgramDayScheduleEventStatus(program, selectedDate)
+          const time = getProgramDayScheduleEventTime(program, selectedDate)
+          const config = PROGRAM_DAY_SCHEDULE_STATUS_CONFIG[status]
           const color = scheduleListColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
 
           return (
