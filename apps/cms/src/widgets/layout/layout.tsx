@@ -23,7 +23,8 @@ function LayoutContent() {
   const params = useParams()
   const { user } = useAuthStore()
 
-  if (user && location.pathname !== '/' && !canAccessPath(location.pathname, user.role)) {
+  const pathActor = user ? { role: user.role, adminLevel: user.adminLevel } : null
+  if (user && location.pathname !== '/' && !canAccessPath(location.pathname, pathActor)) {
     return (
       <ComingSoonPage
         title="접근 권한이 없습니다"

@@ -72,11 +72,11 @@
 }
 
 .app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--education-scheduled {
-  color: #1e8c29;
+  color: var(--color-green, #1e8c29);
 }
 
 .app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--education-in-progress {
-  color: #017eaf;
+  color: var(--color-blue, #017eaf);
 }
 
 .app-status-badge.program-enrollment-status-badge.program-enrollment-status-badge--variant-economy-list.program-enrollment-status-badge--program-ended {

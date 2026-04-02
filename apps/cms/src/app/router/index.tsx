@@ -67,16 +67,6 @@ const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-pag
 const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
-const EducationProgramLayout = lazyLoad(() =>
-  import('@/pages/programs/education-program-layout').then(m => ({
-    default: m.EducationProgramLayout,
-  }))
-)
-const EducationEnrollmentPage = lazyLoad(() =>
-  import('@/pages/programs/education-enrollment-page').then(m => ({
-    default: m.EducationEnrollmentPage,
-  }))
-)
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
@@ -241,16 +231,24 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
-          { path: 'education/schedule', element: <ComingSoonPage title="페이지 준비중" /> }, // 교육 프로그램 > 프로그램 일정
           {
+            // 임시: LNB「일반 교육 프로그램」 및 해당 하위 URL 전부 준비중 화면 (경제 교육은 `economy-education` 유지)
             path: 'education',
-            element: <EducationProgramLayout />,
-            children: [
-              { index: true, element: <ProgramListPage /> }, // 교육 프로그램 > 전체 프로그램
-              { path: 'student-recruitment', element: <ProgramListPage /> }, // 수강자 모집
-              { path: 'instructor-recruitment', element: <ProgramListPage /> }, // 강의 신청 현황 > 강사 모집 중
-              { path: 'enrollment', element: <EducationEnrollmentPage /> }, // 수강 신청 현황
-            ],
+            element: (
+              <ComingSoonPage
+                title="페이지 준비중"
+                description="일반 교육 프로그램 영역은 현재 준비 중입니다. 곧 이용하실 수 있습니다."
+              />
+            ),
+          },
+          {
+            path: 'education/*',
+            element: (
+              <ComingSoonPage
+                title="페이지 준비중"
+                description="일반 교육 프로그램 영역은 현재 준비 중입니다. 곧 이용하실 수 있습니다."
+              />
+            ),
           },
           { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램 (기존 경로 유지)
           { path: 'economy-education', element: <ProgramListPage /> }, // 경제 교육 프로그램

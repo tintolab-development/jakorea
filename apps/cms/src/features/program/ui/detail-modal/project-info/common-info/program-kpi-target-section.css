@@ -43,13 +43,20 @@
 .program-kpi-target-section__instructor-row {
   display: flex;
   align-items: center;
-  column-gap: 6px;
+  /* 구분선은 project-info-form-shared 의 separator margin(0 12px)으로 간격 처리 */
+  column-gap: 0;
   row-gap: var(--spacing-8);
   flex-wrap: wrap;
 }
 
-.program-kpi-target-section__instructor-row:has(.program-detail-info-tab__separator) {
-  gap: 0;
+.program-kpi-target-section__instructor-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.program-kpi-target-section__instructor-row-error {
+  flex-basis: 100%;
 }
 
 /* 강사/봉사자 라벨: #3D3D3D, Pretendard 16px 500, line-height 150% */

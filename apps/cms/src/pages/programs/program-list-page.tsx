@@ -71,9 +71,9 @@ export function ProgramListPage() {
   // 헤더 타이틀 계산: statusFilter (위젯 클릭) → 모집단계 라벨 → "전체 프로그램"
   const headerTitle = useMemo(() => {
     if (programType === 'economy' && statusFilter) {
-      if (statusFilter === 'economy_scheduled') return '예정 프로그램'
+      if (statusFilter === 'economy_scheduled') return '진행 예정 프로그램'
       if (statusFilter === 'economy_in_progress') return '진행 중인 프로그램'
-      if (statusFilter === 'economy_completed') return '완료 프로그램'
+      if (statusFilter === 'economy_completed') return '진행 완료된 프로그램'
     }
 
     // 7단계/교육 모집단계 매핑
@@ -213,6 +213,10 @@ export function ProgramListPage() {
     })
   }
 
+  const handleProgramCreateClick = () => {
+    window.alert('준비중입니다.')
+  }
+
   // 예정 프로그램 필터 해제 시 선택 초기화
   useEffect(() => {
     if (!isScheduledFilter) setSelectedRowKeys([])
@@ -300,7 +304,7 @@ export function ProgramListPage() {
               {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
             </AppButton>
             {showEducationActions && (
-              <AppButton variant="primary" size="filter-wide" onClick={() => openFormModal()}>
+              <AppButton variant="primary" size="filter-wide" onClick={handleProgramCreateClick}>
                 프로그램 신규 등록
               </AppButton>
             )}
@@ -311,7 +315,14 @@ export function ProgramListPage() {
   )
 
   return (
-    <div>
+    <div
+      className={[
+        'program-list-page',
+        programType === 'economy' ? 'program-list-page--economy-education' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {/* 위젯 영역 */}
       {isAdmin && (
         <div className="program-progress-widget-container">
@@ -364,11 +375,20 @@ export function ProgramListPage() {
         showFavorite={false}
         onChangeStatus={showEducationActions ? handleStatusChange : undefined}
         showCalendarView={isAdmin && (programType === 'education' || programType === 'economy')}
-        onCreateNew={showEducationActions ? () => openFormModal() : undefined}
+        onCreateNew={showEducationActions ? handleProgramCreateClick : undefined}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         tableVariant={programType === 'economy' ? 'education' : programType}
         readOnlyLifecycleStatus={programType === 'economy'}
+        economyScheduledFilterLayout={
+          programType === 'economy' &&
+          (statusFilter === 'economy_scheduled' ||
+            statusFilter === 'economy_in_progress' ||
+            statusFilter === 'economy_completed')
+        }
+        economyInProgressActive={programType === 'economy' && statusFilter === 'economy_in_progress'}
+        economyCompletedActive={programType === 'economy' && statusFilter === 'economy_completed'}
+        economyAllProgramsActive={programType === 'economy' && statusFilter === null}
         studentRecruitmentTable={statusFilter === 'recruiting_students'}
         instructorRecruitmentTable={statusFilter === 'recruiting_instructors'}
         onDisplayCountChange={(count, hasActiveFilters) => {

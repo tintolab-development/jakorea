@@ -5,13 +5,12 @@
  */
 
 import { Card, Button, Typography, Space, Empty, Tag } from 'antd'
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { type Notification, type NotificationType } from '../api/notification-service'
-import { NotificationModal } from './notification-modal'
 import { useNotifications } from '../hooks/use-notifications'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './notification-widget.css'
 
@@ -53,34 +52,7 @@ const formatTimestamp = (dateValue: string | Date): string => {
 
 export function NotificationWidget() {
   const navigate = useNavigate()
-  const [modalOpen, setModalOpen] = useState(false)
-  const {
-    notifications,
-    loading,
-    unreadCount,
-    refresh,
-    markAsRead,
-    removeNotification,
-    markAllAsRead,
-  } = useNotifications()
-
-  const handleConfirm = async (notification: Notification) => {
-    try {
-      // 읽음 처리
-      if (!notification.read) {
-        await markAsRead(notification.id)
-      }
-      // 알림 제거
-      await removeNotification(notification.id)
-
-      // 링크가 있으면 이동
-      if (notification.link) {
-        navigate(notification.link)
-      }
-    } catch (error) {
-      console.error('알림 확인 처리 실패:', error)
-    }
-  }
+  const { notifications, loading, unreadCount, markAsRead } = useNotifications()
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
@@ -101,90 +73,71 @@ export function NotificationWidget() {
     notifications.length > displayNotifications.length || notifications.some(n => n.read)
 
   return (
-    <>
-      <Card
-        className="notification-widget"
-        loading={loading}
-        title={
-          <WidgetTitleWithHandle>
-            <Space size={4} className="notification-widget__title-inline">
-              <Text strong className="notification-widget__title-text">
-                알림 리스트
+    <Card
+      className="notification-widget"
+      loading={loading}
+      title={
+        <WidgetTitleWithHandle>
+          <Space size={4} className="notification-widget__title-inline">
+            <Text strong className="notification-widget__title-text">
+              알림 리스트
+            </Text>
+            {unreadCount > 0 && (
+              <Text type="secondary" className="notification-widget__count">
+                미확인 {unreadCount}건
               </Text>
-              {unreadCount > 0 && (
-                <Text type="secondary" className="notification-widget__count">
-                  미확인 {unreadCount}건
-                </Text>
-              )}
-            </Space>
-          </WidgetTitleWithHandle>
-        }
-        extra={
-          hasMoreNotifications ? (
-            <Button
-              type="link"
-              size="small"
-              onClick={() => setModalOpen(true)}
-              className="widget-more-button"
-            >
-              더보기
-            </Button>
-          ) : null
-        }
-      >
-        {displayNotifications.length === 0 ? (
-          <div className="notification-widget__empty">
-            <Empty description="새로운 알림이 없습니다" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          </div>
-        ) : (
-          <div className="notification-widget__list">
-            {displayNotifications.map(notification => {
-              const tagColor = getNotificationTypeTagColor(notification.type)
-              return (
-                <div
-                  key={notification.id}
-                  className="notification-item"
-                  onClick={() => handleNotificationClick(notification)}
+            )}
+          </Space>
+        </WidgetTitleWithHandle>
+      }
+      extra={
+        hasMoreNotifications ? (
+          <Button
+            type="link"
+            size="small"
+            onClick={() => window.alert(WIDGET_MORE_ALERT_MESSAGE)}
+            className="widget-more-button"
+          >
+            더보기
+          </Button>
+        ) : null
+      }
+    >
+      {displayNotifications.length === 0 ? (
+        <div className="notification-widget__empty">
+          <Empty description="새로운 알림이 없습니다" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      ) : (
+        <div className="notification-widget__list">
+          {displayNotifications.map(notification => {
+            const tagColor = getNotificationTypeTagColor(notification.type)
+            return (
+              <div
+                key={notification.id}
+                className="notification-item"
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <Tag
+                  className="notification-item__tag"
+                  style={{
+                    backgroundColor: tagColor.bg,
+                    color: tagColor.text,
+                    border: 'none',
+                  }}
                 >
-                  <Tag
-                    className="notification-item__tag"
-                    style={{
-                      backgroundColor: tagColor.bg,
-                      color: tagColor.text,
-                      border: 'none',
-                    }}
-                  >
-                    {getNotificationTypeLabel(notification.type)}
-                  </Tag>
-                  <Text className="notification-item__title">
-                    {notification.message || notification.title}
-                  </Text>
-                  <Text type="secondary" className="notification-item__timestamp">
-                    {formatTimestamp(notification.createdAt)}
-                  </Text>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </Card>
-
-      <NotificationModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        onNotificationClick={handleNotificationClick}
-        onConfirm={handleConfirm}
-        onMarkAllAsRead={async () => {
-          try {
-            await markAllAsRead()
-          } catch (error) {
-            console.error('모든 알림 읽음 처리 실패:', error)
-          }
-        }}
-        onRefresh={refresh}
-      />
-    </>
+                  {getNotificationTypeLabel(notification.type)}
+                </Tag>
+                <Text className="notification-item__title">
+                  {notification.message || notification.title}
+                </Text>
+                <Text type="secondary" className="notification-item__timestamp">
+                  {formatTimestamp(notification.createdAt)}
+                </Text>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </Card>
   )
 }

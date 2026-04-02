@@ -41,6 +41,12 @@
   overflow: hidden;
 }
 
+/* 닫힌 상태: 열 너비 안에서 프로그램 진행 현황 배지 말줄임 */
+.status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--open)
+  .program-lifecycle-status-badge.program-lifecycle-status-badge--table {
+  max-width: 100%;
+}
+
 .status-dropdown-cell__status-trigger .app-status-badge {
   flex: 1 1 auto;
   min-width: 0;
@@ -72,6 +78,14 @@
 .status-dropdown-cell__status-trigger--open .app-status-badge {
   border: none;
   box-shadow: none;
+}
+
+/* 프로그램 진행 현황 테이블 배지: 기본 variant는 max-width 100%라 동일 특이도에서 열림 시 120px가 밀릴 수 있음 */
+.status-dropdown-cell__status-trigger--open
+  .app-status-badge.program-lifecycle-status-badge.program-lifecycle-status-badge--table {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
 }
 
 /* 열린 트리거에서도 지급/결재 배지 보더·radius 스펙 유지(공통 규칙의 border:none 덮어씀) */

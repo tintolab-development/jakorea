@@ -4,6 +4,9 @@
 
 import { uiColors } from './colors'
 
+/** 대시보드 위젯「더보기」— 상세 화면 미구현 시 안내 */
+export const WIDGET_MORE_ALERT_MESSAGE = '준비중입니다.'
+
 // 더보기 버튼 공통 스타일
 export const MORE_BUTTON_STYLES = {
   color: uiColors.moreButton,

@@ -13,21 +13,32 @@
  *   background: #F2F3F5; color: #464646; border: 1px solid rgba(126, 138, 150, 0.06);
  *   참여자 모집 완료 / 강사 모집 완료 / 봉사자 모집 완료
  *
- * [경제 교육 페이지] 스크린샷 기준 3단계
- *   프로그램 진행 예정: background #E0F2F7, color #007BFF
- *   프로그램 진행 중: background #DCF7EE, color #28A745
- *   프로그램 진행 완료: background #F0F0F0, color #6C757D
+ * [경제 교육 페이지] 3단계(테이블 variant는 배경 투명)
+ *   프로그램 진행 예정: color var(--color-green, #1E8C29)
+ *   프로그램 진행 중: color var(--color-blue, #017EAF)
+ *   프로그램 진행 완료: color #3d3d3d
  */
 
 /* ===== 테이블 컬럼 variant (`ProgramLifecycleStatusBadge` variant="table") =====
- * app-status-badge.css 의 고정 120×30 을 해제해 긴 라벨·경제 3단계 라벨이 잘리지 않도록 함 */
+ * app-status-badge.css 의 고정 120×30 을 해제. 프로그램 진행 현황 td 텍스트 스펙(말줄임·타이포) */
 .app-status-badge.program-lifecycle-status-badge.program-lifecycle-status-badge--table {
+  display: inline-block;
+  box-sizing: border-box;
   width: auto !important;
   min-width: 0 !important;
-  max-width: none !important;
+  max-width: 100%;
   height: auto !important;
   min-height: 30px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  vertical-align: middle;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 /* ===== 경제 교육 페이지 3단계 (스크린샷 색상) ===== */
@@ -39,12 +50,12 @@
 }
 
 .app-status-badge.program-lifecycle-status-badge--economy-scheduled {
-  color: #017eaf;
+  color: var(--color-green, #1e8c29);
   background-color: transparent !important;
 }
 
 .app-status-badge.program-lifecycle-status-badge--economy-in-progress {
-  color: #1e8c29;
+  color: var(--color-blue, #017eaf);
   background-color: transparent !important;
 }
 

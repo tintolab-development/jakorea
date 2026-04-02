@@ -30,7 +30,8 @@ export const studentRecruitmentTableColumns = [
   {
     title: '모집 신청 현황',
     key: 'lifecycleStatus',
-    width: 140,
+    width: 180,
+    minWidth: 180,
     align: 'center' as const,
     className: undefined,
     render: (_: unknown, record: Program) => (
@@ -142,7 +143,8 @@ export const instructorRecruitmentTableColumns = [
   {
     title: '모집 신청 현황',
     key: 'lifecycleStatus',
-    width: 140,
+    width: 180,
+    minWidth: 180,
     align: 'center' as const,
     className: undefined,
     render: (_: unknown, record: Program) => (

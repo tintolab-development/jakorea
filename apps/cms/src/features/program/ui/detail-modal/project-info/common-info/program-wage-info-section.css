@@ -24,11 +24,85 @@
   width: 100%;
 }
 
-.program-wage-info-section__pricing-row {
+/* 강사비 유형(입금 유형) 셀렉트 — 테이블 셀 너비에 맞춤 */
+.program-wage-info-section__wage-type-select {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+}
+
+.program-wage-info-section__wage-type-select .ant-select {
+  width: 100%;
+}
+
+/* 임금 책정 기준 td: 셀·행 기준 수직 가운데 */
+.program-wage-info-section__td-pricing-basis {
+  vertical-align: middle;
+}
+
+/* 수정 모드 한 줄 행이 셀보다 넓을 때 잘림 방지 */
+.program-wage-info-section__td-pricing-basis:has(.program-wage-info-section__pricing-basis-row) {
+  overflow-x: auto;
+}
+
+/* 임금 책정 기준: 단위 셀렉트 + 수량 + 단위 라벨 + 기준(당)/초과/이하 — 한 줄(row) 고정 */
+.program-wage-info-section__pricing-basis-row {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
+  gap: 10px;
+  min-width: min-content;
+}
+
+/* AppInput 기본 flex:1 0 0 제거 — 행 안에서 늘어나지 않도록 */
+.program-wage-info-section__pricing-basis-row > .app-select,
+.program-wage-info-section__pricing-basis-row > .app-input {
+  flex: 0 0 auto;
+  min-width: 0;
+  align-self: center;
+}
+
+.program-wage-info-section__pricing-basis-row > .program-wage-info-section__compare-radios {
+  align-self: center;
+}
+
+.program-wage-info-section__measure-select {
+  flex-shrink: 0;
+  width: auto;
+  min-width: 0;
+  max-width: 88px;
+}
+
+.program-wage-info-section__measure-select.app-select {
+  background: #f2f3f5;
+  border-color: #e0e4e7;
+}
+
+.program-wage-info-section__measure-select .ant-select-selection-item {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.program-wage-info-section__input--qty {
+  width: 56px;
+  min-width: 56px;
+  max-width: 72px;
+}
+
+.program-wage-info-section__pricing-basis-unit-suffix {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.program-wage-info-section__compare-radios.app-radio-group.ant-radio-group {
+  flex-wrap: nowrap;
+  gap: 16px;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 
 .program-wage-info-section__inline-label {
@@ -59,4 +133,14 @@
   color: var(--default-BK, #3d3d3d);
   font-size: 16px;
   font-weight: 500;
+}
+
+/* 지급·공제: 조회·수정 공통 읽기 전용 텍스트 */
+.program-wage-info-section__cell-plain-text {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

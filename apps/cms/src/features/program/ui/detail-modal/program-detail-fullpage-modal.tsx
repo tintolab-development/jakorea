@@ -613,13 +613,21 @@ export function ProgramDetailFullPageModal({
 
   if (!open) return null
 
+  const isEconomyEducationProgram =
+    location.pathname.includes('/programs/economy-education')
+
   return (
     <DetailFullPageModal
       open={open}
       onClose={onClose}
       onHeaderClose={handleHeaderCloseClick}
       title={title}
-      className="program-detail-fullpage-modal"
+      className={[
+        'program-detail-fullpage-modal',
+        isEconomyEducationProgram && 'program-detail-fullpage-modal--economy-education',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       closeAriaLabel={
         schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : '닫기'
       }

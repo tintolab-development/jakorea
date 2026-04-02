@@ -15,7 +15,7 @@
 .submissions-tab__section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-16);
 }
 
 .submissions-tab__section-header {

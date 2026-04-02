@@ -82,7 +82,7 @@
 
 /* 탭: 활성 탭 청록 밑줄, 텍스트 색상 */
 .applicant-instructor-detail-modal__tabs .ant-tabs-nav {
-    margin-bottom: 12px;
+    margin-bottom: var(--spacing-16);
     flex-shrink: 0;
 }
 
