@@ -107,10 +107,10 @@ export function SchoolDetailStudentListSection({
   studentCount,
   programTitle,
   readOnly = false,
-  onIssueCertificates,
+  onIssueCertificates: _onIssueCertificates,
   onEditInfo,
   onAddStudent,
-  onViewDetail,
+  onViewDetail: _onViewDetail,
   onSaveEdit,
 }: SchoolDetailStudentListSectionProps) {
   const { filters, appliedFilters, setFilter, applyFilters } = useStudentListFilterParams()
@@ -523,7 +523,7 @@ export function SchoolDetailStudentListSection({
                   size="filter"
                   icon={<CertificateIssueIcon />}
                   className="school-detail-student-list-section__btn-certificate"
-                  onClick={() => onIssueCertificates?.()}
+                  onClick={() => window.alert('준비 중입니다.')}
                 >
                   수료증 발급
                 </AppButton>
@@ -568,7 +568,7 @@ export function SchoolDetailStudentListSection({
                   variant="primary"
                   size="filter-wide"
                   modalTeal
-                  onClick={() => onViewDetail?.()}
+                  onClick={() => window.alert('준비 중입니다.')}
                 >
                   개인정보 상세보기
                 </AppButton>

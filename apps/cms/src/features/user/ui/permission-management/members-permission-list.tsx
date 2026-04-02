@@ -198,21 +198,22 @@ export function MembersPermissionList({
     setSelectedRowKeys([])
   }, [canWrite, selectedRowKeys.length, selectedPendingRows])
 
+  const selectedSingleRowId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : null
+  const isSelectedRowPrivacyRevealed =
+    selectedSingleRowId != null && Boolean(privacyRevealedByRowId[selectedSingleRowId])
+
   const handleToggleListPrivacyMask = useCallback(() => {
     if (selectedRowKeys.length !== 1) {
       message.warning('개인정보 상세보기는 회원 1명만 선택해 주세요.')
       return
     }
     const id = String(selectedRowKeys[0])
-    setPrivacyRevealedByRowId(prev => ({
-      ...prev,
-      [id]: !prev[id],
-    }))
-  }, [selectedRowKeys])
-
-  const selectedSingleRowId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : null
-  const isSelectedRowPrivacyRevealed =
-    selectedSingleRowId != null && Boolean(privacyRevealedByRowId[selectedSingleRowId])
+    if (isSelectedRowPrivacyRevealed) {
+      setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: false }))
+      return
+    }
+    window.alert('준비 중입니다.')
+  }, [selectedRowKeys, isSelectedRowPrivacyRevealed])
 
   const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(
     () => [

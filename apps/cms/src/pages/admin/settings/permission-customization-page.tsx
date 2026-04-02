@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Alert, Checkbox, Tabs, message } from 'antd'
+import { Alert, Checkbox, Tabs } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMasterAdmin } from '@/shared/utils/permissions'
 import type {
@@ -138,7 +138,7 @@ export function PermissionCustomizationPage() {
   }
 
   const handlePersonalDetailClick = () => {
-    message.info('개인정보 상세보기는 추후 연동 예정입니다.')
+    window.alert('준비 중입니다.')
   }
 
   if (!user || !isMasterAdmin(user)) {
