@@ -63,9 +63,8 @@ export { ProgramCalendar } from './program-calendar'
 export type {
   ProgramCalendarProps,
   ProgramCalendarProgramProps,
-  ProgramCalendarApplicantProps,
-  ProgramCalendarMonthHeaderVariant,
-  ProgramScheduleOverlayWrapArgs,
+  ProgramCalendarEventsProps,
+  ProgramCalendarEventItem,
 } from './program-calendar'
 export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'

@@ -1,5 +1,5 @@
 /**
- * 신청자 캘린더 일정 색상·툴팁 내용 (ProgramCalendar applicant 모드와 공유)
+ * 신청자 캘린더 일정 색상·툴팁 내용 (ProgramCalendar events 모드와 공유)
  */
 
 import { useMemo, useCallback } from 'react'
@@ -63,33 +63,33 @@ export function ApplicantCalendarEventPopoverContent({
   colorMap: Map<string | number, ScheduleColorPair>
 }) {
   return (
-    <div className="applicant-calendar-popover">
+    <div className="program-calendar-schedule-panel">
       {events.map(ev => {
         const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
         const parts = getPopoverRowParts(ev.originalItem as Record<string, unknown> | undefined)
         const fallbackTitle = String(ev.title ?? '').replace(/^\[.*?\]\s*/, '')
         if (!parts) {
           return (
-            <div key={String(ev.id)} className="applicant-calendar-popover__row">
-              <span className="applicant-calendar-popover__title" style={{ color: colors.text }}>
+            <div key={String(ev.id)} className="program-calendar-schedule-panel__row">
+              <span className="program-calendar-schedule-panel__title" style={{ color: colors.text }}>
                 {fallbackTitle || '-'}
               </span>
             </div>
           )
         }
         return (
-          <div key={String(ev.id)} className="applicant-calendar-popover__row">
-            <span className="applicant-calendar-popover__title" style={{ color: colors.text }}>
+          <div key={String(ev.id)} className="program-calendar-schedule-panel__row">
+            <span className="program-calendar-schedule-panel__title" style={{ color: colors.text }}>
               {parts.title}
             </span>
-            <span className="applicant-calendar-popover__sep" aria-hidden>
+            <span className="program-calendar-schedule-panel__sep" aria-hidden>
               |
             </span>
-            <span className="applicant-calendar-popover__text">{parts.location}</span>
-            <span className="applicant-calendar-popover__sep" aria-hidden>
+            <span className="program-calendar-schedule-panel__text">{parts.location}</span>
+            <span className="program-calendar-schedule-panel__sep" aria-hidden>
               |
             </span>
-            <span className="applicant-calendar-popover__text">{parts.countLabel}</span>
+            <span className="program-calendar-schedule-panel__text">{parts.countLabel}</span>
           </div>
         )
       })}

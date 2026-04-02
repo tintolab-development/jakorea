@@ -276,49 +276,44 @@ const tomorrowSchedulesAdditional: Schedule[] = Array.from({ length: 10 }, (_, i
 
 /**
  * 대시보드 프로그램 일정 위젯: 경제 교육 프로그램(economy-prog-*)만 노출할 때
- * 기존 mockSchedules는 prog-* id라 전부 걸러지므로, 3·4·5월(고정 연도)에 맞춘 일정을 둔다.
- * (모듈 로드 시점 '현재 달'만 쓰면 다른 달·연도에서 위젯이 비어 보임)
+ * 기존 mockSchedules는 prog-* id라 전부 걸러지므로, 동일 달(모듈 로드 시점 기준)에 맞춘 일정을 둔다.
  */
-const ECONOMY_DASHBOARD_SCHEDULE_YEAR = 2026
-/** JS Date 월 인덱스: 2=3월, 3=4월, 4=5월 */
-const ECONOMY_DASHBOARD_MONTH_INDICES = [2, 3, 4] as const
-
 function buildEconomyDashboardSchedules(): Schedule[] {
   const economyPrograms = getEconomyPrograms()
   if (economyPrograms.length === 0) return []
 
-  const y = ECONOMY_DASHBOARD_SCHEDULE_YEAR
-  const createdAt = new Date().toISOString()
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = now.getMonth()
+  const lastDay = new Date(y, m + 1, 0).getDate()
+  const createdAt = now.toISOString()
   const schedules: Schedule[] = []
   let seq = 0
 
-  for (const m of ECONOMY_DASHBOARD_MONTH_INDICES) {
-    const lastDay = new Date(y, m + 1, 0).getDate()
-    for (let day = 1; day <= lastDay; day += 1) {
-      const slotsThisDay = day % 4 === 0 ? 2 : 1
-      for (let s = 0; s < slotsThisDay; s++) {
-        seq += 1
-        const program = economyPrograms[(seq - 1) % economyPrograms.length]
-        const round = program.rounds?.[0]
-        const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-        const startHour = 9 + ((seq + s) % 7)
-        const startTime = `${String(startHour).padStart(2, '0')}:00`
-        const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
+  for (let day = 1; day <= lastDay; day += 1) {
+    const slotsThisDay = day % 4 === 0 ? 2 : 1
+    for (let s = 0; s < slotsThisDay; s++) {
+      seq += 1
+      const program = economyPrograms[(seq - 1) % economyPrograms.length]
+      const round = program.rounds?.[0]
+      const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      const startHour = 9 + ((seq + s) % 7)
+      const startTime = `${String(startHour).padStart(2, '0')}:00`
+      const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
 
-        schedules.push({
-          id: `sch-economy-dash-${String(seq).padStart(4, '0')}` as UUID,
-          programId: program.id,
-          roundId: round?.id,
-          title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
-          date: dateStr,
-          startTime,
-          endTime,
-          location: locations[(seq - 1) % locations.length],
-          instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
-          createdAt,
-          updatedAt: createdAt,
-        })
-      }
+      schedules.push({
+        id: `sch-economy-dash-${String(seq).padStart(3, '0')}` as UUID,
+        programId: program.id,
+        roundId: round?.id,
+        title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
+        date: dateStr,
+        startTime,
+        endTime,
+        location: locations[(seq - 1) % locations.length],
+        instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
+        createdAt,
+        updatedAt: createdAt,
+      })
     }
   }
 

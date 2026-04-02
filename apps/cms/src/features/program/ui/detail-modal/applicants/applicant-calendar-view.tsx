@@ -1,12 +1,4 @@
-import {
-  useState,
-  useRef,
-  useMemo,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  type Key,
-} from 'react'
+import { useState, useRef, useMemo, useCallback, useEffect, useLayoutEffect, type Key } from 'react'
 import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -67,9 +59,7 @@ export function ApplicantCalendarView({
   const schoolFilterOptions = useMemo(() => {
     const uniqueSchools = Array.from(
       new Set(
-        dayEvents
-          .map(ev => String(ev?.originalItem?.schoolName ?? '').trim())
-          .filter(Boolean)
+        dayEvents.map(ev => String(ev?.originalItem?.schoolName ?? '').trim()).filter(Boolean)
       )
     ).sort((a, b) => a.localeCompare(b, 'ko'))
     return uniqueSchools.map((school, i) => ({
@@ -99,13 +89,13 @@ export function ApplicantCalendarView({
 
     const applyMonthRowHeight = () => {
       if (calendarMode !== 'month') {
-        main.style.removeProperty('--applicant-cal-row-height')
+        main.style.removeProperty('--program-calendar-month-row-height')
         return
       }
 
       const thead = main.querySelector('.ant-picker-content thead')
       if (!thead) {
-        main.style.removeProperty('--applicant-cal-row-height')
+        main.style.removeProperty('--program-calendar-month-row-height')
         return
       }
 
@@ -115,7 +105,10 @@ export function ApplicantCalendarView({
       const tbodyTop = thead.getBoundingClientRect().bottom
       const forBody = Math.max(0, innerBottom - tbodyTop - BOTTOM_RESERVE)
       const rowPx = Math.max(MIN_ROW, forBody / ROWS)
-      main.style.setProperty('--applicant-cal-row-height', `${Math.round(rowPx * 10) / 10}px`)
+      main.style.setProperty(
+        '--program-calendar-month-row-height',
+        `${Math.round(rowPx * 10) / 10}px`
+      )
     }
 
     const ro = new ResizeObserver(() => {
@@ -128,7 +121,7 @@ export function ApplicantCalendarView({
     requestAnimationFrame(applyMonthRowHeight)
     return () => {
       ro.disconnect()
-      main.style.removeProperty('--applicant-cal-row-height')
+      main.style.removeProperty('--program-calendar-month-row-height')
     }
   }, [calendarMode, loading, currentMonth])
 
@@ -178,7 +171,6 @@ export function ApplicantCalendarView({
     <div className="applicant-calendar-layout">
       <ProgramCalendar
         ref={mainCalendarRef}
-        kind="applicant"
         className="applicant-calendar-main"
         events={events}
         selectedRowKeys={selectedRowKeys}
@@ -188,8 +180,7 @@ export function ApplicantCalendarView({
         onSelectDate={handleDateSelect}
         onMonthChange={setCurrentMonth}
         onModeChange={setCalendarMode}
-        headerModeSwitcher="applicantPill"
-        monthHeaderTitleVariant="applicantSpaced"
+        scheduleOverlay="tooltip"
         onTodayClick={handleToday}
       />
 

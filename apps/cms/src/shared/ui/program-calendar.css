@@ -108,19 +108,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Popover 정렬용 1px 앵커(커서 근처 fixed). 호버는 래퍼 div에서 처리 */
-.program-calendar-popover-cursor-anchor {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: 0;
-  pointer-events: none;
-  opacity: 0;
-}
-
 .program-calendar-cell-preview {
   display: flex;
   width: 333px;
@@ -132,7 +119,7 @@
   box-sizing: border-box;
 }
 
-/* applicant·레거시: Tooltip 투명 래퍼 (program 일정 미리보기는 Popover) */
+/* 주간·월간 program 모드: Tooltip (패널형이 아닌 투명 래퍼) */
 .program-calendar-tooltip-overlay .ant-tooltip-arrow {
   display: none !important;
 }
@@ -187,7 +174,12 @@
   font-style: normal;
   font-weight: 700;
   line-height: 130%;
-  word-break: break-word;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .program-calendar-cell-preview__desc {
@@ -196,6 +188,12 @@
   font-style: normal;
   font-weight: 500;
   line-height: 140%;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .program-calendar-cell-preview__item:hover .program-calendar-cell-preview__title,
@@ -228,17 +226,15 @@
 }
 
 .program-calendar-cell--selected .program-calendar-cell-date {
-  display: flex;
-  width: 25px;
-  height: 25px;
-  padding: 0 10px;
+  display: inline-flex;
+  width: 25px !important;
+  height: 25px !important;
+  padding: 0;
   color: var(--default-WT) !important;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  aspect-ratio: 1/1;
-  border-radius: 60px;
+  line-height: 1;
+  border-radius: 50%;
   background: var(--JA-mint-01, #01a1af);
 }
 
@@ -320,7 +316,7 @@
   align-items: center;
   height: 24px;
   min-height: 24px;
-  padding: 4px 6px;
+  padding: 0 8px;
   box-sizing: border-box;
   border: none;
   border-radius: 2px;
@@ -347,7 +343,9 @@
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
+  font-family: Pretendard;
   font-size: 12px;
+  font-style: normal;
   font-weight: 500;
   line-height: 130%; /* 15.6px */
 }
@@ -363,6 +361,75 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 신청자 일정: 테두리 칩 + 행 선택 시 (인라인 border 제거와 함께 사용) */
+.program-calendar-event--selected {
+  border: none !important;
+}
+
+/* Tooltip 본문: 일정 요약 패널 (Popover 미리보기와 별도) */
+.program-calendar-schedule-panel {
+  display: inline-flex;
+  width: auto;
+  min-width: 334px;
+  max-width: min(360px, calc(100vw - 24px));
+  max-height: 250px;
+  padding: 11px 16px 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.program-calendar-schedule-panel__row {
+  display: grid;
+  grid-template-columns: minmax(96px, 1fr) 21px 86px 21px 80px;
+  align-items: center;
+  column-gap: 0;
+  width: 100%;
+}
+
+.program-calendar-schedule-panel__title {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.program-calendar-schedule-panel__text {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.program-calendar-schedule-panel__sep {
+  display: inline-flex;
+  width: 21px;
+  justify-content: center;
+  color: #d4d4d4;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1;
+  user-select: none;
+  padding: 0;
 }
 
 /* Ant Design Calendar 오버라이드 */
@@ -381,6 +448,7 @@
 
 .program-calendar-main .ant-picker-cell {
   padding: 0;
+  vertical-align: top;
 }
 
 .program-calendar-main .ant-picker-calendar-date-value {
@@ -509,6 +577,10 @@
 
 .program-calendar-week-cell:hover {
   background: #fcfcfc;
+}
+
+.program-calendar-week-cell--selected {
+  background: #f5f6f7;
 }
 
 .program-calendar-week-cell-date--selected {

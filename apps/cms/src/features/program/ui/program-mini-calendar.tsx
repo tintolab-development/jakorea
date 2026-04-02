@@ -58,7 +58,6 @@ export function ProgramMiniCalendar({
       return null
     }
 
-    const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
     const hasSchedule = programDates.has(date.format('YYYY-MM-DD'))
 
@@ -66,7 +65,6 @@ export function ProgramMiniCalendar({
       <div
         className={[
           'program-mini-calendar-cell',
-          isToday ? 'program-mini-calendar-cell--today' : '',
           hasSchedule ? 'program-mini-calendar-cell--has-schedule' : '',
           isSelected ? 'program-mini-calendar-cell--selected' : '',
         ]
