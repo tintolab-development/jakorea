@@ -1,0 +1,15 @@
+/**
+ * Ant Design Popover 공통 패널 크롬 (페이지별 overlayClassName에 합성해 사용)
+ * 예: overlayClassName="app-popover-panel program-calendar-cell-preview-popover"
+ */
+.app-popover-panel .ant-popover-inner {
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  padding: 12px 16px 12px 14px;
+}
+
+.app-popover-panel .ant-popover-inner-content {
+  padding: 0;
+}

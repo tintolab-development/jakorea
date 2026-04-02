@@ -221,12 +221,8 @@
   box-sizing: border-box;
 }
 
-.program-mini-calendar-cell--selected {
-  background-color: #f5f6f7 !important;
-}
-
 /* 오늘 + 일정 없음: 기존 원형 강조 */
-.program-mini-calendar-cell--today:not(.program-mini-calendar-cell--has-schedule) {
+.program-mini-calendar-cell--selected {
   background-color: var(--color-brand-primary) !important;
   border-radius: 50%;
   width: 30px;
@@ -236,8 +232,7 @@
   justify-content: center;
 }
 
-.program-mini-calendar-cell--today:not(.program-mini-calendar-cell--has-schedule)
-  .program-mini-calendar-date {
+.program-mini-calendar-cell--selected .program-mini-calendar-date {
   color: var(--default-WT);
 }
 

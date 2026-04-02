@@ -10,7 +10,7 @@
   min-width: 0;
 }
 
-/* Ant Tooltip: 커스텀 inner만 보이도록 (applicant-calendar-tooltip-overlay 와 동일 패턴) */
+/* Ant Tooltip: 커스텀 inner만 보이도록 (program-calendar-tooltip-overlay 와 동일 패턴) */
 .payment-orders-calendar-tooltip-overlay .ant-tooltip-arrow {
   display: none !important;
 }
