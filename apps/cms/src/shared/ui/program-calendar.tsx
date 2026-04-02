@@ -64,6 +64,10 @@ export type ProgramCalendarProgramProps = ProgramCalendarSharedProps & {
 export type ProgramCalendarEventsProps = ProgramCalendarSharedProps & {
   events: ProgramCalendarEventItem[]
   selectedRowKeys?: React.Key[]
+  renderEventsTooltipContent?: (args: {
+    events: ProgramCalendarEventItem[]
+    colorMap: ReturnType<ReturnType<typeof useApplicantCalendarColorMaps>['buildResolvedColorMap']>
+  }) => ReactNode
   programs?: undefined
   onProgramClick?: undefined
 }
@@ -223,6 +227,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     const programs = isEvents ? [] : props.programs
     const events = isEvents ? props.events : []
     const selectedRowKeys = isEvents ? (props.selectedRowKeys ?? []) : []
+    const renderEventsTooltipContent = isEvents ? props.renderEventsTooltipContent : undefined
 
     const scheduleOverlay: 'popover' | 'tooltip' =
       scheduleOverlayProp ?? (isEvents ? 'tooltip' : 'popover')
@@ -272,7 +277,12 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     const buildEventsPreview = (
       dayEvents: ProgramCalendarEventItem[],
       colorMap: ReturnType<typeof buildResolvedColorMap>
-    ) => <ApplicantCalendarEventPopoverContent events={dayEvents} colorMap={colorMap} />
+    ) =>
+      renderEventsTooltipContent ? (
+        renderEventsTooltipContent({ events: dayEvents, colorMap })
+      ) : (
+        <ApplicantCalendarEventPopoverContent events={dayEvents} colorMap={colorMap} />
+      )
 
     const dateFullCellRender = (date: Dayjs) => {
       const isCurrentMonth = date.isSame(currentMonth, 'month')

@@ -494,10 +494,6 @@
 }
 
 .participating-institutions-calendar-popover__row {
-  display: grid;
-  grid-template-columns: minmax(120px, 1fr) 21px minmax(92px, auto) 21px minmax(100px, auto);
-  align-items: center;
-  column-gap: 0;
   width: 100%;
 }
 
