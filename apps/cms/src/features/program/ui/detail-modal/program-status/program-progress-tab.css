@@ -81,12 +81,12 @@
   align-items: center;
 }
 
-/* 필터 필드: 같은 선상(공통 높이), 레이블·인풋 12px 간격 */
+/* 필터 필드: 같은 선상(공통 높이), 레이블·컨트롤 6px 간격 */
 .program-progress-tab__filter-field {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
   height: var(--filter-control-height, 44px);
   min-height: var(--filter-control-height, 44px);
   overflow: visible;
@@ -96,15 +96,14 @@
   overflow: visible !important;
 }
 
-/* 레이블: 공통 높이 + line-height로 한 줄 텍스트 세로 중앙 */
+/* 레이블: 한 줄, 행 높이 안에서 수직 중앙 (타이포는 filter-controls-common) */
 .program-progress-tab__filter-label {
   flex: 0 0 auto;
   white-space: nowrap;
-  height: var(--filter-control-height, 44px);
-  line-height: var(--filter-control-height, 44px) !important;
   margin: 0;
   padding: 0;
-  display: block;
+  display: flex;
+  align-items: center;
 }
 
 .program-progress-tab__filter-label .ant-typography {
@@ -117,12 +116,12 @@
   min-width: 0;
 }
 
-/* 교사/강사명 검색: 필터와 같은 공통 높이, 레이블·인풋 12px 간격 */
+/* 교사/강사명 검색: 필터와 같은 공통 높이, 레이블·인풋 6px 간격 */
 .program-progress-tab__filters .labeled-search-input {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
   height: var(--filter-control-height, 44px);
 }
 
@@ -130,9 +129,10 @@
   flex: 0 0 auto;
   white-space: nowrap;
   margin: 0;
-  height: var(--filter-control-height, 44px);
-  line-height: var(--filter-control-height, 44px) !important;
-  display: block;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  height: auto;
 }
 
 /* LabeledSearchInput: 테두리·높이는 내부 __input에만 (AppInput 래퍼는 투명) */
@@ -314,12 +314,6 @@
   .program-progress-tab__filter-col--btn {
     flex: 1 1 100% !important;
   }
-}
-
-.program-progress-tab__filter-field .program-progress-tab__filter-label {
-  font-size: var(--font-size-14);
-  font-weight: var(--font-weight-500);
-  color: #262626;
 }
 
 /* 탭·필터와 테이블 구분 디바이더 */

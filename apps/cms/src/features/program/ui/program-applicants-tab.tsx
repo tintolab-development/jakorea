@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Card, Table, Row, Col, Select, message } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
 import {
@@ -680,9 +680,7 @@ export function ProgramApplicantsTab({
                   </>
                 )}
                 <Col flex="none" className="program-applicants-tab__filter-col--btn">
-                  <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                    조회
-                  </AppButton>
+                  <FilterSearchButton onClick={handleSearch} />
                 </Col>
               </Row>
             </div>
