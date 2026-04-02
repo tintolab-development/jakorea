@@ -263,7 +263,7 @@
 .unified-filter-card__field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
+  gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
 }
 
 /* 검색 필드(AppInput) 박스가 페이지별 전역 규칙에 깨지지 않도록 강제 */
@@ -313,15 +313,8 @@
   align-items: center;
   min-height: var(--filter-label-height, 27px);
   height: var(--filter-label-height, 27px);
-  font-size: 16px;
-  font-weight: var(--font-weight-500);
-  color: var(--color-text-label);
   margin-bottom: 0;
   white-space: nowrap;
-}
-
-.unified-filter-card .labeled-search-input__label {
-  font-size: 16px;
 }
 
 .unified-filter-card .app-multi-select__trigger-text {
