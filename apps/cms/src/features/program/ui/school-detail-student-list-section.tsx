@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useStudentListFilterParams } from '../hooks/use-student-list-filter-params'
 import { Table, Input, Select, Row, Col } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
-import { AppButton } from '@/shared/ui/app-button'
+import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { formatLectureAttendanceCellDisplay } from '@/shared/lib/format-lecture-attendance-display'
@@ -464,9 +464,7 @@ export function SchoolDetailStudentListSection({
             </div>
           </Col>
           <Col flex="none" className="program-progress-tab__filter-col--btn">
-            <AppButton variant="primary" size="filter" onClick={handleStudentSearch}>
-              조회
-            </AppButton>
+            <FilterSearchButton onClick={handleStudentSearch} />
           </Col>
         </Row>
       </div>

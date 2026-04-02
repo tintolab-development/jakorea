@@ -8,7 +8,7 @@ import { Col, DatePicker, Input, Radio, Row, Select, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
-import { AppButton } from '@/shared/ui/app-button'
+import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
 import {
   mockPaymentOrderAdminInstructorList,
   mockPaymentOrderAdminProgramList,
@@ -302,9 +302,7 @@ export default function PaymentOrdersPage() {
               </Col>
               <Col flex="none" className="program-progress-tab__filter-col--btn">
                 <div className="payment-orders-page__filter-btn-slot">
-                  <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                    조회
-                  </AppButton>
+                  <FilterSearchButton onClick={handleSearch} />
                 </div>
               </Col>
             </Row>

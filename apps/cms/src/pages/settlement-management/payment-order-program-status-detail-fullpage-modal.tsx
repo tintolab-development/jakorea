@@ -12,7 +12,7 @@ import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
-import { AppButton } from '@/shared/ui/app-button'
+import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import {
   StatusDropdownCell,
@@ -454,9 +454,7 @@ export function PaymentOrderProgramStatusDetailFullPageModal({
               className="program-progress-tab__filter-col--btn payment-order-program-status-detail__filter-col--btn"
             >
               <div className="payment-order-program-status-detail__filter-btn-slot">
-                <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                  조회
-                </AppButton>
+                <FilterSearchButton onClick={handleSearch} />
               </div>
             </Col>
           </Row>
