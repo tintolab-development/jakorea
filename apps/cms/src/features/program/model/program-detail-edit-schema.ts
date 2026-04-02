@@ -113,6 +113,12 @@ export const programDetailEditSchema = z.object({
   // 임금 정보
   wageType: z.string().optional(),
   wagePricingTimeUnit: z.string().optional(),
+  /** 임금 책정 기준 — 단위 셀렉트(예: 시간) */
+  wagePricingMeasureLabel: z.string().optional(),
+  /** 임금 책정 기준 — 수치(예: 1) */
+  wagePricingQuantity: z.number().min(0, '0 이상을 입력해주세요').optional(),
+  /** 임금 책정 기준 — 기준(당) / 초과 / 이하 */
+  wagePricingCompareMode: z.enum(['per', 'over', 'under']).optional(),
   wagePricingBase: z.string().optional(),
   wagePricingLongDistance: z.string().optional(),
   wagePaymentItems: z.string().optional(),
@@ -216,6 +222,9 @@ export function programToDetailEditValues(
     programChannel: program.programChannel ?? undefined,
     wageType: undefined,
     wagePricingTimeUnit: undefined,
+    wagePricingMeasureLabel: undefined,
+    wagePricingQuantity: undefined,
+    wagePricingCompareMode: undefined,
     wagePricingBase: undefined,
     wagePricingLongDistance: undefined,
     wagePaymentItems: undefined,
