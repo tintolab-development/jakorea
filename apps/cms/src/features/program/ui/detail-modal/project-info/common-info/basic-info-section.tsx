@@ -20,6 +20,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { DividerVertical } from '@/shared/components/divider-vertical'
 import './basic-info-section.css'
 import {
   formatDate,
@@ -202,6 +203,7 @@ export function BasicInfoSection({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="대표 프로그램명"
+                            className="program-detail-info-tab__input--cell-full"
                           />
                         )}
                       />
@@ -237,6 +239,7 @@ export function BasicInfoSection({
                             value={field.value ?? ''}
                             placeholder="세부 프로그램명"
                             status={form.formState.errors.title ? 'error' : undefined}
+                            className="program-detail-info-tab__input--cell-full"
                           />
                         )}
                       />
@@ -1353,6 +1356,10 @@ export function BasicInfoSection({
                           className="program-detail-info-tab__date-picker"
                         />
                       )}
+                    />
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
                     />
                     <Controller
                       name="resultAnnouncementMethod"
