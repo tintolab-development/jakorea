@@ -154,7 +154,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                       }
                     >
                       {round.roundNumber}회차 강의 분량 및 내용
-                      {isEditMode && round.roundNumber <= 4 ? (
+                      {isFormEdit && round.roundNumber <= 4 ? (
                         <span className="program-detail-info-tab__required">*</span>
                       ) : null}
                     </th>

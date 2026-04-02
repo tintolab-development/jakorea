@@ -254,12 +254,14 @@ function ThumbnailImageRow({
 function AdditionalContentRow({
   program,
   isEditMode,
+  isFormEdit,
   editorOpen,
   editorHostRef,
   showRequiredOnTh,
 }: {
   program: Program
   isEditMode: boolean
+  isFormEdit: boolean
   editorOpen: boolean
   editorHostRef: React.RefObject<HTMLDivElement | null>
   showRequiredOnTh: boolean
@@ -268,7 +270,7 @@ function AdditionalContentRow({
     <tr>
       <th>
         추가 내용
-        {showRequiredOnTh && isEditMode ? (
+        {showRequiredOnTh && isFormEdit ? (
           <span className="program-detail-info-tab__required">*</span>
         ) : null}
       </th>
@@ -407,12 +409,12 @@ export function DetailInfoSection({
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
             guideLines={DEFAULT_THUMBNAIL_GUIDE}
-            showRequiredStar={isEditMode}
+            showRequiredStar={isFormEdit}
           />
         )}
         <TextAreaFieldRow
           label="프로그램 설명"
-          showRequiredStar={isEditMode}
+          showRequiredStar={isFormEdit}
           isFormEdit={isFormEdit}
           form={f}
           name="description"
@@ -423,7 +425,7 @@ export function DetailInfoSection({
         />
         <TextAreaFieldRow
           label="모집 안내"
-          showRequiredStar={isEditMode}
+          showRequiredStar={isFormEdit}
           isFormEdit={isFormEdit}
           form={f}
           name="recruitmentGuide"
@@ -434,7 +436,7 @@ export function DetailInfoSection({
         />
         <TextAreaFieldRow
           label="학습 지원 내용"
-          showRequiredStar={isEditMode}
+          showRequiredStar={isFormEdit}
           isFormEdit={isFormEdit}
           form={f}
           name="learningSupportContent"
@@ -447,9 +449,10 @@ export function DetailInfoSection({
         <AdditionalContentRow
           program={program}
           isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
           editorOpen={editorOpen}
           editorHostRef={editorHostRef}
-          showRequiredOnTh
+          showRequiredOnTh={true}
         />
         <AttachmentRowStandard
           isEditMode={isEditMode}
@@ -548,6 +551,7 @@ export function InstructorDetailInfoSection({
         <AdditionalContentRow
           program={program}
           isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
           editorOpen={editorOpen}
           editorHostRef={editorHostRef}
           showRequiredOnTh={false}
@@ -663,6 +667,7 @@ export function VolunteerDetailInfoSection({
         <AdditionalContentRow
           program={program}
           isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
           editorOpen={editorOpen}
           editorHostRef={editorHostRef}
           showRequiredOnTh={false}
