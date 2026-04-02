@@ -1,0 +1,172 @@
+/**
+ * 대시보드 테이블형 위젯 공통 스타일
+ * 모집 신청 현황 · 프로그램 별 문의 현황
+ */
+
+.dashboard-widget-table {
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-widget-table .ant-card-body {
+  padding: 0 var(--spacing-16) 20px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 테이블 영역만 세로 스크롤 */
+.dashboard-widget-table .ant-card-body .ant-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.dashboard-widget-table .ant-card-body .ant-table-wrapper .ant-spin-nested-loading,
+.dashboard-widget-table .ant-card-body .ant-table-wrapper .ant-table-container {
+  height: 100%;
+}
+
+.dashboard-widget-table__data.ant-table-wrapper .ant-table {
+  table-layout: fixed;
+  width: 100%;
+  padding-top: 1px;
+}
+
+/* 헤더 고정 */
+.dashboard-widget-table__data .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 44px !important;
+  box-shadow: 0 1px 0 var(--color-border-skeleton, #f0f0f0);
+  background: #f5f6f7;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center !important;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  padding: var(--spacing-10) var(--spacing-12);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  white-space: nowrap;
+}
+
+.dashboard-widget-table__data .ant-table-thead > tr > th:not(:last-child) {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.dashboard-widget-table__data .ant-table-tbody > tr > td {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  padding: var(--spacing-10) var(--spacing-12);
+  height: 47px !important;
+  min-height: 47px !important;
+  max-height: 47px !important;
+  vertical-align: middle;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.dashboard-widget-table__data .ant-table-tbody > tr > td.dashboard-widget-table__cell--status {
+  vertical-align: middle;
+}
+
+.dashboard-widget-table__data .ant-table-tbody > tr > td:not(:last-child) {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr,
+.dashboard-widget-table__data .ant-table-tbody > tr {
+  height: 47px !important;
+  min-height: 47px !important;
+  max-height: 47px !important;
+}
+
+.dashboard-widget-table__data .ant-table-tbody > tr:hover > td {
+  background: var(--color-table-row-hover) !important;
+}
+
+.dashboard-widget-table .widget-more-button {
+  color: var(--color-text-primary) !important;
+}
+
+.dashboard-widget-table .widget-more-button:hover {
+  color: var(--color-text-primary) !important;
+  opacity: 0.8;
+}
+
+/* 문의 현황 — 답변 대기 클릭 셀 */
+.dashboard-widget-table__pending-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 47px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #017eaf;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.dashboard-widget-table__pending-inner {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.dashboard-widget-table__pending-text {
+  display: inline-block;
+}
+
+.dashboard-widget-table__pending-dot {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  transform: translate(calc(50% + 3.5px), calc(-50% + 7px));
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e4223f;
+  flex-shrink: 0;
+}
+
+.dashboard-widget-table__pending-btn:hover {
+  text-decoration: underline;
+}
+
+.dashboard-widget-table__count--muted {
+  color: #3d3d3d;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

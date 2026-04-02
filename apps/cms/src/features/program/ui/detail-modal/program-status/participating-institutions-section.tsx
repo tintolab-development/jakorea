@@ -406,7 +406,7 @@ export function ParticipatingInstitutionsSection({
         title: '교재 배송 현황',
         dataIndex: 'textbookStatus',
         key: 'textbookStatus',
-        width: 152,
+        width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (

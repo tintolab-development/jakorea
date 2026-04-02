@@ -266,6 +266,15 @@
   gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
 }
 
+.unified-filter-card__field--radio {
+  min-width: 0;
+}
+
+.unified-filter-card__field--radio .app-radio-group.ant-radio-group {
+  min-height: var(--filter-control-height, 44px);
+  align-items: center;
+}
+
 /* 검색 필드(AppInput) 박스가 페이지별 전역 규칙에 깨지지 않도록 강제 */
 .unified-filter-card .labeled-search-input .app-input.app-input--filter {
   min-width: 0 !important;

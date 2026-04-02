@@ -150,7 +150,14 @@ export function Sidebar() {
           style={sidebarChrome}
           items={menuItems}
           onClick={({ key }) => {
-            if (typeof key === 'string' && key.startsWith('/')) navigate(key)
+            // 기존: if (typeof key === 'string' && key.startsWith('/')) navigate(key)
+            if (typeof key !== 'string' || !key.startsWith('/')) return
+            if (key === '/programs/education') {
+              window.alert('준비 중 입니다.')
+              // navigate(key)
+              return
+            }
+            navigate(key)
           }}
         />
       </div>

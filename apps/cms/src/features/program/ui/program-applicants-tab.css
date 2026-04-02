@@ -224,9 +224,9 @@
 .program-applicants-tab .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   padding-top: 0;
   padding-bottom: 0;
   overflow: visible;
@@ -235,9 +235,9 @@
 
 .program-applicants-tab .status-dropdown-cell__status-trigger--open {
   box-sizing: border-box !important;
-  width: 152px !important;
-  min-width: 152px !important;
-  max-width: 152px !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
 }
 
 .program-applicants-tab .ant-table-tbody

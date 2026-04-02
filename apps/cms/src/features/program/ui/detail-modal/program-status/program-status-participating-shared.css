@@ -46,9 +46,7 @@
     min-width: 0;
   }
 
-  .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col:nth-child(3n) {
+  .program-status-participating .unified-filter-card__fields-inner > .ant-col:nth-child(3n) {
     margin-right: 0 !important;
   }
 }
@@ -58,15 +56,11 @@
     flex: 1 1 calc((100% - 12px) / 2) !important;
   }
 
-  .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col:nth-child(3n) {
+  .program-status-participating .unified-filter-card__fields-inner > .ant-col:nth-child(3n) {
     margin-right: 12px !important;
   }
 
-  .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col:nth-child(2n) {
+  .program-status-participating .unified-filter-card__fields-inner > .ant-col:nth-child(2n) {
     margin-right: 0 !important;
   }
 }

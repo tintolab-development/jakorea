@@ -37,108 +37,8 @@
   width: 100%;
 }
 
-/* 필터 행: 전체 너비, 4개 필터 컬럼 균등 분배 */
-.payment-order-program-status-detail__filters .payment-order-program-status-detail__filter-row {
-  width: 100%;
-  flex-wrap: nowrap !important;
-}
-
-.payment-order-program-status-detail__filters
-  .payment-order-program-status-detail__filter-row
-  > .ant-col.payment-order-program-status-detail__filter-col {
-  flex: 1 1 0 !important;
-  min-width: 0;
-  max-width: none;
-  align-items: stretch;
-}
-
-.payment-order-program-status-detail__filters
-  .payment-order-program-status-detail__filter-row
-  > .ant-col.payment-order-program-status-detail__filter-col
-  > .program-progress-tab__filter-field {
-  width: 100%;
-  min-width: 0;
-  align-self: flex-end;
-}
-
-.payment-order-program-status-detail__filters
-  .payment-order-program-status-detail__filter-row
-  > .ant-col.payment-order-program-status-detail__filter-col--btn {
-  flex: 0 0 auto !important;
-}
-
-/* 필터 스택·컨트롤이 컬럼 너비 100% 채움 */
-.payment-order-program-status-detail__root .payment-order-program-status-detail__filter-stack {
-  width: 100%;
-  min-width: 0;
-}
-
-.payment-order-program-status-detail__root
-  .payment-order-program-status-detail__filter-stack
-  .participating-institutions-section__filter-input,
-.payment-order-program-status-detail__root
-  .payment-order-program-status-detail__filter-stack
-  .ant-input-affix-wrapper {
-  width: 100% !important;
-  max-width: 100%;
-}
-
-.payment-order-program-status-detail__root .payment-order-program-status-detail__filter-stack .ant-select {
-  width: 100% !important;
-  max-width: 100%;
-}
-
-.payment-order-program-status-detail__root
-  .payment-order-program-status-detail__filter-stack
-  .ant-select
-  .ant-select-selector {
-  width: 100% !important;
-}
-
-.payment-order-program-status-detail__root
-  .participating-institutions-section__filters
-  .payment-order-program-status-detail__filter-stack.program-progress-tab__filter-field {
-  height: 71px;
-  min-height: 71px;
-  max-height: 71px;
-  box-sizing: border-box;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 6px;
-  overflow: visible;
-}
-
-.payment-order-program-status-detail__root
-  .participating-institutions-section__filters
-  .payment-order-program-status-detail__filter-stack
-  > .program-progress-tab__filter-label {
-  flex: 0 0 21px !important;
-  height: 21px !important;
-  min-height: 21px !important;
-  max-height: 21px !important;
-  line-height: 21px !important;
-  display: flex !important;
-  align-items: center;
-  margin: 0 !important;
+.payment-order-program-status-detail__filters .unified-filter-card .ant-card-body {
   padding: 0 !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.payment-order-program-status-detail__root
-  .participating-institutions-section__filters
-  .payment-order-program-status-detail__filter-stack
-  > *:not(.program-progress-tab__filter-label) {
-  flex: 0 0 44px;
-  min-height: 44px;
-  max-height: 44px;
-  margin: 0;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
 }
 
 .payment-order-program-status-detail__table-wrap.participating-institutions-section__table-wrap {
@@ -148,17 +48,25 @@
   overflow: auto;
 }
 
-.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-container {
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-container {
   border-inline-start: none !important;
   border-inline-end: none !important;
 }
 
-.payment-order-program-status-detail__table.participating-institutions-section__table table.ant-table {
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  table.ant-table {
   border-inline: none !important;
 }
 
-.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-thead > tr > th,
-.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-tbody > tr > td {
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th,
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td {
   border-inline-start: none;
   border-inline-end: none;
 }
@@ -174,11 +82,17 @@
   border-inline-start: 1px solid var(--color-border-light, #e8e8e8);
 }
 
-.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-thead > tr > th {
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th {
   border-bottom: 1px solid var(--color-border-light, #e8e8e8);
 }
 
-.payment-order-program-status-detail__table.participating-institutions-section__table .ant-table-tbody > tr > td {
+.payment-order-program-status-detail__table.participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td {
   border-bottom: 1px solid var(--color-border-light, #e8e8e8);
 }
 
@@ -254,9 +168,9 @@
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   height: 54px !important;
   min-height: 54px !important;
   max-height: 54px !important;
@@ -305,7 +219,9 @@
   box-shadow: none !important;
 }
 
-.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm:hover:not(:disabled) {
+.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm:hover:not(
+    :disabled
+  ) {
   border-color: rgba(0, 0, 0, 0.22) !important;
   color: var(--default-BK, #3d3d3d) !important;
   background: #fff !important;
@@ -315,38 +231,6 @@
   border-color: rgba(0, 0, 0, 0.25) !important;
   color: var(--default-BK, #3d3d3d) !important;
   background: #fff !important;
-}
-
-/* 필터: 조회 버튼 슬롯 높이 (지급조서 확인 페이지와 동일) */
-.payment-order-program-status-detail__filter-btn-slot {
-  height: 71px;
-  min-height: 71px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-start;
-}
-
-.payment-order-program-status-detail__range-picker.ant-picker {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  height: 44px;
-  padding: 0 14px 0 16px;
-  border-radius: 8px;
-  border: 1px solid #c4cdd1;
-  background: var(--default-WT, #fff);
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.payment-order-program-status-detail__range-picker .ant-picker-input > input {
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
 }
 
 .payment-order-program-status-detail__below-divider.participating-institutions-section__below-divider {
@@ -363,7 +247,9 @@
 }
 
 /* 기본 정보 표: 집계 상태 문구 좌측 정렬 */
-.payment-order-program-status-detail__basic-block .program-detail-info-tab__table td:has(.payment-order-admin__status-text) {
+.payment-order-program-status-detail__basic-block
+  .program-detail-info-tab__table
+  td:has(.payment-order-admin__status-text) {
   text-align: left;
   vertical-align: middle;
 }

@@ -12,15 +12,15 @@
 }
 
 .payment-order-admin__status-text--pending {
-  color: #389e0d;
+  color: var(--color-green, #1e8c29);
 }
 
 .payment-order-admin__status-text--confirmed {
-  color: #01a1af;
+  color: var(--color-blue, #017eaf);
 }
 
 .payment-order-admin__status-text--correction {
-  color: #cf1322;
+  color: var(--color-red, #c32f4a);
 }
 
 .payment-order-admin__status-text--rejected {

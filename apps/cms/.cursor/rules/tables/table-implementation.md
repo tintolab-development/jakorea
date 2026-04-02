@@ -296,5 +296,5 @@ const columns: ColumnsType<MyRow> = useMemo(
 
 | 용도 | 파일 |
 | --- | --- |
-| 강사 지급 상세 기본정보(단일 테이블) | `pages/settlement-management/payment-order-instructor-status-detail-fullpage-modal.tsx` |
+| 강사 지급 상세 기본정보(단일 테이블) | `pages/settlement-management/payment-order-instructor-basic-info.tsx` |
 | 산출 내역서 기본정보(4열 program-detail-info-tab·3행·디바이더·반려) | `pages/settlement-management/payment-order-program-calculation-statement-modal.tsx` / `.css` |

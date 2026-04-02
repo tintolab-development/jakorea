@@ -17,18 +17,19 @@ import { AppMultiSelect } from './app-multi-select'
 import type { AppMultiSelectOption } from './app-multi-select'
 import { AppSelect } from './app-select'
 import { AppDateRangePicker } from './app-datepicker'
+import { AppRadio } from './app-radio'
 import './unified-filter-card.css'
 
 export interface FilterFieldConfig {
   /** 필터 키 */
   key: string
   /** 필터 타입 */
-  type: 'search' | 'select' | 'dateRange' | 'multiSelect'
+  type: 'search' | 'select' | 'dateRange' | 'multiSelect' | 'radio'
   /** 레이블 텍스트 */
   label: string
   /** placeholder 텍스트 */
   placeholder?: string
-  /** Select 옵션 (type이 'select'일 때) */
+  /** Select / Radio 옵션 (type이 'select' | 'radio'일 때) */
   options?: Array<{ label: string; value: string | number }>
   /** 다중 선택 옵션 (type이 'multiSelect'일 때). value는 문자열 */
   multiSelectOptions?: AppMultiSelectOption[]
@@ -180,6 +181,26 @@ export function UnifiedFilterCard({
 
   // 필터 렌더링 함수
   const renderField = (field: FilterFieldConfig) => {
+    if (field.type === 'radio') {
+      return (
+        <Col key={field.key} flex={colFlex(field, '0 0 auto')} className={colClassFor(field)}>
+          <div className="unified-filter-card__field unified-filter-card__field--radio">
+            <span className="unified-filter-card__label">{field.label}</span>
+            <AppRadio.Group
+              value={filters[field.key]}
+              onChange={e => onFilterChange(field.key, e.target.value)}
+            >
+              {(field.options ?? []).map(opt => (
+                <AppRadio key={String(opt.value)} value={opt.value}>
+                  {opt.label}
+                </AppRadio>
+              ))}
+            </AppRadio.Group>
+          </div>
+        </Col>
+      )
+    }
+
     if (field.type === 'search') {
       return (
         <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>

@@ -47,10 +47,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-16);
-  margin-bottom: var(--spacing-16);
-  margin-top: calc(-1 * var(--spacing-24)); /* ~님 반갑습니다 헤더를 상단으로 올림 */
-  padding: var(--spacing-16) 0 0;
+  margin-bottom: 16px;
 }
 
 .dashboard-toolbar-left {
@@ -62,17 +59,19 @@
 }
 
 .dashboard-toolbar-title {
-  margin: 0;
-  font-size: var(--font-size-18);
-  font-weight: var(--font-weight-600);
-  line-height: 1.4;
-  color: var(--color-text-label);
+  color: var(--default-BK, #3d3d3d);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 120%; /* 28.8px */
 }
 
 .dashboard-toolbar-description {
-  font-size: var(--font-size-13);
-  color: var(--color-text-secondary);
-  line-height: 1.4;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
 }
 
 .dashboard-toolbar-right {
@@ -115,7 +114,7 @@
   flex-direction: column;
 }
 
-.dashboard-widgets-left .customer-inquiry-status-widget {
+.dashboard-widgets-left .dashboard-widget-table--customer-inquiry {
   flex: none;
 }
 
@@ -283,27 +282,27 @@
 }
 
 /* 모집 신청 현황 위젯 50%일 때: 카드·본문·테이블이 콘텐츠 높이만 사용해 하단 빈 공간 제거, 컨테이너 radius 유지 */
-.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget) > .ant-card {
+.dashboard-widget-slot[data-col-span='12']:has(.dashboard-widget-table--recruitment) > .ant-card {
   flex: 0 0 auto;
   height: auto;
   border-radius: var(--radius-8);
   overflow: hidden;
 }
-.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget)
-  .recruitment-status-widget
+.dashboard-widget-slot[data-col-span='12']:has(.dashboard-widget-table--recruitment)
+  .dashboard-widget-table--recruitment
   .ant-card-body {
   flex: 0 1 auto;
 }
-.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget)
-  .recruitment-status-widget
+.dashboard-widget-slot[data-col-span='12']:has(.dashboard-widget-table--recruitment)
+  .dashboard-widget-table--recruitment
   .ant-card-body
   .ant-table-wrapper {
   flex: 0 1 auto;
 }
 
 /* 50% 너비 슬롯: 긴 헤더 라벨 한 줄 유지를 위해 좌우 패딩 축소 */
-.dashboard-widget-slot[data-col-span='12']:has(.recruitment-status-widget)
-  .recruitment-status-widget__table
+.dashboard-widget-slot[data-col-span='12']:has(.dashboard-widget-table--recruitment)
+  .dashboard-widget-table__data
   .ant-table-thead
   > tr
   > th {

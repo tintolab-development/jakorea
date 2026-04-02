@@ -174,7 +174,7 @@ export function SettlementStatusCell({ record, onChange, ... }) {
 | 공통 셀 컴포넌트 | `shared/components/status-dropdown-cell.tsx` |
 | 공통 셀 스타일 | `shared/components/status-dropdown-cell.css` |
 | 프로그램 진행 현황 래퍼 | `shared/components/program-lifecycle-status-cell.tsx` |
-| 대시보드 위젯 테이블 | `features/dashboard/ui/recruitment-status-widget.tsx` / `.css` |
+| 대시보드 위젯 테이블 | `features/dashboard/ui/recruitment-status-widget.tsx`, `dashboard-widget-table.css` |
 | 교육 프로그램 테이블 | `features/program/ui/program-list.tsx` / `program-list.css` |
 
 ---
@@ -201,4 +201,4 @@ export function SettlementStatusCell({ record, onChange, ... }) {
 | 행 클릭 전파 차단 | 셀을 `<div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-block' }}>` 로 감싸기 |
 | 너비 | 신청자 프로그램 승인 현황과 동일: 컬럼·`td.status-dropdown-cell__cell-status` **152px**, 배지 **120px**(`app-status-badge`). 드롭다운 오버레이는 `body`에 붙으므로 전역 `status-dropdown-cell.css`(152px)와 맞출 것 — 배지만 넓히면 메뉴·트리거와 어긋남. |
 
-참고 구현: `pages/settlement-management/payment-order-program-status-detail-fullpage-modal.tsx`, `payment-order-instructor-status-detail-fullpage-modal.tsx`, 배지 `shared/components/payment-order-line-processing-status-badge.tsx` · `textbook-status-badge.css`(confirmed / correction; 라인 변형은 말줄임만).
+참고 구현: `pages/settlement-management/payment-order-program-settlement-table.tsx`, `payment-order-instructor-settlement-table.tsx`, 배지 `shared/components/payment-order-line-processing-status-badge.tsx` · `textbook-status-badge.css`(confirmed / correction; 라인 변형은 말줄임만).

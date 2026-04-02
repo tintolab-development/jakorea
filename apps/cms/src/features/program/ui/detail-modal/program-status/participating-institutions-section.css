@@ -162,8 +162,12 @@
   color: var(--default-WT, #fff) !important;
 }
 
-.participating-instructors-section__btn-add-instructor.app-button.ant-btn-primary:hover:not(:disabled),
-.participating-instructors-section__btn-privacy-detail.app-button.ant-btn-primary:hover:not(:disabled) {
+.participating-instructors-section__btn-add-instructor.app-button.ant-btn-primary:hover:not(
+    :disabled
+  ),
+.participating-instructors-section__btn-privacy-detail.app-button.ant-btn-primary:hover:not(
+    :disabled
+  ) {
   border-color: rgba(0, 0, 0, 0.06) !important;
   background: color-mix(in srgb, var(--JA-mint-01, #01a1af) 88%, #000) !important;
   color: var(--default-WT, #fff) !important;
@@ -234,7 +238,8 @@
 }
 
 /* 세로 flex 자식 기본 shrink로 카드 본문이 잘리는 것 방지 — 스크롤은 부모에 위임 */
-.participating-instructors-section__calendar-right-cards > .participating-instructors-section__calendar-card {
+.participating-instructors-section__calendar-right-cards
+  > .participating-instructors-section__calendar-card {
   flex-shrink: 0;
 }
 
@@ -307,7 +312,9 @@
   border-radius: 6px;
 }
 
-.participating-instructors-section__calendar-card-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+.participating-instructors-section__calendar-card-checkbox
+  .ant-checkbox-checked
+  .ant-checkbox-inner {
   background-color: #0097a7;
   border-color: #0097a7;
 }

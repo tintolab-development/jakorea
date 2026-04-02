@@ -263,9 +263,9 @@
 .school-detail-fullpage-view .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   padding-top: 0;
   padding-bottom: 0;
   overflow: visible;

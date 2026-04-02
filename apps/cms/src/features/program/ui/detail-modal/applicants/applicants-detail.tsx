@@ -388,7 +388,7 @@ export function ApplicantDetails({
         title: '프로그램 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 152,
+        width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
@@ -539,7 +539,7 @@ export function ApplicantDetails({
         title: '프로그램 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 152,
+        width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantInstructorRow) => (

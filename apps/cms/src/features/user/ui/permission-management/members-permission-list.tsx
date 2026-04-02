@@ -365,7 +365,7 @@ export function MembersPermissionList({
                 </AppButton>
                 <AppButton
                   variant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
-                  size="filter"
+                  size="filter-wide"
                   onClick={handleToggleListPrivacyMask}
                   disabled={selectedRowKeys.length !== 1}
                 >
