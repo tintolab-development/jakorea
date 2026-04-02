@@ -3,7 +3,6 @@
  */
 
 import { Fragment, type ReactNode } from 'react'
-import { Input } from 'antd'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { Controller } from 'react-hook-form'
 import { AppInput } from '@/shared/ui/app-input'
@@ -30,8 +29,6 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { ProjectInfoDetailInfoSection } from './project-info-detail-info-section'
 import './project-info-recruitment-section.css'
-
-const { TextArea } = Input
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 const toIso = (d: Dayjs | null) => (d ? d.toISOString() : undefined)
@@ -432,7 +429,7 @@ export function ParticipantRecruitmentSection({
                           const n = parseInt(e.target.value, 10)
                           field.onChange(isNaN(n) ? undefined : n)
                         }}
-                        className="program-detail-info-tab__capacity-input"
+                        className="program-detail-info-tab__max-class-count-input"
                       />
                     )}
                   />
@@ -525,6 +522,7 @@ export function ParticipantRecruitmentSection({
                     contactName={sponsorName}
                     contactPhone={program.contactPhone}
                     contactEmail={program.contactEmail}
+                    padEmptySegments
                   />
                 )}
               </td>
@@ -1384,12 +1382,11 @@ export function VolunteerRecruitmentSection({
                     name="oneLineIntroduction"
                     control={form.control}
                     render={({ field }) => (
-                      <TextArea
+                      <AppInput
                         {...field}
                         value={field.value ?? ''}
-                        rows={3}
                         placeholder="비고"
-                        className="program-detail-info-tab__content-textarea"
+                        className="program-detail-info-tab__notes-input"
                       />
                     )}
                   />

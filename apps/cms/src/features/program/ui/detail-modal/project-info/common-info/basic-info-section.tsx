@@ -116,12 +116,11 @@ export function BasicInfoSection({
   const targetLabel = program.targetLevel
     ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
     : '-'
-  const contactLine1Parts = [
-    sponsorName && `문의처 : ${sponsorName}`,
-    program.contactPhone && `Tel : ${program.contactPhone}`,
-    program.contactEmail && `E-mail : ${program.contactEmail}`,
-  ].filter(Boolean)
-  const contactLine1 = contactLine1Parts.length ? contactLine1Parts.join(' | ') : '-'
+  const contactLine1 = [
+    `문의처 : ${(sponsorName ?? '').trim() || '-'}`,
+    `Tel : ${(program.contactPhone ?? '').trim() || '-'}`,
+    `E-mail : ${(program.contactEmail ?? '').trim() || '-'}`,
+  ].join(' | ')
   const contactLine2 = '운영시간 : 평일 9:00~16:00 (점심시간 12:00~13:00 제외)'
 
   /* 공통 정보 탭 전용: 스크린샷 구조 — 상단 블록(등록일/대표·세부 프로그램명/사업 운영 기간/참여자·후원사) + 하단 블록(팀구분/교육 과정/IP·IPS 등). 수정 모드 시 수정 가능 필드만 입력 컴포넌트로. */
@@ -239,7 +238,7 @@ export function BasicInfoSection({
                             value={field.value ?? ''}
                             placeholder="세부 프로그램명"
                             status={form.formState.errors.title ? 'error' : undefined}
-                            className="program-detail-info-tab__input--cell-full"
+                            className="program-detail-info-tab__input--detail-program-title"
                           />
                         )}
                       />
