@@ -5,7 +5,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { AppButton } from '@/shared/ui/app-button'
@@ -19,6 +19,7 @@ import { INSTRUCTOR_ROLE_LABELS } from '../model/school-detail-types'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
+  TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import type {
   ParticipatingInstructorRow,
@@ -137,6 +138,8 @@ const SESSION_STATUS_LABELS: Record<string, string> = {
   not_planned: '미진행 희망',
 }
 
+const TEXTBOOK_STATUS_OPTIONS: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
+
 /** td 내 세로 디바이더 — 1×13px, default-BK @ 50%, 양옆 gap 12px */
 function TdDivider() {
   return <span className="school-detail-fullpage-view__td-divider" aria-hidden />
@@ -155,6 +158,14 @@ function withTdDivider(segments: ReactNode[]) {
   )
 }
 
+/** 자택 주소 컬럼 표시: 개인정보 마스킹 대신 앞 두 단위(공백 기준)까지만 노출 */
+function formatHomeAddressToSecondUnit(address?: string): string {
+  if (!address) return '-'
+  const parts = address.trim().split(/\s+/).filter(Boolean)
+  if (parts.length <= 2) return parts.join(' ')
+  return `${parts[0]} ${parts[1]}`
+}
+
 export interface SchoolDetailFullpageViewProps {
   program: Program
   detail: SchoolDetailForModal
@@ -171,6 +182,8 @@ export interface SchoolDetailFullpageViewProps {
   instructorList: ParticipatingInstructorRow[]
   /** 승인 취소 버튼 클릭 후 컨펌 시 호출 (프로그램 승인 현황 → 승인 취소) */
   onCancelApproval?: (schoolId: string) => void
+  /** 신청 정보 탭 교재 현황 태그 클릭 시 상태 변경 (참여 기관 목록·mock과 동기화) */
+  onTextbookStatusChange?: (schoolId: string, status: TextbookStatusKey) => void
 }
 
 export function SchoolDetailFullpageView({
@@ -186,6 +199,7 @@ export function SchoolDetailFullpageView({
   savedInstructorPatches = {},
   instructorList,
   onCancelApproval,
+  onTextbookStatusChange,
 }: SchoolDetailFullpageViewProps) {
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
@@ -211,9 +225,14 @@ export function SchoolDetailFullpageView({
     showApprovalAlarmSection: boolean
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
   const privacyMasked = !personalInfoRevealed
+
+  useEffect(() => {
+    setTextbookStatusDropdownOpen(false)
+  }, [detail.id])
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const instructors =
@@ -443,7 +462,7 @@ export function SchoolDetailFullpageView({
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.address(v) : v) : '-'),
+        render: (v: string | undefined) => formatHomeAddressToSecondUnit(v),
       },
       {
         title: '기관과의 거리',
@@ -454,19 +473,23 @@ export function SchoolDetailFullpageView({
         render: (v: string | undefined) => v ?? '-',
       },
       {
-        title: '교육 담당 날짜',
+        title: '교육 담당 날짜 및 수업 시간',
         dataIndex: 'assignedDate',
         key: 'assignedDate',
-        width: 140,
+        width: 280,
         align: 'center',
-        render: (v: string | undefined) => v ?? '-',
-      },
-      {
-        title: '교육 담당 수업 시간',
-        dataIndex: 'assignedTime',
-        key: 'assignedTime',
-        width: 180,
-        render: (v: string | undefined) => v ?? '-',
+        render: (v: string | undefined, record: AssignedInstructorDisplayRow) => {
+          const date = v ?? '-'
+          const time = record.assignedTime ?? '-'
+          if (!date && !time) return '-'
+          return (
+            <span className="school-detail-fullpage-view__assigned-datetime-cell">
+              <span>{date}</span>
+              <TdDivider />
+              <span>{time}</span>
+            </span>
+          )
+        },
       },
       {
         title: '교육 담당 차시',
@@ -509,7 +532,7 @@ export function SchoolDetailFullpageView({
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.address(v) : v) : '-'),
+        render: (v: string | undefined) => formatHomeAddressToSecondUnit(v),
       },
       {
         title: '기관과의 거리',
@@ -534,19 +557,23 @@ export function SchoolDetailFullpageView({
         ),
       },
       {
-        title: '교육 희망 날짜',
+        title: '교육 희망 날짜 및 수업 시간',
         dataIndex: 'hopeDate',
         key: 'hopeDate',
-        width: 140,
+        width: 280,
         align: 'center',
-        render: (v: string | undefined) => v ?? '-',
-      },
-      {
-        title: '교육 희망 수업 시간',
-        dataIndex: 'hopeTime',
-        key: 'hopeTime',
-        width: 180,
-        render: (v: string | undefined) => v ?? '-',
+        render: (v: string | undefined, record: WaitingInstructorRow) => {
+          const date = v ?? '-'
+          const time = record.hopeTime ?? '-'
+          if (!date && !time) return '-'
+          return (
+            <span className="school-detail-fullpage-view__assigned-datetime-cell">
+              <span>{date}</span>
+              <TdDivider />
+              <span>{time}</span>
+            </span>
+          )
+        },
       },
       {
         title: '교육 희망 차시',
@@ -611,8 +638,31 @@ export function SchoolDetailFullpageView({
             : mergedDetail.textbookQuantity != null
               ? `${mergedDetail.textbookQuantity}권`
               : '-'
-        const status = <TextbookStatusBadge status={mergedDetail.textbookStatus} />
-        return withTdDivider([name, kitsAndQty, status])
+        const status =
+          onTextbookStatusChange != null ? (
+            <StatusDropdownCell<TextbookStatusKey>
+              status={mergedDetail.textbookStatus}
+              statusOptions={TEXTBOOK_STATUS_OPTIONS}
+              renderBadge={s => <TextbookStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
+              isOpen={textbookStatusDropdownOpen}
+              onOpenChange={setTextbookStatusDropdownOpen}
+            />
+          ) : (
+            <TextbookStatusBadge status={mergedDetail.textbookStatus} />
+          )
+        return (
+          <div className="school-detail-fullpage-view__textbook-value-row">
+            <span className="school-detail-fullpage-view__textbook-value-row__segment">{name}</span>
+            <TdDivider />
+            <span className="school-detail-fullpage-view__textbook-value-row__segment">
+              {kitsAndQty}
+            </span>
+            <TdDivider />
+            <span className="school-detail-fullpage-view__textbook-value-row__status">{status}</span>
+          </div>
+        )
       })(),
     },
     {
@@ -913,7 +963,7 @@ export function SchoolDetailFullpageView({
                   <AppButton
                     variant="primary"
                     size="large"
-                    className="participating-institutions-section__btn-approve"
+                    className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (instructors.length >= MOCK_REQUIRED_INSTRUCTORS) {
                         setAddAssignOverflowOpen(true)
@@ -968,7 +1018,7 @@ export function SchoolDetailFullpageView({
                   <AppButton
                     variant="primary"
                     size="large"
-                    className="participating-institutions-section__btn-approve"
+                    className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (selectedWaitingKeys.length === 0) {
                         message.warning('배정할 강사를 선택해 주세요.')

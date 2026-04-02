@@ -337,7 +337,7 @@ export function ParticipatingInstitutionsSection({
         width: 200,
       },
       {
-        title: '강의 회차 별 교육 진행 날짜',
+        title: '강의 회차 별 교육 진행 날짜 및 시간',
         key: 'sessions',
         width: 480,
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
@@ -477,6 +477,7 @@ export function ParticipatingInstitutionsSection({
           savedInstructorPatches={savedInstructorPatches}
           instructorList={instructorHook.instructorList}
           onCancelApproval={handleSchoolApprovalCancel}
+          onTextbookStatusChange={handleTextbookStatusChange}
         />
       </div>
     )
