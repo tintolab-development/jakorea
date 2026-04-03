@@ -345,7 +345,8 @@ export function ProgramDetailFullPageModal({
   const handleSidebarSelectTop = (key: string) => {
     const k = key as LnbKey
     if (k === 'applicants') {
-      setLnb('applicants')
+      // 프로젝트 정보 등에서 남은 tab=instructors 등이 신청자 목록으로 이월되지 않도록 상위 클릭 시 항상 신청 기관
+      setLnb('applicants', 'institutions')
     } else if (k === 'progress') {
       setLnb(
         'progress',
