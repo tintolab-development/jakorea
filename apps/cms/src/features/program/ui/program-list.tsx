@@ -903,6 +903,7 @@ export function ProgramList({
             economyScheduledFilterLayout
               ? 'program-list-content-wrapper--economy-scheduled-filters'
               : '',
+            showCalendarView ? 'program-list-content-wrapper--calendar-list-toggle' : '',
           ]
             .filter(Boolean)
             .join(' ')}

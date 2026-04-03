@@ -165,7 +165,7 @@ export function UserListPage() {
   // 회원 추가 모달 상태 관리
   const {
     open: createModalOpen,
-    openModal: openCreateModal,
+    // openModal: openCreateModal,
     closeModal: closeCreateModal,
   } = useModalState()
 
@@ -490,6 +490,7 @@ export function UserListPage() {
               key: 'search',
               type: 'search',
               label: '회원명',
+              width: '30%',
               placeholder: '회원명을 입력하세요',
             },
             {
@@ -497,6 +498,7 @@ export function UserListPage() {
               type: 'select',
               label: '회원 유형',
               placeholder: '전체',
+              width: '30%',
               options: [
                 { label: '전체', value: 'ALL' },
                 { label: '개인', value: 'INDIVIDUAL' },
@@ -509,6 +511,7 @@ export function UserListPage() {
               key: 'createdAtRange',
               type: 'dateRange',
               label: '가입일',
+              width: '40%',
             },
           ]}
           filters={{
@@ -550,21 +553,27 @@ export function UserListPage() {
                     onClick={() => {
                       const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
                       if (toDelete.length === 0) return
-                      if (toDelete.length === 1) {
-                        setDeletingUser(toDelete[0])
-                        setBulkDeleteUsers(null)
-                      } else {
-                        setDeletingUser(null)
-                        setBulkDeleteUsers(toDelete)
-                      }
-                      setDeleteModalOpen(true)
+                      // if (toDelete.length === 1) {
+                      //   setDeletingUser(toDelete[0])
+                      //   setBulkDeleteUsers(null)
+                      // } else {
+                      //   setDeletingUser(null)
+                      //   setBulkDeleteUsers(toDelete)
+                      // }
+                      window.alert('준비 중입니다')
+
+                      // setDeleteModalOpen(true)
                     }}
                     disabled={selectedRowKeys.length === 0}
                   >
                     회원 삭제
                   </AppButton>
                   {canWrite && (
-                    <AppButton variant="primary" size="filter" onClick={openCreateModal}>
+                    <AppButton
+                      variant="primary"
+                      size="filter"
+                      onClick={() => window.alert('준비 중입니다')}
+                    >
                       회원 등록
                     </AppButton>
                   )}

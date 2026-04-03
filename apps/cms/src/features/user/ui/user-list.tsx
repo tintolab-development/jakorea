@@ -229,7 +229,6 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
     ]
   }
 
-  /* all, individual — 열 너비는 user-list-table.css (`--kind-all`) */
   return [
     noCol,
     {
@@ -272,24 +271,6 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
   ]
 }
 
-/**
- * rc-table: `scroll.x`가 `'max-content'`이면 테이블에 width:max-content 가 걸려
- * colgroup/selection 열 너비(60px)가 깨짐 — 최소 가로폭을 숫자로 고정 (user-list-table.css 열 합 + 여유).
- */
-function scrollXMinForKind(kind: MemberListKind): number {
-  const cb = TABLE_COLUMN_WIDTHS.checkbox
-  switch (kind) {
-    case 'institutions':
-      return cb + 56 + 200 + 260 + 130 + 120 + 120 + 48
-    case 'instructors':
-      return cb + 56 + 120 + 168 + 200 + 110 + 120 + 110 + 120 + 48
-    case 'admins':
-      return cb + 56 + 120 + 168 + 200 + 120 + 130 + 120 + 48
-    default:
-      return cb + 56 + 120 + 172 + 200 + 124 + 120 + 48
-  }
-}
-
 export function UserList({
   data,
   loading = false,
@@ -300,18 +281,15 @@ export function UserList({
   listKind = DEFAULT_MEMBER_LIST_KIND,
 }: UserListProps) {
   const columns = useMemo(() => columnsForKind(listKind), [listKind])
-  const scrollX = useMemo(() => scrollXMinForKind(listKind), [listKind])
 
   return (
-    <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
+    <div className="program-list-table-wrapper">
       <Table
         className={`cms-data-table`}
         columns={columns}
         dataSource={data}
         loading={loading}
         rowKey="id"
-        tableLayout="fixed"
-        scroll={{ x: scrollX, y: 'calc(100vh - 320px)' }}
         onRow={
           onView
             ? record => ({

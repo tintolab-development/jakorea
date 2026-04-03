@@ -3,30 +3,14 @@
  * 전체 회원 목록 행 클릭 시 프로그램 상세와 동일한 LNB+메인 레이아웃으로 노출
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import type { Dispatch, ReactNode, SetStateAction } from 'react'
-import { Table, Empty, Dropdown, message, Space } from 'antd'
-import type { MenuProps } from 'antd'
-import { AccountBookOutlined, BulbOutlined, FolderOpenOutlined } from '@ant-design/icons'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Table, Empty, message, Space } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import {
-  DetailModalSidebar,
-  type DetailModalSidebarNavItem,
-} from '@/shared/ui/detail-modal-sidebar'
-import { AppButton } from '@/shared/ui/app-button'
-import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
-import type { ColumnsType } from 'antd/es/table'
-import type { User } from '@/types/user'
+import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
-import { lectureAttendanceHasAtLeastOne } from '@/shared/utils'
 import { applicationService } from '@/entities/application/api/application-service'
-import { programService } from '@/entities/program/api/program-service'
-import {
-  getEffectiveEnrollmentDisplayStatus,
-  type ProgramEnrollmentDisplayStatus,
-} from '@/shared/constants/status'
 import { mockUserHistories } from '@/data/mock/mypage'
 import dayjs from 'dayjs'
 import {
@@ -44,45 +28,34 @@ import { InstructorPaymentTab } from './instructor-payment-tab'
 import { AdminManagedProgramHistory } from './admin-managed-program-history'
 import { MemberProgramLectureHistory } from './member-program-lecture-history'
 import { SchoolAffiliatedTeachersSection } from './school-affiliated-teachers-section'
+import {
+  programsHistoryHasChildMenu,
+  clampProgramsChildForRole,
+  userDetailModalTitle,
+  userDetailSidebarNavAriaLabel,
+  type UserDetailLnbKey,
+  type UserDetailProgramsChildKey,
+} from './user-detail-fullpage-helpers'
+import { buildUserDetailSidebarItems } from './user-detail-fullpage-sidebar-items'
+import { useUserDetailApplications } from './use-user-detail-applications'
+import { useUserDetailUrlSync } from './use-user-detail-url-sync'
+import {
+  UserDetailFullPageHeaderActions,
+  type UserDetailPermissionRole,
+} from './user-detail-fullpage-header-actions'
+import { createProgramHistoryColumns } from './user-detail-program-history-columns'
+import type { User } from '@/types/user'
+import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import './user-detail-modal.css'
 import './user-detail-fullpage-modal.css'
 
-export type UserDetailLnbKey = 'detail-info' | 'history' | 'payment-status'
-
-/** 프로그램 참여 이력 LNB 하위 (전체·강사 회원) */
-export type UserDetailProgramsChildKey = 'enrollment' | 'lecture' | 'volunteer'
+export type { UserDetailLnbKey, UserDetailProgramsChildKey } from './user-detail-fullpage-helpers'
+export type { UserDetailPermissionRole } from './user-detail-fullpage-header-actions'
 
 /** 회원 목록·풀페이지 공통 URL — 새로고침 시 하위 탭 유지 */
 export const USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY = 'programsChild' as const
 
-function programsHistoryHasChildMenu(role: User['role']): boolean {
-  return role === 'INDIVIDUAL' || role === 'INSTRUCTOR'
-}
-
-function parseProgramsChildParam(raw: string | null): UserDetailProgramsChildKey | null {
-  if (raw === 'enrollment' || raw === 'lecture' || raw === 'volunteer') return raw
-  return null
-}
-
-function clampProgramsChildForRole(
-  role: User['role'],
-  child: UserDetailProgramsChildKey
-): UserDetailProgramsChildKey {
-  if (role === 'INDIVIDUAL') {
-    if (child === 'lecture') return 'enrollment'
-    return child
-  }
-  if (role === 'INSTRUCTOR') {
-    // TODO: 강사 상세 > 프로그램 수강 이력은 개발 완료 후 재오픈 예정
-    if (child === 'enrollment') return 'lecture'
-    return child
-  }
-  return 'enrollment'
-}
-
 export type UserDetailFullPageModalMode = 'default' | 'permission'
-
-export type UserDetailPermissionRole = 'instructor' | 'admin'
 
 export interface UserDetailFullPageModalProps {
   open: boolean
@@ -102,188 +75,6 @@ export interface UserDetailFullPageModalProps {
   onNavigateToLinkedUser?: (userId: string) => void
 }
 
-function userDetailModalTitle(displayName: string, role: User['role']): string {
-  switch (role) {
-    case 'ADMIN':
-      return `관리자 상세_${displayName}`
-    case 'INSTRUCTOR':
-      return `강사 상세_${displayName}`
-    case 'SCHOOL':
-      return `학교 상세_${displayName}`
-    default:
-      return `회원 상세_${displayName}`
-  }
-}
-
-function userDetailSidebarNavAriaLabel(
-  mode: UserDetailFullPageModalMode,
-  role: User['role']
-): string {
-  if (mode === 'permission') return '신청 정보 메뉴'
-  switch (role) {
-    case 'ADMIN':
-      return '관리자 상세 메뉴'
-    case 'INSTRUCTOR':
-      return '강사 상세 메뉴'
-    case 'SCHOOL':
-      return '학교 상세 메뉴'
-    default:
-      return '회원 상세 메뉴'
-  }
-}
-
-function renderUserDetailHeaderExtra(params: {
-  mode: UserDetailFullPageModalMode
-  permissionRole: UserDetailPermissionRole | undefined
-  displayUser: Omit<User, 'password'>
-  activeLnb: UserDetailLnbKey
-  activeProgramsChild: UserDetailProgramsChildKey
-  personalInfoRevealed: boolean
-  setPersonalInfoRevealed: Dispatch<SetStateAction<boolean>>
-  onPermissionApprove: UserDetailFullPageModalProps['onPermissionApprove']
-  onPermissionReject: UserDetailFullPageModalProps['onPermissionReject']
-  onWithdraw: UserDetailFullPageModalProps['onWithdraw']
-  onEdit: UserDetailFullPageModalProps['onEdit']
-  onOpenWithdrawConfirm: () => void
-}): ReactNode {
-  const {
-    mode,
-    permissionRole,
-    displayUser,
-    activeLnb,
-    activeProgramsChild,
-    personalInfoRevealed,
-    setPersonalInfoRevealed,
-    onPermissionApprove,
-    onPermissionReject,
-    onWithdraw,
-    onEdit,
-    onOpenWithdrawConfirm,
-  } = params
-
-  if (mode === 'permission' && permissionRole) {
-    return (
-      <div className="user-detail-fullpage-modal__header-actions">
-        <AppButton
-          variant="danger"
-          size="filter"
-          dangerFillOnHover
-          onClick={() => {
-            onPermissionReject?.({ userId: displayUser.id, permissionRole })
-          }}
-          className="user-detail-modal__btn-withdraw"
-        >
-          신청 반려
-        </AppButton>
-        <AppButton
-          variant="cancel"
-          size="filter"
-          onClick={() => {
-            onPermissionApprove?.({ userId: displayUser.id, permissionRole })
-          }}
-          className="user-detail-modal__btn-edit"
-        >
-          신청 승인
-        </AppButton>
-        <AppButton
-          variant={personalInfoRevealed ? 'default' : 'primary'}
-          size="filter-wide"
-          onClick={() => {
-            if (personalInfoRevealed) {
-              setPersonalInfoRevealed(false)
-            } else {
-              window.alert('준비 중입니다.')
-            }
-          }}
-        >
-          {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-        </AppButton>
-      </div>
-    )
-  }
-
-  if (activeLnb === 'payment-status') return null
-
-  if (activeLnb === 'history' && activeProgramsChild === 'volunteer') {
-    return null
-  }
-
-  if (
-    displayUser.role === 'INDIVIDUAL' &&
-    activeLnb === 'history' &&
-    activeProgramsChild === 'enrollment'
-  ) {
-    return null
-  }
-
-  if (
-    displayUser.role === 'INSTRUCTOR' &&
-    activeLnb === 'history' &&
-    activeProgramsChild === 'lecture'
-  ) {
-    return null
-  }
-
-  if (displayUser.role === 'ADMIN' && activeLnb === 'history') {
-    return null
-  }
-
-  if (displayUser.role === 'SCHOOL') {
-    if (!onWithdraw) return null
-    return (
-      <div className="user-detail-fullpage-modal__header-actions">
-        <AppButton
-          variant="danger"
-          size="filter"
-          dangerFillOnHover
-          onClick={onOpenWithdrawConfirm}
-          className="user-detail-modal__btn-withdraw"
-        >
-          학교 삭제
-        </AppButton>
-      </div>
-    )
-  }
-
-  return (
-    <div className="user-detail-fullpage-modal__header-actions">
-      {onWithdraw ? (
-        <AppButton
-          variant="default"
-          size="filter"
-          onClick={onOpenWithdrawConfirm}
-          className="user-detail-modal__btn-withdraw"
-        >
-          회원 탈퇴
-        </AppButton>
-      ) : null}
-      {onEdit ? (
-        <AppButton
-          variant="default"
-          size="filter"
-          onClick={() => onEdit(displayUser)}
-          className="user-detail-modal__btn-edit"
-        >
-          정보 수정
-        </AppButton>
-      ) : null}
-      <AppButton
-        variant={personalInfoRevealed ? 'default' : 'primary'}
-        size="filter-wide"
-        onClick={() => {
-          if (personalInfoRevealed) {
-            setPersonalInfoRevealed(false)
-          } else {
-            window.alert('준비 중입니다.')
-          }
-        }}
-      >
-        {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-      </AppButton>
-    </div>
-  )
-}
-
 export function UserDetailFullPageModal({
   open,
   user,
@@ -299,16 +90,17 @@ export function UserDetailFullPageModal({
 }: UserDetailFullPageModalProps) {
   const displayUser = user
   const [searchParams, setSearchParams] = useSearchParams()
-  /** open=false일 때 false로 리셋. 닫기 직전 틱에만 의미 있는 값으로 쓴다. */
-  const detailUrlSyncSeenOpenRef = useRef(false)
 
   const [activeLnb, setActiveLnb] = useState<UserDetailLnbKey>('detail-info')
   const [activeProgramsChild, setActiveProgramsChild] =
     useState<UserDetailProgramsChildKey>('enrollment')
-  const [applications, setApplications] = useState<Application[]>([])
-  /** 강사 회원 — 프로그램 수강 이력(학생 신청) 전용 */
-  const [enrollmentApplications, setEnrollmentApplications] = useState<Application[]>([])
-  const [applicationsLoading, setApplicationsLoading] = useState(false)
+  const {
+    applications,
+    enrollmentApplications,
+    applicationsLoading,
+    refetchApplications,
+  } = useUserDetailApplications(open, displayUser)
+
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
@@ -323,6 +115,17 @@ export function UserDetailFullPageModal({
     useState<Application | null>(null)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
 
+  useUserDetailUrlSync({
+    open,
+    displayUser,
+    mode,
+    searchParams,
+    setSearchParams,
+    setActiveLnb,
+    setActiveProgramsChild,
+    programsChildQueryKey: USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
+  })
+
   useEffect(() => {
     if (!open) setPersonalInfoRevealed(false)
   }, [open])
@@ -330,48 +133,6 @@ export function UserDetailFullPageModal({
   useEffect(() => {
     setPersonalInfoRevealed(false)
   }, [displayUser?.id])
-
-  useEffect(() => {
-    if (open && displayUser) {
-      const loadApplications = async () => {
-        setApplicationsLoading(true)
-        try {
-          if (displayUser.role === 'INSTRUCTOR') {
-            const [instructorApps, studentApps] = await Promise.all([
-              applicationService.getByUserId(displayUser.id, 'instructor'),
-              applicationService.getByUserId(displayUser.id, 'student'),
-            ])
-            setApplications(instructorApps)
-            setEnrollmentApplications(studentApps)
-          } else if (displayUser.role === 'INDIVIDUAL') {
-            const studentApps = await applicationService.getByUserId(displayUser.id, 'student')
-            setApplications(studentApps)
-            setEnrollmentApplications([])
-          } else {
-            let subjectType: Application['subjectType'] | undefined
-            if (displayUser.role === 'SCHOOL') subjectType = 'school'
-
-            const userApplications = await applicationService.getByUserId(
-              displayUser.id,
-              subjectType
-            )
-            setApplications(userApplications)
-            setEnrollmentApplications([])
-          }
-        } catch (error) {
-          console.error('Failed to load applications:', error)
-          setApplications([])
-          setEnrollmentApplications([])
-        } finally {
-          setApplicationsLoading(false)
-        }
-      }
-      loadApplications()
-    } else {
-      setApplications([])
-      setEnrollmentApplications([])
-    }
-  }, [open, displayUser])
 
   useEffect(() => {
     if (open && displayUser) {
@@ -392,92 +153,6 @@ export function UserDetailFullPageModal({
       setVolunteerHistories([])
     }
   }, [open, displayUser])
-
-  /**
-   * URL(`id`, `lnb`, `programsChild`) ↔ 사이드바
-   * - 목록에서 열 때 부모가 `id`를 넣기 전/후 틱에 `useSearchParams`에 `id`가 없을 수 있음 → 열림 직후 한 번만 id 보강.
-   * - 부모가 닫기 위해 `id`를 지우면 searchParams가 먼저 갱신되고, 이 effect는 아직 `open===true`인 틱에 돌 수 있음.
-   *   이때 `id`를 다시 넣으면 URL이 복구되어 모달이 닫히지 않는다 → **이미 열린 상태에서 id만 비었으면** 보강하지 않는다.
-   */
-  useEffect(() => {
-    if (!open || !displayUser) {
-      detailUrlSyncSeenOpenRef.current = false
-      return
-    }
-
-    const transitionedIntoOpen = !detailUrlSyncSeenOpenRef.current
-    detailUrlSyncSeenOpenRef.current = true
-
-    if (mode === 'permission') {
-      setActiveLnb('detail-info')
-      setActiveProgramsChild('enrollment')
-      return
-    }
-
-    const urlId = searchParams.get('id')?.trim()
-    if (!urlId && displayUser.id) {
-      if (!transitionedIntoOpen) {
-        return
-      }
-    }
-
-    const sp = new URLSearchParams(searchParams)
-    if (displayUser.id) {
-      sp.set('id', displayUser.id)
-    }
-
-    const rawLnb = sp.get('lnb')
-    const isInstructor = displayUser.role === 'INSTRUCTOR'
-    const hasChildMenu = programsHistoryHasChildMenu(displayUser.role)
-
-    const nextLnb: UserDetailLnbKey =
-      rawLnb === 'history'
-        ? 'history'
-        : rawLnb === 'payment-status' && isInstructor
-          ? 'payment-status'
-          : 'detail-info'
-
-    let nextChild: UserDetailProgramsChildKey =
-      displayUser.role === 'INSTRUCTOR' ? 'lecture' : 'enrollment'
-    if (nextLnb === 'history' && hasChildMenu) {
-      const parsed = parseProgramsChildParam(sp.get(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY))
-      nextChild = parsed
-        ? clampProgramsChildForRole(displayUser.role, parsed)
-        : displayUser.role === 'INSTRUCTOR'
-          ? 'lecture'
-          : 'enrollment'
-    }
-
-    setActiveLnb(nextLnb)
-    setActiveProgramsChild(nextChild)
-
-    const nextParams = new URLSearchParams(sp)
-    let urlDirty = false
-
-    if ((sp.get('lnb') ?? '') !== nextLnb) {
-      nextParams.set('lnb', nextLnb)
-      urlDirty = true
-    }
-
-    if (nextLnb === 'history' && hasChildMenu) {
-      const cur = sp.get(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
-      if (cur !== nextChild) {
-        nextParams.set(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, nextChild)
-        urlDirty = true
-      }
-    } else if (sp.has(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)) {
-      nextParams.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
-      urlDirty = true
-    }
-
-    if (displayUser.id && searchParams.get('id') !== displayUser.id) {
-      urlDirty = true
-    }
-
-    if (urlDirty) {
-      setSearchParams(nextParams, { replace: true })
-    }
-  }, [open, displayUser?.id, displayUser?.role, mode, searchParams, setSearchParams])
 
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {
@@ -501,109 +176,18 @@ export function UserDetailFullPageModal({
             progressStatus: progressMap[displayStatus],
           })
         }
-        if (displayUser.role === 'INSTRUCTOR') {
-          const [inst, stu] = await Promise.all([
-            applicationService.getByUserId(displayUser.id, 'instructor'),
-            applicationService.getByUserId(displayUser.id, 'student'),
-          ])
-          setApplications(inst)
-          setEnrollmentApplications(stu)
-        } else if (displayUser.role === 'INDIVIDUAL') {
-          const stu = await applicationService.getByUserId(displayUser.id, 'student')
-          setApplications(stu)
-        } else {
-          let subjectType: Application['subjectType'] | undefined
-          if (displayUser.role === 'SCHOOL') subjectType = 'school'
-          const list = await applicationService.getByUserId(displayUser.id, subjectType)
-          setApplications(list)
-        }
+        await refetchApplications()
       } catch (e) {
         console.error('Failed to update progress status:', e)
       }
     },
-    [displayUser]
+    [displayUser, refetchApplications]
   )
 
-  const userSidebarItems = useMemo<DetailModalSidebarNavItem[]>(() => {
-    const role = displayUser?.role
-
-    if (mode === 'permission') {
-      return [
-        {
-          key: 'detail-info',
-          label: '신청 정보',
-          icon: (
-            <BulbOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />
-          ),
-        },
-      ]
-    }
-
-    const programsLabel = role === 'ADMIN' ? '담당 프로그램 이력' : '프로그램 참여 이력'
-    const programsIcon = (
-      <FolderOpenOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />
-    )
-
-    const programsItem: DetailModalSidebarNavItem =
-      role === 'INDIVIDUAL'
-        ? {
-            key: 'history',
-            label: programsLabel,
-            icon: programsIcon,
-            children: [
-              { key: 'enrollment', label: '프로그램 수강 이력' },
-              { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
-            ],
-          }
-        : role === 'INSTRUCTOR'
-          ? {
-              key: 'history',
-              label: programsLabel,
-              icon: programsIcon,
-              children: [
-                // TODO: 강사 상세 > 프로그램 수강 이력은 개발 완료 후 주석 해제 예정
-                // { key: 'enrollment', label: '프로그램 수강 이력' },
-                { key: 'lecture', label: '프로그램 강의 이력' },
-                { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
-              ],
-            }
-          : {
-              key: 'history',
-              label: programsLabel,
-              icon: programsIcon,
-            }
-
-    const items: DetailModalSidebarNavItem[] = [
-      {
-        key: 'detail-info',
-        label:
-          role === 'ADMIN'
-            ? '관리자 상세 정보'
-            : role === 'INSTRUCTOR'
-              ? '강사 상세 정보'
-              : role === 'SCHOOL'
-                ? '학교 상세 정보'
-                : '회원 상세 정보',
-        icon: <BulbOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
-      },
-      programsItem,
-    ]
-
-    if (role === 'INSTRUCTOR') {
-      items.push({
-        key: 'payment-status',
-        label: '정산 현황',
-        icon: (
-          <AccountBookOutlined
-            className="detail-fullpage-modal__lnb-icon"
-            style={{ fontSize: 20 }}
-          />
-        ),
-      })
-    }
-
-    return items
-  }, [displayUser?.role, mode])
+  const userSidebarItems = useMemo(
+    () => buildUserDetailSidebarItems(displayUser?.role, mode),
+    [displayUser?.role, mode]
+  )
 
   const sidebarExpandedGroupKeys = useMemo(() => {
     if (activeLnb !== 'history' || !displayUser) return [] as const
@@ -666,119 +250,32 @@ export function UserDetailFullPageModal({
     )
   }
 
+  const openLectureAttendance = useCallback((record: Application) => {
+    setLectureAttendanceApplication(record)
+    setLectureAttendanceModalOpen(true)
+  }, [])
+
+  const openAssignmentSubmission = useCallback((record: Application) => {
+    setAssignmentSubmissionApplication(record)
+    setAssignmentSubmissionModalOpen(true)
+  }, [])
+
+  const programHistoryColumns = useMemo(
+    () =>
+      createProgramHistoryColumns({
+        onProgressStatusChange: handleProgressStatusChange,
+        onOpenLectureAttendance: openLectureAttendance,
+        onOpenAssignmentSubmission: openAssignmentSubmission,
+      }),
+    [handleProgressStatusChange, openLectureAttendance, openAssignmentSubmission]
+  )
+
   if (!open) {
     return null
   }
   if (!displayUser) {
     return null
   }
-
-  const programHistoryColumns: ColumnsType<Application> = [
-    {
-      title: 'No.',
-      key: 'no',
-      width: 72,
-      align: 'center',
-      render: (_: unknown, __: Application, index: number) => index + 1,
-    },
-    {
-      title: '프로그램명',
-      dataIndex: 'programId',
-      key: 'programId',
-      align: 'center',
-      render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
-        return program ? program.title : programId
-      },
-    },
-    {
-      title: '모집 신청 현황',
-      key: 'progressDisplay',
-      align: 'center',
-      render: (_: unknown, record: Application) => {
-        const program = programService.getByIdSync(record.programId)
-        const displayStatus = getEffectiveEnrollmentDisplayStatus(
-          record.status,
-          record.progressStatus,
-          program?.lifecycleStatus
-        )
-        const menuItems: MenuProps['items'] = (
-          [
-            'WAITING_RESULT',
-            'REJECTED',
-            'EDUCATION_SCHEDULED',
-            'EDUCATION_IN_PROGRESS',
-            'PROGRAM_ENDED',
-          ] as const
-        ).map(key => ({
-          key,
-          label: <ProgramEnrollmentStatusBadge status={key} />,
-          onClick: () => handleProgressStatusChange(record, key),
-        }))
-        return (
-          <span className="user-detail-modal__progress-cell" onClick={e => e.stopPropagation()}>
-            <Dropdown menu={{ items: menuItems }} trigger={['click']}>
-              <span className="user-detail-modal__progress-dropdown-trigger">
-                <ProgramEnrollmentStatusBadge status={displayStatus} />
-              </span>
-            </Dropdown>
-          </span>
-        )
-      },
-    },
-    {
-      title: '강의 출석 내역',
-      dataIndex: 'lectureAttendance',
-      key: 'lectureAttendance',
-      align: 'center',
-      render: (v: string | undefined, record: Application) => {
-        const label = v ?? '0/0'
-        if (!lectureAttendanceHasAtLeastOne(v)) {
-          return label
-        }
-        return (
-          <button
-            type="button"
-            className="user-detail-modal__attendance-link"
-            onClick={e => {
-              e.stopPropagation()
-              setLectureAttendanceApplication(record)
-              setLectureAttendanceModalOpen(true)
-            }}
-          >
-            {label}
-          </button>
-        )
-      },
-    },
-    {
-      title: '과제 제출 내역',
-      key: 'assignment',
-      align: 'center',
-      render: (_: unknown, record: Application) => (
-        <span className="user-detail-modal__assignment-cell" onClick={e => e.stopPropagation()}>
-          <AppButton
-            variant="viewDetails"
-            size="small"
-            disabled={!record.hasAssignmentSubmission}
-            onClick={() => {
-              setAssignmentSubmissionApplication(record)
-              setAssignmentSubmissionModalOpen(true)
-            }}
-          >
-            내역 보기
-          </AppButton>
-        </span>
-      ),
-    },
-    {
-      title: '담당자',
-      dataIndex: 'managerName',
-      key: 'managerName',
-      align: 'center',
-      render: (v: string | undefined) => v ?? '-',
-    },
-  ]
 
   const basicInfoExternalId1365 =
     displayUser.role === 'INDIVIDUAL' || displayUser.role === 'SCHOOL'
@@ -981,20 +478,22 @@ export function UserDetailFullPageModal({
             onSelectChild={handleSidebarSelectChild}
           />
         }
-        headerExtra={renderUserDetailHeaderExtra({
-          mode,
-          permissionRole,
-          displayUser,
-          activeLnb,
-          activeProgramsChild,
-          personalInfoRevealed,
-          setPersonalInfoRevealed,
-          onPermissionApprove,
-          onPermissionReject,
-          onWithdraw,
-          onEdit,
-          onOpenWithdrawConfirm: () => setWithdrawConfirmOpen(true),
-        })}
+        headerExtra={
+          <UserDetailFullPageHeaderActions
+            mode={mode}
+            permissionRole={permissionRole}
+            displayUser={displayUser}
+            activeLnb={activeLnb}
+            activeProgramsChild={activeProgramsChild}
+            personalInfoRevealed={personalInfoRevealed}
+            setPersonalInfoRevealed={setPersonalInfoRevealed}
+            onPermissionApprove={onPermissionApprove}
+            onPermissionReject={onPermissionReject}
+            onWithdraw={onWithdraw}
+            onEdit={onEdit}
+            onOpenWithdrawConfirm={() => setWithdrawConfirmOpen(true)}
+          />
+        }
       >
         {activeLnb === 'detail-info' && basicInfoContent}
         {activeLnb === 'history' &&
