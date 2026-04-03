@@ -82,14 +82,12 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   }, [filters])
 
   const managerFilterFields = useMemo((): FilterFieldConfig[] => {
-    const colWidth = '40%'
     return [
       {
         key: 'managerName',
         type: 'search',
         label: '담당자명',
         placeholder: '담당자명을 입력하세요',
-        width: colWidth,
       },
       {
         key: 'role',
@@ -97,7 +95,6 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         label: '권한',
         placeholder: '전체',
         options: ROLE_OPTIONS,
-        width: colWidth,
       },
     ]
   }, [])
@@ -269,19 +266,19 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '담당자명',
         dataIndex: 'name',
         key: 'name',
-        width: 120,
+        width: 246,
         align: 'center',
       },
       {
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 150,
+        width: 160,
         align: 'center',
         onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
         onCell: () => ({
@@ -305,7 +302,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         title: '연락처',
         dataIndex: 'phone',
         key: 'phone',
-        width: 140,
+        width: 246,
         align: 'center',
         render: (phone: string) => maskPhoneDisplay(phone),
       },
@@ -313,7 +310,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 180,
+        width: 246,
         align: 'center',
         ellipsis: true,
         render: (email: string) => maskEmailDisplay(email),
@@ -322,13 +319,13 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         title: '등록일시',
         dataIndex: 'registeredAt',
         key: 'registeredAt',
-        width: 160,
+        width: 246,
         align: 'center',
       },
       {
         title: '관리',
         key: 'action',
-        width: 120,
+        width: 246,
         align: 'center',
         render: (_: unknown, record: ProgramManagerRow) => (
           <AppButton
@@ -392,6 +389,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
           rowKey="id"
           pagination={false}
           rowSelection={{
+            columnWidth: 60,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys as string[]),
           }}
