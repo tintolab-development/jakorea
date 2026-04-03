@@ -525,7 +525,7 @@
   border-bottom: none;
 }
 
-.teacher-detail-modal__teaching-table .ant-table-tbody > tr:hover > td {
+.teacher-detail-modal__teaching-table .ant-table-tbody > tr:hover:not(.ant-table-row-selected) > td {
   background: var(--color-table-row-hover) !important;
 }
 
@@ -749,7 +749,7 @@
   border-bottom: none;
 }
 
-.settlement-tab__table .ant-table-tbody > tr:hover > td {
+.settlement-tab__table .ant-table-tbody > tr:hover:not(.ant-table-row-selected) > td {
   background: var(--color-table-row-hover) !important;
 }
 

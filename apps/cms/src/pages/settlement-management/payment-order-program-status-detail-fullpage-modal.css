@@ -183,7 +183,7 @@
 
 .payment-order-program-status-detail__table.participating-institutions-section__table
   .ant-table-tbody
-  > tr.ant-table-row:hover
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
   > td {
   background: #f0f8ff !important;
 }
