@@ -21,7 +21,13 @@ import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
  * 상위 위젯·예정 프로그램 등 동일 비율. 화면별 최소는 각 minWidth(px), 좁으면 가로 스크롤.
  */
 const ECONOMY_COL_NO_PX = 80
+/** 「전체 프로그램」목록(진행 현황 열): 프로그램명 최소 너비 */
 const ECONOMY_COL_TITLE_PX = 590
+/**
+ * 예정·사업 운영 기간 열 포함 목록: 프로그램명을 과도하게 넓히지 않음(기간 열과 시각적 간격 완화).
+ * 진행 중/완료 8열 테이블의 프로그램명(420px)과 맞춤.
+ */
+const ECONOMY_COL_TITLE_PX_WITH_PERIOD = 420
 /** 프로그램 진행 현황 열 — 반응형 최소 너비 */
 const ECONOMY_COL_PROGRESS_PX = 180
 /** 사업 운영 기간 열 */
@@ -36,14 +42,14 @@ const ECONOMY_DATA_COLUMNS_TOTAL_PX_PROGRESS =
 
 const ECONOMY_DATA_COLUMNS_TOTAL_PX_PERIOD =
   ECONOMY_COL_NO_PX +
-  ECONOMY_COL_TITLE_PX +
+  ECONOMY_COL_TITLE_PX_WITH_PERIOD +
   ECONOMY_COL_PERIOD_PX +
   ECONOMY_COL_TAIL_PX * 3
 
 /** 「전체 프로그램」·진행 현황 열 포함 시 데이터 열 합 */
 export const ECONOMY_EDUCATION_TABLE_SCROLL_X_PROGRESS = ECONOMY_DATA_COLUMNS_TOTAL_PX_PROGRESS
 
-/** 예정/진행중/완료 위젯 — 사업 운영 기간 열 포함 시 데이터 열 합 */
+/** 예정 위젯 — 사업 운영 기간 열 포함 시 데이터 열 합(진행 중·완료 8열과 별도) */
 export const ECONOMY_EDUCATION_TABLE_SCROLL_X_PERIOD = ECONOMY_DATA_COLUMNS_TOTAL_PX_PERIOD
 
 /** 행 선택 열 80px + 데이터 열 합 */
@@ -293,8 +299,8 @@ export function resolveEducationColumns({
         title: '프로그램명',
         dataIndex: 'title',
         key: 'title',
-        width: w(ECONOMY_COL_TITLE_PX),
-        minWidth: ECONOMY_COL_TITLE_PX,
+        width: w(ECONOMY_COL_TITLE_PX_WITH_PERIOD),
+        minWidth: ECONOMY_COL_TITLE_PX_WITH_PERIOD,
         ellipsis: true,
         align: 'center' as const,
         className: 'economy-program-table__col-title',

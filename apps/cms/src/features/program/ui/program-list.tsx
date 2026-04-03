@@ -811,6 +811,13 @@ export function ProgramList({
   }
 
   const economyWideMetricsTable = economyInProgressActive || economyCompletedActive
+  /** 사업 운영 기간 열이 있는 경제 교육 목록(예정 위젯) — 테이블·컬럼 min-width를 진행 중 뷰와 맞춤 */
+  const economyPeriodColumnTable =
+    isEconomyPage &&
+    !economyWideMetricsTable &&
+    !economyAllProgramsActive &&
+    !studentRecruitmentTable &&
+    !instructorRecruitmentTable
 
   const columnsAdmin = useMemo(() => {
     if (tableVariant !== 'education') return []
@@ -951,7 +958,7 @@ export function ProgramList({
           <div className="program-list-content-wrapper__table">
             <Card
               loading={loading}
-              className={`program-list-card program-list-card--in-wrapper program-list-card--no-border${isEconomyPage ? ' program-list-card--economy-education' : ''}${economyInProgressActive ? ' program-list-card--economy-in-progress' : ''}${economyCompletedActive ? ' program-list-card--economy-completed' : ''}`}
+              className={`program-list-card program-list-card--in-wrapper program-list-card--no-border${isEconomyPage ? ' program-list-card--economy-education' : ''}${economyPeriodColumnTable ? ' program-list-card--economy-period-columns' : ''}${economyInProgressActive ? ' program-list-card--economy-in-progress' : ''}${economyCompletedActive ? ' program-list-card--economy-completed' : ''}`}
               style={{ border: 'none', boxShadow: 'none' }}
             >
               <div
@@ -962,6 +969,7 @@ export function ProgramList({
                   isEconomyPage && economyAllProgramsActive
                     ? 'program-list-table-wrapper--economy-all-programs'
                     : '',
+                  economyPeriodColumnTable ? 'program-list-table-wrapper--economy-period-columns' : '',
                   economyInProgressActive ? 'program-list-table-wrapper--economy-in-progress' : '',
                   economyCompletedActive ? 'program-list-table-wrapper--economy-completed' : '',
                   economyRowSelectionActive

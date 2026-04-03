@@ -295,7 +295,7 @@
   line-height: 1;
 }
 
-/* Select 화살표 아이콘 */
+/* Select 화살표 아이콘 (clear와 간격: filter-controls-common 토큰) */
 .program-filter-card .ant-select .ant-select-arrow {
   display: flex;
   align-items: center;
@@ -303,7 +303,7 @@
   top: 50%;
   transform: translateY(-50%);
   margin-top: 0;
-  right: var(--spacing-10);
+  right: var(--filter-select-arrow-inset-end, 8px);
   width: var(--spacing-12);
   height: var(--spacing-12);
 }
@@ -324,7 +324,7 @@
   top: 50%;
   transform: translateY(-50%);
   margin-top: 0;
-  right: var(--spacing-24);
+  right: var(--filter-select-clear-inset-end, 38px);
   width: var(--spacing-12);
   height: var(--spacing-12);
 }
@@ -442,7 +442,7 @@
   top: 50%;
   transform: translateY(-50%);
   margin-top: 0;
-  right: var(--spacing-10);
+  right: var(--filter-select-arrow-inset-end, 8px);
   width: var(--spacing-12);
   height: var(--spacing-12);
 }
@@ -462,7 +462,7 @@
   top: 50%;
   transform: translateY(-50%);
   margin-top: 0;
-  right: var(--spacing-24);
+  right: var(--filter-select-clear-inset-end, 38px);
   width: var(--spacing-12);
   height: var(--spacing-12);
 }
@@ -670,10 +670,15 @@
   color: var(--color-brand-primary-hover);
 }
 
-/* 경제 교육 프로그램 목록 — 예정/진행/완료 위젯: 데이터 열 최소 합 1470px(80+590+320+160×3). 「전체 프로그램」: 진행 현황 열 min 180 → 합 1330px. 행 선택 시 +80px */
+/* 경제 교육 프로그램 목록 — 기본 1470px(레거시). 예정 위젯+사업 운영 기간 열: 1300px(80+420+320+160×3). 「전체 프로그램」: 1330px. 행 선택 시 +80px */
 .program-list-table-wrapper--economy-education {
   --table-selection-column-width: 80px;
   --economy-table-min-width: 1470px;
+}
+
+/* 예정 위젯(사업 운영 기간 열): 프로그램명 열 420px — 진행 중·완료 8열과 동일, 기간 열과 간격 완화 */
+.program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-period-columns {
+  --economy-table-min-width: 1300px;
 }
 
 .program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-all-programs {
@@ -682,6 +687,10 @@
 
 .program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-education-selection {
   --economy-table-min-width: 1550px;
+}
+
+.program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-period-columns.program-list-table-wrapper--economy-education-selection {
+  --economy-table-min-width: 1380px;
 }
 
 .program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-all-programs.program-list-table-wrapper--economy-education-selection {
@@ -750,6 +759,10 @@
 
 .program-list-card--economy-education .economy-program-table__col-title {
   min-width: 590px;
+}
+
+.program-list-card--economy-education.program-list-card--economy-period-columns .economy-program-table__col-title {
+  min-width: 420px;
 }
 
 .program-list-card--economy-education .economy-program-table__col-period {

@@ -94,8 +94,9 @@
   color: #464646;
 }
 
-/* tag132 트리거 안 태그: 닫힘·열림·호버 동일 치수 (공통 120px 규칙과 충돌 시에도 밀림 방지) */
-.assignment-submission-modal .status-dropdown-cell__status-trigger--tag-132 .assignment-submission-modal__team-role-tag {
+/* tag132·tag160 트리거 안 태그: 닫힘·열림·호버 동일 치수 (공통 120px 규칙과 충돌 시에도 밀림 방지) */
+.assignment-submission-modal .status-dropdown-cell__status-trigger--tag-132 .assignment-submission-modal__team-role-tag,
+.assignment-submission-modal .status-dropdown-cell__status-trigger--tag-160 .assignment-submission-modal__team-role-tag {
   width: 132px !important;
   min-width: 132px !important;
   max-width: 132px !important;
@@ -119,20 +120,32 @@
   > tr
   > th.ant-table-cell.status-dropdown-cell__header--tag-132,
 .assignment-submission-modal__table-outer
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__header--tag-160,
+.assignment-submission-modal__table-outer
   .ant-table-tbody
   > tr
   > td.status-dropdown-cell__cell-status--tag-132,
 .assignment-submission-modal__table-outer
   .ant-table-tbody
   > tr:hover
-  > td.status-dropdown-cell__cell-status--tag-132 {
+  > td.status-dropdown-cell__cell-status--tag-132,
+.assignment-submission-modal__table-outer
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status--tag-160,
+.assignment-submission-modal__table-outer
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status--tag-160 {
   padding-left: 0 !important;
   padding-right: 0 !important;
   text-align: center !important;
   vertical-align: middle !important;
 }
 
-/* 트리거 박스(150px) 자체를 셀 안에서 고정 — 호버·행 호버 시에도 치수·위치 유지 */
+/* 트리거 박스(150px / 160px) 자체를 셀 안에서 고정 — 호버·행 호버 시에도 치수·위치 유지 */
 .assignment-submission-modal__table-outer .status-dropdown-cell__status-trigger--tag-132 {
   display: inline-flex !important;
   box-sizing: border-box !important;
@@ -144,8 +157,26 @@
   border-style: solid !important;
 }
 
+.assignment-submission-modal__table-outer .status-dropdown-cell__status-trigger--tag-160 {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  padding: 8px 13px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
 .assignment-submission-modal__table-outer
   .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.assignment-submission-modal__table-outer
+  .status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open) {
   border-color: transparent !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -162,7 +193,24 @@
 }
 
 .assignment-submission-modal__table-outer
+  .status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open):hover,
+.assignment-submission-modal__table-outer
+  .status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+.assignment-submission-modal__table-outer
   .status-dropdown-cell__status-trigger--tag-132.status-dropdown-cell__status-trigger--open {
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
+  background: #fff !important;
+}
+
+.assignment-submission-modal__table-outer
+  .status-dropdown-cell__status-trigger--tag-160.status-dropdown-cell__status-trigger--open {
   border-color: var(--JA-mint-01, #01a1af) !important;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
   background: #fff !important;
