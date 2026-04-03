@@ -43,12 +43,21 @@ import {
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
 } from '../program-detail-info-constants'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 
 const { TextArea } = Input
+
+function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
+  const { label, color } = getProgramProgressPhaseDisplay(status)
+  return (
+    <span className="program-detail-info-tab__lifecycle-status-text" style={{ color }}>
+      {label}
+    </span>
+  )
+}
 
 export interface BasicInfoSectionProps {
   program: Program
@@ -300,11 +309,7 @@ export function BasicInfoSection({
                 <th>프로그램 진행 현황</th>
                 <td>
                   {lifecycleStatus ? (
-                    <span
-                      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycleStatus.replace(/_/g, '-')}`}
-                    >
-                      {getProgramLifecycleLabel(lifecycleStatus)}
-                    </span>
+                    <ProgramProgressReadonlyCell status={lifecycleStatus} />
                   ) : (
                     '-'
                   )}
@@ -782,11 +787,7 @@ export function BasicInfoSection({
                     )}
                   />
                 ) : lifecycleStatus ? (
-                  <span
-                    className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycleStatus.replace(/_/g, '-')}`}
-                  >
-                    {getProgramLifecycleLabel(lifecycleStatus)}
-                  </span>
+                  <ProgramProgressReadonlyCell status={lifecycleStatus} />
                 ) : (
                   '-'
                 )}

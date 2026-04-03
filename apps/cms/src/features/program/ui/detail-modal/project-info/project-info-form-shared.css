@@ -195,37 +195,20 @@
     width: auto;
 }
 
-/* 기본 정보 — 프로그램 진행 상태: 배지 제외, 대표 색상 텍스트만 (스펙: Pretendard 16px 500 150%) */
+/* 기본 정보 — 프로그램 진행 현황 읽기 전용 (색상은 TS `PROGRAM_PROGRESS_PHASE_COLORS` 인라인) */
 .program-detail-info-tab__lifecycle-status-text {
+    display: block;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-family: var(--font-family-primary, 'Pretendard', sans-serif);
     font-size: 16px;
     font-style: normal;
     font-weight: 500;
     line-height: 150%;
-}
-
-/* 그룹1: 모집 예정 — 대표색 #E44970 */
-.program-detail-info-tab__lifecycle-status-text--planned,
-.program-detail-info-tab__lifecycle-status-text--instructor-recruitment-planned,
-.program-detail-info-tab__lifecycle-status-text--volunteer-recruitment-planned,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-planned {
-    color: #e44970;
-}
-
-/* 그룹2: 모집 중 — 대표색 #017EAF */
-.program-detail-info-tab__lifecycle-status-text--recruiting-students,
-.program-detail-info-tab__lifecycle-status-text--recruiting-instructors,
-.program-detail-info-tab__lifecycle-status-text--recruiting-volunteers,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruiting {
-    color: #017eaf;
-}
-
-/* 그룹3: 모집 완료 — 대표색 #464646 */
-.program-detail-info-tab__lifecycle-status-text--matching-completed,
-.program-detail-info-tab__lifecycle-status-text--education-completed,
-.program-detail-info-tab__lifecycle-status-text--document-processing-completed,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-completed {
-    color: #464646;
 }
 
 /* 교육 커리큘럼 테이블 — 기본 정보와 동일 스타일(라벨 200px, #F9F9F9, 구분선 #E0E0E0) */
