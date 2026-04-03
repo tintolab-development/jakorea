@@ -6,6 +6,12 @@
 /** 미구현 기능 `window.alert` 공통 안내 (프로그램 상세 미리보기, 대시보드 위젯 더보기 등) */
 export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
 
+/** 참여 강사진 — 활동확인서 발급 버튼 미구현 시 `window.alert` */
+export const ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE = '준비중'
+
+/** 참여 기관 학생 명단 — 정보 수정 버튼 미구현 시 `window.alert` */
+export const STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE = '준비중'
+
 export const MESSAGES = {
   success: {
     created: '등록되었습니다.',

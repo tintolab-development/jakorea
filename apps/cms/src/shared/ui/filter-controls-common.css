@@ -481,8 +481,9 @@
   background: var(--ant-color-primary-bg, #e6f4ff) !important;
 }
 
+/* 선택 행 호버 시에도 선택 배경 유지(호버 틴트 없음) */
 .member-table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
-  background: var(--ant-color-primary-bg-hover, #bae0ff) !important;
+  background: var(--ant-color-primary-bg, #e6f4ff) !important;
 }
 
 /* 768px 이하: 너비 100%일 때 컨테이너 min-width */
