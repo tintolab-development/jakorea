@@ -148,6 +148,14 @@
   box-sizing: border-box;
 }
 
+/* events 모드: 툴팁/팝오버 앵커를 개별 태그 행에 맞춤 (셀 전체 높이로 확장하지 않음) */
+.program-calendar-event-tooltip-trigger {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .program-calendar-cell-preview__item {
   display: flex;
   flex-direction: column;

@@ -4,7 +4,7 @@
  * - `scheduleOverlay`로 Popover(프로그램 일정) vs Tooltip(신청자 일정)만 분기
  */
 
-import { forwardRef, useMemo, type ReactElement, type ReactNode } from 'react'
+import { forwardRef, Fragment, useMemo, type ReactElement, type ReactNode } from 'react'
 import { Calendar, Button, Popover, Tooltip } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -300,7 +300,6 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
         const dayEvents = getEventsForDate(events, date)
         const hasItems = dayEvents.length > 0
         const resolvedColors = buildResolvedColorMap(dayEvents)
-        const preview = buildEventsPreview(dayEvents, resolvedColors)
 
         const cellBody = (
           <div className={cellClass} onClick={() => onSelectDate(date)}>
@@ -311,32 +310,46 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                   const isEventSelected = selectedRowKeys.includes(event.id)
                   const colors = resolvedColors.get(event.id) ?? SCHEDULE_COLORS[0]
+                  const previewOne = buildEventsPreview([event], resolvedColors)
                   return (
-                    <div
-                      key={String(event.id)}
-                      className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
-                      style={{
-                        backgroundColor: colors.bg,
-                      }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <span className="program-calendar-event-title">{displayTitle}</span>
-                    </div>
+                    <Fragment key={String(event.id)}>
+                      {wrapScheduleOverlay(
+                        scheduleOverlay,
+                        tooltipOverlayClassName,
+                        previewOne,
+                        <div className="program-calendar-event-tooltip-trigger">
+                          <div
+                            className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                            style={{
+                              backgroundColor: colors.bg,
+                            }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <span className="program-calendar-event-title">{displayTitle}</span>
+                          </div>
+                        </div>
+                      )}
+                    </Fragment>
                   )
                 })}
                 {dayEvents.length > 2 && (
-                  <div className="program-calendar-event-more">
-                    외 {dayEvents.length - 2}개의 일정
-                  </div>
+                  <Fragment key="more">
+                    {wrapScheduleOverlay(
+                      scheduleOverlay,
+                      tooltipOverlayClassName,
+                      buildEventsPreview(dayEvents.slice(2), resolvedColors),
+                      <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
+                        외 {dayEvents.length - 2}개의 일정
+                      </div>
+                    )}
+                  </Fragment>
                 )}
               </div>
             )}
           </div>
         )
 
-        if (!hasItems) return cellBody
-        const trigger = <div className="program-calendar-cell-tooltip-trigger">{cellBody}</div>
-        return wrapScheduleOverlay(scheduleOverlay, tooltipOverlayClassName, preview, trigger)
+        return cellBody
       }
 
       const dayPrograms = getProgramsForDate(programs, date)
@@ -397,7 +410,6 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 const dayEvents = getEventsForDate(events, date)
                 const hasItems = dayEvents.length > 0
                 const resolvedWeekColors = buildResolvedColorMap(dayEvents)
-                const preview = buildEventsPreview(dayEvents, resolvedWeekColors)
 
                 const weekCellInner = (
                   <>
@@ -412,24 +424,40 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                           const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                           const isEventSelected = selectedRowKeys.includes(event.id)
                           const colors = resolvedWeekColors.get(event.id) ?? SCHEDULE_COLORS[0]
+                          const previewOne = buildEventsPreview([event], resolvedWeekColors)
                           return (
-                            <div
-                              key={String(event.id)}
-                              className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
-                              style={{
-                                backgroundColor: colors.bg,
-                                border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                              }}
-                              onClick={e => e.stopPropagation()}
-                            >
-                              <span className="program-calendar-event-title">{displayTitle}</span>
-                            </div>
+                            <Fragment key={String(event.id)}>
+                              {wrapScheduleOverlay(
+                                scheduleOverlay,
+                                tooltipOverlayClassName,
+                                previewOne,
+                                <div className="program-calendar-event-tooltip-trigger">
+                                  <div
+                                    className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                                    style={{
+                                      backgroundColor: colors.bg,
+                                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                                    }}
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <span className="program-calendar-event-title">{displayTitle}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </Fragment>
                           )
                         })}
                         {dayEvents.length > 2 && (
-                          <div className="program-calendar-event-more">
-                            외 {dayEvents.length - 2}개의 일정
-                          </div>
+                          <Fragment key="more">
+                            {wrapScheduleOverlay(
+                              scheduleOverlay,
+                              tooltipOverlayClassName,
+                              buildEventsPreview(dayEvents.slice(2), resolvedWeekColors),
+                              <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
+                                외 {dayEvents.length - 2}개의 일정
+                              </div>
+                            )}
+                          </Fragment>
                         )}
                       </div>
                     )}
@@ -442,16 +470,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                     className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
                     onClick={() => onSelectDate(date)}
                   >
-                    {hasItems
-                      ? wrapScheduleOverlay(
-                          scheduleOverlay,
-                          tooltipOverlayClassName,
-                          preview,
-                          <div className="program-calendar-week-cell-tooltip-trigger">
-                            {weekCellInner}
-                          </div>
-                        )
-                      : weekCellInner}
+                    {weekCellInner}
                   </div>
                 )
               }
