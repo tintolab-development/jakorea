@@ -85,8 +85,10 @@ function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTa
 
 function parseInstructorTabFromSearch(searchParams: URLSearchParams): InstructorDetailTabKey {
   const t = searchParams.get(INSTRUCTOR_TAB_PARAM)
-  if (t && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(t))
+  if (t && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(t)) {
+    if (t === 'settlement') return 'application'
     return t as InstructorDetailTabKey
+  }
   return 'application'
 }
 
@@ -232,6 +234,13 @@ export function ProgramDetailFullPageModal({
   useEffect(() => {
     if (!open || !instructorIdFromUrl) return
     const raw = searchParams.get(INSTRUCTOR_TAB_PARAM)
+    if (raw === 'settlement') {
+      const next = new URLSearchParams(searchParams)
+      next.set(INSTRUCTOR_TAB_PARAM, 'application')
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
     if (raw && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(raw)) return
     const next = new URLSearchParams(searchParams)
     next.set(INSTRUCTOR_TAB_PARAM, 'application')
@@ -362,8 +371,8 @@ export function ProgramDetailFullPageModal({
   }
 
   const handleSidebarSelectChild = (groupKey: string, childKey: string) => {
-    if (groupKey === 'applicants' && childKey === 'volunteers') {
-      window.alert('준비 중입니다.')
+    if (childKey === 'volunteers') {
+      window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
       return
     }
     if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
@@ -400,6 +409,7 @@ export function ProgramDetailFullPageModal({
   }
 
   const setInstructorTab = (tab: InstructorDetailTabKey) => {
+    if (tab === 'settlement') return
     const next = new URLSearchParams(searchParams)
     next.set(INSTRUCTOR_TAB_PARAM, tab)
     if (programId) next.set('programId', programId)
