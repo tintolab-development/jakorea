@@ -12,7 +12,7 @@ import { AppButton } from '@/shared/ui/app-button'
 import { AppMultiSelect } from '@/shared/ui'
 import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
-import { message } from 'antd'
+import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
   SETTLEMENT_STATUS_LABELS,
   type ParticipatingInstructorRow,
@@ -540,7 +540,9 @@ export function ParticipatingInstructorsSection({
               variant="cancel"
               size="filter-wide"
               icon={<DownloadOutlined />}
-              onClick={() => message.info('활동확인서 발급 기능 준비 중입니다.')}
+              onClick={() =>
+                window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
+              }
             >
               활동확인서 발급
             </AppButton>

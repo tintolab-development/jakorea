@@ -346,10 +346,12 @@
 }
 
 .program-progress-tab__table .ant-table-thead > tr > th,
-.program-progress-tab__table .ant-table-tbody > tr > td {
+.program-progress-tab__table .ant-table-tbody > tr > td,
+.program-progress-tab__table .ant-table-tbody > tr:hover > td {
   text-align: center;
   vertical-align: middle;
-  border-right: 1px solid var(--color-border-light);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
 }
 
 .program-progress-tab__table .ant-table-thead > tr > th:last-child,
@@ -365,13 +367,10 @@
   text-align: center;
 }
 
-/* 선택된 행 하이라이트: 연한 녹색 */
-.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected > td {
-  background: var(--color-table-row-selected) !important;
-}
-
+/* 선택된 행 하이라이트: 연한 녹색(호버 시에도 동일 배경 유지) */
+.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected > td,
 .program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
-  background: var(--color-table-row-selected-hover) !important;
+  background: var(--color-table-row-selected) !important;
 }
 
 /* 교재·정산 현황: 공통 StatusDropdownCell — 행 53px·셀 136px (트리거 외곽과 동일) */

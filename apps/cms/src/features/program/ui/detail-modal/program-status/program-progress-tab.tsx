@@ -7,6 +7,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
+import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
 import {
   useProgramProgressParams,
@@ -580,7 +581,9 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                     variant="cancel"
                     size="large"
                     icon={<DownloadOutlined />}
-                    onClick={() => {}}
+                    onClick={() =>
+                      window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
+                    }
                   >
                     활동확인서 발급
                   </AppButton>

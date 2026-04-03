@@ -23,7 +23,7 @@
 .participating-institutions-section__sessions-cell {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   text-align: left;
   padding: 0;
   margin: 0;

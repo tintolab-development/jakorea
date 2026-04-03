@@ -11,6 +11,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { formatLectureAttendanceCellDisplay } from '@/shared/lib/format-lecture-attendance-display'
 import type {
   LectureAttendanceSession,
@@ -95,6 +96,11 @@ export interface SchoolDetailStudentListSectionProps {
   programTitle?: string
   /** 풀페이지 등에서 상단에 이미 정보 수정/개인정보 상세보기 있을 때 버튼만 숨기거나 콜백으로 위임 */
   readOnly?: boolean
+  /**
+   * true면 `readOnly`가 아닐 때도 「정보 수정」 클릭 시 명단 편집 모드 대신 준비 중 alert만 표시
+   * (참여 기관 풀페이지 학생 명단 탭 등)
+   */
+  studentListInfoEditComingSoonAlert?: boolean
   onIssueCertificates?: () => void
   onEditInfo?: () => void
   onAddStudent?: () => void
@@ -107,6 +113,7 @@ export function SchoolDetailStudentListSection({
   studentCount,
   programTitle,
   readOnly = false,
+  studentListInfoEditComingSoonAlert = false,
   onIssueCertificates: _onIssueCertificates,
   onEditInfo,
   onAddStudent,
@@ -532,7 +539,11 @@ export function SchoolDetailStudentListSection({
                     variant="cancel"
                     size="filter"
                     className="school-detail-student-list-section__btn-edit-info"
-                    onClick={enterStudentListEditMode}
+                    onClick={
+                      studentListInfoEditComingSoonAlert
+                        ? () => window.alert(STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE)
+                        : enterStudentListEditMode
+                    }
                   >
                     정보 수정
                   </AppButton>

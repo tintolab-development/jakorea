@@ -927,6 +927,7 @@ export function SchoolDetailFullpageView({
               schoolId={detail.id}
               studentCount={detail.studentCount}
               readOnly={false}
+              studentListInfoEditComingSoonAlert
               onViewDetail={() => {}}
               onSaveEdit={() => {}}
             />
