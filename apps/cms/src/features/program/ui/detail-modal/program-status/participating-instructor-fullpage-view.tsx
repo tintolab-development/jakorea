@@ -13,10 +13,7 @@ import type {
   ParticipatingInstructorEducationItem,
   ParticipatingInstructorQualification,
 } from '@/data/mock/participating-instructors'
-import {
-  SETTLEMENT_STATUS_LABELS,
-  MOCK_PARTICIPATING_INSTRUCTORS,
-} from '@/data/mock/participating-instructors'
+import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
@@ -67,6 +64,11 @@ export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'posts',
 ] as const
 export type InstructorDetailTabKey = (typeof INSTRUCTOR_DETAIL_TAB_KEYS)[number]
+
+/** 참여 강사 풀페이지 — 정산 현황 탭 비활성화(표시만 유지) */
+const INSTRUCTOR_TAB_DISABLED: Partial<Record<InstructorDetailTabKey, boolean>> = {
+  settlement: true,
+}
 
 const TAB_LABELS: Record<InstructorDetailTabKey, string> = {
   application: '신청 정보',
@@ -286,7 +288,10 @@ export function ParticipatingInstructorFullpageView({
 
   const activeTab =
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
+  const effectiveTab: InstructorDetailTabKey =
+    activeTab === 'settlement' ? 'application' : activeTab
   const setActiveTab = (key: InstructorDetailTabKey) => {
+    if (INSTRUCTOR_TAB_DISABLED[key]) return
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
   }
@@ -801,14 +806,15 @@ export function ParticipatingInstructorFullpageView({
             <button
               key={key}
               type="button"
-              className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
+              disabled={!!INSTRUCTOR_TAB_DISABLED[key]}
+              className={`program-detail-fullpage-modal__tab ${effectiveTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
               onClick={() => setActiveTab(key)}
             >
               <span className="program-detail-fullpage-modal__tab-label">{TAB_LABELS[key]}</span>
             </button>
           ))}
         </div>
-        {activeTab === 'application' && (
+        {effectiveTab === 'application' && (
           <div className="program-detail-fullpage-modal__header-actions">
             <AppButton
               variant="danger"
@@ -833,7 +839,7 @@ export function ParticipatingInstructorFullpageView({
             </AppButton>
           </div>
         )}
-        {activeTab === 'institutionAssignment' && (
+        {effectiveTab === 'institutionAssignment' && (
           <div className="program-detail-fullpage-modal__header-actions">
             <AppButton
               variant="danger"
@@ -851,7 +857,7 @@ export function ParticipatingInstructorFullpageView({
             </AppButton>
           </div>
         )}
-        {activeTab === 'posts' && (
+        {effectiveTab === 'posts' && (
           <div className="program-detail-fullpage-modal__header-actions">
             <AppButton variant="primary" size="filter" onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
@@ -861,10 +867,10 @@ export function ParticipatingInstructorFullpageView({
       </div>
 
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
-        {activeTab === 'application' && (
+        {effectiveTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab">{applicationTab}</div>
         )}
-        {activeTab === 'institutionAssignment' && (
+        {effectiveTab === 'institutionAssignment' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
             <div className="school-detail-fullpage-view__instructor-section">
               <div className="participating-institutions-section__table-header">
@@ -1098,17 +1104,7 @@ export function ParticipatingInstructorFullpageView({
             </ContentModal>
           </div>
         )}
-        {activeTab === 'settlement' && (
-          <div className="program-detail-fullpage-modal__info-tab">
-            <p className="participating-instructor-fullpage-view__tab-placeholder">
-              정산 현황: {SETTLEMENT_STATUS_LABELS[d.settlementStatus]}
-            </p>
-            <p className="participating-instructor-fullpage-view__tab-placeholder">
-              상세 정산 내역 화면은 준비 중입니다.
-            </p>
-          </div>
-        )}
-        {activeTab === 'posts' && (
+        {effectiveTab === 'posts' && (
           <div className="program-detail-fullpage-modal__info-tab participating-instructor-fullpage-view__posts-tab-wrap">
             <EnrollmentProgramDetailPostsTab
               program={program}
