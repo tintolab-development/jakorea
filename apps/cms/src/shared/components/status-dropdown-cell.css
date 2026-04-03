@@ -13,17 +13,21 @@
   overflow: visible;
   position: relative;
   z-index: 1;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .status-dropdown-cell__status-empty {
   color: var(--color-text-tertiary, #8c8c8c);
 }
 
-/* 트리거: 닫힘·열림 동일 외곽 136×(8+태그+8), 태그 높이 ≈33px → 총 ≈49px */
+/* 트리거: 닫힘·열림 동일 외곽 136×(8+태그+8), 태그 높이 ≈33px → 총 ≈49px
+ * inline-flex: 테이블 셀에서 text-align:center 와 함께 가로 중앙 정렬(tag-132와 동일 원리) */
 .status-dropdown-cell__status-trigger {
   box-sizing: border-box;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
+  vertical-align: middle;
   width: 136px;
   min-width: 136px;
   max-width: 136px;
