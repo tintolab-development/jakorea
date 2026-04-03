@@ -108,6 +108,16 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* 커서 추적 Popover(createPortal + fixed) — 외부 정렬 transform과 충돌 방지 */
+.program-calendar-cursor-popover {
+  transform: none !important;
+}
+
+/* 커서 추적 Tooltip(신청자 일정 등) — 동일 */
+.program-calendar-cursor-tooltip {
+  transform: none !important;
+}
+
 .program-calendar-cell-preview {
   display: flex;
   width: 333px;
@@ -397,10 +407,7 @@
 }
 
 .program-calendar-schedule-panel__row {
-  display: grid;
-  grid-template-columns: minmax(96px, 1fr) 21px 86px 21px 80px;
   align-items: center;
-  column-gap: 0;
   width: 100%;
 }
 

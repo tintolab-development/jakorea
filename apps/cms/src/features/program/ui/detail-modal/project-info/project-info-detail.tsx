@@ -42,14 +42,10 @@ function ProjectInfoDetailTabsRow({
   isEditModeInstructors,
   isEditModeVolunteers,
   onInfoEdit,
-  onInfoCancelEdit,
   onInfoSave,
   onInstitutionsSave,
-  onInstitutionsCancelEdit,
-  onInstructorsCancelEdit,
   onInstructorsSave,
   onVolunteersSave,
-  onVolunteersCancelEdit,
   onPreview,
 }: {
   activeTab: TabKey
@@ -60,14 +56,10 @@ function ProjectInfoDetailTabsRow({
   isEditModeInstructors: boolean
   isEditModeVolunteers: boolean
   onInfoEdit: () => void
-  onInfoCancelEdit: () => void
   onInfoSave: () => void
   onInstitutionsSave: () => void
-  onInstitutionsCancelEdit: () => void
-  onInstructorsCancelEdit: () => void
   onInstructorsSave: () => void
   onVolunteersSave: () => void
-  onVolunteersCancelEdit: () => void
   onPreview: () => void
 }) {
   return (
@@ -88,62 +80,42 @@ function ProjectInfoDetailTabsRow({
         <div className="program-detail-fullpage-modal__header-actions">
           {activeTab === 'info' ? (
             <>
-              {isEditModeInfo && (
-                <AppButton variant="danger" size="filter" onClick={onInfoCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeInfo ? onInfoSave : onInfoEdit}
               >
-                {isEditModeInfo ? '수정사항 저장' : '정보 수정'}
+                {isEditModeInfo ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : activeTab === 'institutions' ? (
             <>
-              {isEditModeInstitutions && (
-                <AppButton variant="danger" size="filter" onClick={onInstitutionsCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeInstitutions ? onInstitutionsSave : onInfoEdit}
               >
-                {isEditModeInstitutions ? '수정사항 저장' : '정보 수정'}
+                {isEditModeInstitutions ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : activeTab === 'volunteers' ? (
             <>
-              {isEditModeVolunteers && (
-                <AppButton variant="danger" size="filter" onClick={onVolunteersCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeVolunteers ? onVolunteersSave : onInfoEdit}
               >
-                {isEditModeVolunteers ? '수정사항 저장' : '정보 수정'}
+                {isEditModeVolunteers ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : activeTab === 'instructors' ? (
             <>
-              {isEditModeInstructors && (
-                <AppButton variant="danger" size="filter" onClick={onInstructorsCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeInstructors ? onInstructorsSave : onInfoEdit}
               >
-                {isEditModeInstructors ? '수정사항 저장' : '정보 수정'}
+                {isEditModeInstructors ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : null}
@@ -180,14 +152,10 @@ export interface ProjectInfoDetailPanelsProps {
   volunteersForm: DetailForm | undefined
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onInfoEdit: () => void
-  onInfoCancelEdit: () => void
   onInfoSave: () => void
   onInstitutionsSave: () => void
-  onInstitutionsCancelEdit: () => void
-  onInstructorsCancelEdit: () => void
   onInstructorsSave: () => void
   onVolunteersSave: () => void
-  onVolunteersCancelEdit: () => void
   onPreview: () => void
 }
 
@@ -209,14 +177,10 @@ export function ProjectInfoDetailPanels({
   volunteersForm,
   registerVolunteersAdditionalHtml,
   onInfoEdit,
-  onInfoCancelEdit,
   onInfoSave,
   onInstitutionsSave,
-  onInstitutionsCancelEdit,
-  onInstructorsCancelEdit,
   onInstructorsSave,
   onVolunteersSave,
-  onVolunteersCancelEdit,
   onPreview,
 }: ProjectInfoDetailPanelsProps) {
   return (
@@ -230,14 +194,10 @@ export function ProjectInfoDetailPanels({
         isEditModeInstructors={isEditModeInstructors}
         isEditModeVolunteers={isEditModeVolunteers}
         onInfoEdit={onInfoEdit}
-        onInfoCancelEdit={onInfoCancelEdit}
         onInfoSave={onInfoSave}
         onInstitutionsSave={onInstitutionsSave}
-        onInstitutionsCancelEdit={onInstitutionsCancelEdit}
-        onInstructorsCancelEdit={onInstructorsCancelEdit}
         onInstructorsSave={onInstructorsSave}
         onVolunteersSave={onVolunteersSave}
-        onVolunteersCancelEdit={onVolunteersCancelEdit}
         onPreview={onPreview}
       />
       {isBodyLoading ? (
