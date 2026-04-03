@@ -134,3 +134,37 @@ export const uiColorsHex = {
   moreButton: '#3d3d3d',
   moreButtonHover: '#595959',
 } as const
+
+/**
+ * 지급 조서 라인 처리 현황 — `theme-provider.css` :root 의 `--color-payment-order-line-*` 와 동기화.
+ * 인라인 스타일·차트 등에서 `color: paymentOrderLineStatusColors.pending.text` 형태로 사용.
+ */
+export const paymentOrderLineStatusCssVarNames = {
+  pendingText: '--color-payment-order-line-pending-text',
+  pendingBg: '--color-payment-order-line-pending-bg',
+  confirmedText: '--color-payment-order-line-confirmed-text',
+  confirmedBg: '--color-payment-order-line-confirmed-bg',
+  correctionText: '--color-payment-order-line-correction-text',
+  correctionBg: '--color-payment-order-line-correction-bg',
+  rejectedText: '--color-payment-order-line-rejected-text',
+  rejectedBg: '--color-payment-order-line-rejected-bg',
+} as const
+
+export const paymentOrderLineStatusColors = {
+  pending: {
+    text: `var(${paymentOrderLineStatusCssVarNames.pendingText})`,
+    background: `var(${paymentOrderLineStatusCssVarNames.pendingBg})`,
+  },
+  confirmed: {
+    text: `var(${paymentOrderLineStatusCssVarNames.confirmedText})`,
+    background: `var(${paymentOrderLineStatusCssVarNames.confirmedBg})`,
+  },
+  correction: {
+    text: `var(${paymentOrderLineStatusCssVarNames.correctionText})`,
+    background: `var(${paymentOrderLineStatusCssVarNames.correctionBg})`,
+  },
+  rejected: {
+    text: `var(${paymentOrderLineStatusCssVarNames.rejectedText})`,
+    background: `var(${paymentOrderLineStatusCssVarNames.rejectedBg})`,
+  },
+} as const

@@ -12,17 +12,17 @@
 }
 
 .payment-order-admin__status-text--pending {
-  color: var(--color-green, #1e8c29);
+  color: var(--color-payment-order-line-pending-text, #1e8c29);
 }
 
 .payment-order-admin__status-text--confirmed {
-  color: var(--color-blue, #017eaf);
+  color: var(--color-payment-order-line-confirmed-text, #017eaf);
 }
 
 .payment-order-admin__status-text--correction {
-  color: var(--color-red, #c32f4a);
+  color: var(--color-payment-order-line-correction-text, #c32f4a);
 }
 
 .payment-order-admin__status-text--rejected {
-  color: #595959;
+  color: var(--color-payment-order-line-rejected-text, #464646);
 }

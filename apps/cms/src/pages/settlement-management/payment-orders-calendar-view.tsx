@@ -15,6 +15,7 @@ import {
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import { paymentOrderLineStatusColors } from '@/shared/constants/colors'
 import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
 import './payment-orders-calendar-view.css'
 
@@ -47,17 +48,17 @@ const CALENDAR_TAG_STATUS_SHORT: Record<PaymentOrderAdminProcessingStatus, strin
 }
 
 const STATUS_TEXT_COLOR: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: '#389e0d',
-  confirmed: '#01a1af',
-  correction: '#cf1322',
-  rejected: '#595959',
+  pending: paymentOrderLineStatusColors.pending.text,
+  confirmed: paymentOrderLineStatusColors.confirmed.text,
+  correction: paymentOrderLineStatusColors.correction.text,
+  rejected: paymentOrderLineStatusColors.rejected.text,
 }
 
 const STATUS_BG: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: '#f6ffed',
-  confirmed: '#e6f7f9',
-  correction: '#fff1f0',
-  rejected: '#fafafa',
+  pending: paymentOrderLineStatusColors.pending.background,
+  confirmed: paymentOrderLineStatusColors.confirmed.background,
+  correction: paymentOrderLineStatusColors.correction.background,
+  rejected: paymentOrderLineStatusColors.rejected.background,
 }
 
 function formatWonPlus(amount: number): string {

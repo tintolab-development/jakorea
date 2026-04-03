@@ -205,28 +205,31 @@
     0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
-/* 제출 및 대기 — matching (#389e0d) */
+/* 제출 및 대기 — theme: --color-payment-order-line-pending-* */
 .payment-orders-calendar__card--pending {
-  border: 1px solid rgba(56, 158, 13, 0.12);
-  background: rgba(56, 158, 13, 0.06);
+  border: 1px solid rgba(70, 70, 70, 0.08);
+  background: var(
+    --color-payment-order-line-pending-bg,
+    linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff
+  );
 }
 
-/* 지급조서 확인 완료 — program primary (#01a1af) */
+/* 지급조서 확인 완료 */
 .payment-orders-calendar__card--confirmed {
-  border: 1px solid rgba(1, 161, 175, 0.12);
-  background: rgba(1, 161, 175, 0.06);
+  border: 1px solid rgba(1, 126, 175, 0.12);
+  background: var(--color-payment-order-line-confirmed-bg, #e6f2f7);
 }
 
 /* 신청 반려 */
 .payment-orders-calendar__card--rejected {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(70, 70, 70, 0.08);
+  background: var(--color-payment-order-line-rejected-bg, #f2f3f5);
 }
 
-/* 지급 정정 요청 — settlement (#cf1322) */
+/* 지급 정정 요청 */
 .payment-orders-calendar__card--correction {
-  border: 1px solid rgba(207, 19, 34, 0.12);
-  background: rgba(207, 19, 34, 0.06);
+  border: 1px solid rgba(195, 47, 74, 0.12);
+  background: var(--color-payment-order-line-correction-bg, #f9eaed);
 }
 
 /* 클릭(선택): 흰 배경 + 민트 테두리 + 그림자 (상태 배경 덮어씀) */
