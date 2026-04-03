@@ -9,6 +9,7 @@ import { AppButton } from '@/shared/ui/app-button'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationStatementCommitPayload } from './payment-order-detail-fullpage-shared'
 import '@/features/program/ui/detail-modal/applicants/applicant-instructor-basic-info.css'
 import '@/features/program/ui/detail-modal/project-info/project-info-form-shared.css'
 import './payment-order-admin-status-tag.css'
@@ -28,12 +29,21 @@ export interface PaymentOrderProgramCalculationStatementModalProps {
   open: boolean
   onCancel: () => void
   data: PaymentOrderProgramCalculationStatement | null
+  /** 확인 처리·신청 반려 확정 시 목록 행 동기화 후 `onCancel`으로 산출 내역서 닫기 */
+  onProcessingCommitted?: (payload: PaymentOrderCalculationStatementCommitPayload) => void
+  /** 신청 반려 직후 산출 내역서 본문만 닫기(`data`는 결과 모달 종료 시 `onClearCalculationStatementData`까지 유지) */
+  onCloseStatementSheet?: () => void
+  /** 반려 결과 모달「확인」 후 mock 데이터 제거 */
+  onClearCalculationStatementData?: () => void
 }
 
 export function PaymentOrderProgramCalculationStatementModal({
   open,
   onCancel,
   data,
+  onProcessingCommitted,
+  onCloseStatementSheet,
+  onClearCalculationStatementData,
 }: PaymentOrderProgramCalculationStatementModalProps) {
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
@@ -41,12 +51,15 @@ export function PaymentOrderProgramCalculationStatementModal({
   const [paymentRejectReason, setPaymentRejectReason] = useState('')
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
       setPaymentConfirmOpen(false)
       setPaymentRejectOpen(false)
       setPaymentRejectDoneOpen(false)
       setPaymentRejectReason('')
+      return
     }
+    setPaymentConfirmOpen(false)
+    setPaymentRejectOpen(false)
   }, [open])
 
   if (!data) {
@@ -337,7 +350,12 @@ export function PaymentOrderProgramCalculationStatementModal({
       onCancel={() => setPaymentConfirmOpen(false)}
       onConfirm={() => {
         setPaymentConfirmOpen(false)
-        message.info('지급조서 확인 완료 처리는 추후 연결됩니다.')
+        onProcessingCommitted?.({
+          lineId: data.sourceLineRowId,
+          status: 'confirmed',
+        })
+        message.success('지급조서 확인 완료 처리되었습니다.')
+        onCancel()
       }}
       data={data}
     />
@@ -346,14 +364,24 @@ export function PaymentOrderProgramCalculationStatementModal({
       onCancel={() => setPaymentRejectOpen(false)}
       onReject={reason => {
         setPaymentRejectOpen(false)
+        onProcessingCommitted?.({
+          lineId: data.sourceLineRowId,
+          status: 'rejected',
+          rejectionReason: reason,
+        })
         setPaymentRejectReason(reason)
         setPaymentRejectDoneOpen(true)
+        onCloseStatementSheet?.()
       }}
       data={data}
     />
     <PaymentOrderPaymentRejectionResultModal
       open={paymentRejectDoneOpen}
-      onClose={() => setPaymentRejectDoneOpen(false)}
+      onClose={() => {
+        setPaymentRejectDoneOpen(false)
+        setPaymentRejectReason('')
+        onClearCalculationStatementData?.()
+      }}
       data={data}
       reason={paymentRejectReason}
     />

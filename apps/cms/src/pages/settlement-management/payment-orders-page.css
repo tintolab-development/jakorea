@@ -60,3 +60,12 @@
   line-height: 150%;
   opacity: 0.6;
 }
+
+/* 필터: 노출 기준(라디오) ~ 프로그램명 간 과한 여백 완화 + 칸 간격 살짝 타이트 */
+.payment-orders-page .unified-filter-card__fields-shell {
+  margin-right: 8px;
+}
+
+.payment-orders-page .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
+  margin-right: 8px;
+}

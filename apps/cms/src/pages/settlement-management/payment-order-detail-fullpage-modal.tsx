@@ -29,6 +29,7 @@ import { PaymentOrderProgramSettlementTable } from './payment-order-program-sett
 import { PaymentOrderInstructorSettlementTable } from './payment-order-instructor-settlement-table'
 import './payment-order-program-status-detail-fullpage-modal.css'
 import './payment-order-instructor-status-detail-fullpage-modal.css'
+import type { PaymentOrderCalculationStatementCommitPayload } from './payment-order-detail-fullpage-shared'
 
 export type PaymentOrderDetailFullPageModalProps =
   | {
@@ -52,6 +53,8 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
   const [calcStatementOpen, setCalcStatementOpen] = useState(false)
   const [calcStatementData, setCalcStatementData] =
     useState<PaymentOrderProgramCalculationStatement | null>(null)
+  const [calcLineCommit, setCalcLineCommit] =
+    useState<PaymentOrderCalculationStatementCommitPayload | null>(null)
 
   const handleAggregateChange = useCallback((status: PaymentOrderAdminProcessingStatus) => {
     setLineAggregateStatus(status)
@@ -75,6 +78,7 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
       setLineAggregateStatus('pending')
       setCalcStatementOpen(false)
       setCalcStatementData(null)
+      setCalcLineCommit(null)
     }
   }, [isOpen, type, programRow?.no, instructorRow?.no])
 
@@ -136,6 +140,9 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
             setCalcStatementData(null)
           }}
           data={calcStatementData}
+          onProcessingCommitted={setCalcLineCommit}
+          onCloseStatementSheet={() => setCalcStatementOpen(false)}
+          onClearCalculationStatementData={() => setCalcStatementData(null)}
         />
         <DetailFullPageModal
           open={isOpen}
@@ -164,6 +171,8 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
               isOpen={isOpen}
               onAggregateChange={handleAggregateChange}
               onOpenCalculationStatement={openProgramCalculationStatement}
+              calculationCommit={calcLineCommit}
+              onCalculationCommitApplied={() => setCalcLineCommit(null)}
             />
           </div>
         </DetailFullPageModal>
@@ -182,6 +191,9 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
           setCalcStatementData(null)
         }}
         data={calcStatementData}
+        onProcessingCommitted={setCalcLineCommit}
+        onCloseStatementSheet={() => setCalcStatementOpen(false)}
+        onClearCalculationStatementData={() => setCalcStatementData(null)}
       />
       <DetailFullPageModal
         open={isOpen}
@@ -210,6 +222,8 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
             isOpen={isOpen}
             onAggregateChange={handleAggregateChange}
             onOpenCalculationStatement={openInstructorCalculationStatement}
+            calculationCommit={calcLineCommit}
+            onCalculationCommitApplied={() => setCalcLineCommit(null)}
           />
         </div>
       </DetailFullPageModal>

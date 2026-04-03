@@ -13,6 +13,8 @@ import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payme
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_CLASSNAME,
+  STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import {
   getMockPaymentOrderInstructorDetail,
@@ -30,6 +32,7 @@ import {
   LINE_STATUS_OPTIONS,
   matchesDateRange,
   type AppliedLineStatus,
+  type PaymentOrderCalculationStatementCommitPayload,
 } from './payment-order-detail-fullpage-shared'
 
 interface InstructorDetailAppliedFilters {
@@ -59,6 +62,8 @@ export interface PaymentOrderInstructorSettlementTableProps {
   isOpen: boolean
   onAggregateChange: (status: PaymentOrderAdminProcessingStatus) => void
   onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
+  calculationCommit?: PaymentOrderCalculationStatementCommitPayload | null
+  onCalculationCommitApplied?: () => void
 }
 
 export function PaymentOrderInstructorSettlementTable({
@@ -66,6 +71,8 @@ export function PaymentOrderInstructorSettlementTable({
   isOpen,
   onAggregateChange,
   onOpenCalculationStatement,
+  calculationCommit,
+  onCalculationCommitApplied,
 }: PaymentOrderInstructorSettlementTableProps) {
   const [draftProgramName, setDraftProgramName] = useState('')
   const [draftInstitutionName, setDraftInstitutionName] = useState('')
@@ -105,6 +112,16 @@ export function PaymentOrderInstructorSettlementTable({
   useEffect(() => {
     onAggregateChange(deriveAggregateFromLines(programRowsState.map(r => r.processingStatus)))
   }, [programRowsState, onAggregateChange])
+
+  useEffect(() => {
+    if (!calculationCommit) return
+    setProgramRowsState(prev =>
+      prev.map(r =>
+        r.id === calculationCommit.lineId ? { ...r, processingStatus: calculationCommit.status } : r
+      )
+    )
+    onCalculationCommitApplied?.()
+  }, [calculationCommit, onCalculationCommitApplied])
 
   const handleSearch = useCallback(() => {
     setApplied({
@@ -156,9 +173,14 @@ export function PaymentOrderInstructorSettlementTable({
       {
         title: '지급 조서 처리 현황',
         key: 'processingStatus',
-        width: 136,
+        width: 176,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onHeaderCell: () => ({
+          className: STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_HEADER_CLASSNAME,
+        }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_CLASSNAME}`,
+        }),
         render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (
           <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
             <StatusDropdownCell<PaymentOrderAdminLineProcessingStatus>
@@ -173,6 +195,7 @@ export function PaymentOrderInstructorSettlementTable({
               }}
               isOpen={openStatusRowId === row.id}
               onOpenChange={nextOpen => setOpenStatusRowId(nextOpen ? row.id : null)}
+              tagLayout="paymentOrderLine"
             />
           </div>
         ),

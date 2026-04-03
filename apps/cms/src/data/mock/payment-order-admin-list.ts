@@ -162,6 +162,8 @@ export interface PaymentOrderCalculationStatementSessionBlock {
 export type PaymentOrderProgramCalculationStatement =
   | {
       context: 'program'
+      /** 강사 별 정산 목록 행 id — 확인/반려 후 테이블 동기화용 */
+      sourceLineRowId: string
       basic: PaymentOrderCalculationStatementProgramBasicInfo
       blocks: PaymentOrderCalculationStatementSessionBlock[]
       formulaLabel: string
@@ -169,6 +171,8 @@ export type PaymentOrderProgramCalculationStatement =
     }
   | {
       context: 'instructor'
+      /** 프로그램별 정산 목록 행 id */
+      sourceLineRowId: string
       basic: PaymentOrderCalculationStatementInstructorBasicInfo
       blocks: PaymentOrderCalculationStatementSessionBlock[]
       formulaLabel: string
@@ -604,6 +608,7 @@ export function getMockPaymentOrderProgramCalculationStatement(
 
   return {
     context: 'program',
+    sourceLineRowId: instructorLineRow.id,
     basic: {
       programName,
       instructorNameKo: instructorLineRow.instructorName,
@@ -731,6 +736,7 @@ export function getMockPaymentOrderInstructorCalculationStatement(
 
   return {
     context: 'instructor',
+    sourceLineRowId: programLineRow.id,
     basic: {
       nameKo: instructorDetail.nameKo,
       nameEn: instructorDetail.nameEn,
