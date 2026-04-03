@@ -32,13 +32,32 @@ import './status-dropdown-cell.css'
 export const STATUS_DROPDOWN_CELL_CLASSNAME = 'status-dropdown-cell__cell-status'
 
 /**
- * 태그 132×33 + 트리거/오버레이 150px(border-box: 8+132+8 + 1px 테두리) — 담당자 권한·강사 역할 열용.
+ * 태그 132×33 + 트리거/오버레이 150px(border-box: 8+132+8 + 1px 테두리) — 강사 역할 등 열용.
  * `onCell`에 `STATUS_DROPDOWN_CELL_CLASSNAME`과 함께 지정할 것.
  */
 export const STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME = 'status-dropdown-cell__cell-status--tag-132'
 
 /** 동일 열 `th`에 지정 — 본문 `td`와 폭·좌우 패딩 맞춰 세로선 정렬 */
 export const STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME = 'status-dropdown-cell__header--tag-132'
+
+/**
+ * 태그 132×33 + 트리거/오버레이 160px(border-box: 1px 테두리 + 가로 패딩 13px + 132 + 13px).
+ * 테이블 열 스펙이 160px일 때 `tag132` 대신 사용.
+ */
+export const STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME = 'status-dropdown-cell__cell-status--tag-160'
+
+/** 동일 열 `th` — `STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME` 과 짝 */
+export const STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME = 'status-dropdown-cell__header--tag-160'
+
+/**
+ * 지급 조서 처리 현황 — 내부 태그 160px, 열·트리거·드롭다운 외곽 176px(패딩 8+태그+8, 기본 136px 규칙과 동일).
+ * `onCell` / `onHeaderCell`에 각각 `STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_*` 병기.
+ */
+export const STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_CLASSNAME =
+  'status-dropdown-cell__cell-status--payment-order-line'
+
+export const STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_HEADER_CLASSNAME =
+  'status-dropdown-cell__header--payment-order-line'
 
 export interface StatusDropdownCellProps<T extends string = string> {
   /** 현재 상태 (null이면 emptyPlaceholder 표시) */
@@ -63,12 +82,34 @@ export interface StatusDropdownCellProps<T extends string = string> {
   emptyPlaceholder?: React.ReactNode
   /**
    * `tag132`: 내부 태그 132×33, 민트 래퍼·드롭다운 150px(border-box, 가로 패딩 8px).
-   * 셀에 `STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME`, 헤더에 `STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME`을 붙일 것.
+   * `tag160`: 동일 내부 태그, 래퍼·드롭다운 160px(border-box, 가로 패딩 13px).
+   * `paymentOrderLine`: 지급 조서 라인 배지 160px — 열·트리거·메뉴 외곽 176px·패딩 8px.
+   * 셀/헤더에는 각각 `STATUS_DROPDOWN_CELL_TAG_*_CLASSNAME` / `*_HEADER_CLASSNAME`을 붙일 것.
    */
-  tagLayout?: 'default' | 'tag132'
+  tagLayout?: 'default' | 'tag132' | 'tag160' | 'paymentOrderLine'
 }
 
 const DEFAULT_EMPTY = '-'
+
+function dropdownOverlayClassName(tagLayout: StatusDropdownCellProps['tagLayout']): string {
+  if (tagLayout === 'tag132') {
+    return 'status-dropdown-cell__dropdown-overlay status-dropdown-cell__dropdown-overlay--tag-132'
+  }
+  if (tagLayout === 'tag160') {
+    return 'status-dropdown-cell__dropdown-overlay status-dropdown-cell__dropdown-overlay--tag-160'
+  }
+  if (tagLayout === 'paymentOrderLine') {
+    return 'status-dropdown-cell__dropdown-overlay status-dropdown-cell__dropdown-overlay--payment-order-line'
+  }
+  return 'status-dropdown-cell__dropdown-overlay'
+}
+
+function statusTriggerLayoutClassName(tagLayout: StatusDropdownCellProps['tagLayout']): string {
+  if (tagLayout === 'tag132') return ' status-dropdown-cell__status-trigger--tag-132'
+  if (tagLayout === 'tag160') return ' status-dropdown-cell__status-trigger--tag-160'
+  if (tagLayout === 'paymentOrderLine') return ' status-dropdown-cell__status-trigger--payment-order-line'
+  return ''
+}
 
 export function StatusDropdownCell<T extends string = string>({
   status,
@@ -110,17 +151,13 @@ export function StatusDropdownCell<T extends string = string>({
       }}
       trigger={['click']}
       disabled={isUpdating}
-      overlayClassName={
-        tagLayout === 'tag132'
-          ? 'status-dropdown-cell__dropdown-overlay status-dropdown-cell__dropdown-overlay--tag-132'
-          : 'status-dropdown-cell__dropdown-overlay'
-      }
+      overlayClassName={dropdownOverlayClassName(tagLayout)}
       getPopupContainer={() => document.body}
       open={isOpen}
       onOpenChange={onOpenChange}
     >
       <span
-        className={`status-dropdown-cell__status-trigger${tagLayout === 'tag132' ? ' status-dropdown-cell__status-trigger--tag-132' : ''}${isOpen ? ' status-dropdown-cell__status-trigger--open' : ''}`}
+        className={`status-dropdown-cell__status-trigger${statusTriggerLayoutClassName(tagLayout)}${isOpen ? ' status-dropdown-cell__status-trigger--open' : ''}`}
         onClick={e => e.stopPropagation()}
       >
         {renderBadge(status)}

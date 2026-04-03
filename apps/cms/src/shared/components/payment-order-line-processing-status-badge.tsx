@@ -1,5 +1,6 @@
 /**
- * 지급 조서 처리 현황(라인) 배지 — 신청자 목록「프로그램 승인 현황」과 동일 TextbookStatusBadge(app-status-badge) 계열
+ * 지급 조서 처리 현황(라인) 배지 — TextbookStatusBadge `payment-order-line`
+ * 색상: theme-provider.css `--color-payment-order-line-*` · TS `paymentOrderLineStatusColors`
  */
 
 import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
