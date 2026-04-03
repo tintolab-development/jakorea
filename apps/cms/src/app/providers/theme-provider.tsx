@@ -45,6 +45,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
             borderRadius: 8,
             rowHoverBg: 'rgba(1, 161, 175, 0.06)',
             rowSelectedBg: 'rgba(1, 161, 175, 0.06)',
+            /* 선택 행 호버 시 배경이 진해지지 않도록(기본 rowSelectedHoverBg와 분리됨) */
+            rowSelectedHoverBg: 'rgba(1, 161, 175, 0.06)',
           },
           Input: {
             borderRadius: 6,
