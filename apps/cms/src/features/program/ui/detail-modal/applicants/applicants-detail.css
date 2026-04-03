@@ -212,10 +212,9 @@
   cursor: pointer;
 }
 
-/* 강의 회차 td: 좌우 24px·상하 10px 패딩 명시, 텍스트가 셀 밖으로 나가지 않도록 */
+/* 강의 회차 td: 비율 열 너비는 컬럼 %에 따름. 최소 너비만 두어 좁은 뷰에서도 내용 가독성 유지 */
 .applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  width: 520px;
-  min-width: 520px;
+  min-width: 280px;
   white-space: normal;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
@@ -229,7 +228,7 @@
 .applicant-details__sessions-cell {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   text-align: left;
   padding: 0;
   margin: 0;

@@ -412,22 +412,28 @@ export function ApplicantInstructorBasicInfo({
             className="applicant-instructor-basic-info__table applicant-instructor-basic-info__table--post-approval"
           >
             <colgroup>
-              <col style={{ width: '200px' }} />
+              <col style={{ width: '220px' }} />
               <col />
-              <col style={{ width: '200px' }} />
+              <col style={{ width: '220px' }} />
               <col />
             </colgroup>
             <tbody>
               <tr>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                <th
+                  scope="row"
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
+                >
                   강의비 책정 기준
-                </td>
+                </th>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                   {instructor.lectureFeeBasisDisplay ?? '-'}
                 </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                <th
+                  scope="row"
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
+                >
                   사업소득자 여부
-                </td>
+                </th>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                   {instructor.businessIncomeEarnerStatus ?? '-'}
                 </td>

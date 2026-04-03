@@ -393,10 +393,11 @@ export function useApplicantsDetail({
     return []
   }, [menu, institutionColumns, instructorColumns])
 
+  /** 신청 강사: 픽셀 합산 스크롤. 신청 기관은 뷰에서 래퍼 너비 기반 scroll.x 사용 */
   const tableScrollX =
     menu === 'instructors'
       ? 48 + 72 + 110 + 150 + 120 + 110 + 130 + 160 + 136
-      : 49 + 64 + 180 + 200 + 136 + 520 + 96 + 100 + 120 + 180
+      : 1280
 
   return {
     menu,

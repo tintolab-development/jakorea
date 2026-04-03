@@ -35,12 +35,13 @@ export function useInstitutionApplicantColumns(params: {
 
   return useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      /* 화면 너비 대비 비율 분배(합 100%). 가로 스크롤은 scroll.x = max(최소, 래퍼 너비)로 처리 */
+      { title: 'No.', dataIndex: 'no', key: 'no', width: '4%', align: 'center' },
       {
         title: '참여 기관명',
         dataIndex: 'schoolName',
         key: 'schoolName',
-        width: 180,
+        width: '11%',
         align: 'center',
         ellipsis: true,
         render: (text: string, record) => (
@@ -56,7 +57,7 @@ export function useInstitutionApplicantColumns(params: {
         title: '기관 지역',
         dataIndex: 'region',
         key: 'region',
-        width: 200,
+        width: '11%',
         align: 'center',
         ellipsis: true,
       },
@@ -64,7 +65,7 @@ export function useInstitutionApplicantColumns(params: {
         title: '프로그램 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 136,
+        width: '8%',
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
@@ -85,7 +86,7 @@ export function useInstitutionApplicantColumns(params: {
       {
         title: '강의 회차 별 희망 교육 날짜 및 시간',
         key: 'sessions',
-        width: 480,
+        width: '28%',
         onCell: () => ({ className: 'applicant-details__td-sessions' }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
           const sessions = record.sessions ?? []
@@ -118,29 +119,37 @@ export function useInstitutionApplicantColumns(params: {
         title: '대상 학년',
         dataIndex: 'educationGrade',
         key: 'educationGrade',
-        width: 96,
+        width: '6%',
         align: 'center',
       },
       {
         title: '대상 학급 수',
         dataIndex: 'classCount',
         key: 'classCount',
-        width: 100,
+        width: '6%',
         align: 'center',
         render: (v: number) => (v != null ? `${v}개` : '-'),
+      },
+      {
+        title: '총 학생 수',
+        dataIndex: 'studentCount',
+        key: 'studentCount',
+        width: '6%',
+        align: 'center',
+        render: (v: number) => (v != null ? `${v}명` : '-'),
       },
       {
         title: '담당 교사명',
         dataIndex: 'teacherName',
         key: 'teacherName',
-        width: 120,
+        width: '8%',
         align: 'center',
       },
       {
         title: '담당 강사',
         dataIndex: 'assignedInstructorNames',
         key: 'assignedInstructorNames',
-        width: 180,
+        width: '12%',
         align: 'center',
         ellipsis: true,
         render: (v: string | undefined) => v ?? '-',
@@ -151,6 +160,7 @@ export function useInstitutionApplicantColumns(params: {
       getSessionLineParts,
       handleInstitutionApprovalStatusChange,
       openApprovalDropdownId,
+      setSelectedItem,
     ]
   )
 }

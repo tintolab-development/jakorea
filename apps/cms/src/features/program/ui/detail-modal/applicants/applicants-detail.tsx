@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
@@ -64,6 +65,27 @@ export function ApplicantDetails({
     columns,
     tableScrollX,
   } = useApplicantsDetail({ menu, onRegisterApplicantCloseHandler })
+
+  const institutionTableWrapRef = useRef<HTMLDivElement>(null)
+  const [institutionTableScrollX, setInstitutionTableScrollX] = useState(1280)
+
+  useLayoutEffect(() => {
+    if (menu !== 'institutions' || viewMode !== 'table' || selectedItem) return
+    const el = institutionTableWrapRef.current
+    if (!el) return
+    const minW = 1280
+    const update = () => {
+      const w = el.getBoundingClientRect().width
+      setInstitutionTableScrollX(Math.max(minW, Math.floor(w)))
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [menu, viewMode, selectedItem])
+
+  const tableHorizontalScrollX =
+    menu === 'institutions' ? institutionTableScrollX : tableScrollX
 
   return (
     <div className="applicant-details">
@@ -209,7 +231,10 @@ export function ApplicantDetails({
               </div>
 
               {viewMode === 'table' ? (
-                <div className="applicant-details__table-wrap">
+                <div
+                  ref={menu === 'institutions' ? institutionTableWrapRef : undefined}
+                  className="applicant-details__table-wrap"
+                >
                   <Table<ApplicantSchoolRow | ApplicantInstructorRow>
                     rowKey="id"
                     columns={columns as ColumnsType<ApplicantSchoolRow | ApplicantInstructorRow>}
@@ -230,7 +255,7 @@ export function ApplicantDetails({
                       },
                       style: { cursor: 'pointer' },
                     })}
-                    scroll={{ x: tableScrollX }}
+                    scroll={{ x: tableHorizontalScrollX }}
                     pagination={false}
                     rowSelection={{
                       selectedRowKeys,
