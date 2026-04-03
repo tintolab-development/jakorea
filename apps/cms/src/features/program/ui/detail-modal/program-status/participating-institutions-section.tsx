@@ -353,9 +353,6 @@ export function ParticipatingInstitutionsSection({
                 const { datePart, durationPart, periodPart } = getSessionLineParts(s)
                 return (
                   <div key={s.round} className="participating-institutions-section__session-line">
-                    <span className="participating-institutions-section__session-round-tag">
-                      {s.round}차시
-                    </span>
                     {datePart}
                     <span
                       className="participating-institutions-section__session-divider"

@@ -48,27 +48,6 @@
   box-sizing: border-box;
 }
 
-/* n차시 배지: 47*26 고정, 배지 내 텍스트 스펙 */
-.participating-institutions-section__session-round-tag {
-  display: inline-flex;
-  width: 47px;
-  height: 26px;
-  padding: 3px 8px 2px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #f5f6f7;
-  box-sizing: border-box;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  flex-shrink: 0;
-}
-
 /* 날짜 | 시간 | 교시 구분 디바이더 */
 .participating-institutions-section__session-divider {
   width: 1px;
