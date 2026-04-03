@@ -210,6 +210,12 @@
   min-width: var(--filter-control-width, 240px);
 }
 
+/* 라디오(노출 기준 등): 컨텐츠 너비만 사용 — 전역 min-width 240px이 옆 필드와 과한 간격을 만듦 */
+.unified-filter-card__fields-inner .ant-col.unified-filter-card__col--radio {
+  min-width: 0;
+  max-width: none;
+}
+
 /* FilterFieldConfig.width: 열 flex-basis에 맞추고 select/input 전역 min-width와 충돌 방지 */
 .unified-filter-card__fields-inner .ant-col.unified-filter-card__col--explicit-width {
   min-width: 0;

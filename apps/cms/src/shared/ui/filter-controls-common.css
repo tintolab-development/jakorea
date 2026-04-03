@@ -22,6 +22,9 @@
   --table-selection-column-width: 60px;
   /** Ant Table 내 체크박스 박스 크기 (ant-table-selection-checkbox.css) */
   --table-checkbox-size: 20px;
+  /** Select allowClear(X) ↔ 드롭다운 화살표 간격 (우측 기준 오프셋) */
+  --filter-select-arrow-inset-end: 8px;
+  --filter-select-clear-inset-end: 38px;
 }
 
 @media (max-width: 1200px) {
@@ -82,8 +85,15 @@
   box-sizing: border-box;
   display: inline-flex;
   align-items: stretch;
-  overflow: hidden;
   border-radius: 8px;
+}
+
+/* 셀렉트·기간: 드롭다운이 잘리지 않도록 — 클리어·화살표는 app-select / app-datepicker 규칙으로 박스 안 배치 */
+.unified-filter-card .app-select,
+.unified-filter-card .unified-filter-card__field .app-select,
+.unified-filter-card .unified-filter-card__field .app-datepicker,
+.unified-filter-card .app-datepicker {
+  overflow: visible;
 }
 
 .unified-filter-card .app-select > .ant-select,
@@ -396,6 +406,53 @@
   min-height: 0 !important;
   line-height: 1 !important;
   padding: 0 11px !important;
+}
+
+/* Ant Select 단독( ListPageFilters · 신청자/담당자 탭 ): X ↔ 화살표 간격 */
+.list-page-filters .ant-select,
+.program-applicants-tab__filter-col .ant-select,
+.program-managers-tab__filter-col .ant-select {
+  position: relative;
+}
+
+.list-page-filters .ant-select .ant-select-arrow,
+.program-applicants-tab__filter-col .ant-select .ant-select-arrow,
+.program-managers-tab__filter-col .ant-select .ant-select-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  inset-inline-end: var(--filter-select-arrow-inset-end, 8px) !important;
+  inset-inline-start: auto !important;
+  width: var(--spacing-12, 12px) !important;
+  height: var(--spacing-12, 12px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.list-page-filters .ant-select .ant-select-clear,
+.program-applicants-tab__filter-col .ant-select .ant-select-clear,
+.program-managers-tab__filter-col .ant-select .ant-select-clear {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  inset-inline-end: var(--filter-select-clear-inset-end, 38px) !important;
+  inset-inline-start: auto !important;
+  width: var(--spacing-12, 12px) !important;
+  height: var(--spacing-12, 12px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.list-page-filters .ant-select-single:has(.ant-select-clear) .ant-select-selector,
+.program-applicants-tab__filter-col .ant-select-single:has(.ant-select-clear) .ant-select-selector,
+.program-managers-tab__filter-col .ant-select-single:has(.ant-select-clear) .ant-select-selector {
+  padding-inline-end: calc(
+    var(--filter-select-clear-inset-end, 38px) + var(--spacing-12, 12px) + 6px
+  ) !important;
 }
 
 /* ==========================================

@@ -25,6 +25,7 @@
   width: 100%;
   min-width: 0;
   height: 100%;
+  position: relative;
 }
 
 .app-select .ant-select-selector {
@@ -38,10 +39,48 @@
   box-shadow: none !important;
 }
 
-/* Ant 기본 inset-inline-end(패딩 토큰) 때문에 화살표가 오른쪽 패딩 안쪽으로 들어감 → 입력 박스 오른쪽 끝에 맞춤 */
+/* 우측 아이콘 영역: 화살표만 / allowClear+화살표 (토큰 --filter-select-* 는 filter-controls-common 에서 정의) */
+.app-select .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  padding-inline-end: 22px !important;
+}
+
+.app-select .ant-select-single:not(.ant-select-customize-input):has(.ant-select-clear) .ant-select-selector {
+  padding-inline-end: calc(var(--filter-select-clear-inset-end, 38px) + var(--spacing-12, 12px) + 4px) !important;
+}
+
+/* allowClear(X) ↔ 드롭다운 화살표 겹침 방지 (필터 토큰과 동일 오프셋) */
 .app-select .ant-select-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  inset-inline-end: var(--filter-select-arrow-inset-end, 8px) !important;
+  inset-inline-start: auto !important;
+  width: var(--spacing-12, 12px) !important;
+  height: var(--spacing-12, 12px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   flex-shrink: 0;
-  inset-inline-end: 0 !important;
+}
+
+.app-select .ant-select-clear {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  inset-inline-end: var(--filter-select-clear-inset-end, 38px) !important;
+  inset-inline-start: auto !important;
+  width: var(--spacing-12, 12px) !important;
+  height: var(--spacing-12, 12px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.app-select .ant-select-clear .anticon {
+  font-size: var(--font-size-12, 12px);
+  line-height: 1;
 }
 
 .app-select .ant-select-selection-item,
