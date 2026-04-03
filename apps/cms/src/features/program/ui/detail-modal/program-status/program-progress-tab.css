@@ -81,12 +81,12 @@
   align-items: center;
 }
 
-/* 필터 필드: 같은 선상(공통 높이), 레이블·인풋 12px 간격 */
+/* 필터 필드: 같은 선상(공통 높이), 레이블·컨트롤 6px 간격 */
 .program-progress-tab__filter-field {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
   height: var(--filter-control-height, 44px);
   min-height: var(--filter-control-height, 44px);
   overflow: visible;
@@ -96,15 +96,14 @@
   overflow: visible !important;
 }
 
-/* 레이블: 공통 높이 + line-height로 한 줄 텍스트 세로 중앙 */
+/* 레이블: 한 줄, 행 높이 안에서 수직 중앙 (타이포는 filter-controls-common) */
 .program-progress-tab__filter-label {
   flex: 0 0 auto;
   white-space: nowrap;
-  height: var(--filter-control-height, 44px);
-  line-height: var(--filter-control-height, 44px) !important;
   margin: 0;
   padding: 0;
-  display: block;
+  display: flex;
+  align-items: center;
 }
 
 .program-progress-tab__filter-label .ant-typography {
@@ -117,12 +116,12 @@
   min-width: 0;
 }
 
-/* 교사/강사명 검색: 필터와 같은 공통 높이, 레이블·인풋 12px 간격 */
+/* 교사/강사명 검색: 필터와 같은 공통 높이, 레이블·인풋 6px 간격 */
 .program-progress-tab__filters .labeled-search-input {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
   height: var(--filter-control-height, 44px);
 }
 
@@ -130,9 +129,10 @@
   flex: 0 0 auto;
   white-space: nowrap;
   margin: 0;
-  height: var(--filter-control-height, 44px);
-  line-height: var(--filter-control-height, 44px) !important;
-  display: block;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  height: auto;
 }
 
 /* LabeledSearchInput: 테두리·높이는 내부 __input에만 (AppInput 래퍼는 투명) */
@@ -316,12 +316,6 @@
   }
 }
 
-.program-progress-tab__filter-field .program-progress-tab__filter-label {
-  font-size: var(--font-size-14);
-  font-weight: var(--font-weight-500);
-  color: #262626;
-}
-
 /* 탭·필터와 테이블 구분 디바이더 */
 .program-progress-tab__divider {
   height: 0;
@@ -352,10 +346,12 @@
 }
 
 .program-progress-tab__table .ant-table-thead > tr > th,
-.program-progress-tab__table .ant-table-tbody > tr > td {
+.program-progress-tab__table .ant-table-tbody > tr > td,
+.program-progress-tab__table .ant-table-tbody > tr:hover > td {
   text-align: center;
   vertical-align: middle;
-  border-right: 1px solid var(--color-border-light);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
 }
 
 .program-progress-tab__table .ant-table-thead > tr > th:last-child,
@@ -371,33 +367,40 @@
   text-align: center;
 }
 
-/* 선택된 행 하이라이트: 연한 녹색 */
-.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected > td {
+/* 선택된 행 하이라이트: 연한 녹색(호버 시에도 동일 배경 유지) */
+.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected > td,
+.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
   background: var(--color-table-row-selected) !important;
 }
 
-.program-progress-tab__table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
-  background: var(--color-table-row-selected-hover) !important;
+/* 교재·정산 현황: 공통 StatusDropdownCell — 행 53px·셀 136px (트리거 외곽과 동일) */
+.program-progress-tab__table .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
 }
 
-/* 교재 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(학교 상세 모달) 방지 */
-.textbook-status-dropdown-cell {
-  position: relative;
-  z-index: 1;
+.program-progress-tab__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow: visible;
+  box-sizing: border-box;
 }
 
-.textbook-status-dropdown-trigger {
-  cursor: pointer;
-  display: inline-block;
-}
-
-/* 정산 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(강사 상세 모달) 방지 */
-.settlement-status-dropdown-cell {
-  position: relative;
-  z-index: 1;
-}
-
-.settlement-status-dropdown-trigger {
-  cursor: pointer;
-  display: inline-block;
+.program-progress-tab__table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
 }

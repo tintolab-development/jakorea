@@ -11,19 +11,16 @@ import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-inf
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { SchoolDetailStudentListSection } from '../../school-detail-student-list-section'
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
-import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
 import './applicants-detail-contents.css'
 
 export type ApplicantType = 'institutions' | 'instructors' | 'volunteers'
 
 const DETAIL_TAB_PARAM = 'detailTab'
 
-/** 신청 강사 상세 — 참여 강사 풀페이지와 동일 라벨·쿼리 키 */
+/** 신청 강사 상세 — 탭 라벨·쿼리 키 */
 const INSTRUCTOR_DETAIL_TAB_LABELS = {
   application: '신청 정보',
   institutionAssignment: '기관 배정 현황',
-  settlement: '정산 현황',
-  posts: '게시글',
 } as const
 
 function parseDetailTabFromSearch(searchParams: URLSearchParams, type: ApplicantType): string {
@@ -33,13 +30,9 @@ function parseDetailTabFromSearch(searchParams: URLSearchParams, type: Applicant
     return 'info'
   }
   if (type === 'instructors') {
-    if (
-      t === 'application' ||
-      t === 'institutionAssignment' ||
-      t === 'settlement' ||
-      t === 'posts'
-    ) {
-      return t
+    /** 정산·게시글 탭 제거, 기관 배정은 비활성(선택 불가) — URL로 들어와도 신청 정보로 정규화 */
+    if (t === 'application') {
+      return 'application'
     }
     /** 이전 URL: detailTab=info | extra → 신청 정보 */
     return 'application'
@@ -75,7 +68,7 @@ function ApplicantHeaderActionsExtra({ items }: { items: ApplicantHeaderActionIt
   )
 }
 
-/** 클릭 시 신청자 상세 화면에서 마스킹된 개인정보를 원문 그대로 표시 */
+/** 클릭 시 준비 중 안내(브라우저 alert) */
 function headerBtnPrivacy(onRevealPersonalInfo: () => void): ApplicantHeaderActionItem {
   return {
     key: 'privacy',
@@ -105,6 +98,16 @@ function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
     variant: 'primary',
     label: '정보 수정',
     disabled: true,
+  }
+}
+
+/** 승인 완료 강사 — 정보 수정(기능 미구현, 클릭 시 안내) */
+function headerBtnEditInfoPreparing(): ApplicantHeaderActionItem {
+  return {
+    key: 'edit-info',
+    variant: 'primary',
+    label: '정보 수정',
+    onClick: () => window.alert('준비중'),
   }
 }
 
@@ -183,6 +186,7 @@ function resolveApplicantHeaderItems(params: {
   if (isApprovedInstructor) {
     return [
       headerBtnCancelApproval(applicantId, onCancelApproval),
+      headerBtnEditInfoPreparing(),
       headerBtnPrivacy(onRevealPersonalInfo),
     ]
   }
@@ -201,7 +205,7 @@ function resolveApplicantHeaderItems(params: {
 interface ApplicantsDetailContentsProps {
   type: ApplicantType
   data: ApplicantSchoolRow | ApplicantInstructorRow
-  /** 신청 강사 게시글 탭용 (없으면 안내 문구만 표시) */
+  /** 상위에서 전달 유지(향후 탭 복원 등). 신청 강사 상세에서는 미사용 */
   program?: Program | null
   onBack: () => void
   onApprove: (id: string) => void
@@ -215,7 +219,6 @@ interface ApplicantsDetailContentsProps {
 export function ApplicantsDetailContents({
   type,
   data,
-  program = null,
   onBack: _onBack,
   onApprove,
   onReject,
@@ -223,7 +226,6 @@ export function ApplicantsDetailContents({
   onCancelReject,
 }: ApplicantsDetailContentsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [instructorPostWriteOpen, setInstructorPostWriteOpen] = useState(false)
 
   const activeTab = useMemo(
     () => parseDetailTabFromSearch(searchParams, type),
@@ -255,7 +257,7 @@ export function ApplicantsDetailContents({
   /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
 
-  /** 신청 강사 승인 완료: [승인 취소] [개인정보 상세보기] */
+  /** 신청 강사 승인 완료: [승인 취소] [정보 수정] [개인정보 상세보기] */
   const isApprovedInstructor = isInstructor && instructorData?.approvalStatus === 'approved'
 
   /** 신청 기관 반려: [반려 취소] [개인정보 상세보기] */
@@ -270,11 +272,10 @@ export function ApplicantsDetailContents({
 
   useEffect(() => {
     setPersonalInfoRevealed(false)
-    setInstructorPostWriteOpen(false)
   }, [applicantId])
 
   const onRevealPersonalInfo = useCallback(() => {
-    setPersonalInfoRevealed(true)
+    window.alert('준비 중입니다.')
   }, [])
 
   const headerExtraContent = useMemo(() => {
@@ -312,21 +313,10 @@ export function ApplicantsDetailContents({
   const tabBarExtraContent = useMemo(() => {
     if (isInstructor) {
       if (activeTab === 'application') return headerExtraContent
-      if (activeTab === 'posts' && program) {
-        return (
-          <AppButton
-            variant="primary"
-            size="filter"
-            onClick={() => setInstructorPostWriteOpen(true)}
-          >
-            게시글 등록
-          </AppButton>
-        )
-      }
       return null
     }
     return headerExtraContent
-  }, [isInstructor, activeTab, headerExtraContent, program])
+  }, [isInstructor, activeTab, headerExtraContent])
 
   const institutionTabItems = useMemo(() => {
     if (!institutionData) return []
@@ -421,41 +411,10 @@ export function ApplicantsDetailContents({
             />
           </div>
         ),
-      },
-      {
-        key: 'settlement',
-        label: INSTRUCTOR_DETAIL_TAB_LABELS.settlement,
-        children: (
-          <div className="extra-tab-content applicant-contents__instructor-payment-tab">
-            <p className="applicant-contents__tab-placeholder">
-              정산 현황은 승인·배정 이후 연동됩니다.
-            </p>
-            <p className="applicant-contents__tab-placeholder">
-              상세 정산 내역 화면은 준비 중입니다.
-            </p>
-          </div>
-        ),
-      },
-      {
-        key: 'posts',
-        label: INSTRUCTOR_DETAIL_TAB_LABELS.posts,
-        children: (
-          <div className="extra-tab-content applicant-contents__instructor-posts-tab">
-            {program ? (
-              <EnrollmentProgramDetailPostsTab
-                program={program}
-                showWriteButtonInSection={false}
-                writeModalOpen={instructorPostWriteOpen}
-                onWriteModalOpenChange={setInstructorPostWriteOpen}
-              />
-            ) : (
-              <Empty description="프로그램 정보가 없어 게시글을 불러올 수 없습니다." />
-            )}
-          </div>
-        ),
+        disabled: true,
       },
     ]
-  }, [instructorData, personalInfoRevealed, program, instructorPostWriteOpen])
+  }, [instructorData, personalInfoRevealed])
 
   if (isVolunteer) {
     return (

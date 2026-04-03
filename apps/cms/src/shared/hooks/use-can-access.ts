@@ -57,8 +57,8 @@ export function useCanAccessPath(path: string): boolean {
   const { user } = useAuth()
 
   return useMemo(() => {
-    return canAccessPath(path, user?.role || null)
-  }, [path, user?.role])
+    return canAccessPath(path, user ? { role: user.role, adminLevel: user.adminLevel } : null)
+  }, [path, user])
 }
 
 /**

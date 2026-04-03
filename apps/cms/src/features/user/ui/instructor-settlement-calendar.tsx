@@ -16,6 +16,7 @@ import {
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import '@/shared/ui/program-calendar.css'
 import '@/features/program/ui/detail-modal/applicants/applicant-calendar-view.css'
 import './instructor-settlement-calendar.css'
 
@@ -170,7 +171,7 @@ export function InstructorSettlementCalendarView({
     const applyMonthRowHeight = () => {
       const thead = main.querySelector('.ant-picker-content thead')
       if (!thead) {
-        main.style.removeProperty('--applicant-cal-row-height')
+        main.style.removeProperty('--program-calendar-month-row-height')
         return
       }
       const mainRect = main.getBoundingClientRect()
@@ -179,7 +180,7 @@ export function InstructorSettlementCalendarView({
       const tbodyTop = thead.getBoundingClientRect().bottom
       const forBody = Math.max(0, innerBottom - tbodyTop - BOTTOM_RESERVE)
       const rowPx = Math.max(MIN_ROW, forBody / ROWS)
-      main.style.setProperty('--applicant-cal-row-height', `${Math.round(rowPx * 10) / 10}px`)
+      main.style.setProperty('--program-calendar-month-row-height', `${Math.round(rowPx * 10) / 10}px`)
     }
     const ro = new ResizeObserver(() => requestAnimationFrame(applyMonthRowHeight))
     ro.observe(main)
@@ -188,7 +189,7 @@ export function InstructorSettlementCalendarView({
     requestAnimationFrame(applyMonthRowHeight)
     return () => {
       ro.disconnect()
-      main.style.removeProperty('--applicant-cal-row-height')
+      main.style.removeProperty('--program-calendar-month-row-height')
     }
   }, [currentMonth])
 
@@ -201,20 +202,17 @@ export function InstructorSettlementCalendarView({
 
   const dateFullCellRender = (date: Dayjs) => {
     const isCurrentMonth = date.isSame(currentMonth, 'month')
+    const isToday = date.isSame(dayjs(), 'day')
     const isSelected = date.isSame(selectedDate, 'day')
     const dayEvents = getEventsForDate(date)
     const hasEvents = dayEvents.length > 0
 
-    /* 캘린더 셀 한칸 스타일 */
+    /* 캘린더 셀 한칸 스타일 — program-calendar.css와 동일 계열 클래스 */
     const cellBody = (
       <>
-        <div className="applicant-calendar-cell-date">
-          <span className={isSelected ? 'applicant-calendar-cell-date-selected' : ''}>
-            {date.date()}
-          </span>
-        </div>
+        <div className="program-calendar-cell-date">{date.date()}</div>
         {hasEvents && (
-          <div className="applicant-calendar-cell-events">
+          <div className="program-calendar-cell-events">
             {dayEvents.slice(0, 2).map(event => {
               const row = event.originalItem
               const colors = statusToColor(row.status)
@@ -222,20 +220,20 @@ export function InstructorSettlementCalendarView({
               return (
                 <div
                   key={event.id}
-                  className="applicant-calendar-event"
+                  className="program-calendar-event"
                   style={{
                     backgroundColor: colors.bg,
                   }}
                   onClick={e => e.stopPropagation()}
                 >
-                  <span className="applicant-calendar-event-title" style={{ color: colors.text }}>
+                  <span className="program-calendar-event-title" style={{ color: colors.text }}>
                     +{row.scheduledAmount.toLocaleString()}원 | {short}
                   </span>
                 </div>
               )
             })}
             {dayEvents.length > 2 && (
-              <div className="applicant-calendar-event-more">외 {dayEvents.length - 2}건</div>
+              <div className="program-calendar-event-more">외 {dayEvents.length - 2}건</div>
             )}
           </div>
         )}
@@ -244,19 +242,19 @@ export function InstructorSettlementCalendarView({
 
     /* 툴팁 스타일 */
     const tooltipTitle = (
-      <div className="applicant-calendar-popover">
+      <div className="program-calendar-schedule-panel">
         {dayEvents.map(ev => {
           const row = ev.originalItem
           const colors = statusToColor(row.status)
           return (
-            <div key={ev.id} className="applicant-calendar-popover__row">
-              <div className="applicant-calendar-popover__title">[{row.programName}]</div>
+            <div key={ev.id} className="program-calendar-schedule-panel__row">
+              <div className="program-calendar-schedule-panel__title">[{row.programName}]</div>
               <div>
                 <span style={{ color: colors.text }}>
                   {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]}
                 </span>
-                <span className="applicant-calendar-popover__text">
-                  <span className="applicant-calendar-popover__sep">|</span> +
+                <span className="program-calendar-schedule-panel__text">
+                  <span className="program-calendar-schedule-panel__sep">|</span> +
                   {row.scheduledAmount.toLocaleString()}원
                 </span>
               </div>
@@ -268,19 +266,19 @@ export function InstructorSettlementCalendarView({
 
     return (
       <div
-        className={`applicant-calendar-cell ${!isCurrentMonth ? 'applicant-calendar-cell--other-month' : ''} ${isSelected ? 'applicant-calendar-cell--selected' : ''}`}
+        className={`program-calendar-cell ${!isCurrentMonth ? 'program-calendar-cell--other-month' : ''} ${isSelected ? 'program-calendar-cell--selected' : ''} ${isToday ? 'program-calendar-cell--today' : ''}`}
         onClick={() => handleDateSelect(date)}
       >
         {hasEvents ? (
           <Tooltip
             arrow={false}
-            overlayClassName="applicant-calendar-tooltip-overlay applicant-calendar-tooltip-overlay--settlement"
+            overlayClassName="program-calendar-tooltip-overlay program-calendar-tooltip-overlay--settlement"
             title={tooltipTitle}
             placement="bottomLeft"
             mouseEnterDelay={0.15}
             destroyTooltipOnHide
           >
-            <div className="applicant-calendar-cell-tooltip-trigger">{cellBody}</div>
+            <div className="program-calendar-cell-tooltip-trigger">{cellBody}</div>
           </Tooltip>
         ) : (
           cellBody
@@ -291,29 +289,30 @@ export function InstructorSettlementCalendarView({
 
   return (
     <div className="applicant-calendar-layout">
-      <div className="applicant-calendar-main" ref={mainCalendarRef}>
-        <div className="applicant-calendar-header">
-          <div className="applicant-calendar-header-left">
-            <span className="applicant-calendar-header-title">
-              {currentMonth.format('YYYY. MM')}
+      <div className="applicant-calendar-main program-calendar-main" ref={mainCalendarRef}>
+        <div className="program-calendar-header">
+          <div className="program-calendar-header-left">
+            <span className="program-calendar-header-title">
+              {currentMonth.format('YYYY.MM')}
             </span>
-            <div className="applicant-calendar-nav">
+            <div className="program-calendar-nav">
               <Button
                 type="text"
                 size="small"
                 icon={<LeftOutlined />}
-                className="applicant-calendar-nav-btn"
+                className="program-calendar-nav-btn"
                 onClick={() => onMonthStep(-1)}
               />
               <Button
                 type="text"
                 size="small"
                 icon={<RightOutlined />}
-                className="applicant-calendar-nav-btn"
+                className="program-calendar-nav-btn"
                 onClick={() => onMonthStep(1)}
               />
             </div>
           </div>
+          <div className="program-calendar-header-right" aria-hidden />
         </div>
         <Calendar
           value={currentMonth}

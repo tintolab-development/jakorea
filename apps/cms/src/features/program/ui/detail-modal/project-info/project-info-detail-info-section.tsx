@@ -23,17 +23,13 @@ import {
 } from './program-detail-info-constants'
 import './project-info-detail-info-section.css'
 
+/** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */
 const THUMBNAIL_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다. / 가로 사이즈 500px 권장, 세로 사이즈 무관',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const ATTACHMENT_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '-  첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
-
-const DEFAULT_THUMBNAIL_GUIDE = [
   '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
@@ -254,12 +250,14 @@ function ThumbnailImageRow({
 function AdditionalContentRow({
   program,
   isEditMode,
+  isFormEdit,
   editorOpen,
   editorHostRef,
   showRequiredOnTh,
 }: {
   program: Program
   isEditMode: boolean
+  isFormEdit: boolean
   editorOpen: boolean
   editorHostRef: React.RefObject<HTMLDivElement | null>
   showRequiredOnTh: boolean
@@ -268,7 +266,7 @@ function AdditionalContentRow({
     <tr>
       <th>
         추가 내용
-        {showRequiredOnTh && isEditMode ? (
+        {showRequiredOnTh && isFormEdit ? (
           <span className="program-detail-info-tab__required">*</span>
         ) : null}
       </th>
@@ -406,13 +404,13 @@ export function DetailInfoSection({
             setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
-            guideLines={DEFAULT_THUMBNAIL_GUIDE}
-            showRequiredStar={isEditMode}
+            guideLines={THUMBNAIL_GUIDE_LINES}
+            showRequiredStar={isFormEdit}
           />
         )}
         <TextAreaFieldRow
           label="프로그램 설명"
-          showRequiredStar={isEditMode}
+          showRequiredStar={isFormEdit}
           isFormEdit={isFormEdit}
           form={f}
           name="description"
@@ -423,7 +421,7 @@ export function DetailInfoSection({
         />
         <TextAreaFieldRow
           label="모집 안내"
-          showRequiredStar={isEditMode}
+          showRequiredStar={false}
           isFormEdit={isFormEdit}
           form={f}
           name="recruitmentGuide"
@@ -434,7 +432,7 @@ export function DetailInfoSection({
         />
         <TextAreaFieldRow
           label="학습 지원 내용"
-          showRequiredStar={isEditMode}
+          showRequiredStar={isFormEdit}
           isFormEdit={isFormEdit}
           form={f}
           name="learningSupportContent"
@@ -447,19 +445,17 @@ export function DetailInfoSection({
         <AdditionalContentRow
           program={program}
           isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
           editorOpen={editorOpen}
           editorHostRef={editorHostRef}
-          showRequiredOnTh
+          showRequiredOnTh={false}
         />
         <AttachmentRowStandard
           isEditMode={isEditMode}
           isFormEdit={isFormEdit}
           form={f}
           displayFileNames={displayFileNames}
-          guideLines={[
-            '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-            '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-          ]}
+          guideLines={THUMBNAIL_GUIDE_LINES}
         />
       </DetailInfoTableFrame>
     </>
@@ -548,6 +544,7 @@ export function InstructorDetailInfoSection({
         <AdditionalContentRow
           program={program}
           isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
           editorOpen={editorOpen}
           editorHostRef={editorHostRef}
           showRequiredOnTh={false}
@@ -663,6 +660,7 @@ export function VolunteerDetailInfoSection({
         <AdditionalContentRow
           program={program}
           isEditMode={isEditMode}
+          isFormEdit={isFormEdit}
           editorOpen={editorOpen}
           editorHostRef={editorHostRef}
           showRequiredOnTh={false}

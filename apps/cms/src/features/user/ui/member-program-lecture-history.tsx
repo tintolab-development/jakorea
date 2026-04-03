@@ -369,7 +369,7 @@ export function MemberProgramLectureHistory({
                   icon={<DownloadOutlined />}
                   onClick={() => {
                     if (onVolunteerCertificateDownload) onVolunteerCertificateDownload(record)
-                    else message.info('수료증·확인서 다운로드는 추후 연결됩니다.')
+                    else window.alert('준비 중입니다.')
                   }}
                 >
                   다운로드
@@ -510,7 +510,7 @@ export function MemberProgramLectureHistory({
                   icon={<DownloadOutlined />}
                   onClick={() => {
                     if (onDownloadCertificate) onDownloadCertificate(record)
-                    else message.info('수료증 다운로드는 추후 연결됩니다.')
+                    else window.alert('준비 중입니다.')
                   }}
                 >
                   다운로드

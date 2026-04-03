@@ -4,7 +4,6 @@
  */
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Calendar, Button, Tooltip } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -15,50 +14,11 @@ import type {
 } from '@/data/mock/participating-schools'
 import { ApplicantScheduleList } from '../applicants/applicant-schedule-list'
 import { SCHEDULE_COLORS } from '../../program-schedule-colors'
-import { AppMultiSelect } from '@/shared/ui'
+import { AppMultiSelect, ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/ui'
 import './participating-institutions-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
-
-/** 캘린더 네비게이터 내부 아이콘 16×16 (오른쪽 화살표) */
-function CalendarNavRightIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 16 16" fill="none">
-      <path
-        d="M5.58224 8.27543C5.45408 8.08135 5.47583 7.81739 5.64669 7.64652L9.64669 3.64652C9.84196 3.45126 10.1585 3.45126 10.3537 3.64652C10.549 3.84179 10.549 4.15829 10.3537 4.35356L6.70724 8.00004L10.3537 11.6465C10.549 11.8418 10.549 12.1583 10.3537 12.3536C10.1585 12.5488 9.84195 12.5488 9.64669 12.3536L5.64669 8.35355L5.58224 8.27543Z"
-        fill="#3D3D3D"
-        stroke="#3D3D3D"
-        strokeWidth="0.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-/** 캘린더 네비게이터 내부 아이콘 16×16 (왼쪽 화살표) */
-function CalendarNavLeftIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      viewBox="0 0 16 16"
-      fill="none"
-      className="participating-institutions-calendar-nav-icon--left"
-    >
-      <path
-        d="M5.58224 8.27543C5.45408 8.08135 5.47583 7.81739 5.64669 7.64652L9.64669 3.64652C9.84196 3.45126 10.1585 3.45126 10.3537 3.64652C10.549 3.84179 10.549 4.15829 10.3537 4.35356L6.70724 8.00004L10.3537 11.6465C10.549 11.8418 10.549 12.1583 10.3537 12.3536C10.1585 12.5488 9.84195 12.5488 9.64669 12.3536L5.64669 8.35355L5.58224 8.27543Z"
-        fill="#3D3D3D"
-        stroke="#3D3D3D"
-        strokeWidth="0.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 /** session.date "2026.01.09" → Dayjs */
 function parseSessionDate(dateStr: string): Dayjs {
@@ -67,11 +27,11 @@ function parseSessionDate(dateStr: string): Dayjs {
 }
 
 /** 학교·날짜별 이벤트 (하루에 한 학교당 1건, 해당 날짜의 세션 목록 포함) */
-interface CalendarEvent {
+interface CalendarEvent extends ProgramCalendarEventItem {
   id: string
   title: string
-  startDate: Dayjs
-  endDate: Dayjs
+  startDate: string
+  endDate: string
   originalItem: {
     row: ParticipatingSchoolRow
     sessionsOnDate: ParticipatingSchoolSession[]
@@ -112,22 +72,32 @@ function getPopoverRowParts(ev: CalendarEvent): CalendarPopoverRowParts {
 
 function ParticipatingCalendarEventPopoverContent({
   events,
+  titleColorMap,
   resolvePopoverRowParts,
 }: {
   events: CalendarEvent[]
+  titleColorMap?: Map<string, string>
   resolvePopoverRowParts?: (ev: CalendarEvent) => CalendarPopoverRowParts
 }) {
   return (
     <div className="participating-institutions-calendar-popover">
       {events.map(ev => {
         const parts = resolvePopoverRowParts ? resolvePopoverRowParts(ev) : getPopoverRowParts(ev)
+        const titleColor = titleColorMap?.get(String(ev.id))
         return (
           <div key={ev.id} className="participating-institutions-calendar-popover__row">
-            <span className="participating-institutions-calendar-popover__title">{parts.title}</span>
+            <span
+              className="participating-institutions-calendar-popover__title"
+              style={titleColor ? { color: titleColor } : undefined}
+            >
+              {parts.title}
+            </span>
             <span className="participating-institutions-calendar-popover__sep" aria-hidden>
               |
             </span>
-            <span className="participating-institutions-calendar-popover__text">{parts.location}</span>
+            <span className="participating-institutions-calendar-popover__text">
+              {parts.location}
+            </span>
             <span className="participating-institutions-calendar-popover__sep" aria-hidden>
               |
             </span>
@@ -170,9 +140,9 @@ function buildEventsFromSchools(schools: ParticipatingSchoolRow[]): CalendarEven
     const periodStr = `${periodLabel} (${timeRangeDisplay})`
     events.push({
       id: row.id,
-      title: row.schoolName,
-      startDate: d,
-      endDate: d,
+      title: `${row.schoolName} | ${row.region || '-'}`,
+      startDate: d.format('YYYY-MM-DD'),
+      endDate: d.format('YYYY-MM-DD'),
       originalItem: {
         row,
         sessionsOnDate: sessions,
@@ -197,10 +167,11 @@ export interface ParticipatingInstitutionsCalendarViewProps {
   calendarGranularity?: 'month' | 'week'
   onCalendarGranularityChange?: (mode: 'month' | 'week') => void
   /** 셀 hover 팝오버 한 줄 내용 커스터마이징 (탭별 대표 정보 유지) */
-  resolvePopoverRowParts?: (args: {
-    schoolRow: ParticipatingSchoolRow
-    date: Dayjs
-  }) => CalendarPopoverRowParts
+  resolvePopoverRowParts?: (args: { schoolRow: ParticipatingSchoolRow; date: Dayjs }) => {
+    title: string
+    location: string
+    valueLabel: string
+  }
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -228,7 +199,19 @@ export function ParticipatingInstitutionsCalendarView({
   }
   const mainCalendarRef = useRef<HTMLDivElement>(null)
 
-  const events = useMemo(() => buildEventsFromSchools(schools), [schools])
+  const baseEvents = useMemo(() => buildEventsFromSchools(schools), [schools])
+  const events = useMemo(
+    () =>
+      baseEvents.map(ev => {
+        if (!resolvePopoverRowParts) return ev
+        const parts = resolvePopoverRowParts({
+          schoolRow: ev.originalItem.row,
+          date: dayjs(ev.startDate),
+        })
+        return { ...ev, title: `${parts.title} | ${parts.location}` }
+      }),
+    [baseEvents, resolvePopoverRowParts]
+  )
 
   /** 초등학교별 색상 인덱스 (학교명 알파벳순으로 0~N 배정) */
   const entityToColorIndex = useMemo(() => {
@@ -240,22 +223,16 @@ export function ParticipatingInstitutionsCalendarView({
   }, [schools])
 
   const getColorForEvent = (event: CalendarEvent) => {
-    const idx = entityToColorIndex.get(event.title) ?? 0
+    const idx = entityToColorIndex.get(event.originalItem.row.schoolName) ?? 0
     return SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length]
-  }
-
-  const getEventsForDate = (date: Dayjs): CalendarEvent[] => {
-    return events.filter(
-      ev => date.isSameOrAfter(ev.startDate, 'day') && date.isSameOrBefore(ev.endDate, 'day')
-    )
   }
 
   const eventsForSelectedDate = useMemo(
     () =>
       events.filter(
         ev =>
-          selectedDate.isSameOrAfter(ev.startDate, 'day') &&
-          selectedDate.isSameOrBefore(ev.endDate, 'day')
+          selectedDate.isSameOrAfter(dayjs(ev.startDate), 'day') &&
+          selectedDate.isSameOrBefore(dayjs(ev.endDate), 'day')
       ),
     [events, selectedDate]
   )
@@ -263,9 +240,7 @@ export function ParticipatingInstitutionsCalendarView({
   const institutionSchoolFilterOptions = useMemo(() => {
     const names = Array.from(
       new Set(
-        eventsForSelectedDate
-          .map(ev => ev.originalItem.row.schoolName.trim())
-          .filter(Boolean)
+        eventsForSelectedDate.map(ev => ev.originalItem.row.schoolName.trim()).filter(Boolean)
       )
     ).sort((a, b) => a.localeCompare(b, 'ko'))
     return names.map(school => {
@@ -314,303 +289,44 @@ export function ParticipatingInstitutionsCalendarView({
     }
   }
 
-  const handlePrev = () => {
-    if (calendarMode === 'week') {
-      setCurrentMonth(prev => prev.subtract(1, 'week'))
-    } else {
-      setCurrentMonth(prev => prev.subtract(1, 'month'))
-    }
-  }
-
-  const handleNext = () => {
-    if (calendarMode === 'week') {
-      setCurrentMonth(prev => prev.add(1, 'week'))
-    } else {
-      setCurrentMonth(prev => prev.add(1, 'month'))
-    }
-  }
-
-  const handleToday = () => {
-    const today = dayjs()
-    setSelectedDate(today)
-    setCurrentMonth(today.startOf('month'))
-  }
-
-  const weekDates = useMemo(() => {
-    const startOfWeek = currentMonth.startOf('week')
-    return Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, 'day'))
-  }, [currentMonth])
-
-  const headerRender = () => {
-    const headerTitle =
-      calendarMode === 'week'
-        ? `${weekDates[0].format('YYYY.MM')} ${weekDates[0].format('D')} - ${weekDates[6].format('D')}`
-        : currentMonth.format('YYYY. MM')
-
-    return (
-      <div className="participating-institutions-calendar-header">
-        <div className="participating-institutions-calendar-header-left">
-          <span className="participating-institutions-calendar-header-title">{headerTitle}</span>
-          <Button
-            size="small"
-            className="participating-institutions-calendar-today-btn"
-            onClick={handleToday}
-          >
-            오늘
-          </Button>
-          <div className="participating-institutions-calendar-nav">
-            <Button
-              type="text"
-              size="small"
-              icon={<CalendarNavRightIcon />}
-              className="participating-institutions-calendar-nav-btn"
-              onClick={handlePrev}
-            />
-            <Button
-              type="text"
-              size="small"
-              icon={<CalendarNavLeftIcon />}
-              className="participating-institutions-calendar-nav-btn"
-              onClick={handleNext}
-            />
-          </div>
-        </div>
-        <div className="participating-institutions-calendar-header-right">
-          <div className="participating-institutions-calendar-view-mode">
-            <div
-              className={`participating-institutions-calendar-view-mode__indicator ${calendarMode === 'week' ? 'participating-institutions-calendar-view-mode__indicator--week' : ''}`}
-              aria-hidden
-            />
-            <button
-              type="button"
-              className={`participating-institutions-calendar-view-mode__tab ${calendarMode === 'month' ? 'participating-institutions-calendar-view-mode__tab--active' : ''}`}
-              onClick={() => setCalendarMode('month')}
-            >
-              <span className="participating-institutions-calendar-view-mode__tab-text">월간</span>
-            </button>
-            <button
-              type="button"
-              className={`participating-institutions-calendar-view-mode__tab ${calendarMode === 'week' ? 'participating-institutions-calendar-view-mode__tab--active' : ''}`}
-              onClick={() => setCalendarMode('week')}
-            >
-              <span className="participating-institutions-calendar-view-mode__tab-text">주간</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const dateFullCellRender = (date: Dayjs) => {
-    const isCurrentMonth = date.isSame(currentMonth, 'month')
-    const isToday = date.isSame(dayjs(), 'day')
-    const isSelected = date.isSame(selectedDate, 'day')
-    const dayEvents = getEventsForDate(date)
-    const hasEvents = dayEvents.length > 0
-
-    return (
-      <div
-        className={`participating-institutions-calendar-cell ${!isCurrentMonth ? 'participating-institutions-calendar-cell--other-month' : ''} ${isSelected ? 'participating-institutions-calendar-cell--selected' : ''} ${isToday ? 'participating-institutions-calendar-cell--today' : ''}`}
-        onClick={() => handleDateSelect(date)}
-      >
-        <div className="participating-institutions-calendar-cell-date">
-          <span className={isToday ? 'participating-institutions-calendar-cell-date-today' : ''}>
-            {date.date()}
-          </span>
-        </div>
-        {hasEvents && (
-          <div className="participating-institutions-calendar-cell-events">
-            {dayEvents.slice(0, 2).map(ev => {
-              const displayTitle = `${ev.originalItem.row.schoolName} | ${ev.originalItem.row.region}`
-              const isEventSelected = selectedRowKeys.includes(ev.id)
-              const colors = getColorForEvent(ev)
-              return (
-                <Tooltip
-                  key={ev.id}
-                  overlayClassName="participating-institutions-calendar-tooltip-overlay"
-                  title={
-                    <ParticipatingCalendarEventPopoverContent
-                      events={[ev]}
-                      resolvePopoverRowParts={
-                        resolvePopoverRowParts
-                          ? event =>
-                              resolvePopoverRowParts({
-                                schoolRow: event.originalItem.row,
-                                date: event.startDate,
-                              })
-                          : undefined
-                      }
-                    />
-                  }
-                  placement="topLeft"
-                  mouseEnterDelay={0.2}
-                  arrow={false}
-                >
-                  <div
-                    className={`participating-institutions-calendar-event ${isEventSelected ? 'participating-institutions-calendar-event--selected' : ''}`}
-                    style={{
-                      backgroundColor: colors.bg,
-                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                    }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className="participating-institutions-calendar-event-title">
-                      {displayTitle}
-                    </span>
-                  </div>
-                </Tooltip>
-              )
-            })}
-            {dayEvents.length > 2 && (
-              <Tooltip
-                overlayClassName="participating-institutions-calendar-tooltip-overlay"
-                title={
-                  <ParticipatingCalendarEventPopoverContent
-                    events={dayEvents.slice(2)}
-                    resolvePopoverRowParts={
-                      resolvePopoverRowParts
-                        ? event =>
-                            resolvePopoverRowParts({
-                              schoolRow: event.originalItem.row,
-                              date: event.startDate,
-                            })
-                        : undefined
-                    }
-                  />
-                }
-                placement="topLeft"
-                mouseEnterDelay={0.2}
-                arrow={false}
-              >
-                <div className="participating-institutions-calendar-event-more">
-                  외 {dayEvents.length - 2}개의 일정
-                </div>
-              </Tooltip>
-            )}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  const renderWeekView = () => {
-    const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    return (
-      <div className="participating-institutions-calendar-week">
-        <div className="participating-institutions-calendar-week-header">
-          {weekdayNames.map(day => (
-            <div key={day} className="participating-institutions-calendar-week-header-cell">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="participating-institutions-calendar-week-body">
-          {weekDates.map(d => {
-            const isToday = d.isSame(dayjs(), 'day')
-            const isSelected = d.isSame(selectedDate, 'day')
-            const dayEvents = getEventsForDate(d)
-            const hasEvents = dayEvents.length > 0
-            return (
-              <div
-                key={d.format('YYYY-MM-DD')}
-                className={`participating-institutions-calendar-week-cell ${isSelected ? 'participating-institutions-calendar-week-cell--selected' : ''} ${isToday ? 'participating-institutions-calendar-week-cell--today' : ''}`}
-                onClick={() => handleDateSelect(d)}
-              >
-                <div className="participating-institutions-calendar-week-cell-date">{d.date()}</div>
-                {hasEvents && (
-                  <div className="participating-institutions-calendar-week-cell-events">
-                    {dayEvents.slice(0, 2).map(ev => {
-                      const displayTitle = `${ev.originalItem.row.schoolName} | ${ev.originalItem.row.region}`
-                      const colors = getColorForEvent(ev)
-                      return (
-                        <Tooltip
-                          key={ev.id}
-                          overlayClassName="participating-institutions-calendar-tooltip-overlay"
-                          title={
-                            <ParticipatingCalendarEventPopoverContent
-                              events={[ev]}
-                              resolvePopoverRowParts={
-                                resolvePopoverRowParts
-                                  ? event =>
-                                      resolvePopoverRowParts({
-                                        schoolRow: event.originalItem.row,
-                                        date: event.startDate,
-                                      })
-                                  : undefined
-                              }
-                            />
-                          }
-                          placement="topLeft"
-                          mouseEnterDelay={0.2}
-                          arrow={false}
-                        >
-                          <div
-                            className="participating-institutions-calendar-event"
-                            style={{
-                              backgroundColor: colors.bg,
-                              border: `1px solid ${colors.border}`,
-                            }}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <span className="participating-institutions-calendar-event-title">
-                              {displayTitle}
-                            </span>
-                          </div>
-                        </Tooltip>
-                      )
-                    })}
-                    {dayEvents.length > 2 && (
-                      <Tooltip
-                        overlayClassName="participating-institutions-calendar-tooltip-overlay"
-                        title={
-                          <ParticipatingCalendarEventPopoverContent
-                            events={dayEvents.slice(2)}
-                            resolvePopoverRowParts={
-                              resolvePopoverRowParts
-                                ? event =>
-                                    resolvePopoverRowParts({
-                                      schoolRow: event.originalItem.row,
-                                      date: event.startDate,
-                                    })
-                                : undefined
-                            }
-                          />
-                        }
-                        placement="topLeft"
-                        mouseEnterDelay={0.2}
-                        arrow={false}
-                      >
-                        <div className="participating-institutions-calendar-event-more">
-                          외 {dayEvents.length - 2}개의 일정
-                        </div>
-                      </Tooltip>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="participating-institutions-calendar-layout">
       <div
         className="participating-institutions-calendar-card participating-institutions-calendar-card--left"
         ref={mainCalendarRef}
       >
-        {headerRender()}
-        {calendarMode === 'week' ? (
-          renderWeekView()
-        ) : (
-          <Calendar
-            value={currentMonth}
-            fullCellRender={dateFullCellRender}
-            headerRender={() => null}
-          />
-        )}
+        <ProgramCalendar
+          className="participating-institutions-calendar-main"
+          events={events}
+          selectedRowKeys={selectedRowKeys}
+          selectedDate={selectedDate}
+          currentMonth={currentMonth}
+          mode={calendarMode}
+          onSelectDate={handleDateSelect}
+          onMonthChange={setCurrentMonth}
+          onModeChange={setCalendarMode}
+          scheduleOverlay="tooltip"
+          tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
+          renderEventsTooltipContent={({ events: dayEvents }) => (
+            <ParticipatingCalendarEventPopoverContent
+              events={dayEvents as CalendarEvent[]}
+              titleColorMap={new Map(
+                (dayEvents as CalendarEvent[]).map(ev => [String(ev.id), getColorForEvent(ev).text])
+              )}
+              resolvePopoverRowParts={
+                resolvePopoverRowParts
+                  ? event => {
+                      const parts = resolvePopoverRowParts({
+                        schoolRow: event.originalItem.row,
+                        date: dayjs(event.startDate),
+                      })
+                      return { ...parts, valueTone: 'default' }
+                    }
+                  : undefined
+              }
+            />
+          )}
+        />
       </div>
       <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right">
         {rightContent !== undefined ? (

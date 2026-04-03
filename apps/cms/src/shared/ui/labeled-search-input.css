@@ -5,7 +5,7 @@
 .labeled-search-input {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
+  gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -13,7 +13,7 @@
 
 .labeled-search-input--filter {
   min-height: calc(
-    var(--filter-label-height, 27px) + var(--spacing-6, 6px) + var(--filter-control-height, 44px)
+    var(--filter-label-height, 27px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 44px)
   );
 }
 
@@ -24,14 +24,6 @@
   min-height: var(--filter-label-height, 27px);
   height: var(--filter-label-height, 27px);
   margin: 0;
-  font-size: var(--font-size-14);
-  font-weight: var(--font-weight-500);
-  line-height: 1.4;
-  color: var(--color-text-label);
-}
-
-.labeled-search-input--filter .labeled-search-input__label {
-  font-size: 16px;
 }
 
 .labeled-search-input__control.app-input {

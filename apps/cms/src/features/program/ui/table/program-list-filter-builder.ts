@@ -4,7 +4,6 @@ import type { ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/typ
 interface PendingFilters {
   title: string
   lifecycleStatus: ProgramLifecycleStatus | undefined
-  lifecycleStatusText: string
   category: string | undefined
   businessArea: string | undefined
   targetLevel: string | undefined
@@ -26,12 +25,25 @@ interface PendingUserFilters {
  */
 export function buildProgramListFilters(
   pendingFilters: PendingFilters,
-  readOnlyLifecycleStatus: boolean
+  readOnlyLifecycleStatus: boolean,
+  economyScheduledLayout = false
 ) {
+  if (readOnlyLifecycleStatus && economyScheduledLayout) {
+    return {
+      title: pendingFilters.title,
+      operationPeriod:
+        pendingFilters.operationStartDate && pendingFilters.operationEndDate
+          ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
+          : null,
+      category: pendingFilters.category,
+      targetLevel: pendingFilters.targetLevel,
+    }
+  }
+
   if (readOnlyLifecycleStatus) {
     return {
       title: pendingFilters.title,
-      lifecycleStatusText: pendingFilters.lifecycleStatusText,
+      lifecycleStatus: pendingFilters.lifecycleStatus,
       category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
     }

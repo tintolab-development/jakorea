@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Card, Table, Row, Col, Select, message } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
 import {
@@ -435,7 +435,7 @@ export function ProgramApplicantsTab({
         title: '결재 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 152,
+        width: 136,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
@@ -509,7 +509,7 @@ export function ProgramApplicantsTab({
         title: '결재 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 152,
+        width: 136,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApprovalStatusKey, record: ApplicantInstructorRow) => (
@@ -680,9 +680,7 @@ export function ProgramApplicantsTab({
                   </>
                 )}
                 <Col flex="none" className="program-applicants-tab__filter-col--btn">
-                  <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                    조회
-                  </AppButton>
+                  <FilterSearchButton onClick={handleSearch} />
                 </Col>
               </Row>
             </div>

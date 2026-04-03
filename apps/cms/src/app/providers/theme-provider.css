@@ -219,7 +219,7 @@
   --color-tab-active: #4ad4cc;
 
   /* 모달·헤더 등 (기존 시안 유지) */
-  --color-modal-header: #47a9ad;
+  --color-modal-header: var(--JA-mint-01, #01a1af);
   --color-modal-header-hover: #3d9599;
   --color-focus-teal-ring: rgba(71, 169, 173, 0.2);
   --color-overlay-light: rgba(255, 255, 255, 0.2);

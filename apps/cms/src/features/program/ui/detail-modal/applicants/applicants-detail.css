@@ -16,14 +16,14 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 드롭다운 활성화 시에도 152px 유지 */
+/* 셀 횡 사이즈 고정: 드롭다운 트리거 외곽 136px과 동일 */
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
-  width: 152px;
-  min-width: 152px;
-  max-width: 152px;
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
   padding-top: 0;
   padding-bottom: 0;
   padding-left: 0;
@@ -32,12 +32,12 @@
   box-sizing: border-box;
 }
 
-/* 선택된 태그 오버레이(트리거) 152px 고정 */
+/* 선택된 태그 오버레이(트리거) 136px 고정 */
 .applicant-details .status-dropdown-cell__status-trigger--open {
   box-sizing: border-box !important;
-  width: 152px !important;
-  min-width: 152px !important;
-  max-width: 152px !important;
+  width: 136px !important;
+  min-width: 136px !important;
+  max-width: 136px !important;
 }
 
 /* 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
@@ -47,7 +47,7 @@
   max-height: 53px !important;
 }
 
-/* 해당 셀 padding 0 — vertical shifting 방지, 152px 트리거가 셀 밖으로 넘지 않도록 */
+/* 해당 셀 padding 0 — vertical shifting 방지, 160px 트리거가 셀 밖으로 넘지 않도록 */
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
@@ -212,10 +212,9 @@
   cursor: pointer;
 }
 
-/* 강의 회차 td: 좌우 24px·상하 10px 패딩 명시, 텍스트가 셀 밖으로 나가지 않도록 */
+/* 강의 회차 td: 비율 열 너비는 컬럼 %에 따름. 최소 너비만 두어 좁은 뷰에서도 내용 가독성 유지 */
 .applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  width: 520px;
-  min-width: 520px;
+  min-width: 280px;
   white-space: normal;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
@@ -229,7 +228,7 @@
 .applicant-details__sessions-cell {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   text-align: left;
   padding: 0;
   margin: 0;

@@ -238,7 +238,8 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
       {
         title: '프로그램 진행 현황',
         key: 'lifecycle',
-        width: 160,
+        width: 180,
+        minWidth: 180,
         align: 'center',
         render: (_: unknown, p: Program) => (
           <ProgramEnrollmentStatusBadge

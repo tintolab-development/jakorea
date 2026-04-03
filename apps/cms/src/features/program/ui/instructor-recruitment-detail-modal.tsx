@@ -36,7 +36,10 @@ import type {
 } from '@/data/mock/applicant-instructors'
 import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import { StatusDropdownCell } from './status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import './instructor-recruitment-detail-modal.css'
@@ -64,6 +67,7 @@ export function InstructorRecruitmentDetailModal({
   const location = useLocation()
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>([])
   const [selectedInstructor, setSelectedInstructor] = useState<ApplicantInstructorRow | null>(null)
+  const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
 
   const sponsorName = program?.sponsorId
     ? sponsorService.getByIdSync(program.sponsorId)?.name
@@ -152,21 +156,25 @@ export function InstructorRecruitmentDetailModal({
         title: '결재 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 120,
+        width: 136,
         align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: ApplicantInstructorApprovalStatusKey, record: ApplicantInstructorRow) => (
-          <StatusDropdownCell<ApprovalStatusKey>
-            status={APPROVAL_STATUS_MAP[status]}
-            statusKeys={APPROVAL_STATUS_KEYS}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
-            onChange={key => handleInstructorApprovalStatusChange(record.id, key)}
-            cellClassName="instructor-recruitment-detail-modal__approval-dropdown-cell"
-            triggerClassName="instructor-recruitment-detail-modal__approval-dropdown-trigger"
-          />
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<ApprovalStatusKey>
+              status={APPROVAL_STATUS_MAP[status]}
+              statusOptions={APPROVAL_STATUS_KEYS}
+              renderBadge={s => <ApprovalStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={key => handleInstructorApprovalStatusChange(record.id, key)}
+              isOpen={openApprovalDropdownId === record.id}
+              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+            />
+          </div>
         ),
       },
     ],
-    [handleInstructorApprovalStatusChange]
+    [handleInstructorApprovalStatusChange, openApprovalDropdownId]
   )
 
   if (!program) return null
@@ -381,12 +389,8 @@ export function InstructorRecruitmentDetailModal({
                 onClick: event => {
                   const target = event.target as HTMLElement
                   if (
-                    target.closest(
-                      '.instructor-recruitment-detail-modal__approval-dropdown-cell'
-                    ) ||
-                    target.closest(
-                      '.instructor-recruitment-detail-modal__approval-dropdown-trigger'
-                    )
+                    target.closest('.status-dropdown-cell__cell-status') ||
+                    target.closest('.status-dropdown-cell__status-trigger')
                   )
                     return
                   setSelectedInstructor(record)

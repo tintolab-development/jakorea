@@ -7,7 +7,7 @@
 
 import { Checkbox, Table } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { useCallback } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
 import {
   useDashboardSettingsStore,
   SHORTCUT_ITEMS,
@@ -24,52 +24,124 @@ export interface DashboardSettingsModalProps {
   onResetLayout?: () => void
 }
 
-const programList = mockPrograms.map(p => ({ id: p.id, title: p.title }))
-const allProgramIds = programList.map(p => p.id)
+const programRows = mockPrograms.map(p => ({ id: p.id, title: p.title }))
+const allProgramIds = programRows.map(p => p.id)
+
+/** 동일 title은 하나의 체크박스로 묶음 (mock 등에서 회차·기관별로 id만 다른 행 대응) */
+function buildProgramTitleGroups(
+  rows: { id: string; title: string }[]
+): { title: string; ids: string[] }[] {
+  const byTitle = new Map<string, string[]>()
+  const order: string[] = []
+  for (const { id, title } of rows) {
+    if (!byTitle.has(title)) {
+      byTitle.set(title, [])
+      order.push(title)
+    }
+    byTitle.get(title)!.push(id)
+  }
+  return order.map(title => ({ title, ids: byTitle.get(title)! }))
+}
+
+const programTitleGroups = buildProgramTitleGroups(programRows)
+
+function cloneWidgetProgramIds(src: Record<string, string[]>): Record<string, string[]> {
+  return Object.fromEntries(Object.entries(src).map(([k, v]) => [k, [...v]]))
+}
 
 export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
-  const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
-  const setShortcutEnabled = useDashboardSettingsStore(s => s.setShortcutEnabled)
-  const setWidgetProgramIds = useDashboardSettingsStore(s => s.setWidgetProgramIds)
-  // widgetProgramIds를 직접 구독해야 변경 시 리렌더 발생
-  const widgetProgramIds = useDashboardSettingsStore(s => s.widgetProgramIds)
+  /** 스토어에 반영 전 편집본 — 저장하기 전까지 대시보드 위젯은 변경되지 않음 */
+  const [draftShortcutEnabled, setDraftShortcutEnabled] = useState<Record<string, boolean> | null>(
+    null
+  )
+  const [draftWidgetProgramIds, setDraftWidgetProgramIds] = useState<Record<
+    string,
+    string[]
+  > | null>(null)
 
-  const isProgramSelected = useCallback(
-    (widgetKey: string, programId: string) => {
+  useLayoutEffect(() => {
+    if (!open) {
+      setDraftShortcutEnabled(null)
+      setDraftWidgetProgramIds(null)
+      return
+    }
+    const s = useDashboardSettingsStore.getState()
+    setDraftShortcutEnabled({ ...s.shortcutEnabled })
+    setDraftWidgetProgramIds(cloneWidgetProgramIds(s.widgetProgramIds))
+  }, [open])
+
+  const shortcutEnabled =
+    draftShortcutEnabled ?? useDashboardSettingsStore.getState().shortcutEnabled
+  const widgetProgramIds =
+    draftWidgetProgramIds ?? useDashboardSettingsStore.getState().widgetProgramIds
+
+  const setDraftShortcut = useCallback((id: string, enabled: boolean) => {
+    setDraftShortcutEnabled(prev => {
+      const base = prev ?? { ...useDashboardSettingsStore.getState().shortcutEnabled }
+      return { ...base, [id]: enabled }
+    })
+  }, [])
+
+  const setDraftWidgetProgramIdsForKey = useCallback((widgetKey: string, programIds: string[]) => {
+    setDraftWidgetProgramIds(prev => {
+      const base =
+        prev ?? cloneWidgetProgramIds(useDashboardSettingsStore.getState().widgetProgramIds)
+      return { ...base, [widgetKey]: programIds }
+    })
+  }, [])
+
+  const isTitleGroupSelected = useCallback(
+    (widgetKey: string, groupIds: string[]) => {
       const ids = widgetProgramIds[widgetKey]
       if (!ids || ids.length === 0) return true
-      return ids.includes(programId)
+      return groupIds.every(id => ids.includes(id))
     },
     [widgetProgramIds]
   )
 
-  const handleProgramToggle = useCallback(
-    (widgetKey: string, programId: string) => {
+  const handleTitleGroupToggle = useCallback(
+    (widgetKey: string, groupIds: string[]) => {
       const currentIds = widgetProgramIds[widgetKey] ?? []
+      const groupOn = groupIds.every(id => currentIds.includes(id))
 
       if (currentIds.length === 0) {
-        setWidgetProgramIds(
+        setDraftWidgetProgramIdsForKey(
           widgetKey,
-          allProgramIds.filter(id => id !== programId)
+          allProgramIds.filter(id => !groupIds.includes(id))
         )
-      } else if (currentIds.includes(programId)) {
-        const remaining = currentIds.filter(id => id !== programId)
-        setWidgetProgramIds(widgetKey, remaining)
-      } else {
-        const next = [...currentIds, programId]
-        const allSelected = allProgramIds.every(id => next.includes(id))
-        setWidgetProgramIds(widgetKey, allSelected ? [] : next)
+        return
       }
+
+      if (groupOn) {
+        const remaining = currentIds.filter(id => !groupIds.includes(id))
+        setDraftWidgetProgramIdsForKey(widgetKey, remaining)
+        return
+      }
+
+      const next = [...new Set([...currentIds, ...groupIds])]
+      const allSelected = allProgramIds.every(id => next.includes(id))
+      setDraftWidgetProgramIdsForKey(widgetKey, allSelected ? [] : next)
     },
-    [widgetProgramIds, setWidgetProgramIds]
+    [widgetProgramIds, setDraftWidgetProgramIdsForKey]
   )
+
+  const handleSave = useCallback(() => {
+    const s = useDashboardSettingsStore.getState()
+    const nextShortcut = draftShortcutEnabled ?? s.shortcutEnabled
+    const nextWidgetIds = draftWidgetProgramIds ?? s.widgetProgramIds
+    useDashboardSettingsStore.setState({
+      shortcutEnabled: { ...nextShortcut },
+      widgetProgramIds: cloneWidgetProgramIds(nextWidgetIds),
+    })
+    onCancel()
+  }, [draftShortcutEnabled, draftWidgetProgramIds, onCancel])
 
   const footer = (
     <>
       <AppButton variant="cancel" onClick={onCancel}>
         닫기
       </AppButton>
-      <AppButton variant="primary" onClick={onCancel}>
+      <AppButton variant="primary" onClick={handleSave}>
         저장
       </AppButton>
     </>
@@ -93,7 +165,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
               <Checkbox
                 key={item.id}
                 checked={!!shortcutEnabled[item.id]}
-                onChange={e => setShortcutEnabled(item.id, e.target.checked)}
+                onChange={e => setDraftShortcut(item.id, e.target.checked)}
               >
                 {item.label}
               </Checkbox>
@@ -127,13 +199,13 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
                 key: 'programs',
                 render: (_: unknown, record: { widgetKey: string }) => (
                   <div className="dashboard-settings-modal__program-checks">
-                    {programList.map(prog => (
+                    {programTitleGroups.map(group => (
                       <Checkbox
-                        key={prog.id}
-                        checked={isProgramSelected(record.widgetKey, prog.id)}
-                        onChange={() => handleProgramToggle(record.widgetKey, prog.id)}
+                        key={group.title}
+                        checked={isTitleGroupSelected(record.widgetKey, group.ids)}
+                        onChange={() => handleTitleGroupToggle(record.widgetKey, group.ids)}
                       >
-                        {prog.title}
+                        {group.title}
                       </Checkbox>
                     ))}
                   </div>

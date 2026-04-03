@@ -4,6 +4,32 @@
   width: 100%;
 }
 
+/* 경제 교육: 상단 진행 위젯과 하단 필터/목록 래퍼 사이 — 가로 디바이더 기준 위·아래 각 32px */
+.program-list-page--economy-education > .program-progress-widget-container {
+  margin-bottom: 0;
+}
+
+.program-list-page--economy-education
+  .program-progress-widget-container
+  .program-progress-widget-container {
+  margin-bottom: 0;
+}
+
+.program-list-page--economy-education .program-progress-widget__bottom-divider {
+  margin-top: var(--spacing-32);
+  margin-bottom: var(--spacing-32);
+}
+
+/* 경제 교육: 단계 카드 행 flex 간격 32px — 세로 디바이더·화살표·카드 간 동일 (래퍼 margin과 이중 합산 방지) */
+.program-list-page--economy-education .program-progress-widget__stages {
+  gap: var(--spacing-32);
+}
+
+.program-list-page--economy-education .program-progress-widget__divider-vertical--wrapper {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 /* 위젯 상단 액션 영역: 검색바 300×44 반응형, 버튼 160×44 (AppButton size=filter) */
 .program-list-page__widget-header-actions {
   display: flex;
@@ -64,7 +90,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px 0 28px;
+  padding: 0 20px 0 8px;
 }
 
 .program-list-page__filter-info-texts {
@@ -90,6 +116,22 @@
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
+}
+
+/* 경제 교육: 테이블 영역 상단 「총 N건」 디스크립션 공통 타이포 */
+.program-list-page--economy-education .program-list-page__filter-info-count {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+  height: auto;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
 }
 
 .program-list-page__divider-wrapper {

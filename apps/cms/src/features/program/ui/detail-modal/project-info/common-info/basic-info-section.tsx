@@ -20,12 +20,14 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { DividerVertical } from '@/shared/components/divider-vertical'
 import './basic-info-section.css'
 import {
   formatDate,
   formatDateOnly,
   formatDateRange,
   getRecruitmentStatus,
+  getParticipantRecruitmentLifecycle,
   getInstructorRecruitmentStatus,
   getThumbnailFilename,
   RECRUITMENT_RADIO_OPTIONS,
@@ -42,12 +44,21 @@ import {
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
 } from '../program-detail-info-constants'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { getProgramLifecycleLabel, getProgramProgressPhaseDisplay } from '@/shared/constants/status'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 
 const { TextArea } = Input
+
+function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
+  const { label, color } = getProgramProgressPhaseDisplay(status)
+  return (
+    <span className="program-detail-info-tab__lifecycle-status-text" style={{ color }}>
+      {label}
+    </span>
+  )
+}
 
 export interface BasicInfoSectionProps {
   program: Program
@@ -63,7 +74,7 @@ export interface BasicInfoSectionProps {
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
-const toIso = (d: Dayjs | null) => (d ? d.toISOString() : undefined)
+const toIso = (d: Dayjs | null) => (d ? d.toISOString() : '')
 
 export function BasicInfoSection({
   program,
@@ -115,12 +126,11 @@ export function BasicInfoSection({
   const targetLabel = program.targetLevel
     ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
     : '-'
-  const contactLine1Parts = [
-    sponsorName && `문의처 : ${sponsorName}`,
-    program.contactPhone && `Tel : ${program.contactPhone}`,
-    program.contactEmail && `E-mail : ${program.contactEmail}`,
-  ].filter(Boolean)
-  const contactLine1 = contactLine1Parts.length ? contactLine1Parts.join(' | ') : '-'
+  const contactLine1 = [
+    `문의처 : ${(sponsorName ?? '').trim() || '-'}`,
+    `Tel : ${(program.contactPhone ?? '').trim() || '-'}`,
+    `E-mail : ${(program.contactEmail ?? '').trim() || '-'}`,
+  ].join(' | ')
   const contactLine2 = '운영시간 : 평일 9:00~16:00 (점심시간 12:00~13:00 제외)'
 
   /* 공통 정보 탭 전용: 스크린샷 구조 — 상단 블록(등록일/대표·세부 프로그램명/사업 운영 기간/참여자·후원사) + 하단 블록(팀구분/교육 과정/IP·IPS 등). 수정 모드 시 수정 가능 필드만 입력 컴포넌트로. */
@@ -202,6 +212,7 @@ export function BasicInfoSection({
                             {...field}
                             value={field.value ?? ''}
                             placeholder="대표 프로그램명"
+                            className="program-detail-info-tab__input--cell-full"
                           />
                         )}
                       />
@@ -237,6 +248,7 @@ export function BasicInfoSection({
                             value={field.value ?? ''}
                             placeholder="세부 프로그램명"
                             status={form.formState.errors.title ? 'error' : undefined}
+                            className="program-detail-info-tab__input--detail-program-title"
                           />
                         )}
                       />
@@ -298,11 +310,7 @@ export function BasicInfoSection({
                 <th>프로그램 진행 현황</th>
                 <td>
                   {lifecycleStatus ? (
-                    <span
-                      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycleStatus.replace(/_/g, '-')}`}
-                    >
-                      {getProgramLifecycleLabel(lifecycleStatus)}
-                    </span>
+                    <ProgramProgressReadonlyCell status={lifecycleStatus} />
                   ) : (
                     '-'
                   )}
@@ -706,6 +714,8 @@ export function BasicInfoSection({
     )
   }
 
+  const participantRecruitmentLifecycleReadonly = getParticipantRecruitmentLifecycle(program)
+
   return (
     <>
       <div className="program-detail-info-tab__section-title">기본 정보</div>
@@ -780,11 +790,7 @@ export function BasicInfoSection({
                     )}
                   />
                 ) : lifecycleStatus ? (
-                  <span
-                    className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycleStatus.replace(/_/g, '-')}`}
-                  >
-                    {getProgramLifecycleLabel(lifecycleStatus)}
-                  </span>
+                  <ProgramProgressReadonlyCell status={lifecycleStatus} />
                 ) : (
                   '-'
                 )}
@@ -1290,8 +1296,14 @@ export function BasicInfoSection({
                     options={RECRUITMENT_RADIO_OPTIONS}
                     className="program-detail-info-tab__recruitment-radio"
                   />
+                ) : participantRecruitmentLifecycleReadonly ? (
+                  <span
+                    className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${participantRecruitmentLifecycleReadonly.replace(/_/g, '-')}`}
+                  >
+                    {getProgramLifecycleLabel(participantRecruitmentLifecycleReadonly)}
+                  </span>
                 ) : (
-                  <RecruitmentStatusBadge status={getRecruitmentStatus(program)} size="fixed" />
+                  '-'
                 )}
               </td>
             </tr>
@@ -1348,11 +1360,15 @@ export function BasicInfoSection({
                       render={({ field }) => (
                         <AppDatePicker
                           value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
+                          onChange={d => field.onChange(d ? d.toISOString() : '')}
                           format="YYYY. MM. DD"
                           className="program-detail-info-tab__date-picker"
                         />
                       )}
+                    />
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
                     />
                     <Controller
                       name="resultAnnouncementMethod"

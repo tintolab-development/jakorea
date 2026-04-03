@@ -6,6 +6,7 @@
 import { Card, List, Tag, Typography, Button, Empty, Tabs } from 'antd'
 import { RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { formatDate } from '@/shared/utils'
 import dayjs from 'dayjs'
 
@@ -44,12 +45,8 @@ export function PendingTasksList({
 }: PendingTasksListProps) {
   const navigate = useNavigate()
 
-  const handleViewAll = (type: 'report' | 'settlement') => {
-    if (type === 'report') {
-      navigate('/instructor/reports')
-    } else {
-      navigate('/settlements/my')
-    }
+  const handleViewAll = () => {
+    window.alert(WIDGET_MORE_ALERT_MESSAGE)
   }
 
   const renderTaskItem = (task: PendingTask) => {
@@ -162,7 +159,7 @@ export function PendingTasksList({
               <List dataSource={reportTasks.slice(0, 5)} renderItem={renderTaskItem} />
               {reportTasks.length > 5 && (
                 <div style={{ textAlign: 'center', marginTop: 16 }}>
-                  <Button type="link" size="small" onClick={() => handleViewAll('report')}>
+                  <Button type="link" size="small" onClick={handleViewAll}>
                     더보기 <RightOutlined />
                   </Button>
                 </div>
@@ -203,7 +200,7 @@ export function PendingTasksList({
               />
               {settlementTasks.length > 5 && (
                 <div style={{ textAlign: 'center', marginTop: 16 }}>
-                  <Button type="link" size="small" onClick={() => handleViewAll('settlement')}>
+                  <Button type="link" size="small" onClick={handleViewAll}>
                     더보기 <RightOutlined />
                   </Button>
                 </div>

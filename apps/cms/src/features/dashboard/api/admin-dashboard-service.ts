@@ -7,7 +7,7 @@
 import type { Program } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
-import { getEconomyPrograms } from '@/data/mock/economy-programs'
+import { getEconomyPrograms, getEconomyProgramById } from '@/data/mock/economy-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
 import { mockSettlements } from '@/data/mock/settlements'
@@ -408,6 +408,10 @@ export async function getKpiAchievementList(options?: {
       const fromRegistry = mockProgramsMap.get(id)
       if (fromRegistry) {
         return buildProgramKpiItemFromProgram(fromRegistry, requestIndex)
+      }
+      const economyProgram = getEconomyProgramById(id)
+      if (economyProgram) {
+        return buildProgramKpiItemFromProgram(economyProgram, requestIndex)
       }
       return buildDefaultProgramKpiItem(id, '프로그램')
     })

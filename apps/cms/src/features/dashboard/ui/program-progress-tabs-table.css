@@ -13,7 +13,7 @@
 }
 
 .program-progress-tabs-table__tabs .ant-tabs-nav {
-    margin-bottom: var(--spacing-12);
+    margin-bottom: var(--spacing-16);
 }
 
 /* 탭–테이블 사이 디바이더 제거 */
@@ -123,4 +123,25 @@
 /* 테이블 본문: shared/cms-data-table.css — .cms-data-table--widget */
 .program-progress-tabs-table__table {
     margin-top: 0;
+}
+
+/* 프로그램 진행 현황 — 셀렉트 필터 */
+.program-progress-tabs-table__status-filter-dropdown {
+    padding: var(--spacing-8);
+    min-width: 240px;
+}
+
+.program-progress-tabs-table__status-filter-select {
+    display: block;
+    width: 100%;
+}
+
+.program-progress-tabs-table__status-filter-actions {
+    margin-top: var(--spacing-8);
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.program-progress-tabs-table__filter-icon {
+    font-size: 12px;
 }

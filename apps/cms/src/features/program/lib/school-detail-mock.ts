@@ -391,6 +391,20 @@ function addDays(base: Date, days: number): Date {
   return next
 }
 
+/** 과제·설문 제출 내역 모달: 행별 팀 역할 사용자 변경값 (row id → 역할) */
+const assignmentSubmissionTeamRoleOverrides: Record<string, AssignmentTeamRoleKey> = {}
+
+/**
+ * 과제 제출 내역 테이블에서 팀 역할 변경 시 mock 데이터에 반영
+ * (실서비스 연동 시 동일 시그니처의 API 호출로 교체)
+ */
+export function updateAssignmentSubmissionTeamRole(
+  rowId: string,
+  role: AssignmentTeamRoleKey
+): void {
+  assignmentSubmissionTeamRoleOverrides[rowId] = role
+}
+
 function buildAssignmentSubmissionRows(
   entityId: string,
   studentName: string,
@@ -432,10 +446,12 @@ function buildAssignmentSubmissionRows(
     const periodStart = addDays(sessionDate, -4)
     const periodEnd = addDays(sessionDate, -1)
     const isLastEvaluationRow = i === count - 1
+    const rowId = `${entityId}-assignment-row-${i}`
+    const defaultRole = rolePattern[(i + roleOffset) % rolePattern.length]!
     rows.push({
-      id: `${entityId}-assignment-row-${i}`,
+      id: rowId,
       roundNumber: i + 1,
-      teamRole: rolePattern[(i + roleOffset) % rolePattern.length]!,
+      teamRole: assignmentSubmissionTeamRoleOverrides[rowId] ?? defaultRole,
       educationDateLabel: isLastEvaluationRow
         ? formatEducationEvaluationLine(sessionDate)
         : formatEducationLine(sessionDate, i + 1),

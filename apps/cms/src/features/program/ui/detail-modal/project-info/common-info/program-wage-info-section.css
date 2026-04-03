@@ -24,11 +24,103 @@
   width: 100%;
 }
 
-.program-wage-info-section__pricing-row {
+/* 강사비 유형 — 수정 모드 190×40 (공통 테이블 필드와 동일) */
+.program-wage-info-section__wage-type-select {
   display: flex;
+  width: 190px;
+  max-width: 190px;
+  flex: 0 0 190px;
+  box-sizing: border-box;
+}
+
+.program-wage-info-section__wage-type-select .ant-select {
+  width: 100%;
+}
+
+/* 임금 책정 기준 td: 셀·행 기준 수직 가운데 */
+.program-wage-info-section__td-pricing-basis {
+  vertical-align: middle;
+}
+
+/* 수정 모드 한 줄 행이 셀보다 넓을 때 잘림 방지 */
+.program-wage-info-section__td-pricing-basis:has(.program-wage-info-section__pricing-basis-row) {
+  overflow-x: auto;
+}
+
+/* 임금 책정 기준: 단위 셀렉트 + 수량 + 단위 라벨 + 기준(당)/초과/이하 — 한 줄 row, 수직 가운데 */
+.program-wage-info-section__pricing-basis-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
+  gap: 8px;
+  min-width: min-content;
+}
+
+/* AppInput 기본 flex:1 0 0 제거 — 행 안에서 늘어나지 않도록 */
+.program-wage-info-section__pricing-basis-row > .app-select,
+.program-wage-info-section__pricing-basis-row > .app-input {
+  flex: 0 0 auto;
+  min-width: 0;
+  align-self: center;
+}
+
+.program-wage-info-section__pricing-basis-row > .program-wage-info-section__compare-radios {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  margin: 0;
+}
+
+.program-wage-info-section__measure-select {
+  flex-shrink: 0;
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  box-sizing: border-box;
+}
+
+/* 단위(시간) 셀 — 80×40, 라디오 행과 수직 정렬 */
+.program-wage-info-section__measure-select.app-select {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px 0 10px;
+  gap: 4px;
+  background: #f2f3f5;
+  border: 1px solid #c4cdd1;
+  border-radius: 6px;
+}
+
+.program-wage-info-section__measure-select .ant-select-selection-item {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.program-wage-info-section__input--qty {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  flex: 0 0 80px;
+  box-sizing: border-box;
+}
+
+.program-wage-info-section__pricing-basis-unit-suffix {
+  display: inline-flex;
+  align-items: center;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  flex-shrink: 0;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.program-wage-info-section__compare-radios.app-radio-group.ant-radio-group {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .program-wage-info-section__inline-label {
@@ -45,8 +137,11 @@
 }
 
 .program-wage-info-section__input--price {
-  width: 120px;
-  min-width: 120px;
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
+  flex: 0 0 190px;
+  box-sizing: border-box;
 }
 
 .program-wage-info-section__amount-row {
@@ -59,4 +154,14 @@
   color: var(--default-BK, #3d3d3d);
   font-size: 16px;
   font-weight: 500;
+}
+
+/* 지급·공제: 조회·수정 공통 읽기 전용 텍스트 */
+.program-wage-info-section__cell-plain-text {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

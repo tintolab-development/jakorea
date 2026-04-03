@@ -18,7 +18,10 @@ const CAL_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 import { AppButton } from '@/shared/ui/app-button'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import type { SettlementStatusKey } from '@/shared/components/settlement-status-badge'
-import { StatusDropdownCell } from '@/features/program/ui/status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import {
   type SettlementOverviewData,
   type SettlementRow,
@@ -54,6 +57,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
   const [calendarSelectedKeys, setCalendarSelectedKeys] = useState<React.Key[]>([])
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [detailModalRowId, setDetailModalRowId] = useState<string | null>(null)
+  const [openStatusDropdownId, setOpenStatusDropdownId] = useState<string | null>(null)
 
   const handleOpenDetail = useCallback((row: SettlementRow) => {
     setDetailModalRowId(row.id)
@@ -234,17 +238,19 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
       key: 'status',
       width: 150,
       align: 'center' as const,
+      onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
       render: (_: unknown, record: SettlementRow) => (
-        <StatusDropdownCell<SettlementRowStatus>
-          status={record.status}
-          statusKeys={SETTLEMENT_ROW_STATUS_KEYS}
-          renderBadge={(s) => (
-            <SettlementStatusBadge status={s as SettlementStatusKey} />
-          )}
-          onChange={(s) => handleStatusChange(record.id, s)}
-          cellClassName="teacher-detail-modal__status-cell"
-          triggerClassName="teacher-detail-modal__status-trigger"
-        />
+        <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+          <StatusDropdownCell<SettlementRowStatus>
+            status={record.status}
+            statusOptions={SETTLEMENT_ROW_STATUS_KEYS}
+            renderBadge={s => <SettlementStatusBadge status={s as SettlementStatusKey} />}
+            isItemDisabled={(cur, opt) => cur === opt}
+            onChange={s => handleStatusChange(record.id, s)}
+            isOpen={openStatusDropdownId === record.id}
+            onOpenChange={open => setOpenStatusDropdownId(open ? record.id : null)}
+          />
+        </div>
       ),
     },
     {
@@ -373,8 +379,17 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
                   <div className="settlement-tab__checkbox-cell">{originNode}</div>
                 ),
               }}
-              onRow={(record) => ({
-                onClick: () => handleOpenDetail(record),
+              onRow={record => ({
+                onClick: e => {
+                  const target = e.target as HTMLElement
+                  if (
+                    target.closest('.status-dropdown-cell__cell-status') ||
+                    target.closest('.status-dropdown-cell__status-trigger')
+                  ) {
+                    return
+                  }
+                  handleOpenDetail(record)
+                },
                 style: { cursor: 'pointer' },
               })}
             />

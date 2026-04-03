@@ -50,6 +50,122 @@
   margin-right: 12px;
 }
 
+/*
+ * 교육 프로그램 목록 등( FilterListLayout · 참가자 program-list-container ):
+ * 넓은 화면에서 한 줄 + 필드별 % 분배, 태블릿에서 3열·2열 래핑
+ */
+@media (min-width: 1200px) {
+  .filter-list-layout .unified-filter-card__fields-inner.ant-row,
+  .program-list-container > .unified-filter-card .unified-filter-card__fields-inner.ant-row {
+    flex-wrap: nowrap !important;
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 769px) {
+  .filter-list-layout .unified-filter-card,
+  .program-list-container > .unified-filter-card {
+    --filter-select-min-width: 0px;
+  }
+
+  .filter-list-layout .unified-filter-card__fields-inner.ant-row,
+  .program-list-container > .unified-filter-card .unified-filter-card__fields-inner.ant-row {
+    flex-wrap: wrap !important;
+    gap: 12px;
+  }
+
+  .filter-list-layout .unified-filter-card__fields-inner > .ant-col:not(:last-child),
+  .program-list-container > .unified-filter-card .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
+    margin-right: 0;
+    margin-bottom: 0;
+  }
+
+  .filter-list-layout .unified-filter-card__fields-inner > .ant-col,
+  .program-list-container > .unified-filter-card .unified-filter-card__fields-inner > .ant-col {
+    flex: 1 1 calc((100% - 24px) / 3) !important;
+    max-width: calc((100% - 24px) / 3) !important;
+    min-width: min(100%, 160px) !important;
+  }
+
+  .filter-list-layout
+    .unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .unified-filter-card__field--select,
+  .program-list-container
+    > .unified-filter-card.unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .unified-filter-card__field--select {
+    min-width: 0 !important;
+  }
+
+  .filter-list-layout
+    .unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .ant-select,
+  .filter-list-layout
+    .unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .app-select,
+  .program-list-container
+    > .unified-filter-card.unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .ant-select,
+  .program-list-container
+    > .unified-filter-card.unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .app-select {
+    min-width: 0 !important;
+  }
+
+  .filter-list-layout
+    .unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .ant-picker-range,
+  .filter-list-layout
+    .unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .app-datepicker,
+  .program-list-container
+    > .unified-filter-card.unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .ant-picker-range,
+  .program-list-container
+    > .unified-filter-card.unified-filter-card--single-row
+    .unified-filter-card__fields-inner
+    .ant-col
+    .app-datepicker {
+    min-width: 0 !important;
+  }
+
+  .filter-list-layout .unified-filter-card--single-row .labeled-search-input__input,
+  .filter-list-layout .unified-filter-card--single-row .labeled-search-input .app-input,
+  .program-list-container
+    > .unified-filter-card.unified-filter-card--single-row
+    .labeled-search-input__input,
+  .program-list-container
+    > .unified-filter-card.unified-filter-card--single-row
+    .labeled-search-input
+    .app-input {
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 769px) {
+  .filter-list-layout .unified-filter-card__fields-inner > .ant-col,
+  .program-list-container > .unified-filter-card .unified-filter-card__fields-inner > .ant-col {
+    flex: 1 1 calc((100% - 12px) / 2) !important;
+    max-width: calc((100% - 12px) / 2) !important;
+  }
+}
+
 @media (max-width: 768px) {
   .unified-filter-card__toolbar {
     flex-wrap: wrap;
@@ -147,7 +263,37 @@
 .unified-filter-card__field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
+  gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
+}
+
+.unified-filter-card__field--radio {
+  min-width: 0;
+}
+
+.unified-filter-card__field--radio .app-radio-group.ant-radio-group {
+  min-height: var(--filter-control-height, 44px);
+  align-items: center;
+}
+
+/* 검색 필드(AppInput) 박스가 페이지별 전역 규칙에 깨지지 않도록 강제 */
+.unified-filter-card .labeled-search-input .app-input.app-input--filter {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input.app-input--filter .app-input__control {
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  border: 1px solid #c4cdd1 !important;
+  border-radius: 8px !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow: none !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input.app-input--filter .ant-input-affix-wrapper,
+.unified-filter-card .labeled-search-input .app-input.app-input--filter .ant-input {
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* 검색 필드(AppInput) 박스가 페이지별 전역 규칙에 깨지지 않도록 강제 */
@@ -197,15 +343,8 @@
   align-items: center;
   min-height: var(--filter-label-height, 27px);
   height: var(--filter-label-height, 27px);
-  font-size: 16px;
-  font-weight: var(--font-weight-500);
-  color: var(--color-text-label);
   margin-bottom: 0;
   white-space: nowrap;
-}
-
-.unified-filter-card .labeled-search-input__label {
-  font-size: 16px;
 }
 
 .unified-filter-card .app-multi-select__trigger-text {

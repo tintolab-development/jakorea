@@ -503,7 +503,11 @@ export function ApplicantInstructorDetailModal({
                 </div>
                 <div className="applicant-instructor-detail-modal__approval-history-divider" />
                 <div className="applicant-instructor-detail-modal__approval-history-cell applicant-instructor-detail-modal__approval-history-cell--action">
-                  <AppButton variant="default" size="small">
+                  <AppButton
+                    variant="default"
+                    size="small"
+                    onClick={() => window.alert('준비 중입니다.')}
+                  >
                     알림 발송
                   </AppButton>
                 </div>
@@ -549,7 +553,11 @@ export function ApplicantInstructorDetailModal({
                 </div>
                 <div className="applicant-instructor-detail-modal__approval-history-divider" />
                 <div className="applicant-instructor-detail-modal__approval-history-cell applicant-instructor-detail-modal__approval-history-cell--action">
-                  <AppButton variant="default" size="small">
+                  <AppButton
+                    variant="default"
+                    size="small"
+                    onClick={() => window.alert('준비 중입니다.')}
+                  >
                     알림 발송
                   </AppButton>
                 </div>

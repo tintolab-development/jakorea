@@ -1,0 +1,327 @@
+/**
+ * 지급 현황 상세 — 강사 기준 프로그램별 정산 목록(필터·테이블)
+ */
+
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Table, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import { DownloadOutlined } from '@ant-design/icons'
+import type { Dayjs } from 'dayjs'
+import { AppButton } from '@/shared/ui/app-button'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
+import {
+  getMockPaymentOrderInstructorDetail,
+  type PaymentOrderAdminInstructorDetailProgramRow,
+  type PaymentOrderAdminInstructorRow,
+  type PaymentOrderAdminLineProcessingStatus,
+  type PaymentOrderAdminProcessingStatus,
+} from '@/data/mock/payment-order-admin-list'
+import {
+  defaultDateRange,
+  deriveAggregateFromLines,
+  formatLectureCell,
+  formatWon,
+  lineStatusSelectOptions,
+  LINE_STATUS_OPTIONS,
+  matchesDateRange,
+  type AppliedLineStatus,
+} from './payment-order-detail-fullpage-shared'
+
+interface InstructorDetailAppliedFilters {
+  programName: string
+  institutionName: string
+  status: AppliedLineStatus
+  dateRange: [Dayjs, Dayjs] | null
+}
+
+function filterInstructorProgramRows(
+  rows: PaymentOrderAdminInstructorDetailProgramRow[],
+  applied: InstructorDetailAppliedFilters
+): PaymentOrderAdminInstructorDetailProgramRow[] {
+  const qProgram = applied.programName.trim()
+  const qInstitution = applied.institutionName.trim()
+  return rows.filter(row => {
+    if (qProgram && !row.programName.includes(qProgram)) return false
+    if (qInstitution && !row.institutionName.includes(qInstitution)) return false
+    if (applied.status !== 'all' && row.processingStatus !== applied.status) return false
+    if (!matchesDateRange(row.lectureDate, applied.dateRange)) return false
+    return true
+  })
+}
+
+export interface PaymentOrderInstructorSettlementTableProps {
+  instructorRow: PaymentOrderAdminInstructorRow
+  isOpen: boolean
+  onAggregateChange: (status: PaymentOrderAdminProcessingStatus) => void
+  onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
+}
+
+export function PaymentOrderInstructorSettlementTable({
+  instructorRow,
+  isOpen,
+  onAggregateChange,
+  onOpenCalculationStatement,
+}: PaymentOrderInstructorSettlementTableProps) {
+  const [draftProgramName, setDraftProgramName] = useState('')
+  const [draftInstitutionName, setDraftInstitutionName] = useState('')
+  const [draftStatus, setDraftStatus] = useState<AppliedLineStatus>('all')
+  const [draftDateRange, setDraftDateRange] = useState<[Dayjs, Dayjs] | null>(defaultDateRange)
+  const [applied, setApplied] = useState<InstructorDetailAppliedFilters>({
+    programName: '',
+    institutionName: '',
+    status: 'all',
+    dateRange: defaultDateRange,
+  })
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [programRowsState, setProgramRowsState] = useState<
+    PaymentOrderAdminInstructorDetailProgramRow[]
+  >([])
+  const [openStatusRowId, setOpenStatusRowId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isOpen && instructorRow) {
+      setDraftProgramName('')
+      setDraftInstitutionName('')
+      setDraftStatus('all')
+      setDraftDateRange(defaultDateRange)
+      setApplied({
+        programName: '',
+        institutionName: '',
+        status: 'all',
+        dateRange: defaultDateRange,
+      })
+      setSelectedRowKeys([])
+      const d = getMockPaymentOrderInstructorDetail(instructorRow)
+      setProgramRowsState(d.programRows.map(r => ({ ...r })))
+      setOpenStatusRowId(null)
+    }
+  }, [isOpen, instructorRow.no])
+
+  useEffect(() => {
+    onAggregateChange(deriveAggregateFromLines(programRowsState.map(r => r.processingStatus)))
+  }, [programRowsState, onAggregateChange])
+
+  const handleSearch = useCallback(() => {
+    setApplied({
+      programName: draftProgramName.trim(),
+      institutionName: draftInstitutionName.trim(),
+      status: draftStatus,
+      dateRange: draftDateRange,
+    })
+  }, [draftDateRange, draftInstitutionName, draftProgramName, draftStatus])
+
+  const filteredRows = useMemo(
+    () => filterInstructorProgramRows(programRowsState, applied),
+    [programRowsState, applied]
+  )
+
+  const columns: ColumnsType<PaymentOrderAdminInstructorDetailProgramRow> = useMemo(
+    () => [
+      {
+        title: 'No.',
+        dataIndex: 'no',
+        key: 'no',
+        width: 64,
+        align: 'center',
+      },
+      {
+        title: '프로그램명',
+        dataIndex: 'programName',
+        key: 'programName',
+        ellipsis: { showTitle: true },
+        width: 280,
+        align: 'center',
+      },
+      {
+        title: '참여 기관명',
+        dataIndex: 'institutionName',
+        key: 'institutionName',
+        ellipsis: { showTitle: true },
+        width: 160,
+        align: 'center',
+      },
+      {
+        title: '강의 진행 일자',
+        key: 'lecture',
+        width: 220,
+        align: 'center',
+        render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) =>
+          formatLectureCell(row.lectureDate, row.sessionOrdinal),
+      },
+      {
+        title: '지급 조서 처리 현황',
+        key: 'processingStatus',
+        width: 136,
+        align: 'center',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<PaymentOrderAdminLineProcessingStatus>
+              status={row.processingStatus}
+              statusOptions={LINE_STATUS_OPTIONS}
+              renderBadge={s => <PaymentOrderLineProcessingStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={newStatus => {
+                setProgramRowsState(prev =>
+                  prev.map(r => (r.id === row.id ? { ...r, processingStatus: newStatus } : r))
+                )
+              }}
+              isOpen={openStatusRowId === row.id}
+              onOpenChange={nextOpen => setOpenStatusRowId(nextOpen ? row.id : null)}
+            />
+          </div>
+        ),
+      },
+      {
+        title: '정산 예정 금액',
+        dataIndex: 'estimatedAmount',
+        key: 'estimatedAmount',
+        width: 140,
+        align: 'center',
+        render: (amount: number, row: PaymentOrderAdminInstructorDetailProgramRow) =>
+          row.processingStatus === 'rejected' ? '-' : formatWon(amount),
+      },
+      {
+        title: '산출 내역',
+        key: 'breakdown',
+        width: 196,
+        align: 'center',
+        render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (
+          <AppButton
+            variant="default"
+            size="small"
+            className="payment-order-program-status-detail__detail-btn"
+            onClick={e => {
+              e.stopPropagation()
+              onOpenCalculationStatement(row)
+            }}
+          >
+            상세 보기
+          </AppButton>
+        ),
+      },
+    ],
+    [onOpenCalculationStatement, openStatusRowId]
+  )
+
+  return (
+    <>
+      <div className="payment-order-program-status-detail__filters">
+        <UnifiedFilterCard
+          bordered={false}
+          cardStyle={{ marginBottom: 0 }}
+          fields={[
+            {
+              key: 'programName',
+              type: 'search',
+              label: '프로그램명',
+              placeholder: '프로그램명을 입력하세요',
+              flex: '1 1 0',
+            },
+            {
+              key: 'institutionName',
+              type: 'search',
+              label: '참여 기관명',
+              placeholder: '기관명을 입력하세요',
+              flex: '1 1 0',
+            },
+            {
+              key: 'status',
+              type: 'select',
+              label: '지급조서 처리 현황',
+              placeholder: '전체',
+              options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
+              allowClear: true,
+              flex: '1 1 0',
+            },
+            {
+              key: 'dateRange',
+              type: 'dateRange',
+              label: '기간',
+              flex: '1 1 0',
+            },
+          ]}
+          filters={{
+            programName: draftProgramName,
+            institutionName: draftInstitutionName,
+            status: draftStatus === 'all' ? undefined : draftStatus,
+            dateRange: draftDateRange,
+          }}
+          onFilterChange={(key, value) => {
+            if (key === 'programName') {
+              setDraftProgramName(value as string)
+              return
+            }
+            if (key === 'institutionName') {
+              setDraftInstitutionName(value as string)
+              return
+            }
+            if (key === 'status') {
+              setDraftStatus((value ?? 'all') as AppliedLineStatus)
+              return
+            }
+            if (key === 'dateRange') {
+              setDraftDateRange(value as [Dayjs, Dayjs] | null)
+            }
+          }}
+          onSearch={handleSearch}
+        />
+      </div>
+
+      <div className="participating-institutions-section__divider payment-order-program-status-detail__section-divider" />
+
+      <div className="payment-order-program-status-detail__below-divider participating-institutions-section__below-divider">
+        <div className="participating-institutions-section__table-header">
+          <div className="participating-institutions-section__table-heading">
+            <span className="participating-institutions-section__table-title">
+              프로그램 별 정산 목록
+            </span>
+            <span className="participating-institutions-section__table-description">
+              총 {filteredRows.length}건
+            </span>
+          </div>
+          <div className="participating-institutions-section__table-actions">
+            <AppButton
+              variant="cancel"
+              size="filter-wide"
+              disabled={selectedRowKeys.length === 0}
+              onClick={() => message.info('일괄 확인은 추후 연결됩니다.')}
+            >
+              일괄 확인
+            </AppButton>
+            <AppButton
+              variant="primary"
+              size="filter-wide"
+              icon={<DownloadOutlined />}
+              onClick={() => message.info('지급조서 다운로드는 추후 연결됩니다.')}
+            >
+              지급조서 다운로드
+            </AppButton>
+          </div>
+        </div>
+
+        <div className="payment-order-program-status-detail__table-wrap participating-institutions-section__table-wrap">
+          <Table<PaymentOrderAdminInstructorDetailProgramRow>
+            className="payment-order-program-status-detail__table participating-institutions-section__table"
+            rowKey="id"
+            columns={columns}
+            dataSource={filteredRows}
+            pagination={false}
+            size="middle"
+            tableLayout="fixed"
+            scroll={{ x: 1280 }}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: keys => setSelectedRowKeys(keys),
+            }}
+          />
+        </div>
+      </div>
+    </>
+  )
+}

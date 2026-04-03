@@ -1,3 +1,12 @@
+/**
+ * 프로젝트 정보(공통/참여자·강사·봉사) 패널 — 풀페이지 모달 본문
+ *
+ * 수정 모드에서 넘어오는 `infoForm` | `institutionsForm` | … 는 모두
+ * `UseFormReturn<ProgramDetailEditFormValues>` (react-hook-form + `programDetailEditSchema`).
+ *
+ * 병합 시: `form={isEditModeX ? xForm : undefined}` 패턴을 유지할 것. `form` 만 props 로 받고
+ * 내부에서 새 `useForm` 을 만들면 상위 저장/리셋과 폼 상태가 분리됨.
+ */
 import { Spin, Typography } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import type { Program } from '@/types/domain'
@@ -19,6 +28,8 @@ import {
 import { TAB_KEYS, TAB_LABELS, type TabKey } from '../program-detail-nav-types'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
+/* 참여자·강사·봉사 탭 상세(썸네일·테이블) 스타일 — 하위 컴포넌트 import에만 의존하지 않도록 고정 */
+import './project-info-form-shared.css'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
@@ -31,14 +42,10 @@ function ProjectInfoDetailTabsRow({
   isEditModeInstructors,
   isEditModeVolunteers,
   onInfoEdit,
-  onInfoCancelEdit,
   onInfoSave,
   onInstitutionsSave,
-  onInstitutionsCancelEdit,
-  onInstructorsCancelEdit,
   onInstructorsSave,
   onVolunteersSave,
-  onVolunteersCancelEdit,
   onPreview,
 }: {
   activeTab: TabKey
@@ -49,14 +56,10 @@ function ProjectInfoDetailTabsRow({
   isEditModeInstructors: boolean
   isEditModeVolunteers: boolean
   onInfoEdit: () => void
-  onInfoCancelEdit: () => void
   onInfoSave: () => void
   onInstitutionsSave: () => void
-  onInstitutionsCancelEdit: () => void
-  onInstructorsCancelEdit: () => void
   onInstructorsSave: () => void
   onVolunteersSave: () => void
-  onVolunteersCancelEdit: () => void
   onPreview: () => void
 }) {
   return (
@@ -77,62 +80,42 @@ function ProjectInfoDetailTabsRow({
         <div className="program-detail-fullpage-modal__header-actions">
           {activeTab === 'info' ? (
             <>
-              {isEditModeInfo && (
-                <AppButton variant="danger" size="filter" onClick={onInfoCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeInfo ? onInfoSave : onInfoEdit}
               >
-                {isEditModeInfo ? '수정사항 저장' : '정보 수정'}
+                {isEditModeInfo ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : activeTab === 'institutions' ? (
             <>
-              {isEditModeInstitutions && (
-                <AppButton variant="danger" size="filter" onClick={onInstitutionsCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeInstitutions ? onInstitutionsSave : onInfoEdit}
               >
-                {isEditModeInstitutions ? '수정사항 저장' : '정보 수정'}
+                {isEditModeInstitutions ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : activeTab === 'volunteers' ? (
             <>
-              {isEditModeVolunteers && (
-                <AppButton variant="danger" size="filter" onClick={onVolunteersCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeVolunteers ? onVolunteersSave : onInfoEdit}
               >
-                {isEditModeVolunteers ? '수정사항 저장' : '정보 수정'}
+                {isEditModeVolunteers ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : activeTab === 'instructors' ? (
             <>
-              {isEditModeInstructors && (
-                <AppButton variant="danger" size="filter" onClick={onInstructorsCancelEdit}>
-                  수정 취소
-                </AppButton>
-              )}
               <AppButton
                 variant="primary"
                 size="filter"
                 onClick={isEditModeInstructors ? onInstructorsSave : onInfoEdit}
               >
-                {isEditModeInstructors ? '수정사항 저장' : '정보 수정'}
+                {isEditModeInstructors ? '정보 저장' : '정보 수정'}
               </AppButton>
             </>
           ) : null}
@@ -169,14 +152,10 @@ export interface ProjectInfoDetailPanelsProps {
   volunteersForm: DetailForm | undefined
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onInfoEdit: () => void
-  onInfoCancelEdit: () => void
   onInfoSave: () => void
   onInstitutionsSave: () => void
-  onInstitutionsCancelEdit: () => void
-  onInstructorsCancelEdit: () => void
   onInstructorsSave: () => void
   onVolunteersSave: () => void
-  onVolunteersCancelEdit: () => void
   onPreview: () => void
 }
 
@@ -198,14 +177,10 @@ export function ProjectInfoDetailPanels({
   volunteersForm,
   registerVolunteersAdditionalHtml,
   onInfoEdit,
-  onInfoCancelEdit,
   onInfoSave,
   onInstitutionsSave,
-  onInstitutionsCancelEdit,
-  onInstructorsCancelEdit,
   onInstructorsSave,
   onVolunteersSave,
-  onVolunteersCancelEdit,
   onPreview,
 }: ProjectInfoDetailPanelsProps) {
   return (
@@ -219,14 +194,10 @@ export function ProjectInfoDetailPanels({
         isEditModeInstructors={isEditModeInstructors}
         isEditModeVolunteers={isEditModeVolunteers}
         onInfoEdit={onInfoEdit}
-        onInfoCancelEdit={onInfoCancelEdit}
         onInfoSave={onInfoSave}
         onInstitutionsSave={onInstitutionsSave}
-        onInstitutionsCancelEdit={onInstitutionsCancelEdit}
-        onInstructorsCancelEdit={onInstructorsCancelEdit}
         onInstructorsSave={onInstructorsSave}
         onVolunteersSave={onVolunteersSave}
-        onVolunteersCancelEdit={onVolunteersCancelEdit}
         onPreview={onPreview}
       />
       {isBodyLoading ? (

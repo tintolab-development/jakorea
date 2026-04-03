@@ -3,6 +3,20 @@
  * - 비즈니스 규칙: 필수/선택 필드, 검증(Zod), Program ↔ 폼 값 변환
  * - programToDetailEditValues: Program → 폼 기본값 (정보 수정 시 기존 값 채움)
  * - detailEditValuesToProgramPatch: 폼 값 → 저장용 패치 (optional 필드는 existing fallback)
+ *
+ * ─── React Hook Form / Zod 연동 (풀페이지 수정 모드) ─────────────────────────
+ * - 폼 값 타입: `programDetailEditSchemaBase` → `ProgramDetailEditFormValues` (`z.infer`)
+ * - 검증: 기본 `programDetailEditSchema`, 참여자 정보 탭만 `programDetailInstitutionsEditSchema` (`use-program-detail-edit-form` 의 `schema` 옵션)
+ * - 저장 시 검증: `use-program-detail-info-save.ts` → `form.trigger()` 가 이 스키마 기준으로 동작
+ *
+ * ─── 브랜치 병합 시 주의 (연동 깨짐 방지) ───────────────────────────────────
+ * 1) 새 `Controller`/`register` 필드를 추가하면 반드시:
+ *    - 아래 `programDetailEditSchema` 에 동일 키 추가
+ *    - `programToDetailEditValues` 에 Program(또는 mock)에서의 매핑 추가
+ *    - API/도메인에 내려야 하면 `detailEditValuesToProgramPatch` 와 `Program` 타입에도 필드 추가
+ * 2) 스키마 키 이름을 바꾸면 모든 `name="..."` / `setValue` / `watch` 호출부를 함께 수정
+ * 3) 임금(`wage*`)·KPI(`kpi*`) 등은 현재 스키마·폼에는 있으나 `detailEditValuesToProgramPatch` 미반영.
+ *    백엔드 저장이 필요하면 패치 함수와 `Program` 모델을 확장할 것 (그 전까지는 UI 상태만 유지)
  */
 
 import { z } from 'zod'
@@ -42,7 +56,7 @@ const roundEditSchema = z.object({
   deliveryType: roundDeliveryTypeEnum.optional(),
 })
 
-export const programDetailEditSchema = z.object({
+const programDetailEditSchemaBase = z.object({
   title: z.string().min(1, '프로그램명을 입력해주세요'),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -51,8 +65,9 @@ export const programDetailEditSchema = z.object({
   district: z.string().optional(),
   type: z.enum(['online', 'offline', 'hybrid']),
   lifecycleStatus: programLifecycleStatusEnum.optional(),
-  applicationStartDate: z.string().optional(),
-  applicationEndDate: z.string().optional(),
+  /** 수강자·참여자 모집 기간(공통/참여자 정보 탭) */
+  applicationStartDate: z.string().min(1, '참여자 모집 시작일을 선택해주세요'),
+  applicationEndDate: z.string().min(1, '참여자 모집 종료일을 선택해주세요'),
   businessArea: z.string().optional(),
   sponsorId: z.string().min(1, '후원사를 선택해주세요'),
   managerName: z.string().min(1, '후원사 담당자를 입력해주세요'),
@@ -70,8 +85,12 @@ export const programDetailEditSchema = z.object({
   attachmentFileNames: z.array(z.string()).optional(),
   rounds: z.array(roundEditSchema),
   // 수강자 모집
-  resultAnnouncementDate: z.string().optional(),
-  resultAnnouncementMethod: z.string().optional(),
+  /** 결과 발표일 및 방법(공통 정보 수강자 모집 / 참여자 정보 참여자 모집) */
+  resultAnnouncementDate: z.string().min(1, '결과 발표일을 선택해주세요'),
+  resultAnnouncementMethod: z
+    .string()
+    .trim()
+    .min(1, '결과 발표 방법을 입력해주세요'),
   studentListRequired: z.enum(['required', 'not_required']).optional(),
   // 강사 모집
   instructorCapacity: z.number().min(0).optional(),
@@ -113,6 +132,12 @@ export const programDetailEditSchema = z.object({
   // 임금 정보
   wageType: z.string().optional(),
   wagePricingTimeUnit: z.string().optional(),
+  /** 임금 책정 기준 — 단위 셀렉트(예: 시간) */
+  wagePricingMeasureLabel: z.string().optional(),
+  /** 임금 책정 기준 — 수치(예: 1) */
+  wagePricingQuantity: z.number().min(0, '0 이상을 입력해주세요').optional(),
+  /** 임금 책정 기준 — 기준(당) / 초과 / 이하 */
+  wagePricingCompareMode: z.enum(['per', 'over', 'under']).optional(),
   wagePricingBase: z.string().optional(),
   wagePricingLongDistance: z.string().optional(),
   wagePaymentItems: z.string().optional(),
@@ -123,6 +148,17 @@ export const programDetailEditSchema = z.object({
   kpiVolunteerCount: z.number().min(0).optional(),
   kpiFinalSchools: z.number().min(0).optional(),
   kpiFinalClasses: z.number().min(0).optional(),
+})
+
+/** 기본: 공통·강사·봉사 탭 등 — 모집 안내는 값이 있으면 공백만 불가 */
+export const programDetailEditSchema = programDetailEditSchemaBase
+
+/**
+ * 참여자 정보(institutions) 탭 — 모집 안내·추가 내용(HTML)은 저장 시 필수 검증 제외
+ * (추가 내용은 폼 필드가 아니며 스키마상 이미 optional)
+ */
+export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.extend({
+  recruitmentGuide: z.string().optional(),
 })
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
@@ -159,8 +195,8 @@ export function programToDetailEditValues(
     attachmentFileNames: program.attachmentFileNames ?? [],
     resultAnnouncementDate: program.resultAnnouncementDate
       ? toStr(program.resultAnnouncementDate)
-      : undefined,
-    resultAnnouncementMethod: program.resultAnnouncementMethod ?? undefined,
+      : '',
+    resultAnnouncementMethod: program.resultAnnouncementMethod ?? '',
     studentListRequired: program.studentListRequired ?? 'required',
     instructorCapacity: program.instructorCapacity ?? undefined,
     instructorApplicationStartDate: program.instructorApplicationStartDate
@@ -216,6 +252,9 @@ export function programToDetailEditValues(
     programChannel: program.programChannel ?? undefined,
     wageType: undefined,
     wagePricingTimeUnit: undefined,
+    wagePricingMeasureLabel: undefined,
+    wagePricingQuantity: undefined,
+    wagePricingCompareMode: undefined,
     wagePricingBase: undefined,
     wagePricingLongDistance: undefined,
     wagePaymentItems: undefined,
@@ -228,7 +267,11 @@ export function programToDetailEditValues(
   }
 }
 
-/** 폼 값 → Program 패치 (저장 시 병합용) */
+/**
+ * 폼 값 → Program 패치 (저장 시 병합용)
+ * `useProgramDetailInfoSave` 의 `triggerSave` 에서만 호출 — RHF `getValues()` 결과를 받음.
+ * 병합: 새 폼 필드를 저장하려면 여기와 `@/types/domain` Program 정의를 함께 갱신.
+ */
 export function detailEditValuesToProgramPatch(
   values: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program

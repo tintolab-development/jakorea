@@ -3,6 +3,14 @@
  * triggerSave: 폼 값 + 스키마 변환 + additionalContentHtml getter → onSaveEdit 호출
  * resetToProgram: 폼을 현재 program 값으로 리셋
  * registerGetAdditionalContentHtml: project-info-detail-info-section(에디터)에서 HTML 수집 getter 등록
+ *
+ * ─── Zod 검증 연동 ───────────────────────────────────────────────────────────
+ * - `form.trigger()` → `zodResolver(programDetailEditSchema)` 기반 전 필드 검증.
+ *   trigger 를 건너뛰거나 수동으로 patch 만내면 스키마와 UI 불일치 가능.
+ *
+ * ─── 병합 시 주의 ───────────────────────────────────────────────────────────
+ * - 저장 페이로드는 `detailEditValuesToProgramPatch(form.getValues(), program)` 만 사용.
+ *   patch 에 없는 폼 필드는 API 로 전달되지 않음 (`program-detail-edit-schema.ts` 주석 참고).
  */
 
 import { useCallback, useRef } from 'react'

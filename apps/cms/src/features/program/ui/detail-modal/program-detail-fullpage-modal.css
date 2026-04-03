@@ -173,6 +173,16 @@
     color: var(--color-text-primary);
 }
 
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled {
+    color: #bdbdbd;
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled:hover {
+    color: #bdbdbd;
+}
+
 /* 활성 탭 — 동일 specificity로 base 오버라이드 (색상·보더 적용되도록) */
 .program-detail-fullpage-modal button.program-detail-fullpage-modal__tab.program-detail-fullpage-modal__tab--active {
     color: var(--JA-mint-01, #01a1af);
@@ -207,6 +217,9 @@
 .program-detail-fullpage-modal__info-tab {
     padding: 0 0 32px;
     box-sizing: border-box;
+    /* 진행현황 등 넓은 테이블: 내용 폭으로 부모가 밀려나면 가로 스크롤이 사라짐 → 폭 상한·shrink 허용 */
+    min-width: 0;
+    max-width: 100%;
 }
 
 /* 참여자 정보 탭: 항목별 갭 32px (공통 정보 탭과 동일하게 margin-top) */
@@ -252,6 +265,96 @@
     border-top: none;
 }
 
+/* 수정 모드: 공통 정보 탭 — td 내 AppSelect·AppInput 기본 너비 190px */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-select {
+    width: 190px;
+    max-width: 190px;
+    box-sizing: border-box;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input {
+    width: 190px;
+    max-width: 190px;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+}
+
+/* 대표 프로그램명: td 폭 전체 사용 (세부 프로그램명은 190px — project-info-form-shared) */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input.program-detail-info-tab__input--cell-full {
+    width: 100%;
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* 후원사 담당자(수정): 공통 정보 탭 시안 — 190×40, 패딩·테두리 (project-info-form-shared 의 auto!important 덮어씀) */
+.program-detail-fullpage-modal__info-tab
+    .program-detail-info-tab__table
+    td
+    .program-detail-info-tab__sponsor-manager-inputs
+    > .app-select.program-detail-info-tab__manager-select,
+.program-detail-fullpage-modal__info-tab
+    .program-detail-info-tab__table
+    td
+    .program-detail-info-tab__sponsor-manager-inputs
+    > .program-detail-info-tab__manager-select.app-select {
+    display: flex;
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+    height: 40px;
+    padding: 0 14px 0 16px;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px;
+    border: 1px solid #c4cdd1;
+    background: var(--default-WT, #fff);
+    flex: 0 0 190px;
+    box-sizing: border-box;
+}
+
+/* 임금: 강사비 유형·단위·수량은 별도 폭 */
+.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.app-select {
+    width: 190px;
+    max-width: 190px;
+}
+
+/* 임금 책정 기준: 단위·수량 80×40 (shared !important 와 동일) */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__measure-select.app-select {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    flex: 0 0 80px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__pricing-basis-row>.app-input.program-wage-info-section__input--qty {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    flex: 0 0 80px;
+}
+
+/* 임금: 기본·장거리 강사비 190×40 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input.program-wage-info-section__input--price {
+    width: 190px;
+    max-width: 190px;
+    flex: 0 0 190px;
+}
+
+/* 교육 커리큘럼: 시간 입력 120px, 비고는 가변 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__curriculum-inputs .program-detail-info-tab__curriculum-time-input.app-input {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__curriculum-inputs .program-detail-info-tab__curriculum-remarks-input.app-input {
+    width: auto;
+    max-width: none;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .program-detail-fullpage-modal__tab-panel {
     min-height: 0;
     width: 100%;
@@ -266,4 +369,22 @@
 .program-detail-fullpage-modal__progress-section .ant-typography+.ant-typography {
     display: block;
     margin-top: 8px;
+}
+
+/* 경제 교육: 테이블 헤더 옆 「총 N건」 등 레이블 디스크립션 공통 타이포 */
+.program-detail-fullpage-modal--economy-education .program-progress-tab__table-description,
+.program-detail-fullpage-modal--economy-education .participating-institutions-section__table-description,
+.program-detail-fullpage-modal--economy-education .program-status-participating__table-description,
+.program-detail-fullpage-modal--economy-education .program-applicants-tab__table-description,
+.program-detail-fullpage-modal--economy-education .program-managers-tab__table-description,
+.program-detail-fullpage-modal--economy-education .applicant-details__table-description,
+.program-detail-fullpage-modal--economy-education .school-detail-modal__table-description {
+    color: var(--default-BK, #3d3d3d);
+    text-align: center;
+    font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+    opacity: 0.6;
 }

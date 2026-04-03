@@ -2,8 +2,8 @@
  * 참여자·강사·봉사자 모집 섹션 + 풀페이지 모달 서브탭 레이아웃 통합
  */
 
-import type { ReactNode } from 'react'
-import { Input } from 'antd'
+import { Fragment, type ReactNode } from 'react'
+import { DividerVertical } from '@/shared/components/divider-vertical'
 import { Controller } from 'react-hook-form'
 import { AppInput } from '@/shared/ui/app-input'
 import { AppRadio } from '@/shared/ui/app-radio'
@@ -17,7 +17,7 @@ import {
   formatDateOnly,
   formatDateRange,
   getInstructorRecruitmentStatus,
-  getRecruitmentStatus,
+  getParticipantRecruitmentLifecycle,
   getVolunteerRecruitmentStatus,
   INSTRUCTOR_TARGET_OPTIONS,
   INTERVIEW_METHOD_OPTIONS,
@@ -30,10 +30,9 @@ import type { Dayjs } from 'dayjs'
 import { ProjectInfoDetailInfoSection } from './project-info-detail-info-section'
 import './project-info-recruitment-section.css'
 
-const { TextArea } = Input
-
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
-const toIso = (d: Dayjs | null) => (d ? d.toISOString() : undefined)
+/** 빈 값은 `undefined` 대신 `''` 로 두어 Zod `z.string().min(1)` 과 맞춤 */
+const toIso = (d: Dayjs | null) => (d ? d.toISOString() : '')
 
 const TARGET_LEVEL_OPTIONS = Object.entries(TARGET_LEVEL_LABEL).map(([value, label]) => ({
   value,
@@ -45,14 +44,106 @@ const STUDENT_LIST_OPTIONS = [
   { value: 'not_required' as const, label: '불필요' },
 ]
 
-/** 신청 기간 기준 모집 현황 → 프로그램 진행 상태 라벨·스타일(기본 정보 탭과 동일) */
-const PARTICIPANT_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
-  'scheduled' | 'recruiting' | 'closed',
-  ProgramLifecycleStatus
-> = {
-  scheduled: 'planned',
-  recruiting: 'recruiting_students',
-  closed: 'matching_completed',
+function ProgramDetailContactReadRow({
+  contactName,
+  contactPhone,
+  contactEmail,
+  padEmptySegments,
+}: {
+  contactName?: string | null
+  contactPhone?: string | null
+  contactEmail?: string | null
+  /** true면 문의처·Tel·E-mail 세 칸을 항상 노출하고 빈 값은 '-' */
+  padEmptySegments?: boolean
+}) {
+  if (padEmptySegments) {
+    const segments = [
+      `문의처 : ${contactName?.trim() || '-'}`,
+      `Tel : ${contactPhone?.trim() || '-'}`,
+      `E-mail : ${contactEmail?.trim() || '-'}`,
+    ]
+    return (
+      <div className="program-detail-info-tab__contact-inline">
+        {segments.map((text, i) => (
+          <Fragment key={i}>
+            {i > 0 ? (
+              <DividerVertical
+                height={13}
+                className="program-detail-info-tab__contact-inline-divider"
+              />
+            ) : null}
+            <span>{text}</span>
+          </Fragment>
+        ))}
+      </div>
+    )
+  }
+
+  const segments: string[] = []
+  if (contactName?.trim()) segments.push(`문의처 : ${contactName.trim()}`)
+  if (contactPhone?.trim()) segments.push(`Tel : ${contactPhone.trim()}`)
+  if (contactEmail?.trim()) segments.push(`E-mail : ${contactEmail.trim()}`)
+
+  if (segments.length === 0) return '-'
+
+  return (
+    <div className="program-detail-info-tab__contact-inline">
+      {segments.map((text, i) => (
+        <Fragment key={`${i}-${text}`}>
+          {i > 0 ? (
+            <DividerVertical
+              height={13}
+              className="program-detail-info-tab__contact-inline-divider"
+            />
+          ) : null}
+          <span>{text}</span>
+        </Fragment>
+      ))}
+    </div>
+  )
+}
+
+function ProgramDetailDateMethodReadRow({
+  dateIso,
+  method,
+}: {
+  dateIso?: string | Date | null
+  method?: string | null
+}) {
+  if (!dateIso) return '-'
+  const dateLabel = formatDateOnly(dateIso)
+  const methodLabel = method?.trim() ? method.trim() : '-'
+  return (
+    <div className="program-detail-info-tab__contact-inline">
+      <span>{dateLabel}</span>
+      <DividerVertical height={13} className="program-detail-info-tab__result-row-divider" />
+      <span>{methodLabel}</span>
+    </div>
+  )
+}
+
+function ProgramDetailInterviewReadRow({
+  start,
+  end,
+  method,
+}: {
+  start?: string | Date | null
+  end?: string | Date | null
+  method?: string | null
+}) {
+  if (!start || !end) return '-'
+  const range = formatDateRange(start, end)
+  const raw = method?.trim()
+  const methodLabel = raw
+    ? (INTERVIEW_METHOD_OPTIONS.find(o => o.value === raw)?.label ?? raw)
+    : '-'
+  return (
+    <div className="program-detail-info-tab__contact-inline">
+      <span>{range}</span>
+      <DividerVertical height={13} className="program-detail-info-tab__result-row-divider" />
+      <span>{methodLabel}</span>
+    </div>
+  )
 }
 
 /** lifecycleStatus 기반 강사 모집 현황 → 프로그램 진행 상태 라벨·스타일(기본 정보 탭과 동일) */
@@ -63,6 +154,16 @@ const INSTRUCTOR_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
   scheduled: 'instructor_recruitment_planned',
   recruiting: 'recruiting_instructors',
   closed: 'education_completed',
+}
+
+/** 봉사자 모집 현황(예정/중/마감) → 프로그램 진행 상태 클래스(참여자·강사 탭과 동일 색상 토큰) */
+const VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
+  'scheduled' | 'recruiting' | 'closed',
+  ProgramLifecycleStatus
+> = {
+  scheduled: 'volunteer_recruitment_planned',
+  recruiting: 'recruiting_volunteers',
+  closed: 'document_processing_completed',
 }
 
 /** 봉사자 모집 현황 라벨 (모집 예정 / 모집 중 / 모집 마감) */
@@ -86,26 +187,18 @@ export function ParticipantRecruitmentSection({
   form,
 }: ParticipantRecruitmentSectionProps) {
   const isFormEdit = isEditMode && form
-  const recruitmentStatus = isFormEdit
-    ? getRecruitmentStatus({
-        ...program,
-        applicationStartDate: form.watch('applicationStartDate'),
-        applicationEndDate: form.watch('applicationEndDate'),
-      })
-    : getRecruitmentStatus(program)
-  const participantRecruitmentLifecycle =
-    recruitmentStatus != null
-      ? PARTICIPANT_RECRUITMENT_STATUS_TO_LIFECYCLE[recruitmentStatus]
-      : null
+  const participantRecruitmentLifecycle = getParticipantRecruitmentLifecycle(
+    program,
+    isFormEdit
+      ? {
+          applicationStartDate: form.watch('applicationStartDate'),
+          applicationEndDate: form.watch('applicationEndDate'),
+        }
+      : undefined
+  )
   const targetLabel = program.targetLevel
     ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
     : '-'
-  const contactParts = [
-    sponsorName && `문의처 : ${sponsorName}`,
-    program.contactPhone && `Tel : ${program.contactPhone}`,
-    program.contactEmail && `E-mail : ${program.contactEmail}`,
-  ].filter(Boolean)
-  const contactLine = contactParts.length > 0 ? contactParts.join(' | ') : '-'
   const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
   const resultMethod = program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
   const resultLine = resultDate ? `${formatDateOnly(resultDate)} | ${resultMethod}` : '-'
@@ -201,7 +294,6 @@ export function ParticipantRecruitmentSection({
                           field.onChange((v as 'elementary' | 'middle' | 'high') || undefined)
                         }
                         placeholder="대상"
-                        style={{ width: '100%' }}
                         allowClear
                         className="program-detail-info-tab__target-select"
                       />
@@ -285,7 +377,10 @@ export function ParticipantRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__separator"> | </span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
+                    />
                     <Controller
                       name="resultAnnouncementMethod"
                       control={form.control}
@@ -323,7 +418,7 @@ export function ParticipantRecruitmentSection({
                           const n = parseInt(e.target.value, 10)
                           field.onChange(isNaN(n) ? undefined : n)
                         }}
-                        className="program-detail-info-tab__capacity-input"
+                        className="program-detail-info-tab__max-class-count-input"
                       />
                     )}
                   />
@@ -372,7 +467,10 @@ export function ParticipantRecruitmentSection({
                         className="program-detail-info-tab__contact-name-input"
                       />
                     </div>
-                    <span className="program-detail-info-tab__contact-divider">|</span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__contact-inline-divider"
+                    />
                     <div className="program-detail-info-tab__contact-group">
                       <span className="program-detail-info-tab__contact-label">Tel</span>
                       <Controller
@@ -388,7 +486,10 @@ export function ParticipantRecruitmentSection({
                         )}
                       />
                     </div>
-                    <span className="program-detail-info-tab__contact-divider">|</span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__contact-inline-divider"
+                    />
                     <div className="program-detail-info-tab__contact-group">
                       <span className="program-detail-info-tab__contact-label">E-mail</span>
                       <Controller
@@ -406,7 +507,12 @@ export function ParticipantRecruitmentSection({
                     </div>
                   </div>
                 ) : (
-                  contactLine
+                  <ProgramDetailContactReadRow
+                    contactName={sponsorName}
+                    contactPhone={program.contactPhone}
+                    contactEmail={program.contactEmail}
+                    padEmptySegments
+                  />
                 )}
               </td>
             </tr>
@@ -457,26 +563,6 @@ export function InstructorRecruitmentSection({
 
   const instructorTarget = program.instructorTarget ?? '성인'
   const instructorTargetDetail = program.instructorTargetDetail ?? '-'
-
-  const contactParts = [
-    (sponsorName ?? program.managerName) && `문의처 : ${sponsorName ?? program.managerName ?? ''}`,
-    program.contactPhone && `Tel : ${program.contactPhone}`,
-    program.contactEmail && `E-mail : ${program.contactEmail}`,
-  ].filter(Boolean)
-  const contactLine = contactParts.length > 0 ? contactParts.join(' | ') : '-'
-
-  const documentPassLine = program.documentPassAnnouncementDate
-    ? `${formatDateOnly(program.documentPassAnnouncementDate)}${program.documentPassAnnouncementMethod ? ` | ${program.documentPassAnnouncementMethod}` : ''}`
-    : '-'
-
-  const interviewLine =
-    program.interviewStartDate && program.interviewEndDate
-      ? `${formatDateRange(program.interviewStartDate, program.interviewEndDate)}${program.interviewMethod ? ` | ${program.interviewMethod}` : ''}`
-      : '-'
-
-  const finalPassLine = program.finalPassAnnouncementDate
-    ? `${formatDateOnly(program.finalPassAnnouncementDate)}${program.finalPassAnnouncementMethod ? ` | ${program.finalPassAnnouncementMethod}` : ''}`
-    : '-'
 
   const notes =
     program.otherNotes ??
@@ -654,7 +740,10 @@ export function InstructorRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__separator"> | </span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
+                    />
                     <Controller
                       name="documentPassAnnouncementMethod"
                       control={form.control}
@@ -669,7 +758,10 @@ export function InstructorRecruitmentSection({
                     />
                   </div>
                 ) : (
-                  documentPassLine
+                  <ProgramDetailDateMethodReadRow
+                    dateIso={program.documentPassAnnouncementDate}
+                    method={program.documentPassAnnouncementMethod}
+                  />
                 )}
               </td>
             </tr>
@@ -707,10 +799,10 @@ export function InstructorRecruitmentSection({
                           />
                         )}
                       />
-                      <span className="program-detail-info-tab__separator" aria-hidden="true">
-                        {' '}
-                        |{' '}
-                      </span>
+                      <DividerVertical
+                        height={13}
+                        className="program-detail-info-tab__result-row-divider"
+                      />
                       <Controller
                         name="interviewMethod"
                         control={form.control}
@@ -727,7 +819,11 @@ export function InstructorRecruitmentSection({
                     </div>
                   </>
                 ) : (
-                  interviewLine
+                  <ProgramDetailInterviewReadRow
+                    start={program.interviewStartDate}
+                    end={program.interviewEndDate}
+                    method={program.interviewMethod}
+                  />
                 )}
               </td>
               <th>
@@ -749,7 +845,10 @@ export function InstructorRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__separator"> | </span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
+                    />
                     <Controller
                       name="finalPassAnnouncementMethod"
                       control={form.control}
@@ -764,7 +863,10 @@ export function InstructorRecruitmentSection({
                     />
                   </div>
                 ) : (
-                  finalPassLine
+                  <ProgramDetailDateMethodReadRow
+                    dateIso={program.finalPassAnnouncementDate}
+                    method={program.finalPassAnnouncementMethod}
+                  />
                 )}
               </td>
             </tr>
@@ -789,7 +891,10 @@ export function InstructorRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__contact-divider">|</span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__contact-inline-divider"
+                    />
                     <span className="program-detail-info-tab__contact-label">Tel</span>
                     <Controller
                       name="contactPhone"
@@ -803,7 +908,10 @@ export function InstructorRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__contact-divider">|</span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__contact-inline-divider"
+                    />
                     <span className="program-detail-info-tab__contact-label">E-mail</span>
                     <Controller
                       name="contactEmail"
@@ -819,7 +927,12 @@ export function InstructorRecruitmentSection({
                     />
                   </div>
                 ) : (
-                  contactLine
+                  <ProgramDetailContactReadRow
+                    contactName={sponsorName ?? program.managerName}
+                    contactPhone={program.contactPhone}
+                    contactEmail={program.contactEmail}
+                    padEmptySegments
+                  />
                 )}
               </td>
             </tr>
@@ -870,6 +983,8 @@ export function VolunteerRecruitmentSection({
         RECRUITMENT_RADIO_OPTIONS.find(o => o.value === recruitmentStatus)?.label ??
         '-')
       : '-'
+  const volunteerRecruitmentLifecycle =
+    recruitmentStatus != null ? VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[recruitmentStatus] : null
 
   const volunteerTarget = program.volunteerTarget ?? '대학(원)생'
   const volunteerTargetDetail = program.volunteerTargetDetail ?? '-'
@@ -883,27 +998,7 @@ export function VolunteerRecruitmentSection({
     program.instructorApplicationEndDate ??
     program.applicationEndDate
 
-  const contactParts = [
-    sponsorName && `문의처 : ${sponsorName}`,
-    program.contactPhone && `Tel : ${program.contactPhone}`,
-    program.contactEmail && `E-mail : ${program.contactEmail}`,
-  ].filter(Boolean)
-  const contactLine = contactParts.length > 0 ? contactParts.join(' | ') : '-'
-
-  const documentPassLine = program.documentPassAnnouncementDate
-    ? `${formatDateOnly(program.documentPassAnnouncementDate)}${program.documentPassAnnouncementMethod ? ` | ${program.documentPassAnnouncementMethod}` : ''}`
-    : '-'
-
-  const interviewLine =
-    program.interviewStartDate && program.interviewEndDate
-      ? `${formatDateRange(program.interviewStartDate, program.interviewEndDate)}${program.interviewMethod ? ` | ${program.interviewMethod}` : ''}`
-      : '-'
-
-  const finalPassLine = program.finalPassAnnouncementDate
-    ? `${formatDateOnly(program.finalPassAnnouncementDate)}${program.finalPassAnnouncementMethod ? ` | ${program.finalPassAnnouncementMethod}` : ''}`
-    : '-'
-
-  const notes = program.oneLineIntroduction ?? '-'
+  const notes = (program.oneLineIntroduction ?? '').trim() || '-'
 
   const isFormEdit = isEditMode && form
 
@@ -959,9 +1054,9 @@ export function VolunteerRecruitmentSection({
               </td>
               <th>봉사자 모집 현황</th>
               <td>
-                {recruitmentStatus != null ? (
+                {volunteerRecruitmentLifecycle ? (
                   <span
-                    className={`program-detail-info-tab__recruitment-status-text program-detail-info-tab__recruitment-status-text--${recruitmentStatus}`}
+                    className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${volunteerRecruitmentLifecycle.replace(/_/g, '-')}`}
                   >
                     {recruitmentStatusLabel}
                   </span>
@@ -985,7 +1080,6 @@ export function VolunteerRecruitmentSection({
                         value={field.value ?? undefined}
                         options={VOLUNTEER_TARGET_OPTIONS}
                         onChange={v => field.onChange(v ?? undefined)}
-                        style={{ width: '100%' }}
                         allowClear
                         placeholder="모집 대상 선택"
                       />
@@ -1075,6 +1169,10 @@ export function VolunteerRecruitmentSection({
                         />
                       )}
                     />
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
+                    />
                     <Controller
                       name="documentPassAnnouncementMethod"
                       control={form.control}
@@ -1089,7 +1187,10 @@ export function VolunteerRecruitmentSection({
                     />
                   </div>
                 ) : (
-                  documentPassLine
+                  <ProgramDetailDateMethodReadRow
+                    dateIso={program.documentPassAnnouncementDate}
+                    method={program.documentPassAnnouncementMethod}
+                  />
                 )}
               </td>
             </tr>
@@ -1126,10 +1227,10 @@ export function VolunteerRecruitmentSection({
                         />
                       )}
                     />
-                    <span className="program-detail-info-tab__separator" aria-hidden="true">
-                      {' '}
-                      |{' '}
-                    </span>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
+                    />
                     <Controller
                       name="interviewMethod"
                       control={form.control}
@@ -1145,7 +1246,11 @@ export function VolunteerRecruitmentSection({
                     />
                   </div>
                 ) : (
-                  interviewLine
+                  <ProgramDetailInterviewReadRow
+                    start={program.interviewStartDate}
+                    end={program.interviewEndDate}
+                    method={program.interviewMethod}
+                  />
                 )}
               </td>
               <th>
@@ -1167,6 +1272,10 @@ export function VolunteerRecruitmentSection({
                         />
                       )}
                     />
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__result-row-divider"
+                    />
                     <Controller
                       name="finalPassAnnouncementMethod"
                       control={form.control}
@@ -1181,7 +1290,10 @@ export function VolunteerRecruitmentSection({
                     />
                   </div>
                 ) : (
-                  finalPassLine
+                  <ProgramDetailDateMethodReadRow
+                    dateIso={program.finalPassAnnouncementDate}
+                    method={program.finalPassAnnouncementMethod}
+                  />
                 )}
               </td>
             </tr>
@@ -1192,48 +1304,62 @@ export function VolunteerRecruitmentSection({
               </th>
               <td colSpan={3}>
                 {isFormEdit ? (
-                  <div className="program-detail-info-tab__contact-inputs">
-                    <AppInput
-                      placeholder="문의처명"
-                      value={sponsorName ?? ''}
-                      readOnly
-                      className="program-detail-info-tab__contact-name-readonly"
+                  <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
+                    <div className="program-detail-info-tab__contact-group">
+                      <span className="program-detail-info-tab__contact-label">문의처</span>
+                      <AppInput
+                        placeholder="문의처"
+                        value={sponsorName ?? ''}
+                        readOnly
+                        className="program-detail-info-tab__contact-name-input"
+                      />
+                    </div>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__contact-inline-divider"
                     />
-                    <span className="program-detail-info-tab__contact-divider" aria-hidden>
-                      |
-                    </span>
-                    <span className="program-detail-info-tab__contact-label">Tel</span>
-                    <Controller
-                      name="contactPhone"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="02-6347-6113"
-                          className="program-detail-info-tab__contact-phone-input"
-                        />
-                      )}
+                    <div className="program-detail-info-tab__contact-group">
+                      <span className="program-detail-info-tab__contact-label">Tel</span>
+                      <Controller
+                        name="contactPhone"
+                        control={form.control}
+                        render={({ field }) => (
+                          <AppInput
+                            {...field}
+                            value={field.value ?? ''}
+                            placeholder="02-6347-6113"
+                            className="program-detail-info-tab__contact-phone-input"
+                          />
+                        )}
+                      />
+                    </div>
+                    <DividerVertical
+                      height={13}
+                      className="program-detail-info-tab__contact-inline-divider"
                     />
-                    <span className="program-detail-info-tab__contact-divider" aria-hidden>
-                      |
-                    </span>
-                    <span className="program-detail-info-tab__contact-label">E-mail</span>
-                    <Controller
-                      name="contactEmail"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="ujat@jakorea.org"
-                          className="program-detail-info-tab__contact-email-input"
-                        />
-                      )}
-                    />
+                    <div className="program-detail-info-tab__contact-group">
+                      <span className="program-detail-info-tab__contact-label">E-mail</span>
+                      <Controller
+                        name="contactEmail"
+                        control={form.control}
+                        render={({ field }) => (
+                          <AppInput
+                            {...field}
+                            value={field.value ?? ''}
+                            placeholder="ujat@jakorea.org"
+                            className="program-detail-info-tab__contact-email-input"
+                          />
+                        )}
+                      />
+                    </div>
                   </div>
                 ) : (
-                  contactLine
+                  <ProgramDetailContactReadRow
+                    contactName={sponsorName ?? program.managerName}
+                    contactPhone={program.contactPhone}
+                    contactEmail={program.contactEmail}
+                    padEmptySegments
+                  />
                 )}
               </td>
             </tr>
@@ -1245,12 +1371,11 @@ export function VolunteerRecruitmentSection({
                     name="oneLineIntroduction"
                     control={form.control}
                     render={({ field }) => (
-                      <TextArea
+                      <AppInput
                         {...field}
                         value={field.value ?? ''}
-                        rows={3}
                         placeholder="비고"
-                        className="program-detail-info-tab__content-textarea"
+                        className="program-detail-info-tab__notes-input"
                       />
                     )}
                   />
