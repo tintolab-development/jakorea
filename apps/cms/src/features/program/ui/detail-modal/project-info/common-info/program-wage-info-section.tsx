@@ -202,7 +202,7 @@ export function ProgramWageInfoSection({
                   data.wageType
                 )}
               </td>
-              <WageRequiredTh showRequired={!!isFormEdit}>임금 책정 기준</WageRequiredTh>
+              <WageRequiredTh showRequired={!!isFormEdit}>강사비 책정</WageRequiredTh>
               <td className="program-wage-info-section__td-pricing-basis">
                 {isFormEdit && form ? (
                   <div className="program-wage-info-section__pricing-basis-row">

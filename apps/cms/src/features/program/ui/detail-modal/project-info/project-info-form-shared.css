@@ -204,11 +204,35 @@
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+    font-family: Pretendard, sans-serif;
     font-size: 16px;
     font-style: normal;
     font-weight: 500;
     line-height: 150%;
+}
+
+/* 참여자·강사·봉사 모집 현황: 태그 없이 텍스트만, 상태별 대표색 (program-lifecycle-status-badge 교육 그룹 톤) */
+.program-detail-info-tab__lifecycle-status-text--planned,
+.program-detail-info-tab__lifecycle-status-text--instructor-recruitment-planned,
+.program-detail-info-tab__lifecycle-status-text--volunteer-recruitment-planned,
+.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-planned {
+    color: #e44970;
+}
+
+.program-detail-info-tab__lifecycle-status-text--recruiting-students,
+.program-detail-info-tab__lifecycle-status-text--recruiting-instructors,
+.program-detail-info-tab__lifecycle-status-text--recruiting-volunteers,
+.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruiting {
+    color: #017eaf;
+}
+
+.program-detail-info-tab__lifecycle-status-text--matching-completed,
+.program-detail-info-tab__lifecycle-status-text--education-before-textbook,
+.program-detail-info-tab__lifecycle-status-text--education-after-textbook,
+.program-detail-info-tab__lifecycle-status-text--education-completed,
+.program-detail-info-tab__lifecycle-status-text--document-processing-completed,
+.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-completed {
+    color: #464646;
 }
 
 /* 교육 커리큘럼 테이블 — 기본 정보와 동일 스타일(라벨 200px, #F9F9F9, 구분선 #E0E0E0) */

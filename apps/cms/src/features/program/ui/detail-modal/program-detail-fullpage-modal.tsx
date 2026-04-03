@@ -6,7 +6,7 @@
  * ─── 수정 모드 ↔ React Hook Form / Zod ─────────────────────────────────────
  * - URL: `edit` 쿼리(`EDIT_PARAM`)가 현재 `tab` 과 같을 때만 해당 탭이 수정 모드 (예: 공통정보 `edit=info`).
  * - 폼: 탭마다 `useProgramDetailEditForm` 인스턴스가 분리됨(info / institutions / instructors / volunteers).
- *   동일 `programDetailEditSchema`·`ProgramDetailEditFormValues` 를 쓰므로 필드 추가 시 스키마 한 곳만 수정하면 됨.
+ *   `ProgramDetailEditFormValues` 공유, 검증 스키마는 탭별로 `programDetailEditSchema` 또는 `programDetailInstitutionsEditSchema`(참여자 정보).
  * - 저장·취소: 각 탭별 `useProgramDetailInfoSave` — `triggerSave` → Zod `trigger` 후 patch, `resetToProgram` 으로 리셋.
  * - 하위 UI는 `ProjectInfoDetailPanels` 로 `form` prop 이 전달되며, 수정 중일 때만 `form` 이 정의됨.
  *
@@ -24,6 +24,7 @@ import {
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
+import { programDetailInstitutionsEditSchema } from '../../model/program-detail-edit-schema'
 import { MESSAGES } from '@/shared/constants'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
@@ -504,6 +505,7 @@ export function ProgramDetailFullPageModal({
   const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeInstitutions,
+    schema: programDetailInstitutionsEditSchema,
   })
   const {
     triggerSave: institutionsTriggerSave,

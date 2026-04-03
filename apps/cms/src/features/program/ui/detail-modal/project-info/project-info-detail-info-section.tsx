@@ -23,17 +23,13 @@ import {
 } from './program-detail-info-constants'
 import './project-info-detail-info-section.css'
 
+/** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */
 const THUMBNAIL_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다. / 가로 사이즈 500px 권장, 세로 사이즈 무관',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const ATTACHMENT_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '-  첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
-
-const DEFAULT_THUMBNAIL_GUIDE = [
   '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
@@ -408,7 +404,7 @@ export function DetailInfoSection({
             setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
-            guideLines={DEFAULT_THUMBNAIL_GUIDE}
+            guideLines={THUMBNAIL_GUIDE_LINES}
             showRequiredStar={isFormEdit}
           />
         )}
@@ -425,7 +421,7 @@ export function DetailInfoSection({
         />
         <TextAreaFieldRow
           label="모집 안내"
-          showRequiredStar={isFormEdit}
+          showRequiredStar={false}
           isFormEdit={isFormEdit}
           form={f}
           name="recruitmentGuide"
@@ -452,17 +448,14 @@ export function DetailInfoSection({
           isFormEdit={isFormEdit}
           editorOpen={editorOpen}
           editorHostRef={editorHostRef}
-          showRequiredOnTh={true}
+          showRequiredOnTh={false}
         />
         <AttachmentRowStandard
           isEditMode={isEditMode}
           isFormEdit={isFormEdit}
           form={f}
           displayFileNames={displayFileNames}
-          guideLines={[
-            '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-            '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-          ]}
+          guideLines={THUMBNAIL_GUIDE_LINES}
         />
       </DetailInfoTableFrame>
     </>

@@ -17,7 +17,7 @@ import {
   formatDateOnly,
   formatDateRange,
   getInstructorRecruitmentStatus,
-  getRecruitmentStatus,
+  getParticipantRecruitmentLifecycle,
   getVolunteerRecruitmentStatus,
   INSTRUCTOR_TARGET_OPTIONS,
   INTERVIEW_METHOD_OPTIONS,
@@ -31,7 +31,8 @@ import { ProjectInfoDetailInfoSection } from './project-info-detail-info-section
 import './project-info-recruitment-section.css'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
-const toIso = (d: Dayjs | null) => (d ? d.toISOString() : undefined)
+/** 빈 값은 `undefined` 대신 `''` 로 두어 Zod `z.string().min(1)` 과 맞춤 */
+const toIso = (d: Dayjs | null) => (d ? d.toISOString() : '')
 
 const TARGET_LEVEL_OPTIONS = Object.entries(TARGET_LEVEL_LABEL).map(([value, label]) => ({
   value,
@@ -145,16 +146,6 @@ function ProgramDetailInterviewReadRow({
   )
 }
 
-/** 신청 기간 기준 모집 현황 → 프로그램 진행 상태 라벨·스타일(기본 정보 탭과 동일) */
-const PARTICIPANT_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
-  'scheduled' | 'recruiting' | 'closed',
-  ProgramLifecycleStatus
-> = {
-  scheduled: 'planned',
-  recruiting: 'recruiting_students',
-  closed: 'matching_completed',
-}
-
 /** lifecycleStatus 기반 강사 모집 현황 → 프로그램 진행 상태 라벨·스타일(기본 정보 탭과 동일) */
 const INSTRUCTOR_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
   'scheduled' | 'recruiting' | 'closed',
@@ -196,17 +187,15 @@ export function ParticipantRecruitmentSection({
   form,
 }: ParticipantRecruitmentSectionProps) {
   const isFormEdit = isEditMode && form
-  const recruitmentStatus = isFormEdit
-    ? getRecruitmentStatus({
-        ...program,
-        applicationStartDate: form.watch('applicationStartDate'),
-        applicationEndDate: form.watch('applicationEndDate'),
-      })
-    : getRecruitmentStatus(program)
-  const participantRecruitmentLifecycle =
-    recruitmentStatus != null
-      ? PARTICIPANT_RECRUITMENT_STATUS_TO_LIFECYCLE[recruitmentStatus]
-      : null
+  const participantRecruitmentLifecycle = getParticipantRecruitmentLifecycle(
+    program,
+    isFormEdit
+      ? {
+          applicationStartDate: form.watch('applicationStartDate'),
+          applicationEndDate: form.watch('applicationEndDate'),
+        }
+      : undefined
+  )
   const targetLabel = program.targetLevel
     ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
     : '-'

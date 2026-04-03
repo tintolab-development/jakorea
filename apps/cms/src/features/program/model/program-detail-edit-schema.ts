@@ -5,8 +5,8 @@
  * - detailEditValuesToProgramPatch: 폼 값 → 저장용 패치 (optional 필드는 existing fallback)
  *
  * ─── React Hook Form / Zod 연동 (풀페이지 수정 모드) ─────────────────────────
- * - 단일 진실 소스: `programDetailEditSchema` → `ProgramDetailEditFormValues` (`z.infer`)
- * - 폼 인스턴스: `use-program-detail-edit-form.ts` 에서 `zodResolver(programDetailEditSchema)` 로 연결
+ * - 폼 값 타입: `programDetailEditSchemaBase` → `ProgramDetailEditFormValues` (`z.infer`)
+ * - 검증: 기본 `programDetailEditSchema`, 참여자 정보 탭만 `programDetailInstitutionsEditSchema` (`use-program-detail-edit-form` 의 `schema` 옵션)
  * - 저장 시 검증: `use-program-detail-info-save.ts` → `form.trigger()` 가 이 스키마 기준으로 동작
  *
  * ─── 브랜치 병합 시 주의 (연동 깨짐 방지) ───────────────────────────────────
@@ -56,7 +56,7 @@ const roundEditSchema = z.object({
   deliveryType: roundDeliveryTypeEnum.optional(),
 })
 
-export const programDetailEditSchema = z.object({
+const programDetailEditSchemaBase = z.object({
   title: z.string().min(1, '프로그램명을 입력해주세요'),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -65,8 +65,9 @@ export const programDetailEditSchema = z.object({
   district: z.string().optional(),
   type: z.enum(['online', 'offline', 'hybrid']),
   lifecycleStatus: programLifecycleStatusEnum.optional(),
-  applicationStartDate: z.string().optional(),
-  applicationEndDate: z.string().optional(),
+  /** 수강자·참여자 모집 기간(공통/참여자 정보 탭) */
+  applicationStartDate: z.string().min(1, '참여자 모집 시작일을 선택해주세요'),
+  applicationEndDate: z.string().min(1, '참여자 모집 종료일을 선택해주세요'),
   businessArea: z.string().optional(),
   sponsorId: z.string().min(1, '후원사를 선택해주세요'),
   managerName: z.string().min(1, '후원사 담당자를 입력해주세요'),
@@ -84,8 +85,12 @@ export const programDetailEditSchema = z.object({
   attachmentFileNames: z.array(z.string()).optional(),
   rounds: z.array(roundEditSchema),
   // 수강자 모집
-  resultAnnouncementDate: z.string().optional(),
-  resultAnnouncementMethod: z.string().optional(),
+  /** 결과 발표일 및 방법(공통 정보 수강자 모집 / 참여자 정보 참여자 모집) */
+  resultAnnouncementDate: z.string().min(1, '결과 발표일을 선택해주세요'),
+  resultAnnouncementMethod: z
+    .string()
+    .trim()
+    .min(1, '결과 발표 방법을 입력해주세요'),
   studentListRequired: z.enum(['required', 'not_required']).optional(),
   // 강사 모집
   instructorCapacity: z.number().min(0).optional(),
@@ -145,6 +150,17 @@ export const programDetailEditSchema = z.object({
   kpiFinalClasses: z.number().min(0).optional(),
 })
 
+/** 기본: 공통·강사·봉사 탭 등 — 모집 안내는 값이 있으면 공백만 불가 */
+export const programDetailEditSchema = programDetailEditSchemaBase
+
+/**
+ * 참여자 정보(institutions) 탭 — 모집 안내·추가 내용(HTML)은 저장 시 필수 검증 제외
+ * (추가 내용은 폼 필드가 아니며 스키마상 이미 optional)
+ */
+export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.extend({
+  recruitmentGuide: z.string().optional(),
+})
+
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
 
 /** Program → 폼 기본값 (날짜는 ISO 문자열) */
@@ -179,8 +195,8 @@ export function programToDetailEditValues(
     attachmentFileNames: program.attachmentFileNames ?? [],
     resultAnnouncementDate: program.resultAnnouncementDate
       ? toStr(program.resultAnnouncementDate)
-      : undefined,
-    resultAnnouncementMethod: program.resultAnnouncementMethod ?? undefined,
+      : '',
+    resultAnnouncementMethod: program.resultAnnouncementMethod ?? '',
     studentListRequired: program.studentListRequired ?? 'required',
     instructorCapacity: program.instructorCapacity ?? undefined,
     instructorApplicationStartDate: program.instructorApplicationStartDate

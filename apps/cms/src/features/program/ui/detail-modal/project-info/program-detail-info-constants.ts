@@ -4,7 +4,7 @@
 
 import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
-import type { Program } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import {
   getProgramLifecycleLabel,
   PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER,
@@ -49,6 +49,27 @@ export function getRecruitmentStatus(
   if (now.isBefore(startDate, 'day')) return 'scheduled'
   if (!now.isBefore(startDate, 'day') && !now.isAfter(endDate, 'day')) return 'recruiting'
   return 'closed'
+}
+
+/** 신청 기간 기준 참여자(수강자) 모집 현황 → lifecycle 키 (td 색상·라벨: 참여자 정보 탭·공통 정보 공통) */
+export const PARTICIPANT_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
+  'scheduled' | 'recruiting' | 'closed',
+  ProgramLifecycleStatus
+> = {
+  scheduled: 'planned',
+  recruiting: 'recruiting_students',
+  closed: 'matching_completed',
+}
+
+/** `getRecruitmentStatus` 결과를 lifecycle로 변환 (날짜 오버라이드는 수정 모드 폼 연동용) */
+export function getParticipantRecruitmentLifecycle(
+  program: Program,
+  overrides?: Pick<Program, 'applicationStartDate' | 'applicationEndDate'>
+): ProgramLifecycleStatus | null {
+  const effective = overrides ? { ...program, ...overrides } : program
+  const s = getRecruitmentStatus(effective)
+  if (s == null) return null
+  return PARTICIPANT_RECRUITMENT_STATUS_TO_LIFECYCLE[s]
 }
 
 /** @deprecated getRecruitmentStatus 사용 (null 처리 통일) */

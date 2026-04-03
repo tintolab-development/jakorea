@@ -27,6 +27,7 @@ import {
   formatDateOnly,
   formatDateRange,
   getRecruitmentStatus,
+  getParticipantRecruitmentLifecycle,
   getInstructorRecruitmentStatus,
   getThumbnailFilename,
   RECRUITMENT_RADIO_OPTIONS,
@@ -43,7 +44,7 @@ import {
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
 } from '../program-detail-info-constants'
-import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
+import { getProgramLifecycleLabel, getProgramProgressPhaseDisplay } from '@/shared/constants/status'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -73,7 +74,7 @@ export interface BasicInfoSectionProps {
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
-const toIso = (d: Dayjs | null) => (d ? d.toISOString() : undefined)
+const toIso = (d: Dayjs | null) => (d ? d.toISOString() : '')
 
 export function BasicInfoSection({
   program,
@@ -713,6 +714,8 @@ export function BasicInfoSection({
     )
   }
 
+  const participantRecruitmentLifecycleReadonly = getParticipantRecruitmentLifecycle(program)
+
   return (
     <>
       <div className="program-detail-info-tab__section-title">기본 정보</div>
@@ -1293,8 +1296,14 @@ export function BasicInfoSection({
                     options={RECRUITMENT_RADIO_OPTIONS}
                     className="program-detail-info-tab__recruitment-radio"
                   />
+                ) : participantRecruitmentLifecycleReadonly ? (
+                  <span
+                    className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${participantRecruitmentLifecycleReadonly.replace(/_/g, '-')}`}
+                  >
+                    {getProgramLifecycleLabel(participantRecruitmentLifecycleReadonly)}
+                  </span>
                 ) : (
-                  <RecruitmentStatusBadge status={getRecruitmentStatus(program)} size="fixed" />
+                  '-'
                 )}
               </td>
             </tr>
@@ -1351,7 +1360,7 @@ export function BasicInfoSection({
                       render={({ field }) => (
                         <AppDatePicker
                           value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
+                          onChange={d => field.onChange(d ? d.toISOString() : '')}
                           format="YYYY. MM. DD"
                           className="program-detail-info-tab__date-picker"
                         />
