@@ -35,12 +35,16 @@
 .dashboard-settings-modal__shortcuts {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-8) var(--spacing-16);
+  gap: 16px;
   align-content: start;
 }
 
 .dashboard-settings-modal__shortcuts .ant-checkbox-wrapper {
   margin-inline-start: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 /* 셀렉트(체크박스) 영역 18×18 */
@@ -61,10 +65,10 @@
 
 .dashboard-settings-modal__table .ant-table-cell {
   vertical-align: top;
+  border: 1px solid #d4d4d4;
 }
 
 .dashboard-settings-modal__table .ant-table-cell:first-child {
-  border-right: 1px solid #d4d4d4;
   background: #f5f6f7;
   color: var(--default-BK, #3d3d3d);
 
@@ -88,9 +92,13 @@
 .dashboard-settings-modal__program-checks {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: 8px;
 }
 
 .dashboard-settings-modal__program-checks .ant-checkbox-wrapper {
   margin-inline-start: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 150%;
 }

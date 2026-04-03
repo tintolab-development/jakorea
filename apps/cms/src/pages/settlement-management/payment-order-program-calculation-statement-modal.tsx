@@ -114,9 +114,7 @@ export function PaymentOrderProgramCalculationStatementModal({
                           className="payment-order-calc-statement-modal__processing-vbar"
                           aria-hidden="true"
                         />
-                        <SendNotiButton
-                          onClick={() => message.info('알림 발송은 추후 연결됩니다.')}
-                        />
+                        <SendNotiButton />
                       </div>
                     ) : (
                       <span
@@ -274,9 +272,7 @@ export function PaymentOrderProgramCalculationStatementModal({
                           className="payment-order-calc-statement-modal__processing-vbar"
                           aria-hidden="true"
                         />
-                        <SendNotiButton
-                          onClick={() => message.info('알림 발송은 추후 연결됩니다.')}
-                        />
+                        <SendNotiButton />
                       </div>
                     ) : (
                       <span

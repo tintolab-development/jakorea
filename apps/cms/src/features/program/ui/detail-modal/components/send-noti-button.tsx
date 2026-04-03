@@ -2,6 +2,10 @@ import { AppButton } from '@/shared/ui/app-button'
 import type { AppButtonProps } from '@/shared/ui/app-button'
 import './send-noti-button.css'
 
+function defaultSendNotiClick() {
+  window.alert('준비 중입니다.')
+}
+
 export interface SendNotiButtonProps {
   /** 승인 완료 후: 알림 재발송 */
   mode?: 'send' | 'resend'
@@ -17,7 +21,7 @@ export function SendNotiButton({ mode = 'send', onClick }: SendNotiButtonProps) 
       size="large"
       htmlType="button"
       className="send-noti-button"
-      onClick={onClick}
+      onClick={onClick ?? defaultSendNotiClick}
     >
       {label}
     </AppButton>

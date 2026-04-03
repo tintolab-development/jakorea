@@ -4,7 +4,6 @@
  */
 
 import { Card, Button, Empty, Typography } from 'antd'
-import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   getKpiAchievementList,
@@ -13,6 +12,7 @@ import {
 } from '../api/admin-dashboard-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './kpi-achievement-widget.css'
 
@@ -81,7 +81,6 @@ function ProgramKpiCard({ item }: { item: ProgramKpiItem }) {
 }
 
 export function KpiAchievementWidget() {
-  const navigate = useNavigate()
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const [list, setList] = useState<ProgramKpiItem[]>([])
@@ -121,7 +120,7 @@ export function KpiAchievementWidget() {
         <Button
           type="link"
           size="small"
-          onClick={() => navigate('/education-records')}
+          onClick={() => window.alert(WIDGET_MORE_ALERT_MESSAGE)}
           className="widget-more-button"
         >
           더보기

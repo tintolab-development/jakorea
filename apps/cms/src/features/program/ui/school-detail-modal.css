@@ -43,8 +43,6 @@
 }
 
 .school-detail-modal__filter-label {
-    font-size: 14px;
-    color: var(--color-text-label);
     margin-right: 4px;
 }
 
@@ -267,24 +265,25 @@
     gap: var(--spacing-8);
 }
 
-/* 강사진 정보 테이블: 헤더(th) 48px, 열 비율 고정 */
-.school-detail-modal__instructor-table .ant-table-thead>tr>th {
-    height: 48px;
-    min-height: 48px;
-    padding: 12px 16px;
+/* 강사진 정보 테이블: 행 높이 60px( border-box, antd 패딩 덮어씀 — 40px 버튼+패딩 합산 방지) */
+.school-detail-modal__instructor-table .ant-table-thead>tr>th.ant-table-cell,
+.school-detail-modal__instructor-table .ant-table-tbody>tr>td.ant-table-cell {
+    box-sizing: border-box !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    max-height: 60px !important;
+    padding-block: 10px !important;
+    padding-inline: 16px !important;
+    line-height: 1.25 !important;
+    vertical-align: middle;
+}
+
+.school-detail-modal__instructor-table .ant-table-thead>tr>th.ant-table-cell {
     background: #edf0f2;
     font-size: 14px;
     font-weight: 700;
     color: var(--color-text-label);
     text-align: center;
-    vertical-align: middle;
-}
-
-.school-detail-modal__instructor-table .ant-table-tbody>tr>td {
-    height: 48px;
-    min-height: 48px;
-    padding: 12px 16px;
-    vertical-align: middle;
 }
 
 /* 체크박스 열 고정 너비 */
@@ -300,7 +299,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: var(--spacing-16);
 }
 
 .school-detail-modal__student-table-heading {
@@ -330,6 +329,11 @@
     gap: 8px;
 }
 
+/* 강의 출석 내역 td: 링크 컬러 — CMS 시안·theme-provider --color-link (#01a1af)와 통일 (#0070E7 폴백 제거) */
+.school-detail-modal__student-table td.school-detail-modal__td-lecture-attendance {
+    color: var(--color-link, #01a1af);
+}
+
 /* 강의 출석 내역 td 텍스트 스펙 (링크 버튼) */
 .school-detail-modal__link-button {
     background: none;
@@ -341,7 +345,7 @@
     font-style: normal;
     font-weight: 500;
     line-height: 150%;
-    color: var(--color-link, #0070E7);
+    color: var(--color-link, #01a1af);
     text-decoration-line: underline;
     text-decoration-style: solid;
     text-decoration-skip-ink: none;
@@ -355,7 +359,7 @@
 }
 
 .school-detail-modal__link-button:hover {
-    color: var(--color-link, #0070E7);
+    color: var(--color-link-hover, #296075);
 }
 
 .school-detail-modal__link-button:focus,
@@ -375,30 +379,171 @@
     width: 100%;
 }
 
-.school-detail-modal__student-table .ant-table-thead>tr>th {
-    height: 48px;
-    min-height: 48px;
-    padding: 12px 16px;
+/*
+ * 참여 학생 목록 컬럼 min-width: 60,80,160,170,170,295,295,150,150(px)
+ * 합계 1530 — TS `STUDENT_LIST_TABLE_SCROLL_X` 와 동기화
+ */
+.school-detail-modal__student-table {
+    --student-list-col-scale: 1;
+}
+
+@media (max-width: 1560px) {
+    .school-detail-modal__student-table {
+        --student-list-col-scale: 0.94;
+    }
+}
+
+@media (max-width: 1360px) {
+    .school-detail-modal__student-table {
+        --student-list-col-scale: 0.86;
+    }
+}
+
+@media (max-width: 1160px) {
+    .school-detail-modal__student-table {
+        --student-list-col-scale: 0.78;
+    }
+}
+
+@media (max-width: 992px) {
+    .school-detail-modal__student-table {
+        --student-list-col-scale: 0.72;
+    }
+}
+
+.school-detail-modal__student-table col:nth-child(1),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(1),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(1) {
+    width: calc(60px * var(--student-list-col-scale)) !important;
+    min-width: calc(60px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(2),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(2),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(2) {
+    width: calc(80px * var(--student-list-col-scale)) !important;
+    min-width: calc(80px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(3),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(3),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(3) {
+    width: calc(160px * var(--student-list-col-scale)) !important;
+    min-width: calc(160px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(4),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(4),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(4) {
+    width: calc(170px * var(--student-list-col-scale)) !important;
+    min-width: calc(170px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(5),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(5),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(5) {
+    width: calc(170px * var(--student-list-col-scale)) !important;
+    min-width: calc(170px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(6),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(6),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(6) {
+    width: calc(295px * var(--student-list-col-scale)) !important;
+    min-width: calc(295px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(7),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(7),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(7) {
+    width: calc(295px * var(--student-list-col-scale)) !important;
+    min-width: calc(295px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(8),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(8),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(8) {
+    width: calc(150px * var(--student-list-col-scale)) !important;
+    min-width: calc(150px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table col:nth-child(9),
+.school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(9),
+.school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(9) {
+    width: calc(150px * var(--student-list-col-scale)) !important;
+    min-width: calc(150px * var(--student-list-col-scale)) !important;
+}
+
+.school-detail-modal__student-table .school-detail-modal__student-table-gender-select {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.school-detail-modal__student-table .ant-table-container {
+    border: 1px solid var(--table-line, #e0e0e0);
+    border-radius: var(--radius-6, 6px);
+    overflow: hidden;
+}
+
+.school-detail-modal__student-table .ant-table-thead>tr>th::before {
+    display: none !important;
+}
+
+/* 본문·헤더 셀: 높이 60px 고정(antd .ant-table-cell 기본 패딩·line-height 보정) */
+.school-detail-modal__student-table .ant-table-thead>tr>th.ant-table-cell,
+.school-detail-modal__student-table .ant-table-tbody>tr>td.ant-table-cell {
+    box-sizing: border-box !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    max-height: 60px !important;
+    padding-block: 10px !important;
+    padding-inline: 16px !important;
+    line-height: 1.25 !important;
+    vertical-align: middle;
+    border-right: 1px solid var(--table-line, #e0e0e0);
+    border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.school-detail-modal__student-table .ant-table-thead>tr>th.ant-table-cell {
     background: #edf0f2;
     font-size: 14px;
     font-weight: 700;
     color: var(--color-text-label);
     text-align: center;
-    vertical-align: middle;
 }
 
-.school-detail-modal__student-table .ant-table-tbody>tr>td {
-    height: 48px;
-    min-height: 48px;
-    padding: 12px 16px;
-    vertical-align: middle;
+.school-detail-modal__student-table .ant-table-thead>tr>th:last-child,
+.school-detail-modal__student-table .ant-table-tbody>tr>td:last-child {
+    border-right: none !important;
 }
 
-.school-detail-modal__student-table .ant-table-thead>tr>th:first-child,
-.school-detail-modal__student-table .ant-table-tbody>tr>td:first-child {
-    width: 48px;
-    min-width: 48px;
-    max-width: 48px;
+.school-detail-modal__student-table .ant-table-thead>tr>th.ant-table-cell-scrollbar {
+    border-right: none !important;
+    border-bottom: 1px solid var(--table-line, #e0e0e0);
+    padding: 0 !important;
+}
+
+.school-detail-modal__student-table .ant-table-thead>tr>th.ant-table-selection-column,
+.school-detail-modal__student-table .ant-table-tbody>tr>td.ant-table-selection-column {
+    padding-inline: 8px !important;
+}
+
+.school-detail-modal__instructor-table .ant-table-thead>tr>th.ant-table-selection-column,
+.school-detail-modal__instructor-table .ant-table-tbody>tr>td.ant-table-selection-column {
+    padding-inline: 8px !important;
+}
+
+.school-detail-modal__student-table .ant-table-tbody>tr:last-child>td {
+    border-bottom: none !important;
+}
+
+/* index.css ant-table-rows — 격자 테이블과 라운드 충돌 방지 */
+.school-detail-modal__student-table .ant-table-tbody>tr:first-child>td:first-child,
+.school-detail-modal__student-table .ant-table-tbody>tr:first-child>td:last-child,
+.school-detail-modal__student-table .ant-table-tbody>tr:hover>td:first-child,
+.school-detail-modal__student-table .ant-table-tbody>tr:hover>td:last-child {
+    border-radius: 0 !important;
 }
 
 /* 기본 정보 수정 모드: 버튼·폼 컨트롤 */

@@ -159,6 +159,19 @@
   color: var(--color-text-secondary, #595959);
 }
 
+/* 승인 완료 전용: 강의비·사업소득자 1행 — 라벨 열 220px */
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table col:nth-child(1),
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table col:nth-child(3) {
+  width: 220px;
+}
+
+.applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table th.applicant-instructor-basic-info__cell--label {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  font-weight: 700;
+}
+
 /* 승인 완료 전용: 강의비·사업소득자 1행 테이블 (메인 기본 정보 바로 아래) */
 .applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
   tbody

@@ -6,6 +6,7 @@
 import { Card, List, Tag, Typography, Button, Empty } from 'antd'
 import { RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { formatDate } from '@/shared/utils'
 import dayjs from 'dayjs'
 
@@ -34,7 +35,7 @@ export function VolunteerPendingTasksList({
   const navigate = useNavigate()
 
   const handleViewAll = () => {
-    navigate('/instructor/reports')
+    window.alert(WIDGET_MORE_ALERT_MESSAGE)
   }
 
   const renderTaskItem = (task: PendingTask) => {

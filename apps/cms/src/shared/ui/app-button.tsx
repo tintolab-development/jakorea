@@ -24,7 +24,7 @@ export interface AppButtonProps extends Omit<ButtonProps, 'size' | 'variant'> {
   size?: AppButtonSize
   /** danger variant에서만: hover 시 배경 채움 (삭제 버튼 등) */
   dangerFillOnHover?: boolean
-  /** primary를 모달 청록(--color-modal-header)으로 사용 */
+  /** primary + 필터 슬롯 등 모달 전용 조합용 클래스 (색은 --JA-mint-01 기본 primary와 동일) */
   modalTeal?: boolean
   children?: React.ReactNode
 }
@@ -85,3 +85,17 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
 )
 
 AppButton.displayName = 'AppButton'
+
+/** 필터 영역 공통 「조회」 버튼 (140×44, JA-mint-01 — `app-button--filter` 스타일) */
+export function FilterSearchButton({
+  children = '조회',
+  ...props
+}: Omit<AppButtonProps, 'variant' | 'size'>) {
+  return (
+    <AppButton variant="primary" size="filter" {...props}>
+      {children}
+    </AppButton>
+  )
+}
+
+FilterSearchButton.displayName = 'FilterSearchButton'

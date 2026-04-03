@@ -18,10 +18,17 @@ import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
   programLifecycleStatusConfig,
   commonStatusStatusConfig,
-  getProgramLifecycleLabel,
 } from '@/shared/constants/status'
 import { programTypes, programFormats } from './constants/program-list-constants'
-import { resolveEducationColumns } from './table/program-table-column-resolver'
+import {
+  resolveEducationColumns,
+  ECONOMY_EDUCATION_TABLE_SCROLL_X_PROGRESS,
+  ECONOMY_EDUCATION_TABLE_SCROLL_X_PERIOD,
+  ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PROGRESS,
+  ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PERIOD,
+  ECONOMY_IN_PROGRESS_TABLE_SCROLL_X,
+  ECONOMY_IN_PROGRESS_TABLE_SCROLL_X_WITH_SELECTION,
+} from './table/program-table-column-resolver'
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -36,6 +43,7 @@ import {
   programListFilterFields,
   participantFilterFields,
   economyFilterFields,
+  economyScheduledFilterFields,
 } from './table/program-list-filter-fields'
 import {
   buildProgramListFilters,
@@ -48,6 +56,11 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
+
+/** 경제 교육 목록 필터 셀렉트 옵션과 동일 (program-list-filter-fields statusOptions) */
+const economyFilterLifecycleStatuses = new Set<ProgramLifecycleStatus>(
+  programLifecycleStatusConfig.order
+)
 
 export type ProgramListTableVariant = 'education' | 'volunteer' | 'all'
 
@@ -81,6 +94,14 @@ interface ProgramListProps {
   effectiveLifecycleStatus?: ProgramLifecycleStatus | null
   /** 모집 신청 현황 컬럼을 텍스트만 표시 (클릭/드롭다운 비활성, 경제 교육 프로그램 페이지용) */
   readOnlyLifecycleStatus?: boolean
+  /** 경제 교육: 위젯 「전체 프로그램」만 선택(URL에 economy status 없음)일 때 전용 컬럼 세트 */
+  economyAllProgramsActive?: boolean
+  /** 경제 교육: 「진행 중인 프로그램」 위젯 — 전용 8열 테이블·고정 너비 */
+  economyInProgressActive?: boolean
+  /** 경제 교육: 「완료 프로그램」 위젯 — 진행 중과 동일 8열·너비 */
+  economyCompletedActive?: boolean
+  /** 경제 교육: 위젯 「예정·진행 중·완료」 선택 시 필터(프로그램명·사업 운영 기간·유형·대상) */
+  economyScheduledFilterLayout?: boolean
   /** 필터와 테이블 사이에 렌더할 콘텐츠 (페이지에서 직접 렌더) */
   children?: React.ReactNode
 }
@@ -96,7 +117,7 @@ export function ProgramList({
   selectedRowKeys: externalSelectedRowKeys,
   // showActions = false,
   showRowSelection = false,
-  onChangeStatus,
+  onChangeStatus: _onChangeStatus,
   showFavorite = false,
   showCalendarView = false,
   onCreateNew: _onCreateNew,
@@ -109,6 +130,10 @@ export function ProgramList({
   onDisplayCountChange,
   effectiveLifecycleStatus,
   readOnlyLifecycleStatus = false,
+  economyAllProgramsActive = false,
+  economyInProgressActive = false,
+  economyCompletedActive = false,
+  economyScheduledFilterLayout = false,
   children,
 }: ProgramListProps) {
   const { user } = useAuthStore()
@@ -143,22 +168,6 @@ export function ProgramList({
       status: (searchParams.get('status') as ProgramLifecycleStatus) || 'all',
     }
   })
-
-  // 교육 테이블 모집신청 현황 컬럼: 드롭다운 열림/변경 중 상태 (위젯과 동일 UI·로직)
-  const [openStatusDropdownId, setOpenStatusDropdownId] = useState<string | null>(null)
-  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
-  const handleLifecycleStatusChange = useCallback(
-    async (record: Program, newStatus: ProgramLifecycleStatus) => {
-      if (!onChangeStatus) return
-      setUpdatingStatusId(record.id)
-      try {
-        await onChangeStatus(record, newStatus)
-      } finally {
-        setUpdatingStatusId(null)
-      }
-    },
-    [onChangeStatus]
-  )
 
   // 활성 필터 (조회 버튼 클릭 시 적용)
   const [activeUserFilters, setActiveUserFilters] = useState<typeof pendingUserFilters>(() => {
@@ -348,25 +357,35 @@ export function ProgramList({
     applicationPeriodRange,
   ])
 
-  // 경제 교육: 제목·진행현황 텍스트로 데이터 선필터 (테이블 컬럼 필터와 별도)
+  // 경제 교육: 제목·진행현황 셀렉트로 데이터 선필터 (테이블 컬럼 필터와 별도, URL lifecycleStatus — 위젯용 status 와 분리)
   const economyFilteredData = useMemo(() => {
     if (!readOnlyLifecycleStatus) return filteredData
     const title = searchParamsAdmin.get('title') || ''
-    const statusText = searchParamsAdmin.get('statusText') || ''
+    const lifecycleRaw = searchParamsAdmin.get('lifecycleStatus') || ''
+    const lifecycleFilter =
+      !economyScheduledFilterLayout &&
+      lifecycleRaw &&
+      economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
+        ? (lifecycleRaw as ProgramLifecycleStatus)
+        : undefined
     let result = filteredData
     if (title.trim()) {
       const q = title.trim().toLowerCase()
       result = result.filter(p => p.title?.toLowerCase().includes(q))
     }
-    if (statusText.trim()) {
-      const q = statusText.trim().toLowerCase()
-      result = result.filter(p => {
-        const label = p.lifecycleStatus ? getProgramLifecycleLabel(p.lifecycleStatus) : ''
-        return label.toLowerCase().includes(q)
-      })
+    if (lifecycleFilter) {
+      if (lifecycleFilter === 'matching_completed') {
+        result = result.filter(
+          p =>
+            p.lifecycleStatus === 'matching_completed' ||
+            p.lifecycleStatus === 'education_before_textbook'
+        )
+      } else {
+        result = result.filter(p => p.lifecycleStatus === lifecycleFilter)
+      }
     }
     return result
-  }, [filteredData, readOnlyLifecycleStatus, searchParamsAdmin])
+  }, [filteredData, readOnlyLifecycleStatus, searchParamsAdmin, economyScheduledFilterLayout])
 
   const dataForTable = readOnlyLifecycleStatus ? economyFilteredData : filteredData
   const { table, resetFilters, columnFilters } = useProgramTable(dataForTable)
@@ -376,11 +395,25 @@ export function ProgramList({
     if (!isParticipant) {
       if (readOnlyLifecycleStatus) {
         const title = searchParamsAdmin.get('title') || ''
-        const statusText = searchParamsAdmin.get('statusText') || ''
+        const lifecycleRaw = searchParamsAdmin.get('lifecycleStatus') || ''
+        const hasLifecycleFilter =
+          !economyScheduledFilterLayout &&
+          lifecycleRaw !== '' &&
+          economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
+        const hasOperationPeriod =
+          economyScheduledFilterLayout &&
+          Boolean(
+            searchParamsAdmin.get('operationStartDate') && searchParamsAdmin.get('operationEndDate')
+          )
         const hasColumnFilter = columnFilters.some(
           f => f.value != null && String(f.value).trim() !== ''
         )
-        return Boolean(hasColumnFilter || title.trim() !== '' || statusText.trim() !== '')
+        return Boolean(
+          hasColumnFilter ||
+            title.trim() !== '' ||
+            hasLifecycleFilter ||
+            hasOperationPeriod
+        )
       }
       const hasColumnFilter = columnFilters.some(
         f => f.value != null && String(f.value).trim() !== ''
@@ -410,6 +443,7 @@ export function ProgramList({
     progressStatusFilter,
     readOnlyLifecycleStatus,
     searchParamsAdmin,
+    economyScheduledFilterLayout,
   ])
 
   // 표시 건수·필터 여부를 부모로 전달 (필터 없을 땐 페이지에서 전체 건수 표시 → 위젯과 일치)
@@ -432,7 +466,6 @@ export function ProgramList({
   const [pendingFilters, setPendingFilters] = useState({
     title: '',
     lifecycleStatus: undefined as ProgramLifecycleStatus | undefined,
-    lifecycleStatusText: '' as string, // 경제 교육: 진행현황 텍스트 검색
     category: undefined as string | undefined,
     businessArea: undefined as string | undefined,
     targetLevel: undefined as string | undefined,
@@ -447,29 +480,69 @@ export function ProgramList({
   useEffect(() => {
     if (!isParticipant) {
       if (readOnlyLifecycleStatus) {
-        // 경제 교육: title, statusText, category, targetLevel
-        const titleFromUrl = searchParamsAdmin.get('title') || ''
-        const statusTextFromUrl = searchParamsAdmin.get('statusText') || ''
-        const categoryFilter = searchParamsAdmin.get('category') || undefined
-        const targetLevelFilter = searchParamsAdmin.get('targetLevel') || undefined
+        if (economyScheduledFilterLayout) {
+          const titleFromUrl = searchParamsAdmin.get('title') || ''
+          const categoryFilter = searchParamsAdmin.get('category') || undefined
+          const targetLevelFilter = searchParamsAdmin.get('targetLevel') || undefined
+          const operationStartDateStr = searchParamsAdmin.get('operationStartDate')
+          const operationEndDateStr = searchParamsAdmin.get('operationEndDate')
 
-        setPendingFilters(prev => {
-          const hasChanges =
-            prev.title !== titleFromUrl ||
-            prev.lifecycleStatusText !== statusTextFromUrl ||
-            prev.category !== categoryFilter ||
-            prev.targetLevel !== targetLevelFilter
+          setPendingFilters(prev => {
+            const hasChanges =
+              prev.title !== titleFromUrl ||
+              prev.category !== categoryFilter ||
+              prev.targetLevel !== targetLevelFilter ||
+              prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
+              prev.operationEndDate?.format('YYYY-MM-DD') !== operationEndDateStr
 
-          if (!hasChanges) return prev
+            if (!hasChanges) return prev
 
-          return {
-            ...prev,
-            title: titleFromUrl,
-            lifecycleStatusText: statusTextFromUrl,
-            category: categoryFilter,
-            targetLevel: targetLevelFilter,
-          }
-        })
+            return {
+              ...prev,
+              title: titleFromUrl,
+              category: categoryFilter,
+              targetLevel: targetLevelFilter,
+              operationStartDate: operationStartDateStr
+                ? dayjs(operationStartDateStr).isValid()
+                  ? dayjs(operationStartDateStr)
+                  : null
+                : null,
+              operationEndDate: operationEndDateStr
+                ? dayjs(operationEndDateStr).isValid()
+                  ? dayjs(operationEndDateStr)
+                  : null
+                : null,
+            }
+          })
+        } else {
+          // 경제 교육: title, lifecycleStatus(카드 필터), category, targetLevel — 위젯은 params.status 별도
+          const titleFromUrl = searchParamsAdmin.get('title') || ''
+          const lifecycleRaw = searchParamsAdmin.get('lifecycleStatus') || ''
+          const lifecycleFromUrl =
+            lifecycleRaw && economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
+              ? (lifecycleRaw as ProgramLifecycleStatus)
+              : undefined
+          const categoryFilter = searchParamsAdmin.get('category') || undefined
+          const targetLevelFilter = searchParamsAdmin.get('targetLevel') || undefined
+
+          setPendingFilters(prev => {
+            const hasChanges =
+              prev.title !== titleFromUrl ||
+              prev.lifecycleStatus !== lifecycleFromUrl ||
+              prev.category !== categoryFilter ||
+              prev.targetLevel !== targetLevelFilter
+
+            if (!hasChanges) return prev
+
+            return {
+              ...prev,
+              title: titleFromUrl,
+              lifecycleStatus: lifecycleFromUrl,
+              category: categoryFilter,
+              targetLevel: targetLevelFilter,
+            }
+          })
+        }
       } else {
         // 일반 교육: 기존 로직
         const titleFromUrl = searchParamsAdmin.get('title') || ''
@@ -513,7 +586,6 @@ export function ProgramList({
           return {
             title: currentTitle,
             lifecycleStatus: statusFilter || undefined,
-            lifecycleStatusText: '',
             category: categoryFilter,
             businessArea: businessAreaFilter,
             targetLevel: targetLevelFilter,
@@ -541,6 +613,7 @@ export function ProgramList({
     table,
     effectiveLifecycleStatus,
     readOnlyLifecycleStatus,
+    economyScheduledFilterLayout,
   ])
 
   // 조회 버튼 클릭 시 필터 적용
@@ -548,29 +621,62 @@ export function ProgramList({
     const nextParams = new URLSearchParams(searchParamsAdmin)
 
     if (readOnlyLifecycleStatus) {
-      // 경제 교육: title, statusText, category, targetLevel
-      if (pendingFilters.title?.trim()) {
-        nextParams.set('title', pendingFilters.title.trim())
-      } else {
-        nextParams.delete('title')
-      }
-      if (pendingFilters.lifecycleStatusText?.trim()) {
-        nextParams.set('statusText', pendingFilters.lifecycleStatusText.trim())
-      } else {
+      if (economyScheduledFilterLayout) {
+        if (pendingFilters.title?.trim()) {
+          nextParams.set('title', pendingFilters.title.trim())
+        } else {
+          nextParams.delete('title')
+        }
+        nextParams.delete('lifecycleStatus')
         nextParams.delete('statusText')
-      }
-      if (pendingFilters.category) {
-        nextParams.set('category', pendingFilters.category)
+        if (pendingFilters.operationStartDate && pendingFilters.operationEndDate) {
+          nextParams.set(
+            'operationStartDate',
+            pendingFilters.operationStartDate.format('YYYY-MM-DD')
+          )
+          nextParams.set('operationEndDate', pendingFilters.operationEndDate.format('YYYY-MM-DD'))
+        } else {
+          nextParams.delete('operationStartDate')
+          nextParams.delete('operationEndDate')
+        }
+        if (pendingFilters.category) {
+          nextParams.set('category', pendingFilters.category)
+        } else {
+          nextParams.delete('category')
+        }
+        if (pendingFilters.targetLevel) {
+          nextParams.set('targetLevel', pendingFilters.targetLevel)
+        } else {
+          nextParams.delete('targetLevel')
+        }
+        table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
+        table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
       } else {
-        nextParams.delete('category')
+        // 경제 교육: title, lifecycleStatus, category, targetLevel
+        if (pendingFilters.title?.trim()) {
+          nextParams.set('title', pendingFilters.title.trim())
+        } else {
+          nextParams.delete('title')
+        }
+        if (pendingFilters.lifecycleStatus) {
+          nextParams.set('lifecycleStatus', pendingFilters.lifecycleStatus)
+        } else {
+          nextParams.delete('lifecycleStatus')
+        }
+        nextParams.delete('statusText')
+        if (pendingFilters.category) {
+          nextParams.set('category', pendingFilters.category)
+        } else {
+          nextParams.delete('category')
+        }
+        if (pendingFilters.targetLevel) {
+          nextParams.set('targetLevel', pendingFilters.targetLevel)
+        } else {
+          nextParams.delete('targetLevel')
+        }
+        table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
+        table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
       }
-      if (pendingFilters.targetLevel) {
-        nextParams.set('targetLevel', pendingFilters.targetLevel)
-      } else {
-        nextParams.delete('targetLevel')
-      }
-      table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
-      table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
     } else {
       // 일반 교육: 기존 로직
       table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
@@ -607,7 +713,14 @@ export function ProgramList({
     }
 
     setSearchParamsAdmin(nextParams, { replace: true })
-  }, [pendingFilters, table, searchParamsAdmin, setSearchParamsAdmin, readOnlyLifecycleStatus])
+  }, [
+    pendingFilters,
+    table,
+    searchParamsAdmin,
+    setSearchParamsAdmin,
+    readOnlyLifecycleStatus,
+    economyScheduledFilterLayout,
+  ])
 
   // 외부에서 selectedRowKeys를 받아오거나 내부 상태 사용
   const effectiveSelectedRowKeys =
@@ -697,6 +810,8 @@ export function ProgramList({
     }
   }
 
+  const economyWideMetricsTable = economyInProgressActive || economyCompletedActive
+
   const columnsAdmin = useMemo(() => {
     if (tableVariant !== 'education') return []
 
@@ -705,10 +820,9 @@ export function ProgramList({
       instructorRecruitmentTable,
       isEconomyPage,
       readOnlyLifecycleStatus,
-      handleLifecycleStatusChange,
-      updatingStatusId,
-      openStatusDropdownId,
-      setOpenStatusDropdownId,
+      economyAllProgramsActive,
+      economyInProgressActive,
+      economyCompletedActive,
     })
   }, [
     tableVariant,
@@ -716,11 +830,14 @@ export function ProgramList({
     instructorRecruitmentTable,
     isEconomyPage,
     readOnlyLifecycleStatus,
-    handleLifecycleStatusChange,
-    updatingStatusId,
-    openStatusDropdownId,
-    setOpenStatusDropdownId,
+    economyAllProgramsActive,
+    economyInProgressActive,
+    economyCompletedActive,
   ])
+
+  const economyRowSelectionActive = Boolean(
+    isEconomyPage && showRowSelection && onBulkDelete
+  )
 
   return (
     <div
@@ -780,9 +897,27 @@ export function ProgramList({
       {/* 관리자 목록 뷰: 필터, tableButtonSection, 테이블을 단일 배경 컨테이너로 감쌈 */}
       {!isParticipant && viewMode === 'list' ? (
         <FilterListLayout
-          className="program-list-content-wrapper"
-          fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
-          filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
+          className={[
+            'program-list-content-wrapper',
+            isEconomyPage ? 'program-list-content-wrapper--economy-education' : '',
+            economyScheduledFilterLayout
+              ? 'program-list-content-wrapper--economy-scheduled-filters'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          fields={
+            readOnlyLifecycleStatus
+              ? economyScheduledFilterLayout
+                ? economyScheduledFilterFields
+                : economyFilterFields
+              : programListFilterFields
+          }
+          filters={buildProgramListFilters(
+            pendingFilters,
+            readOnlyLifecycleStatus,
+            economyScheduledFilterLayout
+          )}
           onFilterChange={(key, value) => {
             if (key === 'operationPeriod') {
               const dates = value as [Dayjs, Dayjs] | null
@@ -791,10 +926,18 @@ export function ProgramList({
                 operationStartDate: dates?.[0] || null,
                 operationEndDate: dates?.[1] || null,
               }))
-            } else if (readOnlyLifecycleStatus && (key === 'category' || key === 'targetLevel')) {
+            } else if (
+              readOnlyLifecycleStatus &&
+              (key === 'category' || key === 'targetLevel' || key === 'lifecycleStatus')
+            ) {
               setPendingFilters(prev => ({
                 ...prev,
-                [key]: value && String(value).trim() ? value : undefined,
+                [key]:
+                  value != null && String(value).trim()
+                    ? (key === 'lifecycleStatus'
+                        ? (value as ProgramLifecycleStatus)
+                        : value)
+                    : undefined,
               }))
             } else {
               setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -807,27 +950,63 @@ export function ProgramList({
           <div className="program-list-content-wrapper__table">
             <Card
               loading={loading}
-              className="program-list-card program-list-card--in-wrapper program-list-card--no-border"
+              className={`program-list-card program-list-card--in-wrapper program-list-card--no-border${isEconomyPage ? ' program-list-card--economy-education' : ''}${economyInProgressActive ? ' program-list-card--economy-in-progress' : ''}${economyCompletedActive ? ' program-list-card--economy-completed' : ''}`}
               style={{ border: 'none', boxShadow: 'none' }}
             >
-              <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
+              <div
+                  className={[
+                  'program-list-table-wrapper',
+                  'program-list-table-wrapper--scroll-x',
+                  isEconomyPage ? 'program-list-table-wrapper--economy-education' : '',
+                  isEconomyPage && economyAllProgramsActive
+                    ? 'program-list-table-wrapper--economy-all-programs'
+                    : '',
+                  economyInProgressActive ? 'program-list-table-wrapper--economy-in-progress' : '',
+                  economyCompletedActive ? 'program-list-table-wrapper--economy-completed' : '',
+                  economyRowSelectionActive
+                    ? 'program-list-table-wrapper--economy-education-selection'
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 <Table
                   rowSelection={
                     showRowSelection && onBulkDelete
                       ? {
-                          columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                          columnWidth: isEconomyPage ? 80 : TABLE_COLUMN_WIDTHS.checkbox,
                           selectedRowKeys: effectiveSelectedRowKeys,
                           onChange: handleSelectionChange,
                         }
                       : undefined
                   }
-                  className="cms-data-table"
+                  className={[
+                    'cms-data-table',
+                    isEconomyPage ? 'cms-data-table--economy-education' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
                   columns={columnsAdmin}
                   rowKey="id"
                   loading={loading}
                   tableLayout="fixed"
-                  scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
+                  scroll={{
+                    x: isEconomyPage
+                      ? economyWideMetricsTable
+                        ? economyRowSelectionActive
+                          ? ECONOMY_IN_PROGRESS_TABLE_SCROLL_X_WITH_SELECTION
+                          : ECONOMY_IN_PROGRESS_TABLE_SCROLL_X
+                        : economyAllProgramsActive
+                          ? economyRowSelectionActive
+                            ? ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PROGRESS
+                            : ECONOMY_EDUCATION_TABLE_SCROLL_X_PROGRESS
+                          : economyRowSelectionActive
+                            ? ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PERIOD
+                            : ECONOMY_EDUCATION_TABLE_SCROLL_X_PERIOD
+                      : 2000,
+                    y: 'calc(100vh - 320px)',
+                  }}
                   onRow={record => ({
                     onClick: () => onView(record),
                     style: { cursor: 'pointer' },

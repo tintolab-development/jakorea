@@ -3,14 +3,7 @@
  * 프로그램 진행 현황 > 참여 강사 — instructorId 쿼리 시 목록 대신 표시
  */
 
-import {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  type ReactNode,
-  type Key,
-} from 'react'
+import { useState, useEffect, useMemo, useCallback, type ReactNode, type Key } from 'react'
 import { message, Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -20,7 +13,7 @@ import type {
   ParticipatingInstructorEducationItem,
   ParticipatingInstructorQualification,
 } from '@/data/mock/participating-instructors'
-import { SETTLEMENT_STATUS_LABELS, MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
+import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
@@ -38,6 +31,8 @@ import { INSTRUCTOR_ROLE_LABELS } from '@/features/program/model/school-detail-t
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import {
   buildInitialAssignedSchoolRows,
@@ -69,6 +64,11 @@ export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'posts',
 ] as const
 export type InstructorDetailTabKey = (typeof INSTRUCTOR_DETAIL_TAB_KEYS)[number]
+
+/** 참여 강사 풀페이지 — 정산 현황 탭 비활성화(표시만 유지) */
+const INSTRUCTOR_TAB_DISABLED: Partial<Record<InstructorDetailTabKey, boolean>> = {
+  settlement: true,
+}
 
 const TAB_LABELS: Record<InstructorDetailTabKey, string> = {
   application: '신청 정보',
@@ -135,22 +135,13 @@ function getTotalCareerYears(items: ParticipatingInstructorCareerDetail[] | unde
   return Math.floor(totalMonths / 12)
 }
 
-function maskBirthDate(value: string): string {
-  const digits = value.replace(/\D/g, '')
-  if (digits.length !== 8) return value
-  const yy = digits.slice(0, 4)
-  const mm = digits.slice(4, 6)
-  return `${yy}.${mm}.**`
-}
-
-function formatBirthGenderAgeContent(d: ParticipatingInstructorRow, mask: boolean): ReactNode {
+function formatBirthGenderAgeContent(d: ParticipatingInstructorRow): ReactNode {
   /** 생년월일과 (만 n세)는 한 문자열로 묶어 flex 분리 시 공백이 사라지지 않도록 함 */
-  const birthValue = d.birthDate ? (mask ? maskBirthDate(d.birthDate) : d.birthDate) : null
   const birthAgeStr =
-    birthValue && d.age != null
-      ? `${birthValue} (만 ${d.age}세)`
-      : birthValue
-        ? birthValue
+    d.birthDate && d.age != null
+      ? `${d.birthDate} (만 ${d.age}세)`
+      : d.birthDate
+        ? d.birthDate
         : d.age != null
           ? `만 ${d.age}세`
           : null
@@ -297,7 +288,10 @@ export function ParticipatingInstructorFullpageView({
 
   const activeTab =
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
+  const effectiveTab: InstructorDetailTabKey =
+    activeTab === 'settlement' ? 'application' : activeTab
   const setActiveTab = (key: InstructorDetailTabKey) => {
+    if (INSTRUCTOR_TAB_DISABLED[key]) return
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
   }
@@ -314,25 +308,22 @@ export function ParticipatingInstructorFullpageView({
     setPersonalInfoRevealed(false)
   }, [d.id, schoolRows, instructorList])
 
-  const handleRoleChange = useCallback(
-    (schoolId: string, newRole: InstructorRoleKey) => {
-      setAssignedSchools(prev => {
-        const updated = prev.map(row => ({
-          ...row,
-          role:
-            row.id === schoolId
-              ? newRole
-              : newRole === 'lead'
-                ? ('assistant' satisfies InstructorRoleKey)
-                : row.role,
-        }))
-        return renumberAssignedRows(updated)
-      })
-      setOpenRoleDropdownId(null)
-      message.success('역할이 변경되었습니다.')
-    },
-    []
-  )
+  const handleRoleChange = useCallback((schoolId: string, newRole: InstructorRoleKey) => {
+    setAssignedSchools(prev => {
+      const updated = prev.map(row => ({
+        ...row,
+        role:
+          row.id === schoolId
+            ? newRole
+            : newRole === 'lead'
+              ? ('assistant' satisfies InstructorRoleKey)
+              : row.role,
+      }))
+      return renumberAssignedRows(updated)
+    })
+    setOpenRoleDropdownId(null)
+    message.success('역할이 변경되었습니다.')
+  }, [])
 
   const assignedSchoolColumns: ColumnsType<InstructorAssignedSchoolRow> = useMemo(
     () => [
@@ -341,9 +332,12 @@ export function ParticipatingInstructorFullpageView({
         title: '역할',
         dataIndex: 'role',
         key: 'role',
-        width: 120,
+        width: 150,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
+        }),
         render: (role: InstructorRoleKey, record: InstructorAssignedSchoolRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
@@ -364,6 +358,7 @@ export function ParticipatingInstructorFullpageView({
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
+            tagLayout="tag132"
           />
         ),
       },
@@ -551,9 +546,7 @@ export function ParticipatingInstructorFullpageView({
 
   const unassignSchoolNames = useMemo(
     () =>
-      assignedSchools
-        .filter(r => selectedAssignedSchoolKeys.includes(r.id))
-        .map(r => r.schoolName),
+      assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id)).map(r => r.schoolName),
     [assignedSchools, selectedAssignedSchoolKeys]
   )
 
@@ -587,9 +580,11 @@ export function ParticipatingInstructorFullpageView({
     careerYearsFromDetails > 0 ? careerYearsFromDetails : (d.lectureExperienceYears ?? 0)
   const qualificationCount = d.qualifications?.length ?? 0
   const affiliationCell = withProgramDetailTdDivider(
-    ['JA강사단', d.lectureExperienceYears != null ? `${d.lectureExperienceYears}년` : null, d.jaEvaluationGrade].filter(
-      (x): x is string => Boolean(x)
-    )
+    [
+      'JA강사단',
+      d.lectureExperienceYears != null ? `${d.lectureExperienceYears}년` : null,
+      d.jaEvaluationGrade,
+    ].filter((x): x is string => Boolean(x))
   )
 
   const applicationTab = (
@@ -597,6 +592,9 @@ export function ParticipatingInstructorFullpageView({
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block">
         <div className="program-detail-info-tab__section-header-row">
           <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
+          {d.registeredByAdmin ? (
+            <p className="program-detail-info-tab__detail-note">*관리자에 의해 등록된 회원입니다</p>
+          ) : null}
         </div>
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
@@ -625,25 +623,19 @@ export function ParticipatingInstructorFullpageView({
                   <ProgramDetailTdSegmentWrap>
                     <span>승인 완료</span>
                     <ProgramDetailTdDivider />
-                    <SendNotiButton
-                      onClick={() => message.info('알림 발송 기능 준비 중입니다.')}
-                    />
+                    <SendNotiButton />
                   </ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
               <tr>
                 <th scope="row">연락처</th>
                 <td>
-                  {d.contact
-                    ? privacyMasked
-                      ? MASKING_POLICY.phone(d.contact)
-                      : d.contact
-                    : '-'}
+                  {d.contact ? (privacyMasked ? MASKING_POLICY.phone(d.contact) : d.contact) : '-'}
                 </td>
                 <th scope="row">성별 및 생년월일</th>
                 <td>
                   <ProgramDetailTdSegmentWrap>
-                    {formatBirthGenderAgeContent(d, privacyMasked)}
+                    {formatBirthGenderAgeContent(d)}
                   </ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
@@ -657,13 +649,7 @@ export function ParticipatingInstructorFullpageView({
                   )}
                 </td>
                 <th scope="row">이메일</th>
-                <td>
-                  {d.email
-                    ? privacyMasked
-                      ? MASKING_POLICY.email(d.email)
-                      : d.email
-                    : '-'}
-                </td>
+                <td>{d.email ? (privacyMasked ? MASKING_POLICY.email(d.email) : d.email) : '-'}</td>
               </tr>
               <tr>
                 <th scope="row">최종 학력</th>
@@ -702,7 +688,9 @@ export function ParticipatingInstructorFullpageView({
               <tr>
                 <th scope="row">강의비 책정 기준</th>
                 <td>
-                  <ProgramDetailTdSegmentWrap>{lectureFeeCriteriaContent(d)}</ProgramDetailTdSegmentWrap>
+                  <ProgramDetailTdSegmentWrap>
+                    {lectureFeeCriteriaContent(d)}
+                  </ProgramDetailTdSegmentWrap>
                 </td>
                 <th scope="row">사업소득자 여부</th>
                 <td>{d.businessIncomeEarnerStatus?.trim() || '-'}</td>
@@ -722,7 +710,12 @@ export function ParticipatingInstructorFullpageView({
             d.educations!.map((item, idx) => {
               const period = formatEducationPeriod(item)
               const schoolLabel = item.schoolName
-                ? [item.schoolName, item.schoolType ? `(${getEducationLevelBadge(undefined, item.schoolType)})` : '']
+                ? [
+                    item.schoolName,
+                    item.schoolType
+                      ? `(${getEducationLevelBadge(undefined, item.schoolType)})`
+                      : '',
+                  ]
                     .filter(Boolean)
                     .join(' ')
                 : NO_DATA
@@ -764,7 +757,9 @@ export function ParticipatingInstructorFullpageView({
                         <span className="instructor-resume-emphasis">{item.companyName}</span>
                       ) : null}
                       {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
-                      {item.role ? <span className="instructor-resume-role">{item.role}</span> : null}
+                      {item.role ? (
+                        <span className="instructor-resume-role">{item.role}</span>
+                      ) : null}
                     </>
                   ) : (
                     <span className="instructor-resume-emphasis">{NO_DATA}</span>
@@ -787,8 +782,12 @@ export function ParticipatingInstructorFullpageView({
           {(d.qualifications?.length ?? 0) > 0 ? (
             d.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
               <div key={idx} className="instructor-resume-row">
-                <span className="instructor-resume-row-left instructor-resume-row-left--single-year">{q.year ?? '-'}</span>
-                <span className="instructor-resume-row-right instructor-resume-row-right--black">{q.name ?? '-'}</span>
+                <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
+                  {q.year ?? '-'}
+                </span>
+                <span className="instructor-resume-row-right instructor-resume-row-right--black">
+                  {q.name ?? '-'}
+                </span>
               </div>
             ))
           ) : (
@@ -807,45 +806,58 @@ export function ParticipatingInstructorFullpageView({
             <button
               key={key}
               type="button"
-              className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
+              disabled={!!INSTRUCTOR_TAB_DISABLED[key]}
+              className={`program-detail-fullpage-modal__tab ${effectiveTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
               onClick={() => setActiveTab(key)}
             >
               <span className="program-detail-fullpage-modal__tab-label">{TAB_LABELS[key]}</span>
             </button>
           ))}
         </div>
-        {activeTab === 'application' && (
+        {effectiveTab === 'application' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton variant="danger" size="filter" onClick={() => message.info('승인 취소 기능 준비 중입니다.')}>
+            <AppButton
+              variant="danger"
+              size="filter"
+              onClick={() => message.info('승인 취소 기능 준비 중입니다.')}
+            >
               승인 취소
             </AppButton>
-            <AppButton variant="primary" size="filter" onClick={() => message.info('정보 수정 기능 준비 중입니다.')}>
+            <AppButton
+              variant="primary"
+              size="filter"
+              onClick={() => message.info('정보 수정 기능 준비 중입니다.')}
+            >
               정보 수정
             </AppButton>
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => setPersonalInfoRevealed(true)}
+              onClick={() => window.alert('준비 중입니다.')}
             >
               개인정보 상세보기
             </AppButton>
           </div>
         )}
-        {activeTab === 'institutionAssignment' && (
+        {effectiveTab === 'institutionAssignment' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton variant="danger" size="filter" onClick={() => message.info('승인 취소 기능 준비 중입니다.')}>
+            <AppButton
+              variant="danger"
+              size="filter"
+              onClick={() => message.info('승인 취소 기능 준비 중입니다.')}
+            >
               승인 취소
             </AppButton>
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => setPersonalInfoRevealed(true)}
+              onClick={() => window.alert('준비 중입니다.')}
             >
               개인정보 상세보기
             </AppButton>
           </div>
         )}
-        {activeTab === 'posts' && (
+        {effectiveTab === 'posts' && (
           <div className="program-detail-fullpage-modal__header-actions">
             <AppButton variant="primary" size="filter" onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
@@ -855,15 +867,17 @@ export function ParticipatingInstructorFullpageView({
       </div>
 
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
-        {activeTab === 'application' && (
+        {effectiveTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab">{applicationTab}</div>
         )}
-        {activeTab === 'institutionAssignment' && (
+        {effectiveTab === 'institutionAssignment' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
             <div className="school-detail-fullpage-view__instructor-section">
               <div className="participating-institutions-section__table-header">
                 <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">배정된 학교 목록</span>
+                  <span className="participating-institutions-section__table-title">
+                    배정된 학교 목록
+                  </span>
                   <span className="participating-institutions-section__table-description">
                     {assignedSchools.length}건
                   </span>
@@ -929,7 +943,9 @@ export function ParticipatingInstructorFullpageView({
             <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
               <div className="participating-institutions-section__table-header">
                 <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">배정 대기 학교 목록</span>
+                  <span className="participating-institutions-section__table-title">
+                    배정 대기 학교 목록
+                  </span>
                   <span className="participating-institutions-section__table-description">
                     {waitingSchools.length}건
                   </span>
@@ -993,7 +1009,11 @@ export function ParticipatingInstructorFullpageView({
               width={560}
               footer={
                 <>
-                  <AppButton variant="cancel" size="large" onClick={() => setUnassignConfirmOpen(false)}>
+                  <AppButton
+                    variant="cancel"
+                    size="large"
+                    onClick={() => setUnassignConfirmOpen(false)}
+                  >
                     취소
                   </AppButton>
                   <AppButton variant="danger" size="large" onClick={handleUnassignConfirm}>
@@ -1020,7 +1040,11 @@ export function ParticipatingInstructorFullpageView({
               width={560}
               footer={
                 <>
-                  <AppButton variant="cancel" size="large" onClick={() => setSelectAssignConfirmOpen(false)}>
+                  <AppButton
+                    variant="cancel"
+                    size="large"
+                    onClick={() => setSelectAssignConfirmOpen(false)}
+                  >
                     취소
                   </AppButton>
                   <AppButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
@@ -1080,15 +1104,7 @@ export function ParticipatingInstructorFullpageView({
             </ContentModal>
           </div>
         )}
-        {activeTab === 'settlement' && (
-          <div className="program-detail-fullpage-modal__info-tab">
-            <p className="participating-instructor-fullpage-view__tab-placeholder">
-              정산 현황: {SETTLEMENT_STATUS_LABELS[d.settlementStatus]}
-            </p>
-            <p className="participating-instructor-fullpage-view__tab-placeholder">상세 정산 내역 화면은 준비 중입니다.</p>
-          </div>
-        )}
-        {activeTab === 'posts' && (
+        {effectiveTab === 'posts' && (
           <div className="program-detail-fullpage-modal__info-tab participating-instructor-fullpage-view__posts-tab-wrap">
             <EnrollmentProgramDetailPostsTab
               program={program}

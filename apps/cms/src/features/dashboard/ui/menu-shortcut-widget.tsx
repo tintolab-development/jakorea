@@ -22,7 +22,7 @@ import {
   FileOutlined,
   HeartOutlined,
 } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { SHORTCUT_ITEMS, useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import './menu-shortcut-widget.css'
@@ -51,7 +51,6 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
 }
 
 export function MenuShortcutWidget() {
-  const navigate = useNavigate()
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const badgeCounts = useDashboardSettingsStore(s => s.shortcutBadgeCounts)
   const setShortcutBadgeCount = useDashboardSettingsStore(s => s.setShortcutBadgeCount)
@@ -59,6 +58,11 @@ export function MenuShortcutWidget() {
   const visibleItems = SHORTCUT_ITEMS.filter(item => shortcutEnabled[item.id])
 
   if (visibleItems.length === 0) return null
+
+  const navigateHandler = (path: string) => {
+    console.log('navigateHandler path', path)
+    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
+  }
 
   return (
     <Card
@@ -80,7 +84,7 @@ export function MenuShortcutWidget() {
                 className="menu-shortcut-widget__item"
                 onClick={() => {
                   setShortcutBadgeCount(item.id, 0)
-                  navigate(item.path)
+                  navigateHandler(item.path)
                 }}
               >
                 <span className="menu-shortcut-widget__item-left">

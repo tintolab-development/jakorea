@@ -1,0 +1,22 @@
+/**
+ * Ant Design Table 내부 체크박스: 20×20 통일 (선택 열·행 내 커스텀 체크)
+ * --table-checkbox-size 는 filter-controls-common.css :root
+ */
+
+.ant-table .ant-checkbox .ant-checkbox-inner {
+  width: var(--table-checkbox-size, 20px) !important;
+  height: var(--table-checkbox-size, 20px) !important;
+}
+
+/* antd token: 체크 각(size/14×5, size/14×8), transform은 컴포넌트 기본 유지 */
+.ant-table .ant-checkbox .ant-checkbox-inner::after {
+  width: calc(var(--table-checkbox-size, 20px) * 5 / 14) !important;
+  height: calc(var(--table-checkbox-size, 20px) * 8 / 14) !important;
+}
+
+.ant-table .ant-checkbox.ant-checkbox-indeterminate .ant-checkbox-inner::after {
+  width: calc(var(--table-checkbox-size, 20px) / 2) !important;
+  height: calc(var(--table-checkbox-size, 20px) / 2) !important;
+  top: 50% !important;
+  inset-inline-start: 50% !important;
+}

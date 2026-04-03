@@ -12,7 +12,10 @@ import {
 } from '@/data/mock/school-detail'
 import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
-import { StatusDropdownCell } from '@/features/program/ui/status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 
@@ -26,6 +29,8 @@ export interface TeacherTeachingHistoryTabProps {
 }
 
 export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistoryTabProps) {
+  const [openProgramDropdownId, setOpenProgramDropdownId] = useState<string | null>(null)
+  const [openSettlementDropdownId, setOpenSettlementDropdownId] = useState<string | null>(null)
   const [overrides, setOverrides] = useState<
     Record<string, { programStatus?: TeachingProgramStatus; settlementStatus?: TeachingSettlementStatus }>
   >({})
@@ -52,67 +57,81 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
     }))
   }, [])
 
-  const columns: ColumnsType<TeachingHistoryRow> = [
-    {
-      title: 'No.',
-      dataIndex: 'no',
-      key: 'no',
-      width: 70,
-      align: 'center' as const,
-    },
-    {
-      title: '프로그램명',
-      dataIndex: 'programName',
-      key: 'programName',
-      ellipsis: true,
-      align: 'center' as const,
-    },
-    {
-      title: '모집 신청 현황',
-      dataIndex: 'programStatus',
-      key: 'programStatus',
-      width: 180,
-      align: 'center' as const,
-      render: (_: unknown, record: TeachingHistoryRow) => (
-        <StatusDropdownCell<TeachingProgramStatus>
-          status={record.programStatus}
-          statusKeys={PROGRAM_STATUS_KEYS}
-          renderBadge={(s) => (
-            <ProgramEnrollmentStatusBadge status={s as ProgramEnrollmentDisplayStatus} />
-          )}
-          onChange={(s) => handleProgramStatusChange(record.id, s)}
-          cellClassName="teacher-detail-modal__status-cell"
-          triggerClassName="teacher-detail-modal__status-trigger"
-        />
-      ),
-    },
-    {
-      title: '정산 현황',
-      dataIndex: 'settlementStatus',
-      key: 'settlementStatus',
-      width: 150,
-      align: 'center' as const,
-      render: (_: unknown, record: TeachingHistoryRow) => (
-        <StatusDropdownCell<TeachingSettlementStatus>
-          status={record.settlementStatus}
-          statusKeys={SETTLEMENT_STATUS_KEYS}
-          renderBadge={(s) => (
-            <SettlementStatusBadge status={s as SettlementStatusKey} />
-          )}
-          onChange={(s) => handleSettlementStatusChange(record.id, s)}
-          cellClassName="teacher-detail-modal__status-cell"
-          triggerClassName="teacher-detail-modal__status-trigger"
-        />
-      ),
-    },
-    {
-      title: '담당자',
-      dataIndex: 'managerName',
-      key: 'managerName',
-      width: 130,
-      align: 'center' as const,
-    },
-  ]
+  const columns: ColumnsType<TeachingHistoryRow> = useMemo(
+    () => [
+      {
+        title: 'No.',
+        dataIndex: 'no',
+        key: 'no',
+        width: 70,
+        align: 'center' as const,
+      },
+      {
+        title: '프로그램명',
+        dataIndex: 'programName',
+        key: 'programName',
+        ellipsis: true,
+        align: 'center' as const,
+      },
+      {
+        title: '모집 신청 현황',
+        dataIndex: 'programStatus',
+        key: 'programStatus',
+        width: 180,
+        align: 'center' as const,
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (_: unknown, record: TeachingHistoryRow) => (
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<TeachingProgramStatus>
+              status={record.programStatus}
+              statusOptions={PROGRAM_STATUS_KEYS}
+              renderBadge={s => (
+                <ProgramEnrollmentStatusBadge status={s as ProgramEnrollmentDisplayStatus} />
+              )}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={s => handleProgramStatusChange(record.id, s)}
+              isOpen={openProgramDropdownId === record.id}
+              onOpenChange={open => setOpenProgramDropdownId(open ? record.id : null)}
+            />
+          </div>
+        ),
+      },
+      {
+        title: '정산 현황',
+        dataIndex: 'settlementStatus',
+        key: 'settlementStatus',
+        width: 150,
+        align: 'center' as const,
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (_: unknown, record: TeachingHistoryRow) => (
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<TeachingSettlementStatus>
+              status={record.settlementStatus}
+              statusOptions={SETTLEMENT_STATUS_KEYS}
+              renderBadge={s => <SettlementStatusBadge status={s as SettlementStatusKey} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={s => handleSettlementStatusChange(record.id, s)}
+              isOpen={openSettlementDropdownId === record.id}
+              onOpenChange={open => setOpenSettlementDropdownId(open ? record.id : null)}
+            />
+          </div>
+        ),
+      },
+      {
+        title: '담당자',
+        dataIndex: 'managerName',
+        key: 'managerName',
+        width: 130,
+        align: 'center' as const,
+      },
+    ],
+    [
+      handleProgramStatusChange,
+      handleSettlementStatusChange,
+      openProgramDropdownId,
+      openSettlementDropdownId,
+    ]
+  )
 
   return (
     <div className="teacher-detail-modal__teaching-tab">

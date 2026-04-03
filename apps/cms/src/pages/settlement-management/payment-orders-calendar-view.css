@@ -10,7 +10,7 @@
   min-width: 0;
 }
 
-/* Ant Tooltip: 커스텀 inner만 보이도록 (applicant-calendar-tooltip-overlay 와 동일 패턴) */
+/* Ant Tooltip: 커스텀 inner만 보이도록 (program-calendar-tooltip-overlay 와 동일 패턴) */
 .payment-orders-calendar-tooltip-overlay .ant-tooltip-arrow {
   display: none !important;
 }
@@ -197,7 +197,12 @@
 }
 
 .payment-orders-calendar__card:hover:not(.payment-orders-calendar__card--selected) {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  border: 2px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 /* 제출 및 대기 — matching (#389e0d) */
@@ -243,11 +248,9 @@
 
 .payment-orders-calendar__card-status {
   flex-shrink: 0;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .payment-orders-calendar__card-divider {
@@ -265,12 +268,9 @@
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: Pretendard, sans-serif;
   font-size: 16px;
-  font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .payment-orders-calendar__card-program {
@@ -278,9 +278,7 @@
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: Pretendard, sans-serif;
   font-size: 16px;
-  font-style: normal;
   font-weight: 500;
   line-height: 150%;
   opacity: 0.6;

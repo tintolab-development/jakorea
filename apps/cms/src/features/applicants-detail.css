@@ -27,7 +27,7 @@
   transition: background 0.3s;
 }
 
-.clickable-table .ant-table-row:hover > td {
+.clickable-table .ant-table-row:hover:not(.ant-table-row-selected) > td {
   background-color: #fafafa !important;
 }
 
@@ -49,7 +49,7 @@
 .applicant-details__sessions-cell {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   text-align: left;
   align-items: flex-start;
   padding: 0;

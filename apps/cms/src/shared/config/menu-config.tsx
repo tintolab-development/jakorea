@@ -4,7 +4,7 @@
  * Phase 0.1.5: 역할별 메뉴 완전 분리 및 권한 기반 라우트 가드 완성
  */
 
-import type { UserRole } from '@/types/user'
+import type { AdminLevel, UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
@@ -323,6 +323,8 @@ export interface MenuItemConfig {
   type?: 'divider'
   // 권한별 접근 제어
   allowedRoles?: UserRole[] // 허용된 권한 목록 (없으면 모든 권한 허용)
+  /** ADMIN 전용: 해당 관리자 레벨은 메뉴·동일 키 경로 접근 불가 (adminLevel 미지정 계정은 차단하지 않음) */
+  blockedAdminLevels?: AdminLevel[]
   hidden?: boolean // 숨김 여부
   enabled?: boolean // 활성화/비활성화 여부 (기본값: true)
 }
@@ -355,6 +357,7 @@ const allMenuItems: MenuItemConfig[] = [
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
+        blockedAdminLevels: ['GENERAL'],
       },
       {
         key: '/programs/economy-education',
@@ -362,6 +365,7 @@ const allMenuItems: MenuItemConfig[] = [
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
+        // 일반 교육과 달리 blockedAdminLevels 없음 → GENERAL 관리자도 접근 가능
       },
     ],
   },
@@ -696,6 +700,9 @@ export function filterMenuByRole(
       if (item.enabled === false) {
         return false
       }
+      if (isMenuPathBlockedForAdminLevel(item, userRole, user?.adminLevel)) {
+        return false
+      }
       // allowedRoles가 없으면 모든 권한 허용
       if (!item.allowedRoles || item.allowedRoles.length === 0) {
         return true
@@ -776,16 +783,35 @@ function findAllMenuItemsByPath(items: MenuItemConfig[], targetPath: string): Me
   return matches
 }
 
+/** ADMIN + 명시적 adminLevel이 메뉴 항목의 blockedAdminLevels에 있으면 접근·노출 불가 */
+function isMenuPathBlockedForAdminLevel(
+  menuItem: MenuItemConfig,
+  userRole: UserRole,
+  adminLevel: AdminLevel | undefined
+): boolean {
+  if (userRole !== 'ADMIN') return false
+  const blocked = menuItem.blockedAdminLevels
+  if (!blocked?.length) return false
+  if (adminLevel === undefined) return false
+  return blocked.includes(adminLevel)
+}
+
+export type CanAccessPathUser = {
+  role: UserRole
+  adminLevel?: AdminLevel
+} | null
+
 /**
  * 특정 경로에 대한 접근 권한 확인
  * @param path 경로
- * @param userRole 사용자 권한
+ * @param user 역할·관리자 레벨 (레이아웃 가드와 동일)
  * @returns 접근 가능 여부
  */
-export function canAccessPath(path: string, userRole: UserRole | null): boolean {
-  if (!userRole) {
+export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
+  if (!user) {
     return false
   }
+  const { role: userRole, adminLevel } = user
 
   // 경로 정규화 (끝에 있는 / 제거)
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
@@ -800,12 +826,41 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     return false
   }
 
+  // 프로그램 관리 > 일반 교육 프로그램: 하위 경로까지 메뉴 키 `/programs/education`과 동일 접근 정책
+  // (직접 URL 진입 시 비관리자 허용 방지 — 하위 경로는 메뉴에 없어 기본 허용으로 빠지던 문제 보완)
+  if (
+    normalizedPath === '/programs/education' ||
+    normalizedPath.startsWith('/programs/education/')
+  ) {
+    const educationProgramMenus = findAllMenuItemsByPath(allMenuItems, '/programs/education')
+    return educationProgramMenus.some(menuItem => {
+      if (menuItem.hidden === true) return false
+      if (menuItem.enabled === false) return false
+      if (isMenuPathBlockedForAdminLevel(menuItem, userRole, adminLevel)) return false
+      if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) return true
+      return menuItem.allowedRoles.includes(userRole)
+    })
+  }
+
+  // 프로그램 관리 > 경제 교육 프로그램: 일반 교육과 분리 — blockedAdminLevels 없는 메뉴 정책 그대로(GENERAL 포함 허용)
+  if (
+    normalizedPath === '/programs/economy-education' ||
+    normalizedPath.startsWith('/programs/economy-education/')
+  ) {
+    const economyProgramMenus = findAllMenuItemsByPath(allMenuItems, '/programs/economy-education')
+    return economyProgramMenus.some(menuItem => {
+      if (menuItem.hidden === true) return false
+      if (menuItem.enabled === false) return false
+      if (isMenuPathBlockedForAdminLevel(menuItem, userRole, adminLevel)) return false
+      if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) return true
+      return menuItem.allowedRoles.includes(userRole)
+    })
+  }
+
   // Phase 0.1.5: 관리자 — 프로그램 영역은 아래 예외 규칙으로 먼저 허용
   // 그 외(회원 목록 `/users/list`, 템플릿, 게시글 등)는 하단 `findAllMenuItemsByPath`와 동일 규칙으로 판단
   if (userRole === 'ADMIN') {
     if (normalizedPath === '/') return true
-    if (normalizedPath.startsWith('/programs/education')) return true
-    if (normalizedPath === '/programs/economy-education') return true
     const programsReserved = [
       'education',
       'economy-education',
@@ -860,6 +915,9 @@ export function canAccessPath(path: string, userRole: UserRole | null): boolean 
     }
     // 비활성화된 메뉴는 접근 불가
     if (menuItem.enabled === false) {
+      return false
+    }
+    if (isMenuPathBlockedForAdminLevel(menuItem, userRole, adminLevel)) {
       return false
     }
     // allowedRoles가 없으면 모든 권한 허용

@@ -63,7 +63,7 @@ const columns: ColumnsType<MyRow> = useMemo(
 | `render`    | 커스텀 셀 (배지, 버튼, `-` 처리)        | `(v) => v ?? '-'`, 배지/버튼 컴포넌트                  |
 
 - **No. 열**: 보통 `width: 72` 또는 `56`, `align: 'center'`.
-- **배지/상태 열**: `render`에서 공용 Badge 컴포넌트 사용 (예: `TextbookStatusBadge`, `SettlementStatusBadge`). **상태를 클릭해 드롭다운으로 변경하는 열**은 [상태 드롭다운 셀](../coding/status-dropdown-cell.md) 패턴 사용 (`StatusDropdownCell`, `ProgramLifecycleStatusCell`, `STATUS_DROPDOWN_CELL_CLASSNAME`).
+- **배지/상태 열**: `render`에서 공용 Badge 컴포넌트 사용 (예: `TextbookStatusBadge`, `SettlementStatusBadge`). **상태를 클릭해 드롭다운으로 변경하는 열**은 [상태 드롭다운 셀](../coding/status-dropdown-cell.md) 패턴 사용 (`StatusDropdownCell`, `ProgramLifecycleStatusCell`, `STATUS_DROPDOWN_CELL_CLASSNAME`). **132×33 태그 + 활성(민트) 래퍼** 스펙이면 동 문서 §2.4 `tagLayout="tag132"` 및 `STATUS_DROPDOWN_CELL_TAG_132_*` 상수를 따른다.
 - **버튼/링크 열**: `dataIndex` 없이 `key`만 두고 `render`에서 버튼 반환. 링크 스타일은 `border: none; background: none; color: var(--color-link); text-decoration: underline` 등으로 통일.
 
 ---
@@ -296,5 +296,5 @@ const columns: ColumnsType<MyRow> = useMemo(
 
 | 용도 | 파일 |
 | --- | --- |
-| 강사 지급 상세 기본정보(단일 테이블) | `pages/settlement-management/payment-order-instructor-status-detail-fullpage-modal.tsx` |
+| 강사 지급 상세 기본정보(단일 테이블) | `pages/settlement-management/payment-order-instructor-basic-info.tsx` |
 | 산출 내역서 기본정보(4열 program-detail-info-tab·3행·디바이더·반려) | `pages/settlement-management/payment-order-program-calculation-statement-modal.tsx` / `.css` |

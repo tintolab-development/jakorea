@@ -71,6 +71,10 @@
   gap: 8px;
 }
 
+.post-write-modal__field--audience {
+  gap: 6px;
+}
+
 .post-write-modal__label {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -90,9 +94,13 @@
 .post-write-modal__checkbox-group {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: 100%;
+  height: 40px;
+  align-items: center;
+  align-content: center;
   gap: 16px;
-  row-gap: 16px;
+  row-gap: 0;
   column-gap: 16px;
 }
 

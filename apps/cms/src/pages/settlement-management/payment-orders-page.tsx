@@ -4,11 +4,12 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Col, DatePicker, Input, Radio, Row, Select, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
 import { AppButton } from '@/shared/ui/app-button'
+import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import {
   mockPaymentOrderAdminInstructorList,
   mockPaymentOrderAdminProgramList,
@@ -22,8 +23,7 @@ import '@/features/program/ui/detail-modal/program-status/program-progress-tab.c
 import './payment-order-admin-status-tag.css'
 import './payment-orders-page.css'
 import { PaymentOrdersCalendarView } from './payment-orders-calendar-view'
-import { PaymentOrderInstructorStatusDetailFullPageModal } from './payment-order-instructor-status-detail-fullpage-modal'
-import { PaymentOrderProgramStatusDetailFullPageModal } from './payment-order-program-status-detail-fullpage-modal'
+import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
 
 type ExposureMode = 'program' | 'instructor'
 
@@ -37,18 +37,16 @@ interface AppliedFilters {
   dateRange: [Dayjs, Dayjs] | null
 }
 
-const DATE_DISPLAY_FORMAT = 'YYYY. MM. DD'
-
 const defaultDateRange: [Dayjs, Dayjs] = [dayjs('2025-08-01'), dayjs('2026-06-30')]
 
 const statusSelectOptions: { value: AppliedStatus; label: string }[] = [
   { value: 'all', label: '전체' },
-  ...(
-    Object.keys(PAYMENT_ORDER_ADMIN_STATUS_LABELS) as PaymentOrderAdminProcessingStatus[]
-  ).map(key => ({
-    value: key,
-    label: PAYMENT_ORDER_ADMIN_STATUS_LABELS[key],
-  })),
+  ...(Object.keys(PAYMENT_ORDER_ADMIN_STATUS_LABELS) as PaymentOrderAdminProcessingStatus[]).map(
+    key => ({
+      value: key,
+      label: PAYMENT_ORDER_ADMIN_STATUS_LABELS[key],
+    })
+  ),
 ]
 
 function matchesDateRange(referenceDate: string, range: [Dayjs, Dayjs] | null): boolean {
@@ -89,7 +87,9 @@ function formatWon(amount: number): string {
 
 function renderProcessingStatusCell(status: PaymentOrderAdminProcessingStatus) {
   return (
-    <span className={`payment-order-admin__status-text payment-order-admin__status-text--${status}`}>
+    <span
+      className={`payment-order-admin__status-text payment-order-admin__status-text--${status}`}
+    >
       {PAYMENT_ORDER_ADMIN_STATUS_LABELS[status]}
     </span>
   )
@@ -244,70 +244,69 @@ export default function PaymentOrdersPage() {
     <div className="payment-orders-page">
       <div className="payment-orders-page__content-wrapper">
         <div className="participating-institutions-section">
-          <div className="participating-institutions-section__filters program-progress-tab__filters">
-            <Row
-              gutter={[0, 0]}
-              align="bottom"
-              wrap={false}
-              className="program-progress-tab__filter-row"
-            >
-              <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-orders-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">노출 기준</span>
-                  <Radio.Group value={exposureMode} onChange={e => setExposureMode(e.target.value)}>
-                    <Radio value="program">프로그램별</Radio>
-                    <Radio value="instructor">강사별</Radio>
-                  </Radio.Group>
-                </div>
-              </Col>
-              <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-orders-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">프로그램명</span>
-                  <Input
-                    placeholder="프로그램명을 입력하세요"
-                    value={draftProgramName}
-                    onChange={e => setDraftProgramName(e.target.value)}
-                    allowClear
-                    className="participating-institutions-section__filter-input"
-                  />
-                </div>
-              </Col>
-              <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-orders-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">지급조서 처리 현황</span>
-                  <Select<AppliedStatus>
-                    placeholder="전체"
-                    value={draftStatus === 'all' ? undefined : draftStatus}
-                    onChange={v => setDraftStatus((v ?? 'all') as AppliedStatus)}
-                    allowClear
-                    options={statusSelectOptions.filter(o => o.value !== 'all')}
-                    getPopupContainer={() => document.body}
-                  />
-                </div>
-              </Col>
-              <Col flex="0 0 auto" className="program-progress-tab__filter-col">
-                <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top payment-orders-page__filter-stack">
-                  <span className="program-progress-tab__filter-label">기간</span>
-                  <DatePicker.RangePicker
-                    className="payment-orders-page__range-picker"
-                    value={draftDateRange}
-                    onChange={dates =>
-                      setDraftDateRange(dates?.[0] && dates?.[1] ? [dates[0], dates[1]] : null)
-                    }
-                    format={DATE_DISPLAY_FORMAT}
-                    allowClear
-                    getPopupContainer={() => document.body}
-                  />
-                </div>
-              </Col>
-              <Col flex="none" className="program-progress-tab__filter-col--btn">
-                <div className="payment-orders-page__filter-btn-slot">
-                  <AppButton variant="primary" size="filter" onClick={handleSearch}>
-                    조회
-                  </AppButton>
-                </div>
-              </Col>
-            </Row>
+          <div className="participating-institutions-section__filters">
+            <UnifiedFilterCard
+              bordered={false}
+              cardStyle={{ marginBottom: 0 }}
+              fields={[
+                {
+                  key: 'exposureMode',
+                  type: 'radio',
+                  label: '노출 기준',
+                  options: [
+                    { label: '프로그램별', value: 'program' },
+                    { label: '강사별', value: 'instructor' },
+                  ],
+                  flex: '0 0 auto',
+                },
+                {
+                  key: 'programName',
+                  type: 'search',
+                  label: '프로그램명',
+                  placeholder: '프로그램명을 입력하세요',
+                  flex: '1 1 240px',
+                },
+                {
+                  key: 'status',
+                  type: 'select',
+                  label: '지급조서 처리 현황',
+                  placeholder: '전체',
+                  options: statusSelectOptions.filter(o => o.value !== 'all'),
+                  allowClear: true,
+                  flex: '0 0 280px',
+                },
+                {
+                  key: 'dateRange',
+                  type: 'dateRange',
+                  label: '기간',
+                  flex: '1 1 360px',
+                },
+              ]}
+              filters={{
+                exposureMode,
+                programName: draftProgramName,
+                status: draftStatus === 'all' ? undefined : draftStatus,
+                dateRange: draftDateRange,
+              }}
+              onFilterChange={(key, value) => {
+                if (key === 'exposureMode') {
+                  setExposureMode(value as ExposureMode)
+                  return
+                }
+                if (key === 'programName') {
+                  setDraftProgramName(value as string)
+                  return
+                }
+                if (key === 'status') {
+                  setDraftStatus((value ?? 'all') as AppliedStatus)
+                  return
+                }
+                if (key === 'dateRange') {
+                  setDraftDateRange(value as [Dayjs, Dayjs] | null)
+                }
+              }}
+              onSearch={handleSearch}
+            />
           </div>
 
           <div className="participating-institutions-section__divider" />
@@ -362,7 +361,7 @@ export default function PaymentOrdersPage() {
               </div>
             </div>
 
-            <div className="participating-institutions-section__table-wrap payment-orders-page__table-scroll-root">
+            <div className="participating-institutions-section__table-wrap">
               {viewMode === 'calendar' ? (
                 <PaymentOrdersCalendarView
                   key={`${appliedResetKey}-${exposureMode}`}
@@ -372,14 +371,10 @@ export default function PaymentOrdersPage() {
                 />
               ) : isProgram ? (
                 <Table<PaymentOrderAdminProgramRow>
-                  className="participating-institutions-section__table participating-institutions-section__table--clickable payment-orders-page__table"
-                  rowKey="no"
+                  className="cms-data-table cms-data-table--fluid"
                   columns={programColumns}
                   dataSource={listProgram}
                   pagination={false}
-                  size="middle"
-                  tableLayout="fixed"
-                  scroll={{ x: 1000 }}
                   onRow={record => ({
                     onClick: () => {
                       setSelectedProgramForDetail(record)
@@ -390,14 +385,11 @@ export default function PaymentOrdersPage() {
                 />
               ) : (
                 <Table<PaymentOrderAdminInstructorRow>
-                  className="participating-institutions-section__table participating-institutions-section__table--clickable payment-orders-page__table"
+                  className="cms-data-table cms-data-table--fluid"
                   rowKey="no"
                   columns={instructorColumns}
                   dataSource={listInstructor}
                   pagination={false}
-                  size="middle"
-                  tableLayout="fixed"
-                  scroll={{ x: 820 }}
                   onRow={record => ({
                     onClick: () => {
                       setSelectedInstructorForDetail(record)
@@ -412,22 +404,24 @@ export default function PaymentOrdersPage() {
         </div>
       </div>
 
-      <PaymentOrderProgramStatusDetailFullPageModal
-        open={programStatusDetailOpen}
+      <PaymentOrderDetailFullPageModal
+        type="program"
+        isOpen={programStatusDetailOpen}
         onClose={() => {
           setProgramStatusDetailOpen(false)
           setSelectedProgramForDetail(null)
         }}
-        programRow={selectedProgramForDetail}
+        data={selectedProgramForDetail}
       />
 
-      <PaymentOrderInstructorStatusDetailFullPageModal
-        open={instructorStatusDetailOpen}
+      <PaymentOrderDetailFullPageModal
+        type="instructor"
+        isOpen={instructorStatusDetailOpen}
         onClose={() => {
           setInstructorStatusDetailOpen(false)
           setSelectedInstructorForDetail(null)
         }}
-        instructorRow={selectedInstructorForDetail}
+        data={selectedInstructorForDetail}
       />
     </div>
   )

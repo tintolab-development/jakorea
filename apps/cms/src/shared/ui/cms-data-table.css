@@ -75,7 +75,9 @@
   height: 54px !important;
 }
 
-.cms-data-table .ant-table-tbody > tr > td {
+/* 본문 셀: 기본·호버 동일 테두리(--table-line) 유지 */
+.cms-data-table .ant-table-tbody > tr > td,
+.cms-data-table .ant-table-tbody > tr:hover > td {
   box-sizing: border-box !important;
   padding: 12px 16px !important;
   color: var(--default-BK, #3d3d3d);

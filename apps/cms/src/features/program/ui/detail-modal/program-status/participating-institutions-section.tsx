@@ -313,7 +313,7 @@ export function ParticipatingInstitutionsSection({
   }
 
   /** 컬럼 너비 합. 회차 컬럼 480px(한 줄 텍스트 길이만큼) → 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
-  const tableScrollX = 48 + 64 + 180 + 200 + 480 + 96 + 100 + 100 + 152 + 120 + 180
+  const tableScrollX = 48 + 64 + 180 + 200 + 480 + 96 + 100 + 100 + 136 + 120 + 180
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
@@ -337,7 +337,7 @@ export function ParticipatingInstitutionsSection({
         width: 200,
       },
       {
-        title: '강의 회차 별 교육 진행 날짜',
+        title: '강의 회차 별 교육 진행 날짜 및 시간',
         key: 'sessions',
         width: 480,
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
@@ -353,9 +353,6 @@ export function ParticipatingInstitutionsSection({
                 const { datePart, durationPart, periodPart } = getSessionLineParts(s)
                 return (
                   <div key={s.round} className="participating-institutions-section__session-line">
-                    <span className="participating-institutions-section__session-round-tag">
-                      {s.round}차시
-                    </span>
                     {datePart}
                     <span
                       className="participating-institutions-section__session-divider"
@@ -406,7 +403,7 @@ export function ParticipatingInstitutionsSection({
         title: '교재 배송 현황',
         dataIndex: 'textbookStatus',
         key: 'textbookStatus',
-        width: 152,
+        width: 136,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
@@ -477,6 +474,7 @@ export function ParticipatingInstitutionsSection({
           savedInstructorPatches={savedInstructorPatches}
           instructorList={instructorHook.instructorList}
           onCancelApproval={handleSchoolApprovalCancel}
+          onTextbookStatusChange={handleTextbookStatusChange}
         />
       </div>
     )

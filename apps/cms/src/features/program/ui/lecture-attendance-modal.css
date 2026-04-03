@@ -3,9 +3,13 @@
  * 레이아웃(컨테이너/헤더/푸터)은 ContentModal(content-modal.css) 사용
  */
 
-/* 디스크립션–테이블 30px (타이틀–디스크립션 16px는 ContentModal 공통) */
+/*
+ * 디스크립션–테이블 간격 30px: teal-header-modal__body의 flex gap(--spacing-30)만 사용.
+ * 여기에 margin-bottom을 두면 gap과 합쳐져 이중 여백(약 60px)이 됨.
+ * 타이틀–디스크립션 16px는 content-modal.css 공통.
+ */
 .lecture-attendance-modal__description {
-  margin: 0 0 30px 0;
+  margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;

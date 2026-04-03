@@ -7,27 +7,29 @@
  * - 쿼리 파라미터 연동 지원
  */
 
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, Row, Col, Space } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { LAYOUT_CONSTANTS } from '@/shared/constants/layout'
 import { LabeledSearchInput } from './labeled-search-input'
-import { AppButton } from './app-button'
+import { FilterSearchButton } from './app-button'
 import { AppMultiSelect } from './app-multi-select'
 import type { AppMultiSelectOption } from './app-multi-select'
 import { AppSelect } from './app-select'
 import { AppDateRangePicker } from './app-datepicker'
+import { AppRadio } from './app-radio'
 import './unified-filter-card.css'
 
 export interface FilterFieldConfig {
   /** 필터 키 */
   key: string
   /** 필터 타입 */
-  type: 'search' | 'select' | 'dateRange' | 'multiSelect'
+  type: 'search' | 'select' | 'dateRange' | 'multiSelect' | 'radio'
   /** 레이블 텍스트 */
   label: string
   /** placeholder 텍스트 */
   placeholder?: string
-  /** Select 옵션 (type이 'select'일 때) */
+  /** Select / Radio 옵션 (type이 'select' | 'radio'일 때) */
   options?: Array<{ label: string; value: string | number }>
   /** 다중 선택 옵션 (type이 'multiSelect'일 때). value는 문자열 */
   multiSelectOptions?: AppMultiSelectOption[]
@@ -96,6 +98,66 @@ export function UnifiedFilterCard({
   // 필터 한 줄 배치 (사이즈 조정으로 단일 행 표현)
   const filterRowFields = fields
 
+  const searchFieldKeys = useMemo(
+    () => filterRowFields.filter(f => f.type === 'search').map(f => f.key),
+    [filterRowFields]
+  )
+
+  const filtersSearchSignature = useMemo(
+    () => JSON.stringify(Object.fromEntries(searchFieldKeys.map(k => [k, filters[k] ?? '']))),
+    [filters, searchFieldKeys]
+  )
+
+  /**
+   * 검색(search) 필드는 카드 내부 초안만 갱신 — 키 입력마다 부모·테이블 리렌더 방지.
+   * 부모 filters(URL·조회 반영 등)가 바뀌면 시그니처로 동기화.
+   */
+  const [searchDrafts, setSearchDrafts] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {}
+    for (const k of searchFieldKeys) {
+      init[k] = String(filters[k] ?? '')
+    }
+    return init
+  })
+
+  const prevSearchSigRef = useRef(filtersSearchSignature)
+  useEffect(() => {
+    if (prevSearchSigRef.current === filtersSearchSignature) return
+    prevSearchSigRef.current = filtersSearchSignature
+    setSearchDrafts(prev => {
+      const next = { ...prev }
+      let changed = false
+      for (const k of searchFieldKeys) {
+        const v = String(filters[k] ?? '')
+        if (next[k] !== v) {
+          next[k] = v
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [filters, filtersSearchSignature, searchFieldKeys])
+
+  const searchDraftsRef = useRef(searchDrafts)
+  searchDraftsRef.current = searchDrafts
+
+  const onSearchRef = useRef(onSearch)
+  onSearchRef.current = onSearch
+
+  const flushSearchToParentAndSearch = useCallback(() => {
+    for (const f of filterRowFields) {
+      if (f.type === 'search') {
+        onFilterChange(f.key, searchDraftsRef.current[f.key] ?? '')
+      }
+    }
+    const run = () => onSearchRef.current()
+    if (typeof globalThis !== 'undefined' && typeof globalThis.setTimeout === 'function') {
+      globalThis.setTimeout(run, 0)
+    } else {
+      run()
+    }
+  }, [filterRowFields, onFilterChange])
+
   /** 필드 칸 사이 margin 12px — % basis는 gap 없이도 (100% - margin 합) 안에서만 잡히게 calc */
   const interFieldGapPx = 12
 
@@ -119,6 +181,26 @@ export function UnifiedFilterCard({
 
   // 필터 렌더링 함수
   const renderField = (field: FilterFieldConfig) => {
+    if (field.type === 'radio') {
+      return (
+        <Col key={field.key} flex={colFlex(field, '0 0 auto')} className={colClassFor(field)}>
+          <div className="unified-filter-card__field unified-filter-card__field--radio">
+            <span className="unified-filter-card__label">{field.label}</span>
+            <AppRadio.Group
+              value={filters[field.key]}
+              onChange={e => onFilterChange(field.key, e.target.value)}
+            >
+              {(field.options ?? []).map(opt => (
+                <AppRadio key={String(opt.value)} value={opt.value}>
+                  {opt.label}
+                </AppRadio>
+              ))}
+            </AppRadio.Group>
+          </div>
+        </Col>
+      )
+    }
+
     if (field.type === 'search') {
       return (
         <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>
@@ -126,8 +208,12 @@ export function UnifiedFilterCard({
             uiVariant="filter"
             label={field.label}
             placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
-            value={filters[field.key] || ''}
-            onChange={value => onFilterChange(field.key, value)}
+            value={searchDrafts[field.key] ?? ''}
+            onChange={value =>
+              setSearchDrafts(prev =>
+                prev[field.key] === value ? prev : { ...prev, [field.key]: value }
+              )
+            }
             allowClear={field.allowClear !== false}
             width="100%"
           />
@@ -204,15 +290,11 @@ export function UnifiedFilterCard({
 
   const actionButtons = (
     <Space size="small">
-      <AppButton
-        variant="primary"
-        size="filter"
-        onClick={onSearch}
+      <FilterSearchButton
+        onClick={flushSearchToParentAndSearch}
         loading={loading}
         className="unified-filter-card__button"
-      >
-        조회
-      </AppButton>
+      />
       {extra}
     </Space>
   )

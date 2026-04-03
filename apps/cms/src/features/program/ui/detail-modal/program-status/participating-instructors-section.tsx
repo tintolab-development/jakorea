@@ -12,7 +12,7 @@ import { AppButton } from '@/shared/ui/app-button'
 import { AppMultiSelect } from '@/shared/ui'
 import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
-import { message } from 'antd'
+import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
   SETTLEMENT_STATUS_LABELS,
   type ParticipatingInstructorRow,
@@ -378,18 +378,7 @@ export function ParticipatingInstructorsSection({
   const handleListView = () => setViewMode('list')
 
   const handleInfoDetailClick = () => {
-    if (selectedInstructorRowKeys.length === 0) {
-      message.warning(
-        '개인정보 상세보기를 하려면 강사를 1명 선택하거나 목록에서 강사 행을 눌러 주세요.'
-      )
-      return
-    }
-    if (selectedInstructorRowKeys.length > 1) {
-      message.warning('개인정보 상세보기는 강사 1명만 선택해 주세요.')
-      return
-    }
-    const row = filteredInstructors.find(r => r.id === selectedInstructorRowKeys[0])
-    if (row) onInstructorRowClick?.(row)
+    window.alert('준비 중입니다.')
   }
 
   const tableScrollX = 48 + 64 + 100 + 140 + 160 + 100 + 100 + 120 + 140 + 120
@@ -551,7 +540,9 @@ export function ParticipatingInstructorsSection({
               variant="cancel"
               size="filter-wide"
               icon={<DownloadOutlined />}
-              onClick={() => message.info('활동확인서 발급 기능 준비 중입니다.')}
+              onClick={() =>
+                window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
+              }
             >
               활동확인서 발급
             </AppButton>

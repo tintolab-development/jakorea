@@ -525,7 +525,7 @@
   border-bottom: none;
 }
 
-.teacher-detail-modal__teaching-table .ant-table-tbody > tr:hover > td {
+.teacher-detail-modal__teaching-table .ant-table-tbody > tr:hover:not(.ant-table-row-selected) > td {
   background: var(--color-table-row-hover) !important;
 }
 
@@ -538,6 +538,30 @@
 .teacher-detail-modal__status-trigger {
   cursor: pointer;
   display: inline-flex;
+}
+
+.teacher-detail-modal__teaching-table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
+}
+
+.settlement-tab__table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
 }
 
 /* ==========================================
@@ -617,8 +641,8 @@
 }
 
 .settlement-tab__btn-settle {
-  background: var(--color-modal-header, #4ca0a8) !important;
-  border-color: var(--color-modal-header, #4ca0a8) !important;
+  background: var(--JA-mint-01, #01a1af) !important;
+  border-color: var(--JA-mint-01, #01a1af) !important;
 }
 
 /* 요약 카드 */
@@ -725,7 +749,7 @@
   border-bottom: none;
 }
 
-.settlement-tab__table .ant-table-tbody > tr:hover > td {
+.settlement-tab__table .ant-table-tbody > tr:hover:not(.ant-table-row-selected) > td {
   background: var(--color-table-row-hover) !important;
 }
 

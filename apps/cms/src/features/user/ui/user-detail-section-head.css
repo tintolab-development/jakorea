@@ -7,7 +7,7 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: var(--spacing-12, 12px);
+  margin-bottom: var(--spacing-16, 16px);
 }
 
 .user-detail-section__title {

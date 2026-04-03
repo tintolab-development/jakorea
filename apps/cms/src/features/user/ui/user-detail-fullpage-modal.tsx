@@ -188,7 +188,13 @@ function renderUserDetailHeaderExtra(params: {
         <AppButton
           variant={personalInfoRevealed ? 'default' : 'primary'}
           size="filter-wide"
-          onClick={() => setPersonalInfoRevealed(v => !v)}
+          onClick={() => {
+            if (personalInfoRevealed) {
+              setPersonalInfoRevealed(false)
+            } else {
+              window.alert('준비 중입니다.')
+            }
+          }}
         >
           {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
         </AppButton>
@@ -264,7 +270,13 @@ function renderUserDetailHeaderExtra(params: {
       <AppButton
         variant={personalInfoRevealed ? 'default' : 'primary'}
         size="filter-wide"
-        onClick={() => setPersonalInfoRevealed(v => !v)}
+        onClick={() => {
+          if (personalInfoRevealed) {
+            setPersonalInfoRevealed(false)
+          } else {
+            window.alert('준비 중입니다.')
+          }
+        }}
       >
         {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
       </AppButton>
@@ -879,7 +891,7 @@ export function UserDetailFullPageModal({
         message.info('봉사 프로그램 상세는 추후 연결됩니다.')
       }}
       onVolunteerCertificateDownload={() => {
-        message.info('수료증·확인서 다운로드는 추후 연결됩니다.')
+        window.alert('준비 중입니다.')
       }}
     />
   )
@@ -901,7 +913,7 @@ export function UserDetailFullPageModal({
               setAssignmentSubmissionModalOpen(true)
             }}
             onDownloadCertificate={() => {
-              message.info('수료증 다운로드는 추후 연결됩니다.')
+              window.alert('준비 중입니다.')
             }}
           />
         ) : (

@@ -7,6 +7,7 @@ import { Card, List, Tag, Typography, Button, Empty } from 'antd'
 import { CalendarOutlined, RightOutlined } from '@ant-design/icons'
 import type { Schedule } from '@/types'
 import { useNavigate } from 'react-router-dom'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import dayjs from 'dayjs'
 
 const { Text } = Typography
@@ -46,7 +47,7 @@ export function UpcomingSchedulesList({
   }
 
   const handleViewAll = () => {
-    navigate('/schedules/my')
+    window.alert(WIDGET_MORE_ALERT_MESSAGE)
   }
 
   return (

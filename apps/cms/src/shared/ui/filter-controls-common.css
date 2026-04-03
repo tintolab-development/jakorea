@@ -1,7 +1,8 @@
 /**
  * 필터 영역 Select(드롭다운) 및 검색 인풋 공통 크기
  * 기본 240×44px, 화면 크기에 따라 반응형 적용
- * 레이블·필터 세로 스택: 레이블과 컨트롤 사이 gap 6px (--spacing-6, labeled-search-input·unified-filter-card·담당자/목록/참여기관 등)
+ * 레이블·컨트롤 사이 갭: --filter-label-control-gap (= --spacing-6, 6px)
+ * 필터 레이블 타이포: --filter-area-label-* (14px / 500 / 150% / default-BK / Pretendard 계열)
  * 필터 레이블 텍스트 영역 높이: --filter-label-height (27px)
  * 프로그램 상세 탭(진행현황/신청자/담당자): 필터 간격·필터-버튼 간격 12px (각 탭 CSS에서 gutter 12, 버튼 col padding 12px 적용)
  */
@@ -11,8 +12,16 @@
   --filter-control-height: 44px;
   --filter-control-min-width: 180px;
   --filter-label-height: 27px;
+  --filter-label-control-gap: var(--spacing-6, 6px);
+  --filter-area-label-color: var(--default-BK, #3d3d3d);
+  --filter-area-label-font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  --filter-area-label-font-size: 14px;
+  --filter-area-label-font-weight: 500;
+  --filter-area-label-line-height: 150%;
   /** Ant Table rowSelection 체크박스 열 */
   --table-selection-column-width: 60px;
+  /** Ant Table 내 체크박스 박스 크기 (ant-table-selection-checkbox.css) */
+  --table-checkbox-size: 20px;
 }
 
 @media (max-width: 1200px) {
@@ -35,6 +44,30 @@
     --filter-control-height: 40px;
     --filter-control-min-width: 0;
   }
+}
+
+/* 필터 영역 레이블 공통 타이포 */
+.unified-filter-card__label,
+.labeled-search-input__label,
+.program-progress-tab__filter-field .program-progress-tab__filter-label,
+.program-applicants-tab__filter-label,
+.program-filter-label,
+.school-detail-modal__filter-label {
+  color: var(--filter-area-label-color);
+  font-family: var(--filter-area-label-font-family);
+  font-size: var(--filter-area-label-font-size);
+  font-style: normal;
+  font-weight: var(--filter-area-label-font-weight);
+  line-height: var(--filter-area-label-line-height);
+}
+
+/* 레이블 상단 스택(참여기관·지급조서 등): 세로 배치 + 레이블·컨트롤 갭 6px */
+.program-progress-tab__filter-field.participating-institutions-section__filter-field--label-top {
+  flex-direction: column;
+  align-items: stretch;
+  height: auto;
+  min-height: 0;
+  gap: var(--filter-label-control-gap);
 }
 
 /* 통일 필터 카드 (flex 컬럼 내에서는 min-width + 높이만 고정) */
@@ -377,7 +410,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-12, 12px);
+  margin-bottom: var(--spacing-16, 16px);
 }
 
 .member-table-card__title-area {
@@ -448,8 +481,9 @@
   background: var(--ant-color-primary-bg, #e6f4ff) !important;
 }
 
+/* 선택 행 호버 시에도 선택 배경 유지(호버 틴트 없음) */
 .member-table-card .user-list-table .ant-table-tbody > tr.ant-table-row-selected:hover > td {
-  background: var(--ant-color-primary-bg-hover, #bae0ff) !important;
+  background: var(--ant-color-primary-bg, #e6f4ff) !important;
 }
 
 /* 768px 이하: 너비 100%일 때 컨테이너 min-width */
