@@ -178,6 +178,88 @@ export const programLifecycleStatusConfig = {
   } as Record<ProgramLifecycleStatus, string>,
 }
 
+/**
+ * 폼 셀렉트·공통정보 등: `ProgramLifecycleStatus` 전체를 도메인 라벨과 동일한 순서로 노출
+ * (`programLifecycleStatusConfig.order`는 위젯/워크플로용 6단계이므로 별도)
+ */
+export const PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER: ProgramLifecycleStatus[] = [
+  'planned',
+  'instructor_recruitment_planned',
+  'volunteer_recruitment_planned',
+  'participant_instructor_recruitment_planned',
+  'recruiting_students',
+  'recruiting_instructors',
+  'recruiting_volunteers',
+  'participant_instructor_recruiting',
+  'matching_completed',
+  'education_before_textbook',
+  'education_after_textbook',
+  'education_in_progress',
+  'education_completed',
+  'document_processing_completed',
+  'participant_instructor_recruitment_completed',
+]
+
+/** 공통정보·경제 목록 등: 세부 `lifecycleStatus` → 요약 3단계 */
+export type ProgramProgressPhaseKey = 'scheduled' | 'inProgress' | 'completed'
+
+export const PROGRAM_PROGRESS_PHASE_LABELS: Record<ProgramProgressPhaseKey, string> = {
+  scheduled: '프로그램 진행 예정',
+  inProgress: '프로그램 진행 중',
+  completed: '프로그램 진행 완료',
+}
+
+/** UI `color` (디자인 토큰 + 폴백 hex) */
+export const PROGRAM_PROGRESS_PHASE_COLORS: Record<ProgramProgressPhaseKey, string> = {
+  scheduled: 'var(--color-green, #1E8C29)',
+  inProgress: 'var(--color-blue, #017EAF)',
+  completed: 'var(--default-BK, #3D3D3D)',
+}
+
+export const PROGRAM_PROGRESS_PHASE_SCHEDULED_STATUSES: readonly ProgramLifecycleStatus[] = [
+  'planned',
+  'instructor_recruitment_planned',
+  'volunteer_recruitment_planned',
+  'participant_instructor_recruitment_planned',
+  'recruiting_students',
+  'recruiting_instructors',
+  'recruiting_volunteers',
+  'participant_instructor_recruiting',
+  'matching_completed',
+  'education_before_textbook',
+]
+
+export const PROGRAM_PROGRESS_PHASE_IN_PROGRESS_STATUSES: readonly ProgramLifecycleStatus[] = [
+  'education_after_textbook',
+  'education_in_progress',
+]
+
+export const PROGRAM_PROGRESS_PHASE_COMPLETED_STATUSES: readonly ProgramLifecycleStatus[] = [
+  'education_completed',
+  'document_processing_completed',
+  'participant_instructor_recruitment_completed',
+]
+
+export function getProgramProgressPhase(status: ProgramLifecycleStatus): ProgramProgressPhaseKey {
+  if (PROGRAM_PROGRESS_PHASE_SCHEDULED_STATUSES.includes(status)) return 'scheduled'
+  if (PROGRAM_PROGRESS_PHASE_IN_PROGRESS_STATUSES.includes(status)) return 'inProgress'
+  if (PROGRAM_PROGRESS_PHASE_COMPLETED_STATUSES.includes(status)) return 'completed'
+  return 'scheduled'
+}
+
+export function getProgramProgressPhaseDisplay(status: ProgramLifecycleStatus): {
+  phase: ProgramProgressPhaseKey
+  label: string
+  color: string
+} {
+  const phase = getProgramProgressPhase(status)
+  return {
+    phase,
+    label: PROGRAM_PROGRESS_PHASE_LABELS[phase],
+    color: PROGRAM_PROGRESS_PHASE_COLORS[phase],
+  }
+}
+
 export function getProgramLifecycleLabel(status: ProgramLifecycleStatus | string): string {
   return programLifecycleStatusConfig.labels[status as ProgramLifecycleStatus] || status
 }

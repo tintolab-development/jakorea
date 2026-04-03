@@ -4,8 +4,11 @@
 
 import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import { getProgramLifecycleLabel, programLifecycleStatusConfig } from '@/shared/constants/status'
+import type { Program } from '@/types/domain'
+import {
+  getProgramLifecycleLabel,
+  PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER,
+} from '@/shared/constants/status'
 
 // ─── 요일/날짜 포맷 ────────────────────────────────────────
 
@@ -145,12 +148,10 @@ export const TARGET_LEVEL_LABEL: Record<string, string> = {
   high: '고등학교',
 }
 
-export const LIFECYCLE_OPTIONS = programLifecycleStatusConfig.order.map(
-  (status: ProgramLifecycleStatus) => ({
-    value: status,
-    label: getProgramLifecycleLabel(status),
-  })
-)
+export const LIFECYCLE_OPTIONS = PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER.map(status => ({
+  value: status,
+  label: getProgramLifecycleLabel(status),
+}))
 
 // ─── 공통 정보 탭 전용 옵션 ─────────────────────────────────────
 
