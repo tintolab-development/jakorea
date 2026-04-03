@@ -296,6 +296,27 @@
   box-shadow: none !important;
 }
 
+/* 검색 필드(AppInput) 박스가 페이지별 전역 규칙에 깨지지 않도록 강제 */
+.unified-filter-card .labeled-search-input .app-input.app-input--filter {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input.app-input--filter .app-input__control {
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  border: 1px solid #c4cdd1 !important;
+  border-radius: 8px !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow: none !important;
+}
+
+.unified-filter-card .labeled-search-input .app-input.app-input--filter .ant-input-affix-wrapper,
+.unified-filter-card .labeled-search-input .app-input.app-input--filter .ant-input {
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Select: single-row에서 min-width:0 때문에 트리거가 과도하게 줄지 않도록, 드롭다운 폭과 정렬 */
 .unified-filter-card__field--select {
   width: 100%;

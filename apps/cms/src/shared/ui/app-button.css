@@ -113,6 +113,30 @@
   white-space: nowrap;
 }
 
+/*
+ * filter / filter-wide 는 Ant에 size=large → .ant-btn-lg 가 붙음.
+ * .ant-btn-lg 의 고정 높이·패딩이 위 규칙을 이기므로 동시에 붙을 때만 재선언.
+ */
+.app-button.app-button--filter.ant-btn-lg,
+.app-button.app-button--filter-wide.ant-btn-lg {
+  height: auto !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  padding: 10px 18px !important;
+  align-items: center !important;
+  line-height: 1.5 !important;
+}
+
+.app-button.app-button--filter.ant-btn-lg {
+  width: 140px !important;
+  min-width: 140px !important;
+}
+
+.app-button.app-button--filter-wide.ant-btn-lg {
+  width: auto !important;
+  min-width: 180px !important;
+  white-space: nowrap;
+}
+
 /* viewDetails + tableAction 조합: 160×40, 폰트 14px */
 .app-button--viewDetails.app-button--tableAction.ant-btn-default {
   width: 160px !important;
