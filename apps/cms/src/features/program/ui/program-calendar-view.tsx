@@ -145,6 +145,7 @@ export function ProgramCalendarView({
           currentMonth={currentMonth}
           selectedDate={selectedDate}
           onMonthChange={handleMonthChange}
+          onSelectDate={handleDateSelect}
           programDates={programDates}
         />
         <div className="program-calendar-left__search-widget">

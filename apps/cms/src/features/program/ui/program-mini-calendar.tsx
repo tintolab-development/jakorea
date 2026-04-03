@@ -19,9 +19,10 @@ dayjs.locale('en')
 
 interface ProgramMiniCalendarProps {
   currentMonth: Dayjs
-  /** 메인 캘린더와 동기화된 선택일 표시용(미니캘린더에서는 날짜 클릭 불가) */
+  /** 메인 캘린더·우측 일정 목록과 동일한 날짜 선택 */
   selectedDate: Dayjs
   onMonthChange: (month: Dayjs) => void
+  onSelectDate: (date: Dayjs) => void
   programDates: Set<string> // 일정 있는 날짜들 (YYYY-MM-DD 형식)
 }
 
@@ -29,6 +30,7 @@ export function ProgramMiniCalendar({
   currentMonth,
   selectedDate,
   onMonthChange,
+  onSelectDate,
   programDates,
 }: ProgramMiniCalendarProps) {
   const handlePrevMonth = () => {
@@ -85,6 +87,11 @@ export function ProgramMiniCalendar({
         locale={enUS}
         fullCellRender={dateFullCellRender}
         headerRender={() => null}
+        onSelect={(date, { source }) => {
+          if (source === 'date') {
+            onSelectDate(date)
+          }
+        }}
       />
     </div>
   )

@@ -163,7 +163,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-16);
 }
 
 .program-mini-calendar-title {
@@ -187,14 +187,14 @@
   color: var(--color-text-label);
 }
 
-/* 미니 캘린더 셀 — 날짜는 표시만(선택·호버 없음) */
+/* 미니 캘린더 셀 — 클릭 시 메인 캘린더 선택과 동기화 */
 .program-mini-calendar-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 4px;
-  cursor: default;
+  cursor: pointer;
   border-radius: 4px;
   position: relative;
   width: 30px;
@@ -286,7 +286,11 @@
 
 .program-mini-calendar .ant-picker-cell {
   padding: 0;
-  pointer-events: none;
+}
+
+/* 표시 월 안 날짜만 클릭 가능 (그리드 이웃 달 셀은 아래 규칙으로 비활성) */
+.program-mini-calendar .ant-picker-cell-in-view {
+  cursor: pointer;
 }
 
 .program-mini-calendar .ant-picker-calendar-date {
