@@ -75,6 +75,8 @@ type ApiFilters = {
   instructorType?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
+  /** `kind=instructors` 전용 — getUsersPage에만 합성 */
+  instructorListPureOnly?: boolean
 }
 
 function parseAdminPermissionVariantParam(raw: string | undefined): AdminPermissionTagVariant | '' {
@@ -183,6 +185,7 @@ export function UserListPage() {
     return {
       ...base,
       ...(role ? { role } : {}),
+      ...(kind === 'instructors' ? { instructorListPureOnly: true as const } : {}),
     }
   }, [activeFilters, params.kind, params.role])
 

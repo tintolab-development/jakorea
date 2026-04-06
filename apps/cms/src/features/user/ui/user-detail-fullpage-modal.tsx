@@ -39,6 +39,7 @@ import { SchoolAffiliatedTeachersSection } from './school-affiliated-teachers-se
 import {
   programsHistoryHasChildMenu,
   clampProgramsChildForUser,
+  instructorDetailLnbClickShowsPrepareMessage,
   userDetailModalTitle,
   userDetailSidebarNavAriaLabel,
   type UserDetailLnbKey,
@@ -103,12 +104,8 @@ export function UserDetailFullPageModal({
   const [activeLnb, setActiveLnb] = useState<UserDetailLnbKey>('detail-info')
   const [activeProgramsChild, setActiveProgramsChild] =
     useState<UserDetailProgramsChildKey>('enrollment')
-  const {
-    applications,
-    enrollmentApplications,
-    applicationsLoading,
-    refetchApplications,
-  } = useUserDetailApplications(open, displayUser)
+  const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
+    useUserDetailApplications(open, displayUser)
 
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
@@ -199,8 +196,15 @@ export function UserDetailFullPageModal({
   )
 
   const sidebarExpandedGroupKeys = useMemo(() => {
-    if (activeLnb !== 'history' || !displayUser) return [] as const
-    if (!programsHistoryHasChildMenu(displayUser)) return [] as const
+    if (!displayUser || !programsHistoryHasChildMenu(displayUser)) return [] as const
+    if (displayUser.role === 'INSTRUCTOR') {
+      const p = resolveInstructorMemberProfile(displayUser)
+      if (p === 'instructor_only') {
+        if (activeLnb === 'payment-status') return [] as const
+        return ['history'] as const
+      }
+    }
+    if (activeLnb !== 'history') return [] as const
     return ['history'] as const
   }, [activeLnb, displayUser])
 
@@ -214,8 +218,21 @@ export function UserDetailFullPageModal({
       setActiveLnb('detail-info')
       return
     }
+    if (!displayUser) return
     const k = key as UserDetailLnbKey
-    if (k === 'history' && displayUser && programsHistoryHasChildMenu(displayUser)) {
+
+    if (k === 'payment-status') {
+      if (instructorDetailLnbClickShowsPrepareMessage(displayUser, k, 'payment-top')) {
+        window.alert('준비 중입니다.')
+        return
+      }
+    }
+
+    if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
+      if (instructorDetailLnbClickShowsPrepareMessage(displayUser, k, 'history-top')) {
+        window.alert('준비 중입니다.')
+        return
+      }
       setActiveLnb('history')
       setActiveProgramsChild('enrollment')
     } else {
@@ -227,7 +244,7 @@ export function UserDetailFullPageModal({
         const nextParams = new URLSearchParams(prev)
         if (displayUser?.id) nextParams.set('id', displayUser.id)
         nextParams.set('lnb', k)
-        if (k === 'history' && displayUser && programsHistoryHasChildMenu(displayUser)) {
+        if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
           nextParams.set(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, 'enrollment')
         } else {
           nextParams.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
@@ -242,6 +259,10 @@ export function UserDetailFullPageModal({
     if (mode === 'permission') return
     if (!displayUser) return
     const child = clampProgramsChildForUser(displayUser, childKey as UserDetailProgramsChildKey)
+    if (instructorDetailLnbClickShowsPrepareMessage(displayUser, 'history', 'history-child', child)) {
+      window.alert('준비 중입니다.')
+      return
+    }
     setActiveProgramsChild(child)
     setActiveLnb('history')
     setSearchParams(
@@ -308,9 +329,7 @@ export function UserDetailFullPageModal({
         <UserBasicInfoSection
           user={displayUser}
           entrySource={basicInfoEntrySource}
-          caption={
-            displayUser.role === 'ADMIN' ? '*관리자에 의해 등록된 회원입니다.' : undefined
-          }
+          caption={displayUser.role === 'ADMIN' ? '*관리자에 의해 등록된 회원입니다.' : undefined}
           externalId1365={basicInfoExternalId1365}
           personalInfoRevealed={personalInfoRevealed}
         />
@@ -350,13 +369,11 @@ export function UserDetailFullPageModal({
             {summaryLabel} 총 {rows.length}건
           </p>
           <Table
-            className="user-detail-modal__program-table"
+            className="cms-data-table"
             columns={programHistoryColumns}
             dataSource={rows}
             rowKey="id"
             pagination={false}
-            scroll={{ y: 'calc(100vh - 480px)' }}
-            size="small"
             onRow={record => ({
               onClick: e => {
                 const target = e.target as HTMLElement

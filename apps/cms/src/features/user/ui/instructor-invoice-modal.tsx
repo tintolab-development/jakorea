@@ -1,8 +1,10 @@
-import { message } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { PlainHeaderModal } from '@/shared/ui/plain-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
-import type { InstructorSettlementInvoiceDetail } from '@/data/mock/instructor-member-settlements'
+import {
+  getInstructorSettlementInvoiceStatusPresentation,
+  type InstructorSettlementInvoiceDetail,
+} from '@/data/mock/instructor-member-settlements'
 import './instructor-invoice-modal.css'
 
 export interface InstructorInvoiceModalProps {
@@ -13,6 +15,10 @@ export interface InstructorInvoiceModalProps {
 
 export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoiceModalProps) {
   if (!open || !data) return null
+
+  const paymentStatementPresentation = getInstructorSettlementInvoiceStatusPresentation(
+    data.paymentStatementStatus
+  )
 
   const displayTotal =
     data.totalAmount > 0
@@ -29,7 +35,7 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
       className="instructor-invoice-modal"
       footer={
         <div className="instructor-invoice-modal__modal-footer">
-          <AppButton variant="cancel" size="large" onClick={onClose}>
+          <AppButton variant="cancel" size="filter" onClick={onClose}>
             닫기
           </AppButton>
         </div>
@@ -49,7 +55,9 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
               <tbody>
                 <tr>
                   <th className="instructor-invoice-modal__cell-label">프로그램명</th>
-                  <td colSpan={3}>{data.programName}</td>
+                  <td colSpan={3} style={{ textAlign: 'center' }}>
+                    {data.programName}
+                  </td>
                 </tr>
                 <tr>
                   <th className="instructor-invoice-modal__cell-label">프로그램 진행 회차</th>
@@ -74,15 +82,12 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
                   <td>
                     <div className="instructor-invoice-modal__payment-row">
                       <span
-                        className={
-                          data.paymentStatementStatusTone === 'purple'
-                            ? 'instructor-invoice-modal__status-purple'
-                            : data.paymentStatementStatusTone === 'mint'
-                              ? 'instructor-invoice-modal__status-mint'
-                              : ''
-                        }
+                        style={{
+                          color: paymentStatementPresentation.color,
+                          fontWeight: 600,
+                        }}
                       >
-                        {data.paymentStatementStatusLabel}
+                        {paymentStatementPresentation.label}
                       </span>
                       <span className="instructor-invoice-modal__payment-row-separator">|</span>
                       <AppButton
@@ -163,7 +168,7 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
                         <AppButton
                           variant="viewDetails"
                           size="large"
-                          onClick={() => message.info('산정 기준 상세는 추후 연동됩니다.')}
+                          onClick={() => window.alert('준비 중입니다.')}
                         >
                           상세 보기
                         </AppButton>
@@ -180,7 +185,7 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
                       <AppButton
                         variant="viewDetails"
                         size="large"
-                        onClick={() => message.info('산정 기준 상세는 추후 연동됩니다.')}
+                        onClick={() => window.alert('준비 중입니다.')}
                       >
                         상세 보기
                       </AppButton>
@@ -202,7 +207,7 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
                       variant="primary"
                       size="large"
                       icon={<DownloadOutlined />}
-                      onClick={() => message.success('지급조서 다운로드는 추후 연동됩니다.')}
+                      onClick={() => window.alert('준비 중입니다.')}
                     >
                       지급조서 다운로드
                     </AppButton>

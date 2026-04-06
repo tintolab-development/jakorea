@@ -52,9 +52,19 @@ export function SchoolDetailModal({
   const region = user?.schoolInfo?.address?.split(' ').slice(0, 2).join(' ') ?? '-'
 
   const teacherColumns: ColumnsType<AffiliatedTeacherRow> = [
-    { title: 'No.', key: 'no', width: 64, align: 'center', render: (_, __, i) => teachers.length - i },
+    {
+      title: 'No.',
+      key: 'no',
+      align: 'center',
+      render: (_, __, i) => teachers.length - i,
+    },
     { title: '교사명', dataIndex: 'name', key: 'name', align: 'center', width: 120 },
-    { title: '담당 학년', dataIndex: 'gradeInCharge', key: 'gradeInCharge', align: 'center', width: 120 },
+    {
+      title: '담당 학년',
+      dataIndex: 'gradeInCharge',
+      key: 'gradeInCharge',
+      align: 'center',
+    },
     { title: '연락처', dataIndex: 'phone', key: 'phone', align: 'center', width: 140 },
     { title: '이메일', dataIndex: 'email', key: 'email', align: 'center', width: 180 },
     {
@@ -68,12 +78,43 @@ export function SchoolDetailModal({
   ]
 
   const historyColumns: ColumnsType<ProgramParticipationRow> = [
-    { title: 'No.', key: 'no', width: 64, align: 'center', render: (_, __, i) => programHistory.length - i },
-    { title: '프로그램명', dataIndex: 'programName', key: 'programName', align: 'center', ellipsis: true },
-    { title: '교육분야', dataIndex: 'educationField', key: 'educationField', align: 'center', width: 110 },
-    { title: '진행 학년', dataIndex: 'gradeTaught', key: 'gradeTaught', align: 'center', width: 100 },
-    { title: '교육 진행 기간', dataIndex: 'programPeriod', key: 'programPeriod', align: 'center', width: 200 },
-    { title: '담당교사', dataIndex: 'teacherInCharge', key: 'teacherInCharge', align: 'center', width: 100 },
+    {
+      title: 'No.',
+      key: 'no',
+      align: 'center',
+      render: (_, __, i) => programHistory.length - i,
+    },
+    {
+      title: '프로그램명',
+      dataIndex: 'programName',
+      key: 'programName',
+      align: 'center',
+      minWidth: 300,
+    },
+    {
+      title: '교육분야',
+      dataIndex: 'educationField',
+      key: 'educationField',
+      align: 'center',
+    },
+    {
+      title: '진행 학년',
+      dataIndex: 'gradeTaught',
+      key: 'gradeTaught',
+      align: 'center',
+    },
+    {
+      title: '교육 진행 기간',
+      dataIndex: 'programPeriod',
+      key: 'programPeriod',
+      align: 'center',
+    },
+    {
+      title: '담당교사',
+      dataIndex: 'teacherInCharge',
+      key: 'teacherInCharge',
+      align: 'center',
+    },
   ]
 
   if (!user) return null
@@ -121,7 +162,9 @@ export function SchoolDetailModal({
           <div className="school-detail-modal__table-header">
             <h3 className="school-detail-modal__section-title">
               소속된 교사 회원 목록
-              <span className="school-detail-modal__section-title-count">총 {teachers.length}건</span>
+              <span className="school-detail-modal__section-title-count">
+                총 {teachers.length}건
+              </span>
             </h3>
             {onDeleteMembers && (
               <AppButton
@@ -138,50 +181,46 @@ export function SchoolDetailModal({
               </AppButton>
             )}
           </div>
-          <div className="school-detail-modal__table-wrap">
-            <Table<AffiliatedTeacherRow>
-              className="school-detail-modal__table"
-              rowSelection={{
-                selectedRowKeys: selectedTeacherKeys,
-                onChange: keys => setSelectedTeacherKeys(keys),
-              }}
-              columns={teacherColumns}
-              dataSource={teachers}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              onRow={record => ({
-                onClick: e => {
-                  if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-                  setSelectedTeacher(record)
-                  setTeacherDetailOpen(true)
-                },
-                style: { cursor: 'pointer' },
-              })}
-            />
-          </div>
+          <Table<AffiliatedTeacherRow>
+            className="cms-data-table"
+            rowSelection={{
+              selectedRowKeys: selectedTeacherKeys,
+              onChange: keys => setSelectedTeacherKeys(keys),
+            }}
+            columns={teacherColumns}
+            dataSource={teachers}
+            rowKey="id"
+            pagination={false}
+            onRow={record => ({
+              onClick: e => {
+                if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                setSelectedTeacher(record)
+                setTeacherDetailOpen(true)
+              },
+              style: { cursor: 'pointer' },
+            })}
+          />
         </section>
 
         {/* 3. 프로그램 참여 이력 */}
         <section className="school-detail-modal__section">
           <h3 className="school-detail-modal__section-title">
             프로그램 참여 이력
-            <span className="school-detail-modal__section-title-count">총 {programHistory.length}건</span>
+            <span className="school-detail-modal__section-title-count">
+              총 {programHistory.length}건
+            </span>
           </h3>
-          <div className="school-detail-modal__table-wrap">
-            <Table<ProgramParticipationRow>
-              className="school-detail-modal__table"
-              rowSelection={{
-                selectedRowKeys: selectedHistoryKeys,
-                onChange: keys => setSelectedHistoryKeys(keys),
-              }}
-              columns={historyColumns}
-              dataSource={programHistory}
-              rowKey="id"
-              pagination={false}
-              size="small"
-            />
-          </div>
+          <Table<ProgramParticipationRow>
+            className="cms-data-table"
+            rowSelection={{
+              selectedRowKeys: selectedHistoryKeys,
+              onChange: keys => setSelectedHistoryKeys(keys),
+            }}
+            columns={historyColumns}
+            dataSource={programHistory}
+            rowKey="id"
+            pagination={false}
+          />
         </section>
       </TealHeaderModal>
 

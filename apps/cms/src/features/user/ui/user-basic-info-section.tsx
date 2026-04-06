@@ -544,6 +544,7 @@ function AdminFields({
     <>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.NameBlock
+          className="user-basic-info-section__admin-name-block"
           rows={[
             {
               subLabel: '한글',

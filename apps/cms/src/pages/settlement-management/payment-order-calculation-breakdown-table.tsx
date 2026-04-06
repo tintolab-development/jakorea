@@ -170,8 +170,7 @@ export function PaymentOrderCalculationBreakdownTable({
   const columns = useMemo(() => getPaymentOrderCalculationColumns(), [])
 
   const handleDownload =
-    onDownloadPaymentStatement ??
-    (() => message.info('지급조서 다운로드는 추후 연결됩니다.'))
+    onDownloadPaymentStatement ?? (() => message.info('지급조서 다운로드는 추후 연결됩니다.'))
 
   return (
     <div

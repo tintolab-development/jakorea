@@ -167,6 +167,7 @@
 
 .detail-fullpage-modal__lnb-list > li {
   margin-bottom: 8px;
+  padding: 0;
 }
 
 .detail-fullpage-modal__lnb-list > li:last-child {
@@ -191,6 +192,8 @@
     background 0.2s,
     color 0.2s;
   gap: 8px;
+  box-sizing: border-box;
+  min-height: 54px;
 }
 
 .detail-fullpage-modal__lnb-item:hover {
@@ -252,6 +255,8 @@
 .detail-fullpage-modal__lnb-children-wrap {
   display: grid;
   grid-template-rows: 0fr;
+  min-height: 0;
+  overflow: hidden;
   transition: grid-template-rows 0.2s ease;
   pointer-events: none;
 }
@@ -270,6 +275,10 @@
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* 접힘 시 margin이 그리드 최소 높이를 밀어 올리지 않도록 — 펼침 때만 상단 간격 */
+.detail-fullpage-modal__lnb-children-wrap--open .detail-fullpage-modal__lnb-children {
   margin-top: 10px;
 }
 

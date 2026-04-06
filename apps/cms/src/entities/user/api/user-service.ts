@@ -13,6 +13,7 @@ import {
   matchesInstructorSettlementFilter,
   matchesInstructorTypeFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   canAssignUserProgramRoleForProgram,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
@@ -34,6 +35,8 @@ export async function getUsers(filters?: {
   instructorType?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
+  /** 강사 회원 관리(`kind=instructors`) — 순수 강사만, 교사·교사 및 강사 제외 */
+  instructorListPureOnly?: boolean
 }): Promise<Omit<User, 'password'>[]> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -42,6 +45,13 @@ export async function getUsers(filters?: {
   // 권한 필터
   if (filters?.role) {
     users = users.filter(user => user.role === filters.role)
+  }
+
+  if (filters?.instructorListPureOnly) {
+    users = users.filter(
+      user =>
+        user.role !== 'INSTRUCTOR' || resolveInstructorMemberProfile(user) === 'instructor_only'
+    )
   }
 
   // 검색 필터 (이름, 이메일)
@@ -112,6 +122,7 @@ export interface GetUsersPageParams {
   instructorType?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
+  instructorListPureOnly?: boolean
 }
 
 export interface GetUsersPageResult {

@@ -78,6 +78,20 @@
   align-items: flex-start;
 }
 
+/* 관리자 상세 — 권한 유형 값 셀(r1) 가로·세로 중앙
+ * 태그 기본 `margin-inline: auto`는 flex 부모 `justify-content`와 겹치면 한쪽으로 밀릴 수 있어 0으로 둠 */
+.user-basic-info-section__admin-name-block.detail-info-form__name-block
+  .detail-info-form__name-block-cell--r1 {
+  justify-content: left;
+  align-items: center;
+}
+
+.user-basic-info-section__admin-name-block.detail-info-form__name-block
+  .detail-info-form__name-block-cell--r1
+  .user-list-admin-perm-tag {
+  margin-inline: 0;
+}
+
 .user-basic-info-section .detail-info-form__field-content {
   align-items: flex-start;
 }

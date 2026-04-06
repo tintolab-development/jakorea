@@ -174,11 +174,6 @@
   width: auto;
 }
 
-/* 프로그램 목록 스크롤 테이블: 컬럼 헤더 영역 ↔ 본문 첫 행 사이 16px (경제 교육 분리 헤더·본문은 간격 제거) */
-.program-list-content-wrapper .program-list-card--in-wrapper .cms-data-table .ant-table-header {
-  margin-bottom: var(--spacing-16);
-}
-
 .program-list-content-wrapper--economy-education
   .program-list-card--in-wrapper
   .cms-data-table--economy-education
@@ -777,29 +772,43 @@
   --economy-table-min-width: 1492px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress .economy-program-table__col-title,
-.program-list-card--economy-education.program-list-card--economy-completed .economy-program-table__col-title {
+.program-list-card--economy-education.program-list-card--economy-in-progress
+  .economy-program-table__col-title,
+.program-list-card--economy-education.program-list-card--economy-completed
+  .economy-program-table__col-title {
   min-width: 420px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress .economy-program-table__col-recruitment,
-.program-list-card--economy-education.program-list-card--economy-in-progress .economy-program-table__col-instructor-recruit,
-.program-list-card--economy-education.program-list-card--economy-completed .economy-program-table__col-recruitment,
-.program-list-card--economy-education.program-list-card--economy-completed .economy-program-table__col-instructor-recruit {
+.program-list-card--economy-education.program-list-card--economy-in-progress
+  .economy-program-table__col-recruitment,
+.program-list-card--economy-education.program-list-card--economy-in-progress
+  .economy-program-table__col-instructor-recruit,
+.program-list-card--economy-education.program-list-card--economy-completed
+  .economy-program-table__col-recruitment,
+.program-list-card--economy-education.program-list-card--economy-completed
+  .economy-program-table__col-instructor-recruit {
   min-width: 168px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress .economy-program-table__col-school-count,
-.program-list-card--economy-education.program-list-card--economy-in-progress .economy-program-table__col-student-count,
-.program-list-card--economy-education.program-list-card--economy-completed .economy-program-table__col-school-count,
-.program-list-card--economy-education.program-list-card--economy-completed .economy-program-table__col-student-count {
+.program-list-card--economy-education.program-list-card--economy-in-progress
+  .economy-program-table__col-school-count,
+.program-list-card--economy-education.program-list-card--economy-in-progress
+  .economy-program-table__col-student-count,
+.program-list-card--economy-education.program-list-card--economy-completed
+  .economy-program-table__col-school-count,
+.program-list-card--economy-education.program-list-card--economy-completed
+  .economy-program-table__col-student-count {
   min-width: 150px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress .economy-program-table__col-category,
-.program-list-card--economy-education.program-list-card--economy-in-progress .economy-program-table__col-target,
-.program-list-card--economy-education.program-list-card--economy-completed .economy-program-table__col-category,
-.program-list-card--economy-education.program-list-card--economy-completed .economy-program-table__col-target {
+.program-list-card--economy-education.program-list-card--economy-in-progress
+  .economy-program-table__col-category,
+.program-list-card--economy-education.program-list-card--economy-in-progress
+  .economy-program-table__col-target,
+.program-list-card--economy-education.program-list-card--economy-completed
+  .economy-program-table__col-category,
+.program-list-card--economy-education.program-list-card--economy-completed
+  .economy-program-table__col-target {
   min-width: 138px;
 }
 

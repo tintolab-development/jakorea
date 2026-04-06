@@ -41,7 +41,7 @@ export function buildUserDetailSidebarItems(
             { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
           ],
         }
-      : role === 'INSTRUCTOR' && instructorProfile === 'school_teacher'
+      : role === 'INSTRUCTOR' && instructorProfile === 'instructor_only'
         ? {
             key: 'history',
             label: programsLabel,
@@ -52,11 +52,23 @@ export function buildUserDetailSidebarItems(
               { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
             ],
           }
-        : {
-            key: 'history',
-            label: programsLabel,
-            icon: programsIcon,
-          }
+        : role === 'INSTRUCTOR' &&
+            (instructorProfile === 'school_teacher' || instructorProfile === 'instructor_dual')
+          ? {
+              key: 'history',
+              label: programsLabel,
+              icon: programsIcon,
+              children: [
+                { key: 'enrollment', label: '프로그램 참여 이력' },
+                { key: 'lecture', label: '프로그램 강의 이력' },
+                { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
+              ],
+            }
+          : {
+              key: 'history',
+              label: programsLabel,
+              icon: programsIcon,
+            }
 
   const detailInfoLabel =
     role === 'ADMIN'

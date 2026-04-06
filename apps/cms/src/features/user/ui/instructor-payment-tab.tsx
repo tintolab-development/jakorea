@@ -201,6 +201,7 @@ export function InstructorPaymentTab({
   }
 
   const handleBulkDownload = () => {
+    window.alert('준비 중입니다.')
     if (selectedRowKeys.length === 0) {
       message.info('다운로드할 행을 선택해 주세요.')
       return
@@ -329,11 +330,6 @@ export function InstructorPaymentTab({
               events={calendarEvents}
               currentMonth={currentMonth}
               onDisplayMonthChange={setCurrentMonth}
-              onMonthStep={delta => {
-                const n = currentMonth.add(delta, 'month')
-                setCurrentMonth(n)
-                setCalendarSelectedDate(n.date(1))
-              }}
               selectedDate={calendarSelectedDate}
               onSelectedDateChange={setCalendarSelectedDate}
               selectedRowKeys={selectedRowKeys}
