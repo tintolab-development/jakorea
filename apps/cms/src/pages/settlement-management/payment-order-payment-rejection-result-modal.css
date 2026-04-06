@@ -20,8 +20,8 @@
   .teal-header-modal__footer
   .payment-order-payment-reject-result__footer-actions
   button {
-  width: 200px;
-  min-width: 200px;
+  width: 120px;
+  min-width: 120px;
 }
 
 .payment-order-payment-reject-result__line {
@@ -30,6 +30,7 @@
   font-weight: var(--font-weight-400, 400);
   line-height: 150%;
   color: var(--color-text-primary, #3d3d3d);
+  padding-top: 16px !important;
 }
 
 .payment-order-payment-reject-result__line + .payment-order-payment-reject-result__line {
@@ -38,4 +39,9 @@
 
 .payment-order-payment-reject-result__name {
   font-weight: var(--font-weight-700, 700);
+}
+
+.payment-order-payment-reject__reason-input .app-input__control .ant-input-affix-wrapper,
+.app-input__control .ant-input {
+  font-size: 16px !important;
 }

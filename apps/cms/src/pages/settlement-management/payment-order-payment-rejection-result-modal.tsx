@@ -46,10 +46,9 @@ export function PaymentOrderPaymentRejectionResultModal({
       }
     >
       <p className="payment-order-payment-reject-result__line">
-        <strong className="payment-order-payment-reject-result__name">[{instructorName}]</strong> 님의
-        강의비 지급 요청이 반려되었습니다.
-      </p>
-      <p className="payment-order-payment-reject-result__line">
+        <strong className="payment-order-payment-reject-result__name">[{instructorName}]</strong>{' '}
+        님의 강의비 지급 요청이 반려되었습니다.
+        <br />
         (사유 : {reason || '-'})
       </p>
     </ContentModal>

@@ -139,10 +139,11 @@ export function UnifiedFilterCard({
   }, [filters, filtersSearchSignature, searchFieldKeys])
 
   const searchDraftsRef = useRef(searchDrafts)
-  searchDraftsRef.current = searchDrafts
-
   const onSearchRef = useRef(onSearch)
-  onSearchRef.current = onSearch
+  useEffect(() => {
+    searchDraftsRef.current = searchDrafts
+    onSearchRef.current = onSearch
+  }, [searchDrafts, onSearch])
 
   const flushSearchToParentAndSearch = useCallback(() => {
     for (const f of filterRowFields) {
@@ -183,7 +184,11 @@ export function UnifiedFilterCard({
   const renderField = (field: FilterFieldConfig) => {
     if (field.type === 'radio') {
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 auto')} className={colClassFor(field)}>
+        <Col
+          key={field.key}
+          flex={colFlex(field, '0 0 auto')}
+          className={['unified-filter-card__col--radio', colClassFor(field)].filter(Boolean).join(' ')}
+        >
           <div className="unified-filter-card__field unified-filter-card__field--radio">
             <span className="unified-filter-card__label">{field.label}</span>
             <AppRadio.Group

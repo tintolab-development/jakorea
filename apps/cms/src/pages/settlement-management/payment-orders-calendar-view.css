@@ -142,7 +142,23 @@
   user-select: none;
 }
 
-/* 우측 패널: 참여 강사 캘린더와 동일 레이아웃 훅 */
+/* 좌측 캘린더: 우측 400px 고정 시 나머지 폭 */
+.payment-orders-calendar-root .participating-institutions-calendar-layout > .participating-institutions-calendar-card:first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* 우측 패널(PaymentOrdersCalendarRightPanel): 고정 400px */
+.payment-orders-calendar-root
+  .participating-institutions-calendar-layout
+  > .payment-orders-calendar-card--right.participating-institutions-calendar-card--right {
+  flex: 0 0 400px;
+  width: 400px;
+  max-width: 400px;
+  min-width: 400px;
+  box-sizing: border-box;
+}
+
 .payment-orders-calendar-card--right .payment-orders-calendar__calendar-right {
   display: flex;
   flex-direction: column;
@@ -151,6 +167,7 @@
   height: 100%;
   max-height: 100%;
   width: 100%;
+  min-width: 0;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -166,7 +183,6 @@
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  width: 100%;
 }
 
 /* 우측 카드: 시안 패딩 top/bottom 10px, left 16px, right 12px · 너비 반응형 */

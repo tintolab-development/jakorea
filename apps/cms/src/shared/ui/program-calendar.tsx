@@ -27,6 +27,7 @@ import type { Program } from '@/types/domain'
 import { getProgramDayScheduleLine } from '@/entities/program/lib/program-day-schedule-line'
 import {
   SCHEDULE_COLORS,
+  type ScheduleColorPair,
   buildResolvedScheduleColorMapForPrograms,
 } from '@/features/program/ui/program-schedule-colors'
 import {
@@ -80,6 +81,17 @@ export type ProgramCalendarEventsProps = ProgramCalendarSharedProps & {
     events: ProgramCalendarEventItem[]
     colorMap: ReturnType<ReturnType<typeof useApplicantCalendarColorMaps>['buildResolvedColorMap']>
   }) => ReactNode
+  /**
+   * 셀 배지 색상. 미지정 시 신청자 일정 팔레트(`useApplicantCalendarColorMaps`) 사용.
+   */
+  resolveEventColors?: (event: ProgramCalendarEventItem) => ScheduleColorPair | undefined
+  /**
+   * 툴팁에 표시할 일정 범위. `full-day`면 해당 날짜의 전체 `events`(지급조서 등).
+   * 기본은 호버한 한 건만.
+   */
+  eventsTooltipScope?: 'trigger-only' | 'full-day'
+  /** 셀에서 2건 초과 시 링크 문구. 기본 `외 n개의 일정` */
+  formatEventsOverflowText?: (hiddenCount: number) => string
   programs?: undefined
   onProgramClick?: undefined
 }
@@ -386,6 +398,9 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     const events = isEvents ? props.events : []
     const selectedRowKeys = isEvents ? (props.selectedRowKeys ?? []) : []
     const renderEventsTooltipContent = isEvents ? props.renderEventsTooltipContent : undefined
+    const resolveEventColors = isEvents ? props.resolveEventColors : undefined
+    const eventsTooltipScope = isEvents ? (props.eventsTooltipScope ?? 'trigger-only') : 'trigger-only'
+    const formatEventsOverflowText = isEvents ? props.formatEventsOverflowText : undefined
 
     const scheduleOverlay: 'popover' | 'tooltip' =
       scheduleOverlayProp ?? (isEvents ? 'tooltip' : 'popover')
@@ -467,8 +482,12 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 {dayEvents.slice(0, 2).map(event => {
                   const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                   const isEventSelected = selectedRowKeys.includes(event.id)
-                  const colors = resolvedColors.get(event.id) ?? SCHEDULE_COLORS[0]
-                  const previewOne = buildEventsPreview([event], resolvedColors)
+                  const colors =
+                    resolveEventColors?.(event) ?? resolvedColors.get(event.id) ?? SCHEDULE_COLORS[0]
+                  const tooltipList =
+                    eventsTooltipScope === 'full-day' ? dayEvents : [event]
+                  const tooltipColorMap = buildResolvedColorMap(tooltipList)
+                  const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
                   return (
                     <Fragment key={String(event.id)}>
                       {wrapScheduleOverlay(
@@ -483,7 +502,12 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                             }}
                             onClick={e => e.stopPropagation()}
                           >
-                            <span className="program-calendar-event-title">{displayTitle}</span>
+                            <span
+                              className="program-calendar-event-title"
+                              style={{ color: colors.text }}
+                            >
+                              {displayTitle}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -495,9 +519,16 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                     {wrapScheduleOverlay(
                       scheduleOverlay,
                       tooltipOverlayClassName,
-                      buildEventsPreview(dayEvents.slice(2), resolvedColors),
+                      (() => {
+                        const moreList =
+                          eventsTooltipScope === 'full-day'
+                            ? dayEvents
+                            : dayEvents.slice(2)
+                        return buildEventsPreview(moreList, buildResolvedColorMap(moreList))
+                      })(),
                       <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
-                        외 {dayEvents.length - 2}개의 일정
+                        {formatEventsOverflowText?.(dayEvents.length - 2) ??
+                          `외 ${dayEvents.length - 2}개의 일정`}
                       </div>
                     )}
                   </Fragment>
@@ -581,8 +612,14 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                         {dayEvents.slice(0, 2).map(event => {
                           const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                           const isEventSelected = selectedRowKeys.includes(event.id)
-                          const colors = resolvedWeekColors.get(event.id) ?? SCHEDULE_COLORS[0]
-                          const previewOne = buildEventsPreview([event], resolvedWeekColors)
+                          const colors =
+                            resolveEventColors?.(event) ??
+                            resolvedWeekColors.get(event.id) ??
+                            SCHEDULE_COLORS[0]
+                          const tooltipList =
+                            eventsTooltipScope === 'full-day' ? dayEvents : [event]
+                          const tooltipColorMap = buildResolvedColorMap(tooltipList)
+                          const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
                           return (
                             <Fragment key={String(event.id)}>
                               {wrapScheduleOverlay(
@@ -598,7 +635,12 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                     }}
                                     onClick={e => e.stopPropagation()}
                                   >
-                                    <span className="program-calendar-event-title">{displayTitle}</span>
+                                    <span
+                                      className="program-calendar-event-title"
+                                      style={{ color: colors.text }}
+                                    >
+                                      {displayTitle}
+                                    </span>
                                   </div>
                                 </div>
                               )}
@@ -610,9 +652,16 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                             {wrapScheduleOverlay(
                               scheduleOverlay,
                               tooltipOverlayClassName,
-                              buildEventsPreview(dayEvents.slice(2), resolvedWeekColors),
+                              (() => {
+                                const moreList =
+                                  eventsTooltipScope === 'full-day'
+                                    ? dayEvents
+                                    : dayEvents.slice(2)
+                                return buildEventsPreview(moreList, buildResolvedColorMap(moreList))
+                              })(),
                               <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
-                                외 {dayEvents.length - 2}개의 일정
+                                {formatEventsOverflowText?.(dayEvents.length - 2) ??
+                                  `외 ${dayEvents.length - 2}개의 일정`}
                               </div>
                             )}
                           </Fragment>

@@ -257,14 +257,14 @@ export default function PaymentOrdersPage() {
                     { label: '프로그램별', value: 'program' },
                     { label: '강사별', value: 'instructor' },
                   ],
-                  flex: '0 0 auto',
+                  width: 188,
                 },
                 {
                   key: 'programName',
                   type: 'search',
                   label: '프로그램명',
                   placeholder: '프로그램명을 입력하세요',
-                  flex: '1 1 240px',
+                  width: '20%',
                 },
                 {
                   key: 'status',
@@ -273,13 +273,13 @@ export default function PaymentOrdersPage() {
                   placeholder: '전체',
                   options: statusSelectOptions.filter(o => o.value !== 'all'),
                   allowClear: true,
-                  flex: '0 0 280px',
+                  width: '20%',
                 },
                 {
                   key: 'dateRange',
                   type: 'dateRange',
                   label: '기간',
-                  flex: '1 1 360px',
+                  width: '30%',
                 },
               ]}
               filters={{
@@ -368,6 +368,15 @@ export default function PaymentOrdersPage() {
                   exposure={exposureMode}
                   programRows={listProgram}
                   instructorRows={listInstructor}
+                  onPaymentStatusDetailClick={payload => {
+                    if (payload.exposure === 'program') {
+                      setSelectedProgramForDetail(payload.row)
+                      setProgramStatusDetailOpen(true)
+                    } else {
+                      setSelectedInstructorForDetail(payload.row)
+                      setInstructorStatusDetailOpen(true)
+                    }
+                  }}
                 />
               ) : isProgram ? (
                 <Table<PaymentOrderAdminProgramRow>

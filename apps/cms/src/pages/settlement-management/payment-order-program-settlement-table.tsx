@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -288,9 +288,9 @@ export function PaymentOrderProgramSettlementTable({
           <div className="participating-institutions-section__table-actions">
             <AppButton
               variant="cancel"
-              size="filter-wide"
+              size="filter"
               disabled={selectedRowKeys.length === 0}
-              onClick={() => message.info('일괄 확인은 추후 연결됩니다.')}
+              onClick={() => window.alert('준비 중입니다.')}
             >
               일괄 확인
             </AppButton>
@@ -298,7 +298,7 @@ export function PaymentOrderProgramSettlementTable({
               variant="primary"
               size="filter-wide"
               icon={<DownloadOutlined />}
-              onClick={() => message.info('지급조서 다운로드는 추후 연결됩니다.')}
+              onClick={() => window.alert('준비 중입니다.')}
             >
               지급조서 다운로드
             </AppButton>
