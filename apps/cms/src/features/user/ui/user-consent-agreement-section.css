@@ -4,6 +4,17 @@
   margin-top: var(--detail-fullpage-section-gap, 32px);
 }
 
+.user-consent-agreement-section__form.detail-info-form {
+  margin-top: 0;
+}
+
+.user-consent-agreement-section__value-status {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
 .user-consent-agreement-section__table {
   width: 100%;
 }

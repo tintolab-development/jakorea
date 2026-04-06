@@ -19,6 +19,7 @@ import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
+import { getInstructorTypeDisplayLabel } from '@/entities/user/lib/matches-instructor-list-filters'
 
 type Row = Omit<User, 'password'>
 
@@ -60,11 +61,8 @@ function displayMetric(n: number | undefined | null) {
 }
 
 function instructorTypeLabel(record: Row): string {
-  const fromApi = record.listMetrics?.instructorTypeLabel
-  if (fromApi) return fromApi
-  if (record.instructorInfo?.isBusinessIncome === true) return '사업소득'
-  if (record.instructorInfo?.isBusinessIncome === false) return '기타소득'
-  return '-'
+  const label = getInstructorTypeDisplayLabel(record)
+  return label || '-'
 }
 
 function adminProgramCountDisplay(record: Row): string {

@@ -39,8 +39,10 @@
  * 프로그램·정산·관리자 담당 이력 탭: 필터·테이블 전폭 사용
  * (.detail-fullpage-modal__content 기본 좌·우·하 52px — 기본 정보 탭은 :has 미매칭으로 유지)
  */
-.user-detail-fullpage-modal .detail-fullpage-modal__content:has(.user-detail-fullpage-modal__programs),
-.user-detail-fullpage-modal .detail-fullpage-modal__content:has(.user-detail-fullpage-modal__admin-programs) {
+.user-detail-fullpage-modal
+  .detail-fullpage-modal__content:has(.user-detail-fullpage-modal__programs),
+.user-detail-fullpage-modal
+  .detail-fullpage-modal__content:has(.user-detail-fullpage-modal__admin-programs) {
   padding: 0;
 }
 
@@ -51,7 +53,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   width: 100%;
-  margin-top: 33px;
+  margin-top: 12px;
 }
 
 /* 기본 정보 블록 — 기본 정보 + 정보 제공 동의 섹션 세로 스택 */

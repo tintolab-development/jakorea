@@ -25,6 +25,7 @@ import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
@@ -41,9 +42,12 @@ import {
   pendingRoleToMemberListKind,
   resolveRoleFilterFromMemberListParams,
   userRoleToBasicInfoEntrySource,
+  type MemberListKind,
 } from '@/shared/config/member-list-kinds'
+import type { AdminPermissionTagVariant } from '@/features/user/lib/admin-permission-display'
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
+import { getUserListFilterFields } from './user-list-filter-fields'
 
 interface UserListQueryParams extends Record<string, string | undefined> {
   /** 전체·학교·강사·관리자 등 목록 맥락 (`member-list-kinds` 참고) */
@@ -56,6 +60,10 @@ interface UserListQueryParams extends Record<string, string | undefined> {
   programsChild?: string
   createdAtFrom?: string
   createdAtTo?: string
+  institutionLocation?: string
+  instructorType?: string
+  settlementStatus?: string
+  adminPermissionVariant?: string
 }
 
 type ApiFilters = {
@@ -63,6 +71,16 @@ type ApiFilters = {
   search?: string
   createdAtFrom?: string
   createdAtTo?: string
+  institutionLocation?: string
+  instructorType?: string
+  settlementStatus?: string
+  adminPermissionVariant?: AdminPermissionTagVariant
+}
+
+function parseAdminPermissionVariantParam(raw: string | undefined): AdminPermissionTagVariant | '' {
+  if (!raw || raw === 'ALL') return ''
+  if (raw === 'manager' || raw === 'partner' || raw === 'viewer') return raw
+  return ''
 }
 
 function pendingRoleFromParams(params: UserListQueryParams): UserRole | 'ALL' {
@@ -75,12 +93,35 @@ function pendingRoleFromParams(params: UserListQueryParams): UserRole | 'ALL' {
   return 'ALL'
 }
 
-function pendingToApiFilters(pending: {
-  search: string
-  createdAtRange: [Dayjs | null, Dayjs | null] | null
-}): ApiFilters {
+function pendingToApiFilters(
+  pending: {
+    search: string
+    institutionLocation: string
+    instructorType: string
+    settlementStatus: string
+    adminPermissionVariant: string
+    createdAtRange: [Dayjs | null, Dayjs | null] | null
+  },
+  listKind: MemberListKind
+): ApiFilters {
   const api: ApiFilters = {}
   if (pending.search) api.search = pending.search
+  if (listKind === 'institutions') {
+    const loc = pending.institutionLocation.trim()
+    if (loc) api.institutionLocation = loc
+  }
+  if (listKind === 'instructors') {
+    const it = pending.instructorType.trim()
+    if (it) api.instructorType = it
+    const ss = pending.settlementStatus.trim()
+    if (ss) api.settlementStatus = ss
+  }
+  if (listKind === 'admins') {
+    const v = pending.adminPermissionVariant.trim()
+    if (v === 'manager' || v === 'partner' || v === 'viewer') {
+      api.adminPermissionVariant = v
+    }
+  }
   if (pending.createdAtRange?.[0] && pending.createdAtRange[1]) {
     api.createdAtFrom = pending.createdAtRange[0].format('YYYY-MM-DD')
     api.createdAtTo = pending.createdAtRange[1].format('YYYY-MM-DD')
@@ -104,6 +145,21 @@ export function UserListPage() {
       api.createdAtFrom = from
       api.createdAtTo = to
     }
+    const initialKind = normalizeMemberListKind(params.kind)
+    if (initialKind === 'institutions') {
+      const loc = params.institutionLocation?.trim()
+      if (loc) api.institutionLocation = loc
+    }
+    if (initialKind === 'instructors') {
+      const it = params.instructorType?.trim()
+      if (it) api.instructorType = it
+      const ss = params.settlementStatus?.trim()
+      if (ss) api.settlementStatus = ss
+    }
+    if (initialKind === 'admins') {
+      const apv = parseAdminPermissionVariantParam(params.adminPermissionVariant)
+      if (apv) api.adminPermissionVariant = apv
+    }
     return api
   })
 
@@ -112,8 +168,20 @@ export function UserListPage() {
       kind: params.kind,
       role: params.role,
     })
+    const kind = normalizeMemberListKind(params.kind)
+    const base: ApiFilters = { ...activeFilters }
+    if (kind !== 'institutions') {
+      delete base.institutionLocation
+    }
+    if (kind !== 'instructors') {
+      delete base.instructorType
+      delete base.settlementStatus
+    }
+    if (kind !== 'admins') {
+      delete base.adminPermissionVariant
+    }
     return {
-      ...activeFilters,
+      ...base,
       ...(role ? { role } : {}),
     }
   }, [activeFilters, params.kind, params.role])
@@ -186,6 +254,9 @@ export function UserListPage() {
    */
   const pendingOpenedUserIdRef = useRef<string | null>(null)
 
+  /** 학교(SCHOOL) 상세 → 소속 교사 linkedUserId 진입 시, X 버튼으로 학교 상세로 되돌리기 */
+  const schoolDetailReturnUserRef = useRef<Omit<User, 'password'> | null>(null)
+
   // 테이블 행 선택 (일괄 삭제용)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   // 일괄 삭제 대상 (여러 명 선택 시)
@@ -195,6 +266,10 @@ export function UserListPage() {
   const [pendingFilters, setPendingFilters] = useState<{
     search: string
     role: UserRole | 'ALL'
+    institutionLocation: string
+    instructorType: string
+    settlementStatus: string
+    adminPermissionVariant: string
     createdAtRange: [Dayjs | null, Dayjs | null] | null
   }>(() => {
     const from = params.createdAtFrom
@@ -205,9 +280,18 @@ export function UserListPage() {
       const end = dayjs(to)
       if (start.isValid() && end.isValid()) createdAtRange = [start, end]
     }
+    const initialKind = normalizeMemberListKind(params.kind)
     return {
       search: params.search || '',
       role: pendingRoleFromParams(params),
+      institutionLocation:
+        initialKind === 'institutions' ? (params.institutionLocation ?? '').trim() : '',
+      instructorType: initialKind === 'instructors' ? (params.instructorType ?? '').trim() : '',
+      settlementStatus: initialKind === 'instructors' ? (params.settlementStatus ?? '').trim() : '',
+      adminPermissionVariant:
+        initialKind === 'admins'
+          ? parseAdminPermissionVariantParam(params.adminPermissionVariant)
+          : '',
       createdAtRange,
     }
   })
@@ -222,17 +306,38 @@ export function UserListPage() {
       const end = dayjs(to)
       if (start.isValid() && end.isValid()) createdAtRange = [start, end]
     }
+    const kind = normalizeMemberListKind(params.kind)
     setPendingFilters({
       search: params.search || '',
       role: pendingRoleFromParams(params),
+      institutionLocation: kind === 'institutions' ? (params.institutionLocation ?? '').trim() : '',
+      instructorType: kind === 'instructors' ? (params.instructorType ?? '').trim() : '',
+      settlementStatus: kind === 'instructors' ? (params.settlementStatus ?? '').trim() : '',
+      adminPermissionVariant:
+        kind === 'admins' ? parseAdminPermissionVariantParam(params.adminPermissionVariant) : '',
       createdAtRange,
     })
-  }, [params.kind, params.search, params.role, params.createdAtFrom, params.createdAtTo])
+  }, [
+    params.kind,
+    params.search,
+    params.role,
+    params.createdAtFrom,
+    params.createdAtTo,
+    params.institutionLocation,
+    params.instructorType,
+    params.settlementStatus,
+    params.adminPermissionVariant,
+  ])
 
   // 선택된 사용자 (드로어용)
   const selectedUser = useUserStore(state => selectSelectedUser(state))
 
   const resolvedMemberListKind = useMemo(() => normalizeMemberListKind(params.kind), [params.kind])
+
+  const userListFilterFields = useMemo(
+    () => getUserListFilterFields(resolvedMemberListKind),
+    [resolvedMemberListKind]
+  )
 
   // URL(id) 기반 모달 상태 복원: 새로고침/직접 진입 시 상세 모달 유지
   useEffect(() => {
@@ -336,11 +441,32 @@ export function UserListPage() {
 
   // 조회 버튼 클릭 시: URL·스토어 동기화 + React Query 키 변경으로 자동 재조회
   const handleSearch = () => {
-    const api = pendingToApiFilters(pendingFilters)
+    const api = pendingToApiFilters(pendingFilters, resolvedMemberListKind)
     setActiveFilters(api)
     setParam('search', pendingFilters.search || null)
     setParam('kind', pendingRoleToMemberListKind(pendingFilters.role))
     setParam('role', null)
+    if (resolvedMemberListKind === 'institutions') {
+      setParam('institutionLocation', pendingFilters.institutionLocation.trim() || null)
+    } else {
+      setParam('institutionLocation', null)
+    }
+    if (resolvedMemberListKind === 'instructors') {
+      setParam('instructorType', pendingFilters.instructorType.trim() || null)
+      setParam('settlementStatus', pendingFilters.settlementStatus.trim() || null)
+    } else {
+      setParam('instructorType', null)
+      setParam('settlementStatus', null)
+    }
+    if (resolvedMemberListKind === 'admins') {
+      const apv = pendingFilters.adminPermissionVariant.trim()
+      setParam(
+        'adminPermissionVariant',
+        apv === 'manager' || apv === 'partner' || apv === 'viewer' ? apv : null
+      )
+    } else {
+      setParam('adminPermissionVariant', null)
+    }
     if (pendingFilters.createdAtRange?.[0] && pendingFilters.createdAtRange[1]) {
       setParam('createdAtFrom', pendingFilters.createdAtRange[0].format('YYYY-MM-DD'))
       setParam('createdAtTo', pendingFilters.createdAtRange[1].format('YYYY-MM-DD'))
@@ -375,34 +501,62 @@ export function UserListPage() {
 
   const handleNavigateToLinkedUser = useCallback(
     async (userId: string) => {
+      const schoolReturn = drawerUser?.role === 'SCHOOL' ? drawerUser : null
+      if (schoolReturn) {
+        schoolDetailReturnUserRef.current = schoolReturn
+      }
       try {
         await fetchUserById(userId)
         const u = useUserStore.getState().usersById[userId]
-        if (u) {
-          handleView(u)
-        } else {
+        if (!u) {
+          if (schoolReturn) schoolDetailReturnUserRef.current = null
           message.error('회원 정보를 찾을 수 없습니다.')
+          return
         }
+        if (u.role === 'INSTRUCTOR') {
+          const profile = resolveInstructorMemberProfile(u)
+          if (profile === 'instructor_only') {
+            if (schoolReturn) schoolDetailReturnUserRef.current = null
+            message.warning(
+              '학교 소속 교사 목록에서는 교사·교사 및 강사 회원만 열 수 있습니다. 순수 강사는 회원 목록의 강사 탭에서 확인하세요.'
+            )
+            return
+          }
+        }
+        handleView(u)
       } catch {
+        if (schoolReturn) schoolDetailReturnUserRef.current = null
         message.error('회원 정보를 불러오지 못했습니다.')
       }
     },
-    [fetchUserById, handleView]
+    [drawerUser, fetchUserById, handleView]
   )
 
-  // Drawer 닫기
-  const handleDrawerClose = () => {
+  /** 모달·URL·복귀 스택까지 완전히 닫음 (탈퇴/삭제 플로우 등) */
+  const flushUserDetailModal = useCallback(() => {
     pendingOpenedUserIdRef.current = null
     setDetailBridgeUser(null)
+    schoolDetailReturnUserRef.current = null
     setDrawerUser(null)
     closeDrawer()
-    clearSelectedUserId(null) // 스토어에서 선택 해제
+    clearSelectedUserId(null)
     setParams({
       id: undefined,
       lnb: undefined,
       [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
     })
-  }
+  }, [closeDrawer, clearSelectedUserId, setParams, setDrawerUser])
+
+  /** 풀페이지 X — 학교→교사 drill-down 중이면 학교 상세로, 아니면 목록으로 */
+  const handleUserDetailModalClose = useCallback(() => {
+    const back = schoolDetailReturnUserRef.current
+    if (back) {
+      schoolDetailReturnUserRef.current = null
+      handleView(back)
+      return
+    }
+    flushUserDetailModal()
+  }, [handleView, flushUserDetailModal])
 
   // 권한 변경
   const handleEdit = (user: Omit<User, 'password'>) => {
@@ -480,50 +634,58 @@ export function UserListPage() {
   }
 
   return (
-    <div style={{ padding: '0 12px' }}>
+    <div>
       <div className="user-list-page__filter-wrap">
         <FilterListLayout
           className="program-list-content-wrapper"
           bordered={false}
-          fields={[
-            {
-              key: 'search',
-              type: 'search',
-              label: '회원명',
-              width: '30%',
-              placeholder: '회원명을 입력하세요',
-            },
-            {
-              key: 'role',
-              type: 'select',
-              label: '회원 유형',
-              placeholder: '전체',
-              width: '30%',
-              options: [
-                { label: '전체', value: 'ALL' },
-                { label: '개인', value: 'INDIVIDUAL' },
-                { label: '학교(교사)', value: 'SCHOOL' },
-                { label: '강사', value: 'INSTRUCTOR' },
-                { label: '관리자', value: 'ADMIN' },
-              ],
-            },
-            {
-              key: 'createdAtRange',
-              type: 'dateRange',
-              label: '가입일',
-              width: '40%',
-            },
-          ]}
-          filters={{
-            search: pendingFilters.search,
-            role: pendingFilters.role,
-            createdAtRange: pendingFilters.createdAtRange ?? undefined,
-          }}
+          fields={userListFilterFields}
+          filters={
+            resolvedMemberListKind === 'institutions'
+              ? {
+                  search: pendingFilters.search,
+                  institutionLocation: pendingFilters.institutionLocation,
+                  createdAtRange: pendingFilters.createdAtRange ?? undefined,
+                }
+              : resolvedMemberListKind === 'instructors'
+                ? {
+                    search: pendingFilters.search,
+                    instructorType: pendingFilters.instructorType,
+                    settlementStatus: pendingFilters.settlementStatus,
+                    createdAtRange: pendingFilters.createdAtRange ?? undefined,
+                  }
+                : resolvedMemberListKind === 'admins'
+                  ? {
+                      search: pendingFilters.search,
+                      adminPermissionVariant: pendingFilters.adminPermissionVariant,
+                      createdAtRange: pendingFilters.createdAtRange ?? undefined,
+                    }
+                  : {
+                      search: pendingFilters.search,
+                      role: pendingFilters.role,
+                      createdAtRange: pendingFilters.createdAtRange ?? undefined,
+                    }
+          }
           onFilterChange={(key, value) => {
             if (key === 'createdAtRange') {
               setPendingFilters(prev => ({
                 ...prev,
                 createdAtRange: value as [Dayjs | null, Dayjs | null] | null,
+              }))
+            } else if (key === 'institutionLocation') {
+              setPendingFilters(prev => ({
+                ...prev,
+                institutionLocation: value === undefined || value === null ? '' : String(value),
+              }))
+            } else if (key === 'instructorType' || key === 'settlementStatus') {
+              setPendingFilters(prev => ({
+                ...prev,
+                [key]: value === undefined || value === null ? '' : String(value),
+              }))
+            } else if (key === 'adminPermissionVariant') {
+              setPendingFilters(prev => ({
+                ...prev,
+                adminPermissionVariant: value === undefined || value === null ? '' : String(value),
               }))
             } else {
               setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -614,12 +776,12 @@ export function UserListPage() {
         open={userDetailModalOpen}
         user={modalDetailUser}
         basicInfoEntrySource={basicInfoEntrySource}
-        onClose={handleDrawerClose}
+        onClose={handleUserDetailModalClose}
         onEdit={modalDetailUser ? () => handleEdit(modalDetailUser) : undefined}
         onWithdraw={
           canWrite && modalDetailUser
             ? (u: Omit<User, 'password'>) => {
-                handleDrawerClose()
+                flushUserDetailModal()
                 setDeletingUser(u)
                 setBulkDeleteUsers(null)
                 setDeleteModalOpen(true)

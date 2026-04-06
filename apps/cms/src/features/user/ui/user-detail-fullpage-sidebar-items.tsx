@@ -1,9 +1,16 @@
-import { AccountBookOutlined, BulbOutlined, FolderOpenOutlined } from '@ant-design/icons'
+import { BulbOutlined, WalletOutlined } from '@ant-design/icons'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import type { User } from '@/types/user'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { instructorDetailShowsPaymentStatusLnb } from './user-detail-fullpage-helpers'
+import { UserProgramsHistoryLnbIcon } from './user-programs-history-lnb-icon'
+
+type SidebarUser =
+  | Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
+  | undefined
 
 export function buildUserDetailSidebarItems(
-  role: User['role'] | undefined,
+  user: SidebarUser,
   mode: 'default' | 'permission'
 ): DetailModalSidebarNavItem[] {
   if (mode === 'permission') {
@@ -16,10 +23,12 @@ export function buildUserDetailSidebarItems(
     ]
   }
 
+  const role = user?.role
   const programsLabel = role === 'ADMIN' ? '담당 프로그램 이력' : '프로그램 참여 이력'
-  const programsIcon = (
-    <FolderOpenOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />
-  )
+  const programsIcon = <UserProgramsHistoryLnbIcon />
+
+  const instructorProfile =
+    user && role === 'INSTRUCTOR' ? resolveInstructorMemberProfile(user) : null
 
   const programsItem: DetailModalSidebarNavItem =
     role === 'INDIVIDUAL'
@@ -32,14 +41,13 @@ export function buildUserDetailSidebarItems(
             { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
           ],
         }
-      : role === 'INSTRUCTOR'
+      : role === 'INSTRUCTOR' && instructorProfile === 'school_teacher'
         ? {
             key: 'history',
             label: programsLabel,
             icon: programsIcon,
             children: [
-              // TODO: 강사 상세 > 프로그램 수강 이력은 개발 완료 후 주석 해제 예정
-              // { key: 'enrollment', label: '프로그램 수강 이력' },
+              { key: 'enrollment', label: '프로그램 수강 이력' },
               { key: 'lecture', label: '프로그램 강의 이력' },
               { key: 'volunteer', label: '봉사 프로그램 참여 이력' },
             ],
@@ -50,29 +58,32 @@ export function buildUserDetailSidebarItems(
             icon: programsIcon,
           }
 
+  const detailInfoLabel =
+    role === 'ADMIN'
+      ? '관리자 상세 정보'
+      : role === 'INSTRUCTOR' && instructorProfile === 'instructor_only'
+        ? '강사 상세 정보'
+        : role === 'INSTRUCTOR' &&
+            (instructorProfile === 'school_teacher' || instructorProfile === 'instructor_dual')
+          ? '교사 상세 정보'
+          : role === 'SCHOOL'
+            ? '프로그램 정보'
+            : '회원 상세 정보'
+
   const items: DetailModalSidebarNavItem[] = [
     {
       key: 'detail-info',
-      label:
-        role === 'ADMIN'
-          ? '관리자 상세 정보'
-          : role === 'INSTRUCTOR'
-            ? '강사 상세 정보'
-            : role === 'SCHOOL'
-              ? '학교 상세 정보'
-              : '회원 상세 정보',
+      label: detailInfoLabel,
       icon: <BulbOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
     },
     programsItem,
   ]
 
-  if (role === 'INSTRUCTOR') {
+  if (user && instructorDetailShowsPaymentStatusLnb(user)) {
     items.push({
       key: 'payment-status',
       label: '정산 현황',
-      icon: (
-        <AccountBookOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />
-      ),
+      icon: <WalletOutlined className="detail-fullpage-modal__lnb-icon" style={{ fontSize: 20 }} />,
     })
   }
 

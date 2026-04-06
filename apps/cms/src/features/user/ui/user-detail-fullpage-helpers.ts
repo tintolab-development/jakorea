@@ -1,12 +1,22 @@
 import type { User } from '@/types/user'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 
 export type UserDetailLnbKey = 'detail-info' | 'history' | 'payment-status'
 
-/** 프로그램 참여 이력 LNB 하위 (전체·강사 회원) */
+/** 프로그램 참여 이력 LNB 하위 (전체·일반 교사) */
 export type UserDetailProgramsChildKey = 'enrollment' | 'lecture' | 'volunteer'
 
-export function programsHistoryHasChildMenu(role: User['role']): boolean {
-  return role === 'INDIVIDUAL' || role === 'INSTRUCTOR'
+export type UserDetailUrlSyncUser = Pick<
+  User,
+  'id' | 'role' | 'name' | 'instructorMemberProfile' | 'affiliatedSchoolUserId' | 'affiliatedSchoolName' | 'schoolInfo'
+>
+
+export function programsHistoryHasChildMenu(user: UserDetailUrlSyncUser): boolean {
+  if (user.role === 'INDIVIDUAL') return true
+  if (user.role === 'INSTRUCTOR') {
+    return resolveInstructorMemberProfile(user) === 'school_teacher'
+  }
+  return false
 }
 
 export function parseProgramsChildParam(raw: string | null): UserDetailProgramsChildKey | null {
@@ -14,28 +24,64 @@ export function parseProgramsChildParam(raw: string | null): UserDetailProgramsC
   return null
 }
 
-export function clampProgramsChildForRole(
-  role: User['role'],
+export function clampProgramsChildForUser(
+  user: UserDetailUrlSyncUser,
   child: UserDetailProgramsChildKey
 ): UserDetailProgramsChildKey {
-  if (role === 'INDIVIDUAL') {
+  if (user.role === 'INDIVIDUAL') {
     if (child === 'lecture') return 'enrollment'
     return child
   }
-  if (role === 'INSTRUCTOR') {
-    // TODO: 강사 상세 > 프로그램 수강 이력은 개발 완료 후 재오픈 예정
-    if (child === 'enrollment') return 'lecture'
+  if (user.role === 'INSTRUCTOR' && programsHistoryHasChildMenu(user)) {
     return child
   }
   return 'enrollment'
 }
 
-export function userDetailModalTitle(displayName: string, role: User['role']): string {
-  switch (role) {
+/** 정산 현황 사이드바·딥링크 — 순수 교사(`school_teacher`)는 비노출, 겸직·순수 강사만 허용 */
+export function instructorDetailShowsPaymentStatusLnb(
+  user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
+): boolean {
+  if (user.role !== 'INSTRUCTOR') return false
+  return resolveInstructorMemberProfile(user) !== 'school_teacher'
+}
+
+function managedProgramCountDisplay(user: Pick<User, 'listMetrics' | 'programRoles'>): string {
+  const n = user.listMetrics?.managedProgramCount
+  if (n != null && !Number.isNaN(n)) return String(n)
+  const keys = user.programRoles ? Object.keys(user.programRoles).length : 0
+  return keys > 0 ? String(keys) : '-'
+}
+
+function instructorDetailTitleSchoolName(user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>): string {
+  const fromField = user.affiliatedSchoolName?.trim()
+  if (fromField) return fromField
+  return user.schoolInfo?.schoolName?.trim() || '-'
+}
+
+export function userDetailModalTitle(user: Pick<
+  User,
+  | 'name'
+  | 'role'
+  | 'instructorMemberProfile'
+  | 'affiliatedSchoolUserId'
+  | 'affiliatedSchoolName'
+  | 'schoolInfo'
+  | 'listMetrics'
+  | 'programRoles'
+>): string {
+  const displayName = user.name
+  switch (user.role) {
     case 'ADMIN':
       return `관리자 상세_${displayName}`
-    case 'INSTRUCTOR':
+    case 'INSTRUCTOR': {
+      const profile = resolveInstructorMemberProfile(user)
+      if (profile === 'school_teacher' || profile === 'instructor_dual') {
+        const school = instructorDetailTitleSchoolName(user)
+        return `교사 상세_${school}_${displayName}`
+      }
       return `강사 상세_${displayName}`
+    }
     case 'SCHOOL':
       return `학교 상세_${displayName}`
     default:
@@ -45,17 +91,24 @@ export function userDetailModalTitle(displayName: string, role: User['role']): s
 
 export function userDetailSidebarNavAriaLabel(
   mode: 'default' | 'permission',
-  role: User['role']
+  user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
 ): string {
   if (mode === 'permission') return '신청 정보 메뉴'
-  switch (role) {
+  switch (user.role) {
     case 'ADMIN':
       return '관리자 상세 메뉴'
-    case 'INSTRUCTOR':
+    case 'INSTRUCTOR': {
+      const profile = resolveInstructorMemberProfile(user)
+      if (profile === 'school_teacher' || profile === 'instructor_dual') {
+        return '교사 상세 메뉴'
+      }
       return '강사 상세 메뉴'
+    }
     case 'SCHOOL':
       return '학교 상세 메뉴'
     default:
       return '회원 상세 메뉴'
   }
 }
+
+export { managedProgramCountDisplay, instructorDetailTitleSchoolName }

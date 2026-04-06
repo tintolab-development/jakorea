@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
 import type { SetURLSearchParams } from 'react-router-dom'
-import type { User } from '@/types/user'
 import {
   programsHistoryHasChildMenu,
   parseProgramsChildParam,
-  clampProgramsChildForRole,
+  clampProgramsChildForUser,
+  instructorDetailShowsPaymentStatusLnb,
   type UserDetailLnbKey,
   type UserDetailProgramsChildKey,
+  type UserDetailUrlSyncUser,
 } from './user-detail-fullpage-helpers'
 
 /**
@@ -17,7 +18,7 @@ import {
  */
 export function useUserDetailUrlSync(params: {
   open: boolean
-  displayUser: Pick<User, 'id' | 'role'> | null | undefined
+  displayUser: UserDetailUrlSyncUser | null | undefined
   mode: 'default' | 'permission'
   searchParams: URLSearchParams
   setSearchParams: SetURLSearchParams
@@ -67,24 +68,22 @@ export function useUserDetailUrlSync(params: {
 
     const rawLnb = sp.get('lnb')
     const isInstructor = displayUser.role === 'INSTRUCTOR'
-    const hasChildMenu = programsHistoryHasChildMenu(displayUser.role)
+    const hasChildMenu = programsHistoryHasChildMenu(displayUser)
+    const paymentLnbAllowed = instructorDetailShowsPaymentStatusLnb(displayUser)
 
     const nextLnb: UserDetailLnbKey =
       rawLnb === 'history'
         ? 'history'
-        : rawLnb === 'payment-status' && isInstructor
+        : rawLnb === 'payment-status' && isInstructor && paymentLnbAllowed
           ? 'payment-status'
           : 'detail-info'
 
-    let nextChild: UserDetailProgramsChildKey =
-      displayUser.role === 'INSTRUCTOR' ? 'lecture' : 'enrollment'
+    let nextChild: UserDetailProgramsChildKey = 'enrollment'
     if (nextLnb === 'history' && hasChildMenu) {
       const parsed = parseProgramsChildParam(sp.get(programsChildQueryKey))
       nextChild = parsed
-        ? clampProgramsChildForRole(displayUser.role, parsed)
-        : displayUser.role === 'INSTRUCTOR'
-          ? 'lecture'
-          : 'enrollment'
+        ? clampProgramsChildForUser(displayUser, parsed)
+        : 'enrollment'
     }
 
     setActiveLnb(nextLnb)
@@ -116,12 +115,13 @@ export function useUserDetailUrlSync(params: {
     if (urlDirty) {
       setSearchParams(nextParams, { replace: true })
     }
-    // displayUser 전체 미포함: id·role만 의존(원본 모달과 동일, 참조 변경 과실행 방지)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     open,
     displayUser?.id,
     displayUser?.role,
+    displayUser?.instructorMemberProfile,
+    displayUser?.affiliatedSchoolUserId,
     mode,
     searchParams,
     setSearchParams,

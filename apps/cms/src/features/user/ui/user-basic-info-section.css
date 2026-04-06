@@ -17,7 +17,67 @@
   gap: var(--spacing-8, 8px);
 }
 
-.user-basic-info-section__text-mint {
-  color: var(--JA-mint-01, #01a1af);
+.user-basic-info-section__text-blue {
+  color: var(--color-blue, #017eaf);
   font-weight: 500;
+}
+
+/* 강의비 행 — 스펙: "유형 | 금액" */
+.basic-info-fee {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  column-gap: 0;
+}
+
+.basic-info-fee__sep {
+  font-weight: 500;
+  margin: 0 4px;
+}
+
+.detail-info-form__name-block .user-basic-info-section__text-blue {
+  color: var(--color-blue, #017eaf);
+}
+
+/* 교사 및 강사: 강의비 블록은 별도 DetailInfoForm — 기본 정보와 16px 간격, 헤더는 스크린리더 전용 */
+.user-basic-info-section--instructor-fee-form {
+  margin-top: var(--spacing-16, 16px);
+  width: 100%;
+  min-width: 0;
+}
+
+.user-basic-info-section--instructor-fee-form .detail-info-form__header {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 자택 주소: 뒷부분 가우시안 블러 (마스킹 * 대신) */
+.user-basic-info-section__address-privacy {
+  display: inline;
+}
+
+.user-basic-info-section__address-privacy__blur {
+  display: inline-block;
+  filter: blur(5px);
+  user-select: none;
+  -webkit-user-select: none;
+  max-width: 100%;
+  vertical-align: baseline;
+}
+
+/* 성명 블록·본문: 줄바꿈 시 상단 정렬(라벨·다열과 시각 정렬) */
+.user-basic-info-section .detail-info-form__name-block-cell--value {
+  align-items: flex-start;
+}
+
+.user-basic-info-section .detail-info-form__field-content {
+  align-items: flex-start;
 }
