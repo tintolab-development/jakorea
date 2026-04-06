@@ -66,9 +66,7 @@ export function DetailFullPageModal({
                 <CloseOutlined />
               </button>
             </div>
-            {headerExtra ? (
-              <div className="detail-fullpage-modal__header-extra-slot">{headerExtra}</div>
-            ) : null}
+            {headerExtra ? <div>{headerExtra}</div> : null}
           </header>
           <div className="detail-fullpage-modal__content">{children}</div>
         </div>

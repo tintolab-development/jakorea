@@ -109,7 +109,11 @@ export function UserDetailFullPageHeaderActions({
           variant="danger"
           size="filter"
           dangerFillOnHover
-          onClick={onOpenWithdrawConfirm}
+          onClick={() => {
+            window.alert('준비 중입니다.')
+            // TODO: 기능 연결 예정 — 학교 삭제 확인 모달
+            // onOpenWithdrawConfirm()
+          }}
           className="user-detail-modal__btn-withdraw"
         >
           학교 삭제

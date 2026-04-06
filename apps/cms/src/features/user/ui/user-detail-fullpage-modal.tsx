@@ -22,15 +22,24 @@ import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
 import { EnrollmentProgramDetailModal } from './enrollment-program-detail-modal'
 import { UserBasicInfoSection, type UserBasicInfoEntrySource } from './user-basic-info-section'
-import { UserConsentAgreementSection } from './user-consent-agreement-section'
-import { InstructorBasicInfo } from './instructor-basic-info'
+import {
+  UserConsentAgreementSection,
+  resolveUserConsentAgreementPreset,
+} from './user-consent-agreement-section'
+import { InstructorResumeDetailForms } from './instructor-resume-detail-forms'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import {
+  maskedUserForInstructorDetail,
+  userToApplicantInstructorRow,
+} from '@/features/user/lib/user-to-applicant-instructor-row'
 import { InstructorPaymentTab } from './instructor-payment-tab'
 import { AdminManagedProgramHistory } from './admin-managed-program-history'
 import { MemberProgramLectureHistory } from './member-program-lecture-history'
 import { SchoolAffiliatedTeachersSection } from './school-affiliated-teachers-section'
 import {
   programsHistoryHasChildMenu,
-  clampProgramsChildForRole,
+  clampProgramsChildForUser,
+  instructorDetailLnbClickShowsPrepareMessage,
   userDetailModalTitle,
   userDetailSidebarNavAriaLabel,
   type UserDetailLnbKey,
@@ -44,6 +53,7 @@ import {
   type UserDetailPermissionRole,
 } from './user-detail-fullpage-header-actions'
 import { createProgramHistoryColumns } from './user-detail-program-history-columns'
+import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import './user-detail-modal.css'
@@ -94,12 +104,8 @@ export function UserDetailFullPageModal({
   const [activeLnb, setActiveLnb] = useState<UserDetailLnbKey>('detail-info')
   const [activeProgramsChild, setActiveProgramsChild] =
     useState<UserDetailProgramsChildKey>('enrollment')
-  const {
-    applications,
-    enrollmentApplications,
-    applicationsLoading,
-    refetchApplications,
-  } = useUserDetailApplications(open, displayUser)
+  const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
+    useUserDetailApplications(open, displayUser)
 
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
@@ -185,18 +191,25 @@ export function UserDetailFullPageModal({
   )
 
   const userSidebarItems = useMemo(
-    () => buildUserDetailSidebarItems(displayUser?.role, mode),
-    [displayUser?.role, mode]
+    () => buildUserDetailSidebarItems(displayUser ?? undefined, mode),
+    [displayUser, mode]
   )
 
   const sidebarExpandedGroupKeys = useMemo(() => {
-    if (activeLnb !== 'history' || !displayUser) return [] as const
-    if (!programsHistoryHasChildMenu(displayUser.role)) return [] as const
+    if (!displayUser || !programsHistoryHasChildMenu(displayUser)) return [] as const
+    if (displayUser.role === 'INSTRUCTOR') {
+      const p = resolveInstructorMemberProfile(displayUser)
+      if (p === 'instructor_only') {
+        if (activeLnb === 'payment-status') return [] as const
+        return ['history'] as const
+      }
+    }
+    if (activeLnb !== 'history') return [] as const
     return ['history'] as const
   }, [activeLnb, displayUser])
 
   const sidebarActiveChildKey =
-    activeLnb === 'history' && displayUser && programsHistoryHasChildMenu(displayUser.role)
+    activeLnb === 'history' && displayUser && programsHistoryHasChildMenu(displayUser)
       ? activeProgramsChild
       : ''
 
@@ -205,10 +218,23 @@ export function UserDetailFullPageModal({
       setActiveLnb('detail-info')
       return
     }
+    if (!displayUser) return
     const k = key as UserDetailLnbKey
-    if (k === 'history' && displayUser && programsHistoryHasChildMenu(displayUser.role)) {
+
+    if (k === 'payment-status') {
+      if (instructorDetailLnbClickShowsPrepareMessage(displayUser, k, 'payment-top')) {
+        window.alert('준비 중입니다.')
+        return
+      }
+    }
+
+    if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
+      if (instructorDetailLnbClickShowsPrepareMessage(displayUser, k, 'history-top')) {
+        window.alert('준비 중입니다.')
+        return
+      }
       setActiveLnb('history')
-      setActiveProgramsChild(displayUser.role === 'INSTRUCTOR' ? 'lecture' : 'enrollment')
+      setActiveProgramsChild('enrollment')
     } else {
       setActiveLnb(k)
     }
@@ -218,11 +244,8 @@ export function UserDetailFullPageModal({
         const nextParams = new URLSearchParams(prev)
         if (displayUser?.id) nextParams.set('id', displayUser.id)
         nextParams.set('lnb', k)
-        if (k === 'history' && displayUser && programsHistoryHasChildMenu(displayUser.role)) {
-          nextParams.set(
-            USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
-            displayUser.role === 'INSTRUCTOR' ? 'lecture' : 'enrollment'
-          )
+        if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
+          nextParams.set(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, 'enrollment')
         } else {
           nextParams.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
         }
@@ -235,7 +258,11 @@ export function UserDetailFullPageModal({
   const handleSidebarSelectChild = (_groupKey: string, childKey: string) => {
     if (mode === 'permission') return
     if (!displayUser) return
-    const child = clampProgramsChildForRole(displayUser.role, childKey as UserDetailProgramsChildKey)
+    const child = clampProgramsChildForUser(displayUser, childKey as UserDetailProgramsChildKey)
+    if (instructorDetailLnbClickShowsPrepareMessage(displayUser, 'history', 'history-child', child)) {
+      window.alert('준비 중입니다.')
+      return
+    }
     setActiveProgramsChild(child)
     setActiveLnb('history')
     setSearchParams(
@@ -270,6 +297,14 @@ export function UserDetailFullPageModal({
     [handleProgressStatusChange, openLectureAttendance, openAssignmentSubmission]
   )
 
+  const instructorResumeApplicantRow = useMemo((): ApplicantInstructorRow | null => {
+    if (!displayUser || displayUser.role !== 'INSTRUCTOR') return null
+    const profile = resolveInstructorMemberProfile(displayUser)
+    if (profile !== 'instructor_dual' && profile !== 'instructor_only') return null
+    const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
+    return userToApplicantInstructorRow(src)
+  }, [displayUser, personalInfoRevealed])
+
   if (!open) {
     return null
   }
@@ -287,32 +322,34 @@ export function UserDetailFullPageModal({
       : undefined
 
   const role = displayUser.role
-  const basicInfoContent =
-    role === 'INSTRUCTOR' ? (
-      <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
-        <InstructorBasicInfo user={displayUser} personalInfoRevealed={personalInfoRevealed} />
-      </div>
-    ) : (
-      <Space direction="vertical" size={24} style={{ width: '100%' }}>
-        <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
-          <UserBasicInfoSection
-            user={displayUser}
-            entrySource={basicInfoEntrySource}
-            externalId1365={basicInfoExternalId1365}
-            personalInfoRevealed={personalInfoRevealed}
-          />
-          {role !== 'SCHOOL' ? <UserConsentAgreementSection /> : null}
-        </div>
-        {role === 'SCHOOL' ? (
-          <SchoolAffiliatedTeachersSection
-            rows={displayUser.schoolInfo?.affiliatedTeachers ?? []}
-            onLinkedUserClick={onNavigateToLinkedUser}
-          />
-        ) : null}
-      </Space>
-    )
 
-  const programsChildMode = programsHistoryHasChildMenu(role)
+  const basicInfoContent = (
+    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+      <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
+        <UserBasicInfoSection
+          user={displayUser}
+          entrySource={basicInfoEntrySource}
+          caption={displayUser.role === 'ADMIN' ? '*관리자에 의해 등록된 회원입니다.' : undefined}
+          externalId1365={basicInfoExternalId1365}
+          personalInfoRevealed={personalInfoRevealed}
+        />
+        {role !== 'SCHOOL' ? (
+          <UserConsentAgreementSection preset={resolveUserConsentAgreementPreset(displayUser)} />
+        ) : null}
+        {instructorResumeApplicantRow ? (
+          <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+        ) : null}
+      </div>
+      {role === 'SCHOOL' ? (
+        <SchoolAffiliatedTeachersSection
+          rows={displayUser.schoolInfo?.affiliatedTeachers ?? []}
+          onLinkedUserClick={onNavigateToLinkedUser}
+        />
+      ) : null}
+    </Space>
+  )
+
+  const programsChildMode = displayUser ? programsHistoryHasChildMenu(displayUser) : false
 
   const enrollmentTableRows = role === 'INSTRUCTOR' ? enrollmentApplications : applications
 
@@ -332,13 +369,11 @@ export function UserDetailFullPageModal({
             {summaryLabel} 총 {rows.length}건
           </p>
           <Table
-            className="user-detail-modal__program-table"
+            className="cms-data-table"
             columns={programHistoryColumns}
             dataSource={rows}
             rowKey="id"
             pagination={false}
-            scroll={{ y: 'calc(100vh - 480px)' }}
-            size="small"
             onRow={record => ({
               onClick: e => {
                 const target = e.target as HTMLElement
@@ -432,6 +467,12 @@ export function UserDetailFullPageModal({
             message.info('이력 삭제는 추후 연결됩니다.')
           }}
         />
+      ) : role === 'INSTRUCTOR' ? (
+        <>
+          {enrollmentSection}
+          <MemberProgramLectureHistory applications={applications} loading={applicationsLoading} />
+          {volunteerProgramHistory}
+        </>
       ) : (
         <>
           {enrollmentSection}
@@ -465,11 +506,11 @@ export function UserDetailFullPageModal({
       <DetailFullPageModal
         open={open}
         onClose={onClose}
-        title={userDetailModalTitle(displayUser.name, displayUser.role)}
+        title={userDetailModalTitle(displayUser)}
         className="user-detail-fullpage-modal"
         sidebar={
           <DetailModalSidebar
-            navAriaLabel={userDetailSidebarNavAriaLabel(mode, displayUser.role)}
+            navAriaLabel={userDetailSidebarNavAriaLabel(mode, displayUser)}
             items={userSidebarItems}
             activeKey={activeLnb}
             activeChildKey={sidebarActiveChildKey}

@@ -164,7 +164,13 @@ export function MembersPermissionList({
     [filteredRows, selectedKeySet]
   )
 
+  const notReady = () => {
+    window.alert('준비 중입니다.')
+    return
+  }
+
   const bulkApprove = useCallback(() => {
+    notReady()
     if (!canWrite || selectedRowKeys.length === 0) return
     if (selectedPendingRows.length === 0) {
       message.warning('승인 대기 상태인 신청만 승인할 수 있습니다.')
@@ -182,6 +188,7 @@ export function MembersPermissionList({
   }, [canWrite, selectedRowKeys.length, selectedPendingRows])
 
   const bulkReject = useCallback(() => {
+    notReady()
     if (!canWrite || selectedRowKeys.length === 0) return
     if (selectedPendingRows.length === 0) {
       message.warning('승인 대기 상태인 신청만 반려할 수 있습니다.')

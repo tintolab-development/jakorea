@@ -52,6 +52,12 @@
   width: 150px;
 }
 
+.program-list-page__filter-info {
+  display: flex;
+  align-items: flex-end !important;
+  justify-content: space-between;
+}
+
 /* 무한 스크롤: 하단 센티넬 (IntersectionObserver 타겟) */
 .user-list-page__load-more-sentinel {
   min-height: 1px;

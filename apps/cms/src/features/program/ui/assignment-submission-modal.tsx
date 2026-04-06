@@ -216,8 +216,8 @@ export function AssignmentSubmissionModal({
         size="filter-wide"
         icon={<DownloadOutlined />}
         onClick={() => {
+          window.alert('준비 중입니다.')
           if (selectedRowKeys.length === 0) return
-          message.info('과제 일괄 다운로드는 추후 연결됩니다.')
         }}
       >
         과제 일괄 다운로드

@@ -302,7 +302,9 @@ export function PaymentOrderProgramSettlementTable({
       <div className="payment-order-program-status-detail__below-divider participating-institutions-section__below-divider">
         <div className="participating-institutions-section__table-header">
           <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">강사 별 정산 목록</span>
+            <span className="participating-institutions-section__table-title">
+              강사 별 정산 목록
+            </span>
             <span className="participating-institutions-section__table-description">
               총 {filteredRows.length}건
             </span>

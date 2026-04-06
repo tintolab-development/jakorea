@@ -3,16 +3,15 @@
  */
 
 import { useRef, useMemo, useLayoutEffect, useCallback } from 'react'
-import { Calendar, Button, Tooltip } from 'antd'
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { Calendar, Checkbox, Empty, Tooltip } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import { Checkbox, Empty } from 'antd'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
+  INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
@@ -125,8 +124,6 @@ export interface InstructorSettlementCalendarViewProps {
   currentMonth: Dayjs
   /** 표시 월만 변경 (날짜 셀에서 타월 선택 시 — 선택일은 그대로) */
   onDisplayMonthChange: (d: Dayjs) => void
-  /** 헤더 화살표: 월 이동 + 선택일을 해당 월 1일로 */
-  onMonthStep: (deltaMonths: number) => void
   selectedDate: Dayjs
   onSelectedDateChange: (d: Dayjs) => void
   selectedRowKeys: React.Key[]
@@ -138,7 +135,6 @@ export function InstructorSettlementCalendarView({
   events,
   currentMonth,
   onDisplayMonthChange,
-  onMonthStep,
   selectedDate,
   onSelectedDateChange,
   selectedRowKeys,
@@ -180,7 +176,10 @@ export function InstructorSettlementCalendarView({
       const tbodyTop = thead.getBoundingClientRect().bottom
       const forBody = Math.max(0, innerBottom - tbodyTop - BOTTOM_RESERVE)
       const rowPx = Math.max(MIN_ROW, forBody / ROWS)
-      main.style.setProperty('--program-calendar-month-row-height', `${Math.round(rowPx * 10) / 10}px`)
+      main.style.setProperty(
+        '--program-calendar-month-row-height',
+        `${Math.round(rowPx * 10) / 10}px`
+      )
     }
     const ro = new ResizeObserver(() => requestAnimationFrame(applyMonthRowHeight))
     ro.observe(main)
@@ -216,7 +215,7 @@ export function InstructorSettlementCalendarView({
             {dayEvents.slice(0, 2).map(event => {
               const row = event.originalItem
               const colors = statusToColor(row.status)
-              const short = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]
+              const short = INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.status]
               return (
                 <div
                   key={event.id}
@@ -250,7 +249,7 @@ export function InstructorSettlementCalendarView({
             <div key={ev.id} className="program-calendar-schedule-panel__row">
               <div className="program-calendar-schedule-panel__title">[{row.programName}]</div>
               <div>
-                <span style={{ color: colors.text }}>
+                <span style={{ color: colors.text, fontWeight: 700 }}>
                   {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]}
                 </span>
                 <span className="program-calendar-schedule-panel__text">
@@ -290,30 +289,6 @@ export function InstructorSettlementCalendarView({
   return (
     <div className="applicant-calendar-layout">
       <div className="applicant-calendar-main program-calendar-main" ref={mainCalendarRef}>
-        <div className="program-calendar-header">
-          <div className="program-calendar-header-left">
-            <span className="program-calendar-header-title">
-              {currentMonth.format('YYYY.MM')}
-            </span>
-            <div className="program-calendar-nav">
-              <Button
-                type="text"
-                size="small"
-                icon={<LeftOutlined />}
-                className="program-calendar-nav-btn"
-                onClick={() => onMonthStep(-1)}
-              />
-              <Button
-                type="text"
-                size="small"
-                icon={<RightOutlined />}
-                className="program-calendar-nav-btn"
-                onClick={() => onMonthStep(1)}
-              />
-            </div>
-          </div>
-          <div className="program-calendar-header-right" aria-hidden />
-        </div>
         <Calendar
           value={currentMonth}
           fullCellRender={dateFullCellRender}
