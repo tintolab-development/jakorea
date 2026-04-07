@@ -24,7 +24,10 @@
 }
 
 /* 푸터 고정 폭(120px) 해제 — 긴 라벨 버튼 */
-.payment-order-payment-confirm-modal .teal-header-modal__footer .payment-order-payment-confirm__footer-actions .ant-btn,
+.payment-order-payment-confirm-modal
+  .teal-header-modal__footer
+  .payment-order-payment-confirm__footer-actions
+  .ant-btn,
 .payment-order-payment-confirm-modal
   .teal-header-modal__footer
   .payment-order-payment-confirm__footer-actions
@@ -47,10 +50,6 @@
   font-weight: var(--font-weight-400, 400);
   line-height: 150%;
   color: var(--color-text-primary, #3d3d3d);
-}
-
-.payment-order-payment-confirm__line + .payment-order-payment-confirm__line {
-  margin-top: 16px;
 }
 
 .payment-order-payment-confirm__name {

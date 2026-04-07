@@ -74,11 +74,8 @@ export function PaymentOrderProgramCalculationStatementModal({
             className="payment-order-calc-statement-modal__basic payment-order-calc-statement-modal__basic--program-info"
             style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
           >
-            <h3 className="program-detail-info-tab__section-title payment-order-calc-statement-modal__basic-info-title">
-              기본 정보
-            </h3>
             <DetailInfoForm
-              title="기본 정보 — 프로그램"
+              title="기본 정보"
               hideHeader
               className="payment-order-calc-statement-modal__detail-form-card"
             >
@@ -277,6 +274,7 @@ export function PaymentOrderProgramCalculationStatementModal({
           blocks={data.blocks}
           formulaLabel={data.formulaLabel}
           totalAmount={data.totalAmount}
+          processingStatus={data.basic.processingStatusClass}
           headerActions={
             <>
               <AppButton variant="danger" size="filter" onClick={() => setPaymentRejectOpen(true)}>

@@ -200,7 +200,7 @@
   padding: 0 16px;
   box-sizing: border-box;
   vertical-align: middle;
-  background: #F5F6F7;
+  background: #f5f6f7;
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
@@ -212,7 +212,10 @@
   border-bottom: 1px solid var(--table-line);
 }
 
-.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-thead > tr > th:first-child {
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-thead
+  > tr
+  > th:first-child {
   border-inline-start: none;
 }
 
@@ -256,7 +259,10 @@
   background: white !important;
 }
 
-.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr > td:first-child {
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-tbody
+  > tr
+  > td:first-child {
   border-inline-start: none;
 }
 
@@ -292,7 +298,9 @@
   height: 54px;
 }
 
-.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-summary .ant-table-cell:first-child {
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-summary
+  .ant-table-cell:first-child {
   border-inline-start: none;
 }
 

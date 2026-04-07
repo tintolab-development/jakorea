@@ -8,7 +8,10 @@ import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
-import type { PaymentOrderCalculationStatementSessionBlock } from '@/data/mock/payment-order-admin-list'
+import type {
+  PaymentOrderAdminLineProcessingStatus,
+  PaymentOrderCalculationStatementSessionBlock,
+} from '@/data/mock/payment-order-admin-list'
 import './payment-order-program-calculation-statement-modal.css'
 
 export const PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH = 1200
@@ -161,6 +164,11 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   blocks: PaymentOrderCalculationStatementSessionBlock[]
   formulaLabel: string
   totalAmount: number
+  /**
+   * 지급조서 처리 현황(라인/기본정보 클래스). `confirmed`(지급조서 확인 완료)이면 headerActions 미노출.
+   * 미전달 시 headerActions 는 항상 표시(예: 계좌 지급 상세의 「지급 완료 처리」만 쓰는 경우).
+   */
+  processingStatus?: PaymentOrderAdminLineProcessingStatus
   /** 산출 내역 헤더 우측 (예: 신청 반려/확인 처리, 지급 완료 처리) */
   headerActions?: ReactNode
   onDownloadPaymentStatement?: () => void
@@ -170,11 +178,15 @@ export function PaymentOrderCalculationBreakdownTable({
   blocks,
   formulaLabel,
   totalAmount,
+  processingStatus,
   headerActions,
   onDownloadPaymentStatement,
 }: PaymentOrderCalculationBreakdownTableProps) {
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(() => getPaymentOrderCalculationColumns(), [])
+  const showHeaderActions =
+    headerActions != null &&
+    (processingStatus === undefined || processingStatus !== 'confirmed')
 
   const handleDownload = () => {
     window.alert('준비 중입니다.')
@@ -199,7 +211,7 @@ export function PaymentOrderCalculationBreakdownTable({
             </span>
           </div>
         </div>
-        {headerActions ? (
+        {showHeaderActions ? (
           <div className="payment-order-calc-statement-modal__detail-actions">{headerActions}</div>
         ) : null}
       </div>
