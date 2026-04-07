@@ -64,8 +64,14 @@ export function formatPaymentOrderCalculationWonPlain(n: number): string {
 export function getPaymentOrderCalculationColumns(options?: {
   onDetailClick?: () => void
 }): ColumnsType<PaymentOrderCalculationTableRow> {
-  const onDetailClick =
-    options?.onDetailClick ?? (() => message.info('산정 기준 상세는 추후 연결됩니다.'))
+  const onDetailClick = () => {
+    window.alert('준비 중입니다.')
+    if (options?.onDetailClick) {
+      options.onDetailClick()
+      return
+    }
+    message.info('산정 기준 상세는 추후 연결됩니다.')
+  }
 
   return [
     {
@@ -169,8 +175,14 @@ export function PaymentOrderCalculationBreakdownTable({
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(() => getPaymentOrderCalculationColumns(), [])
 
-  const handleDownload =
-    onDownloadPaymentStatement ?? (() => message.info('지급조서 다운로드는 추후 연결됩니다.'))
+  const handleDownload = () => {
+    window.alert('준비 중입니다.')
+    if (onDownloadPaymentStatement) {
+      onDownloadPaymentStatement()
+      return
+    }
+    message.info('지급조서 다운로드는 추후 연결됩니다.')
+  }
 
   return (
     <div
@@ -179,13 +191,11 @@ export function PaymentOrderCalculationBreakdownTable({
     >
       <div className="payment-order-calc-statement-modal__detail-header">
         <div className="payment-order-calc-statement-modal__detail-header-left">
-          <div className="payment-order-calc-statement-modal__detail-title-row">
-            <h3 className="payment-order-calc-statement-modal__section-title payment-order-calc-statement-modal__section-title--detail-inline">
-              산출 내역 상세
-            </h3>
-            <p className="payment-order-calc-statement-modal__detail-desc">
+          <div>
+            <span className="info-section-title">산출 내역 상세</span>
+            <span className="info-section-desc">
               교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.
-            </p>
+            </span>
           </div>
         </div>
         {headerActions ? (
@@ -194,7 +204,7 @@ export function PaymentOrderCalculationBreakdownTable({
       </div>
 
       <Table<PaymentOrderCalculationTableRow>
-        className="payment-order-calc-statement-modal__table participating-institutions-section__table"
+        className="payment-order-calc-statement-modal__table"
         rowKey="key"
         columns={columns}
         dataSource={tableRows}

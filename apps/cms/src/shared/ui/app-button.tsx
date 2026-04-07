@@ -47,6 +47,7 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
       type: antType,
       dangerFillOnHover = false,
       modalTeal = false,
+      style,
       ...rest
     },
     ref
@@ -76,7 +77,7 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
         type={type}
         danger={isVariantDanger ? true : antDanger}
         size={antSize}
-        style={{ outline: 'none' }}
+        style={{ outline: 'none', ...style }}
         className={cn}
         {...rest}
       />

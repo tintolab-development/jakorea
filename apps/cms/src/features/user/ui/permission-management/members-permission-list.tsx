@@ -323,6 +323,7 @@ export function MembersPermissionList({
             type: 'dateRange',
             label: '신청 시기',
             width: '30%',
+            defaultValue: null,
           },
         ]}
         filters={{

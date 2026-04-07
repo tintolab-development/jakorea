@@ -26,6 +26,7 @@ function dateRangeField(label: string, width: string): FilterFieldConfig {
     type: 'dateRange',
     label,
     width,
+    defaultValue: null,
   }
 }
 

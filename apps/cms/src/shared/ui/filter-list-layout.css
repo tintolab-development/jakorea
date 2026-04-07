@@ -17,8 +17,14 @@
 }
 
 /* 리스트 헤더(제목·건수·버튼)와 테이블 본문 사이: 16px */
+/* 구분선 + 본문 슬롯을 세로로 쌓아 가로 폭 100% 유지(가로 flex 시 자식이 콘텐츠 폭만 차지하는 문제 방지) */
 .filter-list-layout__header {
   margin-bottom: var(--spacing-16);
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 /*

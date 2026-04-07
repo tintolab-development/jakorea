@@ -3,49 +3,33 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import {
-  DetailModalSidebar,
-  type DetailModalSidebarNavItem,
-} from '@/shared/ui/detail-modal-sidebar'
 import {
   getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
   getMockPaymentOrderCalculationStatementFromProgramDetailPage,
   getMockPaymentOrderInstructorDetail,
   getMockPaymentOrderProgramDetail,
+  type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
-  type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
-import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
-import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
-import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
-import { PaymentOrderProgramBasicInfo } from './payment-order-program-basic-info'
-import { PaymentOrderInstructorBasicInfo } from './payment-order-instructor-basic-info'
-import { PaymentOrderProgramSettlementTable } from './payment-order-program-settlement-table'
-import { PaymentOrderInstructorSettlementTable } from './payment-order-instructor-settlement-table'
-import './payment-order-program-status-detail-fullpage-modal.css'
-import './payment-order-instructor-status-detail-fullpage-modal.css'
+import {
+  PaymentOrderDetailView,
+  type PaymentOrderCalculationStatementLineRow,
+} from '@/features/settlement/ui/payment-record'
 
-export type PaymentOrderDetailFullPageModalProps =
-  | {
-      type: 'program'
-      isOpen: boolean
-      onClose: () => void
-      data: PaymentOrderAdminProgramRow | null
-    }
-  | {
-      type: 'instructor'
-      isOpen: boolean
-      onClose: () => void
-      data: PaymentOrderAdminInstructorRow | null
-    }
+export type PaymentOrderDetailFullPageModalProps = {
+  type: 'program' | 'instructor'
+  isOpen: boolean
+  onClose: () => void
+  /** 열림 + type 일치 시 해당 행. 닫힌 상태에서는 null 권장 */
+  data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
+}
 
 export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
-  const { isOpen, onClose, type } = props
+  const { type, isOpen, onClose, data } = props
 
   const [lineAggregateStatus, setLineAggregateStatus] =
     useState<PaymentOrderAdminProcessingStatus>('pending')
@@ -57,8 +41,10 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     setLineAggregateStatus(status)
   }, [])
 
-  const programRow = type === 'program' ? props.data : null
-  const instructorRow = type === 'instructor' ? props.data : null
+  const programRow: PaymentOrderAdminProgramRow | null =
+    type === 'program' && data != null ? (data as PaymentOrderAdminProgramRow) : null
+  const instructorRow: PaymentOrderAdminInstructorRow | null =
+    type === 'instructor' && data != null ? (data as PaymentOrderAdminInstructorRow) : null
 
   const programDetail = useMemo(
     () => (programRow ? getMockPaymentOrderProgramDetail(programRow) : null),
@@ -78,42 +64,37 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     }
   }, [isOpen, type, programRow?.no, instructorRow?.no])
 
-  const openProgramCalculationStatement = useCallback(
-    (row: PaymentOrderAdminProgramDetailInstructorRow) => {
-      if (!programRow || !programDetail) return
-      setCalcStatementData(
-        getMockPaymentOrderCalculationStatementFromProgramDetailPage(programRow, programDetail, row)
-      )
-      setCalcStatementOpen(true)
-    },
-    [programDetail, programRow]
-  )
-
-  const openInstructorCalculationStatement = useCallback(
-    (row: PaymentOrderAdminInstructorDetailProgramRow) => {
-      if (!instructorRow || !instructorDetail) return
-      setCalcStatementData(
-        getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
-          instructorRow,
-          instructorDetail,
-          row
+  const openCalculationStatement = useCallback(
+    (lineRow: PaymentOrderCalculationStatementLineRow) => {
+      if (type === 'program' && programRow && programDetail) {
+        setCalcStatementData(
+          getMockPaymentOrderCalculationStatementFromProgramDetailPage(
+            programRow,
+            programDetail,
+            lineRow as PaymentOrderAdminProgramDetailInstructorRow
+          )
         )
-      )
-      setCalcStatementOpen(true)
+        setCalcStatementOpen(true)
+        return
+      }
+      if (type === 'instructor' && instructorRow && instructorDetail) {
+        setCalcStatementData(
+          getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
+            instructorRow,
+            instructorDetail,
+            lineRow as PaymentOrderAdminInstructorDetailProgramRow
+          )
+        )
+        setCalcStatementOpen(true)
+      }
     },
-    [instructorDetail, instructorRow]
+    [type, programRow, programDetail, instructorRow, instructorDetail]
   )
 
-  const sidebarItems = useMemo<DetailModalSidebarNavItem[]>(
-    () => [
-      {
-        key: 'payment-status-detail',
-        label: '지급 현황 상세',
-        icon: <PaymentOrderStatusDetailLnbIcon className="detail-fullpage-modal__lnb-icon" />,
-      },
-    ],
-    []
-  )
+  const closeCalculationStatement = useCallback(() => {
+    setCalcStatementOpen(false)
+    setCalcStatementData(null)
+  }, [])
 
   const resetCalcAndClose = useCallback(() => {
     setCalcStatementOpen(false)
@@ -121,98 +102,46 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     onClose()
   }, [onClose])
 
-  if (!isOpen || !props.data) {
+  const sharedViewProps = {
+    isOpen,
+    lineAggregateStatus,
+    handleAggregateChange,
+    calcStatementOpen,
+    calcStatementData,
+    openCalculationStatement,
+    closeCalculationStatement,
+    resetCalcAndClose,
+  }
+
+  if (!isOpen || data == null) {
     return null
   }
 
-  if (type === 'program') {
-    if (!programRow || !programDetail) return null
+  if (type === 'program' && programRow && programDetail) {
     return (
-      <>
-        <PaymentOrderProgramCalculationStatementModal
-          open={calcStatementOpen}
-          onCancel={() => {
-            setCalcStatementOpen(false)
-            setCalcStatementData(null)
-          }}
-          data={calcStatementData}
-        />
-        <DetailFullPageModal
-          open={isOpen}
-          onClose={resetCalcAndClose}
-          title={`지급 현황 상세_${programDetail.programName}`}
-          className="payment-order-program-status-detail-fullpage-modal"
-          sidebar={
-            <DetailModalSidebar
-              navAriaLabel="지급 현황 상세 메뉴"
-              items={sidebarItems}
-              activeKey="payment-status-detail"
-              activeChildKey=""
-              expandedGroupKeys={[]}
-              onSelectTop={() => {}}
-              onSelectChild={() => {}}
-            />
-          }
-        >
-          <div className="payment-order-program-status-detail__root participating-institutions-section">
-            <PaymentOrderProgramBasicInfo
-              detail={programDetail}
-              aggregateStatus={lineAggregateStatus}
-            />
-            <PaymentOrderProgramSettlementTable
-              programRow={programRow}
-              isOpen={isOpen}
-              onAggregateChange={handleAggregateChange}
-              onOpenCalculationStatement={openProgramCalculationStatement}
-            />
-          </div>
-        </DetailFullPageModal>
-      </>
+      <PaymentOrderDetailView
+        {...sharedViewProps}
+        kind="program"
+        title={`지급 현황 상세_${programDetail.programName}`}
+        modalClassName={undefined}
+        detail={programDetail}
+        row={programRow}
+      />
     )
   }
 
-  if (!instructorRow || !instructorDetail) return null
-
-  return (
-    <>
-      <PaymentOrderProgramCalculationStatementModal
-        open={calcStatementOpen}
-        onCancel={() => {
-          setCalcStatementOpen(false)
-          setCalcStatementData(null)
-        }}
-        data={calcStatementData}
-      />
-      <DetailFullPageModal
-        open={isOpen}
-        onClose={resetCalcAndClose}
+  if (type === 'instructor' && instructorRow && instructorDetail) {
+    return (
+      <PaymentOrderDetailView
+        {...sharedViewProps}
+        kind="instructor"
         title={`지급 현황 상세_${instructorDetail.nameKo}`}
-        className="payment-order-instructor-status-detail-fullpage-modal"
-        sidebar={
-          <DetailModalSidebar
-            navAriaLabel="지급 현황 상세 메뉴"
-            items={sidebarItems}
-            activeKey="payment-status-detail"
-            activeChildKey=""
-            expandedGroupKeys={[]}
-            onSelectTop={() => {}}
-            onSelectChild={() => {}}
-          />
-        }
-      >
-        <div className="payment-order-program-status-detail__root participating-institutions-section">
-          <PaymentOrderInstructorBasicInfo
-            detail={instructorDetail}
-            aggregateStatus={lineAggregateStatus}
-          />
-          <PaymentOrderInstructorSettlementTable
-            instructorRow={instructorRow}
-            isOpen={isOpen}
-            onAggregateChange={handleAggregateChange}
-            onOpenCalculationStatement={openInstructorCalculationStatement}
-          />
-        </div>
-      </DetailFullPageModal>
-    </>
-  )
+        modalClassName=""
+        detail={instructorDetail}
+        row={instructorRow}
+      />
+    )
+  }
+
+  return null
 }

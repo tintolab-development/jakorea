@@ -143,7 +143,9 @@
 }
 
 /* 좌측 캘린더: 우측 400px 고정 시 나머지 폭 */
-.payment-orders-calendar-root .participating-institutions-calendar-layout > .participating-institutions-calendar-card:first-child {
+.payment-orders-calendar-root
+  .participating-institutions-calendar-layout
+  > .participating-institutions-calendar-card:first-child {
   flex: 1 1 0;
   min-width: 0;
 }
@@ -185,70 +187,90 @@
   gap: 10px;
 }
 
-/* 우측 카드: 시안 패딩 top/bottom 10px, left 16px, right 12px · 너비 반응형 */
+/* 우측 카드: applicant-schedule-item 과 동일 호버(인라인 상태색 덮기 위해 !important) */
 .payment-orders-calendar__card {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 10px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   align-self: stretch;
-  border-radius: 6px;
+  border-radius: 10px;
   border: 1px solid transparent;
   padding: 10px 12px 10px 16px;
   box-sizing: border-box;
-  cursor: pointer;
   text-align: left;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
+  transition: all 0.2s;
 }
 
-.payment-orders-calendar__card:focus {
+/* applicant-schedule-list.tsx 와 동일 체크박스 히트영역·크기 (applicant-calendar-view.css) */
+.payment-orders-calendar__card .applicant-schedule-item-checkbox {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  align-self: center;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox:hover {
+  background: rgba(1, 161, 175, 0.14);
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox-wrapper {
+  align-items: center;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+  top: 0;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner::after {
+  inset-block-start: 45%;
+}
+
+.payment-orders-calendar__card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.payment-orders-calendar__card-main:focus {
   outline: none;
 }
 
-.payment-orders-calendar__card:focus-visible {
+.payment-orders-calendar__card-main:focus-visible {
   outline: 2px solid var(--JA-mint-01, #01a1af);
   outline-offset: 2px;
 }
 
-.payment-orders-calendar__card:hover:not(.payment-orders-calendar__card--selected) {
-  border-radius: 6px;
-  border: 2px solid var(--JA-mint-01, #01a1af);
-  background: var(--default-WT, #fff);
+.payment-orders-calendar__card:hover {
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
   box-shadow:
     0 0 4px 0 rgba(0, 136, 148, 0.06),
     0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
-/* 제출 및 대기 — matching (#389e0d) */
-.payment-orders-calendar__card--pending {
-  border: 1px solid rgba(56, 158, 13, 0.12);
-  background: rgba(56, 158, 13, 0.06);
-}
-
-/* 지급조서 확인 완료 — program primary (#01a1af) */
-.payment-orders-calendar__card--confirmed {
-  border: 1px solid rgba(1, 161, 175, 0.12);
-  background: rgba(1, 161, 175, 0.06);
-}
-
-/* 신청 반려 */
-.payment-orders-calendar__card--rejected {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.04);
-}
-
-/* 지급 정정 요청 — settlement (#cf1322) */
-.payment-orders-calendar__card--correction {
-  border: 1px solid rgba(207, 19, 34, 0.12);
-  background: rgba(207, 19, 34, 0.06);
-}
-
-/* 클릭(선택): 흰 배경 + 민트 테두리 + 그림자 (상태 배경 덮어씀) */
+/* 체크 선택: 인라인 상태색보다 우선 (호버와 동일 토큰) */
 .payment-orders-calendar__card--selected {
-  border: 2px solid var(--JA-mint-01, #01a1af);
-  background: var(--default-WT, #fff);
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
   box-shadow:
     0 0 4px 0 rgba(0, 136, 148, 0.06),
     0 4px 12px 0 rgba(0, 136, 148, 0.14);

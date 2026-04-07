@@ -22,6 +22,11 @@ export type DetailInfoFormProps = {
   description?: ReactNode
   /** 헤더 우측(타이틀·설명과 한 줄에서 테이블/본문 우측 끝에 맞춤) */
   headerEnd?: ReactNode
+  /**
+   * true면 섹션 헤더 없이 본문 격자만 렌더합니다.
+   * 상위에 이미 제목(h2 등)이 있을 때 — `title`은 접근용 aria-label 등에만 쓰입니다.
+   */
+  hideHeader?: boolean
   mode?: DetailInfoFormMode
   children: ReactNode
   className?: string
@@ -31,12 +36,24 @@ function DetailInfoFormRoot({
   title,
   description,
   headerEnd,
+  hideHeader = false,
   mode = 'view',
   children,
   className,
 }: DetailInfoFormProps) {
   const titleId = useId()
   const rootClass = ['detail-info-form', className].filter(Boolean).join(' ')
+  const body = <div className="detail-info-form__body">{children}</div>
+
+  if (hideHeader) {
+    return (
+      <DetailInfoFormContext.Provider value={{ mode }}>
+        <div className={rootClass} role="group" aria-label={title}>
+          {body}
+        </div>
+      </DetailInfoFormContext.Provider>
+    )
+  }
 
   return (
     <DetailInfoFormContext.Provider value={{ mode }}>
@@ -50,7 +67,7 @@ function DetailInfoFormRoot({
           </div>
           {headerEnd ? <div className="detail-info-form__header-end">{headerEnd}</div> : null}
         </header>
-        <div className="detail-info-form__body">{children}</div>
+        {body}
       </section>
     </DetailInfoFormContext.Provider>
   )

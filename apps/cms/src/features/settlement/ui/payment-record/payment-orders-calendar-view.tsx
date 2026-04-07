@@ -3,17 +3,24 @@
  * 레이아웃: participating-institutions-calendar-view.css + 공통 ProgramCalendar
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { Checkbox } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import {
-  PAYMENT_ORDER_ADMIN_STATUS_LABELS,
+  PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST,
+  PAYMENT_ORDER_STATUS_LABELS_LIST,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import {
+  PAYMENT_ORDER_STATUS_LIST_BG,
+  PAYMENT_ORDER_STATUS_LIST_BORDER,
+  PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR,
+} from '@/shared/constants/payment-order-status-list-colors'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
@@ -41,34 +48,6 @@ function pickAnchorDateForExposure(
     if (d.isBefore(min, 'day')) min = d
   }
   return min
-}
-
-const CALENDAR_TAG_STATUS_SHORT: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: '제출·대기',
-  confirmed: '확인 완료',
-  correction: '정정 요청',
-  rejected: '신청 반려',
-}
-
-const STATUS_TEXT_COLOR: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: '#389e0d',
-  confirmed: '#01a1af',
-  correction: '#cf1322',
-  rejected: '#595959',
-}
-
-const STATUS_BG: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: '#f6ffed',
-  confirmed: '#e6f7f9',
-  correction: '#fff1f0',
-  rejected: '#fafafa',
-}
-
-const STATUS_BORDER: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: 'rgba(56, 158, 13, 0.12)',
-  confirmed: 'rgba(1, 161, 175, 0.12)',
-  correction: 'rgba(207, 19, 34, 0.12)',
-  rejected: 'rgba(0, 0, 0, 0.08)',
 }
 
 function formatWonPlus(amount: number): string {
@@ -137,16 +116,20 @@ function toProgramCalendarItems(events: PaymentOrderCalendarEvent[]): ProgramCal
     id: ev.id,
     startDate: ev.date.format('YYYY-MM-DD'),
     endDate: ev.date.format('YYYY-MM-DD'),
-    title: `${formatCalendarAmount(ev.status, ev.amount)} | ${CALENDAR_TAG_STATUS_SHORT[ev.status]}`,
+    title: `${formatCalendarAmount(ev.status, ev.amount)} | ${PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST[ev.status]}`,
     originalItem: ev,
   }))
 }
 
 function PaymentOrdersCalendarRightPanel({
   eventsForSelectedDate,
+  selectedRowKeys,
+  onSelectionChange,
   onPaymentStatusDetailClick,
 }: {
   eventsForSelectedDate: PaymentOrderCalendarEvent[]
+  selectedRowKeys: Key[]
+  onSelectionChange: (keys: Key[]) => void
   onPaymentStatusDetailClick?: (payload: PaymentOrdersCalendarDetailClick) => void
 }) {
   const handleCardActivate = (ev: PaymentOrderCalendarEvent) => {
@@ -160,38 +143,64 @@ function PaymentOrdersCalendarRightPanel({
     }
   }
 
+  const handleToggleSelection = (id: Key) => {
+    if (selectedRowKeys.includes(id)) {
+      onSelectionChange(selectedRowKeys.filter(k => k !== id))
+    } else {
+      onSelectionChange([...selectedRowKeys, id])
+    }
+  }
+
   return (
     <div className="payment-orders-calendar__calendar-right">
       <div className="payment-orders-calendar__calendar-right-cards">
         {eventsForSelectedDate.map(ev => {
+          const isChecked = selectedRowKeys.includes(ev.id)
           return (
             <div
               key={ev.id}
-              role="button"
-              tabIndex={0}
-              className={`payment-orders-calendar__card payment-orders-calendar__card--${ev.status}`}
-              onClick={() => handleCardActivate(ev)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  handleCardActivate(ev)
-                }
+              style={{
+                border: `1px solid ${PAYMENT_ORDER_STATUS_LIST_BORDER[ev.status]}`,
+                background: PAYMENT_ORDER_STATUS_LIST_BG[ev.status],
               }}
+              className={`payment-orders-calendar__card${isChecked ? ' payment-orders-calendar__card--selected' : ''}`}
             >
-              <div className="payment-orders-calendar__card-status-row">
-                <span
-                  className="payment-orders-calendar__card-status"
-                  style={{ color: STATUS_TEXT_COLOR[ev.status] }}
-                >
-                  {PAYMENT_ORDER_ADMIN_STATUS_LABELS[ev.status]}
-                </span>
-                <span className="payment-orders-calendar__card-divider" aria-hidden />
-                <span className="payment-orders-calendar__card-amount">
-                  {formatCalendarAmount(ev.status, ev.amount)}
-                </span>
+              <div
+                className="payment-orders-calendar__card-main"
+                role="button"
+                tabIndex={0}
+                onClick={() => handleCardActivate(ev)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleCardActivate(ev)
+                  }
+                }}
+              >
+                <div className="payment-orders-calendar__card-status-row">
+                  <span
+                    className="payment-orders-calendar__card-status"
+                    style={{ color: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[ev.status] }}
+                  >
+                    {PAYMENT_ORDER_STATUS_LABELS_LIST[ev.status]}
+                  </span>
+                  <span className="payment-orders-calendar__card-divider" aria-hidden />
+                  <span className="payment-orders-calendar__card-amount">
+                    {formatCalendarAmount(ev.status, ev.amount)}
+                  </span>
+                </div>
+                <div className="payment-orders-calendar__card-program" title={ev.bracketTitle}>
+                  {ev.bracketTitle}
+                </div>
               </div>
-              <div className="payment-orders-calendar__card-program" title={ev.bracketTitle}>
-                {ev.bracketTitle}
+              <div
+                className="applicant-schedule-item-checkbox"
+                onClick={e => {
+                  e.stopPropagation()
+                  handleToggleSelection(ev.id)
+                }}
+              >
+                <Checkbox checked={isChecked} />
               </div>
             </div>
           )
@@ -215,9 +224,9 @@ function PaymentOrderDayTooltipContent({ items }: { items: PaymentOrderCalendarE
             <div className="payment-orders-calendar-tag-preview__row2">
               <span
                 className="payment-orders-calendar-tag-preview__status"
-                style={{ color: STATUS_TEXT_COLOR[ev.status] }}
+                style={{ color: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[ev.status] }}
               >
-                {PAYMENT_ORDER_ADMIN_STATUS_LABELS[ev.status]}
+                {PAYMENT_ORDER_STATUS_LABELS_LIST[ev.status]}
               </span>
               <span className="payment-orders-calendar-tag-preview__sep" aria-hidden>
                 |
@@ -243,16 +252,22 @@ export interface PaymentOrdersCalendarViewProps {
   instructorRows: PaymentOrderAdminInstructorRow[]
   /** 우측 목록 카드 클릭 시 지급 현황 상세(풀페이지 모달) */
   onPaymentStatusDetailClick?: (payload: PaymentOrdersCalendarDetailClick) => void
+  /**
+   * 우측 패널 체크 선택 — 둘 다 주면 제어 컴포넌트(일괄 확인 등 상위 연동).
+   * 미주입 시 내부 상태만 사용.
+   */
+  rightPanelSelectedKeys?: Key[]
+  onRightPanelSelectedKeysChange?: (keys: Key[]) => void
 }
 
 function resolvePaymentOrderEventColors(event: ProgramCalendarEventItem): ScheduleColorPair {
   const ev = event.originalItem as PaymentOrderCalendarEvent
-  const status = ev.status
+  const { status } = ev
   return {
     ...SCHEDULE_COLORS[0],
-    text: STATUS_TEXT_COLOR[status],
-    bg: STATUS_BG[status],
-    border: STATUS_BORDER[status],
+    text: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[status],
+    bg: PAYMENT_ORDER_STATUS_LIST_BG[status],
+    border: PAYMENT_ORDER_STATUS_LIST_BORDER[status],
   } as ScheduleColorPair
 }
 
@@ -261,6 +276,8 @@ export function PaymentOrdersCalendarView({
   programRows,
   instructorRows,
   onPaymentStatusDetailClick,
+  rightPanelSelectedKeys: controlledRightPanelKeys,
+  onRightPanelSelectedKeysChange,
 }: PaymentOrdersCalendarViewProps) {
   const events = useMemo(
     () =>
@@ -280,6 +297,19 @@ export function PaymentOrdersCalendarView({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => anchor)
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => anchor.startOf('month'))
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  const [internalRightPanelKeys, setInternalRightPanelKeys] = useState<Key[]>([])
+  const isRightPanelControlled =
+    controlledRightPanelKeys !== undefined && onRightPanelSelectedKeysChange !== undefined
+  const rightPanelSelectedKeys = isRightPanelControlled
+    ? controlledRightPanelKeys!
+    : internalRightPanelKeys
+  const setRightPanelSelectedKeys = isRightPanelControlled
+    ? onRightPanelSelectedKeysChange!
+    : setInternalRightPanelKeys
+
+  useEffect(() => {
+    setRightPanelSelectedKeys([])
+  }, [selectedDate, exposure, setRightPanelSelectedKeys])
 
   const eventsForSelectedDate = useMemo(
     () => events.filter(ev => selectedDate.isSame(ev.date, 'day')),
@@ -372,6 +402,8 @@ export function PaymentOrdersCalendarView({
           <PaymentOrdersCalendarRightPanel
             key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
             eventsForSelectedDate={eventsForSelectedDate}
+            selectedRowKeys={rightPanelSelectedKeys}
+            onSelectionChange={setRightPanelSelectedKeys}
             onPaymentStatusDetailClick={onPaymentStatusDetailClick}
           />
         </div>

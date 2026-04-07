@@ -38,6 +38,7 @@
   font-weight: 700;
   line-height: 140%;
   color: var(--default-BK, #3d3d3d);
+  padding: 0 8px;
 }
 
 .detail-info-form__description {

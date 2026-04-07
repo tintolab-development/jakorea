@@ -5,20 +5,45 @@
 
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 
-export type PaymentOrderAdminProcessingStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'correction'
-  | 'rejected'
+export type PaymentOrderAdminProcessingStatus = 'pending' | 'confirmed' | 'correction' | 'rejected'
 
-export const PAYMENT_ORDER_ADMIN_STATUS_LABELS: Record<
+/** 목록(집계·테이블) 지급조서 처리 현황 문구 */
+export const PAYMENT_ORDER_STATUS_LABELS_LIST: Record<PaymentOrderAdminProcessingStatus, string> = {
+  pending: '확인 대기 중',
+  rejected: '일부 확인 완료',
+  confirmed: '지급조서 확인 완료',
+  correction: '지급 정정 요청',
+}
+
+/** 상세(강사·라인 등) 지급조서 처리 현황 문구 */
+export const PAYMENT_ORDER_STATUS_LABELS_DETAIL: Record<PaymentOrderAdminProcessingStatus, string> =
+  {
+    pending: '확인 대기 중',
+    confirmed: '지급조서 확인 완료',
+    rejected: '신청 반려',
+    correction: '지급 정정 요청',
+  }
+
+/** 캘린더 셀·태그 한 줄용 (목록 톤과 맞춤) */
+export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST: Record<
   PaymentOrderAdminProcessingStatus,
   string
 > = {
-  pending: '제출 및 대기',
-  confirmed: '지급조서 확인 완료',
-  correction: '지급 정정 요청',
-  rejected: '신청 반려',
+  pending: '확인 대기',
+  rejected: '일부 완료',
+  confirmed: '확인 완료',
+  correction: '정정 요청',
+}
+
+/** 캘린더 셀·태그 한 줄용 (상세 톤 — 목록 외 재사용 시) */
+export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_DETAIL: Record<
+  PaymentOrderAdminProcessingStatus,
+  string
+> = {
+  pending: '확인 대기',
+  confirmed: '확인 완료',
+  rejected: '반려',
+  correction: '정정 요청',
 }
 
 export interface PaymentOrderAdminProgramRow {
@@ -96,11 +121,7 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
 }
 
 /** 산출 내역서 모달 — 산정 행 구분(합계 수식·표시용) */
-export type PaymentOrderCalculationLineKind =
-  | 'lecture_fee'
-  | 'travel'
-  | 'lodging'
-  | 'withholding'
+export type PaymentOrderCalculationLineKind = 'lecture_fee' | 'travel' | 'lodging' | 'withholding'
 
 /** 산출 내역서 모달 — 기본 정보(프로그램 맥락 4열 `program-detail-info-tab`) */
 export interface PaymentOrderCalculationStatementProgramBasicInfo {
@@ -412,9 +433,7 @@ export function getMockPaymentOrderInstructorDetail(
     (_, i) => {
       const salt = mixSeed(n, 200 + i)
       const programName =
-        i < related.length
-          ? related[i]
-          : programTitles[(n + i * 17) % programTitles.length]
+        i < related.length ? related[i] : programTitles[(n + i * 17) % programTitles.length]
       const instIdx = (n * 5 + i * 11) % institutionNames.length
       const day = 1 + (salt % 27)
       const month = 1 + (salt % 12)
@@ -487,9 +506,7 @@ function addressDisplayForStatementBlur(address: string): {
   return { addressDisplay: head, addressBlurredTail: tail }
 }
 
-function lineStatusToCalculationDisplay(
-  status: PaymentOrderAdminLineProcessingStatus
-): string {
+function lineStatusToCalculationDisplay(status: PaymentOrderAdminLineProcessingStatus): string {
   if (status === 'pending') return '확인 대기 중'
   /** 산출 내역서 시안: 반려 문구는 「지급 반려」 */
   if (status === 'rejected') return '지급 반려'
@@ -522,7 +539,8 @@ export function getMockPaymentOrderProgramCalculationStatement(
   const programSessionProgressDisplay = `${programDetail.sessionCompleted} / ${programDetail.sessionTotal}`
 
   const isSpecialLecture = seed % 3 !== 0
-  const lectureFee = instructorLineRow.estimatedAmount > 0 ? instructorLineRow.estimatedAmount : 915000
+  const lectureFee =
+    instructorLineRow.estimatedAmount > 0 ? instructorLineRow.estimatedAmount : 915000
   const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
   const lectureFeeStandardTitle = isSpecialLecture
     ? '특강 강의비'
@@ -540,7 +558,8 @@ export function getMockPaymentOrderProgramCalculationStatement(
   const lodgingAmount = 80000
   const travelDesc = '대전 중구 -> 서울 강서구 이동 (146.8km)'
 
-  const subtotalBeforeTax = lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
+  const subtotalBeforeTax =
+    lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
   const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
 
   const lines: PaymentOrderCalculationStatementLine[] = [
@@ -639,7 +658,9 @@ export function getMockPaymentOrderInstructorCalculationStatement(
     mixSeed(n, programLineRow.no * 31) +
     mixSeed(programLineRow.sessionOrdinal, programLineRow.institutionName.length + 17)
 
-  const { addressDisplay, addressBlurredTail } = addressDisplayForStatementBlur(instructorDetail.address)
+  const { addressDisplay, addressBlurredTail } = addressDisplayForStatementBlur(
+    instructorDetail.address
+  )
 
   const isSpecialLecture = seed % 3 !== 0
   const lectureFee = programLineRow.estimatedAmount > 0 ? programLineRow.estimatedAmount : 915000
@@ -660,7 +681,8 @@ export function getMockPaymentOrderInstructorCalculationStatement(
   const lodgingAmount = 80000
   const travelDesc = '대전 중구 -> 서울 강서구 이동 (146.8km)'
 
-  const subtotalBeforeTax = lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
+  const subtotalBeforeTax =
+    lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
   const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
 
   const lines: PaymentOrderCalculationStatementLine[] = [
@@ -797,15 +819,16 @@ export function getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
   instructorDetail: PaymentOrderAdminInstructorDetail,
   programLineRow: PaymentOrderAdminInstructorDetailProgramRow
 ): PaymentOrderProgramCalculationStatement {
-  const programRow =
-    mockPaymentOrderAdminProgramList.find(p => p.programName === programLineRow.programName) ?? {
-      no: instructorRow.no + 500,
-      programName: programLineRow.programName,
-      instructorCount: instructorRow.programCount,
-      processingStatus: instructorRow.processingStatus,
-      estimatedAmount: instructorRow.estimatedAmount,
-      referenceDate: instructorRow.referenceDate,
-    }
+  const programRow = mockPaymentOrderAdminProgramList.find(
+    p => p.programName === programLineRow.programName
+  ) ?? {
+    no: instructorRow.no + 500,
+    programName: programLineRow.programName,
+    instructorCount: instructorRow.programCount,
+    processingStatus: instructorRow.processingStatus,
+    estimatedAmount: instructorRow.estimatedAmount,
+    referenceDate: instructorRow.referenceDate,
+  }
 
   const programDetailLine: PaymentOrderAdminProgramDetailInstructorRow = {
     id: programLineRow.id,

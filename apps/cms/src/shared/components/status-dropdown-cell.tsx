@@ -8,6 +8,7 @@
  * 2. 테이블 CSS에 tr:has(td.status-dropdown-cell__cell-status), tr:has(td .status-dropdown-cell__status-trigger--open) 규칙 추가 (UI shifting 방지)
  * 3. 새 도메인은 renderBadge에 해당 배지 컴포넌트 전달; 드롭다운 내 배지 색상은 status-dropdown-cell.css에 도메인 클래스 추가
  *    (지급 조서 라인: PaymentOrderLineProcessingStatusBadge = TextbookStatusBadge payment-order-line, 신청자 프로그램 승인과 동일 계열)
+ * 트리거 래퍼는 CSS에서 불투명 흰 배경 — 테이블 행 hover 시 rgba 배지가 배경색과 섞이지 않도록 함.
  *
  * @example
  * <StatusDropdownCell
@@ -26,6 +27,13 @@
 
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
+import {
+  cloneElement,
+  isValidElement,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import './status-dropdown-cell.css'
 
 /** 테이블 컬럼에 지정할 className — 행 높이 고정 등 레이아웃 스타일 적용용 */
@@ -66,9 +74,57 @@ export interface StatusDropdownCellProps<T extends string = string> {
    * 셀에 `STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME`, 헤더에 `STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME`을 붙일 것.
    */
   tagLayout?: 'default' | 'tag132'
+  /**
+   * 배지 카드(내부 Tag·`.app-status-badge` 루트)에 적용 — 드롭다운 트리거(흰 래퍼)가 아님.
+   * `width`가 있으면 배지 폭에 맞추고, 드롭다운 패널은 트리거와 동일하게 배지+16px(좌우 padding 8px×2).
+   */
+  style?: CSSProperties
 }
 
 const DEFAULT_EMPTY = '-'
+
+const BADGE_CELL_STYLE_CLASS = 'status-dropdown-cell__badge--cell-style'
+const TRIGGER_CELL_STYLE_CLASS = 'status-dropdown-cell__trigger--cell-style'
+const OVERLAY_CELL_STYLE_CLASS = 'status-dropdown-cell__dropdown-overlay--cell-style'
+
+/** 배지 가로 크기용 변수 — 패널 폭은 CSS에서 `+ 16px`(트리거 좌우 padding 8px×2) */
+function overlayStyleFromCellStyle(cellStyle: CSSProperties | undefined): CSSProperties | undefined {
+  if (cellStyle?.width == null) return undefined
+  const w = cellStyle.width
+  const minw = cellStyle.minWidth ?? w
+  const maxw = cellStyle.maxWidth ?? w
+  return {
+    ['--sdcb-overlay-w' as string]: w,
+    ['--sdcb-overlay-minw' as string]: minw,
+    ['--sdcb-overlay-maxw' as string]: maxw,
+  } as CSSProperties
+}
+
+/** `renderBadge` 루트 엘리먼트에 `style`·크기용 CSS 변수 병합 (단일 ReactElement일 때) */
+function injectBadgeCellStyle(node: ReactNode, cellStyle: CSSProperties | undefined): ReactNode {
+  if (cellStyle == null) return node
+  if (!isValidElement(node)) {
+    return <span style={cellStyle}>{node}</span>
+  }
+
+  type BadgeRootProps = { style?: CSSProperties; className?: string }
+  const el = node as ReactElement<BadgeRootProps>
+  const prevStyle = el.props.style ?? {}
+  const prevClass = el.props.className ?? ''
+
+  const nextStyle: Record<string, string | number | undefined> = { ...prevStyle, ...cellStyle }
+  if (cellStyle.width != null) {
+    const w = cellStyle.width
+    nextStyle['--sdcb-badge-w'] = w
+    nextStyle['--sdcb-badge-minw'] = (cellStyle.minWidth ?? w) as string | number
+    nextStyle['--sdcb-badge-maxw'] = (cellStyle.maxWidth ?? w) as string | number
+  }
+
+  return cloneElement(el, {
+    className: `${prevClass} ${BADGE_CELL_STYLE_CLASS}`.trim(),
+    style: nextStyle as CSSProperties,
+  } as Partial<BadgeRootProps>)
+}
 
 export function StatusDropdownCell<T extends string = string>({
   status,
@@ -82,11 +138,14 @@ export function StatusDropdownCell<T extends string = string>({
   onOpenChange,
   emptyPlaceholder = DEFAULT_EMPTY,
   tagLayout = 'default',
+  style,
 }: StatusDropdownCellProps<T>) {
   const menuItems: MenuProps['items'] = statusOptions.map(opt => ({
     key: opt,
     label: (
-      <span className="status-dropdown-cell__dropdown-item">{renderBadge(opt)}</span>
+      <span className="status-dropdown-cell__dropdown-item">
+        {injectBadgeCellStyle(renderBadge(opt), style)}
+      </span>
     ),
     disabled: status != null && isItemDisabled?.(status, opt),
     className: getItemClassName?.(opt),
@@ -94,13 +153,25 @@ export function StatusDropdownCell<T extends string = string>({
 
   if (status == null) {
     return (
-      <span className="status-dropdown-cell__status-empty">{emptyPlaceholder}</span>
+      <span className="status-dropdown-cell__status-empty" style={style}>
+        {emptyPlaceholder}
+      </span>
     )
   }
 
   if (onChange == null) {
-    return <>{renderBadge(status)}</>
+    return injectBadgeCellStyle(renderBadge(status), style)
   }
+
+  const overlayClassName = [
+    'status-dropdown-cell__dropdown-overlay',
+    tagLayout === 'tag132' ? 'status-dropdown-cell__dropdown-overlay--tag-132' : '',
+    style?.width != null ? OVERLAY_CELL_STYLE_CLASS : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const overlayStyle = overlayStyleFromCellStyle(style)
 
   return (
     <Dropdown
@@ -110,20 +181,17 @@ export function StatusDropdownCell<T extends string = string>({
       }}
       trigger={['click']}
       disabled={isUpdating}
-      overlayClassName={
-        tagLayout === 'tag132'
-          ? 'status-dropdown-cell__dropdown-overlay status-dropdown-cell__dropdown-overlay--tag-132'
-          : 'status-dropdown-cell__dropdown-overlay'
-      }
+      overlayClassName={overlayClassName}
+      overlayStyle={overlayStyle}
       getPopupContainer={() => document.body}
       open={isOpen}
       onOpenChange={onOpenChange}
     >
       <span
-        className={`status-dropdown-cell__status-trigger${tagLayout === 'tag132' ? ' status-dropdown-cell__status-trigger--tag-132' : ''}${isOpen ? ' status-dropdown-cell__status-trigger--open' : ''}`}
+        className={`status-dropdown-cell__status-trigger${tagLayout === 'tag132' ? ' status-dropdown-cell__status-trigger--tag-132' : ''}${isOpen ? ' status-dropdown-cell__status-trigger--open' : ''}${style != null ? ` ${TRIGGER_CELL_STYLE_CLASS}` : ''}`}
         onClick={e => e.stopPropagation()}
       >
-        {renderBadge(status)}
+        {injectBadgeCellStyle(renderBadge(status), style)}
         {isUpdating ? (
           <span className="status-dropdown-cell__status-updating"> …</span>
         ) : null}

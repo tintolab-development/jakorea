@@ -97,6 +97,7 @@
   min-height: 900px;
 }
 
+/* TODO 추후 삭제 */
 /* 목록 상단: 제목 + (총 N건) + 우측 버튼 — 풀페이지 참여 섹션·구 program-progress-tab 테이블 헤더 통합 */
 .program-status-participating__table-header,
 .participating-institutions-section__table-header,
@@ -173,8 +174,12 @@
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
-.app-button.program-status-participating__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary:hover:not(:disabled),
-.app-button.participating-institutions-section__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary:hover:not(:disabled) {
+.app-button.program-status-participating__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary:hover:not(
+    :disabled
+  ),
+.app-button.participating-institutions-section__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary:hover:not(
+    :disabled
+  ) {
   border-color: var(--JA-mint-01, #01a1af) !important;
   background: rgba(1, 161, 175, 0.08) !important;
   color: var(--JA-mint-01, #01a1af) !important;
@@ -246,7 +251,8 @@
 }
 
 .payment-orders-page__content-wrapper .participating-institutions-section__below-divider {
-  flex: 0 1 auto;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;

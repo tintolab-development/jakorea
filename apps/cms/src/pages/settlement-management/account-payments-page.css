@@ -1,6 +1,6 @@
 /**
  * 계좌 지급 확인 — 요약 카드 + 목록 래퍼
- * 필터·테이블·레이아웃: payment-orders-page.css 재사용 (루트에 payment-orders-page 클래스 병행)
+ * 필터·테이블·레이아웃: payment-orders-page.css·캘린더 공통 CSS는 features/settlement/ui/payment-record 등과 병행
  * 흰 카드(배경·그림자·패딩): 필터~테이블만 — 상단 요약 카드는 layout-content 배경 위에 둠
  */
 

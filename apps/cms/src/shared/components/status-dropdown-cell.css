@@ -45,7 +45,8 @@
   overflow: hidden;
   border-radius: 6px;
   border: 1px solid transparent;
-  background: transparent;
+  /* 행 hover 등으로 td 배경이 바뀌어도 rgba 배지 톤이 섞이지 않도록 불투명 흰 바탕 */
+  background: #fff;
   box-shadow: none;
 }
 
@@ -112,6 +113,29 @@
   font-weight: 600 !important;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* StatusDropdownCell `style` prop: 태그 카드(`.app-status-badge`)에만 크기 적용 — 트리거 래퍼는 가변 */
+.status-dropdown-cell__status-trigger.status-dropdown-cell__trigger--cell-style {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.status-dropdown-cell__status-trigger .app-status-badge.status-dropdown-cell__badge--cell-style,
+.status-dropdown-cell__dropdown-item .app-status-badge.status-dropdown-cell__badge--cell-style {
+  width: var(--sdcb-badge-w, 120px) !important;
+  min-width: var(--sdcb-badge-minw, 120px) !important;
+  max-width: var(--sdcb-badge-maxw, 120px) !important;
+}
+
+.status-dropdown-cell__status-trigger
+  .app-status-badge.status-dropdown-cell__badge--cell-style.program-lifecycle-status-badge.program-lifecycle-status-badge--table,
+.status-dropdown-cell__dropdown-item
+  .app-status-badge.status-dropdown-cell__badge--cell-style.program-lifecycle-status-badge.program-lifecycle-status-badge--table {
+  width: var(--sdcb-badge-w, 120px) !important;
+  min-width: var(--sdcb-badge-minw, 120px) !important;
+  max-width: var(--sdcb-badge-maxw, 120px) !important;
 }
 
 /* 열림: 민트 테두리 + 그림자 (디자인 스펙) */
@@ -183,7 +207,7 @@
 .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):focus-visible {
   border: 1px solid transparent;
   box-shadow: none;
-  background: transparent;
+  background: #fff;
   outline: none;
 }
 
@@ -416,6 +440,25 @@
 
 .status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132) .ant-dropdown-menu-item:hover {
   background: transparent !important;
+}
+
+/* `style.width` = 배지 폭; 패널은 트리거와 맞춤 = 배지 + 좌우 padding 8px×2 (기본 136 = 120+16) */
+.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
+    .status-dropdown-cell__dropdown-overlay--tag-132
+  ) {
+  width: calc(var(--sdcb-overlay-w) + 16px) !important;
+  min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
+  max-width: calc(var(--sdcb-overlay-maxw) + 16px) !important;
+}
+
+.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
+    .status-dropdown-cell__dropdown-overlay--tag-132
+  )
+  .ant-dropdown-menu {
+  box-sizing: border-box;
+  min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
+  width: calc(var(--sdcb-overlay-w) + 16px) !important;
+  max-width: calc(var(--sdcb-overlay-maxw) + 16px) !important;
 }
 
 .status-dropdown-cell__dropdown-group-start {

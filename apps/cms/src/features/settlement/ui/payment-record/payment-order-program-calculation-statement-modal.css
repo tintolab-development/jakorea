@@ -35,67 +35,21 @@
   box-sizing: border-box;
 }
 
-/* 강사 맥락 기본정보: applicant 5열 테이블 (2블록) */
-.payment-order-calc-statement-modal__basic-applicant-wrap {
-  width: 100%;
-  max-width: 100%;
-}
-
-.payment-order-calc-statement-modal .applicant-instructor-basic-info__table-wrap {
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-}
-
-.payment-order-calc-statement-modal__basic--instructor .applicant-instructor-basic-info__table-wrap {
-  overflow: hidden;
-  max-width: none;
-}
-
-.payment-order-calc-statement-modal__basic--instructor
-  .applicant-instructor-basic-info__table-wrap
-  .applicant-instructor-basic-info__table {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  table-layout: fixed;
-}
-
+/* 강사 맥락 기본정보: DetailInfoForm 2블록 — 블록 사이 간격 16px (자택 주소·계좌 / 지급 조서·강의비) */
 .payment-order-calc-statement-modal__basic-group-gap {
   height: 16px;
+  flex-shrink: 0;
 }
 
 .payment-order-calc-statement-modal__basic--instructor
-  .applicant-instructor-basic-info__table
-  .applicant-instructor-basic-info__cell {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  line-height: 150%;
-  vertical-align: middle;
-}
-
-.payment-order-calc-statement-modal__basic--instructor
-  .applicant-instructor-basic-info__table
-  .applicant-instructor-basic-info__cell--label {
-  text-align: center;
-  font-weight: 700;
-}
-
-.payment-order-calc-statement-modal__basic--instructor
-  .applicant-instructor-basic-info__table
-  .applicant-instructor-basic-info__cell--value {
-  text-align: left;
-  font-weight: 500;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  .payment-order-calc-statement-modal__detail-form-card {
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .payment-order-calc-statement-modal__basic--instructor
-  .applicant-instructor-basic-info__table
+  .detail-info-form
   .payment-order-admin__status-text {
   font-family: Pretendard, sans-serif;
   font-size: 16px;
@@ -104,30 +58,22 @@
   line-height: 150%;
 }
 
-/* 기본 정보: program-detail-info-tab(풀페이지와 동일) — 모달 내 min-width·폭 보정 */
-.payment-order-calc-statement-modal__basic--program-info .program-detail-info-tab__table-wrapper {
-  width: 100%;
-  max-width: 100%;
-}
-
-.payment-order-calc-statement-modal__basic--program-info .program-detail-info-tab__table--basic {
-  width: 100%;
-  table-layout: fixed;
-  box-sizing: border-box;
-}
-
-.payment-order-calc-statement-modal__basic--program-info .program-detail-info-tab__table--basic td {
-  min-width: 0 !important;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
+/* 프로그램 맥락 기본정보: DetailInfoForm */
 .payment-order-calc-statement-modal__basic-info-title.program-detail-info-tab__section-title {
   margin: 0 0 10px;
   text-align: left;
 }
 
-.payment-order-calc-statement-modal__basic--program-info .program-detail-info-tab__table--basic .payment-order-admin__status-text {
+.payment-order-calc-statement-modal__basic--program-info
+  .payment-order-calc-statement-modal__detail-form-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.payment-order-calc-statement-modal__basic--program-info
+  .detail-info-form
+  .payment-order-admin__status-text {
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -188,26 +134,9 @@
   line-height: 140%;
 }
 
-/* 산출 내역 상세: 타이틀 + 디스크립션 한 행 정렬 */
-.payment-order-calc-statement-modal__detail-title-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
 .payment-order-calc-statement-modal__section-title--detail-inline {
   margin: 0;
   flex-shrink: 0;
-}
-
-.payment-order-calc-statement-modal__detail-title-row .payment-order-calc-statement-modal__detail-desc {
-  margin: 0;
-  flex: 1;
-  min-width: min(100%, 280px);
-  text-align: left;
 }
 
 /* 항목 디스크립션 (산출 내역 상세 안내) */
@@ -306,11 +235,17 @@
   min-height: 54px;
 }
 
-.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr.ant-table-measure-row {
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-tbody
+  > tr.ant-table-measure-row {
   height: 0 !important;
   min-height: 0 !important;
   line-height: 0;
   font-size: 0;
+}
+
+.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr:hover {
+  background: white !important;
 }
 
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr > td {
@@ -332,7 +267,10 @@
   border-inline-end: none;
 }
 
-.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-tbody > tr > td:nth-child(5) {
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-tbody
+  > tr
+  > td:nth-child(5) {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -360,7 +298,10 @@
 }
 
 /* 합계 행 마지막 셀: 지급조서 다운로드 버튼 td 안 중앙 정렬 */
-.payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table-summary tr .ant-table-cell:last-child {
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-summary
+  tr
+  .ant-table-cell:last-child {
   border-inline-end: none;
   display: flex;
   justify-content: center;
@@ -370,8 +311,10 @@
 }
 
 /* 정산 금액: 기존 색 유지, 타이포는 테이블과 동일 */
-.payment-order-calc-statement-modal__table.ant-table-wrapper .payment-order-calc-statement-modal__amount--positive,
-.payment-order-calc-statement-modal__table.ant-table-wrapper .payment-order-calc-statement-modal__amount--negative {
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .payment-order-calc-statement-modal__amount--positive,
+.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .payment-order-calc-statement-modal__amount--negative {
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -428,66 +371,4 @@
   line-height: 150%;
   color: #01a1af;
   font-variant-numeric: tabular-nums;
-}
-
-/* 지급조서 다운로드 (160×40, 스펙의 세로 32px 패딩은 높이 40과 상충하여 수평 패딩만 적용) */
-.payment-order-calc-statement-modal__download-btn.app-button.ant-btn {
-  display: flex !important;
-  width: 160px;
-  height: 40px;
-  padding: 0 24px 0 20px !important;
-  min-height: 40px !important;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  background: var(--JA-mint-01, #01a1af) !important;
-  color: #fff !important;
-  font-size: 14px;
-  line-height: 1.2;
-}
-
-.payment-order-calc-statement-modal__download-btn.app-button.ant-btn:hover,
-.payment-order-calc-statement-modal__download-btn.app-button.ant-btn:focus {
-  background: var(--JA-mint-01, #01a1af) !important;
-  color: #fff !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
-}
-
-/* 산정 기준 상세: 블록 레벨 버튼을 셀 가로 중앙에 배치 */
-.payment-order-calc-statement-modal__detail-btn-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
-/* 산정 기준 상세 — 상세 보기 (스펙: 160×40, 세로 패딩 32px는 높이 40과 상충하여 0 처리) */
-.payment-order-calc-statement-modal__detail-btn.app-button.ant-btn {
-  display: flex !important;
-  flex-direction: column;
-  width: 160px;
-  height: 40px;
-  min-width: 160px !important;
-  min-height: 40px !important;
-  padding: 0 31px !important;
-  box-sizing: border-box;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.15) !important;
-  background: #fff !important;
-  color: rgba(0, 0, 0, 0.88) !important;
-  font-size: 14px;
-  line-height: 1.2;
-}
-
-.payment-order-calc-statement-modal__detail-btn.app-button.ant-btn:hover,
-.payment-order-calc-statement-modal__detail-btn.app-button.ant-btn:focus {
-  background: #fff !important;
-  color: rgba(0, 0, 0, 0.88) !important;
-  border-color: rgba(0, 0, 0, 0.15) !important;
 }
