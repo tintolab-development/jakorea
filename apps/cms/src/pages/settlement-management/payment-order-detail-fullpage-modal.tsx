@@ -8,17 +8,30 @@ import {
   getMockPaymentOrderCalculationStatementFromProgramDetailPage,
   getMockPaymentOrderInstructorDetail,
   getMockPaymentOrderProgramDetail,
-  type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
-  type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
   type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
 import {
   PaymentOrderDetailView,
   type PaymentOrderCalculationStatementLineRow,
+  type PaymentOrderDetailViewProps,
 } from '@/features/settlement/ui/payment-record'
+
+/** 컴포넌트 밖에 두어 `current` 참조가 렌더마다 바뀌지 않게 함 (useMemo/useCallback deps) */
+const CONFIG = {
+  program: {
+    getDetail: getMockPaymentOrderProgramDetail,
+    getCalc: getMockPaymentOrderCalculationStatementFromProgramDetailPage,
+    getTitle: (detail: any) => `지급 현황 상세_${detail.programName}`,
+  },
+  instructor: {
+    getDetail: getMockPaymentOrderInstructorDetail,
+    getCalc: getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
+    getTitle: (detail: any) => `지급 현황 상세_${detail.nameKo}`,
+  },
+} as const
 
 export type PaymentOrderDetailFullPageModalProps = {
   type: 'program' | 'instructor'
@@ -31,6 +44,9 @@ export type PaymentOrderDetailFullPageModalProps = {
 export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
   const { type, isOpen, onClose, data } = props
 
+  const row = data
+  const current = CONFIG[type]
+
   const [lineAggregateStatus, setLineAggregateStatus] =
     useState<PaymentOrderAdminProcessingStatus>('pending')
   const [calcStatementOpen, setCalcStatementOpen] = useState(false)
@@ -41,20 +57,10 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     setLineAggregateStatus(status)
   }, [])
 
-  const programRow: PaymentOrderAdminProgramRow | null =
-    type === 'program' && data != null ? (data as PaymentOrderAdminProgramRow) : null
-  const instructorRow: PaymentOrderAdminInstructorRow | null =
-    type === 'instructor' && data != null ? (data as PaymentOrderAdminInstructorRow) : null
-
-  const programDetail = useMemo(
-    () => (programRow ? getMockPaymentOrderProgramDetail(programRow) : null),
-    [programRow]
-  )
-
-  const instructorDetail = useMemo(
-    () => (instructorRow ? getMockPaymentOrderInstructorDetail(instructorRow) : null),
-    [instructorRow]
-  )
+  const detail = useMemo(() => {
+    if (!row) return null
+    return current.getDetail(row as any)
+  }, [row, current])
 
   useEffect(() => {
     if (isOpen) {
@@ -62,33 +68,16 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
       setCalcStatementOpen(false)
       setCalcStatementData(null)
     }
-  }, [isOpen, type, programRow?.no, instructorRow?.no])
+  }, [isOpen, type, row])
 
   const openCalculationStatement = useCallback(
     (lineRow: PaymentOrderCalculationStatementLineRow) => {
-      if (type === 'program' && programRow && programDetail) {
-        setCalcStatementData(
-          getMockPaymentOrderCalculationStatementFromProgramDetailPage(
-            programRow,
-            programDetail,
-            lineRow as PaymentOrderAdminProgramDetailInstructorRow
-          )
-        )
-        setCalcStatementOpen(true)
-        return
-      }
-      if (type === 'instructor' && instructorRow && instructorDetail) {
-        setCalcStatementData(
-          getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
-            instructorRow,
-            instructorDetail,
-            lineRow as PaymentOrderAdminInstructorDetailProgramRow
-          )
-        )
-        setCalcStatementOpen(true)
-      }
+      if (!row || !detail) return
+
+      setCalcStatementData(current.getCalc(row as any, detail as any, lineRow as any))
+      setCalcStatementOpen(true)
     },
-    [type, programRow, programDetail, instructorRow, instructorDetail]
+    [row, detail, current]
   )
 
   const closeCalculationStatement = useCallback(() => {
@@ -113,35 +102,20 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     resetCalcAndClose,
   }
 
-  if (!isOpen || data == null) {
+  if (!isOpen || !row || !detail) {
     return null
   }
 
-  if (type === 'program' && programRow && programDetail) {
-    return (
-      <PaymentOrderDetailView
-        {...sharedViewProps}
-        kind="program"
-        title={`지급 현황 상세_${programDetail.programName}`}
-        modalClassName={undefined}
-        detail={programDetail}
-        row={programRow}
-      />
-    )
-  }
-
-  if (type === 'instructor' && instructorRow && instructorDetail) {
-    return (
-      <PaymentOrderDetailView
-        {...sharedViewProps}
-        kind="instructor"
-        title={`지급 현황 상세_${instructorDetail.nameKo}`}
-        modalClassName=""
-        detail={instructorDetail}
-        row={instructorRow}
-      />
-    )
-  }
-
-  return null
+  return (
+    <PaymentOrderDetailView
+      {...({
+        ...sharedViewProps,
+        kind: type,
+        title: current.getTitle(detail),
+        modalClassName: type === 'instructor' ? '' : undefined,
+        detail,
+        row,
+      } as PaymentOrderDetailViewProps)}
+    />
+  )
 }

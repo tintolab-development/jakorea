@@ -1,5 +1,5 @@
 /**
- * 정산 관리 > 지급 현황 상세(프로그램) — 산출 내역서 ContentModal
+ * 정산 관리 > 지급 현황 상세(프로그램) — 산출 내역서 모달
  */
 
 import { useEffect, useState } from 'react'
@@ -20,7 +20,7 @@ import { PaymentOrderPaymentRejectionResultModal } from './payment-order-payment
 import {
   PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH,
   PaymentOrderCalculationBreakdownTable,
-} from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
+} from './payment-order-calculation-breakdown-table'
 
 /** 기본정보 블록 가로 폭을 하단 테이블과 맞춤 */
 const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH

@@ -20,8 +20,8 @@ import type {
   PaymentOrderAdminProgramRow,
   PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
-import { PaymentOrderDetailFilterTable } from '@/features/settlement/ui/payment-record/payment-order-detail-filter-table'
-import { PaymentOrderProgramCalculationStatementModal } from '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal'
+import { PaymentOrderDetailFilterTable } from './payment-order-detail-filter-table'
+import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
 import { PaymentOrderInstructorBasicInfo } from '@/pages/settlement-management/payment-order-instructor-basic-info'
 import { PaymentOrderProgramBasicInfo } from '@/pages/settlement-management/payment-order-program-basic-info'
 import { PaymentOrderStatusDetailLnbIcon } from '@/pages/settlement-management/payment-order-status-detail-lnb-icon'

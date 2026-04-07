@@ -145,7 +145,8 @@ export function getPaymentOrderCalculationColumns(options?: {
         <div className="payment-order-calc-statement-modal__detail-btn-wrap">
           <AppButton
             variant="default"
-            className="payment-order-calc-statement-modal__detail-btn"
+            style={{ width: '160px' }}
+            size="large"
             onClick={onDetailClick}
           >
             상세 보기
@@ -232,9 +233,9 @@ export function PaymentOrderCalculationBreakdownTable({
               <Table.Summary.Cell index={5} align="center">
                 <AppButton
                   variant="primary"
+                  size="large"
+                  style={{ width: '160px' }}
                   icon={<DownloadOutlined />}
-                  modalTeal
-                  className="payment-order-calc-statement-modal__download-btn"
                   onClick={handleDownload}
                 >
                   지급조서 다운로드
