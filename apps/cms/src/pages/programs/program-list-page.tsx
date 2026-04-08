@@ -2,7 +2,7 @@
  * 프로그램 목록 페이지
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Modal } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
@@ -59,6 +59,9 @@ export function ProgramListPage() {
   // 2. Local State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [, setHasListFilters] = useState(false)
+  const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
+    setHasListFilters(hasActiveFilters)
+  }, [])
 
   // 헤더 타이틀 계산: statusFilter (위젯 클릭) → 모집단계 라벨 → "전체 프로그램"
   const headerTitle = useMemo(() => {
@@ -311,14 +314,7 @@ export function ProgramListPage() {
   )
 
   return (
-    <div
-      className={[
-        'program-list-page',
-        programType === 'economy' ? 'program-list-page--economy-education' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
+    <div>
       {/* 위젯 영역 */}
       <div className="program-progress-widget-container">
         <ProgramStatusWidget title={null} />
@@ -335,9 +331,7 @@ export function ProgramListPage() {
         viewMode={viewMode}
         tableVariant={programType === 'economy' ? 'economy' : 'general'}
         config={programListConfig}
-        onDisplayCountChange={(_count, hasActiveFilters) => {
-          setHasListFilters(hasActiveFilters)
-        }}
+        onDisplayCountChange={handleDisplayCountChange}
       >
         {programListToolbarActions}
       </ProgramList>

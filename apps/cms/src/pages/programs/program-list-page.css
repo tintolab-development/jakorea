@@ -20,11 +20,6 @@
   margin-bottom: var(--spacing-32);
 }
 
-/* 경제 교육: 단계 카드 행 flex 간격 32px — 세로 디바이더·화살표·카드 간 동일 (래퍼 margin과 이중 합산 방지) */
-.program-list-page--economy-education .program-progress-widget__stages {
-  gap: var(--spacing-32);
-}
-
 .program-list-page--economy-education .program-progress-widget__divider-vertical--wrapper {
   margin-left: 0;
   margin-right: 0;

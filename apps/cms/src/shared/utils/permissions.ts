@@ -116,13 +116,13 @@ export function canPerformWriteAction(user: Omit<User, 'password'> | null): bool
   const result = adminLevel === 'MASTER' || adminLevel === 'ADMIN' || !adminLevel
 
   if (process.env.NODE_ENV === 'development') {
-    console.log('[canPerformWriteAction] 권한 체크 결과:', {
-      role: user.role,
-      adminLevel,
-      result,
-      userId: user.id,
-      userName: user.name,
-    })
+    // console.log('[canPerformWriteAction] 권한 체크 결과:', {
+    //   role: user.role,
+    //   adminLevel,
+    //   result,
+    //   userId: user.id,
+    //   userName: user.name,
+    // })
   }
 
   return result

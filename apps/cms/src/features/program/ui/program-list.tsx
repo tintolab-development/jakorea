@@ -74,14 +74,20 @@ export function ProgramList({
   const mode = config?.mode ?? 'general'
   const effectiveLifecycleStatus = config?.lifecycleStatus
 
-  const tableContext: ProgramTableContext = {
-    mode,
-    view: economyView,
-    tableType,
-    effectiveLifecycleStatus,
-  }
+  const tableContext = useMemo<ProgramTableContext>(
+    () => ({
+      mode,
+      view: economyView,
+      tableType,
+      effectiveLifecycleStatus,
+    }),
+    [mode, economyView, tableType, effectiveLifecycleStatus]
+  )
 
-  const tableConfig = useMemo(() => getProgramTablePageConfig(tableContext), [tableContext])
+  const tableConfig = useMemo(
+    () => getProgramTablePageConfig(tableContext),
+    [mode, economyView, tableType, effectiveLifecycleStatus]
+  )
 
   const {
     table,
