@@ -30,7 +30,7 @@ export function FilterTableLayout({
   actions,
   children,
   className,
-  ...unifiedFilterCardProps
+  ...TableFilterGroupProps
 }: FilterTableLayoutProps) {
   const rootClass = ['filter-table-layout', className].filter(Boolean).join(' ')
   const showToolbar = title != null || description != null || actions != null
@@ -38,7 +38,7 @@ export function FilterTableLayout({
   return (
     <div className={rootClass}>
       <div className="filter-table-layout__filter">
-        <TableFilterGroup {...unifiedFilterCardProps} />
+        <TableFilterGroup {...TableFilterGroupProps} />
       </div>
 
       <div className="filter-table-layout__divider">

@@ -8,10 +8,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Row, Col, Space } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { LabeledSearchInput } from './labeled-search-input'
-import { FilterSearchButton } from './app-button'
+import { CmsButton } from './cms-button'
 import { AppMultiSelect, type AppMultiSelectOption } from './app-multi-select'
-import { AppSelect } from './app-select'
-import { AppDateRangePicker } from './app-datepicker'
+import { CmsSelect } from './cms-select'
+import { CmsDateRangePicker } from './cms-datepicker'
 import { AppRadio } from './app-radio'
 import './table-filter-group.css'
 
@@ -205,7 +205,6 @@ export function TableFilterGroup({
       return (
         <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>
           <LabeledSearchInput
-            uiVariant="filter"
             label={field.label}
             placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
             value={searchDrafts[field.key] ?? ''}
@@ -214,7 +213,6 @@ export function TableFilterGroup({
                 prev[field.key] === value ? prev : { ...prev, [field.key]: value }
               )
             }
-            allowClear={field.allowClear !== false}
             width="100%"
           />
         </Col>
@@ -226,9 +224,8 @@ export function TableFilterGroup({
         <Col key={field.key} flex={colFlex(field, '1 1 300px')} className={colClassFor(field)}>
           <div className="unified-filter-card__field unified-filter-card__field--select">
             <span className="unified-filter-card__label">{field.label}</span>
-            <AppSelect
-              uiVariant="filter"
-              size="small"
+            <CmsSelect
+              inputSize="large"
               placeholder={field.placeholder || '전체'}
               value={filters[field.key]}
               selectClassName="unified-filter-card__select"
@@ -251,9 +248,8 @@ export function TableFilterGroup({
         <Col key={field.key} flex={colFlex(field, '1 1 360px')} className={colClassFor(field)}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
-            <AppDateRangePicker
-              uiVariant="filter"
-              size="small"
+            <CmsDateRangePicker
+              inputSize="large"
               style={{ width: '100%', ...field.style }}
               value={filters[field.key]}
               onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
@@ -290,11 +286,14 @@ export function TableFilterGroup({
 
   const actionButtons = (
     <Space size="small">
-      <FilterSearchButton
+      <CmsButton
+        variant="primary"
+        type="button"
         onClick={flushSearchToParentAndSearch}
         loading={loading}
-        className="unified-filter-card__button"
-      />
+      >
+        조회
+      </CmsButton>
       {extra}
     </Space>
   )
