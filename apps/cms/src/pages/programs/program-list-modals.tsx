@@ -17,7 +17,6 @@ interface ProgramListModalsProps {
   onEditFromDrawer: () => void
   onDeleteFromDrawer: () => void
   loading: boolean
-  hideActions: boolean
 
   // Form Modal
   formModalOpen: boolean
@@ -51,7 +50,6 @@ export function ProgramListModals({
   onEditFromDrawer,
   onDeleteFromDrawer,
   loading,
-  hideActions,
   formModalOpen,
   isEditingMode,
   editingProgram,
@@ -94,7 +92,6 @@ export function ProgramListModals({
         onEdit={onEditFromDrawer}
         onDelete={onDeleteFromDrawer}
         loading={loading}
-        hideActions={hideActions}
       />
 
       <Modal

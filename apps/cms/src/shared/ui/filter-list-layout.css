@@ -19,7 +19,8 @@
 /* 리스트 헤더(제목·건수·버튼)와 테이블 본문 사이: 16px */
 /* 구분선 + 본문 슬롯을 세로로 쌓아 가로 폭 100% 유지(가로 flex 시 자식이 콘텐츠 폭만 차지하는 문제 방지) */
 .filter-list-layout__header {
-  margin-bottom: var(--spacing-16);
+  padding: 0 20px;
+  background-color: blue !important;
   width: 100%;
   min-width: 0;
   display: flex;
@@ -27,12 +28,6 @@
   align-items: stretch;
 }
 
-/*
- * program-list-card는 .ant-card-body에 padding 24가 들어가 헤더 margin(16)과 합쳐 간격이 커짐.
- * 래퍼 안 목록 테이블은 상단 패딩을 제거해 "헤더 하단 ↔ 테이블 헤더" 합계를 16px로 맞춘다.
- */
-.filter-list-layout__body .program-list-card--in-wrapper .ant-card-body {
-  padding-top: 0;
+.filter-list-layout__body {
+  padding: 0 20px 20px;
 }
-
-/* 헤더·본문 패딩은 페이지별로 지정 (프로그램 목록은 기존 BEM, 회원은 user-list-page.css) */

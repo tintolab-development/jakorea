@@ -1,108 +1,58 @@
 /**
- * 프로그램 목록 컴포넌트
- * Phase 2.1: 테이블 + 필터 (기획자 요청: 다양한 컴포넌트 활용)
+ * CMS 프로그램 목록 (필터 카드 + 테이블/캘린더)
  */
 
-import { Table, Button, Image, Tag, Card } from 'antd'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
-import { FilterListLayout } from '@/shared/ui/filter-list-layout'
-import { message } from 'antd'
-import { HeartOutlined, HeartFilled } from '@ant-design/icons'
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Table } from 'antd'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { useProgramTable } from '../model/use-program-table'
-import type { Program, ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
-import {
-  programLifecycleStatusConfig,
-  commonStatusStatusConfig,
-} from '@/shared/constants/status'
-import { programTypes, programFormats } from './constants/program-list-constants'
-import {
-  resolveEducationColumns,
-  ECONOMY_EDUCATION_TABLE_SCROLL_X_PROGRESS,
-  ECONOMY_EDUCATION_TABLE_SCROLL_X_PERIOD,
-  ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PROGRESS,
-  ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PERIOD,
-  ECONOMY_IN_PROGRESS_TABLE_SCROLL_X,
-  ECONOMY_IN_PROGRESS_TABLE_SCROLL_X_WITH_SELECTION,
-} from './table/program-table-column-resolver'
-import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
-import { StatusBadge } from '@/shared/ui/status-badge'
-import { MESSAGES } from '@/shared/constants/messages'
-import { domainColorsHex } from '@/shared/constants/colors'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  addFavoriteProgram,
-  removeFavoriteProgram,
-  isFavoriteProgram,
-} from '@/entities/program/api/favorite-program-service'
-import {
-  programListFilterFields,
-  participantFilterFields,
-  economyFilterFields,
-  economyScheduledFilterFields,
-} from './table/program-list-filter-fields'
-import {
-  buildProgramListFilters,
-  buildParticipantFilters,
-} from './table/program-list-filter-builder'
+import { programLifecycleStatusConfig } from '@/shared/constants/status'
+import { resolveEducationColumns } from './table/program-table-column-resolver'
+import { programListFilterFields, economyFilterFields } from './table/program-list-filter-fields'
+import { buildProgramListFilters } from './table/program-list-filter-builder'
 import dayjs, { type Dayjs } from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { FilterTableLayout } from '@/shared/ui'
 
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
 
-/** 경제 교육 목록 필터 셀렉트 옵션과 동일 (program-list-filter-fields statusOptions) */
 const economyFilterLifecycleStatuses = new Set<ProgramLifecycleStatus>(
   programLifecycleStatusConfig.order
 )
 
-export type ProgramListTableVariant = 'education' | 'volunteer' | 'all'
+export type ProgramListTableVariant = 'general' | 'economy'
 
-interface ProgramListProps {
+export interface ProgramListProps {
   data: Program[]
   loading?: boolean
+  headerTitle?: string
   onView: (program: Program) => void
-  onEdit?: (program: Program) => void // 관리자만 사용
-  onDelete?: (program: Program) => void // 관리자만 사용
-  onBulkDelete?: (programs: Program[]) => void // 선택 삭제 (교육 프로그램 등)
-  onSelectionChange?: (selectedKeys: React.Key[]) => void // 선택된 항목 변경 시 호출
-  selectedRowKeys?: React.Key[] // 외부에서 관리하는 선택된 행 키 (선택사항)
-  showActions?: boolean // 작업 컬럼 표시 여부 (기본값: false, 관리자만 true)
-  showRowSelection?: boolean // 행 선택 + 선택 삭제 (교육 프로그램 등)
-  onChangeStatus?: (program: Program, status: ProgramLifecycleStatus) => void
-  showFavorite?: boolean // 찜하기 컬럼 표시 여부 (기본값: false, 강사/봉사자/학생용)
-  showCalendarView?: boolean // 캘린더 뷰 전환 여부
-  onCreateNew?: () => void // 프로그램 신규 등록 버튼 클릭 핸들러
-  tableTitle?: string // 테이블 타이틀 (기본값: '전체 프로그램')
-  viewMode?: 'list' | 'calendar' // 뷰 모드 (외부에서 제어)
-  onViewModeChange?: (mode: 'list' | 'calendar') => void // 뷰 모드 변경 핸들러
-  /** 테이블 컬럼 구분: education 경로일 때 No., 프로그램명, 모집 상태, 교육 분야, 수강 유형 구분, 교육 대상, 진행 방식, 공란 */
+  onBulkDelete?: (programs: Program[]) => void
+  onSelectionChange?: (selectedKeys: React.Key[]) => void
+  selectedRowKeys?: React.Key[]
+  showRowSelection?: boolean
+  showCalendarView?: boolean
+  viewMode?: 'list' | 'calendar'
   tableVariant?: ProgramListTableVariant
-  /** 수강자 모집 전용 테이블 컬럼 사용 (No., 프로그램명, 지원자 수, 수강자 모집 인원, 교육 분야, …) */
   studentRecruitmentTable?: boolean
-  /** 강사 모집 전용 테이블 컬럼 사용 (No., 프로그램명, 지원자 수, 강사 모집 인원, 교육 분야, …) */
   instructorRecruitmentTable?: boolean
-  /** 테이블에 실제 표시되는 건수·필터 적용 여부 전달 (헤더 "총 N건"과 위젯 동기화: 필터 없을 땐 전체 건수, 있을 땐 표시 건수) */
   onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
-  /** 페이지에서 적용한 진행현황(URL 또는 경로 기본값). 필터 카드 표시와 동기화용, URL에 status 없을 때 사용 */
   effectiveLifecycleStatus?: ProgramLifecycleStatus | null
-  /** 모집 신청 현황 컬럼을 텍스트만 표시 (클릭/드롭다운 비활성, 경제 교육 프로그램 페이지용) */
   readOnlyLifecycleStatus?: boolean
-  /** 경제 교육: 위젯 「전체 프로그램」만 선택(URL에 economy status 없음)일 때 전용 컬럼 세트 */
+  /** 경제 교육 ProgramStatusWidget — 전체 */
   economyAllProgramsActive?: boolean
-  /** 경제 교육: 「진행 중인 프로그램」 위젯 — 전용 8열 테이블·고정 너비 */
+  /** 경제 교육 — 예정 */
+  economyScheduledActive?: boolean
+  /** 경제 교육 — 진행 중 */
   economyInProgressActive?: boolean
-  /** 경제 교육: 「완료 프로그램」 위젯 — 진행 중과 동일 8열·너비 */
+  /** 경제 교육 — 완료 (전체와 동일 컬럼) */
   economyCompletedActive?: boolean
-  /** 경제 교육: 위젯 「예정·진행 중·완료」 선택 시 필터(프로그램명·사업 운영 기간·유형·대상) */
-  economyScheduledFilterLayout?: boolean
-  /** 필터와 테이블 사이에 렌더할 콘텐츠 (페이지에서 직접 렌더) */
   children?: React.ReactNode
 }
 
@@ -110,221 +60,62 @@ export function ProgramList({
   data,
   loading,
   onView,
-  // onEdit,
-  // onDelete,
+  headerTitle,
   onBulkDelete,
   onSelectionChange,
   selectedRowKeys: externalSelectedRowKeys,
-  // showActions = false,
   showRowSelection = false,
-  onChangeStatus: _onChangeStatus,
-  showFavorite = false,
   showCalendarView = false,
-  onCreateNew: _onCreateNew,
-  tableTitle: _tableTitle = '전체 프로그램',
-  studentRecruitmentTable = false,
-  instructorRecruitmentTable = false,
   viewMode: externalViewMode,
-  onViewModeChange: _onViewModeChange,
-  tableVariant = 'all',
+  tableVariant = 'general',
   onDisplayCountChange,
   effectiveLifecycleStatus,
   readOnlyLifecycleStatus = false,
   economyAllProgramsActive = false,
+  economyScheduledActive = false,
   economyInProgressActive = false,
   economyCompletedActive = false,
-  economyScheduledFilterLayout = false,
+  studentRecruitmentTable = false,
+  instructorRecruitmentTable = false,
   children,
 }: ProgramListProps) {
-  const { user } = useAuthStore()
   const location = useLocation()
-  const isEconomyPage = location.pathname === '/programs/economy-education'
-  const isParticipant = user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
+  const isEconomyPage =
+    location.pathname === '/programs/economy-education' || tableVariant === 'economy'
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // 사용자 권한 필터 상태 관리 (조회 버튼 클릭 전까지 임시 저장)
-  const [pendingUserFilters, setPendingUserFilters] = useState<{
-    search?: string
-    dateRange?: [Dayjs | null, Dayjs | null] | null
-    target?: ProgramCategory | 'all'
-    type?: ProgramType | 'all'
-    status?: ProgramLifecycleStatus | 'all'
-  }>(() => {
-    const start = searchParams.get('startDate')
-    const end = searchParams.get('endDate')
-    let dateRange: [Dayjs | null, Dayjs | null] | null = null
-    if (start && end) {
-      const startDate = dayjs(start)
-      const endDate = dayjs(end)
-      if (startDate.isValid() && endDate.isValid()) {
-        dateRange = [startDate, endDate]
-      }
-    }
-    return {
-      search: searchParams.get('search') || '',
-      dateRange,
-      target: (searchParams.get('target') as ProgramCategory) || 'all',
-      type: (searchParams.get('type') as ProgramType) || 'all',
-      status: (searchParams.get('status') as ProgramLifecycleStatus) || 'all',
-    }
-  })
-
-  // 활성 필터 (조회 버튼 클릭 시 적용)
-  const [activeUserFilters, setActiveUserFilters] = useState<typeof pendingUserFilters>(() => {
-    const start = searchParams.get('startDate')
-    const end = searchParams.get('endDate')
-    let dateRange: [Dayjs | null, Dayjs | null] | null = null
-    if (start && end) {
-      const startDate = dayjs(start)
-      const endDate = dayjs(end)
-      if (startDate.isValid() && endDate.isValid()) {
-        dateRange = [startDate, endDate]
-      }
-    }
-    return {
-      search: searchParams.get('search') || '',
-      dateRange,
-      target: (searchParams.get('target') as ProgramCategory) || 'all',
-      type: (searchParams.get('type') as ProgramType) || 'all',
-      status: (searchParams.get('status') as ProgramLifecycleStatus) || 'all',
-    }
-  })
-
-  // 위젯 클릭 등으로 URL의 status가 바뀌면 필터 상태 동기화 (다른 위젯 클릭 시 올바르게 전환되도록)
-  const urlStatus = searchParams.get('status') as ProgramLifecycleStatus | 'all' | null
-  useEffect(() => {
-    const statusFromUrl = urlStatus && urlStatus !== 'all' ? urlStatus : 'all'
-    setActiveUserFilters(prev =>
-      prev.status !== statusFromUrl ? { ...prev, status: statusFromUrl } : prev
-    )
-    setPendingUserFilters(prev =>
-      prev.status !== statusFromUrl ? { ...prev, status: statusFromUrl } : prev
-    )
-  }, [urlStatus])
-
-  const periodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
-    // activeUserFilters의 dateRange를 우선 사용
-    if (activeUserFilters.dateRange?.[0] && activeUserFilters.dateRange[1]) {
-      return activeUserFilters.dateRange
-    }
-    // 없으면 URL 파라미터에서 읽기
-    const start = searchParams.get('startDate')
-    const end = searchParams.get('endDate')
-    if (!start || !end) return null
-    const startDate = dayjs(start)
-    const endDate = dayjs(end)
-    if (!startDate.isValid() || !endDate.isValid()) return null
-    return [startDate, endDate]
-  }, [activeUserFilters.dateRange, searchParams])
-  const targetFilter = useMemo<ProgramCategory | 'all'>(() => {
-    const value = activeUserFilters.target || searchParams.get('target')
-    return value === 'individual' || value === 'school' ? value : 'all'
-  }, [activeUserFilters.target, searchParams])
-  const educationTypeFilter = useMemo<ProgramType | 'all'>(() => {
-    const value = activeUserFilters.type || searchParams.get('type')
-    return value === 'online' || value === 'offline' || value === 'hybrid' ? value : 'all'
-  }, [activeUserFilters.type, searchParams])
-  // 위젯 클릭 시 URL이 곧바로 반영되도록 URL 우선 (activeUserFilters는 필터 패널 '조회'용)
-  const progressStatusFilter = useMemo<ProgramLifecycleStatus | 'all'>(() => {
-    const fromUrl = searchParams.get('status') as ProgramLifecycleStatus | null
-    const value = fromUrl || activeUserFilters.status
-    if (!value || value === 'all') return 'all'
-    const validStatuses = new Set(programLifecycleStatusConfig.order)
-    return validStatuses.has(value as ProgramLifecycleStatus)
-      ? (value as ProgramLifecycleStatus)
-      : 'all'
-  }, [activeUserFilters.status, searchParams])
-  const searchQuery = useMemo(
-    () => activeUserFilters.search || searchParams.get('search') || '',
-    [activeUserFilters.search, searchParams]
-  )
-
-  // 관리자용 필터 상태 (운영 기간, 신청 기간)
-  const [searchParamsAdmin, setSearchParamsAdmin] = useSearchParams()
   const operationPeriodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
-    const start = searchParamsAdmin.get('operationStartDate')
-    const end = searchParamsAdmin.get('operationEndDate')
+    const start = searchParams.get('operationStartDate')
+    const end = searchParams.get('operationEndDate')
     if (!start || !end) return null
     const startDate = dayjs(start)
     const endDate = dayjs(end)
     if (!startDate.isValid() || !endDate.isValid()) return null
     return [startDate, endDate]
-  }, [searchParamsAdmin])
+  }, [searchParams])
 
   const applicationPeriodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
-    const start = searchParamsAdmin.get('applicationStartDate')
-    const end = searchParamsAdmin.get('applicationEndDate')
+    const start = searchParams.get('applicationStartDate')
+    const end = searchParams.get('applicationEndDate')
     if (!start || !end) return null
     const startDate = dayjs(start)
     const endDate = dayjs(end)
     if (!startDate.isValid() || !endDate.isValid()) return null
     return [startDate, endDate]
-  }, [searchParamsAdmin])
+  }, [searchParams])
 
   const filteredData = useMemo(() => {
-    if (!isParticipant) {
-      // 관리자용: 운영 기간·신청 기간 필터링 (진행현황·진행방식은 테이블 컬럼 필터로 처리)
-      let filtered = data
-
-      // 운영 기간 필터링
-      if (operationPeriodRange?.[0] && operationPeriodRange?.[1]) {
-        const rangeStart = operationPeriodRange[0].startOf('day')
-        const rangeEnd = operationPeriodRange[1].endOf('day')
-        filtered = filtered.filter(program => {
-          if (!program.startDate || !program.endDate) {
-            return false
-          }
-          const startDate = dayjs(program.startDate)
-          const endDate = dayjs(program.endDate)
-          // 날짜 유효성 검사
-          if (!startDate.isValid() || !endDate.isValid()) {
-            return false
-          }
-          return startDate.isSameOrBefore(rangeEnd) && endDate.isSameOrAfter(rangeStart)
-        })
-      }
-
-      // 신청 기간 필터링
-      if (applicationPeriodRange?.[0] && applicationPeriodRange?.[1]) {
-        const rangeStart = applicationPeriodRange[0].startOf('day')
-        const rangeEnd = applicationPeriodRange[1].endOf('day')
-        filtered = filtered.filter(program => {
-          // 신청 기간이 있는 경우에만 필터링
-          if (program.applicationStartDate && program.applicationEndDate) {
-            const appStart = dayjs(program.applicationStartDate)
-            const appEnd = dayjs(program.applicationEndDate)
-            // 날짜 유효성 검사
-            if (!appStart.isValid() || !appEnd.isValid()) {
-              return false
-            }
-            // 신청 기간과 필터 범위가 겹치는지 확인
-            return appStart.isSameOrBefore(rangeEnd) && appEnd.isSameOrAfter(rangeStart)
-          }
-          // 신청 기간이 없는 프로그램은 필터에서 제외 (필터 적용 시 신청 기간이 있는 프로그램만 표시)
-          return false
-        })
-      }
-
-      return filtered
-    }
-
     let filtered = data
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase()
-      filtered = filtered.filter(program => program.title.toLowerCase().includes(query))
-    }
-
-    if (periodRange?.[0] && periodRange?.[1]) {
-      const rangeStart = periodRange[0].startOf('day')
-      const rangeEnd = periodRange[1].endOf('day')
+    if (operationPeriodRange?.[0] && operationPeriodRange?.[1]) {
+      const rangeStart = operationPeriodRange[0].startOf('day')
+      const rangeEnd = operationPeriodRange[1].endOf('day')
       filtered = filtered.filter(program => {
         if (!program.startDate || !program.endDate) {
           return false
         }
         const startDate = dayjs(program.startDate)
         const endDate = dayjs(program.endDate)
-        // 날짜 유효성 검사
         if (!startDate.isValid() || !endDate.isValid()) {
           return false
         }
@@ -332,121 +123,73 @@ export function ProgramList({
       })
     }
 
-    if (targetFilter !== 'all') {
-      filtered = filtered.filter(program => program.category === targetFilter)
-    }
-
-    if (educationTypeFilter !== 'all') {
-      filtered = filtered.filter(program => program.type === educationTypeFilter)
-    }
-
-    if (progressStatusFilter !== 'all') {
-      filtered = filtered.filter(program => program.lifecycleStatus === progressStatusFilter)
+    if (applicationPeriodRange?.[0] && applicationPeriodRange?.[1]) {
+      const rangeStart = applicationPeriodRange[0].startOf('day')
+      const rangeEnd = applicationPeriodRange[1].endOf('day')
+      filtered = filtered.filter(program => {
+        if (program.applicationStartDate && program.applicationEndDate) {
+          const appStart = dayjs(program.applicationStartDate)
+          const appEnd = dayjs(program.applicationEndDate)
+          if (!appStart.isValid() || !appEnd.isValid()) {
+            return false
+          }
+          return appStart.isSameOrBefore(rangeEnd) && appEnd.isSameOrAfter(rangeStart)
+        }
+        return false
+      })
     }
 
     return filtered
-  }, [
-    data,
-    educationTypeFilter,
-    isParticipant,
-    periodRange,
-    progressStatusFilter,
-    searchQuery,
-    targetFilter,
-    operationPeriodRange,
-    applicationPeriodRange,
-  ])
+  }, [data, operationPeriodRange, applicationPeriodRange])
 
-  // 경제 교육: 제목·진행현황 셀렉트로 데이터 선필터 (테이블 컬럼 필터와 별도, URL lifecycleStatus — 위젯용 status 와 분리)
   const economyFilteredData = useMemo(() => {
     if (!readOnlyLifecycleStatus) return filteredData
-    const title = searchParamsAdmin.get('title') || ''
-    const lifecycleRaw = searchParamsAdmin.get('lifecycleStatus') || ''
-    const lifecycleFilter =
-      !economyScheduledFilterLayout &&
-      lifecycleRaw &&
-      economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
-        ? (lifecycleRaw as ProgramLifecycleStatus)
-        : undefined
+    const title = searchParams.get('title') || ''
+
     let result = filteredData
     if (title.trim()) {
       const q = title.trim().toLowerCase()
       result = result.filter(p => p.title?.toLowerCase().includes(q))
     }
-    if (lifecycleFilter) {
-      if (lifecycleFilter === 'matching_completed') {
-        result = result.filter(
-          p =>
-            p.lifecycleStatus === 'matching_completed' ||
-            p.lifecycleStatus === 'education_before_textbook'
-        )
-      } else {
-        result = result.filter(p => p.lifecycleStatus === lifecycleFilter)
-      }
-    }
     return result
-  }, [filteredData, readOnlyLifecycleStatus, searchParamsAdmin, economyScheduledFilterLayout])
+  }, [filteredData, readOnlyLifecycleStatus, searchParams])
 
   const dataForTable = readOnlyLifecycleStatus ? economyFilteredData : filteredData
-  const { table, resetFilters, columnFilters } = useProgramTable(dataForTable)
+  const { table, columnFilters } = useProgramTable(dataForTable)
 
-  // 목록에 필터가 적용됐는지 (관리자: 운영/신청 기간 + 테이블 컬럼 필터(검색·진행현황 등), 강사 등: 검색·기간·대상·진행상태)
   const hasActiveFilters = useMemo(() => {
-    if (!isParticipant) {
-      if (readOnlyLifecycleStatus) {
-        const title = searchParamsAdmin.get('title') || ''
-        const lifecycleRaw = searchParamsAdmin.get('lifecycleStatus') || ''
-        const hasLifecycleFilter =
-          !economyScheduledFilterLayout &&
-          lifecycleRaw !== '' &&
-          economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
-        const hasOperationPeriod =
-          economyScheduledFilterLayout &&
-          Boolean(
-            searchParamsAdmin.get('operationStartDate') && searchParamsAdmin.get('operationEndDate')
-          )
-        const hasColumnFilter = columnFilters.some(
-          f => f.value != null && String(f.value).trim() !== ''
-        )
-        return Boolean(
-          hasColumnFilter ||
-            title.trim() !== '' ||
-            hasLifecycleFilter ||
-            hasOperationPeriod
-        )
-      }
+    if (readOnlyLifecycleStatus) {
+      const title = searchParams.get('title') || ''
+      const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
+      const hasLifecycleFilter =
+        lifecycleRaw !== '' &&
+        economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
+      const hasOperationPeriod = Boolean(
+        searchParams.get('operationStartDate') && searchParams.get('operationEndDate')
+      )
       const hasColumnFilter = columnFilters.some(
         f => f.value != null && String(f.value).trim() !== ''
       )
       return Boolean(
-        hasColumnFilter ||
-        (operationPeriodRange?.[0] && operationPeriodRange?.[1]) ||
-        (applicationPeriodRange?.[0] && applicationPeriodRange?.[1])
+        hasColumnFilter || title.trim() !== '' || hasLifecycleFilter || hasOperationPeriod
       )
     }
+    const hasColumnFilter = columnFilters.some(
+      f => f.value != null && String(f.value).trim() !== ''
+    )
     return Boolean(
-      searchQuery.trim() ||
-      (periodRange?.[0] && periodRange?.[1]) ||
-      targetFilter !== 'all' ||
-      educationTypeFilter !== 'all' ||
-      progressStatusFilter !== 'all'
+      hasColumnFilter ||
+      (operationPeriodRange?.[0] && operationPeriodRange?.[1]) ||
+      (applicationPeriodRange?.[0] && applicationPeriodRange?.[1])
     )
   }, [
-    isParticipant,
     columnFilters,
     operationPeriodRange,
     applicationPeriodRange,
-    searchQuery,
-    periodRange,
-    targetFilter,
-    educationTypeFilter,
-    progressStatusFilter,
     readOnlyLifecycleStatus,
-    searchParamsAdmin,
-    economyScheduledFilterLayout,
+    searchParams,
   ])
 
-  // 표시 건수·필터 여부를 부모로 전달 (필터 없을 땐 페이지에서 전체 건수 표시 → 위젯과 일치)
   const displayedCount = hasActiveFilters
     ? table.getFilteredRowModel().rows.length
     : filteredData.length
@@ -454,15 +197,10 @@ export function ProgramList({
     onDisplayCountChange?.(displayedCount, hasActiveFilters)
   }, [displayedCount, hasActiveFilters, onDisplayCountChange])
 
-  const [favorites, setFavorites] = useState<Set<string>>(new Set())
-  // 외부에서 selectedRowKeys를 관리하는 경우를 위해 내부 상태도 유지
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
-  // 뷰 모드: 외부에서 제어되면 그것을 사용, 아니면 내부 상태 사용
   const [internalViewMode] = useState<'list' | 'calendar'>('list')
   const viewMode = externalViewMode ?? internalViewMode
-  const studentFiltersInitialized = useRef(false)
 
-  // 관리자용: Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
   const [pendingFilters, setPendingFilters] = useState({
     title: '',
     lifecycleStatus: undefined as ProgramLifecycleStatus | undefined,
@@ -476,209 +214,125 @@ export function ProgramList({
     operationEndDate: null as Dayjs | null,
   })
 
-  // URL에서 필터 값을 읽어와서 pendingFilters 초기화 및 검색어 즉시 적용 (관리자용)
   useEffect(() => {
-    if (!isParticipant) {
-      if (readOnlyLifecycleStatus) {
-        if (economyScheduledFilterLayout) {
-          const titleFromUrl = searchParamsAdmin.get('title') || ''
-          const categoryFilter = searchParamsAdmin.get('category') || undefined
-          const targetLevelFilter = searchParamsAdmin.get('targetLevel') || undefined
-          const operationStartDateStr = searchParamsAdmin.get('operationStartDate')
-          const operationEndDateStr = searchParamsAdmin.get('operationEndDate')
+    if (readOnlyLifecycleStatus) {
+      const titleFromUrl = searchParams.get('title') || ''
+      const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
+      const lifecycleFromUrl =
+        lifecycleRaw && economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
+          ? (lifecycleRaw as ProgramLifecycleStatus)
+          : undefined
+      const categoryFilter = searchParams.get('category') || undefined
+      const targetLevelFilter = searchParams.get('targetLevel') || undefined
 
-          setPendingFilters(prev => {
-            const hasChanges =
-              prev.title !== titleFromUrl ||
-              prev.category !== categoryFilter ||
-              prev.targetLevel !== targetLevelFilter ||
-              prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
-              prev.operationEndDate?.format('YYYY-MM-DD') !== operationEndDateStr
+      setPendingFilters(prev => {
+        const hasChanges =
+          prev.title !== titleFromUrl ||
+          prev.lifecycleStatus !== lifecycleFromUrl ||
+          prev.category !== categoryFilter ||
+          prev.targetLevel !== targetLevelFilter
 
-            if (!hasChanges) return prev
+        if (!hasChanges) return prev
 
-            return {
-              ...prev,
-              title: titleFromUrl,
-              category: categoryFilter,
-              targetLevel: targetLevelFilter,
-              operationStartDate: operationStartDateStr
-                ? dayjs(operationStartDateStr).isValid()
-                  ? dayjs(operationStartDateStr)
-                  : null
-                : null,
-              operationEndDate: operationEndDateStr
-                ? dayjs(operationEndDateStr).isValid()
-                  ? dayjs(operationEndDateStr)
-                  : null
-                : null,
-            }
-          })
-        } else {
-          // 경제 교육: title, lifecycleStatus(카드 필터), category, targetLevel — 위젯은 params.status 별도
-          const titleFromUrl = searchParamsAdmin.get('title') || ''
-          const lifecycleRaw = searchParamsAdmin.get('lifecycleStatus') || ''
-          const lifecycleFromUrl =
-            lifecycleRaw && economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
-              ? (lifecycleRaw as ProgramLifecycleStatus)
-              : undefined
-          const categoryFilter = searchParamsAdmin.get('category') || undefined
-          const targetLevelFilter = searchParamsAdmin.get('targetLevel') || undefined
-
-          setPendingFilters(prev => {
-            const hasChanges =
-              prev.title !== titleFromUrl ||
-              prev.lifecycleStatus !== lifecycleFromUrl ||
-              prev.category !== categoryFilter ||
-              prev.targetLevel !== targetLevelFilter
-
-            if (!hasChanges) return prev
-
-            return {
-              ...prev,
-              title: titleFromUrl,
-              lifecycleStatus: lifecycleFromUrl,
-              category: categoryFilter,
-              targetLevel: targetLevelFilter,
-            }
-          })
+        return {
+          ...prev,
+          title: titleFromUrl,
+          lifecycleStatus: lifecycleFromUrl,
+          category: categoryFilter,
+          targetLevel: targetLevelFilter,
         }
-      } else {
-        // 일반 교육: 기존 로직
-        const titleFromUrl = searchParamsAdmin.get('title') || ''
-        const titleFilter = columnFilters.find(f => f.id === 'title')?.value as string | undefined
-        const currentTitle = titleFromUrl || titleFilter || ''
+      })
+    } else {
+      const titleFromUrl = searchParams.get('title') || ''
+      const titleFilter = columnFilters.find(f => f.id === 'title')?.value as string | undefined
+      const currentTitle = titleFromUrl || titleFilter || ''
 
-        if (currentTitle !== ((table.getColumn('title')?.getFilterValue() as string) || '')) {
-          table.getColumn('title')?.setFilterValue(currentTitle || null)
-        }
-
-        const categoryFilter = columnFilters.find(f => f.id === 'category')?.value as
-          | string
-          | undefined
-        const businessAreaFilter = columnFilters.find(f => f.id === 'businessArea')?.value as
-          | string
-          | undefined
-        const targetLevelFilter = columnFilters.find(f => f.id === 'targetLevel')?.value as
-          | string
-          | undefined
-
-        const statusFromUrl = searchParamsAdmin.get('status') as ProgramLifecycleStatus | null
-        const statusFilter = statusFromUrl ?? effectiveLifecycleStatus ?? null
-        const typeFilter = searchParamsAdmin.get('type') || null
-
-        const operationStartDateStr = searchParamsAdmin.get('operationStartDate')
-        const operationEndDateStr = searchParamsAdmin.get('operationEndDate')
-
-        setPendingFilters(prev => {
-          const hasChanges =
-            prev.title !== currentTitle ||
-            prev.lifecycleStatus !== (statusFilter || undefined) ||
-            prev.type !== (typeFilter || undefined) ||
-            prev.category !== categoryFilter ||
-            prev.businessArea !== businessAreaFilter ||
-            prev.targetLevel !== targetLevelFilter ||
-            prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
-            prev.operationEndDate?.format('YYYY-MM-DD') !== operationEndDateStr
-
-          if (!hasChanges) return prev
-
-          return {
-            title: currentTitle,
-            lifecycleStatus: statusFilter || undefined,
-            category: categoryFilter,
-            businessArea: businessAreaFilter,
-            targetLevel: targetLevelFilter,
-            type: typeFilter || undefined,
-            applicationStartDate: null,
-            applicationEndDate: null,
-            operationStartDate: operationStartDateStr
-              ? dayjs(operationStartDateStr).isValid()
-                ? dayjs(operationStartDateStr)
-                : null
-              : null,
-            operationEndDate: operationEndDateStr
-              ? dayjs(operationEndDateStr).isValid()
-                ? dayjs(operationEndDateStr)
-                : null
-              : null,
-          }
-        })
+      if (currentTitle !== ((table.getColumn('title')?.getFilterValue() as string) || '')) {
+        table.getColumn('title')?.setFilterValue(currentTitle || null)
       }
-    }
-  }, [
-    columnFilters,
-    searchParamsAdmin,
-    isParticipant,
-    table,
-    effectiveLifecycleStatus,
-    readOnlyLifecycleStatus,
-    economyScheduledFilterLayout,
-  ])
 
-  // 조회 버튼 클릭 시 필터 적용
+      const categoryFilter = columnFilters.find(f => f.id === 'category')?.value as
+        | string
+        | undefined
+      const businessAreaFilter = columnFilters.find(f => f.id === 'businessArea')?.value as
+        | string
+        | undefined
+      const targetLevelFilter = columnFilters.find(f => f.id === 'targetLevel')?.value as
+        | string
+        | undefined
+
+      const statusFromUrl = searchParams.get('status') as ProgramLifecycleStatus | null
+      const statusFilter = statusFromUrl ?? effectiveLifecycleStatus ?? null
+      const typeFilter = searchParams.get('type') || null
+
+      const operationStartDateStr = searchParams.get('operationStartDate')
+      const operationEndDateStr = searchParams.get('operationEndDate')
+
+      setPendingFilters(prev => {
+        const hasChanges =
+          prev.title !== currentTitle ||
+          prev.lifecycleStatus !== (statusFilter || undefined) ||
+          prev.type !== (typeFilter || undefined) ||
+          prev.category !== categoryFilter ||
+          prev.businessArea !== businessAreaFilter ||
+          prev.targetLevel !== targetLevelFilter ||
+          prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
+          prev.operationEndDate?.format('YYYY-MM-DD') !== operationEndDateStr
+
+        if (!hasChanges) return prev
+
+        return {
+          title: currentTitle,
+          lifecycleStatus: statusFilter || undefined,
+          category: categoryFilter,
+          businessArea: businessAreaFilter,
+          targetLevel: targetLevelFilter,
+          type: typeFilter || undefined,
+          applicationStartDate: null,
+          applicationEndDate: null,
+          operationStartDate: operationStartDateStr
+            ? dayjs(operationStartDateStr).isValid()
+              ? dayjs(operationStartDateStr)
+              : null
+            : null,
+          operationEndDate: operationEndDateStr
+            ? dayjs(operationEndDateStr).isValid()
+              ? dayjs(operationEndDateStr)
+              : null
+            : null,
+        }
+      })
+    }
+  }, [columnFilters, searchParams, table, effectiveLifecycleStatus, readOnlyLifecycleStatus])
+
   const handleSearch = useCallback(() => {
-    const nextParams = new URLSearchParams(searchParamsAdmin)
+    const nextParams = new URLSearchParams(searchParams)
 
     if (readOnlyLifecycleStatus) {
-      if (economyScheduledFilterLayout) {
-        if (pendingFilters.title?.trim()) {
-          nextParams.set('title', pendingFilters.title.trim())
-        } else {
-          nextParams.delete('title')
-        }
-        nextParams.delete('lifecycleStatus')
-        nextParams.delete('statusText')
-        if (pendingFilters.operationStartDate && pendingFilters.operationEndDate) {
-          nextParams.set(
-            'operationStartDate',
-            pendingFilters.operationStartDate.format('YYYY-MM-DD')
-          )
-          nextParams.set('operationEndDate', pendingFilters.operationEndDate.format('YYYY-MM-DD'))
-        } else {
-          nextParams.delete('operationStartDate')
-          nextParams.delete('operationEndDate')
-        }
-        if (pendingFilters.category) {
-          nextParams.set('category', pendingFilters.category)
-        } else {
-          nextParams.delete('category')
-        }
-        if (pendingFilters.targetLevel) {
-          nextParams.set('targetLevel', pendingFilters.targetLevel)
-        } else {
-          nextParams.delete('targetLevel')
-        }
-        table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
-        table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
+      if (pendingFilters.title?.trim()) {
+        nextParams.set('title', pendingFilters.title.trim())
       } else {
-        // 경제 교육: title, lifecycleStatus, category, targetLevel
-        if (pendingFilters.title?.trim()) {
-          nextParams.set('title', pendingFilters.title.trim())
-        } else {
-          nextParams.delete('title')
-        }
-        if (pendingFilters.lifecycleStatus) {
-          nextParams.set('lifecycleStatus', pendingFilters.lifecycleStatus)
-        } else {
-          nextParams.delete('lifecycleStatus')
-        }
-        nextParams.delete('statusText')
-        if (pendingFilters.category) {
-          nextParams.set('category', pendingFilters.category)
-        } else {
-          nextParams.delete('category')
-        }
-        if (pendingFilters.targetLevel) {
-          nextParams.set('targetLevel', pendingFilters.targetLevel)
-        } else {
-          nextParams.delete('targetLevel')
-        }
-        table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
-        table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
+        nextParams.delete('title')
       }
+      if (pendingFilters.lifecycleStatus) {
+        nextParams.set('lifecycleStatus', pendingFilters.lifecycleStatus)
+      } else {
+        nextParams.delete('lifecycleStatus')
+      }
+      nextParams.delete('statusText')
+      if (pendingFilters.category) {
+        nextParams.set('category', pendingFilters.category)
+      } else {
+        nextParams.delete('category')
+      }
+      if (pendingFilters.targetLevel) {
+        nextParams.set('targetLevel', pendingFilters.targetLevel)
+      } else {
+        nextParams.delete('targetLevel')
+      }
+      table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
+      table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
     } else {
-      // 일반 교육: 기존 로직
       table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
       table.getColumn('businessArea')?.setFilterValue(pendingFilters.businessArea || null)
       table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
@@ -712,131 +366,45 @@ export function ProgramList({
       }
     }
 
-    setSearchParamsAdmin(nextParams, { replace: true })
-  }, [
-    pendingFilters,
-    table,
-    searchParamsAdmin,
-    setSearchParamsAdmin,
-    readOnlyLifecycleStatus,
-    economyScheduledFilterLayout,
-  ])
+    setSearchParams(nextParams, { replace: true })
+  }, [pendingFilters, table, searchParams, setSearchParams, readOnlyLifecycleStatus])
 
-  // 외부에서 selectedRowKeys를 받아오거나 내부 상태 사용
   const effectiveSelectedRowKeys =
     externalSelectedRowKeys !== undefined ? externalSelectedRowKeys : internalSelectedRowKeys
 
   const handleSelectionChange = useCallback(
     (keys: React.Key[]) => {
       if (externalSelectedRowKeys !== undefined) {
-        // 외부에서 관리하는 경우
         onSelectionChange?.(keys)
       } else {
-        // 내부에서 관리하는 경우
         setInternalSelectedRowKeys(keys)
         onSelectionChange?.(keys)
       }
     },
     [externalSelectedRowKeys, onSelectionChange]
   )
-
-  const loadFavorites = useCallback(
-    async (userId: string) => {
-      try {
-        const favoriteStatuses = await Promise.all(data.map(p => isFavoriteProgram(userId, p.id)))
-        const favoriteSet = new Set<string>()
-        data.forEach((p, index) => {
-          if (favoriteStatuses[index]) {
-            favoriteSet.add(p.id)
-          }
-        })
-        setFavorites(favoriteSet)
-      } catch (error) {
-        console.error('관심 프로그램 상태 로드 실패:', error)
-      }
-    },
-    [data]
-  )
-
-  // 찜하기 상태 로드
-  useEffect(() => {
-    const userId = user?.instructorId || user?.id
-    if (showFavorite && userId && data.length > 0) {
-      // setTimeout을 사용하여 비동기적으로 실행 (cascading render 경고 방지)
-      const timer = setTimeout(() => {
-        loadFavorites(userId)
-      }, 0)
-      return () => clearTimeout(timer)
-    }
-  }, [showFavorite, user, data, loadFavorites])
-
-  useEffect(() => {
-    if (isParticipant && !studentFiltersInitialized.current) {
-      resetFilters()
-      studentFiltersInitialized.current = true
-    }
-    if (!isParticipant) {
-      studentFiltersInitialized.current = false
-    }
-  }, [isParticipant, resetFilters])
-
-  const handleToggleFavorite = async (programId: string) => {
-    const userId = user?.instructorId || user?.id
-    if (!userId) return
-
-    const isFavorite = favorites.has(programId)
-
-    try {
-      if (isFavorite) {
-        await removeFavoriteProgram(userId, programId)
-        message.success(MESSAGES.success.removedFromFavorites)
-      } else {
-        await addFavoriteProgram(userId, programId)
-        message.success(MESSAGES.success.addedToFavorites)
-      }
-
-      setFavorites(prev => {
-        const newSet = new Set(prev)
-        if (isFavorite) {
-          newSet.delete(programId)
-        } else {
-          newSet.add(programId)
-        }
-        return newSet
-      })
-    } catch (error) {
-      console.error('관심 프로그램 토글 실패:', error)
-      message.error(MESSAGES.error.unknown)
-    }
-  }
-
-  const economyWideMetricsTable = economyInProgressActive || economyCompletedActive
-
-  const columnsAdmin = useMemo(() => {
-    if (tableVariant !== 'education') return []
-
-    return resolveEducationColumns({
+  const tableColumns = useMemo(
+    () =>
+      resolveEducationColumns({
+        studentRecruitmentTable,
+        instructorRecruitmentTable,
+        isEconomyPage,
+        readOnlyLifecycleStatus,
+        economyAllProgramsActive,
+        economyScheduledActive,
+        economyInProgressActive,
+        economyCompletedActive,
+      }),
+    [
       studentRecruitmentTable,
       instructorRecruitmentTable,
       isEconomyPage,
       readOnlyLifecycleStatus,
       economyAllProgramsActive,
+      economyScheduledActive,
       economyInProgressActive,
       economyCompletedActive,
-    })
-  }, [
-    tableVariant,
-    studentRecruitmentTable,
-    instructorRecruitmentTable,
-    isEconomyPage,
-    readOnlyLifecycleStatus,
-    economyAllProgramsActive,
-    economyInProgressActive,
-    economyCompletedActive,
-  ])
-
-  const economyRowSelectionActive = Boolean(
-    isEconomyPage && showRowSelection && onBulkDelete
+    ]
   )
 
   return (
@@ -845,80 +413,10 @@ export function ProgramList({
         viewMode === 'list' ? 'program-list-container' : 'program-list-calendar-view-container'
       }
     >
-      {isParticipant && (
-        <UnifiedFilterCard
-          fields={participantFilterFields}
-          filters={buildParticipantFilters(pendingUserFilters, periodRange)}
-          onFilterChange={(key, value) => {
-            if (key === 'dateRange') {
-              setPendingUserFilters(prev => ({
-                ...prev,
-                dateRange: value as [Dayjs | null, Dayjs | null] | null,
-              }))
-            } else {
-              setPendingUserFilters(prev => ({ ...prev, [key]: value || undefined }))
-            }
-          }}
-          onSearch={() => {
-            setActiveUserFilters(pendingUserFilters)
-            const nextParams = new URLSearchParams(searchParams)
-            if (pendingUserFilters.search?.trim()) {
-              nextParams.set('search', pendingUserFilters.search.trim())
-            } else {
-              nextParams.delete('search')
-            }
-            if (pendingUserFilters.dateRange?.[0] && pendingUserFilters.dateRange[1]) {
-              nextParams.set('startDate', pendingUserFilters.dateRange[0].format('YYYY-MM-DD'))
-              nextParams.set('endDate', pendingUserFilters.dateRange[1].format('YYYY-MM-DD'))
-            } else {
-              nextParams.delete('startDate')
-              nextParams.delete('endDate')
-            }
-            if (pendingUserFilters.target && pendingUserFilters.target !== 'all') {
-              nextParams.set('target', pendingUserFilters.target)
-            } else {
-              nextParams.delete('target')
-            }
-            if (pendingUserFilters.type && pendingUserFilters.type !== 'all') {
-              nextParams.set('type', pendingUserFilters.type)
-            } else {
-              nextParams.delete('type')
-            }
-            if (pendingUserFilters.status && pendingUserFilters.status !== 'all') {
-              nextParams.set('status', pendingUserFilters.status)
-            } else {
-              nextParams.delete('status')
-            }
-            setSearchParams(nextParams, { replace: true })
-          }}
-        />
-      )}
-
-      {/* 관리자 목록 뷰: 필터, tableButtonSection, 테이블을 단일 배경 컨테이너로 감쌈 */}
-      {!isParticipant && viewMode === 'list' ? (
-        <FilterListLayout
-          className={[
-            'program-list-content-wrapper',
-            isEconomyPage ? 'program-list-content-wrapper--economy-education' : '',
-            economyScheduledFilterLayout
-              ? 'program-list-content-wrapper--economy-scheduled-filters'
-              : '',
-            showCalendarView ? 'program-list-content-wrapper--calendar-list-toggle' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          fields={
-            readOnlyLifecycleStatus
-              ? economyScheduledFilterLayout
-                ? economyScheduledFilterFields
-                : economyFilterFields
-              : programListFilterFields
-          }
-          filters={buildProgramListFilters(
-            pendingFilters,
-            readOnlyLifecycleStatus,
-            economyScheduledFilterLayout
-          )}
+      {viewMode === 'list' ? (
+        <FilterTableLayout
+          fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
+          filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
           onFilterChange={(key, value) => {
             if (key === 'operationPeriod') {
               const dates = value as [Dayjs, Dayjs] | null
@@ -935,9 +433,9 @@ export function ProgramList({
                 ...prev,
                 [key]:
                   value != null && String(value).trim()
-                    ? (key === 'lifecycleStatus'
-                        ? (value as ProgramLifecycleStatus)
-                        : value)
+                    ? key === 'lifecycleStatus'
+                      ? (value as ProgramLifecycleStatus)
+                      : value
                     : undefined,
               }))
             } else {
@@ -946,81 +444,35 @@ export function ProgramList({
           }}
           onSearch={handleSearch}
           bordered={false}
-          listHeader={children}
+          title={headerTitle}
+          description={`총 ${displayedCount.toLocaleString()}건`}
+          actions={children}
         >
-          <div className="program-list-content-wrapper__table">
-            <Card
-              loading={loading}
-              className={`program-list-card program-list-card--in-wrapper program-list-card--no-border${isEconomyPage ? ' program-list-card--economy-education' : ''}${economyInProgressActive ? ' program-list-card--economy-in-progress' : ''}${economyCompletedActive ? ' program-list-card--economy-completed' : ''}`}
-              style={{ border: 'none', boxShadow: 'none' }}
-            >
-              <div
-                  className={[
-                  'program-list-table-wrapper',
-                  'program-list-table-wrapper--scroll-x',
-                  isEconomyPage ? 'program-list-table-wrapper--economy-education' : '',
-                  isEconomyPage && economyAllProgramsActive
-                    ? 'program-list-table-wrapper--economy-all-programs'
-                    : '',
-                  economyInProgressActive ? 'program-list-table-wrapper--economy-in-progress' : '',
-                  economyCompletedActive ? 'program-list-table-wrapper--economy-completed' : '',
-                  economyRowSelectionActive
-                    ? 'program-list-table-wrapper--economy-education-selection'
-                    : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                <Table
-                  rowSelection={
-                    showRowSelection && onBulkDelete
-                      ? {
-                          columnWidth: isEconomyPage ? 80 : TABLE_COLUMN_WIDTHS.checkbox,
-                          selectedRowKeys: effectiveSelectedRowKeys,
-                          onChange: handleSelectionChange,
-                        }
-                      : undefined
+          <Table
+            className="cms-data-table"
+            rowSelection={
+              showRowSelection && (onBulkDelete != null || onSelectionChange != null)
+                ? {
+                    columnWidth: isEconomyPage ? 80 : TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys: effectiveSelectedRowKeys,
+                    onChange: handleSelectionChange,
                   }
-                  className={[
-                    'cms-data-table',
-                    isEconomyPage ? 'cms-data-table--economy-education' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
-                  columns={columnsAdmin}
-                  rowKey="id"
-                  loading={loading}
-                  tableLayout="fixed"
-                  scroll={{
-                    x: isEconomyPage
-                      ? economyWideMetricsTable
-                        ? economyRowSelectionActive
-                          ? ECONOMY_IN_PROGRESS_TABLE_SCROLL_X_WITH_SELECTION
-                          : ECONOMY_IN_PROGRESS_TABLE_SCROLL_X
-                        : economyAllProgramsActive
-                          ? economyRowSelectionActive
-                            ? ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PROGRESS
-                            : ECONOMY_EDUCATION_TABLE_SCROLL_X_PROGRESS
-                          : economyRowSelectionActive
-                            ? ECONOMY_EDUCATION_TABLE_SCROLL_X_WITH_SELECTION_PERIOD
-                            : ECONOMY_EDUCATION_TABLE_SCROLL_X_PERIOD
-                      : 2000,
-                    y: 'calc(100vh - 320px)',
-                  }}
-                  onRow={record => ({
-                    onClick: () => onView(record),
-                    style: { cursor: 'pointer' },
-                  })}
-                  pagination={false}
-                />
-              </div>
-            </Card>
-          </div>
-        </FilterListLayout>
+                : undefined
+            }
+            dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
+            columns={tableColumns}
+            rowKey="id"
+            loading={loading}
+            onRow={record => ({
+              onClick: () => onView(record),
+              style: { cursor: 'pointer' },
+            })}
+            pagination={false}
+          />
+        </FilterTableLayout>
       ) : null}
 
-      {!isParticipant && showCalendarView && viewMode === 'calendar' ? (
+      {showCalendarView && viewMode === 'calendar' ? (
         <>
           {children}
           <ProgramCalendarView
@@ -1030,182 +482,6 @@ export function ProgramList({
           />
         </>
       ) : null}
-
-      {/* 참가자용 목록 뷰 (카드로 감싸기) */}
-      {isParticipant && (
-        <Card loading={loading} className="program-list-card">
-          <div className="program-list-table-wrapper">
-            <Table
-              dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
-              columns={[
-                {
-                  title: '포스터',
-                  dataIndex: 'posterImage',
-                  key: 'posterImage',
-                  width: 100,
-                  render: (_: unknown, record: Program) => {
-                    const src = record.posterImage
-                    if (!src) {
-                      return (
-                        <div
-                          style={{
-                            width: 72,
-                            height: 54,
-                            background: '#f0f0f0',
-                            borderRadius: 4,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 10,
-                            color: '#bfbfbf',
-                          }}
-                        >
-                          이미지 없음
-                        </div>
-                      )
-                    }
-                    return (
-                      <div onClick={e => e.stopPropagation()}>
-                        <Image
-                          src={src}
-                          alt=""
-                          width={72}
-                          height={54}
-                          style={{ objectFit: 'cover', borderRadius: 4 }}
-                          preview={{ mask: '확대' }}
-                        />
-                      </div>
-                    )
-                  },
-                },
-                {
-                  title: '프로그램명',
-                  dataIndex: 'title',
-                  key: 'title',
-                  width: 260,
-                  ellipsis: true,
-                  render: (text: string) => (
-                    <Tag
-                      color={domainColorsHex.program.primary}
-                      style={{
-                        maxWidth: 230,
-                        display: 'inline-block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        verticalAlign: 'middle',
-                      }}
-                    >
-                      {text}
-                    </Tag>
-                  ),
-                },
-                {
-                  title: '스폰서',
-                  dataIndex: 'sponsorId',
-                  key: 'sponsorId',
-                  render: (sponsorId: string | undefined) => {
-                    if (!sponsorId) {
-                      return '-'
-                    }
-                    return sponsorService.getNameById(sponsorId)
-                  },
-                },
-                {
-                  title: '유형',
-                  dataIndex: 'type',
-                  key: 'type',
-                  render: (type: string) => {
-                    const typeLabel = programTypes.find(t => t.value === type)?.label || type
-                    return <Tag>{typeLabel}</Tag>
-                  },
-                },
-                {
-                  title: '형태',
-                  dataIndex: 'format',
-                  key: 'format',
-                  render: (format: string) => {
-                    const formatLabel =
-                      programFormats.find(f => f.value === format)?.label || format
-                    return formatLabel
-                  },
-                },
-                {
-                  title: '회차',
-                  dataIndex: 'rounds',
-                  key: 'rounds',
-                  render: (rounds: Program['rounds']) => `${rounds?.length || 0}회차`,
-                },
-                {
-                  title: '상태',
-                  dataIndex: 'status',
-                  key: 'status',
-                  render: (_status: string, record: Program) => {
-                    const lifecycle = record.lifecycleStatus
-
-                    const badge = lifecycle ? (
-                      <ProgramLifecycleStatusBadge status={lifecycle} variant="table" />
-                    ) : (
-                      <StatusBadge
-                        status={record.status}
-                        statusConfig={commonStatusStatusConfig}
-                        showIcon={false}
-                      />
-                    )
-
-                    return badge
-                  },
-                },
-                ...(showFavorite
-                  ? [
-                      {
-                        title: '찜하기',
-                        key: 'favorite',
-                        width: 100,
-                        fixed: 'right' as const,
-                        render: (_: unknown, record: Program) => (
-                          <div onClick={e => e.stopPropagation()}>
-                            <Button
-                              type="text"
-                              icon={
-                                favorites.has(record.id) ? (
-                                  <HeartFilled style={{ color: '#ff4d4f' }} />
-                                ) : (
-                                  <HeartOutlined />
-                                )
-                              }
-                              onClick={e => {
-                                e.stopPropagation()
-                                handleToggleFavorite(record.id)
-                              }}
-                            />
-                          </div>
-                        ),
-                      },
-                    ]
-                  : []),
-              ]}
-              rowKey="id"
-              tableLayout="fixed"
-              scroll={{ x: 2000, y: 'calc(100vh - 320px)' }}
-              onRow={record => ({
-                onClick: event => {
-                  const target = event.target as HTMLElement
-                  if (target.closest('.ant-image-preview-wrap') || target.closest('.ant-image')) {
-                    return
-                  }
-                  if (target.closest('.ant-image-mask')) {
-                    return
-                  }
-                  onView(record)
-                },
-                style: { cursor: 'pointer' },
-              })}
-              pagination={false}
-            />
-          </div>
-        </Card>
-      )}
     </div>
   )
 }

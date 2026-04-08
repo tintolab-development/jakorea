@@ -93,57 +93,6 @@
   padding: 0 20px 0 8px;
 }
 
-.program-list-page__filter-info-texts {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.program-list-page__filter-info-title {
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-/* 캘린더/리스트 전환 있는 관리자 프로그램 목록 — 리스트 뷰(FilterListLayout)에서만 */
-/* 회원 목록(user-list-page): 동일 필터 헤더 타이틀 정렬 */
-.filter-list-layout.program-list-content-wrapper--calendar-list-toggle
-  .program-list-page__filter-info-title,
-.user-list-page__filter-wrap
-  .filter-list-layout.program-list-content-wrapper
-  .program-list-page__filter-info-title {
-  margin-left: 20px;
-}
-
-.program-list-page__filter-info-count {
-  color: var(--color-text-secondary);
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  height: 28px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-}
-
-/* 경제 교육: 테이블 영역 상단 「총 N건」 디스크립션 공통 타이포 */
-.program-list-page--economy-education .program-list-page__filter-info-count {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-  height: auto;
-  min-height: 0;
-  align-items: center;
-  justify-content: center;
-}
-
 .program-list-page__divider-wrapper {
   padding: 0 20px 32px 20px;
 }

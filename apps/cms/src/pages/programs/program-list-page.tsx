@@ -3,22 +3,20 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { Tabs, Modal } from 'antd'
+import { Modal } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { AppButton } from '@/shared/ui/app-button'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
-import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
   type ProgramProgressStageKey,
 } from '@/shared/config/program-progress-stages'
-import type { Program, ProgramCategory, ProgramLifecycleStatus } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 
@@ -29,7 +27,6 @@ import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
 
 import './program-list-page.css'
-import { Divider } from '@/shared/components/divider'
 
 export function ProgramListPage() {
   const navigate = useNavigate()
@@ -39,22 +36,16 @@ export function ProgramListPage() {
   const { programs, loading, fetchPrograms, selectedProgram, setSelectedProgram } = programStore
 
   // 1. Logic Hooks
-  const {
-    programType,
-    statusFilter,
-    filteredPrograms,
-    categoryTab,
-    handleCategoryTabChange,
-    params,
-    setParam,
-  } = useProgramListFilters(programs, user)
+  const { programType, statusFilter, filteredPrograms, params, setParam } = useProgramListFilters(
+    programs,
+    user
+  )
 
   const {
     formLoading,
     handleFormSubmit,
     handleConfirmDelete,
     handleBulkDelete,
-    handleStatusChange,
     getDeleteConfirmMessage,
     programToDelete,
     setProgramToDelete,
@@ -66,7 +57,6 @@ export function ProgramListPage() {
 
   // 2. Local State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
-  const [displayCount, setDisplayCount] = useState<number | null>(null)
   const [, setHasListFilters] = useState(false)
 
   // 헤더 타이틀 계산: statusFilter (위젯 클릭) → 모집단계 라벨 → "전체 프로그램"
@@ -104,6 +94,10 @@ export function ProgramListPage() {
     viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
   )
 
+  const isRecruitmentRoute =
+    location.pathname === '/programs/education/student-recruitment' ||
+    location.pathname === '/programs/education/instructor-recruitment'
+
   // 3. Modal States
   const {
     open: drawerOpen,
@@ -140,16 +134,13 @@ export function ProgramListPage() {
 
   // 수강자/강사 모집 경로에서는 항상 리스트(테이블) 뷰 적용
   useEffect(() => {
-    const isRecruitmentRoute =
-      location.pathname === '/programs/education/student-recruitment' ||
-      location.pathname === '/programs/education/instructor-recruitment'
     if (isRecruitmentRoute && viewMode !== 'list') {
       setViewMode('list')
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('viewMode', 'list')
       setSearchParams(nextParams, { replace: true })
     }
-  }, [location.pathname, viewMode, searchParams, setSearchParams])
+  }, [isRecruitmentRoute, viewMode, searchParams, setSearchParams])
 
   // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동 — 새로고침 시에도 모달 유지
   const isFullPageModalPath =
@@ -175,7 +166,9 @@ export function ProgramListPage() {
       const program = programs.find(p => p.id === programId)
       if (program) {
         setParam('programId', null)
-        navigate(getProgramAdminDetailUrlFromPathname(programId, location.pathname), { replace: true })
+        navigate(getProgramAdminDetailUrlFromPathname(programId, location.pathname), {
+          replace: true,
+        })
       }
     }
   }, [
@@ -189,18 +182,12 @@ export function ProgramListPage() {
     location.pathname,
   ])
 
-  // 5. Handlers (role/action 플래그 — statusFilter, filteredPrograms는 useProgramListFilters에서 제공)
-  const isAdmin = user?.role === 'ADMIN'
-  const canWrite = canPerformWriteAction(user)
-  const isInstructor = user?.role === 'INSTRUCTOR'
-  const isUserRole = isInstructor || user?.role === 'INDIVIDUAL' || user?.role === 'SCHOOL'
-  const showEducationActions = Boolean(
-    isAdmin && canWrite && (programType === 'education' || programType === 'economy')
-  )
-
   /** 예정 프로그램 필터 활성 시에만 행 선택·선택 삭제 표시 (경제 교육 페이지) */
   const isScheduledFilter = programType === 'economy' && statusFilter === 'economy_scheduled'
-  const showRowSelectionForScheduled = showEducationActions && isScheduledFilter
+
+  const isAdmin = user?.role === 'ADMIN'
+
+  const showCalendarView = isAdmin && (programType === 'education' || programType === 'economy')
 
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
@@ -267,52 +254,32 @@ export function ProgramListPage() {
     setSearchParams(nextParams, { replace: true })
   }
 
-  const programListHeader = (
-    <>
-      {viewMode === 'list' && (
-        <div className="program-list-page__divider-wrapper">
-          <Divider />
-        </div>
+  /** ProgramList `FilterTableLayout`의 `actions` 슬롯 — 제목·건수는 `headerTitle`·목록 내부 건수로 표시 */
+  const programListToolbarActions = (
+    <div className="program-list-page__widget-header-actions">
+      {isScheduledFilter && (
+        <AppButton
+          variant="cancel"
+          size="filter"
+          onClick={handleBulkDeleteClick}
+          disabled={selectedRowKeys.length === 0}
+          className="program-list-page__bulk-delete-button"
+        >
+          선택 삭제
+        </AppButton>
       )}
-      {isAdmin && (programType === 'education' || programType === 'economy') && (
-        <div className="program-list-page__filter-info">
-          <div className="program-list-page__filter-info-texts">
-            <div className="program-list-page__filter-info-title">{headerTitle}</div>
-            {displayCount !== null && (
-              <div className="program-list-page__filter-info-count">
-                총 {displayCount.toLocaleString()}건
-              </div>
-            )}
-          </div>
-          <div className="program-list-page__widget-header-actions">
-            {isScheduledFilter && (
-              <AppButton
-                variant="cancel"
-                size="filter"
-                onClick={handleBulkDeleteClick}
-                disabled={selectedRowKeys.length === 0}
-                className="program-list-page__bulk-delete-button"
-              >
-                선택 삭제
-              </AppButton>
-            )}
-            <AppButton
-              variant="cancel"
-              size="filter-wide"
-              icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
-              onClick={handleViewModeToggle}
-            >
-              {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-            </AppButton>
-            {showEducationActions && (
-              <AppButton variant="primary" size="filter-wide" onClick={handleProgramCreateClick}>
-                프로그램 신규 등록
-              </AppButton>
-            )}
-          </div>
-        </div>
-      )}
-    </>
+      <AppButton
+        variant="cancel"
+        size="filter-wide"
+        icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
+        onClick={handleViewModeToggle}
+      >
+        {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
+      </AppButton>
+      <AppButton variant="primary" size="filter-wide" onClick={handleProgramCreateClick}>
+        프로그램 신규 등록
+      </AppButton>
+    </div>
   )
 
   return (
@@ -325,77 +292,29 @@ export function ProgramListPage() {
         .join(' ')}
     >
       {/* 위젯 영역 */}
-      {isAdmin && (
-        <div className="program-progress-widget-container">
-          <ProgramStatusWidget title={null} />
-        </div>
-      )}
-
-      {isAdmin && programType === 'all' && (
-        <div className="program-list-widget-container">
-          <ProgramProgressTabsTable />
-        </div>
-      )}
-
-      {/* 강사용 탭 */}
-      {isUserRole && !isAdmin && (
-        <Tabs
-          activeKey={categoryTab}
-          onChange={key => handleCategoryTabChange(key as ProgramCategory | 'all')}
-          items={[
-            { key: 'all', label: '전체' },
-            { key: 'individual', label: '개인 학생 대상 프로그램' },
-            { key: 'school', label: '단체(학교) 대상 프로그램' },
-          ]}
-          style={{ marginBottom: 16 }}
-        />
-      )}
-
+      <div className="program-progress-widget-container">
+        <ProgramStatusWidget title={null} />
+      </div>
       <ProgramList
         data={filteredPrograms}
         loading={loading}
+        headerTitle={headerTitle}
         onView={handleView}
-        onEdit={showEducationActions ? handleEdit : undefined}
-        onDelete={
-          showEducationActions
-            ? p => {
-                setProgramToDelete(p)
-                setDeleteModalOpen(true)
-              }
-            : undefined
-        }
-        onBulkDelete={
-          showEducationActions
-            ? programs => handleBulkDelete(programs, () => setSelectedRowKeys([]))
-            : undefined
-        }
-        onSelectionChange={showRowSelectionForScheduled ? setSelectedRowKeys : undefined}
-        selectedRowKeys={showRowSelectionForScheduled ? selectedRowKeys : undefined}
-        showActions={showEducationActions}
-        showRowSelection={showRowSelectionForScheduled}
-        showFavorite={false}
-        onChangeStatus={showEducationActions ? handleStatusChange : undefined}
-        showCalendarView={isAdmin && (programType === 'education' || programType === 'economy')}
-        onCreateNew={showEducationActions ? handleProgramCreateClick : undefined}
+        onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
+        selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
+        showRowSelection={isScheduledFilter}
+        showCalendarView={showCalendarView}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        tableVariant={programType === 'economy' ? 'education' : programType}
+        tableVariant={programType === 'economy' ? 'economy' : 'general'}
         readOnlyLifecycleStatus={programType === 'economy'}
-        economyScheduledFilterLayout={
-          programType === 'economy' &&
-          (statusFilter === 'economy_scheduled' ||
-            statusFilter === 'economy_in_progress' ||
-            statusFilter === 'economy_completed')
-        }
-        economyInProgressActive={programType === 'economy' && statusFilter === 'economy_in_progress'}
-        economyCompletedActive={programType === 'economy' && statusFilter === 'economy_completed'}
         economyAllProgramsActive={programType === 'economy' && statusFilter === null}
+        economyScheduledActive={programType === 'economy' && statusFilter === 'economy_scheduled'}
+        economyInProgressActive={
+          programType === 'economy' && statusFilter === 'economy_in_progress'
+        }
+        economyCompletedActive={programType === 'economy' && statusFilter === 'economy_completed'}
         studentRecruitmentTable={statusFilter === 'recruiting_students'}
         instructorRecruitmentTable={statusFilter === 'recruiting_instructors'}
-        onDisplayCountChange={(count, hasActiveFilters) => {
-          setDisplayCount(count)
-          setHasListFilters(hasActiveFilters)
-        }}
         effectiveLifecycleStatus={
           programType === 'economy'
             ? undefined
@@ -403,8 +322,11 @@ export function ProgramListPage() {
               ? 'education_before_textbook'
               : (statusFilter as ProgramLifecycleStatus | null)
         }
+        onDisplayCountChange={(_count, hasActiveFilters) => {
+          setHasListFilters(hasActiveFilters)
+        }}
       >
-        {programListHeader}
+        {programListToolbarActions}
       </ProgramList>
 
       <ProgramListModals
@@ -428,7 +350,6 @@ export function ProgramListPage() {
           }
         }}
         loading={loading}
-        hideActions={!showEducationActions}
         formModalOpen={formModalOpen}
         isEditingMode={isEditingMode}
         editingProgram={editingProgram}
