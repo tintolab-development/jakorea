@@ -64,17 +64,6 @@
   color: var(--color-text-label);
 }
 
-/* 프로그램 목록 컨테이너 */
-.program-list-container {
-  width: 100%;
-  border-radius: 12px;
-  background: var(--color-bg-base);
-  box-shadow: var(--shadow-brand-active);
-}
-.program-list-calendar-view-container {
-  width: 100%;
-}
-
 /* 필터 + tableButtonSection + 테이블 공통 배경 컨테이너 */
 .program-list-content-wrapper {
   background: var(--color-bg-base);

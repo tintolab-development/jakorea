@@ -19,7 +19,7 @@ import {
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
 import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
-import { FilterListLayout } from '@/shared/ui/filter-list-layout'
+import { FilterListLayout } from '@/shared/components/filter-list-layout'
 import { AppButton } from '@/shared/ui/app-button'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/model/user-store'

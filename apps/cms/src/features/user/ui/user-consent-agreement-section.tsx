@@ -5,7 +5,7 @@
 import { type ReactNode } from 'react'
 import type { User } from '@/types/user'
 import { AppButton } from '@/shared/ui/app-button'
-import { DetailInfoForm } from '@/shared/ui/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import './user-detail-section-head.css'
 import './user-consent-agreement-section.css'

@@ -236,12 +236,7 @@
 }
 
 .program-calendar-cell:hover {
-  background: #f5f6f7;
-}
-
-/* 캘린더 > 월간 : 선택된 셀 스타일 */
-.program-calendar-cell--selected {
-  background: #f5f6f7;
+  background: var(--status-hover-bg);
 }
 
 .program-calendar-cell--selected .program-calendar-cell-date {
@@ -592,11 +587,7 @@
 }
 
 .program-calendar-week-cell:hover {
-  background: #fcfcfc;
-}
-
-.program-calendar-week-cell--selected {
-  background: #f5f6f7;
+  background: var(--status-hover-bg);
 }
 
 .program-calendar-week-cell-date--selected {

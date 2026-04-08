@@ -26,7 +26,8 @@
   margin: 0;
 }
 
-.labeled-search-input__control.app-input {
+.labeled-search-input__control.app-input,
+.labeled-search-input__control.cms-input {
   width: 100%;
   min-width: 0;
 }

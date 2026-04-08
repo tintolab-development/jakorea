@@ -14,7 +14,7 @@ import {
 import type { DateValue } from '@/types'
 import type { User, UserRole } from '@/types/user'
 import { formatDate } from '@/shared/utils'
-import { DetailInfoForm } from '@/shared/ui/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { managedProgramCountDisplay } from './user-detail-fullpage-helpers'
 import './user-basic-info-section.css'

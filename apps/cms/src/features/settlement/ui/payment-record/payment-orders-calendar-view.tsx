@@ -25,7 +25,7 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
-import { ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/ui/program-calendar'
+import { ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/components/program-calendar'
 import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
 import './payment-orders-calendar-view.css'
 

@@ -6,7 +6,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { Modal } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
-import { AppButton } from '@/shared/ui/app-button'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useModalState } from '@/shared/hooks/use-modal-state'
@@ -17,6 +16,7 @@ import {
   type ProgramProgressStageKey,
 } from '@/shared/config/program-progress-stages'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import type { EconomyView } from '@/features/program/ui/table/program-table-column-resolver'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 
@@ -27,6 +27,7 @@ import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
 
 import './program-list-page.css'
+import { CmsButton } from '@/shared/ui'
 
 export function ProgramListPage() {
   const navigate = useNavigate()
@@ -189,6 +190,34 @@ export function ProgramListPage() {
 
   const showCalendarView = isAdmin && (programType === 'education' || programType === 'economy')
 
+  const programListConfig = useMemo(() => {
+    const economyView: EconomyView =
+      statusFilter === 'economy_scheduled'
+        ? 'SCHEDULED'
+        : statusFilter === 'economy_in_progress'
+          ? 'IN_PROGRESS'
+          : statusFilter === 'economy_completed'
+            ? 'COMPLETED'
+            : 'ALL'
+
+    return {
+      mode: programType === 'economy' ? ('economy' as const) : ('general' as const),
+      view: economyView,
+      tableType:
+        statusFilter === 'recruiting_students'
+          ? ('student' as const)
+          : statusFilter === 'recruiting_instructors'
+            ? ('instructor' as const)
+            : undefined,
+      lifecycleStatus:
+        programType === 'economy'
+          ? undefined
+          : statusFilter === 'matching_completed'
+            ? ('education_before_textbook' as const)
+            : (statusFilter as ProgramLifecycleStatus | null),
+    }
+  }, [programType, statusFilter])
+
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
     if (programsToDelete.length === 0) return
@@ -258,27 +287,26 @@ export function ProgramListPage() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {isScheduledFilter && (
-        <AppButton
-          variant="cancel"
-          size="filter"
+        <CmsButton
+          variant="delete"
           onClick={handleBulkDeleteClick}
           disabled={selectedRowKeys.length === 0}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
-        </AppButton>
+        </CmsButton>
       )}
-      <AppButton
-        variant="cancel"
-        size="filter-wide"
+      <CmsButton
+        variant="secondary"
+        width={180}
         icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
-      </AppButton>
-      <AppButton variant="primary" size="filter-wide" onClick={handleProgramCreateClick}>
+      </CmsButton>
+      <CmsButton width={180} onClick={handleProgramCreateClick}>
         프로그램 신규 등록
-      </AppButton>
+      </CmsButton>
     </div>
   )
 
@@ -306,22 +334,7 @@ export function ProgramListPage() {
         showCalendarView={showCalendarView}
         viewMode={viewMode}
         tableVariant={programType === 'economy' ? 'economy' : 'general'}
-        readOnlyLifecycleStatus={programType === 'economy'}
-        economyAllProgramsActive={programType === 'economy' && statusFilter === null}
-        economyScheduledActive={programType === 'economy' && statusFilter === 'economy_scheduled'}
-        economyInProgressActive={
-          programType === 'economy' && statusFilter === 'economy_in_progress'
-        }
-        economyCompletedActive={programType === 'economy' && statusFilter === 'economy_completed'}
-        studentRecruitmentTable={statusFilter === 'recruiting_students'}
-        instructorRecruitmentTable={statusFilter === 'recruiting_instructors'}
-        effectiveLifecycleStatus={
-          programType === 'economy'
-            ? undefined
-            : statusFilter === 'matching_completed'
-              ? 'education_before_textbook'
-              : (statusFilter as ProgramLifecycleStatus | null)
-        }
+        config={programListConfig}
         onDisplayCountChange={(_count, hasActiveFilters) => {
           setHasListFilters(hasActiveFilters)
         }}

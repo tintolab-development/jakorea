@@ -16,7 +16,7 @@ import {
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
-import { FilterListLayout } from '@/shared/ui/filter-list-layout'
+import { FilterListLayout } from '@/shared/components/filter-list-layout'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { AppButton } from '@/shared/ui/app-button'
 import { Divider } from '@/shared/components/divider'

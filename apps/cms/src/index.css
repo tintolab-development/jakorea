@@ -1,5 +1,5 @@
 /* 필터 Select·검색바 공통 크기 180×44px 및 반응형 */
-@import './shared/ui/filter-controls-common.css';
+@import './shared/components/filter-controls-common.css';
 @import './shared/ui/ant-table-rows.css';
 @import './shared/ui/cms-data-table.css';
 @import './shared/ui/ant-table-selection-checkbox.css';

@@ -34,8 +34,8 @@ import {
   ApplicantCalendarEventPopoverContent,
   useApplicantCalendarColorMaps,
 } from '@/features/program/ui/detail-modal/applicants/applicant-calendar-schedule-helpers'
-import { SegmentedTab } from './segmented-tab'
-import './overlay-popover.css'
+import { SegmentedTab } from '@/shared/ui/segmented-tab'
+import '@/shared/ui/overlay-popover.css'
 import './program-calendar.css'
 
 dayjs.extend(isSameOrAfter)

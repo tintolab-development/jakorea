@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { message } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { DetailInfoForm } from '@/shared/ui/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppButton } from '@/shared/ui/app-button'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'

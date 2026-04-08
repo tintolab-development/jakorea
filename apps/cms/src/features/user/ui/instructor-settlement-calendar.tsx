@@ -15,7 +15,7 @@ import {
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
-import '@/shared/ui/program-calendar.css'
+import '@/shared/components/program-calendar.css'
 import '@/features/program/ui/detail-modal/applicants/applicant-calendar-view.css'
 import './instructor-settlement-calendar.css'
 

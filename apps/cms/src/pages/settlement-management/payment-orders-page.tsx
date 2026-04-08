@@ -7,8 +7,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactElement, type Key 
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
-import { ListPageLayout } from '@/shared/ui/list-page'
-import type { ViewModeToggleOption } from '@/shared/ui/view-mode'
+import { ListPageLayout } from '@/shared/components/list-page'
+import type { ViewModeToggleOption } from '@/shared/components/view-mode'
 import {
   mockPaymentOrderAdminInstructorList,
   mockPaymentOrderAdminProgramList,

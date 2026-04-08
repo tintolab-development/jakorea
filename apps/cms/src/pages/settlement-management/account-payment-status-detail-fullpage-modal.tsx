@@ -10,7 +10,7 @@ import {
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import { AppButton } from '@/shared/ui/app-button'
-import { DetailInfoForm } from '@/shared/ui/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'

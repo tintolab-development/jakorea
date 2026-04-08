@@ -7,12 +7,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Row, Col, Space } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { LabeledSearchInput } from './labeled-search-input'
-import { CmsButton } from './cms-button'
-import { AppMultiSelect, type AppMultiSelectOption } from './app-multi-select'
-import { CmsSelect } from './cms-select'
-import { CmsDateRangePicker } from './cms-datepicker'
-import { AppRadio } from './app-radio'
+import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { AppMultiSelect, type AppMultiSelectOption } from '@/shared/ui/app-multi-select'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
+import { AppRadio } from '@/shared/ui/app-radio'
 import './table-filter-group.css'
 
 export interface FilterFieldConfig {

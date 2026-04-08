@@ -9,7 +9,7 @@ import {
   UnifiedFilterCard,
   type FilterFieldConfig,
   type UnifiedFilterCardProps,
-} from './unified-filter-card'
+} from '@/shared/ui/unified-filter-card'
 import './filter-list-layout.css'
 
 export type { FilterFieldConfig, UnifiedFilterCardProps }

@@ -4,7 +4,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { AppButton } from '../app-button'
+import { AppButton } from '@/shared/ui/app-button'
 import './view-mode-toggle.css'
 
 export type ViewMode = 'list' | 'calendar'

@@ -10,7 +10,7 @@ import { AppButton } from '@/shared/ui/app-button'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import { formatDate } from '@/shared/utils'
-import { DetailInfoForm } from '@/shared/ui/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './school-affiliated-teachers-section.css'
 
 const EMPLOYMENT_LABEL: Record<SchoolAffiliatedTeacherRow['employmentStatus'], string> = {

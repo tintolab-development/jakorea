@@ -1,7 +1,7 @@
 /**
  * 회원 목록(`/users/list`) 상단 필터 필드 정의 — kind별 분기
  */
-import type { FilterFieldConfig } from '@/shared/ui/filter-list-layout'
+import type { FilterFieldConfig } from '@/shared/components/filter-list-layout'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
 import { INSTITUTION_LOCATION_FILTER_OPTIONS } from '@/shared/config/institution-location-filter-options'
 import {

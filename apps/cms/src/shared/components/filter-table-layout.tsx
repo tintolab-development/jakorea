@@ -5,7 +5,7 @@
  */
 
 import type { ReactNode } from 'react'
-import type { FilterFieldConfig } from './unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { Divider } from '@/shared/components/divider'
 import './filter-table-layout.css'
 import { TableFilterGroup, type TableFilterGroupProps } from './table-filter-group'

@@ -1,5 +1,4 @@
 import { Modal } from 'antd'
-import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import { ProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/program-detail-fullpage-modal'
 import { ProgramForm } from '@/features/program/ui/program-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -44,12 +43,6 @@ interface ProgramListModalsProps {
 }
 
 export function ProgramListModals({
-  drawerOpen,
-  drawerProgram,
-  onCloseDrawer,
-  onEditFromDrawer,
-  onDeleteFromDrawer,
-  loading,
   formModalOpen,
   isEditingMode,
   editingProgram,
@@ -83,15 +76,6 @@ export function ProgramListModals({
         open={!!selectedProgramForInstructorModal}
         program={selectedProgramForInstructorModal}
         onCancel={onCancelInstructorModal}
-      />
-
-      <ProgramDetailDrawer
-        open={drawerOpen}
-        program={drawerProgram || undefined}
-        onClose={onCloseDrawer}
-        onEdit={onEditFromDrawer}
-        onDelete={onDeleteFromDrawer}
-        loading={loading}
       />
 
       <Modal

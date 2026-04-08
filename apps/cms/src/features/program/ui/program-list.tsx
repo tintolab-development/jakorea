@@ -5,28 +5,32 @@
 import { Table } from 'antd'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
-import { useProgramTable } from '../model/use-program-table'
+import type { Dayjs } from 'dayjs'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
-import { programLifecycleStatusConfig } from '@/shared/constants/status'
-import { resolveEducationColumns } from './table/program-table-column-resolver'
-import { programListFilterFields, economyFilterFields } from './table/program-list-filter-fields'
+import {
+  programListFilterFields,
+  resolveEconomyProgramListFilterFields,
+} from './table/program-list-filter-fields'
 import { buildProgramListFilters } from './table/program-list-filter-builder'
-import dayjs, { type Dayjs } from 'dayjs'
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import type { ProgramListProgramMode } from '../model/program-list-program-mode'
+import type { EconomyView } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/ui'
-
-dayjs.extend(isSameOrBefore)
-dayjs.extend(isSameOrAfter)
-
-const economyFilterLifecycleStatuses = new Set<ProgramLifecycleStatus>(
-  programLifecycleStatusConfig.order
-)
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import { getProgramTablePageConfig, type ProgramTableContext } from './program-table.config'
 
 export type ProgramListTableVariant = 'general' | 'economy'
+
+export type { ProgramListProgramMode } from '../model/program-list-program-mode'
+
+export type ProgramListConfig = {
+  mode?: ProgramListProgramMode
+  view?: EconomyView
+  tableType?: 'student' | 'instructor'
+  lifecycleStatus?: ProgramLifecycleStatus | null
+}
 
 export interface ProgramListProps {
   data: Program[]
@@ -40,19 +44,8 @@ export interface ProgramListProps {
   showCalendarView?: boolean
   viewMode?: 'list' | 'calendar'
   tableVariant?: ProgramListTableVariant
-  studentRecruitmentTable?: boolean
-  instructorRecruitmentTable?: boolean
   onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
-  effectiveLifecycleStatus?: ProgramLifecycleStatus | null
-  readOnlyLifecycleStatus?: boolean
-  /** 경제 교육 ProgramStatusWidget — 전체 */
-  economyAllProgramsActive?: boolean
-  /** 경제 교육 — 예정 */
-  economyScheduledActive?: boolean
-  /** 경제 교육 — 진행 중 */
-  economyInProgressActive?: boolean
-  /** 경제 교육 — 완료 (전체와 동일 컬럼) */
-  economyCompletedActive?: boolean
+  config?: ProgramListConfig
   children?: React.ReactNode
 }
 
@@ -69,130 +62,42 @@ export function ProgramList({
   viewMode: externalViewMode,
   tableVariant = 'general',
   onDisplayCountChange,
-  effectiveLifecycleStatus,
-  readOnlyLifecycleStatus = false,
-  economyAllProgramsActive = false,
-  economyScheduledActive = false,
-  economyInProgressActive = false,
-  economyCompletedActive = false,
-  studentRecruitmentTable = false,
-  instructorRecruitmentTable = false,
+  config,
   children,
 }: ProgramListProps) {
   const location = useLocation()
   const isEconomyPage =
     location.pathname === '/programs/economy-education' || tableVariant === 'economy'
   const [searchParams, setSearchParams] = useSearchParams()
+  const economyView: EconomyView = config?.view ?? 'ALL'
+  const tableType = config?.tableType
+  const mode = config?.mode ?? 'general'
+  const effectiveLifecycleStatus = config?.lifecycleStatus
 
-  const operationPeriodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
-    const start = searchParams.get('operationStartDate')
-    const end = searchParams.get('operationEndDate')
-    if (!start || !end) return null
-    const startDate = dayjs(start)
-    const endDate = dayjs(end)
-    if (!startDate.isValid() || !endDate.isValid()) return null
-    return [startDate, endDate]
-  }, [searchParams])
+  const tableContext: ProgramTableContext = {
+    mode,
+    view: economyView,
+    tableType,
+    effectiveLifecycleStatus,
+  }
 
-  const applicationPeriodRange = useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
-    const start = searchParams.get('applicationStartDate')
-    const end = searchParams.get('applicationEndDate')
-    if (!start || !end) return null
-    const startDate = dayjs(start)
-    const endDate = dayjs(end)
-    if (!startDate.isValid() || !endDate.isValid()) return null
-    return [startDate, endDate]
-  }, [searchParams])
+  const tableConfig = useMemo(() => getProgramTablePageConfig(tableContext), [tableContext])
 
-  const filteredData = useMemo(() => {
-    let filtered = data
-
-    if (operationPeriodRange?.[0] && operationPeriodRange?.[1]) {
-      const rangeStart = operationPeriodRange[0].startOf('day')
-      const rangeEnd = operationPeriodRange[1].endOf('day')
-      filtered = filtered.filter(program => {
-        if (!program.startDate || !program.endDate) {
-          return false
-        }
-        const startDate = dayjs(program.startDate)
-        const endDate = dayjs(program.endDate)
-        if (!startDate.isValid() || !endDate.isValid()) {
-          return false
-        }
-        return startDate.isSameOrBefore(rangeEnd) && endDate.isSameOrAfter(rangeStart)
-      })
-    }
-
-    if (applicationPeriodRange?.[0] && applicationPeriodRange?.[1]) {
-      const rangeStart = applicationPeriodRange[0].startOf('day')
-      const rangeEnd = applicationPeriodRange[1].endOf('day')
-      filtered = filtered.filter(program => {
-        if (program.applicationStartDate && program.applicationEndDate) {
-          const appStart = dayjs(program.applicationStartDate)
-          const appEnd = dayjs(program.applicationEndDate)
-          if (!appStart.isValid() || !appEnd.isValid()) {
-            return false
-          }
-          return appStart.isSameOrBefore(rangeEnd) && appEnd.isSameOrAfter(rangeStart)
-        }
-        return false
-      })
-    }
-
-    return filtered
-  }, [data, operationPeriodRange, applicationPeriodRange])
-
-  const economyFilteredData = useMemo(() => {
-    if (!readOnlyLifecycleStatus) return filteredData
-    const title = searchParams.get('title') || ''
-
-    let result = filteredData
-    if (title.trim()) {
-      const q = title.trim().toLowerCase()
-      result = result.filter(p => p.title?.toLowerCase().includes(q))
-    }
-    return result
-  }, [filteredData, readOnlyLifecycleStatus, searchParams])
-
-  const dataForTable = readOnlyLifecycleStatus ? economyFilteredData : filteredData
-  const { table, columnFilters } = useProgramTable(dataForTable)
-
-  const hasActiveFilters = useMemo(() => {
-    if (readOnlyLifecycleStatus) {
-      const title = searchParams.get('title') || ''
-      const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
-      const hasLifecycleFilter =
-        lifecycleRaw !== '' &&
-        economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
-      const hasOperationPeriod = Boolean(
-        searchParams.get('operationStartDate') && searchParams.get('operationEndDate')
-      )
-      const hasColumnFilter = columnFilters.some(
-        f => f.value != null && String(f.value).trim() !== ''
-      )
-      return Boolean(
-        hasColumnFilter || title.trim() !== '' || hasLifecycleFilter || hasOperationPeriod
-      )
-    }
-    const hasColumnFilter = columnFilters.some(
-      f => f.value != null && String(f.value).trim() !== ''
-    )
-    return Boolean(
-      hasColumnFilter ||
-      (operationPeriodRange?.[0] && operationPeriodRange?.[1]) ||
-      (applicationPeriodRange?.[0] && applicationPeriodRange?.[1])
-    )
-  }, [
-    columnFilters,
-    operationPeriodRange,
-    applicationPeriodRange,
-    readOnlyLifecycleStatus,
+  const {
+    table,
+    pendingFilters,
+    setPendingFilters,
+    applySearch: handleSearch,
+    hasActiveFilters,
+    displayedCount,
+    antdColumns,
+  } = useTablePage(tableConfig, {
+    data,
     searchParams,
-  ])
+    setSearchParams,
+    context: tableContext,
+  })
 
-  const displayedCount = hasActiveFilters
-    ? table.getFilteredRowModel().rows.length
-    : filteredData.length
   useEffect(() => {
     onDisplayCountChange?.(displayedCount, hasActiveFilters)
   }, [displayedCount, hasActiveFilters, onDisplayCountChange])
@@ -200,174 +105,6 @@ export function ProgramList({
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
   const [internalViewMode] = useState<'list' | 'calendar'>('list')
   const viewMode = externalViewMode ?? internalViewMode
-
-  const [pendingFilters, setPendingFilters] = useState({
-    title: '',
-    lifecycleStatus: undefined as ProgramLifecycleStatus | undefined,
-    category: undefined as string | undefined,
-    businessArea: undefined as string | undefined,
-    targetLevel: undefined as string | undefined,
-    type: undefined as string | undefined,
-    applicationStartDate: null as Dayjs | null,
-    applicationEndDate: null as Dayjs | null,
-    operationStartDate: null as Dayjs | null,
-    operationEndDate: null as Dayjs | null,
-  })
-
-  useEffect(() => {
-    if (readOnlyLifecycleStatus) {
-      const titleFromUrl = searchParams.get('title') || ''
-      const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
-      const lifecycleFromUrl =
-        lifecycleRaw && economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
-          ? (lifecycleRaw as ProgramLifecycleStatus)
-          : undefined
-      const categoryFilter = searchParams.get('category') || undefined
-      const targetLevelFilter = searchParams.get('targetLevel') || undefined
-
-      setPendingFilters(prev => {
-        const hasChanges =
-          prev.title !== titleFromUrl ||
-          prev.lifecycleStatus !== lifecycleFromUrl ||
-          prev.category !== categoryFilter ||
-          prev.targetLevel !== targetLevelFilter
-
-        if (!hasChanges) return prev
-
-        return {
-          ...prev,
-          title: titleFromUrl,
-          lifecycleStatus: lifecycleFromUrl,
-          category: categoryFilter,
-          targetLevel: targetLevelFilter,
-        }
-      })
-    } else {
-      const titleFromUrl = searchParams.get('title') || ''
-      const titleFilter = columnFilters.find(f => f.id === 'title')?.value as string | undefined
-      const currentTitle = titleFromUrl || titleFilter || ''
-
-      if (currentTitle !== ((table.getColumn('title')?.getFilterValue() as string) || '')) {
-        table.getColumn('title')?.setFilterValue(currentTitle || null)
-      }
-
-      const categoryFilter = columnFilters.find(f => f.id === 'category')?.value as
-        | string
-        | undefined
-      const businessAreaFilter = columnFilters.find(f => f.id === 'businessArea')?.value as
-        | string
-        | undefined
-      const targetLevelFilter = columnFilters.find(f => f.id === 'targetLevel')?.value as
-        | string
-        | undefined
-
-      const statusFromUrl = searchParams.get('status') as ProgramLifecycleStatus | null
-      const statusFilter = statusFromUrl ?? effectiveLifecycleStatus ?? null
-      const typeFilter = searchParams.get('type') || null
-
-      const operationStartDateStr = searchParams.get('operationStartDate')
-      const operationEndDateStr = searchParams.get('operationEndDate')
-
-      setPendingFilters(prev => {
-        const hasChanges =
-          prev.title !== currentTitle ||
-          prev.lifecycleStatus !== (statusFilter || undefined) ||
-          prev.type !== (typeFilter || undefined) ||
-          prev.category !== categoryFilter ||
-          prev.businessArea !== businessAreaFilter ||
-          prev.targetLevel !== targetLevelFilter ||
-          prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
-          prev.operationEndDate?.format('YYYY-MM-DD') !== operationEndDateStr
-
-        if (!hasChanges) return prev
-
-        return {
-          title: currentTitle,
-          lifecycleStatus: statusFilter || undefined,
-          category: categoryFilter,
-          businessArea: businessAreaFilter,
-          targetLevel: targetLevelFilter,
-          type: typeFilter || undefined,
-          applicationStartDate: null,
-          applicationEndDate: null,
-          operationStartDate: operationStartDateStr
-            ? dayjs(operationStartDateStr).isValid()
-              ? dayjs(operationStartDateStr)
-              : null
-            : null,
-          operationEndDate: operationEndDateStr
-            ? dayjs(operationEndDateStr).isValid()
-              ? dayjs(operationEndDateStr)
-              : null
-            : null,
-        }
-      })
-    }
-  }, [columnFilters, searchParams, table, effectiveLifecycleStatus, readOnlyLifecycleStatus])
-
-  const handleSearch = useCallback(() => {
-    const nextParams = new URLSearchParams(searchParams)
-
-    if (readOnlyLifecycleStatus) {
-      if (pendingFilters.title?.trim()) {
-        nextParams.set('title', pendingFilters.title.trim())
-      } else {
-        nextParams.delete('title')
-      }
-      if (pendingFilters.lifecycleStatus) {
-        nextParams.set('lifecycleStatus', pendingFilters.lifecycleStatus)
-      } else {
-        nextParams.delete('lifecycleStatus')
-      }
-      nextParams.delete('statusText')
-      if (pendingFilters.category) {
-        nextParams.set('category', pendingFilters.category)
-      } else {
-        nextParams.delete('category')
-      }
-      if (pendingFilters.targetLevel) {
-        nextParams.set('targetLevel', pendingFilters.targetLevel)
-      } else {
-        nextParams.delete('targetLevel')
-      }
-      table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
-      table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
-    } else {
-      table.getColumn('category')?.setFilterValue(pendingFilters.category || null)
-      table.getColumn('businessArea')?.setFilterValue(pendingFilters.businessArea || null)
-      table.getColumn('targetLevel')?.setFilterValue(pendingFilters.targetLevel || null)
-      table
-        .getColumn('type')
-        ?.setFilterValue(
-          pendingFilters.type && pendingFilters.type !== 'all' ? pendingFilters.type : null
-        )
-
-      if (pendingFilters.title) {
-        nextParams.set('title', pendingFilters.title)
-      } else {
-        nextParams.delete('title')
-      }
-      if (pendingFilters.lifecycleStatus) {
-        nextParams.set('status', pendingFilters.lifecycleStatus)
-      } else {
-        nextParams.delete('status')
-      }
-      if (pendingFilters.type && pendingFilters.type !== 'all') {
-        nextParams.set('type', pendingFilters.type)
-      } else {
-        nextParams.delete('type')
-      }
-      if (pendingFilters.operationStartDate && pendingFilters.operationEndDate) {
-        nextParams.set('operationStartDate', pendingFilters.operationStartDate.format('YYYY-MM-DD'))
-        nextParams.set('operationEndDate', pendingFilters.operationEndDate.format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('operationStartDate')
-        nextParams.delete('operationEndDate')
-      }
-    }
-
-    setSearchParams(nextParams, { replace: true })
-  }, [pendingFilters, table, searchParams, setSearchParams, readOnlyLifecycleStatus])
 
   const effectiveSelectedRowKeys =
     externalSelectedRowKeys !== undefined ? externalSelectedRowKeys : internalSelectedRowKeys
@@ -383,40 +120,27 @@ export function ProgramList({
     },
     [externalSelectedRowKeys, onSelectionChange]
   )
-  const tableColumns = useMemo(
+  const economyFilterFieldsForLayout = useMemo(
     () =>
-      resolveEducationColumns({
-        studentRecruitmentTable,
-        instructorRecruitmentTable,
-        isEconomyPage,
-        readOnlyLifecycleStatus,
-        economyAllProgramsActive,
-        economyScheduledActive,
-        economyInProgressActive,
-        economyCompletedActive,
+      resolveEconomyProgramListFilterFields({
+        economyScheduledActive: economyView === 'SCHEDULED',
+        economyInProgressActive: economyView === 'IN_PROGRESS',
       }),
-    [
-      studentRecruitmentTable,
-      instructorRecruitmentTable,
-      isEconomyPage,
-      readOnlyLifecycleStatus,
-      economyAllProgramsActive,
-      economyScheduledActive,
-      economyInProgressActive,
-      economyCompletedActive,
-    ]
+    [economyView]
   )
 
   return (
-    <div
-      className={
-        viewMode === 'list' ? 'program-list-container' : 'program-list-calendar-view-container'
-      }
-    >
+    <>
       {viewMode === 'list' ? (
         <FilterTableLayout
-          fields={readOnlyLifecycleStatus ? economyFilterFields : programListFilterFields}
-          filters={buildProgramListFilters(pendingFilters, readOnlyLifecycleStatus)}
+          fields={
+            tableContext.mode === 'economy' ? economyFilterFieldsForLayout : programListFilterFields
+          }
+          filters={buildProgramListFilters(
+            pendingFilters,
+            tableContext.mode,
+            tableContext.view === 'SCHEDULED'
+          )}
           onFilterChange={(key, value) => {
             if (key === 'operationPeriod') {
               const dates = value as [Dayjs, Dayjs] | null
@@ -426,8 +150,11 @@ export function ProgramList({
                 operationEndDate: dates?.[1] || null,
               }))
             } else if (
-              readOnlyLifecycleStatus &&
-              (key === 'category' || key === 'targetLevel' || key === 'lifecycleStatus')
+              tableContext.mode === 'economy' &&
+              (key === 'category' ||
+                key === 'targetLevel' ||
+                key === 'lifecycleStatus' ||
+                key === 'participantRecruitment')
             ) {
               setPendingFilters(prev => ({
                 ...prev,
@@ -460,7 +187,7 @@ export function ProgramList({
                 : undefined
             }
             dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
-            columns={tableColumns}
+            columns={antdColumns}
             rowKey="id"
             loading={loading}
             onRow={record => ({
@@ -474,7 +201,13 @@ export function ProgramList({
 
       {showCalendarView && viewMode === 'calendar' ? (
         <>
-          {children}
+          <div className="table-header-actions ">
+            <div className="table-header-title-wrapper">
+              <span className="table-title">{headerTitle}</span>
+              <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
+            </div>
+            {children}
+          </div>
           <ProgramCalendarView
             programs={table.getRowModel().rows.map(row => row.original)}
             loading={loading}
@@ -482,6 +215,6 @@ export function ProgramList({
           />
         </>
       ) : null}
-    </div>
+    </>
   )
 }
