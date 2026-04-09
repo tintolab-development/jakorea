@@ -32,7 +32,7 @@ import {
 import {
   ApplicantCalendarEventPopoverContent,
   useApplicantCalendarColorMaps,
-} from '@/features/program/ui/detail-modal/applicants/applicant-calendar-schedule-helpers'
+} from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
 import { SegmentedTab } from './segmented-tab'
 import './overlay-popover.css'
 import './program-calendar.css'

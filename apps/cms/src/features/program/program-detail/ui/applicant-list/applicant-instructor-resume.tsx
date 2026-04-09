@@ -11,7 +11,7 @@ import {
   instructorCareerSectionDescription,
   instructorEducationSectionDescription,
   instructorQualificationsSectionDescription,
-} from '@/features/program/ui/detail-modal/applicants/instructor-resume-blocks'
+} from './instructor-resume-blocks'
 import './applicant-instructor-resume.css'
 
 export interface ApplicantInstructorResumeProps {

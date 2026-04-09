@@ -25,9 +25,9 @@ import {
   InstructorDetailInfoSection,
   VolunteerDetailInfoSection,
 } from './detail-info/project-info-detail-info-section'
-import { TAB_KEYS, TAB_LABELS, type TabKey } from '../../ui/detail-modal/program-detail-nav-types'
+import { TAB_KEYS, TAB_LABELS, type TabKey } from '../../../ui/detail-modal/program-detail-nav-types'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 /* 참여자·강사·봉사 탭 상세(썸네일·테이블) 스타일 — 하위 컴포넌트 import에만 의존하지 않도록 고정 */
 import './project-info-form-shared.css'
 import { CmsButton } from '@/shared/ui'

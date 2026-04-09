@@ -2,13 +2,13 @@
  * 참여자·강사·봉사자 모집 섹션 + 풀페이지 모달 서브탭 레이아웃 통합
  */
 
-import { createInstitutionsSchema } from './institutions-schema'
-import { createInstructorsSchema } from './instructors-schema'
-import { createVolunteersSchema } from './volunteers-schema'
-import { renderSchema } from './recruitment-schema-renderer'
+import { createInstitutionsSchema } from './schema/institutions-schema'
+import { createInstructorsSchema } from './schema/instructors-schema'
+import { createVolunteersSchema } from './schema/volunteers-schema'
+import { renderSchema } from './components/recruitment-schema-renderer'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import {
   formatDateOnly,
   formatDateRange,
@@ -17,7 +17,7 @@ import {
   getVolunteerRecruitmentStatus,
   RECRUITMENT_RADIO_OPTIONS,
   TARGET_LEVEL_LABEL,
-} from '../../lib/program-detail-info-constants'
+} from '../../../lib/program-detail-info-constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 
 const STUDENT_LIST_OPTIONS = [

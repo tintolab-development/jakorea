@@ -9,7 +9,7 @@ import type {
 } from '@/data/mock/payment-order-admin-list'
 import { formatWon } from './payment-order-detail-fullpage-shared'
 import { renderAggregateStatus } from './payment-order-detail-aggregate-status'
-import '@/features/program/ui/detail-modal/applicants/applicant-instructor-basic-info.css'
+import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-basic-info.css'
 
 export interface PaymentOrderInstructorBasicInfoProps {
   detail: PaymentOrderAdminInstructorDetail

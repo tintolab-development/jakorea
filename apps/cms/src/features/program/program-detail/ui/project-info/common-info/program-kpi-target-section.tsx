@@ -11,7 +11,7 @@ import { Controller } from 'react-hook-form'
 import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
 import type { KpiMetric } from '@/features/dashboard/api/admin-dashboard-service'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsInput } from '@/shared/ui'
 

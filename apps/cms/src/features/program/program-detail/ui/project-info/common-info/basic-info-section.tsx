@@ -17,7 +17,7 @@ import { Controller } from 'react-hook-form'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import {
   formatDate,
@@ -31,7 +31,7 @@ import {
   PARTNER_INVOLVEMENT_OPTIONS,
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
-} from '../../lib/program-detail-info-constants'
+} from '../../../lib/program-detail-info-constants'
 import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'

@@ -6,7 +6,7 @@ import { useMemo, useCallback } from 'react'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
-} from '../../program-schedule-colors'
+} from '../../../ui/program-schedule-colors'
 
 export function getEntityKey(event: { originalItem?: unknown; title?: string }): string {
   const item = event?.originalItem as Record<string, unknown> | undefined

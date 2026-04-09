@@ -66,101 +66,68 @@
   box-sizing: border-box;
 }
 
-/* 테이블 영역 — 좌우는 공통 .detail-fullpage-modal__content 패딩 사용 */
-.applicant-details__below-divider {
-  margin-top: 32px;
-  padding: 0 0 24px;
+/* FilterTableLayout: 풀페이지 모달 본문 안 — 이중 카드·그림자 제거 */
+.applicant-details .applicant-details__filter-table-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
 }
 
-.applicant-details__divider {
-  margin: 32px 0 0;
-  border-top: 1px solid var(--color-border-light, #e8e8e8);
+.applicant-details .applicant-details__filter-table-layout .filter-table-layout__divider {
+  padding: var(--spacing-16, 16px) 0;
 }
 
-.applicant-details__table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--spacing-16, 16px);
-  margin-bottom: var(--spacing-16, 16px);
+.applicant-details .applicant-details__filter-table-layout .filter-table-layout__table {
+  padding-bottom: 24px;
 }
 
-.applicant-details__table-heading {
-  display: flex;
-  align-items: baseline;
-  gap: var(--spacing-8, 8px);
-}
-
-.applicant-details__table-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--default-BK);
-}
-
-.applicant-details__table-description {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-secondary, #666);
-}
-
-.applicant-details__table-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8, 8px);
-  flex-shrink: 0;
-}
-
-.applicant-details__table-actions .app-button {
+.applicant-details .applicant-details__filter-table-layout .filter-table-layout__toolbar-actions .app-button {
   border-radius: 8px !important;
   font-weight: 600;
   font-size: 16px;
 }
 
-/* 신청 기관/강사 필터: 참여기관 카테고리와 동일 패딩(좌우 24) */
-.applicant-details .unified-filter-card--no-border .ant-card-body {
-  padding: 16px 24px 0 0 !important;
-}
-
-/* 필터 칸 반응형 분배: 갭(12px) 유지, 각 필드 폭 균등 */
-.applicant-details .unified-filter-card__fields-inner > .ant-col {
+/* 필터 칸 반응형 분배: 갭(12px) 유지, 각 필드 폭 균등 — TableFilterGroup */
+.applicant-details .table-filter-group__fields-inner > .ant-col {
   flex: 1 1 0 !important;
   min-width: 0;
 }
 
 /* 신청자 화면에서는 긴 라벨 때문에 최소 너비 과다 고정 해제 */
 .applicant-details .unified-filter-card__field--select,
-.applicant-details .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .ant-select,
-.applicant-details .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .app-select,
-.applicant-details .unified-filter-card--single-row .labeled-search-input__input,
-.applicant-details .unified-filter-card--single-row .labeled-search-input .app-input,
-.applicant-details .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .ant-picker-range,
-.applicant-details .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .app-datepicker {
+.applicant-details .table-filter-group__fields-inner .ant-col .ant-select,
+.applicant-details .table-filter-group__fields-inner .ant-col .cms-select,
+.applicant-details .table-filter-group__fields-inner .labeled-search-input__input,
+.applicant-details .table-filter-group__fields-inner .labeled-search-input .app-input,
+.applicant-details .table-filter-group__fields-inner .ant-col .ant-picker-range,
+.applicant-details .table-filter-group__fields-inner .ant-col .cms-datepicker {
   min-width: 0 !important;
 }
 
 @media (max-width: 1280px) {
-  .applicant-details .unified-filter-card__toolbar {
+  .applicant-details .table-filter-group__container {
     flex-wrap: wrap;
   }
 
-  .applicant-details .unified-filter-card__fields-shell {
+  .applicant-details .table-filter-group__fields-shell {
     flex: 1 1 100%;
     max-width: 100%;
     margin-right: 0;
     margin-bottom: 8px;
   }
 
-  .applicant-details .unified-filter-card__fields-inner.ant-row {
+  .applicant-details .table-filter-group__fields-inner.ant-row {
     flex-wrap: wrap !important;
   }
 
-  .applicant-details .unified-filter-card__fields-inner > .ant-col {
+  .applicant-details .table-filter-group__fields-inner > .ant-col {
     flex: 1 1 calc((100% - 12px) / 2) !important;
     min-width: 0;
   }
 
-  .applicant-details .unified-filter-card__fields-inner > .ant-col:nth-child(2n) {
+  .applicant-details .table-filter-group__fields-inner > .ant-col:nth-child(2n) {
     margin-right: 0 !important;
   }
 }

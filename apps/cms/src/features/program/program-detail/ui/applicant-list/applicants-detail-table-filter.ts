@@ -1,6 +1,6 @@
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { TabKey } from '../program-detail-nav-types'
+import type { TabKey } from '../../../ui/detail-modal/program-detail-nav-types'
 
 export function filterApplicantsTableData(
   menu: TabKey | '',

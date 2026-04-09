@@ -12,7 +12,7 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
-import { ApplicantScheduleList } from '../applicants/applicant-schedule-list'
+import { ApplicantScheduleList } from '../../../program-detail/ui/applicant-list/applicant-schedule-list'
 import { SCHEDULE_COLORS } from '../../program-schedule-colors'
 import { AppMultiSelect, ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/ui'
 import './participating-institutions-calendar-view.css'

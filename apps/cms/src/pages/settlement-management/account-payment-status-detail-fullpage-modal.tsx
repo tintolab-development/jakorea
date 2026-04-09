@@ -15,7 +15,7 @@ import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import { getMockAccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
-import '@/features/program/ui/detail-modal/applicants/applicant-instructor-basic-info.css'
+import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-basic-info.css'
 import './payment-order-admin-status-tag.css'
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'

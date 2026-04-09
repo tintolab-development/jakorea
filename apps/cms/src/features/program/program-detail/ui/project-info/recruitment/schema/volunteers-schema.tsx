@@ -1,49 +1,51 @@
 import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../../model/program-detail-edit-schema'
 import {
   formatDateRange,
-  INSTRUCTOR_TARGET_OPTIONS,
   INTERVIEW_METHOD_OPTIONS,
-} from '../../lib/program-detail-info-constants'
-import type { SectionSchema } from '../../model/recruitment-schema'
+  VOLUNTEER_TARGET_OPTIONS,
+} from '../../../../lib/program-detail-info-constants'
+import type { SectionSchema } from '../../../../model/recruitment-schema'
 import {
   DateRangeEdit,
   ProgramDetailContactReadRow,
   ProgramDetailDateMethodReadRow,
   ProgramDetailInterviewReadRow,
-} from './recruitment-form-parts'
+} from '../components/recruitment-form-parts'
 import dayjs from 'dayjs'
-import type { Dayjs } from 'dayjs'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsDatePicker, CmsInput } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 
-export type InstructorsSchemaParams = {
+export type VolunteersSchemaParams = {
   program: Program
   form: UseFormReturn<ProgramDetailEditFormValues> | undefined
   isEdit: boolean
   sponsorName?: string
-  instructorRecruitmentLifecycle: ProgramLifecycleStatus | null
-  instructorTarget: string
-  instructorTargetDetail: string
+  recruitmentStatusLabel: string
+  volunteerRecruitmentLifecycle: ProgramLifecycleStatus | null
+  volunteerTarget: string
+  volunteerTargetDetail: string
+  volunteerPeriodLabel: string
   notes: string
 }
 
-export function createInstructorsSchema({
+export function createVolunteersSchema({
   program,
   form,
   isEdit,
   sponsorName,
-  instructorRecruitmentLifecycle,
-  instructorTarget,
-  instructorTargetDetail,
+  recruitmentStatusLabel,
+  volunteerRecruitmentLifecycle,
+  volunteerTarget,
+  volunteerTargetDetail,
+  volunteerPeriodLabel,
   notes,
-}: InstructorsSchemaParams): SectionSchema {
+}: VolunteersSchemaParams): SectionSchema {
   return {
     rows: [
       {
@@ -55,21 +57,16 @@ export function createInstructorsSchema({
             view: formatDateRange(program.startDate, program.endDate),
             edit:
               isEdit && form ? (
-                <DateRangeEdit
-                  form={form}
-                  startName="startDate"
-                  endName="endDate"
-                  clearToUndefined
-                />
+                <DateRangeEdit form={form} startName="startDate" endName="endDate" />
               ) : undefined,
           },
           {
-            label: '강사 모집 현황',
-            view: instructorRecruitmentLifecycle ? (
+            label: '봉사자 모집 현황',
+            view: volunteerRecruitmentLifecycle ? (
               <span
-                className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${instructorRecruitmentLifecycle.replace(/_/g, '-')}`}
+                className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${volunteerRecruitmentLifecycle.replace(/_/g, '-')}`}
               >
-                {getProgramLifecycleLabel(instructorRecruitmentLifecycle)}
+                {recruitmentStatusLabel}
               </span>
             ) : (
               '-'
@@ -83,17 +80,19 @@ export function createInstructorsSchema({
           {
             label: '모집 대상',
             required: true,
-            view: instructorTarget,
+            view: volunteerTarget,
             edit:
               isEdit && form ? (
                 <Controller
-                  name="instructorTarget"
+                  name="volunteerTarget"
                   control={form.control}
                   render={({ field }) => (
                     <CmsSelect
-                      {...field}
-                      value={field.value ?? '성인'}
-                      options={INSTRUCTOR_TARGET_OPTIONS}
+                      value={field.value ?? undefined}
+                      options={VOLUNTEER_TARGET_OPTIONS}
+                      onChange={v => field.onChange(v ?? undefined)}
+                      allowClear
+                      placeholder="모집 대상 선택"
                     />
                   )}
                 />
@@ -102,11 +101,11 @@ export function createInstructorsSchema({
           {
             label: '모집 대상 상세',
             required: true,
-            view: instructorTargetDetail,
+            view: volunteerTargetDetail,
             edit:
               isEdit && form ? (
                 <Controller
-                  name="instructorTargetDetail"
+                  name="volunteerTargetDetail"
                   control={form.control}
                   render={({ field }) => (
                     <CmsInput {...field} value={field.value ?? ''} placeholder="모집 대상 상세" />
@@ -120,19 +119,15 @@ export function createInstructorsSchema({
         columns: 2,
         fields: [
           {
-            label: '강사 모집 기간',
+            label: '봉사자 모집 기간',
             required: true,
-            view: formatDateRange(
-              program.instructorApplicationStartDate,
-              program.instructorApplicationEndDate
-            ),
+            view: volunteerPeriodLabel,
             edit:
               isEdit && form ? (
                 <DateRangeEdit
                   form={form}
-                  startName="instructorApplicationStartDate"
-                  endName="instructorApplicationEndDate"
-                  clearToUndefined
+                  startName="volunteerApplicationStartDate"
+                  endName="volunteerApplicationEndDate"
                 />
               ) : undefined,
           },
@@ -153,7 +148,7 @@ export function createInstructorsSchema({
                     control={form.control}
                     render={({ field }) => (
                       <CmsDatePicker
-                        value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
+                        value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         format="YYYY. MM. DD"
                         className="program-detail-info-tab__date-picker"
@@ -168,7 +163,8 @@ export function createInstructorsSchema({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="합격자 개별 안내"
+                        placeholder="홈페이지 공지 및 합격자 개별 안내"
+                        className="program-detail-info-tab__result-method-input"
                       />
                     )}
                   />
@@ -199,7 +195,7 @@ export function createInstructorsSchema({
                     render={({ field }) => (
                       <CmsDatePicker
                         width={'30%'}
-                        value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
+                        value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         format="YYYY. MM. DD"
                       />
@@ -212,7 +208,7 @@ export function createInstructorsSchema({
                     render={({ field }) => (
                       <CmsDatePicker
                         width={'30%'}
-                        value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
+                        value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         format="YYYY. MM. DD"
                       />
@@ -252,7 +248,7 @@ export function createInstructorsSchema({
                     control={form.control}
                     render={({ field }) => (
                       <CmsDatePicker
-                        value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
+                        value={toDayjs(field.value as string | Date | undefined)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         format="YYYY. MM. DD"
                       />
@@ -266,7 +262,7 @@ export function createInstructorsSchema({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="합격자 개별 안내"
+                        placeholder="홈페이지 공지 및 합격자 개별 안내"
                       />
                     )}
                   />
@@ -293,36 +289,41 @@ export function createInstructorsSchema({
             edit:
               isEdit && form ? (
                 <div className="detail-info-form-inputs-wrapper">
-                  <span>문의처</span>
-                  <Controller
-                    name="managerName"
-                    control={form.control}
-                    render={({ field }) => (
-                      <CmsInput
-                        {...field}
-                        value={field.value ?? ''}
-                        placeholder="문의처 담당자명"
-                      />
-                    )}
-                  />
+                  <div className="detail-info-form-inputs-wrapper">
+                    <span>문의처</span>
+                    <CmsInput
+                      placeholder="문의처"
+                      value={sponsorName ?? ''}
+                      readOnly
+                      className="program-detail-info-tab__contact-name-input"
+                    />
+                  </div>
                   <DetailInfoForm.InputsSeparator />
-                  <span>Tel</span>
-                  <Controller
-                    name="contactPhone"
-                    control={form.control}
-                    render={({ field }) => (
-                      <CmsInput {...field} value={field.value ?? ''} placeholder="Tel" />
-                    )}
-                  />
+                  <div className="detail-info-form-inputs-wrapper">
+                    <span>Tel</span>
+                    <Controller
+                      name="contactPhone"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput {...field} value={field.value ?? ''} placeholder="02-6347-6113" />
+                      )}
+                    />
+                  </div>
                   <DetailInfoForm.InputsSeparator />
-                  <span>E-mail</span>
-                  <Controller
-                    name="contactEmail"
-                    control={form.control}
-                    render={({ field }) => (
-                      <CmsInput {...field} value={field.value ?? ''} placeholder="E-mail" />
-                    )}
-                  />
+                  <div className="detail-info-form-inputs-wrapper">
+                    <span>E-mail</span>
+                    <Controller
+                      name="contactEmail"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          {...field}
+                          value={field.value ?? ''}
+                          placeholder="ujat@jakorea.org"
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
               ) : undefined,
           },
@@ -338,14 +339,14 @@ export function createInstructorsSchema({
             edit:
               isEdit && form ? (
                 <Controller
-                  name="otherNotes"
+                  name="oneLineIntroduction"
                   control={form.control}
                   render={({ field }) => (
                     <CmsInput
                       width={'100%'}
                       {...field}
                       value={field.value ?? ''}
-                      placeholder="상기 일정은 기관 사정에 따라 변동될 수 있습니다."
+                      placeholder="비고"
                     />
                   )}
                 />

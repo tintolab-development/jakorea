@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { TabKey } from '../program-detail-nav-types'
+import type { TabKey } from '../../../ui/detail-modal/program-detail-nav-types'
 
 /** 강사 캘린더 집계 이벤트용 — `calendarInstitutionSummary` 있으면 팝오버는 기관·인원, 우측 목록은 `calendarInstitutionInstructors`로 강사별 행 */
 export type ApplicantInstructorCalendarEventItem = ApplicantInstructorRow & {

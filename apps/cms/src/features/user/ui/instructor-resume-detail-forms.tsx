@@ -12,8 +12,8 @@ import {
   instructorCareerSectionDescription,
   instructorEducationSectionDescription,
   instructorQualificationsSectionDescription,
-} from '@/features/program/ui/detail-modal/applicants/instructor-resume-blocks'
-import '@/features/program/ui/detail-modal/applicants/applicant-instructor-resume.css'
+} from '@/features/program/program-detail/ui/applicant-list/instructor-resume-blocks'
+import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-resume.css'
 import './instructor-resume-detail-forms.css'
 
 function resumeSectionDescriptionNode(text: string) {

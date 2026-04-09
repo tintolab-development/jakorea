@@ -26,7 +26,7 @@ import {
   InstructorSettlementCalendarView,
   type SettlementCalendarEvent,
 } from './instructor-settlement-calendar'
-import '@/features/program/ui/detail-modal/applicants/applicants-detail.css'
+import '@/features/program/program-detail/ui/applicant-list/applicant-list.css'
 import './instructor-payment-tab.css'
 
 const FILTER_FIELDS: FilterFieldConfig[] = [

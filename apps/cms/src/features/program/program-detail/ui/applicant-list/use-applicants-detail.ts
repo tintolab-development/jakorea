@@ -4,12 +4,12 @@ import { message } from 'antd'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { APP_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/app-multi-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import type { TabKey } from '../program-detail-nav-types'
+import type { TabKey } from '../../../ui/detail-modal/program-detail-nav-types'
 import {
   institutionFilterFields,
   instructorFilterFields,
   volunteerFilterFields,
-} from '../../table/applicant-filter-fields'
+} from '../../../ui/table/applicant-filter-fields'
 import {
   APPLICANTS_CALENDAR_RANGE_PARAM,
   parseCalendarRangeParam,

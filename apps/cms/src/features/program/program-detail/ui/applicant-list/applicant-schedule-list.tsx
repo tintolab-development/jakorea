@@ -4,7 +4,7 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
-import type { ScheduleColorPair } from '../../program-schedule-colors'
+import type { ScheduleColorPair } from '../../../ui/program-schedule-colors'
 import './applicant-calendar-view.css'
 
 /** 강사 캘린더 기관 집계 이벤트(대표 행 클릭 시) — 메타 제거 후 상세로 전달 */
