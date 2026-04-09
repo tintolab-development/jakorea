@@ -1,13 +1,15 @@
 /**
  * 정산 관리 > 지급조서 확인 페이지 — 프로그램별·강사별 정산 목록
- * 필터·테이블 헤더·버튼: 프로그램 상세 풀페이지 모달 내 참여기관 UI와 동일 구조·스타일 (기존 컴포넌트·CSS 재사용)
+ * 필터: FilterTableLayout(TableFilterGroup) · 헤더·뷰 전환: ViewModeController (참여기관 섹션과 동일 패턴)
  */
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
-import { ListPageLayout } from '@/shared/components/list-page'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { ViewModeController } from '@/shared/components/view-mode'
+import '@/shared/components/list-page/list-page-layout.css'
 import type { ViewModeToggleOption } from '@/shared/components/view-mode'
 import {
   mockPaymentOrderAdminInstructorList,
@@ -281,9 +283,12 @@ export default function PaymentOrdersPage() {
   const listInstructor = filteredInstructors
   const total = isProgram ? listProgram.length : listInstructor.length
 
-  const isTableRowKeySelected = useCallback((rowNo: number) => {
-    return selectedRowKeys.some(k => k === rowNo || String(k) === String(rowNo))
-  }, [selectedRowKeys])
+  const isTableRowKeySelected = useCallback(
+    (rowNo: number) => {
+      return selectedRowKeys.some(k => k === rowNo || String(k) === String(rowNo))
+    },
+    [selectedRowKeys]
+  )
 
   const handleBatchConfirm = useCallback(() => {
     if (viewMode === 'list') {
@@ -315,9 +320,7 @@ export default function PaymentOrdersPage() {
 
   const renderHeader = (mode: PageViewMode): ReactElement => {
     const hasBatchSelection =
-      mode === 'list'
-        ? selectedRowKeys.length > 0
-        : calendarRightPanelSelectedKeys.length > 0
+      mode === 'list' ? selectedRowKeys.length > 0 : calendarRightPanelSelectedKeys.length > 0
     return (
       <div className="table-header-actions">
         <div className="table-header-title--wrapper">
@@ -380,77 +383,81 @@ export default function PaymentOrdersPage() {
     )
 
   return (
-    <div className="payment-orders-page">
-      <div className="payment-orders-page__content-wrapper">
-        <ListPageLayout<PageViewMode>
-          className="payment-orders-page__filter-list-layout participating-institutions-section"
-          bordered={false}
-          cardStyle={{ marginBottom: 0 }}
-          fields={[
-            {
-              key: 'exposureMode',
-              type: 'radio',
-              label: '노출 기준',
-              options: [
-                { label: '프로그램별', value: 'program' },
-                { label: '강사별', value: 'instructor' },
-              ],
-              width: 188,
-            },
-            {
-              key: 'programName',
-              type: 'search',
-              label: '프로그램명',
-              placeholder: '프로그램명을 입력하세요',
-              width: '20%',
-            },
-            {
-              key: 'status',
-              type: 'select',
-              label: '지급조서 처리 현황',
-              placeholder: '전체',
-              options: statusSelectOptions.filter(o => o.value !== 'all'),
-              allowClear: true,
-              width: '20%',
-            },
-            {
-              key: 'dateRange',
-              type: 'dateRange',
-              label: '기간',
-              width: '30%',
-            },
-          ]}
-          filters={{
-            exposureMode,
-            programName: draftProgramName,
-            status: draftStatus === 'all' ? undefined : draftStatus,
-            dateRange: draftDateRange,
-          }}
-          onFilterChange={(key, value) => {
-            if (key === 'exposureMode') {
-              setExposureMode(value as ExposureMode)
-              return
-            }
-            if (key === 'programName') {
-              setDraftProgramName(value as string)
-              return
-            }
-            if (key === 'status') {
-              setDraftStatus((value ?? 'all') as AppliedStatus)
-              return
-            }
-            if (key === 'dateRange') {
-              setDraftDateRange(value as [Dayjs, Dayjs] | null)
-            }
-          }}
-          onSearch={handleSearch}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          viewModeOptions={paymentOrdersViewModeOptions}
-          renderHeader={renderHeader}
-          renderContent={renderContent}
-        />
-      </div>
+    <>
+      <FilterTableLayout
+        bordered={false}
+        cardStyle={{ marginBottom: 0 }}
+        fields={[
+          {
+            key: 'exposureMode',
+            type: 'radio',
+            label: '노출 기준',
+            options: [
+              { label: '프로그램별', value: 'program' },
+              { label: '강사별', value: 'instructor' },
+            ],
+            width: 188,
+          },
+          {
+            key: 'programName',
+            type: 'search',
+            label: '프로그램명',
+            placeholder: '프로그램명을 입력하세요',
+            width: '20%',
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '지급조서 처리 현황',
+            placeholder: '전체',
+            options: statusSelectOptions.filter(o => o.value !== 'all'),
+            allowClear: true,
+            width: '20%',
+          },
+          {
+            key: 'dateRange',
+            type: 'dateRange',
+            label: '기간',
+            width: '30%',
+          },
+        ]}
+        filters={{
+          exposureMode,
+          programName: draftProgramName,
+          status: draftStatus === 'all' ? undefined : draftStatus,
+          dateRange: draftDateRange,
+        }}
+        onFilterChange={(key, value) => {
+          if (key === 'exposureMode') {
+            setExposureMode(value as ExposureMode)
+            return
+          }
+          if (key === 'programName') {
+            setDraftProgramName(value as string)
+            return
+          }
+          if (key === 'status') {
+            setDraftStatus((value ?? 'all') as AppliedStatus)
+            return
+          }
+          if (key === 'dateRange') {
+            setDraftDateRange(value as [Dayjs, Dayjs] | null)
+          }
+        }}
+        onSearch={handleSearch}
+      >
+        <div className="participating-institutions-section__below-divider">
+          <ViewModeController<PageViewMode>
+            value={viewMode}
+            onChange={setViewMode}
+            options={paymentOrdersViewModeOptions}
+            renderHeader={renderHeader}
+            renderContent={mode => (
+              <div className="list-page-layout__table-shell">{renderContent(mode)}</div>
+            )}
+          />
+        </div>
+      </FilterTableLayout>
 
       <PaymentOrderDetailFullPageModal
         type={detailState?.type ?? 'program'}
@@ -458,6 +465,6 @@ export default function PaymentOrdersPage() {
         onClose={closeDetail}
         data={detailState?.data ?? null}
       />
-    </div>
+    </>
   )
 }

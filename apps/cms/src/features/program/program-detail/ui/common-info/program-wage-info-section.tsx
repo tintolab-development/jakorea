@@ -11,7 +11,7 @@ import {
   PROGRAM_WAGE_TYPE_OPTIONS,
   PROGRAM_WAGE_PRICING_MEASURE_OPTIONS,
 } from '@/data/mock/program-wage-info'
-import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsInput } from '@/shared/ui/cms-input'
 
