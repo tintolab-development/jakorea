@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 import { Image, message } from 'antd'
 import type { Program } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
@@ -20,7 +20,7 @@ import {
   DEFAULT_PROGRAM_DESCRIPTION,
   DEFAULT_RECRUITMENT_GUIDE,
   getThumbnailFilename,
-} from '../constants/program-detail-info-constants'
+} from '../../lib/program-detail-info-constants'
 import './project-info-detail-info-section.css'
 
 /** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */

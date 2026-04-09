@@ -8,12 +8,12 @@ import {
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
-import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 import {
   formatDateOnly,
   formatDateRange,
   INTERVIEW_METHOD_OPTIONS,
-} from '../constants/program-detail-info-constants'
+} from '../../lib/program-detail-info-constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)

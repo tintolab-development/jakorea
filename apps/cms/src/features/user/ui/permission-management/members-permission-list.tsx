@@ -1,14 +1,12 @@
 /**
- * 회원 권한 신청 목록 — 강사·관리자 공통 UI (user-list-page 레이아웃 정렬)
+ * 회원 권한 신청 목록 — 강사·관리자 공통 UI (`FilterTableLayout` / user-list·program-list 스타일 정렬)
  */
 
 import { useMemo, useState, useEffect, useCallback, type Key, type MouseEvent } from 'react'
-import { Card, Table, message } from 'antd'
+import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
-import { FilterListLayout } from '@/shared/components/filter-list-layout'
-import { AppButton } from '@/shared/ui/app-button'
-import { Divider } from '@/shared/components/divider'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
 import type { UserRole } from '@/types/user'
 import {
@@ -24,6 +22,7 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/ui/program-list.css'
 import './members-permission-list.css'
+import { CmsButton } from '@/shared/ui'
 
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
   SCHOOL: '학교(교사)',
@@ -292,133 +291,102 @@ export function MembersPermissionList({
   )
 
   return (
-    <div className="user-list-page__filter-wrap">
-      <FilterListLayout
-        className="program-list-content-wrapper"
-        bordered={false}
-        fields={[
-          {
-            key: 'search',
-            type: 'search',
-            label: '회원명',
-            placeholder: '회원명을 입력하세요',
-            width: '30%',
-          },
-          {
-            key: 'role',
-            type: 'select',
-            label: '회원 유형',
-            placeholder: '전체',
-            width: '30%',
-            options: [
-              { label: '전체', value: 'ALL' },
-              { label: '개인', value: 'INDIVIDUAL' },
-              { label: '학교(교사)', value: 'SCHOOL' },
-              { label: '강사', value: 'INSTRUCTOR' },
-              { label: '관리자', value: 'ADMIN' },
-            ],
-          },
-          {
-            key: 'createdAtRange',
-            type: 'dateRange',
-            label: '신청 시기',
-            width: '30%',
-            defaultValue: null,
-          },
-        ]}
-        filters={{
-          search: pendingFilters.search,
-          role: pendingFilters.role,
-          createdAtRange: pendingFilters.createdAtRange ?? undefined,
-        }}
-        onFilterChange={(key, value) => {
-          if (key === 'createdAtRange') {
-            setPendingFilters(prev => ({
-              ...prev,
-              createdAtRange: value as [Dayjs | null, Dayjs | null] | null,
-            }))
-          } else {
-            setPendingFilters(prev => ({ ...prev, [key]: value }))
-          }
-        }}
-        onSearch={handleSearch}
-        listHeader={
-          <>
-            <div className="program-list-page__divider-wrapper">
-              <Divider />
-            </div>
-            <div className="program-list-page__filter-info">
-              <div className="program-list-page__filter-info-texts">
-                <div className="program-list-page__filter-info-title">{listTitle(memberType)}</div>
-                <div className="program-list-page__filter-info-count">
-                  총 {filteredRows.length.toLocaleString()}건
-                </div>
-              </div>
-              <div className="program-list-page__widget-header-actions">
-                <AppButton
-                  variant="danger"
-                  size="filter"
-                  dangerFillOnHover
-                  onClick={bulkReject}
-                  disabled={!canWrite || selectedRowKeys.length === 0}
-                >
-                  신청 반려
-                </AppButton>
-                <AppButton
-                  variant="cancel"
-                  size="filter"
-                  onClick={bulkApprove}
-                  disabled={!canWrite || selectedRowKeys.length === 0}
-                >
-                  신청 승인
-                </AppButton>
-                <AppButton
-                  variant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
-                  size="filter-wide"
-                  onClick={handleToggleListPrivacyMask}
-                  disabled={selectedRowKeys.length !== 1}
-                >
-                  {isSelectedRowPrivacyRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-                </AppButton>
-              </div>
-            </div>
-          </>
+    <FilterTableLayout
+      bordered={false}
+      fields={[
+        {
+          key: 'search',
+          type: 'search',
+          label: '회원명',
+          placeholder: '회원명을 입력하세요',
+          width: '30%',
+        },
+        {
+          key: 'role',
+          type: 'select',
+          label: '회원 유형',
+          placeholder: '전체',
+          width: '30%',
+          options: [
+            { label: '전체', value: 'ALL' },
+            { label: '개인', value: 'INDIVIDUAL' },
+            { label: '학교(교사)', value: 'SCHOOL' },
+            { label: '강사', value: 'INSTRUCTOR' },
+            { label: '관리자', value: 'ADMIN' },
+          ],
+        },
+        {
+          key: 'createdAtRange',
+          type: 'dateRange',
+          label: '신청 시기',
+          width: '30%',
+          defaultValue: null,
+        },
+      ]}
+      filters={{
+        search: pendingFilters.search,
+        role: pendingFilters.role,
+        createdAtRange: pendingFilters.createdAtRange ?? undefined,
+      }}
+      onFilterChange={(key, value) => {
+        if (key === 'createdAtRange') {
+          setPendingFilters(prev => ({
+            ...prev,
+            createdAtRange: value as [Dayjs | null, Dayjs | null] | null,
+          }))
+        } else {
+          setPendingFilters(prev => ({ ...prev, [key]: value }))
         }
-      >
-        <div className="program-list-content-wrapper__table">
-          <Card
-            className="program-list-card program-list-card--in-wrapper program-list-card--no-border"
-            style={{ border: 'none', boxShadow: 'none' }}
+      }}
+      onSearch={handleSearch}
+      title={listTitle(memberType)}
+      description={`총 ${filteredRows.length.toLocaleString()}건`}
+      actions={
+        <>
+          <CmsButton
+            variant="delete"
+            onClick={bulkReject}
+            disabled={!canWrite || selectedRowKeys.length === 0}
           >
-            <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x">
-              <Table<MemberPermissionApplicationRow>
-                className="cms-data-table members-permission-list__table"
-                rowKey="id"
-                columns={columns}
-                dataSource={filteredRows}
-                onRow={record => ({
-                  onClick: (e: MouseEvent<HTMLElement>) => {
-                    if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-                    void onOpenUserDetail?.(record.userId, memberType)
-                  },
-                  style: { cursor: onOpenUserDetail ? 'pointer' : undefined },
-                })}
-                rowSelection={
-                  canWrite
-                    ? {
-                        columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                        selectedRowKeys,
-                        onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                        preserveSelectedRowKeys: false,
-                      }
-                    : undefined
-                }
-                pagination={false}
-              />
-            </div>
-          </Card>
-        </div>
-      </FilterListLayout>
-    </div>
+            신청 반려
+          </CmsButton>
+          <CmsButton onClick={bulkApprove} disabled={!canWrite || selectedRowKeys.length === 0}>
+            신청 승인
+          </CmsButton>
+          <CmsButton
+            variant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
+            onClick={handleToggleListPrivacyMask}
+            width={180}
+            disabled={selectedRowKeys.length !== 1}
+          >
+            {isSelectedRowPrivacyRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
+          </CmsButton>
+        </>
+      }
+    >
+      <Table<MemberPermissionApplicationRow>
+        rowKey="id"
+        columns={columns}
+        dataSource={filteredRows}
+        onRow={record => ({
+          onClick: (e: MouseEvent<HTMLElement>) => {
+            if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+            void onOpenUserDetail?.(record.userId, memberType)
+          },
+          style: { cursor: onOpenUserDetail ? 'pointer' : undefined },
+        })}
+        rowSelection={
+          canWrite
+            ? {
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                selectedRowKeys,
+                onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                preserveSelectedRowKeys: false,
+              }
+            : undefined
+        }
+        pagination={false}
+      />
+    </FilterTableLayout>
   )
 }
