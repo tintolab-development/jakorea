@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { TemplateModalLeftCardConfig } from '@/shared/components/template/template-modal-left-content'
-import type { TemplateRow } from '../schemas/template.schema'
+import type { TemplateRow } from '@/features/template/model/template.schema'
 
 interface UseTemplateModalParams {
   buildBaseLeftContentConfig: (selectedTemplate: TemplateRow | null) => TemplateModalLeftCardConfig[]

@@ -40,11 +40,14 @@ category: implementation
 
 ## 3. `@/features/template` 구성 (참고)
 
-- **hooks**: `use-template-crud`, `use-clipboard`, `use-template-editor`, `use-template-preview`
-- **ui**: `template-filters`, `sms-template-table`, `email-template-table`, SMS/메일 폼·미리보기·일괄 발송 모달 등
+- **model**: `template.schema.ts` — 작성 양식 목록·variant·모달 섹션 정의
+- **lib**: `build-template-config.ts` — 풀페이지 모달 좌·우 구성 빌더
+- **hooks**: `use-template-modal`, `use-template-crud`, `use-clipboard`, `use-template-editor`, `use-template-preview`
+- **ui**: `template-table`, `basic-info-curriculum-section`, `template-filters`, `sms-template-table`, `email-template-table`, SMS/메일 폼·미리보기·일괄 발송 모달 등
+- **루트**: `template-route-redirects.tsx` — 구 템플릿 URL 리다이렉트
 - **constants**: `constants.ts`
 
-페이지는 이 모듈을 **조합**하고, 동일 패턴이 두 화면 이상이면 `features/template`로 승격한다.
+페이지(`pages/templates`)는 이 모듈을 **조합**하고, 동일 패턴이 두 화면 이상이면 `features/template`로 승격한다.
 
 ---
 
@@ -54,9 +57,9 @@ category: implementation
 
 - 라우트: `/templates` — index는 `form-management`로 이동.
 - 셸·탭: `template-list-page.tsx` — 쿼리 `tab`(예: `template-form`, `issuance-form`)과 Ant `Tabs`.
-- 작성: `template-form-tab.tsx` — `schemas/template.schema`, `hooks/use-template-modal`, `utils/build-template-config`, `components/template-table`, 필요 시 `components/basic-info-curriculum-section`.
+- 작성: `template-form-tab.tsx` — `@/features/template`의 `model/template.schema`, `hooks/use-template-modal`, `lib/build-template-config`, `ui/template-table`, 필요 시 `ui/basic-info-curriculum-section`.
 - 발급: `issuance-form-tab.tsx` — 동일 풀페이지 모달 패턴; 우측 하단 보조 UI는 `TemplateModalRightNavigation`의 **`children`**으로 확장한다.
-- 구 URL: `template-route-redirects.tsx`
+- 구 URL: `@/features/template/template-route-redirects`
 
 ### B) SMS / 메일
 
@@ -83,10 +86,10 @@ category: implementation
 
 ## 6. 데이터·모달 (작성 탭)
 
-- 행·variant·모달 섹션: `schemas/template.schema.ts` (`TemplateVariant`, `writingSections`, `TEMPLATE_MODAL_SECTIONS_BY_VARIANT`).
-- 모달 상태: `hooks/use-template-modal.ts`.
-- 좌측 카드·우측 네비 구성: `utils/build-template-config.ts` — 우측 `items`는 좌측 카드 배열에서 파생(`buildRightNavigationConfig`).
-- 목록 테이블 마크업·컬럼: `components/template-table.tsx`에 모은다.
+- 행·variant·모달 섹션: `features/template/model/template.schema.ts` (`TemplateVariant`, `writingSections`, `TEMPLATE_MODAL_SECTIONS_BY_VARIANT`).
+- 모달 상태: `features/template/hooks/use-template-modal.ts`.
+- 좌측 카드·우측 네비 구성: `features/template/lib/build-template-config.ts` — 우측 `items`는 좌측 카드 배열에서 파생(`buildRightNavigationConfig`).
+- 목록 테이블 마크업·컬럼: `features/template/ui/template-table.tsx`에 모은다.
 
 좌·우 DnD 정렬은 **동일한 ordered id**로 좌측 카드 목록을 맞춘다. 모달 닫을 때 선택 템플릿·열림 상태를 초기화한다.
 
@@ -102,7 +105,7 @@ category: implementation
 ## 8. 모달 내부 격자 (항목명 / 항목내용)
 
 - 반복되는 라벨+값 격자는 **`DetailInfoForm`** 우선.
-- 참고: `components/basic-info-curriculum-section.tsx` (`curriculum` variant + 「기본 정보」 카드 `children` 주입).
+- 참고: `features/template/ui/basic-info-curriculum-section.tsx` (`curriculum` variant + 「기본 정보」 카드 `children` 주입).
 
 ---
 
@@ -132,4 +135,4 @@ category: implementation
 
 ---
 
-**마지막 업데이트**: 2026-04-10
+**마지막 업데이트**: 2026-04-11

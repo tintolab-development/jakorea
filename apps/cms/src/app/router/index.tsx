@@ -51,7 +51,7 @@ import {
   RedirectLegacyTemplatesKakaoAlimtalk,
   RedirectLegacyTemplatesProgramForms,
   RedirectLegacyTemplatesSms,
-} from '@/pages/templates/template-route-redirects'
+} from '@/features/template/template-route-redirects'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'

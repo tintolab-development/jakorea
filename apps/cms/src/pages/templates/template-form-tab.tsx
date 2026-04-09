@@ -1,19 +1,19 @@
 import { useCallback, useMemo } from 'react'
-import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { TemplateListCard } from '@/shared/components/template/template-list-card'
-import { IssuanceFormTab } from './issuance-form-tab'
 import './template-form-tab.css'
 import { TemplateFullpageModal } from '@/shared/components/template/template-fullpage-modal'
 import { TemplateModalLeftContent } from '@/shared/components/template/template-modal-left-content'
 import { TemplateModalRightNavigation } from '@/shared/components/template/template-modal-right-navigation'
-import { BasicInfoCurriculumSection } from './components/basic-info-curriculum-section'
-import { TemplateTable } from './components/template-table'
-import { useTemplateModal } from './hooks/use-template-modal'
-import { writingSections } from './schemas/template.schema'
-import { buildRightNavigationConfig, buildTemplateConfig } from './utils/build-template-config'
+import { BasicInfoCurriculumSection } from '@/features/template/ui/basic-info-curriculum-section'
+import { TemplateTable } from '@/features/template/ui/template-table'
+import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
+import { writingSections } from '@/features/template/model/template.schema'
+import {
+  buildRightNavigationConfig,
+  buildTemplateConfig,
+} from '@/features/template/lib/build-template-config'
 
 export default function TemplateFormTab() {
-  const { params } = useQueryParams<{ tab?: string }>()
   const curriculumSection = useMemo(() => <BasicInfoCurriculumSection />, [])
   const buildBaseLeftContentConfig = useCallback(
     (selectedTemplate: Parameters<typeof buildTemplateConfig>[0]['selectedTemplate']) =>
@@ -42,10 +42,6 @@ export default function TemplateFormTab() {
     () => buildRightNavigationConfig(orderedLeftContentConfig),
     [orderedLeftContentConfig]
   )
-
-  if (params.tab === 'issuance-form') {
-    return <IssuanceFormTab />
-  }
 
   return (
     <>

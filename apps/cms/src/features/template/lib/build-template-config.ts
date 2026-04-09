@@ -5,7 +5,7 @@ import {
   TEMPLATE_MODAL_SECTIONS_BY_VARIANT,
   type TemplateRow,
   type TemplateVariant,
-} from '../schemas/template.schema'
+} from '@/features/template/model/template.schema'
 
 interface BuildTemplateConfigParams {
   selectedTemplate: TemplateRow | null

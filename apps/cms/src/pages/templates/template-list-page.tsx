@@ -8,7 +8,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tabs } from 'antd'
 import TemplateFormTab from './template-form-tab'
+import { IssuanceFormTab } from './issuance-form-tab'
 import './template-list-page.css'
+import './template-form-tab.css'
 import { CmsButton } from '@/shared/ui'
 
 const FORM_MANAGEMENT_BASE = '/templates/form-management'
@@ -78,7 +80,15 @@ export function TemplateListPage() {
           />
         </>
       )}
-      {isFormManagementSection ? <TemplateFormTab /> : <div />}
+      {isFormManagementSection ? (
+        activeKey === 'issuance-form' ? (
+          <IssuanceFormTab />
+        ) : (
+          <TemplateFormTab />
+        )
+      ) : (
+        <div />
+      )}
     </>
   )
 }

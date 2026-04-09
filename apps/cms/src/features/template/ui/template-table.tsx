@@ -2,7 +2,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
-import type { TemplateRow } from '../schemas/template.schema'
+import type { TemplateRow } from '@/features/template/model/template.schema'
 
 interface TemplateTableProps {
   rows: TemplateRow[]
