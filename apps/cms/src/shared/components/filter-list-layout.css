@@ -1,0 +1,33 @@
+/**
+ * 필터 + 리스트 헤더 + 테이블 공통 컨테이너
+ * 프로그램 목록과 동일 톤(program-list-content-wrapper) 기준
+ */
+
+.filter-list-layout {
+  width: 100%;
+  background: var(--color-bg-base);
+  margin-bottom: var(--spacing-24);
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
+}
+
+.filter-list-layout .unified-filter-card {
+  margin-bottom: var(--spacing-16);
+}
+
+/* 리스트 헤더(제목·건수·버튼)와 테이블 본문 사이: 16px */
+/* 구분선 + 본문 슬롯을 세로로 쌓아 가로 폭 100% 유지(가로 flex 시 자식이 콘텐츠 폭만 차지하는 문제 방지) */
+.filter-list-layout__header {
+  padding: 0 20px;
+  background-color: blue !important;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.filter-list-layout__body {
+  padding: 0 20px 20px;
+}

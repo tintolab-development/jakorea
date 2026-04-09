@@ -24,7 +24,7 @@ import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentConfirmationPayloadForSelection,
-} from './account-payment-confirmation-modal'
+} from '@/features/settlement/ui/account-payment-confirmation-modal'
 import { AccountPaymentStatusDetailFullPageModal } from './account-payment-status-detail-fullpage-modal'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */

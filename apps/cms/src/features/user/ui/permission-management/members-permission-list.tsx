@@ -6,7 +6,7 @@ import { useMemo, useState, useEffect, useCallback, type Key, type MouseEvent } 
 import { Card, Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
-import { FilterListLayout } from '@/shared/ui/filter-list-layout'
+import { FilterListLayout } from '@/shared/components/filter-list-layout'
 import { AppButton } from '@/shared/ui/app-button'
 import { Divider } from '@/shared/components/divider'
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
@@ -323,6 +323,7 @@ export function MembersPermissionList({
             type: 'dateRange',
             label: '신청 시기',
             width: '30%',
+            defaultValue: null,
           },
         ]}
         filters={{

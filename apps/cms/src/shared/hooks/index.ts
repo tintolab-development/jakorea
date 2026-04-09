@@ -12,6 +12,15 @@ export {
   useRequirePermission,
 } from './use-can-access'
 export { useTableWithQuery } from './use-table-with-query'
+export { useTableSearch } from './use-table-search'
+export type {
+  TableSearchParamRule,
+  TableSearchParamRuleApply,
+  TableSearchParamRuleParam,
+  TableSearchSetSearchParams,
+  UseTableSearchOptions,
+  UseTableSearchReturn,
+} from './use-table-search'
 export { useListCRUD } from './use-list-crud'
 export type { UseListCRUDOptions, UseListCRUDReturn } from './use-list-crud'
 export { useListFilters } from './use-list-filters'

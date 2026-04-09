@@ -1,0 +1,85 @@
+/**
+ * 지급 반려 모달 — 텍스트 16px 간격, 기관|일자|차시 8px·볼드, 하위 입력과 32px
+ */
+
+.payment-order-payment-reject-modal.ant-modal .ant-modal-content {
+  /* figma spec: top 26, horizontal 30, bottom 34 */
+  padding: 26px 30px 34px;
+}
+
+.payment-order-payment-reject-modal .teal-header-modal__body {
+  padding-top: 16px;
+}
+
+.payment-order-payment-reject-modal .teal-header-modal__footer {
+  justify-content: flex-end;
+}
+
+.payment-order-payment-reject__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  width: 100%;
+}
+
+.payment-order-payment-reject-modal
+  .teal-header-modal__footer
+  .payment-order-payment-reject__footer-actions
+  .ant-btn,
+.payment-order-payment-reject-modal
+  .teal-header-modal__footer
+  .payment-order-payment-reject__footer-actions
+  button {
+  width: 120px;
+  min-width: 120px;
+}
+
+.payment-order-payment-reject__line {
+  margin: 0;
+  font-size: var(--font-size-16, 16px);
+  font-weight: var(--font-weight-400, 400);
+  line-height: 150%;
+  color: var(--color-text-primary, #3d3d3d);
+}
+
+.payment-order-payment-reject__line + .payment-order-payment-reject__line {
+  margin-top: 16px;
+}
+
+.payment-order-payment-reject__name {
+  font-weight: var(--font-weight-700, 700);
+}
+
+.payment-order-payment-reject__detail-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: var(--font-size-16, 16px);
+  font-weight: var(--font-weight-700, 700);
+  line-height: 150%;
+  color: var(--color-text-primary, #3d3d3d);
+}
+
+.payment-order-payment-reject__sep {
+  font-weight: var(--font-weight-700, 700);
+  color: var(--color-text-primary, #3d3d3d);
+}
+
+.payment-order-payment-reject__reason-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 30px;
+}
+
+.payment-order-payment-reject__reason-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}

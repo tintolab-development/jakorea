@@ -1,6 +1,6 @@
 /**
  * 프로그램 캘린더 뷰 스타일 (3단 레이아웃: 좌 패널 · 우 패널 · 미니·일정리스트)
- * 중앙 메인 캘린더 스타일은 @/shared/ui/program-calendar.css (ProgramCalendar)
+ * 중앙 메인 캘린더 스타일은 @/shared/components/program-calendar.css (ProgramCalendar)
  */
 
 /* ===== 메인 컨테이너 (3단: 좌 패널 | 메인 캘린더 | 우 패널) ===== */

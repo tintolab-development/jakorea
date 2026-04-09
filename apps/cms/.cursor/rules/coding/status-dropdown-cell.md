@@ -258,4 +258,4 @@ export function SettlementStatusCell({ record, onChange, ... }) {
 | 행 클릭 전파 차단 | 셀을 `<div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-block' }}>` 로 감싸기 |
 | 너비 | 신청자 프로그램 승인 현황과 동일: 컬럼·`td.status-dropdown-cell__cell-status` **152px**, 배지 **120px**(`app-status-badge`). 드롭다운 오버레이는 `body`에 붙으므로 전역 `status-dropdown-cell.css`(152px)와 맞출 것 — 배지만 넓히면 메뉴·트리거와 어긋남. |
 
-참고 구현: `pages/settlement-management/payment-order-program-settlement-table.tsx`, `payment-order-instructor-settlement-table.tsx`, 배지 `shared/components/payment-order-line-processing-status-badge.tsx` · `textbook-status-badge.css`(confirmed / correction; 라인 변형은 말줄임만).
+참고 구현: `features/settlement/ui/payment-record/payment-order-detail-filter-table.tsx`(program·instructor `mode`), 배지 `shared/components/payment-order-line-processing-status-badge.tsx` · `textbook-status-badge.css`(confirmed / correction; 라인 변형은 말줄임만).

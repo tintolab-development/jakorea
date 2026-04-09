@@ -285,4 +285,6 @@
 
   /* 작업 중 추가되는 색상 (추후 정리) */
   --table-line: #e0e0e0;
+  --status-hover-bg:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
 }

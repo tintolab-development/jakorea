@@ -1,0 +1,45 @@
+.table-filter-group__container {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.table-filter-group__fields-container {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.table-filter-group__fields-shell {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.table-filter-group__fields-inner.ant-row {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.table-filter-group__fields-inner.ant-row > .ant-col {
+  min-width: 0;
+}
+
+.table-filter-group__fields-inner .unified-filter-card__field {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* unified-filter-card의 전역 select min-width(280px)가 table-filter-group에서 gap을 먹지 않도록 무효화 */
+.table-filter-group__fields-inner .unified-filter-card__field--select,
+.table-filter-group__fields-inner .cms-select,
+.table-filter-group__fields-inner .ant-select {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100%;
+}

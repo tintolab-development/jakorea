@@ -3,11 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import {
-  DetailModalSidebar,
-  type DetailModalSidebarNavItem,
-} from '@/shared/ui/detail-modal-sidebar'
 import {
   getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
   getMockPaymentOrderCalculationStatementFromProgramDetailPage,
@@ -15,109 +10,80 @@ import {
   getMockPaymentOrderProgramDetail,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
-  type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
-  type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
-import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
-import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
-import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
-import { PaymentOrderProgramBasicInfo } from './payment-order-program-basic-info'
-import { PaymentOrderInstructorBasicInfo } from './payment-order-instructor-basic-info'
-import { PaymentOrderProgramSettlementTable } from './payment-order-program-settlement-table'
-import { PaymentOrderInstructorSettlementTable } from './payment-order-instructor-settlement-table'
-import './payment-order-program-status-detail-fullpage-modal.css'
-import './payment-order-instructor-status-detail-fullpage-modal.css'
-import type { PaymentOrderCalculationStatementCommitPayload } from './payment-order-detail-fullpage-shared'
+import {
+  PaymentOrderDetailView,
+  type PaymentOrderCalculationStatementLineRow,
+  type PaymentOrderDetailViewProps,
+} from '@/features/settlement/ui/payment-record'
 
-export type PaymentOrderDetailFullPageModalProps =
-  | {
-      type: 'program'
-      isOpen: boolean
-      onClose: () => void
-      data: PaymentOrderAdminProgramRow | null
-    }
-  | {
-      type: 'instructor'
-      isOpen: boolean
-      onClose: () => void
-      data: PaymentOrderAdminInstructorRow | null
-    }
+/** 컴포넌트 밖에 두어 `current` 참조가 렌더마다 바뀌지 않게 함 (useMemo/useCallback deps) */
+const CONFIG = {
+  program: {
+    getDetail: getMockPaymentOrderProgramDetail,
+    getCalc: getMockPaymentOrderCalculationStatementFromProgramDetailPage,
+    getTitle: (detail: any) => `지급 현황 상세_${detail.programName}`,
+  },
+  instructor: {
+    getDetail: getMockPaymentOrderInstructorDetail,
+    getCalc: getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
+    getTitle: (detail: any) => `지급 현황 상세_${detail.nameKo}`,
+  },
+} as const
+
+export type PaymentOrderDetailFullPageModalProps = {
+  type: 'program' | 'instructor'
+  isOpen: boolean
+  onClose: () => void
+  /** 열림 + type 일치 시 해당 행. 닫힌 상태에서는 null 권장 */
+  data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
+}
 
 export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
-  const { isOpen, onClose, type } = props
+  const { type, isOpen, onClose, data } = props
+
+  const row = data
+  const current = CONFIG[type]
 
   const [lineAggregateStatus, setLineAggregateStatus] =
     useState<PaymentOrderAdminProcessingStatus>('pending')
   const [calcStatementOpen, setCalcStatementOpen] = useState(false)
   const [calcStatementData, setCalcStatementData] =
     useState<PaymentOrderProgramCalculationStatement | null>(null)
-  const [calcLineCommit, setCalcLineCommit] =
-    useState<PaymentOrderCalculationStatementCommitPayload | null>(null)
 
   const handleAggregateChange = useCallback((status: PaymentOrderAdminProcessingStatus) => {
     setLineAggregateStatus(status)
   }, [])
 
-  const programRow = type === 'program' ? props.data : null
-  const instructorRow = type === 'instructor' ? props.data : null
-
-  const programDetail = useMemo(
-    () => (programRow ? getMockPaymentOrderProgramDetail(programRow) : null),
-    [programRow]
-  )
-
-  const instructorDetail = useMemo(
-    () => (instructorRow ? getMockPaymentOrderInstructorDetail(instructorRow) : null),
-    [instructorRow]
-  )
+  const detail = useMemo(() => {
+    if (!row) return null
+    return current.getDetail(row as any)
+  }, [row, current])
 
   useEffect(() => {
     if (isOpen) {
       setLineAggregateStatus('pending')
       setCalcStatementOpen(false)
       setCalcStatementData(null)
-      setCalcLineCommit(null)
     }
-  }, [isOpen, type, programRow?.no, instructorRow?.no])
+  }, [isOpen, type, row])
 
-  const openProgramCalculationStatement = useCallback(
-    (row: PaymentOrderAdminProgramDetailInstructorRow) => {
-      if (!programRow || !programDetail) return
-      setCalcStatementData(
-        getMockPaymentOrderCalculationStatementFromProgramDetailPage(programRow, programDetail, row)
-      )
+  const openCalculationStatement = useCallback(
+    (lineRow: PaymentOrderCalculationStatementLineRow) => {
+      if (!row || !detail) return
+
+      setCalcStatementData(current.getCalc(row as any, detail as any, lineRow as any))
       setCalcStatementOpen(true)
     },
-    [programDetail, programRow]
+    [row, detail, current]
   )
 
-  const openInstructorCalculationStatement = useCallback(
-    (row: PaymentOrderAdminInstructorDetailProgramRow) => {
-      if (!instructorRow || !instructorDetail) return
-      setCalcStatementData(
-        getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
-          instructorRow,
-          instructorDetail,
-          row
-        )
-      )
-      setCalcStatementOpen(true)
-    },
-    [instructorDetail, instructorRow]
-  )
-
-  const sidebarItems = useMemo<DetailModalSidebarNavItem[]>(
-    () => [
-      {
-        key: 'payment-status-detail',
-        label: '지급 현황 상세',
-        icon: <PaymentOrderStatusDetailLnbIcon className="detail-fullpage-modal__lnb-icon" />,
-      },
-    ],
-    []
-  )
+  const closeCalculationStatement = useCallback(() => {
+    setCalcStatementOpen(false)
+    setCalcStatementData(null)
+  }, [])
 
   const resetCalcAndClose = useCallback(() => {
     setCalcStatementOpen(false)
@@ -125,108 +91,31 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     onClose()
   }, [onClose])
 
-  if (!isOpen || !props.data) {
+  const sharedViewProps = {
+    isOpen,
+    lineAggregateStatus,
+    handleAggregateChange,
+    calcStatementOpen,
+    calcStatementData,
+    openCalculationStatement,
+    closeCalculationStatement,
+    resetCalcAndClose,
+  }
+
+  if (!isOpen || !row || !detail) {
     return null
   }
 
-  if (type === 'program') {
-    if (!programRow || !programDetail) return null
-    return (
-      <>
-        <PaymentOrderProgramCalculationStatementModal
-          open={calcStatementOpen}
-          onCancel={() => {
-            setCalcStatementOpen(false)
-            setCalcStatementData(null)
-          }}
-          data={calcStatementData}
-          onProcessingCommitted={setCalcLineCommit}
-          onCloseStatementSheet={() => setCalcStatementOpen(false)}
-          onClearCalculationStatementData={() => setCalcStatementData(null)}
-        />
-        <DetailFullPageModal
-          open={isOpen}
-          onClose={resetCalcAndClose}
-          title={`지급 현황 상세_${programDetail.programName}`}
-          className="payment-order-program-status-detail-fullpage-modal"
-          sidebar={
-            <DetailModalSidebar
-              navAriaLabel="지급 현황 상세 메뉴"
-              items={sidebarItems}
-              activeKey="payment-status-detail"
-              activeChildKey=""
-              expandedGroupKeys={[]}
-              onSelectTop={() => {}}
-              onSelectChild={() => {}}
-            />
-          }
-        >
-          <div className="payment-order-program-status-detail__root participating-institutions-section">
-            <PaymentOrderProgramBasicInfo
-              detail={programDetail}
-              aggregateStatus={lineAggregateStatus}
-            />
-            <PaymentOrderProgramSettlementTable
-              programRow={programRow}
-              isOpen={isOpen}
-              onAggregateChange={handleAggregateChange}
-              onOpenCalculationStatement={openProgramCalculationStatement}
-              calculationCommit={calcLineCommit}
-              onCalculationCommitApplied={() => setCalcLineCommit(null)}
-            />
-          </div>
-        </DetailFullPageModal>
-      </>
-    )
-  }
-
-  if (!instructorRow || !instructorDetail) return null
-
   return (
-    <>
-      <PaymentOrderProgramCalculationStatementModal
-        open={calcStatementOpen}
-        onCancel={() => {
-          setCalcStatementOpen(false)
-          setCalcStatementData(null)
-        }}
-        data={calcStatementData}
-        onProcessingCommitted={setCalcLineCommit}
-        onCloseStatementSheet={() => setCalcStatementOpen(false)}
-        onClearCalculationStatementData={() => setCalcStatementData(null)}
-      />
-      <DetailFullPageModal
-        open={isOpen}
-        onClose={resetCalcAndClose}
-        title={`지급 현황 상세_${instructorDetail.nameKo}`}
-        className="payment-order-instructor-status-detail-fullpage-modal"
-        sidebar={
-          <DetailModalSidebar
-            navAriaLabel="지급 현황 상세 메뉴"
-            items={sidebarItems}
-            activeKey="payment-status-detail"
-            activeChildKey=""
-            expandedGroupKeys={[]}
-            onSelectTop={() => {}}
-            onSelectChild={() => {}}
-          />
-        }
-      >
-        <div className="payment-order-program-status-detail__root participating-institutions-section">
-          <PaymentOrderInstructorBasicInfo
-            detail={instructorDetail}
-            aggregateStatus={lineAggregateStatus}
-          />
-          <PaymentOrderInstructorSettlementTable
-            instructorRow={instructorRow}
-            isOpen={isOpen}
-            onAggregateChange={handleAggregateChange}
-            onOpenCalculationStatement={openInstructorCalculationStatement}
-            calculationCommit={calcLineCommit}
-            onCalculationCommitApplied={() => setCalcLineCommit(null)}
-          />
-        </div>
-      </DetailFullPageModal>
-    </>
+    <PaymentOrderDetailView
+      {...({
+        ...sharedViewProps,
+        kind: type,
+        title: current.getTitle(detail),
+        modalClassName: type === 'instructor' ? '' : undefined,
+        detail,
+        row,
+      } as PaymentOrderDetailViewProps)}
+    />
   )
 }

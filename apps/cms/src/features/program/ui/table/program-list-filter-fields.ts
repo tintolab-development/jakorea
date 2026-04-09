@@ -6,7 +6,18 @@ import {
   targetLevelOptions,
   economyParticipantTypeOptions,
   economyTargetLevelOptions,
+  recruitmentStatusOptions,
 } from '../constants/program-list-constants'
+
+/** 경제 교육: 참여자(수강자) 모집 기간 기준 상태 — 목록 컬럼「참여자 모집 인원」과 연계 필터 */
+const economyParticipantRecruitmentField = {
+  key: 'participantRecruitment' as const,
+  type: 'select' as const,
+  label: '참여자 모집 인원',
+  placeholder: '전체',
+  options: recruitmentStatusOptions,
+  width: '20%',
+}
 
 /** 참가자(강사/학생 등)용 필터 필드 */
 export const participantFilterFields = [
@@ -59,14 +70,17 @@ export const participantFilterFields = [
   },
 ]
 
-/** 경제 교육 프로그램용 관리자 필터 필드 */
+/**
+ * 경제 교육 · 「전체 프로그램」「완료 프로그램」
+ * 프로그램명 / 진행 현황 / 참여자 모집 / 유형 / 교육 대상
+ */
 export const economyFilterFields = [
   {
     key: 'title',
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '28%',
+    width: '20%',
   },
   {
     key: 'lifecycleStatus',
@@ -74,15 +88,16 @@ export const economyFilterFields = [
     label: '프로그램 진행 현황',
     placeholder: '전체',
     options: statusOptions,
-    width: '28%',
+    width: '20%',
   },
+  economyParticipantRecruitmentField,
   {
     key: 'category',
     type: 'select' as const,
     label: '참여자 유형',
     placeholder: '전체',
     options: economyParticipantTypeOptions,
-    width: '22%',
+    width: '20%',
   },
   {
     key: 'targetLevel',
@@ -90,32 +105,33 @@ export const economyFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: economyTargetLevelOptions,
-    width: '22%',
+    width: '20%',
   },
 ]
 
-/** 경제 교육 · 위젯 「예정·진행 중·완료 프로그램」 선택 시 — 진행 현황 필터 없음 */
+/** 경제 교육 · 「예정 프로그램」 */
 export const economyScheduledFilterFields = [
   {
     key: 'title',
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '25%',
+    width: '20%',
   },
   {
     key: 'operationPeriod',
     type: 'dateRange' as const,
     label: '사업 운영 기간',
-    width: '25%',
+    width: '20%',
   },
+  economyParticipantRecruitmentField,
   {
     key: 'category',
     type: 'select' as const,
     label: '참여자 유형',
     placeholder: '전체',
     options: economyParticipantTypeOptions,
-    width: '25%',
+    width: '20%',
   },
   {
     key: 'targetLevel',
@@ -123,9 +139,51 @@ export const economyScheduledFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: economyTargetLevelOptions,
-    width: '25%',
+    width: '20%',
   },
 ]
+
+/** 경제 교육 · 「진행 중인 프로그램」 */
+export const economyInProgressFilterFields = [
+  {
+    key: 'title',
+    type: 'search' as const,
+    label: '프로그램명',
+    placeholder: '프로그램명을 입력하세요',
+    width: '34%',
+  },
+  {
+    key: 'category',
+    type: 'select' as const,
+    label: '참여자 유형',
+    placeholder: '전체',
+    options: economyParticipantTypeOptions,
+    width: '33%',
+  },
+  {
+    key: 'targetLevel',
+    type: 'select' as const,
+    label: '교육 대상',
+    placeholder: '전체',
+    options: economyTargetLevelOptions,
+    width: '33%',
+  },
+]
+
+export interface ResolveEconomyProgramFilterFieldsParams {
+  economyScheduledActive: boolean
+  economyInProgressActive: boolean
+}
+
+/** ProgramStatusWidget(경제) 탭에 맞는 필터 필드 */
+export function resolveEconomyProgramListFilterFields({
+  economyScheduledActive,
+  economyInProgressActive,
+}: ResolveEconomyProgramFilterFieldsParams) {
+  if (economyScheduledActive) return economyScheduledFilterFields
+  if (economyInProgressActive) return economyInProgressFilterFields
+  return economyFilterFields
+}
 
 /** 일반 프로그램용 관리자 필터 필드 */
 export const programListFilterFields = [

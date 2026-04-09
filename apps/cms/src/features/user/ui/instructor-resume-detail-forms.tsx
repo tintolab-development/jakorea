@@ -3,7 +3,7 @@
  */
 
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import { DetailInfoForm } from '@/shared/ui/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   INSTRUCTOR_RESUME_NO_DATA,
   InstructorResumeCareerCardBody,

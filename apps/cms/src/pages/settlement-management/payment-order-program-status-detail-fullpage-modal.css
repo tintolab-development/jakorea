@@ -32,22 +32,6 @@
   margin-bottom: 0;
 }
 
-.payment-order-program-status-detail__filters.participating-institutions-section__filters {
-  margin-bottom: 0;
-  width: 100%;
-}
-
-.payment-order-program-status-detail__filters .unified-filter-card .ant-card-body {
-  padding: 0 !important;
-}
-
-.payment-order-program-status-detail__table-wrap.participating-institutions-section__table-wrap {
-  margin-top: 0;
-  flex: 1;
-  min-height: 280px;
-  overflow: auto;
-}
-
 .payment-order-program-status-detail__table.participating-institutions-section__table
   .ant-table-container {
   border-inline-start: none !important;
@@ -179,71 +163,6 @@
   padding-left: 0 !important;
   padding-right: 0 !important;
   box-sizing: border-box !important;
-}
-
-.payment-order-program-status-detail__table.participating-institutions-section__table
-  .ant-table-tbody
-  > tr.ant-table-row:hover:not(.ant-table-row-selected)
-  > td {
-  background: #f0f8ff !important;
-}
-
-/* 산출 내역 「상세 보기」 — 시안 180×40, 회색 보더, 14px/600 */
-/* display:flex 로 블록화되어 td의 text-align만으로는 가운데 오지 않음 → margin auto로 셀 내 수평 중앙 */
-/* 스펙의 padding: 32px 31px는 height: 40px과 함께 쓸 수 없어 가로 31px만 반영, 세로는 flex 중앙 정렬 */
-.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: 10px !important;
-  flex-shrink: 0 !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  width: 180px !important;
-  height: 40px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-  padding: 0 31px !important;
-  box-sizing: border-box !important;
-  border-radius: 6px !important;
-  border: 1px solid rgba(0, 0, 0, 0.15) !important;
-  background: #fff !important;
-  color: var(--default-BK, #3d3d3d) !important;
-  font-family: Pretendard, sans-serif !important;
-  font-size: 14px !important;
-  font-style: normal !important;
-  font-weight: 600 !important;
-  line-height: 150% !important;
-  text-align: center !important;
-  box-shadow: none !important;
-}
-
-.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm:hover:not(
-    :disabled
-  ) {
-  border-color: rgba(0, 0, 0, 0.22) !important;
-  color: var(--default-BK, #3d3d3d) !important;
-  background: #fff !important;
-}
-
-.payment-order-program-status-detail__detail-btn.app-button.ant-btn.ant-btn-sm:focus-visible {
-  border-color: rgba(0, 0, 0, 0.25) !important;
-  color: var(--default-BK, #3d3d3d) !important;
-  background: #fff !important;
-}
-
-.payment-order-program-status-detail__below-divider.participating-institutions-section__below-divider {
-  display: flex;
-  flex-direction: column;
-  min-height: 400px;
-  margin-top: 0;
-}
-
-/* 필터 ↔ 목록 사이 디바이더: 위·아래 각 32px (below-divider 기본 margin-top은 제거해 중복 방지) */
-.payment-order-program-status-detail__section-divider.participating-institutions-section__divider {
-  margin-top: 32px;
-  margin-bottom: 32px;
 }
 
 /* 기본 정보 표: 집계 상태 문구 좌측 정렬 */

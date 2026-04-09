@@ -59,7 +59,10 @@ export { mockPaymentStatements, mockPaymentStatementsMap } from './payment-state
 export {
   mockPaymentOrderAdminProgramList,
   mockPaymentOrderAdminInstructorList,
-  PAYMENT_ORDER_ADMIN_STATUS_LABELS,
+  PAYMENT_ORDER_STATUS_LABELS_LIST,
+  PAYMENT_ORDER_STATUS_LABELS_DETAIL,
+  PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST,
+  PAYMENT_ORDER_CALENDAR_STATUS_SHORT_DETAIL,
   PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
   getMockPaymentOrderProgramDetail,
   type PaymentOrderAdminProcessingStatus,

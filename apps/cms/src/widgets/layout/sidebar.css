@@ -69,13 +69,16 @@
   --sidebar-open-bg: #1d4352;
   --sidebar-selected-bg: #345663;
   --sidebar-selected-stack:
-    linear-gradient(var(--sidebar-selected-bg), var(--sidebar-selected-bg)),
-    var(--color-sidebar-bg);
-  --sidebar-hover-overlay: linear-gradient(var(--color-sidebar-overlay-15), var(--color-sidebar-overlay-15));
+    linear-gradient(var(--sidebar-selected-bg), var(--sidebar-selected-bg)), var(--color-sidebar-bg);
+  --sidebar-hover-overlay: linear-gradient(
+    var(--color-sidebar-overlay-15),
+    var(--color-sidebar-overlay-15)
+  );
   --sidebar-hover-on-base: var(--sidebar-hover-overlay), var(--color-sidebar-bg);
   --sidebar-hover-on-selected: var(--sidebar-hover-overlay), var(--sidebar-selected-stack);
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
+  padding: 10px;
 }
 
 /* ---- 행 공통(패딩·레이아웃) ---- */
@@ -84,8 +87,8 @@
   margin-block: 0 !important;
   margin-inline: 0 !important;
   width: 100%;
-  height: 44px !important;
-  padding: 0 24px !important;
+  height: 54px !important;
+  padding: 10px 18px 10px 20px !important;
   display: flex;
   align-items: center;
   background: var(--color-sidebar-bg) !important;
@@ -101,7 +104,7 @@
 
 .sidebar-menu.ant-menu > li.ant-menu-item,
 .sidebar-menu.ant-menu > li.ant-menu-submenu {
-  margin-bottom: 8px !important;
+  margin-bottom: 2px !important;
 }
 
 /* ---- 타이포: 1뎁스 18px / 600 (루트 ul 직계 li만) ---- */
@@ -137,6 +140,7 @@
 .sidebar-menu.ant-menu > li.ant-menu-submenu.ant-menu-submenu-selected > .ant-menu-submenu-title {
   background: var(--sidebar-open-bg) !important;
   color: var(--color-sidebar-text) !important;
+  padding: 10px 18px 10px 20px !important;
 }
 
 /* children 있는 메뉴가 펼쳐진(open) 때 타이틀 행 하단 구분선 */
@@ -288,7 +292,10 @@
 }
 
 /* 2뎁스 리프(자식 없는 메뉴) 선택 배경 명시 적용 */
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item.ant-menu-item-selected {
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > .ant-menu-item.ant-menu-item-selected {
   background: var(--sidebar-selected-bg) !important;
 }
 
@@ -316,7 +323,8 @@
 }
 
 .sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item {
-  padding-left: 66px !important;
+  padding-left: 48px !important;
+  height: 42px !important;
 }
 
 /* 3뎁스 비선택: opacity 0.6 */
@@ -341,15 +349,23 @@
   opacity: 1 !important;
 }
 
-.sidebar-menu .ant-menu-sub .ant-menu-sub > .ant-menu-item.ant-menu-item-selected > .ant-menu-title-content {
+.sidebar-menu
+  .ant-menu-sub
+  .ant-menu-sub
+  > .ant-menu-item.ant-menu-item-selected
+  > .ant-menu-title-content {
   font-weight: var(--font-weight-700) !important;
   opacity: 1 !important;
 }
 
 /* 루트 1뎁스 바로 아래 패널의 2뎁스 행: 높이 44px, 세로 패딩 12px, 좌 38px, 우 18px */
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title {
-  padding: 12px 18px 12px 38px !important;
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title {
+  padding: 12px 18px 12px 24px !important;
   height: 44px !important;
   min-height: 44px !important;
   max-height: 44px !important;
@@ -437,7 +453,11 @@
 
 /* ---- 2뎁스(루트 바로 하위)만: 불릿↔텍스트 8px, 닷 3x3 ---- */
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item,
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > li.ant-menu-submenu > .ant-menu-submenu-title,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub
@@ -469,7 +489,12 @@
   transform: translateY(1px);
 }
 
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item .ant-menu-item-icon > span,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > .ant-menu-item
+  .ant-menu-item-icon
+  > span,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub
@@ -493,7 +518,12 @@
 }
 
 /* 3뎁스: 불릿 아이콘 제거 (스크린샷 기준) */
-.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub .ant-menu-sub .ant-menu-item .ant-menu-item-icon,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  .ant-menu-sub
+  .ant-menu-item
+  .ant-menu-item-icon,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub

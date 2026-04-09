@@ -69,6 +69,8 @@
     background: #f9eaed;
 }
 
+/* 지급 조서 라인: 색상은 shared/constants/payment-order-status-list-colors + TextbookStatusBadge inline */
+/* 레이아웃: 160px 스펙 — 신청자 프로그램 승인 현황과 동일 계열, 긴 라벨 말줄임 */
 /* ===== 지급 조서 라인 처리 현황 (상태 변경 가능 태그: 160px 스펙) ===== */
 .app-status-badge.textbook-status-badge--payment-order-line {
     display: flex;
