@@ -65,6 +65,8 @@ export type { CmsInputProps, CmsInputSize } from './cms-input'
 export type { CmsControlSize } from './cms-control-size'
 export { CmsSelect } from './cms-select'
 export type { CmsSelectProps } from './cms-select'
+export { CmsRadio, CmsRadioGroup } from './cms-radio'
+export type { CmsRadioProps, CmsRadioGroupProps } from './cms-radio'
 export {
   CmsDatePicker,
   CmsDateRangePicker,

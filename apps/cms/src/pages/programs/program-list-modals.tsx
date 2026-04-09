@@ -1,5 +1,4 @@
 import { Modal } from 'antd'
-import { ProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/program-detail-fullpage-modal'
 import { ProgramForm } from '@/features/program/ui/program-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { EnrollmentStatusDetailModal } from '@/features/program/ui/enrollment-status-detail-modal'
@@ -37,9 +36,6 @@ interface ProgramListModalsProps {
   selectedProgramForInstructorModal: Program | null
   onCancelInstructorModal: () => void
 
-  // Full-page detail modal (economy/education list row click)
-  selectedProgramForFullPageModal: Program | null
-  onCloseFullPageModal: () => void
 }
 
 export function ProgramListModals({
@@ -57,16 +53,9 @@ export function ProgramListModals({
   onCancelEnrollmentModal,
   selectedProgramForInstructorModal,
   onCancelInstructorModal,
-  selectedProgramForFullPageModal,
-  onCloseFullPageModal,
 }: ProgramListModalsProps) {
   return (
     <>
-      <ProgramDetailFullPageModal
-        open={!!selectedProgramForFullPageModal}
-        program={selectedProgramForFullPageModal}
-        onClose={onCloseFullPageModal}
-      />
       <EnrollmentStatusDetailModal
         open={!!selectedProgramForModal}
         program={selectedProgramForModal}

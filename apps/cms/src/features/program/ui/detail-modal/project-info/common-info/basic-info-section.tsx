@@ -7,35 +7,23 @@
  * - 수정 모드: react-hook-form Controller, 기존 프로그램 값이 default로 채워짐
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Image, Input } from 'antd'
-import { AppInput } from '@/shared/ui/app-input'
-import { AppRadio } from '@/shared/ui/app-radio'
-import { AppSelect } from '@/shared/ui/app-select'
-import { AppDatePicker } from '@/shared/ui/app-datepicker'
+import { CmsRadio } from '@/shared/ui/cms-radio'
+import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
+import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { Controller } from 'react-hook-form'
 import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
-import { FileSelectField } from '@/shared/ui/file-select-field'
-import { DividerVertical } from '@/shared/components/divider-vertical'
-import './basic-info-section.css'
+import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import {
   formatDate,
-  formatDateOnly,
   formatDateRange,
-  getRecruitmentStatus,
-  getParticipantRecruitmentLifecycle,
-  getInstructorRecruitmentStatus,
-  getThumbnailFilename,
-  RECRUITMENT_RADIO_OPTIONS,
   CATEGORY_LABEL,
   CATEGORY_OPTIONS,
-  TARGET_LEVEL_LABEL,
-  TYPE_LABEL,
-  LIFECYCLE_OPTIONS,
   BUSINESS_AREA_OPTIONS,
   EDUCATION_PROCESS_OPTIONS,
   IP_OWNED_OPTIONS,
@@ -43,13 +31,10 @@ import {
   PARTNER_INVOLVEMENT_OPTIONS,
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
-} from '../program-detail-info-constants'
-import { getProgramLifecycleLabel, getProgramProgressPhaseDisplay } from '@/shared/constants/status'
-import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
+} from '../constants/program-detail-info-constants'
+import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-
-const { TextArea } = Input
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
   const { label, color } = getProgramProgressPhaseDisplay(status)
@@ -69,8 +54,6 @@ export interface BasicInfoSectionProps {
   isEditMode?: boolean
   /** 수정 모드일 때만 전달, react-hook-form 인스턴스 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
-  /** 공통 정보 탭 전용: 기본 정보만 상단/하단 블록 2개 테이블로 노출 (대표/세부 프로그램명, 팀구분, 교육 과정, IP/IPS 등) */
-  displayMode?: 'commonInfo'
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -84,10 +67,7 @@ export function BasicInfoSection({
   lifecycleStatus,
   isEditMode = false,
   form,
-  displayMode,
 }: BasicInfoSectionProps) {
-  const [selectedThumbnailFile, setSelectedThumbnailFile] = useState<File | null>(null)
-  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null)
   const { sponsors, fetchSponsors } = useSponsorStore()
 
   useEffect(() => {
@@ -95,1546 +75,418 @@ export function BasicInfoSection({
   }, [fetchSponsors])
 
   const isFormEdit = isEditMode && form
-  // 수정 모드: 폼 값만 사용(삭제 시 program으로 되돌아가지 않도록). 비수정 모드: program 값
-  const thumbnailUrlFromFormOrProgram =
-    isFormEdit && form
-      ? (form.watch('keyVisualImage') ?? form.watch('posterImage') ?? '') || undefined
-      : program.keyVisualImage || program.posterImage
-  const thumbnailFilename = thumbnailUrlFromFormOrProgram
-    ? getThumbnailFilename(thumbnailUrlFromFormOrProgram)
-    : ''
-
-  useEffect(() => {
-    if (!selectedThumbnailFile) {
-      setThumbnailPreviewUrl(null)
-      return
-    }
-    const url = URL.createObjectURL(selectedThumbnailFile)
-    setThumbnailPreviewUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [selectedThumbnailFile])
-
-  const displayThumbnailUrl = thumbnailPreviewUrl || thumbnailUrlFromFormOrProgram
-  const displayThumbnailFilename = selectedThumbnailFile
-    ? selectedThumbnailFile.name
-    : thumbnailUrlFromFormOrProgram
-      ? thumbnailFilename
-      : '파일명.jpg'
-  const totalCapacity = program.rounds?.reduce((sum, r) => sum + (r.capacity ?? 0), 0) ?? 0
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
-  const typeValue = program.type
-  const targetLabel = program.targetLevel
-    ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
-    : '-'
-  const contactLine1 = [
-    `문의처 : ${(sponsorName ?? '').trim() || '-'}`,
-    `Tel : ${(program.contactPhone ?? '').trim() || '-'}`,
-    `E-mail : ${(program.contactEmail ?? '').trim() || '-'}`,
-  ].join(' | ')
-  const contactLine2 = '운영시간 : 평일 9:00~16:00 (점심시간 12:00~13:00 제외)'
 
-  /* 공통 정보 탭 전용: 스크린샷 구조 — 상단 블록(등록일/대표·세부 프로그램명/사업 운영 기간/참여자·후원사) + 하단 블록(팀구분/교육 과정/IP·IPS 등). 수정 모드 시 수정 가능 필드만 입력 컴포넌트로. */
-  if (displayMode === 'commonInfo') {
-    const partnerLabel =
-      program.partnerInvolvement === true
-        ? 'Yes'
-        : program.partnerInvolvement === false
-          ? 'No'
-          : '-'
-    const courseDeliveredLabel =
-      program.courseDeliveredBy === 'JA'
-        ? 'JA'
-        : program.courseDeliveredBy === 'Jointly'
-          ? 'Jointly'
-          : program.courseDeliveredBy === 'Partner'
-            ? 'Partner'
-            : (program.courseDeliveredBy ?? '-')
-    const commonInfoFormEdit = isFormEdit && form
-
-    return (
-      <>
-        <div className="program-detail-info-tab__section-title">기본 정보</div>
-        {/* 수정 불가: 최초 등록일·마지막 수정일만 단일 행 테이블 */}
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--dates">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--dates">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th>최초 등록일</th>
-                <td>
-                  {formatDate(program.createdAt)}
-                  <span className="program-detail-info-tab__separator"> | </span>
-                  {createdByName ?? '-'}
-                </td>
-                <th>마지막 수정일</th>
-                <td>
-                  {formatDate(program.updatedAt)}
-                  <span className="program-detail-info-tab__separator"> | </span>
-                  {updatedByName ?? '-'}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--top">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  대표 프로그램명
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <>
-                      <Controller
-                        name="mainTitle"
-                        control={form.control}
-                        render={({ field }) => (
-                          <AppInput
-                            {...field}
-                            value={field.value ?? ''}
-                            placeholder="대표 프로그램명"
-                            className="program-detail-info-tab__input--cell-full"
-                          />
-                        )}
-                      />
-                      {form.formState.errors.mainTitle?.message && (
-                        <span className="program-detail-info-tab__field-error">
-                          {form.formState.errors.mainTitle.message}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    (program.mainTitle ?? '-')
-                  )}
-                </td>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  세부 프로그램명
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <>
-                      <Controller
-                        name="title"
-                        control={form.control}
-                        render={({ field }) => (
-                          <AppInput
-                            {...field}
-                            value={field.value ?? ''}
-                            placeholder="세부 프로그램명"
-                            status={form.formState.errors.title ? 'error' : undefined}
-                            className="program-detail-info-tab__input--detail-program-title"
-                          />
-                        )}
-                      />
-                      {form.formState.errors.title?.message && (
-                        <span className="program-detail-info-tab__field-error">
-                          {form.formState.errors.title.message}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    program.title
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  사업 운영 기간
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <div className="program-detail-info-tab__date-range">
-                      <Controller
-                        name="startDate"
-                        control={form.control}
-                        render={({ field }) => (
-                          <AppDatePicker
-                            value={toDayjs(field.value)}
-                            onChange={d => field.onChange(toIso(d))}
-                            format="YYYY. MM. DD"
-                            className="program-detail-info-tab__date-picker"
-                          />
-                        )}
-                      />
-                      <span>~</span>
-                      <Controller
-                        name="endDate"
-                        control={form.control}
-                        render={({ field }) => (
-                          <AppDatePicker
-                            value={toDayjs(field.value)}
-                            onChange={d => field.onChange(toIso(d))}
-                            format="YYYY. MM. DD"
-                            className="program-detail-info-tab__date-picker"
-                          />
-                        )}
-                      />
-                    </div>
-                  ) : (
-                    formatDateRange(program.startDate, program.endDate)
-                  )}
-                </td>
-                <th>프로그램 진행 현황</th>
-                <td>
-                  {lifecycleStatus ? (
-                    <ProgramProgressReadonlyCell status={lifecycleStatus} />
-                  ) : (
-                    '-'
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  참여자 유형
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="category"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          {...field}
-                          options={CATEGORY_OPTIONS}
-                          style={{ width: '100%' }}
-                          onChange={v => v && field.onChange(v)}
-                        />
-                      )}
-                    />
-                  ) : (
-                    categoryLabel
-                  )}
-                </td>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  사업 분야
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="businessArea"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          value={field.value ?? undefined}
-                          options={BUSINESS_AREA_OPTIONS}
-                          onChange={v => field.onChange(v ?? undefined)}
-                          style={{ width: '100%' }}
-                          allowClear
-                        />
-                      )}
-                    />
-                  ) : (
-                    (program.businessArea ?? '-')
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  후원사
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <>
-                      <Controller
-                        name="sponsorId"
-                        control={form.control}
-                        render={({ field }) => (
-                          <AppSelect
-                            {...field}
-                            placeholder="후원사 선택"
-                            allowClear={false}
-                            showSearch
-                            optionFilterProp="label"
-                            options={sponsors.map(s => ({ value: s.id, label: s.name }))}
-                            onChange={v => field.onChange(v ?? '')}
-                            className="program-detail-info-tab__sponsor-select"
-                            status={form.formState.errors.sponsorId ? 'error' : undefined}
-                          />
-                        )}
-                      />
-                      {form.formState.errors.sponsorId?.message && (
-                        <span className="program-detail-info-tab__field-error">
-                          {form.formState.errors.sponsorId.message}
-                        </span>
-                      )}
-                    </>
-                  ) : program.sponsorId ? (
-                    <Link
-                      to={`/sponsors/${program.sponsorId}`}
-                      className="program-detail-info-tab__sponsor-link"
-                    >
-                      {sponsorName ?? '-'}
-                    </Link>
-                  ) : (
-                    (sponsorName ?? '-')
-                  )}
-                </td>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  후원사 담당자
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td className="program-detail-info-tab__sponsor-manager-cell">
-                  <div className="program-detail-info-tab__sponsor-manager-inner">
-                    {commonInfoFormEdit ? (
-                    (() => {
-                      const sponsorId = form.watch('sponsorId')
-                      const selectedSponsor = sponsors.find(s => s.id === sponsorId)
-                      const managers = selectedSponsor?.managers ?? []
-                      return (
-                        <>
-                          <div className="program-detail-info-tab__sponsor-manager-inputs">
-                            <Controller
-                              name="managerName"
-                              control={form.control}
-                              render={({ field }) => {
-                                const currentName = field.value ?? ''
-                                const currentPhone = form.watch('contactPhone') ?? ''
-                                const selectedIndex =
-                                  managers.length > 0
-                                    ? managers.findIndex(
-                                        m => m.name === currentName || m.phone === currentPhone
-                                      )
-                                    : -1
-                                return (
-                                  <AppSelect
-                                    placeholder="담당자 선택"
-                                    allowClear
-                                    value={selectedIndex >= 0 ? selectedIndex : undefined}
-                                    options={managers.map((m, i) => ({
-                                      value: i,
-                                      label: m.name,
-                                    }))}
-                                    onChange={idx => {
-                                      if (idx !== undefined && idx >= 0 && managers[idx]) {
-                                        form.setValue('managerName', managers[idx].name)
-                                        form.setValue('contactPhone', managers[idx].phone)
-                                      } else {
-                                        form.setValue('managerName', '')
-                                        form.setValue('contactPhone', undefined)
-                                      }
-                                    }}
-                                    className="program-detail-info-tab__manager-select"
-                                    status={form.formState.errors.managerName ? 'error' : undefined}
-                                  />
-                                )
-                              }}
-                            />
-                            <div className="program-detail-info-tab__sponsor-manager-phone-wrapper">
-                              <span className="program-detail-info-tab__separator"> | </span>
-                              <span className="program-detail-info-tab__contact-phone-readonly">
-                                {form.watch('contactPhone') || '-'}
-                              </span>
-                            </div>
-                          </div>
-                          {form.formState.errors.managerName?.message && (
-                            <span className="program-detail-info-tab__field-error">
-                              {form.formState.errors.managerName.message}
-                            </span>
-                          )}
-                        </>
-                      )
-                    })()
-                  ) : program.managerName || program.contactPhone ? (
-                    <>
-                      {program.managerName ?? ''}
-                      {program.managerName && program.contactPhone ? (
-                        <span className="program-detail-info-tab__separator"> | </span>
-                      ) : null}
-                      {program.contactPhone ? (
-                        <span className="program-detail-info-tab__contact-phone-readonly">
-                          {program.contactPhone}
-                        </span>
-                      ) : null}
-                    </>
-                  ) : (
-                    '-'
-                  )}
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--sub">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--sub">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  교육 과정
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="educationProcess"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          value={field.value ?? undefined}
-                          options={EDUCATION_PROCESS_OPTIONS}
-                          onChange={v => field.onChange(v ?? undefined)}
-                          style={{ width: '100%' }}
-                          allowClear
-                          placeholder="교육 과정 선택"
-                        />
-                      )}
-                    />
-                  ) : (
-                    (program.educationProcess ?? '-')
-                  )}
-                </td>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  IP Owned
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="ipOwned"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          value={field.value ?? undefined}
-                          options={IP_OWNED_OPTIONS}
-                          onChange={v => field.onChange(v ?? undefined)}
-                          style={{ width: '100%' }}
-                          allowClear
-                          placeholder="JA"
-                        />
-                      )}
-                    />
-                  ) : (
-                    (program.ipOwned ?? 'JA')
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  Course Delivered By
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="courseDeliveredBy"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          value={field.value ?? undefined}
-                          options={COURSE_DELIVERED_BY_OPTIONS}
-                          onChange={v => field.onChange(v ?? undefined)}
-                          style={{ width: '100%' }}
-                          allowClear
-                          placeholder="JA"
-                        />
-                      )}
-                    />
-                  ) : (
-                    courseDeliveredLabel
-                  )}
-                </td>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  Partner Involvement
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="partnerInvolvement"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppRadio.Group
-                          value={field.value}
-                          options={PARTNER_INVOLVEMENT_OPTIONS}
-                          onChange={e => field.onChange(e.target.value)}
-                        />
-                      )}
-                    />
-                  ) : (
-                    partnerLabel
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  IPS
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="ips"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppRadio.Group
-                          value={field.value}
-                          options={IPS_OPTIONS}
-                          onChange={e => field.onChange(e.target.value)}
-                        />
-                      )}
-                    />
-                  ) : (
-                    (program.ips ?? '-')
-                  )}
-                </td>
-                <th
-                  className={
-                    commonInfoFormEdit ? 'program-detail-info-tab__th--required' : undefined
-                  }
-                >
-                  프로그램 종류
-                  {commonInfoFormEdit ? (
-                    <span className="program-detail-info-tab__required">*</span>
-                  ) : null}
-                </th>
-                <td>
-                  {commonInfoFormEdit ? (
-                    <Controller
-                      name="programCategory"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          value={field.value ?? undefined}
-                          options={PROGRAM_CATEGORY_OPTIONS}
-                          onChange={v => field.onChange(v ?? undefined)}
-                          style={{ width: '100%' }}
-                          allowClear
-                          placeholder="프로그램 종류 선택"
-                          disabled={form.watch('ips') !== 'Succeed'}
-                        />
-                      )}
-                    />
-                  ) : program.ips === 'Succeed' ? (
-                    (program.programCategory ?? '-')
-                  ) : (
-                    '-'
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </>
-    )
+  /* 공통 정보 탭 기본 정보 */
+  const BOOLEAN_LABEL: Record<string, string> = {
+    true: 'Yes',
+    false: 'No',
   }
+  const partnerLabel =
+    program.partnerInvolvement != null ? BOOLEAN_LABEL[String(program.partnerInvolvement)] : '-'
 
-  const participantRecruitmentLifecycleReadonly = getParticipantRecruitmentLifecycle(program)
+  const COURSE_DELIVERED_LABEL: Record<string, string> = {
+    JA: 'JA',
+    Jointly: 'Jointly',
+    Partner: 'Partner',
+  }
+  const courseDeliveredLabel = program.courseDeliveredBy
+    ? (COURSE_DELIVERED_LABEL[program.courseDeliveredBy] ?? program.courseDeliveredBy)
+    : '-'
+
+  const commonInfoFormEdit = isFormEdit && form
+  const commonInfoForm =
+    form ??
+    ({
+      control: undefined,
+      formState: { errors: {} },
+      watch: () => undefined,
+      setValue: () => undefined,
+    } as unknown as UseFormReturn<ProgramDetailEditFormValues>)
 
   return (
-    <>
-      <div className="program-detail-info-tab__section-title">기본 정보</div>
+    <DetailInfoForm title="기본 정보" mode={commonInfoFormEdit ? 'edit' : 'view'}>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="최초 등록일"
+          view={
+            <>
+              {formatDate(program.createdAt)}
+              <DetailInfoForm.InputsSeparator />
+              {createdByName ?? '-'}
+            </>
+          }
+        />
+        <DetailInfoForm.Field
+          label="마지막 수정일"
+          view={
+            <>
+              {formatDate(program.updatedAt)}
+              <DetailInfoForm.InputsSeparator />
+              {updatedByName ?? '-'}
+            </>
+          }
+        />
+      </DetailInfoForm.Row>
 
-      <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-        <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--top">
-          <colgroup>
-            <col style={{ width: '200px' }} />
-            <col />
-            <col style={{ width: '200px' }} />
-            <col />
-          </colgroup>
-          <tbody>
-            <tr>
-              <th>최초 등록일</th>
-              <td>
-                {formatDate(program.createdAt)}
-                <span className="program-detail-info-tab__separator"> | </span>
-                {createdByName ?? '-'}
-              </td>
-              <th>마지막 수정일</th>
-              <td>
-                {formatDate(program.updatedAt)}
-                <span className="program-detail-info-tab__separator"> | </span>
-                {updatedByName ?? '-'}
-              </td>
-            </tr>
-            <tr>
-              <th>
-                프로그램 진행 방식
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <Controller
-                    name="type"
-                    control={form.control}
-                    render={({ field }) => (
-                      <AppRadio.Group
-                        value={field.value}
-                        options={[
-                          { value: 'online', label: '온라인' },
-                          { value: 'offline', label: '오프라인' },
-                          { value: 'hybrid', label: '온/오프라인' },
-                        ]}
-                        onChange={e => field.onChange(e.target.value)}
-                      />
-                    )}
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="대표 프로그램명"
+          required
+          view={program.mainTitle ?? '-'}
+          edit={
+            <>
+              <Controller
+                name="mainTitle"
+                control={commonInfoForm.control}
+                render={({ field }) => (
+                  <CmsInput
+                    {...field}
+                    value={field.value ?? ''}
+                    placeholder="대표 프로그램명"
+                    width={'100%'}
                   />
-                ) : (
-                  (TYPE_LABEL[typeValue] ?? typeValue ?? '-')
                 )}
-              </td>
-              <th>
-                프로그램 진행 현황
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <Controller
-                    name="lifecycleStatus"
-                    control={form.control}
-                    render={({ field }) => (
-                      <AppSelect
-                        {...field}
-                        value={field.value ?? undefined}
-                        options={LIFECYCLE_OPTIONS}
-                        placeholder="진행 상태 선택"
-                        className="program-detail-info-tab__lifecycle-select"
-                        onChange={value => field.onChange(value ?? undefined)}
-                      />
-                    )}
+              />
+            </>
+          }
+        />
+        <DetailInfoForm.Field
+          label="세부 프로그램명"
+          required
+          view={program.title}
+          edit={
+            <>
+              <Controller
+                name="title"
+                control={commonInfoForm.control}
+                render={({ field }) => (
+                  <CmsInput
+                    {...field}
+                    value={field.value ?? ''}
+                    placeholder="세부 프로그램명"
+                    status={commonInfoForm.formState.errors.title ? 'error' : undefined}
+                    width={'100%'}
                   />
-                ) : lifecycleStatus ? (
-                  <ProgramProgressReadonlyCell status={lifecycleStatus} />
-                ) : (
-                  '-'
                 )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              />
+            </>
+          }
+        />
+      </DetailInfoForm.Row>
 
-      <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--sub">
-        <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__table--sub">
-          <colgroup>
-            <col style={{ width: '200px' }} />
-            <col />
-            <col style={{ width: '200px' }} />
-            <col />
-          </colgroup>
-          <tbody>
-            <tr>
-              <th>
-                썸네일 이미지
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td colSpan={3} className="program-detail-info-tab__cell--thumbnail">
-                <div className="program-detail-info-tab__thumbnail-wrap">
-                  <div className="program-detail-info-tab__thumbnail-row">
-                    {displayThumbnailUrl ? (
-                      <Image
-                        src={displayThumbnailUrl}
-                        alt={program.title}
-                        className="program-detail-info-tab__thumbnail-img"
-                        preview={{ mask: '확대 보기' }}
-                      />
-                    ) : (
-                      <div className="program-detail-info-tab__thumbnail-placeholder-box">
-                        이미지 없음
-                      </div>
-                    )}
-                    <div className="program-detail-info-tab__thumbnail-meta">
-                      {/* 업로드된 파일은 FileSelectField fileNames 한 곳에서만 표시 + X로 삭제 (파일명 중복 방지, 첨부파일 필드와 동일) */}
-                      <FileSelectField
-                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                        disabled={!isEditMode}
-                        className={
-                          isEditMode
-                            ? 'file-select-field--edit program-detail-info-tab__file-select'
-                            : 'program-detail-info-tab__file-select'
-                        }
-                        fileNames={displayThumbnailUrl ? [displayThumbnailFilename] : []}
-                        emptyPlaceholder="파일을 선택해주세요"
-                        guideLines={[
-                          '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-                          '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-                        ]}
-                        onFilesChange={files => {
-                          const file = files[0]
-                          setSelectedThumbnailFile(file ?? null)
-                          if (file && form) {
-                            const url = URL.createObjectURL(file)
-                            form.setValue('keyVisualImage', url)
-                            form.setValue('posterImage', url)
-                          }
-                        }}
-                        onRemoveFile={
-                          isEditMode
-                            ? () => {
-                                setSelectedThumbnailFile(null)
-                                if (form) {
-                                  form.setValue('keyVisualImage', undefined)
-                                  form.setValue('posterImage', undefined)
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="사업 운영 기간"
+          required
+          view={formatDateRange(program.startDate, program.endDate)}
+          edit={
+            <Controller
+              name="startDate"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsDateRangePicker
+                  value={[toDayjs(field.value), toDayjs(commonInfoForm.watch('endDate'))]}
+                  onChange={dates => {
+                    const [start, end] = dates ?? [null, null]
+                    field.onChange(toIso(start))
+                    commonInfoForm.setValue('endDate', toIso(end))
+                  }}
+                  format="YYYY. MM. DD"
+                  width={'100%'}
+                />
+              )}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="프로그램 진행 현황"
+          view={lifecycleStatus ? <ProgramProgressReadonlyCell status={lifecycleStatus} /> : '-'}
+        />
+      </DetailInfoForm.Row>
+
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="참여자 유형"
+          required
+          view={categoryLabel}
+          edit={
+            <Controller
+              name="category"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsSelect
+                  {...field}
+                  options={CATEGORY_OPTIONS}
+                  width={'100%'}
+                  onChange={v => v && field.onChange(v)}
+                />
+              )}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="사업 분야"
+          required
+          view={program.businessArea ?? '-'}
+          edit={
+            <Controller
+              name="businessArea"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsSelect
+                  value={field.value ?? undefined}
+                  options={BUSINESS_AREA_OPTIONS}
+                  onChange={v => field.onChange(v ?? undefined)}
+                  width={'100%'}
+                  allowClear
+                />
+              )}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="후원사"
+          required
+          view={
+            program.sponsorId ? (
+              <Link to={`/sponsors/${program.sponsorId}`} className="text-decoration-underline">
+                {sponsorName ?? '-'}
+              </Link>
+            ) : (
+              (sponsorName ?? '-')
+            )
+          }
+          edit={
+            <>
+              <Controller
+                name="sponsorId"
+                control={commonInfoForm.control}
+                render={({ field }) => (
+                  <CmsSelect
+                    {...field}
+                    placeholder="후원사 선택"
+                    allowClear={false}
+                    showSearch
+                    optionFilterProp="label"
+                    options={sponsors.map(s => ({ value: s.id, label: s.name }))}
+                    onChange={v => field.onChange(v ?? '')}
+                    width={'100%'}
+                    status={commonInfoForm.formState.errors.sponsorId ? 'error' : undefined}
+                  />
+                )}
+              />
+            </>
+          }
+        />
+        <DetailInfoForm.Field
+          label="후원사 담당자"
+          required
+          view={
+            program.managerName || program.contactPhone ? (
+              <>
+                {program.managerName ?? ''}
+                {program.managerName && program.contactPhone ? (
+                  <DetailInfoForm.InputsSeparator />
+                ) : null}
+                {program.contactPhone ? <span>{program.contactPhone}</span> : null}
+              </>
+            ) : (
+              '-'
+            )
+          }
+          edit={
+            <div>
+              {(() => {
+                const sponsorId = commonInfoForm.watch('sponsorId')
+                const selectedSponsor = sponsors.find(s => s.id === sponsorId)
+                const managers = selectedSponsor?.managers ?? []
+                return (
+                  <>
+                    <div className="detail-info-form-inputs-wrapper">
+                      <Controller
+                        name="managerName"
+                        control={commonInfoForm.control}
+                        render={({ field }) => {
+                          const currentName = field.value ?? ''
+                          const currentPhone = commonInfoForm.watch('contactPhone') ?? ''
+                          const selectedIndex =
+                            managers.length > 0
+                              ? managers.findIndex(
+                                  m => m.name === currentName || m.phone === currentPhone
+                                )
+                              : -1
+                          return (
+                            <CmsSelect
+                              placeholder="담당자 선택"
+                              allowClear
+                              value={selectedIndex >= 0 ? selectedIndex : undefined}
+                              options={managers.map((m, i) => ({
+                                value: i,
+                                label: m.name,
+                              }))}
+                              onChange={idx => {
+                                if (idx !== undefined && idx >= 0 && managers[idx]) {
+                                  commonInfoForm.setValue('managerName', managers[idx].name)
+                                  commonInfoForm.setValue('contactPhone', managers[idx].phone)
+                                } else {
+                                  commonInfoForm.setValue('managerName', '')
+                                  commonInfoForm.setValue('contactPhone', undefined)
                                 }
+                              }}
+                              width={'50%'}
+                              status={
+                                commonInfoForm.formState.errors.managerName ? 'error' : undefined
                               }
-                            : undefined
-                        }
+                            />
+                          )
+                        }}
                       />
+                      <div>
+                        <DetailInfoForm.InputsSeparator />
+                        <span>{commonInfoForm.watch('contactPhone') || '-'}</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <th>
-                프로그램명
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <>
-                    <Controller
-                      name="title"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          placeholder="프로그램명"
-                          status={form.formState.errors.title ? 'error' : undefined}
-                        />
-                      )}
-                    />
-                    {form.formState.errors.title?.message && (
-                      <span className="program-detail-info-tab__field-error">
-                        {form.formState.errors.title.message}
-                      </span>
-                    )}
                   </>
-                ) : (
-                  program.title
-                )}
-              </td>
-              <th>
-                프로그램 운영 기간
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__date-range">
-                    <Controller
-                      name="startDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(toIso(d))}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                    <Controller
-                      name="endDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(toIso(d))}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : (
-                  formatDateRange(program.startDate, program.endDate)
-                )}
-              </td>
-            </tr>
-            <tr>
-              <th>
-                수강자 유형
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <Controller
-                    name="category"
-                    control={form.control}
-                    render={({ field }) => (
-                      <AppSelect
-                        {...field}
-                        options={CATEGORY_OPTIONS}
-                        style={{ width: '100%' }}
-                        onChange={v => v && field.onChange(v)}
-                      />
-                    )}
-                  />
-                ) : (
-                  categoryLabel
-                )}
-              </td>
-              <th>
-                교육 분야
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <Controller
-                    name="businessArea"
-                    control={form.control}
-                    render={({ field }) => (
-                      <AppSelect
-                        value={field.value ?? undefined}
-                        options={BUSINESS_AREA_OPTIONS}
-                        onChange={v => field.onChange(v ?? undefined)}
-                        style={{ width: '100%' }}
-                        allowClear
-                      />
-                    )}
-                  />
-                ) : (
-                  (program.businessArea ?? '-')
-                )}
-              </td>
-            </tr>
-            <tr>
-              <th>교육 대상</th>
-              <td>
-                {isFormEdit && form ? (
-                  <Controller
-                    name="targetLevel"
-                    control={form.control}
-                    render={({ field }) => (
-                      <AppSelect
-                        value={field.value ?? undefined}
-                        options={Object.entries(TARGET_LEVEL_LABEL).map(([value, label]) => ({
-                          value,
-                          label,
-                        }))}
-                        onChange={v =>
-                          field.onChange((v as 'elementary' | 'middle' | 'high') || undefined)
-                        }
-                        placeholder="대상"
-                        style={{ width: '100%' }}
-                        allowClear
-                      />
-                    )}
-                  />
-                ) : (
-                  targetLabel || '-'
-                )}
-              </td>
-              <th>교육 대상 상세</th>
-              <td>
-                {isFormEdit && form ? (
-                  <Controller
-                    name="district"
-                    control={form.control}
-                    render={({ field }) => (
-                      <AppInput
-                        value={field.value ?? ''}
-                        onChange={e => field.onChange(e.target.value || undefined)}
-                        placeholder="경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역"
-                      />
-                    )}
-                  />
-                ) : (
-                  program.district || '-'
-                )}
-              </td>
-            </tr>
-            <tr>
-              <th>
-                후원사
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <>
-                    <Controller
-                      name="sponsorId"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          {...field}
-                          placeholder="후원사 선택"
-                          allowClear={false}
-                          showSearch
-                          optionFilterProp="label"
-                          options={sponsors.map(s => ({ value: s.id, label: s.name }))}
-                          onChange={v => field.onChange(v ?? '')}
-                          className="program-detail-info-tab__sponsor-select"
-                          status={form.formState.errors.sponsorId ? 'error' : undefined}
-                        />
-                      )}
-                    />
-                    {form.formState.errors.sponsorId?.message && (
-                      <span className="program-detail-info-tab__field-error">
-                        {form.formState.errors.sponsorId.message}
-                      </span>
-                    )}
-                  </>
-                ) : program.sponsorId ? (
-                  <Link
-                    to={`/sponsors/${program.sponsorId}`}
-                    className="program-detail-info-tab__sponsor-link"
-                  >
-                    {sponsorName ?? '-'}
-                  </Link>
-                ) : (
-                  (sponsorName ?? '-')
-                )}
-              </td>
-              <th>
-                후원사 담당자
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td className="program-detail-info-tab__sponsor-manager-cell">
-                <div className="program-detail-info-tab__sponsor-manager-inner">
-                  {isFormEdit ? (
-                  (() => {
-                    const sponsorId = form.watch('sponsorId')
-                    const selectedSponsor = sponsors.find(s => s.id === sponsorId)
-                    const managers = selectedSponsor?.managers ?? []
-                    return (
-                      <>
-                        <div className="program-detail-info-tab__sponsor-manager-inputs">
-                          <Controller
-                            name="managerName"
-                            control={form.control}
-                            render={({ field }) => {
-                              const currentName = field.value ?? ''
-                              const currentPhone = form.watch('contactPhone') ?? ''
-                              const selectedIndex =
-                                managers.length > 0
-                                  ? managers.findIndex(
-                                      m => m.name === currentName || m.phone === currentPhone
-                                    )
-                                  : -1
-                              return (
-                                <AppSelect
-                                  placeholder="담당자 선택"
-                                  allowClear
-                                  value={selectedIndex >= 0 ? selectedIndex : undefined}
-                                  options={managers.map((m, i) => ({ value: i, label: m.name }))}
-                                  onChange={idx => {
-                                    if (idx !== undefined && idx >= 0 && managers[idx]) {
-                                      form.setValue('managerName', managers[idx].name)
-                                      form.setValue('contactPhone', managers[idx].phone)
-                                    } else {
-                                      form.setValue('managerName', '')
-                                      form.setValue('contactPhone', undefined)
-                                    }
-                                  }}
-                                  className="program-detail-info-tab__manager-select"
-                                  status={form.formState.errors.managerName ? 'error' : undefined}
-                                />
-                              )
-                            }}
-                          />
-                          <span className="program-detail-info-tab__separator"> | </span>
-                          <span className="program-detail-info-tab__contact-phone-readonly">
-                            {form.watch('contactPhone') || '-'}
-                          </span>
-                        </div>
-                        {form.formState.errors.managerName?.message && (
-                          <span className="program-detail-info-tab__field-error">
-                            {form.formState.errors.managerName.message}
-                          </span>
-                        )}
-                      </>
-                    )
-                  })()
-                ) : program.managerName || program.contactPhone ? (
-                  <>
-                    {program.managerName ?? ''}
-                    {program.managerName && program.contactPhone ? (
-                      <span className="program-detail-info-tab__separator"> | </span>
-                    ) : null}
-                    {program.contactPhone ? (
-                      <span className="program-detail-info-tab__contact-phone-readonly">
-                        {program.contactPhone}
-                      </span>
-                    ) : null}
-                  </>
-                ) : (
-                  '-'
-                )}
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <th>
-                문의처
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td colSpan={3} className="program-detail-info-tab__contact-cell">
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__contact-inputs">
-                    <AppInput
-                      placeholder="문의처명"
-                      value={sponsorName ?? ''}
-                      readOnly
-                      className="program-detail-info-tab__contact-name-readonly"
-                    />
-                    <span className="program-detail-info-tab__separator"> | </span>
-                    <span className="program-detail-info-tab__contact-label">Tel</span>
-                    <Controller
-                      name="contactPhone"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="02-6085-6028"
-                          className="program-detail-info-tab__contact-phone-input"
-                        />
-                      )}
-                    />
-                    <span className="program-detail-info-tab__separator"> | </span>
-                    <span className="program-detail-info-tab__contact-label">E-mail</span>
-                    <Controller
-                      name="contactEmail"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="ujat@jakorea.org"
-                          className="program-detail-info-tab__contact-email-input"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : (
-                  `${contactLine1} | ${contactLine2}`
-                )}
-              </td>
-            </tr>
-            <tr>
-              <th>비고</th>
-              <td colSpan={3}>
-                {isFormEdit ? (
-                  <Controller
-                    name="oneLineIntroduction"
-                    control={form.control}
-                    render={({ field }) => (
-                      <TextArea {...field} value={field.value ?? ''} rows={3} placeholder="비고" />
-                    )}
-                  />
-                ) : (
-                  (program.oneLineIntroduction ?? '-')
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                )
+              })()}
+            </div>
+          }
+        />
+      </DetailInfoForm.Row>
 
-      {/* 수강자 모집 */}
-      <div className="program-detail-info-tab__section-title">수강자 모집</div>
-      <div className="program-detail-info-tab__table-wrapper">
-        <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-          <colgroup>
-            <col style={{ width: '200px' }} />
-            <col />
-            <col style={{ width: '200px' }} />
-            <col />
-          </colgroup>
-          <tbody>
-            <tr>
-              <th>
-                수강자 모집 인원
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit && form ? (
-                  <div className="program-detail-info-tab__capacity-row">
-                    <span className="program-detail-info-tab__capacity-approved">
-                      {program.approvedStudentCount ?? '-'}
-                    </span>
-                    <span className="program-detail-info-tab__capacity-divider">/</span>
-                    <Controller
-                      name="rounds"
-                      control={form.control}
-                      render={({ field }) => {
-                        const cap = field.value?.[0]?.capacity ?? 0
-                        return (
-                          <AppInput
-                            type="number"
-                            min={0}
-                            value={cap || ''}
-                            onChange={e => {
-                              const n = parseInt(e.target.value, 10)
-                              const next = (field.value ?? []).map((r, i) =>
-                                i === 0 ? { ...r, capacity: isNaN(n) ? 0 : n } : r
-                              )
-                              field.onChange(next)
-                            }}
-                            className="program-detail-info-tab__capacity-input"
-                          />
-                        )
-                      }}
-                    />
-                    <span className="program-detail-info-tab__detail-note">
-                      (신청자가 아닌 승인된 수강자 기준)
-                    </span>
-                  </div>
-                ) : totalCapacity > 0 ? (
-                  <>
-                    {program.approvedStudentCount != null
-                      ? `${program.approvedStudentCount} / `
-                      : null}
-                    <strong>{totalCapacity}건</strong>
-                    {' (신청자가 아닌 승인된 수강자 기준)'}
-                  </>
-                ) : (
-                  '-'
-                )}
-              </td>
-              <th>
-                수강자 모집 현황
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit && form ? (
-                  <AppRadio.Group
-                    value={
-                      getRecruitmentStatus({
-                        ...program,
-                        applicationStartDate: form.watch('applicationStartDate'),
-                        applicationEndDate: form.watch('applicationEndDate'),
-                      }) ?? 'scheduled'
-                    }
-                    options={RECRUITMENT_RADIO_OPTIONS}
-                    className="program-detail-info-tab__recruitment-radio"
-                  />
-                ) : participantRecruitmentLifecycleReadonly ? (
-                  <span
-                    className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${participantRecruitmentLifecycleReadonly.replace(/_/g, '-')}`}
-                  >
-                    {getProgramLifecycleLabel(participantRecruitmentLifecycleReadonly)}
-                  </span>
-                ) : (
-                  '-'
-                )}
-              </td>
-            </tr>
-            <tr>
-              <th>
-                수강자 모집 기간
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__date-range">
-                    <Controller
-                      name="applicationStartDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(toIso(d))}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                    <span className="program-detail-info-tab__date-separator">~</span>
-                    <Controller
-                      name="applicationEndDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(toIso(d))}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : program.applicationStartDate && program.applicationEndDate ? (
-                  `${formatDateOnly(program.applicationStartDate)} ~ ${formatDateOnly(program.applicationEndDate)}`
-                ) : (
-                  '-'
-                )}
-              </td>
-              <th>
-                결과 발표일 및 방법
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__result-row">
-                    <Controller
-                      name="resultAnnouncementDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : '')}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                    <DividerVertical
-                      height={13}
-                      className="program-detail-info-tab__result-row-divider"
-                    />
-                    <Controller
-                      name="resultAnnouncementMethod"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="홈페이지 공지 및 담당교사 개별 안내"
-                          className="program-detail-info-tab__result-method-input"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : (program.resultAnnouncementDate ?? program.applicationEndDate) ? (
-                  `${formatDateOnly(program.resultAnnouncementDate ?? program.applicationEndDate)} | ${program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'}`
-                ) : (
-                  '-'
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="교육 과정"
+          required
+          view={program.educationProcess ?? '-'}
+          edit={
+            <Controller
+              name="educationProcess"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsSelect
+                  value={field.value ?? undefined}
+                  options={EDUCATION_PROCESS_OPTIONS}
+                  onChange={v => field.onChange(v ?? undefined)}
+                  width={'100%'}
+                  allowClear
+                  placeholder="교육 과정 선택"
+                />
+              )}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="IP Owned"
+          required
+          view={program.ipOwned ?? 'JA'}
+          edit={
+            <Controller
+              name="ipOwned"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsSelect
+                  value={field.value ?? undefined}
+                  options={IP_OWNED_OPTIONS}
+                  onChange={v => field.onChange(v ?? undefined)}
+                  width={'100%'}
+                  allowClear
+                  placeholder="JA"
+                />
+              )}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
 
-      {/* 강사 모집 */}
-      <div className="program-detail-info-tab__section-title">강사 모집</div>
-      <div className="program-detail-info-tab__table-wrapper">
-        <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-          <colgroup>
-            <col style={{ width: '200px' }} />
-            <col />
-            <col style={{ width: '200px' }} />
-            <col />
-          </colgroup>
-          <tbody>
-            <tr>
-              <th>
-                강사 모집 인원
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit && form ? (
-                  <div className="program-detail-info-tab__capacity-row">
-                    <span className="program-detail-info-tab__capacity-approved">
-                      {program.instructors ?? '-'}
-                    </span>
-                    <span className="program-detail-info-tab__capacity-divider">/</span>
-                    <Controller
-                      name="instructorCapacity"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          type="number"
-                          min={0}
-                          value={field.value ?? ''}
-                          onChange={e => {
-                            const n = parseInt(e.target.value, 10)
-                            field.onChange(isNaN(n) ? undefined : n)
-                          }}
-                          className="program-detail-info-tab__capacity-input"
-                        />
-                      )}
-                    />
-                    <span className="program-detail-info-tab__detail-note">
-                      (신청자가 아닌 승인된 강사 기준)
-                    </span>
-                  </div>
-                ) : program.instructors != null ? (
-                  <>
-                    {program.instructorCapacity != null ? `${program.instructors} / ` : null}
-                    <strong>
-                      {program.instructorCapacity != null
-                        ? `${program.instructorCapacity}건`
-                        : `${program.instructors}건`}
-                    </strong>
-                    {' (신청자가 아닌 승인된 강사 기준)'}
-                  </>
-                ) : (
-                  '-'
-                )}
-              </td>
-              <th>
-                강사 모집 현황
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <AppRadio.Group
-                    value={getInstructorRecruitmentStatus(program) ?? 'scheduled'}
-                    options={RECRUITMENT_RADIO_OPTIONS}
-                    className="program-detail-info-tab__recruitment-radio"
-                  />
-                ) : (
-                  <RecruitmentStatusBadge
-                    status={getInstructorRecruitmentStatus(program)}
-                    size="fixed"
-                  />
-                )}
-              </td>
-            </tr>
-            <tr>
-              <th>
-                강사 모집 기간
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__date-range">
-                    <Controller
-                      name="instructorApplicationStartDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                    <span className="program-detail-info-tab__date-separator">~</span>
-                    <Controller
-                      name="instructorApplicationEndDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : program.instructorApplicationStartDate &&
-                  program.instructorApplicationEndDate ? (
-                  formatDateRange(
-                    program.instructorApplicationStartDate,
-                    program.instructorApplicationEndDate
-                  )
-                ) : (
-                  '-'
-                )}
-              </td>
-              <th>
-                1차 서류 합격자 발표
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__result-row">
-                    <Controller
-                      name="documentPassAnnouncementDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                    <Controller
-                      name="documentPassAnnouncementMethod"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="합격자 개별 안내"
-                          className="program-detail-info-tab__result-method-input"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : program.documentPassAnnouncementDate ? (
-                  `${formatDateOnly(program.documentPassAnnouncementDate)}${program.documentPassAnnouncementMethod ? ` | ${program.documentPassAnnouncementMethod}` : ''}`
-                ) : (
-                  '-'
-                )}
-              </td>
-            </tr>
-            <tr>
-              <th>
-                2차 면접 심사
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__date-range">
-                    <Controller
-                      name="interviewStartDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                    <span className="program-detail-info-tab__date-separator">~</span>
-                    <Controller
-                      name="interviewEndDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : program.interviewStartDate && program.interviewEndDate ? (
-                  `${formatDateRange(program.interviewStartDate, program.interviewEndDate)}${program.interviewMethod ? ` | ${program.interviewMethod}` : ''}`
-                ) : (
-                  '-'
-                )}
-              </td>
-              <th>
-                최종 합격자 발표
-                {isFormEdit ? <span className="program-detail-info-tab__required">*</span> : null}
-              </th>
-              <td>
-                {isFormEdit ? (
-                  <div className="program-detail-info-tab__result-row">
-                    <Controller
-                      name="finalPassAnnouncementDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          format="YYYY. MM. DD"
-                          className="program-detail-info-tab__date-picker"
-                        />
-                      )}
-                    />
-                    <Controller
-                      name="finalPassAnnouncementMethod"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="합격자 개별 안내"
-                          className="program-detail-info-tab__result-method-input"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : program.finalPassAnnouncementDate ? (
-                  `${formatDateOnly(program.finalPassAnnouncementDate)}${program.finalPassAnnouncementMethod ? ` | ${program.finalPassAnnouncementMethod}` : ''}`
-                ) : (
-                  '-'
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="Course Delivered By"
+          required
+          view={courseDeliveredLabel}
+          edit={
+            <Controller
+              name="courseDeliveredBy"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsSelect
+                  value={field.value ?? undefined}
+                  options={COURSE_DELIVERED_BY_OPTIONS}
+                  onChange={v => field.onChange(v ?? undefined)}
+                  width={'100%'}
+                  allowClear
+                  placeholder="JA"
+                />
+              )}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="Partner Involvement"
+          required
+          view={partnerLabel}
+          edit={
+            <Controller
+              name="partnerInvolvement"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsRadio.Group
+                  value={field.value}
+                  options={PARTNER_INVOLVEMENT_OPTIONS}
+                  onChange={e => field.onChange(e.target.value)}
+                />
+              )}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="IPS"
+          required
+          view={program.ips ?? '-'}
+          edit={
+            <Controller
+              name="ips"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsRadio.Group
+                  value={field.value}
+                  options={IPS_OPTIONS}
+                  onChange={e => field.onChange(e.target.value)}
+                />
+              )}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="프로그램 종류"
+          required
+          view={program.ips === 'Succeed' ? (program.programCategory ?? '-') : '-'}
+          edit={
+            <Controller
+              name="programCategory"
+              control={commonInfoForm.control}
+              render={({ field }) => (
+                <CmsSelect
+                  value={field.value ?? undefined}
+                  options={PROGRAM_CATEGORY_OPTIONS}
+                  onChange={v => field.onChange(v ?? undefined)}
+                  width={'100%'}
+                  allowClear
+                  placeholder="프로그램 종류 선택"
+                  disabled={commonInfoForm.watch('ips') !== 'Succeed'}
+                />
+              )}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }

@@ -14,7 +14,7 @@ import {
   formatDateRange,
   TYPE_LABEL,
   TARGET_LEVEL_LABEL,
-} from '@/features/program/ui/detail-modal/project-info/program-detail-info-constants'
+} from '@/features/program/ui/detail-modal/project-info/constants/program-detail-info-constants'
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
 import {

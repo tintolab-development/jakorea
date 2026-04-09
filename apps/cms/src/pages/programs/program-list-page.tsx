@@ -25,6 +25,7 @@ import { useProgramListFilters } from './use-program-list-filters'
 import { useProgramListActions } from './use-program-list-actions'
 import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
+import { ProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/program-detail-fullpage-modal'
 
 import './program-list-page.css'
 import { CmsButton } from '@/shared/ui'
@@ -286,6 +287,14 @@ export function ProgramListPage() {
     setSearchParams(nextParams, { replace: true })
   }
 
+  const handleCloseFullPageModal = () => {
+    setSelectedProgramForFullPageModal(null)
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('programId')
+    nextParams.delete('tab')
+    setSearchParams(nextParams, { replace: true })
+  }
+
   /** ProgramList `FilterTableLayout`의 `actions` 슬롯 — 제목·건수는 `headerTitle`·목록 내부 건수로 표시 */
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
@@ -336,6 +345,12 @@ export function ProgramListPage() {
         {programListToolbarActions}
       </ProgramList>
 
+      <ProgramDetailFullPageModal
+        open={!!selectedProgramForFullPageModal}
+        program={selectedProgramForFullPageModal}
+        onClose={handleCloseFullPageModal}
+      />
+
       <ProgramListModals
         drawerOpen={drawerOpen}
         drawerProgram={drawerProgram || selectedProgram || null}
@@ -385,14 +400,6 @@ export function ProgramListPage() {
         onCancelEnrollmentModal={() => setSelectedProgramForModal(null)}
         selectedProgramForInstructorModal={selectedProgramForInstructorModal}
         onCancelInstructorModal={() => setSelectedProgramForInstructorModal(null)}
-        selectedProgramForFullPageModal={selectedProgramForFullPageModal}
-        onCloseFullPageModal={() => {
-          setSelectedProgramForFullPageModal(null)
-          const nextParams = new URLSearchParams(searchParams)
-          nextParams.delete('programId')
-          nextParams.delete('tab')
-          setSearchParams(nextParams, { replace: true })
-        }}
       />
     </div>
   )

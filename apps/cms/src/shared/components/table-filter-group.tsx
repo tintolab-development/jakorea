@@ -12,7 +12,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { AppMultiSelect, type AppMultiSelectOption } from '@/shared/ui/app-multi-select'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
-import { AppRadio } from '@/shared/ui/app-radio'
+import { CmsRadio } from '@/shared/ui/cms-radio'
 import './table-filter-group.css'
 
 export interface FilterFieldConfig {
@@ -186,16 +186,16 @@ export function TableFilterGroup({
         >
           <div className="unified-filter-card__field unified-filter-card__field--radio">
             <span className="unified-filter-card__label">{field.label}</span>
-            <AppRadio.Group
+            <CmsRadio.Group
               value={filters[field.key]}
               onChange={e => onFilterChange(field.key, e.target.value)}
             >
               {(field.options ?? []).map(opt => (
-                <AppRadio key={String(opt.value)} value={opt.value}>
+                <CmsRadio key={String(opt.value)} value={opt.value}>
                   {opt.label}
-                </AppRadio>
+                </CmsRadio>
               ))}
-            </AppRadio.Group>
+            </CmsRadio.Group>
           </div>
         </Col>
       )

@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useId,
-  type CSSProperties,
-  type ReactNode,
-} from 'react'
+import { createContext, useContext, useId, type CSSProperties, type ReactNode } from 'react'
 import './detail-info-form.css'
 
 export type DetailInfoFormMode = 'view' | 'edit'
@@ -30,6 +24,7 @@ export type DetailInfoFormProps = {
   mode?: DetailInfoFormMode
   children: ReactNode
   className?: string
+  style?: CSSProperties
 }
 
 function DetailInfoFormRoot({
@@ -40,6 +35,7 @@ function DetailInfoFormRoot({
   mode = 'view',
   children,
   className,
+  style,
 }: DetailInfoFormProps) {
   const titleId = useId()
   const rootClass = ['detail-info-form', className].filter(Boolean).join(' ')
@@ -48,7 +44,7 @@ function DetailInfoFormRoot({
   if (hideHeader) {
     return (
       <DetailInfoFormContext.Provider value={{ mode }}>
-        <div className={rootClass} role="group" aria-label={title}>
+        <div className={rootClass} role="group" aria-label={title} style={style}>
           {body}
         </div>
       </DetailInfoFormContext.Provider>
@@ -57,13 +53,15 @@ function DetailInfoFormRoot({
 
   return (
     <DetailInfoFormContext.Provider value={{ mode }}>
-      <section className={rootClass} aria-labelledby={titleId}>
+      <section className={rootClass} aria-labelledby={titleId} style={style}>
         <header className="detail-info-form__header">
           <div className="detail-info-form__header-lead">
             <h2 id={titleId} className="detail-info-form__title">
               {title}
             </h2>
-            {description ? <div className="detail-info-form__description">{description}</div> : null}
+            {description ? (
+              <div className="detail-info-form__description">{description}</div>
+            ) : null}
           </div>
           {headerEnd ? <div className="detail-info-form__header-end">{headerEnd}</div> : null}
         </header>
@@ -120,10 +118,7 @@ function DetailInfoFormField({
   } as CSSProperties
 
   const isFull = Boolean(fullRow || colSpan === 2)
-  const fieldClass = [
-    'detail-info-form__field',
-    isFull ? 'detail-info-form__field--full-row' : '',
-  ]
+  const fieldClass = ['detail-info-form__field', isFull ? 'detail-info-form__field--full-row' : '']
     .filter(Boolean)
     .join(' ')
 
@@ -210,14 +205,20 @@ function DetailInfoFormNameBlock({
   )
 }
 
+function DetailInfoFormInputsSeparator() {
+  return <span className="detail-info-form-inputs-separator"> | </span>
+}
+
 DetailInfoFormRoot.Row = DetailInfoFormRow
 DetailInfoFormRoot.Field = DetailInfoFormField
 DetailInfoFormRoot.NameBlock = DetailInfoFormNameBlock
+DetailInfoFormRoot.InputsSeparator = DetailInfoFormInputsSeparator
 
 type DetailInfoFormCompound = typeof DetailInfoFormRoot & {
   Row: typeof DetailInfoFormRow
   Field: typeof DetailInfoFormField
   NameBlock: typeof DetailInfoFormNameBlock
+  InputsSeparator: typeof DetailInfoFormInputsSeparator
 }
 
 export const DetailInfoForm = DetailInfoFormRoot as DetailInfoFormCompound

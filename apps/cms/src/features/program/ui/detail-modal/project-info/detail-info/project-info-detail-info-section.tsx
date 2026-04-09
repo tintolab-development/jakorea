@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 import { Image, message } from 'antd'
 import type { Program } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
@@ -20,7 +20,7 @@ import {
   DEFAULT_PROGRAM_DESCRIPTION,
   DEFAULT_RECRUITMENT_GUIDE,
   getThumbnailFilename,
-} from './program-detail-info-constants'
+} from '../constants/program-detail-info-constants'
 import './project-info-detail-info-section.css'
 
 /** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */
@@ -107,18 +107,11 @@ function useDetailInfoEditorBlock(
   }
 }
 
-function DetailSectionHeader({
-  note,
-  titleAs = 'div',
-}: {
-  note: string
-  titleAs?: 'div' | 'h3'
-}) {
-  const Title = titleAs
+function DetailSectionHeader({ note }: { note: string }) {
   return (
-    <div className="program-detail-info-tab__section-header-row">
-      <Title className="program-detail-info-tab__section-title">상세 정보</Title>
-      <p className="program-detail-info-tab__detail-note">{note}</p>
+    <div style={{ marginBottom: '10px' }}>
+      <span className="info-section-title">상세 정보</span>
+      <span className="info-section-desc">{note}</span>
     </div>
   )
 }
@@ -606,10 +599,7 @@ export function VolunteerDetailInfoSection({
 
   return (
     <>
-      <DetailSectionHeader
-        note="공란인 경우, 상세 페이지에서 항목 미노출 됩니다."
-        titleAs="h3"
-      />
+      <DetailSectionHeader note="공란인 경우, 상세 페이지에서 항목 미노출 됩니다." />
       <DetailInfoTableFrame>
         <ThumbnailImageRow
           program={program}

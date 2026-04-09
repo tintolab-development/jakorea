@@ -17,7 +17,7 @@ import { AppMultiSelect } from './app-multi-select'
 import type { AppMultiSelectOption } from './app-multi-select'
 import { AppSelect } from './app-select'
 import { AppDateRangePicker } from './app-datepicker'
-import { AppRadio } from './app-radio'
+import { CmsRadio } from './cms-radio'
 import './unified-filter-card.css'
 
 export interface FilterFieldConfig {
@@ -311,16 +311,16 @@ export function UnifiedFilterCard({
         >
           <div className="unified-filter-card__field unified-filter-card__field--radio">
             <span className="unified-filter-card__label">{field.label}</span>
-            <AppRadio.Group
+            <CmsRadio.Group
               value={filters[field.key]}
               onChange={e => onFilterChange(field.key, e.target.value)}
             >
               {(field.options ?? []).map(opt => (
-                <AppRadio key={String(opt.value)} value={opt.value}>
+                <CmsRadio key={String(opt.value)} value={opt.value}>
                   {opt.label}
-                </AppRadio>
+                </CmsRadio>
               ))}
-            </AppRadio.Group>
+            </CmsRadio.Group>
           </div>
         </Col>
       )

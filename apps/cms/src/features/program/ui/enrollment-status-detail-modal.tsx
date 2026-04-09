@@ -18,7 +18,7 @@ import {
   getRecruitmentStatus,
   formatDateOnly,
   formatDateRange,
-} from './detail-modal/project-info/program-detail-info-constants'
+} from './detail-modal/project-info/constants/program-detail-info-constants'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
