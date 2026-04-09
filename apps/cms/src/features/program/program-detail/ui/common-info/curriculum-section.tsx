@@ -7,7 +7,7 @@
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import type { Program, RoundDeliveryType } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
-import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 

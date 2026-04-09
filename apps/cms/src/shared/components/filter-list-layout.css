@@ -20,7 +20,6 @@
 /* 구분선 + 본문 슬롯을 세로로 쌓아 가로 폭 100% 유지(가로 flex 시 자식이 콘텐츠 폭만 차지하는 문제 방지) */
 .filter-list-layout__header {
   padding: 0 20px;
-  background-color: blue !important;
   width: 100%;
   min-width: 0;
   display: flex;

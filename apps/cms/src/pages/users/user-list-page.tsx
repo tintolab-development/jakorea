@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Card, Modal, message } from 'antd'
+import { Modal, message } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -19,8 +19,7 @@ import {
 import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
 import { UserCreateForm } from '@/features/user/ui/user-create-form'
 import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
-import { FilterListLayout } from '@/shared/components/filter-list-layout'
-import { AppButton } from '@/shared/ui/app-button'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
@@ -33,7 +32,6 @@ import {
   DeleteGuideModal,
   buildMemberDeleteMessageLines,
 } from '@/features/program/ui/manager-delete-guide-modal'
-import { Divider } from '@/shared/components/divider'
 import {
   memberListKindToBasicInfoEntrySource,
   memberListKindToPendingRole,
@@ -48,6 +46,7 @@ import type { AdminPermissionTagVariant } from '@/features/user/lib/admin-permis
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
 import { getUserListFilterFields } from './user-list-filter-fields'
+import { CmsButton } from '@/shared/ui/cms-button'
 
 interface UserListQueryParams extends Record<string, string | undefined> {
   /** 전체·학교·강사·관리자 등 목록 맥락 (`member-list-kinds` 참고) */
@@ -639,8 +638,7 @@ export function UserListPage() {
   return (
     <div>
       <div className="user-list-page__filter-wrap">
-        <FilterListLayout
-          className="program-list-content-wrapper"
+        <FilterTableLayout
           bordered={false}
           fields={userListFilterFields}
           filters={
@@ -696,83 +694,55 @@ export function UserListPage() {
           }}
           onSearch={handleSearch}
           loading={listLoading}
-          listHeader={
+          title={memberListPageTitle(resolvedMemberListKind)}
+          description={`총 ${listTotal.toLocaleString()}건`}
+          actions={
             <>
-              <div className="program-list-page__divider-wrapper">
-                <Divider />
-              </div>
-              <div className="program-list-page__filter-info">
-                <div className="program-list-page__filter-info-texts">
-                  <div className="program-list-page__filter-info-title">
-                    {memberListPageTitle(resolvedMemberListKind)}
-                  </div>
-                  <div className="program-list-page__filter-info-count">
-                    총 {listTotal.toLocaleString()}건
-                  </div>
-                </div>
-                <div className="program-list-page__widget-header-actions">
-                  <AppButton
-                    variant="danger"
-                    size="filter"
-                    dangerFillOnHover
-                    onClick={() => {
-                      const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
-                      if (toDelete.length === 0) return
-                      // if (toDelete.length === 1) {
-                      //   setDeletingUser(toDelete[0])
-                      //   setBulkDeleteUsers(null)
-                      // } else {
-                      //   setDeletingUser(null)
-                      //   setBulkDeleteUsers(toDelete)
-                      // }
-                      window.alert('준비 중입니다')
+              <CmsButton
+                variant="delete"
+                onClick={() => {
+                  const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
+                  if (toDelete.length === 0) return
+                  // if (toDelete.length === 1) {
+                  //   setDeletingUser(toDelete[0])
+                  //   setBulkDeleteUsers(null)
+                  // } else {
+                  //   setDeletingUser(null)
+                  //   setBulkDeleteUsers(toDelete)
+                  // }
+                  window.alert('준비 중입니다')
 
-                      // setDeleteModalOpen(true)
-                    }}
-                    disabled={selectedRowKeys.length === 0}
-                  >
-                    회원 삭제
-                  </AppButton>
-                  {canWrite && (
-                    <AppButton
-                      variant="primary"
-                      size="filter"
-                      onClick={() => window.alert('준비 중입니다')}
-                    >
-                      회원 등록
-                    </AppButton>
-                  )}
-                </div>
-              </div>
+                  // setDeleteModalOpen(true)
+                }}
+                disabled={selectedRowKeys.length === 0}
+              >
+                회원 삭제
+              </CmsButton>
+              {canWrite && (
+                <CmsButton onClick={() => window.alert('준비 중입니다')}>회원 등록</CmsButton>
+              )}
             </>
           }
         >
           <div className="program-list-content-wrapper__table">
-            <Card
-              loading={listLoading}
-              className="program-list-card program-list-card--in-wrapper program-list-card--no-border"
-              style={{ border: 'none', boxShadow: 'none' }}
-            >
-              <UserList
-                listKind={resolvedMemberListKind}
-                data={listUsers}
-                loading={false}
-                onView={handleView}
-                onEdit={handleEdit}
-                onDelete={canWrite ? handleDeleteClick : undefined}
-                selectedRowKeys={selectedRowKeys}
-                onSelectionChange={setSelectedRowKeys}
-                pagination={false}
-              />
-            </Card>
+            <UserList
+              listKind={resolvedMemberListKind}
+              data={listUsers}
+              loading={false}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={canWrite ? handleDeleteClick : undefined}
+              selectedRowKeys={selectedRowKeys}
+              onSelectionChange={setSelectedRowKeys}
+              pagination={false}
+            />
           </div>
-
           <div ref={loadMoreRef} className="user-list-page__load-more-sentinel" aria-hidden>
             {isFetchingNextPage && (
               <div className="user-list-page__load-more-spinner">불러오는 중...</div>
             )}
           </div>
-        </FilterListLayout>
+        </FilterTableLayout>
       </div>
 
       <UserDetailFullPageModal

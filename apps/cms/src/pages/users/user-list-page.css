@@ -1,34 +1,5 @@
 /* 필터·테이블: program-list-content-wrapper + program-list-card가 패딩·구분선 담당 */
 
-/* 필터 영역: 기본 240×44, 반응형 */
-.user-list-page__filter-wrap {
-  --filter-control-width: 240px;
-  --filter-control-height: 44px;
-  --filter-control-min-width: 180px;
-}
-
-@media (max-width: 1200px) {
-  .user-list-page__filter-wrap {
-    --filter-control-width: 200px;
-    --filter-control-min-width: 160px;
-  }
-}
-
-@media (max-width: 992px) {
-  .user-list-page__filter-wrap {
-    --filter-control-width: 180px;
-    --filter-control-min-width: 140px;
-  }
-}
-
-@media (max-width: 768px) {
-  .user-list-page__filter-wrap {
-    --filter-control-width: 100%;
-    --filter-control-height: 40px;
-    --filter-control-min-width: 0;
-  }
-}
-
 .user-list-header {
   margin-bottom: 16px;
   width: 100%;

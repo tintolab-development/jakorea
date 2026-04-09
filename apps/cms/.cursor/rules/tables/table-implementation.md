@@ -250,7 +250,7 @@ const columns: ColumnsType<MyRow> = useMemo(
 ### 12.0 산출 내역서 ContentModal — 기본 정보(프로그램 맥락)
 
 - **단일** native 테이블: 지급 현황 상세 **프로그램** 풀페이지와 동일하게 **`program-detail-info-tab__table-wrapper`** + **`program-detail-info-tab__table--basic`**, `colgroup` **`200px` / 가변 / `200px` / 가변**, `th`·`td` 4열 × **3행** (1행: 프로그램명·사업 운영 기간 / 2행: 프로그램 진행 회차·지급 조서 처리 현황 / 3행: 강의비 책정 기준·사업소득자 여부).
-- 스타일 베이스: `apps/cms/src/features/program/ui/detail-modal/project-info/project-info-form-shared.css` 참고; 모달에서는 해당 파일 import 후 **`.payment-order-calc-statement-modal__basic--program-info` 스코프**로 `table-layout: fixed`, 값 셀 `min-width: 0` 등 보정 (`apps/cms/src/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css`).
+- 스타일 베이스: `apps/cms/src/features/program/program-detail/ui/project-info-form-shared.css` 참고; 모달에서는 해당 파일 import 후 **`.payment-order-calc-statement-modal__basic--program-info` 스코프**로 `table-layout: fixed`, 값 셀 `min-width: 0` 등 보정 (`apps/cms/src/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css`).
 - 데이터: `context: 'program'`일 때 `PaymentOrderCalculationStatementProgramBasicInfo`(`businessPeriodDisplay`, `programSessionProgressDisplay` 등); mock은 `getMockPaymentOrderProgramDetail(programRow)`와 동일 시드로 기간·회차를 채운다. 강사 풀페이지에서는 `context: 'instructor'` + `getMockPaymentOrderInstructorCalculationStatement`.
 
 ### 12.1 복수 블록 5열 applicant 패턴(참고)

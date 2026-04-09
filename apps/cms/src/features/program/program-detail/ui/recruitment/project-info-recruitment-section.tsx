@@ -8,7 +8,7 @@ import { createVolunteersSchema } from './volunteers-schema'
 import { renderSchema } from './recruitment-schema-renderer'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 import {
   formatDateOnly,
   formatDateRange,
@@ -17,7 +17,7 @@ import {
   getVolunteerRecruitmentStatus,
   RECRUITMENT_RADIO_OPTIONS,
   TARGET_LEVEL_LABEL,
-} from '../constants/program-detail-info-constants'
+} from '../../lib/program-detail-info-constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 
 const STUDENT_LIST_OPTIONS = [

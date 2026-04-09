@@ -1,13 +1,13 @@
 import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
+import type { ProgramDetailEditFormValues } from '../../../model/program-detail-edit-schema'
 import {
   formatDateRange,
   INTERVIEW_METHOD_OPTIONS,
   VOLUNTEER_TARGET_OPTIONS,
-} from '../constants/program-detail-info-constants'
-import type { SectionSchema } from './recruitment-schema'
+} from '../../lib/program-detail-info-constants'
+import type { SectionSchema } from '../../model/recruitment-schema'
 import {
   DateRangeEdit,
   ProgramDetailContactReadRow,
