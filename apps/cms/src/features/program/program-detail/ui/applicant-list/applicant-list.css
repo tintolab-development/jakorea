@@ -132,6 +132,11 @@
   }
 }
 
+/* 신청자 목록: 헤더 16px (전역 Table/fontSize 14 토큰·다른 규칙보다 확실히) */
+.applicant-details .cms-data-table .ant-table-thead > tr > th.ant-table-cell:not(.ant-table-cell-scrollbar) {
+  font-size: 16px !important;
+}
+
 /* 테이블 가로 스크롤 */
 .applicant-details__table-wrap {
   overflow-x: auto;

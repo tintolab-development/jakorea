@@ -15,14 +15,14 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'users', label: '전체 회원', path: '/users/list?kind=all' },
   { id: 'schools', label: '학교(교사) 회원', path: '/users/list?kind=institutions' },
   { id: 'instructors', label: '강사단', path: '/users/list?kind=instructors' },
-  { id: 'kakao-alimtalk', label: '카카오 알림톡', path: '/templates/kakao-alimtalk' },
-  { id: 'email', label: '메일 관리', path: '/templates/email' },
+  { id: 'kakao-alimtalk', label: '카카오 알림톡 관리', path: '/templates/kakao-notification' },
+  { id: 'email', label: '메일 관리', path: '/templates/email-management' },
   { id: 'banner', label: '배너 관리', path: '/templates/banner' },
   { id: 'notices', label: '공지사항', path: '/admin/posts/notices' },
   { id: 'faq', label: 'FAQ', path: '/admin/posts/faq' },
   { id: 'inquiries', label: '문의하기', path: '/admin/posts/inquiries' },
-  { id: 'program-forms', label: '프로그램 양식', path: '/templates/program-forms' },
-  { id: 'file-forms', label: '파일 양식', path: '/templates/file-forms' },
+  { id: 'program-forms', label: '폼 양식 관리', path: '/templates/form-management' },
+  { id: 'file-forms', label: '발급 양식', path: '/templates/form-management?tab=issuance-form' },
   { id: 'sponsors', label: '후원사', path: '/sponsors' },
 ]
 

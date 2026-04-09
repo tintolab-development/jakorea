@@ -37,12 +37,6 @@ export function Sidebar() {
 
     if (user?.role === 'ADMIN' && path.startsWith('/templates')) {
       keys.push('templates-group')
-      if (path.startsWith('/templates/program-forms')) {
-        keys.push('program-forms-group')
-      }
-      if (path.startsWith('/templates/file-forms')) {
-        keys.push('file-forms-group')
-      }
     }
 
     if (
@@ -129,6 +123,18 @@ export function Sidebar() {
       }
     }
 
+    if (user?.role === 'ADMIN' && path.startsWith('/templates/')) {
+      if (path.startsWith('/templates/form-management')) {
+        return ['/templates/form-management']
+      }
+      if (path.startsWith('/templates/kakao-notification')) {
+        return ['/templates/kakao-notification']
+      }
+      if (path.startsWith('/templates/email-management')) {
+        return ['/templates/email-management']
+      }
+    }
+
     return [path]
   }, [location.pathname, location.search, user?.role])
 
@@ -156,6 +162,10 @@ export function Sidebar() {
             if (key === '/programs/education') {
               window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
               // navigate(key)
+              return
+            }
+            if (key === '/templates/kakao-notification' || key === '/templates/email-management') {
+              window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
               return
             }
             navigate(key)

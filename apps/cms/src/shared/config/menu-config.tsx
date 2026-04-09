@@ -8,10 +8,7 @@ import type { AdminLevel, UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
-import {
-  memberListHref,
-  normalizeMemberListKind,
-} from '@/shared/config/member-list-kinds'
+import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 
 const svgStyle = { display: 'block' } as const
 
@@ -494,62 +491,22 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       {
-        key: 'program-forms-group',
-        label: '프로그램 양식',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-        children: [
-          {
-            key: '/templates/program-forms/application',
-            label: '신청 기본 폼',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/program-forms/survey',
-            label: '설문 조사',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/program-forms/satisfaction',
-            label: '만족도조사',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/program-forms/assignment',
-            label: '과제 제출 폼',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-        ],
-      },
-      {
-        key: '/templates/file-forms',
-        label: '파일 양식',
+        key: '/templates/form-management',
+        label: '폼 양식 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/templates/sms',
-        label: '문자 양식',
+        key: '/templates/kakao-notification',
+        label: '카카오 알림톡 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/templates/email',
+        key: '/templates/email-management',
         label: '메일 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/templates/banner',
-        label: '배너 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
@@ -817,13 +774,15 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
 
   // LNB 접근 차단: 특정 관리 카테고리는 하위 경로 포함 접근 불가
-  const blockedPathPrefixes = ['/templates/', '/admin/posts/', '/logs/']
-  if (blockedPathPrefixes.some(prefix => normalizedPath.startsWith(prefix))) {
-    return false
-  }
-  const blockedExactPaths = ['/sponsors', '/education-records']
-  if (blockedExactPaths.includes(normalizedPath)) {
-    return false
+  if (userRole !== 'ADMIN') {
+    const blockedPathPrefixes = ['/admin/posts/', '/logs/']
+    if (blockedPathPrefixes.some(prefix => normalizedPath.startsWith(prefix))) {
+      return false
+    }
+    const blockedExactPaths = ['/sponsors', '/education-records']
+    if (blockedExactPaths.includes(normalizedPath)) {
+      return false
+    }
   }
 
   // 프로그램 관리 > 일반 교육 프로그램: 하위 경로까지 메뉴 키 `/programs/education`과 동일 접근 정책

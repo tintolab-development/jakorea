@@ -5,6 +5,7 @@
 
 .cms-data-table {
   min-width: 0;
+  width: 100%;
 }
 
 /* scroll.x(숫자)·고정 열 합계용 — 기본은 fixed */
@@ -93,6 +94,15 @@
 .cms-data-table .ant-table-thead > tr > th:last-child,
 .cms-data-table .ant-table-tbody > tr > td:last-child {
   border-right: none !important;
+}
+
+/* 테이블 외곽 4면 보더 */
+.cms-data-table.cms-data-table--border .ant-table-container {
+  border: 1px solid var(--table-line, #e0e0e0);
+}
+
+.cms-data-table.cms-data-table--border .ant-table-tbody > tr:last-child > td {
+  border-bottom: none !important;
 }
 
 /* 대시보드: 전체 프로그램 진행 현황 탭 테이블 */

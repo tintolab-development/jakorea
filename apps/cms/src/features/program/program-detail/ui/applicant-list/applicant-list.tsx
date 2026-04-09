@@ -220,7 +220,7 @@ export function ApplicantList({
                 rowKey="id"
                 columns={columns as ColumnsType<ApplicantSchoolRow | ApplicantInstructorRow>}
                 dataSource={tableData}
-                className="cms-data-tabl cms-data-table--fluid"
+                className="cms-data-table cms-data-table--fluid"
                 onRow={record => ({
                   onClick: e => {
                     const target = e.target as HTMLElement
