@@ -4,8 +4,8 @@
  */
 
 import { SearchOutlined } from '@ant-design/icons'
-import { AppInput } from './app-input'
 import './labeled-search-input.css'
+import { CmsInput } from './cms-input'
 
 export interface LabeledSearchInputProps {
   /** 레이블 텍스트 */
@@ -46,17 +46,14 @@ export function LabeledSearchInput({
   onBlur,
   width = 300,
   style,
-  allowClear = true,
   disabled = false,
   showPrefixIcon = false,
   showLabel = true,
-  uiVariant = 'default',
 }: LabeledSearchInputProps) {
   const wrapperClassName = [
     'labeled-search-input',
     !showPrefixIcon && 'labeled-search-input--no-icon',
     !showLabel && 'labeled-search-input--no-label',
-    uiVariant === 'filter' && 'labeled-search-input--filter',
   ]
     .filter((className): className is string => Boolean(className))
     .join(' ')
@@ -64,17 +61,17 @@ export function LabeledSearchInput({
   return (
     <div className={wrapperClassName} style={style}>
       {showLabel && <span className="labeled-search-input__label">{label}</span>}
-      <AppInput
-        uiVariant={uiVariant}
+      <CmsInput
         className="labeled-search-input__control labeled-search-input__input"
         placeholder={placeholder}
         value={value}
+        inputSize="large"
         onChange={e => onChange?.(e.target.value)}
         onBlur={onBlur}
-        allowClear={allowClear}
+        allowClear={true}
+        width={width}
         disabled={disabled}
-        style={{ width }}
-        prefix={
+        icon={
           showPrefixIcon ? <SearchOutlined className="labeled-search-input__icon" /> : undefined
         }
       />

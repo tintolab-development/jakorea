@@ -23,7 +23,7 @@ import {
 import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
-import '@/shared/ui/program-calendar.css'
+import '@/shared/components/program-calendar.css'
 import './program-schedule-widget.css'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const

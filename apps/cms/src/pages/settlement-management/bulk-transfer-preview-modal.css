@@ -21,29 +21,12 @@
 }
 
 .bulk-transfer-preview-modal .content-modal__description {
-  color: var(--color-text-secondary, #8c8c8c);
-  font-size: 14px;
-  line-height: 150%;
-  flex-shrink: 0;
-}
-
-/* 푸터: 파일 다운로드 — 아이콘·텍스트 한 줄 가로 정렬 */
-.bulk-transfer-preview-modal__download-btn.ant-btn {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px;
-  min-width: 168px !important;
-  width: auto !important;
-}
-
-.bulk-transfer-preview-modal__download-btn.ant-btn .ant-btn-icon {
-  display: inline-flex !important;
-  align-items: center !important;
-  line-height: 1 !important;
-  margin-inline-end: 0 !important;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
 }
 
 .bulk-transfer-preview-modal__sheet-host {

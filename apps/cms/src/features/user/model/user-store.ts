@@ -20,6 +20,15 @@ import {
   deleteUser,
   type CreateUserRequest,
 } from '@/entities/user/api/user-service'
+import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
+import {
+  matchesInstructorSettlementFilter,
+  matchesInstructorTypeFilter,
+} from '@/entities/user/lib/matches-instructor-list-filters'
+import {
+  getAdminPermissionVariant,
+  type AdminPermissionTagVariant,
+} from '@/features/user/lib/admin-permission-display'
 
 type UserId = string
 type UserWithoutPassword = Omit<User, 'password'>
@@ -31,6 +40,10 @@ interface UserFilters {
   /** 가입일 필터 (YYYY-MM-DD). 클라이언트 필터링용 */
   createdAtFrom?: string
   createdAtTo?: string
+  institutionLocation?: string
+  instructorType?: string
+  settlementStatus?: string
+  adminPermissionVariant?: AdminPermissionTagVariant
 }
 
 interface UserStore {
@@ -103,6 +116,33 @@ export const selectFilteredUserIds = (
     }
     if (filters.createdAtTo && createdAt > filters.createdAtTo) {
       return false
+    }
+
+    if (filters.institutionLocation?.trim()) {
+      if (!matchesUserInstitutionLocation(user, filters.institutionLocation)) {
+        return false
+      }
+    }
+
+    if (filters.instructorType?.trim()) {
+      if (!matchesInstructorTypeFilter(user, filters.instructorType)) {
+        return false
+      }
+    }
+
+    if (filters.settlementStatus?.trim()) {
+      if (!matchesInstructorSettlementFilter(user, filters.settlementStatus)) {
+        return false
+      }
+    }
+
+    if (filters.adminPermissionVariant) {
+      if (
+        user.role !== 'ADMIN' ||
+        getAdminPermissionVariant(user) !== filters.adminPermissionVariant
+      ) {
+        return false
+      }
     }
 
     return true

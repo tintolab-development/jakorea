@@ -2,14 +2,16 @@
  * 학교 상세 — 기본 정보 하단 소속 교사 목록
  */
 
-import { useMemo, useState, useId } from 'react'
-import { Flex, Table, message } from 'antd'
+import { useMemo, useState } from 'react'
+import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { SchoolAffiliatedTeacherRow } from '@/types/user'
 import { AppButton } from '@/shared/ui/app-button'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import { formatDate } from '@/shared/utils'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import './school-affiliated-teachers-section.css'
 
 const EMPLOYMENT_LABEL: Record<SchoolAffiliatedTeacherRow['employmentStatus'], string> = {
   ACTIVE: '재직 중',
@@ -32,10 +34,8 @@ function isCheckboxClickTarget(target: EventTarget | null): boolean {
 
 export function SchoolAffiliatedTeachersSection({
   rows,
-  onWithdrawSelected,
   onLinkedUserClick,
 }: SchoolAffiliatedTeachersSectionProps) {
-  const titleId = useId()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   type Row = SchoolAffiliatedTeacherRow & { key: string }
@@ -102,13 +102,7 @@ export function SchoolAffiliatedTeachersSection({
   )
 
   const handleWithdraw = () => {
-    const ids = selectedRowKeys.map(String)
-    if (ids.length === 0) return
-    if (onWithdrawSelected) {
-      onWithdrawSelected(ids)
-    } else {
-      message.info('선택한 교사 회원 탈퇴는 추후 연결됩니다.')
-    }
+    window.alert('준비 중입니다.')
   }
 
   const handleRowClick = (record: Row) => {
@@ -120,14 +114,11 @@ export function SchoolAffiliatedTeachersSection({
   }
 
   return (
-    <section className="user-basic-info-section" aria-labelledby={titleId}>
-      <Flex justify="space-between" align="center" wrap="wrap" style={{ width: '100%', marginBottom: 12 }}>
-        <div className="user-detail-section__head" style={{ marginBottom: 0 }}>
-          <div id={titleId} className="user-detail-section__title">
-            소속 교사 목록
-          </div>
-          <p className="user-detail-section__caption">총 {rows.length}건</p>
-        </div>
+    <DetailInfoForm
+      title="소속 교사 목록"
+      description={`총 ${rows.length}건`}
+      className="school-affiliated-teachers-section"
+      headerEnd={
         <AppButton
           variant="danger"
           size="filter"
@@ -137,31 +128,36 @@ export function SchoolAffiliatedTeachersSection({
         >
           회원 탈퇴
         </AppButton>
-      </Flex>
-      <Table
-        className="cms-data-table cms-data-table--fluid"
-        rowSelection={{
-          selectedRowKeys,
-          onChange: keys => setSelectedRowKeys(keys),
-        }}
-        columns={columns}
-        dataSource={dataSource}
-        pagination={false}
-        size={TABLE_CONFIG.size}
-        bordered={TABLE_CONFIG.bordered}
-        scroll={TABLE_CONFIG.scroll}
-        rowKey="id"
-        onRow={record => ({
-          onClick: e => {
-            if (isCheckboxClickTarget(e.target)) return
-            handleRowClick(record)
-          },
-          style:
-            record.linkedUserId && onLinkedUserClick
-              ? { cursor: 'pointer' }
-              : undefined,
-        })}
-      />
-    </section>
+      }
+    >
+      <DetailInfoForm.Row type="custom">
+        <div className="school-affiliated-teachers-section__body">
+          <Table
+            className="cms-data-table cms-data-table--fluid"
+            rowSelection={{
+              selectedRowKeys,
+              onChange: keys => setSelectedRowKeys(keys),
+            }}
+            columns={columns}
+            dataSource={dataSource}
+            pagination={false}
+            size={TABLE_CONFIG.size}
+            bordered={TABLE_CONFIG.bordered}
+            scroll={TABLE_CONFIG.scroll}
+            rowKey="id"
+            onRow={record => ({
+              onClick: e => {
+                if (isCheckboxClickTarget(e.target)) return
+                handleRowClick(record)
+              },
+              style:
+                record.linkedUserId && onLinkedUserClick
+                  ? { cursor: 'pointer' }
+                  : undefined,
+            })}
+          />
+        </div>
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }

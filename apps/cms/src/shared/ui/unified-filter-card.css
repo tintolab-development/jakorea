@@ -74,7 +74,10 @@
   }
 
   .filter-list-layout .unified-filter-card__fields-inner > .ant-col:not(:last-child),
-  .program-list-container > .unified-filter-card .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
+  .program-list-container
+    > .unified-filter-card
+    .unified-filter-card__fields-inner
+    > .ant-col:not(:last-child) {
     margin-right: 0;
     margin-bottom: 0;
   }
@@ -164,6 +167,16 @@
     flex: 1 1 calc((100% - 12px) / 2) !important;
     max-width: calc((100% - 12px) / 2) !important;
   }
+
+  .filter-list-layout .unified-filter-card__fields-inner > .ant-col.unified-filter-card__col--radio,
+  .program-list-container
+    > .unified-filter-card
+    .unified-filter-card__fields-inner
+    > .ant-col.unified-filter-card__col--radio {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -208,6 +221,13 @@
 /* 필터 필드: 기본 240×44 반응형 — 각 컬럼 최소 너비 적용 */
 .unified-filter-card__fields-inner .ant-col {
   min-width: var(--filter-control-width, 240px);
+}
+
+/* 라디오(노출 기준 등): 콘텐츠 너비만 — 전역 min-width(240px)이 과한 간격·빈 영역을 만듦 */
+.unified-filter-card__fields-inner .ant-col.unified-filter-card__col--radio {
+  min-width: 0;
+  max-width: none;
+  width: auto;
 }
 
 /* FilterFieldConfig.width: 열 flex-basis에 맞추고 select/input 전역 min-width와 충돌 방지 */
@@ -266,13 +286,30 @@
   gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
 }
 
+/* 라디오: 세로 flex 필드의 stretch로 그룹이 가로 100% 늘어나지 않게 */
 .unified-filter-card__field--radio {
   min-width: 0;
+  align-items: flex-start;
 }
 
 .unified-filter-card__field--radio .app-radio-group.ant-radio-group {
+  width: fit-content;
+  max-width: 100%;
   min-height: var(--filter-control-height, 44px);
   align-items: center;
+}
+
+/* 태블릿 구간에서 전 Col에 걸린 flex 분배가 라디오 칸까지 넓히지 않도록 */
+@media (max-width: 1199px) and (min-width: 769px) {
+  .filter-list-layout .unified-filter-card__fields-inner > .ant-col.unified-filter-card__col--radio,
+  .program-list-container
+    > .unified-filter-card
+    .unified-filter-card__fields-inner
+    > .ant-col.unified-filter-card__col--radio {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
 }
 
 /* 검색 필드(AppInput) 박스가 페이지별 전역 규칙에 깨지지 않도록 강제 */

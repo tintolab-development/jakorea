@@ -26,36 +26,35 @@
     linear-gradient(0deg, rgba(132, 87, 206, 0.06) 0%, rgba(132, 87, 206, 0.06) 100%), #fff;
 }
 
-/* 신청 반려 */
+/* 신청 반려 — 지급 조서 라인 토큰과 동일 */
 .instructor-payment-status-badge--application-rejected {
   border: 1px solid rgba(70, 70, 70, 0.06);
-  background: #f2f3f5;
-  color: #464646;
+  background: var(--color-payment-order-line-rejected-bg, #f2f3f5);
+  color: var(--color-payment-order-line-rejected-text, #464646);
 }
 
 /* 확인 대기 중 */
 .instructor-payment-status-badge--awaiting-confirmation {
   border: 1px solid rgba(30, 140, 41, 0.06);
   background: var(
-    --color-bg-green,
-    linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%),
-    #fff
+    --color-payment-order-line-pending-bg,
+    linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff
   );
-  color: var(--color-green, #1e8c29);
+  color: var(--color-payment-order-line-pending-text, #1e8c29);
 }
 
 /* 지급 정정 요청 */
 .instructor-payment-status-badge--payment-correction-requested {
   border: 1px solid rgba(195, 47, 74, 0.06);
-  background: #f9eaed;
-  color: #c32f4a;
+  background: var(--color-payment-order-line-correction-bg, #f9eaed);
+  color: var(--color-payment-order-line-correction-text, #c32f4a);
 }
 
-/* 계좌 지급 완료 */
+/* 계좌 지급 완료 — 확인 완료 톤과 동일 */
 .instructor-payment-status-badge--account-paid {
   border: 1px solid rgba(1, 126, 175, 0.06);
-  background: #e6f2f7;
-  color: var(--color-blue, #017eaf);
+  background: var(--color-payment-order-line-confirmed-bg, #e6f2f7);
+  color: var(--color-payment-order-line-confirmed-text, #017eaf);
 }
 
 /* 미분류 / 없음 */

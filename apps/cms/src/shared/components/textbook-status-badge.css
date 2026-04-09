@@ -53,16 +53,7 @@
     color: #e65100;
 }
 
-/* ===== 지급 조서 라인 처리 현황 ===== */
-/* 제출 및 대기(확인 대기 중 톤) — 승인 대기(pending 단독)와 구분: .payment-order-line 병기 시만 적용 */
-.app-status-badge.textbook-status-badge--pending.textbook-status-badge--payment-order-line {
-    color: var(--color-green, #1e8c29);
-    border-radius: 4px;
-    border: 1px solid rgba(30, 140, 41, 0.06);
-    background: linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff;
-}
-
-/* 지급 조서 확인 완료 */
+/* 지급 조서 확인 완료 (confirmed 단독 — 지급 조서 라인은 아래 .payment-order-line 한정 규칙 사용) */
 .app-status-badge.textbook-status-badge--confirmed {
     color: var(--color-blue, #017eaf);
     border-radius: 4px;
@@ -78,9 +69,59 @@
     background: #f9eaed;
 }
 
-/* 지급 조서 라인: 레이아웃은 신청자 프로그램 승인 현황과 동일 120×30(app-status-badge), 긴 라벨만 말줄임 */
+/* 지급 조서 라인: 색상은 shared/constants/payment-order-status-list-colors + TextbookStatusBadge inline */
+/* 레이아웃: 160px 스펙 — 신청자 프로그램 승인 현황과 동일 계열, 긴 라벨 말줄임 */
+/* ===== 지급 조서 라인 처리 현황 (상태 변경 가능 태그: 160px 스펙) ===== */
 .app-status-badge.textbook-status-badge--payment-order-line {
+    display: flex;
+    box-sizing: border-box;
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
+    height: auto;
+    min-height: 0;
+    padding: 6px 10px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    border: 1px solid rgba(70, 70, 70, 0.06);
+    margin: 0;
+    text-align: center;
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 150%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* 제출 및 대기(확인 대기 중 톤) — 승인 대기(pending 단독)와 구분 */
+.app-status-badge.textbook-status-badge--pending.textbook-status-badge--payment-order-line {
+    color: var(--color-payment-order-line-pending-text, #1e8c29);
+    background: var(
+        --color-payment-order-line-pending-bg,
+        linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff
+    );
+}
+
+.app-status-badge.textbook-status-badge--confirmed.textbook-status-badge--payment-order-line {
+    color: var(--color-payment-order-line-confirmed-text, #017eaf);
+    background: var(--color-payment-order-line-confirmed-bg, #e6f2f7);
+    border: 1px solid rgba(70, 70, 70, 0.06);
+}
+
+.app-status-badge.textbook-status-badge--correction.textbook-status-badge--payment-order-line {
+    color: var(--color-payment-order-line-correction-text, #c32f4a);
+    background: var(--color-payment-order-line-correction-bg, #f9eaed);
+    border: 1px solid rgba(70, 70, 70, 0.06);
+}
+
+.app-status-badge.textbook-status-badge--rejected.textbook-status-badge--payment-order-line {
+    color: var(--color-payment-order-line-rejected-text, #464646);
+    background: var(--color-payment-order-line-rejected-bg, #f2f3f5);
+    border: 1px solid rgba(70, 70, 70, 0.06);
 }

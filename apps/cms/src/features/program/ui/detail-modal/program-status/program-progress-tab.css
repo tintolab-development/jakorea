@@ -179,7 +179,7 @@
   height: var(--filter-control-height, 44px) !important;
   min-height: var(--filter-control-height, 44px) !important;
   width: 100% !important;
-  padding: 0 28px 0 var(--spacing-12) !important;
+  padding: 0 32px 0 var(--spacing-12) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-4) !important;
   display: flex !important;
@@ -209,12 +209,19 @@
   min-width: 0;
 }
 
+/* allowClear(X) 표시 시 우측 패딩 — X·화살표 겹침 방지 (filter-controls-common 토큰) */
+.program-progress-tab__filters .ant-select:has(.ant-select-clear) .ant-select-selector {
+  padding-inline-end: calc(
+    var(--filter-select-clear-inset-end, 38px) + var(--spacing-12, 12px) + 8px
+  ) !important;
+}
+
 /* 드롭다운 화살표: 셀렉트 박스 안에서 세로 중앙 */
 .program-progress-tab__filters .ant-select .ant-select-arrow {
   position: absolute !important;
   top: 50% !important;
   bottom: auto !important;
-  inset-inline-end: var(--spacing-10) !important;
+  inset-inline-end: var(--filter-select-arrow-inset-end, 8px) !important;
   inset-inline-start: auto !important;
   margin: 0 !important;
   transform: translateY(-50%) !important;
@@ -228,6 +235,28 @@
 }
 
 .program-progress-tab__filters .ant-select .ant-select-arrow .anticon {
+  display: block;
+  line-height: 0;
+  font-size: var(--font-size-12);
+}
+
+/* allowClear(X): 화살표보다 안쪽에 배치해 탭 간격 확보 */
+.program-progress-tab__filters .ant-select .ant-select-clear {
+  position: absolute !important;
+  top: 50% !important;
+  bottom: auto !important;
+  inset-inline-end: var(--filter-select-clear-inset-end, 38px) !important;
+  inset-inline-start: auto !important;
+  margin: 0 !important;
+  transform: translateY(-50%) !important;
+  width: var(--spacing-12) !important;
+  height: var(--spacing-12) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.program-progress-tab__filters .ant-select .ant-select-clear .anticon {
   display: block;
   line-height: 0;
   font-size: var(--font-size-12);

@@ -83,6 +83,16 @@ export function MainHeader() {
       return '수강 신청 현황'
     }
 
+    // 관리자: 권한 승인 목록 — 콘텐츠 상단 타이틀만 '회원 권한 승인' (LNB 라벨은 menu-config '권한 승인' 유지)
+    const permissionRequestsBase = '/admin/permission-requests'
+    if (
+      user?.role === 'ADMIN' &&
+      (location.pathname === permissionRequestsBase ||
+        location.pathname.startsWith(`${permissionRequestsBase}/`))
+    ) {
+      return '회원 권한 승인'
+    }
+
     // 관리자: 프로그램 상세/수정 페이지 타이틀
     const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
     if (user?.role === 'ADMIN' && location.pathname.startsWith('/programs/')) {

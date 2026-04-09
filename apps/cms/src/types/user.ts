@@ -11,6 +11,9 @@ import type { UUID, DateValue } from './index'
 // 프론트 사용자 역할 (§2.1)
 export type UserRole = 'INDIVIDUAL' | 'SCHOOL' | 'INSTRUCTOR' | 'ADMIN'
 
+/** 강사(INSTRUCTOR) 회원 상세 UI 분기 — API와 필드명 맞출 것 */
+export type InstructorMemberProfile = 'school_teacher' | 'instructor_dual' | 'instructor_only'
+
 // 관리자 권한 레벨 (§2.2)
 export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
 
@@ -78,6 +81,12 @@ export interface User {
   /** 강사 — 소속 학교(학교 회원) user id (mock/CMS 연동) */
   affiliatedSchoolUserId?: UUID
 
+  /** 소속 학교 기관명 (상세 타이틀 등 — API 또는 mock) */
+  affiliatedSchoolName?: string
+
+  /** 강사 상세: 일반 교사 / 강사 겸 교사 / 순수 강사 UI */
+  instructorMemberProfile?: InstructorMemberProfile
+
   // 강사 전용 (§2.1)
   instructorInfo?: {
     bankName: string
@@ -138,6 +147,16 @@ export interface UserListRowMetrics {
   managedProgramCount?: number
   /** 관리자 목록: 권한 유형 태그 (없으면 programRoles로 추론) */
   adminPermissionVariant?: 'manager' | 'partner' | 'viewer'
+  /** 일반 교사 상세: 재직 현황 라벨 */
+  employmentStatusLabel?: string
+  /** 일반 교사 상세: 담당 학년 등 */
+  instructorAssignedGrade?: string
+  /** 강사 상세: 최종 학력 한 줄 */
+  highestEducationLabel?: string
+  /** 강사 상세: 소속·경력 요약(우선 표시, 없으면 학교·유형·연수·등급으로 조합) */
+  instructorCareerSummaryLabel?: string
+  /** 강사 상세: 경력 연수 표기(예: "3년") — 조합 시 사용 */
+  instructorCareerYearsLabel?: string
 }
 
 // 로그인 요청

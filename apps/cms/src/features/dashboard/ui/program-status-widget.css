@@ -320,7 +320,7 @@
 }
 
 .program-progress-widget__divider-vertical--wrapper {
-  margin: 0 20px;
+  margin: 0 30px !important;
 }
 
 /* 반응형: 작은 화면에서는 세로 배치 */

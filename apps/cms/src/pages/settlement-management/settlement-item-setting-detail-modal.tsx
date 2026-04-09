@@ -12,7 +12,7 @@ import {
 } from '@/data/mock/settlement-item-setting-detail.mock'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
-import { AppRadio } from '@/shared/ui/app-radio'
+import { CmsRadio } from '@/shared/ui/cms-radio'
 import { SettlementItemSettingIcon } from './settlement-item-setting-icons'
 import './settlement-item-setting-detail-modal.css'
 import { AppInput } from '@/shared/ui/app-input'
@@ -109,15 +109,15 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
                 />
               </div>
             </div>
-            <AppRadio.Group
+            <CmsRadio.Group
               className="settlement-item-setting-detail-modal__basis-radios"
               value={compareKind}
               onChange={e => setCompareKind(e.target.value as SettlementItemSettingCompareKind)}
             >
-              <AppRadio value="standard">기준(당)</AppRadio>
-              <AppRadio value="exceed">초과</AppRadio>
-              <AppRadio value="below">이하</AppRadio>
-            </AppRadio.Group>
+              <CmsRadio value="standard">기준(당)</CmsRadio>
+              <CmsRadio value="exceed">초과</CmsRadio>
+              <CmsRadio value="below">이하</CmsRadio>
+            </CmsRadio.Group>
           </div>
         ) : (
           <div className="settlement-item-setting-detail-modal__basis-row settlement-item-setting-detail-modal__basis-row--simple">
@@ -263,16 +263,16 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
           >
             증빙 자료 제출 여부
           </h3>
-          <AppRadio.Group
+          <CmsRadio.Group
             className="settlement-item-setting-detail-modal__evidence-radios"
             value={evidenceSubmission}
             onChange={e =>
               setEvidenceSubmission(e.target.value as SettlementItemEvidenceSubmission)
             }
           >
-            <AppRadio value="required">필요</AppRadio>
-            <AppRadio value="not_required">불필요</AppRadio>
-          </AppRadio.Group>
+            <CmsRadio value="required">필요</CmsRadio>
+            <CmsRadio value="not_required">불필요</CmsRadio>
+          </CmsRadio.Group>
         </section>
       ) : null}
     </>

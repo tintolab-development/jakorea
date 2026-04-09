@@ -5,6 +5,7 @@
 
 import { useCallback, useMemo, useState, type Key, type MouseEvent, type ReactNode } from 'react'
 import { Card, Table, message } from 'antd'
+import type { TableProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Application, Program, UserHistory } from '@/types/domain'
@@ -15,7 +16,7 @@ import {
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
-import { FilterListLayout } from '@/shared/ui/filter-list-layout'
+import { FilterListLayout } from '@/shared/components/filter-list-layout'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { AppButton } from '@/shared/ui/app-button'
 import { Divider } from '@/shared/components/divider'
@@ -52,6 +53,14 @@ function programYear(programId: string): number | null {
 function programTitle(programId: string): string {
   const p = programService.getByIdSync(programId)
   return p?.title ?? programId
+}
+
+function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
+  return (
+    !!target.closest('.ant-table-selection-column') ||
+    !!target.closest('.member-program-lecture-history__action-cell') ||
+    !!target.closest('.user-detail-modal__attendance-link')
+  )
 }
 
 export type MemberProgramHistoryMode =
@@ -307,6 +316,7 @@ export function MemberProgramLectureHistory({
           title: '프로그램명',
           key: 'programTitle',
           ellipsis: true,
+          minWidth: 300,
           align: 'center',
           render: (_: unknown, record: UserHistory) => programTitle(record.programId),
         },
@@ -569,6 +579,7 @@ export function MemberProgramLectureHistory({
                 size="large"
                 disabled={!canView}
                 onClick={() => {
+                  window.alert('준비 중입니다.')
                   if (onViewLectureReport) onViewLectureReport(record)
                   else message.info('강의보고서 내역은 추후 연결됩니다.')
                 }}
@@ -634,6 +645,27 @@ export function MemberProgramLectureHistory({
           ? '봉사 프로그램 참여 이력이 없습니다.'
           : '프로그램 강의 이력이 없습니다.'
 
+  const isVolunteerMode = mode === 'volunteerProgram'
+  const tableDataSource: (Application | UserHistory)[] = isVolunteerMode
+    ? filteredVolunteerHistories
+    : filteredApplications
+  const hasTableRowClick = isVolunteerMode ? onVolunteerRowClick != null : onRowClick != null
+
+  const tableOnRow = useMemo((): TableProps<Application | UserHistory>['onRow'] => {
+    if (!hasTableRowClick) return undefined
+    return record => ({
+      onClick: (e: MouseEvent<HTMLElement>) => {
+        if (shouldIgnoreTableRowClick(e.target as HTMLElement)) return
+        if (mode === 'volunteerProgram' && onVolunteerRowClick) {
+          onVolunteerRowClick(record as UserHistory)
+        } else if (onRowClick) {
+          onRowClick(record as Application)
+        }
+      },
+      style: { cursor: 'pointer' },
+    })
+  }, [hasTableRowClick, mode, onVolunteerRowClick, onRowClick])
+
   const listHeader = (
     <>
       <div className="program-list-page__divider-wrapper">
@@ -698,79 +730,24 @@ export function MemberProgramLectureHistory({
               style={{ border: 'none', boxShadow: 'none' }}
             >
               <div className="program-list-table-wrapper program-list-table-wrapper--scroll-x member-program-lecture-history__table-wrap">
-                {mode === 'volunteerProgram' ? (
-                  <Table<UserHistory>
-                    className="cms-data-table cms-data-table--fluid user-list-table"
-                    loading={loading}
-                    rowSelection={{
-                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                      selectedRowKeys,
-                      onChange: keys => setSelectedRowKeys(keys),
-                    }}
-                    dataSource={filteredVolunteerHistories}
-                    columns={columns as ColumnsType<UserHistory>}
-                    rowKey="id"
-                    pagination={false}
-                    scroll={{ y: 'calc(100vh - 480px)' }}
-                    locale={{
-                      emptyText: loading ? undefined : emptyTableText,
-                    }}
-                    onRow={
-                      onVolunteerRowClick
-                        ? record => ({
-                            onClick: (e: MouseEvent<HTMLElement>) => {
-                              const el = e.target as HTMLElement
-                              if (
-                                el.closest('.ant-table-selection-column') ||
-                                el.closest('.member-program-lecture-history__action-cell') ||
-                                el.closest('.user-detail-modal__attendance-link')
-                              ) {
-                                return
-                              }
-                              onVolunteerRowClick(record)
-                            },
-                            style: { cursor: 'pointer' },
-                          })
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <Table<Application>
-                    className="cms-data-table cms-data-table--fluid user-list-table"
-                    loading={loading}
-                    rowSelection={{
-                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                      selectedRowKeys,
-                      onChange: keys => setSelectedRowKeys(keys),
-                    }}
-                    dataSource={filteredApplications}
-                    columns={columns as ColumnsType<Application>}
-                    rowKey="id"
-                    pagination={false}
-                    scroll={{ y: 'calc(100vh - 480px)' }}
-                    locale={{
-                      emptyText: loading ? undefined : emptyTableText,
-                    }}
-                    onRow={
-                      onRowClick
-                        ? record => ({
-                            onClick: (e: MouseEvent<HTMLElement>) => {
-                              const el = e.target as HTMLElement
-                              if (
-                                el.closest('.ant-table-selection-column') ||
-                                el.closest('.member-program-lecture-history__action-cell') ||
-                                el.closest('.user-detail-modal__attendance-link')
-                              ) {
-                                return
-                              }
-                              onRowClick(record)
-                            },
-                            style: { cursor: 'pointer' },
-                          })
-                        : undefined
-                    }
-                  />
-                )}
+                <Table<Application | UserHistory>
+                  className="cms-data-table"
+                  scroll={{ x: 'max-content' }}
+                  loading={loading}
+                  rowSelection={{
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys),
+                  }}
+                  dataSource={tableDataSource}
+                  columns={columns as ColumnsType<Application | UserHistory>}
+                  rowKey="id"
+                  pagination={false}
+                  locale={{
+                    emptyText: loading ? undefined : emptyTableText,
+                  }}
+                  onRow={tableOnRow}
+                />
               </div>
             </Card>
           </div>

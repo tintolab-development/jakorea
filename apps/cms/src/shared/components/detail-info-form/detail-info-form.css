@@ -1,0 +1,258 @@
+/**
+ * 섹션형 상세 정보 격자 — Section 헤더 + 본문 Row/Field
+ * 라벨·본문 타이포는 이 파일에서만 정의; 소비자에서 override 지양
+ */
+
+.detail-info-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.detail-info-form__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.detail-info-form__header-lead {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.detail-info-form__header-end {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.detail-info-form__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  padding: 0 8px;
+}
+
+.detail-info-form__description {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+.detail-info-form__body {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.detail-info-form__row {
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  box-sizing: border-box;
+}
+
+.detail-info-form__row:last-child {
+  border-bottom: none;
+}
+
+.detail-info-form__row--single {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-info-form__row--single > .detail-info-form__field {
+  width: 100%;
+}
+
+.detail-info-form__row--double {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.detail-info-form__row--double > .detail-info-form__field {
+  flex: 1 1 50%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detail-info-form__row--double > .detail-info-form__field--full-row {
+  flex: 1 1 100%;
+  border-right: none;
+}
+
+.detail-info-form__row--double
+  > .detail-info-form__field:not(.detail-info-form__field--full-row):nth-child(odd):not(
+    :last-child
+  ) {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.detail-info-form__field {
+  display: grid;
+  grid-template-columns: var(--detail-info-label-w, 200px) minmax(0, 1fr);
+  align-items: stretch;
+  min-height: 48px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detail-info-form__field-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  width: var(--detail-info-label-w, 200px);
+  min-width: var(--detail-info-label-w, 200px);
+  max-width: var(--detail-info-label-w, 200px);
+  padding: 12px 16px;
+  background: #f5f6f7;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.detail-info-form__field-content {
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detail-info-form__field-required {
+  color: #c32f4a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.detail-info-form__row--custom > * {
+  min-width: 0;
+}
+
+/*
+ * 성명 2행 블록
+ * - 우측 라벨 열 200px → 아래 Field(기본 200px)와 세로선 정렬
+ * - 좌측 100+100 = 200px → Field 단일 라벨 200px과 동일 폭
+ * - gap 대신 border만 사용(세로 구분선 누락 방지), 하단은 Row border와 이중선 없음
+ */
+.detail-info-form__name-block {
+  display: grid;
+  width: 100%;
+  box-sizing: border-box;
+  grid-template-columns: 100px 100px minmax(0, 1fr) 200px minmax(0, 1fr);
+  grid-template-rows: minmax(48px, auto) minmax(48px, auto);
+  grid-template-areas:
+    'nbT nbS1 nbV1 nbL1 nbR1'
+    'nbT nbS2 nbV2 nbL2 nbR2';
+}
+
+/* 교사 상세: 성명(한글)·성명(영문) 단일 라벨 열 — Field 라벨 200px과 맞춤 */
+.detail-info-form__name-block--no-group-title {
+  grid-template-columns: 200px minmax(0, 1fr) 200px minmax(0, 1fr);
+  grid-template-areas:
+    'nbS1 nbV1 nbL1 nbR1'
+    'nbS2 nbV2 nbL2 nbR2';
+}
+
+.detail-info-form__name-block-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  font-size: 16px;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.detail-info-form__name-block-cell--r1,
+.detail-info-form__name-block-cell--r2 {
+  border-right: none;
+}
+
+.detail-info-form__name-block-cell--s2,
+.detail-info-form__name-block-cell--v2,
+.detail-info-form__name-block-cell--l2,
+.detail-info-form__name-block-cell--r2 {
+  border-bottom: none;
+}
+
+.detail-info-form__body > .detail-info-form__row:first-child .detail-info-form__name-block-cell {
+  border-top: none;
+}
+
+.detail-info-form__name-block-cell--label {
+  justify-content: center;
+  text-align: center;
+  background: #f5f6f7;
+  font-weight: 700;
+}
+
+.detail-info-form__name-block-cell--value {
+  background: #fff;
+  font-weight: 500;
+}
+
+.detail-info-form__name-block-cell--t {
+  grid-area: nbT;
+  white-space: nowrap;
+  border-bottom: none;
+}
+
+.detail-info-form__name-block-cell--s1 {
+  grid-area: nbS1;
+}
+
+.detail-info-form__name-block-cell--v1 {
+  grid-area: nbV1;
+}
+
+.detail-info-form__name-block-cell--l1 {
+  grid-area: nbL1;
+}
+
+.detail-info-form__name-block-cell--r1 {
+  grid-area: nbR1;
+}
+
+.detail-info-form__name-block-cell--s2 {
+  grid-area: nbS2;
+}
+
+.detail-info-form__name-block-cell--v2 {
+  grid-area: nbV2;
+}
+
+.detail-info-form__name-block-cell--l2 {
+  grid-area: nbL2;
+}
+
+.detail-info-form__name-block-cell--r2 {
+  grid-area: nbR2;
+}

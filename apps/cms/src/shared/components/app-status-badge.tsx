@@ -4,6 +4,7 @@
  */
 
 import { Tag } from 'antd'
+import type { CSSProperties } from 'react'
 import './app-status-badge.css'
 
 export interface AppStatusBadgeProps {
@@ -11,15 +12,19 @@ export interface AppStatusBadgeProps {
   label: string
   /** 모디파이어 클래스 (예: textbook-status-badge--preparing, app-status-badge--lifecycle--recruiting_students) */
   className?: string
+  style?: CSSProperties
 }
 
 /**
  * 교재 현황 배지와 동일한 레이아웃의 공통 배지.
  * 색상은 className으로 전달된 모디파이어에서 적용.
  */
-export function AppStatusBadge({ label, className }: AppStatusBadgeProps) {
+export function AppStatusBadge({ label, className, style }: AppStatusBadgeProps) {
   return (
-    <Tag className={`app-status-badge ${className ?? ''}`.trim()} style={{ margin: 0 }}>
+    <Tag
+      className={`app-status-badge ${className ?? ''}`.trim()}
+      style={{ margin: 0, ...style }}
+    >
       {label}
     </Tag>
   )

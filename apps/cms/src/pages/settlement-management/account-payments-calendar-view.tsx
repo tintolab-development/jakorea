@@ -1,6 +1,6 @@
 /**
  * 정산 관리 > 계좌 지급 확인 — 캘린더 뷰
- * 레이아웃: participating-institutions-calendar-view + payment-orders-calendar-view CSS 재사용
+ * 레이아웃: participating-institutions-calendar-view + payment-record/payment-orders-calendar-view CSS 재사용
  */
 
 import { useCallback, useMemo, useState } from 'react'
@@ -13,7 +13,7 @@ import {
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
 import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
-import './payment-orders-calendar-view.css'
+import '@/features/settlement/ui/payment-record/payment-orders-calendar-view.css'
 import './account-payments-calendar-view.css'
 
 const STATUS_TEXT_COLOR: Record<AccountPaymentTransferStatus, string> = {
@@ -125,32 +125,36 @@ function AccountPaymentsCalendarRightPanel({
           return (
             <div
               key={ev.id}
-              role="button"
-              tabIndex={0}
               className={`payment-orders-calendar__card ${cardMod}${isSelected ? ' payment-orders-calendar__card--selected' : ''}`}
-              onClick={() => toggleCardSelection(ev.id)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  toggleCardSelection(ev.id)
-                }
-              }}
             >
-              <div className="payment-orders-calendar__card-status-row">
-                <span
-                  className="payment-orders-calendar__card-status"
-                  style={{ color: STATUS_TEXT_COLOR[ev.status] }}
-                >
-                  {ACCOUNT_PAYMENT_STATUS_LABELS[ev.status]}
-                </span>
-                <span className="payment-orders-calendar__card-divider" aria-hidden />
-                <span className="payment-orders-calendar__card-amount">{formatWonPlus(ev.amount)}</span>
-              </div>
-              <div className="payment-orders-calendar__card-program" title={ev.programTitle}>
-                {ev.programTitle}
-              </div>
-              <div className="payment-orders-calendar__card-program" title={ev.instructorLine}>
-                {ev.instructorLine}
+              <div
+                className="payment-orders-calendar__card-main"
+                role="button"
+                tabIndex={0}
+                onClick={() => toggleCardSelection(ev.id)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    toggleCardSelection(ev.id)
+                  }
+                }}
+              >
+                <div className="payment-orders-calendar__card-status-row">
+                  <span
+                    className="payment-orders-calendar__card-status"
+                    style={{ color: STATUS_TEXT_COLOR[ev.status] }}
+                  >
+                    {ACCOUNT_PAYMENT_STATUS_LABELS[ev.status]}
+                  </span>
+                  <span className="payment-orders-calendar__card-divider" aria-hidden />
+                  <span className="payment-orders-calendar__card-amount">{formatWonPlus(ev.amount)}</span>
+                </div>
+                <div className="payment-orders-calendar__card-program" title={ev.programTitle}>
+                  {ev.programTitle}
+                </div>
+                <div className="payment-orders-calendar__card-program" title={ev.instructorLine}>
+                  {ev.instructorLine}
+                </div>
               </div>
             </div>
           )

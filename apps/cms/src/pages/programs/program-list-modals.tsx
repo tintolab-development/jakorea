@@ -1,6 +1,4 @@
 import { Modal } from 'antd'
-import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
-import { ProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/program-detail-fullpage-modal'
 import { ProgramForm } from '@/features/program/ui/program-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { EnrollmentStatusDetailModal } from '@/features/program/ui/enrollment-status-detail-modal'
@@ -17,7 +15,6 @@ interface ProgramListModalsProps {
   onEditFromDrawer: () => void
   onDeleteFromDrawer: () => void
   loading: boolean
-  hideActions: boolean
 
   // Form Modal
   formModalOpen: boolean
@@ -39,19 +36,9 @@ interface ProgramListModalsProps {
   selectedProgramForInstructorModal: Program | null
   onCancelInstructorModal: () => void
 
-  // Full-page detail modal (economy/education list row click)
-  selectedProgramForFullPageModal: Program | null
-  onCloseFullPageModal: () => void
 }
 
 export function ProgramListModals({
-  drawerOpen,
-  drawerProgram,
-  onCloseDrawer,
-  onEditFromDrawer,
-  onDeleteFromDrawer,
-  loading,
-  hideActions,
   formModalOpen,
   isEditingMode,
   editingProgram,
@@ -66,16 +53,9 @@ export function ProgramListModals({
   onCancelEnrollmentModal,
   selectedProgramForInstructorModal,
   onCancelInstructorModal,
-  selectedProgramForFullPageModal,
-  onCloseFullPageModal,
 }: ProgramListModalsProps) {
   return (
     <>
-      <ProgramDetailFullPageModal
-        open={!!selectedProgramForFullPageModal}
-        program={selectedProgramForFullPageModal}
-        onClose={onCloseFullPageModal}
-      />
       <EnrollmentStatusDetailModal
         open={!!selectedProgramForModal}
         program={selectedProgramForModal}
@@ -85,16 +65,6 @@ export function ProgramListModals({
         open={!!selectedProgramForInstructorModal}
         program={selectedProgramForInstructorModal}
         onCancel={onCancelInstructorModal}
-      />
-
-      <ProgramDetailDrawer
-        open={drawerOpen}
-        program={drawerProgram || undefined}
-        onClose={onCloseDrawer}
-        onEdit={onEditFromDrawer}
-        onDelete={onDeleteFromDrawer}
-        loading={loading}
-        hideActions={hideActions}
       />
 
       <Modal

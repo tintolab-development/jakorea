@@ -334,7 +334,9 @@
 
 .school-detail-fullpage-view .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132) {
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132):not(
+      .status-dropdown-cell__cell-status--tag-160
+    ) {
   width: 136px;
   min-width: 136px;
   max-width: 136px;
@@ -366,6 +368,19 @@
   width: 150px !important;
   min-width: 150px !important;
   max-width: 150px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 역할 tag160: 열 160px (공통과 동일 스펙 — 뷰 단에서 행 높이·호버 규칙과 함께 쓰일 때 정렬 유지) */
+.school-detail-fullpage-view .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status--tag-160)
+  > td.status-dropdown-cell__cell-status--tag-160 {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
   text-align: center !important;
   vertical-align: middle !important;
   padding-left: 0 !important;

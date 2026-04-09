@@ -20,11 +20,9 @@ import {
 } from '@/entities/program/api/favorite-program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { ProgramDetailDrawer } from '@/features/program/ui/program-detail-drawer'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { MESSAGES } from '@/shared/constants'
-import type { Program } from '@/types/domain'
 
 const { Option } = Select
 
@@ -38,8 +36,6 @@ export function MyFavoriteProgramsPage() {
   }>()
   const [programs, setPrograms] = useState<FavoriteProgram[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // 카테고리명 가져오기
   const categoryName = getCategoryNameByPath(location.pathname, 3) || '관심 프로그램 관리'
@@ -106,11 +102,6 @@ export function MyFavoriteProgramsPage() {
       console.error('관심 프로그램 해제 실패:', error)
       message.error(MESSAGES.error.favoriteProgramRemoveFailed)
     }
-  }
-
-  const handleViewProgram = (program: FavoriteProgram) => {
-    setSelectedProgram(program)
-    setDrawerOpen(true)
   }
 
   const getProgramStatus = (program: FavoriteProgram) => {
@@ -261,27 +252,10 @@ export function MyFavoriteProgramsPage() {
           showSizeChanger: true,
           showTotal: total => `총 ${total}개`,
         }}
-        onRow={record => ({
-          onClick: () => handleViewProgram(record),
-          style: { cursor: 'pointer' },
-        })}
         scroll={{ x: 1200 }}
         locale={{
           emptyText: <Empty description="관심 등록한 프로그램이 없습니다." />,
         }}
-      />
-
-      <ProgramDetailDrawer
-        open={drawerOpen}
-        program={selectedProgram}
-        onClose={() => {
-          setDrawerOpen(false)
-          setSelectedProgram(null)
-        }}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        loading={false}
-        hideActions
       />
     </div>
   )

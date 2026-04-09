@@ -76,6 +76,24 @@
   color: #85969d;
 }
 
+/* 필터 DatePicker: allowClear(X)가 접미 캘린더·입력과 겹치지 않도록 */
+.app-datepicker .ant-picker .ant-picker-clear,
+.app-datepicker__segment .ant-picker .ant-picker-clear {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  inset-inline-end: var(--spacing-10, 10px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.app-datepicker .ant-picker .ant-picker-clear .anticon,
+.app-datepicker__segment .ant-picker .ant-picker-clear .anticon {
+  font-size: var(--font-size-12, 12px);
+  line-height: 1;
+}
+
 /*
  * 기간: RangePicker 대신 두 개의 DatePicker(각각 캘린더 아이콘) + 가운데 ~
  * 시안: 흰 배경·테두리·둥근 모서리가 필드마다 분리

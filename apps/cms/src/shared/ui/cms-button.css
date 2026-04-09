@@ -1,0 +1,161 @@
+/**
+ * CMS 전용 버튼 (antd .ant-btn 위에 스펙 적용)
+ * - variant: primary | secondary | default | delete
+ * - size: large | medium | small
+ * - hover 시 색·테두리 변화 없음
+ */
+
+.cms-button.ant-btn {
+  box-sizing: border-box;
+  display: flex !important;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0 16px !important;
+  border-radius: var(--8, 8px);
+  text-align: center;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 150%;
+  cursor: pointer;
+  border-style: solid;
+  border-width: 1px;
+  transition: none !important;
+  box-shadow: none !important;
+}
+
+.cms-button.ant-btn.ant-btn-disabled,
+.cms-button.ant-btn:disabled {
+  cursor: not-allowed;
+  color: rgba(61, 61, 61, 0.35) !important;
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background-color: #fff !important;
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+  ) !important;
+}
+
+/* ----- size ----- */
+.cms-button.ant-btn.cms-button--large {
+  width: 140px;
+  height: 44px;
+  font-size: 16px;
+}
+
+.cms-button.ant-btn.cms-button--medium {
+  width: 120px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.cms-button.ant-btn.cms-button--small {
+  width: 100px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.cms-button.ant-btn.cms-button--medium.cms-button--has-icon,
+.cms-button.ant-btn.cms-button--small.cms-button--has-icon {
+  gap: 4px;
+}
+
+.cms-button.ant-btn .cms-button__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.cms-button.ant-btn .cms-button__label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----- variant (enabled) ----- */
+.cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled) {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--color-mint-01, #01a1af) !important;
+  color: var(--main-WT, #fff) !important;
+}
+
+.cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled) {
+  color: var(--color-mint-01, #01a1af) !important;
+  border-color: var(--color-mint-01, #01a1af) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(1, 161, 175, 0.06) 0%,
+    rgba(1, 161, 175, 0.06) 100%
+  ) !important;
+}
+
+.cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled) {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--main-WT, #fff) !important;
+  color: var(--main-BK, #3d3d3d) !important;
+}
+
+.cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
+  color: var(--color-red, #c32f4a) !important;
+  border-color: var(--color-red, #c32f4a) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(195, 47, 74, 0.06) 0%,
+    rgba(195, 47, 74, 0.06) 100%
+  ) !important;
+}
+
+/* hover / focus / active — 기본 상태와 동일 (시각 변화 없음) */
+.cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled):hover,
+.cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled):focus,
+.cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled):active {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--color-mint-01, #01a1af) !important;
+  color: var(--main-WT, #fff) !important;
+  box-shadow: none !important;
+}
+
+.cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):hover,
+.cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):focus,
+.cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):active {
+  color: var(--color-mint-01, #01a1af) !important;
+  border-color: var(--color-mint-01, #01a1af) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(1, 161, 175, 0.06) 0%,
+    rgba(1, 161, 175, 0.06) 100%
+  ) !important;
+  box-shadow: none !important;
+}
+
+.cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):hover,
+.cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):focus,
+.cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):active {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--main-WT, #fff) !important;
+  color: var(--main-BK, #3d3d3d) !important;
+  box-shadow: none !important;
+}
+
+.cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):hover,
+.cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):focus,
+.cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):active {
+  color: var(--color-red, #c32f4a) !important;
+  border-color: var(--color-red, #c32f4a) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(195, 47, 74, 0.06) 0%,
+    rgba(195, 47, 74, 0.06) 100%
+  ) !important;
+  box-shadow: none !important;
+}

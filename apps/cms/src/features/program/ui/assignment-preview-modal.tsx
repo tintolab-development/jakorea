@@ -24,7 +24,7 @@ export function AssignmentPreviewModal({
   onCancel,
   studentName,
   roundNumber,
-  onDownload,
+  onDownload: _onDownload,
 }: AssignmentPreviewModalProps) {
   const footer = (
     <>
@@ -36,7 +36,8 @@ export function AssignmentPreviewModal({
         size="large"
         modalTeal
         icon={<DownloadOutlined />}
-        onClick={() => onDownload?.()}
+        // onClick={() => onDownload?.()}
+        onClick={() => window.alert('준비 중입니다.')}
         className="assignment-preview-modal__btn-download"
       >
         파일 다운로드

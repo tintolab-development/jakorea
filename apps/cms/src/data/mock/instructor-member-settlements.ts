@@ -23,29 +23,42 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS: Record<InstructorSettlementUiS
   none: '-',
 }
 
+/** 캘린더 툴팁 등 — 정산현황 4종 짧은 표기 */
+export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
+  InstructorSettlementUiStatus,
+  string
+> = {
+  awaiting_confirmation: '확인 대기',
+  payment_statement_verified: '확인 완료',
+  account_paid: '일부 확인',
+  payment_correction_requested: '정정 요청',
+  application_rejected: '정정 요청',
+  none: '확인 대기',
+}
+
 export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
   InstructorSettlementUiStatus,
   { bg: string; color: string; border: string }
 > = {
   payment_statement_verified: {
-    bg: 'rgba(123,97,200,0.08)',
-    color: '#7B61C8',
-    border: 'rgba(123,97,200,0.2)',
+    bg: 'rgba(1, 161, 175, 0.06);',
+    color: '#017EAF',
+    border: 'rgba(1, 161, 175, 0.10)',
   },
   application_rejected: {
-    bg: 'rgba(107,114,128,0.08)',
-    color: '#6B7280',
-    border: 'rgba(107,114,128,0.2)',
+    bg: 'rgba(70, 70, 70, 0.06)',
+    color: '#464646',
+    border: 'rgba(70, 70, 70, 0.10)',
   },
   awaiting_confirmation: {
-    bg: 'rgba(79,138,100,0.1)',
-    color: '#1e8c29',
-    border: 'rgba(79,138,100,0.25)',
+    bg: 'rgba(30, 140, 41, 0.06)',
+    color: '#1E8C29',
+    border: 'rgba(30, 140, 41, 0.10)',
   },
   payment_correction_requested: {
-    bg: 'rgba(195,47,74,0.08)',
+    bg: 'rgba(195, 47, 74, 0.06)',
     color: '#C32F4A',
-    border: 'rgba(195,47,74,0.2)',
+    border: 'rgba(195, 47, 74, 0.10)',
   },
   account_paid: {
     bg: 'rgba(2,132,199,0.08)',
@@ -57,6 +70,16 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
     color: '#9CA3AF',
     border: 'rgba(107,114,128,0.15)',
   },
+}
+
+/** 산출 내역서 등 — 라벨·글자색을 `INSTRUCTOR_SETTLEMENT_STATUS_*` 상수와 동기화 */
+export function getInstructorSettlementInvoiceStatusPresentation(
+  status: InstructorSettlementUiStatus
+): { label: string; color: string } {
+  return {
+    label: INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
+    color: INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[status].color,
+  }
 }
 
 export interface InstructorSettlementInvoiceLineItem {
@@ -72,8 +95,7 @@ export interface InstructorSettlementInvoiceDetail {
   programName: string
   sessionProgress: string
   operationPeriod: string
-  paymentStatementStatusLabel: string
-  paymentStatementStatusTone: 'purple' | 'mint' | 'default'
+  paymentStatementStatus: InstructorSettlementUiStatus
   expectedTransferDate: string
   lectureFeeBasis: string
   businessIncomeEarner: string
@@ -106,8 +128,7 @@ const sampleInvoice = (
   programName: '2026년 JA Korea 초등 경제교육',
   sessionProgress: '4 / 16',
   operationPeriod: '2025. 12. 08(월) ~ 2026. 12. 30(수)',
-  paymentStatementStatusLabel: '지급조서 확인 완료',
-  paymentStatementStatusTone: 'purple',
+  paymentStatementStatus: 'payment_statement_verified',
   expectedTransferDate: '2026. 05. 24(일)',
   lectureFeeBasis: '특강 강의비 915,000원',
   businessIncomeEarner: '해당 없음',
@@ -157,8 +178,7 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     detailAvailable: false,
     invoice: sampleInvoice({
       programName: "2026 SAP-함께 성장하JA! 경제교육 프로그램 '함께'",
-      paymentStatementStatusLabel: '지급조서 확인 완료',
-      paymentStatementStatusTone: 'purple',
+      paymentStatementStatus: 'payment_statement_verified',
     }),
   },
   {
@@ -174,8 +194,7 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     invoice: sampleInvoice({
       programName: '2026 JA Korea 대학생경제교육봉사단 UJAT 36기',
       institutionName: '대구수성초등학교',
-      paymentStatementStatusLabel: '확인 대기 중',
-      paymentStatementStatusTone: 'default',
+      paymentStatementStatus: 'awaiting_confirmation',
       lineItems: sampleInvoice({}).lineItems.slice(0, 1),
       withholdingAmount: 12_000,
       totalAmount: 850_000,
@@ -208,8 +227,7 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     invoice: sampleInvoice({
       programName: '청소년 금융 리터러시 특강 시리즈',
       institutionName: '수원중학교',
-      paymentStatementStatusLabel: '지급 정정 요청',
-      paymentStatementStatusTone: 'default',
+      paymentStatementStatus: 'payment_correction_requested',
     }),
   },
   {
@@ -225,8 +243,7 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     invoice: sampleInvoice({
       programName: 'JA 코리아 창업 시뮬레이션 캠프',
       institutionName: '인천남중학교',
-      paymentStatementStatusLabel: '계좌 지급 완료',
-      paymentStatementStatusTone: 'mint',
+      paymentStatementStatus: 'account_paid',
     }),
   },
   {
@@ -242,6 +259,7 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     invoice: sampleInvoice({
       programName: '지역 연계 경제교육 파트너십',
       institutionName: '광주동초등학교',
+      paymentStatementStatus: 'awaiting_confirmation',
     }),
   },
   {
@@ -257,8 +275,7 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     invoice: sampleInvoice({
       programName: '겨울방학 직업 체험 경제 캠프',
       institutionName: '대전중앙고등학교',
-      paymentStatementStatusLabel: '신청 반려',
-      paymentStatementStatusTone: 'default',
+      paymentStatementStatus: 'application_rejected',
       lineItems: [],
       withholdingAmount: 0,
       totalAmount: 0,
@@ -274,7 +291,7 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     status: 'account_paid',
     scheduledAmount: 915_000,
     detailAvailable: true,
-    invoice: sampleInvoice({}),
+    invoice: sampleInvoice({ paymentStatementStatus: 'account_paid' }),
   },
 ]
 

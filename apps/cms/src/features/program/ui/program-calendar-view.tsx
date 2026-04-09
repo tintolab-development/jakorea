@@ -1,6 +1,6 @@
 /**
  * 프로그램 캘린더 뷰 컴포넌트
- * 3단: 좌측(미니 캘린더 + 검색 + 유형 필터) | 중앙(메인 캘린더) | 우측(선택일 일정 리스트)
+ * 3단: 좌측(미니 캘린더 + 검색 + 프로그램명 필터) | 중앙(메인 캘린더) | 우측(선택일 일정 리스트)
  */
 
 import { useState, useMemo, useRef, useEffect } from 'react'
@@ -13,17 +13,15 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
 import { ProgramMiniCalendar } from './program-mini-calendar'
 import { ProgramScheduleList } from './program-schedule-list'
-import { businessAreaOptions } from './constants/program-list-constants'
-import { ProgramCalendar } from '@/shared/ui'
+import { CmsInput, ProgramCalendar } from '@/shared/ui'
 import './program-calendar-view.css'
-import { AppInput } from '@/shared/ui/app-input'
 
-const businessAreaColorClasses: Record<string, string> = {
-  경제금융: 'program-calendar-left__filter-item--cyan',
-  기업가정신: 'program-calendar-left__filter-item--red',
-  진로취업: 'program-calendar-left__filter-item--purple',
-  디지털리터러시: 'program-calendar-left__filter-item--green',
-}
+const programFilterColorClasses = [
+  'program-calendar-left__filter-item--cyan',
+  'program-calendar-left__filter-item--red',
+  'program-calendar-left__filter-item--purple',
+  'program-calendar-left__filter-item--green',
+] as const
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -43,12 +41,24 @@ export function ProgramCalendarView({
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
   const [calendarSearchKeyword, setCalendarSearchKeyword] = useState('')
-  /** 초기 진입 시 사업분야 필터 전체 선택; 선택된 항목에 해당하는 프로그램만 캘린더·일정 목록에 표시 */
-  const [calendarBusinessAreaKeys, setCalendarBusinessAreaKeys] = useState<string[]>(() =>
-    businessAreaOptions.map(o => o.value)
-  )
+  /** null이면 프로그램명 필터 전체 선택; 배열이면 해당 id만 캘린더·일정 목록에 표시 */
+  const [calendarProgramSelection, setCalendarProgramSelection] = useState<string[] | null>(null)
   const [sidebarHeight, setSidebarHeight] = useState<number | null>(null)
   const mainCalendarRef = useRef<HTMLDivElement>(null)
+
+  const programFilterOptions = useMemo(() => {
+    const keyword = calendarSearchKeyword.trim().toLowerCase()
+    let list = programs
+    if (keyword) {
+      list = list.filter(p => (p.title ?? '').toLowerCase().includes(keyword))
+    }
+    return [...list]
+      .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '', 'ko'))
+      .map(p => ({ id: p.id, title: p.title?.trim() || '이름 없음' }))
+  }, [programs, calendarSearchKeyword])
+
+  const allProgramIds = useMemo(() => programs.map(p => p.id), [programs])
+  const effectiveProgramSelection = calendarProgramSelection ?? allProgramIds
 
   const filteredByCalendar = useMemo(() => {
     let list = programs
@@ -56,15 +66,16 @@ export function ProgramCalendarView({
     if (keyword) {
       list = list.filter(p => (p.title ?? '').toLowerCase().includes(keyword))
     }
-    if (calendarBusinessAreaKeys.length === 0) {
-      list = []
-    } else {
-      list = list.filter(
-        p => p.businessArea != null && calendarBusinessAreaKeys.includes(p.businessArea)
-      )
+    if (calendarProgramSelection !== null) {
+      if (calendarProgramSelection.length === 0) {
+        list = []
+      } else {
+        const allowed = new Set(calendarProgramSelection)
+        list = list.filter(p => allowed.has(p.id))
+      }
     }
     return list
-  }, [programs, calendarSearchKeyword, calendarBusinessAreaKeys])
+  }, [programs, calendarSearchKeyword, calendarProgramSelection])
 
   useEffect(() => {
     const el = mainCalendarRef.current
@@ -124,10 +135,17 @@ export function ProgramCalendarView({
     setCurrentMonth(month)
   }
 
-  const handleBusinessAreaChange = (value: string, checked: boolean) => {
-    setCalendarBusinessAreaKeys(prev =>
-      checked ? [...prev, value] : prev.filter(k => k !== value)
-    )
+  const handleProgramFilterChange = (programId: string, checked: boolean) => {
+    const allIds = programs.map(p => p.id)
+    setCalendarProgramSelection(prev => {
+      const base = prev ?? allIds
+      const next = checked
+        ? [...new Set([...base, programId])]
+        : base.filter(id => id !== programId)
+      const allSelected =
+        next.length === allIds.length && allIds.every(id => next.includes(id))
+      return allSelected ? null : next
+    })
   }
 
   if (loading) {
@@ -150,23 +168,25 @@ export function ProgramCalendarView({
         />
         <div className="program-calendar-left__search-widget">
           <div className="program-calendar-left__search">
-            <AppInput
+            <CmsInput
               placeholder="프로그램명을 입력하세요"
-              prefix={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
+              icon={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
               value={calendarSearchKeyword}
               onChange={e => setCalendarSearchKeyword(e.target.value)}
               allowClear
             />
           </div>
           <div className="program-calendar-left__filters">
-            {businessAreaOptions.map(opt => (
-              <div key={opt.value} className="program-calendar-left__filters-wrapper">
+            {programFilterOptions.map((opt, index) => (
+              <div key={opt.id} className="program-calendar-left__filters-wrapper">
                 <Checkbox
-                  className={`program-calendar-left__filter-item ${businessAreaColorClasses[opt.value] ?? ''}`}
-                  checked={calendarBusinessAreaKeys.includes(opt.value)}
-                  onChange={e => handleBusinessAreaChange(opt.value, e.target.checked)}
+                  className={`program-calendar-left__filter-item ${
+                    programFilterColorClasses[index % programFilterColorClasses.length]
+                  }`}
+                  checked={effectiveProgramSelection.includes(opt.id)}
+                  onChange={e => handleProgramFilterChange(opt.id, e.target.checked)}
                 >
-                  {opt.label}
+                  {opt.title}
                 </Checkbox>
               </div>
             ))}

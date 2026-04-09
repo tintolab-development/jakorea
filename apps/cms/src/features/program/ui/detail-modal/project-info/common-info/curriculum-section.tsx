@@ -4,12 +4,12 @@
  * 수정 모드: react-hook-form 연동, 기존 회차·커리큘럼 값이 default로 채워짐
  */
 
-import { AppInput } from '@/shared/ui/app-input'
-import { AppRadio } from '@/shared/ui/app-radio'
+import { CmsRadio } from '@/shared/ui/cms-radio'
 import type { Program, RoundDeliveryType } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
-import './curriculum-section.css'
+import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import { CmsInput } from '@/shared/ui/cms-input'
 
 const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'online', label: '온라인' },
@@ -61,6 +61,10 @@ function getRoundCurriculumContent(
   return defaultDesc ? `1시간 | ${defaultDesc}` : '1시간 | (상세 내용 없음)'
 }
 
+const CurriculumDivider = () => (
+  <span className="detail-info-form-inputs-separator" role="presentation" aria-hidden />
+)
+
 /** 조회 모드: 시간 + (온라인|오프라인|온/오프라인) + 설명; `|`는 구분선 스타일 span */
 function CurriculumReadonlyDisplay({
   content,
@@ -76,7 +80,7 @@ function CurriculumReadonlyDisplay({
       {duration} ({deliveryLabel})
       {description ? (
         <>
-          <span className="program-detail-info-tab__separator"> | </span>
+          <CurriculumDivider />
           {description}
         </>
       ) : null}
@@ -115,102 +119,68 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
     form.setValue('rounds', nextRounds)
   }
 
-  const CurriculumDivider = () => (
-    <span className="program-detail-info-tab__curriculum-divider" role="presentation" aria-hidden />
-  )
-
   return (
-    <>
-      <div className="program-detail-info-tab__section-title program-detail-info-tab__section-title--block-start">
-        교육 커리큘럼
-      </div>
-      <div className="program-detail-info-tab__table-wrapper">
-        <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-detail-info-tab__curriculum-table">
-          <colgroup>
-            <col style={{ width: '200px' }} />
-            <col />
-          </colgroup>
-          <tbody>
-            {sortedRounds.length > 0 ? (
-              sortedRounds.map((round, sortedIndex) => {
-                const content = getRoundCurriculumContent(
-                  round.roundNumber,
-                  round.curriculum,
-                  program.curriculum
-                )
-                const { duration, description } = parseCurriculumContent(round.curriculum)
-                const roundIndex =
-                  (isFormEdit ? roundsFromForm : program.rounds)?.findIndex(
-                    (r: { id: string }) => r.id === round.id
-                  ) ?? sortedIndex
+    <DetailInfoForm
+      title="교육 커리큘럼"
+      mode={isFormEdit ? 'edit' : 'view'}
+      className="detail-info-form--gap"
+    >
+      {sortedRounds.length > 0 ? (
+        sortedRounds.map((round, sortedIndex) => {
+          const content = getRoundCurriculumContent(
+            round.roundNumber,
+            round.curriculum,
+            program.curriculum
+          )
+          const { duration, description } = parseCurriculumContent(round.curriculum)
+          const roundIndex =
+            (isFormEdit ? roundsFromForm : program.rounds)?.findIndex(
+              (r: { id: string }) => r.id === round.id
+            ) ?? sortedIndex
 
-                return (
-                  <tr key={round.id}>
-                    <th
-                      className={
-                        isFormEdit && round.roundNumber <= 4
-                          ? 'program-detail-info-tab__th--required'
-                          : undefined
-                      }
-                    >
-                      {round.roundNumber}회차 강의 분량 및 내용
-                      {isFormEdit && round.roundNumber <= 4 ? (
-                        <span className="program-detail-info-tab__required">*</span>
-                      ) : null}
-                    </th>
-                    <td>
-                      {isFormEdit ? (
-                        <div className="program-detail-info-tab__curriculum-inputs">
-                          <AppRadio.Group
-                            value={round.deliveryType ?? 'offline'}
-                            options={ROUND_DELIVERY_OPTIONS}
-                            onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
-                            className="program-detail-info-tab__curriculum-radio"
-                          />
-                          <CurriculumDivider />
-                          <AppInput
-                            value={duration}
-                            onChange={e =>
-                              updateRoundCurriculum(roundIndex, e.target.value, description)
-                            }
-                            placeholder="1시간"
-                            className="program-detail-info-tab__curriculum-time-input"
-                          />
-                          <CurriculumDivider />
-                          <AppInput
-                            value={description}
-                            onChange={e =>
-                              updateRoundCurriculum(roundIndex, duration, e.target.value)
-                            }
-                            placeholder="비고"
-                            className="program-detail-info-tab__curriculum-remarks-input"
-                          />
-                        </div>
-                      ) : (
-                        <CurriculumReadonlyDisplay
-                          content={content}
-                          deliveryType={round.deliveryType}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                )
-              })
-            ) : (
-              <tr>
-                <td colSpan={2} className="program-detail-info-tab__curriculum-empty">
-                  등록된 회차가 없습니다.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {isFormEdit && form?.formState?.errors?.rounds?.message && (
-        <span className="program-detail-info-tab__field-error">
-          {form.formState.errors.rounds.message}
-        </span>
+          return (
+            <DetailInfoForm.Row key={round.id} type="single">
+              <DetailInfoForm.Field
+                label={`${round.roundNumber}회차 강의 분량 및 내용`}
+                required={round.roundNumber <= 4}
+                fullRow
+                view={
+                  <CurriculumReadonlyDisplay content={content} deliveryType={round.deliveryType} />
+                }
+                edit={
+                  isFormEdit ? (
+                    <div className="detail-info-form-inputs-wrapper">
+                      <CmsRadio.Group
+                        value={round.deliveryType ?? 'offline'}
+                        options={ROUND_DELIVERY_OPTIONS}
+                        onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
+                      />
+                      <CurriculumDivider />
+                      <CmsInput
+                        value={duration}
+                        onChange={e =>
+                          updateRoundCurriculum(roundIndex, e.target.value, description)
+                        }
+                        placeholder="1시간"
+                      />
+                      <CurriculumDivider />
+                      <CmsInput
+                        value={description}
+                        onChange={e => updateRoundCurriculum(roundIndex, duration, e.target.value)}
+                        placeholder="비고"
+                      />
+                    </div>
+                  ) : undefined
+                }
+              />
+            </DetailInfoForm.Row>
+          )
+        })
+      ) : (
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field label="안내" fullRow view="등록된 회차가 없습니다." />
+        </DetailInfoForm.Row>
       )}
-    </>
+    </DetailInfoForm>
   )
 }

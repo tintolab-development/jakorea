@@ -164,16 +164,6 @@
   background: #f5f6f7;
 }
 
-.instructor-invoice-modal .instructor-invoice-modal__status-purple {
-  color: #7b61c8;
-  font-weight: 600;
-}
-
-.instructor-invoice-modal .instructor-invoice-modal__status-mint {
-  color: var(--JA-mint-01, #01a1af);
-  font-weight: 600;
-}
-
 .instructor-invoice-modal .instructor-invoice-modal__payment-row {
   display: inline-flex;
   align-items: center;

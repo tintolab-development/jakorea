@@ -1,5 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import type { ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/types/domain'
+import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 
 interface PendingFilters {
   title: string
@@ -8,6 +9,8 @@ interface PendingFilters {
   businessArea: string | undefined
   targetLevel: string | undefined
   type: string | undefined
+  /** 모집 예정 | 모집 중 | 모집 마감 (`getRecruitmentStatus`) */
+  participantRecruitment: string | undefined
   operationStartDate: Dayjs | null
   operationEndDate: Dayjs | null
 }
@@ -25,25 +28,27 @@ interface PendingUserFilters {
  */
 export function buildProgramListFilters(
   pendingFilters: PendingFilters,
-  readOnlyLifecycleStatus: boolean,
+  programMode: ProgramListProgramMode,
   economyScheduledLayout = false
 ) {
-  if (readOnlyLifecycleStatus && economyScheduledLayout) {
+  if (programMode === 'economy' && economyScheduledLayout) {
     return {
       title: pendingFilters.title,
       operationPeriod:
         pendingFilters.operationStartDate && pendingFilters.operationEndDate
           ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
           : null,
+      participantRecruitment: pendingFilters.participantRecruitment,
       category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
     }
   }
 
-  if (readOnlyLifecycleStatus) {
+  if (programMode === 'economy') {
     return {
       title: pendingFilters.title,
       lifecycleStatus: pendingFilters.lifecycleStatus,
+      participantRecruitment: pendingFilters.participantRecruitment,
       category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
     }

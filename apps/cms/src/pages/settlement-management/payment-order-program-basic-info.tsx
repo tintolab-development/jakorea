@@ -22,7 +22,7 @@ export function PaymentOrderProgramBasicInfo({
   const sessionLabel = `${detail.sessionCompleted} / ${detail.sessionTotal}`
 
   return (
-    <div className="payment-order-program-status-detail__basic-block program-detail-fullpage-modal__info-tab-block">
+    <div className="payment-order-program-status-detail__basic-block">
       <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
       <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">

@@ -26,37 +26,72 @@
   overflow: visible;
 }
 
-/* 테이블·캘린더 영역: 세로는 layout-content 스크롤 */
-.payment-orders-page__table-scroll-root {
-  display: flex;
-  flex-direction: column;
+/* FilterListLayout: content-wrapper가 이미 카드이므로 이중 그림자·배경 제거 */
+.payment-orders-page__content-wrapper .payment-orders-page__filter-list-layout.filter-list-layout {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout.filter-list-layout
+  .unified-filter-card {
+  margin-bottom: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-list-layout__body {
   flex: 0 1 auto;
   min-height: 0;
+  min-width: 0;
 }
 
-/* 캘린더 뷰: 툴바 단일 타이틀 + 디스크립션 (목록 뷰와 이중 타이틀 방지) */
-.payment-orders-page__calendar-heading {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+/* ViewModeController를 listHeader로 모은 뒤: 헤더 슬롯 하단 16px은 목록 전체 아래로 가면 안 됨 */
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-list-layout__header {
+  margin-bottom: 0;
 }
 
-.payment-orders-page__calendar-title {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
+/* 예전: __header(구분선만)의 margin-bottom 16px이 구분선과 본문 슬롯 사이 간격 — 동일 효과 */
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-list-layout__header
+  .participating-institutions-section__divider {
+  margin-bottom: var(--spacing-16);
 }
 
-.payment-orders-page__calendar-description {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-list-layout__body:empty {
+  display: none;
+}
+
+/* 구 participating-institutions-section__filters 와 동일: 필터 슬롯 축소 방지 */
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-list-layout__filter {
+  flex-shrink: 0;
+}
+
+/*
+ * 프로그램별·강사별 목록: 동일 열 정의를 써도 fluid 기본(table-layout:auto)이면
+ * 셀 텍스트 길이에 따라 열 비율이 달라짐 → 한쪽만 고정 레이아웃으로 통일
+ */
+.payment-orders-page
+  .participating-institutions-section__table-wrap
+  .cms-data-table.cms-data-table--fluid
+  table.ant-table {
+  table-layout: fixed !important;
+}
+
+/* 필터: 노출 기준(라디오) ~ 프로그램명 간 과한 여백 완화 + 칸 간격 살짝 타이트 */
+.payment-orders-page .unified-filter-card__fields-shell {
+  margin-right: 8px;
+}
+
+.payment-orders-page .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
+  margin-right: 8px;
 }

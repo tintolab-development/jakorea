@@ -6,7 +6,7 @@ import { useMemo, useState, useEffect, useCallback, type Key, type MouseEvent } 
 import { Card, Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
-import { FilterListLayout } from '@/shared/ui/filter-list-layout'
+import { FilterListLayout } from '@/shared/components/filter-list-layout'
 import { AppButton } from '@/shared/ui/app-button'
 import { Divider } from '@/shared/components/divider'
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
@@ -164,7 +164,13 @@ export function MembersPermissionList({
     [filteredRows, selectedKeySet]
   )
 
+  const notReady = () => {
+    window.alert('준비 중입니다.')
+    return
+  }
+
   const bulkApprove = useCallback(() => {
+    notReady()
     if (!canWrite || selectedRowKeys.length === 0) return
     if (selectedPendingRows.length === 0) {
       message.warning('승인 대기 상태인 신청만 승인할 수 있습니다.')
@@ -182,6 +188,7 @@ export function MembersPermissionList({
   }, [canWrite, selectedRowKeys.length, selectedPendingRows])
 
   const bulkReject = useCallback(() => {
+    notReady()
     if (!canWrite || selectedRowKeys.length === 0) return
     if (selectedPendingRows.length === 0) {
       message.warning('승인 대기 상태인 신청만 반려할 수 있습니다.')
@@ -316,6 +323,7 @@ export function MembersPermissionList({
             type: 'dateRange',
             label: '신청 시기',
             width: '30%',
+            defaultValue: null,
           },
         ]}
         filters={{

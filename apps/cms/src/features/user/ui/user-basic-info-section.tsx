@@ -1,8 +1,8 @@
 /**
- * 회원 상세 — 기본 정보 (개인·학교 / 강사 / 관리자 공통 테이블)
+ * 회원 상세 — 기본 정보 (DetailInfoForm.Field + DetailInfoForm.NameBlock)
  */
 
-import { useId, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AppButton } from '@/shared/ui/app-button'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
@@ -14,14 +14,14 @@ import {
 import type { DateValue } from '@/types'
 import type { User, UserRole } from '@/types/user'
 import { formatDate } from '@/shared/utils'
-import './user-detail-section-head.css'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { managedProgramCountDisplay } from './user-detail-fullpage-helpers'
 import './user-basic-info-section.css'
 import './admin-permission-tag.css'
 
-/** 기본 정보 테이블 본문 분기 (전체 회원 / 학교·교사 / 강사 / 관리자) */
 export type UserBasicInfoEntrySource = 'all_users' | 'institution' | 'instructor' | 'admin'
 
-/** URL 쿼리로 진입 맥락 전달 시 사용 (`?userDetailEntry=all_users` 등) */
 export const USER_BASIC_INFO_ENTRY_QUERY_KEY = 'userDetailEntry' as const
 
 const VALID_ENTRY_SOURCES: readonly UserBasicInfoEntrySource[] = [
@@ -38,11 +38,6 @@ function parseEntryQuery(value: string | null): UserBasicInfoEntrySource | undef
     : undefined
 }
 
-/**
- * props → URL 쿼리 → 역할 순으로 본문 키 결정.
- * - 전체 회원 목록: `entrySource="all_users"` 또는 쿼리 `userDetailEntry=all_users`
- * - 학교(교사) 회원: `entrySource="institution"` 또는 `userDetailEntry=institution`
- */
 export function resolveUserBasicInfoBodyKey(
   entrySourceProp: UserBasicInfoEntrySource | undefined,
   entryFromQuery: UserBasicInfoEntrySource | undefined,
@@ -57,28 +52,16 @@ export function resolveUserBasicInfoBodyKey(
 
 export interface UserBasicInfoExternalId1365 {
   maskedLabel: string
-  /** 개인정보 상세보기(마스킹 해제) 시 표시할 전체 ID — 없으면 `maskedLabel`만 사용 */
   fullLabel?: string
   onOpen?: () => void
 }
 
 export interface UserBasicInfoSectionProps {
   user: Omit<User, 'password'>
-  /**
-   * 기본 정보 테이블 분기 — 미지정 시 URL `userDetailEntry` 또는 회원 역할로 도출
-   * (`resolveUserBasicInfoBodyKey` 참고)
-   */
   entrySource?: UserBasicInfoEntrySource
-  /** 섹션 상단 회색 안내 (예: *관리자에 의해 등록된 회원입니다) */
   caption?: ReactNode
-  /** 일정 변경&취소 이력 — 1 이상이면 한글 성명 옆 배지 */
   scheduleChangeCount?: number
-  /** 1365 ID 마스킹 + 바로가기 */
   externalId1365?: UserBasicInfoExternalId1365 | null
-  /**
-   * true면 연락처·이메일·주소·계좌 등 원문 표시 (개인정보 상세보기 클릭 후)
-   * @default false
-   */
   personalInfoRevealed?: boolean
 }
 
@@ -107,6 +90,39 @@ function affiliationLine(user: Omit<User, 'password'>): string {
   return '-'
 }
 
+function affiliationAndGradeLine(user: Omit<User, 'password'>): string {
+  const school = user.affiliatedSchoolName?.trim()
+  const grade = user.listMetrics?.instructorAssignedGrade?.trim()
+  if (school && grade) return `${school} | ${grade}`
+  if (school) return school
+  return affiliationLine(user)
+}
+
+function highestEducationLine(user: Omit<User, 'password'>): string {
+  const t = user.listMetrics?.highestEducationLabel?.trim()
+  return t && t.length > 0 ? t : '-'
+}
+
+/** 소속 및 강사 경력 — API 요약 우선, 없으면 학교(학년)·강사 유형·경력 연수·JA 등급 조합 */
+function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>): string {
+  const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
+  if (summary) return summary
+
+  const school = user.affiliatedSchoolName?.trim()
+  const grade = user.listMetrics?.instructorAssignedGrade?.trim()
+  const schoolPart = school && grade ? `${school}(${grade})` : school || affiliationLine(user)
+  const typeLabel = user.listMetrics?.instructorTypeLabel?.trim()
+  const years = user.listMetrics?.instructorCareerYearsLabel?.trim()
+  const ja = user.listMetrics?.jaEvaluationGrade?.trim()
+  const jaPart = ja ? `${ja}등급` : ''
+  const tail = [typeLabel, years, jaPart].filter(Boolean).join(' | ')
+
+  if (schoolPart && schoolPart !== '-' && tail) return `${schoolPart}, ${tail}`
+  if (tail) return tail
+  if (schoolPart && schoolPart !== '-') return schoolPart
+  return '-'
+}
+
 function addressLine(user: Omit<User, 'password'>): string {
   return user.schoolInfo?.address ?? user.detailAddress ?? '-'
 }
@@ -129,10 +145,41 @@ function detailEmailDisplay(user: Omit<User, 'password'>, revealed: boolean): st
   return MASKING_POLICY.email(t)
 }
 
-function detailAddressDisplay(user: Omit<User, 'password'>, revealed: boolean): string {
+/** 비공개 시 앞쪽 시·군·구(공백 기준 앞 2토큰)는 그대로, 나머지는 blur (별표 마스킹 미사용) */
+function detailAddressView(user: Omit<User, 'password'>, revealed: boolean): ReactNode {
   const raw = addressLine(user)
   if (raw === '-' || revealed) return raw
-  return MASKING_POLICY.address(raw)
+  const parts = raw.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '-'
+  if (parts.length === 1) {
+    const [one] = parts
+    const cut = Math.min(4, Math.ceil(one.length / 2))
+    const head = one.slice(0, cut)
+    const tail = one.slice(cut)
+    return (
+      <span className="user-basic-info-section__address-privacy">
+        <span>{head}</span>
+        {tail ? (
+          <span className="user-basic-info-section__address-privacy__blur" aria-hidden>
+            {tail}
+          </span>
+        ) : null}
+      </span>
+    )
+  }
+  const head = parts.slice(0, 2).join(' ')
+  const tail = parts.slice(2).join(' ')
+  return (
+    <span className="user-basic-info-section__address-privacy">
+      <span>{head}</span>
+      {tail ? (
+        <span className="user-basic-info-section__address-privacy__blur" aria-hidden>
+          {' '}
+          {tail}
+        </span>
+      ) : null}
+    </span>
+  )
 }
 
 function instructorBankLine(user: Omit<User, 'password'>, revealed: boolean): string {
@@ -153,19 +200,34 @@ function instructorBankLine(user: Omit<User, 'password'>, revealed: boolean): st
   return left || holder ? `${left}${holder}` : '-'
 }
 
-function ColGroup() {
+function institutionTimesLabel(n: number | undefined): string {
+  return n != null && !Number.isNaN(n) ? `${n}회` : '-'
+}
+
+function Id1365View({
+  personalInfoRevealed,
+  externalId1365,
+}: {
+  personalInfoRevealed: boolean
+  externalId1365?: UserBasicInfoExternalId1365 | null
+}) {
   return (
-    <colgroup>
-      <col className="user-detail-modal__basic-table-col-label-left" />
-      <col className="user-detail-modal__basic-table-col-name-sub" />
-      <col className="user-detail-modal__basic-table-col-input-left" />
-      <col className="user-detail-modal__basic-table-col-label-right" />
-      <col className="user-detail-modal__basic-table-col-input-right" />
-    </colgroup>
+    <span className="user-basic-info-section__id1365-cell">
+      <span>
+        {personalInfoRevealed && externalId1365?.fullLabel
+          ? externalId1365.fullLabel
+          : (externalId1365?.maskedLabel ?? '-')}
+      </span>
+      {externalId1365?.onOpen ? (
+        <AppButton variant="primary" size="small" onClick={externalId1365.onOpen}>
+          1365 바로가기
+        </AppButton>
+      ) : null}
+    </span>
   )
 }
 
-function AllUsersBody({
+function AllUsersFields({
   user,
   scheduleChangeCount,
   externalId1365,
@@ -177,118 +239,63 @@ function AllUsersBody({
   personalInfoRevealed: boolean
 }) {
   return (
-    <tbody>
-      <tr>
-        <td
-          rowSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name"
-        >
-          <span className="user-detail-modal__basic-table-label">성명</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-          <span className="user-detail-modal__basic-table-label">한글</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          <span className="user-basic-info-section__name-with-badge">
-            {user.name}
-            {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-              <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-            ) : null}
-          </span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">1365 ID</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          <span className="user-basic-info-section__id1365-cell">
-            <span>
-              {personalInfoRevealed && externalId1365?.fullLabel
-                ? externalId1365.fullLabel
-                : (externalId1365?.maskedLabel ?? '-')}
-            </span>
-            {externalId1365?.onOpen ? (
-              <AppButton variant="primary" size="small" onClick={externalId1365.onOpen}>
-                1365 바로가기
-              </AppButton>
-            ) : null}
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-          <span className="user-detail-modal__basic-table-label">영문</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider user-detail-modal__name-eng">
-          {user.nameEn ?? '-'}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">성별 및 생년월일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {formatGenderBirthLine(user)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">연락처</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {detailPhoneDisplay(user, personalInfoRevealed)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">이메일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {detailEmailDisplay(user, personalInfoRevealed)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">자택 주소</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {detailAddressDisplay(user, personalInfoRevealed)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">소속</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {affiliationLine(user)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">가입일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {formatDate(user.createdAt)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">연동된 소셜 계정</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {socialLine(user)}
-        </td>
-      </tr>
-    </tbody>
+    <>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.NameBlock
+          rows={[
+            {
+              subLabel: '한글',
+              main: (
+                <span className="user-basic-info-section__name-with-badge">
+                  {user.name}
+                  {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+                    <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+                  ) : null}
+                </span>
+              ),
+              sideLabel: '1365 ID',
+              side: (
+                <Id1365View
+                  personalInfoRevealed={personalInfoRevealed}
+                  externalId1365={externalId1365}
+                />
+              ),
+            },
+            {
+              subLabel: '영문',
+              main: <span>{user.nameEn ?? '-'}</span>,
+              sideLabel: '성별 및 생년월일',
+              side: <span>{formatGenderBirthLine(user)}</span>,
+            },
+          ]}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="연락처"
+          view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="이메일"
+          view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="자택 주소"
+          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field label="소속" view={<span>{affiliationLine(user)}</span>} />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
+        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+      </DetailInfoForm.Row>
+    </>
   )
 }
 
-function institutionTimesLabel(n: number | undefined): string {
-  return n != null && !Number.isNaN(n) ? `${n}회` : '-'
-}
-
-/** 학교(교사) 회원 전용 — 기본 정보 */
-function InstitutionBody({ user }: { user: Omit<User, 'password'> }) {
+function InstitutionFields({ user }: { user: Omit<User, 'password'> }) {
   const schoolName = user.schoolInfo?.schoolName ?? '-'
   const schoolAddress = user.schoolInfo?.address ?? '-'
   const applicationCount = institutionTimesLabel(
@@ -297,252 +304,234 @@ function InstitutionBody({ user }: { user: Omit<User, 'password'> }) {
   const attendanceCount = institutionTimesLabel(user.listMetrics?.institutionProgramAttendanceCount)
 
   return (
-    <tbody>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">기관명</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {schoolName}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">기관 소재지</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {schoolAddress}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">프로그램 신청 횟수</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {applicationCount}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">프로그램 수강 횟수</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {attendanceCount}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">등록일</span>
-        </td>
-        <td
-          colSpan={3}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input"
-        >
-          {formatDate(user.createdAt)}
-        </td>
-      </tr>
-    </tbody>
+    <>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="기관명" view={<span>{schoolName}</span>} />
+        <DetailInfoForm.Field label="기관 소재지" view={<span>{schoolAddress}</span>} />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="프로그램 신청 횟수" view={<span>{applicationCount}</span>} />
+        <DetailInfoForm.Field label="프로그램 수강 횟수" view={<span>{attendanceCount}</span>} />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field label="등록일" view={<span>{formatDate(user.createdAt)}</span>} />
+      </DetailInfoForm.Row>
+    </>
   )
 }
 
-function InstructorBody({
-  user,
-  scheduleChangeCount,
-  externalId1365,
-  personalInfoRevealed,
-}: {
-  user: Omit<User, 'password'>
-  scheduleChangeCount?: number
-  externalId1365?: UserBasicInfoExternalId1365 | null
-  personalInfoRevealed: boolean
-}) {
-  const settlement = '-' // TODO: API — 정산 현황
-  const education = '-' // TODO: API — 최종 학력
-  const career = '-' // TODO: API — 소속 및 강사 경력
-  const feeLabel = '특강 강사비' // placeholder
-  const feeAmount = '915,000원' // placeholder
+function instructorFeeView(user: Omit<User, 'password'>) {
+  const feeLabel = user.listMetrics?.instructorTypeLabel?.trim() || '특강 강사비'
+  const feeAmount = '915,000원'
+  return (
+    <span className="basic-info-fee">
+      <span>{feeLabel}</span>
+      <span className="basic-info-fee__sep" aria-hidden>
+        {' | '}
+      </span>
+      <span>{feeAmount}</span>
+    </span>
+  )
+}
+
+function instructorBusinessIncomeView(user: Omit<User, 'password'>) {
   const businessIncome =
     user.instructorInfo?.isBusinessIncome === true
       ? '해당'
       : user.instructorInfo?.isBusinessIncome === false
         ? '해당 없음'
         : '-'
+  return <span>{businessIncome}</span>
+}
 
+function settlementStatusView(user: Omit<User, 'password'>) {
+  const s = user.listMetrics?.settlementStatusLabel?.trim()
+  return <span className="user-basic-info-section__text-blue">{s && s.length > 0 ? s : '-'}</span>
+}
+
+function SchoolTeacherFields({
+  user,
+  scheduleChangeCount,
+  personalInfoRevealed,
+}: {
+  user: Omit<User, 'password'>
+  scheduleChangeCount?: number
+  personalInfoRevealed: boolean
+}) {
+  const employment = user.listMetrics?.employmentStatusLabel?.trim() || '-'
   return (
-    <tbody>
-      <tr>
-        <td
-          rowSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name"
-        >
-          <span className="user-detail-modal__basic-table-label">성명</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-          <span className="user-detail-modal__basic-table-label">한글</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          <span className="user-basic-info-section__name-with-badge">
-            {user.name}
-            {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-              <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-            ) : null}
-          </span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">정산 현황</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-basic-info-section__text-mint">
-          {settlement}
-        </td>
-      </tr>
-      <tr>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-          <span className="user-detail-modal__basic-table-label">영문</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider user-detail-modal__name-eng">
-          {user.nameEn ?? '-'}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">1365 ID</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          <span className="user-basic-info-section__id1365-cell">
-            <span>
-              {personalInfoRevealed && externalId1365?.fullLabel
-                ? externalId1365.fullLabel
-                : (externalId1365?.maskedLabel ?? '-')}
-            </span>
-            {externalId1365?.onOpen ? (
-              <AppButton variant="primary" size="small" onClick={externalId1365.onOpen}>
-                1365 바로가기
-              </AppButton>
-            ) : null}
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">연락처</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {detailPhoneDisplay(user, personalInfoRevealed)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">성별 및 생년월일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {formatGenderBirthLine(user)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">자택 주소</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {detailAddressDisplay(user, personalInfoRevealed)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">이메일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {detailEmailDisplay(user, personalInfoRevealed)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">최종 학력</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {education}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">정산 계좌 정보</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {instructorBankLine(user, personalInfoRevealed)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">가입일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {formatDate(user.createdAt)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">소속 및 강사 경력</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {career}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">연동된 소셜 계정</span>
-        </td>
-        <td
-          colSpan={3}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input"
-        >
-          {socialLine(user)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">강의비 책정 기준</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-          <span className="user-detail-modal__basic-table-label">{feeLabel}</span>
-        </td>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input"
-        >
-          {feeAmount}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">사업소득자 여부</span>
-        </td>
-        <td
-          colSpan={3}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input"
-        >
-          {businessIncome}
-        </td>
-      </tr>
-    </tbody>
+    <>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.NameBlock
+          showGroupTitle={false}
+          rows={[
+            {
+              subLabel: '성명(한글)',
+              main: (
+                <span className="user-basic-info-section__name-with-badge">
+                  {user.name}
+                  {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+                    <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+                  ) : null}
+                </span>
+              ),
+              sideLabel: '재직 현황',
+              side: <span>{employment}</span>,
+            },
+            {
+              subLabel: '성명(영문)',
+              main: <span>{user.nameEn ?? '-'}</span>,
+              sideLabel: '성별 및 생년월일',
+              side: <span>{formatGenderBirthLine(user)}</span>,
+            },
+          ]}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="연락처"
+          view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="이메일"
+          view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="자택 주소"
+          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="소속 및 담당 학년"
+          view={<span>{affiliationAndGradeLine(user)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
+        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+      </DetailInfoForm.Row>
+    </>
   )
 }
 
-function AdminBody({
+/** 겸직 강사·순수 강사 공통 — 기본 정보 6행 + 강의비는 별도 폼 */
+function InstructorDualOrOnlyBasicFields({
+  user,
+  scheduleChangeCount,
+  personalInfoRevealed,
+}: {
+  user: Omit<User, 'password'>
+  scheduleChangeCount?: number
+  personalInfoRevealed: boolean
+}) {
+  return (
+    <>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.NameBlock
+          showGroupTitle={false}
+          rows={[
+            {
+              subLabel: '성명(한글)',
+              main: (
+                <span className="user-basic-info-section__name-with-badge">
+                  {user.name}
+                  {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+                    <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+                  ) : null}
+                </span>
+              ),
+              sideLabel: '정산 현황',
+              side: settlementStatusView(user),
+            },
+            {
+              subLabel: '성명(영문)',
+              main: <span>{user.nameEn ?? '-'}</span>,
+              sideLabel: '성별 및 생년월일',
+              side: <span>{formatGenderBirthLine(user)}</span>,
+            },
+          ]}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="연락처"
+          view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="이메일"
+          view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="자택 주소"
+          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="정산 계좌 정보"
+          view={<span>{instructorBankLine(user, personalInfoRevealed)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="최종 학력" view={<span>{highestEducationLine(user)}</span>} />
+        <DetailInfoForm.Field
+          label="소속 및 강사 경력"
+          view={<span>{affiliationAndInstructorCareerLine(user)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
+        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+      </DetailInfoForm.Row>
+    </>
+  )
+}
+
+/** 강의비·사업소득 — 기본 정보와 분리(상단 16px 간격) */
+function InstructorFeeDetailForm({ user }: { user: Omit<User, 'password'> }) {
+  return (
+    <DetailInfoForm
+      title="강의비·사업소득"
+      className="user-basic-info-section user-basic-info-section--instructor-fee-form"
+    >
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="강의비 책정 기준" view={instructorFeeView(user)} />
+        <DetailInfoForm.Field label="사업소득자 여부" view={instructorBusinessIncomeView(user)} />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
+  )
+}
+
+function InstructorFieldsByProfile({
+  user,
+  scheduleChangeCount,
+  personalInfoRevealed,
+}: {
+  user: Omit<User, 'password'>
+  scheduleChangeCount?: number
+  personalInfoRevealed: boolean
+}) {
+  const profile = resolveInstructorMemberProfile(user) ?? 'instructor_only'
+  if (profile === 'school_teacher') {
+    return (
+      <SchoolTeacherFields
+        user={user}
+        scheduleChangeCount={scheduleChangeCount}
+        personalInfoRevealed={personalInfoRevealed}
+      />
+    )
+  }
+  return (
+    <InstructorDualOrOnlyBasicFields
+      user={user}
+      scheduleChangeCount={scheduleChangeCount}
+      personalInfoRevealed={personalInfoRevealed}
+    />
+  )
+}
+
+function AdminFields({
   user,
   personalInfoRevealed,
 }: {
@@ -552,78 +541,57 @@ function AdminBody({
   const permVariant = getAdminPermissionVariant(user)
 
   return (
-    <tbody>
-      <tr>
-        <td
-          rowSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name"
-        >
-          <span className="user-detail-modal__basic-table-label">성명</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-          <span className="user-detail-modal__basic-table-label">한글</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {user.name}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">권한 유형</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          <span className={`user-list-admin-perm-tag user-list-admin-perm-tag--${permVariant}`}>
-            {ADMIN_PERMISSION_TAG_LABEL[permVariant]}
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--name-sub">
-          <span className="user-detail-modal__basic-table-label">영문</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {user.nameEn ?? '-'}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">성별 및 생년월일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {formatGenderBirthLine(user)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">연락처</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {detailPhoneDisplay(user, personalInfoRevealed)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">이메일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {detailEmailDisplay(user, personalInfoRevealed)}
-        </td>
-      </tr>
-      <tr>
-        <td
-          colSpan={2}
-          className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--row-label"
-        >
-          <span className="user-detail-modal__basic-table-label">가입일</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input user-detail-modal__basic-table-cell--before-divider">
-          {formatDate(user.createdAt)}
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--label user-detail-modal__basic-table-cell--label-right user-detail-modal__basic-table-cell--divider-left">
-          <span className="user-detail-modal__basic-table-label">연동된 소셜 계정</span>
-        </td>
-        <td className="user-detail-modal__basic-table-cell user-detail-modal__basic-table-cell--input">
-          {socialLine(user)}
-        </td>
-      </tr>
-    </tbody>
+    <>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.NameBlock
+          className="user-basic-info-section__admin-name-block"
+          rows={[
+            {
+              subLabel: '한글',
+              main: <span>{user.name}</span>,
+              sideLabel: '권한 유형',
+              side: (
+                <span
+                  className={`user-list-admin-perm-tag user-list-admin-perm-tag--${permVariant}`}
+                >
+                  {ADMIN_PERMISSION_TAG_LABEL[permVariant]}
+                </span>
+              ),
+            },
+            {
+              subLabel: '영문',
+              main: <span>{user.nameEn ?? '-'}</span>,
+              sideLabel: '담당 프로그램 수',
+              side: <span>{managedProgramCountDisplay(user)}</span>,
+            },
+          ]}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="연락처"
+          view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="이메일"
+          view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="자택 주소"
+          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="소속 및 담당 학년"
+          view={<span>{affiliationLine(user)}</span>}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
+        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+      </DetailInfoForm.Row>
+    </>
   )
 }
 
@@ -638,42 +606,38 @@ export function UserBasicInfoSection({
   const [searchParams] = useSearchParams()
   const entryFromQuery = parseEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
   const bodyKey = resolveUserBasicInfoBodyKey(entrySourceProp, entryFromQuery, user.role)
-  const titleId = useId()
+  const instructorProfileForFee =
+    bodyKey === 'instructor' && user.role === 'INSTRUCTOR'
+      ? (resolveInstructorMemberProfile(user) ?? 'instructor_only')
+      : null
+  const showInstructorFeeForm =
+    instructorProfileForFee === 'instructor_dual' || instructorProfileForFee === 'instructor_only'
 
   return (
-    <section className="user-basic-info-section" aria-labelledby={titleId}>
-      <div className="user-detail-section__head">
-        <div id={titleId} className="user-detail-section__title">
-          기본 정보
-        </div>
-        {caption ? <p className="user-detail-section__caption">{caption}</p> : null}
+    <div className="user-detail-modal__basic-inner">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+        <DetailInfoForm title="기본 정보" description={caption} className="user-basic-info-section">
+          {bodyKey === 'all_users' ? (
+            <AllUsersFields
+              user={user}
+              scheduleChangeCount={scheduleChangeCount}
+              externalId1365={externalId1365}
+              personalInfoRevealed={personalInfoRevealed}
+            />
+          ) : bodyKey === 'institution' ? (
+            <InstitutionFields user={user} />
+          ) : bodyKey === 'instructor' ? (
+            <InstructorFieldsByProfile
+              user={user}
+              scheduleChangeCount={scheduleChangeCount}
+              personalInfoRevealed={personalInfoRevealed}
+            />
+          ) : (
+            <AdminFields user={user} personalInfoRevealed={personalInfoRevealed} />
+          )}
+        </DetailInfoForm>
+        {showInstructorFeeForm ? <InstructorFeeDetailForm user={user} /> : null}
       </div>
-      <div className="user-detail-modal__basic-inner">
-        <div className="user-detail-modal__basic-table-wrap">
-          <table className="user-detail-modal__basic-table">
-            <ColGroup />
-            {bodyKey === 'all_users' ? (
-              <AllUsersBody
-                user={user}
-                scheduleChangeCount={scheduleChangeCount}
-                externalId1365={externalId1365}
-                personalInfoRevealed={personalInfoRevealed}
-              />
-            ) : bodyKey === 'institution' ? (
-              <InstitutionBody user={user} />
-            ) : bodyKey === 'instructor' ? (
-              <InstructorBody
-                user={user}
-                scheduleChangeCount={scheduleChangeCount}
-                externalId1365={externalId1365}
-                personalInfoRevealed={personalInfoRevealed}
-              />
-            ) : (
-              <AdminBody user={user} personalInfoRevealed={personalInfoRevealed} />
-            )}
-          </table>
-        </div>
-      </div>
-    </section>
+    </div>
   )
 }

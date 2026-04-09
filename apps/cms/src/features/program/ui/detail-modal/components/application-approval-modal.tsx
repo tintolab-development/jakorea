@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
-import { AppRadio } from '@/shared/ui/app-radio'
+import { CmsRadio } from '@/shared/ui/cms-radio'
 import { AppSelect } from '@/shared/ui/app-select'
 import './application-approval-modal.css'
 
@@ -78,14 +78,14 @@ export function ApplicationApprovalModal({
         <div className="application-approval-modal__fee">
           <div className="application-approval-modal__fee-label">강사비 책정 방식</div>
           <div className="application-approval-modal__fee-row">
-            <AppRadio.Group
+            <CmsRadio.Group
               className="application-approval-modal__radio-group"
               value={feeMode}
               onChange={e => setFeeMode(e.target.value)}
             >
-              <AppRadio value="program">프로그램 기준</AppRadio>
-              <AppRadio value="instructor">강사 별도</AppRadio>
-            </AppRadio.Group>
+              <CmsRadio value="program">프로그램 기준</CmsRadio>
+              <CmsRadio value="instructor">강사 별도</CmsRadio>
+            </CmsRadio.Group>
             {feeMode === 'instructor' ? (
               <AppSelect
                 className="application-approval-modal__fee-select"
