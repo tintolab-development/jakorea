@@ -26,53 +26,46 @@
   overflow: visible;
 }
 
-/* FilterListLayout: content-wrapper가 이미 카드이므로 이중 그림자·배경 제거 */
-.payment-orders-page__content-wrapper .payment-orders-page__filter-list-layout.filter-list-layout {
+/* FilterTableLayout: content-wrapper가 이미 카드이므로 이중 그림자·배경 제거 */
+.payment-orders-page__content-wrapper .payment-orders-page__filter-list-layout.filter-table-layout {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
   margin-bottom: 0;
+  padding: 0;
 }
 
 .payment-orders-page__content-wrapper
-  .payment-orders-page__filter-list-layout.filter-list-layout
-  .unified-filter-card {
+  .payment-orders-page__filter-list-layout.filter-table-layout
+  .table-filter-group__container {
   margin-bottom: 0;
 }
 
 .payment-orders-page__content-wrapper
   .payment-orders-page__filter-list-layout
-  .filter-list-layout__body {
+  .filter-table-layout__table {
   flex: 0 1 auto;
   min-height: 0;
   min-width: 0;
 }
 
-/* ViewModeController를 listHeader로 모은 뒤: 헤더 슬롯 하단 16px은 목록 전체 아래로 가면 안 됨 */
+/* 구분선·본문 슬롯 간격은 filter-table-layout__divider 패딩으로 처리 */
 .payment-orders-page__content-wrapper
   .payment-orders-page__filter-list-layout
-  .filter-list-layout__header {
-  margin-bottom: 0;
-}
-
-/* 예전: __header(구분선만)의 margin-bottom 16px이 구분선과 본문 슬롯 사이 간격 — 동일 효과 */
-.payment-orders-page__content-wrapper
-  .payment-orders-page__filter-list-layout
-  .filter-list-layout__header
-  .participating-institutions-section__divider {
-  margin-bottom: var(--spacing-16);
+  .filter-table-layout__divider {
+  padding: var(--spacing-16) 0;
 }
 
 .payment-orders-page__content-wrapper
   .payment-orders-page__filter-list-layout
-  .filter-list-layout__body:empty {
+  .filter-table-layout__table:empty {
   display: none;
 }
 
 /* 구 participating-institutions-section__filters 와 동일: 필터 슬롯 축소 방지 */
 .payment-orders-page__content-wrapper
   .payment-orders-page__filter-list-layout
-  .filter-list-layout__filter {
+  .filter-table-layout__filter {
   flex-shrink: 0;
 }
 

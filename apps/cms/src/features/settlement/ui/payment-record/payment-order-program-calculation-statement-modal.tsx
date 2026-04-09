@@ -11,7 +11,7 @@ import { SendNotiButton } from '@/features/program/ui/detail-modal/components/se
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import '@/features/program/ui/detail-modal/applicants/applicant-instructor-basic-info.css'
-import '@/features/program/ui/detail-modal/project-info/project-info-form-shared.css'
+import '@/features/program/program-detail/ui/project-info-form-shared.css'
 import '@/pages/settlement-management/payment-order-admin-status-tag.css'
 import './payment-order-program-calculation-statement-modal.css'
 import { PaymentOrderPaymentConfirmationModal } from './payment-order-payment-confirmation-modal'

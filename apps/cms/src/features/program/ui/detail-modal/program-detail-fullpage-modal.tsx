@@ -38,7 +38,7 @@ import {
 } from './program-status/participating-instructor-fullpage-view'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantDetails } from './applicants/applicants-detail'
-import { ProjectInfoDetailPanels } from './project-info/project-info-detail'
+import { ProjectInfoDetailPanels } from '../../program-detail/ui/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'

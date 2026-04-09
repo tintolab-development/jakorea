@@ -1,5 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
-import type { SectionSchema } from './recruitment-schema'
+import type { SectionSchema } from '../../model/recruitment-schema'
 
 export function renderSchema(section: SectionSchema, isEdit: boolean) {
   return section.rows.map((row, i) => (

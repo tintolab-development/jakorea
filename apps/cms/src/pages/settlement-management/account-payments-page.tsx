@@ -418,15 +418,9 @@ export default function AccountPaymentsPage() {
 
           <div className="participating-institutions-section__below-divider">
             <div className="participating-institutions-section__table-header">
-              <div
-                className={
-                  viewMode === 'calendar'
-                    ? 'participating-institutions-section__table-heading payment-orders-page__calendar-heading'
-                    : 'participating-institutions-section__table-heading'
-                }
-              >
-                <span className="payment-orders-page__calendar-title">계좌 지급 대상 목록</span>
-                <span className="payment-orders-page__calendar-description">총 {total}건</span>
+              <div>
+                <span className="table-title">계좌 지급 대상 목록</span>
+                <span className="table-description">총 {total}건</span>
               </div>
               <div className="participating-institutions-section__table-actions">
                 {viewMode === 'list' ? (
