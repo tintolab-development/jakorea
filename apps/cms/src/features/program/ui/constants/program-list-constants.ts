@@ -6,7 +6,7 @@
 
 import type { ProgramCategory, TargetLevel } from '@/types/domain'
 import { programLifecycleStatusConfig, getProgramLifecycleLabel } from '@/shared/constants/status'
-import { getRecruitmentStatus } from '../detail-modal/project-info/program-detail-info-constants'
+import { getRecruitmentStatus } from '../detail-modal/project-info/constants/program-detail-info-constants'
 
 export { getRecruitmentStatus }
 

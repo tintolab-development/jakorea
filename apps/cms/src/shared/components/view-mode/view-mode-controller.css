@@ -1,0 +1,33 @@
+/**
+ * ViewModeController — 헤더(좌: 커스텀, 우: ViewModeToggle) + 본문
+ */
+
+.view-mode-controller {
+  width: 100%;
+  min-width: 0;
+}
+
+.view-mode-controller__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: var(--spacing-16);
+}
+
+.view-mode-controller__header-start {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.view-mode-controller__header-end {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.view-mode-controller__content {
+  width: 100%;
+  min-width: 0;
+}

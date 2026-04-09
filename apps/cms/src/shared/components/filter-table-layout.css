@@ -1,0 +1,69 @@
+/**
+ * 필터 + 구분선 + 테이블 헤더(제목·설명·버튼) + 테이블
+ */
+
+.filter-table-layout {
+  width: 100%;
+  background: var(--color-bg-base);
+  margin-bottom: var(--spacing-24);
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
+  padding: 20px;
+}
+
+.filter-table-layout .unified-filter-card {
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
+.filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-16);
+}
+
+.filter-table-layout__toolbar-main {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.filter-table-layout__toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-12);
+  flex-shrink: 0;
+}
+
+.filter-table-layout__title {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%; /* 28px */
+  padding: 0 10px 0 8px;
+}
+
+.filter-table-layout__description {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
+}
+
+.filter-table-layout__table {
+  width: 100%;
+  min-width: 0;
+}

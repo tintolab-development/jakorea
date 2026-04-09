@@ -10,9 +10,9 @@
   overflow: auto;
 }
 
-/* 기본 정보 테이블 ↔ 필터 영역 간격 32px (강사 지급 현황 상세 전용 블록) */
-.payment-order-program-status-detail__basic-block.payment-order-instructor-status-detail__basic-block {
-  margin-bottom: 32px;
+/* 기본 정보 테이블 ↔ 필터 영역 간격 48px */
+.payment-order-program-status-detail__basic-block {
+  margin-bottom: 48px;
 }
 
 /* 신청 강사 기본정보 탭과 동일: applicant-instructor-basic-info__title 간격은 부모 .applicant-instructor-basic-info gap */

@@ -4,6 +4,7 @@
  * 경제 교육 페이지: 3단계 라벨 (프로그램 진행 예정/중/완료) 및 스크린샷 색상 적용
  */
 
+import type { CSSProperties } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { ProgramLifecycleStatus } from '@/types/domain'
 import {
@@ -33,6 +34,7 @@ function getEconomyModifier(status: ProgramLifecycleStatus): string {
 export interface ProgramLifecycleStatusBadgeProps {
   status: ProgramLifecycleStatus
   className?: string
+  style?: CSSProperties
   /**
    * `table`: 목록/테이블 컬럼용 — `AppStatusBadge` 기본 고정 폭(120px)을 풀고 라벨 길이에 맞춤.
    * 카드·요약 위젯 등은 기본값(`default`) 유지.
@@ -43,6 +45,7 @@ export interface ProgramLifecycleStatusBadgeProps {
 export function ProgramLifecycleStatusBadge({
   status,
   className,
+  style,
   variant = 'default',
 }: ProgramLifecycleStatusBadgeProps) {
   const location = useLocation()
@@ -56,6 +59,7 @@ export function ProgramLifecycleStatusBadge({
     <AppStatusBadge
       label={label}
       className={`program-lifecycle-status-badge ${modifier}${variantClass} ${className ?? ''}`.trim()}
+      style={style}
     />
   )
 }

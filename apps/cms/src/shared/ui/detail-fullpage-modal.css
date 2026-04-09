@@ -63,8 +63,7 @@
   align-items: stretch;
   gap: var(--spacing-12);
   padding: var(--detail-fullpage-header-padding-top, 30px)
-    var(--detail-fullpage-header-padding-x, 52px) var(--detail-fullpage-header-padding-bottom, 16px)
-    var(--detail-fullpage-header-padding-x, 52px);
+    var(--detail-fullpage-header-padding-x, 52px) 0 var(--detail-fullpage-header-padding-x, 52px);
   min-height: 90px;
   box-sizing: border-box;
 }
@@ -86,17 +85,6 @@
   line-height: 120%;
   color: var(--default-BK, #3d3d3d);
   flex: 1;
-  min-width: 0;
-}
-
-/* 타이틀 행 아래: 액션 버튼 — 닫기(X)와 동일 오른쪽 기준선으로 정렬 */
-.detail-fullpage-modal__header-extra-slot {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-8);
-  width: 100%;
   min-width: 0;
 }
 
@@ -179,6 +167,7 @@
 
 .detail-fullpage-modal__lnb-list > li {
   margin-bottom: 8px;
+  padding: 0;
 }
 
 .detail-fullpage-modal__lnb-list > li:last-child {
@@ -203,6 +192,8 @@
     background 0.2s,
     color 0.2s;
   gap: 8px;
+  box-sizing: border-box;
+  min-height: 54px;
 }
 
 .detail-fullpage-modal__lnb-item:hover {
@@ -233,13 +224,16 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
+  line-height: 0;
 }
 
 .detail-fullpage-modal__lnb-icon {
+  display: block;
   width: 20px;
   height: 20px;
   flex-shrink: 0;
   color: inherit;
+  box-sizing: border-box;
 }
 
 .detail-fullpage-modal__lnb-item-label {
@@ -261,6 +255,8 @@
 .detail-fullpage-modal__lnb-children-wrap {
   display: grid;
   grid-template-rows: 0fr;
+  min-height: 0;
+  overflow: hidden;
   transition: grid-template-rows 0.2s ease;
   pointer-events: none;
 }
@@ -279,6 +275,10 @@
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* 접힘 시 margin이 그리드 최소 높이를 밀어 올리지 않도록 — 펼침 때만 상단 간격 */
+.detail-fullpage-modal__lnb-children-wrap--open .detail-fullpage-modal__lnb-children {
   margin-top: 10px;
 }
 

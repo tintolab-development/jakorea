@@ -1,19 +1,19 @@
 /**
- * 임금 정보 테이블 (프로그램 상세 공통 정보 탭)
+ * 임금 정보 섹션 (프로그램 상세 공통 정보 탭)
  */
 
-import { useEffect, useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Controller, type UseFormReturn } from 'react-hook-form'
-import { AppInput } from '@/shared/ui/app-input'
-import { AppSelect } from '@/shared/ui/app-select'
-import { AppRadio } from '@/shared/ui/app-radio'
+import { CmsRadio } from '@/shared/ui/cms-radio'
+import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import {
   getProgramWageInfoMock,
   PROGRAM_WAGE_TYPE_OPTIONS,
   PROGRAM_WAGE_PRICING_MEASURE_OPTIONS,
 } from '@/data/mock/program-wage-info'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
-import './program-wage-info-section.css'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import { CmsInput } from '@/shared/ui/cms-input'
 
 export interface ProgramWageInfoSectionProps {
   programId: string
@@ -34,7 +34,7 @@ function WageValueParts({ text }: { text: string }) {
     <>
       {parts.map((p, i) => (
         <span key={i}>
-          {i > 0 ? <span className="program-detail-info-tab__separator"> | </span> : null}
+          {i > 0 ? <span className="detail-info-form-inputs-separator"> | </span> : null}
           {p}
         </span>
       ))}
@@ -52,9 +52,8 @@ function parsePricingDisplay(text: string): {
   const basePrice =
     parts.find(v => v.startsWith('기본'))?.replace(/^기본(?: 강사비)?\s*:\s*/, '') ?? '240,000원'
   const longDistancePrice =
-    parts
-      .find(v => v.startsWith('장거리'))
-      ?.replace(/^장거리(?: 강사비)?\s*:\s*/, '') ?? '300,000원'
+    parts.find(v => v.startsWith('장거리'))?.replace(/^장거리(?: 강사비)?\s*:\s*/, '') ??
+    '300,000원'
   return { timeUnit, basePrice, longDistancePrice }
 }
 
@@ -89,8 +88,7 @@ function composeWagePricingTimeUnit(
   quantity: number | undefined,
   compareMode: WageCompareMode | undefined
 ): string {
-  const q =
-    quantity != null && !Number.isNaN(Number(quantity)) ? Math.max(0, Number(quantity)) : 1
+  const q = quantity != null && !Number.isNaN(Number(quantity)) ? Math.max(0, Number(quantity)) : 1
   const measure = measureLabel?.trim() || '시간'
   const mode: WageCompareMode = compareMode ?? 'per'
   const suffix = mode === 'over' ? '초과' : mode === 'under' ? '이하' : '당'
@@ -112,22 +110,6 @@ function syncWagePricingTimeUnit(form: UseFormReturn<ProgramDetailEditFormValues
   )
 }
 
-/** 임금 정보 테이블: 필수 표시(*)는 수정 모드(폼 연동)에서만 */
-function WageRequiredTh({
-  children,
-  showRequired,
-}: {
-  children: ReactNode
-  showRequired: boolean
-}) {
-  return (
-    <th className={showRequired ? 'program-detail-info-tab__th--required' : undefined}>
-      {children}
-      {showRequired ? <span className="program-detail-info-tab__required">*</span> : null}
-    </th>
-  )
-}
-
 export function ProgramWageInfoSection({
   programId,
   isEditMode = false,
@@ -135,7 +117,10 @@ export function ProgramWageInfoSection({
 }: ProgramWageInfoSectionProps) {
   const data = useMemo(() => getProgramWageInfoMock(programId), [programId])
   const isFormEdit = isEditMode && form
-  const parsedPricing = useMemo(() => parsePricingDisplay(data.pricingDisplay), [data.pricingDisplay])
+  const parsedPricing = useMemo(
+    () => parsePricingDisplay(data.pricingDisplay),
+    [data.pricingDisplay]
+  )
 
   useEffect(() => {
     if (!isFormEdit || !form) return
@@ -159,97 +144,98 @@ export function ProgramWageInfoSection({
   }, [isFormEdit, form, data, parsedPricing])
 
   return (
-    <section className="program-wage-info-section">
-      <div className="program-detail-info-tab__section-title">임금 정보</div>
-      <div className="program-wage-info-section__table-wrap">
-        <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-wage-info-section__table">
-          <colgroup>
-            <col className="program-wage-info-section__col-label" />
-            <col />
-            <col className="program-wage-info-section__col-label" />
-            <col />
-          </colgroup>
-          <tbody>
-            <tr>
-              <WageRequiredTh showRequired={!!isFormEdit}>강사비 유형</WageRequiredTh>
-              <td>
-                {isFormEdit && form ? (
+    <DetailInfoForm
+      title="임금 정보"
+      mode={isFormEdit ? 'edit' : 'view'}
+      className="detail-info-form--gap"
+    >
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="강사비 유형"
+          required
+          view={data.wageType}
+          edit={
+            isFormEdit && form ? (
+              <Controller
+                name="wageType"
+                control={form.control}
+                render={({ field }) => {
+                  const current = field.value?.trim() ?? ''
+                  const inPreset = PROGRAM_WAGE_TYPE_OPTIONS.some(o => o.value === current)
+                  const options =
+                    current && !inPreset
+                      ? [...PROGRAM_WAGE_TYPE_OPTIONS, { value: current, label: current }]
+                      : PROGRAM_WAGE_TYPE_OPTIONS
+                  return (
+                    <CmsSelect
+                      value={current || undefined}
+                      options={options}
+                      placeholder="강사비 유형 선택"
+                      allowClear
+                      showSearch
+                      optionFilterProp="label"
+                      onChange={v => field.onChange(v ?? undefined)}
+                    />
+                  )
+                }}
+              />
+            ) : undefined
+          }
+        />
+        <DetailInfoForm.Field
+          label="강사비 책정"
+          required
+          view={<WageValueParts text={data.pricingDisplay} />}
+          edit={
+            isFormEdit && form ? (
+              <div>
+                <div className="detail-info-form-inputs-wrapper">
                   <Controller
-                    name="wageType"
+                    name="wagePricingMeasureLabel"
                     control={form.control}
-                    render={({ field }) => {
-                      const current = field.value?.trim() ?? ''
-                      const inPreset = PROGRAM_WAGE_TYPE_OPTIONS.some(o => o.value === current)
-                      const options =
-                        current && !inPreset
-                          ? [...PROGRAM_WAGE_TYPE_OPTIONS, { value: current, label: current }]
-                          : PROGRAM_WAGE_TYPE_OPTIONS
-                      return (
-                        <AppSelect
-                          value={current || undefined}
-                          options={options}
-                          placeholder="강사비 유형 선택"
-                          allowClear
-                          showSearch
-                          optionFilterProp="label"
-                          onChange={v => field.onChange(v ?? undefined)}
-                          className="program-wage-info-section__wage-type-select"
-                        />
-                      )
-                    }}
+                    render={({ field }) => (
+                      <CmsSelect
+                        width={96}
+                        style={{ flexShrink: 0 }}
+                        value={field.value || '시간'}
+                        options={PROGRAM_WAGE_PRICING_MEASURE_OPTIONS}
+                        onChange={v => {
+                          field.onChange(v ?? '시간')
+                          syncWagePricingTimeUnit(form)
+                        }}
+                        allowClear={false}
+                      />
+                    )}
                   />
-                ) : (
-                  data.wageType
-                )}
-              </td>
-              <WageRequiredTh showRequired={!!isFormEdit}>강사비 책정</WageRequiredTh>
-              <td className="program-wage-info-section__td-pricing-basis">
-                {isFormEdit && form ? (
-                  <div className="program-wage-info-section__pricing-basis-row">
-                    <Controller
-                      name="wagePricingMeasureLabel"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppSelect
-                          value={field.value || '시간'}
-                          options={PROGRAM_WAGE_PRICING_MEASURE_OPTIONS}
-                          onChange={v => {
-                            field.onChange(v ?? '시간')
-                            syncWagePricingTimeUnit(form)
-                          }}
-                          allowClear={false}
-                          className="program-wage-info-section__measure-select"
-                        />
-                      )}
-                    />
-                    <Controller
-                      name="wagePricingQuantity"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          type="number"
-                          min={0}
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={e => {
-                            const raw = e.target.value
-                            const n = parseInt(raw, 10)
-                            field.onChange(raw === '' ? undefined : Number.isNaN(n) ? undefined : n)
-                            syncWagePricingTimeUnit(form)
-                          }}
-                          className="program-wage-info-section__input program-wage-info-section__input--qty"
-                        />
-                      )}
-                    />
-                    <span className="program-wage-info-section__pricing-basis-unit-suffix">
-                      {form.watch('wagePricingMeasureLabel') || '시간'}
-                    </span>
+                  <Controller
+                    name="wagePricingQuantity"
+                    control={form.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        width={112}
+                        style={{ flexShrink: 0 }}
+                        type="number"
+                        min={0}
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const raw = e.target.value
+                          const n = parseInt(raw, 10)
+                          field.onChange(raw === '' ? undefined : Number.isNaN(n) ? undefined : n)
+                          syncWagePricingTimeUnit(form)
+                        }}
+                      />
+                    )}
+                  />
+                  <div style={{ flexShrink: 0 }}>
+                    {form.watch('wagePricingMeasureLabel') || '시간'}
+                  </div>
+                  <div style={{ flexShrink: 0, marginLeft: 4 }}>
                     <Controller
                       name="wagePricingCompareMode"
                       control={form.control}
                       render={({ field }) => (
-                        <AppRadio.Group
-                          className="program-wage-info-section__compare-radios"
+                        <CmsRadio.Group
                           value={field.value ?? 'per'}
                           options={WAGE_COMPARE_RADIO_OPTIONS}
                           onChange={e => {
@@ -260,64 +246,56 @@ export function ProgramWageInfoSection({
                       )}
                     />
                   </div>
-                ) : (
-                  <WageValueParts text={data.pricingDisplay} />
-                )}
-              </td>
-            </tr>
-            {isFormEdit && form ? (
-              <tr>
-                <WageRequiredTh showRequired>기본 강사비</WageRequiredTh>
-                <td>
-                  <div className="program-wage-info-section__amount-row">
-                    <Controller
-                      name="wagePricingBase"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="직접 입력"
-                          className="program-wage-info-section__input program-wage-info-section__input--price"
-                        />
-                      )}
-                    />
-                    <span className="program-wage-info-section__amount-unit">원</span>
-                  </div>
-                </td>
-                <WageRequiredTh showRequired>장거리 강사비</WageRequiredTh>
-                <td>
-                  <div className="program-wage-info-section__amount-row">
-                    <Controller
-                      name="wagePricingLongDistance"
-                      control={form.control}
-                      render={({ field }) => (
-                        <AppInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="직접 입력"
-                          className="program-wage-info-section__input program-wage-info-section__input--price"
-                        />
-                      )}
-                    />
-                    <span className="program-wage-info-section__amount-unit">원</span>
-                  </div>
-                </td>
-              </tr>
-            ) : null}
-            <tr>
-              <WageRequiredTh showRequired={!!isFormEdit}>지급 항목</WageRequiredTh>
-              <td>
-                <div className="program-wage-info-section__cell-plain-text">{data.paymentItems}</div>
-              </td>
-              <WageRequiredTh showRequired={!!isFormEdit}>공제 항목</WageRequiredTh>
-              <td>
-                <div className="program-wage-info-section__cell-plain-text">{data.deductionItems}</div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+                </div>
+              </div>
+            ) : undefined
+          }
+        />
+      </DetailInfoForm.Row>
+
+      {isFormEdit && form ? (
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="기본 강사비"
+            required
+            view="-"
+            edit={
+              <div className="detail-info-form-inputs-wrapper">
+                <Controller
+                  name="wagePricingBase"
+                  control={form.control}
+                  render={({ field }) => (
+                    <CmsInput {...field} value={field.value ?? ''} placeholder="직접 입력" />
+                  )}
+                />
+                <span>원</span>
+              </div>
+            }
+          />
+          <DetailInfoForm.Field
+            label="장거리 강사비"
+            required
+            view="-"
+            edit={
+              <div className="detail-info-form-inputs-wrapper">
+                <Controller
+                  name="wagePricingLongDistance"
+                  control={form.control}
+                  render={({ field }) => (
+                    <CmsInput {...field} value={field.value ?? ''} placeholder="직접 입력" />
+                  )}
+                />
+                <span>원</span>
+              </div>
+            }
+          />
+        </DetailInfoForm.Row>
+      ) : null}
+
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="지급 항목" required view={data.paymentItems} />
+        <DetailInfoForm.Field label="공제 항목" required view={data.deductionItems} />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }

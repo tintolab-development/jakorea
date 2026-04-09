@@ -82,11 +82,13 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 트리거 외곽 136px과 동일 (132 태그 열은 status-dropdown-cell tag132 전용 150px) */
+/* 셀 횡 사이즈 고정: 트리거 외곽 136px과 동일 (132 태그 열은 tag132 150px · tag160 160px · 지급조서 라인 payment-order-line 176px) */
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132) {
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132):not(
+      .status-dropdown-cell__cell-status--tag-160
+    ):not(.status-dropdown-cell__cell-status--payment-order-line) {
   width: 136px;
   min-width: 136px;
   max-width: 136px;
@@ -99,7 +101,9 @@
 }
 
 .participating-institutions-section
-  .status-dropdown-cell__status-trigger--open:not(.status-dropdown-cell__status-trigger--tag-132) {
+  .status-dropdown-cell__status-trigger--open:not(.status-dropdown-cell__status-trigger--tag-132):not(
+    .status-dropdown-cell__status-trigger--tag-160
+  ):not(.status-dropdown-cell__status-trigger--payment-order-line) {
   box-sizing: border-box !important;
   width: 136px !important;
   min-width: 136px !important;

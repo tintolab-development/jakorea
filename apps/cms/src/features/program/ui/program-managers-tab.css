@@ -174,22 +174,6 @@
   width: 100%;
 }
 
-/* 권한 열: 공통 tag-132(150px)과 스펙 160px 불일치 방지 */
-.program-managers-tab
-  .program-managers-tab__managers-table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.ant-table-cell.status-dropdown-cell__header--tag-132,
-.program-managers-tab
-  .program-managers-tab__managers-table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.status-dropdown-cell__cell-status--tag-132 {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-}
-
 /*
  * 담당자 목록: 행·셀 54px
  * cms-data-table 기본 세로 padding(12×2) + tableAction(40px) ≈ 64px → 행이 밀림

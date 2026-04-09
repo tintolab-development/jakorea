@@ -1,0 +1,350 @@
+/**
+ * 지급조서 확인 캘린더 — 참여 기관 캘린더 CSS와 함께 사용
+ * 레이아웃·그리드는 participating-institutions-calendar-view.css 재사용
+ */
+
+.payment-orders-calendar-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Ant Tooltip: 커스텀 inner만 보이도록 (program-calendar-tooltip-overlay 와 동일 패턴) */
+.payment-orders-calendar-tooltip-overlay .ant-tooltip-arrow {
+  display: none !important;
+}
+
+.payment-orders-calendar-tooltip-overlay .ant-tooltip-inner {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* 시안 2·3: 태그 호버 미리보기 컨테이너 (항목 간 간격은 margin+구분선으로 10px) */
+.payment-orders-calendar-tag-preview {
+  display: flex;
+  width: 333px;
+  max-width: 400px;
+  padding: 12px 16px 12px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+}
+
+.payment-orders-calendar-tag-preview__block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+}
+
+.payment-orders-calendar-tag-preview__block + .payment-orders-calendar-tag-preview__block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.payment-orders-calendar-tag-preview__title {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 140%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payment-orders-calendar-tag-preview__row2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  line-height: 140%;
+}
+
+.payment-orders-calendar-tag-preview__status {
+  font-weight: 700;
+}
+
+.payment-orders-calendar-tag-preview__amount {
+  color: #3d3d3d;
+  font-weight: 500;
+}
+
+.payment-orders-calendar-tag-preview__sep {
+  color: #d4d4d4;
+  font-weight: 300;
+  user-select: none;
+}
+
+/* 캘린더 셀 태그: 배경은 상태별(inline STATUS_BG) */
+.payment-orders-calendar-event-tag {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.payment-orders-calendar-event-tag__body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
+/* 셀 태그 본문: 금액 | 상태 (Pretendard 12/500/130%) */
+.payment-orders-calendar-event-tag__amount,
+.payment-orders-calendar-event-tag__status {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+.payment-orders-calendar-event-tag__sep {
+  flex-shrink: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  user-select: none;
+}
+
+/* 좌측 캘린더: 우측 400px 고정 시 나머지 폭 */
+.payment-orders-calendar-root
+  .participating-institutions-calendar-layout
+  > .participating-institutions-calendar-card:first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* 우측 패널(PaymentOrdersCalendarRightPanel): 고정 400px */
+.payment-orders-calendar-root
+  .participating-institutions-calendar-layout
+  > .payment-orders-calendar-card--right.participating-institutions-calendar-card--right {
+  flex: 0 0 400px;
+  width: 400px;
+  max-width: 400px;
+  min-width: 400px;
+  box-sizing: border-box;
+}
+
+.payment-orders-calendar-card--right .payment-orders-calendar__calendar-right {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.payment-orders-calendar-card--right .payment-orders-calendar__calendar-right-cards {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* 우측 카드: applicant-schedule-item 과 동일 호버(인라인 상태색 덮기 위해 !important) */
+.payment-orders-calendar__card {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 10px 12px 10px 16px;
+  box-sizing: border-box;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+/* applicant-schedule-list.tsx 와 동일 체크박스 히트영역·크기 (applicant-calendar-view.css) */
+.payment-orders-calendar__card .applicant-schedule-item-checkbox {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  align-self: center;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox:hover {
+  background: rgba(1, 161, 175, 0.14);
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox-wrapper {
+  align-items: center;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+  top: 0;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.payment-orders-calendar__card .applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner::after {
+  inset-block-start: 45%;
+}
+
+.payment-orders-calendar__card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.payment-orders-calendar__card-main:focus {
+  outline: none;
+}
+
+.payment-orders-calendar__card-main:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.payment-orders-calendar__card:hover {
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
+/* 제출 및 대기 — theme: --color-payment-order-line-pending-* */
+.payment-orders-calendar__card--pending {
+  border: 1px solid rgba(70, 70, 70, 0.08);
+  background: var(
+    --color-payment-order-line-pending-bg,
+    linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff
+  );
+}
+
+/* 지급조서 확인 완료 */
+.payment-orders-calendar__card--confirmed {
+  border: 1px solid rgba(1, 126, 175, 0.12);
+  background: var(--color-payment-order-line-confirmed-bg, #e6f2f7);
+}
+
+/* 신청 반려 */
+.payment-orders-calendar__card--rejected {
+  border: 1px solid rgba(70, 70, 70, 0.08);
+  background: var(--color-payment-order-line-rejected-bg, #f2f3f5);
+}
+
+/* 지급 정정 요청 */
+.payment-orders-calendar__card--correction {
+  border: 1px solid rgba(195, 47, 74, 0.12);
+  background: var(--color-payment-order-line-correction-bg, #f9eaed);
+}
+
+/* 체크 선택: 인라인 상태색보다 우선 (호버와 동일 토큰) */
+.payment-orders-calendar__card--selected {
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
+.payment-orders-calendar__card-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin-bottom: 8px;
+}
+
+.payment-orders-calendar__card-status {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+.payment-orders-calendar__card-divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 14px;
+  background: #d4d4d4;
+  flex-shrink: 0;
+  margin: 0 10px;
+}
+
+.payment-orders-calendar__card-amount {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.payment-orders-calendar__card-program {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}

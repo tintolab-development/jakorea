@@ -1,0 +1,14 @@
+/**
+ * ListPageLayout — FilterListLayout + 구분선 + ViewModeController + 선택적 본문 래퍼
+ */
+
+.list-page-layout__table-shell {
+  width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}

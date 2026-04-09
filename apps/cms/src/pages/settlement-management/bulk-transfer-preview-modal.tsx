@@ -28,7 +28,8 @@ export function BulkTransferPreviewModal({ open, onCancel, rows }: BulkTransferP
   }, [rows])
 
   const handleDownload = useCallback(async () => {
-    const { exportBulkTransferExcel } = await import('@/pages/settlement-management/bulk-transfer-excel')
+    const { exportBulkTransferExcel } =
+      await import('@/pages/settlement-management/bulk-transfer-excel')
     await exportBulkTransferExcel(rows)
   }, [rows])
 
@@ -50,7 +51,6 @@ export function BulkTransferPreviewModal({ open, onCancel, rows }: BulkTransferP
             variant="primary"
             size="large"
             modalTeal
-            className="bulk-transfer-preview-modal__download-btn"
             icon={<DownloadOutlined />}
             onClick={() => void handleDownload()}
           >

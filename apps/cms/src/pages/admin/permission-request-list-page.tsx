@@ -76,7 +76,7 @@ export function PermissionRequestListPage() {
   )
 
   return (
-    <div style={{ padding: '0 24px' }}>
+    <div>
       <Tabs
         defaultActiveKey="instructor"
         className="permission-request-list-page__tabs"

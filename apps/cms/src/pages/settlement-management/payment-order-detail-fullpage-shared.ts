@@ -62,3 +62,10 @@ export function deriveAggregateFromLines(
 export function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
 }
+
+/** 산출 내역서에서 확인 처리·신청 반려 후 목록 테이블 행과 동기화 */
+export interface PaymentOrderCalculationStatementCommitPayload {
+  lineId: string
+  status: PaymentOrderAdminLineProcessingStatus
+  rejectionReason?: string
+}

@@ -195,8 +195,9 @@
   overflow: visible;
 }
 
-/* 메뉴 바로가기 위젯이 50% 사이즈(colSpan 12)일 때 위젯 높이 최대 340px, 퀵메뉴 영역만 스크롤 */
+/* 메뉴 바로가기 위젯이 50% 사이즈(colSpan 12)일 때 위젯 높이 340px 고정(항목이 적어도 슬롯 높이 유지), 퀵메뉴 영역만 스크롤 */
 .dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) {
+  min-height: 340px;
   max-height: 340px;
   overflow: hidden;
   display: flex;

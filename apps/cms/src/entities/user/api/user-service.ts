@@ -5,6 +5,16 @@
 
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import {
+  getAdminPermissionVariant,
+  type AdminPermissionTagVariant,
+} from '@/features/user/lib/admin-permission-display'
+import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
+import {
+  matchesInstructorSettlementFilter,
+  matchesInstructorTypeFilter,
+} from '@/entities/user/lib/matches-instructor-list-filters'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import {
   canAssignUserProgramRoleForProgram,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
@@ -21,6 +31,12 @@ export async function getUsers(filters?: {
   isActive?: boolean
   createdAtFrom?: string
   createdAtTo?: string
+  institutionLocation?: string
+  instructorType?: string
+  settlementStatus?: string
+  adminPermissionVariant?: AdminPermissionTagVariant
+  /** 강사 회원 관리(`kind=instructors`) — 순수 강사만, 교사·교사 및 강사 제외 */
+  instructorListPureOnly?: boolean
 }): Promise<Omit<User, 'password'>[]> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -29,6 +45,13 @@ export async function getUsers(filters?: {
   // 권한 필터
   if (filters?.role) {
     users = users.filter(user => user.role === filters.role)
+  }
+
+  if (filters?.instructorListPureOnly) {
+    users = users.filter(
+      user =>
+        user.role !== 'INSTRUCTOR' || resolveInstructorMemberProfile(user) === 'instructor_only'
+    )
   }
 
   // 검색 필터 (이름, 이메일)
@@ -56,6 +79,25 @@ export async function getUsers(filters?: {
     })
   }
 
+  if (filters?.institutionLocation?.trim()) {
+    users = users.filter(user => matchesUserInstitutionLocation(user, filters.institutionLocation!))
+  }
+
+  if (filters?.instructorType?.trim()) {
+    users = users.filter(user => matchesInstructorTypeFilter(user, filters.instructorType!))
+  }
+
+  if (filters?.settlementStatus?.trim()) {
+    users = users.filter(user => matchesInstructorSettlementFilter(user, filters.settlementStatus!))
+  }
+
+  if (filters?.adminPermissionVariant) {
+    const v = filters.adminPermissionVariant
+    users = users.filter(
+      user => user.role === 'ADMIN' && getAdminPermissionVariant(user) === v
+    )
+  }
+
   // 비밀번호 제외하고 반환, participationHistory 계산
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return users.map(({ password, ...user }) => {
@@ -76,6 +118,11 @@ export interface GetUsersPageParams {
   isActive?: boolean
   createdAtFrom?: string
   createdAtTo?: string
+  institutionLocation?: string
+  instructorType?: string
+  settlementStatus?: string
+  adminPermissionVariant?: AdminPermissionTagVariant
+  instructorListPureOnly?: boolean
 }
 
 export interface GetUsersPageResult {

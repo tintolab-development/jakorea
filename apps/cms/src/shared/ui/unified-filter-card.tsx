@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, Row, Col, Space } from 'antd'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { LAYOUT_CONSTANTS } from '@/shared/constants/layout'
 import { LabeledSearchInput } from './labeled-search-input'
 import { FilterSearchButton } from './app-button'
@@ -17,7 +17,7 @@ import { AppMultiSelect } from './app-multi-select'
 import type { AppMultiSelectOption } from './app-multi-select'
 import { AppSelect } from './app-select'
 import { AppDateRangePicker } from './app-datepicker'
-import { AppRadio } from './app-radio'
+import { CmsRadio } from './cms-radio'
 import './unified-filter-card.css'
 
 export interface FilterFieldConfig {
@@ -33,7 +33,12 @@ export interface FilterFieldConfig {
   options?: Array<{ label: string; value: string | number }>
   /** 다중 선택 옵션 (type이 'multiSelect'일 때). value는 문자열 */
   multiSelectOptions?: AppMultiSelectOption[]
-  /** 기본값 */
+  /**
+   * 기본값. `dateRange`에서만 추가 의미:
+   * - `undefined`: 값이 없을 때 이번 달 1일~말일을 부모에 1회 시드
+   * - `null`: 시드하지 않음(빈 구간 유지)
+   * - `[Dayjs, Dayjs]`: 시드 시 해당 구간 사용
+   */
   defaultValue?: string | number | [Dayjs, Dayjs] | null
   /** allowClear 옵션 */
   allowClear?: boolean
@@ -66,6 +71,38 @@ export interface UnifiedFilterCardProps {
   cardStyle?: React.CSSProperties
   /** Card 테두리 표시 여부 */
   bordered?: boolean
+}
+
+type DateRangeFilterValue = [Dayjs | null, Dayjs | null] | null
+
+function sameCalendarDay(
+  a: Dayjs | null | undefined,
+  b: Dayjs | null | undefined
+): boolean {
+  if (a == null && b == null) return true
+  if (a == null || b == null) return false
+  return a.isSame(b, 'day')
+}
+
+function serializeDateRangeFilter(raw: unknown): string {
+  if (raw == null) return ''
+  if (!Array.isArray(raw) || raw.length < 2) return ''
+  const s = raw[0] as Dayjs | null | undefined
+  const e = raw[1] as Dayjs | null | undefined
+  return `${s?.valueOf() ?? ''}|${e?.valueOf() ?? ''}`
+}
+
+function normalizeDateRangeFromFilters(raw: unknown): DateRangeFilterValue {
+  if (raw == null) return null
+  if (!Array.isArray(raw) || raw.length < 2) return null
+  const s = raw[0] as Dayjs | null | undefined
+  const e = raw[1] as Dayjs | null | undefined
+  if (s == null && e == null) return null
+  return [s ?? null, e ?? null]
+}
+
+function getCurrentMonthRangeTuple(reference = dayjs()): [Dayjs, Dayjs] {
+  return [reference.startOf('month'), reference.endOf('month')]
 }
 
 /**
@@ -139,10 +176,11 @@ export function UnifiedFilterCard({
   }, [filters, filtersSearchSignature, searchFieldKeys])
 
   const searchDraftsRef = useRef(searchDrafts)
-  searchDraftsRef.current = searchDrafts
-
   const onSearchRef = useRef(onSearch)
-  onSearchRef.current = onSearch
+  useEffect(() => {
+    searchDraftsRef.current = searchDrafts
+    onSearchRef.current = onSearch
+  }, [searchDrafts, onSearch])
 
   const flushSearchToParentAndSearch = useCallback(() => {
     for (const f of filterRowFields) {
@@ -157,6 +195,89 @@ export function UnifiedFilterCard({
       run()
     }
   }, [filterRowFields, onFilterChange])
+
+  const onFilterChangeRef = useRef(onFilterChange)
+  useEffect(() => {
+    onFilterChangeRef.current = onFilterChange
+  }, [onFilterChange])
+
+  const dateRangeSeededKeysRef = useRef(new Set<string>())
+  const dateRangeEndLockedRef = useRef<Record<string, boolean>>({})
+  const dateRangeLastEmittedRef = useRef<Record<string, DateRangeFilterValue>>({})
+  const dateRangeCommittedSigRef = useRef<Record<string, string>>({})
+
+  useEffect(() => {
+    for (const field of filterRowFields) {
+      if (field.type !== 'dateRange') continue
+
+      if (field.defaultValue !== null && !dateRangeSeededKeysRef.current.has(field.key)) {
+        const raw = filters[field.key]
+        if (raw == null) {
+          let range: [Dayjs, Dayjs]
+          if (
+            Array.isArray(field.defaultValue) &&
+            field.defaultValue[0] &&
+            field.defaultValue[1]
+          ) {
+            range = [field.defaultValue[0], field.defaultValue[1]]
+          } else {
+            range = getCurrentMonthRangeTuple()
+          }
+          onFilterChangeRef.current(field.key, range)
+          dateRangeSeededKeysRef.current.add(field.key)
+          dateRangeLastEmittedRef.current[field.key] = range
+          dateRangeCommittedSigRef.current[field.key] = serializeDateRangeFilter(range)
+          dateRangeEndLockedRef.current[field.key] = false
+          continue
+        }
+        dateRangeSeededKeysRef.current.add(field.key)
+      }
+
+      const sig = serializeDateRangeFilter(filters[field.key])
+      if (sig !== dateRangeCommittedSigRef.current[field.key]) {
+        const normalized = normalizeDateRangeFromFilters(filters[field.key])
+        dateRangeLastEmittedRef.current[field.key] = normalized
+        dateRangeCommittedSigRef.current[field.key] = sig
+        dateRangeEndLockedRef.current[field.key] = false
+      }
+    }
+  }, [filterRowFields, filters])
+
+  const handleDateRangeFilterChange = useCallback(
+    (fieldKey: string, incoming: DateRangeFilterValue) => {
+      const prev = dateRangeLastEmittedRef.current[fieldKey] ?? null
+
+      if (incoming == null || (incoming[0] == null && incoming[1] == null)) {
+        dateRangeEndLockedRef.current[fieldKey] = false
+        dateRangeLastEmittedRef.current[fieldKey] = null
+        dateRangeCommittedSigRef.current[fieldKey] = ''
+        onFilterChange(fieldKey, null)
+        return
+      }
+
+      const [ns, ne] = incoming
+      const [ps, pe] = prev ?? [null, null]
+
+      const startChanged = !sameCalendarDay(ns, ps)
+      const endChanged = !sameCalendarDay(ne, pe)
+
+      if (endChanged) {
+        dateRangeEndLockedRef.current[fieldKey] = ne != null
+      }
+
+      let out: DateRangeFilterValue
+      if (startChanged && ns != null && !dateRangeEndLockedRef.current[fieldKey]) {
+        out = [ns, ns.add(1, 'month')]
+      } else {
+        out = [ns, ne]
+      }
+
+      dateRangeLastEmittedRef.current[fieldKey] = out
+      dateRangeCommittedSigRef.current[fieldKey] = serializeDateRangeFilter(out)
+      onFilterChange(fieldKey, out)
+    },
+    [onFilterChange]
+  )
 
   /** 필드 칸 사이 margin 12px — % basis는 gap 없이도 (100% - margin 합) 안에서만 잡히게 calc */
   const interFieldGapPx = 12
@@ -183,19 +304,23 @@ export function UnifiedFilterCard({
   const renderField = (field: FilterFieldConfig) => {
     if (field.type === 'radio') {
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 auto')} className={colClassFor(field)}>
+        <Col
+          key={field.key}
+          flex={colFlex(field, '0 0 auto')}
+          className={['unified-filter-card__col--radio', colClassFor(field)].filter(Boolean).join(' ')}
+        >
           <div className="unified-filter-card__field unified-filter-card__field--radio">
             <span className="unified-filter-card__label">{field.label}</span>
-            <AppRadio.Group
+            <CmsRadio.Group
               value={filters[field.key]}
               onChange={e => onFilterChange(field.key, e.target.value)}
             >
               {(field.options ?? []).map(opt => (
-                <AppRadio key={String(opt.value)} value={opt.value}>
+                <CmsRadio key={String(opt.value)} value={opt.value}>
                   {opt.label}
-                </AppRadio>
+                </CmsRadio>
               ))}
-            </AppRadio.Group>
+            </CmsRadio.Group>
           </div>
         </Col>
       )
@@ -256,7 +381,7 @@ export function UnifiedFilterCard({
               size="small"
               style={{ width: '100%', ...field.style }}
               value={filters[field.key]}
-              onChange={dates => onFilterChange(field.key, dates)}
+              onChange={dates => handleDateRangeFilterChange(field.key, dates as DateRangeFilterValue)}
               allowClear={field.allowClear !== false}
             />
           </div>

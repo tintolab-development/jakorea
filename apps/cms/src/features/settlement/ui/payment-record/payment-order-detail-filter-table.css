@@ -1,0 +1,56 @@
+/**
+ * 지급 현황 상세 — 필터·구분선·목록 테이블 래퍼·산출 내역 버튼
+ * (`PaymentOrderDetailFilterTable` — mode program / instructor 공통)
+ */
+.payment-order-detail-filter-table__filters .unified-filter-card .ant-card-body {
+  padding: 0 !important;
+}
+
+/* 필터 ↔ 목록 사이 디바이더: 위·아래 각 32px */
+.payment-order-detail-filter-table__section-divider {
+  margin-top: 32px;
+  margin-bottom: 32px;
+  background: #c4cdd1 !important;
+}
+
+/*
+ * 강사별 정산 목록 테이블: 행·헤더 셀 54px 고정
+ * (cms-data-table 기본 12×16 패딩 + line-height 조합 시 실측 76px대로 커지는 것 방지)
+ */
+.payment-order-detail-filter-table
+  .cms-data-table.ant-table-wrapper
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.payment-order-detail-filter-table
+  .cms-data-table.ant-table-wrapper
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.payment-order-detail-filter-table
+  .cms-data-table.ant-table-wrapper
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+.payment-order-detail-filter-table
+  .cms-data-table.ant-table-wrapper
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}

@@ -1,5 +1,5 @@
 /* 필터 Select·검색바 공통 크기 180×44px 및 반응형 */
-@import './shared/ui/filter-controls-common.css';
+@import './shared/components/filter-controls-common.css';
 @import './shared/ui/ant-table-rows.css';
 @import './shared/ui/cms-data-table.css';
 @import './shared/ui/ant-table-selection-checkbox.css';
@@ -136,4 +136,92 @@ body
 /* 테이블 행 호버: 전체 영역 통일 (#01A1AF opacity 0.06). 선택된 Ant Table 행은 tr 배경으로 호버색 덮지 않음 */
 table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   background: var(--color-table-row-hover) !important;
+}
+
+.table-header-actions {
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.table-header-title--wrapper {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+  min-width: 0;
+}
+
+.table-title {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 28px */
+  padding: 0 10px 0 8px;
+}
+
+.table-description {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
+}
+
+.info-section-title {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%; /* 25.2px */
+  padding: 0 10px 0 8px;
+}
+
+.info-section-desc {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.5;
+}
+
+.detail-info-form--gap {
+  margin-top: 32px;
+}
+.detail-info-form-inputs-wrapper {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-info-form-inputs-separator {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  margin: 0 12px;
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-self: center;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+  color: transparent;
+  user-select: none;
+}
+
+.text-decoration-underline {
+  text-decoration: underline;
 }

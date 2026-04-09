@@ -20,11 +20,6 @@
   margin-bottom: var(--spacing-32);
 }
 
-/* 경제 교육: 단계 카드 행 flex 간격 32px — 세로 디바이더·화살표·카드 간 동일 (래퍼 margin과 이중 합산 방지) */
-.program-list-page--economy-education .program-progress-widget__stages {
-  gap: var(--spacing-32);
-}
-
 .program-list-page--economy-education .program-progress-widget__divider-vertical--wrapper {
   margin-left: 0;
   margin-right: 0;
@@ -91,31 +86,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px 0 8px;
-}
-
-.program-list-page__filter-info-texts {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.program-list-page__filter-info-title {
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.program-list-page__filter-info-count {
-  color: var(--color-text-secondary);
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  height: 28px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
 }
 
 /* 경제 교육: 테이블 영역 상단 「총 N건」 디스크립션 공통 타이포 */

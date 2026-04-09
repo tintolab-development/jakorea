@@ -1,0 +1,8 @@
+/**
+ * ViewModeToggle — 테이블 헤더 액션 슬롯과 정렬 맞춤
+ */
+
+.view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+}
