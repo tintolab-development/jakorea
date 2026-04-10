@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tabs } from 'antd'
 import TemplateFormTab from './template-form-tab'
+import { FormTestTab } from './form-test-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
 import './template-list-page.css'
 import './template-form-tab.css'
@@ -26,6 +27,7 @@ export function TemplateListPage() {
     () => [
       { key: 'template-form', label: '작성 양식', path: FORM_MANAGEMENT_BASE },
       { key: 'issuance-form', label: '발급 양식', path: FORM_MANAGEMENT_BASE },
+      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
     ],
     []
   )
@@ -75,7 +77,9 @@ export function TemplateListPage() {
             activeKey={activeKey}
             onChange={handleFormTabChange}
             items={formTabItems.map(t => ({ key: t.key, label: t.label }))}
-            tabBarExtraContent={<CmsButton>+ 신규 템플릿</CmsButton>}
+            tabBarExtraContent={
+              activeKey === 'form-test' ? null : <CmsButton>+ 신규 템플릿</CmsButton>
+            }
             style={{ marginBottom: 20 }}
           />
         </>
@@ -83,6 +87,8 @@ export function TemplateListPage() {
       {isFormManagementSection ? (
         activeKey === 'issuance-form' ? (
           <IssuanceFormTab />
+        ) : activeKey === 'form-test' ? (
+          <FormTestTab />
         ) : (
           <TemplateFormTab />
         )
