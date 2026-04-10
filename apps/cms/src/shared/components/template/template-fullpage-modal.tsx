@@ -1,4 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useId, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -110,7 +110,12 @@ export function TemplateFullpageModal({
             {description ? <p className="full-page-modal__description">{description}</p> : <span />}
             <div className="full-page-modal__actions">
               {templateTabType === 'issuance' ? (
-                <CmsButton variant="secondary" onClick={onDownloadDocument}>
+                <CmsButton
+                  variant="secondary"
+                  icon={<DownloadOutlined />}
+                  onClick={onDownloadDocument}
+                  className="full-page-modal__download-btn"
+                >
                   문서 다운로드
                 </CmsButton>
               ) : null}
@@ -127,6 +132,7 @@ export function TemplateFullpageModal({
               <div className="full-page-modal__right">{rightNavigation}</div>
             </aside>
           </div>
+          <div className="full-page-modal__body-bottom" aria-hidden="true" />
         </div>
       </div>
     </TealHeaderModal>
