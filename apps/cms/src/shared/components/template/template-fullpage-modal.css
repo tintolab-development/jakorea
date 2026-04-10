@@ -77,19 +77,21 @@
   padding: var(--full-page-modal-padding-top) var(--full-page-modal-padding-x)
     var(--full-page-modal-padding-bottom);
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 16px;
   background: #f4f6f6;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .full-page-modal__body-header {
   display: flex;
   width: 100%;
-  max-width: 1816px;
+  max-width: none;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  box-sizing: border-box;
 }
 
 .full-page-modal__description {
@@ -115,9 +117,10 @@
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
-  max-width: 1816px;
+  max-width: none;
   align-items: stretch;
   gap: 20px;
+  box-sizing: border-box;
 }
 
 .full-page-modal__left {
@@ -246,9 +249,11 @@
 .full-page-modal-card__action-slot {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .full-page-modal-card__drag-handle {

@@ -141,6 +141,13 @@
   align-items: center;
   min-width: 0;
   box-sizing: border-box;
+  flex: 1;
+}
+
+/* no-gap 한 줄 래퍼만: 부모가 flex일 때 남는 폭을 쓰도록 (일반 단일 컨트롤은 기존 폭 유지) */
+.detail-info-form__field-content > .detail-info-form-inputs-wrapper-no-gap {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .detail-info-form__field-required {

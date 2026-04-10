@@ -66,6 +66,7 @@
 
 .cms-datepicker--explicit-width:not(.cms-datepicker--range-split) {
   width: 100%;
+  min-width: 0;
 }
 
 .cms-datepicker .ant-picker.cms-datepicker__picker {
