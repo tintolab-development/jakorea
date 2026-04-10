@@ -1,0 +1,403 @@
+.form-test-certificate-preview {
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.form-test-certificate-preview__bg {
+  display: flex;
+  width: 1208px;
+  max-width: 100%;
+  height: 1682px;
+  padding: 32px 0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  border-radius: var(--16, 16px);
+  background: var(--gray-bdc-6-c-9, #bdc6c9);
+  box-shadow: 0 4px 32px 0 rgba(0, 0, 0, 0.12);
+}
+
+/* 이미지 영역과 동일 비율·폭 — 빈 화면(흰색 슬롯), 내부 오버레이 기준점 */
+.form-test-certificate-preview__canvas {
+  position: relative;
+  display: block;
+  width: 1144px;
+  max-width: 100%;
+  aspect-ratio: 1144 / 1618;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 0;
+  background: var(--main-WT, #fff);
+}
+
+.form-test-certificate-preview__tag {
+  position: absolute;
+  top: 142px;
+  left: 34px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 2px solid var(--JA-mint-01, #01A1AF);
+  background: var(--color-bg-mint, linear-gradient(0deg, rgba(1, 161, 175, 0.10) 0%, rgba(1, 161, 175, 0.10) 100%), #FFF);
+  box-sizing: border-box;
+  color: #606060;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 30px */
+  letter-spacing: 0.8px;
+}
+
+.form-test-certificate-preview__logo {
+  position: absolute;
+  top: 208px;
+  left: 76px;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 76px);
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__education {
+  position: absolute;
+  top: 193px;
+  right: 69px;
+  display: block;
+  width: 150px;
+  height: 130px;
+  object-fit: contain;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__title {
+  position: absolute;
+  top: 301px;
+  left: 186px;
+  width: fit-content;
+  height: 150px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: #003d4c;
+  text-align: center;
+  font-family: 'Source Han Serif K', serif;
+  font-size: 100px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 150px */
+  letter-spacing: 16px;
+  pointer-events: none;
+}
+
+/* 본문 영역 — 내부: 좌 111px · 갭 56px · 우측 나머지 */
+.form-test-certificate-preview__content-frame {
+  position: absolute;
+  top: 507px;
+  left: 170px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 56px;
+  width: 618px;
+  height: 384px;
+  box-sizing: border-box;
+  background: transparent;
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__content-frame-labels {
+  display: flex;
+  flex: 0 0 111px;
+  flex-direction: column;
+  gap: 24px;
+  align-items: stretch;
+  width: 111px;
+  min-width: 111px;
+  box-sizing: border-box;
+}
+
+.form-test-certificate-preview__label-row {
+  display: flex;
+  flex: 0 0 44px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 111px 안에서 글자 사이 간격 자동 — 첫·끝 글자는 양끝 정렬 */
+.form-test-certificate-preview__label-text {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  align-items: center;
+  color: #606060;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 36px */
+}
+
+.form-test-certificate-preview__label-char {
+  flex-shrink: 0;
+}
+
+.form-test-certificate-preview__content-frame-values {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-test-certificate-preview__value-row {
+  display: flex;
+  flex: 0 0 44px;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.form-test-certificate-preview__value-text {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  color: #606060;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 36px */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-test-certificate-preview__confirm {
+  position: absolute;
+  top: 971px;
+  left: 352px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: fit-content;
+  min-width: 0;
+  max-width: calc(100% - 352px);
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  color: #606060;
+  text-align: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 170%; /* 54.4px */
+  word-break: keep-all;
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__issue-date {
+  position: absolute;
+  top: 1180px;
+  left: 492px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: var(--color-mint-03, #22404b);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 51px */
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__org-name {
+  position: absolute;
+  z-index: 2;
+  bottom: 263px;
+  left: 362px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100% - 362px);
+  min-width: 0;
+  color: #003d4c;
+  text-align: center;
+  font-family: 'Source Han Serif K', serif;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 54px */
+  letter-spacing: 0.72px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__chairman-name {
+  position: absolute;
+  bottom: 181px;
+  left: 433.5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: calc(100% - 433.5px);
+  min-width: 0;
+  color: #003d4c;
+  font-family: 'Source Han Serif K', serif;
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 72px */
+  letter-spacing: 0.96px;
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__chairman-name-part {
+  flex-shrink: 0;
+}
+
+.form-test-certificate-preview__stamp {
+  position: absolute;
+  /* 기관명(사단법인 제이에이코리아, z-index:2)보다 항상 아래 */
+  z-index: 0;
+  bottom: 170px;
+  right: 237px;
+  display: block;
+  width: 179px;
+  height: 178px;
+  object-fit: contain;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+/* 하단 기관 정보 — 캔버스 기준 절대 좌표(디자인 스펙) */
+.form-test-certificate-preview__footer {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.form-test-certificate-preview__footer-brand,
+.form-test-certificate-preview__footer-address,
+.form-test-certificate-preview__footer-tel,
+.form-test-certificate-preview__footer-fax,
+.form-test-certificate-preview__footer-link {
+  position: absolute;
+  bottom: 0;
+  white-space: nowrap;
+}
+
+.form-test-certificate-preview__footer-brand {
+  left: 35px;
+  color: var(--main-WT, #fff);
+  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 30px */
+}
+
+.form-test-certificate-preview__footer-address {
+  left: 285px;
+  color: var(--main-WT, #fff);
+  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+}
+
+.form-test-certificate-preview__footer-tel {
+  left: 590px;
+  color: var(--main-WT, #fff);
+  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+}
+
+.form-test-certificate-preview__footer-fax {
+  left: 736px;
+  color: var(--main-WT, #fff);
+  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+}
+
+.form-test-certificate-preview__footer-link {
+  left: 908px;
+  right: auto;
+  text-align: left;
+  color: var(--main-WT, #fff);
+  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.form-test-certificate-preview__footer-link:hover {
+  text-decoration: underline;
+}
+
+/* 우측 커스텀 필드 선택 시 — 해당 영역 점선 프레임
+   border는 박스 안쪽을 잡아 수료증 배경(canvas) 등에서 UI shifting 유발 → outline만 사용(레이아웃 불변, 스트로크는 콘텐츠 박스 바깥) */
+.form-test-certificate-preview__region--frame-active {
+  outline: 6px dashed var(--JA-mint-01, #01a1af);
+  outline-offset: 0;
+  z-index: 5;
+}
+
+.form-test-certificate-preview__canvas.form-test-certificate-preview__region--frame-active {
+  z-index: 0;
+}
+
+/* 프레임 하이라이트 공통 z-index:5가 스탬프에도 적용되면 기관명 위로 올라감 → 스탬프만 억제 */
+.form-test-certificate-preview__stamp.form-test-certificate-preview__region--frame-active {
+  z-index: 0;
+}
+
+.form-test-certificate-preview__footer-frame {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  width: 100%;
+  height: 34px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
