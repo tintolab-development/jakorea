@@ -88,6 +88,7 @@
 /* `width` prop(예: 100%)이 루트에 걸릴 때 — 내부 박스는 부모 폭을 채움 */
 .cms-input--large.cms-input--explicit-width .cms-input__control {
   width: 100%;
+  min-width: 0;
 }
 
 .cms-input--medium .cms-input__control {
@@ -99,6 +100,7 @@
 
 .cms-input--medium.cms-input--explicit-width .cms-input__control {
   width: 100%;
+  min-width: 0;
 }
 
 .cms-input--small .cms-input__control {
@@ -110,6 +112,7 @@
 
 .cms-input--small.cms-input--explicit-width .cms-input__control {
   width: 100%;
+  min-width: 0;
 }
 
 .cms-input--large .cms-input__inner .ant-input,

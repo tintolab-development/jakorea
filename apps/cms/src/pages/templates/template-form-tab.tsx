@@ -5,7 +5,10 @@ import { TemplateFullpageModal } from '@/shared/components/template/template-ful
 import { TemplateModalLeftContent } from '@/shared/components/template/template-modal-left-content'
 import { TemplateModalRightNavigation } from '@/shared/components/template/template-modal-right-navigation'
 import { BasicInfoCurriculumSection } from '@/features/template/ui/basic-info-curriculum-section'
+import { EducationCurriculumSection } from '@/features/template/ui/education-curriculum-section'
+import { KpiGoalsCurriculumSection } from '@/features/template/ui/kpi-goals-curriculum-section'
 import { TemplateTable } from '@/features/template/ui/template-table'
+import { WageInfoCurriculumSection } from '@/features/template/ui/wage-info-curriculum-section'
 import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
 import { writingSections } from '@/features/template/model/template.schema'
 import {
@@ -14,15 +17,23 @@ import {
 } from '@/features/template/lib/build-template-config'
 
 export default function TemplateFormTab() {
-  const curriculumSection = useMemo(() => <BasicInfoCurriculumSection />, [])
+  const curriculumSections = useMemo(
+    () => ({
+      '기본 정보': <BasicInfoCurriculumSection />,
+      '사업 KPI 목표': <KpiGoalsCurriculumSection />,
+      '임금 정보': <WageInfoCurriculumSection />,
+      '교육 커리큘럼': <EducationCurriculumSection />,
+    }),
+    []
+  )
   const buildBaseLeftContentConfig = useCallback(
     (selectedTemplate: Parameters<typeof buildTemplateConfig>[0]['selectedTemplate']) =>
       buildTemplateConfig({
         selectedTemplate,
         orderedLeftContentConfig: [],
-        curriculumSection,
+        curriculumSections,
       }).baseLeftContentConfig,
-    [curriculumSection]
+    [curriculumSections]
   )
 
   const {
@@ -61,7 +72,7 @@ export default function TemplateFormTab() {
         open={isPreviewOpen}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '양식 미리보기'}
-        description="해당 폼은 각 항목 삭제가 불가하며, 수정에 제한이 있습니다."
+        description="해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="writing"
         leftContent={
           <TemplateModalLeftContent

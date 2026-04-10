@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { TemplateModalLeftCardConfig } from '@/shared/components/template/template-modal-left-content'
+import {
+  mergeLeftCardOrderByDragIds,
+  normalizeLeftCardOrder,
+  type TemplateModalLeftCardConfig,
+} from '@/shared/components/template/template-modal-left-content'
 import type { TemplateRow } from '@/features/template/model/template.schema'
 
 interface UseTemplateModalParams {
@@ -33,8 +37,9 @@ export function useTemplateModal({
 
   useEffect(() => {
     if (!isPreviewOpen) return
-    setOrderedLeftContentConfig(baseLeftContentConfig)
-    setActiveCardId(baseLeftContentConfig[0]?.id ?? null)
+    const ordered = normalizeLeftCardOrder(baseLeftContentConfig)
+    setOrderedLeftContentConfig(ordered)
+    setActiveCardId(ordered[0]?.id ?? null)
   }, [baseLeftContentConfig, isPreviewOpen])
 
   const openTemplatePreview = (row: TemplateRow) => {
@@ -48,10 +53,7 @@ export function useTemplateModal({
   }
 
   const applyOrderedCards = (orderedIds: string[]) => {
-    const idSet = new Set(orderedIds)
-    setOrderedLeftContentConfig(prev =>
-      prev.filter(card => idSet.has(card.id)).sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id))
-    )
+    setOrderedLeftContentConfig(prev => mergeLeftCardOrderByDragIds(prev, orderedIds))
   }
 
   return {

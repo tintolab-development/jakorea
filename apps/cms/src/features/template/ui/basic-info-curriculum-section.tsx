@@ -11,24 +11,24 @@ export function BasicInfoCurriculumSection() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="대표 프로그램명 (국문)"
-          edit={<CmsInput placeholder="대표 프로그램명을 입력하세요" />}
+          edit={<CmsInput inputSize="medium" placeholder="대표 프로그램명을 입력하세요" />}
           view="-"
         />
         <DetailInfoForm.Field
           label="대표 프로그램명 (영문)"
-          edit={<CmsInput placeholder="상세 프로그램명을 입력하세요" />}
+          edit={<CmsInput inputSize="medium" placeholder="상세 프로그램명을 입력하세요" />}
           view="-"
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="공고용 프로그램명"
-          edit={<CmsInput placeholder="모집 시 노출될 프로그램명을 입력하세요" />}
+          edit={<CmsInput inputSize="medium" placeholder="모집 시 노출될 프로그램명을 입력하세요" />}
           view="-"
         />
         <DetailInfoForm.Field
           label="세부 프로그램명"
-          edit={<CmsInput placeholder="상세 프로그램명을 입력하세요" />}
+          edit={<CmsInput inputSize="medium" placeholder="상세 프로그램명을 입력하세요" />}
           view="-"
         />
       </DetailInfoForm.Row>
@@ -37,16 +37,18 @@ export function BasicInfoCurriculumSection() {
           label="사업 운영 기간"
           edit={
             <div className="detail-info-form-inputs-wrapper">
-              <CmsDatePicker placeholder="시작일" style={{ width: '40%' }} />
+              <CmsDatePicker inputSize="medium" placeholder="시작일" style={{ width: '40%' }} />
               <DetailInfoForm.InputsSeparator />
-              <CmsDatePicker placeholder="종료일" style={{ width: '40%' }} />
+              <CmsDatePicker inputSize="medium" placeholder="종료일" style={{ width: '40%' }} />
             </div>
           }
           view="-"
         />
         <DetailInfoForm.Field
           label="프로그램 진행 현황"
-          edit={<CmsInput placeholder="일정에 따라 진행 현황이 자동으로 반영됩니다." />}
+          edit={
+            <CmsInput inputSize="medium" placeholder="일정에 따라 진행 현황이 자동으로 반영됩니다." />
+          }
           view="-"
         />
       </DetailInfoForm.Row>
@@ -58,19 +60,25 @@ export function BasicInfoCurriculumSection() {
         />
         <DetailInfoForm.Field
           label="사업 분야"
-          edit={<CmsSelect placeholder="전체" options={[{ value: 'all', label: '전체' }]} />}
+          edit={
+            <CmsSelect inputSize="medium" placeholder="전체" options={[{ value: 'all', label: '전체' }]} />
+          }
           view="-"
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="후원사"
-          edit={<CmsSelect placeholder="전체" options={[{ value: 'all', label: '전체' }]} />}
+          edit={
+            <CmsSelect inputSize="medium" placeholder="전체" options={[{ value: 'all', label: '전체' }]} />
+          }
           view="-"
         />
         <DetailInfoForm.Field
           label="후원사 담당자"
-          edit={<CmsSelect placeholder="전체" options={[{ value: 'all', label: '전체' }]} />}
+          edit={
+            <CmsSelect inputSize="medium" placeholder="전체" options={[{ value: 'all', label: '전체' }]} />
+          }
           view="-"
         />
       </DetailInfoForm.Row>
@@ -89,19 +97,25 @@ export function BasicInfoCurriculumSection() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="교육 과정"
-          edit={<CmsSelect placeholder="전체" options={[{ value: 'all', label: '전체' }]} />}
+          edit={
+            <CmsSelect inputSize="medium" placeholder="전체" options={[{ value: 'all', label: '전체' }]} />
+          }
           view="-"
         />
         <DetailInfoForm.Field
           label="IP Owned"
-          edit={<CmsSelect placeholder="전체" options={[{ value: 'all', label: '전체' }]} />}
+          edit={
+            <CmsSelect inputSize="medium" placeholder="전체" options={[{ value: 'all', label: '전체' }]} />
+          }
           view="-"
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="Course Delivered By"
-          edit={<CmsSelect placeholder="전체" options={[{ value: 'all', label: '전체' }]} />}
+          edit={
+            <CmsSelect inputSize="medium" placeholder="전체" options={[{ value: 'all', label: '전체' }]} />
+          }
           view="-"
         />
         <DetailInfoForm.Field

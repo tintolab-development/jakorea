@@ -77,10 +77,34 @@ category: implementation
 |----------|------|
 | `TemplateListCard` | 섹션 제목·설명 + 내부 목록 |
 | `TemplateFullpageModal` | `TealHeaderModal` 기반 풀페이지 셸. `templateTabType`: `writing` \| `issuance` 로 상단 액션 분기 |
-| `TemplateModalLeftContent` | 좌측 카드 + DnD + 선택 |
+| `TemplateModalLeftContent` | 좌측 카드 + DnD + 선택 (`TemplateModalLeftCardConfig`, 아래 §5.1 `pinned`) |
 | `TemplateModalRightNavigation` | 우측 정렬 가능 네비 + `children`(목록 아래 영역; 구분선은 컴포넌트 내부) |
 
 템플릿 풀페이지 UI는 위 조합을 깨지 않는다. 확장이 필요하면 `shared/components/template`를 확장한다.
+
+### 5.1 좌측 카드 `pinned` — 상단 고정·비정렬
+
+`TemplateModalLeftCardConfig`의 **`pinned?: boolean`** 으로, 풀페이지 모달 **좌측 카드 중 일부만** 순서 변경 대상에서 빼고 맨 위에 고정한다.
+
+| 동작 | 설명 |
+|------|------|
+| **`pinned: true`** | 렌더 시 **항상 비-pinned 카드보다 위**에 둔다. **드래그 핸들(정렬 아이콘) 없음**, `@dnd-kit` Sortable 대상이 아니다. |
+| **`pinned` 생략 / `false`** | 기존과 같이 정렬 가능하고 상단 중앙에 핸들이 보인다. |
+| **여러 개** | config 배열에서 `pinned`인 항목들의 **상대 순서**는 그대로 유지한 채, 전부 목록 **앞쪽**에 모은다. |
+
+**데이터 정규화·재정렬**
+
+- 모달에 넘기기 전·초기화 시 순서를 맞출 때: `@/shared/components/template/template-modal-left-content`의 **`normalizeLeftCardOrder(cards)`** — `pinned`를 앞으로 모은 배열을 반환.
+- 우측 네비 DnD 등 **id 배열만** 넘어올 때: 같은 모듈의 **`mergeLeftCardOrderByDragIds(prev, orderedIds)`** — `orderedIds` 순을 반영하되 **`pinned` 카드 id는 항상 결과 배열의 앞쪽**에 둔다 (작성 탭 `use-template-modal`, 발급 탭 등에서 사용).
+
+**설정 위치 예**
+
+- 작성 탭: `features/template/lib/build-template-config.ts`에서 생성하는 `TemplateModalLeftCardConfig`에 `pinned: true`를 붙인다.
+- 발급 탭 등: `useMemo`로 만드는 카드 배열에 동일하게 지정한다.
+
+**주의**
+
+- 우측 네비 `items`는 여전히 좌측 카드와 **동일 id·동일 순서 규칙**(pinned 선두)을 따른다. 순서만 바꾸는 콜백에서는 `mergeLeftCardOrderByDragIds`를 쓰지 않으면 `pinned`가 어긋날 수 있다.
 
 ---
 
@@ -91,7 +115,7 @@ category: implementation
 - 좌측 카드·우측 네비 구성: `features/template/lib/build-template-config.ts` — 우측 `items`는 좌측 카드 배열에서 파생(`buildRightNavigationConfig`).
 - 목록 테이블 마크업·컬럼: `features/template/ui/template-table.tsx`에 모은다.
 
-좌·우 DnD 정렬은 **동일한 ordered id**로 좌측 카드 목록을 맞춘다. 모달 닫을 때 선택 템플릿·열림 상태를 초기화한다.
+좌·우 DnD 정렬은 **동일한 ordered id**로 좌측 카드 목록을 맞춘다. **`pinned` 카드가 있으면** §5.1대로 `normalizeLeftCardOrder` / `mergeLeftCardOrderByDragIds`로 순서를 맞춘다. 모달 닫을 때 선택 템플릿·열림 상태를 초기화한다.
 
 ---
 
@@ -105,13 +129,25 @@ category: implementation
 ## 8. 모달 내부 격자 (항목명 / 항목내용)
 
 - 반복되는 라벨+값 격자는 **`DetailInfoForm`** 우선.
-- 참고: `features/template/ui/basic-info-curriculum-section.tsx` (`curriculum` variant + 「기본 정보」 카드 `children` 주입).
+- **`DetailInfoForm.Row` + `DetailInfoForm.Field`**로 구성한다. 라벨·본문 폭·세로 구분선은 **`DetailInfoForm` / `detail-info-form` 기본 스타일**에 맡긴다.
+- 차시·블록처럼 **한 덩어리 UI**를 묶어야 하면 `Row type="custom"`으로 래핑한 뒤, **그 안에서** 다시 `Row`/`Field`를 중첩해 동일 격자 규칙을 유지한다 (마크업만 `div`로 끝내지 않는다).
+- 참고: `basic-info-curriculum-section.tsx`, `kpi-goals-curriculum-section.tsx`, `wage-info-curriculum-section.tsx`, `education-curriculum-section.tsx` (`curriculum` variant 카드 `children`).
+
+### 8.1 `DetailInfoForm` 사용 시 클래스·스타일
+
+- **`Field`의 `edit` 슬롯 등에 임의 `className`을 추가하지 않는다.** 기본 격자·필드 스타일로 충분하다.
+- **추가 스타일이 꼭 필요할 때만** `style` 등 **인라인으로 임시** 적용한다. 전용 유틸 클래스를 새로 두는 것은 지양한다.
+- **인풋·셀렉트·데이트피커 등을 한 줄로 맞출 때** (`apps/cms/src/index.css`):
+  - `detail-info-form-inputs-wrapper` — 기본 간격
+  - `detail-info-form-inputs-wrapper-no-gap` — 간격 없음
+- **같은 줄 안에서 컨트롤 사이에 세로 구분(가로선 느낌) UI가 필요할 때**: `<DetailInfoForm.InputsSeparator />` 를 사용한다.
 
 ---
 
 ## 9. 편집 컨트롤 — `cms-*` 우선
 
 - `CmsInput`, `CmsSelect`, `CmsDatePicker`, `CmsRadio` 등 **존재 여부를 확인 후** 우선 사용.
+- **`@/features/template`에서 `DetailInfoForm`의 `mode="edit"` 안에 넣는 `CmsInput` / `CmsSelect` / `CmsDatePicker`에는 `inputSize="medium"`을 기본으로 둔다** (컴포넌트 기본값은 `large`이므로 명시).
 - Ant 전용 위젯만 있을 때는 사용 가능; 공통화되면 교체한다.
 
 ---
@@ -129,9 +165,10 @@ category: implementation
 - [ ] import가 `@/shared/components/template/...` 형태인가
 - [ ] 목록 테이블에 `cms-data-table--border` (또는 `TemplateTable` 사용)
 - [ ] 모달은 `TemplateFullpageModal` + 좌·우 공통 컴포넌트 조합 유지
-- [ ] 격자형 필드는 `DetailInfoForm` 우선, 입력은 `cms-*` 우선
+- [ ] 격자형 필드는 `DetailInfoForm` 우선, 입력은 `cms-*` 우선; 템플릿 `edit`의 `CmsInput`/`CmsSelect`/`CmsDatePicker`는 `inputSize="medium"` (`DetailInfoForm`에 불필요한 `className` 추가 없음; 일렬 정렬·구분은 `detail-info-form-inputs-wrapper*` / `InputsSeparator`)
 - [ ] 발급 탭 우측 하단은 `TemplateModalRightNavigation` `children`으로 확장
 - [ ] (해당 시) 레거시 리다이렉트·`?tab=` 동작 확인
+- [ ] (해당 시) 좌측 카드에 `pinned`를 쓰면 초기화·재정렬에 `normalizeLeftCardOrder` / `mergeLeftCardOrderByDragIds` 적용 여부 확인
 
 ---
 

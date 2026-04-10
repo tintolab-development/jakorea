@@ -27,6 +27,29 @@ export interface TemplateModalLeftCardConfig {
   description: string
   required?: boolean
   children?: ReactNode
+  /** true면 항상 목록 맨 위에 두고, 드래그 정렬·핸들 없음 */
+  pinned?: boolean
+}
+
+/** 우측 네비 등에서 넘어온 id 순서를 반영하되, `pinned` 카드는 항상 앞쪽에 유지 */
+export function mergeLeftCardOrderByDragIds(
+  prev: TemplateModalLeftCardConfig[],
+  orderedIds: string[]
+): TemplateModalLeftCardConfig[] {
+  const idSet = new Set(orderedIds)
+  const pinned = prev.filter(c => c.pinned && idSet.has(c.id))
+  const pinnedIdSet = new Set(pinned.map(p => p.id))
+  const sortableOrdered = orderedIds
+    .filter(id => !pinnedIdSet.has(id))
+    .map(id => prev.find(c => c.id === id))
+    .filter((c): c is TemplateModalLeftCardConfig => c != null && idSet.has(c.id))
+  return [...pinned, ...sortableOrdered]
+}
+
+export function normalizeLeftCardOrder(
+  cards: TemplateModalLeftCardConfig[]
+): TemplateModalLeftCardConfig[] {
+  return [...cards.filter(c => c.pinned), ...cards.filter(c => !c.pinned)]
 }
 
 interface TemplateModalLeftContentProps {
@@ -36,6 +59,34 @@ interface TemplateModalLeftContentProps {
   onReorderCards?: (cards: TemplateModalLeftCardConfig[]) => void
 }
 
+interface LeftCardShellProps {
+  card: TemplateModalLeftCardConfig
+  selectedCardId?: string | null
+  onSelectCard?: (id: string) => void
+  actionSlot?: ReactNode
+}
+
+function LeftCardShell({ card, selectedCardId, onSelectCard, actionSlot }: LeftCardShellProps) {
+  return (
+    <TemplateFullpageModalCard
+      className={[
+        onSelectCard ? 'full-page-modal-card--selectable' : '',
+        selectedCardId === card.id ? 'full-page-modal-card--active' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      onClick={onSelectCard ? () => onSelectCard(card.id) : undefined}
+      actionSlot={actionSlot}
+    >
+      <TemplateFullpageModalCardTitle title={card.title} required={card.required} />
+      <TemplateFullpageModalCardDescription>
+        {card.description}
+      </TemplateFullpageModalCardDescription>
+      {card.children}
+    </TemplateFullpageModalCard>
+  )
+}
+
 interface SortableLeftCardProps {
   card: TemplateModalLeftCardConfig
   selectedCardId?: string | null
@@ -43,8 +94,15 @@ interface SortableLeftCardProps {
 }
 
 function SortableLeftCard({ card, selectedCardId, onSelectCard }: SortableLeftCardProps) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id: card.id })
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: card.id })
 
   return (
     <div
@@ -55,14 +113,10 @@ function SortableLeftCard({ card, selectedCardId, onSelectCard }: SortableLeftCa
         opacity: isDragging ? 0.7 : 1,
       }}
     >
-      <TemplateFullpageModalCard
-        className={[
-          onSelectCard ? 'full-page-modal-card--selectable' : '',
-          selectedCardId === card.id ? 'full-page-modal-card--active' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        onClick={onSelectCard ? () => onSelectCard(card.id) : undefined}
+      <LeftCardShell
+        card={card}
+        selectedCardId={selectedCardId}
+        onSelectCard={onSelectCard}
         actionSlot={
           <button
             ref={setActivatorNodeRef}
@@ -76,13 +130,19 @@ function SortableLeftCard({ card, selectedCardId, onSelectCard }: SortableLeftCa
             <MenuOutlined />
           </button>
         }
-      >
-        <TemplateFullpageModalCardTitle title={card.title} required={card.required} />
-        <TemplateFullpageModalCardDescription>{card.description}</TemplateFullpageModalCardDescription>
-        {card.children}
-      </TemplateFullpageModalCard>
+      />
     </div>
   )
+}
+
+interface PinnedLeftCardProps {
+  card: TemplateModalLeftCardConfig
+  selectedCardId?: string | null
+  onSelectCard?: (id: string) => void
+}
+
+function PinnedLeftCard({ card, selectedCardId, onSelectCard }: PinnedLeftCardProps) {
+  return <LeftCardShell card={card} selectedCardId={selectedCardId} onSelectCard={onSelectCard} />
 }
 
 export function TemplateModalLeftContent({
@@ -91,31 +151,48 @@ export function TemplateModalLeftContent({
   onSelectCard,
   onReorderCards,
 }: TemplateModalLeftContentProps) {
-  const [items, setItems] = useState<TemplateModalLeftCardConfig[]>(config)
-  const itemIds = useMemo(() => items.map(item => item.id), [items])
+  const [items, setItems] = useState<TemplateModalLeftCardConfig[]>(() =>
+    normalizeLeftCardOrder(config)
+  )
+
+  const pinnedItems = useMemo(() => items.filter(c => c.pinned), [items])
+  const sortableItems = useMemo(() => items.filter(c => !c.pinned), [items])
+  const sortableIds = useMemo(() => sortableItems.map(item => item.id), [sortableItems])
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
   useEffect(() => {
-    setItems(config)
+    setItems(normalizeLeftCardOrder(config))
   }, [config])
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (over == null || active.id === over.id) return
-    const oldIndex = itemIds.findIndex(id => id === active.id)
-    const newIndex = itemIds.findIndex(id => id === over.id)
+    const oldIndex = sortableIds.findIndex(id => id === active.id)
+    const newIndex = sortableIds.findIndex(id => id === over.id)
     if (oldIndex < 0 || newIndex < 0) return
 
     setItems(prev => {
-      const moved = arrayMove(prev, oldIndex, newIndex)
-      onReorderCards?.(moved)
-      return moved
+      const pinned = prev.filter(c => c.pinned)
+      const sortable = prev.filter(c => !c.pinned)
+      const moved = arrayMove(sortable, oldIndex, newIndex)
+      const merged = [...pinned, ...moved]
+      onReorderCards?.(merged)
+      return merged
     })
   }
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-        {items.map(card => (
+      {pinnedItems.map(card => (
+        <PinnedLeftCard
+          key={card.id}
+          card={card}
+          selectedCardId={selectedCardId}
+          onSelectCard={onSelectCard}
+        />
+      ))}
+      <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+        {sortableItems.map(card => (
           <SortableLeftCard
             key={card.id}
             card={card}
