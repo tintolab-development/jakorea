@@ -90,8 +90,57 @@
 
 /* 하단 인풋 — 상단 버튼과 동일 44px·테두리·라운드 */
 .template-custom-fields-form__secondary-input-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   width: 100%;
   align-self: stretch;
+}
+
+/* 인풋·텍스트영역 아래 8px — 흑백 텍스트 색 닷 */
+.template-custom-fields-form__text-color-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.template-custom-fields-form__text-color-dot {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.template-custom-fields-form__text-color-dot:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.template-custom-fields-form__text-color-dot--black {
+  background: #000;
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+.template-custom-fields-form__text-color-dot--white {
+  background: #fff;
+  border-color: var(--table-line, #e0e0e0);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.template-custom-fields-form__text-color-dot--selected {
+  box-shadow:
+    0 0 0 2px var(--main-WT, #fff),
+    0 0 0 4px var(--color-mint-01, #01a1af);
 }
 
 .template-custom-fields-form__secondary-input.ant-input,
@@ -107,7 +156,7 @@
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  color: var(--main-BK, #3d3d3d);
+  color: #000;
 }
 
 .template-custom-fields-form__secondary-input.ant-input::placeholder,
@@ -138,7 +187,7 @@
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  color: var(--main-BK, #3d3d3d);
+  color: #000;
 }
 
 .template-custom-fields-form__secondary-textarea.ant-input::placeholder,
