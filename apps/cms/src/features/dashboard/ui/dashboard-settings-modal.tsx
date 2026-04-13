@@ -1,6 +1,6 @@
 /**
  * 대시보드 설정 모달
- * - 바로가기 아이콘 설정 (17개 체크박스)
+ * - 바로가기 아이콘 설정 (체크박스)
  * - 위젯 별 프로그램 설정 (4개 위젯 × 프로그램 체크박스)
  * TealHeaderModal 재사용, 800×720px, 바디 스크롤
  */
@@ -12,6 +12,7 @@ import {
   useDashboardSettingsStore,
   SHORTCUT_ITEMS,
   WIDGET_PROGRAM_KEYS,
+  isShortcutItemEnabled,
 } from '../model/dashboard-settings-store'
 import { mockPrograms } from '@/data/mock'
 import './dashboard-settings-modal.css'
@@ -164,7 +165,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
             {SHORTCUT_ITEMS.map(item => (
               <Checkbox
                 key={item.id}
-                checked={!!shortcutEnabled[item.id]}
+                checked={isShortcutItemEnabled(shortcutEnabled, item.id)}
                 onChange={e => setDraftShortcut(item.id, e.target.checked)}
               >
                 {item.label}

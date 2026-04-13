@@ -7,23 +7,38 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-/** 바로가기 항목: id, label, path (대시보드 설정·메뉴 바로가기 위젯 공통) */
+/** 대시보드 홈(임시 미구현 라우트 대체) */
+export const DASHBOARD_HOME_PATH = '/'
+
+export const isShortcutItemEnabled = (shortcutEnabled: Record<string, boolean>, id: string): boolean =>
+  shortcutEnabled[id] !== false
+
+/** 바로가기 항목: id, label, path (대시보드 설정·메뉴 바로가기 위젯 공통) — 미구현 경로는 DASHBOARD_HOME_PATH */
 export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> = [
-  { id: 'programs', label: '전체 프로그램', path: '/programs/education' },
-  { id: 'applications', label: '참여자 모집 현황', path: '/programs/education/student-recruitment' },
-  { id: 'instructor-applications', label: '강사 모집 현황', path: '/programs/education/instructor-recruitment' },
-  { id: 'users', label: '전체 회원', path: '/users/list?kind=all' },
-  { id: 'schools', label: '학교(교사) 회원', path: '/users/list?kind=institutions' },
-  { id: 'instructors', label: '강사단', path: '/users/list?kind=instructors' },
-  { id: 'kakao-alimtalk', label: '카카오 알림톡 관리', path: '/templates/kakao-notification' },
-  { id: 'email', label: '메일 관리', path: '/templates/email-management' },
-  { id: 'banner', label: '배너 관리', path: '/templates/banner' },
+  { id: 'programs-all', label: '전체', path: '/programs' },
+  { id: 'programs-general-education', label: '일반 프로그램', path: '/programs/education' },
+  { id: 'programs-economy', label: '경제교육 프로그램', path: '/programs/economy-education' },
+  { id: 'programs-gemini', label: '제미나이 프로그램', path: DASHBOARD_HOME_PATH },
+  { id: 'users-all', label: '전체 회원 관리', path: '/users/list?kind=all' },
+  { id: 'users-school', label: '학교(교사)회원', path: '/users/list?kind=institutions' },
+  { id: 'users-instructor', label: '강사 회원 관리', path: '/users/list?kind=instructors' },
+  { id: 'users-admin', label: '관리자 관리', path: '/users/list?kind=admins' },
+  { id: 'permission-requests', label: '회원 권한 승인', path: '/admin/permission-requests' },
+  { id: 'settlement-payment-orders', label: '지급 조서 확인', path: '/settlement-management/payment-orders' },
+  { id: 'settlement-account-payments', label: '계좌 지급 확인', path: '/settlement-management/account-payments' },
+  { id: 'settlement-item-settings', label: '정산 항목 설정', path: '/settlement-management/item-settings' },
   { id: 'notices', label: '공지사항', path: '/admin/posts/notices' },
   { id: 'faq', label: 'FAQ', path: '/admin/posts/faq' },
-  { id: 'inquiries', label: '문의하기', path: '/admin/posts/inquiries' },
-  { id: 'program-forms', label: '폼 양식 관리', path: '/templates/form-management' },
-  { id: 'file-forms', label: '발급 양식', path: '/templates/form-management?tab=issuance-form' },
-  { id: 'sponsors', label: '후원사', path: '/sponsors' },
+  { id: 'inquiries', label: '문의 사항', path: '/admin/posts/inquiries' },
+  { id: 'template-management', label: '템플릿 관리', path: '/templates/form-management' },
+  { id: 'sponsors', label: '후원사 관리', path: '/sponsors' },
+  { id: 'textbooks', label: '교재 관리', path: DASHBOARD_HOME_PATH },
+  { id: 'programs-detail', label: '세부 프로그램 관리', path: '/programs' },
+  { id: 'performance', label: '실적 관리', path: '/education-records' },
+  { id: 'email-history', label: '메일 발송 이력', path: '/templates/email-management' },
+  { id: 'file-download-history', label: '파일 다운로드 이력', path: DASHBOARD_HOME_PATH },
+  { id: 'privacy-query-history', label: '개인정보 조회 이력', path: DASHBOARD_HOME_PATH },
+  { id: 'bug-issue-history', label: '버그/이슈 이력', path: '/logs' },
 ]
 
 /** 위젯별 프로그램 설정용 위젯 키 (4개 위젯) */
@@ -37,23 +52,9 @@ export const WIDGET_PROGRAM_KEYS = [
 export type WidgetProgramKey = (typeof WIDGET_PROGRAM_KEYS)[number]['key']
 
 /** 바로가기 항목별 미확인 내역 mock 초기값 */
-const defaultShortcutBadgeCounts: Record<string, number> = {
-  programs: 2,
-  applications: 2,
-  'instructor-applications': 0,
-  users: 10,
-  schools: 0,
-  instructors: 0,
-  'kakao-alimtalk': 0,
-  email: 105, // 임시: 99+ 배지 확인용
-  banner: 0,
-  notices: 0,
-  faq: 0,
-  inquiries: 5,
-  'program-forms': 0,
-  'file-forms': 0,
-  sponsors: 0,
-}
+const defaultShortcutBadgeCounts: Record<string, number> = Object.fromEntries(
+  SHORTCUT_ITEMS.map(item => [item.id, 0])
+) as Record<string, number>
 
 const defaultShortcutEnabled: Record<string, boolean> = Object.fromEntries(
   SHORTCUT_ITEMS.map(item => [item.id, true])
