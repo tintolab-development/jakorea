@@ -24,6 +24,16 @@ export interface TemplateSection {
 const DEFAULT_MODAL_SECTIONS = ['기본 정보', '신청자 정보', '동의 항목'] as const
 const VOLUNTEER_MODAL_SECTIONS = ['봉사자 신청 정보', '학력사항', '경력사항', 'JA Korea 활동 경험'] as const
 
+/** 일반 프로그램 등록 정보 폼 (교육 커리큘럼 ver.) 풀페이지 모달 섹션 */
+export const CURRICULUM_MODAL_SECTIONS = [
+  '기본 정보',
+  '사업 KPI 목표',
+  '임금 정보',
+  '교육 커리큘럼',
+] as const
+
+export type CurriculumModalSectionTitle = (typeof CURRICULUM_MODAL_SECTIONS)[number]
+
 const createRows = (prefix: string, definitions: TemplateDefinition[]): TemplateRow[] =>
   definitions.map((definition, index) => ({
     ...definition,
@@ -117,5 +127,5 @@ export const writingSections: TemplateSection[] = [
 export const TEMPLATE_MODAL_SECTIONS_BY_VARIANT: Record<TemplateVariant, readonly string[]> = {
   default: DEFAULT_MODAL_SECTIONS,
   volunteer: VOLUNTEER_MODAL_SECTIONS,
-  curriculum: DEFAULT_MODAL_SECTIONS,
+  curriculum: CURRICULUM_MODAL_SECTIONS,
 }

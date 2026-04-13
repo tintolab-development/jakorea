@@ -1,17 +1,19 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useMemo, useState } from 'react'
-import { TemplateListCard } from '@/shared/components/template/template-list-card'
+import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { TemplateFullpageModal } from '@/shared/components/template/template-fullpage-modal'
+import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import {
+  mergeLeftCardOrderByDragIds,
+  normalizeLeftCardOrder,
   TemplateModalLeftContent,
   type TemplateModalLeftCardConfig,
-} from '@/shared/components/template/template-modal-left-content'
+} from '@/features/template/ui/template-modal-left-content'
 import {
   TemplateModalRightNavigation,
   type TemplateModalRightNavigationConfig,
-} from '@/shared/components/template/template-modal-right-navigation'
+} from '@/features/template/ui/template-modal-right-navigation'
 
 interface IssuanceTemplateRow {
   key: string
@@ -102,8 +104,9 @@ export function IssuanceFormTab() {
 
   useEffect(() => {
     if (!isPreviewOpen) return
-    setOrderedLeftContentConfig(baseLeftContentConfig)
-    setActiveCardId(baseLeftContentConfig[0]?.id ?? null)
+    const ordered = normalizeLeftCardOrder(baseLeftContentConfig)
+    setOrderedLeftContentConfig(ordered)
+    setActiveCardId(ordered[0]?.id ?? null)
   }, [baseLeftContentConfig, isPreviewOpen])
 
   const rightNavigationConfig: TemplateModalRightNavigationConfig = {
@@ -112,12 +115,7 @@ export function IssuanceFormTab() {
   }
 
   const applyOrderedCards = (orderedIds: string[]) => {
-    const idSet = new Set(orderedIds)
-    setOrderedLeftContentConfig(prev =>
-      prev
-        .filter(card => idSet.has(card.id))
-        .sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id))
-    )
+    setOrderedLeftContentConfig(prev => mergeLeftCardOrderByDragIds(prev, orderedIds))
   }
 
   return (

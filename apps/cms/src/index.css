@@ -31,6 +31,11 @@ a:hover {
   color: var(--color-link-hover);
 }
 
+/* 모달 등으로 document 스크롤이 잠길 때 스크롤바 소멸로 인한 가로 레이아웃 시프트 완화 */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   min-width: 1920px;
@@ -201,6 +206,22 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+  width: 100%;
+}
+.detail-info-form-inputs-wrapper-no-gap {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+}
+
+/* flex item 기본 min-width:auto + 컴포넌트 고정 min-width 때문에 width %가 밀리는 것 방지 */
+.detail-info-form-inputs-wrapper-no-gap > .cms-select,
+.detail-info-form-inputs-wrapper-no-gap > .cms-input,
+.detail-info-form-inputs-wrapper-no-gap > .cms-datepicker:not(.cms-datepicker--range-split),
+.detail-info-form-inputs-wrapper > .cms-datepicker:not(.cms-datepicker--range-split) {
+  min-width: 0;
 }
 
 .detail-info-form-inputs-separator {

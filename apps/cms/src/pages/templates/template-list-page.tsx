@@ -3,29 +3,40 @@
  * Phase: 관리자 페이지 카테고리 정리 및 뎁스 변경
  */
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tabs } from 'antd'
 import TemplateFormTab from './template-form-tab'
+import { FormTab } from './form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
+import { TemplateCreateModal } from '@/features/template/ui/modal/template-create-modal'
 import './template-list-page.css'
 import './template-form-tab.css'
 import { CmsButton } from '@/shared/ui'
 
 const FORM_MANAGEMENT_BASE = '/templates/form-management'
+
+type FormManagementQuery = {
+  tab?: string
+  mode?: string
+  type?: string
+  id?: string
+}
 // const KAKAO_NOTIFICATION = '/templates/kakao-notification'
 // const EMAIL_MANAGEMENT = '/templates/email-management'
 
 export function TemplateListPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { params, setParams } = useQueryParams<{ tab?: string }>()
+  const { params, setParams } = useQueryParams<FormManagementQuery>()
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const formTabItems = useMemo(
     () => [
       { key: 'template-form', label: '작성 양식', path: FORM_MANAGEMENT_BASE },
       { key: 'issuance-form', label: '발급 양식', path: FORM_MANAGEMENT_BASE },
+      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
     ],
     []
   )
@@ -56,9 +67,13 @@ export function TemplateListPage() {
   ])
 
   const handleFormTabChange = (key: string) => {
-    setParams({
-      tab: key,
-    })
+    const updates: Partial<FormManagementQuery> = { tab: key }
+    if (key !== 'template-form') {
+      updates.mode = undefined
+      updates.type = undefined
+      updates.id = undefined
+    }
+    setParams(updates)
 
     const target = formTabItems.find(t => t.key === key)?.path || FORM_MANAGEMENT_BASE
     if (location.pathname !== target) {
@@ -75,14 +90,43 @@ export function TemplateListPage() {
             activeKey={activeKey}
             onChange={handleFormTabChange}
             items={formTabItems.map(t => ({ key: t.key, label: t.label }))}
-            tabBarExtraContent={<CmsButton>+ 신규 템플릿</CmsButton>}
+            tabBarExtraContent={
+              activeKey === 'template-form' ? (
+                <CmsButton type="button" onClick={() => setCreateModalOpen(true)}>
+                  + 신규 템플릿
+                </CmsButton>
+              ) : null
+            }
             style={{ marginBottom: 20 }}
+          />
+          <TemplateCreateModal
+            open={createModalOpen}
+            onCancel={() => setCreateModalOpen(false)}
+            onDirectRegister={target => {
+              setCreateModalOpen(false)
+              setParams({
+                tab: 'template-form',
+                mode: 'new',
+                type: target,
+                id: undefined,
+              })
+            }}
+            onDuplicateSuccess={newTemplateId => {
+              setCreateModalOpen(false)
+              setParams({
+                mode: 'edit',
+                id: newTemplateId,
+                type: undefined,
+              })
+            }}
           />
         </>
       )}
       {isFormManagementSection ? (
         activeKey === 'issuance-form' ? (
           <IssuanceFormTab />
+        ) : activeKey === 'form-test' ? (
+          <FormTab />
         ) : (
           <TemplateFormTab />
         )

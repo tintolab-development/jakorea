@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
-import type { TemplateModalLeftCardConfig } from '@/shared/components/template/template-modal-left-content'
-import type { TemplateModalRightNavigationConfig } from '@/shared/components/template/template-modal-right-navigation'
+import type { TemplateModalLeftCardConfig } from '@/features/template/ui/template-modal-left-content'
+import type { TemplateModalRightNavigationConfig } from '@/features/template/ui/template-modal-right-navigation'
 import {
+  CURRICULUM_MODAL_SECTIONS,
   TEMPLATE_MODAL_SECTIONS_BY_VARIANT,
+  type CurriculumModalSectionTitle,
   type TemplateRow,
   type TemplateVariant,
 } from '@/features/template/model/template.schema'
@@ -10,7 +12,8 @@ import {
 interface BuildTemplateConfigParams {
   selectedTemplate: TemplateRow | null
   orderedLeftContentConfig: TemplateModalLeftCardConfig[]
-  curriculumSection?: ReactNode
+  /** 교육 커리큘럼 variant 전용: 섹션 타이틀 → 본문 슬롯 */
+  curriculumSections?: Partial<Record<CurriculumModalSectionTitle, ReactNode>>
 }
 
 const resolveCardDescription = (index: number): string => {
@@ -22,9 +25,12 @@ const resolveCardDescription = (index: number): string => {
 const resolveVariant = (selectedTemplate: TemplateRow | null): TemplateVariant =>
   selectedTemplate?.variant ?? 'default'
 
+const isCurriculumSectionTitle = (title: string): title is CurriculumModalSectionTitle =>
+  (CURRICULUM_MODAL_SECTIONS as readonly string[]).includes(title)
+
 export const buildBaseLeftContentConfig = (
   selectedTemplate: TemplateRow | null,
-  curriculumSection?: ReactNode
+  curriculumSections?: Partial<Record<CurriculumModalSectionTitle, ReactNode>>
 ): TemplateModalLeftCardConfig[] => {
   const variant = resolveVariant(selectedTemplate)
   const sections = TEMPLATE_MODAL_SECTIONS_BY_VARIANT[variant]
@@ -33,9 +39,12 @@ export const buildBaseLeftContentConfig = (
   return sections.map((title, index) => ({
     id: `card-${index + 1}`,
     title,
-    required: index === 0,
-    description: resolveCardDescription(index),
-    children: isCurriculumTemplate && title === '기본 정보' ? curriculumSection : undefined,
+    required: isCurriculumTemplate ? true : index === 0,
+    description: isCurriculumTemplate ? '설명 입력' : resolveCardDescription(index),
+    children:
+      isCurriculumTemplate && isCurriculumSectionTitle(title)
+        ? curriculumSections?.[title]
+        : undefined,
   }))
 }
 
@@ -49,12 +58,12 @@ export const buildRightNavigationConfig = (
 export const buildTemplateConfig = ({
   selectedTemplate,
   orderedLeftContentConfig,
-  curriculumSection,
+  curriculumSections,
 }: BuildTemplateConfigParams): {
   baseLeftContentConfig: TemplateModalLeftCardConfig[]
   rightNavigationConfig: TemplateModalRightNavigationConfig
 } => {
-  const baseLeftContentConfig = buildBaseLeftContentConfig(selectedTemplate, curriculumSection)
+  const baseLeftContentConfig = buildBaseLeftContentConfig(selectedTemplate, curriculumSections)
   const rightNavigationConfig = buildRightNavigationConfig(orderedLeftContentConfig)
 
   return {

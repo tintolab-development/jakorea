@@ -1,0 +1,28 @@
+/**
+ * 교육 커리큘럼 — DetailInfoForm.Row(custom)로 차시 단위 그룹,
+ * 내부는 Row(double) + Field로 라벨/본문 격자 정렬 (다른 커리큘럼 섹션과 동일 패턴)
+ */
+.education-curriculum-session {
+  width: 100%;
+  min-width: 0;
+}
+
+.education-curriculum-session__heading {
+  padding: 8px 0 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--default-BK, #3d3d3d);
+}
+
+/* custom 행 안의 이중 열 행: 상위 카드 테두리와 이중 구분선 완화 */
+.education-curriculum-session > .detail-info-form__row--double {
+  border-bottom: none;
+}
+
+.education-curriculum-session__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
