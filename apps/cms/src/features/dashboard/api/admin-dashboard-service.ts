@@ -338,7 +338,7 @@ const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> =
 /** 사업 KPI 목표·위젯 공통: 달성/목표 수치 (patternIndex로 목록 간 변주) */
 function buildKpiMetricsForPattern(patternIndex: number): KpiMetric[] {
   const achievedParticipants = patternIndex % 3 === 0 ? 100 : 80
-  const targetParticipants = patternIndex % 4 === 0 ? 30 : 100
+  const targetParticipants = 100
   const achievedSchools = 100
   const targetSchools = 100
   const achievedClasses = patternIndex % 2 === 0 ? 100 : 80
