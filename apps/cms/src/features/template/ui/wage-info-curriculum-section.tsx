@@ -1,5 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsInput, type CmsInputProps } from '@/shared/ui/cms-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 
@@ -23,18 +23,21 @@ const wageBasisOptions = [
   { value: 'under', label: '이하' },
 ]
 
-function WonSuffixInput() {
+type WonSuffixInputProps = Pick<CmsInputProps, 'width'>
+
+function WonSuffixInput({ width }: WonSuffixInputProps) {
   return (
-    <div className="detail-info-form-inputs-wrapper" style={{ alignItems: 'center' }}>
+    <div className="detail-info-form-inputs-wrapper">
       <CmsInput
         inputSize="medium"
         type="number"
         inputMode="numeric"
         placeholder="금액"
         min={0}
-        style={{ flex: 1 }}
+        width={width}
+        style={{ flex: 1, minWidth: 0 }}
       />
-      <span style={{ flexShrink: 0, paddingLeft: 8, color: 'var(--color-text-secondary, #666)' }}>원</span>
+      <span style={{ marginLeft: 6 }}>원</span>
     </div>
   )
 }
@@ -45,7 +48,14 @@ export function WageInfoCurriculumSection() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="강사비 유형"
-          edit={<CmsSelect inputSize="medium" placeholder="선택" options={wageTypeOptions} />}
+          edit={
+            <CmsSelect
+              inputSize="medium"
+              width={'100%'}
+              placeholder="선택"
+              options={wageTypeOptions}
+            />
+          }
           view="-"
         />
         <DetailInfoForm.Field
@@ -55,8 +65,16 @@ export function WageInfoCurriculumSection() {
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="기본 강사비" edit={<WonSuffixInput />} view="-" />
-        <DetailInfoForm.Field label="장거리 강사비" edit={<WonSuffixInput />} view="-" />
+        <DetailInfoForm.Field
+          label="기본 강사비"
+          edit={<WonSuffixInput width={'100%'} />}
+          view="-"
+        />
+        <DetailInfoForm.Field
+          label="장거리 강사비"
+          edit={<WonSuffixInput width={'100%'} />}
+          view="-"
+        />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field

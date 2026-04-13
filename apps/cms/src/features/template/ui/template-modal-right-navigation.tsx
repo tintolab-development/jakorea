@@ -24,6 +24,8 @@ export interface TemplateModalRightNavigationConfig {
 export interface TemplateModalRightNavigationItem {
   id: string
   label: string
+  /** 설정 시 목록·title 속성에 `${index + 1}. ${label}` 대신 이 문자열을 그대로 사용 */
+  displayLine?: string
 }
 
 interface TemplateModalRightNavigationProps {
@@ -43,6 +45,10 @@ interface SortableNavigationItemProps {
   onSelect: () => void
 }
 
+function navigationItemLine(item: TemplateModalRightNavigationItem, index: number): string {
+  return item.displayLine ?? `${index + 1}. ${item.label}`
+}
+
 function SortableNavigationItem({
   id,
   item,
@@ -52,6 +58,8 @@ function SortableNavigationItem({
 }: SortableNavigationItemProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id })
+
+  const line = navigationItemLine(item, index)
 
   return (
     <button
@@ -65,8 +73,8 @@ function SortableNavigationItem({
         opacity: isDragging ? 0.7 : 1,
       }}
     >
-      <span className="template-modal-nav-item__label" title={`${index + 1}. ${item.label}`}>
-        {index + 1}. {item.label}
+      <span className="template-modal-nav-item__label" title={line}>
+        {line}
       </span>
       <span
         ref={setActivatorNodeRef}

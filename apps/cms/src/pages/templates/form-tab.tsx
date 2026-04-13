@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Space, Typography } from 'antd'
-import { TemplateListCard } from '@/shared/components/template/template-list-card'
+import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 

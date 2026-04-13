@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import {
   DEFAULT_PARTICIPANT_ROW_VISIBILITY,
   PARTICIPANT_INFO_ROW_COUNT,
-} from '@/shared/components/template/template-custom-fields-form'
+} from '@/features/template/ui/template-custom-fields-form'
 import { resolveCanvasRegion } from './form-certificate-preview-mapping'
 import { splitParticipantValues } from './form-certificate-preview-utils'
 

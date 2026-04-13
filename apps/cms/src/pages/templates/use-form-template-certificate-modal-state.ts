@@ -4,7 +4,7 @@ import {
   createDefaultParticipantRowVisibility,
   DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
   DEFAULT_TEMPLATE_FIELD_TEXT_COLORS,
-} from '@/shared/components/template/template-custom-fields-form'
+} from '@/features/template/ui/template-custom-fields-form'
 import { useObjectUrlFromFile } from '@/shared/hooks/use-object-url-from-file'
 
 export function useFormTemplateCertificateModalState(open: boolean) {

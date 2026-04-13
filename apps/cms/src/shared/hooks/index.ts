@@ -44,3 +44,5 @@ export type {
   JusoAddressRow,
 } from './use-juso-address-search'
 export { useObjectUrlFromFile } from './use-object-url-from-file'
+export { useFormInputsWidth } from './use-form-inputs-width'
+export type { FormInputsWidthOptions } from './use-form-inputs-width'

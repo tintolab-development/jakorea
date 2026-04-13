@@ -1,0 +1,169 @@
+/* 설문 편집기 — new-survey-form / survey-editor-* 전용 */
+
+.survey-editor-left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.survey-editor-card .full-page-modal-card__description {
+  min-height: 1.25em;
+}
+
+.survey-editor-placeholder {
+  color: var(--color-text-placeholder, #bfbfbf);
+}
+
+.survey-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.survey-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.survey-editor-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.survey-editor-field__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.survey-editor-range {
+  width: 100%;
+  max-width: 100%;
+}
+
+.survey-editor-user-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+@media (max-width: 900px) {
+  .survey-editor-user-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.survey-editor-user-grid__cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--main-BK, #3d3d3d);
+  cursor: pointer;
+}
+
+.survey-editor-likert__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #6f7f86;
+  margin-bottom: 8px;
+}
+
+.survey-editor-likert__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.survey-editor-likert__btn {
+  min-width: 44px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--main-BK, #3d3d3d);
+  cursor: pointer;
+}
+
+.survey-editor-likert__btn:hover {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.survey-editor-likert__btn--active {
+  border-color: var(--color-mint-01, #01a1af);
+  background: rgba(1, 161, 175, 0.12);
+  color: var(--color-mint-01, #01a1af);
+}
+
+.survey-editor-subjective.ant-input {
+  resize: vertical;
+}
+
+.survey-editor-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+.survey-editor-card__actions--minimal {
+  justify-content: flex-start;
+}
+
+/* 우측 네비: 고정 행은 드래그 핸들 없이 동일 높이 유지 */
+.template-modal-nav-item--pinned {
+  padding-right: 14px;
+}
+
+.survey-editor-right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.survey-editor-right-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.survey-editor-right-panel__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.survey-editor-right-panel__select {
+  width: 100%;
+}
+
+.survey-editor-right-panel__section-title {
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 140% !important;
+}
+
+.survey-editor-right-panel__form {
+  width: 100%;
+}
+
+.survey-editor-right-panel__form .ant-form-item {
+  margin-bottom: 12px;
+}

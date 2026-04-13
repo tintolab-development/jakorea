@@ -6,9 +6,9 @@ import templateCertificateBg from '@/assets/images/template/templatge-background
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'
 import templateStamp from '@/assets/images/template/template-stamp.png'
-import { TemplateCustomFieldImageUpload } from '@/shared/components/template/template-custom-field-image-upload'
+import { TemplateCustomFieldImageUpload } from './template-custom-field-image-upload'
 import './template-custom-fields-form.css'
-import '@/shared/components/template/template-fullpage-modal.css'
+import './template-fullpage-modal.css'
 
 /** 파일 업로드·썸네일 UI를 쓰는 필드 (기관 로고·수료증 배경·회장 직인 등) */
 const IMAGE_UPLOAD_FIELD_NAMES = new Set([
