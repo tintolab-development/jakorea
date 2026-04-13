@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import type { TemplateModalLeftCardConfig } from '@/shared/components/template/template-modal-left-content'
-import type { TemplateModalRightNavigationConfig } from '@/shared/components/template/template-modal-right-navigation'
+import type { TemplateModalLeftCardConfig } from '@/features/template/ui/template-modal-left-content'
+import type { TemplateModalRightNavigationConfig } from '@/features/template/ui/template-modal-right-navigation'
 import {
   CURRICULUM_MODAL_SECTIONS,
   TEMPLATE_MODAL_SECTIONS_BY_VARIANT,

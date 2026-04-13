@@ -281,7 +281,6 @@
   border-radius: var(--16, 16px);
   border: 1px solid var(--color-mint-01, #01a1af);
   background: var(--main-WT, #fff);
-  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
 }
 
 .full-page-modal-card__title-wrap {
@@ -300,6 +299,13 @@
   font-style: normal;
   font-weight: 700;
   line-height: 140%;
+}
+
+/* 설문 카드 등: 아웃라인 placeholder 문구 — ParagraphInput 기본 톤과 맞춤 */
+.full-page-modal-card__title.full-page-modal-card__title--placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .full-page-modal-card__required {

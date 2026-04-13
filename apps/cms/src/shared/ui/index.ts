@@ -69,6 +69,8 @@ export { CmsRadio, CmsRadioGroup } from './cms-radio'
 export type { CmsRadioProps, CmsRadioGroupProps, CmsRadioSize } from './cms-radio'
 export { CmsCheckbox } from './cms-checkbox'
 export type { CmsCheckboxProps, CmsCheckboxGroupProps, CmsCheckboxSize } from './cms-checkbox'
+export { CmsToggle } from './cms-toggle'
+export type { CmsToggleProps } from './cms-toggle'
 export {
   CmsDatePicker,
   CmsDateRangePicker,

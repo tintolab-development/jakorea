@@ -1,19 +1,19 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useMemo, useState } from 'react'
-import { TemplateListCard } from '@/shared/components/template/template-list-card'
+import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { TemplateFullpageModal } from '@/shared/components/template/template-fullpage-modal'
+import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import {
   mergeLeftCardOrderByDragIds,
   normalizeLeftCardOrder,
   TemplateModalLeftContent,
   type TemplateModalLeftCardConfig,
-} from '@/shared/components/template/template-modal-left-content'
+} from '@/features/template/ui/template-modal-left-content'
 import {
   TemplateModalRightNavigation,
   type TemplateModalRightNavigationConfig,
-} from '@/shared/components/template/template-modal-right-navigation'
+} from '@/features/template/ui/template-modal-right-navigation'
 
 interface IssuanceTemplateRow {
   key: string

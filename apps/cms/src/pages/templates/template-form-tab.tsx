@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo } from 'react'
-import { TemplateListCard } from '@/shared/components/template/template-list-card'
+import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import './template-form-tab.css'
-import { TemplateFullpageModal } from '@/shared/components/template/template-fullpage-modal'
-import { TemplateModalLeftContent } from '@/shared/components/template/template-modal-left-content'
-import { TemplateModalRightNavigation } from '@/shared/components/template/template-modal-right-navigation'
+import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
+import { TemplateModalLeftContent } from '@/features/template/ui/template-modal-left-content'
+import { TemplateModalRightNavigation } from '@/features/template/ui/template-modal-right-navigation'
 import { BasicInfoCurriculumSection } from '@/features/template/ui/basic-info-curriculum-section'
 import { EducationCurriculumSection } from '@/features/template/ui/education-curriculum-section'
 import { KpiGoalsCurriculumSection } from '@/features/template/ui/kpi-goals-curriculum-section'
@@ -29,6 +29,8 @@ type TemplateFormTabQuery = {
 
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
+  const isPreviewOpen = params.mode === 'edit'
+
   const curriculumSections = useMemo(
     () => ({
       '기본 정보': <BasicInfoCurriculumSection />,
@@ -49,7 +51,6 @@ export default function TemplateFormTab() {
   )
 
   const {
-    isPreviewOpen,
     selectedTemplate,
     orderedLeftContentConfig,
     activeCardId,
@@ -63,22 +64,23 @@ export default function TemplateFormTab() {
 
   const handleOpenTemplatePreview = useCallback(
     (row: TemplateRow) => {
-      openTemplatePreview(row)
       setParams({ mode: 'edit', id: row.id, type: undefined })
     },
-    [openTemplatePreview, setParams]
+    [setParams]
   )
 
   const handleCloseTemplatePreview = useCallback(() => {
-    closeTemplatePreview()
     setParams({ mode: undefined, id: undefined, type: undefined })
-  }, [closeTemplatePreview, setParams])
+  }, [setParams])
 
   useEffect(() => {
-    if (params.mode !== 'edit' || params.id == null || params.id === '' || isPreviewOpen) return
+    if (params.mode !== 'edit' || params.id == null || params.id === '') {
+      closeTemplatePreview()
+      return
+    }
     const row = findWritingTemplateRowByDefinitionId(params.id)
     if (row) openTemplatePreview(row)
-  }, [params.mode, params.id, isPreviewOpen, openTemplatePreview])
+  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview])
 
   const rightNavigationConfig = useMemo(
     () => buildRightNavigationConfig(orderedLeftContentConfig),

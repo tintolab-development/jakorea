@@ -20,7 +20,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 - [Custom Hooks](./coding/custom-hooks.md) - Custom Hooks 작성 가이드
 - [타입 안전성 및 일관성](./coding/type-safety-and-consistency.md) - Deprecated 코드 사용 금지, 타입 일관성 유지
 - [리팩토링 원칙](./coding/refactoring-principles.md) - 코드 품질 원칙
-- [템플릿 관리 구현](./coding/template-management.md) - `shared/components/template`, `features/template`, `pages/templates` 공통 UI·라우팅·테이블·모달 패턴 (기획 스펙 제외)
+- [템플릿 관리 구현](./coding/template-management.md) - `features/template`(`ui`에 풀페이지 모달·네비 포함), `pages/templates` 공통 UI·라우팅·테이블·모달 패턴 (기획 스펙 제외)
 
 ## 🎨 UI/UX
 

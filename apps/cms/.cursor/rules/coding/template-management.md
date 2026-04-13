@@ -5,7 +5,7 @@ category: implementation
 
 # 템플릿 관리 — 구현 규칙 (CMS)
 
-**적용 범위**: `apps/cms/src/shared/components/template/**`, `apps/cms/src/features/template/**`, `apps/cms/src/pages/templates/**`
+**적용 범위**: `apps/cms/src/features/template/**`, `apps/cms/src/pages/templates/**`
 
 **비적용**: 화면 기획·IA·카피·PM 스펙은 별도 문서로 관리하며, 이 룰에는 포함하지 않는다.
 
@@ -17,24 +17,24 @@ category: implementation
 
 | 위치 | 용도 |
 |------|------|
-| `@/shared/components/template` | 양식 관리(작성/발급) 풀페이지 모달, 좌·우 네비, 섹션 카드 등 **여러 템플릿 화면에서 공유하는 프레젠테이션 셸** |
-| `@/features/template` | 문자(SMS)·메일 템플릿 CRUD, 목록 테이블, 필터, 일괄 발송, 미리보기/편집 모달 등 **채널·도메인에 가까운 기능** |
+| `@/features/template/ui` (예: `template-fullpage-modal`, `template-modal-*`, `template-list-card`) | 양식 관리(작성/발급) 풀페이지 모달, 좌·우 네비, 섹션 카드 등 **템플릿 작성/발급 화면의 프레젠테이션 셸** |
+| `@/features/template` (그 외 model·hooks·ui) | 문자(SMS)·메일 템플릿 CRUD, 목록 테이블, 필터, 일괄 발송, 미리보기/편집 모달 등 **채널·도메인에 가까운 기능** |
 
 **선택 기준**
 
-- 작성/발급과 동일한 풀페이지 레이아웃을 다른 경로에서도 쓸 예정 → `shared/components/template`
+- 작성/발급과 동일한 풀페이지 레이아웃을 다른 경로에서도 쓸 예정 → `@/features/template/ui`의 풀페이지·네비·카드 컴포넌트
 - 카카오 알림톡·메일 등 데이터 모델·모달 플로우·목록 액션이 채널 고유 → `features/template`
 
 ---
 
-## 2. Import 경로 (`shared/components/template`)
+## 2. Import 경로 (풀페이지 템플릿 셸)
 
-템플릿 전용 공통 UI는 아래 네임스페이스에서 가져온다.
+템플릿 작성/발급 풀페이지 UI는 아래에서 가져온다.
 
-- `@/shared/components/template/template-list-card`
-- `@/shared/components/template/template-fullpage-modal`
-- `@/shared/components/template/template-modal-left-content`
-- `@/shared/components/template/template-modal-right-navigation`
+- `@/features/template/ui/template-list-card`
+- `@/features/template/ui/template-fullpage-modal`
+- `@/features/template/ui/template-modal-left-content`
+- `@/features/template/ui/template-modal-right-navigation`
 
 ---
 
@@ -43,7 +43,7 @@ category: implementation
 - **model**: `template.schema.ts` — 작성 양식 목록·variant·모달 섹션 정의
 - **lib**: `build-template-config.ts` — 풀페이지 모달 좌·우 구성 빌더
 - **hooks**: `use-template-modal`, `use-template-crud`, `use-clipboard`, `use-template-editor`, `use-template-preview`
-- **ui**: `template-table`, `basic-info-curriculum-section`, `template-filters`, `sms-template-table`, `email-template-table`, SMS/메일 폼·미리보기·일괄 발송 모달 등
+- **ui**: `template-fullpage-modal`, `template-list-card`, `template-modal-left-content`, `template-modal-right-navigation`, `template-table`, `basic-info-curriculum-section`, `template-filters`, `sms-template-table`, `email-template-table`, SMS/메일 폼·미리보기·일괄 발송 모달 등
 - **루트**: `template-route-redirects.tsx` — 구 템플릿 URL 리다이렉트
 - **constants**: `constants.ts`
 
@@ -82,7 +82,7 @@ category: implementation
 | `TemplateModalLeftContent` | 좌측 카드 + DnD + 선택 (`TemplateModalLeftCardConfig`, 아래 §5.1 `pinned`) |
 | `TemplateModalRightNavigation` | 우측 정렬 가능 네비 + `children`(목록 아래 영역; 구분선은 컴포넌트 내부) |
 
-템플릿 풀페이지 UI는 위 조합을 깨지 않는다. 확장이 필요하면 `shared/components/template`를 확장한다.
+템플릿 풀페이지 UI는 위 조합을 깨지 않는다. 확장이 필요하면 `@/features/template/ui`의 해당 컴포넌트를 확장한다.
 
 ### 5.1 좌측 카드 `pinned` — 상단 고정·비정렬
 
@@ -96,7 +96,7 @@ category: implementation
 
 **데이터 정규화·재정렬**
 
-- 모달에 넘기기 전·초기화 시 순서를 맞출 때: `@/shared/components/template/template-modal-left-content`의 **`normalizeLeftCardOrder(cards)`** — `pinned`를 앞으로 모은 배열을 반환.
+- 모달에 넘기기 전·초기화 시 순서를 맞출 때: `@/features/template/ui/template-modal-left-content`의 **`normalizeLeftCardOrder(cards)`** — `pinned`를 앞으로 모은 배열을 반환.
 - 우측 네비 DnD 등 **id 배열만** 넘어올 때: 같은 모듈의 **`mergeLeftCardOrderByDragIds(prev, orderedIds)`** — `orderedIds` 순을 반영하되 **`pinned` 카드 id는 항상 결과 배열의 앞쪽**에 둔다 (작성 탭 `use-template-modal`, 발급 탭 등에서 사용).
 
 **설정 위치 예**
@@ -165,14 +165,14 @@ category: implementation
 ## 10. 금지·주의
 
 - `template.schema`의 variant·섹션을 바꿀 때 `TEMPLATE_MODAL_SECTIONS_BY_VARIANT`와 행 정의의 `variant`를 함께 검증한다.
-- `shared/components/template/**` 또는 `shared/ui/cms-data-table.css` 수정 시 작성·발급 탭·모달 회귀를 PR에 명시한다.
+- `features/template/ui/template-fullpage-modal*`·`template-modal-*`·`template-list-card*` 또는 `shared/ui/cms-data-table.css` 수정 시 작성·발급 탭·모달 회귀를 PR에 명시한다.
 
 ---
 
 ## 11. PR 체크리스트
 
-- [ ] 신규 공통 UI는 `shared/components/template` 또는 `features/template`에만 추가
-- [ ] import가 `@/shared/components/template/...` 형태인가
+- [ ] 신규 템플릿 도메인 UI는 `features/template`(`ui` 포함)에만 추가
+- [ ] 풀페이지 셸·import가 `@/features/template/ui/template-...` 형태인가
 - [ ] 목록 테이블에 `cms-data-table--border` (또는 `TemplateTable` 사용)
 - [ ] 모달은 `TemplateFullpageModal` + 좌·우 공통 컴포넌트 조합 유지
 - [ ] 격자형 필드는 `DetailInfoForm` 우선, 입력은 `cms-*` 우선; 템플릿 `edit`의 `CmsInput`/`CmsSelect`/`CmsDatePicker`는 `inputSize="medium"` (`DetailInfoForm`에 불필요한 `className` 추가 없음; 일렬 정렬·구분은 `detail-info-form-inputs-wrapper*` / `InputsSeparator`; 너비는 `width` prop, `style.width` 지양; **한 Field 컨트롤 1개면 `width={'100%'}`**; **다중 인라인(2~5)은 `FORM_INPUTS_*_WIDTHS` 우선, 그 외 `useFormInputsWidth`/`getFormInputsWidth`; `calc` 하드코딩 금지**)

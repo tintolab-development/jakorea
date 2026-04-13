@@ -28,7 +28,10 @@ interface TemplateFullpageModalCardProps {
 interface TemplateFullpageModalCardTitleProps {
   title: ReactNode
   required?: boolean
+  /** `title-wrap` 루트 */
   className?: string
+  /** `full-page-modal-card__title` span — placeholder 톤 등 */
+  titleClassName?: string
 }
 
 interface TemplateFullpageModalCardDescriptionProps {
@@ -154,11 +157,14 @@ export function TemplateFullpageModalCardTitle({
   title,
   required = false,
   className,
+  titleClassName,
 }: TemplateFullpageModalCardTitleProps) {
   return (
     <div className={['full-page-modal-card__title-wrap', className].filter(Boolean).join(' ')}>
       {required ? <span className="full-page-modal-card__required">*</span> : null}
-      <span className="full-page-modal-card__title">{title}</span>
+      <span className={['full-page-modal-card__title', titleClassName].filter(Boolean).join(' ')}>
+        {title}
+      </span>
     </div>
   )
 }
