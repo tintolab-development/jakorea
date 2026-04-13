@@ -1,7 +1,10 @@
 /**
- * 대시보드 설정 스토어
- * - 바로가기 아이콘 노출 여부
- * - 위젯별 프로그램 선택 (4개 위젯 × 프로그램 id[])
+ * 대시보드 설정 스토어 (단일 persist)
+ *
+ * 도메인 슬라이스(구독 시 선택):
+ * - shortcut: shortcutEnabled, shortcutBadgeCounts
+ * - widgetPrograms: widgetProgramIds
+ * - inquiry: inquiryNotificationReadProgramKeys
  */
 
 import { create } from 'zustand'
@@ -141,6 +144,15 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
         }))
       },
     }),
-    { name: STORAGE_KEY }
+    {
+      name: STORAGE_KEY,
+      /** 액션은 직렬화 제외 — 상태 필드만 저장 */
+      partialize: state => ({
+        shortcutEnabled: state.shortcutEnabled,
+        shortcutBadgeCounts: state.shortcutBadgeCounts,
+        widgetProgramIds: state.widgetProgramIds,
+        inquiryNotificationReadProgramKeys: state.inquiryNotificationReadProgramKeys,
+      }),
+    }
   )
 )
