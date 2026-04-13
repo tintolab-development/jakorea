@@ -51,9 +51,9 @@ export function MainHeader() {
 
   // 카테고리명 동적 계산 - 메뉴 설정과 자동 동기화 (사용자 권한 고려)
   const categoryName = useMemo(() => {
-    // 관리자 홈 특수 처리
+    // 대시보드 홈 특수 처리
     if (user?.role === 'ADMIN' && location.pathname === '/') {
-      return '관리자 홈'
+      return '대시보드 홈'
     }
 
     // 관리자: 회원 목록 통합 `/users/list?kind=…`
@@ -137,7 +137,7 @@ export function MainHeader() {
     }
 
     // 기본값
-    return user?.role === 'ADMIN' ? '관리자 홈' : '메인 홈'
+    return user?.role === 'ADMIN' ? '대시보드 홈' : '메인 홈'
   }, [location.pathname, location.search, user?.role, user])
 
   const handleLogout = () => {

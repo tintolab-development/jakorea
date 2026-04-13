@@ -74,11 +74,12 @@
   border: 1px solid rgba(228, 73, 112, 0.06);
 }
 
-/* ===== 교육 페이지 — 그룹2: 모집 중 ===== */
+/* ===== 교육 페이지 — 그룹2: 모집 중 + 프로그램 진행 중 ===== */
 .app-status-badge.program-lifecycle-status-badge--recruiting-students,
 .app-status-badge.program-lifecycle-status-badge--recruiting-instructors,
 .app-status-badge.program-lifecycle-status-badge--recruiting-volunteers,
-.app-status-badge.program-lifecycle-status-badge--participant-instructor-recruiting {
+.app-status-badge.program-lifecycle-status-badge--participant-instructor-recruiting,
+.app-status-badge.program-lifecycle-status-badge--education-in-progress {
   background: #e6f2f7;
   color: #017eaf;
   border: 1px solid rgba(1, 126, 175, 0.06);
@@ -107,8 +108,10 @@
 .program-lifecycle-status-text--recruiting-students,
 .program-lifecycle-status-text--recruiting-instructors,
 .program-lifecycle-status-text--recruiting-volunteers,
-.program-lifecycle-status-text--participant-instructor-recruiting {
-  color: #017eaf;
+.program-lifecycle-status-text--participant-instructor-recruiting,
+/* 프로그램 진행 중 — PROGRAM_PROGRESS_PHASE_COLORS.inProgress 와 동일 */
+.program-lifecycle-status-text--education-in-progress {
+  color: var(--color-blue, #017eaf);
 }
 
 .program-lifecycle-status-text--matching-completed,

@@ -334,7 +334,7 @@ const allMenuItems: MenuItemConfig[] = [
   // 관리자 전용 홈
   {
     key: '/',
-    label: '관리자 홈',
+    label: '대시보드 홈',
     icon: <IconDashboardHome />,
     enabled: true,
     allowedRoles: ['ADMIN'],
@@ -1136,7 +1136,7 @@ export function getBreadcrumbByPath(
   const n = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
 
   if (n === '/') {
-    const label = userRole === 'ADMIN' ? '관리자 홈' : '메인 홈'
+    const label = userRole === 'ADMIN' ? '대시보드 홈' : '메인 홈'
     return [{ label }]
   }
 
