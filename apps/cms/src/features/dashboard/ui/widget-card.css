@@ -87,9 +87,25 @@
     background-color: currentColor;
 }
 
+/* 대시보드 위젯 카드 타이틀 공통 스펙 */
 .widget-card-title {
-    font-weight: var(--font-weight-500);
-    color: var(--color-text-label);
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--main-BK, #3d3d3d);
+    text-overflow: ellipsis;
+    font-family: Pretendard, var(--font-family-primary), sans-serif;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 150%;
+    white-space: nowrap;
+}
+
+/* 타이틀은 컨텐츠 너비만 차지 (디스크립션이 바로 옆에 위치하도록). 폭 부족 시 shrink + 말줄임 */
+.widget-card-header > .widget-card-title {
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 .widget-card-actions {

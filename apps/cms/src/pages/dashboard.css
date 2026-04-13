@@ -33,14 +33,19 @@
   box-shadow: none !important;
 }
 
-/* 위젯 타이틀 폰트 스펙 */
+/* 위젯 타이틀: Ant 카드 헤더보다 우선 (widget-card.css와 동일 스펙) */
 .dashboard-container .ant-card .widget-card-title {
-  color: var(--default-BK, #3d3d3d);
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
-  line-height: 120%;
+  line-height: 150%;
+  white-space: nowrap;
 }
 
 .dashboard-toolbar {
@@ -53,7 +58,7 @@
 .dashboard-toolbar-left {
   display: flex;
   align-items: baseline;
-  gap: var(--spacing-12);
+  gap: var(--spacing-8);
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -65,13 +70,16 @@
   line-height: 120%; /* 28.8px */
 }
 
+/* 타이틀 옆 디스크립션: 타이틀과 8px 간격(.dashboard-toolbar-left gap), 설정 버튼 쪽 8px */
 .dashboard-toolbar-description {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 24px */
+  line-height: 170%;
   opacity: 0.6;
+  margin-right: var(--spacing-8);
 }
 
 .dashboard-toolbar-right {
@@ -178,7 +186,7 @@
 
 /* 프로그램 일정 위젯: 캘린더/일정 비율은 program-schedule-widget.css 반응형 규칙 사용 */
 
-/* DnD 슬롯: 위젯 바깥 래퍼, 기존 위젯 레이아웃 변경 없음. 높이는 인라인 스타일로 제어(기본 338px) */
+/* DnD 슬롯: 위젯 바깥 래퍼. 패딩 24px는 슬롯이 아니라 직계 자식 .ant-card 루트에 적용. 높이는 인라인 스타일로 제어(기본 338px) */
 .dashboard-widget-slot {
   position: relative;
   min-height: 0;
@@ -189,22 +197,31 @@
   border-radius: var(--radius-8);
 }
 
-/* 메뉴 바로가기 위젯: 슬롯 하단 패딩 제거(행 간격은 Row gutter 20px로 통일), 배지 잘림 방지는 overflow 완화로 */
+/* 메뉴 바로가기 위젯: 배지 잘림 방지는 overflow 완화로 */
 .dashboard-widget-slot:has(.menu-shortcut-widget) {
-  padding-bottom: 0;
   overflow: visible;
 }
 
-/* 메뉴 바로가기 위젯이 50% 사이즈(colSpan 12)일 때 위젯 높이 340px 고정(항목이 적어도 슬롯 높이 유지), 퀵메뉴 영역만 스크롤 */
+/* 메뉴 바로가기: 50% 400px / 100% 고정, 퀵메뉴 그리드만 스크롤 (슬롯 높이는 헤더·패딩·버튼 행 높이 합에 맞춤) */
 .dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) {
-  min-height: 340px;
-  max-height: 340px;
+  min-height: 400px;
+  max-height: 400px;
+}
+
+.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) {
+  min-height: 248px;
+  max-height: 248px;
+}
+
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget),
+.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) > .ant-card {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) > .ant-card,
+.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) > .ant-card {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -212,7 +229,8 @@
   flex-direction: column;
 }
 
-.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget,
+.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) .menu-shortcut-widget {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -222,6 +240,9 @@
 
 .dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget)
   .menu-shortcut-widget
+  .ant-card-body,
+.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget)
+  .menu-shortcut-widget
   .ant-card-body {
   flex: 1;
   min-height: 0;
@@ -230,7 +251,8 @@
   flex-direction: column;
 }
 
-.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__body,
+.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -238,41 +260,25 @@
   flex-direction: column;
 }
 
-/* 퀵메뉴 그리드만 스크롤 */
-.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
+/* 퀵메뉴 그리드만 스크롤. 50%/100% 공통: 스크롤 영역 하단 inset 24px */
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__grid,
+.dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: visible;
+  padding-bottom: 24px;
+  box-sizing: border-box;
 }
 
-.dashboard-widget-slot:has(.menu-shortcut-widget) > .ant-card {
-  flex: none;
-  height: auto;
-  overflow: visible;
-}
-
-/* 메뉴 바로가기: 슬롯/카드 높이 자동 확장, 스크롤 없음, 하단 패딩 20px 유지 */
-.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget .ant-card-body {
-  overflow: visible;
-}
-
-.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
-  overflow: visible;
-}
-
-.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
-  overflow: visible;
-}
-
-.dashboard-widget-slot:has(.menu-shortcut-widget) .menu-shortcut-widget__item {
-  overflow: visible;
-}
-
-/* 사업 별 KPI 대비 달성률 위젯: 가로 스크롤이 보이도록 슬롯에서 가로 overflow 해제 */
 .dashboard-widget-slot:has(.kpi-achievement-widget) {
-  overflow-x: visible;
-  overflow-y: hidden;
+  overflow: hidden;
+}
+
+.dashboard-widget-slot:has(.kpi-achievement-widget) > .ant-card {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .dashboard-widget-slot > .ant-card {
@@ -280,25 +286,102 @@
   min-height: 0;
   border-radius: var(--radius-8);
   overflow: hidden;
+  box-sizing: border-box;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-/* 모집 신청 현황 위젯 50%일 때: 카드·본문·테이블이 콘텐츠 높이만 사용해 하단 빈 공간 제거, 컨테이너 radius 유지 */
-.dashboard-widget-slot[data-col-span='12']:has(.dashboard-widget-table--recruitment) > .ant-card {
-  flex: 0 0 auto;
-  height: auto;
+/* 카드 루트 패딩만 사용 — head/body Ant 기본 패딩 제거. 헤더 높이 30px */
+.dashboard-widget-slot > .ant-card > .ant-card-head {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden;
+}
+.dashboard-widget-slot > .ant-card > .ant-card-head .ant-card-head-wrapper {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* 프로그램 일정: 헤더 30px 안에 한 줄 맞춤 */
+.dashboard-widget-slot .program-schedule-widget .program-schedule-widget__head-row {
+  padding-top: 0;
+}
+.dashboard-widget-slot > .ant-card > .ant-card-body {
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.dashboard-widget-slot > .ant-card > .ant-card-body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* 메뉴 바로가기: 카드 루트 레이아웃 + 행 gutter와 맞추기 위해 하단 패딩만 없음 */
+.dashboard-widget-slot:has(.menu-shortcut-widget) > .ant-card {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+/* 위젯 내부 자식 스크롤 영역도 스크롤바만 숨김 */
+.dashboard-widget-slot .menu-shortcut-widget__grid,
+.dashboard-widget-slot .ant-table-body,
+.dashboard-widget-slot .ant-table-content,
+.dashboard-widget-slot .program-schedule-widget .ant-card-body,
+.dashboard-widget-slot .program-schedule-widget__content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.dashboard-widget-slot .menu-shortcut-widget__grid::-webkit-scrollbar,
+.dashboard-widget-slot .ant-table-body::-webkit-scrollbar,
+.dashboard-widget-slot .ant-table-content::-webkit-scrollbar,
+.dashboard-widget-slot .program-schedule-widget .ant-card-body::-webkit-scrollbar,
+.dashboard-widget-slot .program-schedule-widget__content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* 모집 신청 현황: 슬롯 높이 안에서 카드·본문·테이블 래퍼가 flex로 채워지고 테이블 영역만 세로 스크롤 */
+.dashboard-widget-slot:has(.dashboard-widget-table--recruitment) > .ant-card {
+  flex: 1;
+  min-height: 0;
   border-radius: var(--radius-8);
   overflow: hidden;
 }
-.dashboard-widget-slot[data-col-span='12']:has(.dashboard-widget-table--recruitment)
+.dashboard-widget-slot:has(.dashboard-widget-table--recruitment)
   .dashboard-widget-table--recruitment
   .ant-card-body {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-.dashboard-widget-slot[data-col-span='12']:has(.dashboard-widget-table--recruitment)
+.dashboard-widget-slot:has(.dashboard-widget-table--recruitment)
   .dashboard-widget-table--recruitment
   .ant-card-body
   .ant-table-wrapper {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 /* 50% 너비 슬롯: 긴 헤더 라벨 한 줄 유지를 위해 좌우 패딩 축소 */
