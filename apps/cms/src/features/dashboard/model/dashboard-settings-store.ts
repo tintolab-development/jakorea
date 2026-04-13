@@ -54,11 +54,6 @@ export const WIDGET_PROGRAM_KEYS = [
 
 export type WidgetProgramKey = (typeof WIDGET_PROGRAM_KEYS)[number]['key']
 
-/** 바로가기 항목별 미확인 내역 mock 초기값 */
-const defaultShortcutBadgeCounts: Record<string, number> = Object.fromEntries(
-  SHORTCUT_ITEMS.map(item => [item.id, 0])
-) as Record<string, number>
-
 const defaultShortcutEnabled: Record<string, boolean> = Object.fromEntries(
   SHORTCUT_ITEMS.map(item => [item.id, true])
 )
@@ -66,7 +61,7 @@ const defaultShortcutEnabled: Record<string, boolean> = Object.fromEntries(
 export interface DashboardSettingsState {
   /** 바로가기 아이콘 노출 여부 (id -> boolean) */
   shortcutEnabled: Record<string, boolean>
-  /** 바로가기 항목별 미확인 내역 수 (id -> count) */
+  /** 바로가기 항목별 읽음 처리(0)만 저장. 미설정 키는 getMenuShortcutBadgeCounts() 집계를 표시 */
   shortcutBadgeCounts: Record<string, number>
   /** 위젯별 선택된 프로그램 id 목록 (위젯 key -> programId[]) */
   widgetProgramIds: Record<string, string[]>
@@ -90,7 +85,7 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
   persist(
     (set, get) => ({
       shortcutEnabled: defaultShortcutEnabled,
-      shortcutBadgeCounts: defaultShortcutBadgeCounts,
+      shortcutBadgeCounts: {},
       widgetProgramIds: {},
 
       setShortcutEnabled: (id, enabled) => {
@@ -146,6 +141,22 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
     }),
     {
       name: STORAGE_KEY,
+      version: 1,
+      migrate: (persistedState, version) => {
+        const p = persistedState as {
+          shortcutEnabled?: Record<string, boolean>
+          shortcutBadgeCounts?: Record<string, number>
+          widgetProgramIds?: Record<string, string[]>
+          inquiryNotificationReadProgramKeys?: Record<string, boolean>
+        }
+        if (version === 0) {
+          return {
+            ...p,
+            shortcutBadgeCounts: {},
+          }
+        }
+        return persistedState as typeof p
+      },
       /** 액션은 직렬화 제외 — 상태 필드만 저장 */
       partialize: state => ({
         shortcutEnabled: state.shortcutEnabled,

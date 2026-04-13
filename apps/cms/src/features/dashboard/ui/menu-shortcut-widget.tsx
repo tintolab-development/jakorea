@@ -33,6 +33,7 @@ import {
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
+import { getMenuShortcutBadgeCounts } from '../api/admin-dashboard-service'
 import {
   SHORTCUT_ITEMS,
   isShortcutItemEnabled,
@@ -82,6 +83,9 @@ export function MenuShortcutWidget() {
 
   if (visibleItems.length === 0) return null
 
+  /** 목/API 집계. 스토어에 0이면 해당 메뉴는 읽음 처리로 배지 숨김 */
+  const liveBadgeCounts = getMenuShortcutBadgeCounts()
+
   return (
     <Card
       className="menu-shortcut-widget"
@@ -94,7 +98,8 @@ export function MenuShortcutWidget() {
       <div className="menu-shortcut-widget__body">
         <div className="menu-shortcut-widget__grid">
           {visibleItems.map(item => {
-            const count = badgeCounts[item.id] ?? 0
+            const live = liveBadgeCounts[item.id] ?? 0
+            const count = badgeCounts[item.id] === 0 ? 0 : live
             return (
               <button
                 key={item.id}
