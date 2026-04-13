@@ -11,7 +11,8 @@ export function getSlotHeight(
   meta: DisplayItemMeta
 ): number | undefined {
   if (id === 'menu-shortcut-widget') {
-    return undefined /* 내용에 따라 슬롯 높이 자동 확장 */
+    /* 100%: 고정 높이 + 그리드 스크롤(dashboard.css). 218px는 본문 영역이 좁아 하단이 잘림 → 248px */
+    return effectiveColSpan === 24 ? 248 : undefined
   }
   if (id === 'program-schedule-widget') {
     return effectiveColSpan === 12 ? 338 : (meta.height ?? 360)

@@ -54,11 +54,11 @@ export interface DashboardWidgetConfig {
 const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 관리자: 전체 통계 및 현황
   ADMIN: [
-    { type: 'menu-shortcut-widget', colSpan: 24, order: 0, height: 202 },
+    { type: 'menu-shortcut-widget', colSpan: 24, order: 0, height: 248 },
     { type: 'program-schedule-widget', colSpan: 24, order: 1, height: 360 },
     { type: 'recruitment-status-widget', colSpan: 24, order: 2, height: 340 },
     { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3, height: 338 },
-    { type: 'kpi-achievement-widget', colSpan: 24, order: 4, height: 314 },
+    { type: 'kpi-achievement-widget', colSpan: 24, order: 4 },
   ],
   // 강사: 본인 활동 요약
   INSTRUCTOR: [

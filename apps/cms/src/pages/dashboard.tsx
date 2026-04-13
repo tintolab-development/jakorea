@@ -30,6 +30,8 @@ import {
 } from '@/features/dashboard'
 import './dashboard.css'
 import '@/features/dashboard/ui/widget-card.css'
+/* 메뉴 바로가기 태그: Ant css-in-js보다 앞서 로드(중복 import는 Vite가 합침) */
+import '@/features/dashboard/ui/menu-shortcut-widget.css'
 
 /** rectSortingStrategy에서 scaleX/scaleY를 항상 1로 고정 — 위젯 크기 변형 없이 위치만 이동 */
 const noScaleRectSortingStrategy: SortingStrategy = args => {

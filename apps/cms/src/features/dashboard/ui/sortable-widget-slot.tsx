@@ -153,7 +153,8 @@ export function SortableWidgetSlot({
     opacity: isDragging ? 0 : 1,
   }
 
-  const slotHeight = height !== undefined ? height : 'auto'
+  // 50% 너비(colSpan 12)일 때 모든 위젯 높이 400px 고정
+  const slotHeight = colSpan === 12 ? 400 : (height !== undefined ? height : 'auto')
   const slotStyle: React.CSSProperties = { height: slotHeight }
 
   return (
