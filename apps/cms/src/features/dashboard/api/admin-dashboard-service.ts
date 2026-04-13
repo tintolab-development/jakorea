@@ -2,6 +2,8 @@
  * 관리자 대시보드 서비스
  * Phase 4.5: 관리자 홈 대시보드
  * FR-C01: 전체 프로그램 진행 현황 7단계 세분화
+ *
+ * 데이터 소스: 현재는 `@/data/mock/*` 기반(로컬 목). API 연동 시 이 모듈에서 분기·어댑터만 교체.
  */
 
 import type { Program } from '@/types/domain'

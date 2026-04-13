@@ -1,6 +1,7 @@
 /**
  * 강사/개인(참여자) 본인 활동 데이터 로드 훅
  * Dashboard 페이지의 활동 데이터 useEffect를 분리 (비즈니스 로직 동일)
+ * React Query 전환 시 키: `dashboardQueryKeys.instructorActivity(instructorId)`
  */
 
 import { useState, useEffect } from 'react'
