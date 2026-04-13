@@ -67,6 +67,7 @@
   flex-direction: column;
 }
 
+/* 메뉴 바로가기: 하단 24px은 본문에 두고, 그리드만 스크롤 */
 .dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__body,
 .dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) .menu-shortcut-widget__body {
   flex: 1;
@@ -74,16 +75,16 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding-bottom: 24px;
+  box-sizing: border-box;
 }
 
-/* 퀵메뉴 그리드만 스크롤. 50%/100% 공통: 스크롤 영역 하단 inset 24px */
 .dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget) .menu-shortcut-widget__grid,
 .dashboard-widget-slot[data-col-span='24']:has(.menu-shortcut-widget) .menu-shortcut-widget__grid {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: visible;
-  padding-bottom: 24px;
   box-sizing: border-box;
 }
 
@@ -147,7 +148,7 @@
   display: none;
 }
 
-/* 메뉴 바로가기: 카드 루트 레이아웃 + 행 gutter와 맞추기 위해 하단 패딩만 없음 */
+/* 메뉴 바로가기: 카드 하단 패딩은 0(행 gutter). 하단 24px은 .menu-shortcut-widget__body */
 .dashboard-widget-slot:has(.menu-shortcut-widget) > .ant-card {
   flex: 1;
   min-height: 0;
