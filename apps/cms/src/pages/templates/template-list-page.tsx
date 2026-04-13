@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tabs } from 'antd'
 import TemplateFormTab from './template-form-tab'
-import { FormTestTab } from './form-test-tab'
+import { FormTab } from './form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
 import './template-list-page.css'
 import './template-form-tab.css'
@@ -88,7 +88,7 @@ export function TemplateListPage() {
         activeKey === 'issuance-form' ? (
           <IssuanceFormTab />
         ) : activeKey === 'form-test' ? (
-          <FormTestTab />
+          <FormTab />
         ) : (
           <TemplateFormTab />
         )

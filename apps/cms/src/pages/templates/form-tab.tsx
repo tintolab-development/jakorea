@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { Space, Typography } from 'antd'
 import { TemplateListCard } from '@/shared/components/template/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { FormTestTemplateFullpageModal } from './form-test-template-fullpage-modal'
+import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 
 /**
  * 폼 양식 관리 > 양식 테스트 탭
  * 작성·발급 양식을 실제 입력 흐름으로 검증하는 화면 (추후 연동)
  */
-export function FormTestTab() {
-  const [formTestModalOpen, setFormTestModalOpen] = useState(false)
+export function FormTab() {
+  const [formModalOpen, setFormModalOpen] = useState(false)
 
   return (
     <>
@@ -27,7 +27,7 @@ export function FormTestTab() {
                 type="button"
                 variant="default"
                 size="medium"
-                onClick={() => setFormTestModalOpen(true)}
+                onClick={() => setFormModalOpen(true)}
               >
                 폼 양식 관리
               </CmsButton>
@@ -36,7 +36,7 @@ export function FormTestTab() {
         </TemplateListCard>
       </div>
 
-      <FormTestTemplateFullpageModal open={formTestModalOpen} onClose={() => setFormTestModalOpen(false)} />
+      <FormTemplateFullpageModal open={formModalOpen} onClose={() => setFormModalOpen(false)} />
     </>
   )
 }
