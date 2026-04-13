@@ -36,6 +36,9 @@ export type DashboardWidgetType =
   | 'recruitment-status-widget' // 모집 신청 현황 위젯
   | 'kpi-achievement-widget' // 사업 별 KPI 대비 달성률 위젯
 
+/** 슬롯 인라인 height(px). colSpan(12=50%, 24=100%)별. 미지정 시 SortableWidgetSlot·meta.height 규칙 */
+export type DashboardWidgetSlotHeightPx = Partial<Record<12 | 24, number>>
+
 /**
  * 대시보드 위젯 설정
  */
@@ -46,7 +49,15 @@ export interface DashboardWidgetConfig {
   order?: number // 표시 순서 (낮을수록 먼저 표시)
   /** 위젯 고정 높이(px). 미지정 시 기본값 338px */
   height?: number
+  /** 슬롯 높이 단일 소스: getSlotHeight가 우선 사용. 미지정이면 height·50% 기본값 등 */
+  slotHeightPx?: DashboardWidgetSlotHeightPx
 }
+
+/** colSpan 12일 때 모든 위젯 슬롯 기본 높이 (SortableWidgetSlot) */
+export const DASHBOARD_SLOT_HEIGHT_HALF_PX = 400 as const
+
+/** 메뉴 바로가기 100% 슬롯 높이 — CSS `.menu-shortcut-widget` 슬롯 규칙과 동기화 */
+export const MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX = 248 as const
 
 /**
  * 권한별 대시보드 위젯 구성
@@ -54,8 +65,20 @@ export interface DashboardWidgetConfig {
 const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
   // 관리자: 전체 통계 및 현황
   ADMIN: [
-    { type: 'menu-shortcut-widget', colSpan: 24, order: 0, height: 248 },
-    { type: 'program-schedule-widget', colSpan: 24, order: 1, height: 360 },
+    {
+      type: 'menu-shortcut-widget',
+      colSpan: 24,
+      order: 0,
+      height: MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX,
+      slotHeightPx: { 24: MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX },
+    },
+    {
+      type: 'program-schedule-widget',
+      colSpan: 24,
+      order: 1,
+      height: 360,
+      slotHeightPx: { 12: 338, 24: 360 },
+    },
     { type: 'recruitment-status-widget', colSpan: 24, order: 2, height: 340 },
     { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3, height: 338 },
     { type: 'kpi-achievement-widget', colSpan: 24, order: 4 },

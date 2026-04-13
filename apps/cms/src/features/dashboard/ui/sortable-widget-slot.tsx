@@ -7,6 +7,7 @@
  */
 
 import React, { useRef, useLayoutEffect, useCallback, useState } from 'react'
+import { DASHBOARD_SLOT_HEIGHT_HALF_PX } from '@/shared/config/dashboard-config'
 import { Col } from 'antd'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -153,8 +154,8 @@ export function SortableWidgetSlot({
     opacity: isDragging ? 0 : 1,
   }
 
-  // 50% 너비(colSpan 12)일 때 모든 위젯 높이 400px 고정
-  const slotHeight = colSpan === 12 ? 400 : (height !== undefined ? height : 'auto')
+  const slotHeight =
+    colSpan === 12 ? DASHBOARD_SLOT_HEIGHT_HALF_PX : (height !== undefined ? height : 'auto')
   const slotStyle: React.CSSProperties = { height: slotHeight }
 
   return (

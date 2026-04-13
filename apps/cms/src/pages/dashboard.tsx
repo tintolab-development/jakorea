@@ -157,7 +157,7 @@ export function Dashboard() {
 
                 const effectiveColSpan =
                   (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
-                const slotHeight = getSlotHeight(id, effectiveColSpan, meta)
+                const slotHeight = getSlotHeight(effectiveColSpan, meta)
 
                 return [
                   <SortableWidgetSlot

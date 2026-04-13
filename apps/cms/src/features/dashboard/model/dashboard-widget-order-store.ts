@@ -6,7 +6,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { UserRole } from '@/types/user'
-import type { DashboardWidgetConfig } from '@/shared/config/dashboard-config'
+import type { DashboardWidgetConfig, DashboardWidgetSlotHeightPx } from '@/shared/config/dashboard-config'
 
 /**
  * 내장 드래그 핸들(WidgetTitleWithHandle)이 **없는** 위젯 목록.
@@ -60,6 +60,8 @@ export interface DisplayItemMeta {
   hasBuiltInHandle: boolean
   /** 위젯 고정 높이(px). undefined이면 기본값 338px 사용 */
   height?: number
+  /** 슬롯 인라인 높이(colSpan별). getSlotHeight 우선 */
+  slotHeightPx?: DashboardWidgetSlotHeightPx
 }
 
 /**
@@ -72,6 +74,7 @@ export function buildDisplayItemsMeta(widgets: DashboardWidgetConfig[]): Display
     colSpan: w.colSpan ?? 24,
     hasBuiltInHandle: !noHandleSet.has(w.type),
     height: w.height,
+    slotHeightPx: w.slotHeightPx,
   }))
 }
 

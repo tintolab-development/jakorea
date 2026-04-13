@@ -1,0 +1,8 @@
+/**
+ * 대시보드 슬롯 높이 토큰 — shared/config/dashboard-config.ts 의
+ * DASHBOARD_SLOT_HEIGHT_HALF_PX, MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX 와 동기화
+ */
+:root {
+  --dashboard-slot-half-height: 400px;
+  --dashboard-menu-shortcut-slot-full: 248px;
+}
