@@ -117,7 +117,7 @@
 }
 
 .cms-data-table.cms-data-table--widget .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar) {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   text-align: center;
   border-bottom: 1px solid var(--color-border-light);
