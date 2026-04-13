@@ -10,7 +10,12 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
-import { mockPrograms, mockSchedules, getEconomyPrograms } from '@/data/mock'
+import {
+  mockPrograms,
+  mockSchedules,
+  getEconomyPrograms,
+  buildEconomySchedulesForVisibleRange,
+} from '@/data/mock'
 import { programService } from '@/entities/program/api/program-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import type { Schedule } from '@/types'
@@ -141,7 +146,9 @@ const WIDGET_KEY = 'program-schedule-widget'
 
 /**
  * 대시보드 설정에 체크된 mock 프로그램 id → 동일 title의 경제 프로그램 id 집합.
- * 빈/미설정은 null(전체 노출). 선택은 있으나 매칭 title이 없으면 빈 Set.
+ * 빈/미설정은 null(전체 노출).
+ * id가 mockPrograms에 없거나, title이 경제 프로그램과 하나도 맞지 않으면 null(전체)로 폴백 —
+ * 그렇지 않으면 일정 위젯이 빈 Set으로 필터되어 목데이터가 전부 사라진다.
  */
 function economyProgramIdsFromWidgetSelection(
   selectedMockProgramIds: string[] | undefined
@@ -153,50 +160,15 @@ function economyProgramIdsFromWidgetSelection(
     const p = mockPrograms.find(m => m.id === id)
     if (p) titleSet.add(p.title)
   }
-  if (titleSet.size === 0) return new Set()
+  if (titleSet.size === 0) return null
 
   const out = new Set<string>()
   for (const ep of getEconomyPrograms()) {
     if (titleSet.has(ep.title)) out.add(ep.id)
   }
+  if (out.size === 0) return null
+
   return out
-}
-
-/** mock 스케줄이 보이는 구간에 경제 일정이 없을 때(달 불일치·필터 등) 대시보드용 보강 */
-function injectEconomyFallbackSchedules(
-  grouped: Record<string, Schedule[]>,
-  visibleDates: Dayjs[],
-  economyProgramIdSet: Set<string>,
-  pool: Program[]
-): void {
-  if (pool.length === 0) return
-  let countInRange = 0
-  for (const d of visibleDates) {
-    const key = d.format('YYYY-MM-DD')
-    for (const s of grouped[key] ?? []) {
-      if (economyProgramIdSet.has(s.programId)) countInRange += 1
-    }
-  }
-  if (countInRange > 0) return
-
-  visibleDates.forEach((d, i) => {
-    const dateKey = d.format('YYYY-MM-DD')
-    const program = pool[i % pool.length]
-    const round = program.rounds?.[0]
-    const startHour = 9 + (i % 7)
-    const row: Schedule = {
-      id: `sch-economy-widget-${dateKey}`,
-      programId: program.id,
-      roundId: round?.id,
-      title: '교육 일정 1차시',
-      date: dateKey,
-      startTime: `${String(startHour).padStart(2, '0')}:00`,
-      endTime: `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`,
-      createdAt: dayjs().toISOString(),
-      updatedAt: dayjs().toISOString(),
-    }
-    grouped[dateKey] = [...(grouped[dateKey] ?? []), row]
-  })
 }
 
 function buildEventsForDate(
@@ -325,21 +297,20 @@ export function ProgramScheduleWidget() {
 
   const schedulesByDate = useMemo(() => {
     const grouped: Record<string, Schedule[]> = {}
+    const visibleKeys = visibleDateRange.map(d => d.format('YYYY-MM-DD'))
+    const dynamicEconomy = buildEconomySchedulesForVisibleRange(visibleKeys, allowedEconomyProgramIdSet)
+
     let schedules = mockSchedules.filter(s => economyProgramIdSet.has(s.programId))
     if (allowedEconomyProgramIdSet) {
       schedules = schedules.filter(s => allowedEconomyProgramIdSet.has(s.programId))
     }
+    schedules = [...schedules, ...dynamicEconomy]
+
     schedules.forEach(schedule => {
       const dateKey = dayjs(schedule.date).format('YYYY-MM-DD')
       if (!grouped[dateKey]) grouped[dateKey] = []
       grouped[dateKey].push(schedule)
     })
-
-    const economyPrograms = getEconomyPrograms()
-    const pool = allowedEconomyProgramIdSet
-      ? economyPrograms.filter(p => allowedEconomyProgramIdSet.has(p.id))
-      : economyPrograms
-    injectEconomyFallbackSchedules(grouped, visibleDateRange, economyProgramIdSet, pool)
 
     return grouped
   }, [allowedEconomyProgramIdSet, economyProgramIdSet, visibleDateRange])
@@ -497,16 +468,18 @@ export function ProgramScheduleWidget() {
     const monthDates = visibleDateRange as Dayjs[]
     return (
       <div className="program-schedule-widget__month-grid-wrap">
-        <div
-          className="program-schedule-widget__month-grid program-schedule-widget__month-grid--grid"
-          role="grid"
-          aria-label="월간 일정"
-        >
+        <div className="program-schedule-widget__month-grid program-schedule-widget__month-grid--dow-row">
           {WEEKDAY_LABELS.map(day => (
             <div key={day} className="program-schedule-widget__month-grid-dow" role="columnheader">
               {day}
             </div>
           ))}
+        </div>
+        <div
+          className="program-schedule-widget__month-grid program-schedule-widget__month-grid--cells"
+          role="grid"
+          aria-label="월간 일정"
+        >
           {[0, 1, 2, 3, 4].flatMap(row =>
             [0, 1, 2, 3, 4, 5, 6].map(col => {
               const date = monthDates[row * 7 + col]
