@@ -4,6 +4,12 @@
   box-sizing: border-box;
 }
 
+/* 우측 필드 선택 시 scrollIntoView — 프레임이 스크롤 영역 안에 여유 있게 보이도록 */
+.form-certificate-preview [data-template-field] {
+  scroll-margin-block: 32px;
+  scroll-margin-inline: 16px;
+}
+
 .form-certificate-preview__bg {
   display: flex;
   width: 1208px;
@@ -137,7 +143,7 @@
   box-sizing: border-box;
   color: #003d4c;
   text-align: center;
-  font-family: 'Source Han Serif K', serif;
+  font-family: var(--font-family-source-han-serif-k);
   font-size: 100px;
   font-style: normal;
   font-weight: 700;
@@ -163,6 +169,12 @@
   box-sizing: border-box;
   background: transparent;
   pointer-events: none;
+}
+
+/* 우측 폼에서 지정한 흑백 색 — 자식에 고정 #606060이 있어 inherit로 통일 */
+.form-certificate-preview__content-frame--custom-text .form-certificate-preview__label-text,
+.form-certificate-preview__content-frame--custom-text .form-certificate-preview__value-text {
+  color: inherit;
 }
 
 .form-certificate-preview__content-frame-labels {
@@ -295,7 +307,7 @@
   min-width: 0;
   color: #003d4c;
   text-align: center;
-  font-family: 'Source Han Serif K', serif;
+  font-family: var(--font-family-source-han-serif-k);
   font-size: 36px;
   font-style: normal;
   font-weight: 700;
@@ -321,7 +333,7 @@
   min-width: 0;
   min-height: 72px;
   color: #003d4c;
-  font-family: 'Source Han Serif K', serif;
+  font-family: var(--font-family-source-han-serif-k);
   font-size: 48px;
   font-style: normal;
   font-weight: 700;
@@ -460,5 +472,27 @@
 /* 프레임 하이라이트 공통 z-index:5가 스탬프에도 적용되면 기관명 위로 올라감 → 스탬프 래퍼만 억제 */
 .form-certificate-preview__stamp-wrap.form-certificate-preview__region--frame-active {
   z-index: 0;
+}
+
+/* PDF 캡처 전용 — 닷·점선 프레임 제거(미리보기 편집 UI는 interactive 트리에만) */
+.form-certificate-preview--pdf-export .form-certificate-preview__region--has-dot::after {
+  display: none !important;
+  content: none !important;
+}
+
+.form-certificate-preview--pdf-export .form-certificate-preview__region--frame-active {
+  outline: none !important;
+}
+
+/* html2canvas 대상 — 레이아웃은 좌측 미리보기와 동일 폭, 화면 밖에 둠 */
+.form-certificate-preview__pdf-export-root {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 1208px;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: -1;
+  overflow: visible;
 }
 

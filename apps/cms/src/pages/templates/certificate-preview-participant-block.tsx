@@ -12,6 +12,8 @@ export interface CertificatePreviewParticipantBlockProps {
   region: CertificateCanvasRegion | null
   rowVisibility: boolean[]
   participantValues: string[]
+  /** 라벨·값 텍스트 공통 색(흑백 등). 미지정 시 시트 기본(#606060) */
+  participantTextColor?: string
   onRegionClick?: (fieldName: string) => void
 }
 
@@ -19,6 +21,7 @@ export function CertificatePreviewParticipantBlock({
   region,
   rowVisibility,
   participantValues,
+  participantTextColor,
   onRegionClick,
 }: CertificatePreviewParticipantBlockProps) {
   return (
@@ -27,10 +30,13 @@ export function CertificatePreviewParticipantBlock({
       tabIndex={0}
       className={cn(
         `${P}__content-frame`,
+        participantTextColor ? `${P}__content-frame--custom-text` : '',
         HANDLE_DOT,
         region === 'contentFrame' && FRAME_ACTIVE,
         shouldDim(region, 'contentFrame') && FRAME_DIMMED
       )}
+      data-template-field="participantInfo"
+      style={participantTextColor ? { color: participantTextColor } : undefined}
       {...getRegionActivationHandlers('participantInfo', onRegionClick)}
     >
       <div className={`${P}__content-frame-labels`}>

@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties } from 'react'
+import { Fragment, useRef, type CSSProperties, type RefObject } from 'react'
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/shared/components/template/template-custom-fields-form'
 import templateCertificateBg from '@/assets/images/template/templatge-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
@@ -19,6 +19,7 @@ import {
   labelToGraphemes,
 } from './form-certificate-preview-utils'
 import { useCertificatePreviewModel } from './use-certificate-preview-model'
+import { useScrollActiveFieldIntoView } from './use-scroll-active-field-into-view'
 import './form-certificate-preview.css'
 
 const P = 'form-certificate-preview'
@@ -34,6 +35,8 @@ export { TEMPLATE_FIELD_TO_CANVAS_REGION, CANVAS_REGION_TO_FIELD_NAME }
 export const DEFAULT_CERTIFICATE_CHAIRMAN_NAME = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.chairmanName
 
 export interface FormCertificatePreviewProps {
+  /** 기관 로고 1(orgLogo) 업로드 시 — JA 로고 슬롯에 표시. 없으면 기본 `template-logo.png` */
+  orgLogoPreviewSrc?: string
   /** 기관 로고 2(orgLogo02) 업로드 시 — 교육기부 슬롯에 표시. 없으면 기본 `template-education.png` */
   orgLogo02PreviewSrc?: string
   /** 수료증 배경(certificateBackground) 업로드 시 — 캔버스 배경. 없으면 기본 `templatge-background.png` */
@@ -59,13 +62,28 @@ export interface FormCertificatePreviewProps {
   orgPhone?: string
   orgFax?: string
   orgWebsite?: string
+  /** 필드명 → CSS 색(흑백 등). 미리보기 텍스트 색 — `DEFAULT_TEMPLATE_FIELD_TEXT_COLORS` 키와 동일 */
+  fieldTextColors?: Record<string, string>
+  /** 루트 클래스 — PDF 내보내기 시 `form-certificate-preview--pdf-export` 등 */
+  className?: string
+  /**
+   * PDF(html2canvas) 캡처 대상 — 흰색 캔버스(`__canvas`)만 지정하면 회색 바깥 래퍼(`__bg`)는 제외됨
+   */
+  canvasRef?: RefObject<HTMLDivElement | null>
 }
+
+/** PDF 캡처 시 편집용 닷·프레임을 숨길 때 루트에 붙이는 클래스 */
+export const FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_CLASS = `${P}--pdf-export`
+
+/** 화면 밖 PDF 캡처용 래퍼 — 폭은 `__bg`(1208px)와 맞춤 */
+export const FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS = `${P}__pdf-export-root`
 
 /**
  * 양식 관리 — 봉사활동인증서 프리뷰 슬롯
  * 캔버스(1144×1618 비율) 기준 절대 배치 오버레이
  */
 export function FormCertificatePreview({
+  orgLogoPreviewSrc,
   orgLogo02PreviewSrc,
   certificateBackgroundPreviewSrc,
   chairmanSealPreviewSrc,
@@ -80,8 +98,12 @@ export function FormCertificatePreview({
   orgPhone = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.orgPhone,
   orgFax = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.orgFax,
   orgWebsite = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.orgWebsite,
+  fieldTextColors,
+  className,
+  canvasRef,
 }: FormCertificatePreviewProps) {
   const issueDate = new Date()
+  const logoSrc = orgLogoPreviewSrc ?? templateLogo
   const educationSrc = orgLogo02PreviewSrc ?? templateEducation
   const certificateBgSrc = certificateBackgroundPreviewSrc ?? templateCertificateBg
   const stampSrc = chairmanSealPreviewSrc ?? templateStamp
@@ -103,12 +125,22 @@ export function FormCertificatePreview({
 
   const bgField = CANVAS_REGION_TO_FIELD_NAME.canvas
 
+  const previewRootRef = useRef<HTMLDivElement>(null)
+  useScrollActiveFieldIntoView(previewRootRef, activeFieldName)
+
+  const titleTextColor = fieldTextColors?.titleName
+  const bodyTextColor = fieldTextColors?.bodyContent
+  const chairmanTextColor = fieldTextColors?.chairmanName
+  const participantTextColor = fieldTextColors?.participantInfo
+
   return (
-    <div className={P}>
+    <div ref={previewRootRef} className={cn(P, className)}>
       <div className={`${P}__bg`}>
         <div
+          ref={canvasRef}
           className={cn(`${P}__canvas`, HANDLE_DOT, region === 'canvas' && FRAME_ACTIVE)}
           style={canvasBgStyle}
+          data-template-field="certificateBackground"
         >
           <div
             role="button"
@@ -129,11 +161,12 @@ export function FormCertificatePreview({
               region === 'logo' && FRAME_ACTIVE,
               shouldDim(region, 'logo') && FRAME_DIMMED
             )}
+            data-template-field="orgLogo"
             {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.logo, onRegionClick)}
           >
             <img
-              src={templateLogo}
-              alt="JA Korea"
+              src={logoSrc}
+              alt={orgLogoPreviewSrc ? '기관 로고' : 'JA Korea'}
               className={`${P}__logo`}
               draggable={false}
             />
@@ -147,6 +180,7 @@ export function FormCertificatePreview({
               region === 'education' && FRAME_ACTIVE,
               shouldDim(region, 'education') && FRAME_DIMMED
             )}
+            data-template-field="orgLogo02"
             {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.education, onRegionClick)}
           >
             <img
@@ -167,6 +201,8 @@ export function FormCertificatePreview({
               region === 'title' && FRAME_ACTIVE,
               shouldDim(region, 'title') && FRAME_DIMMED
             )}
+            data-template-field="titleName"
+            style={titleTextColor ? { color: titleTextColor } : undefined}
             {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.title, onRegionClick)}
           >
             {titleText}
@@ -175,6 +211,7 @@ export function FormCertificatePreview({
             region={region}
             rowVisibility={rowVisibility}
             participantValues={participantValues}
+            participantTextColor={participantTextColor}
             onRegionClick={onRegionClick}
           />
           <p
@@ -187,6 +224,8 @@ export function FormCertificatePreview({
               shouldDim(region, 'confirm') && FRAME_DIMMED
             )}
             aria-label="본문 내용 편집"
+            data-template-field="bodyContent"
+            style={bodyTextColor ? { color: bodyTextColor } : undefined}
             {...getRegionActivationHandlers('bodyContent', onRegionClick)}
           >
             {confirmLines.map((line, i) => (
@@ -215,6 +254,8 @@ export function FormCertificatePreview({
               shouldDim(region, 'chairmanName') && FRAME_DIMMED
             )}
             aria-label={chairmanAriaLabel}
+            data-template-field="chairmanName"
+            style={chairmanTextColor ? { color: chairmanTextColor } : undefined}
             {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.chairmanName, onRegionClick)}
           >
             <span className={`${P}__chairman-name-part`}>회장</span>
@@ -233,6 +274,7 @@ export function FormCertificatePreview({
               region === 'stamp' && FRAME_ACTIVE,
               shouldDim(region, 'stamp') && FRAME_DIMMED
             )}
+            data-template-field="chairmanSeal"
             {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.stamp, onRegionClick)}
           >
             <img
@@ -250,6 +292,7 @@ export function FormCertificatePreview({
             orgPhone={orgPhone}
             orgFax={orgFax}
             orgWebsite={orgWebsite}
+            fieldTextColors={fieldTextColors}
             onRegionClick={onRegionClick}
           />
         </div>

@@ -13,6 +13,7 @@ export interface CertificatePreviewFooterProps {
   orgPhone: string
   orgFax: string
   orgWebsite: string
+  fieldTextColors?: Record<string, string>
   onRegionClick?: (fieldName: string) => void
 }
 
@@ -22,8 +23,14 @@ export function CertificatePreviewFooter({
   orgPhone,
   orgFax,
   orgWebsite,
+  fieldTextColors,
   onRegionClick,
 }: CertificatePreviewFooterProps) {
+  const orgAddressColor = fieldTextColors?.orgAddress
+  const orgPhoneColor = fieldTextColors?.orgPhone
+  const orgFaxColor = fieldTextColors?.orgFax
+  const orgWebsiteColor = fieldTextColors?.orgWebsite
+
   return (
     <div className={`${P}__footer`}>
       <span
@@ -42,6 +49,8 @@ export function CertificatePreviewFooter({
           shouldDimFooterPart(region, 'footerAddress') && FRAME_DIMMED
         )}
         aria-label="기관 주소지 편집"
+        data-template-field="orgAddress"
+        style={orgAddressColor ? { color: orgAddressColor } : undefined}
         {...getRegionActivationHandlers('orgAddress', onRegionClick)}
       >
         {orgAddress}
@@ -57,6 +66,8 @@ export function CertificatePreviewFooter({
           shouldDimFooterPart(region, 'footerPhone') && FRAME_DIMMED
         )}
         aria-label="기관 전화번호 편집"
+        data-template-field="orgPhone"
+        style={orgPhoneColor ? { color: orgPhoneColor } : undefined}
         {...getRegionActivationHandlers('orgPhone', onRegionClick)}
       >
         {orgPhone}
@@ -72,6 +83,8 @@ export function CertificatePreviewFooter({
           shouldDimFooterPart(region, 'footerFax') && FRAME_DIMMED
         )}
         aria-label="기관 팩스번호 편집"
+        data-template-field="orgFax"
+        style={orgFaxColor ? { color: orgFaxColor } : undefined}
         {...getRegionActivationHandlers('orgFax', onRegionClick)}
       >
         {orgFax}
@@ -87,6 +100,8 @@ export function CertificatePreviewFooter({
           shouldDimFooterPart(region, 'footerWebsite') && FRAME_DIMMED
         )}
         aria-label="기관 홈페이지 주소 편집"
+        data-template-field="orgWebsite"
+        style={orgWebsiteColor ? { color: orgWebsiteColor } : undefined}
         {...getRegionActivationHandlers('orgWebsite', onRegionClick)}
       >
         {orgWebsite}
