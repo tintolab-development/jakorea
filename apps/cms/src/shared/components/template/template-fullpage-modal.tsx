@@ -13,6 +13,8 @@ interface TemplateFullpageModalProps {
   onPreview?: () => void
   onSave?: () => void
   onDownloadDocument?: () => void
+  /** true이면 문서 다운로드 버튼 비활성(중복 클릭 방지 등) */
+  downloadDocumentLoading?: boolean
   leftContent: ReactNode
   rightNavigation: ReactNode
   className?: string
@@ -45,6 +47,7 @@ export function TemplateFullpageModal({
   onPreview,
   onSave,
   onDownloadDocument,
+  downloadDocumentLoading = false,
   leftContent,
   rightNavigation,
   className,
@@ -115,6 +118,8 @@ export function TemplateFullpageModal({
                   icon={<DownloadOutlined />}
                   onClick={onDownloadDocument}
                   className="full-page-modal__download-btn"
+                  disabled={downloadDocumentLoading}
+                  aria-busy={downloadDocumentLoading}
                 >
                   문서 다운로드
                 </CmsButton>

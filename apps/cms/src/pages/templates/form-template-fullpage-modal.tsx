@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { message } from 'antd'
 import { TemplateFullpageModal } from '@/shared/components/template/template-fullpage-modal'
 import {
@@ -6,10 +6,20 @@ import {
   TemplateCustomFieldsForm,
   TEMPLATE_FIELD_CERTIFICATE_BACKGROUND,
   TEMPLATE_FIELD_CHAIRMAN_SEAL,
+  TEMPLATE_FIELD_ORG_LOGO,
   TEMPLATE_FIELD_ORG_LOGO_02,
 } from '@/shared/components/template/template-custom-fields-form'
-import { FormCertificatePreview } from './form-certificate-preview'
+import { generateFilename } from '@/shared/utils/file-download'
+import {
+  FormCertificatePreview,
+  FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
+} from './form-certificate-preview'
+import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { saveFormTemplateSettings } from './form-template-api'
+import { FormCertificateDocumentPreviewModal } from './form-certificate-document-preview-modal'
+import { useFormCertificateDocumentPreviewModal } from './use-form-certificate-document-preview-modal'
+import { useFormCertificatePdfDownload } from './use-form-certificate-pdf-download'
+import { useFormCertificatePreviewProps } from './use-form-certificate-preview-props'
 import { useFormTemplateCertificateModalState } from './use-form-template-certificate-modal-state'
 
 export interface FormTemplateFullpageModalProps {
@@ -18,22 +28,36 @@ export interface FormTemplateFullpageModalProps {
 }
 
 export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpageModalProps) {
+  const modalState = useFormTemplateCertificateModalState(open)
   const {
+    setOrgLogoFile,
     setOrgLogo02File,
     setCertificateBackgroundFile,
     setChairmanSealFile,
-    orgLogo02PreviewSrc,
-    certificateBackgroundPreviewSrc,
-    chairmanSealPreviewSrc,
     logoUploadResults,
     setLogoUploadResults,
     activeFieldName,
     setActiveFieldName,
-    stringPreviewValues,
     setStringPreviewValues,
     participantRowVisibility,
     setParticipantRowVisibility,
-  } = useFormTemplateCertificateModalState(open)
+    fieldTextColors,
+    setFieldTextColors,
+  } = modalState
+
+  const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
+    useFormCertificatePreviewProps(modalState)
+
+  const { open: documentPreviewOpen, openPreview, closePreview } =
+    useFormCertificateDocumentPreviewModal()
+
+  const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
+  const buildPdfFilename = useCallback(() => generateFilename('봉사활동인증서', 'pdf'), [])
+
+  const { downloadPdf, isDownloading: isPdfDownloading } = useFormCertificatePdfDownload({
+    exportRootRef: pdfExportCanvasRef,
+    buildFilename: buildPdfFilename,
+  })
 
   const handleSave = useCallback(async () => {
     const hideLoading = message.loading('저장 중…', 0)
@@ -53,6 +77,8 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
   }, [logoUploadResults])
 
   return (
+    <>
+    <FormCertificatePdfExportOverlay visible={isPdfDownloading} />
     <TemplateFullpageModal
       className="form-template-fullpage-modal"
       open={open}
@@ -60,40 +86,28 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
       title="봉사활동인증서"
       description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
       templateTabType="issuance"
-      onPreview={() => {
-        message.info('미리보기는 준비 중입니다.')
-      }}
+      onPreview={openPreview}
       onSave={handleSave}
-      onDownloadDocument={() => {
-        message.info('문서 다운로드는 준비 중입니다.')
-      }}
+      onDownloadDocument={downloadPdf}
+      downloadDocumentLoading={isPdfDownloading}
       leftContent={
-        <FormCertificatePreview
-          orgLogo02PreviewSrc={orgLogo02PreviewSrc}
-          certificateBackgroundPreviewSrc={certificateBackgroundPreviewSrc}
-          chairmanSealPreviewSrc={chairmanSealPreviewSrc}
-          activeFieldName={activeFieldName}
-          onRegionClick={setActiveFieldName}
-          titleText={stringPreviewValues.titleName}
-          bodyContent={stringPreviewValues.bodyContent}
-          chairmanNameDisplay={stringPreviewValues.chairmanName}
-          participantInfo={stringPreviewValues.participantInfo}
-          participantRowVisibility={participantRowVisibility}
-          orgAddress={stringPreviewValues.orgAddress}
-          orgPhone={stringPreviewValues.orgPhone}
-          orgFax={stringPreviewValues.orgFax}
-          orgWebsite={stringPreviewValues.orgWebsite}
-        />
+        <>
+          <FormCertificatePreview {...certificatePreviewProps} />
+          <div className={FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS} aria-hidden>
+            <FormCertificatePreview {...certificatePdfExportProps} canvasRef={pdfExportCanvasRef} />
+          </div>
+        </>
       }
       rightNavigation={
         <TemplateCustomFieldsForm
           key={open ? 'form-template-fields' : 'form-template-fields-closed'}
           selectedFieldName={activeFieldName}
-          onFieldClick={field => setActiveFieldName(field.name)}
+          onFieldClick={field => setActiveFieldName(field?.name ?? null)}
           onSecondaryValueChange={(field: TemplateCustomFieldDef, value: string) => {
             setStringPreviewValues(prev => ({ ...prev, [field.name]: value }))
           }}
           onLogoFileSelected={(fieldName, file) => {
+            if (fieldName === TEMPLATE_FIELD_ORG_LOGO) setOrgLogoFile(file)
             if (fieldName === TEMPLATE_FIELD_ORG_LOGO_02) setOrgLogo02File(file)
             if (fieldName === TEMPLATE_FIELD_CERTIFICATE_BACKGROUND) setCertificateBackgroundFile(file)
             if (fieldName === TEMPLATE_FIELD_CHAIRMAN_SEAL) setChairmanSealFile(file)
@@ -109,8 +123,18 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
               return next
             })
           }}
+          fieldTextColors={fieldTextColors}
+          onFieldTextColorChange={(fieldName, color) => {
+            setFieldTextColors(prev => ({ ...prev, [fieldName]: color }))
+          }}
         />
       }
     />
+    <FormCertificateDocumentPreviewModal
+      open={documentPreviewOpen}
+      onClose={closePreview}
+      previewProps={certificatePdfExportProps}
+    />
+    </>
   )
 }
