@@ -357,7 +357,7 @@
    ————————————————————————————————————————————————— */
 
 /* contents: flex 축소 금지 → 자연 높이(1682px)대로, body 스크롤 유발 */
-.form-test-template-fullpage-modal .full-page-modal__contents {
+.form-template-fullpage-modal .full-page-modal__contents {
   display: grid;
   grid-template-columns: min(1208px, 100%) 1fr;
   /* auto: 이미지 실제 높이(1682px)가 행 높이를 결정 */
@@ -369,18 +369,18 @@
   min-height: auto;
 }
 
-.form-test-template-fullpage-modal .full-page-modal__left {
+.form-template-fullpage-modal .full-page-modal__left {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.form-test-template-fullpage-modal .form-test-certificate-preview {
+.form-template-fullpage-modal .form-certificate-preview {
   width: 100%;
 }
 
 /* 우측: 그리드 셀 높이(= 이미지 bg 1682px)를 그대로 채움 */
-.form-test-template-fullpage-modal .full-page-modal__right-wrap {
+.form-template-fullpage-modal .full-page-modal__right-wrap {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -388,7 +388,7 @@
   align-self: stretch;
 }
 
-.form-test-template-fullpage-modal .full-page-modal__right {
+.form-template-fullpage-modal .full-page-modal__right {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
