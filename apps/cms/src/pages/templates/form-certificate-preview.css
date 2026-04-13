@@ -1,0 +1,464 @@
+.form-certificate-preview {
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.form-certificate-preview__bg {
+  display: flex;
+  width: 1208px;
+  max-width: 100%;
+  height: 1682px;
+  padding: 32px 0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  border-radius: var(--16, 16px);
+  background: var(--gray-bdc-6-c-9, #bdc6c9);
+  box-shadow: 0 4px 32px 0 rgba(0, 0, 0, 0.12);
+}
+
+/* 이미지 영역과 동일 비율·폭 — 빈 화면(흰색 슬롯), 내부 오버레이 기준점 */
+.form-certificate-preview__canvas {
+  position: relative;
+  display: block;
+  width: 1144px;
+  max-width: 100%;
+  aspect-ratio: 1144 / 1618;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 0;
+  background-color: var(--main-WT, #fff);
+  isolation: isolate;
+  min-width: 0;
+}
+
+/* 수료증 배경 — 캔버스와 분리해 비선택 시에만 딤 가능. 빈 영역 클릭 시 수료증 배경 필드 선택 */
+.form-certificate-preview__canvas-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background-color: var(--main-WT, #fff);
+  background-image: var(--certificate-bg-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* 전경(배경 레이어 위) — DOM 순서만으로도 대부분 위에 그려지나, 명시해 겹침 안정화 */
+.form-certificate-preview__tag,
+.form-certificate-preview__logo-wrap,
+.form-certificate-preview__education-wrap,
+.form-certificate-preview__title,
+.form-certificate-preview__content-frame,
+.form-certificate-preview__confirm,
+.form-certificate-preview__issue-date,
+.form-certificate-preview__org-name,
+.form-certificate-preview__chairman-name,
+.form-certificate-preview__stamp-wrap,
+.form-certificate-preview__footer,
+.form-certificate-preview__footer-field-wrap {
+  z-index: 1;
+}
+
+.form-certificate-preview__tag {
+  position: absolute;
+  top: 142px;
+  left: 34px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 2px solid var(--JA-mint-01, #01A1AF);
+  background: var(--color-bg-mint, linear-gradient(0deg, rgba(1, 161, 175, 0.10) 0%, rgba(1, 161, 175, 0.10) 100%), #FFF);
+  box-sizing: border-box;
+  color: #606060;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 30px */
+  letter-spacing: 0.8px;
+}
+
+.form-certificate-preview__logo-wrap {
+  position: absolute;
+  top: 208px;
+  left: 76px;
+  z-index: 1;
+  max-width: calc(100% - 76px);
+  pointer-events: none;
+}
+
+.form-certificate-preview__logo-wrap .form-certificate-preview__logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+}
+
+.form-certificate-preview__education-wrap {
+  position: absolute;
+  top: 193px;
+  right: 69px;
+  z-index: 1;
+  width: 150px;
+  height: 130px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.form-certificate-preview__education-wrap .form-certificate-preview__education {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  box-sizing: border-box;
+}
+
+/* 한 줄 타이틀: 100px + letter-spacing 16px 기준 실제 폭이 ~800px대라 772px 박스에선 줄바꿈됨 → max-content + nowrap */
+.form-certificate-preview__title {
+  position: absolute;
+  top: 301px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 80px);
+  height: 150px;
+  min-height: 150px;
+  max-height: 150px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: #003d4c;
+  text-align: center;
+  font-family: 'Source Han Serif K', serif;
+  font-size: 100px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 150px */
+  letter-spacing: 16px;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* 본문 영역 — 내부: 좌 111px · 갭 56px · 우측 나머지 */
+.form-certificate-preview__content-frame {
+  position: absolute;
+  top: 507px;
+  left: 170px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 56px;
+  width: 618px;
+  min-height: 0;
+  height: auto;
+  box-sizing: border-box;
+  background: transparent;
+  pointer-events: none;
+}
+
+.form-certificate-preview__content-frame-labels {
+  display: flex;
+  flex: 0 0 111px;
+  flex-direction: column;
+  gap: 24px;
+  align-items: stretch;
+  width: 111px;
+  min-width: 111px;
+  box-sizing: border-box;
+}
+
+.form-certificate-preview__label-row {
+  display: flex;
+  flex: 0 0 44px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 111px 안에서 글자 사이 간격 자동 — 첫·끝 글자는 양끝 정렬 */
+.form-certificate-preview__label-text {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  align-items: center;
+  color: #606060;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 36px */
+}
+
+.form-certificate-preview__label-char {
+  flex-shrink: 0;
+}
+
+.form-certificate-preview__content-frame-values {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-certificate-preview__value-row {
+  display: flex;
+  flex: 0 0 44px;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.form-certificate-preview__value-text {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  color: #606060;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 36px */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-certificate-preview__confirm {
+  position: absolute;
+  top: 971px;
+  left: 372px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: fit-content;
+  min-width: 0;
+  max-width: calc(100% - 372px);
+  min-height: 109px;
+  height: auto;
+  max-height: none;
+  color: #606060;
+  text-align: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 170%; /* 54.4px */
+  word-break: keep-all;
+}
+
+.form-certificate-preview__issue-date {
+  position: absolute;
+  top: 1180px;
+  left: 492px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: var(--color-mint-03, #22404b);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 51px */
+  pointer-events: none;
+}
+
+.form-certificate-preview__org-name {
+  position: absolute;
+  z-index: 3;
+  bottom: 263px;
+  left: 362px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100% - 362px);
+  min-width: 0;
+  color: #003d4c;
+  text-align: center;
+  font-family: 'Source Han Serif K', serif;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 54px */
+  letter-spacing: 0.72px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.form-certificate-preview__chairman-name {
+  position: absolute;
+  bottom: 181px;
+  left: 433.5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: calc(100% - 433.5px);
+  min-width: 0;
+  min-height: 72px;
+  color: #003d4c;
+  font-family: 'Source Han Serif K', serif;
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 72px */
+  letter-spacing: 0.96px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.form-certificate-preview__chairman-name-part {
+  flex-shrink: 0;
+}
+
+.form-certificate-preview__stamp-wrap {
+  position: absolute;
+  /* 기관명(사단법인 제이에이코리아)보다 항상 아래 */
+  z-index: 2;
+  bottom: 170px;
+  right: 237px;
+  width: 179px;
+  height: 178px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.form-certificate-preview__stamp-wrap .form-certificate-preview__stamp {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  box-sizing: border-box;
+}
+
+/* 하단 기관 정보 — 캔버스 기준 절대 좌표(디자인 스펙). 주소·전화·팩스·웹은 각각 닷·프레임 분리 */
+.form-certificate-preview__footer {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.form-certificate-preview__footer-brand {
+  position: absolute;
+  bottom: 0;
+  left: 35px;
+  white-space: nowrap;
+  color: var(--main-WT, #fff);
+  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 30px */
+  pointer-events: none;
+  user-select: none;
+}
+
+.form-certificate-preview__footer-field-wrap {
+  position: absolute;
+  bottom: 0;
+  white-space: nowrap;
+  color: var(--main-WT, #fff);
+  font-family: 'Noto Sans', 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+  text-align: left;
+  user-select: none;
+}
+
+.form-certificate-preview__footer-field-wrap--address {
+  left: 285px;
+}
+
+.form-certificate-preview__footer-field-wrap--tel {
+  left: 590px;
+}
+
+.form-certificate-preview__footer-field-wrap--fax {
+  left: 736px;
+}
+
+.form-certificate-preview__footer-field-wrap--link {
+  left: 908px;
+  right: auto;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* 우측 필드 선택 시 — 비선택 영역 딤 */
+.form-certificate-preview__region--dimmed {
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+/* 편집 영역 닷 — 미선택 시에도 항상 노출(클릭으로 우측 필드 선택) */
+.form-certificate-preview__region--has-dot {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* 우측 상단 32px 민트 원 — `has-dot`에서만 그림(프레임은 `frame-active`가 outline만 담당) */
+.form-certificate-preview__region--has-dot::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 32px;
+  height: 32px;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--JA-mint-01, #01a1af);
+  border: 3px solid var(--main-WT, #fff);
+  filter: drop-shadow(0 4px 24px rgba(0, 89, 97, 0.2));
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* 우측 커스텀 필드 선택 시 — 해당 영역 점선 프레임만(닷은 위 `has-dot::after`와 동일 요소)
+   border는 박스 안쪽을 잡아 수료증 배경(canvas) 등에서 UI shifting 유발 → outline만 사용 */
+.form-certificate-preview__region--frame-active {
+  outline: 6px dashed var(--JA-mint-01, #01a1af);
+  outline-offset: 0;
+  z-index: 5;
+}
+
+.form-certificate-preview__canvas.form-certificate-preview__region--frame-active {
+  z-index: 0;
+}
+
+/* 프레임 하이라이트 공통 z-index:5가 스탬프에도 적용되면 기관명 위로 올라감 → 스탬프 래퍼만 억제 */
+.form-certificate-preview__stamp-wrap.form-certificate-preview__region--frame-active {
+  z-index: 0;
+}
+
