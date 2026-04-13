@@ -179,38 +179,64 @@ export async function generateCertificatePdf(
   }
 }
 
+export interface GeneratePdfBlobFromHtmlElementOptions {
+  /** html2canvas 렌더 스케일 (기본 2) */
+  scale?: number
+}
+
+const CSS_PX_PER_INCH = 96
+const MM_PER_INCH = 25.4
+
+function canvasPixelsToMm(px: number): number {
+  return (px * MM_PER_INCH) / CSS_PX_PER_INCH
+}
+
 /**
- * HTML 요소를 Canvas로 변환하여 PDF 생성 (대안 방법)
- * @param elementId HTML 요소 ID
- * @param filename 파일명
- * @returns PDF Blob
+ * DOM 요소를 캡처해 A4 한 페이지 PDF Blob으로 만듭니다.
+ * 이미지 비율을 유지한 채 페이지 안에 맞춥니다.
  */
-export async function generatePdfFromElement(
-  elementId: string
+export async function generatePdfBlobFromHtmlElement(
+  element: HTMLElement,
+  options: GeneratePdfBlobFromHtmlElementOptions = {}
 ): Promise<Blob> {
+  const { scale = 2 } = options
+
+  const canvas = await html2canvas(element, {
+    scale,
+    useCORS: true,
+    logging: false,
+    backgroundColor: '#ffffff',
+  })
+
+  const imgData = canvas.toDataURL('image/png', 1.0)
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  })
+
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const pageHeight = pdf.internal.pageSize.getHeight()
+
+  const imgWidthMm = canvasPixelsToMm(canvas.width)
+  const imgHeightMm = canvasPixelsToMm(canvas.height)
+  const fit = Math.min(pageWidth / imgWidthMm, pageHeight / imgHeightMm)
+  const drawW = imgWidthMm * fit
+  const drawH = imgHeightMm * fit
+  const x = (pageWidth - drawW) / 2
+  const y = (pageHeight - drawH) / 2
+
+  pdf.addImage(imgData, 'PNG', x, y, drawW, drawH, undefined, 'SLOW')
+  return pdf.output('blob')
+}
+
+/**
+ * HTML 요소 ID로 PDF Blob 생성 (`generatePdfBlobFromHtmlElement` 위임)
+ */
+export async function generatePdfFromElement(elementId: string): Promise<Blob> {
   const element = document.getElementById(elementId)
   if (!element) {
     throw new Error(`요소를 찾을 수 없습니다: ${elementId}`)
   }
-
-  try {
-    const canvas = await html2canvas(element, {
-      scale: 2, // 고해상도
-      useCORS: true,
-      logging: false,
-    })
-
-    const imgData = canvas.toDataURL('image/png', 1.0)
-    const pdf = new jsPDF({
-      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-      unit: 'px',
-      format: [canvas.width, canvas.height],
-    })
-
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height)
-    return pdf.output('blob')
-  } catch (error) {
-    console.error('PDF 생성 실패:', error)
-    throw new Error('PDF 생성 중 오류가 발생했습니다')
-  }
+  return generatePdfBlobFromHtmlElement(element)
 }
