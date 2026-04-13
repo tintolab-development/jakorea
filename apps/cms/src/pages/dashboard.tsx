@@ -150,7 +150,7 @@ export function Dashboard() {
             className="dashboard-widget-row-wrapper"
             data-dragging={activeId ? 'true' : undefined}
           >
-            <Row gutter={[16, 20]} align="stretch">
+            <Row gutter={[32, 32]} align="stretch">
               {displayOrder.flatMap((id: string) => {
                 const meta = displayItemsMeta.find(m => m.id === id)
                 if (!meta) return []
