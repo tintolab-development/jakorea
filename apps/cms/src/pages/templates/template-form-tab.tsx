@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { TemplateListCard } from '@/shared/components/template/template-list-card'
 import './template-form-tab.css'
 import { TemplateFullpageModal } from '@/shared/components/template/template-fullpage-modal'
@@ -11,12 +11,24 @@ import { TemplateTable } from '@/features/template/ui/template-table'
 import { WageInfoCurriculumSection } from '@/features/template/ui/wage-info-curriculum-section'
 import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
 import { writingSections } from '@/features/template/model/template.schema'
+import type { TemplateRow } from '@/features/template/model/template.schema'
 import {
   buildRightNavigationConfig,
   buildTemplateConfig,
 } from '@/features/template/lib/build-template-config'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import NewSurveyForm from '@/features/template/ui/new-survey-form'
+import NewAgreementForm from '@/features/template/ui/new-agreement-form'
+
+type TemplateFormTabQuery = {
+  mode?: string
+  type?: string
+  id?: string
+}
 
 export default function TemplateFormTab() {
+  const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
   const curriculumSections = useMemo(
     () => ({
       '기본 정보': <BasicInfoCurriculumSection />,
@@ -49,10 +61,36 @@ export default function TemplateFormTab() {
     buildBaseLeftContentConfig,
   })
 
+  const handleOpenTemplatePreview = useCallback(
+    (row: TemplateRow) => {
+      openTemplatePreview(row)
+      setParams({ mode: 'edit', id: row.id, type: undefined })
+    },
+    [openTemplatePreview, setParams]
+  )
+
+  const handleCloseTemplatePreview = useCallback(() => {
+    closeTemplatePreview()
+    setParams({ mode: undefined, id: undefined, type: undefined })
+  }, [closeTemplatePreview, setParams])
+
+  useEffect(() => {
+    if (params.mode !== 'edit' || params.id == null || params.id === '' || isPreviewOpen) return
+    const row = findWritingTemplateRowByDefinitionId(params.id)
+    if (row) openTemplatePreview(row)
+  }, [params.mode, params.id, isPreviewOpen, openTemplatePreview])
+
   const rightNavigationConfig = useMemo(
     () => buildRightNavigationConfig(orderedLeftContentConfig),
     [orderedLeftContentConfig]
   )
+
+  if (params.mode === 'new' && params.type === 'survey') {
+    return <NewSurveyForm />
+  }
+  if (params.mode === 'new' && params.type === 'agreement') {
+    return <NewAgreementForm />
+  }
 
   return (
     <>
@@ -63,14 +101,14 @@ export default function TemplateFormTab() {
             title={section.title}
             description={section.description}
           >
-            <TemplateTable rows={section.rows} onPreview={openTemplatePreview} />
+            <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
           </TemplateListCard>
         ))}
       </div>
 
       <TemplateFullpageModal
         open={isPreviewOpen}
-        onClose={closeTemplatePreview}
+        onClose={handleCloseTemplatePreview}
         title={selectedTemplate?.templateName ?? '양식 미리보기'}
         description="해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="writing"

@@ -73,6 +73,8 @@ category: implementation
 
 ## 5. 공통 컴포넌트 역할
 
+**체크박스**: `basic-info-curriculum-section` 등 템플릿 작성 양식 필드에서는 `antd` `Checkbox` 대신 `@/shared/ui/cms-checkbox`의 **`CmsCheckbox` / `CmsCheckbox.Group`** 을 쓰고, 사이즈는 **`checkboxSize="large"`** 를 기준으로 한다.
+
 | 컴포넌트 | 역할 |
 |----------|------|
 | `TemplateListCard` | 섹션 제목·설명 + 내부 목록 |
@@ -136,18 +138,26 @@ category: implementation
 ### 8.1 `DetailInfoForm` 사용 시 클래스·스타일
 
 - **`Field`의 `edit` 슬롯 등에 임의 `className`을 추가하지 않는다.** 기본 격자·필드 스타일로 충분하다.
-- **추가 스타일이 꼭 필요할 때만** `style` 등 **인라인으로 임시** 적용한다. 전용 유틸 클래스를 새로 두는 것은 지양한다.
+- **컨트롤 너비**: `edit` 안에서 `CmsInput`·`CmsSelect`·`CmsDatePicker` 등에 가로 폭을 줄 때 **`style={{ width: … }}`를 쓰지 않는다.** 각 컴포넌트의 **`width` prop**(`number | string`)으로 넘긴다. 예: `width="20%"`, `width={'50%'}`, `width={300}`(숫자는 px). **한 `Field`의 `edit`에 컨트롤이 하나뿐이면** 값 영역 가로를 채우도록 **`width={'100%'}`** (또는 `width="100%"`)를 넣는다. **한 Field 안에 다중 컨트롤과 `DetailInfoForm.InputsSeparator`가 같이 있을 때** 래퍼는 `detail-info-form-inputs-wrapper-no-gap`을 쓰고, 각 컨트롤 `width`는 직접 `calc`를 쓰지 않고 `@/shared/lib/form-inputs-width`의 **`getFormInputsWidth`** 또는 `@/shared/hooks`의 **`useFormInputsWidth`** 로 계산한다. 구분선 가로 점유는 **`DETAIL_INFO_FORM_SEPARATOR_WIDTH`** 와 `apps/cms/src/index.css`의 `.detail-info-form-inputs-separator`를 함께 맞춘다.
+- **그 외 추가 스타일**이 꼭 필요할 때만 `style` 등 **인라인으로 임시** 적용한다. 전용 유틸 클래스를 새로 두는 것은 지양한다.
 - **인풋·셀렉트·데이트피커 등을 한 줄로 맞출 때** (`apps/cms/src/index.css`):
   - `detail-info-form-inputs-wrapper` — 기본 간격
   - `detail-info-form-inputs-wrapper-no-gap` — 간격 없음
 - **같은 줄 안에서 컨트롤 사이에 세로 구분(가로선 느낌) UI가 필요할 때**: `<DetailInfoForm.InputsSeparator />` 를 사용한다.
+
+### 8.2 템플릿 작성(신규 섹션·필드) 시 — `DetailInfoForm` 안 인풋 너비
+
+- `@/features/template`에서 **템플릿 양식용 UI를 새로 만들거나** `DetailInfoForm` 기반 필드를 추가할 때, **`mode="edit"`이고 한 `Field`의 `edit`에 `CmsInput`·`CmsSelect`·`CmsDatePicker` 등이 하나만** 오면 해당 컨트롤에 **`width={'100%'}`** 를 넣는다 (값 셀 가로 활용).
+- **`mode="edit"`이고 한 `Field`의 `edit` 슬롯 안에 컨트롤이 둘 이상 한 줄로** 배치되면, **`width`는 우선 `@/features/template/constants`의 사전 정의 튜플을 쓴다**: **`FORM_INPUTS_2_WIDTHS`** … **`FORM_INPUTS_5_WIDTHS`** (각 튜플 원소는 동일 문자열 — `InputsSeparator`가 컨트롤 사이마다 1개일 때, 구분선 폭 **`TEMPLATE_FORM_SEPARATOR_WIDTH_PX`(26px)** 로 `getFormInputsWidth`와 동일 계산). 2~5개가 아니거나 구분선 개수가 다르면 **`useFormInputsWidth`** / **`getFormInputsWidth`** 로 계산한다.
+- **`inputCount`** / **`separatorCount`** 의미는 §8.1·`form-inputs-width`와 동일.
+- 래퍼는 **`detail-info-form-inputs-wrapper` 또는 `detail-info-form-inputs-wrapper-no-gap`** 중 해당하는 쪽을 쓰고, **`calc((100% - …px) / n)` 형태의 `width` 문자열을 직접 하드코딩하지 않는다** (상수 튜플·훅·`getFormInputsWidth` 사용).
 
 ---
 
 ## 9. 편집 컨트롤 — `cms-*` 우선
 
 - `CmsInput`, `CmsSelect`, `CmsDatePicker`, `CmsRadio` 등 **존재 여부를 확인 후** 우선 사용.
-- **`@/features/template`에서 `DetailInfoForm`의 `mode="edit"` 안에 넣는 `CmsInput` / `CmsSelect` / `CmsDatePicker`에는 `inputSize="medium"`을 기본으로 둔다** (컴포넌트 기본값은 `large`이므로 명시).
+- **`@/features/template`에서 `DetailInfoForm`의 `mode="edit"` 안에 넣는 `CmsInput` / `CmsSelect` / `CmsDatePicker`에는 `inputSize="medium"`을 기본으로 둔다** (컴포넌트 기본값은 `large`이므로 명시). **한 Field에 컨트롤이 하나면 `width={'100%'}`**, 둘 이상 나란히면 §8.2대로 **`FORM_INPUTS_*_WIDTHS`**(2~5) 또는 **`useFormInputsWidth`** / **`getFormInputsWidth`** 로 `width`를 채운다.
 - Ant 전용 위젯만 있을 때는 사용 가능; 공통화되면 교체한다.
 
 ---
@@ -165,11 +175,11 @@ category: implementation
 - [ ] import가 `@/shared/components/template/...` 형태인가
 - [ ] 목록 테이블에 `cms-data-table--border` (또는 `TemplateTable` 사용)
 - [ ] 모달은 `TemplateFullpageModal` + 좌·우 공통 컴포넌트 조합 유지
-- [ ] 격자형 필드는 `DetailInfoForm` 우선, 입력은 `cms-*` 우선; 템플릿 `edit`의 `CmsInput`/`CmsSelect`/`CmsDatePicker`는 `inputSize="medium"` (`DetailInfoForm`에 불필요한 `className` 추가 없음; 일렬 정렬·구분은 `detail-info-form-inputs-wrapper*` / `InputsSeparator`)
+- [ ] 격자형 필드는 `DetailInfoForm` 우선, 입력은 `cms-*` 우선; 템플릿 `edit`의 `CmsInput`/`CmsSelect`/`CmsDatePicker`는 `inputSize="medium"` (`DetailInfoForm`에 불필요한 `className` 추가 없음; 일렬 정렬·구분은 `detail-info-form-inputs-wrapper*` / `InputsSeparator`; 너비는 `width` prop, `style.width` 지양; **한 Field 컨트롤 1개면 `width={'100%'}`**; **다중 인라인(2~5)은 `FORM_INPUTS_*_WIDTHS` 우선, 그 외 `useFormInputsWidth`/`getFormInputsWidth`; `calc` 하드코딩 금지**)
 - [ ] 발급 탭 우측 하단은 `TemplateModalRightNavigation` `children`으로 확장
 - [ ] (해당 시) 레거시 리다이렉트·`?tab=` 동작 확인
 - [ ] (해당 시) 좌측 카드에 `pinned`를 쓰면 초기화·재정렬에 `normalizeLeftCardOrder` / `mergeLeftCardOrderByDragIds` 적용 여부 확인
 
 ---
 
-**마지막 업데이트**: 2026-04-11
+**마지막 업데이트**: 2026-04-10
