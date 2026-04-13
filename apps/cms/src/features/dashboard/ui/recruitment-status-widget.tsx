@@ -5,7 +5,7 @@
  * 모집 신청 현황 컬럼: 프로그램 lifecycleStatus 기반 읽기 전용 텍스트 표시 (프로그램 일정과 연동)
  */
 
-import { Card, Button, Table } from 'antd'
+import { Card, Button, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import type { Program } from '@/types/domain'
@@ -17,6 +17,8 @@ import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
+
+const { Text } = Typography
 
 const WIDGET_KEY = 'recruitment-status-widget'
 const EMPTY_IDS: string[] = []
@@ -43,6 +45,8 @@ export function RecruitmentStatusWidget() {
       cancelled = true
     }
   }, [allowedProgramIds.length, allowedProgramIds.join(',')])
+
+  const totalCount = programs.length
 
   const columns: ColumnsType<Program> = [
     {
@@ -102,6 +106,9 @@ export function RecruitmentStatusWidget() {
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">모집 신청 현황</span>
+          <Text type="secondary" className="dashboard-widget-table__header-total-count">
+            총 {totalCount}건
+          </Text>
         </WidgetTitleWithHandle>
       }
       extra={

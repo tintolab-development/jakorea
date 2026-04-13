@@ -29,6 +29,14 @@
   overflow-y: auto;
 }
 
+/* 모집 신청 현황: 본문·래퍼가 카드 높이를 채운 뒤 tbody 영역 세로 스크롤 */
+.dashboard-widget-table--recruitment .ant-card-body .ant-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
 .dashboard-widget-table .ant-card-body .ant-table-wrapper .ant-spin-nested-loading,
 .dashboard-widget-table .ant-card-body .ant-table-wrapper .ant-table-container {
   height: 100%;
@@ -106,15 +114,6 @@
   background: var(--color-table-row-hover) !important;
 }
 
-.dashboard-widget-table .widget-more-button {
-  color: var(--color-text-primary) !important;
-}
-
-.dashboard-widget-table .widget-more-button:hover {
-  color: var(--color-text-primary) !important;
-  opacity: 0.8;
-}
-
 /* 문의 현황 — 답변 대기 클릭 셀 */
 .dashboard-widget-table__pending-btn {
   position: relative;
@@ -172,4 +171,56 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+}
+
+/* ant-card-head-title: 기본 inline-block 대신 flex로 전환 → widget-card-header가 전체 너비를 채우고 타이틀+디스크립션 레이아웃이 잘리지 않도록 */
+.dashboard-widget-table .ant-card-head-title {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.dashboard-widget-table .ant-card-head-title > .widget-card-header {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 타이틀 옆 총 N건 디스크립션 — dashboard-toolbar-description과 동일 타이포 (Typography secondary 색상 덮어씀) */
+.dashboard-widget-table__header-total-count.ant-typography {
+  flex-shrink: 0;
+  margin-right: var(--spacing-8);
+  color: var(--main-BK, #3d3d3d) !important;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 170%;
+  opacity: 0.6;
+}
+
+/* 모집 신청 현황 · 프로그램 별 문의 현황: 테이블 스크롤바 UI 숨김(스크롤 동작 유지) */
+.dashboard-widget-table--recruitment .ant-card-body .ant-table-wrapper,
+.dashboard-widget-table--customer-inquiry .ant-card-body .ant-table-wrapper,
+.dashboard-widget-table--recruitment .ant-table-container,
+.dashboard-widget-table--customer-inquiry .ant-table-container,
+.dashboard-widget-table--recruitment .ant-table-body,
+.dashboard-widget-table--customer-inquiry .ant-table-body,
+.dashboard-widget-table--recruitment .ant-table-content,
+.dashboard-widget-table--customer-inquiry .ant-table-content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dashboard-widget-table--recruitment .ant-card-body .ant-table-wrapper::-webkit-scrollbar,
+.dashboard-widget-table--customer-inquiry .ant-card-body .ant-table-wrapper::-webkit-scrollbar,
+.dashboard-widget-table--recruitment .ant-table-container::-webkit-scrollbar,
+.dashboard-widget-table--customer-inquiry .ant-table-container::-webkit-scrollbar,
+.dashboard-widget-table--recruitment .ant-table-body::-webkit-scrollbar,
+.dashboard-widget-table--customer-inquiry .ant-table-body::-webkit-scrollbar,
+.dashboard-widget-table--recruitment .ant-table-content::-webkit-scrollbar,
+.dashboard-widget-table--customer-inquiry .ant-table-content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

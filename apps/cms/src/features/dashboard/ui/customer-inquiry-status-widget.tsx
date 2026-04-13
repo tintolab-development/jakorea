@@ -3,7 +3,7 @@
  * 프로그램별 답변 대기 / 답변 완료 / 전체 건수를 테이블로 표시
  */
 
-import { Card, Button, Table } from 'antd'
+import { Card, Button, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
@@ -12,6 +12,8 @@ import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
+
+const { Text } = Typography
 
 const WIDGET_KEY = 'customer-inquiry-status-widget'
 const EMPTY_IDS: string[] = []
@@ -76,6 +78,8 @@ export function CustomerInquiryStatusWidget() {
     if (allowedProgramIds.length === 0) return MOCK_PROGRAM_INQUIRIES
     return MOCK_PROGRAM_INQUIRIES
   }, [allowedProgramIds])
+
+  const totalCount = data.length
 
   const handlePendingClick = (programKey: string) => {
     console.log('handlePendingClick programKey', programKey)
@@ -152,6 +156,9 @@ export function CustomerInquiryStatusWidget() {
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">프로그램 별 문의 현황</span>
+          <Text type="secondary" className="dashboard-widget-table__header-total-count">
+            총 {totalCount}건
+          </Text>
         </WidgetTitleWithHandle>
       }
       extra={
