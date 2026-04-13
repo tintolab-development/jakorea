@@ -21,7 +21,7 @@ export interface TealHeaderModalProps {
   footer?: React.ReactNode
   /** 헤더 우측에 X 버튼 앞에 노출할 추가 내용 (예: 닫기 버튼) */
   headerExtra?: React.ReactNode
-  /** 기본 800, large 시 1400, full 시 100vw×100vh 풀페이지 */
+  /** 기본 800, large 시 1400, full 시 뷰포트 풀페이지(좌우 인셋, CSS 참고) */
   size?: 'default' | 'large' | 'full'
   /** 커스텀 width (size보다 우선) */
   width?: number

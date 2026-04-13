@@ -31,6 +31,11 @@ a:hover {
   color: var(--color-link-hover);
 }
 
+/* 모달 등으로 document 스크롤이 잠길 때 스크롤바 소멸로 인한 가로 레이아웃 시프트 완화 */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   min-width: 1920px;
