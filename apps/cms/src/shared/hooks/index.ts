@@ -43,3 +43,4 @@ export type {
   JusoAddressItem,
   JusoAddressRow,
 } from './use-juso-address-search'
+export { useObjectUrlFromFile } from './use-object-url-from-file'
