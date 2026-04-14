@@ -7,6 +7,7 @@ import type { Schedule, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockInstructors } from './instructors'
 import { getEconomyPrograms } from './economy-programs'
+import { getGeneralEducationPrograms, getGeminiPrograms } from './program-schedule-categories'
 
 // Phase 0.2.6: instructor-1-fixed-id-for-testing용 일정 할당
 const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
@@ -298,11 +299,10 @@ export function buildEconomySchedulesForVisibleRange(
   let seq = 0
 
   for (const dateStr of visibleDateKeys) {
-    const dom = parseInt(dateStr.slice(8, 10), 10)
-    const slotsThisDay = Number.isFinite(dom) && dom % 4 === 0 ? 2 : 1
-    for (let s = 0; s < slotsThisDay; s++) {
+    const maxSlots = Math.min(2, pool.length)
+    for (let s = 0; s < maxSlots; s++) {
       seq += 1
-      const program = pool[(seq - 1) % pool.length]
+      const program = pool[s % pool.length]
       const round = program.rounds?.[0]
       const startHour = 9 + ((seq + s) % 7)
       const startTime = `${String(startHour).padStart(2, '0')}:00`
@@ -310,6 +310,106 @@ export function buildEconomySchedulesForVisibleRange(
 
       schedules.push({
         id: `sch-economy-vis-${dateStr}-${s}` as UUID,
+        programId: program.id,
+        roundId: round?.id,
+        title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
+        date: dateStr,
+        startTime,
+        endTime,
+        location: locations[(seq - 1) % locations.length],
+        instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
+        createdAt,
+        updatedAt: createdAt,
+      })
+    }
+  }
+
+  return schedules
+}
+
+/**
+ * 일반 교육 프로그램 일정 위젯: 가시 구간 동적 목 일정 (경제 위젯과 동일 패턴)
+ */
+export function buildGeneralSchedulesForVisibleRange(
+  visibleDateKeys: string[],
+  allowedProgramIdSet: Set<string> | null
+): Schedule[] {
+  const generalPrograms = getGeneralEducationPrograms()
+  if (generalPrograms.length === 0) return []
+
+  const pool =
+    allowedProgramIdSet == null
+      ? generalPrograms
+      : generalPrograms.filter(p => allowedProgramIdSet.has(p.id))
+
+  if (pool.length === 0) return []
+
+  const createdAt = new Date().toISOString()
+  const schedules: Schedule[] = []
+  let seq = 0
+
+  for (const dateStr of visibleDateKeys) {
+    const maxSlots = Math.min(2, pool.length)
+    for (let s = 0; s < maxSlots; s++) {
+      seq += 1
+      const program = pool[s % pool.length]
+      const round = program.rounds?.[0]
+      const startHour = 9 + ((seq + s) % 7)
+      const startTime = `${String(startHour).padStart(2, '0')}:00`
+      const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
+
+      schedules.push({
+        id: `sch-general-vis-${dateStr}-${s}` as UUID,
+        programId: program.id,
+        roundId: round?.id,
+        title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
+        date: dateStr,
+        startTime,
+        endTime,
+        location: locations[(seq - 1) % locations.length],
+        instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
+        createdAt,
+        updatedAt: createdAt,
+      })
+    }
+  }
+
+  return schedules
+}
+
+/**
+ * 제미나이 프로그램 일정 위젯: 가시 구간 동적 목 일정
+ */
+export function buildGeminiSchedulesForVisibleRange(
+  visibleDateKeys: string[],
+  allowedProgramIdSet: Set<string> | null
+): Schedule[] {
+  const geminiPrograms = getGeminiPrograms()
+  if (geminiPrograms.length === 0) return []
+
+  const pool =
+    allowedProgramIdSet == null
+      ? geminiPrograms
+      : geminiPrograms.filter(p => allowedProgramIdSet.has(p.id))
+
+  if (pool.length === 0) return []
+
+  const createdAt = new Date().toISOString()
+  const schedules: Schedule[] = []
+  let seq = 0
+
+  for (const dateStr of visibleDateKeys) {
+    const maxSlots = Math.min(2, pool.length)
+    for (let s = 0; s < maxSlots; s++) {
+      seq += 1
+      const program = pool[s % pool.length]
+      const round = program.rounds?.[0]
+      const startHour = 9 + ((seq + s) % 7)
+      const startTime = `${String(startHour).padStart(2, '0')}:00`
+      const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
+
+      schedules.push({
+        id: `sch-gemini-vis-${dateStr}-${s}` as UUID,
         programId: program.id,
         roundId: round?.id,
         title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
