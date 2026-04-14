@@ -109,15 +109,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--spacing-32, 32px);
-  height: var(--spacing-32, 32px);
-  min-width: var(--spacing-32, 32px);
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
   padding: 0;
   border: none;
+  background: transparent;
   color: var(--color-text-body);
   transition: all 0.2s;
   line-height: 1;
   vertical-align: middle;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .main-header-icon-button .anticon {
@@ -127,8 +130,7 @@
 }
 
 .main-header-icon-button:hover {
-  color: var(--color-input-focus);
-  background: var(--color-bg-info-lighter);
+  background: rgba(1, 161, 175, 0.06);
 }
 
 .main-header-user-info {
@@ -163,23 +165,76 @@
 
 .main-header-avatar {
   flex-shrink: 0;
-  cursor: pointer;
   transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  aspect-ratio: 1 / 1;
 }
 
 .main-header-avatar-button {
-  border: none;
-  background: transparent;
-  padding: 0;
-  margin: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  margin-left: 4px;
+  margin-right: 16px;
+}
+
+.main-header-account-trigger svg {
+  width: 28px;
+  height: 28px;
+  aspect-ratio: 1 / 1;
 }
 
 .main-header-avatar:hover {
-  opacity: 0.8;
+  opacity: 1;
+}
+
+.main-header-account-dropdown {
+  display: inline-flex;
+  width: 76px;
+  height: 98px;
+  padding: 4px;
+  flex-direction: column;
+  align-items: flex-start;
+  border-radius: var(--6, 6px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.main-header-account-dropdown-item {
+  display: flex;
+  width: 68px;
+  padding: 5px 8px 4px 8px;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+  border: none;
+  border-radius: var(--4, 4px);
+  background: #fff;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  cursor: pointer;
+}
+
+.main-header-account-dropdown-item:hover {
+  background: var(
+    --status-hover-bg,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff
+  );
+}
+
+.main-header-account-dropdown-item:focus-visible {
+  outline: 2px solid rgba(1, 161, 175, 0.35);
+  outline-offset: 1px;
 }
 
 /* 알림 드롭다운 오버레이 루트 — 너비 고정으로 카테고리 전환 시 시프트 방지 */
