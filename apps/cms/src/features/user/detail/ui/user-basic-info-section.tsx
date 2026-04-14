@@ -616,7 +616,12 @@ export function UserBasicInfoSection({
   return (
     <div className="user-detail-modal__basic-inner">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-        <DetailInfoForm title="기본 정보" description={caption} className="user-basic-info-section">
+        <DetailInfoForm
+          title="기본 정보"
+          hideHeader
+          description={caption}
+          className="user-basic-info-section"
+        >
           {bodyKey === 'all_users' ? (
             <AllUsersFields
               user={user}

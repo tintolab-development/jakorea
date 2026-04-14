@@ -185,6 +185,11 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   gap: 8px;
 }
 
+.info-section-title-wrapper {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+}
 .info-section-title {
   color: var(--default-BK, #3d3d3d);
   font-size: 18px;

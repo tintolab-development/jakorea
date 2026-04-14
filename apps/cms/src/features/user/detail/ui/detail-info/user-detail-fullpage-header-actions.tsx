@@ -2,9 +2,19 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { User } from '@/types/user'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
-  programsHistoryHasChildMenu,
-  type TabState,
-} from '../../lib/user-detail-fullpage-helpers'
+  actionConfigToCmsVariant,
+  getDefaultHeaderActions,
+} from '@/features/user/detail/lib/get-default-header-actions'
+import {
+  resolveDefaultHeaderShellState,
+  resolvePermissionHeaderEntry,
+} from '@/features/user/detail/lib/user-detail-header-resolvers'
+import type { TabState } from '../../lib/user-detail-fullpage-helpers'
+import {
+  usePersonalInfoToggle,
+  type PersonalInfoToggleButtonConfig,
+} from '@/features/user/detail/lib/use-personal-info-toggle'
+import { PermissionHeaderActions } from './permission-header-actions'
 
 export type UserDetailPermissionRole = 'instructor' | 'admin'
 
@@ -22,130 +32,80 @@ export interface UserDetailFullPageHeaderActionsProps {
   onOpenWithdrawConfirm: () => void
 }
 
-export function UserDetailFullPageHeaderActions({
-  mode,
-  permissionRole,
-  displayUser,
-  tabState,
-  personalInfoRevealed,
-  setPersonalInfoRevealed,
-  onPermissionApprove,
-  onPermissionReject,
-  onWithdraw,
-  onEdit,
-  onOpenWithdrawConfirm,
-}: UserDetailFullPageHeaderActionsProps) {
-  const hasProgramsChildMenu = programsHistoryHasChildMenu(displayUser)
-  const effectiveProgramsChild =
-    tabState.lnb === 'history' && hasProgramsChildMenu
-      ? (tabState.child ?? 'enrollment')
-      : undefined
+export type PermissionHeaderActionsProps = UserDetailFullPageHeaderActionsProps & {
+  personalInfoButton: PersonalInfoToggleButtonConfig
+}
 
-  if (mode === 'permission' && permissionRole) {
-    return (
-      <div className="info-section-buttons--wrapper">
-        <CmsButton
-          variant="delete"
-          onClick={() => {
-            onPermissionReject?.({ userId: displayUser.id, permissionRole })
-          }}
-        >
-          신청 반려
-        </CmsButton>
-        <CmsButton
-          onClick={() => {
-            onPermissionApprove?.({ userId: displayUser.id, permissionRole })
-          }}
-        >
-          신청 승인
-        </CmsButton>
-        <CmsButton
-          variant={personalInfoRevealed ? 'default' : 'primary'}
-          width={180}
-          onClick={() => {
-            if (personalInfoRevealed) {
-              setPersonalInfoRevealed(false)
-            } else {
-              window.alert('준비 중입니다.')
-            }
-          }}
-        >
-          {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-        </CmsButton>
-      </div>
-    )
+export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderActionsProps) {
+  const {
+    mode,
+    permissionRole,
+    displayUser,
+    tabState,
+    personalInfoRevealed,
+    setPersonalInfoRevealed,
+    onWithdraw,
+    onEdit,
+    onOpenWithdrawConfirm,
+  } = props
+
+  const personalInfoButton = usePersonalInfoToggle({
+    personalInfoRevealed,
+    setPersonalInfoRevealed,
+  })
+
+  const permissionEntry = resolvePermissionHeaderEntry(mode, permissionRole)
+  if (permissionEntry.enter) {
+    return <PermissionHeaderActions {...props} personalInfoButton={personalInfoButton} />
   }
 
-  if (tabState.lnb === 'payment-status') return null
-
-  if (tabState.lnb === 'history' && effectiveProgramsChild === 'volunteer') {
+  const shell = resolveDefaultHeaderShellState({ displayUser, tabState, onWithdraw })
+  if (!shell.visible) {
     return null
   }
 
-  if (
-    displayUser.role === 'INDIVIDUAL' &&
-    tabState.lnb === 'history' &&
-    effectiveProgramsChild === 'enrollment'
-  ) {
-    return null
-  }
+  const actions = getDefaultHeaderActions({
+    viewKind: shell.viewKind,
+    displayUser,
+    onWithdraw,
+    onEdit,
+    onOpenWithdrawConfirm,
+  })
 
-  if (
-    displayUser.role === 'INSTRUCTOR' &&
-    tabState.lnb === 'history' &&
-    effectiveProgramsChild === 'lecture'
-  ) {
-    return null
-  }
+  const leadingSpaceNode = shell.leadingSpace ? ' ' : null
 
-  if (displayUser.role === 'ADMIN' && tabState.lnb === 'history') {
-    return null
-  }
+  const personalInfoNode = shell.showPersonalInfoToggle ? (
+    <CmsButton
+      size="medium"
+      width={160}
+      variant={personalInfoButton.variant}
+      onClick={personalInfoButton.onClick}
+    >
+      {personalInfoButton.label}
+    </CmsButton>
+  ) : null
 
-  if (displayUser.role === 'SCHOOL') {
-    if (!onWithdraw) return null
-    return (
-      <div className="info-section-buttons--wrapper">
-        {' '}
-        <CmsButton
-          variant="delete"
-          onClick={() => {
-            window.alert('준비 중입니다.')
-            // TODO: 기능 연결 예정 — 학교 삭제 확인 모달
-            // onOpenWithdrawConfirm()
-          }}
-        >
-          학교 삭제
-        </CmsButton>
-      </div>
-    )
-  }
+  const actionButtons = actions.map(action => (
+    <CmsButton
+      size="medium"
+      key={action.key}
+      variant={actionConfigToCmsVariant(action.variant)}
+      onClick={action.onClick}
+    >
+      {action.label}
+    </CmsButton>
+  ))
 
   return (
-    <div className="info-section-buttons--wrapper">
-      {onWithdraw ? (
-        <CmsButton variant="default" onClick={onOpenWithdrawConfirm}>
-          회원 탈퇴
-        </CmsButton>
-      ) : null}
-      {onEdit ? (
-        <CmsButton variant="default" onClick={() => onEdit(displayUser)}>
-          정보 수정
-        </CmsButton>
-      ) : null}
-      <CmsButton
-        variant={personalInfoRevealed ? 'default' : 'primary'}
-        width={180}
-        onClick={() => {
-          if (personalInfoRevealed) {
-            setPersonalInfoRevealed(false)
-          } else {
-            window.alert('준비 중입니다.')
-          }
-        }}
-      >
-        {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-      </CmsButton>
-    </div>
+    <>
+      <div className="info-section-title-wrapper">
+        <div className="info-section-title">기본정보</div>
+      </div>
+      <div className="info-section-buttons--wrapper">
+        {leadingSpaceNode}
+        {actionButtons}
+        {personalInfoNode}
+      </div>
+    </>
   )
 }

@@ -131,10 +131,8 @@
 .detail-fullpage-modal__content-actions {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-end;
   width: 100%;
-  /* background-color: blue; */
 }
 
 /* LNB 없을 때 본문을 헤더 타이틀과 동일 좌측 기준선(60px)에 맞춤 */
