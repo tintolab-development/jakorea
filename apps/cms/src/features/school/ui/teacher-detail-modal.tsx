@@ -141,7 +141,7 @@ export function TeacherDetailModal({
         title="회원 탈퇴 안내"
         lines={withdrawLines}
         confirmText="탈퇴"
-        confirmVariant="danger"
+        confirmVariant="delete"
       />
     </>
   )

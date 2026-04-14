@@ -641,7 +641,7 @@ export function ParticipatingInstitutionsSection({
           title="참여 기관 삭제 안내"
           lines={buildParticipatingInstitutionDeleteMessageLines(schoolNamesToDelete)}
           confirmText="삭제"
-          confirmVariant="danger"
+          confirmVariant="delete"
           requiredConfirmInput="삭제"
         />
       )}

@@ -849,7 +849,7 @@ export function ApplicantInstructorDetailModal({
           title="반려 안내"
           lines={buildInstructorRejectMessageLines(1)}
           confirmText="반려"
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       )}
       {confirmType === 'approve' && (

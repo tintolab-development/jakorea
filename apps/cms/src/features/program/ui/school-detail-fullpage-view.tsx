@@ -1184,7 +1184,7 @@ export function SchoolDetailFullpageView({
           title="승인 취소 안내"
           lines={buildSchoolCancelApprovalMessageLines(row.schoolName)}
           confirmText="취소"
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       )}
     </div>

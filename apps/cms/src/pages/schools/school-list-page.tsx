@@ -281,7 +281,7 @@ export function SchoolListPage() {
             bulkDeleteUsers?.length ?? (deletingUser ? 1 : 0)
           )}
           confirmText="삭제"
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       )}
     </div>

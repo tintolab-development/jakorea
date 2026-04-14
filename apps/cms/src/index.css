@@ -185,10 +185,11 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   gap: 8px;
 }
 
-.info-section-title-wrapper {
+.info-section-wrapper {
   display: flex;
   width: 100%;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 .info-section-title {
   color: var(--default-BK, #3d3d3d);

@@ -4,10 +4,10 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Modal, Input } from 'antd'
+import { Modal } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
-import { AppButton } from '@/shared/ui/app-button'
 import './manager-delete-guide-modal.css'
+import { CmsButton, CmsInput } from '@/shared/ui'
 
 /** 공통 삭제 안내 모달: title + lines + 확인 버튼 문구/스타일 */
 export interface DeleteGuideModalProps {
@@ -19,7 +19,7 @@ export interface DeleteGuideModalProps {
   /** 확인 버튼 문구 (기본: 삭제) */
   confirmText?: string
   /** 확인 버튼 스타일 (기본: danger) */
-  confirmVariant?: 'danger' | 'primary'
+  confirmVariant?: 'delete' | 'primary'
   /** 설정 시 해당 문자열과 정확히 일치할 때만 확인 버튼 활성화 */
   requiredConfirmInput?: string
   /** 확인 입력란 placeholder */
@@ -83,11 +83,7 @@ export function buildParticipatingInstitutionDeleteMessageLines(schoolNames: str
   const line3 = '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?'
   if (schoolNames.length === 1) {
     const name = schoolNames[0]
-    return [
-      `[${name}]를 참여 기관 목록에서 삭제하시겠습니까?`,
-      line2,
-      line3,
-    ]
+    return [`[${name}]를 참여 기관 목록에서 삭제하시겠습니까?`, line2, line3]
   }
   const count = schoolNames.length
   const nameList = schoolNames.map(n => `[${n}]`).join(', ')
@@ -190,10 +186,12 @@ export function buildMemberDeleteMessageLines(
 }
 
 /** 회원 탈퇴 안내 문구 생성 (회원 상세 모달 > 탈퇴 버튼) */
-export function buildMemberWithdrawMessageLines(singleUser: {
-  name: string
-  email: string
-} | null): string[] {
+export function buildMemberWithdrawMessageLines(
+  singleUser: {
+    name: string
+    email: string
+  } | null
+): string[] {
   if (!singleUser) return []
   return [
     `[${singleUser.name}] (${singleUser.email}) 회원을 탈퇴 처리하시겠습니까?`,
@@ -203,10 +201,12 @@ export function buildMemberWithdrawMessageLines(singleUser: {
 }
 
 /** 학교(기관) 상세 > 학교 삭제 확인 문구 */
-export function buildSchoolDeleteMessageLines(singleUser: {
-  name: string
-  email: string
-} | null): string[] {
+export function buildSchoolDeleteMessageLines(
+  singleUser: {
+    name: string
+    email: string
+  } | null
+): string[] {
   if (!singleUser) return []
   return [
     `[${singleUser.name}] (${singleUser.email}) 학교(기관) 계정을 삭제하시겠습니까?`,
@@ -237,7 +237,7 @@ export function DeleteGuideModal({
   title,
   lines,
   confirmText = '삭제',
-  confirmVariant = 'danger',
+  confirmVariant = 'delete',
   requiredConfirmInput,
   confirmInputPlaceholder = '삭제하시려면 해당란에 [삭제]를 입력해 주세요.',
   zIndex = 2500,
@@ -285,8 +285,8 @@ export function DeleteGuideModal({
 
         {needsTypedConfirm && (
           <div className="manager-delete-guide-modal__confirm-input-wrap">
-            <Input
-              className="manager-delete-guide-modal__confirm-input"
+            <CmsInput
+              width={'100%'}
               placeholder={confirmInputPlaceholder}
               value={confirmInput}
               onChange={e => setConfirmInput(e.target.value)}
@@ -296,19 +296,18 @@ export function DeleteGuideModal({
         )}
 
         <div className="manager-delete-guide-modal__footer">
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant={confirmVariant}
-            size="large"
             disabled={!canConfirm}
             onClick={() => {
               if (canConfirm) onConfirm()
             }}
           >
             {confirmText}
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
     </Modal>

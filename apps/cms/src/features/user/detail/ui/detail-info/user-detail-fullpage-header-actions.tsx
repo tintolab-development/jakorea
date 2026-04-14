@@ -98,9 +98,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   return (
     <>
-      <div className="info-section-title-wrapper">
-        <div className="info-section-title">기본정보</div>
-      </div>
+      <div className="info-section-title">기본정보</div>
       <div className="info-section-buttons--wrapper">
         {leadingSpaceNode}
         {actionButtons}

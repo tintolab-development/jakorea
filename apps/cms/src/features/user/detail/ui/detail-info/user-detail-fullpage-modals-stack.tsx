@@ -33,7 +33,7 @@ export function UserDetailFullpageModalsStack() {
               : buildMemberWithdrawMessageLines({ name: displayUser.name, email: displayUser.email })
           }
           confirmText={sections.withdraw.isSchoolDelete ? '삭제' : '탈퇴'}
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       )}
 
