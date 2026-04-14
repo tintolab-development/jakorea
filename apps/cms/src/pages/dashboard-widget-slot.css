@@ -129,10 +129,43 @@
   align-items: center;
 }
 
-/* 프로그램 일정: 헤더 30px 안에 한 줄 맞춤 */
+/* 프로그램 일정: 월간/주간 스위치 트랙 44px — 전역 헤더 30px 고정과 충돌하므로 이 슬롯만 헤더 확장 */
+.dashboard-widget-slot:has(.program-schedule-widget) > .ant-card > .ant-card-head {
+  height: auto !important;
+  min-height: 44px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.dashboard-widget-slot:has(.program-schedule-widget) > .ant-card > .ant-card-head .ant-card-head-wrapper {
+  min-height: 44px;
+  align-items: center;
+}
+
+/* 프로그램 일정: 헤더 한 줄 (슬롯에서는 상단 패딩 제거) */
 .dashboard-widget-slot .program-schedule-widget .program-schedule-widget__head-row {
   padding-top: 0;
 }
+
+/* 프로그램 일정: 슬롯 고정 높이 안에서 타이틀·헤더는 고정, 카드 본문 전체 스크롤 없음(우측 일정 목록·주간 셀 내부만 스크롤) */
+.dashboard-widget-slot:has(.program-schedule-widget) > .ant-card {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-widget-slot:has(.program-schedule-widget) > .ant-card > .ant-card-body {
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-widget-slot .program-schedule-widget .program-schedule-widget__content {
+  margin-top: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .dashboard-widget-slot > .ant-card > .ant-card-body {
   padding: 0 !important;
   margin: 0 !important;

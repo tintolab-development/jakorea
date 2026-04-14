@@ -72,7 +72,7 @@ export function Dashboard() {
     setWidgetWidth,
     getSlotRects,
     rowRef,
-  } = useDashboardLayout({ userRole: user?.role ?? null })
+  } = useDashboardLayout({ userRole: user?.role ?? null, user: user ?? undefined })
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -109,6 +109,7 @@ export function Dashboard() {
       instructorActivityLoading,
       instructorCount,
       onInstructorCardClick: handleInstructorCardClick,
+      user: user ?? undefined,
     }),
     [
       overallStatistics,
@@ -117,6 +118,7 @@ export function Dashboard() {
       instructorActivityLoading,
       instructorCount,
       handleInstructorCardClick,
+      user,
     ]
   )
 
