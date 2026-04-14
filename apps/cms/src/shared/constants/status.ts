@@ -216,6 +216,68 @@ export const PROGRAM_PROGRESS_PHASE_COLORS: Record<ProgramProgressPhaseKey, stri
   completed: 'var(--default-BK, #3D3D3D)',
 }
 
+/**
+ * 대시보드 홈「모집 신청 현황」위젯 테이블 — 모집 신청 현황 컬럼 텍스트 색상 (시안)
+ * 예정(녹) / 모집 중·진행 중(청) / 완료·이후 단계(본문 BK)
+ */
+export type ProgramRecruitmentApplicationTextTone = 'scheduled' | 'recruiting' | 'completed'
+
+export const PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS: Record<
+  ProgramRecruitmentApplicationTextTone,
+  string
+> = {
+  scheduled: 'var(--color-green, #1E8C29)',
+  recruiting: 'var(--color-blue, #017EAF)',
+  completed: 'var(--main-BK, #3D3D3D)',
+}
+
+/** 참여자·강사·봉사자·참여자&교육진행자 모집 예정 */
+export const PROGRAM_RECRUITMENT_APPLICATION_SCHEDULED_STATUSES = [
+  'planned',
+  'instructor_recruitment_planned',
+  'volunteer_recruitment_planned',
+  'participant_instructor_recruitment_planned',
+] as const satisfies readonly ProgramLifecycleStatus[]
+
+/** 참여자·강사·봉사자·참여자&교육진행자 모집 중 + 프로그램 진행 중 */
+export const PROGRAM_RECRUITMENT_APPLICATION_RECRUITING_STATUSES = [
+  'recruiting_students',
+  'recruiting_instructors',
+  'recruiting_volunteers',
+  'participant_instructor_recruiting',
+  'education_in_progress',
+] as const satisfies readonly ProgramLifecycleStatus[]
+
+/** 참여자·강사·봉사자·참여자&교육진행자 모집 완료 및 교재·정리 단계 */
+export const PROGRAM_RECRUITMENT_APPLICATION_COMPLETED_STATUSES = [
+  'matching_completed',
+  'education_before_textbook',
+  'education_after_textbook',
+  'education_completed',
+  'document_processing_completed',
+  'participant_instructor_recruitment_completed',
+] as const satisfies readonly ProgramLifecycleStatus[]
+
+/** 테이블 셀: `data-recruitment-tone` + CSS (`program-lifecycle-status-badge.css`) */
+export function getProgramRecruitmentApplicationTextTone(
+  status: ProgramLifecycleStatus
+): ProgramRecruitmentApplicationTextTone {
+  const scheduled = PROGRAM_RECRUITMENT_APPLICATION_SCHEDULED_STATUSES as readonly ProgramLifecycleStatus[]
+  const recruiting = PROGRAM_RECRUITMENT_APPLICATION_RECRUITING_STATUSES as readonly ProgramLifecycleStatus[]
+  const completed = PROGRAM_RECRUITMENT_APPLICATION_COMPLETED_STATUSES as readonly ProgramLifecycleStatus[]
+  if (scheduled.includes(status)) return 'scheduled'
+  if (recruiting.includes(status)) return 'recruiting'
+  if (completed.includes(status)) return 'completed'
+  return 'completed'
+}
+
+/** Canvas·차트 등에서 동일 색이 필요할 때 */
+export function getProgramRecruitmentApplicationTextColor(
+  status: ProgramLifecycleStatus
+): string {
+  return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS[getProgramRecruitmentApplicationTextTone(status)]
+}
+
 export const PROGRAM_PROGRESS_PHASE_SCHEDULED_STATUSES: readonly ProgramLifecycleStatus[] = [
   'planned',
   'instructor_recruitment_planned',
