@@ -1,0 +1,193 @@
+/**
+ * 내 정보 수정 모달 스타일
+ */
+
+.content-modal.profile-edit-modal.ant-modal .ant-modal-content {
+  width: 800px;
+  min-height: 469px;
+  padding: 26px 30px 34px;
+  border-radius: var(--16, 16px);
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__header {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__body {
+  padding-top: 30px;
+}
+
+.profile-edit-modal__form,
+.profile-edit-modal__content {
+  width: 100%;
+}
+
+.profile-edit-modal__content {
+  display: flex;
+  align-items: stretch;
+  gap: 30px;
+}
+
+.profile-edit-modal__avatar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  min-width: 120px;
+  gap: 0;
+}
+
+.profile-edit-modal__avatar-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.profile-edit-modal__avatar-button {
+  width: 120px;
+  height: 120px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.profile-edit-modal__avatar-button svg {
+  display: block;
+}
+
+.profile-edit-modal__avatar-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-edit-modal__camera-icon-button {
+  position: absolute;
+  left: 84px;
+  top: 84.5px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.profile-edit-modal__file-input {
+  display: none;
+}
+
+.profile-edit-modal__withdraw-button {
+  margin-top: auto;
+  border: none;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+  cursor: pointer;
+}
+
+.profile-edit-modal__fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 30px;
+}
+
+.profile-edit-modal__fields .ant-form-item {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.profile-edit-modal__field-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.profile-edit-modal__field-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.profile-edit-modal__fields .ant-form-item-control-input {
+  min-height: 44px;
+}
+
+.profile-edit-modal__field-row .ant-form-item {
+  width: 100%;
+}
+
+.profile-edit-modal__fields .cms-input__control {
+  width: 100%;
+}
+
+.profile-edit-modal .content-modal__footer-actions {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.content-modal.profile-withdraw-modal.ant-modal .ant-modal-content {
+  width: 600px;
+  min-height: 314px;
+  padding: 26px 30px 34px;
+  border-radius: var(--16, 16px);
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+}
+
+.content-modal.profile-withdraw-modal .teal-header-modal__body {
+  padding-top: 16px;
+}
+
+.profile-withdraw-modal__content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.profile-withdraw-modal__description {
+  margin: 0;
+  height: 72px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.content-modal.profile-withdraw-modal .content-modal__footer-actions {
+  justify-content: flex-end;
+  gap: 10px;
+}

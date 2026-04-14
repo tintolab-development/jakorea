@@ -11,7 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
-import { getRoleLabel, AppBreadcrumb, LogoutIcon } from '@/shared/ui'
+import { getRoleLabel, AppBreadcrumb, LogoutIcon, ProfileEditModal } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
@@ -33,6 +33,7 @@ export function MainHeader() {
   const { notifications, unreadCount, markAsRead, removeNotification } = useNotifications()
   const { items: breadcrumbItems } = useBreadcrumb()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [profileEditModalOpen, setProfileEditModalOpen] = useState(false)
 
   // 상태 동기화 확인: user 상태 변경 시 권한 정보 업데이트 확인
   useEffect(() => {
@@ -247,7 +248,14 @@ export function MainHeader() {
               <Text className="main-header-user-name" strong>
                 {userName}
               </Text>
-              <Avatar size={32} icon={<UserOutlined />} className="main-header-avatar" />
+              <button
+                type="button"
+                className="main-header-avatar-button"
+                onClick={() => setProfileEditModalOpen(true)}
+                aria-label="내 정보 수정"
+              >
+                <Avatar size={32} icon={<UserOutlined />} className="main-header-avatar" />
+              </button>
             </div>
 
             {/* 로그아웃 */}
@@ -260,6 +268,10 @@ export function MainHeader() {
           </Space>
         </div>
       </div>
+      <ProfileEditModal
+        open={profileEditModalOpen}
+        onCancel={() => setProfileEditModalOpen(false)}
+      />
     </AntHeader>
   )
 }

@@ -167,6 +167,17 @@
   transition: all 0.2s;
 }
 
+.main-header-avatar-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 .main-header-avatar:hover {
   opacity: 0.8;
 }

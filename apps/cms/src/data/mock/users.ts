@@ -1344,3 +1344,16 @@ export function getUserByPhone(phone: string): User | undefined {
     return normalizedUserPhone === normalizedPhone && user.isActive
   })
 }
+
+/**
+ * 사용자 목데이터 부분 업데이트 (런타임 동기화용)
+ */
+export function updateMockUserById(userId: string, userData: Partial<User>): User | null {
+  const target = mockUsers.find(user => user.id === userId)
+  if (!target) return null
+
+  Object.assign(target, userData, {
+    updatedAt: new Date().toISOString(),
+  })
+  return target
+}

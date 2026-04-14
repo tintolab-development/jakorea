@@ -7,6 +7,7 @@ import { create } from 'zustand'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import { login as loginApi, validateToken } from '@/entities/user/api/auth-service'
+import { updateMockUserById } from '@/data/mock/users'
 
 interface AuthState {
   user: Omit<User, 'password'> | null
@@ -327,6 +328,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       if (!currentUser) return
 
       const updatedUser = { ...currentUser, ...userData }
+
+      // Mock 데이터 동기화 (validateToken/login과 동일 데이터 소스 유지)
+      updateMockUserById(currentUser.id, userData as Partial<User>)
 
       // localStorage 업데이트
       if (typeof window !== 'undefined' && window.localStorage) {

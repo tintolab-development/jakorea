@@ -52,6 +52,8 @@ export interface User {
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
+  /** 프로필 이미지 URL 또는 data URL */
+  profileImageUrl?: string
   phone?: string
   role: UserRole
 
