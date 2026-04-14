@@ -7,7 +7,7 @@
 
 import { Card, Button, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Program } from '@/types/domain'
 import { getCapacity } from '@/features/program/lib/program-helpers'
 import { ProgramLifecycleStatusText } from '@/shared/components/program-lifecycle-status-text'
@@ -24,10 +24,13 @@ const WIDGET_KEY = 'recruitment-status-widget'
 const EMPTY_IDS: string[] = []
 
 export function RecruitmentStatusWidget() {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
+  const equalWidth = halfColumn ? '25%' : undefined
 
   useEffect(() => {
     let cancelled = false
@@ -47,61 +50,87 @@ export function RecruitmentStatusWidget() {
   }, [allowedProgramIds.length, allowedProgramIds.join(',')])
 
   const totalCount = programs.length
+  useLayoutEffect(() => {
+    const root = cardRef.current
+    if (!root) {
+      setHalfColumn(false)
+      return
+    }
+    const slot = root.closest('.dashboard-widget-slot')
+    if (!slot) {
+      setHalfColumn(false)
+      return
+    }
+    const sync = () => setHalfColumn(slot.getAttribute('data-col-span') === '12')
+    sync()
+    const mo = new MutationObserver(sync)
+    mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
+    return () => mo.disconnect()
+  }, [])
 
-  const columns: ColumnsType<Program> = [
-    {
-      title: '프로그램명',
-      dataIndex: 'title',
-      key: 'title',
-      ellipsis: true,
-      width: '50%',
-      align: 'center',
-    },
-    {
-      title: '모집 신청 현황',
-      key: 'lifecycleStatus',
-      width: '17%',
-      align: 'center',
-      className: 'dashboard-widget-table__cell--status',
-      render: (_: unknown, record: Program) =>
-        record.lifecycleStatus ? (
-          <ProgramLifecycleStatusText status={record.lifecycleStatus} />
-        ) : (
-          '-'
+  const columns: ColumnsType<Program> = useMemo(
+    () => [
+      {
+        title: '프로그램명',
+        dataIndex: 'title',
+        key: 'title',
+        ellipsis: true,
+        width: equalWidth ?? '50%',
+        align: 'center',
+        render: (value: string) => (
+          <span className="dashboard-widget-table__program-name" title={value}>
+            {value}
+          </span>
         ),
-    },
-    {
-      title: '참여자 모집 현황',
-      key: 'studentRecruitment',
-      width: '17%',
-      align: 'center',
-      render: (_: unknown, record: Program) => {
-        const supportCount = record.approvedStudentCount ?? 0
-        const total = getCapacity(record)
-        if (total === undefined || total === null) {
-          return supportCount > 0 ? `${supportCount} / -` : '-'
-        }
-        return `${supportCount} / ${total}`
       },
-    },
-    {
-      title: '봉사단 모집 현황',
-      key: 'instructorRecruitment',
-      width: '16%',
-      align: 'center',
-      render: (_: unknown, record: Program) => {
-        const supportCount = record.instructors ?? 0
-        const total = record.instructorCapacity
-        if (total === undefined || total === null) {
-          return supportCount > 0 ? `${supportCount} / -` : '-'
-        }
-        return `${supportCount} / ${total}`
+      {
+        title: '모집 신청 현황',
+        key: 'lifecycleStatus',
+        width: equalWidth ?? '17%',
+        align: 'center',
+        className: 'dashboard-widget-table__cell--status',
+        render: (_: unknown, record: Program) =>
+          record.lifecycleStatus ? (
+            <ProgramLifecycleStatusText status={record.lifecycleStatus} />
+          ) : (
+            '-'
+          ),
       },
-    },
-  ]
+      {
+        title: '참여자 모집 현황',
+        key: 'studentRecruitment',
+        width: equalWidth ?? '17%',
+        align: 'center',
+        render: (_: unknown, record: Program) => {
+          const supportCount = record.approvedStudentCount ?? 0
+          const total = getCapacity(record)
+          if (total === undefined || total === null) {
+            return supportCount > 0 ? `${supportCount} / -` : '-'
+          }
+          return `${supportCount} / ${total}`
+        },
+      },
+      {
+        title: '봉사단 모집 현황',
+        key: 'instructorRecruitment',
+        width: equalWidth ?? '16%',
+        align: 'center',
+        render: (_: unknown, record: Program) => {
+          const supportCount = record.instructors ?? 0
+          const total = record.instructorCapacity
+          if (total === undefined || total === null) {
+            return supportCount > 0 ? `${supportCount} / -` : '-'
+          }
+          return `${supportCount} / ${total}`
+        },
+      },
+    ],
+    [equalWidth]
+  )
 
   return (
     <Card
+      ref={cardRef}
       className="dashboard-widget-table dashboard-widget-table--recruitment"
       title={
         <WidgetTitleWithHandle>

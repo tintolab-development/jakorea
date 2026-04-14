@@ -86,6 +86,16 @@
   overflow-y: auto;
   overflow-x: visible;
   box-sizing: border-box;
+  row-gap: 12px;
+  column-gap: var(--spacing-12, 12px);
+}
+
+/* 50% 슬롯에서는 버튼이 칸 너비를 끝까지 사용하도록 최대폭 제한 해제 */
+.dashboard-widget-slot[data-col-span='12']:has(.menu-shortcut-widget)
+  .menu-shortcut-widget__grid
+  > button.menu-shortcut-widget__item {
+  max-width: none !important;
+  width: 100% !important;
 }
 
 .dashboard-widget-slot:has(.kpi-achievement-widget) {
@@ -291,36 +301,28 @@
   cursor: grabbing;
 }
 
-/* 너비 드래그 리사이즈 핸들: 우측 엣지, 호버 시 노출 */
+/* 너비 드래그 리사이즈 핸들: 우측 엣지, 상단 78px 고정 노출 */
 .dashboard-widget-resize-handle {
   position: absolute;
-  top: 0;
+  top: 78px;
   right: var(--spacing-2);
-  width: var(--spacing-12);
-  height: 100%;
+  width: 12px;
+  height: 40px;
   cursor: col-resize;
   z-index: 30;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.dashboard-widget-slot:hover .dashboard-widget-resize-handle,
-.dashboard-widget-resize-handle--active {
   opacity: 1;
 }
 
 .dashboard-widget-resize-handle__bar {
-  width: var(--spacing-3);
-  height: var(--spacing-48);
-  border-radius: var(--spacing-2);
-  background: var(--color-border-subtle);
+  width: 4px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  opacity: 0.1;
+  background: var(--main-BK, #3d3d3d);
   transition: background 0.15s;
 }
 
-.dashboard-widget-resize-handle:hover .dashboard-widget-resize-handle__bar,
-.dashboard-widget-resize-handle--active .dashboard-widget-resize-handle__bar {
-  background: var(--color-modal-header);
-}

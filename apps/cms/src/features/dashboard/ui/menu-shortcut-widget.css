@@ -42,7 +42,9 @@
 .menu-shortcut-widget__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--spacing-12);
+  /* 행·열 간격: 세로(row) 12px 고정, 가로는 디자인 토큰 */
+  row-gap: 12px;
+  column-gap: var(--spacing-12, 12px);
   align-content: start;
   overflow: visible;
 }

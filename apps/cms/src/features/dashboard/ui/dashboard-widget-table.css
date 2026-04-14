@@ -173,6 +173,14 @@
   line-height: 150%;
 }
 
+.dashboard-widget-table__program-name {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ant-card-head-title: 기본 inline-block 대신 flex로 전환 → widget-card-header가 전체 너비를 채우고 타이틀+디스크립션 레이아웃이 잘리지 않도록 */
 .dashboard-widget-table .ant-card-head-title {
   display: flex;
