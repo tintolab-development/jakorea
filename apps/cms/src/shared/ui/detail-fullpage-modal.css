@@ -122,6 +122,21 @@
   overflow-x: hidden;
 }
 
+.detail-fullpage-modal__content-actions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* background-color: red; */
+}
+.detail-fullpage-modal__content-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  /* background-color: blue; */
+}
+
 /* LNB 없을 때 본문을 헤더 타이틀과 동일 좌측 기준선(60px)에 맞춤 */
 .detail-fullpage-modal--no-sidebar .detail-fullpage-modal__content {
   padding-left: 60px;
@@ -366,4 +381,16 @@
 
 .detail-fullpage-modal__lnb-child--selected .detail-fullpage-modal__lnb-child-dot {
   background-color: var(--JA-mint-01, #01a1af);
+}
+
+.detail-fullpage-modal .filter-table-layout {
+  padding: 0 !important;
+}
+
+/* 회원 상세 풀페이지 — 신청/수강 이력: 필터 미사용 시 슬롯 숨김 */
+.detail-fullpage-modal .user-detail-fullpage-modal__enrollment-layout .filter-table-layout__filter,
+.detail-fullpage-modal
+  .user-detail-fullpage-modal__enrollment-layout
+  .filter-table-layout__divider {
+  display: none;
 }

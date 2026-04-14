@@ -266,12 +266,18 @@ const rawApplications: Application[] = [
   ...programLectureHistoryDemoApplications,
 ]
 export const mockApplications: Application[] = rawApplications.map((app, index) => {
-  if (app.status !== 'approved') return app
-  // 이미 progressStatus가 있으면 유지 (회원 수강 이력용 등)
-  if (app.progressStatus) return app
-  const progressIndex = index % APPLICATION_PROGRESS_ORDER.length
-  const progressStatus = APPLICATION_PROGRESS_ORDER[progressIndex] as ApplicationProgressStatus
-  return { ...app, progressStatus }
+  let next: Application = app
+  if (app.status === 'approved') {
+    if (!app.progressStatus) {
+      const progressIndex = index % APPLICATION_PROGRESS_ORDER.length
+      const progressStatus = APPLICATION_PROGRESS_ORDER[progressIndex] as ApplicationProgressStatus
+      next = { ...next, progressStatus }
+    }
+  }
+  if (app.status === 'rejected' && index % 7 === 0) {
+    next = { ...next, rejectionKind: 'INTERVIEW' }
+  }
+  return next
 })
 
 export const mockApplicationsMap = new Map<UUID, Application>()

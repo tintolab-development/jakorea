@@ -5,6 +5,7 @@
 
 import { ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import type {
+  ApplicationRejectionKind,
   ApplicationStatus,
   SettlementStatus,
   ProgramLifecycleStatus,
@@ -268,41 +269,58 @@ export function getProgramLifecycleColor(status: ProgramLifecycleStatus | string
   return programLifecycleStatusConfig.colors[status as ProgramLifecycleStatus] || 'default'
 }
 
-/** 회원 상세 > 프로그램 수강 이력 탭: 표시용 진행 현황 5단계 */
+/** 회원 상세 > 프로그램 수강 이력 탭: 표시용 진행 현황 7단계 */
 export type ProgramEnrollmentDisplayStatus =
-  | 'WAITING_RESULT'       // 신청 결과 대기 중
-  | 'REJECTED'             // 신청 반려
-  | 'EDUCATION_SCHEDULED'  // 교육 진행 예정
-  | 'EDUCATION_IN_PROGRESS' // 교육 진행 중
-  | 'PROGRAM_ENDED'        // 프로그램 종료
+  | 'WAITING_RESULT' // 신청 및 대기 중
+  | 'DOCUMENT_PASS' // 1차 서류 합격
+  | 'EDUCATION_SCHEDULED' // 프로그램 진행 예정
+  | 'EDUCATION_IN_PROGRESS' // 프로그램 진행 중
+  | 'PROGRAM_ENDED' // 프로그램 진행 완료
+  | 'INTERVIEW_FAILED' // 면접 불합격
+  | 'REJECTED' // 신청 반려
+
+export const PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER: ProgramEnrollmentDisplayStatus[] = [
+  'WAITING_RESULT',
+  'DOCUMENT_PASS',
+  'EDUCATION_SCHEDULED',
+  'EDUCATION_IN_PROGRESS',
+  'PROGRAM_ENDED',
+  'INTERVIEW_FAILED',
+  'REJECTED',
+]
 
 export const programEnrollmentDisplayConfig = {
   labels: {
-    WAITING_RESULT: '신청 결과 대기 중',
+    WAITING_RESULT: '신청 및 대기 중',
+    DOCUMENT_PASS: '1차 서류 합격',
+    EDUCATION_SCHEDULED: '프로그램 진행 예정',
+    EDUCATION_IN_PROGRESS: '프로그램 진행 중',
+    PROGRAM_ENDED: '프로그램 진행 완료',
+    INTERVIEW_FAILED: '면접 불합격',
     REJECTED: '신청 반려',
-    EDUCATION_SCHEDULED: '교육 진행 예정',
-    EDUCATION_IN_PROGRESS: '교육 진행 중',
-    PROGRAM_ENDED: '프로그램 종료',
   } as Record<ProgramEnrollmentDisplayStatus, string>,
   colors: {
-    WAITING_RESULT: 'cyan',
-    REJECTED: 'red',
-    EDUCATION_SCHEDULED: 'orange',
-    EDUCATION_IN_PROGRESS: 'blue',
+    WAITING_RESULT: 'orange',
+    DOCUMENT_PASS: 'purple',
+    EDUCATION_SCHEDULED: 'green',
+    EDUCATION_IN_PROGRESS: 'cyan',
     PROGRAM_ENDED: 'default',
+    INTERVIEW_FAILED: 'default',
+    REJECTED: 'red',
   } as Record<ProgramEnrollmentDisplayStatus, string>,
 }
 
 /**
- * 경제 교육 프로그램 목록과 동일 톤(텍스트 컬러 위주)으로 쓰는 5단계 라벨
- * — 강사 상세 > 프로그램 강의 이력 등
+ * 목록·테이블에서 쓰는 라벨(스크린샷 문구와 동일). `programEnrollmentDisplayConfig.labels`와 통일.
  */
 export const programEnrollmentEconomyListLabels = {
-  WAITING_RESULT: '신청 결과 대기 중',
-  REJECTED: '신청 반려',
+  WAITING_RESULT: '신청 및 대기 중',
+  DOCUMENT_PASS: '1차 서류 합격',
   EDUCATION_SCHEDULED: '프로그램 진행 예정',
   EDUCATION_IN_PROGRESS: '프로그램 진행 중',
   PROGRAM_ENDED: '프로그램 진행 완료',
+  INTERVIEW_FAILED: '면접 불합격',
+  REJECTED: '신청 반려',
 } as const satisfies Record<ProgramEnrollmentDisplayStatus, string>
 
 export function getProgramEnrollmentDisplayLabel(
@@ -322,15 +340,7 @@ export const programEnrollmentDisplayStatusConfig: Record<
   ProgramEnrollmentDisplayStatus,
   StatusConfig
 > = Object.fromEntries(
-  (
-    [
-      'WAITING_RESULT',
-      'REJECTED',
-      'EDUCATION_SCHEDULED',
-      'EDUCATION_IN_PROGRESS',
-      'PROGRAM_ENDED',
-    ] as ProgramEnrollmentDisplayStatus[]
-  ).map(key => [
+  PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(key => [
     key,
     {
       label: programEnrollmentDisplayConfig.labels[key],
@@ -351,16 +361,23 @@ const PROGRESS_FOR_EDUCATION_IN_PROGRESS: ApplicationProgressStatus[] = [
   'SURVEY_SUBMITTED',
 ]
 
-/** 회원 상세 탭: Application.status + progressStatus → 표시용 5단계 */
+/** 회원 상세 탭: Application.status + progressStatus → 표시용 7단계 */
 export function getApplicationEnrollmentDisplayStatus(
   status: ApplicationStatus,
-  progressStatus?: ApplicationProgressStatus
+  progressStatus?: ApplicationProgressStatus,
+  rejectionKind?: ApplicationRejectionKind
 ): ProgramEnrollmentDisplayStatus {
-  if (status === 'submitted' || status === 'reviewing' || status === 'waiting') {
-    return 'WAITING_RESULT'
+  if (status === 'rejected') {
+    return rejectionKind === 'INTERVIEW' ? 'INTERVIEW_FAILED' : 'REJECTED'
   }
-  if (status === 'rejected' || status === 'cancelled') {
+  if (status === 'cancelled') {
     return 'REJECTED'
+  }
+  if (status === 'reviewing') {
+    return 'DOCUMENT_PASS'
+  }
+  if (status === 'submitted' || status === 'waiting') {
+    return 'WAITING_RESULT'
   }
   if (status !== 'approved') {
     return 'WAITING_RESULT'
@@ -390,7 +407,7 @@ export function isProgramLifecycleEnded(
 }
 
 /**
- * 프로그램 엔티티의 lifecycle → 회원 상세·경제 목록과 동일한 5단계 배지용 상태
+ * 프로그램 엔티티의 lifecycle → 회원 상세·경제 목록과 동일한 배지용 상태
  * (담당 프로그램 이력 등 Program 행 표시)
  */
 export function getEnrollmentDisplayStatusFromProgramLifecycle(
@@ -419,11 +436,13 @@ export function getEnrollmentDisplayStatusFromProgramLifecycle(
 export function getEffectiveEnrollmentDisplayStatus(
   applicationStatus: ApplicationStatus,
   applicationProgressStatus: ApplicationProgressStatus | undefined,
-  programLifecycleStatus?: ProgramLifecycleStatus
+  programLifecycleStatus?: ProgramLifecycleStatus,
+  rejectionKind?: ApplicationRejectionKind
 ): ProgramEnrollmentDisplayStatus {
   const fromApplication = getApplicationEnrollmentDisplayStatus(
     applicationStatus,
-    applicationProgressStatus
+    applicationProgressStatus,
+    rejectionKind
   )
   if (isProgramLifecycleEnded(programLifecycleStatus)) {
     return 'PROGRAM_ENDED'

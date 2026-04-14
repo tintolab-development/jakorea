@@ -179,6 +179,12 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   opacity: 0.6;
 }
 
+.info-section-buttons--wrapper {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .info-section-title {
   color: var(--default-BK, #3d3d3d);
   font-size: 18px;

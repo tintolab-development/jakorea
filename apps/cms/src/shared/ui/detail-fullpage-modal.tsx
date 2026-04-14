@@ -12,6 +12,8 @@ export interface DetailFullPageModalProps {
   title: React.ReactNode
   /** 메인 헤더: 타이틀과 닫기 사이 (예: 회원 상세 액션 버튼) */
   headerExtra?: React.ReactNode
+  /** 메인 컨텐츠 영역 추가 영역 (예: 회원 상세 액션 버튼) */
+  contentExtra?: React.ReactNode
   /** 미지정 시 LNB 없이 메인만 풀폭 */
   sidebar?: React.ReactNode
   children: React.ReactNode
@@ -27,6 +29,7 @@ export function DetailFullPageModal({
   onClose,
   title,
   headerExtra,
+  contentExtra,
   sidebar,
   children,
   onHeaderClose,
@@ -66,9 +69,18 @@ export function DetailFullPageModal({
                 <CloseOutlined />
               </button>
             </div>
-            {headerExtra ? <div>{headerExtra}</div> : null}
+            {headerExtra ? <>{headerExtra}</> : null}
           </header>
-          <div className="detail-fullpage-modal__content">{children}</div>
+          <div className="detail-fullpage-modal__content">
+            {contentExtra ? (
+              <div className="detail-fullpage-modal__content-actions-wrapper">
+                <div className="detail-fullpage-modal__content-actions">{contentExtra}</div>
+                <div>{children}</div>
+              </div>
+            ) : (
+              children
+            )}
+          </div>
         </div>
       </div>
     </TealHeaderModal>

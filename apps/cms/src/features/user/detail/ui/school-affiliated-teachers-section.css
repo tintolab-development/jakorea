@@ -1,0 +1,44 @@
+.school-affiliated-teachers-section {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--detail-fullpage-section-gap, 32px);
+}
+
+.school-affiliated-teachers-section__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.school-affiliated-teachers-section__header-lead {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.school-affiliated-teachers-section__header-end {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.school-affiliated-teachers-section .detail-info-form__body {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.school-affiliated-teachers-section .detail-info-form__row--custom {
+  border: none;
+}
+
+.school-affiliated-teachers-section__body {
+  width: 100%;
+  min-width: 0;
+}

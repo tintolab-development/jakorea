@@ -96,7 +96,7 @@ const ADMIN_FIELDS: FilterFieldConfig[] = [
 const DEFAULT_MEMBER_FIELDS: FilterFieldConfig[] = [
   searchField('회원명', '회원명을 입력하세요', '30%'),
   MEMBER_ROLE_SELECT_FIELD,
-  dateRangeField('가입일', '40%'),
+  dateRangeField('가입 시기', '40%'),
 ]
 
 export function getUserListFilterFields(kind: MemberListKind): FilterFieldConfig[] {

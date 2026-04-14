@@ -14,8 +14,6 @@ const DetailInfoFormContext = createContext<DetailInfoFormContextValue>({
 export type DetailInfoFormProps = {
   title: string
   description?: ReactNode
-  /** 헤더 우측(타이틀·설명과 한 줄에서 테이블/본문 우측 끝에 맞춤) */
-  headerEnd?: ReactNode
   /**
    * true면 섹션 헤더 없이 본문 격자만 렌더합니다.
    * 상위에 이미 제목(h2 등)이 있을 때 — `title`은 접근용 aria-label 등에만 쓰입니다.
@@ -30,7 +28,6 @@ export type DetailInfoFormProps = {
 function DetailInfoFormRoot({
   title,
   description,
-  headerEnd,
   hideHeader = false,
   mode = 'view',
   children,
@@ -63,7 +60,6 @@ function DetailInfoFormRoot({
               <div className="detail-info-form__description">{description}</div>
             ) : null}
           </div>
-          {headerEnd ? <div className="detail-info-form__header-end">{headerEnd}</div> : null}
         </header>
         {body}
       </section>

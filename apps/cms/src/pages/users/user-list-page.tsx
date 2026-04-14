@@ -11,17 +11,17 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useInView } from '@/shared/hooks/use-in-view'
-import { UserList } from '@/features/user/ui/user-list'
+import { UserList } from '@/features/user/shared/ui/user-list'
 import {
   UserDetailFullPageModal,
   USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
-} from '@/features/user/ui/user-detail-fullpage-modal'
-import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
-import { UserCreateForm } from '@/features/user/ui/user-create-form'
-import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
+} from '@/pages/users/user-detail-fullpage-modal'
+import { UserRoleChangeModal } from '@/features/user/shared/ui/user-role-change-modal'
+import { UserCreateForm } from '@/features/user/shared/ui/user-create-form'
+import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
-import { useUserStore, selectSelectedUser } from '@/features/user/model/user-store'
+import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
@@ -42,7 +42,7 @@ import {
   userRoleToBasicInfoEntrySource,
   type MemberListKind,
 } from '@/shared/config/member-list-kinds'
-import type { AdminPermissionTagVariant } from '@/features/user/lib/admin-permission-display'
+import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
 import { getUserListFilterFields } from './user-list-filter-fields'

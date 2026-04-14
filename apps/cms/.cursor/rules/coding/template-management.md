@@ -123,7 +123,7 @@ category: implementation
 
 ## 7. 목록 View — 테이블
 
-- 클래스: **`cms-data-table cms-data-table--border`** (작성 탭은 `TemplateTable`에 반영).
+- 클래스: **`cms-data-table`** (외곽 보더는 `cms-data-table.css` 기본값. 작성 탭은 `TemplateTable`에 반영).
 - 발급 등 동일 목록 패턴 추가 시에도 동일 조합·컬럼 폭·정렬을 맞춘다.
 
 ---
@@ -173,7 +173,7 @@ category: implementation
 
 - [ ] 신규 템플릿 도메인 UI는 `features/template`(`ui` 포함)에만 추가
 - [ ] 풀페이지 셸·import가 `@/features/template/ui/template-...` 형태인가
-- [ ] 목록 테이블에 `cms-data-table--border` (또는 `TemplateTable` 사용)
+- [ ] 목록 테이블에 `cms-data-table` (또는 `TemplateTable` 사용)
 - [ ] 모달은 `TemplateFullpageModal` + 좌·우 공통 컴포넌트 조합 유지
 - [ ] 격자형 필드는 `DetailInfoForm` 우선, 입력은 `cms-*` 우선; 템플릿 `edit`의 `CmsInput`/`CmsSelect`/`CmsDatePicker`는 `inputSize="medium"` (`DetailInfoForm`에 불필요한 `className` 추가 없음; 일렬 정렬·구분은 `detail-info-form-inputs-wrapper*` / `InputsSeparator`; 너비는 `width` prop, `style.width` 지양; **한 Field 컨트롤 1개면 `width={'100%'}`**; **다중 인라인(2~5)은 `FORM_INPUTS_*_WIDTHS` 우선, 그 외 `useFormInputsWidth`/`getFormInputsWidth`; `calc` 하드코딩 금지**)
 - [ ] 발급 탭 우측 하단은 `TemplateModalRightNavigation` `children`으로 확장

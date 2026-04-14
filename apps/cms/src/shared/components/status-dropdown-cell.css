@@ -51,8 +51,8 @@
   box-shadow: none;
 }
 
-/* 정산 현황(Tag 기반, app-status-badge 아님) */
-.status-dropdown-cell__status-trigger .settlement-status-badge {
+/* 정산 현황(StatusBadge settlement) */
+.status-dropdown-cell__status-trigger .status-badge--variant-badge[class*='--settlement-'] {
   box-sizing: border-box;
   flex-shrink: 0;
   width: 120px !important;
@@ -583,9 +583,9 @@
   min-height: 33px;
 }
 
-/* 모집 신청 현황(ProgramEnrollmentStatusBadge): 테이블 드롭다운은 14px/600 스펙으로 통일 */
-.status-dropdown-cell__status-trigger .app-status-badge.program-enrollment-status-badge,
-.status-dropdown-cell__dropdown-item .app-status-badge.program-enrollment-status-badge {
+/* 모집 신청 현황(StatusBadge): 테이블 드롭다운은 14px/600 스펙으로 통일 */
+.status-dropdown-cell__status-trigger .status-badge,
+.status-dropdown-cell__dropdown-item .status-badge {
   font-size: 14px !important;
   font-weight: 600 !important;
   line-height: 150% !important;
@@ -636,7 +636,7 @@
   text-overflow: ellipsis;
 }
 
-.status-dropdown-cell__dropdown-item .settlement-status-badge {
+.status-dropdown-cell__dropdown-item .status-badge--variant-badge[class*='--settlement-'] {
   pointer-events: none;
   box-sizing: border-box;
   width: 120px;

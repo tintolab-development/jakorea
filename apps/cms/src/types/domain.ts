@@ -267,6 +267,9 @@ export type ApplicationStatus =
   | 'cancelled' // 취소
   | 'waiting' // 대기 (정원 초과 시, Phase 3)
 
+/** 거절 시 화면 표시 구분(면접 불합격 vs 신청 반려) */
+export type ApplicationRejectionKind = 'APPLICATION' | 'INTERVIEW'
+
 // 신청
 export interface Application {
   id: UUID
@@ -282,6 +285,8 @@ export interface Application {
   /** Phase 0.2.2: 학교 신청서 학생 명단 엑셀 파일 URL (FR-C03) */
   studentListFileUrl?: string
   rejectionReason?: string // 거절 사유 (Phase 2)
+  /** `rejected`일 때만 사용. `INTERVIEW`면 표시상 면접 불합격 */
+  rejectionKind?: ApplicationRejectionKind
   waitingListOrder?: number // 대기 목록 순번 (Phase 3)
   /** Phase 0.2.4: 승인 후 진행 단계 (FR-D01 타임라인) */
   progressStatus?: ApplicationProgressStatus

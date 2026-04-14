@@ -4,11 +4,11 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { Tabs, message } from 'antd'
-import { MembersPermissionList } from '@/features/user/ui/permission-management/members-permission-list'
-import { UserDetailFullPageModal } from '@/features/user/ui/user-detail-fullpage-modal'
-import { useUserStore } from '@/features/user/model/user-store'
+import { MembersPermissionList } from '@/features/user/permission-management/members-permission-list'
+import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-modal'
+import { useUserStore } from '@/features/user/shared/model/user-store'
 import { userRoleToBasicInfoEntrySource } from '@/shared/config/member-list-kinds'
-import type { UserDetailPermissionRole } from '@/features/user/ui/user-detail-fullpage-modal'
+import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import './permission-request-page.css'
 
 export function PermissionRequestListPage() {
