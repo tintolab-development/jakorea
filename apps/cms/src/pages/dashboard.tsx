@@ -13,7 +13,7 @@ import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
-import { isWidgetResizable } from '@/shared/config/dashboard-config'
+import { DASHBOARD_SLOT_HEIGHT_HALF_PX, isWidgetResizable } from '@/shared/config/dashboard-config'
 import { getRoleLabel } from '@/shared/ui'
 import { mockInstructors } from '@/data/mock'
 import {
@@ -85,8 +85,15 @@ export function Dashboard() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  const { activeId, sensors, handleDragStart, handleDragMove, handleDragEnd, handleDragCancel } =
-    useDashboardDnd({
+  const {
+    activeId,
+    overlayRect,
+    sensors,
+    handleDragStart,
+    handleDragMove,
+    handleDragEnd,
+    handleDragCancel,
+  } = useDashboardDnd({
       orderedIds: displayOrder,
       setOrderedIds,
       userRole: user?.role ?? null,
@@ -121,6 +128,23 @@ export function Dashboard() {
       user,
     ]
   )
+
+  /** DragOverlay는 그리드 밖이라 `.dashboard-widget-slot > .ant-card` 선택자가 빠지면 패딩이 사라짐 — 슬롯 래퍼로 동일 적용 */
+  const activeDragSlot = useMemo(() => {
+    if (!activeId) return null
+    const meta = displayItemsMeta.find(m => m.id === activeId)
+    if (!meta) return null
+    const colSpan =
+      (roleWidths[activeId] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
+    const heightFromMeta = getSlotHeight(colSpan, meta)
+    const slotHeight =
+      colSpan === 12
+        ? DASHBOARD_SLOT_HEIGHT_HALF_PX
+        : heightFromMeta !== undefined
+          ? heightFromMeta
+          : 'auto'
+    return { colSpan, slotHeight }
+  }, [activeId, displayItemsMeta, roleWidths])
 
   return (
     <div
@@ -193,8 +217,29 @@ export function Dashboard() {
           }
         >
           {activeId ? (
-            <div className="dashboard-widget-drag-overlay">
-              <DashboardWidgetRenderer widgetType={activeId} {...widgetRendererProps} />
+            <div
+              className="dashboard-widget-drag-overlay"
+              style={
+                overlayRect
+                  ? {
+                      width: overlayRect.width,
+                      height: overlayRect.height,
+                      maxWidth: overlayRect.width,
+                    }
+                  : undefined
+              }
+            >
+              {activeDragSlot ? (
+                <div
+                  className="dashboard-widget-slot"
+                  data-col-span={activeDragSlot.colSpan}
+                  style={{ height: activeDragSlot.slotHeight }}
+                >
+                  <DashboardWidgetRenderer widgetType={activeId} {...widgetRendererProps} />
+                </div>
+              ) : (
+                <DashboardWidgetRenderer widgetType={activeId} {...widgetRendererProps} />
+              )}
             </div>
           ) : null}
         </DragOverlay>

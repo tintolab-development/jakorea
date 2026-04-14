@@ -149,8 +149,11 @@ export function SortableWidgetSlot({
     : null
 
   const colStyle: React.CSSProperties = {
+    transition: resizeTransition ?? undefined,
+  }
+  const motionStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition: [transition, resizeTransition].filter(Boolean).join(', ') || undefined,
+    transition: transition ?? undefined,
     opacity: isDragging ? 0 : 1,
   }
 
@@ -165,7 +168,13 @@ export function SortableWidgetSlot({
       style={colStyle}
       data-dashboard-slot-id={id}
     >
-      <div ref={slotRef} className="dashboard-widget-slot" style={slotStyle} data-col-span={colSpan}>
+      <div style={motionStyle}>
+        <div
+          ref={slotRef}
+          className="dashboard-widget-slot"
+          style={slotStyle}
+          data-col-span={colSpan}
+        >
         {!hasBuiltInHandle && (
           <div
             ref={setActivatorNodeRef}
@@ -212,7 +221,8 @@ export function SortableWidgetSlot({
             <div className="dashboard-widget-resize-handle__bar" />
           </div>
         )}
-        {children}
+          {children}
+        </div>
       </div>
     </Col>
   )

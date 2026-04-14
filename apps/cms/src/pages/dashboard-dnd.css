@@ -10,15 +10,9 @@
   box-shadow: var(--shadow-drag-overlay);
   opacity: 0.95;
   cursor: grabbing;
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
-  transform: scale(1.02);
   will-change: transform;
-}
-
-/* 접근성: 동작 감소 선호 시 오버레이 확대·애니메이션 제거 */
-.dashboard-container--reduced-motion .dashboard-widget-drag-overlay {
-  transform: none;
 }
 
 .dashboard-container--reduced-motion .dashboard-widget-row-wrapper .ant-col {

@@ -31,6 +31,11 @@ import {
 
 export type { SlotRect }
 
+interface OverlayRect {
+  width: number
+  height: number
+}
+
 export interface UseDashboardDndParams {
   orderedIds: string[]
   setOrderedIds: (role: string, ids: string[]) => void
@@ -56,6 +61,7 @@ export function useDashboardDnd({
   onLayoutSaved,
 }: UseDashboardDndParams) {
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [overlayRect, setOverlayRect] = useState<OverlayRect | null>(null)
   const [dropInsertIndex, setDropInsertIndex] = useState<number | null>(null)
   const lastPointerRef = useRef({ x: 0, y: 0 })
   const lastDropIndexRef = useRef<number | null>(null)
@@ -82,6 +88,12 @@ export function useDashboardDnd({
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string)
+    const activeRect = event.active.rect.current.initial ?? event.active.rect.current.translated
+    if (activeRect && activeRect.width > 0 && activeRect.height > 0) {
+      setOverlayRect({ width: activeRect.width, height: activeRect.height })
+    } else {
+      setOverlayRect(null)
+    }
     setDropInsertIndex(null)
     lastDropIndexRef.current = null
     lastOverIdRef.current = null
@@ -147,6 +159,7 @@ export function useDashboardDnd({
       const { active, over } = event
       const activeIdStr = active.id as string
       setActiveId(null)
+      setOverlayRect(null)
       setDropInsertIndex(null)
 
       if (!userRole) return
@@ -203,11 +216,13 @@ export function useDashboardDnd({
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null)
+    setOverlayRect(null)
     setDropInsertIndex(null)
   }, [])
 
   return {
     activeId,
+    overlayRect,
     dropInsertIndex,
     sensors,
     handleDragStart,
