@@ -313,7 +313,7 @@ const mockSchools: User[] = [
           assignedGrade: '3학년',
           phone: '010-2002-0002',
           email: 'jung.centum@school.kr',
-          employmentStatus: 'ACTIVE',
+          employmentStatus: 'ON_LEAVE',
           joinedAt: generatePastDate(125),
           linkedUserId: 'mock-aff-link-005',
         },

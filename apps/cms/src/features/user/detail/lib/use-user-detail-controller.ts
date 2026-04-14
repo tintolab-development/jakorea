@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import { applicationService } from '@/entities/application/api/application-service'
@@ -25,6 +25,7 @@ import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
+import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
 
 export type UserDetailControllerModalMode = 'default' | 'permission'
 
@@ -47,6 +48,7 @@ export function useUserDetailController({
   onWithdraw,
   modals,
 }: UseUserDetailControllerParams) {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
@@ -235,6 +237,13 @@ export function useUserDetailController({
     [mode, displayUser, setSearchParams, programsChildQueryKey]
   )
 
+  const openEnrollmentProgramDetail = useCallback(
+    (record: Application) => {
+      navigate(getProgramAdminDetailInfoTabUrl(record.programId))
+    },
+    [navigate]
+  )
+
   const sidebarItems = useMemo(
     () => buildUserDetailSidebarItems(displayUser ?? undefined, mode),
     [displayUser, mode]
@@ -292,8 +301,7 @@ export function useUserDetailController({
       openAssignmentSubmission: modals.assignment.show,
       closeLectureAttendanceModal: modals.lectureAttendance.close,
       closeAssignmentSubmissionModal: modals.assignment.close,
-      openEnrollmentProgramDetail: modals.programDetail.show,
-      closeProgramDetailModal: modals.programDetail.close,
+      openEnrollmentProgramDetail,
       openWithdrawConfirm,
       closeWithdrawConfirm,
       handleWithdrawConfirm,

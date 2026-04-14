@@ -29,6 +29,7 @@ export const individualStrategy: UserDetailRoleStrategy = {
       enrollmentSectionTitle: '프로그램 수강 이력',
       enrollmentEmptyDescription: '프로그램 신청 이력이 없습니다.',
       enrollmentChildUsesStudentMemberHistory: true,
+      enrollmentChildUsesSchoolProgramParticipationView: false,
       showLectureHistoryWhenLectureChild: false,
       useSchoolProgramParticipationSingleView: false,
     },

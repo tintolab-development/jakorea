@@ -4,7 +4,6 @@
 
 import { type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AppButton } from '@/shared/ui/app-button'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
@@ -19,6 +18,7 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 import { managedProgramCountDisplay } from '../lib/user-detail-fullpage-helpers'
 import './user-basic-info-section.css'
 import '@/features/user/shared/ui/admin-permission-tag.css'
+import { CmsButton } from '@/shared/ui'
 
 export type UserBasicInfoEntrySource = 'all_users' | 'institution' | 'instructor' | 'admin'
 
@@ -219,9 +219,9 @@ function Id1365View({
           : (externalId1365?.maskedLabel ?? '-')}
       </span>
       {externalId1365?.onOpen ? (
-        <AppButton variant="primary" size="small" onClick={externalId1365.onOpen}>
+        <CmsButton size="medium" onClick={externalId1365.onOpen}>
           1365 바로가기
-        </AppButton>
+        </CmsButton>
       ) : null}
     </span>
   )

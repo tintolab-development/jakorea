@@ -5,10 +5,15 @@
 import { useMemo, useState, useEffect, useCallback, type Key, type MouseEvent } from 'react'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import dayjs, { type Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
+import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import {
+  membersPermissionTablePageConfig,
+  type MembersPermissionTableContext,
+} from './members-permission-table.config'
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
-import type { UserRole } from '@/types/user'
 import {
   mockMemberPermissionApplicationsAdmin,
   mockMemberPermissionApplicationsInstructor,
@@ -55,19 +60,6 @@ function maskedEmail(email: string | undefined): string {
   return MASKING_POLICY.email(t)
 }
 
-type PendingFilters = {
-  search: string
-  role: UserRole | 'ALL'
-  createdAtRange: [Dayjs | null, Dayjs | null] | null
-}
-
-type ActiveFilters = {
-  search: string
-  role: UserRole | 'ALL'
-  createdAtFrom?: string
-  createdAtTo?: string
-}
-
 function listTitle(memberType: 'instructor' | 'admin'): string {
   return memberType === 'instructor' ? '강사 권한 신청 목록' : '관리자 권한 신청 목록'
 }
@@ -87,6 +79,9 @@ export function MembersPermissionList({
 }: MembersPermissionListProps) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const tableContext = useMemo<MembersPermissionTableContext>(() => ({ memberType }), [memberType])
 
   const baseRows = useMemo(
     () =>
@@ -101,56 +96,22 @@ export function MembersPermissionList({
     setRows(baseRows)
   }, [baseRows])
 
-  const [pendingFilters, setPendingFilters] = useState<PendingFilters>({
-    search: '',
-    role: 'ALL',
-    createdAtRange: null,
-  })
-
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
-    search: '',
-    role: 'ALL',
+  const {
+    pendingFilters,
+    applySearch: handleSearch,
+    handleFilterChange,
+    displayedCount,
+    tableData,
+  } = useTablePage(membersPermissionTablePageConfig, {
+    data: rows,
+    searchParams,
+    setSearchParams,
+    context: tableContext,
   })
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   /** 목록 내 연락처·이메일 마스킹 해제 여부 (행 id) */
   const [privacyRevealedByRowId, setPrivacyRevealedByRowId] = useState<Record<string, boolean>>({})
-
-  const filteredRows = useMemo(() => {
-    let list = rows
-
-    if (activeFilters.search.trim()) {
-      const q = activeFilters.search.trim().toLowerCase()
-      list = list.filter(r => r.name.toLowerCase().includes(q))
-    }
-
-    if (activeFilters.role !== 'ALL') {
-      list = list.filter(r => r.memberCategory === activeFilters.role)
-    }
-
-    if (activeFilters.createdAtFrom && activeFilters.createdAtTo) {
-      const from = dayjs(activeFilters.createdAtFrom).startOf('day')
-      const to = dayjs(activeFilters.createdAtTo).endOf('day')
-      list = list.filter(r => {
-        const d = dayjs(r.appliedAt)
-        return (d.isAfter(from) || d.isSame(from, 'day')) && (d.isBefore(to) || d.isSame(to, 'day'))
-      })
-    }
-
-    return list
-  }, [rows, activeFilters])
-
-  const handleSearch = () => {
-    const api: ActiveFilters = {
-      search: pendingFilters.search,
-      role: pendingFilters.role,
-    }
-    if (pendingFilters.createdAtRange?.[0] && pendingFilters.createdAtRange[1]) {
-      api.createdAtFrom = pendingFilters.createdAtRange[0].format('YYYY-MM-DD')
-      api.createdAtTo = pendingFilters.createdAtRange[1].format('YYYY-MM-DD')
-    }
-    setActiveFilters(api)
-  }
 
   const selectedKeySet = useMemo(
     () => new Set(selectedRowKeys.map(k => String(k))),
@@ -158,9 +119,8 @@ export function MembersPermissionList({
   )
 
   const selectedPendingRows = useMemo(
-    () =>
-      filteredRows.filter(r => selectedKeySet.has(String(r.id)) && r.approvalStatus === 'PENDING'),
-    [filteredRows, selectedKeySet]
+    () => tableData.filter(r => selectedKeySet.has(String(r.id)) && r.approvalStatus === 'PENDING'),
+    [tableData, selectedKeySet]
   )
 
   const notReady = () => {
@@ -229,7 +189,7 @@ export function MembersPermissionList({
         width: TABLE_COLUMN_WIDTHS.index,
         align: 'center',
         render: (_: unknown, __: MemberPermissionApplicationRow, index: number) =>
-          filteredRows.length - index,
+          tableData.length - index,
       },
       {
         title: '회원명',
@@ -287,7 +247,7 @@ export function MembersPermissionList({
         render: (v: string) => dayjs(v).format('YYYY.MM.DD'),
       },
     ],
-    [filteredRows.length, privacyRevealedByRowId]
+    [tableData.length, privacyRevealedByRowId]
   )
 
   return (
@@ -299,14 +259,14 @@ export function MembersPermissionList({
           type: 'search',
           label: '회원명',
           placeholder: '회원명을 입력하세요',
-          width: '30%',
+          width: '20%',
         },
         {
           key: 'role',
           type: 'select',
           label: '회원 유형',
           placeholder: '전체',
-          width: '30%',
+          width: '20%',
           options: [
             { label: '전체', value: 'ALL' },
             { label: '개인', value: 'INDIVIDUAL' },
@@ -316,31 +276,36 @@ export function MembersPermissionList({
           ],
         },
         {
+          key: 'approvalStatus',
+          type: 'select',
+          label: '권한 승인 현황',
+          placeholder: '전체',
+          width: '20%',
+          options: [
+            { label: '전체', value: 'ALL' },
+            { label: APPROVAL_STATUS_LABEL.PENDING, value: 'PENDING' },
+            { label: APPROVAL_STATUS_LABEL.APPROVED, value: 'APPROVED' },
+            { label: APPROVAL_STATUS_LABEL.REJECTED, value: 'REJECTED' },
+          ],
+        },
+        {
           key: 'createdAtRange',
           type: 'dateRange',
           label: '신청 시기',
-          width: '30%',
+          width: '40%',
           defaultValue: null,
         },
       ]}
       filters={{
         search: pendingFilters.search,
         role: pendingFilters.role,
+        approvalStatus: pendingFilters.approvalStatus,
         createdAtRange: pendingFilters.createdAtRange ?? undefined,
       }}
-      onFilterChange={(key, value) => {
-        if (key === 'createdAtRange') {
-          setPendingFilters(prev => ({
-            ...prev,
-            createdAtRange: value as [Dayjs | null, Dayjs | null] | null,
-          }))
-        } else {
-          setPendingFilters(prev => ({ ...prev, [key]: value }))
-        }
-      }}
+      onFilterChange={handleFilterChange}
       onSearch={handleSearch}
       title={listTitle(memberType)}
-      description={`총 ${filteredRows.length.toLocaleString()}건`}
+      description={`총 ${displayedCount.toLocaleString()}건`}
       actions={
         <>
           <CmsButton
@@ -366,8 +331,9 @@ export function MembersPermissionList({
     >
       <Table<MemberPermissionApplicationRow>
         rowKey="id"
+        className="cms-data-table"
         columns={columns}
-        dataSource={filteredRows}
+        dataSource={tableData}
         onRow={record => ({
           onClick: (e: MouseEvent<HTMLElement>) => {
             if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return

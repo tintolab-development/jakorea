@@ -1,8 +1,11 @@
 import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Table, Empty, message } from 'antd'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import { userProgramsEnrollmentStubTableConfig } from './user-programs-stub-table.config'
 import { MemberProgramLectureHistory } from './member-program-lecture-history'
 import { createProgramHistoryColumns } from './detail-info/user-detail-program-history-columns'
 import type { UserDetailProgramsChildKey } from '../lib/user-detail-fullpage-helpers'
@@ -11,6 +14,7 @@ export interface UserProgramsHistoryConfig {
   enrollmentSectionTitle: string
   enrollmentEmptyDescription: string
   enrollmentChildUsesStudentMemberHistory: boolean
+  enrollmentChildUsesSchoolProgramParticipationView: boolean
   showLectureHistoryWhenLectureChild: boolean
   useSchoolProgramParticipationSingleView: boolean
 }
@@ -52,9 +56,21 @@ export function UserProgramsSection({
     enrollmentSectionTitle,
     enrollmentEmptyDescription,
     enrollmentChildUsesStudentMemberHistory,
+    enrollmentChildUsesSchoolProgramParticipationView,
     showLectureHistoryWhenLectureChild,
     useSchoolProgramParticipationSingleView,
   } = programsHistoryConfig
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const enrollmentTableContext = useMemo(() => ({} as const), [])
+
+  const { handleFilterChange, applySearch: handleEnrollmentSearchStub, displayedCount } =
+    useTablePage(userProgramsEnrollmentStubTableConfig, {
+      data: enrollmentTableRows,
+      searchParams,
+      setSearchParams,
+      context: enrollmentTableContext,
+    })
 
   const programHistoryColumns = useMemo(
     () =>
@@ -105,10 +121,10 @@ export function UserProgramsSection({
       className="user-detail-fullpage-modal__enrollment-layout"
       fields={[]}
       filters={{}}
-      onFilterChange={() => {}}
-      onSearch={() => {}}
+      onFilterChange={handleFilterChange}
+      onSearch={handleEnrollmentSearchStub}
       title={enrollmentSectionTitle}
-      description={`총 ${enrollmentTableRows.length}건`}
+      description={`총 ${displayedCount.toLocaleString()}건`}
     >
       {renderApplicationTable(enrollmentTableRows, enrollmentEmptyDescription)}
     </FilterTableLayout>
@@ -137,17 +153,32 @@ export function UserProgramsSection({
               mode="studentEnrollment"
               applications={applications}
               loading={loading}
+              onRowClick={onRowClick}
               onOpenAttendance={onOpenLectureAttendance}
               onOpenAssignment={onOpenAssignment}
               onDownloadCertificate={() => {
                 window.alert('준비 중입니다.')
               }}
             />
+          ) : enrollmentChildUsesSchoolProgramParticipationView ? (
+            <MemberProgramLectureHistory
+              mode="schoolProgramParticipation"
+              applications={enrollmentTableRows}
+              loading={loading}
+              onRowClick={onRowClick}
+              onBulkDelete={() => {
+                message.info('이력 삭제는 추후 연결됩니다.')
+              }}
+            />
           ) : (
             enrollmentSection
           ))}
         {activeProgramsChild === 'lecture' && showLectureHistoryWhenLectureChild && (
-          <MemberProgramLectureHistory applications={applications} loading={loading} />
+          <MemberProgramLectureHistory
+            applications={applications}
+            loading={loading}
+            onRowClick={onRowClick}
+          />
         )}
         {activeProgramsChild === 'volunteer' && volunteerProgramHistory}
       </div>
@@ -158,8 +189,9 @@ export function UserProgramsSection({
     return (
       <MemberProgramLectureHistory
         mode="schoolProgramParticipation"
-        applications={applications}
+        applications={enrollmentTableRows}
         loading={loading}
+        onRowClick={onRowClick}
         onBulkDelete={() => {
           message.info('이력 삭제는 추후 연결됩니다.')
         }}

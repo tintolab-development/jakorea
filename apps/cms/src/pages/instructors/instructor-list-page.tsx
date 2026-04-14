@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Modal, Drawer } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { InstructorList } from '@/features/instructor/ui/instructor-list'
@@ -19,8 +20,14 @@ import { useModalState } from '@/shared/hooks/use-modal-state'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import {
+  useTablePage,
+  EMPTY_TABLE_PAGE_CONTEXT,
+} from '@/shared/components/table-system/model/use-table-page'
+import { createInstructorListTablePageConfig } from './instructor-list-table.config'
+import '@/pages/programs/program-list-page.css'
 
 interface InstructorListQueryParams extends Record<string, string | undefined> {
   search?: string
@@ -38,7 +45,8 @@ export function InstructorListPage() {
     selectedInstructor,
     setSelectedInstructor,
   } = useInstructorStore()
-  const { params, setParams } = useQueryParams<InstructorListQueryParams>()
+  const { params } = useQueryParams<InstructorListQueryParams>()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   // Form 모달 상태 관리
   const {
@@ -77,25 +85,29 @@ export function InstructorListPage() {
     ]
   }, [instructors])
 
-  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
-  const [pendingFilters, setPendingFilters] = useState({
-    search: params.search || '',
-    region: params.region || 'all',
-  })
-
-  // URL에서 필터 값을 읽어와서 pendingFilters 초기화
-  useEffect(() => {
-    setPendingFilters({
-      search: params.search || '',
-      region: params.region || 'all',
-    })
-  }, [params.search, params.region])
+  const filterFields = useMemo(
+    () => [
+      {
+        key: 'search',
+        type: 'search' as const,
+        label: '이름/이메일/전문분야',
+        placeholder: '이름, 이메일, 전문분야를 입력하세요',
+      },
+      {
+        key: 'region',
+        type: 'select' as const,
+        label: '지역',
+        placeholder: '전체',
+        options: regionOptions,
+      },
+    ],
+    [regionOptions]
+  )
 
   // 필터링된 데이터
   const filteredInstructors = useMemo(() => {
     let filtered = instructors
 
-    // 검색어 필터
     if (params.search) {
       const searchLower = params.search.toLowerCase()
       filtered = filtered.filter(
@@ -106,7 +118,6 @@ export function InstructorListPage() {
       )
     }
 
-    // 지역 필터
     if (params.region && params.region !== 'all') {
       filtered = filtered.filter(instructor => instructor.region === params.region)
     }
@@ -114,13 +125,17 @@ export function InstructorListPage() {
     return filtered
   }, [instructors, params.search, params.region])
 
-  // 조회 버튼 클릭 시 필터 적용
-  const handleSearch = () => {
-    setParams({
-      search: pendingFilters.search || undefined,
-      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
-    })
-  }
+  const instructorListTablePageConfig = useMemo(() => createInstructorListTablePageConfig(), [])
+
+  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+    instructorListTablePageConfig,
+    {
+      data: filteredInstructors,
+      searchParams,
+      setSearchParams,
+      context: EMPTY_TABLE_PAGE_CONTEXT,
+    }
+  )
 
   const handleNewClick = () => {
     openFormModal()
@@ -174,7 +189,6 @@ export function InstructorListPage() {
 
     setDeleteLoading(true)
     try {
-      // InstructorListItem의 경우 instructorId를 사용, Instructor의 경우 id를 사용
       const instructorId =
         'instructorId' in deletingInstructor && deletingInstructor.instructorId
           ? deletingInstructor.instructorId
@@ -204,53 +218,35 @@ export function InstructorListPage() {
     setDeletingInstructor(null)
   }
 
-  // prop의 instructor를 우선 사용 (즉시 표시), 없으면 store의 selectedInstructor 사용
   const displayInstructor = drawerInstructor || selectedInstructor || null
 
   return (
     <div>
-      <div
-        style={{
-          marginBottom: LAYOUT_CONSTANTS.margins.lg,
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <PermissionButton
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleNewClick}
-          allowedRoles={['ADMIN']}
-          isWriteAction={true}
-        >
-          강사 등록
-        </PermissionButton>
-      </div>
-      <UnifiedFilterCard
-        fields={[
-          {
-            key: 'search',
-            type: 'search',
-            label: '이름/이메일/전문분야',
-            placeholder: '이름, 이메일, 전문분야를 입력하세요',
-          },
-          {
-            key: 'region',
-            type: 'select',
-            label: '지역',
-            placeholder: '전체',
-            options: regionOptions,
-          },
-        ]}
+      <FilterTableLayout
+        bordered={false}
+        fields={filterFields}
         filters={pendingFilters}
-        onFilterChange={(key, value) => {
-          setPendingFilters(prev => ({ ...prev, [key]: value }))
-        }}
-        onSearch={handleSearch}
-      />
-
-      <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />
+        onFilterChange={handleFilterChange}
+        onSearch={applySearch}
+        loading={loading}
+        title="강사 목록"
+        description={`총 ${filteredInstructors.length.toLocaleString()}건`}
+        actions={
+          <PermissionButton
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleNewClick}
+            allowedRoles={['ADMIN']}
+            isWriteAction={true}
+          >
+            강사 등록
+          </PermissionButton>
+        }
+      >
+        <div className="program-list-content-wrapper__table">
+          <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />
+        </div>
+      </FilterTableLayout>
 
       <Drawer
         title="강사 상세"

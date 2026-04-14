@@ -20,14 +20,12 @@ export interface UserDetailApplicationModalHandle {
 export interface UseUserDetailModalsResult {
   lectureAttendance: UserDetailApplicationModalHandle
   assignment: UserDetailApplicationModalHandle
-  programDetail: UserDetailApplicationModalHandle
 }
 
 export function useUserDetailModals(): UseUserDetailModalsResult {
   const [lectureAttendance, setLectureAttendance] =
     useState<ApplicationModalBranch>(initialBranch)
   const [assignment, setAssignment] = useState<ApplicationModalBranch>(initialBranch)
-  const [programDetail, setProgramDetail] = useState<ApplicationModalBranch>(initialBranch)
 
   const openLecture = useCallback((record: Application) => {
     setLectureAttendance({ isOpen: true, data: record })
@@ -41,13 +39,6 @@ export function useUserDetailModals(): UseUserDetailModalsResult {
   }, [])
   const closeAssignment = useCallback(() => {
     setAssignment(initialBranch)
-  }, [])
-
-  const openProgramDetail = useCallback((record: Application) => {
-    setProgramDetail({ isOpen: true, data: record })
-  }, [])
-  const closeProgramDetail = useCallback(() => {
-    setProgramDetail(initialBranch)
   }, [])
 
   return useMemo(
@@ -64,23 +55,14 @@ export function useUserDetailModals(): UseUserDetailModalsResult {
         show: openAssignment,
         close: closeAssignment,
       },
-      programDetail: {
-        open: programDetail.isOpen,
-        data: programDetail.data,
-        show: openProgramDetail,
-        close: closeProgramDetail,
-      },
     }),
     [
       lectureAttendance,
       assignment,
-      programDetail,
       openLecture,
       closeLecture,
       openAssignment,
       closeAssignment,
-      openProgramDetail,
-      closeProgramDetail,
     ]
   )
 }

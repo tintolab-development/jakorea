@@ -31,7 +31,7 @@ export type InterviewStatus =
   | 'REJECTED' // 반려
 
 /** 소속 교사 목록 행 (학교 상세 mock/API) */
-export type SchoolTeacherEmploymentStatus = 'ACTIVE' | 'WITHDRAWN' | 'TRANSFERRED'
+export type SchoolTeacherEmploymentStatus = 'ACTIVE' | 'ON_LEAVE' | 'WITHDRAWN' | 'TRANSFERRED'
 
 export interface SchoolAffiliatedTeacherRow {
   id: UUID

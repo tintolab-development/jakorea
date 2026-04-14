@@ -12,7 +12,6 @@ import type {
 } from '../../types/domain'
 import { mockSponsors } from './sponsors'
 import { mockSchools } from './schools'
-import { programLectureHistoryDemoPrograms } from './program-lecture-history-demo'
 
 const getDate = (daysAgo: number): string => {
   const date = new Date()
@@ -1424,9 +1423,6 @@ const educationPrograms: Program[] = educationRecords.map((record, index) => {
   return base
 })
 
-export const mockPrograms: Program[] = [
-  ...educationPrograms,
-  ...programLectureHistoryDemoPrograms,
-]
+export const mockPrograms: Program[] = [...educationPrograms]
 
 export const mockProgramsMap = new Map(mockPrograms.map(program => [program.id, program]))

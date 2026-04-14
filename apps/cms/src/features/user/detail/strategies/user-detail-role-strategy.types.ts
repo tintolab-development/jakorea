@@ -33,6 +33,7 @@ export interface UserDetailStrategySectionConfig {
     enrollmentSectionTitle: string
     enrollmentEmptyDescription: string
     enrollmentChildUsesStudentMemberHistory: boolean
+    enrollmentChildUsesSchoolProgramParticipationView: boolean
     showLectureHistoryWhenLectureChild: boolean
     useSchoolProgramParticipationSingleView: boolean
   }

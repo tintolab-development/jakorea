@@ -2,21 +2,44 @@
  * 학교 상세 — 기본 정보 하단 소속 교사 목록
  */
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { SchoolAffiliatedTeacherRow } from '@/types/user'
+import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { AppButton } from '@/shared/ui/app-button'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import { formatDate } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import {
+  AppStatusBadge,
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components'
 import './school-affiliated-teachers-section.css'
 
-const EMPLOYMENT_LABEL: Record<SchoolAffiliatedTeacherRow['employmentStatus'], string> = {
-  ACTIVE: '재직 중',
-  WITHDRAWN: '탈퇴',
+/** 재직 현황 드롭다운 선택지 — 탈퇴(WITHDRAWN)는 목록에서 제외, 데이터에만 남을 수 있음 */
+const SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS = [
+  'ACTIVE',
+  'ON_LEAVE',
+  'TRANSFERRED',
+] as const satisfies readonly SchoolTeacherEmploymentStatus[]
+
+const EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmploymentStatus, string> = {
+  ACTIVE: '재직중',
+  ON_LEAVE: '휴직',
   TRANSFERRED: '전근',
+  WITHDRAWN: '탈퇴',
+}
+
+function SchoolTeacherEmploymentStatusBadge({ status }: { status: SchoolTeacherEmploymentStatus }) {
+  const variant = status === 'ACTIVE' ? 'active' : 'muted'
+  return (
+    <AppStatusBadge
+      label={EMPLOYMENT_BADGE_LABEL[status]}
+      className={`school-affiliated-teachers-section__employment-badge school-affiliated-teachers-section__employment-badge--${variant}`}
+    />
+  )
 }
 
 export interface SchoolAffiliatedTeachersSectionProps {
@@ -25,6 +48,11 @@ export interface SchoolAffiliatedTeachersSectionProps {
   onWithdrawSelected?: (teacherIds: string[]) => void
   /** `linkedUserId`가 있는 행 클릭 시 해당 CMS 회원 상세로 이동 */
   onLinkedUserClick?: (linkedUserId: string) => void
+  /** 재직 현황 변경 시 (API 연동 시 저장 로직 연결) */
+  onEmploymentStatusChange?: (
+    teacherId: string,
+    status: SchoolTeacherEmploymentStatus
+  ) => void | Promise<void>
 }
 
 function isCheckboxClickTarget(target: EventTarget | null): boolean {
@@ -32,15 +60,55 @@ function isCheckboxClickTarget(target: EventTarget | null): boolean {
   return Boolean(target.closest('.ant-checkbox-wrapper, .ant-checkbox'))
 }
 
+const EMPLOYMENT_BADGE_CELL_STYLE = {
+  width: 100,
+  minWidth: 100,
+  maxWidth: 100,
+  height: 32,
+  minHeight: 32,
+  maxHeight: 32,
+} as const
+
 export function SchoolAffiliatedTeachersSection({
   rows,
   onLinkedUserClick,
+  onEmploymentStatusChange,
 }: SchoolAffiliatedTeachersSectionProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [employmentPatchById, setEmploymentPatchById] = useState<
+    Partial<Record<string, SchoolTeacherEmploymentStatus>>
+  >({})
+  const [openEmploymentDropdownId, setOpenEmploymentDropdownId] = useState<string | null>(null)
+
+  /** 서버(부모) rows가 바뀌면 로컬 재직 패치 초기화 */
+  const rowsStableKey = useMemo(
+    () => rows.map(r => `${r.id}:${r.employmentStatus}`).join(','),
+    [rows]
+  )
+  useEffect(() => {
+    setEmploymentPatchById({})
+  }, [rowsStableKey])
 
   type Row = SchoolAffiliatedTeacherRow & { key: string }
 
-  const dataSource = useMemo<Row[]>(() => rows.map(r => ({ ...r, key: r.id })), [rows])
+  const dataSource = useMemo<Row[]>(
+    () =>
+      rows.map(r => ({
+        ...r,
+        key: r.id,
+        employmentStatus: employmentPatchById[r.id] ?? r.employmentStatus,
+      })),
+    [rows, employmentPatchById]
+  )
+
+  const handleEmploymentStatusChange = useCallback(
+    (teacherId: string, next: SchoolTeacherEmploymentStatus) => {
+      setEmploymentPatchById(prev => ({ ...prev, [teacherId]: next }))
+      setOpenEmploymentDropdownId(null)
+      void onEmploymentStatusChange?.(teacherId, next)
+    },
+    [onEmploymentStatusChange]
+  )
 
   const columns: ColumnsType<Row> = useMemo(
     () => [
@@ -85,9 +153,23 @@ export function SchoolAffiliatedTeachersSection({
         title: '재직 현황',
         dataIndex: 'employmentStatus',
         key: 'employmentStatus',
-        width: TABLE_COLUMN_WIDTHS.status,
+        width: 118,
         align: 'center',
-        render: (s: SchoolAffiliatedTeacherRow['employmentStatus']) => EMPLOYMENT_LABEL[s] ?? '-',
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (_: unknown, record: Row) => (
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<SchoolTeacherEmploymentStatus>
+              status={record.employmentStatus}
+              statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
+              renderBadge={s => <SchoolTeacherEmploymentStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={next => handleEmploymentStatusChange(record.id, next)}
+              isOpen={openEmploymentDropdownId === record.id}
+              onOpenChange={open => setOpenEmploymentDropdownId(open ? record.id : null)}
+              style={EMPLOYMENT_BADGE_CELL_STYLE}
+            />
+          </div>
+        ),
       },
       {
         title: '가입일',
@@ -98,7 +180,7 @@ export function SchoolAffiliatedTeachersSection({
         render: (d: Row['joinedAt']) => formatDate(d),
       },
     ],
-    [rows]
+    [rows.length, openEmploymentDropdownId, handleEmploymentStatusChange]
   )
 
   const handleWithdraw = () => {

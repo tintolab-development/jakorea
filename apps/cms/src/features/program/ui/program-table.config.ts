@@ -310,6 +310,38 @@ export function getProgramTablePageConfig(
       },
 
       getBaseCount: ({ filteredData }) => filteredData.length,
+
+      onFilterChange: ({ prev, key, value, context: ctx }) => {
+        if (key === 'operationPeriod') {
+          const dates = value as [Dayjs, Dayjs] | null
+          return {
+            ...prev,
+            operationStartDate: dates?.[0] || null,
+            operationEndDate: dates?.[1] || null,
+          }
+        }
+        if (
+          ctx.mode === 'economy' &&
+          (key === 'category' ||
+            key === 'targetLevel' ||
+            key === 'lifecycleStatus' ||
+            key === 'participantRecruitment')
+        ) {
+          return {
+            ...prev,
+            [key]:
+              value != null && String(value).trim()
+                ? key === 'lifecycleStatus'
+                  ? (value as ProgramLifecycleStatus)
+                  : value
+                : undefined,
+          }
+        }
+        return {
+          ...prev,
+          [key]: value,
+        }
+      },
     },
 
     filterFn: ({ context: ctx, data, searchParams }) => {

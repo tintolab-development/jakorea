@@ -2,7 +2,8 @@
  * 관리자 회원 상세 — 담당 프로그램 이력 (필터 + 테이블)
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useMemo, useState, type Key } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program, TargetLevel } from '@/types/domain'
@@ -15,6 +16,8 @@ import {
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import { adminManagedProgramTablePageConfig } from './admin-managed-program-table.config'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { AppButton } from '@/shared/ui/app-button'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
@@ -23,14 +26,6 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 
 type AdminUser = Omit<User, 'password'>
-
-type PendingFilters = {
-  title: string
-  year: string
-  lifecycle: string
-  participantType: string
-  targetLevel: string
-}
 
 const ALL = ''
 
@@ -98,6 +93,7 @@ export interface AdminManagedProgramHistoryProps {
 }
 
 export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const sourcePrograms = useMemo(() => resolveManagedPrograms(user), [user])
 
   const yearOptions = useMemo(() => buildProgressYearSelectOptions(ALL), [])
@@ -170,35 +166,20 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     ]
   }, [yearOptions, lifecycleOptions])
 
-  const [pendingFilters, setPendingFilters] = useState<PendingFilters>({
-    title: '',
-    year: ALL,
-    lifecycle: ALL,
-    participantType: ALL,
-    targetLevel: ALL,
+  const tableContext = useMemo(() => ({} as const), [])
+
+  const {
+    pendingFilters,
+    applySearch: handleSearch,
+    handleFilterChange,
+    displayedCount,
+    tableData,
+  } = useTablePage(adminManagedProgramTablePageConfig, {
+    data: sourcePrograms,
+    searchParams,
+    setSearchParams,
+    context: tableContext,
   })
-
-  const [activeFilters, setActiveFilters] = useState<PendingFilters>(pendingFilters)
-
-  const handleSearch = useCallback(() => {
-    setActiveFilters({ ...pendingFilters })
-  }, [pendingFilters])
-
-  const filteredPrograms = useMemo(() => {
-    return sourcePrograms.filter(p => {
-      if (activeFilters.title.trim() && !p.title.includes(activeFilters.title.trim())) return false
-      if (activeFilters.year && String(yearOfProgram(p)) !== activeFilters.year) return false
-      if (activeFilters.lifecycle && p.lifecycleStatus !== activeFilters.lifecycle) return false
-      if (
-        activeFilters.participantType &&
-        participantTypeKey(p) !== activeFilters.participantType
-      ) {
-        return false
-      }
-      if (activeFilters.targetLevel && p.targetLevel !== activeFilters.targetLevel) return false
-      return true
-    })
-  }, [sourcePrograms, activeFilters])
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
 
@@ -276,12 +257,10 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         participantType: pendingFilters.participantType || undefined,
         targetLevel: pendingFilters.targetLevel || undefined,
       }}
-      onFilterChange={(key, value) => {
-        setPendingFilters(prev => ({ ...prev, [key]: value ?? ALL }))
-      }}
+      onFilterChange={handleFilterChange}
       onSearch={handleSearch}
       title="프로그램 진행 이력"
-      description={`총 ${filteredPrograms.length}건`}
+      description={`총 ${displayedCount}건`}
       actions={
         <AppButton
           variant="danger"
@@ -302,7 +281,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
           selectedRowKeys,
           onChange: keys => setSelectedRowKeys(keys),
         }}
-        dataSource={filteredPrograms}
+        dataSource={tableData}
         columns={columns}
         rowKey="id"
         scroll={{ x: 'max-content' }}

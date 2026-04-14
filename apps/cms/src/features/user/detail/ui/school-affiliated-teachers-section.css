@@ -42,3 +42,50 @@
   width: 100%;
   min-width: 0;
 }
+
+/* 재직 현황: StatusDropdownCell + AppStatusBadge — 100×32 (드롭다운은 body 포털이므로 섹션 부모 미사용) */
+.school-affiliated-teachers-section__employment-badge.app-status-badge {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  margin: 0;
+  padding: 6px 12px;
+  gap: 4px;
+  border-radius: 6px;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.school-affiliated-teachers-section__employment-badge--active.app-status-badge {
+  border: 1px solid rgba(1, 126, 175, 0.1);
+  background: #e6f2f7;
+  color: var(--color-blue, #017eaf);
+}
+
+.school-affiliated-teachers-section__employment-badge--muted.app-status-badge {
+  border: 1px solid rgba(61, 61, 61, 0.1);
+  background: #f2f3f5;
+  color: var(--main-bk, #3d3d3d);
+}
+
+/* 드롭다운 열림 시 행 높이 흔들림 완화 */
+.school-affiliated-teachers-section__body
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}

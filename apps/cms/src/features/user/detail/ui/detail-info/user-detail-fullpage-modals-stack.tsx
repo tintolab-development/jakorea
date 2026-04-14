@@ -5,7 +5,6 @@ import {
 } from '@/features/program/ui/manager-delete-guide-modal'
 import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
-import { EnrollmentProgramDetailModal } from '@/features/user/detail/ui/enrollment-program-detail-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 
 export function UserDetailFullpageModalsStack() {
@@ -49,11 +48,6 @@ export function UserDetailFullpageModalsStack() {
         onCancel={modals.assignment.close}
         application={modals.assignment.data ?? undefined}
         userName={displayUser.name}
-      />
-      <EnrollmentProgramDetailModal
-        open={modals.programDetail.open}
-        onCancel={modals.programDetail.close}
-        application={modals.programDetail.data}
       />
     </>
   )

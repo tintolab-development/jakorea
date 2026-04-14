@@ -75,6 +75,7 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
   const noCol: ColumnsType<Row>[0] = {
     title: 'No.',
     key: 'no',
+    width: 80,
     align: 'center',
     render: (_: unknown, __: Row, index: number) => index + 1,
   }
@@ -100,6 +101,7 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
         title: '프로그램 수강 횟수',
         key: 'programCount',
         align: 'center',
+        width: 200,
         render: (_: unknown, r: Row) =>
           displayMetric(r.listMetrics?.institutionProgramAttendanceCount),
       },
@@ -107,13 +109,15 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
         title: '등록된 교사 수',
         key: 'teacherCount',
         align: 'center',
+        width: 200,
         render: (_: unknown, r: Row) =>
-          displayMetric(r.listMetrics?.institutionRegisteredTeacherCount),
+          displayMetric(r.listMetrics?.institutionRegisteredTeacherCount) + '명',
       },
       {
         title: '등록일',
         dataIndex: 'createdAt',
         key: 'createdAt',
+        width: 200,
         align: 'center',
         render: (d: string) => formatDate(new Date(d)),
       },

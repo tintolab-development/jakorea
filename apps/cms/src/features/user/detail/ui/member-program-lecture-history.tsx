@@ -3,7 +3,8 @@
  * FilterTableLayout + user-list-table 스타일, 프로그램 진행 현황은 StatusBadge text
  */
 
-import { useCallback, useMemo, useState, type Key, type MouseEvent, type ReactNode } from 'react'
+import { useMemo, useState, type Key, type MouseEvent, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Table, message } from 'antd'
 import type { TableProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -12,12 +13,16 @@ import type { Application, Program, UserHistory } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import {
   getEffectiveEnrollmentDisplayStatus,
-  PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER,
-  programEnrollmentEconomyListLabels,
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import {
+  createMemberProgramLectureTablePageConfig,
+  memberProgramEnrollmentStatusFieldOptions,
+  type MemberProgramHistoryMode,
+} from './member-program-lecture-table.config'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { AppButton } from '@/shared/ui/app-button'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -26,15 +31,7 @@ import '@/features/program/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'
-
-const ALL = ''
-
-type PendingFilters = {
-  title: string
-  year: string
-  enrollmentStatus: string
-  managerName: string
-}
+import { CmsButton } from '@/shared/ui'
 
 function programYear(programId: string): number | null {
   const p = programService.getByIdSync(programId)
@@ -55,12 +52,7 @@ function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
   )
 }
 
-export type MemberProgramHistoryMode =
-  | 'instructorLecture'
-  | 'studentEnrollment'
-  | 'volunteerProgram'
-  /** 학교 회원 — 프로그램명·진행년도·진행현황·교육분야·교육 학년·담당자 (출석/과제/수료증 열 없음) */
-  | 'schoolProgramParticipation'
+export type { MemberProgramHistoryMode }
 
 export interface MemberProgramLectureHistoryProps {
   /** 수강·강의 이력(Application). volunteerProgram 모드에서는 미사용 */
@@ -97,7 +89,7 @@ const DEFAULT_VOLUNTEER_FOOTNOTE = DEFAULT_STUDENT_FOOTNOTE
 /** 학교 참여 이력 테이블: 교육 학년 표시 (신청 건별 안정적 매핑) */
 const SCHOOL_GRADE_LABELS = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년']
 
-function educationFieldLabel(program: Program | undefined): string {
+function businessAreaLabel(program: Program | undefined): string {
   const raw = program?.businessArea?.trim()
   if (!raw) return '-'
   if (raw === '디지털리터러시') return '디지털 리터러시'
@@ -158,18 +150,11 @@ export function MemberProgramLectureHistory({
       : mode === 'studentEnrollment' || mode === 'volunteerProgram'
         ? DEFAULT_VOLUNTEER_FOOTNOTE
         : DEFAULT_FOOTNOTE)
-  const yearOptions = useMemo(() => buildProgressYearSelectOptions(ALL), [])
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const enrollmentStatusOptions = useMemo(
-    () => [
-      { label: '전체', value: ALL },
-      ...PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(value => ({
-        label: programEnrollmentEconomyListLabels[value],
-        value,
-      })),
-    ],
-    []
-  )
+  const yearOptions = useMemo(() => buildProgressYearSelectOptions(''), [])
+
+  const enrollmentStatusOptions = useMemo(() => memberProgramEnrollmentStatusFieldOptions(), [])
 
   const filterFields = useMemo((): FilterFieldConfig[] => {
     return [
@@ -206,72 +191,32 @@ export function MemberProgramLectureHistory({
     ]
   }, [yearOptions, enrollmentStatusOptions])
 
-  const [pendingFilters, setPendingFilters] = useState<PendingFilters>({
-    title: '',
-    year: ALL,
-    enrollmentStatus: ALL,
-    managerName: '',
+  const tablePageConfig = useMemo(() => createMemberProgramLectureTablePageConfig(mode), [mode])
+
+  const tableContext = useMemo(() => ({ mode }), [mode])
+
+  const listData = useMemo(
+    () =>
+      (mode === 'volunteerProgram' ? volunteerHistories : applications) as
+        | Application[]
+        | UserHistory[],
+    [mode, volunteerHistories, applications]
+  )
+
+  const {
+    pendingFilters,
+    applySearch: handleSearch,
+    handleFilterChange,
+    displayedCount,
+    tableData,
+  } = useTablePage(tablePageConfig, {
+    data: listData,
+    searchParams,
+    setSearchParams,
+    context: tableContext,
   })
 
-  const [activeFilters, setActiveFilters] = useState<PendingFilters>(pendingFilters)
-
-  const handleSearch = useCallback(() => {
-    setActiveFilters({ ...pendingFilters })
-  }, [pendingFilters])
-
-  const filteredApplications = useMemo(() => {
-    return applications.filter(app => {
-      const title = programTitle(app.programId)
-      if (activeFilters.title.trim() && !title.includes(activeFilters.title.trim())) {
-        return false
-      }
-      const y = programYear(app.programId)
-      if (activeFilters.year && (y == null || String(y) !== activeFilters.year)) {
-        return false
-      }
-      const program = programService.getByIdSync(app.programId)
-      const displayStatus = getEffectiveEnrollmentDisplayStatus(
-        app.status,
-        app.progressStatus,
-        program?.lifecycleStatus,
-        app.rejectionKind
-      )
-      if (activeFilters.enrollmentStatus && displayStatus !== activeFilters.enrollmentStatus) {
-        return false
-      }
-      const mgr = (app.managerName ?? '').trim()
-      if (activeFilters.managerName.trim() && !mgr.includes(activeFilters.managerName.trim())) {
-        return false
-      }
-      return true
-    })
-  }, [applications, activeFilters])
-
-  const filteredVolunteerHistories = useMemo(() => {
-    if (mode !== 'volunteerProgram') return [] as UserHistory[]
-    return volunteerHistories.filter(h => {
-      const title = programTitle(h.programId)
-      if (activeFilters.title.trim() && !title.includes(activeFilters.title.trim())) {
-        return false
-      }
-      const y = programYear(h.programId)
-      if (activeFilters.year && (y == null || String(y) !== activeFilters.year)) {
-        return false
-      }
-      const displayStatus = deriveVolunteerDisplayStatus(h)
-      if (activeFilters.enrollmentStatus && displayStatus !== activeFilters.enrollmentStatus) {
-        return false
-      }
-      const mgr = (h.managerName ?? '').trim()
-      if (activeFilters.managerName.trim() && !mgr.includes(activeFilters.managerName.trim())) {
-        return false
-      }
-      return true
-    })
-  }, [mode, volunteerHistories, activeFilters])
-
-  const displayRowCount =
-    mode === 'volunteerProgram' ? filteredVolunteerHistories.length : filteredApplications.length
+  const displayRowCount = displayedCount
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
 
@@ -407,9 +352,7 @@ export function MemberProgramLectureHistory({
             program?.lifecycleStatus,
             record.rejectionKind
           )
-          return (
-            <StatusBadge domain="programEnrollment" status={displayStatus} variant="text" />
-          )
+          return <StatusBadge domain="programEnrollment" status={displayStatus} variant="text" />
         },
       },
     ]
@@ -487,12 +430,12 @@ export function MemberProgramLectureHistory({
       return [
         ...sharedStart,
         {
-          title: '교육분야',
-          key: 'educationField',
+          title: '사업 분야',
+          key: 'businessArea',
           ellipsis: true,
           align: 'center',
           render: (_: unknown, record: Application) =>
-            educationFieldLabel(programService.getByIdSync(record.programId)),
+            businessAreaLabel(programService.getByIdSync(record.programId)),
         },
         {
           title: '교육 학년',
@@ -592,15 +535,13 @@ export function MemberProgramLectureHistory({
     mode === 'studentEnrollment'
       ? '프로그램 수강 이력이 없습니다.'
       : mode === 'schoolProgramParticipation'
-        ? '프로그램 참여 이력이 없습니다.'
+        ? '프로그램 수강 이력이 없습니다.'
         : mode === 'volunteerProgram'
           ? '봉사 프로그램 참여 이력이 없습니다.'
           : '프로그램 강의 이력이 없습니다.'
 
   const isVolunteerMode = mode === 'volunteerProgram'
-  const tableDataSource: (Application | UserHistory)[] = isVolunteerMode
-    ? filteredVolunteerHistories
-    : filteredApplications
+  const tableDataSource: (Application | UserHistory)[] = tableData as (Application | UserHistory)[]
   const hasTableRowClick = isVolunteerMode ? onVolunteerRowClick != null : onRowClick != null
 
   const tableOnRow = useMemo((): TableProps<Application | UserHistory>['onRow'] => {
@@ -628,9 +569,7 @@ export function MemberProgramLectureHistory({
         enrollmentStatus: pendingFilters.enrollmentStatus || undefined,
         managerName: pendingFilters.managerName,
       }}
-      onFilterChange={(key, value) => {
-        setPendingFilters(prev => ({ ...prev, [key]: value ?? ALL }))
-      }}
+      onFilterChange={handleFilterChange}
       onSearch={handleSearch}
       title={summaryTitle}
       description={
@@ -639,11 +578,8 @@ export function MemberProgramLectureHistory({
         </>
       }
       actions={
-        <AppButton
-          variant="danger"
-          size="filter"
-          dangerFillOnHover
-          className="program-list-page__bulk-delete-button"
+        <CmsButton
+          variant="delete"
           disabled={selectedRowKeys.length === 0}
           onClick={() => {
             if (onBulkDelete) {
@@ -654,7 +590,7 @@ export function MemberProgramLectureHistory({
           }}
         >
           이력 삭제
-        </AppButton>
+        </CmsButton>
       }
     >
       <Table<Application | UserHistory>

@@ -17,7 +17,7 @@ export interface GetDefaultHeaderActionsCtx {
 }
 
 export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): ActionConfig[] {
-  const { viewKind, displayUser, onWithdraw, onEdit, onOpenWithdrawConfirm } = ctx
+  const { viewKind, displayUser, onWithdraw, onEdit } = ctx
 
   if (viewKind === 'school_delete') {
     return [
@@ -42,7 +42,8 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
       label: '회원 탈퇴',
       variant: 'delete',
       onClick: () => {
-        onOpenWithdrawConfirm()
+        window.alert('준비 중입니다.')
+        // onOpenWithdrawConfirm()
       },
     })
   }

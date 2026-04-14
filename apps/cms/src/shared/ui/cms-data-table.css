@@ -6,12 +6,14 @@
 .cms-data-table {
   min-width: 0;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: scroll;
 }
 
 /* 테이블 외곽 4면 보더(구 cms-data-table--border — 전 테이블 공통) */
 .cms-data-table .ant-table-container {
   border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
 }
 
 .cms-data-table .ant-table-tbody > tr:last-child > td {

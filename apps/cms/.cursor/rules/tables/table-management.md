@@ -6,6 +6,8 @@ category: tables
 
 # 테이블 관리 및 필터링
 
+**CMS 목록 페이지(필터 카드 + URL 조회 + `useTablePage`)** 는 [list-page-table-stack.md](./list-page-table-stack.md)를 우선한다.
+
 ## @tanstack/react-table 사용
 
 테이블 관리 및 필터링은 **@tanstack/react-table** 라이브러리를 사용합니다.

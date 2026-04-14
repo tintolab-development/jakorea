@@ -1,9 +1,6 @@
 import type { User } from '@/types/user'
 import type { TabState } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
-import {
-  getUserDetailHeaderEffectiveProgramsChild,
-  shouldShowHeaderActions,
-} from '@/features/user/detail/lib/should-show-header-actions'
+import { shouldShowHeaderActions } from '@/features/user/detail/lib/should-show-header-actions'
 
 export type PermissionQueueRole = 'instructor' | 'admin'
 
@@ -35,15 +32,7 @@ export function resolveDefaultHeaderShellState(params: {
 }): DefaultHeaderShellState {
   const { displayUser, tabState, onWithdraw } = params
 
-  const effectiveProgramsChild = getUserDetailHeaderEffectiveProgramsChild(displayUser, tabState)
-
-  if (
-    !shouldShowHeaderActions({
-      role: displayUser.role,
-      tabState,
-      effectiveProgramsChild,
-    })
-  ) {
+  if (!shouldShowHeaderActions({ tabState })) {
     return { visible: false }
   }
 

@@ -3,7 +3,7 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 
 export type UserDetailLnbKey = 'detail-info' | 'history' | 'payment-status'
 
-/** 프로그램 참여 이력 LNB 하위 — 개인: 수강·봉사 / 순수 강사·교사·겸직: (라벨만 상이) 수강·강의·봉사 */
+/** 프로그램 참여 이력 LNB 하위 — 역할·교사 프로필별 수강·강의·봉사 (학교 소속 교사는 강의 탭 없음) */
 export type UserDetailProgramsChildKey = 'enrollment' | 'lecture' | 'volunteer'
 
 /** 회원 상세 풀페이지 — LNB + (선택) 프로그램 이력 하위 탭 */
@@ -22,6 +22,7 @@ export type UserDetailUrlSyncUser = Pick<
 export function programsHistoryHasChildMenu(user: UserDetailUrlSyncUser): boolean {
   if (user.role === 'INDIVIDUAL') return true
   if (user.role === 'INSTRUCTOR') return true
+  if (user.role === 'SCHOOL') return true
   return false
 }
 
@@ -39,41 +40,33 @@ export function clampProgramsChildForUser(
     return child
   }
   if (user.role === 'INSTRUCTOR') {
+    const p = resolveInstructorMemberProfile(user)
+    if (p === 'school_teacher' && child === 'lecture') return 'enrollment'
     return child
   }
   return 'enrollment'
 }
 
 /**
- * 교사·겸직: 프로그램 이력(부모·하위 전부)·정산 탭 클릭 시 준비 중 안내
- * 순수 강사: 프로그램 수강·봉사 하위만 준비 중 — 강의 이력·정산·이력 부모 클릭은 정상 이동
+ * 강사 상세 LNB 클릭 시 «준비 중» 알림이 필요하면 true.
+ * 정산·프로그램 이력 탭은 연결되어 있으므로 현재는 항상 false.
  */
 export function instructorDetailLnbClickShowsPrepareMessage(
-  user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>,
-  lnb: UserDetailLnbKey,
-  context: InstructorLnbPrepareClickContext,
-  programsChild?: UserDetailProgramsChildKey
+  _user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>,
+  _lnb: UserDetailLnbKey,
+  _context: InstructorLnbPrepareClickContext,
+  _programsChild?: UserDetailProgramsChildKey
 ): boolean {
-  if (user.role !== 'INSTRUCTOR') return false
-  const p = resolveInstructorMemberProfile(user)
-  if (p === 'school_teacher' || p === 'instructor_dual') {
-    if (context === 'payment-top') return lnb === 'payment-status'
-    return lnb === 'history' && (context === 'history-top' || context === 'history-child')
-  }
-  if (p === 'instructor_only') {
-    if (context === 'payment-top') return false
-    if (lnb !== 'history') return false
-    if (context === 'history-top') return false
-    return programsChild === 'enrollment' || programsChild === 'volunteer'
-  }
   return false
 }
 
-/** 정산 현황 LNB — 교사(학교 소속) 포함 전 강사 역할 노출 */
+/** 정산 현황 LNB — 순수 강사(instructor_only)·교사 겸 강사(instructor_dual) */
 export function instructorDetailShowsPaymentStatusLnb(
   user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
 ): boolean {
-  return user.role === 'INSTRUCTOR'
+  if (user.role !== 'INSTRUCTOR') return false
+  const p = resolveInstructorMemberProfile(user)
+  return p === 'instructor_only' || p === 'instructor_dual'
 }
 
 function managedProgramCountDisplay(user: Pick<User, 'listMetrics' | 'programRoles'>): string {

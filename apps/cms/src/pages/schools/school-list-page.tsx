@@ -5,6 +5,7 @@
  */
 
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Card, Modal } from 'antd'
 import { mockUsers } from '@/data/mock/users'
 import { UserList } from '@/features/user/shared/ui/user-list'
@@ -26,6 +27,11 @@ import {
 import type { User } from '@/types/user'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import './school-list-page.css'
+import {
+  useTablePage,
+  EMPTY_TABLE_PAGE_CONTEXT,
+} from '@/shared/components/table-system/model/use-table-page'
+import { createSchoolListTablePageConfig } from './school-list-table.config'
 
 interface SchoolListQueryParams extends Record<string, string | undefined> {
   search?: string
@@ -35,7 +41,8 @@ interface SchoolListQueryParams extends Record<string, string | undefined> {
 export function SchoolListPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const { params, setParams } = useQueryParams<SchoolListQueryParams>()
+  const { params } = useQueryParams<SchoolListQueryParams>()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const createUser = useUserStore(state => state.createUser)
   const deleteUser = useUserStore(state => state.deleteUser)
@@ -84,17 +91,11 @@ export function SchoolListPage() {
     ]
   }, [])
 
-  // Pending 필터 상태
-  const [pendingFilters, setPendingFilters] = useState({
-    search: params.search || '',
-    region: params.region || 'ALL',
-  })
-
   // SCHOOL 역할 사용자만 필터링
   const schoolUsers: Omit<User, 'password'>[] = useMemo(() => {
     let filtered = mockUsers
       .filter(u => u.role === 'SCHOOL')
-      .map(({ password, ...rest }) => rest)
+      .map(({ password: _password, ...rest }) => rest)
 
     if (params.search) {
       const s = params.search.toLowerCase()
@@ -115,12 +116,17 @@ export function SchoolListPage() {
     return filtered
   }, [params.search, params.region])
 
-  const handleSearch = () => {
-    setParams({
-      search: pendingFilters.search || undefined,
-      region: pendingFilters.region === 'ALL' ? undefined : pendingFilters.region,
-    })
-  }
+  const schoolListTablePageConfig = useMemo(() => createSchoolListTablePageConfig(), [])
+
+  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+    schoolListTablePageConfig,
+    {
+      data: schoolUsers,
+      searchParams,
+      setSearchParams,
+      context: EMPTY_TABLE_PAGE_CONTEXT,
+    }
+  )
 
   const handleView = (u: Omit<User, 'password'>) => {
     openDetail(u)
@@ -206,10 +212,8 @@ export function SchoolListPage() {
           search: pendingFilters.search,
           region: pendingFilters.region,
         }}
-        onFilterChange={(key, value) => {
-          setPendingFilters(prev => ({ ...prev, [key]: value }))
-        }}
-        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        onSearch={applySearch}
       />
 
       <Card className="member-table-card" bodyStyle={{ padding: 20 }}>
