@@ -78,11 +78,13 @@ describe('computeDragEndResult', () => {
       resizable
     )
     expect(r).not.toBeNull()
+    expect(r!.operation).toBe('swap')
+    expect(r!.swapTargetId).toBe('target')
     expect(r!.shouldSplit).toBe(false)
     expect(r!.newIndex).toBe(1)
   })
 
-  it('100% 위에 드롭·좌측 치우침이면 분할', () => {
+  it('100% 위에 드롭·좌측 치우침이어도 위젯 위 드롭이면 swap', () => {
     const ordered = ['drag', 'target']
     const slots: SlotRect[] = [{ id: 'target', rect: rect(0, 0, 100, 50) }]
     const r = computeDragEndResult(
@@ -94,8 +96,10 @@ describe('computeDragEndResult', () => {
       alwaysFull,
       resizable
     )
-    expect(r!.shouldSplit).toBe(true)
-    expect(r!.splitTargetId).toBe('target')
+    expect(r!.operation).toBe('swap')
+    expect(r!.swapTargetId).toBe('target')
+    expect(r!.shouldSplit).toBe(false)
+    expect(r!.splitTargetId).toBeNull()
   })
 
   it('50%↔50% 같은 크기면 스왑 인덱스만', () => {
@@ -106,7 +110,23 @@ describe('computeDragEndResult', () => {
     ]
     const half = (_id: string) => COL_SPAN_HALF as 12 | 24
     const r = computeDragEndResult(ordered, 'a', 'b', { x: 150, y: 25 }, slots, half, resizable)
+    expect(r!.operation).toBe('swap')
+    expect(r!.swapTargetId).toBe('b')
     expect(r!.shouldSplit).toBe(false)
     expect(r!.newIndex).toBe(1)
+  })
+
+  it('effectiveOverId 없고 빈 공간 드롭이면 move 유지', () => {
+    const ordered = ['a', 'b', 'c']
+    const slots: SlotRect[] = [
+      { id: 'a', rect: rect(0, 0, 100, 50) },
+      { id: 'b', rect: rect(100, 0, 100, 50) },
+      { id: 'c', rect: rect(0, 60, 200, 50) },
+    ]
+    const half = (_id: string) => COL_SPAN_HALF as 12 | 24
+    const r = computeDragEndResult(ordered, 'a', null, { x: 180, y: 20 }, slots, half, resizable)
+    expect(r).not.toBeNull()
+    expect(r!.operation).toBe('move')
+    expect(r!.swapTargetId).toBeNull()
   })
 })

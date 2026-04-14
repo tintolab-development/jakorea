@@ -6,7 +6,7 @@
 export const COL_SPAN_FULL = 24
 export const COL_SPAN_HALF = 12
 
-/** 100% 위젯 위 드롭 시: 포인터가 가운데 이 비율(40%) 안이면 순서만, 좌/우 치우침이면 50% 분할 */
+/** 100% 위젯 위 드롭 시 중앙 밴드 계산에 사용하는 비율(빈 공간 드롭 분할 판정에 사용) */
 export const FULL_WIDTH_CENTER_RATIO = 0.4
 
 export interface SlotRect {
@@ -16,6 +16,10 @@ export interface SlotRect {
 
 export interface DragEndComputed {
   newIndex: number
+  /** 드롭 의도: 위젯 위 드롭은 swap, 빈 공간 포인터 삽입은 move */
+  operation: 'swap' | 'move'
+  /** swap 시 맞교환 대상 위젯 id */
+  swapTargetId: string | null
   shouldSplit: boolean
   /** 50% 분할 시 함께 줄일 100% 위젯 id (setWidgetWidth 첫 인자) */
   splitTargetId: string | null
@@ -51,6 +55,8 @@ export function computeDragEndResult(
   if (oldIndex === -1) return null
 
   let newIndex = 0
+  let operation: 'swap' | 'move' = 'move'
+  let swapTargetId: string | null = null
   let shouldSplit = false
   let splitTargetId: string | null = null
   let droppedInEmptySpace = false
@@ -65,18 +71,13 @@ export function computeDragEndResult(
     const activeColSpan = getEffectiveColSpan(activeIdStr)
     const isTargetFullWidth =
       targetColSpan === COL_SPAN_FULL && isResizable(overIdStr) && isResizable(activeIdStr)
+    operation = 'swap'
+    swapTargetId = overIdStr
 
     if (isTargetFullWidth) {
-      const overRect = slotRects.find(s => s.id === overIdStr)?.rect
-      let pointerInCenter = false
-      if (overRect && overRect.width > 0) {
-        pointerInCenter = isPointerInFullWidthCenterBand(pointer.x, overRect)
-      }
       newIndex = overIndex
-      if (!pointerInCenter) {
-        shouldSplit = true
-        splitTargetId = overIdStr
-      }
+      // 위젯 위 드롭은 사용자 의도를 1:1 교환으로 해석한다.
+      // 분할(50/50)은 over가 없는 빈 공간 드롭 경로에서만 판정한다.
     } else if (targetColSpan === activeColSpan) {
       newIndex = overIndex
     } else {
@@ -128,6 +129,8 @@ export function computeDragEndResult(
 
   return {
     newIndex,
+    operation,
+    swapTargetId,
     shouldSplit,
     splitTargetId: shouldSplit ? splitTargetId : null,
     droppedInEmptySpace,

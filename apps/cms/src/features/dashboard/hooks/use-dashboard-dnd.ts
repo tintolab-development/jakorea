@@ -36,6 +36,16 @@ interface OverlayRect {
   height: number
 }
 
+function swapArrayItems<T>(arr: T[], fromIndex: number, toIndex: number): T[] {
+  if (fromIndex === toIndex) return arr
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= arr.length || toIndex >= arr.length) return arr
+  const next = [...arr]
+  const temp = next[fromIndex]
+  next[fromIndex] = next[toIndex]
+  next[toIndex] = temp
+  return next
+}
+
 export interface UseDashboardDndParams {
   orderedIds: string[]
   setOrderedIds: (role: string, ids: string[]) => void
@@ -189,7 +199,11 @@ export function useDashboardDnd({
       )
       if (!computed) return
 
-      const next = arrayMove(orderedIds, oldIndex, computed.newIndex)
+      const next =
+        computed.operation === 'swap' && computed.swapTargetId
+          ? swapArrayItems(orderedIds, oldIndex, orderedIds.indexOf(computed.swapTargetId))
+          : arrayMove(orderedIds, oldIndex, computed.newIndex)
+      // setOrderedIds 내부 reorderToAvoidTopGap 후처리를 유지해 상단 빈칸 보정 정책을 그대로 적용한다.
       setOrderedIds(userRole, next)
 
       if (computed.shouldSplit && computed.splitTargetId) {
