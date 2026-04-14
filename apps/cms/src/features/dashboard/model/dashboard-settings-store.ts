@@ -23,7 +23,7 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'inquiries', label: '문의하기', path: '/admin/posts/inquiries' },
   { id: 'program-forms', label: '폼 양식 관리', path: '/templates/form-management' },
   { id: 'file-forms', label: '발급 양식', path: '/templates/form-management?tab=issuance-form' },
-  { id: 'sponsors', label: '후원사', path: '/sponsors' },
+  { id: 'sponsors', label: '후원사', path: '/sponsor' },
 ]
 
 /** 위젯별 프로그램 설정용 위젯 키 (4개 위젯) */
