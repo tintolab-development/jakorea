@@ -334,7 +334,7 @@ export function MainHeader() {
                   >
                     <mask
                       id="main-header-account-gear-mask"
-                      style={{ maskType: 'alpha' }}
+                      mask-type="alpha"
                       maskUnits="userSpaceOnUse"
                       x="0"
                       y="0"
