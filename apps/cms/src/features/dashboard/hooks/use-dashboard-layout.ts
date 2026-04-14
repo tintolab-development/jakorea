@@ -4,8 +4,8 @@
  */
 
 import { useMemo, useCallback, useRef } from 'react'
-import type { UserRole } from '@/types/user'
-import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
+import type { User, UserRole } from '@/types/user'
+import { getDashboardWidgetsByRole, getDashboardWidgetsForUser } from '@/shared/config/dashboard-config'
 import type { DashboardWidgetConfig } from '@/shared/config/dashboard-config'
 import {
   useDashboardWidgetOrderStore,
@@ -18,6 +18,8 @@ import {
 
 export interface UseDashboardLayoutParams {
   userRole: UserRole | null
+  /** 관리자 대시보드 ACL 반영 시 전달 */
+  user?: Omit<User, 'password'> | null
 }
 
 export interface UseDashboardLayoutResult {
@@ -36,10 +38,17 @@ export interface UseDashboardLayoutResult {
 
 export function useDashboardLayout({
   userRole,
+  user,
 }: UseDashboardLayoutParams): UseDashboardLayoutResult {
   const rowRef = useRef<HTMLDivElement | null>(null)
 
-  const widgets = useMemo(() => getDashboardWidgetsByRole(userRole), [userRole])
+  const widgets = useMemo(() => {
+    if (userRole === 'ADMIN') {
+      if (user) return getDashboardWidgetsForUser(user)
+      return getDashboardWidgetsByRole('ADMIN')
+    }
+    return getDashboardWidgetsByRole(userRole)
+  }, [userRole, user])
   const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
   const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
 
