@@ -1,7 +1,7 @@
 /**
  * 대시보드 설정 모달
  * - 바로가기 아이콘 설정 (체크박스)
- * - 위젯 별 프로그램 설정 (4개 위젯 × 프로그램 체크박스)
+ * - 위젯 별 프로그램 설정 (일정 3종 + 기타 위젯 × 프로그램 체크박스)
  * TealHeaderModal 재사용, 800×720px, 바디 스크롤
  */
 
@@ -14,7 +14,12 @@ import {
   WIDGET_PROGRAM_KEYS,
   isShortcutItemEnabled,
 } from '../model/dashboard-settings-store'
-import { mockPrograms } from '@/data/mock'
+import {
+  mockPrograms,
+  getGeneralEducationPrograms,
+  getEconomyPrograms,
+  getGeminiPrograms,
+} from '@/data/mock'
 import './dashboard-settings-modal.css'
 import { AppButton } from '@/shared/ui'
 
@@ -24,9 +29,6 @@ export interface DashboardSettingsModalProps {
   /** 기본 레이아웃으로 되돌리기 (순서·너비 초기화) */
   onResetLayout?: () => void
 }
-
-const programRows = mockPrograms.map(p => ({ id: p.id, title: p.title }))
-const allProgramIds = programRows.map(p => p.id)
 
 /** 동일 title은 하나의 체크박스로 묶음 (mock 등에서 회차·기관별로 id만 다른 행 대응) */
 function buildProgramTitleGroups(
@@ -44,7 +46,26 @@ function buildProgramTitleGroups(
   return order.map(title => ({ title, ids: byTitle.get(title)! }))
 }
 
-const programTitleGroups = buildProgramTitleGroups(programRows)
+function getProgramRowsForWidget(widgetKey: string): { id: string; title: string }[] {
+  if (widgetKey === 'program-schedule-general-widget') {
+    return getGeneralEducationPrograms().map(p => ({ id: p.id, title: p.title }))
+  }
+  if (widgetKey === 'program-schedule-economy-widget') {
+    return getEconomyPrograms().map(p => ({ id: p.id, title: p.title }))
+  }
+  if (widgetKey === 'program-schedule-gemini-widget') {
+    return getGeminiPrograms().map(p => ({ id: p.id, title: p.title }))
+  }
+  return mockPrograms.map(p => ({ id: p.id, title: p.title }))
+}
+
+function getProgramTitleGroupsForWidget(widgetKey: string) {
+  return buildProgramTitleGroups(getProgramRowsForWidget(widgetKey))
+}
+
+function getAllProgramIdsForWidget(widgetKey: string): string[] {
+  return getProgramRowsForWidget(widgetKey).map(p => p.id)
+}
 
 function cloneWidgetProgramIds(src: Record<string, string[]>): Record<string, string[]> {
   return Object.fromEntries(Object.entries(src).map(([k, v]) => [k, [...v]]))
@@ -102,6 +123,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const handleTitleGroupToggle = useCallback(
     (widgetKey: string, groupIds: string[]) => {
+      const allProgramIds = getAllProgramIdsForWidget(widgetKey)
       const currentIds = widgetProgramIds[widgetKey] ?? []
       const groupOn = groupIds.every(id => currentIds.includes(id))
 
@@ -200,7 +222,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
                 key: 'programs',
                 render: (_: unknown, record: { widgetKey: string }) => (
                   <div className="dashboard-settings-modal__program-checks">
-                    {programTitleGroups.map(group => (
+                    {getProgramTitleGroupsForWidget(record.widgetKey).map(group => (
                       <Checkbox
                         key={group.title}
                         checked={isTitleGroupSelected(record.widgetKey, group.ids)}

@@ -27,7 +27,7 @@
 
 .widget-more-button:hover,
 .widget-more-button.ant-btn-link:hover {
-  color: rgba(61, 61, 61, 0.65) !important;
+  color: var(--color-ui-more-button) !important; /* #3D3D3D */
   text-decoration-line: underline !important;
   text-decoration-style: solid !important;
   text-decoration-skip-ink: none !important;

@@ -49,13 +49,19 @@
     min-width: 0;
 }
 
-/* 좌상단 두 줄 햄버거: 항상 노출, 편집 모드에서만 드래그 가능 */
+/* 좌상단 두 줄 햄버거: 항상 노출, 편집 모드에서만 드래그 가능 — 터치/히트 영역 20×20 */
 .widget-drag-handle {
     display: inline-flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     gap: 3px;
-    padding: 4px;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+    padding: 0;
     cursor: default;
     color: var(--color-text-secondary);
     flex-shrink: 0;

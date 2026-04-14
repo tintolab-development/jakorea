@@ -54,13 +54,13 @@ export function RecruitmentStatusWidget() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      width: '38%',
+      width: '50%',
       align: 'center',
     },
     {
       title: '모집 신청 현황',
       key: 'lifecycleStatus',
-      width: '18%',
+      width: '17%',
       align: 'center',
       className: 'dashboard-widget-table__cell--status',
       render: (_: unknown, record: Program) =>
@@ -73,7 +73,7 @@ export function RecruitmentStatusWidget() {
     {
       title: '참여자 모집 현황',
       key: 'studentRecruitment',
-      width: '22%',
+      width: '17%',
       align: 'center',
       render: (_: unknown, record: Program) => {
         const supportCount = record.approvedStudentCount ?? 0
@@ -87,7 +87,7 @@ export function RecruitmentStatusWidget() {
     {
       title: '봉사단 모집 현황',
       key: 'instructorRecruitment',
-      width: '22%',
+      width: '16%',
       align: 'center',
       render: (_: unknown, record: Program) => {
         const supportCount = record.instructors ?? 0

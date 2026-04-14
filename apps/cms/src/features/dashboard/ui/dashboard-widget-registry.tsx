@@ -27,6 +27,8 @@ import { PendingSettlementsCard } from '@/features/dashboard/ui/pending-settleme
 import { PendingActionsRow } from '@/features/dashboard/ui/pending-actions-row'
 import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
 import { CustomerInquiryStatusWidget } from '@/features/dashboard/ui/customer-inquiry-status-widget'
+import type { User } from '@/types/user'
+import { PROGRAM_SCHEDULE_WIDGET_KEYS } from '@/data/mock'
 import { ProgramScheduleWidget } from '@/features/dashboard/ui/program-schedule-widget'
 import { MenuShortcutWidget } from '@/features/dashboard/ui/menu-shortcut-widget'
 import { RecruitmentStatusWidget } from '@/features/dashboard/ui/recruitment-status-widget'
@@ -39,6 +41,8 @@ export interface DashboardWidgetRenderProps {
   instructorActivityLoading: boolean
   instructorCount: number
   onInstructorCardClick: () => void
+  /** 관리자 프로그램 일정 위젯 ACL */
+  user?: Omit<User, 'password'> | null
 }
 
 export type DashboardWidgetRenderFn = (props: DashboardWidgetRenderProps) => React.ReactNode
@@ -127,7 +131,33 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, Dash
   'volunteer-pending-tasks-list': renderVolunteerPendingTasksList,
   'notification-widget': () => <NotificationWidget />,
   'customer-inquiry-status-widget': () => <CustomerInquiryStatusWidget />,
-  'program-schedule-widget': () => <ProgramScheduleWidget />,
+  'program-schedule-general-widget': p => (
+    <ProgramScheduleWidget
+      variant="general"
+      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.general}
+      title="일반 프로그램 일정"
+      viewAllPath="/programs/education"
+      user={p.user}
+    />
+  ),
+  'program-schedule-economy-widget': p => (
+    <ProgramScheduleWidget
+      variant="economy"
+      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.economy}
+      title="경제 교육 프로그램 일정"
+      viewAllPath="/programs/economy-education"
+      user={p.user}
+    />
+  ),
+  'program-schedule-gemini-widget': p => (
+    <ProgramScheduleWidget
+      variant="gemini"
+      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.gemini}
+      title="제미나이 프로그램 일정"
+      viewAllPath="/programs"
+      user={p.user}
+    />
+  ),
   'menu-shortcut-widget': () => <MenuShortcutWidget />,
   'recruitment-status-widget': () => <RecruitmentStatusWidget />,
   'kpi-achievement-widget': () => <KpiAchievementWidget />,
