@@ -7,7 +7,7 @@ import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import {
   getAdminPermissionVariant,
   type AdminPermissionTagVariant,
-} from '@/features/user/lib/admin-permission-display'
+} from '@/features/user/shared/lib/admin-permission-display'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
   matchesInstructorSettlementFilter,

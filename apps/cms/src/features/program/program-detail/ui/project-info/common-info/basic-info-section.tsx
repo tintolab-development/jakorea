@@ -8,7 +8,6 @@
  */
 
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -251,15 +250,7 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="후원사"
           required
-          view={
-            program.sponsorId ? (
-              <Link to={`/sponsors/${program.sponsorId}`} className="text-decoration-underline">
-                {sponsorName ?? '-'}
-              </Link>
-            ) : (
-              (sponsorName ?? '-')
-            )
-          }
+          view={<span>{sponsorName ?? '-'}</span>}
           edit={
             <>
               <Controller

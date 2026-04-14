@@ -60,5 +60,5 @@ category: process
 
 - [persona.md](./persona.md) — 시니어 개발자 역할 및 FSD/타입 안전성 준수.
 - 행 클릭 시 노출되는 회원 상세 UI: [회원 상세 모달 스펙](./member-detail-modal-spec.md).
-- 실제 테이블 컴포넌트: `apps/cms/src/features/user/ui/user-list.tsx`
+- 실제 테이블 컴포넌트: `apps/cms/src/features/user/shared/ui/user-list.tsx`
 - 목록 페이지: `apps/cms/src/pages/users/user-list-page.tsx`

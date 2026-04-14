@@ -27,11 +27,6 @@
   flex: 1 1 auto;
 }
 
-.detail-info-form__header-end {
-  flex: 0 0 auto;
-  margin-left: auto;
-}
-
 .detail-info-form__title {
   margin: 0;
   font-size: 18px;

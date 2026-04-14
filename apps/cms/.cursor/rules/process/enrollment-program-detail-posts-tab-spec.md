@@ -126,8 +126,8 @@ category: process
 
 ## 7. 참고 구현·파일
 
-- 수강 프로그램 상세 모달: [EnrollmentProgramDetailModal](apps/cms/src/features/user/ui/enrollment-program-detail-modal.tsx) — 현재 "게시글" 탭은 placeholder. 본 스펙으로 2컬럼·게시글/파일 UI 구현.
-- 스타일: [enrollment-program-detail-modal.css](apps/cms/src/features/user/ui/enrollment-program-detail-modal.css) — 바디 814px, 2컬럼 레이아웃·태그 클래스 추가.
+- 수강 프로그램 상세 모달: [EnrollmentProgramDetailModal](apps/cms/src/features/user/detail/ui/enrollment-program-detail-modal.tsx) — 현재 "게시글" 탭은 placeholder. 본 스펙으로 2컬럼·게시글/파일 UI 구현.
+- 스타일: [enrollment-program-detail-modal.css](apps/cms/src/features/user/detail/ui/enrollment-program-detail-modal.css) — 바디 814px, 2컬럼 레이아웃·태그 클래스 추가.
 - [persona.md](./persona.md) — 디자이너·개발자 역할 및 디자인 시스템.
 - [member-detail-modal-spec.md](./member-detail-modal-spec.md) — 동일한 스펙 문서 형식 참고.
 

@@ -487,7 +487,7 @@ export function ParticipatingInstructorsSection({
           title="강사 삭제 안내"
           lines={buildInstructorMessageLines(instructorNamesToDelete)}
           confirmText="삭제"
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       </div>
     )
@@ -737,7 +737,7 @@ export function ParticipatingInstructorsSection({
         title="강사 삭제 안내"
         lines={buildInstructorMessageLines(instructorNamesToDelete)}
         confirmText="삭제"
-        confirmVariant="danger"
+        confirmVariant="delete"
       />
     </div>
   )

@@ -11,6 +11,10 @@ import { mockSchools } from './schools'
 import { mockInstructors } from './instructors'
 import {
   mockUsers,
+  MOCK_INSTRUCTOR_CHOI_USER_ID,
+  MOCK_INSTRUCTOR_JUNG_USER_ID,
+  MOCK_INSTRUCTOR_KANG_USER_ID,
+  MOCK_SCHOOL_JINWOL_USER_ID,
   MOCK_SCHOOL_SEOUL_USER_ID,
   MOCK_SCHOOL_BUSAN_USER_ID,
   MOCK_SCHOOL_DAEGU_USER_ID,
@@ -257,6 +261,46 @@ const schoolDetailApplications: Application[] = fixedSchoolIds.flatMap((schoolId
   })
 })
 
+/**
+ * 회원 상세 — 프로그램 수강 이력(student) / 프로그램 강의 이력(instructor) / 학교 수강(school)
+ * 최강사(겸직)·정멘토(순수 강사)·강선생(일반 교사) + 진월초 학교: `program-lecture-history-demo` 5건 시나리오 복제
+ */
+function cloneLectureDemoApplicationsForInstructor(subjectId: UUID, idPrefix: string): Application[] {
+  return programLectureHistoryDemoApplications.map(app => ({
+    ...app,
+    id: `app-${idPrefix}-lec-${app.id}`,
+    subjectId,
+  }))
+}
+
+function cloneLectureDemoApplicationsAsStudent(subjectId: UUID, idPrefix: string): Application[] {
+  return programLectureHistoryDemoApplications.map(app => ({
+    ...app,
+    id: `app-${idPrefix}-stu-${app.id}`,
+    subjectType: 'student' as const,
+    subjectId,
+  }))
+}
+
+function cloneLectureDemoApplicationsAsSchool(subjectId: UUID, idPrefix: string): Application[] {
+  return programLectureHistoryDemoApplications.map(app => ({
+    ...app,
+    id: `app-${idPrefix}-sch-${app.id}`,
+    subjectType: 'school' as const,
+    subjectId,
+  }))
+}
+
+const programParticipationAndLectureDemoApplications: Application[] = [
+  ...cloneLectureDemoApplicationsForInstructor(MOCK_INSTRUCTOR_CHOI_USER_ID, 'choi-ins'),
+  ...cloneLectureDemoApplicationsAsStudent(MOCK_INSTRUCTOR_CHOI_USER_ID, 'choi-stu'),
+  ...cloneLectureDemoApplicationsForInstructor(MOCK_INSTRUCTOR_JUNG_USER_ID, 'jung-ins'),
+  ...cloneLectureDemoApplicationsAsStudent(MOCK_INSTRUCTOR_JUNG_USER_ID, 'jung-stu'),
+  ...cloneLectureDemoApplicationsForInstructor(MOCK_INSTRUCTOR_KANG_USER_ID, 'kang-ins'),
+  ...cloneLectureDemoApplicationsAsStudent(MOCK_INSTRUCTOR_KANG_USER_ID, 'kang-stu'),
+  ...cloneLectureDemoApplicationsAsSchool(MOCK_SCHOOL_JINWOL_USER_ID, 'jinwol'),
+]
+
 // Phase 0.2.4: 승인된 신청에 progressStatus 부여 (타임라인용)
 const rawApplications: Application[] = [
   ...baseApplications,
@@ -264,14 +308,21 @@ const rawApplications: Application[] = [
   ...memberEnrollmentApplications,
   ...schoolDetailApplications,
   ...programLectureHistoryDemoApplications,
+  ...programParticipationAndLectureDemoApplications,
 ]
 export const mockApplications: Application[] = rawApplications.map((app, index) => {
-  if (app.status !== 'approved') return app
-  // 이미 progressStatus가 있으면 유지 (회원 수강 이력용 등)
-  if (app.progressStatus) return app
-  const progressIndex = index % APPLICATION_PROGRESS_ORDER.length
-  const progressStatus = APPLICATION_PROGRESS_ORDER[progressIndex] as ApplicationProgressStatus
-  return { ...app, progressStatus }
+  let next: Application = app
+  if (app.status === 'approved') {
+    if (!app.progressStatus) {
+      const progressIndex = index % APPLICATION_PROGRESS_ORDER.length
+      const progressStatus = APPLICATION_PROGRESS_ORDER[progressIndex] as ApplicationProgressStatus
+      next = { ...next, progressStatus }
+    }
+  }
+  if (app.status === 'rejected' && index % 7 === 0) {
+    next = { ...next, rejectionKind: 'INTERVIEW' }
+  }
+  return next
 })
 
 export const mockApplicationsMap = new Map<UUID, Application>()

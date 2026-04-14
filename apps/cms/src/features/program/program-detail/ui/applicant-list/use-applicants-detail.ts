@@ -1,6 +1,10 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { message } from 'antd'
+import {
+  useTablePage,
+  EMPTY_TABLE_PAGE_CONTEXT,
+} from '@/shared/components/table-system/model/use-table-page'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { APP_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/app-multi-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
@@ -35,6 +39,7 @@ import {
   useInstitutionApplicantColumns,
   useInstructorApplicantColumns,
 } from './use-applicants-detail-columns'
+import { createApplicantsFilterTablePageConfig } from './applicants-filter-table.config'
 
 export function useApplicantsDetail({
   menu,
@@ -60,8 +65,7 @@ export function useApplicantsDetail({
     [searchParams, setSearchParams]
   )
 
-  const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({})
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({})
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, unknown>>({})
 
   const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>(() => [
     ...MOCK_APPLICANT_INSTITUTIONS,
@@ -69,6 +73,32 @@ export function useApplicantsDetail({
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [
     ...MOCK_APPLICANT_INSTRUCTORS,
   ])
+
+  const rawTableData = useMemo((): ApplicantSchoolRow[] | ApplicantInstructorRow[] => {
+    if (menu === 'institutions') return institutionList
+    if (menu === 'instructors') return instructorList
+    return []
+  }, [menu, institutionList, instructorList])
+
+  const applicantFilterTablePageConfig = useMemo(
+    () =>
+      createApplicantsFilterTablePageConfig({
+        onAfterApplySearch: next => {
+          setAppliedFilters({ ...next })
+        },
+      }),
+    []
+  )
+
+  const { pendingFilters, setPendingFilters, handleFilterChange, applySearch } = useTablePage(
+    applicantFilterTablePageConfig,
+    {
+      data: rawTableData,
+      searchParams,
+      setSearchParams,
+      context: EMPTY_TABLE_PAGE_CONTEXT,
+    }
+  )
 
   const [selectedItem, setSelectedItem] = useState<
     ApplicantSchoolRow | ApplicantInstructorRow | null
@@ -123,7 +153,7 @@ export function useApplicantsDetail({
         setSearchParams(next, { replace: true })
       }
     }
-  }, [menu, searchParams, setSearchParams])
+  }, [menu, searchParams, setSearchParams, setPendingFilters])
 
   useEffect(() => {
     const next = new URLSearchParams(searchParams)
@@ -239,17 +269,6 @@ export function useApplicantsDetail({
     openApprovalDropdownId,
     setOpenApprovalDropdownId,
   })
-
-  const handleFilterChange = (key: string, value: any) => {
-    setPendingFilters(prev => ({
-      ...prev,
-      [key]: value,
-    }))
-  }
-
-  const handleSearch = () => {
-    setAppliedFilters({ ...pendingFilters })
-  }
 
   const handleBulkReject = () => {
     if (selectedRowKeys.length === 0) {
@@ -383,7 +402,13 @@ export function useApplicantsDetail({
   }, [menu])
 
   const tableData = useMemo(
-    () => filterApplicantsTableData(menu, institutionList, instructorList, appliedFilters),
+    () =>
+      filterApplicantsTableData(
+        menu,
+        institutionList,
+        instructorList,
+        appliedFilters as Record<string, any>
+      ),
     [menu, institutionList, instructorList, appliedFilters]
   )
 
@@ -421,7 +446,7 @@ export function useApplicantsDetail({
     handleInstitutionApprovalStatusChange,
     handleInstructorApprovalStatusChange,
     handleFilterChange,
-    handleSearch,
+    handleSearch: applySearch,
     handleBulkReject,
     handleBulkApprove,
     handleCancelApproval,

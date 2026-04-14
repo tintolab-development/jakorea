@@ -20,7 +20,7 @@ import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { AppButton } from '@/shared/ui/app-button'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
-import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
+import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import {
   ProgramDetailTdDivider,
   withProgramDetailTdDivider,

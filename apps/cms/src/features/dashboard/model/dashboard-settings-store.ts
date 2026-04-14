@@ -34,6 +34,7 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'faq', label: 'FAQ', path: '/admin/posts/faq' },
   { id: 'inquiries', label: '문의 사항', path: '/admin/posts/inquiries' },
   { id: 'template-management', label: '템플릿 관리', path: '/templates/form-management' },
+  { id: 'file-forms', label: '발급 양식', path: '/templates/form-management?tab=issuance-form' },
   { id: 'sponsors', label: '후원사 관리', path: '/sponsors' },
   { id: 'textbooks', label: '교재 관리', path: DASHBOARD_HOME_PATH },
   { id: 'programs-detail', label: '세부 프로그램 관리', path: '/programs' },

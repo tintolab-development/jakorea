@@ -19,6 +19,7 @@ import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
 import { ApplicationApprovalModal } from '../../../ui/detail-modal/components/application-approval-modal'
 import { useApplicantsDetail } from './use-applicants-detail'
+import './applicants-detail.css'
 import './applicant-list.css'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 

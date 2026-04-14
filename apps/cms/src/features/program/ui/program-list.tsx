@@ -5,7 +5,6 @@
 import { Table } from 'antd'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
-import type { Dayjs } from 'dayjs'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
@@ -92,11 +91,11 @@ export function ProgramList({
   const {
     table,
     pendingFilters,
-    setPendingFilters,
     applySearch: handleSearch,
     hasActiveFilters,
     displayedCount,
     antdColumns,
+    handleFilterChange,
   } = useTablePage(tableConfig, {
     data,
     searchParams,
@@ -147,34 +146,7 @@ export function ProgramList({
             tableContext.mode,
             tableContext.view === 'SCHEDULED'
           )}
-          onFilterChange={(key, value) => {
-            if (key === 'operationPeriod') {
-              const dates = value as [Dayjs, Dayjs] | null
-              setPendingFilters(prev => ({
-                ...prev,
-                operationStartDate: dates?.[0] || null,
-                operationEndDate: dates?.[1] || null,
-              }))
-            } else if (
-              tableContext.mode === 'economy' &&
-              (key === 'category' ||
-                key === 'targetLevel' ||
-                key === 'lifecycleStatus' ||
-                key === 'participantRecruitment')
-            ) {
-              setPendingFilters(prev => ({
-                ...prev,
-                [key]:
-                  value != null && String(value).trim()
-                    ? key === 'lifecycleStatus'
-                      ? (value as ProgramLifecycleStatus)
-                      : value
-                    : undefined,
-              }))
-            } else {
-              setPendingFilters(prev => ({ ...prev, [key]: value }))
-            }
-          }}
+          onFilterChange={handleFilterChange}
           onSearch={handleSearch}
           bordered={false}
           title={headerTitle}

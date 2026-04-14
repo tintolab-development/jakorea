@@ -926,7 +926,7 @@ export function SchoolDetailModal({
             participatingRow?.schoolName ?? detail.schoolName
           )}
           confirmText="취소"
-          confirmVariant="danger"
+          confirmVariant="delete"
           zIndex={1100}
         />
       )}

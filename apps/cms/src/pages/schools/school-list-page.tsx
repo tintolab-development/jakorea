@@ -5,18 +5,19 @@
  */
 
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Card, Modal } from 'antd'
 import { mockUsers } from '@/data/mock/users'
-import { UserList } from '@/features/user/ui/user-list'
+import { UserList } from '@/features/user/shared/ui/user-list'
 import { SchoolDetailModal } from '@/features/school/ui/school-detail-modal'
-import { UserCreateForm } from '@/features/user/ui/user-create-form'
+import { UserCreateForm } from '@/features/user/shared/ui/user-create-form'
 import { AppButton } from '@/shared/ui/app-button'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { useUserStore } from '@/features/user/model/user-store'
+import { useUserStore } from '@/features/user/shared/model/user-store'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
 import {
@@ -26,6 +27,11 @@ import {
 import type { User } from '@/types/user'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import './school-list-page.css'
+import {
+  useTablePage,
+  EMPTY_TABLE_PAGE_CONTEXT,
+} from '@/shared/components/table-system/model/use-table-page'
+import { createSchoolListTablePageConfig } from './school-list-table.config'
 
 interface SchoolListQueryParams extends Record<string, string | undefined> {
   search?: string
@@ -35,7 +41,8 @@ interface SchoolListQueryParams extends Record<string, string | undefined> {
 export function SchoolListPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const { params, setParams } = useQueryParams<SchoolListQueryParams>()
+  const { params } = useQueryParams<SchoolListQueryParams>()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const createUser = useUserStore(state => state.createUser)
   const deleteUser = useUserStore(state => state.deleteUser)
@@ -84,17 +91,11 @@ export function SchoolListPage() {
     ]
   }, [])
 
-  // Pending 필터 상태
-  const [pendingFilters, setPendingFilters] = useState({
-    search: params.search || '',
-    region: params.region || 'ALL',
-  })
-
   // SCHOOL 역할 사용자만 필터링
   const schoolUsers: Omit<User, 'password'>[] = useMemo(() => {
     let filtered = mockUsers
       .filter(u => u.role === 'SCHOOL')
-      .map(({ password, ...rest }) => rest)
+      .map(({ password: _password, ...rest }) => rest)
 
     if (params.search) {
       const s = params.search.toLowerCase()
@@ -115,12 +116,17 @@ export function SchoolListPage() {
     return filtered
   }, [params.search, params.region])
 
-  const handleSearch = () => {
-    setParams({
-      search: pendingFilters.search || undefined,
-      region: pendingFilters.region === 'ALL' ? undefined : pendingFilters.region,
-    })
-  }
+  const schoolListTablePageConfig = useMemo(() => createSchoolListTablePageConfig(), [])
+
+  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+    schoolListTablePageConfig,
+    {
+      data: schoolUsers,
+      searchParams,
+      setSearchParams,
+      context: EMPTY_TABLE_PAGE_CONTEXT,
+    }
+  )
 
   const handleView = (u: Omit<User, 'password'>) => {
     openDetail(u)
@@ -206,10 +212,8 @@ export function SchoolListPage() {
           search: pendingFilters.search,
           region: pendingFilters.region,
         }}
-        onFilterChange={(key, value) => {
-          setPendingFilters(prev => ({ ...prev, [key]: value }))
-        }}
-        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        onSearch={applySearch}
       />
 
       <Card className="member-table-card" bodyStyle={{ padding: 20 }}>
@@ -277,7 +281,7 @@ export function SchoolListPage() {
             bulkDeleteUsers?.length ?? (deletingUser ? 1 : 0)
           )}
           confirmText="삭제"
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       )}
     </div>

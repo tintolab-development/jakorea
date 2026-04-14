@@ -9,40 +9,48 @@ import { useCallback, useMemo } from 'react'
 export function useQueryParams<T extends Record<string, string | undefined> = Record<string, string | undefined>>() {
   const [searchParams, setSearchParams] = useSearchParams()
 
+  /** `URLSearchParams` 인스턴스는 라우터마다 렌더마다 새 참조일 수 있어, 내용 문자열로만 `params` 객체를 재생성한다. */
+  const searchParamsKey = searchParams.toString()
+
   const params = useMemo(() => {
     const result = {} as T
     searchParams.forEach((value, key) => {
       result[key as keyof T] = value as T[keyof T]
     })
     return result
-  }, [searchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams는 searchParamsKey와 동일 시점의 스냅샷으로만 읽음
+  }, [searchParamsKey])
 
   const setParam = useCallback(
     (key: keyof T, value: string | null | undefined) => {
-      const newParams = new URLSearchParams(searchParams)
-      if (value === null || value === undefined || value === '' || value === 'undefined') {
-        newParams.delete(key as string)
-      } else {
-        newParams.set(key as string, value)
-      }
-      setSearchParams(newParams, { replace: true })
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev)
+        if (value === null || value === undefined || value === '' || value === 'undefined') {
+          newParams.delete(key as string)
+        } else {
+          newParams.set(key as string, value)
+        }
+        return newParams
+      }, { replace: true })
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   )
 
   const setParams = useCallback(
     (updates: Partial<T>) => {
-      const newParams = new URLSearchParams(searchParams)
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === null || value === undefined || value === '' || value === 'undefined') {
-          newParams.delete(key)
-        } else {
-          newParams.set(key, value)
-        }
-      })
-      setSearchParams(newParams, { replace: true })
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev)
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value === null || value === undefined || value === '' || value === 'undefined') {
+            newParams.delete(key)
+          } else {
+            newParams.set(key, value)
+          }
+        })
+        return newParams
+      }, { replace: true })
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   )
 
   const clearParams = useCallback(() => {

@@ -68,9 +68,10 @@ const InstructorSchedulePage = lazyLoad(
   () => import('@/pages/instructors/instructor-schedule-page')
 )
 const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
-const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
-const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
-const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-page'))
+const DataManagementPage = lazyLoad(() => import('@/pages/data-management/data-management-page'))
+const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
+const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
+const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
 const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
 const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
@@ -214,12 +215,27 @@ export const router = createBrowserRouter([
       },
       {
         path: 'sponsors',
-        children: [
-          { index: true, element: <SponsorListPage /> },
-          { path: 'new', element: <SponsorFormPage /> },
-          { path: ':id', element: <SponsorDetailPage /> },
-          { path: ':id/edit', element: <SponsorFormPage /> },
-        ],
+        element: <Navigate to="/sponsor" replace />,
+      },
+      {
+        path: 'sponsors/*',
+        element: <Navigate to="/sponsor" replace />,
+      },
+      {
+        path: 'data-management',
+        element: <DataManagementPage />,
+      },
+      {
+        path: 'sponsor',
+        element: <SponsorDataPage />,
+      },
+      {
+        path: 'textbook',
+        element: <TextbookPage />,
+      },
+      {
+        path: 'detailed-program',
+        element: <DetailedProgramPage />,
       },
       {
         path: 'schools',
