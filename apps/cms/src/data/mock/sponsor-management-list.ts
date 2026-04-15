@@ -19,7 +19,7 @@ const SCREENSHOT_LEADING: Array<{
 }> = [
   { name: '스타벅스', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: '삼성꿈장학재단', organizationKind: 'foundation', sponsorshipStatus: 'active' },
-  { name: '한국청소년활동진흥원', organizationKind: 'institution', sponsorshipStatus: 'active' },
+  { name: '한국청소년활동진흥원', organizationKind: 'foundation', sponsorshipStatus: 'active' },
   { name: '현대 자동차', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: 'SK하이닉스', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: 'LG화학', organizationKind: 'corporate', sponsorshipStatus: 'active' },
@@ -111,7 +111,7 @@ const FILLER_BASE = [
   '한국남동발전',
 ]
 
-const KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation', 'institution']
+const KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation']
 
 const SPONSOR_ENGLISH_NAME_MAP: Record<string, string> = {
   스타벅스: 'STARBUCKS',

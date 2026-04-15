@@ -47,6 +47,14 @@ export type SponsorProgramHistoryRow = {
   educationTarget: SponsorProgramEducationTarget
 }
 
+export type SponsorProgramHistoryFilters = {
+  title: string
+  year: string
+  lifecycleStatus: string
+  educationTarget: string
+  managerName: string
+}
+
 /** 후원사 상세 풀페이지용 — 목록 행 + 표시 전용 확장 필드 */
 export type SponsorManagementDetailView = SponsorManagementRow & {
   nameDisplayKo: string

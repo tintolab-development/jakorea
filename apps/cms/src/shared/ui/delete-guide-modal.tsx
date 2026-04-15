@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER } from '@/shared/constants'
 import { CmsButton } from './cms-button'
 import { CmsInput } from './cms-input'
 import { ContentModal } from './content-modal'
@@ -44,7 +45,7 @@ export function DeleteGuideModal({
   confirmText = '삭제',
   confirmVariant = 'delete',
   requiredConfirmInput,
-  confirmInputPlaceholder = '삭제하시려면 해당란에 [삭제]를 입력해 주세요.',
+  confirmInputPlaceholder = DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   zIndex = 2500,
 }: DeleteGuideModalProps) {
   const [confirmInput, setConfirmInput] = useState('')

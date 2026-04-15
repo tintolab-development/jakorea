@@ -1,3 +1,7 @@
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
 import { DeleteGuideModal, buildDomainEntityDeleteMessageLines } from '@/shared/ui'
 
 export interface SponsorDeleteModalProps {
@@ -26,8 +30,8 @@ export function SponsorDeleteModal({
       title="후원사 삭제"
       lines={lines}
       confirmText="후원사 삭제"
-      requiredConfirmInput="삭제"
-      confirmInputPlaceholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+      requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+      confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
     />
   )
 }

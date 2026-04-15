@@ -301,7 +301,6 @@
     "shared/hooks/index.ts",
     "shared/hooks/use-breadcrumb.ts",
     "shared/hooks/use-can-access.ts",
-    "shared/hooks/use-juso-address-search.ts",
     "shared/hooks/use-list-crud.ts",
     "shared/hooks/use-list-filters.ts",
     "shared/hooks/use-modal-state.ts",

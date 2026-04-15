@@ -20,7 +20,12 @@ import { UserRoleChangeModal } from '@/features/user/shared/ui/user-role-change-
 import { UserCreateForm } from '@/features/user/shared/ui/user-create-form'
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  LAYOUT_CONSTANTS,
+  MESSAGES,
+} from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
@@ -30,13 +35,16 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import {
   DeleteGuideModal,
-  buildMemberDeleteMessageLines,
-} from '@/features/program/ui/manager-delete-guide-modal'
+  buildBulkDeleteGuideTitle,
+  buildBulkDomainDeleteMessageLines,
+  buildDomainEntityDeleteMessageLines,
+} from '@/shared/ui'
 import {
   memberListKindToBasicInfoEntrySource,
   memberListPageTitle,
   normalizeMemberListKind,
   userRoleToBasicInfoEntrySource,
+  type MemberListKind,
 } from '@/shared/config/member-list-kinds'
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
@@ -51,6 +59,49 @@ import {
   createUserListTablePageConfig,
   type UserListQueryParams,
 } from './user-list-table.config'
+
+type UserListRow = Omit<User, 'password'>
+
+function memberDeleteGuideDomain(kind: MemberListKind) {
+  switch (kind) {
+    case 'institutions':
+      return {
+        bulkCounterPhrase: '개의 학교',
+        particleTargetNoun: '학교',
+        domainLabel: '학교',
+        singleTitle: '학교 삭제',
+        confirmText: '학교 삭제',
+      }
+    case 'instructors':
+      return {
+        bulkCounterPhrase: '명의 강사',
+        particleTargetNoun: '강사',
+        domainLabel: '강사',
+        singleTitle: '강사 삭제',
+        confirmText: '강사 삭제',
+      }
+    default:
+      return {
+        bulkCounterPhrase: '명의 회원',
+        particleTargetNoun: '회원',
+        domainLabel: '회원',
+        singleTitle: '회원 삭제',
+        confirmText: '회원 삭제',
+      }
+  }
+}
+
+function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string {
+  if (kind === 'institutions') {
+    const school = u.schoolInfo?.schoolName?.trim()
+    if (school) return school
+  }
+  const name = u.name?.trim()
+  if (name) return name
+  const email = u.email?.trim()
+  if (email) return email
+  return '(이름 없음)'
+}
 
 export function UserListPage() {
   const { params, setParams } = useQueryParams<UserListQueryParams>()
@@ -100,12 +151,15 @@ export function UserListPage() {
     []
   )
 
-  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(userListTablePageConfig, {
-    data: listUsers,
-    searchParams,
-    setSearchParams,
-    context: EMPTY_TABLE_PAGE_CONTEXT,
-  })
+  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+    userListTablePageConfig,
+    {
+      data: listUsers,
+      searchParams,
+      setSearchParams,
+      context: EMPTY_TABLE_PAGE_CONTEXT,
+    }
+  )
 
   // Drawer 상태 관리 (useModalState 사용) — 행 클릭 시 열리는 회원 상세
   const {
@@ -160,6 +214,31 @@ export function UserListPage() {
   const selectedUser = useUserStore(state => selectSelectedUser(state))
 
   const resolvedMemberListKind = useMemo(() => normalizeMemberListKind(params.kind), [params.kind])
+
+  const deleteTargets = useMemo((): UserListRow[] => {
+    if (bulkDeleteUsers && bulkDeleteUsers.length > 0) return bulkDeleteUsers
+    if (deletingUser) return [deletingUser]
+    return []
+  }, [bulkDeleteUsers, deletingUser])
+
+  const memberDeleteGuide = useMemo(() => {
+    if (deleteTargets.length === 0) return null
+    const domain = memberDeleteGuideDomain(resolvedMemberListKind)
+    const isMulti = deleteTargets.length >= 2
+    const title = isMulti ? buildBulkDeleteGuideTitle(domain.domainLabel) : domain.singleTitle
+    const lines = isMulti
+      ? buildBulkDomainDeleteMessageLines(
+          deleteTargets.length,
+          domain.bulkCounterPhrase,
+          domain.particleTargetNoun,
+          domain.domainLabel
+        )
+      : buildDomainEntityDeleteMessageLines(
+          [displayNameForUserDelete(resolvedMemberListKind, deleteTargets[0])],
+          domain.domainLabel
+        )
+    return { title, lines, confirmText: domain.confirmText }
+  }, [deleteTargets, resolvedMemberListKind])
 
   const userListFilterFields = useMemo(
     () => getUserListFilterFields(resolvedMemberListKind),
@@ -422,99 +501,89 @@ export function UserListPage() {
 
   return (
     <div>
-      <div className="user-list-page__filter-wrap">
-        <FilterTableLayout
-          bordered={false}
-          fields={userListFilterFields}
-          filters={
-            resolvedMemberListKind === 'institutions'
+      <FilterTableLayout
+        bordered={false}
+        fields={userListFilterFields}
+        filters={
+          resolvedMemberListKind === 'institutions'
+            ? {
+                search: pendingFilters.search,
+                institutionLocation: pendingFilters.institutionLocation,
+                createdAtRange: pendingFilters.createdAtRange ?? undefined,
+              }
+            : resolvedMemberListKind === 'instructors'
               ? {
                   search: pendingFilters.search,
-                  institutionLocation: pendingFilters.institutionLocation,
+                  instructorType: pendingFilters.instructorType,
+                  settlementStatus: pendingFilters.settlementStatus,
                   createdAtRange: pendingFilters.createdAtRange ?? undefined,
                 }
-              : resolvedMemberListKind === 'instructors'
+              : resolvedMemberListKind === 'admins'
                 ? {
                     search: pendingFilters.search,
-                    instructorType: pendingFilters.instructorType,
-                    settlementStatus: pendingFilters.settlementStatus,
+                    adminPermissionVariant: pendingFilters.adminPermissionVariant,
                     createdAtRange: pendingFilters.createdAtRange ?? undefined,
                   }
-                : resolvedMemberListKind === 'admins'
-                  ? {
-                      search: pendingFilters.search,
-                      adminPermissionVariant: pendingFilters.adminPermissionVariant,
-                      createdAtRange: pendingFilters.createdAtRange ?? undefined,
-                    }
-                  : {
-                      search: pendingFilters.search,
-                      role: pendingFilters.role,
-                      createdAtRange: pendingFilters.createdAtRange ?? undefined,
-                    }
-          }
-          onFilterChange={handleFilterChange}
-          onSearch={applySearch}
-          loading={listLoading}
-          title={memberListPageTitle(resolvedMemberListKind)}
-          description={`총 ${listTotal.toLocaleString()}건`}
-          actions={
-            <>
-              <CmsButton
-                variant="delete"
-                onClick={() => {
-                  const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
-                  if (toDelete.length === 0) return
-                  // if (toDelete.length === 1) {
-                  //   setDeletingUser(toDelete[0])
-                  //   setBulkDeleteUsers(null)
-                  // } else {
-                  //   setDeletingUser(null)
-                  //   setBulkDeleteUsers(toDelete)
-                  // }
-                  window.alert('준비 중입니다')
-
-                  // setDeleteModalOpen(true)
-                }}
-                disabled={selectedRowKeys.length === 0}
-              >
+                : {
+                    search: pendingFilters.search,
+                    role: pendingFilters.role,
+                    createdAtRange: pendingFilters.createdAtRange ?? undefined,
+                  }
+        }
+        onFilterChange={handleFilterChange}
+        onSearch={applySearch}
+        loading={listLoading}
+        title={memberListPageTitle(resolvedMemberListKind)}
+        description={`총 ${listTotal.toLocaleString()}건`}
+        actions={
+          <>
+            <CmsButton
+              variant="delete"
+              onClick={() => {
+                const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
+                if (toDelete.length === 0) return
+                if (toDelete.length === 1) {
+                  setDeletingUser(toDelete[0])
+                  setBulkDeleteUsers(null)
+                } else {
+                  setDeletingUser(null)
+                  setBulkDeleteUsers(toDelete)
+                }
+                setDeleteModalOpen(true)
+              }}
+              disabled={selectedRowKeys.length === 0}
+            >
+              {resolvedMemberListKind === 'institutions'
+                ? '학교 삭제'
+                : resolvedMemberListKind === 'instructors'
+                  ? '강사 삭제'
+                  : '회원 삭제'}
+            </CmsButton>
+            {canWrite && (
+              <CmsButton onClick={() => window.alert('준비 중입니다')}>
                 {resolvedMemberListKind === 'institutions'
-                  ? '학교 삭제'
+                  ? '학교 등록'
                   : resolvedMemberListKind === 'instructors'
-                    ? '강사 삭제'
-                    : '회원 삭제'}
+                    ? '강사 등록'
+                    : '회원 등록'}
               </CmsButton>
-              {canWrite && (
-                <CmsButton onClick={() => window.alert('준비 중입니다')}>
-                  {resolvedMemberListKind === 'institutions'
-                    ? '학교 등록'
-                    : resolvedMemberListKind === 'instructors'
-                      ? '강사 등록'
-                      : '회원 등록'}
-                </CmsButton>
-              )}
-            </>
-          }
-        >
-          <div className="program-list-content-wrapper__table">
-            <UserList
-              listKind={resolvedMemberListKind}
-              data={listUsers}
-              loading={false}
-              onView={handleView}
-              onEdit={handleEdit}
-              onDelete={canWrite ? handleDeleteClick : undefined}
-              selectedRowKeys={selectedRowKeys}
-              onSelectionChange={setSelectedRowKeys}
-              pagination={false}
-            />
-          </div>
-          <div ref={loadMoreRef} className="user-list-page__load-more-sentinel" aria-hidden>
-            {isFetchingNextPage && (
-              <div className="user-list-page__load-more-spinner">불러오는 중...</div>
             )}
-          </div>
-        </FilterTableLayout>
-      </div>
+          </>
+        }
+      >
+        <UserList
+          listKind={resolvedMemberListKind}
+          data={listUsers}
+          loading={false}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={canWrite ? handleDeleteClick : undefined}
+          selectedRowKeys={selectedRowKeys}
+          onSelectionChange={setSelectedRowKeys}
+          pagination={false}
+        />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+      </FilterTableLayout>
 
       <UserDetailFullPageModal
         open={userDetailModalOpen}
@@ -554,18 +623,17 @@ export function UserListPage() {
         <UserCreateForm onSubmit={handleCreateUser} onCancel={closeCreateModal} loading={loading} />
       </Modal>
 
-      {deleteModalOpen && (
+      {deleteModalOpen && memberDeleteGuide && (
         <DeleteGuideModal
           open
           onCancel={handleDeleteCancel}
           onConfirm={handleDeleteConfirm}
-          title="회원 삭제 안내"
-          lines={buildMemberDeleteMessageLines(
-            deletingUser ? { name: deletingUser.name, email: deletingUser.email } : null,
-            bulkDeleteUsers?.length ?? (deletingUser ? 1 : 0)
-          )}
-          confirmText="삭제"
+          title={memberDeleteGuide.title}
+          lines={memberDeleteGuide.lines}
+          confirmText={memberDeleteGuide.confirmText}
           confirmVariant="delete"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
     </div>

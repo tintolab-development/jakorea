@@ -36,7 +36,11 @@ export type {
   NeisSchoolItem,
   NeisSchoolRow,
 } from './use-neis-school-search'
-export { useJusoAddressSearch } from './use-juso-address-search'
+export {
+  useJusoAddressSearch,
+  JUSO_BUSINESS_ADDR_LINK_API_URL,
+  readJusoConfmKeyFromEnv,
+} from './use-juso-address-search'
 export type {
   UseJusoAddressSearchOptions,
   UseJusoAddressSearchReturn,

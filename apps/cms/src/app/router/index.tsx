@@ -111,7 +111,6 @@ const EducationRecordListPage = lazyLoad(
   () => import('@/pages/education-records/education-record-list-page')
 )
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
-const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
 const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
@@ -379,7 +378,6 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/users/list?kind=all" replace /> },
           { path: 'list', element: <UserListPage /> },
-          { path: 'participants', element: <ParticipantListPage /> },
           {
             path: 'instructors',
             element: <Navigate to="/users/list?kind=instructors" replace />,

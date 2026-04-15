@@ -17,6 +17,10 @@ import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -424,8 +428,8 @@ export default function DetailedProgramPage() {
         title="세부 프로그램 삭제"
         lines={viewDeleteModalLines}
         confirmText="세부 프로그램 삭제"
-        requiredConfirmInput="삭제"
-        confirmInputPlaceholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+        confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         onCancel={() => setViewDeleteModalOpen(false)}
         onConfirm={() => {
           const removeIds = new Set(viewDeletePendingIdsRef.current)

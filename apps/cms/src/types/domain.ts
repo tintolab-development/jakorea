@@ -13,8 +13,8 @@ export interface SponsorManager {
   phone: string
 }
 
-/** 후원사 관리 목록 — 구분(기업 / 재단 / 기관) */
-export type SponsorOrganizationKind = 'corporate' | 'foundation' | 'institution'
+/** 후원사 관리 목록 — 구분(기업 / 재단) */
+export type SponsorOrganizationKind = 'corporate' | 'foundation'
 
 /** 후원사 관리 목록 — 후원 상태 */
 export type SponsorSponsorshipStatus = 'active' | 'ended'
@@ -31,7 +31,7 @@ export interface Sponsor {
   securityMemo?: string // 보안/정책 메모
   createdAt: DateValue
   updatedAt: DateValue
-  /** 기업 / 재단 / 기관 (후원사 관리) */
+  /** 기업 / 재단 (후원사 관리) */
   organizationKind?: SponsorOrganizationKind
   /** 진행 중 / 후원 종료 (후원사 관리) */
   sponsorshipStatus?: SponsorSponsorshipStatus

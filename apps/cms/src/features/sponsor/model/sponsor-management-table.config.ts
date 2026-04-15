@@ -10,7 +10,7 @@ import type {
 } from './sponsor-management.types'
 
 function parseKind(raw: string | null): 'ALL' | SponsorOrganizationKind {
-  if (raw === 'corporate' || raw === 'foundation' || raw === 'institution') return raw
+  if (raw === 'corporate' || raw === 'foundation') return raw
   return 'ALL'
 }
 

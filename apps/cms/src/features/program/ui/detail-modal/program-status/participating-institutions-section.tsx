@@ -30,6 +30,10 @@ import { useParticipatingInstitutionsParams } from '../../../hooks/use-participa
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import { Divider } from '@/shared/components/divider'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { SchoolDetailModal } from '../../school-detail-modal'
 import {
@@ -642,7 +646,8 @@ export function ParticipatingInstitutionsSection({
           lines={buildParticipatingInstitutionDeleteMessageLines(schoolNamesToDelete)}
           confirmText="삭제"
           confirmVariant="delete"
-          requiredConfirmInput="삭제"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
       {bulkConfirmModal === 'approve' && (

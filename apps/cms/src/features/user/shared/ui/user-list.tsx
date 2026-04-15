@@ -285,42 +285,40 @@ export function UserList({
   const columns = useMemo(() => columnsForKind(listKind), [listKind])
 
   return (
-    <div className="program-list-table-wrapper">
-      <Table
-        className={`cms-data-table`}
-        columns={columns}
-        dataSource={data}
-        loading={loading}
-        rowKey="id"
-        onRow={
-          onView
-            ? record => ({
-                onClick: (e: React.MouseEvent<HTMLElement>) => {
-                  if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-                  onView(record)
-                },
-                style: { cursor: 'pointer' },
-              })
-            : undefined
-        }
-        rowSelection={
-          onSelectionChange
-            ? {
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                selectedRowKeys,
-                onChange: keys => onSelectionChange(keys as string[]),
-              }
-            : undefined
-        }
-        pagination={
-          pagination
-            ? {
-                ...PAGINATION_CONFIG,
-                showTotal: (total: number) => `총 ${total}명`,
-              }
-            : false
-        }
-      />
-    </div>
+    <Table
+      className={`cms-data-table`}
+      columns={columns}
+      dataSource={data}
+      loading={loading}
+      rowKey="id"
+      onRow={
+        onView
+          ? record => ({
+              onClick: (e: React.MouseEvent<HTMLElement>) => {
+                if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                onView(record)
+              },
+              style: { cursor: 'pointer' },
+            })
+          : undefined
+      }
+      rowSelection={
+        onSelectionChange
+          ? {
+              columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+              selectedRowKeys,
+              onChange: keys => onSelectionChange(keys as string[]),
+            }
+          : undefined
+      }
+      pagination={
+        pagination
+          ? {
+              ...PAGINATION_CONFIG,
+              showTotal: (total: number) => `총 ${total}명`,
+            }
+          : false
+      }
+    />
   )
 }

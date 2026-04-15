@@ -2,9 +2,9 @@
  * 관리자 회원 상세 — 담당 프로그램 이력 (필터 + 테이블)
  */
 
-import { useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program, TargetLevel } from '@/types/domain'
 import type { User } from '@/types/user'
@@ -19,7 +19,11 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { adminManagedProgramTablePageConfig } from './admin-managed-program-table.config'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
-import { AppButton } from '@/shared/ui/app-button'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
+import { CmsButton, DeleteGuideModal, buildProgramProgressHistoryDeleteGuide } from '@/shared/ui'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
 import '@/features/program/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
@@ -95,6 +99,13 @@ export interface AdminManagedProgramHistoryProps {
 export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const sourcePrograms = useMemo(() => resolveManagedPrograms(user), [user])
+
+  const [localPrograms, setLocalPrograms] = useState<Program[]>(() => sourcePrograms)
+  useEffect(() => {
+    setLocalPrograms([...sourcePrograms])
+  }, [sourcePrograms])
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
   const yearOptions = useMemo(() => buildProgressYearSelectOptions(ALL), [])
 
@@ -175,13 +186,40 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     displayedCount,
     tableData,
   } = useTablePage(adminManagedProgramTablePageConfig, {
-    data: sourcePrograms,
+    data: localPrograms,
     searchParams,
     setSearchParams,
     context: tableContext,
   })
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+
+  const selectedPrograms = useMemo(() => {
+    const keySet = new Set(selectedRowKeys.map(k => String(k)))
+    return tableData.filter(p => keySet.has(p.id))
+  }, [tableData, selectedRowKeys])
+
+  const deleteGuide = useMemo(() => {
+    return buildProgramProgressHistoryDeleteGuide(
+      selectedPrograms.map(p => (p.title?.trim() ? p.title.trim() : '(제목 없음)'))
+    )
+  }, [selectedPrograms])
+
+  const handleOpenDeleteModal = useCallback((): void => {
+    if (selectedRowKeys.length === 0) return
+    setDeleteModalOpen(true)
+  }, [selectedRowKeys.length])
+
+  const handleDeleteCancel = useCallback((): void => {
+    setDeleteModalOpen(false)
+  }, [])
+
+  const handleDeleteConfirm = useCallback((): void => {
+    const idSet = new Set(selectedRowKeys.map(k => String(k)))
+    setLocalPrograms(prev => prev.filter(p => !idSet.has(p.id)))
+    setSelectedRowKeys([])
+    setDeleteModalOpen(false)
+  }, [selectedRowKeys])
 
   const columns: ColumnsType<Program> = useMemo(
     () => [
@@ -247,47 +285,53 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
   )
 
   return (
-    <FilterTableLayout
-      bordered={false}
-      fields={filterFields}
-      filters={{
-        title: pendingFilters.title,
-        year: pendingFilters.year || undefined,
-        lifecycle: pendingFilters.lifecycle || undefined,
-        participantType: pendingFilters.participantType || undefined,
-        targetLevel: pendingFilters.targetLevel || undefined,
-      }}
-      onFilterChange={handleFilterChange}
-      onSearch={handleSearch}
-      title="프로그램 진행 이력"
-      description={`총 ${displayedCount}건`}
-      actions={
-        <AppButton
-          variant="danger"
-          size="filter"
-          dangerFillOnHover
-          className="program-list-page__bulk-delete-button"
-          disabled={selectedRowKeys.length === 0}
-          onClick={() => {
-            message.info('이력 삭제는 추후 연결됩니다.')
-          }}
-        >
-          이력 삭제
-        </AppButton>
-      }
-    >
-      <Table<Program>
-        rowSelection={{
-          selectedRowKeys,
-          onChange: keys => setSelectedRowKeys(keys),
+    <>
+      <FilterTableLayout
+        bordered={false}
+        fields={filterFields}
+        filters={{
+          title: pendingFilters.title,
+          year: pendingFilters.year || undefined,
+          lifecycle: pendingFilters.lifecycle || undefined,
+          participantType: pendingFilters.participantType || undefined,
+          targetLevel: pendingFilters.targetLevel || undefined,
         }}
-        dataSource={tableData}
-        columns={columns}
-        rowKey="id"
-        scroll={{ x: 'max-content' }}
-        pagination={false}
-        className="cms-data-table cms-data-table--fluid"
-      />
-    </FilterTableLayout>
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+        title="프로그램 진행 이력"
+        description={`총 ${displayedCount}건`}
+        actions={
+          <CmsButton variant="delete" disabled={selectedRowKeys.length === 0} onClick={handleOpenDeleteModal}>
+            이력 삭제
+          </CmsButton>
+        }
+      >
+        <Table<Program>
+          rowSelection={{
+            selectedRowKeys,
+            onChange: keys => setSelectedRowKeys(keys),
+          }}
+          dataSource={tableData}
+          columns={columns}
+          rowKey="id"
+          scroll={{ x: 'max-content' }}
+          pagination={false}
+          className="cms-data-table cms-data-table--fluid"
+        />
+      </FilterTableLayout>
+      {deleteModalOpen && deleteGuide && (
+        <DeleteGuideModal
+          open
+          onCancel={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          title={deleteGuide.title}
+          lines={deleteGuide.lines}
+          confirmText="삭제"
+          confirmVariant="delete"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+        />
+      )}
+    </>
   )
 }

@@ -42,7 +42,6 @@ export function Sidebar() {
     if (
       user?.role === 'ADMIN' &&
       (path.startsWith('/users/list') ||
-        path.startsWith('/users/participants') ||
         path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members') ||
