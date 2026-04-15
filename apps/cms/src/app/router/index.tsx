@@ -68,7 +68,6 @@ const InstructorSchedulePage = lazyLoad(
   () => import('@/pages/instructors/instructor-schedule-page')
 )
 const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
-const DataManagementPage = lazyLoad(() => import('@/pages/data-management/data-management-page'))
 const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
 const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
 const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
@@ -223,7 +222,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'data-management',
-        element: <DataManagementPage />,
+        element: <Navigate to="/sponsor" replace />,
       },
       {
         path: 'sponsor',

@@ -1,10 +1,11 @@
 /**
  * 테이블 상단 필터 그룹 (UnifiedFilterCard와 동일 레이아웃·스타일)
- * - 날짜 구간: 부모 `onFilterChange`로 직접 반영 (end 잠금/직렬화 동기화 없음)
- * - dateRange 기본값은 `filters[key] == null && defaultValue !== null`일 때만 시드
+ * - search: 로컬 `searchDrafts` → 조회 시 `flushSync`로 부모 `onFilterChange` 반영 후 `onSearch`(applySearch)
+ * - dateRange: 부모 `onFilterChange` 직접 반영 · 기본값은 `filters[key] == null && defaultValue !== null`일 때만 시드
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Row, Col, Space } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
@@ -119,26 +120,21 @@ export function TableFilterGroup({
     })
   }, [filters, filtersSearchSignature, searchFieldKeys])
 
-  const searchDraftsRef = useRef(searchDrafts)
   const onSearchRef = useRef(onSearch)
-  useEffect(() => {
-    searchDraftsRef.current = searchDrafts
+  useLayoutEffect(() => {
     onSearchRef.current = onSearch
-  }, [searchDrafts, onSearch])
+  }, [onSearch])
 
   const flushSearchToParentAndSearch = useCallback(() => {
-    for (const f of filterRowFields) {
-      if (f.type === 'search') {
-        onFilterChange(f.key, searchDraftsRef.current[f.key] ?? '')
+    flushSync(() => {
+      for (const f of filterRowFields) {
+        if (f.type === 'search') {
+          onFilterChange(f.key, searchDrafts[f.key] ?? '')
+        }
       }
-    }
-    const run = () => onSearchRef.current()
-    if (typeof globalThis !== 'undefined' && typeof globalThis.setTimeout === 'function') {
-      globalThis.setTimeout(run, 0)
-    } else {
-      run()
-    }
-  }, [filterRowFields, onFilterChange])
+    })
+    onSearchRef.current()
+  }, [filterRowFields, onFilterChange, searchDrafts])
 
   useEffect(() => {
     for (const field of filterRowFields) {

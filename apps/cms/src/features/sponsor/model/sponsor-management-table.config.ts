@@ -58,14 +58,14 @@ const searchSyncRules: readonly TableSearchParamRule<SponsorManagementPendingFil
     kind: 'param',
     filterKey: 'sponsorName',
     paramKey: 'sp_name',
-    condition: f => f.sponsorName.trim().length > 0,
+    condition: f => (f.sponsorName ?? '').trim().length > 0,
     transform: v => String(v).trim(),
   },
   {
     kind: 'param',
     filterKey: 'managerName',
     paramKey: 'sp_mgr',
-    condition: f => f.managerName.trim().length > 0,
+    condition: f => (f.managerName ?? '').trim().length > 0,
     transform: v => String(v).trim(),
   },
   {

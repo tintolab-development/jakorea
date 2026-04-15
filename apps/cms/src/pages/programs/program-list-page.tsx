@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Modal } from 'antd'
+import { App } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { useProgramStore } from '@/features/program/model/program-store'
@@ -31,6 +31,7 @@ import './program-list-page.css'
 import { CmsButton } from '@/shared/ui'
 
 export function ProgramListPage() {
+  const { modal } = App.useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isAuthenticated } = useAuthStore()
@@ -225,7 +226,7 @@ export function ProgramListPage() {
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
     if (programsToDelete.length === 0) return
-    Modal.confirm({
+    modal.confirm({
       title: '선택 삭제',
       content: `선택한 ${programsToDelete.length}건을 삭제하시겠습니까?`,
       okText: '삭제',
