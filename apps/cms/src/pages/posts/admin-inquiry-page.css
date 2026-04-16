@@ -1,0 +1,59 @@
+/**
+ * 문의내역 관리 — 공지 목록과 동일 FilterTableLayout 래퍼 간격
+ */
+
+.admin-inquiry-page {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.admin-inquiry-page .filter-table-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.admin-inquiry-page__table.cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
+.admin-inquiry-page__table.cms-data-table .ant-table-tbody > tr > td {
+  box-sizing: border-box !important;
+  padding: 12px 16px !important;
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.admin-inquiry-page__table.cms-data-table .ant-table-thead > tr > th {
+  background: #edf0f2;
+}
+
+/* No. 열 — 80px */
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-no,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-no {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+}
+
+.admin-inquiry-page__table.cms-data-table .admin-inquiry-page__cell--title {
+  text-align: left;
+}
+
+/* 답변 대기·답변 완료 공통 타이포 */
+.admin-inquiry-page__status {
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 답변 대기 텍스트 스펙 */
+.admin-inquiry-page__status--pending {
+  color: var(--color-green, #1e8c29);
+}
+
+.admin-inquiry-page__status--answered {
+  color: inherit;
+}
+
+.admin-inquiry-page__row--clickable {
+  cursor: pointer;
+}
