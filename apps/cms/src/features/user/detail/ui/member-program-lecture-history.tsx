@@ -139,14 +139,6 @@ function deriveVolunteerDisplayStatus(history: UserHistory): ProgramEnrollmentDi
   return getEffectiveEnrollmentDisplayStatus('submitted', undefined, program?.lifecycleStatus)
 }
 
-function volunteerCertificateEnabled(history: UserHistory): boolean {
-  if (history.finalStatus === 'CANCELLED') return false
-  return (
-    (history.finalStatus === 'COMPLETED' || history.finalStatus === 'CONFIRMED') &&
-    (history.certificates?.length ?? 0) > 0
-  )
-}
-
 export function MemberProgramLectureHistory({
   applications = [],
   volunteerHistories = [],
