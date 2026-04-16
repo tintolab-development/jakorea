@@ -50,10 +50,15 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 Ant Design 테마 커스터마이징은 `ConfigProvider`의 `theme` prop을 통해 설정합니다.
 전역 스타일은 `src/index.css`에서 관리합니다.
 
+## Modals (viewport)
+
+Center all modals relative to the **full browser viewport**, not only the main content column. See [Modal viewport centering](../design/modal-viewport-centering.md).
+
 ## 관련 규칙
 
 - [커스텀 SVG 아이콘](../design/svg-icons.md) — Ant Design에 없는 디자인 전용 SVG는 `shared/ui/icons`에서 관리
 - [UI 원칙](../design/ui-principles.md)
 - [컴포넌트 패턴](../coding/component-patterns.md)
 - [이벤트 처리](../design/event-handling.md)
+- 관리자 **공지 등록·수정**처럼 `Form` + `ContentModal`을 쓰는 화면의 치수·간격: [admin-notice-form-modal-spec.md](../process/admin-notice-form-modal-spec.md)
 
