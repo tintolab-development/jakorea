@@ -529,6 +529,8 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '대전중앙고등학교',
     role: 'SCHOOL',
+    /** CMS 데모: 관리자 등록 학교 — 소속 교사 연동 전 타이틀 안내·기본정보 수정 허용 */
+    registeredByAdmin: true,
     schoolInfo: {
       schoolName: '대전중앙고등학교',
       address: '대전광역시 중구 대종로 200',

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type Key } from 'react'
-import { App, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -66,7 +66,6 @@ function coerceRadioBoolean(raw: unknown): boolean {
 }
 
 export default function DetailedProgramPage() {
-  const { message } = App.useApp()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -87,6 +86,7 @@ export default function DetailedProgramPage() {
   const [viewDeleteModalLines, setViewDeleteModalLines] = useState<string[]>([])
   const viewDeletePendingIdsRef = useRef<string[]>([])
   const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
+  const [deleteBlockedSelectedCount, setDeleteBlockedSelectedCount] = useState(1)
 
   const { pendingFilters, applySearch, handleFilterChange, displayedCount, tableData } =
     useTablePage(detailedProgramManagementTablePageConfig, {
@@ -98,11 +98,10 @@ export default function DetailedProgramPage() {
 
   const handleSearch = useCallback(() => {
     if (isEditMode) {
-      message.warning('편집을 마치려면 저장을 눌러 주세요.')
       return
     }
     applySearch()
-  }, [applySearch, isEditMode, message])
+  }, [applySearch, isEditMode])
 
   const enterEditMode = useCallback(() => {
     setStagedDeleteIds([])
@@ -127,7 +126,6 @@ export default function DetailedProgramPage() {
     const staged = new Set(stagedDeleteIds)
     const emptyNameId = Object.entries(drafts).find(([id, d]) => !staged.has(id) && !d.name.trim())
     if (emptyNameId) {
-      message.error('세부 프로그램명을 모두 입력해 주세요.')
       return
     }
 
@@ -145,8 +143,7 @@ export default function DetailedProgramPage() {
     })
     exitEditMode()
     setSelectedRowKeys([])
-    message.success('저장되었습니다.')
-  }, [exitEditMode, message, stagedDeleteIds])
+  }, [exitEditMode, stagedDeleteIds])
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite || selectedRowKeys.length === 0) return
@@ -156,14 +153,13 @@ export default function DetailedProgramPage() {
 
     if (isEditMode) {
       const blockedEdit = selectedRows.filter(r => r.inUse)
-      const deletableEdit = selectedRows.filter(r => !r.inUse)
-
-      if (deletableEdit.length === 0) {
+      if (blockedEdit.length > 0) {
+        setDeleteBlockedSelectedCount(selectedRows.length)
         setDeleteBlockedModalOpen(true)
         return
       }
 
-      const idsToStage = deletableEdit.map(r => r.id)
+      const idsToStage = selectedRows.map(r => r.id)
       setStagedDeleteIds(prev => [...new Set([...prev, ...idsToStage])])
       setDraftById(prev => {
         const next = { ...prev }
@@ -174,42 +170,25 @@ export default function DetailedProgramPage() {
         return next
       })
       setSelectedRowKeys([])
-      if (blockedEdit.length > 0) {
-        message.warning(
-          '사용 중인 항목은 제외했습니다. 나머지는 목록에서 숨겼으며, 삭제를 확정하려면 저장을 눌러 주세요.'
-        )
-      } else {
-        message.info('목록에서 숨겼습니다. 삭제를 확정하려면 저장을 눌러 주세요.')
-      }
       return
     }
 
     const blocked = selectedRows.filter(r => r.inUse)
-    const deletable = selectedRows.filter(r => !r.inUse)
-
-    if (deletable.length === 0) {
+    if (blocked.length > 0) {
+      setDeleteBlockedSelectedCount(selectedRows.length)
       setDeleteBlockedModalOpen(true)
       return
     }
 
     const baseLines = buildDomainEntityDeleteMessageLines(
-      deletable.map(r => r.name),
+      selectedRows.map(r => r.name),
       '세부 프로그램'
     )
-    const lines =
-      blocked.length > 0
-        ? [
-            `실적 관리에서 사용 중인 ${blocked.length}건은 제외되며,`,
-            '삭제 가능한 항목만 아래 안내에 따라 삭제됩니다.',
-            ' ',
-            ...baseLines,
-          ]
-        : baseLines
 
-    viewDeletePendingIdsRef.current = deletable.map(r => r.id)
-    setViewDeleteModalLines(lines)
+    viewDeletePendingIdsRef.current = selectedRows.map(r => r.id)
+    setViewDeleteModalLines(baseLines)
     setViewDeleteModalOpen(true)
-  }, [canWrite, isEditMode, message, rows, selectedRowKeys])
+  }, [canWrite, isEditMode, rows, selectedRowKeys])
 
   const handleAddClick = useCallback(() => {
     if (!canWrite) return
@@ -233,7 +212,7 @@ export default function DetailedProgramPage() {
       setRows(prev => [row, ...prev])
       setAddItemModalOpen(false)
     },
-    [canWrite, message, rows, user?.name]
+    [canWrite, rows, user?.name]
   )
 
   const updateDraft = useCallback((id: string, patch: Partial<DetailedProgramDraft>) => {
@@ -407,12 +386,27 @@ export default function DetailedProgramPage() {
       <ContentModal
         open={deleteBlockedModalOpen}
         onCancel={() => setDeleteBlockedModalOpen(false)}
-        title="삭제할 수 없습니다"
+        title="세부 프로그램 삭제 불가 안내"
         width={480}
-        description="선택한 항목은 실적 관리에서 사용 중인 세부 프로그램이라 삭제할 수 없습니다."
+        description={
+          deleteBlockedSelectedCount <= 1 ? (
+            <span className="fs-16">
+              해당 세부 프로그램은 실적 관리에서 사용 중입니다.
+              <br />
+              사용 중인 세부 프로그램은 삭제할 수 없습니다.
+            </span>
+          ) : (
+            <span className="fs-16">
+              선택한 {deleteBlockedSelectedCount}개의 세부 프로그램 중 실적 관리에서 사용 중인
+              항목이 있습니다.
+              <br />
+              사용 중인 세부 프로그램은 삭제할 수 없습니다.
+            </span>
+          )
+        }
         footer={
           <CmsButton
-            variant="primary"
+            variant="secondary"
             size="medium"
             type="button"
             onClick={() => setDeleteBlockedModalOpen(false)}

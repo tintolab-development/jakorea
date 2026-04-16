@@ -167,6 +167,8 @@ export type PatchUserBasicInfoInput = Partial<
     | 'birthDate'
     | 'socialAccounts'
     | 'adminComment'
+    | 'schoolInfo'
+    | 'listMetrics'
   >
 >
 
@@ -194,6 +196,29 @@ export async function patchUserBasicInfo(
   if (patch.socialAccounts !== undefined) user.socialAccounts = patch.socialAccounts
   if (Object.prototype.hasOwnProperty.call(patch, 'adminComment')) {
     user.adminComment = patch.adminComment
+  }
+  if (patch.schoolInfo != null && user.role === 'SCHOOL') {
+    const base = user.schoolInfo ?? { schoolName: user.name, address: '' }
+    const p = patch.schoolInfo
+    user.schoolInfo = {
+      ...base,
+      ...(p.schoolName !== undefined ? { schoolName: p.schoolName } : {}),
+      ...(p.address !== undefined ? { address: p.address } : {}),
+      ...(p.position !== undefined ? { position: p.position } : {}),
+      ...(p.affiliatedTeachers !== undefined ? { affiliatedTeachers: p.affiliatedTeachers } : {}),
+    }
+    if (p.schoolName !== undefined && String(p.schoolName).trim() !== '') {
+      user.name = String(p.schoolName).trim()
+    }
+  }
+  if (patch.listMetrics != null) {
+    const prev = user.listMetrics ?? {}
+    user.listMetrics = {
+      ...prev,
+      ...Object.fromEntries(
+        Object.entries(patch.listMetrics).filter(([, v]) => v !== undefined)
+      ),
+    }
   }
   user.updatedAt = new Date().toISOString()
 

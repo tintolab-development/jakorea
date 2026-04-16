@@ -17,6 +17,7 @@ import {
 import { PermissionHeaderActions } from './permission-header-actions'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   parseUserBasicInfoEntryQuery,
   resolveUserBasicInfoBodyKey,
@@ -87,40 +88,53 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
   )
   const showMemberInlineEdit =
     shouldShowCmsMemberInfoEditButton(displayUser) && basicBodyKey === 'all_users'
+  const showSchoolInstitutionInlineEdit =
+    displayUser.role === 'SCHOOL' && basicBodyKey === 'institution'
+  const showSchoolTeacherAdminCommentEdit =
+    Boolean(onWithdraw) &&
+    displayUser.role === 'INSTRUCTOR' &&
+    (resolveInstructorMemberProfile(displayUser) ?? 'instructor_only') === 'school_teacher' &&
+    basicBodyKey === 'instructor'
 
-  const memberEditCluster = showMemberInlineEdit ? (
-    pageShell.basicInfoEditing ? (
-      <>
-        <CmsButton
-          key="member-info-cancel"
-          size="medium"
-          variant="secondary"
-          onClick={pageShell.onCancelBasicInfoEdit}
-        >
-          취소
-        </CmsButton>
-        <CmsButton
-          key="member-info-save"
-          size="medium"
-          variant="primary"
-          loading={pageShell.basicInfoSaveLoading}
-          onClick={() => {
-            void pageShell.onSaveBasicInfoEdit()
-          }}
-        >
-          저장
-        </CmsButton>
-      </>
-    ) : (
+  const showInlineEditStart =
+    !pageShell.basicInfoEditing &&
+    (showMemberInlineEdit || showSchoolInstitutionInlineEdit || showSchoolTeacherAdminCommentEdit)
+
+  const showInlineEditControls =
+    pageShell.basicInfoEditing &&
+    (showMemberInlineEdit || showSchoolInstitutionInlineEdit || showSchoolTeacherAdminCommentEdit)
+
+  const inlineEditCluster = showInlineEditControls ? (
+    <>
       <CmsButton
-        key="member-info-edit"
+        key="basic-info-cancel"
         size="medium"
         variant="secondary"
-        onClick={pageShell.onStartBasicInfoEdit}
+        onClick={pageShell.onCancelBasicInfoEdit}
       >
-        정보 수정
+        취소
       </CmsButton>
-    )
+      <CmsButton
+        key="basic-info-save"
+        size="medium"
+        variant="primary"
+        loading={pageShell.basicInfoSaveLoading}
+        onClick={() => {
+          void pageShell.onSaveBasicInfoEdit()
+        }}
+      >
+        저장
+      </CmsButton>
+    </>
+  ) : showInlineEditStart ? (
+    <CmsButton
+      key="basic-info-edit"
+      size="medium"
+      variant="secondary"
+      onClick={pageShell.onStartBasicInfoEdit}
+    >
+      정보 수정
+    </CmsButton>
   ) : null
 
   const leadingSpaceNode = headerLayout.leadingSpace ? ' ' : null
@@ -137,7 +151,11 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       </CmsButton>
     ) : null
 
-  const actionButtons = actions.map(action => (
+  const headerActionsForLayout = pageShell.basicInfoEditing
+    ? actions.filter(a => a.key !== 'school-delete' && a.key !== 'withdraw')
+    : actions
+
+  const actionButtons = headerActionsForLayout.map(action => (
     <CmsButton
       size="medium"
       key={action.key}
@@ -152,7 +170,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     <div className="info-section-buttons--wrapper">
       {leadingSpaceNode}
       {actionButtons}
-      {memberEditCluster}
+      {inlineEditCluster}
       {personalInfoNode}
     </div>
   )

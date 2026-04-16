@@ -48,6 +48,7 @@ export function UserDetailFullpageTabPanels() {
           <AdminManagedProgramHistory user={displayUser} />
         ) : (
           <UserProgramsSection
+            user={displayUser}
             applications={applications}
             enrollmentTableRows={enrollmentTableRows}
             loading={applicationsLoading}

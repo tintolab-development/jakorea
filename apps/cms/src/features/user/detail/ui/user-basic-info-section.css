@@ -1,6 +1,8 @@
-.user-basic-info-section {
-  width: 100%;
-  min-width: 0;
+.user-basic-info-section__school-admin-notice {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-blue, #017eaf);
+  white-space: normal;
 }
 
 .user-basic-info-section__name-with-badge {
@@ -8,6 +10,38 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--spacing-8, 8px);
+}
+
+/* 일반 교사: 가입일 카드 + 성명 카드 — 32px 간격, 각각 독립 `detail-info-form__body`(둥근 테두리) */
+.user-basic-info-section__school-teacher-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 일반 교사 기본 정보 — 재직 현황 (소속 교사 목록 배지 톤과 정렬) */
+.user-basic-info-section__teacher-employment-badge.app-status-badge {
+  width: auto;
+  min-width: 120px;
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.user-basic-info-section__teacher-employment-badge--active.app-status-badge {
+  border: 1px solid rgba(1, 126, 175, 0.1);
+  background: #e6f2f7;
+  color: var(--color-blue, #017eaf);
+}
+
+.user-basic-info-section__teacher-employment-badge--muted.app-status-badge {
+  border: 1px solid rgba(61, 61, 61, 0.1);
+  background: #f2f3f5;
+  color: var(--main-bk, #3d3d3d);
 }
 
 .user-basic-info-section__id1365-cell {
@@ -20,6 +54,39 @@
 .user-basic-info-section__text-blue {
   color: var(--color-blue, #017eaf);
   font-weight: 500;
+}
+
+.user-basic-info-section__settlement-status {
+  font-weight: 500;
+  color: var(--main-bk, #3d3d3d);
+}
+
+.user-basic-info-section__settlement-status--awaiting-confirmation {
+  color: #f07917;
+}
+
+.user-basic-info-section__settlement-status--partially-confirmed {
+  color: #8457ce;
+}
+
+.user-basic-info-section__settlement-status--payment-statement-verified {
+  color: #1e8c29;
+}
+
+.user-basic-info-section__settlement-status--account-paid {
+  color: #017eaf;
+}
+
+.user-basic-info-section__settlement-status--none {
+  color: #3d3d3d;
+}
+
+.user-basic-info-section__settlement-status--application-rejected {
+  color: #c32f4a;
+}
+
+.user-basic-info-section__settlement-status--payment-correction-requested {
+  color: #c32f4a;
 }
 
 /* 강의비 행 — 스펙: "유형 | 금액" */

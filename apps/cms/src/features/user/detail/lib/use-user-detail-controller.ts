@@ -30,7 +30,11 @@ import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
   draftToBasicInfoPatch,
+  draftToSchoolAdminCommentOnlyPatch,
+  draftToSchoolInstitutionBasicInfoPatch,
+  userToAdminCommentOnlyDraft,
   userToAdminProvisionedBasicDraft,
+  userToSchoolInstitutionEditDraft,
   type AdminProvisionedMemberBasicInfoDraft,
 } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import {
@@ -229,6 +233,46 @@ export function useUserDetailController({
     if (!displayUser) return
     const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
     const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
+
+    if (displayUser.role === 'SCHOOL' && bodyKey === 'institution') {
+      setBasicInfoDraft(userToSchoolInstitutionEditDraft(displayUser))
+      setBasicInfoEditing(true)
+      setTabState({ lnb: 'detail-info' })
+      setSearchParams(
+        prev => {
+          const nextParams = new URLSearchParams(prev)
+          if (displayUser.id) nextParams.set('id', displayUser.id)
+          nextParams.set('lnb', 'detail-info')
+          nextParams.delete(programsChildQueryKey)
+          return nextParams
+        },
+        { replace: true }
+      )
+      return
+    }
+
+    const instructorProfile = resolveInstructorMemberProfile(displayUser)
+    if (
+      displayUser.role === 'INSTRUCTOR' &&
+      instructorProfile === 'school_teacher' &&
+      bodyKey === 'instructor'
+    ) {
+      setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
+      setBasicInfoEditing(true)
+      setTabState({ lnb: 'detail-info' })
+      setSearchParams(
+        prev => {
+          const nextParams = new URLSearchParams(prev)
+          if (displayUser.id) nextParams.set('id', displayUser.id)
+          nextParams.set('lnb', 'detail-info')
+          nextParams.delete(programsChildQueryKey)
+          return nextParams
+        },
+        { replace: true }
+      )
+      return
+    }
+
     if (!shouldShowCmsMemberInfoEditButton(displayUser) || bodyKey !== 'all_users') {
       return
     }
@@ -262,7 +306,17 @@ export function useUserDetailController({
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
     setBasicInfoSaveLoading(true)
     try {
-      const patch = draftToBasicInfoPatch(basicInfoDraft)
+      let patch: PatchUserBasicInfoInput
+      if (displayUser.role === 'SCHOOL') {
+        patch = draftToSchoolInstitutionBasicInfoPatch(basicInfoDraft)
+      } else if (
+        displayUser.role === 'INSTRUCTOR' &&
+        resolveInstructorMemberProfile(displayUser) === 'school_teacher'
+      ) {
+        patch = draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+      } else {
+        patch = draftToBasicInfoPatch(basicInfoDraft)
+      }
       const updated = await patchMemberBasicInfo(displayUser.id, patch)
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
@@ -273,7 +327,12 @@ export function useUserDetailController({
     } finally {
       setBasicInfoSaveLoading(false)
     }
-  }, [displayUser, basicInfoDraft, patchMemberBasicInfo, onMemberBasicInfoSaved])
+  }, [
+    displayUser,
+    basicInfoDraft,
+    patchMemberBasicInfo,
+    onMemberBasicInfoSaved,
+  ])
 
   const updateBasicInfoDraft = useCallback((partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {
     setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))

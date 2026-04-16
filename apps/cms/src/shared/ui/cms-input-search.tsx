@@ -1,6 +1,7 @@
 /**
  * CMS 검색형 인풋: `CmsInput` 마크업·`cms-input.css` 그대로 사용.
  * 입력 문자열을 포함하는 옵션만 실시간 필터링하여 목록 표시. 일치 구간은 `var(--JA-mint-01)` 색.
+ * 일치 항목이 없으면 패널에 안내 문구를 표시한다.
  */
 
 import {
@@ -83,6 +84,7 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
     readOnly,
     width,
     style,
+    className,
     ...cmsInputProps
   },
   ref
@@ -115,6 +117,31 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
   const [panelOpen, setPanelOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
 
+  const listPanelStyle: CSSProperties = {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '100%',
+    marginTop: 4,
+    zIndex: 1050,
+    background: '#fff',
+    border: '1px solid rgba(0, 0, 0, 0.12)',
+    borderRadius: 8,
+    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
+    maxHeight: 240,
+    overflowY: 'auto',
+    margin: 0,
+    padding: '4px 0',
+    listStyle: 'none',
+  }
+
+  const rowStyle = (active: boolean): CSSProperties => ({
+    margin: 0,
+    padding: '8px 12px',
+    cursor: 'pointer',
+    background: active ? 'rgba(0, 0, 0, 0.04)' : undefined,
+  })
+
   const clearBlurTimeout = () => {
     if (blurTimeout.current != null) {
       clearTimeout(blurTimeout.current)
@@ -122,12 +149,19 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
     }
   }
 
-  const showPanel =
-    !disabled &&
-    !readOnly &&
-    panelOpen &&
-    value.trim() !== '' &&
-    filtered.length > 0
+  const hasQuery = value.trim() !== ''
+  const showDropdownPanel = !disabled && !readOnly && panelOpen && hasQuery
+  const hasResults = filtered.length > 0
+
+  const emptyPanelStyle: CSSProperties = {
+    ...listPanelStyle,
+    padding: '12px 16px',
+    color: 'rgba(61, 61, 61, 0.55)',
+    fontSize: 14,
+    lineHeight: '150%',
+    textAlign: 'center',
+    cursor: 'default',
+  }
 
   const handleFocus = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
@@ -163,7 +197,13 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
-      if (showPanel) {
+      if (showDropdownPanel && e.key === 'Escape') {
+        e.preventDefault()
+        setPanelOpen(false)
+        setActiveIndex(-1)
+        return
+      }
+      if (showDropdownPanel && hasResults) {
         if (e.key === 'ArrowDown') {
           e.preventDefault()
           setActiveIndex(i => (i + 1 >= filtered.length ? 0 : i + 1))
@@ -179,42 +219,11 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
           pickOption(filtered[activeIndex]!)
           return
         }
-        if (e.key === 'Escape') {
-          e.preventDefault()
-          setPanelOpen(false)
-          setActiveIndex(-1)
-          return
-        }
       }
       onKeyDown?.(e)
     },
-    [activeIndex, filtered, onKeyDown, pickOption, showPanel]
+    [activeIndex, filtered, hasResults, onKeyDown, pickOption, showDropdownPanel]
   )
-
-  const listPanelStyle: CSSProperties = {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '100%',
-    marginTop: 4,
-    zIndex: 1050,
-    background: '#fff',
-    border: '1px solid rgba(0, 0, 0, 0.12)',
-    borderRadius: 8,
-    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
-    maxHeight: 240,
-    overflowY: 'auto',
-    margin: 0,
-    padding: '4px 0',
-    listStyle: 'none',
-  }
-
-  const rowStyle = (active: boolean): CSSProperties => ({
-    margin: 0,
-    padding: '8px 12px',
-    cursor: 'pointer',
-    background: active ? 'rgba(0, 0, 0, 0.04)' : undefined,
-  })
 
   const wrapStyle: CSSProperties = {
     position: 'relative',
@@ -222,18 +231,20 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
     ...style,
   }
 
+  const wrapClassName = ['cms-input-search', className].filter(Boolean).join(' ')
+
   return (
-    <div style={wrapStyle}>
+    <div style={wrapStyle} className={wrapClassName}>
       <CmsInput
         ref={ref}
         {...cmsInputProps}
-        width={width}
+        width="100%"
         disabled={disabled}
         readOnly={readOnly}
         value={value}
         role="combobox"
-        aria-expanded={showPanel}
-        aria-controls={listId}
+        aria-expanded={showDropdownPanel}
+        aria-controls={showDropdownPanel ? listId : undefined}
         aria-autocomplete="list"
         onChange={e => {
           setValue(e.target.value)
@@ -244,24 +255,30 @@ export const CmsInputSearch = forwardRef<InputRef, CmsInputSearchProps>(function
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
       />
-      {showPanel ? (
-        <ul id={listId} role="listbox" style={listPanelStyle}>
-          {filtered.map((opt, idx) => (
-            <li
-              key={idx}
-              role="option"
-              aria-selected={idx === activeIndex}
-              style={rowStyle(idx === activeIndex)}
-              onMouseDown={e => {
-                e.preventDefault()
-                pickOption(opt)
-              }}
-              onMouseEnter={() => setActiveIndex(idx)}
-            >
-              {renderMatchHighlight(opt, value)}
-            </li>
-          ))}
-        </ul>
+      {showDropdownPanel ? (
+        hasResults ? (
+          <ul id={listId} role="listbox" style={listPanelStyle}>
+            {filtered.map((opt, idx) => (
+              <li
+                key={idx}
+                role="option"
+                aria-selected={idx === activeIndex}
+                style={rowStyle(idx === activeIndex)}
+                onMouseDown={e => {
+                  e.preventDefault()
+                  pickOption(opt)
+                }}
+                onMouseEnter={() => setActiveIndex(idx)}
+              >
+                {renderMatchHighlight(opt, value)}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div id={listId} role="status" aria-live="polite" style={emptyPanelStyle}>
+            검색 결과가 없습니다.
+          </div>
+        )
       ) : null}
     </div>
   )

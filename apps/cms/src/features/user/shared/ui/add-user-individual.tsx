@@ -1,8 +1,24 @@
+import { useMemo } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
-import { AddressSearch, CmsButton, CmsInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
+import { mockSchools } from '@/data/mock/schools'
+import {
+  AddressSearch,
+  CmsButton,
+  CmsInput,
+  CmsInputSearch,
+  CmsRadioGroup,
+  CmsSelect,
+} from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './add-user-individual.css'
+import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
+
+/** 신규 등록 소속 검색용 — `mockSchools` 학교명 (추후 API 연동 시 제거) */
+function buildAffiliationSchoolOptions(): readonly string[] {
+  const names = mockSchools.map(s => s.name.trim()).filter(Boolean)
+  return [...new Set(names)].sort((a, b) => a.localeCompare(b, 'ko'))
+}
 
 type ConsentValue = 'agree' | 'disagree'
 
@@ -56,6 +72,7 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
 }
 
 export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUserIndividualProps) {
+  const affiliationSchoolOptions = useMemo(() => buildAffiliationSchoolOptions(), [])
   const [form] = Form.useForm<AddUserIndividualFormValues>()
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
   const address = Form.useWatch('address', form) ?? ''
@@ -160,11 +177,30 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
               label="소속"
               view="-"
               edit={
-                <Form.Item name="affiliation" noStyle>
-                  <CmsSelect placeholder="소속" options={[]} inputSize="medium" width="100%" />
+                <div className="detail-info-form-inputs-wrapper-no-gap">
+                  <Form.Item name="affiliation" noStyle>
+                    <CmsInputSearch
+                      options={affiliationSchoolOptions}
+                      placeholder="학교명"
+                      inputSize="medium"
+                      width={FORM_INPUTS_2_WIDTHS[0]}
+                    />
+                  </Form.Item>
                   <DetailInfoForm.InputsSeparator />
-                  <CmsInput placeholder="강사 경력" inputSize="medium" width="100%" />
-                </Form.Item>
+                  <CmsSelect
+                    placeholder="학년"
+                    inputSize="medium"
+                    width={FORM_INPUTS_2_WIDTHS[1]}
+                    options={[
+                      { label: '1학년', value: '1학년' },
+                      { label: '2학년', value: '2학년' },
+                      { label: '3학년', value: '3학년' },
+                      { label: '4학년', value: '4학년' },
+                      { label: '5학년', value: '5학년' },
+                      { label: '6학년', value: '6학년' },
+                    ]}
+                  />
+                </div>
               }
             />
           </DetailInfoForm.Row>

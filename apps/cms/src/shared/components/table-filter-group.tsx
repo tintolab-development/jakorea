@@ -16,11 +16,22 @@ import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import './table-filter-group.css'
 
+export type AddressRegionFilterSubConfig = {
+  /** 시/도 값이 저장되는 `filters` 키 */
+  sidoKey: string
+  /** 시/군/구 값이 저장되는 `filters` 키 */
+  sigunguKey: string
+  sidoOptions: Array<{ label: string; value: string }>
+  getSigunguOptions: (sido: string | undefined | null) => Array<{ label: string; value: string }>
+  sidoPlaceholder?: string
+  sigunguPlaceholder?: string
+}
+
 export interface FilterFieldConfig {
   /** 필터 키 */
   key: string
   /** 필터 타입 */
-  type: 'search' | 'select' | 'dateRange' | 'multiSelect' | 'radio'
+  type: 'search' | 'select' | 'dateRange' | 'multiSelect' | 'radio' | 'addressRegion'
   /** 레이블 텍스트 */
   label: string
   /** placeholder 텍스트 */
@@ -42,6 +53,8 @@ export interface FilterFieldConfig {
   style?: React.CSSProperties
   /** 너비 (flex 값 또는 숫자) */
   flex?: number | string
+  /** `type === 'addressRegion'`일 때 시/도·시/군/구 이중 셀렉트 설정 */
+  addressRegion?: AddressRegionFilterSubConfig
   /**
    * 열 기준 너비(예: 200, '25%', 'min(280px, 30%)').
    * 지정 시 Col에 `flex: 0 0 <width>`를 쓰고, 좁은 select의 전역 min-width를 완화한다.
@@ -211,6 +224,47 @@ export function TableFilterGroup({
             }
             width="100%"
           />
+        </Col>
+      )
+    }
+
+    if (field.type === 'addressRegion') {
+      const ar = field.addressRegion
+      if (!ar) return null
+      const sido = filters[ar.sidoKey] as string | undefined
+      const sigungu = filters[ar.sigunguKey] as string | undefined
+      const sidoEmpty = sido == null || sido === ''
+      const districtOptions = ar.getSigunguOptions(sido)
+      return (
+        <Col key={field.key} flex={colFlex(field, '1 1 320px')} className={colClassFor(field)}>
+          <div className="unified-filter-card__field unified-filter-card__field--select">
+            <span className="unified-filter-card__label">{field.label}</span>
+            <div className="table-filter-group__address-region-selects">
+              <CmsSelect
+                inputSize="large"
+                placeholder={ar.sidoPlaceholder ?? '시/도'}
+                value={sidoEmpty ? undefined : sido}
+                selectClassName="unified-filter-card__select"
+                onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
+                allowClear={field.allowClear !== false}
+                popupMatchSelectWidth
+                style={{ width: '100%', ...field.style }}
+                options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+              />
+              <CmsSelect
+                inputSize="large"
+                placeholder={ar.sigunguPlaceholder ?? '시/군/구'}
+                value={sigungu == null || sigungu === '' ? undefined : sigungu}
+                selectClassName="unified-filter-card__select"
+                onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
+                allowClear={field.allowClear !== false}
+                disabled={sidoEmpty}
+                popupMatchSelectWidth
+                style={{ width: '100%', ...field.style }}
+                options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+              />
+            </div>
+          </div>
         </Col>
       )
     }

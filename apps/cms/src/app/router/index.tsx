@@ -71,8 +71,6 @@ const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instruc
 const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
 const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
 const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
-const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
-const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
@@ -234,15 +232,6 @@ export const router = createBrowserRouter([
       {
         path: 'detailed-program',
         element: <DetailedProgramPage />,
-      },
-      {
-        path: 'schools',
-        children: [
-          { index: true, element: <Navigate to="/users/list?kind=institutions" replace /> },
-          { path: 'new', element: <SchoolFormPage /> },
-          { path: ':id', element: <SchoolDetailPage /> },
-          { path: ':id/edit', element: <SchoolFormPage /> },
-        ],
       },
       {
         path: 'programs',

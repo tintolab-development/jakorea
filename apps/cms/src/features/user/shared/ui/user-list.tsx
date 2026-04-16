@@ -8,6 +8,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/ui/program-list.css'
 import './admin-permission-tag.css'
+import './user-list.css'
 import type { User, UserRole } from '@/types/user'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
@@ -68,6 +69,28 @@ function adminProgramCountDisplay(record: Row): string {
   const explicit = record.listMetrics?.managedProgramCount
   if (explicit !== undefined && explicit !== null) return String(explicit)
   return String(record.programRoles ? Object.keys(record.programRoles).length : 0)
+}
+
+function settlementStatusTextClass(statusLabel?: string): string {
+  const normalized = statusLabel?.trim()
+  switch (normalized) {
+    case '확인 대기 중':
+      return 'user-list__settlement-status user-list__settlement-status--awaiting-confirmation'
+    case '일부 확인 완료':
+      return 'user-list__settlement-status user-list__settlement-status--partially-confirmed'
+    case '지급조서 확인 완료':
+      return 'user-list__settlement-status user-list__settlement-status--payment-statement-verified'
+    case '계좌 지급 완료':
+      return 'user-list__settlement-status user-list__settlement-status--account-paid'
+    case '해당 없음':
+      return 'user-list__settlement-status user-list__settlement-status--none'
+    case '신청 반려':
+      return 'user-list__settlement-status user-list__settlement-status--application-rejected'
+    case '지급 정정 요청':
+      return 'user-list__settlement-status user-list__settlement-status--payment-correction-requested'
+    default:
+      return 'user-list__settlement-status'
+  }
 }
 
 function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
@@ -164,7 +187,10 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
         title: '정산현황',
         key: 'settlement',
         align: 'center',
-        render: (_: unknown, r: Row) => r.listMetrics?.settlementStatusLabel?.trim() || '-',
+        render: (_: unknown, r: Row) => {
+          const statusLabel = r.listMetrics?.settlementStatusLabel?.trim()
+          return <span className={settlementStatusTextClass(statusLabel)}>{statusLabel || '-'}</span>
+        },
       },
       {
         title: '가입일',

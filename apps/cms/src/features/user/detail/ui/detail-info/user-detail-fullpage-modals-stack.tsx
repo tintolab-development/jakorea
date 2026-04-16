@@ -46,12 +46,11 @@ export function UserDetailFullpageModalsStack() {
         open={personalInfoRevealSuccessOpen}
         title="마스킹 처리 해제 완료"
         message={
-          <>
+          <span className="fs-16">
             개인정보 마스킹이 해제되었습니다.
             <br />
-            <br />
             관리자 권한에 따라 일부 항목은 마스킹이 유지될 수 있습니다.
-          </>
+          </span>
         }
         onClose={onClosePersonalInfoRevealSuccess}
         zIndex={PERSONAL_INFO_REVEAL_SUCCESS_MODAL_Z}
@@ -64,7 +63,10 @@ export function UserDetailFullpageModalsStack() {
           title={sections.withdraw.isSchoolDelete ? '학교 탈퇴 안내' : '회원 탈퇴 안내'}
           lines={
             sections.withdraw.isSchoolDelete
-              ? buildSchoolDeleteMessageLines({ displayName: displayUser.name })
+              ? buildSchoolDeleteMessageLines({
+                  displayName:
+                    displayUser.schoolInfo?.schoolName?.trim() || displayUser.name,
+                })
               : buildMemberWithdrawMessageLines({ displayName: displayUser.name })
           }
           confirmText="삭제"

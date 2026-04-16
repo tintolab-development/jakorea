@@ -103,6 +103,8 @@ export interface MemberProgramLectureHistoryProps {
   onVolunteerRowClick?: (history: UserHistory) => void
   onVolunteerCertificateDownload?: (history: UserHistory) => void
   onBulkDelete?: (applicationIds: string[]) => void
+  /** false: 교사(일반) 등 — 수료증·참여·활동 인증서 일괄 발급 UI 비노출 */
+  showCertificateBulkIssue?: boolean
 }
 
 const DEFAULT_FOOTNOTE =
@@ -155,6 +157,7 @@ export function MemberProgramLectureHistory({
   onVolunteerRowClick,
   onVolunteerCertificateDownload,
   onBulkDelete,
+  showCertificateBulkIssue = true,
 }: MemberProgramLectureHistoryProps) {
   const summaryTitle =
     summaryTitleProp ??
@@ -612,24 +615,25 @@ export function MemberProgramLectureHistory({
         actions={
           <div className="member-program-lecture-history__toolbar-actions-inner">
             <div className="member-program-lecture-history__toolbar-actions-buttons">
-              {(mode === 'studentEnrollment' || mode === 'schoolProgramParticipation') && (
-                <CmsButton
-                  variant="secondary"
-                  size="large"
-                  width={240}
-                  icon={<DownloadOutlined />}
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={() => {
-                    const ids = selectedRowKeys.map(String)
-                    if (ids.length === 0) return
-                    setCertificateIssueTargetIds(ids)
-                    setCertificateIssueModalOpen(true)
-                  }}
-                >
-                  수료증/참여인증서 발급
-                </CmsButton>
-              )}
-              {mode === 'volunteerProgram' && (
+              {(mode === 'studentEnrollment' || mode === 'schoolProgramParticipation') &&
+                showCertificateBulkIssue && (
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    width={240}
+                    icon={<DownloadOutlined />}
+                    disabled={selectedRowKeys.length === 0}
+                    onClick={() => {
+                      const ids = selectedRowKeys.map(String)
+                      if (ids.length === 0) return
+                      setCertificateIssueTargetIds(ids)
+                      setCertificateIssueModalOpen(true)
+                    }}
+                  >
+                    수료증/참여인증서 발급
+                  </CmsButton>
+                )}
+              {mode === 'volunteerProgram' && showCertificateBulkIssue && (
                 <CmsButton
                   variant="secondary"
                   width={180}
@@ -688,18 +692,19 @@ export function MemberProgramLectureHistory({
           confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       ) : null}
-      {(mode === 'studentEnrollment' ||
-        mode === 'schoolProgramParticipation' ||
-        mode === 'volunteerProgram') && (
-        <CertificateBulkIssueReasonModal
-          open={certificateIssueModalOpen}
-          onCancel={() => setCertificateIssueModalOpen(false)}
-          applicationIds={certificateIssueTargetIds}
-          certificateDocumentLabel={
-            mode === 'volunteerProgram' ? '참여인증서' : '수료증/참여인증서'
-          }
-        />
-      )}
+      {showCertificateBulkIssue &&
+        (mode === 'studentEnrollment' ||
+          mode === 'schoolProgramParticipation' ||
+          mode === 'volunteerProgram') && (
+          <CertificateBulkIssueReasonModal
+            open={certificateIssueModalOpen}
+            onCancel={() => setCertificateIssueModalOpen(false)}
+            applicationIds={certificateIssueTargetIds}
+            certificateDocumentLabel={
+              mode === 'volunteerProgram' ? '참여인증서' : '수료증/참여인증서'
+            }
+          />
+        )}
     </>
   )
 }

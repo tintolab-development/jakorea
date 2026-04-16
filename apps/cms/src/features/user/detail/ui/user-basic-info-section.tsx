@@ -3,7 +3,9 @@
  */
 
 import { type ReactNode } from 'react'
+import { Space } from 'antd'
 import { useSearchParams } from 'react-router-dom'
+import { AppStatusBadge } from '@/shared/components'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
@@ -18,7 +20,7 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 import { managedProgramCountDisplay } from '../lib/user-detail-fullpage-helpers'
 import './user-basic-info-section.css'
 import '@/features/user/shared/ui/admin-permission-tag.css'
-import { CmsButton, CmsInput, CmsSelect } from '@/shared/ui'
+import { AddressSearch, CmsButton, CmsInput, CmsSelect } from '@/shared/ui'
 import { getFormInputsWidth } from '@/shared/lib/form-inputs-width'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 
@@ -88,6 +90,8 @@ export interface UserBasicInfoSectionProps {
   user: Omit<User, 'password'>
   entrySource?: UserBasicInfoEntrySource
   caption?: ReactNode
+  /** 기관(학교) 본문일 때 기본 정보 타이틀 우측 안내(예: 관리자 등록 학교) */
+  institutionBasicInfoTitleTrailing?: ReactNode
   scheduleChangeCount?: number
   externalId1365?: UserBasicInfoExternalId1365 | null
   personalInfoRevealed?: boolean
@@ -234,6 +238,15 @@ function instructorBankLine(user: Omit<User, 'password'>, revealed: boolean): st
 
 function institutionTimesLabel(n: number | undefined): string {
   return n != null && !Number.isNaN(n) ? `${n}회` : '-'
+}
+
+/** 일반 교사 기본 정보 — 재직 현황 배지 톤 (소속 교사 목록과 유사) */
+function schoolTeacherEmploymentBadgeModifier(label: string): 'active' | 'muted' {
+  const t = label.trim()
+  if (!t || t === '-') return 'muted'
+  if (/휴직|전근|탈퇴/.test(t)) return 'muted'
+  if (/재직/.test(t)) return 'active'
+  return 'muted'
 }
 
 const ID1365_NOT_REGISTERED_LABEL = '등록되지 않음'
@@ -453,7 +466,16 @@ function AllUsersFields({
   )
 }
 
-function InstitutionFields({ user }: { user: Omit<User, 'password'> }) {
+function InstitutionFields({
+  user,
+  memberInfoDraft,
+  onMemberInfoDraftChange,
+}: {
+  user: Omit<User, 'password'>
+  memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+}) {
+  const d = memberInfoDraft
   const schoolName = user.schoolInfo?.schoolName ?? '-'
   const schoolAddress = user.schoolInfo?.address ?? '-'
   const applicationCount = institutionTimesLabel(
@@ -464,15 +486,96 @@ function InstitutionFields({ user }: { user: Omit<User, 'password'> }) {
   return (
     <>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="기관명" view={<span>{schoolName}</span>} />
-        <DetailInfoForm.Field label="기관 소재지" view={<span>{schoolAddress}</span>} />
+        <DetailInfoForm.Field
+          label="기관명"
+          view={<span>{schoolName}</span>}
+          edit={
+            <CmsInput
+              value={d?.schoolName ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ schoolName: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              aria-label="기관명"
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="기관 소재지"
+          view={<span>{schoolAddress}</span>}
+          edit={
+            <Space.Compact style={{ width: '100%' }}>
+              <AddressSearch
+                value={d?.institutionAddressSearch ?? ''}
+                onChange={next =>
+                  onMemberInfoDraftChange?.({
+                    institutionAddressSearch: next,
+                  })
+                }
+                placeholder="건물명, 도로명 또는 지번"
+                inputSize="medium"
+                width="100%"
+              />
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                placeholder="상세 주소"
+                value={d?.institutionAddressDetail ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({
+                    institutionAddressDetail: e.target.value,
+                  })
+                }
+                inputSize="medium"
+                width="100%"
+                aria-label="기관 소재지 상세"
+              />
+            </Space.Compact>
+          }
+        />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="프로그램 신청 횟수" view={<span>{applicationCount}</span>} />
-        <DetailInfoForm.Field label="프로그램 수강 횟수" view={<span>{attendanceCount}</span>} />
+        <DetailInfoForm.Field
+          label="프로그램 신청 횟수"
+          view={<span>{applicationCount}</span>}
+          edit={
+            <CmsInput
+              value={d?.institutionProgramApplicationCount ?? ''}
+              onChange={e =>
+                onMemberInfoDraftChange?.({
+                  institutionProgramApplicationCount: e.target.value,
+                })
+              }
+              inputSize="medium"
+              width="100%"
+              placeholder="회 단위 숫자"
+              aria-label="프로그램 신청 횟수"
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="프로그램 수강 횟수"
+          view={<span>{attendanceCount}</span>}
+          edit={
+            <CmsInput
+              value={d?.institutionProgramAttendanceCount ?? ''}
+              onChange={e =>
+                onMemberInfoDraftChange?.({
+                  institutionProgramAttendanceCount: e.target.value,
+                })
+              }
+              inputSize="medium"
+              width="100%"
+              placeholder="회 단위 숫자"
+              aria-label="프로그램 수강 횟수"
+            />
+          }
+        />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="등록일" view={<span>{formatDate(user.createdAt)}</span>} />
+        <DetailInfoForm.Field
+          label="등록일"
+          readOnlyDisplay
+          view={<span>{formatDate(user.createdAt)}</span>}
+        />
       </DetailInfoForm.Row>
     </>
   )
@@ -502,12 +605,45 @@ function instructorBusinessIncomeView(user: Omit<User, 'password'>) {
   return <span>{businessIncome}</span>
 }
 
-function settlementStatusView(user: Omit<User, 'password'>) {
-  const s = user.listMetrics?.settlementStatusLabel?.trim()
-  return <span className="user-basic-info-section__text-blue">{s && s.length > 0 ? s : '-'}</span>
+function settlementStatusTextClass(statusLabel?: string) {
+  const normalized = statusLabel?.trim()
+  switch (normalized) {
+    case '확인 대기 중':
+      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--awaiting-confirmation'
+    case '일부 확인 완료':
+      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--partially-confirmed'
+    case '지급조서 확인 완료':
+      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--payment-statement-verified'
+    case '계좌 지급 완료':
+      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--account-paid'
+    case '해당 없음':
+      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--none'
+    case '신청 반려':
+      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--application-rejected'
+    case '지급 정정 요청':
+      return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--payment-correction-requested'
+    default:
+      return 'user-basic-info-section__settlement-status'
+  }
 }
 
-function SchoolTeacherFields({
+function settlementStatusView(user: Omit<User, 'password'>) {
+  const s = user.listMetrics?.settlementStatusLabel?.trim()
+  return <span className={settlementStatusTextClass(s)}>{s && s.length > 0 ? s : '-'}</span>
+}
+
+/** 일반 교사 — 가입일·소셜만 (상단 별도 카드 `DetailInfoForm` 본문용) */
+function SchoolTeacherMetaFields({ user }: { user: Omit<User, 'password'> }) {
+  return (
+    <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
+      <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+    </DetailInfoForm.Row>
+  )
+}
+
+/** 일반 교사 — 성명 블록 이하 (하단 별도 카드 `DetailInfoForm` 본문용) */
+function SchoolTeacherProfileFields({
   user,
   scheduleChangeCount,
   personalInfoRevealed,
@@ -517,14 +653,23 @@ function SchoolTeacherFields({
   personalInfoRevealed: boolean
 }) {
   const employment = user.listMetrics?.employmentStatusLabel?.trim() || '-'
+  const employmentSide =
+    employment === '-' ? (
+      <span>-</span>
+    ) : (
+      <AppStatusBadge
+        label={employment}
+        className={`user-basic-info-section__teacher-employment-badge user-basic-info-section__teacher-employment-badge--${schoolTeacherEmploymentBadgeModifier(employment)}`}
+      />
+    )
+
   return (
     <>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.NameBlock
-          showGroupTitle={false}
           rows={[
             {
-              subLabel: '성명(한글)',
+              subLabel: '한글',
               main: (
                 <span className="user-basic-info-section__name-with-badge">
                   {user.name}
@@ -534,10 +679,10 @@ function SchoolTeacherFields({
                 </span>
               ),
               sideLabel: '재직 현황',
-              side: <span>{employment}</span>,
+              side: employmentSide,
             },
             {
-              subLabel: '성명(영문)',
+              subLabel: '영문',
               main: <span>{user.nameEn ?? '-'}</span>,
               sideLabel: '성별 및 생년월일',
               side: <span>{formatGenderBirthLine(user)}</span>,
@@ -564,10 +709,6 @@ function SchoolTeacherFields({
           label="소속 및 담당 학년"
           view={<span>{affiliationAndGradeLine(user)}</span>}
         />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
-        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
       </DetailInfoForm.Row>
     </>
   )
@@ -670,16 +811,6 @@ function InstructorFieldsByProfile({
   scheduleChangeCount?: number
   personalInfoRevealed: boolean
 }) {
-  const profile = resolveInstructorMemberProfile(user) ?? 'instructor_only'
-  if (profile === 'school_teacher') {
-    return (
-      <SchoolTeacherFields
-        user={user}
-        scheduleChangeCount={scheduleChangeCount}
-        personalInfoRevealed={personalInfoRevealed}
-      />
-    )
-  }
   return (
     <InstructorDualOrOnlyBasicFields
       user={user}
@@ -757,6 +888,7 @@ export function UserBasicInfoSection({
   user,
   entrySource: entrySourceProp,
   caption,
+  institutionBasicInfoTitleTrailing,
   scheduleChangeCount,
   externalId1365,
   personalInfoRevealed = false,
@@ -769,6 +901,12 @@ export function UserBasicInfoSection({
     searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY)
   )
   const bodyKey = resolveUserBasicInfoBodyKey(entrySourceProp, entryFromQuery, user.role)
+  const instructorProfile =
+    user.role === 'INSTRUCTOR' ? (resolveInstructorMemberProfile(user) ?? 'instructor_only') : null
+  /** 일반 교사: 기본 정보 필드는 항상 뷰 — 관리자 코멘트만 상단 섹션에서 편집 */
+  const basicFormMemberEditing =
+    memberInfoEditing && !(bodyKey === 'instructor' && instructorProfile === 'school_teacher')
+  const detailInfoFormMode: 'view' | 'edit' = basicFormMemberEditing ? 'edit' : 'view'
   const instructorProfileForFee =
     bodyKey === 'instructor' && user.role === 'INSTRUCTOR'
       ? (resolveInstructorMemberProfile(user) ?? 'instructor_only')
@@ -779,34 +917,61 @@ export function UserBasicInfoSection({
   return (
     <div className="user-detail-modal__basic-inner">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-        <DetailInfoForm
-          title="기본 정보"
-          description={caption}
-          className="user-basic-info-section"
-          mode={memberInfoEditing ? 'edit' : 'view'}
-        >
-          {bodyKey === 'all_users' ? (
-            <AllUsersFields
-              user={user}
-              scheduleChangeCount={scheduleChangeCount}
-              externalId1365={externalId1365}
-              personalInfoRevealed={personalInfoRevealed}
-              memberInfoEditing={memberInfoEditing}
-              memberInfoDraft={memberInfoDraft}
-              onMemberInfoDraftChange={onMemberInfoDraftChange}
-            />
-          ) : bodyKey === 'institution' ? (
-            <InstitutionFields user={user} />
-          ) : bodyKey === 'instructor' ? (
-            <InstructorFieldsByProfile
-              user={user}
-              scheduleChangeCount={scheduleChangeCount}
-              personalInfoRevealed={personalInfoRevealed}
-            />
-          ) : (
-            <AdminFields user={user} personalInfoRevealed={personalInfoRevealed} />
-          )}
-        </DetailInfoForm>
+        {bodyKey === 'instructor' && instructorProfile === 'school_teacher' ? (
+          <div className="user-basic-info-section__school-teacher-cards">
+            <DetailInfoForm title="기본 정보" description={caption} mode={detailInfoFormMode}>
+              <SchoolTeacherMetaFields user={user} />
+            </DetailInfoForm>
+            <DetailInfoForm
+              title="기본 정보 — 성명·연락처 등"
+              hideHeader
+              className="user-basic-info-section user-basic-info-section--school-teacher-profile-card"
+              mode={detailInfoFormMode}
+            >
+              <SchoolTeacherProfileFields
+                user={user}
+                scheduleChangeCount={scheduleChangeCount}
+                personalInfoRevealed={personalInfoRevealed}
+              />
+            </DetailInfoForm>
+          </div>
+        ) : (
+          <DetailInfoForm
+            title="기본 정보"
+            titleTrailing={
+              bodyKey === 'institution' ? institutionBasicInfoTitleTrailing : undefined
+            }
+            description={caption}
+            className="user-basic-info-section"
+            mode={detailInfoFormMode}
+          >
+            {bodyKey === 'all_users' ? (
+              <AllUsersFields
+                user={user}
+                scheduleChangeCount={scheduleChangeCount}
+                externalId1365={externalId1365}
+                personalInfoRevealed={personalInfoRevealed}
+                memberInfoEditing={basicFormMemberEditing}
+                memberInfoDraft={memberInfoDraft}
+                onMemberInfoDraftChange={onMemberInfoDraftChange}
+              />
+            ) : bodyKey === 'institution' ? (
+              <InstitutionFields
+                user={user}
+                memberInfoDraft={memberInfoDraft}
+                onMemberInfoDraftChange={onMemberInfoDraftChange}
+              />
+            ) : bodyKey === 'instructor' ? (
+              <InstructorFieldsByProfile
+                user={user}
+                scheduleChangeCount={scheduleChangeCount}
+                personalInfoRevealed={personalInfoRevealed}
+              />
+            ) : (
+              <AdminFields user={user} personalInfoRevealed={personalInfoRevealed} />
+            )}
+          </DetailInfoForm>
+        )}
         {showInstructorFeeForm ? <InstructorFeeDetailForm user={user} /> : null}
       </div>
     </div>

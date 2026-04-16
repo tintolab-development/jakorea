@@ -17,6 +17,10 @@ import {
   USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
 } from '@/pages/users/user-detail-fullpage-modal'
 import { AddUserIndividual } from '@/features/user/shared/ui/add-user-individual'
+import {
+  SchoolRegisterModal,
+  type SchoolRegisterModalFormValues,
+} from '@/features/school/ui/school-register-modal'
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -53,6 +57,8 @@ import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
 import { getUserListFilterFields } from './user-list-filter-fields'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
+import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
 import {
   useTablePage,
   EMPTY_TABLE_PAGE_CONTEXT,
@@ -187,6 +193,13 @@ export function UserListPage() {
     closeModal: closeCreateModal,
   } = useModalState()
 
+  // 학교(기관) 신규 등록 모달
+  const {
+    open: schoolRegisterOpen,
+    openModal: openSchoolRegisterModal,
+    closeModal: closeSchoolRegisterModal,
+  } = useModalState()
+
   // 삭제 확인 모달 상태
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
@@ -216,6 +229,10 @@ export function UserListPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   // 일괄 삭제 대상 (여러 명 선택 시)
   const [bulkDeleteUsers, setBulkDeleteUsers] = useState<Omit<User, 'password'>[] | null>(null)
+
+  /** 학교(기관) — 소속 교사가 있으면 삭제 불가 안내 */
+  const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
+  const [institutionDeleteBlockedCount, setInstitutionDeleteBlockedCount] = useState(1)
 
   // 선택된 사용자 (드로어용)
   const selectedUser = useUserStore(state => selectSelectedUser(state))
@@ -452,9 +469,39 @@ export function UserListPage() {
     }
   }
 
+  const handleSchoolRegisterSubmit = async (values: SchoolRegisterModalFormValues) => {
+    try {
+      const address = [values.roadAddress.trim(), values.detailAddress?.trim()]
+        .filter(Boolean)
+        .join(' ')
+      await createUser({
+        email: `school-${Date.now()}@institution.jakorea.local`,
+        password: 'Temp1234!',
+        name: values.institutionName.trim(),
+        role: 'SCHOOL',
+        schoolInfo: {
+          schoolName: values.institutionName.trim(),
+          address,
+        },
+        isActive: true,
+      })
+      showSuccessMessage(MESSAGES.success.created)
+      invalidateList()
+    } catch (error) {
+      handleError(error, { defaultMessage: '학교 등록에 실패했습니다.' })
+      throw error
+    }
+  }
+
   // 회원 삭제
   const handleDeleteClick = (user: Omit<User, 'password'>) => {
+    if (resolvedMemberListKind === 'institutions' && institutionHasRegisteredTeachers(user)) {
+      setInstitutionDeleteBlockedCount(1)
+      setInstitutionDeleteBlockedOpen(true)
+      return
+    }
     setDeletingUser(user)
+    setBulkDeleteUsers(null)
     setDeleteModalOpen(true)
   }
 
@@ -542,7 +589,8 @@ export function UserListPage() {
           resolvedMemberListKind === 'institutions'
             ? {
                 search: pendingFilters.search,
-                institutionLocation: pendingFilters.institutionLocation,
+                institutionSido: pendingFilters.institutionSido,
+                institutionSigungu: pendingFilters.institutionSigungu,
                 createdAtRange: pendingFilters.createdAtRange ?? undefined,
               }
             : resolvedMemberListKind === 'instructors'
@@ -576,6 +624,14 @@ export function UserListPage() {
               onClick={() => {
                 const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
                 if (toDelete.length === 0) return
+                if (resolvedMemberListKind === 'institutions') {
+                  const blocked = toDelete.filter(institutionHasRegisteredTeachers)
+                  if (blocked.length > 0) {
+                    setInstitutionDeleteBlockedCount(toDelete.length)
+                    setInstitutionDeleteBlockedOpen(true)
+                    return
+                  }
+                }
                 if (toDelete.length === 1) {
                   setDeletingUser(toDelete[0])
                   setBulkDeleteUsers(null)
@@ -598,6 +654,10 @@ export function UserListPage() {
                 onClick={() => {
                   if (resolvedMemberListKind === 'all') {
                     openCreateModal()
+                    return
+                  }
+                  if (resolvedMemberListKind === 'institutions') {
+                    openSchoolRegisterModal()
                     return
                   }
                   window.alert('준비 중입니다')
@@ -650,6 +710,13 @@ export function UserListPage() {
         />
       </ContentModal>
 
+      <SchoolRegisterModal
+        open={schoolRegisterOpen}
+        onClose={closeSchoolRegisterModal}
+        onSubmit={handleSchoolRegisterSubmit}
+        loading={loading}
+      />
+
       {deleteModalOpen && memberDeleteGuide && (
         <DeleteGuideModal
           open
@@ -669,6 +736,12 @@ export function UserListPage() {
         title={deleteResultTitle}
         message={deleteResultMessage}
         onClose={handleCloseDeleteResultModal}
+      />
+
+      <InstitutionDeleteBlockedModal
+        open={institutionDeleteBlockedOpen}
+        onClose={() => setInstitutionDeleteBlockedOpen(false)}
+        selectedCount={institutionDeleteBlockedCount}
       />
     </div>
   )

@@ -176,9 +176,16 @@ export function buildMemberWithdrawMessageLines(params: { displayName: string } 
   ]
 }
 
-/** 학교(기관) 계정 탈퇴 안내 — 본문은 회원 탈퇴와 동일 (제목에서 학교 여부 구분) */
+/** 회원 상세 > [학교 삭제] 확인 모달 본문 */
 export function buildSchoolDeleteMessageLines(params: { displayName: string } | null): string[] {
-  return buildMemberWithdrawMessageLines(params)
+  if (!params) return []
+  const name = params.displayName.trim()
+  if (!name) return []
+  return [
+    `[${name}]를 삭제하시겠습니까?`,
+    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
+    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+  ]
 }
 
 /** 담당자 삭제 안내 모달 (기존 호환) */

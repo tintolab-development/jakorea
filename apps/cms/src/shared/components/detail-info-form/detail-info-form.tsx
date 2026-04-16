@@ -13,6 +13,8 @@ const DetailInfoFormContext = createContext<DetailInfoFormContextValue>({
 
 export type DetailInfoFormProps = {
   title: string
+  /** 타이틀(`h2`) 우측에 붙는 보조 문구·뱃지 등 */
+  titleTrailing?: ReactNode
   description?: ReactNode
   /**
    * true면 섹션 헤더 없이 본문 격자만 렌더합니다.
@@ -27,6 +29,7 @@ export type DetailInfoFormProps = {
 
 function DetailInfoFormRoot({
   title,
+  titleTrailing,
   description,
   hideHeader = false,
   mode = 'view',
@@ -60,6 +63,9 @@ function DetailInfoFormRoot({
               <div className="detail-info-form__description">{description}</div>
             ) : null}
           </div>
+          {titleTrailing ? (
+            <div className="detail-info-form__header-trailing">{titleTrailing}</div>
+          ) : null}
         </header>
         {body}
       </section>
@@ -69,17 +75,24 @@ function DetailInfoFormRoot({
 
 export type DetailInfoFormRowProps = {
   type?: 'single' | 'double' | 'custom'
+  className?: string
   children: ReactNode
 }
 
-function DetailInfoFormRow({ type = 'single', children }: DetailInfoFormRowProps) {
+function DetailInfoFormRow({ type = 'single', className, children }: DetailInfoFormRowProps) {
   if (type === 'custom') {
-    return <div className="detail-info-form__row detail-info-form__row--custom">{children}</div>
+    const customClass = ['detail-info-form__row', 'detail-info-form__row--custom', className]
+      .filter(Boolean)
+      .join(' ')
+    return <div className={customClass}>{children}</div>
   }
-  const rowClass =
-    type === 'double'
-      ? 'detail-info-form__row detail-info-form__row--double'
-      : 'detail-info-form__row detail-info-form__row--single'
+  const rowClass = [
+    'detail-info-form__row',
+    type === 'double' ? 'detail-info-form__row--double' : 'detail-info-form__row--single',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
   return <div className={rowClass}>{children}</div>
 }
 
@@ -92,6 +105,11 @@ export type DetailInfoFormFieldProps = {
   view: ReactNode
   edit?: ReactNode
   mode?: DetailInfoFormMode
+  /**
+   * 부모 `DetailInfoForm`이 `edit`여도 이 필드는 항상 읽기 전용(값은 `view`만, 편집 슬롯 미사용).
+   * `mode="view"`만으로 컨텍스트가 이기는 경우를 막기 위해 사용한다.
+   */
+  readOnlyDisplay?: boolean
 }
 
 function DetailInfoFormField({
@@ -103,18 +121,22 @@ function DetailInfoFormField({
   view,
   edit,
   mode: modeProp,
+  readOnlyDisplay = false,
 }: DetailInfoFormFieldProps) {
   const { mode: contextMode } = useContext(DetailInfoFormContext)
-  const effectiveMode: DetailInfoFormMode = modeProp ?? contextMode ?? 'view'
+  const effectiveMode: DetailInfoFormMode = readOnlyDisplay
+    ? 'view'
+    : (modeProp ?? contextMode ?? 'view')
   const showRequired = Boolean(required && effectiveMode === 'edit')
-  const content = effectiveMode === 'edit' && edit != null ? edit : view
+  const useEditSlot = !readOnlyDisplay && effectiveMode === 'edit' && edit != null
+  const content = useEditSlot ? edit : view
 
   const style = {
     '--detail-info-label-w': `${labelWidth}px`,
   } as CSSProperties
 
   const isFull = Boolean(fullRow || colSpan === 2)
-  const isEditSlot = effectiveMode === 'edit' && edit != null
+  const isEditSlot = useEditSlot
   const fieldClass = [
     'detail-info-form__field',
     isFull ? 'detail-info-form__field--full-row' : '',
