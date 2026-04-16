@@ -84,7 +84,8 @@ export function useTablePage<
     return hasActiveFilters
       ? table.getFilteredRowModel().rows.length
       : config.filters.getBaseCount({ context, filteredData })
-  }, [config, context, filteredData, hasActiveFilters, table])
+    // `table` 참조만으로는 데이터 갱신을 감지하지 못함(TanStack Table 인스턴스 안정) — 소스 배열 변경 시 재계산
+  }, [config, context, filteredData, hasActiveFilters, table, dataForTable])
 
   const searchSync = useMemo(() => config.getSearchSync(context), [config, context])
 
@@ -105,7 +106,8 @@ export function useTablePage<
 
   const tableData = useMemo(
     () => table.getFilteredRowModel().rows.map(row => row.original),
-    [table]
+    // `table`만 deps에 두면 행 추가·삭제 후에도 메모가 갱신되지 않을 수 있음(인스턴스 참조 유지)
+    [table, dataForTable]
   )
 
   const handleFilterChange = useCallback(
