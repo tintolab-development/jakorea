@@ -578,15 +578,22 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       {
-        key: '/logs/bug',
-        label: '버그',
+        key: '/logs/file-download-history',
+        label: '파일 다운로드 이력',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/logs/issue',
-        label: '이슈',
+        key: '/logs/personal-info-access-history',
+        label: '개인정보 조회 이력',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/logs/bug-issue-history',
+        label: '버그/이슈 이력',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],

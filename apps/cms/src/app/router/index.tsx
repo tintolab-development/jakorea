@@ -128,6 +128,11 @@ const PermissionRequestListPage = lazyLoad(
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
+const FileDownloadHistoryPage = lazyLoad(() => import('@/pages/logs/file-download-history-page'))
+const PersonalInfoAccessHistoryPage = lazyLoad(
+  () => import('@/pages/logs/personal-info-access-history-page')
+)
+const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
 
 function LegacyPostsRedirect({
   kind,
@@ -529,7 +534,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: 'audit',
-                element: <Navigate to="/logs/bug" replace />,
+                element: <Navigate to="/logs/file-download-history" replace />,
               },
             ],
           },
@@ -551,19 +556,19 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="bug" replace />,
+            element: <Navigate to="file-download-history" replace />,
           },
           {
-            path: 'bug',
-            element: (
-              <ComingSoonPage title="버그" description="버그 관리 기능은 현재 준비 중입니다." />
-            ),
+            path: 'file-download-history',
+            element: <FileDownloadHistoryPage />,
           },
           {
-            path: 'issue',
-            element: (
-              <ComingSoonPage title="이슈" description="이슈 관리 기능은 현재 준비 중입니다." />
-            ),
+            path: 'personal-info-access-history',
+            element: <PersonalInfoAccessHistoryPage />,
+          },
+          {
+            path: 'bug-issue-history',
+            element: <BugIssueHistoryPage />,
           },
         ],
       },
