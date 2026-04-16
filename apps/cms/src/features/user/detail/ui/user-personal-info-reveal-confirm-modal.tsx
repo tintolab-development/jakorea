@@ -18,11 +18,17 @@ export function UserPersonalInfoRevealConfirmModal({
   zIndex,
 }: UserPersonalInfoRevealConfirmModalProps) {
   const [reason, setReason] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const trimmedReason = reason.trim()
+  const canSubmit = trimmedReason.length > 0
 
   const handleConfirm = () => {
-    const trimmed = reason.trim()
-
-    onConfirm(trimmed)
+    if (!canSubmit) {
+      setErrorMessage('개인정보 열람 사유를 입력해 주세요.')
+      return
+    }
+    onConfirm(trimmedReason)
   }
 
   return (
@@ -37,7 +43,13 @@ export function UserPersonalInfoRevealConfirmModal({
           <CmsButton variant="secondary" width={70} type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" width={100} type="button" onClick={handleConfirm}>
+          <CmsButton
+            variant="primary"
+            width={100}
+            type="button"
+            onClick={handleConfirm}
+            disabled={!canSubmit}
+          >
             정보 열람
           </CmsButton>
         </>
@@ -49,12 +61,24 @@ export function UserPersonalInfoRevealConfirmModal({
           <br />
           마스킹 처리 해제를 희망하실 경우, 개인정보 열람 사유를 입력해 주세요.
         </p>
+        <label className="user-personal-info-reveal-confirm-modal__label" htmlFor="privacy-reveal-reason">
+          개인정보 열람 사유
+        </label>
         <CmsInput
+          id="privacy-reveal-reason"
           value={reason}
-          onChange={e => setReason(e.target.value)}
+          onChange={e => {
+            setReason(e.target.value)
+            if (errorMessage) setErrorMessage('')
+          }}
           width={'100%'}
           placeholder="열람 사유를 입력해 주세요"
         />
+        {errorMessage ? (
+          <p className="user-personal-info-reveal-confirm-modal__hint" role="alert">
+            {errorMessage}
+          </p>
+        ) : null}
       </div>
     </ContentModal>
   )

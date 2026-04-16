@@ -86,7 +86,6 @@ export function useUserDetailController({
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
   const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
-  const [personalInfoRevealSuccessOpen, setPersonalInfoRevealSuccessOpen] = useState(false)
   const [basicInfoEditing, setBasicInfoEditing] = useState(false)
   const [basicInfoDraft, setBasicInfoDraft] = useState<AdminProvisionedMemberBasicInfoDraft | null>(
     null
@@ -107,7 +106,6 @@ export function useUserDetailController({
     if (!open) {
       setPersonalInfoRevealed(false)
       setPersonalInfoRevealConfirmOpen(false)
-      setPersonalInfoRevealSuccessOpen(false)
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
       setBasicInfoSaveLoading(false)
@@ -117,7 +115,6 @@ export function useUserDetailController({
   useEffect(() => {
     setPersonalInfoRevealed(false)
     setPersonalInfoRevealConfirmOpen(false)
-    setPersonalInfoRevealSuccessOpen(false)
     setBasicInfoEditing(false)
     setBasicInfoDraft(null)
     setBasicInfoSaveLoading(false)
@@ -222,11 +219,6 @@ export function useUserDetailController({
   const submitPersonalInfoReveal = useCallback((_reason: string) => {
     setPersonalInfoRevealed(true)
     setPersonalInfoRevealConfirmOpen(false)
-    setPersonalInfoRevealSuccessOpen(true)
-  }, [])
-
-  const closePersonalInfoRevealSuccess = useCallback(() => {
-    setPersonalInfoRevealSuccessOpen(false)
   }, [])
 
   const startBasicInfoEdit = useCallback(() => {
@@ -462,7 +454,6 @@ export function useUserDetailController({
       withdrawConfirmOpen,
       personalInfoRevealed,
       personalInfoRevealConfirmOpen,
-      personalInfoRevealSuccessOpen,
       basicInfoEditing,
       basicInfoDraft,
       basicInfoSaveLoading,
@@ -484,7 +475,6 @@ export function useUserDetailController({
       openPersonalInfoRevealConfirm,
       closePersonalInfoRevealConfirm,
       submitPersonalInfoReveal,
-      closePersonalInfoRevealSuccess,
       startBasicInfoEdit,
       cancelBasicInfoEdit,
       saveBasicInfoEdit,

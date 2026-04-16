@@ -24,10 +24,8 @@ export interface UserDetailFullpageShellValue {
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
   personalInfoRevealConfirmOpen: boolean
-  personalInfoRevealSuccessOpen: boolean
   onClosePersonalInfoRevealConfirm: () => void
   onSubmitPersonalInfoReveal: (reason: string) => void
-  onClosePersonalInfoRevealSuccess: () => void
   onProgressStatusChange: (
     app: Application,
     displayStatus: ProgramEnrollmentDisplayStatus
