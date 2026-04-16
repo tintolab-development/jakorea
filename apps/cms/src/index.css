@@ -143,6 +143,7 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   background: var(--color-table-row-hover) !important;
 }
 
+
 .table-header-actions {
   height: 100%;
   display: flex;

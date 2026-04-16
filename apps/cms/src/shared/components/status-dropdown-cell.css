@@ -46,8 +46,8 @@
   overflow: hidden;
   border-radius: 6px;
   border: 1px solid transparent;
-  /* 행 hover 등으로 td 배경이 바뀌어도 rgba 배지 톤이 섞이지 않도록 불투명 흰 바탕 */
-  background: #fff;
+  /* 닫힘 상태에서는 행 배경과 자연스럽게 섞이도록 투명 */
+  background: transparent;
   box-shadow: none;
 }
 
@@ -75,6 +75,34 @@
   text-align: center;
 }
 
+/* 테이블 행 hover 시 상태 배지/태그 보더가 도드라져 보이지 않도록 투명 처리 */
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .app-status-badge,
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .status-badge,
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .program-managers-tab__role-badge,
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .school-detail-fullpage-view__role-tag,
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .assignment-submission-modal__team-role-tag,
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .sponsor-contact-type-badge {
+  border: 1px solid transparent !important;
+  border-color: transparent !important;
+}
+
+/* 권한/상태에 따라 트리거 없이 배지만 렌더되는 셀도 동일 처리 */
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .app-status-badge,
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .status-badge,
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .program-managers-tab__role-badge,
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .school-detail-fullpage-view__role-tag,
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .assignment-submission-modal__team-role-tag,
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .sponsor-contact-type-badge {
+  border: 1px solid transparent !important;
+  border-color: transparent !important;
+}
+
+/* 열림(open) 상태 트리거의 민트 외곽선도 hover 시 숨김 */
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--open {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* 내부 배지: 교재·승인·정산 등 app-status-badge 계열 */
 .status-dropdown-cell__status-trigger .app-status-badge {
   box-sizing: border-box;
@@ -99,6 +127,7 @@
   font-style: normal;
   font-weight: 600;
   line-height: 150%;
+  transition: none !important;
 }
 
 /* 프로그램 진행 현황(테이블 variant): 드롭다운 셀 안에서는 고정 태그 스펙으로 통일 */
@@ -208,7 +237,7 @@
 .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):focus-visible {
   border: 1px solid transparent;
   box-shadow: none;
-  background: #fff;
+  background: transparent;
   outline: none;
 }
 
@@ -620,6 +649,13 @@
   font-weight: 600;
   line-height: 150%;
   text-align: center;
+  transition: none !important;
+}
+
+/* Ant Tag/Badge 기본 전환으로 hover 순간 보더가 깜빡이는 현상 방지 */
+.ant-table-tbody > tr > td.status-dropdown-cell__cell-status .app-status-badge,
+.ant-table-tbody > tr > td.status-dropdown-cell__cell-status .status-badge--variant-badge {
+  transition: none !important;
 }
 
 .status-dropdown-cell__dropdown-item

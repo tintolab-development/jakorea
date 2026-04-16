@@ -56,3 +56,11 @@
   font-weight: 600;
   line-height: 150%;
 }
+
+/* 테이블 행 hover 시 배지 보더가 도드라져 보이지 않도록 숨김 */
+.ant-table-tbody > tr:hover .app-status-badge.sponsor-sponsorship-status-badge--table,
+.ant-table-tbody > tr:hover
+  .status-dropdown-cell__status-trigger
+  .app-status-badge.sponsor-sponsorship-status-badge--table {
+  border-color: transparent !important;
+}
