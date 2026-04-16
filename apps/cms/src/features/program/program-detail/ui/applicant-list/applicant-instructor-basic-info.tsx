@@ -128,11 +128,11 @@ function maskEducationSchoolName(name: string): string {
   ].sort((a, b) => b.length - a.length)
   for (const suf of suffixes) {
     if (name.endsWith(suf)) {
-      return `***${suf}`
+      return `**${suf}`
     }
   }
   if (name.length <= 2) return '**'
-  return `***${name.slice(-2)}`
+  return `**${name.slice(-2)}`
 }
 
 function AddressDisplay({ address, mask }: { address: string; mask: boolean }) {
