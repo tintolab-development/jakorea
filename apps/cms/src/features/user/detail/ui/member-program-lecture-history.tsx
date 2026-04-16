@@ -1,9 +1,16 @@
 /**
- * 회원 상세 — 프로그램 강의 이력 / 개인 회원 프로그램 수강 이력
- * FilterTableLayout + user-list-table 스타일, 프로그램 진행 현황은 StatusBadge text
+ * 회원 상세 — 프로그램 수강 이력 / 봉사 프로그램 참여 이력
  */
 
-import { useMemo, useState, type Key, type MouseEvent, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type Key,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Table, message } from 'antd'
 import type { TableProps } from 'antd'
@@ -24,14 +31,18 @@ import {
   type MemberProgramHistoryMode,
 } from './member-program-lecture-table.config'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
-import { AppButton } from '@/shared/ui/app-button'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { buildProgressYearSelectOptions, lectureAttendanceHasAtLeastOne } from '@/shared/utils'
 import '@/features/program/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, buildProgramProgressHistoryDeleteGuide } from '@/shared/ui'
+import { CertificateBulkIssueReasonModal } from './certificate-bulk-issue-reason-modal'
 
 function programYear(programId: string): number | null {
   const p = programService.getByIdSync(programId)
@@ -42,6 +53,23 @@ function programYear(programId: string): number | null {
 function programTitle(programId: string): string {
   const p = programService.getByIdSync(programId)
   return p?.title ?? programId
+}
+
+/** 프로그램 진행 현황 — `StatusBadge` 글자색 전용(`variant="text"`) */
+function ProgramEnrollmentStatusTextBadge({ status }: { status: ProgramEnrollmentDisplayStatus }) {
+  return <StatusBadge domain="programEnrollment" status={status} variant="text" />
+}
+
+function enrollmentDisplayStatusForApplication(
+  record: Application
+): ProgramEnrollmentDisplayStatus {
+  const program = programService.getByIdSync(record.programId)
+  return getEffectiveEnrollmentDisplayStatus(
+    record.status,
+    record.progressStatus,
+    program?.lifecycleStatus,
+    record.rejectionKind
+  )
 }
 
 function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
@@ -75,6 +103,8 @@ export interface MemberProgramLectureHistoryProps {
   onVolunteerRowClick?: (history: UserHistory) => void
   onVolunteerCertificateDownload?: (history: UserHistory) => void
   onBulkDelete?: (applicationIds: string[]) => void
+  /** false: 교사(일반) 등 — 수료증·참여·활동 인증서 일괄 발급 UI 비노출 */
+  showCertificateBulkIssue?: boolean
 }
 
 const DEFAULT_FOOTNOTE =
@@ -111,14 +141,6 @@ function deriveVolunteerDisplayStatus(history: UserHistory): ProgramEnrollmentDi
   return getEffectiveEnrollmentDisplayStatus('submitted', undefined, program?.lifecycleStatus)
 }
 
-function volunteerCertificateEnabled(history: UserHistory): boolean {
-  if (history.finalStatus === 'CANCELLED') return false
-  return (
-    (history.finalStatus === 'COMPLETED' || history.finalStatus === 'CONFIRMED') &&
-    (history.certificates?.length ?? 0) > 0
-  )
-}
-
 export function MemberProgramLectureHistory({
   applications = [],
   volunteerHistories = [],
@@ -135,6 +157,7 @@ export function MemberProgramLectureHistory({
   onVolunteerRowClick,
   onVolunteerCertificateDownload,
   onBulkDelete,
+  showCertificateBulkIssue = true,
 }: MemberProgramLectureHistoryProps) {
   const summaryTitle =
     summaryTitleProp ??
@@ -219,6 +242,53 @@ export function MemberProgramLectureHistory({
   const displayRowCount = displayedCount
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [deleteHistoryModalOpen, setDeleteHistoryModalOpen] = useState(false)
+  const [certificateIssueModalOpen, setCertificateIssueModalOpen] = useState(false)
+  const [certificateIssueTargetIds, setCertificateIssueTargetIds] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!certificateIssueModalOpen) {
+      setCertificateIssueTargetIds([])
+    }
+  }, [certificateIssueModalOpen])
+
+  const historyDeleteGuide = useMemo(() => {
+    if (selectedRowKeys.length === 0) return null
+    const keySet = new Set(selectedRowKeys.map(String))
+    const titles = tableData
+      .filter(row => keySet.has(String(row.id)))
+      .map(row => programTitle(row.programId))
+    return buildProgramProgressHistoryDeleteGuide(titles)
+  }, [tableData, selectedRowKeys])
+
+  const handleOpenHistoryDeleteModal = useCallback(() => {
+    if (selectedRowKeys.length === 0) return
+    const keySet = new Set(selectedRowKeys.map(String))
+    const titles = tableData
+      .filter(row => keySet.has(String(row.id)))
+      .map(row => programTitle(row.programId))
+    if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles)) {
+      message.warning('선택한 이력을 찾을 수 없습니다.')
+      return
+    }
+    setDeleteHistoryModalOpen(true)
+  }, [selectedRowKeys, tableData])
+
+  const handleHistoryDeleteCancel = useCallback(() => {
+    setDeleteHistoryModalOpen(false)
+  }, [])
+
+  const handleHistoryDeleteConfirm = useCallback(() => {
+    const ids = selectedRowKeys.map(String)
+    if (ids.length === 0) return
+    if (onBulkDelete) {
+      onBulkDelete(ids)
+    } else {
+      message.info('이력 삭제는 추후 연결됩니다.')
+    }
+    setSelectedRowKeys([])
+    setDeleteHistoryModalOpen(false)
+  }, [onBulkDelete, selectedRowKeys])
 
   const columns: ColumnsType<Application> | ColumnsType<UserHistory> = useMemo(() => {
     if (mode === 'volunteerProgram') {
@@ -258,11 +328,7 @@ export function MemberProgramLectureHistory({
           key: 'enrollmentDisplay',
           align: 'center',
           render: (_: unknown, record: UserHistory) => (
-            <StatusBadge
-              domain="programEnrollment"
-              status={deriveVolunteerDisplayStatus(record)}
-              variant="text"
-            />
+            <ProgramEnrollmentStatusTextBadge status={deriveVolunteerDisplayStatus(record)} />
           ),
         },
         {
@@ -276,42 +342,15 @@ export function MemberProgramLectureHistory({
           key: 'assignment',
           align: 'center',
           render: () => (
-            <span
+            <div
               className="member-program-lecture-history__action-cell"
               onClick={e => e.stopPropagation()}
             >
-              <AppButton variant="viewDetails" size="large" disabled>
+              <CmsButton variant="default" size="medium" width={120} disabled>
                 내역 보기
-              </AppButton>
-            </span>
+              </CmsButton>
+            </div>
           ),
-        },
-        {
-          title: '수료증 발급',
-          key: 'certificate',
-          align: 'center',
-          render: (_: unknown, record: UserHistory) => {
-            const canDownload = volunteerCertificateEnabled(record)
-            return (
-              <span
-                className="member-program-lecture-history__action-cell"
-                onClick={e => e.stopPropagation()}
-              >
-                <AppButton
-                  variant="primary"
-                  size="large"
-                  disabled={!canDownload}
-                  icon={<DownloadOutlined />}
-                  onClick={() => {
-                    if (onVolunteerCertificateDownload) onVolunteerCertificateDownload(record)
-                    else window.alert('준비 중입니다.')
-                  }}
-                >
-                  다운로드
-                </AppButton>
-              </span>
-            )
-          },
         },
         managerCol,
       ]
@@ -344,16 +383,11 @@ export function MemberProgramLectureHistory({
         title: '프로그램 진행 현황',
         key: 'enrollmentDisplay',
         align: 'center',
-        render: (_: unknown, record: Application) => {
-          const program = programService.getByIdSync(record.programId)
-          const displayStatus = getEffectiveEnrollmentDisplayStatus(
-            record.status,
-            record.progressStatus,
-            program?.lifecycleStatus,
-            record.rejectionKind
-          )
-          return <StatusBadge domain="programEnrollment" status={displayStatus} variant="text" />
-        },
+        render: (_: unknown, record: Application) => (
+          <ProgramEnrollmentStatusTextBadge
+            status={enrollmentDisplayStatusForApplication(record)}
+          />
+        ),
       },
     ]
 
@@ -408,9 +442,9 @@ export function MemberProgramLectureHistory({
               className="member-program-lecture-history__action-cell"
               onClick={e => e.stopPropagation()}
             >
-              <AppButton
-                variant="viewDetails"
-                size="large"
+              <CmsButton
+                variant="default"
+                size="medium"
                 disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
                   if (onOpenAssignment) onOpenAssignment(record)
@@ -418,7 +452,7 @@ export function MemberProgramLectureHistory({
                 }}
               >
                 내역 보기
-              </AppButton>
+              </CmsButton>
             </span>
           ),
         },
@@ -468,9 +502,9 @@ export function MemberProgramLectureHistory({
               className="member-program-lecture-history__action-cell"
               onClick={e => e.stopPropagation()}
             >
-              <AppButton
-                variant="viewDetails"
-                size="large"
+              <CmsButton
+                variant="default"
+                size="medium"
                 disabled={!canView}
                 onClick={() => {
                   window.alert('준비 중입니다.')
@@ -479,7 +513,7 @@ export function MemberProgramLectureHistory({
                 }}
               >
                 내역 보기
-              </AppButton>
+              </CmsButton>
             </span>
           )
         },
@@ -502,7 +536,7 @@ export function MemberProgramLectureHistory({
               className="member-program-lecture-history__action-cell"
               onClick={e => e.stopPropagation()}
             >
-              <AppButton
+              <CmsButton
                 variant="primary"
                 size="large"
                 disabled={!canDownload}
@@ -513,7 +547,7 @@ export function MemberProgramLectureHistory({
                 }}
               >
                 다운로드
-              </AppButton>
+              </CmsButton>
             </span>
           )
         },
@@ -560,57 +594,117 @@ export function MemberProgramLectureHistory({
   }, [hasTableRowClick, mode, onVolunteerRowClick, onRowClick])
 
   return (
-    <FilterTableLayout
-      bordered={false}
-      fields={filterFields}
-      filters={{
-        title: pendingFilters.title,
-        year: pendingFilters.year || undefined,
-        enrollmentStatus: pendingFilters.enrollmentStatus || undefined,
-        managerName: pendingFilters.managerName,
-      }}
-      onFilterChange={handleFilterChange}
-      onSearch={handleSearch}
-      title={summaryTitle}
-      description={
-        <>
-          총 {displayRowCount}건{footnote ? <span> | {footnote}</span> : null}
-        </>
-      }
-      actions={
-        <CmsButton
-          variant="delete"
-          disabled={selectedRowKeys.length === 0}
-          onClick={() => {
-            if (onBulkDelete) {
-              onBulkDelete(selectedRowKeys.map(String))
-            } else {
-              message.info('이력 삭제는 추후 연결됩니다.')
-            }
+    <>
+      <FilterTableLayout
+        bordered={false}
+        fields={filterFields}
+        filters={{
+          title: pendingFilters.title,
+          year: pendingFilters.year || undefined,
+          enrollmentStatus: pendingFilters.enrollmentStatus || undefined,
+          managerName: pendingFilters.managerName,
+        }}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+        title={summaryTitle}
+        description={
+          <>
+            총 {displayRowCount}건{footnote ? <span> | {footnote}</span> : null}
+          </>
+        }
+        actions={
+          <div className="member-program-lecture-history__toolbar-actions-inner">
+            <div className="member-program-lecture-history__toolbar-actions-buttons">
+              {(mode === 'studentEnrollment' || mode === 'schoolProgramParticipation') &&
+                showCertificateBulkIssue && (
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    width={240}
+                    icon={<DownloadOutlined />}
+                    disabled={selectedRowKeys.length === 0}
+                    onClick={() => {
+                      const ids = selectedRowKeys.map(String)
+                      if (ids.length === 0) return
+                      setCertificateIssueTargetIds(ids)
+                      setCertificateIssueModalOpen(true)
+                    }}
+                  >
+                    수료증/참여인증서 발급
+                  </CmsButton>
+                )}
+              {mode === 'volunteerProgram' && showCertificateBulkIssue && (
+                <CmsButton
+                  variant="secondary"
+                  width={180}
+                  disabled={selectedRowKeys.length === 0}
+                  icon={<DownloadOutlined />}
+                  onClick={() => {
+                    const ids = selectedRowKeys.map(String)
+                    if (ids.length === 0) return
+                    setCertificateIssueTargetIds(ids)
+                    setCertificateIssueModalOpen(true)
+                  }}
+                >
+                  활동인증서 발급
+                </CmsButton>
+              )}
+              <CmsButton
+                variant="delete"
+                disabled={selectedRowKeys.length === 0}
+                onClick={handleOpenHistoryDeleteModal}
+              >
+                이력 삭제
+              </CmsButton>
+            </div>
+          </div>
+        }
+      >
+        <Table<Application | UserHistory>
+          className="cms-data-table"
+          scroll={{ x: 'max-content' }}
+          loading={loading}
+          rowSelection={{
+            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+            selectedRowKeys,
+            onChange: keys => setSelectedRowKeys(keys),
           }}
-        >
-          이력 삭제
-        </CmsButton>
-      }
-    >
-      <Table<Application | UserHistory>
-        className="cms-data-table"
-        scroll={{ x: 'max-content' }}
-        loading={loading}
-        rowSelection={{
-          columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-          selectedRowKeys,
-          onChange: keys => setSelectedRowKeys(keys),
-        }}
-        dataSource={tableDataSource}
-        columns={columns as ColumnsType<Application | UserHistory>}
-        rowKey="id"
-        pagination={false}
-        locale={{
-          emptyText: loading ? undefined : emptyTableText,
-        }}
-        onRow={tableOnRow}
-      />
-    </FilterTableLayout>
+          dataSource={tableDataSource}
+          columns={columns as ColumnsType<Application | UserHistory>}
+          rowKey="id"
+          pagination={false}
+          locale={{
+            emptyText: loading ? undefined : emptyTableText,
+          }}
+          onRow={tableOnRow}
+        />
+      </FilterTableLayout>
+      {deleteHistoryModalOpen && historyDeleteGuide ? (
+        <DeleteGuideModal
+          open
+          onCancel={handleHistoryDeleteCancel}
+          onConfirm={handleHistoryDeleteConfirm}
+          title={historyDeleteGuide.title}
+          lines={historyDeleteGuide.lines}
+          confirmText="삭제"
+          confirmVariant="delete"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+        />
+      ) : null}
+      {showCertificateBulkIssue &&
+        (mode === 'studentEnrollment' ||
+          mode === 'schoolProgramParticipation' ||
+          mode === 'volunteerProgram') && (
+          <CertificateBulkIssueReasonModal
+            open={certificateIssueModalOpen}
+            onCancel={() => setCertificateIssueModalOpen(false)}
+            applicationIds={certificateIssueTargetIds}
+            certificateDocumentLabel={
+              mode === 'volunteerProgram' ? '참여인증서' : '수료증/참여인증서'
+            }
+          />
+        )}
+    </>
   )
 }

@@ -44,6 +44,8 @@ function SchoolTeacherEmploymentStatusBadge({ status }: { status: SchoolTeacherE
 
 export interface SchoolAffiliatedTeachersSectionProps {
   rows: SchoolAffiliatedTeacherRow[]
+  /** 상단「개인정보 상세보기」로 마스킹 해제된 경우 연락처·이메일 원문 표시 */
+  personalInfoRevealed?: boolean
   /** 선택 교사 일괄 탈퇴 — 미지정 시 안내만 표시 */
   onWithdrawSelected?: (teacherIds: string[]) => void
   /** `linkedUserId`가 있는 행 클릭 시 해당 CMS 회원 상세로 이동 */
@@ -71,6 +73,7 @@ const EMPLOYMENT_BADGE_CELL_STYLE = {
 
 export function SchoolAffiliatedTeachersSection({
   rows,
+  personalInfoRevealed = false,
   onLinkedUserClick,
   onEmploymentStatusChange,
 }: SchoolAffiliatedTeachersSectionProps) {
@@ -139,7 +142,8 @@ export function SchoolAffiliatedTeachersSection({
         key: 'phone',
         width: TABLE_COLUMN_WIDTHS.phone,
         align: 'center',
-        render: (phone: string) => MASKING_POLICY.phone(phone),
+        render: (phone: string) =>
+          personalInfoRevealed ? (phone?.trim() ? phone : '-') : MASKING_POLICY.phone(phone),
       },
       {
         title: '이메일',
@@ -147,7 +151,8 @@ export function SchoolAffiliatedTeachersSection({
         key: 'email',
         width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
-        render: (email: string) => MASKING_POLICY.email(email),
+        render: (email: string) =>
+          personalInfoRevealed ? (email?.trim() ? email : '-') : MASKING_POLICY.email(email),
       },
       {
         title: '재직 현황',
@@ -180,7 +185,7 @@ export function SchoolAffiliatedTeachersSection({
         render: (d: Row['joinedAt']) => formatDate(d),
       },
     ],
-    [rows.length, openEmploymentDropdownId, handleEmploymentStatusChange]
+    [rows.length, openEmploymentDropdownId, handleEmploymentStatusChange, personalInfoRevealed]
   )
 
   const handleWithdraw = () => {

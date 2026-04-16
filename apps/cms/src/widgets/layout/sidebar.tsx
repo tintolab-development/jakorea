@@ -42,8 +42,6 @@ export function Sidebar() {
     if (
       user?.role === 'ADMIN' &&
       (path.startsWith('/users/list') ||
-        path.startsWith('/users/participants') ||
-        path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members') ||
         path.startsWith('/admin/settings/permissions') ||
@@ -53,7 +51,6 @@ export function Sidebar() {
       // 회원 목록(2뎁스) 아래 3뎁스 — `member-list-group` 없으면 네비 후 서브메뉴가 닫힘
       if (
         path.startsWith('/users/list') ||
-        path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members')
       ) {
@@ -94,10 +91,6 @@ export function Sidebar() {
     if (user?.role === 'ADMIN' && path === '/users/list') {
       const kind = normalizeMemberListKind(new URLSearchParams(location.search).get('kind'))
       return [memberListHref(kind)]
-    }
-
-    if (user?.role === 'ADMIN' && path.startsWith('/schools')) {
-      return [memberListHref('institutions')]
     }
 
     if (user?.role === 'ADMIN' && path.startsWith('/instructors')) {

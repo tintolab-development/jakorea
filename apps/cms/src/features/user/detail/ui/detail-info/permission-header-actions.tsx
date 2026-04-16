@@ -29,9 +29,11 @@ export function PermissionHeaderActions({
       >
         신청 승인
       </CmsButton>
-      <CmsButton width={180} variant={personalInfoButton.variant} onClick={personalInfoButton.onClick}>
-        {personalInfoButton.label}
-      </CmsButton>
+      {personalInfoButton ? (
+        <CmsButton width={180} variant={personalInfoButton.variant} onClick={personalInfoButton.onClick}>
+          {personalInfoButton.label}
+        </CmsButton>
+      ) : null}
     </div>
   )
 }

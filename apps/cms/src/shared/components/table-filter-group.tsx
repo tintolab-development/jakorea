@@ -1,10 +1,11 @@
 /**
  * 테이블 상단 필터 그룹 (UnifiedFilterCard와 동일 레이아웃·스타일)
- * - 날짜 구간: 부모 `onFilterChange`로 직접 반영 (end 잠금/직렬화 동기화 없음)
- * - dateRange 기본값은 `filters[key] == null && defaultValue !== null`일 때만 시드
+ * - search: 로컬 `searchDrafts` → 조회 시 `flushSync`로 부모 `onFilterChange` 반영 후 `onSearch`(applySearch)
+ * - dateRange: 부모 `onFilterChange` 직접 반영 · 기본값은 `filters[key] == null && defaultValue !== null`일 때만 시드
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Row, Col } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
@@ -15,11 +16,22 @@ import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import './table-filter-group.css'
 
+export type AddressRegionFilterSubConfig = {
+  /** 시/도 값이 저장되는 `filters` 키 */
+  sidoKey: string
+  /** 시/군/구 값이 저장되는 `filters` 키 */
+  sigunguKey: string
+  sidoOptions: Array<{ label: string; value: string }>
+  getSigunguOptions: (sido: string | undefined | null) => Array<{ label: string; value: string }>
+  sidoPlaceholder?: string
+  sigunguPlaceholder?: string
+}
+
 export interface FilterFieldConfig {
   /** 필터 키 */
   key: string
   /** 필터 타입 */
-  type: 'search' | 'select' | 'dateRange' | 'multiSelect' | 'radio'
+  type: 'search' | 'select' | 'dateRange' | 'multiSelect' | 'radio' | 'addressRegion'
   /** 레이블 텍스트 */
   label: string
   /** placeholder 텍스트 */
@@ -41,6 +53,8 @@ export interface FilterFieldConfig {
   style?: React.CSSProperties
   /** 너비 (flex 값 또는 숫자) */
   flex?: number | string
+  /** `type === 'addressRegion'`일 때 시/도·시/군/구 이중 셀렉트 설정 */
+  addressRegion?: AddressRegionFilterSubConfig
   /**
    * 열 기준 너비(예: 200, '25%', 'min(280px, 30%)').
    * 지정 시 Col에 `flex: 0 0 <width>`를 쓰고, 좁은 select의 전역 min-width를 완화한다.
@@ -130,26 +144,21 @@ export function TableFilterGroup({
     })
   }, [filters, filtersSearchSignature, searchFieldKeys])
 
-  const searchDraftsRef = useRef(searchDrafts)
   const onSearchRef = useRef(onSearch)
-  useEffect(() => {
-    searchDraftsRef.current = searchDrafts
+  useLayoutEffect(() => {
     onSearchRef.current = onSearch
-  }, [searchDrafts, onSearch])
+  }, [onSearch])
 
   const flushSearchToParentAndSearch = useCallback(() => {
-    for (const f of filterRowFields) {
-      if (f.type === 'search') {
-        onFilterChange(f.key, searchDraftsRef.current[f.key] ?? '')
+    flushSync(() => {
+      for (const f of filterRowFields) {
+        if (f.type === 'search') {
+          onFilterChange(f.key, searchDrafts[f.key] ?? '')
+        }
       }
-    }
-    const run = () => onSearchRef.current()
-    if (typeof globalThis !== 'undefined' && typeof globalThis.setTimeout === 'function') {
-      globalThis.setTimeout(run, 0)
-    } else {
-      run()
-    }
-  }, [filterRowFields, onFilterChange])
+    })
+    onSearchRef.current()
+  }, [filterRowFields, onFilterChange, searchDrafts])
 
   useEffect(() => {
     for (const field of filterRowFields) {
@@ -168,7 +177,7 @@ export function TableFilterGroup({
   /** `table-filter-group.css` 의 `--table-filter-field-gap` 와 동일(px) — % 폭 colFlex 계산용 */
   const interFieldGapPx = 12
 
-  const colFlex = (field: FilterFieldConfig, defaultFlex: string, rowFieldCount: number) => {
+  const colFlex = (field: FilterFieldConfig, defaultFlex: string, rowFieldCount = 1) => {
     if (field.width != null) {
       if (typeof field.width === 'string' && field.width.trim().endsWith('%')) {
         const pct = parseFloat(field.width) / 100
@@ -235,6 +244,47 @@ export function TableFilterGroup({
           }
           width="100%"
         />
+      )
+    }
+
+    if (field.type === 'addressRegion') {
+      const ar = field.addressRegion
+      if (!ar) return null
+      const sido = filters[ar.sidoKey] as string | undefined
+      const sigungu = filters[ar.sigunguKey] as string | undefined
+      const sidoEmpty = sido == null || sido === ''
+      const districtOptions = ar.getSigunguOptions(sido)
+      return (
+        <Col key={field.key} flex={colFlex(field, '1 1 320px')} className={colClassFor(field)}>
+          <div className="unified-filter-card__field unified-filter-card__field--select">
+            <span className="unified-filter-card__label">{field.label}</span>
+            <div className="table-filter-group__address-region-selects">
+              <CmsSelect
+                inputSize="large"
+                placeholder={ar.sidoPlaceholder ?? '시/도'}
+                value={sidoEmpty ? undefined : sido}
+                selectClassName="unified-filter-card__select"
+                onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
+                allowClear={field.allowClear !== false}
+                popupMatchSelectWidth
+                style={{ width: '100%', ...field.style }}
+                options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+              />
+              <CmsSelect
+                inputSize="large"
+                placeholder={ar.sigunguPlaceholder ?? '시/군/구'}
+                value={sigungu == null || sigungu === '' ? undefined : sigungu}
+                selectClassName="unified-filter-card__select"
+                onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
+                allowClear={field.allowClear !== false}
+                disabled={sidoEmpty}
+                popupMatchSelectWidth
+                style={{ width: '100%', ...field.style }}
+                options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+              />
+            </div>
+          </div>
+        </Col>
       )
     }
 

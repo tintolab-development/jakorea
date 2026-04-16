@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Space, Spin, message, Modal } from 'antd'
+import { App, Card, Descriptions, Tag, Button, Space, Spin } from 'antd'
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
@@ -24,6 +24,7 @@ import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
 
 export function MySettlementDetailPage() {
+  const { modal, message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -51,7 +52,7 @@ export function MySettlementDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [id, navigate, user?.instructorId])
+  }, [id, message, navigate, user?.instructorId])
 
   useEffect(() => {
     if (id && user?.instructorId) {
@@ -63,7 +64,7 @@ export function MySettlementDetailPage() {
   const handleConfirmPaymentStatement = useCallback(async () => {
     if (!settlement || !user?.instructorId) return
 
-    Modal.confirm({
+    modal.confirm({
       title: '지급조서 확인 완료',
       content: '지급조서 내용을 확인하셨습니까? 확인 완료 시 계좌로 지급이 진행됩니다.',
       okText: '확인 완료',
@@ -92,7 +93,7 @@ export function MySettlementDetailPage() {
         }
       },
     })
-  }, [settlement, user?.instructorId, loadSettlement])
+  }, [loadSettlement, message, modal, settlement, user?.instructorId])
 
   if (!user?.instructorId) {
     return (

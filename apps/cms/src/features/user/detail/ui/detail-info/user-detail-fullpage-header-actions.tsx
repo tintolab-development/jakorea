@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { User } from '@/types/user'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
@@ -15,6 +15,14 @@ import {
   type PersonalInfoToggleButtonConfig,
 } from '@/features/user/detail/lib/use-personal-info-toggle'
 import { PermissionHeaderActions } from './permission-header-actions'
+import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
+import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import {
+  parseUserBasicInfoEntryQuery,
+  resolveUserBasicInfoBodyKey,
+  USER_BASIC_INFO_ENTRY_QUERY_KEY,
+} from '@/features/user/detail/ui/user-basic-info-section'
 
 export type UserDetailPermissionRole = 'instructor' | 'admin'
 
@@ -24,34 +32,34 @@ export interface UserDetailFullPageHeaderActionsProps {
   displayUser: Omit<User, 'password'>
   tabState: TabState
   personalInfoRevealed: boolean
-  setPersonalInfoRevealed: Dispatch<SetStateAction<boolean>>
+  onRequestPersonalInfoReveal: () => void
   onPermissionApprove?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onPermissionReject?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onWithdraw?: (user: Omit<User, 'password'>) => void
-  onEdit?: (user: Omit<User, 'password'>) => void
   onOpenWithdrawConfirm: () => void
 }
 
 export type PermissionHeaderActionsProps = UserDetailFullPageHeaderActionsProps & {
-  personalInfoButton: PersonalInfoToggleButtonConfig
+  personalInfoButton: PersonalInfoToggleButtonConfig | null
 }
 
 export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderActionsProps) {
+  const pageShell = useUserDetailFullpageShell()
+  const [searchParams] = useSearchParams()
   const {
     mode,
     permissionRole,
     displayUser,
     tabState,
     personalInfoRevealed,
-    setPersonalInfoRevealed,
+    onRequestPersonalInfoReveal,
     onWithdraw,
-    onEdit,
     onOpenWithdrawConfirm,
   } = props
 
   const personalInfoButton = usePersonalInfoToggle({
     personalInfoRevealed,
-    setPersonalInfoRevealed,
+    onRequestReveal: onRequestPersonalInfoReveal,
   })
 
   const permissionEntry = resolvePermissionHeaderEntry(mode, permissionRole)
@@ -59,33 +67,95 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     return <PermissionHeaderActions {...props} personalInfoButton={personalInfoButton} />
   }
 
-  const shell = resolveDefaultHeaderShellState({ displayUser, tabState, onWithdraw })
-  if (!shell.visible) {
+  const headerLayout = resolveDefaultHeaderShellState({ displayUser, tabState, onWithdraw })
+  if (!headerLayout.visible) {
     return null
   }
 
   const actions = getDefaultHeaderActions({
-    viewKind: shell.viewKind,
-    displayUser,
-    onWithdraw,
-    onEdit,
+    viewKind: headerLayout.viewKind,
+    onWithdraw: pageShell.basicInfoEditing ? undefined : onWithdraw,
     onOpenWithdrawConfirm,
   })
 
-  const leadingSpaceNode = shell.leadingSpace ? ' ' : null
+  const entryFromQuery = parseUserBasicInfoEntryQuery(
+    searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY)
+  )
+  const basicBodyKey = resolveUserBasicInfoBodyKey(
+    pageShell.basicInfoEntrySource,
+    entryFromQuery,
+    displayUser.role
+  )
+  const showMemberInlineEdit =
+    shouldShowCmsMemberInfoEditButton(displayUser) && basicBodyKey === 'all_users'
+  const showSchoolInstitutionInlineEdit =
+    displayUser.role === 'SCHOOL' && basicBodyKey === 'institution'
+  const showSchoolTeacherAdminCommentEdit =
+    Boolean(onWithdraw) &&
+    displayUser.role === 'INSTRUCTOR' &&
+    (resolveInstructorMemberProfile(displayUser) ?? 'instructor_only') === 'school_teacher' &&
+    basicBodyKey === 'instructor'
 
-  const personalInfoNode = shell.showPersonalInfoToggle ? (
+  const showInlineEditStart =
+    !pageShell.basicInfoEditing &&
+    (showMemberInlineEdit || showSchoolInstitutionInlineEdit || showSchoolTeacherAdminCommentEdit)
+
+  const showInlineEditControls =
+    pageShell.basicInfoEditing &&
+    (showMemberInlineEdit || showSchoolInstitutionInlineEdit || showSchoolTeacherAdminCommentEdit)
+
+  const inlineEditCluster = showInlineEditControls ? (
+    <>
+      <CmsButton
+        key="basic-info-cancel"
+        size="medium"
+        variant="secondary"
+        onClick={pageShell.onCancelBasicInfoEdit}
+      >
+        취소
+      </CmsButton>
+      <CmsButton
+        key="basic-info-save"
+        size="medium"
+        variant="primary"
+        loading={pageShell.basicInfoSaveLoading}
+        onClick={() => {
+          void pageShell.onSaveBasicInfoEdit()
+        }}
+      >
+        저장
+      </CmsButton>
+    </>
+  ) : showInlineEditStart ? (
     <CmsButton
+      key="basic-info-edit"
       size="medium"
-      width={160}
-      variant={personalInfoButton.variant}
-      onClick={personalInfoButton.onClick}
+      variant="secondary"
+      onClick={pageShell.onStartBasicInfoEdit}
     >
-      {personalInfoButton.label}
+      정보 수정
     </CmsButton>
   ) : null
 
-  const actionButtons = actions.map(action => (
+  const leadingSpaceNode = headerLayout.leadingSpace ? ' ' : null
+
+  const personalInfoNode =
+    !pageShell.basicInfoEditing && headerLayout.showPersonalInfoToggle && personalInfoButton ? (
+      <CmsButton
+        size="medium"
+        width={160}
+        variant={personalInfoButton.variant}
+        onClick={personalInfoButton.onClick}
+      >
+        {personalInfoButton.label}
+      </CmsButton>
+    ) : null
+
+  const headerActionsForLayout = pageShell.basicInfoEditing
+    ? actions.filter(a => a.key !== 'school-delete' && a.key !== 'withdraw')
+    : actions
+
+  const actionButtons = headerActionsForLayout.map(action => (
     <CmsButton
       size="medium"
       key={action.key}
@@ -97,13 +167,11 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
   ))
 
   return (
-    <>
-      <div className="info-section-title">기본정보</div>
-      <div className="info-section-buttons--wrapper">
-        {leadingSpaceNode}
-        {actionButtons}
-        {personalInfoNode}
-      </div>
-    </>
+    <div className="info-section-buttons--wrapper">
+      {leadingSpaceNode}
+      {actionButtons}
+      {inlineEditCluster}
+      {personalInfoNode}
+    </div>
   )
 }

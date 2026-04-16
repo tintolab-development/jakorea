@@ -40,3 +40,14 @@
   box-shadow: none;
   background: transparent;
 }
+
+.member-program-lecture-history__toolbar-actions-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.member-program-lecture-history__action-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

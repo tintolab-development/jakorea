@@ -131,6 +131,16 @@
  */
 .table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split .cms-datepicker__segment {
   max-width: none;
+}
+
+.table-filter-group__address-region-selects {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.table-filter-group__address-region-selects > .cms-select {
   flex: 1 1 0;
   min-width: 0;
 }

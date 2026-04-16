@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { ColumnFiltersState } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
@@ -61,6 +61,8 @@ export function useTablePage<
   })
 
   const [pendingFilters, setPendingFilters] = useState<TFilters>(config.filters.initialPending)
+  const pendingFiltersRef = useRef(pendingFilters)
+  pendingFiltersRef.current = pendingFilters
 
   useEffect(() => {
     config.filters.syncPendingFromUrl({
@@ -80,18 +82,10 @@ export function useTablePage<
     [columnFilters, config, context, searchParamsKey]
   )
 
-  const displayedCount = useMemo(() => {
-    return hasActiveFilters
-      ? table.getFilteredRowModel().rows.length
-      : config.filters.getBaseCount({ context, filteredData })
-    // `table` 참조만으로는 데이터 갱신을 감지하지 못함(TanStack Table 인스턴스 안정) — 소스 배열 변경 시 재계산
-  }, [config, context, filteredData, hasActiveFilters, table, dataForTable])
-
   const searchSync = useMemo(() => config.getSearchSync(context), [config, context])
 
   const { applySearch } = useTableSearch<TFilters, TData>({
-    filters: pendingFilters,
-    searchParams,
+    filtersRef: pendingFiltersRef,
     setSearchParams,
     table,
     paramConfig: searchSync.paramConfig,
@@ -104,11 +98,27 @@ export function useTablePage<
     [config, context]
   )
 
-  const tableData = useMemo(
-    () => table.getFilteredRowModel().rows.map(row => row.original),
-    // `table`만 deps에 두면 행 추가·삭제 후에도 메모가 갱신되지 않을 수 있음(인스턴스 참조 유지)
-    [table, dataForTable]
-  )
+  /**
+   * TanStack `table` 인스턴스 참조가 유지되는 경우에도 `getFilteredRowModel()` 결과가 갱신되도록
+   * `dataForTable`·`searchParamsKey`·`columnFilters`를 deps에 포함한다.
+   */
+  const { tableData, displayedCount } = useMemo(() => {
+    const rows = table.getFilteredRowModel().rows.map(row => row.original)
+    const nextDisplayedCount = hasActiveFilters
+      ? rows.length
+      : config.filters.getBaseCount({ context, filteredData })
+    return { tableData: rows, displayedCount: nextDisplayedCount }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `table` 참조만으로는 row model 갱신을 감지하지 못함
+  }, [
+    columnFilters,
+    config,
+    context,
+    dataForTable,
+    filteredData,
+    hasActiveFilters,
+    searchParamsKey,
+    table,
+  ])
 
   const handleFilterChange = useCallback(
     (key: string, value: unknown) => {

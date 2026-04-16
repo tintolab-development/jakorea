@@ -12,6 +12,11 @@ import {
   resolveRoleFilterFromMemberListParams,
   type MemberListKind,
 } from '@/shared/config/member-list-kinds'
+import {
+  INSTITUTION_SIDO_VALUES,
+  LEGACY_INSTITUTION_LOCATION_TO_SIDO_SIGUNGU,
+  buildInstitutionLocationFilterToken,
+} from '@/shared/config/institution-address-region-data'
 
 export type UserListRow = Omit<User, 'password'>
 
@@ -24,7 +29,10 @@ export type UserListQueryParams = Record<string, string | undefined> & {
   programsChild?: string
   createdAtFrom?: string
   createdAtTo?: string
+  /** @deprecated 구 북마크 호환용. 신규는 `institutionSido`·`institutionSigungu` */
   institutionLocation?: string
+  institutionSido?: string
+  institutionSigungu?: string
   instructorType?: string
   settlementStatus?: string
   adminPermissionVariant?: string
@@ -45,7 +53,8 @@ export type UserListApiFilters = {
 export type UserListPendingFilters = {
   search: string
   role: UserRole | 'ALL'
-  institutionLocation: string
+  institutionSido: string
+  institutionSigungu: string
   instructorType: string
   settlementStatus: string
   adminPermissionVariant: string
@@ -79,6 +88,37 @@ export function parseAdminPermissionVariantParam(raw: string | undefined): Admin
   return ''
 }
 
+const INSTITUTION_SIDO_SET = new Set<string>(INSTITUTION_SIDO_VALUES as unknown as string[])
+
+/** URL 쿼리 → 시/도·시/군/구 (구형 `institutionLocation` 단일 값 호환) */
+export function parseInstitutionRegionFromUserListParams(params: UserListQueryParams): {
+  institutionSido: string
+  institutionSigungu: string
+} {
+  const kind = normalizeMemberListKind(params.kind)
+  if (kind !== 'institutions') return { institutionSido: '', institutionSigungu: '' }
+
+  const s0 = (params.institutionSido ?? '').trim()
+  const g0 = (params.institutionSigungu ?? '').trim()
+  if (s0 || g0) return { institutionSido: s0, institutionSigungu: g0 }
+
+  const legacy = (params.institutionLocation ?? '').trim()
+  if (!legacy) return { institutionSido: '', institutionSigungu: '' }
+
+  if (INSTITUTION_SIDO_SET.has(legacy)) return { institutionSido: legacy, institutionSigungu: '' }
+
+  for (const sido of INSTITUTION_SIDO_VALUES) {
+    if (legacy.startsWith(`${sido} `)) {
+      return { institutionSido: sido, institutionSigungu: legacy.slice(sido.length + 1).trim() }
+    }
+  }
+
+  const mapped = LEGACY_INSTITUTION_LOCATION_TO_SIDO_SIGUNGU[legacy]
+  if (mapped) return { institutionSido: mapped[0], institutionSigungu: mapped[1] }
+
+  return { institutionSido: '', institutionSigungu: '' }
+}
+
 export function pendingRoleFromParams(params: UserListQueryParams): UserRole | 'ALL' {
   if (params.kind !== undefined && params.kind !== '') {
     return memberListKindToPendingRole(normalizeMemberListKind(params.kind))
@@ -93,7 +133,8 @@ export function pendingToApiFilters(
   pending: Pick<
     UserListPendingFilters,
     | 'search'
-    | 'institutionLocation'
+    | 'institutionSido'
+    | 'institutionSigungu'
     | 'instructorType'
     | 'settlementStatus'
     | 'adminPermissionVariant'
@@ -104,7 +145,7 @@ export function pendingToApiFilters(
   const api: Omit<UserListApiFilters, 'role' | 'instructorListPureOnly'> = {}
   if (pending.search) api.search = pending.search
   if (listKind === 'institutions') {
-    const loc = pending.institutionLocation.trim()
+    const loc = buildInstitutionLocationFilterToken(pending.institutionSido, pending.institutionSigungu).trim()
     if (loc) api.institutionLocation = loc
   }
   if (listKind === 'instructors') {
@@ -137,7 +178,8 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
     api.createdAtTo = to
   }
   if (kind === 'institutions') {
-    const loc = params.institutionLocation?.trim()
+    const { institutionSido, institutionSigungu } = parseInstitutionRegionFromUserListParams(params)
+    const loc = buildInstitutionLocationFilterToken(institutionSido, institutionSigungu).trim()
     if (loc) api.institutionLocation = loc
   }
   if (kind === 'instructors') {
@@ -171,10 +213,13 @@ export function userListPendingFiltersFromParams(params: UserListQueryParams): U
     if (start.isValid() && end.isValid()) createdAtRange = [start, end]
   }
   const kind = normalizeMemberListKind(params.kind)
+  const region =
+    kind === 'institutions' ? parseInstitutionRegionFromUserListParams(params) : { institutionSido: '', institutionSigungu: '' }
   return {
     search: params.search || '',
     role: pendingRoleFromParams(params),
-    institutionLocation: kind === 'institutions' ? (params.institutionLocation ?? '').trim() : '',
+    institutionSido: region.institutionSido,
+    institutionSigungu: region.institutionSigungu,
     instructorType: kind === 'instructors' ? (params.instructorType ?? '').trim() : '',
     settlementStatus: kind === 'instructors' ? (params.settlementStatus ?? '').trim() : '',
     adminPermissionVariant:
@@ -193,11 +238,17 @@ function applyUserListSearchToParams(nextParams: URLSearchParams, filters: UserL
   nextParams.delete('role')
 
   if (nextKind === 'institutions') {
-    const loc = filters.institutionLocation.trim()
-    if (loc) nextParams.set('institutionLocation', loc)
-    else nextParams.delete('institutionLocation')
+    nextParams.delete('institutionLocation')
+    const s = filters.institutionSido.trim()
+    const g = filters.institutionSigungu.trim()
+    if (s) nextParams.set('institutionSido', s)
+    else nextParams.delete('institutionSido')
+    if (g) nextParams.set('institutionSigungu', g)
+    else nextParams.delete('institutionSigungu')
   } else {
     nextParams.delete('institutionLocation')
+    nextParams.delete('institutionSido')
+    nextParams.delete('institutionSigungu')
   }
 
   if (nextKind === 'instructors') {
@@ -259,7 +310,8 @@ export function createUserListTablePageConfig(opts: {
       initialPending: {
         search: '',
         role: 'ALL',
-        institutionLocation: '',
+        institutionSido: '',
+        institutionSigungu: '',
         instructorType: '',
         settlementStatus: '',
         adminPermissionVariant: '',
@@ -275,10 +327,17 @@ export function createUserListTablePageConfig(opts: {
         if (key === 'createdAtRange') {
           return { ...prev, createdAtRange: value as [Dayjs | null, Dayjs | null] | null }
         }
-        if (key === 'institutionLocation') {
+        if (key === 'institutionSido') {
           return {
             ...prev,
-            institutionLocation: value === undefined || value === null ? '' : String(value),
+            institutionSido: value === undefined || value === null ? '' : String(value),
+            institutionSigungu: '',
+          }
+        }
+        if (key === 'institutionSigungu') {
+          return {
+            ...prev,
+            institutionSigungu: value === undefined || value === null ? '' : String(value),
           }
         }
         if (key === 'instructorType' || key === 'settlementStatus') {

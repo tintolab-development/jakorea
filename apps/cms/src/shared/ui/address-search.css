@@ -1,0 +1,138 @@
+/**
+ * 주소 검색(ContentModal 내부): tip·결과 영역만 스타일 (CmsInput은 건드리지 않음)
+ */
+
+.address-search__trigger-wrap {
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.address-search__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+}
+
+.address-search__search-row {
+  width: 100%;
+}
+
+.address-search__search-input-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.address-search__results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 120px;
+}
+
+.address-search__result-count {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.address-search__result-empty {
+  color: var(--color-text-secondary, #8c8c8c);
+  font-size: 14px;
+  line-height: 150%;
+}
+
+.address-search__result-table-wrap {
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--8, 8px);
+}
+
+.address-search__result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.address-search__result-table th,
+.address-search__result-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  vertical-align: top;
+}
+
+.address-search__result-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--main-WT, #fff);
+  font-weight: 600;
+}
+
+.address-search__result-table tbody tr {
+  cursor: pointer;
+}
+
+.address-search__result-table tbody tr:hover {
+  background: var(--table-header-bg, #fafafa);
+}
+
+.address-search__result-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.address-search__pagination {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.address-search__tip {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.address-search__tip-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.address-search__tip-lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 160%;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.address-search__tip-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.address-search__tip-item-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  margin-bottom: 4px;
+}
+
+.address-search__tip-item-example {
+  margin: 0;
+  font-size: 13px;
+  line-height: 150%;
+  color: var(--color-primary, #1677ff);
+}

@@ -10,14 +10,13 @@ import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-c
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
-import { CmsButton, CmsDatePicker, CmsInput, CmsRadioGroup } from '@/shared/ui'
+import { AddressSearch, CmsButton, CmsInput, CmsRadioGroup } from '@/shared/ui'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 const ORG_LABEL: Record<SponsorOrganizationKind, string> = {
   corporate: '기업',
   foundation: '재단',
-  institution: '기관',
 }
 
 const SPONSORSHIP_STATUS_OPTIONS = ['active', 'ended'] as const
@@ -47,6 +46,10 @@ export function SponsorBasicInfoSection({
   onChange,
 }: SponsorBasicInfoSectionProps) {
   const [isSponsorshipStatusDropdownOpen, setIsSponsorshipStatusDropdownOpen] = useState(false)
+
+  const sponsorshipStartDisplay = value.sponsorshipStartDate
+    ? dayjs(value.sponsorshipStartDate).format('YYYY.MM.DD')
+    : '-'
 
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode={isEditing ? 'edit' : 'view'}>
@@ -82,7 +85,6 @@ export function SponsorBasicInfoSection({
                   options={[
                     { label: '기업', value: 'corporate' },
                     { label: '재단', value: 'foundation' },
-                    { label: '기관', value: 'institution' },
                   ]}
                   size="medium"
                 />
@@ -144,13 +146,14 @@ export function SponsorBasicInfoSection({
           }
           edit={
             <Space.Compact block>
-              <CmsInput
+              <AddressSearch
                 value={value.district}
-                onChange={event => onChange(prev => ({ ...prev, district: event.target.value }))}
-                placeholder="시군구 검색"
+                onChange={next => onChange(prev => ({ ...prev, district: next }))}
+                onSelect={() => onChange(prev => ({ ...prev, detailAddress: '' }))}
                 inputSize="medium"
                 width="100%"
               />
+              <DetailInfoForm.InputsSeparator />
               <CmsInput
                 value={value.detailAddress}
                 onChange={event =>
@@ -167,27 +170,8 @@ export function SponsorBasicInfoSection({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="후원 시작일"
-          view={
-            <span>
-              {value.sponsorshipStartDate
-                ? dayjs(value.sponsorshipStartDate).format('YYYY.MM.DD')
-                : '-'}
-            </span>
-          }
-          edit={
-            <CmsDatePicker
-              value={value.sponsorshipStartDate ? dayjs(value.sponsorshipStartDate) : null}
-              onChange={date =>
-                onChange(prev => ({
-                  ...prev,
-                  sponsorshipStartDate: date ? date.format('YYYY-MM-DD') : undefined,
-                }))
-              }
-              format="YYYY.MM.DD"
-              inputSize="medium"
-              width="100%"
-            />
-          }
+          view={<span>{sponsorshipStartDisplay}</span>}
+          edit={<span>{sponsorshipStartDisplay}</span>}
         />
         <DetailInfoForm.Field
           label="후원 상태"
@@ -198,23 +182,23 @@ export function SponsorBasicInfoSection({
             />
           }
           edit={
-            <div>
-              <StatusDropdownCell<SponsorshipStatus>
-                status={value.sponsorshipStatus ?? 'active'}
-                statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-                renderBadge={status => <SponsorSponsorshipStatusBadge status={status} variant="table" />}
-                isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
-                onChange={next =>
-                  onChange(prev => ({
-                    ...prev,
-                    sponsorshipStatus: next,
-                  }))
-                }
-                isOpen={isSponsorshipStatusDropdownOpen}
-                onOpenChange={setIsSponsorshipStatusDropdownOpen}
-                style={{ width: 120 }}
-              />
-            </div>
+            <StatusDropdownCell<SponsorshipStatus>
+              status={value.sponsorshipStatus ?? 'active'}
+              statusOptions={SPONSORSHIP_STATUS_OPTIONS}
+              renderBadge={status => (
+                <SponsorSponsorshipStatusBadge status={status} variant="table" />
+              )}
+              isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
+              onChange={next =>
+                onChange(prev => ({
+                  ...prev,
+                  sponsorshipStatus: next,
+                }))
+              }
+              isOpen={isSponsorshipStatusDropdownOpen}
+              onOpenChange={setIsSponsorshipStatusDropdownOpen}
+              style={{ width: '120px' }}
+            />
           }
         />
       </DetailInfoForm.Row>
@@ -266,12 +250,7 @@ export function SponsorContactsSection({
           >
             담당자 삭제
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="medium"
-            onClick={onRegisterClick}
-            disabled={!canWrite}
-          >
+          <CmsButton variant="primary" size="medium" onClick={onRegisterClick} disabled={!canWrite}>
             담당자 등록
           </CmsButton>
         </div>

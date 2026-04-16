@@ -418,3 +418,19 @@
   flex: 0 0 auto;
   flex-shrink: 0;
 }
+
+.unified-filter-card__address-region-selects {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.unified-filter-card__address-region-selects > .app-select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.unified-filter-card--single-row .unified-filter-card__address-region-selects .app-select {
+  min-width: 0 !important;
+}

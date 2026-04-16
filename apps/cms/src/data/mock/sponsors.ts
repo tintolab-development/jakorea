@@ -122,7 +122,7 @@ const defaultManagers = [
   { name: '이소율', phone: '02-6347-6113' },
 ]
 
-const ORG_KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation', 'institution']
+const ORG_KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation']
 
 // mockSponsors[0] = JA Korea 고유목적사업으로 연동되므로 JA코리아 담당자 목록 부여, 나머지는 기본 목록
 mockSponsors.forEach((s, i) => {

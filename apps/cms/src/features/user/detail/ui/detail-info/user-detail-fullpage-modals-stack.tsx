@@ -3,9 +3,18 @@ import {
   buildMemberWithdrawMessageLines,
   buildSchoolDeleteMessageLines,
 } from '@/features/program/ui/manager-delete-guide-modal'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
 import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
+import { ActionResultModal } from '@/shared/ui/action-result-modal'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
+
+const PERSONAL_INFO_REVEAL_MODAL_Z = 1100
+const PERSONAL_INFO_REVEAL_SUCCESS_MODAL_Z = 1101
 
 export function UserDetailFullpageModalsStack() {
   const {
@@ -15,25 +24,55 @@ export function UserDetailFullpageModalsStack() {
     onWithdrawModalCancel,
     onWithdrawModalConfirm,
     derived,
+    personalInfoRevealConfirmOpen,
+    personalInfoRevealSuccessOpen,
+    onClosePersonalInfoRevealConfirm,
+    onSubmitPersonalInfoReveal,
+    onClosePersonalInfoRevealSuccess,
   } = useUserDetailFullpageShell()
 
   const { sections } = derived
 
   return (
     <>
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={onClosePersonalInfoRevealConfirm}
+          onConfirm={onSubmitPersonalInfoReveal}
+          zIndex={PERSONAL_INFO_REVEAL_MODAL_Z}
+        />
+      ) : null}
+      <ActionResultModal
+        open={personalInfoRevealSuccessOpen}
+        title="마스킹 처리 해제 완료"
+        message={
+          <span className="fs-16">
+            개인정보 마스킹이 해제되었습니다.
+            <br />
+            관리자 권한에 따라 일부 항목은 마스킹이 유지될 수 있습니다.
+          </span>
+        }
+        onClose={onClosePersonalInfoRevealSuccess}
+        zIndex={PERSONAL_INFO_REVEAL_SUCCESS_MODAL_Z}
+      />
       {withdrawConfirmOpen && (
         <DeleteGuideModal
           open
           onCancel={onWithdrawModalCancel}
           onConfirm={onWithdrawModalConfirm}
-          title={sections.withdraw.isSchoolDelete ? '학교 삭제 안내' : '회원 탈퇴 안내'}
+          title={sections.withdraw.isSchoolDelete ? '학교 탈퇴 안내' : '회원 탈퇴 안내'}
           lines={
             sections.withdraw.isSchoolDelete
-              ? buildSchoolDeleteMessageLines({ name: displayUser.name, email: displayUser.email })
-              : buildMemberWithdrawMessageLines({ name: displayUser.name, email: displayUser.email })
+              ? buildSchoolDeleteMessageLines({
+                  displayName:
+                    displayUser.schoolInfo?.schoolName?.trim() || displayUser.name,
+                })
+              : buildMemberWithdrawMessageLines({ displayName: displayUser.name })
           }
-          confirmText={sections.withdraw.isSchoolDelete ? '삭제' : '탈퇴'}
+          confirmText="삭제"
           confirmVariant="delete"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
 

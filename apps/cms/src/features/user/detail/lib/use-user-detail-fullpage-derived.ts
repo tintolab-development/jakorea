@@ -11,6 +11,7 @@ import {
   type UserDetailRoleStrategy,
   type UserDetailStrategySectionConfig,
 } from '@/features/user/detail/strategies'
+import { resolveUserDetailBasicTabCaption } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 
 export interface UseUserDetailFullpageDerivedParams {
   displayUser: Omit<User, 'password'> | null
@@ -38,7 +39,14 @@ export function useUserDetailFullpageDerived({
 
     const strategyCtx = { displayUser, applications, enrollmentApplications }
     const strategy = roleStrategyMap[displayUser.role]
-    const sections = strategy.getSections(strategyCtx)
+    const rawSections = strategy.getSections(strategyCtx)
+    const sections: UserDetailStrategySectionConfig = {
+      ...rawSections,
+      basicTab: {
+        ...rawSections.basicTab,
+        caption: resolveUserDetailBasicTabCaption(displayUser, rawSections.basicTab.caption),
+      },
+    }
     const enrollmentTableRows = strategy.getEnrollmentRows(strategyCtx)
     const resolvedProgramsChild =
       tabState.lnb === 'history' && programsHistoryHasChildMenu(displayUser)

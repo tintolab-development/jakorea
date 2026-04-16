@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Table, Empty, message } from 'antd'
 import type { Application, UserHistory } from '@/types/domain'
+import type { User } from '@/types/user'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -19,7 +21,16 @@ export interface UserProgramsHistoryConfig {
   useSchoolProgramParticipationSingleView: boolean
 }
 
+function memberShowsProgramHistoryCertificateBulkIssue(
+  user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
+): boolean {
+  if (user.role !== 'INSTRUCTOR') return true
+  return resolveInstructorMemberProfile(user) !== 'school_teacher'
+}
+
 export interface UserProgramsSectionProps {
+  /** 일반 교사 등 발급 버튼 제어용 */
+  user: Omit<User, 'password'>
   applications: Application[]
   enrollmentTableRows: Application[]
   loading: boolean
@@ -39,6 +50,7 @@ export interface UserProgramsSectionProps {
 
 /** 회원 상세 — 프로그램·봉사 이력 탭 본문 (역할별 분기는 상위 전략에서 주입) */
 export function UserProgramsSection({
+  user,
   applications,
   enrollmentTableRows,
   loading,
@@ -52,6 +64,11 @@ export function UserProgramsSection({
   onOpenAssignment,
   onRowClick,
 }: UserProgramsSectionProps) {
+  const showCertificateBulkIssue = useMemo(
+    () => memberShowsProgramHistoryCertificateBulkIssue(user),
+    [user]
+  )
+
   const {
     enrollmentSectionTitle,
     enrollmentEmptyDescription,
@@ -135,6 +152,7 @@ export function UserProgramsSection({
       mode="volunteerProgram"
       volunteerHistories={volunteerHistories}
       loading={volunteerHistoriesLoading}
+      showCertificateBulkIssue={showCertificateBulkIssue}
       onVolunteerRowClick={() => {
         message.info('봉사 프로그램 상세는 추후 연결됩니다.')
       }}
@@ -153,6 +171,7 @@ export function UserProgramsSection({
               mode="studentEnrollment"
               applications={applications}
               loading={loading}
+              showCertificateBulkIssue={showCertificateBulkIssue}
               onRowClick={onRowClick}
               onOpenAttendance={onOpenLectureAttendance}
               onOpenAssignment={onOpenAssignment}
@@ -165,6 +184,7 @@ export function UserProgramsSection({
               mode="schoolProgramParticipation"
               applications={enrollmentTableRows}
               loading={loading}
+              showCertificateBulkIssue={showCertificateBulkIssue}
               onRowClick={onRowClick}
               onBulkDelete={() => {
                 message.info('이력 삭제는 추후 연결됩니다.')
@@ -191,6 +211,7 @@ export function UserProgramsSection({
         mode="schoolProgramParticipation"
         applications={enrollmentTableRows}
         loading={loading}
+        showCertificateBulkIssue={showCertificateBulkIssue}
         onRowClick={onRowClick}
         onBulkDelete={() => {
           message.info('이력 삭제는 추후 연결됩니다.')

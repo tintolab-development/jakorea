@@ -17,11 +17,27 @@ import {
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
+import { useDeleteGuideMessages } from '@/shared/hooks'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton } from '@/shared/ui'
+import {
+  ActionResultModal,
+  CmsButton,
+  DeleteGuideModal,
+  buildDeleteCompletedMessageBulk,
+  buildDeleteCompletedMessageSingle,
+  buildDeleteCompletedTitle,
+  buildRegisterCompletedMessage,
+  buildRegisterCompletedTitle,
+} from '@/shared/ui'
+import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
+import { SponsorRegisterModal } from '@/features/sponsor/ui/modal/sponsor-register-modal'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -30,7 +46,6 @@ import '@/features/program/ui/program-list.css'
 const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, string> = {
   corporate: '기업',
   foundation: '재단',
-  institution: '기관',
 }
 
 const SPONSORSHIP_STATUS_OPTIONS = [
@@ -62,10 +77,16 @@ export default function SponsorPage() {
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [openSponsorshipDropdownId, setOpenSponsorshipDropdownId] = useState<string | null>(null)
+  const [bulkSponsorDeleteModalOpen, setBulkSponsorDeleteModalOpen] = useState(false)
+  const [bulkSponsorDeleteBlockedOpen, setBulkSponsorDeleteBlockedOpen] = useState(false)
+  const [registerModalOpen, setRegisterModalOpen] = useState(false)
+  const [actionResultModalOpen, setActionResultModalOpen] = useState(false)
+  const [actionResultTitle, setActionResultTitle] = useState('')
+  const [actionResultMessage, setActionResultMessage] = useState('')
 
   const sponsorIdFromUrl = searchParams.get('sponsorId') ?? ''
   const sponsorRowForDetail = useMemo(
-    () => (sponsorIdFromUrl ? rows.find(r => r.id === sponsorIdFromUrl) ?? null : null),
+    () => (sponsorIdFromUrl ? (rows.find(r => r.id === sponsorIdFromUrl) ?? null) : null),
     [sponsorIdFromUrl, rows]
   )
   const sponsorDetailOpen = Boolean(sponsorIdFromUrl && sponsorRowForDetail)
@@ -91,26 +112,94 @@ export default function SponsorPage() {
   const handleDeleteSponsor = useCallback(
     (sponsorId: string) => {
       if (!canWrite) return
-      setRows(prev => prev.filter(row => row.id !== sponsorId))
+      const row = rows.find(r => r.id === sponsorId)
+      const displayName = row?.name?.trim() ?? ''
+      setRows(prev => prev.filter(r => r.id !== sponsorId))
       closeSponsorDetail()
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== sponsorId))
+      setActionResultTitle(buildDeleteCompletedTitle('후원사'))
+      setActionResultMessage(buildDeleteCompletedMessageSingle(displayName, '후원사'))
+      setActionResultModalOpen(true)
     },
-    [canWrite, closeSponsorDetail]
+    [canWrite, closeSponsorDetail, rows]
   )
+
+  const selectedSponsors = useMemo(() => {
+    const keySet = new Set(selectedRowKeys.map(k => String(k)))
+    return rows.filter(r => keySet.has(r.id))
+  }, [rows, selectedRowKeys])
+
+  const { title: bulkSponsorDeleteTitle, lines: bulkSponsorDeleteLines } = useDeleteGuideMessages({
+    items: selectedSponsors,
+    domainLabel: '후원사',
+    bulkCounterPhrase: '개의 후원사',
+    particleTargetNoun: '후원사',
+    singleTitle: '후원사 삭제 안내',
+    getDisplayName: sponsor => sponsor.name ?? '',
+  })
+
+  const handleBulkDelete = useCallback(() => {
+    if (!canWrite || selectedRowKeys.length === 0) return
+    setBulkSponsorDeleteModalOpen(true)
+  }, [canWrite, selectedRowKeys.length])
+
+  const handleCancelBulkSponsorDelete = useCallback(() => {
+    setBulkSponsorDeleteModalOpen(false)
+  }, [])
+
+  const handleCloseBulkSponsorDeleteBlocked = useCallback(() => {
+    setBulkSponsorDeleteBlockedOpen(false)
+  }, [])
+
+  const handleConfirmBulkSponsorDelete = useCallback(() => {
+    if (selectedSponsors.some(s => (s.programCount ?? 0) > 0)) {
+      setBulkSponsorDeleteModalOpen(false)
+      setBulkSponsorDeleteBlockedOpen(true)
+      return
+    }
+    const ids = new Set(selectedSponsors.map(s => s.id))
+    const n = selectedSponsors.length
+    setRows(prev => prev.filter(r => !ids.has(r.id)))
+    setSelectedRowKeys([])
+    setBulkSponsorDeleteModalOpen(false)
+    setActionResultTitle(buildDeleteCompletedTitle('후원사'))
+    if (n === 1) {
+      setActionResultMessage(
+        buildDeleteCompletedMessageSingle(selectedSponsors[0]?.name?.trim() ?? '', '후원사')
+      )
+    } else {
+      setActionResultMessage(buildDeleteCompletedMessageBulk(n, '개의 후원사'))
+    }
+    setActionResultModalOpen(true)
+    if (sponsorIdFromUrl && ids.has(sponsorIdFromUrl)) {
+      closeSponsorDetail()
+    }
+  }, [closeSponsorDetail, selectedSponsors, sponsorIdFromUrl])
 
   const updateSponsorshipStatus = useCallback((id: string, next: SponsorSponsorshipStatus) => {
     setRows(prev => prev.map(r => (r.id === id ? { ...r, sponsorshipStatus: next } : r)))
   }, [])
 
-  const handleBulkDelete = useCallback(() => {
-    if (!canWrite) return
-    window.alert('준비 중입니다.')
-  }, [canWrite])
-
   const handleRegister = useCallback(() => {
     if (!canWrite) return
-    window.alert('준비 중입니다.')
+    setRegisterModalOpen(true)
   }, [canWrite])
+
+  const handleRegisterSubmit = useCallback((row: SponsorManagementRow) => {
+    setRows(prev => [row, ...prev])
+    setRegisterModalOpen(false)
+    setActionResultTitle(buildRegisterCompletedTitle('후원사'))
+    setActionResultMessage(buildRegisterCompletedMessage(row.name ?? '', '후원사'))
+    setActionResultModalOpen(true)
+  }, [])
+
+  const handleRegisterModalClose = useCallback(() => {
+    setRegisterModalOpen(false)
+  }, [])
+
+  const handleCloseActionResultModal = useCallback(() => {
+    setActionResultModalOpen(false)
+  }, [])
 
   const columns: ColumnsType<SponsorManagementRow> = useMemo(
     () => [
@@ -269,6 +358,32 @@ export default function SponsorPage() {
         onClose={closeSponsorDetail}
         sponsor={sponsorRowForDetail}
         onDeleteSponsor={handleDeleteSponsor}
+      />
+
+      <DeleteGuideModal
+        open={bulkSponsorDeleteModalOpen}
+        onCancel={handleCancelBulkSponsorDelete}
+        onConfirm={handleConfirmBulkSponsorDelete}
+        title={bulkSponsorDeleteTitle}
+        lines={bulkSponsorDeleteLines}
+        confirmText="후원사 삭제"
+        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+        confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+      />
+      <SponsorDeleteBlockedModal
+        open={bulkSponsorDeleteBlockedOpen}
+        onClose={handleCloseBulkSponsorDeleteBlocked}
+      />
+      <SponsorRegisterModal
+        open={registerModalOpen}
+        onCancel={handleRegisterModalClose}
+        onSubmit={handleRegisterSubmit}
+      />
+      <ActionResultModal
+        open={actionResultModalOpen}
+        title={actionResultTitle}
+        message={actionResultMessage}
+        onClose={handleCloseActionResultModal}
       />
     </div>
   )

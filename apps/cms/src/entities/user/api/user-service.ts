@@ -154,6 +154,81 @@ export async function getUsersPage(
 /**
  * 사용자 상세 조회
  */
+export type PatchUserBasicInfoInput = Partial<
+  Pick<
+    User,
+    | 'name'
+    | 'nameEn'
+    | 'phone'
+    | 'email'
+    | 'detailAddress'
+    | 'affiliation'
+    | 'gender'
+    | 'birthDate'
+    | 'socialAccounts'
+    | 'adminComment'
+    | 'schoolInfo'
+    | 'listMetrics'
+  >
+>
+
+/** CMS: 관리자 등록 회원 등 기본 정보 일부 수정 (Mock — mockUsers 반영) */
+export async function patchUserBasicInfo(
+  userId: UUID,
+  patch: PatchUserBasicInfoInput
+): Promise<Omit<User, 'password'>> {
+  await new Promise(resolve => setTimeout(resolve, 300))
+
+  const userIndex = mockUsers.findIndex(u => u.id === userId)
+  if (userIndex === -1) {
+    throw new Error('사용자를 찾을 수 없습니다.')
+  }
+
+  const user = mockUsers[userIndex]
+  if (patch.name !== undefined) user.name = patch.name
+  if (patch.nameEn !== undefined) user.nameEn = patch.nameEn
+  if (patch.phone !== undefined) user.phone = patch.phone
+  if (patch.email !== undefined) user.email = patch.email
+  if (patch.detailAddress !== undefined) user.detailAddress = patch.detailAddress
+  if (patch.affiliation !== undefined) user.affiliation = patch.affiliation
+  if (patch.gender !== undefined) user.gender = patch.gender
+  if (patch.birthDate !== undefined) user.birthDate = patch.birthDate
+  if (patch.socialAccounts !== undefined) user.socialAccounts = patch.socialAccounts
+  if (Object.prototype.hasOwnProperty.call(patch, 'adminComment')) {
+    user.adminComment = patch.adminComment
+  }
+  if (patch.schoolInfo != null && user.role === 'SCHOOL') {
+    const base = user.schoolInfo ?? { schoolName: user.name, address: '' }
+    const p = patch.schoolInfo
+    user.schoolInfo = {
+      ...base,
+      ...(p.schoolName !== undefined ? { schoolName: p.schoolName } : {}),
+      ...(p.address !== undefined ? { address: p.address } : {}),
+      ...(p.position !== undefined ? { position: p.position } : {}),
+      ...(p.affiliatedTeachers !== undefined ? { affiliatedTeachers: p.affiliatedTeachers } : {}),
+    }
+    if (p.schoolName !== undefined && String(p.schoolName).trim() !== '') {
+      user.name = String(p.schoolName).trim()
+    }
+  }
+  if (patch.listMetrics != null) {
+    const prev = user.listMetrics ?? {}
+    user.listMetrics = {
+      ...prev,
+      ...Object.fromEntries(
+        Object.entries(patch.listMetrics).filter(([, v]) => v !== undefined)
+      ),
+    }
+  }
+  user.updatedAt = new Date().toISOString()
+
+  const refreshed = await getUserById(userId)
+  if (!refreshed) {
+    throw new Error('사용자를 찾을 수 없습니다.')
+  }
+  return refreshed
+}
+
 export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> | null> {
   await new Promise(resolve => setTimeout(resolve, 200))
 
@@ -286,6 +361,8 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
     isActive: request.isActive ?? true,
     createdAt: now,
     updatedAt: now,
+    /** CMS 관리자 회원 등록 플로우에서 생성 */
+    registeredByAdmin: true,
   }
 
   // 관리자 권한 설정

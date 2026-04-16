@@ -1,4 +1,5 @@
-import { DeleteGuideModal } from '@/features/program/ui/manager-delete-guide-modal'
+import { useMemo } from 'react'
+import { DeleteGuideModal } from '@/shared/ui'
 
 export interface SponsorContactDeleteModalProps {
   open: boolean
@@ -7,13 +8,16 @@ export interface SponsorContactDeleteModalProps {
   contactNames: string[]
 }
 
-function buildSponsorContactDeleteLines(names: string[]): string[] {
-  if (names.length === 0) return []
-  if (names.length === 1) {
-    return [`[${names[0]}] 담당자를 목록에서 삭제하시겠습니까?`]
+function buildSponsorContactDeleteMessageLines(names: string[]): string[] {
+  const trimmed = names.map(n => n.trim()).filter(Boolean)
+  if (trimmed.length === 0) return []
+
+  if (trimmed.length === 1) {
+    return [`[${trimmed[0]}] 담당자를 목록에서 삭제하시겠습니까?`]
   }
 
-  return [`선택한 ${names.length}명의 담당자를 후원사 담당자 목록에서 삭제하시겠습니까?`]
+  const count = trimmed.length
+  return [`선택한 ${count}명의 담당자를 목록에서 삭제하시겠습니까?`]
 }
 
 export function SponsorContactDeleteModal({
@@ -22,13 +26,15 @@ export function SponsorContactDeleteModal({
   onConfirm,
   contactNames,
 }: SponsorContactDeleteModalProps) {
+  const lines = useMemo(() => buildSponsorContactDeleteMessageLines(contactNames), [contactNames])
+
   return (
     <DeleteGuideModal
       open={open}
       onCancel={onCancel}
       onConfirm={onConfirm}
       title="담당자 삭제"
-      lines={buildSponsorContactDeleteLines(contactNames)}
+      lines={lines}
       confirmText="담당자 삭제"
     />
   )

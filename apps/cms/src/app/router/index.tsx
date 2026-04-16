@@ -68,12 +68,9 @@ const InstructorSchedulePage = lazyLoad(
   () => import('@/pages/instructors/instructor-schedule-page')
 )
 const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
-const DataManagementPage = lazyLoad(() => import('@/pages/data-management/data-management-page'))
 const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
 const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
 const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
-const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
-const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
@@ -112,7 +109,6 @@ const EducationRecordListPage = lazyLoad(
   () => import('@/pages/education-records/education-record-list-page')
 )
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
-const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
 const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
@@ -225,7 +221,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'data-management',
-        element: <DataManagementPage />,
+        element: <Navigate to="/sponsor" replace />,
       },
       {
         path: 'sponsor',
@@ -238,15 +234,6 @@ export const router = createBrowserRouter([
       {
         path: 'detailed-program',
         element: <DetailedProgramPage />,
-      },
-      {
-        path: 'schools',
-        children: [
-          { index: true, element: <Navigate to="/users/list?kind=institutions" replace /> },
-          { path: 'new', element: <SchoolFormPage /> },
-          { path: ':id', element: <SchoolDetailPage /> },
-          { path: ':id/edit', element: <SchoolFormPage /> },
-        ],
       },
       {
         path: 'programs',
@@ -382,7 +369,6 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/users/list?kind=all" replace /> },
           { path: 'list', element: <UserListPage /> },
-          { path: 'participants', element: <ParticipantListPage /> },
           {
             path: 'instructors',
             element: <Navigate to="/users/list?kind=instructors" replace />,

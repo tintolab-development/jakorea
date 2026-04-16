@@ -1,32 +1,11 @@
 /**
- * 삭제 안내 모달 (재확인) — 담당자/학교 등 공통
- * 패딩 26/30/34 · 타이틀 24px 700 · 본문 16px 500 좌측 · [이름] 볼드
+ * 삭제 안내 문구 조합 및 담당자 삭제 모달
+ * 모달 UI는 `@/shared/ui/delete-guide-modal` (공통)
  */
 
-import { useState, useEffect } from 'react'
-import { Modal } from 'antd'
-import { CloseOutlined } from '@ant-design/icons'
-import './manager-delete-guide-modal.css'
-import { CmsButton, CmsInput } from '@/shared/ui'
+export { DeleteGuideModal, type DeleteGuideModalProps } from '@/shared/ui/delete-guide-modal'
 
-/** 공통 삭제 안내 모달: title + lines + 확인 버튼 문구/스타일 */
-export interface DeleteGuideModalProps {
-  open: boolean
-  onCancel: () => void
-  onConfirm: () => void
-  title: string
-  lines: string[]
-  /** 확인 버튼 문구 (기본: 삭제) */
-  confirmText?: string
-  /** 확인 버튼 스타일 (기본: danger) */
-  confirmVariant?: 'delete' | 'primary'
-  /** 설정 시 해당 문자열과 정확히 일치할 때만 확인 버튼 활성화 */
-  requiredConfirmInput?: string
-  /** 확인 입력란 placeholder */
-  confirmInputPlaceholder?: string
-  /** TealHeaderModal·풀페이지·중첩 모달 위 표시 (antd 스택 z-index보다 높게) */
-  zIndex?: number
-}
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 
 /** 담당자 삭제 전용 props (기존 호환) */
 export interface ManagerDeleteGuideModalProps {
@@ -185,133 +164,28 @@ export function buildMemberDeleteMessageLines(
   return []
 }
 
-/** 회원 탈퇴 안내 문구 생성 (회원 상세 모달 > 탈퇴 버튼) */
-export function buildMemberWithdrawMessageLines(
-  singleUser: {
-    name: string
-    email: string
-  } | null
-): string[] {
-  if (!singleUser) return []
+/** 회원 탈퇴 안내 문구 (회원 상세 > 탈퇴) */
+export function buildMemberWithdrawMessageLines(params: { displayName: string } | null): string[] {
+  if (!params) return []
+  const name = params.displayName.trim()
+  if (!name) return []
   return [
-    `[${singleUser.name}] (${singleUser.email}) 회원을 탈퇴 처리하시겠습니까?`,
-    '탈퇴된 회원은 복구할 수 없습니다.',
-    '정말로 탈퇴하시겠습니까?',
+    `[${name}] 회원을 탈퇴 처리하시겠습니까?`,
+    '탈퇴 처리 시 등록 및 관련된 정보는 모두 삭제됩니다.',
+    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
   ]
 }
 
-/** 학교(기관) 상세 > 학교 삭제 확인 문구 */
-export function buildSchoolDeleteMessageLines(
-  singleUser: {
-    name: string
-    email: string
-  } | null
-): string[] {
-  if (!singleUser) return []
+/** 회원 상세 > [학교 삭제] 확인 모달 본문 */
+export function buildSchoolDeleteMessageLines(params: { displayName: string } | null): string[] {
+  if (!params) return []
+  const name = params.displayName.trim()
+  if (!name) return []
   return [
-    `[${singleUser.name}] (${singleUser.email}) 학교(기관) 계정을 삭제하시겠습니까?`,
-    '삭제된 계정은 복구할 수 없습니다.',
-    '정말로 삭제하시겠습니까?',
+    `[${name}]를 삭제하시겠습니까?`,
+    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
+    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
   ]
-}
-
-/** 문장에서 [xxx] 부분을 볼드(700)로 감싸서 React 노드로 반환 */
-function renderLineWithBoldBrackets(line: string) {
-  const parts = line.split(/(\[[^\]]+\])/g)
-  return parts.map((part, i) =>
-    /^\[.+\]$/.test(part) ? (
-      <strong key={i} className="manager-delete-guide-modal__bold">
-        {part}
-      </strong>
-    ) : (
-      part
-    )
-  )
-}
-
-/** 공통 삭제 안내 모달 (제목·본문 라인·확인 버튼 문구/스타일) */
-export function DeleteGuideModal({
-  open,
-  onCancel,
-  onConfirm,
-  title,
-  lines,
-  confirmText = '삭제',
-  confirmVariant = 'delete',
-  requiredConfirmInput,
-  confirmInputPlaceholder = '삭제하시려면 해당란에 [삭제]를 입력해 주세요.',
-  zIndex = 2500,
-}: DeleteGuideModalProps) {
-  const [confirmInput, setConfirmInput] = useState('')
-  const needsTypedConfirm = Boolean(requiredConfirmInput)
-  const canConfirm = !needsTypedConfirm || confirmInput.trim() === requiredConfirmInput
-
-  useEffect(() => {
-    if (open) setConfirmInput('')
-  }, [open])
-
-  return (
-    <Modal
-      open={open}
-      onCancel={onCancel}
-      closable={false}
-      footer={null}
-      width={600}
-      className="manager-delete-guide-modal__root"
-      centered
-      maskClosable
-      destroyOnClose
-      zIndex={zIndex}
-    >
-      <div className="manager-delete-guide-modal__content">
-        <button
-          type="button"
-          className="manager-delete-guide-modal__close"
-          onClick={onCancel}
-          aria-label="닫기"
-        >
-          <CloseOutlined />
-        </button>
-
-        <h2 className="manager-delete-guide-modal__title">{title}</h2>
-
-        <div className="manager-delete-guide-modal__body">
-          {lines.map((line, i) => (
-            <p key={i} className="manager-delete-guide-modal__line">
-              {renderLineWithBoldBrackets(line)}
-            </p>
-          ))}
-        </div>
-
-        {needsTypedConfirm && (
-          <div className="manager-delete-guide-modal__confirm-input-wrap">
-            <CmsInput
-              width={'100%'}
-              placeholder={confirmInputPlaceholder}
-              value={confirmInput}
-              onChange={e => setConfirmInput(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
-        )}
-
-        <div className="manager-delete-guide-modal__footer">
-          <CmsButton variant="secondary" onClick={onCancel}>
-            취소
-          </CmsButton>
-          <CmsButton
-            variant={confirmVariant}
-            disabled={!canConfirm}
-            onClick={() => {
-              if (canConfirm) onConfirm()
-            }}
-          >
-            {confirmText}
-          </CmsButton>
-        </div>
-      </div>
-    </Modal>
-  )
 }
 
 /** 담당자 삭제 안내 모달 (기존 호환) */

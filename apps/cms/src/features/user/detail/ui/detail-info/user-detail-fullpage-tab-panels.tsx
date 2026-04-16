@@ -21,6 +21,9 @@ export function UserDetailFullpageTabPanels() {
     onOpenLectureAttendance,
     onOpenAssignmentSubmission,
     onOpenEnrollmentProgramDetail,
+    basicInfoEditing,
+    basicInfoDraft,
+    onBasicInfoDraftChange,
   } = useUserDetailFullpageShell()
 
   const { sections, strategy, enrollmentTableRows, resolvedProgramsChild } = derived
@@ -35,6 +38,9 @@ export function UserDetailFullpageTabPanels() {
           personalInfoRevealed={personalInfoRevealed}
           instructorResumeApplicantRow={instructorResumeApplicantRow}
           onNavigateToLinkedUser={onNavigateToLinkedUser}
+          memberInfoEditing={basicInfoEditing}
+          memberInfoDraft={basicInfoDraft}
+          onMemberInfoDraftChange={onBasicInfoDraftChange}
         />
       )}
       {tabState.lnb === 'history' &&
@@ -42,6 +48,7 @@ export function UserDetailFullpageTabPanels() {
           <AdminManagedProgramHistory user={displayUser} />
         ) : (
           <UserProgramsSection
+            user={displayUser}
             applications={applications}
             enrollmentTableRows={enrollmentTableRows}
             loading={applicationsLoading}

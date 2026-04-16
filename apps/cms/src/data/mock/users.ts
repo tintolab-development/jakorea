@@ -529,6 +529,8 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '대전중앙고등학교',
     role: 'SCHOOL',
+    /** CMS 데모: 관리자 등록 학교 — 소속 교사 연동 전 타이틀 안내·기본정보 수정 허용 */
+    registeredByAdmin: true,
     schoolInfo: {
       schoolName: '대전중앙고등학교',
       address: '대전광역시 중구 대종로 200',
@@ -677,6 +679,9 @@ const mockIndividuals: User[] = [
     name: '장학생',
     nameEn: 'Jang Hak-saeng',
     role: 'INDIVIDUAL',
+    /** CMS 데모: 관리자 등록 계정 — 기본 정보 desc·[정보 수정] 노출 */
+    registeredByAdmin: true,
+    adminComment: '체험학습 일정 조율 시 연락 바랍니다.',
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(60),
@@ -695,6 +700,9 @@ const mockIndividuals: User[] = [
     name: '임참여',
     nameEn: 'Im Cham-yeo',
     role: 'INDIVIDUAL',
+    /** CMS 데모: 관리자 등록 후 본인인증·직접 가입 완료 — [정보 수정] 비노출, desc는 유지 */
+    registeredByAdmin: true,
+    identitySelfSignupCompletedAfterAdminRegistration: true,
     isActive: true,
     lastLoginAt: generatePastDate(3),
     createdAt: generatePastDate(45),
