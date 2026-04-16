@@ -35,6 +35,7 @@ import {
   type InstructorDetailTabKey,
 } from './participating-instructor-fullpage-view'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
@@ -754,7 +755,12 @@ export function ParticipatingInstructorsSection({
       {personalInfoRevealConfirmOpen ? (
         <UserPersonalInfoRevealConfirmModal
           onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
-          onConfirm={_reason => {
+          onConfirm={reason => {
+            const accessItem = selectedInstructorRowKeys.length === 1
+              ? filteredInstructors.find(row => row.id === String(selectedInstructorRowKeys[0]))
+                  ?.instructorName ?? '참여 강사 목록'
+              : '참여 강사 목록'
+            trackPersonalInfoAccess(accessItem, reason)
             setPersonalInfoRevealed(true)
             setPersonalInfoRevealConfirmOpen(false)
           }}

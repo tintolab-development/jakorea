@@ -28,6 +28,7 @@ import { LectureAttendanceModal } from './lecture-attendance-modal'
 import { AssignmentSubmissionModal } from './assignment-submission-modal'
 import { AddStudentModal } from './add-student-modal'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import './school-detail-modal.css'
 import './detail-modal/program-status/program-progress-tab.css'
 import './detail-modal/program-status/participating-institutions-section.css'
@@ -661,7 +662,9 @@ export function SchoolDetailStudentListSection({
       {personalInfoRevealConfirmOpen ? (
         <UserPersonalInfoRevealConfirmModal
           onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
-          onConfirm={_reason => {
+          onConfirm={reason => {
+            const accessItem = filteredStudentList.find(row => selectedStudentKeys.includes(row.id))?.name
+            trackPersonalInfoAccess(accessItem ?? '학생 명단', reason)
             setPersonalInfoRevealed(true)
             setPersonalInfoRevealConfirmOpen(false)
           }}

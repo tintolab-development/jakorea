@@ -61,6 +61,7 @@ import {
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import './detail-modal/program-status/participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
@@ -238,6 +239,8 @@ export function SchoolDetailFullpageView({
     setPersonalInfoRevealConfirmOpen(false)
   }, [detail.id])
 
+  const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
+
   const handlePrivacyToggleClick = useCallback(() => {
     if (personalInfoRevealed) {
       setPersonalInfoRevealed(false)
@@ -246,12 +249,11 @@ export function SchoolDetailFullpageView({
     setPersonalInfoRevealConfirmOpen(true)
   }, [personalInfoRevealed])
 
-  const handleConfirmPersonalInfoReveal = useCallback((_reason: string) => {
+  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
+    trackPersonalInfoAccess(mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보', reason)
     setPersonalInfoRevealed(true)
     setPersonalInfoRevealConfirmOpen(false)
-  }, [])
-
-  const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
+  }, [mergedDetail.schoolName, row.schoolName])
   const instructors =
     savedInstructorPatches[detail.id] !== undefined
       ? savedInstructorPatches[detail.id].map(inv => ({

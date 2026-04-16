@@ -10,6 +10,7 @@ import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import { SchoolDetailStudentListSection } from '../../../ui/school-detail-student-list-section'
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
@@ -282,10 +283,14 @@ export function ApplicantsDetailContents({
     setPersonalInfoRevealConfirmOpen(true)
   }, [personalInfoRevealed])
 
-  const handleConfirmPersonalInfoReveal = useCallback((_reason: string) => {
+  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
+    const accessItem = isInstitution
+      ? institutionData?.schoolName ?? '신청 기관 정보'
+      : instructorData?.instructorName ?? '신청 강사 정보'
+    trackPersonalInfoAccess(accessItem, reason)
     setPersonalInfoRevealed(true)
     setPersonalInfoRevealConfirmOpen(false)
-  }, [])
+  }, [instructorData?.instructorName, institutionData?.schoolName, isInstitution])
 
   const headerExtraContent = useMemo(() => {
     const items = resolveApplicantHeaderItems({

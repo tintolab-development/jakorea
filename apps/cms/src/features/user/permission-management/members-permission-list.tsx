@@ -29,6 +29,7 @@ import '@/features/program/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton } from '@/shared/ui'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
   SCHOOL: '학교(교사)',
@@ -362,7 +363,9 @@ export function MembersPermissionList({
       {personalInfoRevealConfirmTargetId ? (
         <UserPersonalInfoRevealConfirmModal
           onCancel={() => setPersonalInfoRevealConfirmTargetId(null)}
-          onConfirm={_reason => {
+          onConfirm={reason => {
+            const target = tableData.find(row => row.id === personalInfoRevealConfirmTargetId)
+            trackPersonalInfoAccess(target?.name ?? '회원 권한 신청자', reason)
             setPrivacyRevealedByRowId(prev => ({ ...prev, [personalInfoRevealConfirmTargetId]: true }))
             setPersonalInfoRevealConfirmTargetId(null)
           }}

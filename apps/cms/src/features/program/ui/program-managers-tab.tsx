@@ -38,6 +38,7 @@ import {
 } from '@/shared/components/status-dropdown-cell'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import './program-managers-tab.css'
 
 const ROLE_OPTIONS = [
@@ -436,7 +437,11 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
       {personalInfoRevealConfirmOpen ? (
         <UserPersonalInfoRevealConfirmModal
           onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
-          onConfirm={_reason => {
+          onConfirm={reason => {
+            const accessItem = selectedRowKeys.length === 1
+              ? managerList.find(row => row.id === String(selectedRowKeys[0]))?.name ?? '담당자 목록'
+              : '담당자 목록'
+            trackPersonalInfoAccess(accessItem, reason)
             setPersonalInfoRevealed(true)
             setPersonalInfoRevealConfirmOpen(false)
           }}

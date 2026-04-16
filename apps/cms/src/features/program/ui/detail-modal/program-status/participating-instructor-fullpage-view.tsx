@@ -22,6 +22,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import {
   ProgramDetailTdDivider,
   withProgramDetailTdDivider,
@@ -319,10 +320,11 @@ export function ParticipatingInstructorFullpageView({
     setPersonalInfoRevealConfirmOpen(true)
   }, [personalInfoRevealed])
 
-  const handleConfirmPersonalInfoReveal = useCallback((_reason: string) => {
+  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
+    trackPersonalInfoAccess(d.instructorName ?? '참여 강사 상세 정보', reason)
     setPersonalInfoRevealed(true)
     setPersonalInfoRevealConfirmOpen(false)
-  }, [])
+  }, [d.instructorName])
 
   const handleRoleChange = useCallback((schoolId: string, newRole: InstructorRoleKey) => {
     setAssignedSchools(prev => {

@@ -45,6 +45,7 @@ import {
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { MESSAGES } from '@/shared/constants'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 
 export type UserDetailControllerModalMode = 'default' | 'permission'
 
@@ -216,10 +217,12 @@ export function useUserDetailController({
     setPersonalInfoRevealConfirmOpen(false)
   }, [])
 
-  const submitPersonalInfoReveal = useCallback((_reason: string) => {
+  const submitPersonalInfoReveal = useCallback((reason: string) => {
+    const accessItem = displayUser?.schoolInfo?.schoolName?.trim() || displayUser?.name || '회원 상세 정보'
+    trackPersonalInfoAccess(accessItem, reason)
     setPersonalInfoRevealed(true)
     setPersonalInfoRevealConfirmOpen(false)
-  }, [])
+  }, [displayUser?.name, displayUser?.schoolInfo?.schoolName])
 
   const startBasicInfoEdit = useCallback(() => {
     if (!displayUser) return
