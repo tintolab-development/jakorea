@@ -24,17 +24,23 @@ function parseVisibility(raw: string | null): AdminNoticePendingFilters['visibil
   return 'ALL'
 }
 
-function parseCategory(raw: string | null): AdminNoticePendingFilters['category'] {
-  const allowed: Notice['category'][] = ['필독', '안내', '정산', '시스템', '봉사단', '강사단']
-  if (raw && (allowed as string[]).includes(raw)) return raw as Notice['category']
+function parseCategory(
+  raw: string | null,
+  allowedLabels: readonly string[]
+): AdminNoticePendingFilters['category'] {
+  if (raw && allowedLabels.includes(raw)) return raw
   return 'ALL'
 }
 
-function filterRows(data: Notice[], searchParams: URLSearchParams): Notice[] {
+function filterRows(
+  data: Notice[],
+  searchParams: URLSearchParams,
+  context: AdminNoticeTableContext
+): Notice[] {
   const title = (searchParams.get('an_q') ?? '').trim().toLowerCase()
   const author = (searchParams.get('an_auth') ?? '').trim().toLowerCase()
   const vis = parseVisibility(searchParams.get('an_vis'))
-  const cat = parseCategory(searchParams.get('an_cat'))
+  const cat = parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels)
   const from = searchParams.get('an_from')
   const to = searchParams.get('an_to')
 
@@ -125,11 +131,11 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
       dateRange: null,
     },
 
-    syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
+    syncPendingFromUrl: ({ context, searchParams, setPendingFilters }) => {
       const title = searchParams.get('an_q') ?? ''
       const author = searchParams.get('an_auth') ?? ''
       const visibility = parseVisibility(searchParams.get('an_vis'))
-      const category = parseCategory(searchParams.get('an_cat'))
+      const category = parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels)
       const from = searchParams.get('an_from')
       const to = searchParams.get('an_to')
       const dateRange =
@@ -156,11 +162,12 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
       })
     },
 
-    hasActiveFilters: ({ searchParams }) => {
+    hasActiveFilters: ({ context, searchParams }) => {
       if ((searchParams.get('an_q') ?? '').trim()) return true
       if ((searchParams.get('an_auth') ?? '').trim()) return true
       if (parseVisibility(searchParams.get('an_vis')) !== 'ALL') return true
-      if (parseCategory(searchParams.get('an_cat')) !== 'ALL') return true
+      if (parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels) !== 'ALL')
+        return true
       if (searchParams.get('an_from') && searchParams.get('an_to')) return true
       return false
     },
@@ -197,8 +204,8 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
     },
   },
 
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterRows(data, searchParams)
+  filterFn: ({ context, data, searchParams }) => {
+    const filtered = filterRows(data, searchParams, context)
     return { dataForTable: filtered, filteredData: filtered }
   },
 

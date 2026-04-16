@@ -2,13 +2,16 @@
  * 게시글 관리 — 공지사항 상세 (관리자)
  */
 
-import { useCallback } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { message } from 'antd'
 import dayjs from 'dayjs'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { NoticeAttachmentDownloadIcon } from '@/features/posts/ui/notice-attachment-download-icon'
-import { getAdminNoticeById } from '@/data/mock/notices'
+import { getAdminNoticeById } from '@/features/posts/api/admin-notice-mock-store'
+import { deleteNotice } from '@/features/posts/api/admin-notice-service'
+import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton } from '@/shared/ui'
@@ -21,20 +24,40 @@ export function AdminNoticeDetailPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
 
-  const notice = id ? getAdminNoticeById(id) : undefined
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  /** mock 스토어 갱신 후 동일 id 재조회용 */
+  const [storeTick, setStoreTick] = useState(0)
+
+  const notice = useMemo(() => {
+    void storeTick
+    return id ? getAdminNoticeById(id) : undefined
+  }, [id, storeTick])
 
   const goList = useCallback(() => {
     navigate('/admin/posts/notices')
   }, [navigate])
 
   const handleDelete = useCallback(() => {
-    if (!canWrite) return
-    message.info('공지사항 삭제는 추후 연결됩니다.')
-  }, [canWrite])
+    if (!canWrite || !id) return
+    setDeleteConfirmOpen(true)
+  }, [canWrite, id])
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!id) return
+    try {
+      await deleteNotice(id)
+      message.success('공지사항이 삭제되었습니다.')
+      setDeleteConfirmOpen(false)
+      goList()
+    } catch {
+      message.error('공지사항을 삭제할 수 없습니다.')
+    }
+  }, [id, goList])
 
   const handleEdit = useCallback(() => {
     if (!canWrite) return
-    message.info('공지사항 수정은 추후 연결됩니다.')
+    setEditModalOpen(true)
   }, [canWrite])
 
   const handleAttachmentClick = useCallback(() => {
@@ -66,6 +89,21 @@ export function AdminNoticeDetailPage() {
 
   return (
     <div className="admin-notice-detail-page">
+      <NoticeDeleteConfirmModal
+        open={deleteConfirmOpen}
+        onCancel={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
+      {notice ? (
+        <NoticeFormModal
+          open={editModalOpen}
+          mode="edit"
+          notice={notice}
+          onCancel={() => setEditModalOpen(false)}
+          onSuccess={() => setStoreTick(t => t + 1)}
+          onDeleted={goList}
+        />
+      ) : null}
       <div className="admin-notice-detail-page__inner">
         <div className="admin-notice-detail-page__card">
           <div className="admin-notice-detail-page__top-row">

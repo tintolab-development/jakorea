@@ -12,7 +12,8 @@ export interface Notice {
   id: string
   title: string
   content: string
-  category: '필독' | '안내' | '정산' | '시스템' | '봉사단' | '강사단'
+  /** 관리자에서 동적 카테고리 추가 가능 — mock·스토어와 문자열로 일치 */
+  category: string
   createdAt: string
   isImportant: boolean
   viewCount: number
@@ -153,16 +154,3 @@ export function buildAdminNoticeMockList(count: number = ADMIN_NOTICE_MOCK_LIST_
   })
 }
 
-let adminNoticeMockListCache: Notice[] | null = null
-
-function getBuiltAdminNoticeMockList(): Notice[] {
-  if (!adminNoticeMockListCache) {
-    adminNoticeMockListCache = buildAdminNoticeMockList(ADMIN_NOTICE_MOCK_LIST_COUNT)
-  }
-  return adminNoticeMockListCache
-}
-
-/** 관리자 공지 상세 — 목록과 동일 ID·데이터 */
-export function getAdminNoticeById(id: string): Notice | undefined {
-  return getBuiltAdminNoticeMockList().find(n => n.id === id)
-}

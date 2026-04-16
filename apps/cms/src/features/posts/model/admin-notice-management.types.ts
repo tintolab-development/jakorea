@@ -1,10 +1,10 @@
 import type { Dayjs } from 'dayjs'
-import type { Notice } from '@/data/mock/notices'
 
 /** 공지사항 관리 목록 — 필터 카드·URL 동기화용 */
 export type AdminNoticeVisibilityFilter = 'ALL' | 'public' | 'private'
 
-export type AdminNoticeCategoryFilter = 'ALL' | Notice['category']
+/** 동적 카테고리 라벨(URL `an_cat`·필터 select와 동기화) */
+export type AdminNoticeCategoryFilter = 'ALL' | string
 
 /** useTablePage의 `TFilters extends Record<string, unknown>` 충족 */
 export interface AdminNoticePendingFilters extends Record<string, unknown> {
@@ -15,5 +15,13 @@ export interface AdminNoticePendingFilters extends Record<string, unknown> {
   dateRange: [Dayjs, Dayjs] | null
 }
 
-/** useTablePage context — 공지 목록은 추가 컨텍스트 없음 */
-export type AdminNoticeTableContext = Record<string, never>
+/** 카테고리 관리 모달 행 */
+export type NoticeCategoryRow = {
+  id: string
+  name: string
+}
+
+/** useTablePage context — 허용 카테고리 라벨(필터·URL 파싱) */
+export type AdminNoticeTableContext = {
+  allowedCategoryLabels: readonly string[]
+}

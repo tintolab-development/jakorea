@@ -1,0 +1,271 @@
+/**
+ * 공지사항 등록 모달 — 디자인 스펙(1400×880, 패딩·간격·첨부) 전용
+ * 내부 스크롤 방지: 세로 여백·폼 item 마진 축소 + 본문 overflow hidden
+ */
+
+/*
+ * 뷰포트 정중앙 — 상세·목록 등 레이아웃(사이드바+메인)과 무관하게 전체 화면 기준
+ * notice-delete-confirm-modal 과 동일: wrap 전체 덮기 + .ant-modal 는 50%/50% + translate
+ */
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-register-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-register-modal) .ant-modal.teal-header-modal--large.notice-register-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(1400px, calc(100vw - 32px)) !important;
+  max-width: min(1400px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+/* 모달 루트: 폭 large(1400), 그림자·radius, 높이는 콘텐츠에 맞추되 상한만 둠(내부 스크롤 없음) */
+.content-modal.notice-register-modal.teal-header-modal--large .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 24px 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  /* 래퍼 padding(32px) + 안전 여유 — 바깥·안 이중 스크롤 방지 */
+  max-height: min(880px, calc(100vh - 48px));
+  max-height: min(880px, calc(100dvh - 48px));
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+}
+
+.content-modal.notice-register-modal.teal-header-modal--large .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 헤더(타이틀) ↔ 본문 — 영역 간격 24px */
+.content-modal.notice-register-modal .teal-header-modal__header {
+  margin-bottom: 24px;
+}
+
+/*
+ * 본문: large 모달 기본과 동일하게 영역을 채우고 세로 스크롤
+ * (이전 flex:0 + overflow:hidden 이 폼·에디터·푸터가 잘리거나 높이 0에 가깝게 보이는 원인)
+ */
+.content-modal.notice-register-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  align-items: stretch;
+}
+
+.content-modal.notice-register-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 24px;
+}
+
+.notice-register-modal__form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 폼: 영역(블록) 간 세로 간격 24px */
+.notice-register-modal__form.ant-form-vertical .ant-form-item {
+  margin-bottom: 24px;
+}
+
+.notice-register-modal__form.ant-form-vertical .notice-register-modal__filter-inner .ant-form-item {
+  margin-bottom: 0;
+}
+
+/* 상단 필터: 바깥 래퍼(블록 간격만) */
+.notice-register-modal__filter-wrap {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+/* 필터 묶음 — 좌측 정렬, 세로 중앙, 항목 간 16px */
+.notice-register-modal__filter-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.notice-register-modal__filter-inner > .ant-form-item {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+/* 카테고리: 컨트롤 240×44 (CmsSelect large = 44px 높이) */
+.notice-register-modal__filter-field--category {
+  width: 240px;
+  max-width: 240px;
+}
+
+/* 공개 여부 · 상단 고정 라디오 영역 */
+.notice-register-modal__filter-inner
+  > .ant-form-item:not(.notice-register-modal__filter-field--category) {
+  width: 200px;
+  max-width: 200px;
+  box-sizing: border-box;
+}
+
+/* 라벨 ↔ 인풋(셀렉트·라디오·제목) 간격 10px */
+.notice-register-modal__form.ant-form-vertical .ant-form-item-label {
+  padding-bottom: 0;
+  margin-bottom: 10px;
+}
+
+/* 제목 블록 */
+.notice-register-modal__section.ant-form-item {
+  margin-bottom: 24px;
+}
+
+/* 내용 에디터 — flex에서 높이 0으로 줄어드는 것 방지 */
+.notice-register-modal__section--editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex-shrink: 0;
+  margin-bottom: 24px;
+}
+
+/* 내용 라벨 ↔ 에디터 간격 10px */
+.notice-register-modal__editor-label {
+  margin-bottom: 10px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.notice-register-modal__editor-host {
+  width: 100%;
+  height: 369px;
+  min-height: 369px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.notice-register-modal__editor-host .toastui-editor {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 첨부: 좌측 th(라벨) + FileSelectField — 하단 선은 자식에서 맞춤 */
+.notice-register-modal__attachment {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  border-top: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-left: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+/* 첨부 라벨 — th 스펙 */
+.notice-register-modal__attachment-label {
+  display: flex;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 180px;
+  min-width: 180px;
+  padding: 10px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  background: #edf0f2;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.notice-register-modal__attachment-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 16px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+/* FileSelectField: 버튼 옆 안내 문구 스펙 */
+.notice-register-modal__file-field.file-select-field {
+  gap: 8px;
+}
+
+.notice-register-modal__file-field .file-select-field__actions {
+  align-items: center;
+  gap: 12px;
+}
+
+.notice-register-modal__file-field .file-select-field__guide {
+  flex: 1 1 200px;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.notice-register-modal__file-field .file-select-field__guide-line {
+  display: block;
+}
+
+/* 푸터: ContentModal 기본 우측 정렬 래퍼 안에서 전폭 행 — 좌 삭제(edit) + 우 취소·저장 */
+.notice-register-modal__footer-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.notice-register-modal__footer-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}

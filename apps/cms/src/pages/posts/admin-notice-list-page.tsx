@@ -3,28 +3,38 @@
  * 데이터 관리 > 후원사 관리(sponsor-page)와 동일: FilterTableLayout + useTablePage + CmsButton + 목록용 CSS 체인
  */
 
-import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type Key,
+  type MouseEvent,
+} from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import {
-  ADMIN_NOTICE_MOCK_LIST_COUNT,
-  buildAdminNoticeMockList,
-  type Notice,
-} from '@/data/mock/notices'
-import { adminNoticeManagementFilterFields } from '@/features/posts/model/admin-notice-management-filter-fields'
+import type { Notice } from '@/data/mock/notices'
+import { listAdminNotices } from '@/features/posts/api/admin-notice-mock-store'
+import { deleteNotices } from '@/features/posts/api/admin-notice-service'
+import { useAdminNoticeCategories } from '@/features/posts/hooks/use-admin-notice-categories'
+import { buildAdminNoticeManagementFilterFields } from '@/features/posts/model/admin-notice-management-filter-fields'
 import { adminNoticeManagementTablePageConfig } from '@/features/posts/model/admin-notice-management-table.config'
+import type {
+  AdminNoticeTableContext,
+  NoticeCategoryRow,
+} from '@/features/posts/model/admin-notice-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import {
-  useTablePage,
-  EMPTY_TABLE_PAGE_CONTEXT,
-} from '@/shared/components/table-system/model/use-table-page'
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton } from '@/shared/ui'
 import { NoticePinnedIcon } from '@/features/posts/ui/notice-pinned-icon'
+import { NoticeCategoryManagementModal } from '@/features/posts/ui/notice-category-management-modal'
+import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/ui/program-list.css'
@@ -43,18 +53,59 @@ const NOTICE_LIST_COL_WIDTH = {
   views: 108,
 } as const
 
+const ADMIN_NOTICES_LIST_PATH = '/admin/posts/notices'
+
 export function AdminNoticeListPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [rows] = useState<Notice[]>(() =>
-    buildAdminNoticeMockList(ADMIN_NOTICE_MOCK_LIST_COUNT).map(r => ({ ...r }))
+  const [rows, setRows] = useState<Notice[]>(() => listAdminNotices())
+
+  /** mock 단일 저장소와 목록 로컬 state 동기화 — 상세에서 수정·삭제 후 복귀, 다른 탭 조작 등 */
+  const syncRowsFromStore = useCallback(() => {
+    setRows(listAdminNotices())
+  }, [])
+
+  useEffect(() => {
+    if (location.pathname === ADMIN_NOTICES_LIST_PATH) {
+      syncRowsFromStore()
+    }
+  }, [location.pathname, syncRowsFromStore])
+
+  const {
+    categoryRows,
+    allowedCategoryLabels,
+    allowedCategorySet,
+    replaceCategories: replaceNoticeCategories,
+  } = useAdminNoticeCategories()
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+
+  const handleNoticeCategoriesChange = useCallback(
+    (next: NoticeCategoryRow[]) => {
+      replaceNoticeCategories(next)
+      syncRowsFromStore()
+    },
+    [replaceNoticeCategories, syncRowsFromStore]
+  )
+
+  const tablePageContext: AdminNoticeTableContext = useMemo(
+    () => ({
+      allowedCategoryLabels,
+    }),
+    [allowedCategoryLabels]
+  )
+
+  const filterFields = useMemo(
+    () => buildAdminNoticeManagementFilterFields(tablePageContext.allowedCategoryLabels),
+    [tablePageContext.allowedCategoryLabels]
   )
 
   const {
     pendingFilters,
+    setPendingFilters,
     applySearch: handleSearch,
     handleFilterChange,
     displayedCount,
@@ -63,19 +114,47 @@ export function AdminNoticeListPage() {
     data: rows,
     searchParams,
     setSearchParams,
-    context: EMPTY_TABLE_PAGE_CONTEXT,
+    context: tablePageContext,
   })
 
+  useEffect(() => {
+    setPendingFilters(prev => {
+      if (prev.category !== 'ALL' && !allowedCategorySet.has(prev.category)) {
+        return { ...prev, category: 'ALL' }
+      }
+      return prev
+    })
+  }, [allowedCategorySet, setPendingFilters])
+
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [registerModalOpen, setRegisterModalOpen] = useState(false)
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false)
 
   const handleBulkDelete = useCallback(() => {
-    if (!canWrite) return
-    message.info('공지사항 삭제는 추후 연결됩니다.')
-  }, [canWrite])
+    if (!canWrite || selectedRowKeys.length === 0) return
+    setBulkDeleteConfirmOpen(true)
+  }, [canWrite, selectedRowKeys.length])
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    const ids = selectedRowKeys.map(k => String(k))
+    if (ids.length === 0) {
+      setBulkDeleteConfirmOpen(false)
+      return
+    }
+    try {
+      await deleteNotices(ids)
+      message.success(`선택한 ${ids.length}건의 공지사항이 삭제되었습니다.`)
+      setRows(listAdminNotices())
+      setSelectedRowKeys([])
+      setBulkDeleteConfirmOpen(false)
+    } catch {
+      message.error('공지사항 삭제에 실패했습니다.')
+    }
+  }, [selectedRowKeys])
 
   const handleRegister = useCallback(() => {
     if (!canWrite) return
-    message.info('공지사항 등록은 추후 연결됩니다.')
+    setRegisterModalOpen(true)
   }, [canWrite])
 
   const columns: ColumnsType<Notice> = useMemo(
@@ -152,11 +231,35 @@ export function AdminNoticeListPage() {
     [tableData.length]
   )
 
+  const bulkDeleteLine1 =
+    selectedRowKeys.length > 0
+      ? `선택한 ${selectedRowKeys.length}건의 공지사항을 삭제하시겠습니까?`
+      : '선택한 공지사항을 삭제하시겠습니까?'
+
   return (
     <div className="admin-notice-list-page">
+      <NoticeDeleteConfirmModal
+        open={bulkDeleteConfirmOpen}
+        onCancel={() => setBulkDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmBulkDelete}
+        line1={bulkDeleteLine1}
+      />
+      <NoticeCategoryManagementModal
+        open={categoryModalOpen}
+        onCancel={() => setCategoryModalOpen(false)}
+        categories={categoryRows}
+        onCategoriesChange={handleNoticeCategoriesChange}
+        notices={rows}
+      />
+      <NoticeFormModal
+        open={registerModalOpen}
+        mode="create"
+        onCancel={() => setRegisterModalOpen(false)}
+        onSuccess={() => setRows(listAdminNotices())}
+      />
       <FilterTableLayout
         bordered={false}
-        fields={adminNoticeManagementFilterFields}
+        fields={filterFields}
         filters={{
           title: pendingFilters.title,
           author: pendingFilters.author,
@@ -177,7 +280,7 @@ export function AdminNoticeListPage() {
             >
               공지사항 삭제
             </CmsButton>
-            <CmsButton variant="secondary" onClick={() => navigate('/admin/posts/categories')}>
+            <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
               카테고리 관리
             </CmsButton>
             <CmsButton variant="primary" onClick={handleRegister} disabled={!canWrite}>

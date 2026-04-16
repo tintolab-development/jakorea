@@ -1,0 +1,85 @@
+/**
+ * 공지 삭제 확인 — ContentModal + 스크린샷 스펙(본문 2줄·우측 취소/삭제)
+ */
+
+/*
+ * 뷰포트 정중앙 — ContentModal에 `wrapClassName="notice-delete-confirm-modal-wrap"` 로
+ * `.ant-modal-wrap` 을 직접 지정(:has()만 쓰면 이중 모달·스택에서 매칭이 어긋날 수 있음)
+ */
+.notice-delete-confirm-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.notice-delete-confirm-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.notice-delete-confirm-modal-wrap .ant-modal.notice-delete-confirm-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(800px, calc(100vw - 32px)) !important;
+  max-width: min(800px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.notice-delete-confirm-modal .ant-modal-content {
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+}
+
+.content-modal.notice-delete-confirm-modal .content-modal__description {
+  margin: 0;
+  padding: 0;
+}
+
+/* 줄간 gap 제거 — 두 줄 × line-height 150%(24px) = 텍스트 영역 48px */
+.notice-delete-confirm-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  height: 48px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.notice-delete-confirm-modal__line {
+  margin: 0;
+  padding: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 스크린샷: 삭제 — 연한 핑크 배경 + 진한 레드 테두리/글자 */
+.notice-delete-confirm-modal .notice-delete-confirm-modal__delete-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
+  color: #c64e62 !important;
+  border-color: #c64e62 !important;
+  background-color: #fff0f2 !important;
+  background-image: none !important;
+}
