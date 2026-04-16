@@ -1,0 +1,36 @@
+---
+description: CMS filterable list pages — FilterTableLayout, useTablePage, feature config reuse
+globs:
+  - "apps/cms/src/pages/**/*.tsx"
+  - "apps/cms/src/features/**/model/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# List page composition (CMS)
+
+Use this stack for **admin/data list pages**: filters + toolbar + `cms-data-table`, same as **sponsor** (`sponsor-page.tsx`) and **admin notice** (`admin-notice-list-page.tsx`).
+
+## Required building blocks
+
+1. **`FilterTableLayout`** (`@/shared/components/filter-table-layout`) — wraps `TableFilterGroup` (not `UnifiedFilterCard` on the same strip). Pass `fields`, `filters`, `onFilterChange`, `onSearch`; optional `title`, `description`, `actions`; usually `bordered={false}`.
+2. **`useTablePage`** (`@/shared/components/table-system/model/use-table-page`) + **`TablePageConfig`** — `filterFn` from URL, `syncPendingFromUrl`, `hasActiveFilters`, `getBaseCount`, `getSearchSync` (`paramConfig` + `apply` for date ranges). Context: `EMPTY_TABLE_PAGE_CONTEXT` unless you have real context.
+3. **Feature module** — colocate under `features/<domain>/model/`:
+   - `<name>-filter-fields.ts` → export `FilterFieldConfig[]` (`width` `%` sum to **100%**; give **dateRange** more `%** than equal splits).
+   - `<name>-table.config.ts` → export `TablePageConfig<Row, PendingFilters, Context>`.
+   - Types: `PendingFilters extends Record<string, unknown>` (required by `useTablePage`).
+
+## Page file
+
+- `useSearchParams` → pass `searchParams` / `setSearchParams` into `useTablePage`.
+- Optional CSS chain for full-width list shell (match sponsor): `program-list-page.css`, `user-list-page.css`, `program-list.css`.
+- **Table**: `className="cms-data-table"`, `dataSource={tableData}`, `TABLE_COLUMN_WIDTHS` from `@/shared/constants/table`, `pagination={false}` unless PM asks otherwise, `rowSelection` only when `canWrite`.
+- **Toolbar**: `CmsButton` (`delete` / `secondary` / `primary`), gate with `canPerformWriteAction`.
+
+## Do not
+
+- Rebuild filter rows ad hoc when this pattern fits.
+- Mix **LMS** or **other apps** list patterns into `apps/cms` pages — follow **CMS** siblings in the same route area.
+
+## Related rules
+
+- [list-page-table-stack.md](../tables/list-page-table-stack.md), [table-implementation.md](../tables/table-implementation.md)

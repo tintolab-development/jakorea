@@ -16,6 +16,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 
 - [코드 스타일](./coding/code-style.md) - ESLint, Prettier, TypeScript, 파일 명명 규칙
 - [컴포넌트 패턴](./coding/component-patterns.md) - 컴포넌트 관심사 분리 및 패턴
+- [목록 페이지 구성 (FilterTableLayout + useTablePage)](./coding/list-page-composition.mdc) - 필터·테이블 화면 재사용 원칙 (영문, Cursor 규칙)
 - [상태 드롭다운 셀](./coding/status-dropdown-cell.md) - 테이블용 상태 배지·드롭다운 셀(StatusDropdownCell) 아키텍처, **활성 래퍼·132×33 태그(tag132)**, 새 테이블/도메인 확장 방법
 - [Custom Hooks](./coding/custom-hooks.md) - Custom Hooks 작성 가이드
 - [타입 안전성 및 일관성](./coding/type-safety-and-consistency.md) - Deprecated 코드 사용 금지, 타입 일관성 유지
