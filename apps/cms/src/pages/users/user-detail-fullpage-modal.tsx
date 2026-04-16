@@ -3,7 +3,7 @@
  * 전체 회원 목록 행 클릭 시 프로그램 상세와 동일한 LNB+메인 레이아웃으로 노출
  */
 
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import {
   userDetailModalTitle,
@@ -20,6 +20,8 @@ import {
 } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-shell-context'
 import { UserDetailFullpageTabPanels } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-tab-panels'
 import type { User } from '@/types/user'
+import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
+import { useUserStore } from '@/features/user/shared/model/user-store'
 import { useUserDetailController } from '@/features/user/detail/lib/use-user-detail-controller'
 import { useUserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import { useUserDetailModals } from '@/features/user/detail/lib/use-user-detail-modals'
@@ -43,7 +45,6 @@ export interface UserDetailFullPageModalProps {
   open: boolean
   user: Omit<User, 'password'> | null
   onClose: () => void
-  onEdit?: (user: Omit<User, 'password'>) => void
   onWithdraw?: (user: Omit<User, 'password'>) => void
   basicInfoEntrySource?: UserBasicInfoEntrySource
   mode?: UserDetailFullPageModalMode
@@ -51,13 +52,14 @@ export interface UserDetailFullPageModalProps {
   onPermissionApprove?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onPermissionReject?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onNavigateToLinkedUser?: (userId: string) => void
+  /** 저장 후 목록·드로어 등 상위가 동일 회원 객체를 갱신할 때 */
+  onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
 }
 
 export function UserDetailFullPageModal({
   open,
   user,
   onClose,
-  onEdit,
   onWithdraw,
   basicInfoEntrySource,
   mode = 'default',
@@ -65,16 +67,24 @@ export function UserDetailFullPageModal({
   onPermissionApprove,
   onPermissionReject,
   onNavigateToLinkedUser,
+  onMemberBasicInfoSaved,
 }: UserDetailFullPageModalProps) {
   const modals = useUserDetailModals()
+  const patchMemberBasicInfo = useCallback(
+    (userId: string, patch: PatchUserBasicInfoInput) =>
+      useUserStore.getState().patchUserBasicInfo(userId, patch),
+    []
+  )
   const { state, actions, derived } = useUserDetailController({
     open,
     displayUser: user,
     mode,
     programsChildQueryKey: USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
-    onClose,
+    basicInfoEntrySource,
     onWithdraw,
     modals,
+    patchMemberBasicInfo,
+    onMemberBasicInfoSaved,
   })
 
   const fullpageDerived = useUserDetailFullpageDerived({
@@ -100,12 +110,24 @@ export function UserDetailFullPageModal({
       onNavigateToLinkedUser,
       modals,
       withdrawConfirmOpen: state.withdrawConfirmOpen,
+      personalInfoRevealConfirmOpen: state.personalInfoRevealConfirmOpen,
+      personalInfoRevealSuccessOpen: state.personalInfoRevealSuccessOpen,
+      onClosePersonalInfoRevealConfirm: actions.closePersonalInfoRevealConfirm,
+      onSubmitPersonalInfoReveal: actions.submitPersonalInfoReveal,
+      onClosePersonalInfoRevealSuccess: actions.closePersonalInfoRevealSuccess,
       onProgressStatusChange: actions.handleProgressStatusChange,
       onOpenLectureAttendance: actions.openLectureAttendance,
       onOpenAssignmentSubmission: actions.openAssignmentSubmission,
       onOpenEnrollmentProgramDetail: actions.openEnrollmentProgramDetail,
       onWithdrawModalCancel: actions.closeWithdrawConfirm,
       onWithdrawModalConfirm: actions.handleWithdrawConfirm,
+      basicInfoEditing: state.basicInfoEditing,
+      basicInfoDraft: state.basicInfoDraft,
+      basicInfoSaveLoading: state.basicInfoSaveLoading,
+      onStartBasicInfoEdit: actions.startBasicInfoEdit,
+      onCancelBasicInfoEdit: actions.cancelBasicInfoEdit,
+      onSaveBasicInfoEdit: actions.saveBasicInfoEdit,
+      onBasicInfoDraftChange: actions.updateBasicInfoDraft,
     }
   }, [
     open,
@@ -118,6 +140,18 @@ export function UserDetailFullPageModal({
     state.volunteerHistoriesLoading,
     state.personalInfoRevealed,
     state.withdrawConfirmOpen,
+    state.personalInfoRevealConfirmOpen,
+    state.personalInfoRevealSuccessOpen,
+    state.basicInfoEditing,
+    state.basicInfoDraft,
+    state.basicInfoSaveLoading,
+    actions.startBasicInfoEdit,
+    actions.cancelBasicInfoEdit,
+    actions.saveBasicInfoEdit,
+    actions.updateBasicInfoDraft,
+    actions.closePersonalInfoRevealConfirm,
+    actions.submitPersonalInfoReveal,
+    actions.closePersonalInfoRevealSuccess,
     derived.instructorResumeApplicantRow,
     basicInfoEntrySource,
     onNavigateToLinkedUser,
@@ -128,6 +162,7 @@ export function UserDetailFullPageModal({
     actions.openEnrollmentProgramDetail,
     actions.closeWithdrawConfirm,
     actions.handleWithdrawConfirm,
+    onMemberBasicInfoSaved,
   ])
 
   if (!shell) {
@@ -160,11 +195,10 @@ export function UserDetailFullPageModal({
             displayUser={displayUser}
             tabState={state.tabState}
             personalInfoRevealed={state.personalInfoRevealed}
-            setPersonalInfoRevealed={actions.setPersonalInfoRevealed}
+            onRequestPersonalInfoReveal={actions.openPersonalInfoRevealConfirm}
             onPermissionApprove={onPermissionApprove}
             onPermissionReject={onPermissionReject}
             onWithdraw={onWithdraw}
-            onEdit={onEdit}
             onOpenWithdrawConfirm={actions.openWithdrawConfirm}
           />
         }

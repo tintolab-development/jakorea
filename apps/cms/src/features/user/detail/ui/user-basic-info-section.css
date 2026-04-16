@@ -64,6 +64,13 @@
   display: inline;
 }
 
+.user-basic-info-section__inline-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .user-basic-info-section__address-privacy__blur {
   display: inline-block;
   filter: blur(5px);
@@ -71,11 +78,6 @@
   -webkit-user-select: none;
   max-width: 100%;
   vertical-align: baseline;
-}
-
-/* 성명 블록·본문: 줄바꿈 시 상단 정렬(라벨·다열과 시각 정렬) */
-.user-basic-info-section .detail-info-form__name-block-cell--value {
-  align-items: flex-start;
 }
 
 /* 관리자 상세 — 권한 유형 값 셀(r1) 가로·세로 중앙
@@ -92,6 +94,7 @@
   margin-inline: 0;
 }
 
-.user-basic-info-section .detail-info-form__field-content {
+/* 조회 슬롯만 상단 정렬 — `--edit` 값 셀에는 적용되지 않음 */
+.user-basic-info-section .detail-info-form__field-content--view {
   align-items: flex-start;
 }

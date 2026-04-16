@@ -1,0 +1,27 @@
+.user-detail-admin-comment-section.detail-info-form .detail-info-form__row--custom {
+  border-bottom: none;
+}
+
+/* 수정 모드: 본문(border)과 CmsInput(border) 사이 여백 — 이중선처럼 보이는 현상 완화 */
+.user-detail-admin-comment-section--editing.detail-info-form .detail-info-form__row--custom {
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.user-detail-admin-comment-section__text {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 64px;
+  padding: 20px 24px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.user-detail-admin-comment-section__text--empty {
+  color: var(--color-text-secondary, #8c8c8c);
+}

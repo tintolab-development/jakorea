@@ -1,4 +1,4 @@
-import { message } from 'antd'
+import { openPortal1365Main } from '@/shared/constants'
 import type { UserDetailRoleStrategy } from './user-detail-role-strategy.types'
 
 export const individualStrategy: UserDetailRoleStrategy = {
@@ -11,7 +11,7 @@ export const individualStrategy: UserDetailRoleStrategy = {
       externalId1365: {
         maskedLabel: '0915***',
         fullLabel: '0915123456',
-        onOpen: () => message.info('1365 바로가기는 추후 연결됩니다.'),
+        onOpen: openPortal1365Main,
       },
       showConsentAgreement: true,
       showSchoolAffiliatedTeachers: false,

@@ -12,6 +12,10 @@ import {
   buildMemberWithdrawMessageLines,
 } from '@/features/program/ui/manager-delete-guide-modal'
 import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
+import {
   getTeacherDetail,
   type AffiliatedTeacherRow,
 } from '@/data/mock/school-detail'
@@ -46,8 +50,7 @@ export function TeacherDetailModal({
   const isInstructor = detail.isInstructorApplicant
 
   const withdrawLines = buildMemberWithdrawMessageLines({
-    name: detail.name,
-    email: detail.email,
+    displayName: detail.name,
   })
 
   const handleWithdrawConfirm = () => {
@@ -140,8 +143,10 @@ export function TeacherDetailModal({
         onConfirm={handleWithdrawConfirm}
         title="회원 탈퇴 안내"
         lines={withdrawLines}
-        confirmText="탈퇴"
+        confirmText="삭제"
         confirmVariant="delete"
+        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+        confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
       />
     </>
   )

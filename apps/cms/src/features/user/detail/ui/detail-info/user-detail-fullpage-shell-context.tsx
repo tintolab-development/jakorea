@@ -6,6 +6,7 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { TabState } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import type { UseUserDetailModalsResult } from '@/features/user/detail/lib/use-user-detail-modals'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
+import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 
 export interface UserDetailFullpageShellValue {
@@ -22,6 +23,11 @@ export interface UserDetailFullpageShellValue {
   onNavigateToLinkedUser?: (userId: string) => void
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
+  personalInfoRevealConfirmOpen: boolean
+  personalInfoRevealSuccessOpen: boolean
+  onClosePersonalInfoRevealConfirm: () => void
+  onSubmitPersonalInfoReveal: (reason: string) => void
+  onClosePersonalInfoRevealSuccess: () => void
   onProgressStatusChange: (
     app: Application,
     displayStatus: ProgramEnrollmentDisplayStatus
@@ -31,6 +37,13 @@ export interface UserDetailFullpageShellValue {
   onOpenEnrollmentProgramDetail: (record: Application) => void
   onWithdrawModalCancel: () => void
   onWithdrawModalConfirm: () => void
+  basicInfoEditing: boolean
+  basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null
+  basicInfoSaveLoading: boolean
+  onStartBasicInfoEdit: () => void
+  onCancelBasicInfoEdit: () => void
+  onSaveBasicInfoEdit: () => void | Promise<void>
+  onBasicInfoDraftChange: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
 }
 
 const UserDetailFullpageShellContext = createContext<UserDetailFullpageShellValue | null>(null)

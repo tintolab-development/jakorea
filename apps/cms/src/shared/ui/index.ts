@@ -9,6 +9,13 @@ export { EmptyState } from './empty-state'
 export { ConfirmModal } from './confirm-modal'
 export { ActionResultModal } from './action-result-modal'
 export type { ActionResultModalProps } from './action-result-modal'
+export {
+  buildRegisterCompletedTitle,
+  buildRegisterCompletedMessage,
+  buildDeleteCompletedTitle,
+  buildDeleteCompletedMessageSingle,
+  buildDeleteCompletedMessageBulk,
+} from './action-result-messages'
 export { DeleteGuideModal } from './delete-guide-modal'
 export type { DeleteGuideModalProps } from './delete-guide-modal'
 export {
@@ -78,6 +85,10 @@ export { CmsButton } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
 export { CmsInput } from './cms-input'
 export type { CmsInputProps, CmsInputSize } from './cms-input'
+export { CmsTextArea } from './cms-textarea'
+export type { CmsTextAreaProps, CmsTextAreaSize } from './cms-textarea'
+export { CmsInputSearch } from './cms-input-search'
+export type { CmsInputSearchProps } from './cms-input-search'
 export { AddressSearch } from './address-search'
 export type { AddressSearchProps } from './address-search'
 export type { CmsControlSize } from './cms-control-size'

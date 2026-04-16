@@ -114,9 +114,19 @@ function DetailInfoFormField({
   } as CSSProperties
 
   const isFull = Boolean(fullRow || colSpan === 2)
-  const fieldClass = ['detail-info-form__field', isFull ? 'detail-info-form__field--full-row' : '']
+  const isEditSlot = effectiveMode === 'edit' && edit != null
+  const fieldClass = [
+    'detail-info-form__field',
+    isFull ? 'detail-info-form__field--full-row' : '',
+    isEditSlot ? 'detail-info-form__field--edit' : '',
+  ]
     .filter(Boolean)
     .join(' ')
+
+  const contentClass = [
+    'detail-info-form__field-content',
+    isEditSlot ? 'detail-info-form__field-content--edit' : 'detail-info-form__field-content--view',
+  ].join(' ')
 
   return (
     <div className={fieldClass} style={style}>
@@ -128,7 +138,7 @@ function DetailInfoFormField({
           </span>
         ) : null}
       </div>
-      <div className="detail-info-form__field-content">{content}</div>
+      <div className={contentClass}>{content}</div>
     </div>
   )
 }

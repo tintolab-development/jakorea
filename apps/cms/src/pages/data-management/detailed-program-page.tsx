@@ -88,18 +88,13 @@ export default function DetailedProgramPage() {
   const viewDeletePendingIdsRef = useRef<string[]>([])
   const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
 
-  const {
-    pendingFilters,
-    applySearch,
-    handleFilterChange,
-    displayedCount,
-    tableData,
-  } = useTablePage(detailedProgramManagementTablePageConfig, {
-    data: rows,
-    searchParams,
-    setSearchParams,
-    context: EMPTY_TABLE_PAGE_CONTEXT,
-  })
+  const { pendingFilters, applySearch, handleFilterChange, displayedCount, tableData } =
+    useTablePage(detailedProgramManagementTablePageConfig, {
+      data: rows,
+      searchParams,
+      setSearchParams,
+      context: EMPTY_TABLE_PAGE_CONTEXT,
+    })
 
   const handleSearch = useCallback(() => {
     if (isEditMode) {
@@ -130,9 +125,7 @@ export default function DetailedProgramPage() {
   const handleSave = useCallback(() => {
     const drafts = draftByIdRef.current
     const staged = new Set(stagedDeleteIds)
-    const emptyNameId = Object.entries(drafts).find(
-      ([id, d]) => !staged.has(id) && !d.name.trim()
-    )
+    const emptyNameId = Object.entries(drafts).find(([id, d]) => !staged.has(id) && !d.name.trim())
     if (emptyNameId) {
       message.error('세부 프로그램명을 모두 입력해 주세요.')
       return
@@ -208,6 +201,7 @@ export default function DetailedProgramPage() {
         ? [
             `실적 관리에서 사용 중인 ${blocked.length}건은 제외되며,`,
             '삭제 가능한 항목만 아래 안내에 따라 삭제됩니다.',
+            ' ',
             ...baseLines,
           ]
         : baseLines
@@ -260,9 +254,7 @@ export default function DetailedProgramPage() {
 
   /** 편집 중: 스테이징 삭제 제외 + draft 병합. 뷰 모드: 필터 결과 그대로 */
   const tableDisplayData = useMemo((): DetailedProgramManagementRow[] => {
-    const base = isEditMode
-      ? tableData.filter(row => !stagedDeleteSet.has(row.id))
-      : tableData
+    const base = isEditMode ? tableData.filter(row => !stagedDeleteSet.has(row.id)) : tableData
     if (!isEditMode) return base
     return base.map(row => {
       const d = draftById[row.id]
@@ -376,7 +368,11 @@ export default function DetailedProgramPage() {
                 정보 수정
               </CmsButton>
             )}
-            <CmsButton variant="primary" onClick={handleAddClick} disabled={!canWrite || isEditMode}>
+            <CmsButton
+              variant="primary"
+              onClick={handleAddClick}
+              disabled={!canWrite || isEditMode}
+            >
               항목 추가
             </CmsButton>
           </>
@@ -415,7 +411,12 @@ export default function DetailedProgramPage() {
         width={480}
         description="선택한 항목은 실적 관리에서 사용 중인 세부 프로그램이라 삭제할 수 없습니다."
         footer={
-          <CmsButton variant="primary" size="medium" type="button" onClick={() => setDeleteBlockedModalOpen(false)}>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            type="button"
+            onClick={() => setDeleteBlockedModalOpen(false)}
+          >
             확인
           </CmsButton>
         }

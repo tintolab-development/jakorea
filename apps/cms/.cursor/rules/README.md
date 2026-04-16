@@ -71,6 +71,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 - [개발 프로세스](./process/development-process.md) - Phase별 개발 프로세스
 - [진행 상황 관리](./process/progress-management.md) - PROGRESS.md 기록 규칙
 - [역할별 Persona](./process/persona.md) - 시니어 PM, 기획자, UX/UI 디자이너, 개발자 역할 정의
+- [수료증/참여인증서 발급](./process/member-program-certificate-issue-spec.md) - 발급 자격·문서 종류 기획, 화면 고정 안내 미삽입 정책
 
 ---
 

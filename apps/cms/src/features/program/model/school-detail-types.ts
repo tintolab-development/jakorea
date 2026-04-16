@@ -164,6 +164,8 @@ export interface AssignmentSubmissionTableRow {
   id: string
   roundNumber: number
   teamRole: AssignmentTeamRoleKey
+  /** 팀 과제 시 팀명, 개인 역할이면 '-' */
+  teamName: string
   /** 예: 2026. 01. 05 (월) | 1차시 */
   educationDateLabel: string
   /** 예: 26. 01. 01 (수) ~ 26. 01. 07 (화) */

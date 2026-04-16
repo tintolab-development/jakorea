@@ -1,32 +1,63 @@
+import type { ReactNode } from 'react'
 import { CmsButton } from './cms-button'
 import { ContentModal } from './content-modal'
 
 export interface ActionResultModalProps {
   open: boolean
-  action: string
   onClose: () => void
   zIndex?: number
+  /** 완료·결과 안내 제목 (예: 회원 삭제 완료) */
+  title: string
+  /** 본문 */
+  message: ReactNode
+  /** 기본값 확인 */
+  confirmLabel?: string
 }
 
 /**
- * 등록/수정/삭제 완료 안내 공통 모달입니다.
- * 제목은 `{action} 완료`, 본문은 `{action}가 완료 되었습니다.` 형식으로 렌더링됩니다.
+ * 등록·삭제 등 작업 완료 안내 공통 모달.
+ * 제목·본문은 호출부에서 조합(`action-result-messages` 등).
  */
-export function ActionResultModal({ open, action, onClose, zIndex }: ActionResultModalProps) {
+export function ActionResultModal({
+  open,
+  title,
+  message,
+  onClose,
+  zIndex,
+  confirmLabel = '확인',
+}: ActionResultModalProps) {
+  const renderedMessage =
+    typeof message === 'string' ? (
+      (() => {
+        const match = message.match(/^\[[^\]]+\]/)
+        if (!match) return message
+        const namePart = match[0]
+        const rest = message.slice(namePart.length)
+        return (
+          <>
+            <span style={{ fontWeight: 600 }}>{namePart}</span>
+            {rest}
+          </>
+        )
+      })()
+    ) : (
+      message
+    )
+
   return (
     <ContentModal
       open={open}
       onCancel={onClose}
-      title={`${action} 완료`}
+      title={title}
       width={420}
       zIndex={zIndex}
       footer={
         <CmsButton variant="secondary" width={70} type="button" onClick={onClose}>
-          닫기
+          {confirmLabel}
         </CmsButton>
       }
     >
-      <span style={{ fontSize: '16px', lineHeight: '150%' }}>{`${action} 완료 되었습니다.`}</span>
+      <span style={{ fontSize: '16px', lineHeight: '150%' }}>{renderedMessage}</span>
     </ContentModal>
   )
 }

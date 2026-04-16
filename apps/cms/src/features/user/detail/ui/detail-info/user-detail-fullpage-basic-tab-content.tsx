@@ -12,6 +12,8 @@ import {
 } from '@/features/user/detail/ui/user-consent-agreement-section'
 import { InstructorResumeDetailForms } from '@/features/user/detail/ui/instructor-resume-detail-forms'
 import { SchoolAffiliatedTeachersSection } from '@/features/user/detail/ui/school-affiliated-teachers-section'
+import { UserDetailAdminCommentSection } from './user-detail-admin-comment-section'
+import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 
 export interface UserDetailFullpageBasicTabContentProps {
   user: Omit<User, 'password'>
@@ -20,6 +22,9 @@ export interface UserDetailFullpageBasicTabContentProps {
   personalInfoRevealed: boolean
   instructorResumeApplicantRow: ApplicantInstructorRow | null
   onNavigateToLinkedUser?: (userId: string) => void
+  memberInfoEditing?: boolean
+  memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
 }
 
 export function UserDetailFullpageBasicTabContent({
@@ -29,24 +34,38 @@ export function UserDetailFullpageBasicTabContent({
   personalInfoRevealed,
   instructorResumeApplicantRow,
   onNavigateToLinkedUser,
+  memberInfoEditing = false,
+  memberInfoDraft,
+  onMemberInfoDraftChange,
 }: UserDetailFullpageBasicTabContentProps) {
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <div className="user-detail-modal__basic-tab-content user-detail-fullpage-modal__basic">
-        <UserBasicInfoSection
-          user={user}
-          entrySource={basicInfoEntrySource}
-          caption={basicTab.caption}
-          externalId1365={basicTab.externalId1365}
-          personalInfoRevealed={personalInfoRevealed}
-        />
-        {basicTab.showConsentAgreement ? (
-          <UserConsentAgreementSection preset={resolveUserConsentAgreementPreset(user)} />
-        ) : null}
-        {instructorResumeApplicantRow ? (
-          <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
-        ) : null}
-      </div>
+      <UserDetailAdminCommentSection
+        user={user}
+        memberInfoEditing={memberInfoEditing}
+        adminCommentDraft={memberInfoDraft?.adminComment}
+        onAdminCommentChange={
+          memberInfoEditing && onMemberInfoDraftChange
+            ? value => onMemberInfoDraftChange({ adminComment: value })
+            : undefined
+        }
+      />
+      <UserBasicInfoSection
+        user={user}
+        entrySource={basicInfoEntrySource}
+        caption={basicTab.caption}
+        externalId1365={basicTab.externalId1365}
+        personalInfoRevealed={personalInfoRevealed}
+        memberInfoEditing={memberInfoEditing}
+        memberInfoDraft={memberInfoDraft}
+        onMemberInfoDraftChange={onMemberInfoDraftChange}
+      />
+      {basicTab.showConsentAgreement ? (
+        <UserConsentAgreementSection preset={resolveUserConsentAgreementPreset(user)} />
+      ) : null}
+      {instructorResumeApplicantRow ? (
+        <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+      ) : null}
       {basicTab.showSchoolAffiliatedTeachers ? (
         <SchoolAffiliatedTeachersSection
           rows={user.schoolInfo?.affiliatedTeachers ?? []}

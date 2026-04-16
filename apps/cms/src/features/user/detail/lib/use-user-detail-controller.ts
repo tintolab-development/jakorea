@@ -26,6 +26,21 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
+import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
+import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import {
+  draftToBasicInfoPatch,
+  userToAdminProvisionedBasicDraft,
+  type AdminProvisionedMemberBasicInfoDraft,
+} from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import {
+  resolveUserBasicInfoBodyKey,
+  parseUserBasicInfoEntryQuery,
+  USER_BASIC_INFO_ENTRY_QUERY_KEY,
+  type UserBasicInfoEntrySource,
+} from '@/features/user/detail/ui/user-basic-info-section'
+import { MESSAGES } from '@/shared/constants'
+import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 
 export type UserDetailControllerModalMode = 'default' | 'permission'
 
@@ -34,9 +49,14 @@ export interface UseUserDetailControllerParams {
   displayUser: Omit<User, 'password'> | null
   mode: UserDetailControllerModalMode
   programsChildQueryKey: string
-  onClose: () => void
+  basicInfoEntrySource?: UserBasicInfoEntrySource
   onWithdraw?: (user: Omit<User, 'password'>) => void
   modals: UseUserDetailModalsResult
+  patchMemberBasicInfo?: (
+    userId: string,
+    patch: PatchUserBasicInfoInput
+  ) => Promise<Omit<User, 'password'>>
+  onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
 }
 
 export function useUserDetailController({
@@ -44,9 +64,11 @@ export function useUserDetailController({
   displayUser,
   mode,
   programsChildQueryKey,
-  onClose,
+  basicInfoEntrySource,
   onWithdraw,
   modals,
+  patchMemberBasicInfo,
+  onMemberBasicInfoSaved,
 }: UseUserDetailControllerParams) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -59,6 +81,13 @@ export function useUserDetailController({
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
+  const [personalInfoRevealSuccessOpen, setPersonalInfoRevealSuccessOpen] = useState(false)
+  const [basicInfoEditing, setBasicInfoEditing] = useState(false)
+  const [basicInfoDraft, setBasicInfoDraft] = useState<AdminProvisionedMemberBasicInfoDraft | null>(
+    null
+  )
+  const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
 
   useUserDetailUrlSync({
     open,
@@ -71,11 +100,23 @@ export function useUserDetailController({
   })
 
   useEffect(() => {
-    if (!open) setPersonalInfoRevealed(false)
+    if (!open) {
+      setPersonalInfoRevealed(false)
+      setPersonalInfoRevealConfirmOpen(false)
+      setPersonalInfoRevealSuccessOpen(false)
+      setBasicInfoEditing(false)
+      setBasicInfoDraft(null)
+      setBasicInfoSaveLoading(false)
+    }
   }, [open])
 
   useEffect(() => {
     setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
+    setPersonalInfoRevealSuccessOpen(false)
+    setBasicInfoEditing(false)
+    setBasicInfoDraft(null)
+    setBasicInfoSaveLoading(false)
   }, [displayUser?.id])
 
   useEffect(() => {
@@ -163,9 +204,80 @@ export function useUserDetailController({
     if (displayUser && onWithdraw) {
       onWithdraw(displayUser)
       setWithdrawConfirmOpen(false)
-      onClose()
     }
-  }, [displayUser, onWithdraw, onClose])
+  }, [displayUser, onWithdraw])
+
+  const openPersonalInfoRevealConfirm = useCallback(() => {
+    setPersonalInfoRevealConfirmOpen(true)
+  }, [])
+
+  const closePersonalInfoRevealConfirm = useCallback(() => {
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [])
+
+  const submitPersonalInfoReveal = useCallback((_reason: string) => {
+    setPersonalInfoRevealed(true)
+    setPersonalInfoRevealConfirmOpen(false)
+    setPersonalInfoRevealSuccessOpen(true)
+  }, [])
+
+  const closePersonalInfoRevealSuccess = useCallback(() => {
+    setPersonalInfoRevealSuccessOpen(false)
+  }, [])
+
+  const startBasicInfoEdit = useCallback(() => {
+    if (!displayUser) return
+    const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
+    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
+    if (!shouldShowCmsMemberInfoEditButton(displayUser) || bodyKey !== 'all_users') {
+      return
+    }
+    setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
+    setBasicInfoEditing(true)
+    setTabState({ lnb: 'detail-info' })
+    setSearchParams(
+      prev => {
+        const nextParams = new URLSearchParams(prev)
+        if (displayUser.id) nextParams.set('id', displayUser.id)
+        nextParams.set('lnb', 'detail-info')
+        nextParams.delete(programsChildQueryKey)
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [
+    displayUser,
+    basicInfoEntrySource,
+    searchParams,
+    programsChildQueryKey,
+    setSearchParams,
+  ])
+
+  const cancelBasicInfoEdit = useCallback(() => {
+    setBasicInfoEditing(false)
+    setBasicInfoDraft(null)
+  }, [])
+
+  const saveBasicInfoEdit = useCallback(async () => {
+    if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
+    setBasicInfoSaveLoading(true)
+    try {
+      const patch = draftToBasicInfoPatch(basicInfoDraft)
+      const updated = await patchMemberBasicInfo(displayUser.id, patch)
+      setBasicInfoEditing(false)
+      setBasicInfoDraft(null)
+      onMemberBasicInfoSaved?.(updated)
+      showSuccessMessage(MESSAGES.success.updated)
+    } catch (error) {
+      handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
+    } finally {
+      setBasicInfoSaveLoading(false)
+    }
+  }, [displayUser, basicInfoDraft, patchMemberBasicInfo, onMemberBasicInfoSaved])
+
+  const updateBasicInfoDraft = useCallback((partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {
+    setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))
+  }, [])
 
   const handleSidebarSelectTop = useCallback(
     (key: string) => {
@@ -290,6 +402,11 @@ export function useUserDetailController({
       volunteerHistoriesLoading,
       withdrawConfirmOpen,
       personalInfoRevealed,
+      personalInfoRevealConfirmOpen,
+      personalInfoRevealSuccessOpen,
+      basicInfoEditing,
+      basicInfoDraft,
+      basicInfoSaveLoading,
     },
     actions: {
       setTabState,
@@ -305,6 +422,14 @@ export function useUserDetailController({
       openWithdrawConfirm,
       closeWithdrawConfirm,
       handleWithdrawConfirm,
+      openPersonalInfoRevealConfirm,
+      closePersonalInfoRevealConfirm,
+      submitPersonalInfoReveal,
+      closePersonalInfoRevealSuccess,
+      startBasicInfoEdit,
+      cancelBasicInfoEdit,
+      saveBasicInfoEdit,
+      updateBasicInfoDraft,
     },
     derived: {
       role,

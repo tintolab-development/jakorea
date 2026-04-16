@@ -18,7 +18,9 @@ import {
   updateUserStatus,
   createUser,
   deleteUser,
+  patchUserBasicInfo,
   type CreateUserRequest,
+  type PatchUserBasicInfoInput,
 } from '@/entities/user/api/user-service'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
@@ -73,6 +75,7 @@ interface UserStore {
     programRole?: ProgramRole
   ) => Promise<void>
   changeUserStatus: (userId: UserId, isActive: boolean) => Promise<void>
+  patchUserBasicInfo: (userId: UserId, patch: PatchUserBasicInfoInput) => Promise<UserWithoutPassword>
   setSelectedUserId: (userId: UserId | null) => void
   setFilters: (filters: Partial<UserFilters>) => void
   clearFilters: () => void
@@ -360,6 +363,26 @@ export const useUserStore = create<UserStore>((set, get) => ({
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('상태 변경에 실패했습니다.')
+      set({ error, loading: false })
+      throw error
+    }
+  },
+
+  patchUserBasicInfo: async (userId, patch) => {
+    set({ loading: true, error: null })
+    try {
+      const updatedUser = await patchUserBasicInfo(userId, patch)
+      const state = get()
+      set({
+        usersById: {
+          ...state.usersById,
+          [userId]: updatedUser,
+        },
+        loading: false,
+      })
+      return updatedUser
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('회원 정보 수정에 실패했습니다.')
       set({ error, loading: false })
       throw error
     }

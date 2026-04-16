@@ -164,34 +164,21 @@ export function buildMemberDeleteMessageLines(
   return []
 }
 
-/** 회원 탈퇴 안내 문구 생성 (회원 상세 모달 > 탈퇴 버튼) */
-export function buildMemberWithdrawMessageLines(
-  singleUser: {
-    name: string
-    email: string
-  } | null
-): string[] {
-  if (!singleUser) return []
+/** 회원 탈퇴 안내 문구 (회원 상세 > 탈퇴) */
+export function buildMemberWithdrawMessageLines(params: { displayName: string } | null): string[] {
+  if (!params) return []
+  const name = params.displayName.trim()
+  if (!name) return []
   return [
-    `[${singleUser.name}] (${singleUser.email}) 회원을 탈퇴 처리하시겠습니까?`,
-    '탈퇴된 회원은 복구할 수 없습니다.',
-    '정말로 탈퇴하시겠습니까?',
+    `[${name}] 회원을 탈퇴 처리하시겠습니까?`,
+    '탈퇴 처리 시 등록 및 관련된 정보는 모두 삭제됩니다.',
+    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
   ]
 }
 
-/** 학교(기관) 상세 > 학교 삭제 확인 문구 */
-export function buildSchoolDeleteMessageLines(
-  singleUser: {
-    name: string
-    email: string
-  } | null
-): string[] {
-  if (!singleUser) return []
-  return [
-    `[${singleUser.name}] (${singleUser.email}) 학교(기관) 계정을 삭제하시겠습니까?`,
-    '삭제된 계정은 복구할 수 없습니다.',
-    '정말로 삭제하시겠습니까?',
-  ]
+/** 학교(기관) 계정 탈퇴 안내 — 본문은 회원 탈퇴와 동일 (제목에서 학교 여부 구분) */
+export function buildSchoolDeleteMessageLines(params: { displayName: string } | null): string[] {
+  return buildMemberWithdrawMessageLines(params)
 }
 
 /** 담당자 삭제 안내 모달 (기존 호환) */

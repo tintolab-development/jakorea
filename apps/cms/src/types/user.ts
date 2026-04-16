@@ -113,6 +113,23 @@ export interface User {
   createdAt: DateValue
   updatedAt: DateValue
 
+  /** CMS 회원 상세 — 관리자 메모(있을 때만 본문 표시) */
+  adminComment?: string
+
+  /**
+   * CMS: 관리자 「회원 등록」 플로우로만 생성된 계정.
+   * 기본 정보 description의「관리자에 의해 등록」안내·상세 [정보 수정] 노출에는
+   * `identitySelfSignupCompletedAfterAdminRegistration`이 아닐 때만 사용한다.
+   */
+  registeredByAdmin?: boolean
+
+  /**
+   * 관리자 등록 계정이 본인인증 후 직접 가입(추가 절차)을 완료한 경우.
+   * true이면 CMS에서는 일반 회원과 동일하게 취급하여 [정보 수정]·기본 정보의 관리자 등록 안내 문구를 비노출한다.
+   * ([관리자 코멘트] 영역은 별도 필드이며 동일하게 노출된다.)
+   */
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
+
   // 추가 프로필 정보
   bio?: string
   detailAddress?: string

@@ -27,7 +27,6 @@ interface UserListProps {
   data: Row[]
   loading?: boolean
   onView?: (user: Row) => void
-  onEdit?: (user: Row) => void
   onDelete?: (user: Row) => void
   selectedRowKeys?: React.Key[]
   onSelectionChange?: (keys: React.Key[]) => void

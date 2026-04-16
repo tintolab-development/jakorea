@@ -1,6 +1,5 @@
 import type { User } from '@/types/user'
 import type { CmsButtonVariant } from '@/shared/ui/cms-button'
-
 export type ActionConfig = {
   key: string
   label: string
@@ -10,14 +9,12 @@ export type ActionConfig = {
 
 export interface GetDefaultHeaderActionsCtx {
   viewKind: 'school_delete' | 'standard'
-  displayUser: Omit<User, 'password'>
   onWithdraw?: (user: Omit<User, 'password'>) => void
-  onEdit?: (user: Omit<User, 'password'>) => void
   onOpenWithdrawConfirm: () => void
 }
 
 export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): ActionConfig[] {
-  const { viewKind, displayUser, onWithdraw, onEdit } = ctx
+  const { viewKind, onWithdraw, onOpenWithdrawConfirm } = ctx
 
   if (viewKind === 'school_delete') {
     return [
@@ -26,9 +23,7 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
         label: '학교 삭제',
         variant: 'delete',
         onClick: () => {
-          window.alert('준비 중입니다.')
-          // TODO: 기능 연결 예정 — 학교 삭제 확인 모달
-          // onOpenWithdrawConfirm()
+          onOpenWithdrawConfirm()
         },
       },
     ]
@@ -42,19 +37,7 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
       label: '회원 탈퇴',
       variant: 'delete',
       onClick: () => {
-        window.alert('준비 중입니다.')
-        // onOpenWithdrawConfirm()
-      },
-    })
-  }
-
-  if (onEdit) {
-    actions.push({
-      key: 'edit',
-      label: '정보 수정',
-      variant: 'secondary',
-      onClick: () => {
-        onEdit(displayUser)
+        onOpenWithdrawConfirm()
       },
     })
   }
