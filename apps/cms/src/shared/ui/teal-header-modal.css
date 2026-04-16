@@ -72,6 +72,15 @@
   padding: 0 !important;
 }
 
+/*
+ * 과거 `centered` + 위 flex를 동시에 쓸 때 Ant Design의 `ant-modal-centered::before`(수직 정렬용)가
+ * flex 아이템으로 남아 대화상자가 밀리는 경우를 막음. (TealHeaderModal은 이제 centered=false 권장)
+ */
+.ant-modal-wrap.ant-modal-centered:has(.teal-header-modal):not(:has(.teal-header-modal--full))::before {
+  display: none !important;
+  content: none !important;
+}
+
 .teal-header-modal.ant-modal {
   padding-bottom: 0;
   top: 0;

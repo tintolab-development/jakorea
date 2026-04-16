@@ -39,6 +39,12 @@ export interface ContentModalProps {
   closeIcon?: ReactNode
   /** 헤더 타이틀 바로 아래 설명. 전달 시 타이틀–설명 간격 16px 공통 적용 */
   description?: ReactNode
+  /** 다른 모달 위에 겹칠 때 (예: 이중 모달) */
+  zIndex?: number
+  /** TealHeaderModal → Modal `wrapClassName` (뷰포트 정렬 등) */
+  wrapClassName?: string
+  /** TealHeaderModal → Modal `rootClassName` */
+  rootClassName?: string
 }
 
 export function ContentModal({
@@ -53,6 +59,9 @@ export function ContentModal({
   className,
   closeIcon = DEFAULT_CLOSE_ICON,
   description,
+  zIndex,
+  wrapClassName,
+  rootClassName,
 }: ContentModalProps) {
   const resolvedClassName = ['content-modal', className].filter(Boolean).join(' ')
 
@@ -72,6 +81,9 @@ export function ContentModal({
       footer={wrappedFooter}
       className={resolvedClassName}
       closeIcon={closeIcon}
+      zIndex={zIndex}
+      wrapClassName={wrapClassName}
+      rootClassName={rootClassName}
     >
       {description != null ? (
         <div className="content-modal__description">{description}</div>
