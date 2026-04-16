@@ -119,6 +119,7 @@ const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-pa
 const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
+const AdminNoticeDetailPage = lazyLoad(() => import('@/pages/posts/admin-notice-detail-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
 const PermissionCustomizationPage = lazyLoad(
@@ -493,6 +494,7 @@ export const router = createBrowserRouter([
               { index: true, element: <Navigate to="/admin/posts/notices" replace /> },
               { path: 'categories', element: <AdminCategoryPage /> },
               { path: 'notices', element: <AdminNoticeListPage /> },
+              { path: 'notices/:id', element: <AdminNoticeDetailPage /> },
               { path: 'faq', element: <AdminFAQPage /> },
               { path: 'inquiries', element: <AdminInquiryPage /> },
             ],
