@@ -10,6 +10,7 @@ declare module '@toast-ui/editor' {
     previewStyle?: 'tab' | 'vertical'
     usageStatistics?: boolean
     initialValue?: string
+    placeholder?: string
     events?: {
       change?: () => void
       load?: (editor: Editor) => void
