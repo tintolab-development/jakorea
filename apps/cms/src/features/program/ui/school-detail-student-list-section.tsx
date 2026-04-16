@@ -27,6 +27,7 @@ import type { AddStudentFormValues } from '../model/school-detail-add-student-sc
 import { LectureAttendanceModal } from './lecture-attendance-modal'
 import { AssignmentSubmissionModal } from './assignment-submission-modal'
 import { AddStudentModal } from './add-student-modal'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
 import './school-detail-modal.css'
 import './detail-modal/program-status/program-progress-tab.css'
 import './detail-modal/program-status/participating-institutions-section.css'
@@ -139,6 +140,8 @@ export function SchoolDetailStudentListSection({
   const [assignmentSubmissionStudent, setAssignmentSubmissionStudent] =
     useState<SchoolDetailStudentRow | null>(null)
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false)
+  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   const studentList = useMemo(
     () => getSchoolDetailStudents(schoolId, studentCount),
@@ -224,6 +227,11 @@ export function SchoolDetailStudentListSection({
     }
   }, [isStudentListEditMode, filteredStudentList, reset])
 
+  useEffect(() => {
+    setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [schoolId])
+
   const openLectureAttendance = useCallback((record: SchoolDetailStudentRow) => {
     setLectureAttendanceStudent(record)
     setLectureAttendanceModalOpen(true)
@@ -282,7 +290,8 @@ export function SchoolDetailStudentListSection({
         key: 'contact',
         align: 'center',
         ...studentListTableDataColumnSize(4),
-        render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v) : '-'),
+        render: (v: string | undefined) =>
+          v ? (personalInfoRevealed ? v : MASKING_POLICY.phone(v)) : '-',
       },
       {
         title: '이메일',
@@ -291,7 +300,8 @@ export function SchoolDetailStudentListSection({
         align: 'center',
         ellipsis: true,
         ...studentListTableDataColumnSize(5),
-        render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
+        render: (v: string | undefined) =>
+          v ? (personalInfoRevealed ? v : MASKING_POLICY.email(v)) : '-',
       },
       {
         title: '강의 출석 내역',
@@ -326,7 +336,7 @@ export function SchoolDetailStudentListSection({
         ),
       },
     ],
-    [openLectureAttendance, openAssignmentSubmission]
+    [openLectureAttendance, openAssignmentSubmission, personalInfoRevealed]
   )
 
   const studentColumnsEdit: ColumnsType<StudentListFormStudent> = useMemo(
@@ -579,9 +589,15 @@ export function SchoolDetailStudentListSection({
                   variant="primary"
                   size="filter-wide"
                   modalTeal
-                  onClick={() => window.alert('준비 중입니다.')}
+                  onClick={() => {
+                    if (personalInfoRevealed) {
+                      setPersonalInfoRevealed(false)
+                      return
+                    }
+                    setPersonalInfoRevealConfirmOpen(true)
+                  }}
                 >
-                  개인정보 상세보기
+                  {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
                 </AppButton>
               </>
             )}
@@ -642,6 +658,15 @@ export function SchoolDetailStudentListSection({
         onCancel={() => setAddStudentModalOpen(false)}
         onAdd={handleAddStudent}
       />
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
+          onConfirm={_reason => {
+            setPersonalInfoRevealed(true)
+            setPersonalInfoRevealConfirmOpen(false)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

@@ -28,6 +28,7 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton } from '@/shared/ui'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
 
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
   SCHOOL: '학교(교사)',
@@ -92,9 +93,6 @@ export function MembersPermissionList({
   )
 
   const [rows, setRows] = useState<MemberPermissionApplicationRow[]>(baseRows)
-  useEffect(() => {
-    setRows(baseRows)
-  }, [baseRows])
 
   const {
     pendingFilters,
@@ -112,6 +110,14 @@ export function MembersPermissionList({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   /** 목록 내 연락처·이메일 마스킹 해제 여부 (행 id) */
   const [privacyRevealedByRowId, setPrivacyRevealedByRowId] = useState<Record<string, boolean>>({})
+  const [personalInfoRevealConfirmTargetId, setPersonalInfoRevealConfirmTargetId] = useState<string | null>(
+    null
+  )
+  useEffect(() => {
+    setRows(baseRows)
+    setPrivacyRevealedByRowId({})
+    setPersonalInfoRevealConfirmTargetId(null)
+  }, [baseRows])
 
   const selectedKeySet = useMemo(
     () => new Set(selectedRowKeys.map(k => String(k))),
@@ -178,7 +184,7 @@ export function MembersPermissionList({
       setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: false }))
       return
     }
-    window.alert('준비 중입니다.')
+    setPersonalInfoRevealConfirmTargetId(id)
   }, [selectedRowKeys, isSelectedRowPrivacyRevealed])
 
   const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(
@@ -353,6 +359,15 @@ export function MembersPermissionList({
         }
         pagination={false}
       />
+      {personalInfoRevealConfirmTargetId ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmTargetId(null)}
+          onConfirm={_reason => {
+            setPrivacyRevealedByRowId(prev => ({ ...prev, [personalInfoRevealConfirmTargetId]: true }))
+            setPersonalInfoRevealConfirmTargetId(null)
+          }}
+        />
+      ) : null}
     </FilterTableLayout>
   )
 }

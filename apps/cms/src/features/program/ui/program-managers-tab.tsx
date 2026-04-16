@@ -36,6 +36,8 @@ import {
   STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
 import './program-managers-tab.css'
 
 const ROLE_OPTIONS = [
@@ -47,28 +49,11 @@ const ROLE_OPTIONS = [
 
 const TABLE_ROLE_ORDER: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
 
-function maskPhoneDisplay(phone: string): string {
-  const parts = phone.split('-')
-  if (parts.length === 3 && parts[0].length >= 2 && parts[2].length >= 2) {
-    return `${parts[0]}-****-${parts[2]}`
-  }
-  return phone
-}
-
-function maskEmailDisplay(email: string): string {
-  const at = email.indexOf('@')
-  if (at <= 0) return email
-  const local = email.slice(0, at)
-  const domain = email.slice(at)
-  const head = local.slice(0, Math.min(5, local.length))
-  return `${head}***${domain}`
-}
-
 interface ProgramManagersTabProps {
   programId: string
 }
 
-export function ProgramManagersTab({ programId: _programId }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
     ...filters,
@@ -76,10 +61,17 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
+
+  useEffect(() => {
+    setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [programId])
 
   const managerFilterFields = useMemo((): FilterFieldConfig[] => {
     return [
@@ -157,10 +149,6 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
       return
     }
     setDeleteGuideModalOpen(true)
-  }
-
-  const handleViewDetailClick = () => {
-    window.alert('준비 중입니다.')
   }
 
   const managerNamesToDeleteFromTable = useMemo(() => {
@@ -304,7 +292,11 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         key: 'phone',
         width: 246,
         align: 'center',
-        render: (phone: string) => maskPhoneDisplay(phone),
+        render: (phone: string) => {
+          const value = phone?.trim()
+          if (!value) return '-'
+          return personalInfoRevealed ? value : MASKING_POLICY.phone(value)
+        },
       },
       {
         title: '이메일',
@@ -313,7 +305,11 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         width: 246,
         align: 'center',
         ellipsis: true,
-        render: (email: string) => maskEmailDisplay(email),
+        render: (email: string) => {
+          const value = email?.trim()
+          if (!value) return '-'
+          return personalInfoRevealed ? value : MASKING_POLICY.email(value)
+        },
       },
       {
         title: '등록일시',
@@ -347,6 +343,7 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
       openEditRoleModal,
       renderRoleBadge,
       roleItemDisabled,
+      personalInfoRevealed,
     ]
   )
 
@@ -379,8 +376,18 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
             <AppButton variant="primary" size="filter" onClick={() => setAddModalOpen(true)}>
               담당자 등록
             </AppButton>
-            <AppButton variant="primary" size="filter-wide" onClick={handleViewDetailClick}>
-              개인정보 상세보기
+            <AppButton
+              variant="primary"
+              size="filter-wide"
+              onClick={() => {
+                if (personalInfoRevealed) {
+                  setPersonalInfoRevealed(false)
+                  return
+                }
+                setPersonalInfoRevealConfirmOpen(true)
+              }}
+            >
+              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
             </AppButton>
           </div>
         </div>
@@ -426,6 +433,15 @@ export function ProgramManagersTab({ programId: _programId }: ProgramManagersTab
         managerNames={managerNamesToDelete}
         onConfirm={handleDeleteConfirm}
       />
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
+          onConfirm={_reason => {
+            setPersonalInfoRevealed(true)
+            setPersonalInfoRevealConfirmOpen(false)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

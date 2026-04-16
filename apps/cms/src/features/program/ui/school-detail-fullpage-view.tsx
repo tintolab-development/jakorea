@@ -60,6 +60,7 @@ import {
 } from './manager-delete-guide-modal'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
 import './detail-modal/program-status/participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
@@ -228,11 +229,27 @@ export function SchoolDetailFullpageView({
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
   const privacyMasked = !personalInfoRevealed
 
   useEffect(() => {
     setTextbookStatusDropdownOpen(false)
+    setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
   }, [detail.id])
+
+  const handlePrivacyToggleClick = useCallback(() => {
+    if (personalInfoRevealed) {
+      setPersonalInfoRevealed(false)
+      return
+    }
+    setPersonalInfoRevealConfirmOpen(true)
+  }, [personalInfoRevealed])
+
+  const handleConfirmPersonalInfoReveal = useCallback((_reason: string) => {
+    setPersonalInfoRevealed(true)
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [])
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const instructors =
@@ -606,11 +623,7 @@ export function SchoolDetailFullpageView({
     {
       key: 'addressDetail',
       label: '상세 주소',
-      children: mergedDetail.addressDetail
-        ? privacyMasked
-          ? MASKING_POLICY.address(mergedDetail.addressDetail)
-          : mergedDetail.addressDetail
-        : '-',
+      children: mergedDetail.addressDetail ?? '-',
     },
     { key: 'educationGrade', label: '신청 학년', children: mergedDetail.educationGrade },
     {
@@ -830,9 +843,9 @@ export function SchoolDetailFullpageView({
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => setPersonalInfoRevealed(true)}
+              onClick={handlePrivacyToggleClick}
             >
-              개인정보 상세보기
+              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
             </AppButton>
           </div>
         )}
@@ -1187,6 +1200,12 @@ export function SchoolDetailFullpageView({
           confirmVariant="delete"
         />
       )}
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
+          onConfirm={handleConfirmPersonalInfoReveal}
+        />
+      ) : null}
     </div>
   )
 }
