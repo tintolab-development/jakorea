@@ -6,25 +6,39 @@
 
 import { Card } from 'antd'
 import {
+  AccountBookOutlined,
+  AppstoreOutlined,
+  BankOutlined,
+  BookOutlined,
+  BugOutlined,
+  CloudDownloadOutlined,
+  CustomerServiceOutlined,
+  ExperimentOutlined,
+  FileDoneOutlined,
+  HeartOutlined,
+  IdcardOutlined,
+  LineChartOutlined,
+  MailOutlined,
+  NotificationOutlined,
+  ProfileOutlined,
+  QuestionCircleOutlined,
   ReadOutlined,
-  FormOutlined,
+  SafetyOutlined,
+  SafetyCertificateOutlined,
+  SettingOutlined,
+  ShopOutlined,
   SolutionOutlined,
   TeamOutlined,
-  BankOutlined,
-  IdcardOutlined,
-  MessageOutlined,
-  MailOutlined,
-  PictureOutlined,
-  NotificationOutlined,
-  QuestionCircleOutlined,
-  CustomerServiceOutlined,
-  ProfileOutlined,
-  FileOutlined,
-  HeartOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { useNavigate } from 'react-router-dom'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
-import { SHORTCUT_ITEMS, useDashboardSettingsStore } from '../model/dashboard-settings-store'
+import { getMenuShortcutBadgeCounts } from '../api/admin-dashboard-service'
+import {
+  SHORTCUT_ITEMS,
+  isShortcutItemEnabled,
+  useDashboardSettingsStore,
+} from '../model/dashboard-settings-store'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
@@ -33,36 +47,44 @@ function formatBadgeCount(count: number): string {
 }
 
 const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
-  programs: <ReadOutlined />,
-  applications: <FormOutlined />,
-  'instructor-applications': <SolutionOutlined />,
-  users: <TeamOutlined />,
-  schools: <BankOutlined />,
-  instructors: <IdcardOutlined />,
-  'kakao-alimtalk': <MessageOutlined />,
-  email: <MailOutlined />,
-  banner: <PictureOutlined />,
+  'programs-all': <AppstoreOutlined />,
+  'programs-general-education': <ReadOutlined />,
+  'programs-economy': <BookOutlined />,
+  'programs-gemini': <ExperimentOutlined />,
+  'users-all': <TeamOutlined />,
+  'users-school': <BankOutlined />,
+  'users-instructor': <IdcardOutlined />,
+  'users-admin': <UserOutlined />,
+  'permission-requests': <SafetyCertificateOutlined />,
+  'settlement-payment-orders': <FileDoneOutlined />,
+  'settlement-account-payments': <AccountBookOutlined />,
+  'settlement-item-settings': <SettingOutlined />,
   notices: <NotificationOutlined />,
   faq: <QuestionCircleOutlined />,
   inquiries: <CustomerServiceOutlined />,
-  'program-forms': <ProfileOutlined />,
-  'file-forms': <FileOutlined />,
+  'template-management': <ProfileOutlined />,
   sponsors: <HeartOutlined />,
+  textbooks: <ReadOutlined />,
+  'programs-detail': <ShopOutlined />,
+  performance: <LineChartOutlined />,
+  'email-history': <MailOutlined />,
+  'file-download-history': <CloudDownloadOutlined />,
+  'privacy-query-history': <SafetyOutlined />,
+  'bug-issue-history': <BugOutlined />,
 }
 
 export function MenuShortcutWidget() {
+  const navigate = useNavigate()
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const badgeCounts = useDashboardSettingsStore(s => s.shortcutBadgeCounts)
   const setShortcutBadgeCount = useDashboardSettingsStore(s => s.setShortcutBadgeCount)
 
-  const visibleItems = SHORTCUT_ITEMS.filter(item => shortcutEnabled[item.id])
+  const visibleItems = SHORTCUT_ITEMS.filter(item => isShortcutItemEnabled(shortcutEnabled, item.id))
 
   if (visibleItems.length === 0) return null
 
-  const navigateHandler = (path: string) => {
-    console.log('navigateHandler path', path)
-    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-  }
+  /** 목/API 집계. 스토어에 0이면 해당 메뉴는 읽음 처리로 배지 숨김 */
+  const liveBadgeCounts = getMenuShortcutBadgeCounts()
 
   return (
     <Card
@@ -76,7 +98,8 @@ export function MenuShortcutWidget() {
       <div className="menu-shortcut-widget__body">
         <div className="menu-shortcut-widget__grid">
           {visibleItems.map(item => {
-            const count = badgeCounts[item.id] ?? 0
+            const live = liveBadgeCounts[item.id] ?? 0
+            const count = badgeCounts[item.id] === 0 ? 0 : live
             return (
               <button
                 key={item.id}
@@ -84,16 +107,20 @@ export function MenuShortcutWidget() {
                 className="menu-shortcut-widget__item"
                 onClick={() => {
                   setShortcutBadgeCount(item.id, 0)
-                  navigateHandler(item.path)
+                  navigate(item.path)
                 }}
               >
-                <span className="menu-shortcut-widget__item-left">
-                  <span className="menu-shortcut-widget__icon">{SHORTCUT_ICON_MAP[item.id]}</span>
-                  <span className="menu-shortcut-widget__label">{item.label}</span>
+                <span className="menu-shortcut-widget__item-inner">
+                  <span className="menu-shortcut-widget__item-left">
+                    <span className="menu-shortcut-widget__icon">
+                      {SHORTCUT_ICON_MAP[item.id] ?? <SolutionOutlined />}
+                    </span>
+                    <span className="menu-shortcut-widget__label">{item.label}</span>
+                  </span>
+                  {count > 0 && (
+                    <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
+                  )}
                 </span>
-                {count > 0 && (
-                  <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
-                )}
               </button>
             )
           })}

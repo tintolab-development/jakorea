@@ -34,7 +34,7 @@ export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
 
   return (
     <Table
-      className="cms-data-table cms-data-table--border"
+      className="cms-data-table"
       rowKey="key"
       columns={columns}
       dataSource={rows}

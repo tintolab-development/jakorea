@@ -9,6 +9,8 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import { SchoolDetailStudentListSection } from '../../../ui/school-detail-student-list-section'
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
@@ -269,14 +271,26 @@ export function ApplicantsDetailContents({
   const applicantId = data.id
 
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   useEffect(() => {
     setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
   }, [applicantId])
 
   const onRevealPersonalInfo = useCallback(() => {
-    window.alert('준비 중입니다.')
-  }, [])
+    if (personalInfoRevealed) return
+    setPersonalInfoRevealConfirmOpen(true)
+  }, [personalInfoRevealed])
+
+  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
+    const accessItem = isInstitution
+      ? institutionData?.schoolName ?? '신청 기관 정보'
+      : instructorData?.instructorName ?? '신청 강사 정보'
+    trackPersonalInfoAccess(accessItem, reason)
+    setPersonalInfoRevealed(true)
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [instructorData?.instructorName, institutionData?.schoolName, isInstitution])
 
   const headerExtraContent = useMemo(() => {
     const items = resolveApplicantHeaderItems({
@@ -451,6 +465,12 @@ export function ApplicantsDetailContents({
           items={isInstitution ? institutionTabItems : instructorTabItems}
         />
       </div>
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
+          onConfirm={handleConfirmPersonalInfoReveal}
+        />
+      ) : null}
     </div>
   )
 }

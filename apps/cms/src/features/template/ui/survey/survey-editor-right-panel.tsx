@@ -1,6 +1,6 @@
-import { Form, Input, Space, Switch, Typography } from 'antd'
-import type { TextAreaProps } from 'antd/es/input'
+import { Form, Space, Switch, Typography } from 'antd'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
@@ -19,19 +19,6 @@ const TITLE_NUMBERING_OPTIONS: { value: SurveyTitleNumberingStyle; label: string
   { value: 'q123', label: 'Q1, Q2, Q3' },
   { value: 'none', label: '미선택' },
 ]
-
-/** 공용 `CmsTextArea` 없음 — `CmsInput` 래퍼 마크업·`cms-input.css`로 시각 정렬 */
-function CmsLikeTextArea(props: TextAreaProps) {
-  return (
-    <span className="cms-input cms-input--large cms-input--explicit-width survey-editor-right-panel__cms-textarea">
-      <span className="cms-input__control">
-        <span className="cms-input__inner cms-input__inner--textarea">
-          <Input.TextArea variant="borderless" {...props} />
-        </span>
-      </span>
-    </span>
-  )
-}
 
 function paragraphKindLabel(p: SurveyParagraph): string {
   if (p.kind === 'description') return '설명글'
@@ -123,7 +110,8 @@ export function SurveyEditorRightPanel({
                   />
                 </Form.Item>
                 <Form.Item label="설문 설명">
-                  <CmsLikeTextArea
+                  <CmsTextArea
+                    width="100%"
                     value={active.surveyDescription}
                     onChange={e =>
                       updateParagraph(active.id, () => ({
@@ -183,7 +171,8 @@ export function SurveyEditorRightPanel({
 
             {active.kind === 'single_item' && active.variant === 'subjective' ? (
               <Form.Item label="단락 설명">
-                <CmsLikeTextArea
+                <CmsTextArea
+                  width="100%"
                   value={active.paragraphDescription}
                   onChange={e =>
                     updateParagraph(active.id, () => ({
@@ -198,7 +187,8 @@ export function SurveyEditorRightPanel({
 
             {active.kind === 'description' && active.variant === 'closing' ? (
               <Form.Item label="마무리 문구">
-                <CmsLikeTextArea
+                <CmsTextArea
+                  width="100%"
                   value={active.body}
                   onChange={e =>
                     updateParagraph(active.id, () => ({

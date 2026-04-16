@@ -8,7 +8,6 @@ export { mockInstructors, mockInstructorsMap } from './instructors'
 export { mockPrograms, mockProgramsMap } from './programs'
 export {
   PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID,
-  programLectureHistoryDemoPrograms,
   programLectureHistoryDemoApplications,
 } from './program-lecture-history-demo'
 export {
@@ -52,7 +51,13 @@ export {
 } from './program-files'
 // ProgramStatistics는 Program 엔티티로 통합됨 (deprecated)
 export { mockApplications, mockApplicationsMap } from './applications'
-export { mockSchedules, mockSchedulesMap } from './schedules'
+export {
+  mockSchedules,
+  mockSchedulesMap,
+  buildEconomySchedulesForVisibleRange,
+  buildGeneralSchedulesForVisibleRange,
+  buildGeminiSchedulesForVisibleRange,
+} from './schedules'
 export { mockMatchings, mockMatchingsMap } from './matchings'
 export { mockSettlements, mockSettlementsMap } from './settlements'
 export { mockPaymentStatements, mockPaymentStatementsMap } from './payment-statements'
@@ -97,6 +102,14 @@ export { mockUsers, getUserByEmail, getUsersByRole, validateLogin } from './user
 export { getVolunteerPrograms, mockVolunteerProgramsMap } from './volunteer-programs'
 export { getEducationPrograms, mockEducationProgramsMap } from './education-programs'
 export { getEconomyPrograms, getEconomyProgramById } from './economy-programs'
+export {
+  isGeminiProgram,
+  getGeneralEducationPrograms,
+  getGeminiPrograms,
+  getProgramScheduleKindsForAdminUser,
+  PROGRAM_SCHEDULE_WIDGET_KEYS,
+  type ProgramScheduleKind,
+} from './program-schedule-categories'
 export { getStudentEnrolledPrograms } from './student-enrollments'
 export { getFormTemplateByProgramId, formTemplatesByProgramId } from './form-templates'
 export {

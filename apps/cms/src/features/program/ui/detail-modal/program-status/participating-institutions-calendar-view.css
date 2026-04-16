@@ -446,7 +446,7 @@
   color: #096dd9;
 }
 
-/* 외 n개의 일정 텍스트 스펙 */
+/* 외 N개의 항목 텍스트 스펙 */
 .participating-institutions-calendar-event-more {
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);

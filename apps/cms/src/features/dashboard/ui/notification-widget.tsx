@@ -79,9 +79,7 @@ export function NotificationWidget() {
       title={
         <WidgetTitleWithHandle>
           <Space size={4} className="notification-widget__title-inline">
-            <Text strong className="notification-widget__title-text">
-              알림 리스트
-            </Text>
+            <span className="widget-card-title">알림 리스트</span>
             {unreadCount > 0 && (
               <Text type="secondary" className="notification-widget__count">
                 미확인 {unreadCount}건

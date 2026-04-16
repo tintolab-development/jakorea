@@ -23,11 +23,8 @@ export {
 export type { StatusDropdownCellProps } from './status-dropdown-cell'
 export { ProgramLifecycleStatusCell } from './program-lifecycle-status-cell'
 export type { ProgramLifecycleStatusCellProps } from './program-lifecycle-status-cell'
-export { ProgramEnrollmentStatusBadge } from './program-enrollment-status-badge'
-export type {
-  ProgramEnrollmentStatusBadgeProps,
-  ProgramEnrollmentStatusBadgeVariant,
-} from './program-enrollment-status-badge'
+export { StatusBadge } from './status-badge'
+export type { StatusBadgeProps, StatusBadgeVariant } from './status-badge'
 export { SettlementStatusBadge } from './settlement-status-badge'
 export type { SettlementStatusKey } from './settlement-status-badge'
 export { ApprovalStatusBadge } from './approval-status-badge'

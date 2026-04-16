@@ -2,6 +2,33 @@
  * 첨부파일 다운로드 트리거
  * - fileUrl이 실제 리소스이면 링크로 시도, 아니면 placeholder blob으로 파일명만 맞춰 다운로드
  */
+import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
+
+type RuntimeAuthUser = {
+  id?: string
+  name?: string
+}
+
+function readRuntimeAuthUser(): RuntimeAuthUser | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+  const raw = window.localStorage.getItem('auth_user')
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as RuntimeAuthUser
+  } catch {
+    return null
+  }
+}
+
+function trackDownload(fileName: string) {
+  const user = readRuntimeAuthUser()
+  void recordFileDownload({
+    fileName,
+    userId: user?.id ?? 'unknown-user',
+    userName: user?.name ?? '알 수 없음',
+    ipAddress: '14.128.xxx.xxx',
+  })
+}
 
 /**
  * 파일 다운로드 실행 (파일명으로 저장)
@@ -22,6 +49,7 @@ export function downloadFile(fileName: string, fileUrl?: string): void {
     document.body.appendChild(a)
     a.click()
     a.remove()
+    trackDownload(fileName)
     return
   }
 
@@ -36,4 +64,6 @@ export function downloadFile(fileName: string, fileUrl?: string): void {
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
+
+  trackDownload(fileName)
 }

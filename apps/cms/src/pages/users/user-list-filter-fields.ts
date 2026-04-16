@@ -3,7 +3,10 @@
  */
 import type { FilterFieldConfig } from '@/shared/components/filter-list-layout'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
-import { INSTITUTION_LOCATION_FILTER_OPTIONS } from '@/shared/config/institution-location-filter-options'
+import {
+  INSTITUTION_SIDO_FILTER_OPTIONS,
+  getInstitutionSigunguSelectOptions,
+} from '@/shared/config/institution-address-region-data'
 import {
   INSTRUCTOR_SETTLEMENT_FILTER_OPTIONS,
   INSTRUCTOR_TYPE_FILTER_OPTIONS,
@@ -48,12 +51,18 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
 const INSTITUTION_FIELDS: FilterFieldConfig[] = [
   searchField('기관명', '기관명을 입력하세요', '30%'),
   {
-    key: 'institutionLocation',
-    type: 'select',
+    key: 'institutionAddress',
+    type: 'addressRegion',
     label: '기관 소재지',
-    placeholder: '전체',
     width: '30%',
-    options: INSTITUTION_LOCATION_FILTER_OPTIONS,
+    addressRegion: {
+      sidoKey: 'institutionSido',
+      sigunguKey: 'institutionSigungu',
+      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
+      getSigunguOptions: getInstitutionSigunguSelectOptions,
+      sidoPlaceholder: '시/도',
+      sigunguPlaceholder: '시/군/구',
+    },
   },
   dateRangeField('등록 시기', '40%'),
 ]
@@ -96,7 +105,7 @@ const ADMIN_FIELDS: FilterFieldConfig[] = [
 const DEFAULT_MEMBER_FIELDS: FilterFieldConfig[] = [
   searchField('회원명', '회원명을 입력하세요', '30%'),
   MEMBER_ROLE_SELECT_FIELD,
-  dateRangeField('가입일', '40%'),
+  dateRangeField('가입 시기', '40%'),
 ]
 
 export function getUserListFilterFields(kind: MemberListKind): FilterFieldConfig[] {

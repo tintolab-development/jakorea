@@ -7,6 +7,7 @@
  */
 
 import React, { useRef, useLayoutEffect, useCallback, useState } from 'react'
+import { DASHBOARD_SLOT_HEIGHT_HALF_PX } from '@/shared/config/dashboard-config'
 import { Col } from 'antd'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -148,12 +149,16 @@ export function SortableWidgetSlot({
     : null
 
   const colStyle: React.CSSProperties = {
+    transition: resizeTransition ?? undefined,
+  }
+  const motionStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition: [transition, resizeTransition].filter(Boolean).join(', ') || undefined,
+    transition: transition ?? undefined,
     opacity: isDragging ? 0 : 1,
   }
 
-  const slotHeight = height !== undefined ? height : 'auto'
+  const slotHeight =
+    colSpan === 12 ? DASHBOARD_SLOT_HEIGHT_HALF_PX : (height !== undefined ? height : 'auto')
   const slotStyle: React.CSSProperties = { height: slotHeight }
 
   return (
@@ -163,7 +168,13 @@ export function SortableWidgetSlot({
       style={colStyle}
       data-dashboard-slot-id={id}
     >
-      <div ref={slotRef} className="dashboard-widget-slot" style={slotStyle} data-col-span={colSpan}>
+      <div style={motionStyle}>
+        <div
+          ref={slotRef}
+          className="dashboard-widget-slot"
+          style={slotStyle}
+          data-col-span={colSpan}
+        >
         {!hasBuiltInHandle && (
           <div
             ref={setActivatorNodeRef}
@@ -210,7 +221,8 @@ export function SortableWidgetSlot({
             <div className="dashboard-widget-resize-handle__bar" />
           </div>
         )}
-        {children}
+          {children}
+        </div>
       </div>
     </Col>
   )

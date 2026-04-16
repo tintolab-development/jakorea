@@ -126,7 +126,7 @@ export function IssuanceFormTab() {
           description="발급 요청 및 안내에 사용하는 기본 양식입니다."
         >
           <Table
-            className="cms-data-table cms-data-table--border"
+            className="cms-data-table"
             rowKey="key"
             columns={issuanceColumns}
             dataSource={issuanceRows}

@@ -10,18 +10,16 @@ import {
   type TeachingProgramStatus,
   type TeachingSettlementStatus,
 } from '@/data/mock/school-detail'
-import { ProgramEnrollmentStatusBadge } from '@/shared/components/program-enrollment-status-badge'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
+import { PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER } from '@/shared/constants/status'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 
-const PROGRAM_STATUS_KEYS: TeachingProgramStatus[] = [
-  'WAITING_RESULT', 'REJECTED', 'EDUCATION_SCHEDULED', 'EDUCATION_IN_PROGRESS', 'PROGRAM_ENDED',
-]
+const PROGRAM_STATUS_KEYS: TeachingProgramStatus[] = PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER
 const SETTLEMENT_STATUS_KEYS: TeachingSettlementStatus[] = ['na', 'pending', 'partial', 'completed']
 
 export interface TeacherTeachingHistoryTabProps {
@@ -86,7 +84,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
               status={record.programStatus}
               statusOptions={PROGRAM_STATUS_KEYS}
               renderBadge={s => (
-                <ProgramEnrollmentStatusBadge status={s as ProgramEnrollmentDisplayStatus} />
+                <StatusBadge domain="programEnrollment" status={s} variant="badge" />
               )}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={s => handleProgramStatusChange(record.id, s)}

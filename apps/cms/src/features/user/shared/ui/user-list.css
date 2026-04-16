@@ -1,0 +1,32 @@
+.user-list__settlement-status {
+  font-weight: 500;
+  color: #3d3d3d;
+}
+
+.user-list__settlement-status--awaiting-confirmation {
+  color: #f07917;
+}
+
+.user-list__settlement-status--partially-confirmed {
+  color: #8457ce;
+}
+
+.user-list__settlement-status--payment-statement-verified {
+  color: #1e8c29;
+}
+
+.user-list__settlement-status--account-paid {
+  color: #017eaf;
+}
+
+.user-list__settlement-status--none {
+  color: #3d3d3d;
+}
+
+.user-list__settlement-status--application-rejected {
+  color: #c32f4a;
+}
+
+.user-list__settlement-status--payment-correction-requested {
+  color: #c32f4a;
+}

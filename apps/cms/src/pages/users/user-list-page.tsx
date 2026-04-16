@@ -5,188 +5,148 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Modal, message } from 'antd'
-import dayjs, { type Dayjs } from 'dayjs'
+import { message } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useInView } from '@/shared/hooks/use-in-view'
-import { UserList } from '@/features/user/ui/user-list'
+import { UserList } from '@/features/user/shared/ui/user-list'
 import {
   UserDetailFullPageModal,
   USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
-} from '@/features/user/ui/user-detail-fullpage-modal'
-import { UserRoleChangeModal } from '@/features/user/ui/user-role-change-modal'
-import { UserCreateForm } from '@/features/user/ui/user-create-form'
-import { useInfiniteUserList } from '@/features/user/hooks/use-infinite-user-list'
+} from '@/pages/users/user-detail-fullpage-modal'
+import { AddUserIndividual } from '@/features/user/shared/ui/add-user-individual'
+import {
+  AdminRegisterModal,
+  type AdminRegisterModalFormValues,
+} from '@/features/user/shared/ui/admin-register-modal'
+import {
+  SchoolRegisterModal,
+  type SchoolRegisterModalFormValues,
+} from '@/features/school/ui/school-register-modal'
+import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
-import { useUserStore, selectSelectedUser } from '@/features/user/model/user-store'
-import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  MESSAGES,
+} from '@/shared/constants'
+import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
+import type { User } from '@/types/user'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import {
+  ActionResultModal,
+  ContentModal,
   DeleteGuideModal,
-  buildMemberDeleteMessageLines,
-} from '@/features/program/ui/manager-delete-guide-modal'
+  buildDeleteCompletedMessageBulk,
+  buildDeleteCompletedMessageSingle,
+  buildDeleteCompletedTitle,
+} from '@/shared/ui'
 import {
   memberListKindToBasicInfoEntrySource,
-  memberListKindToPendingRole,
   memberListPageTitle,
   normalizeMemberListKind,
-  pendingRoleToMemberListKind,
-  resolveRoleFilterFromMemberListParams,
   userRoleToBasicInfoEntrySource,
   type MemberListKind,
 } from '@/shared/config/member-list-kinds'
-import type { AdminPermissionTagVariant } from '@/features/user/lib/admin-permission-display'
 import '@/pages/programs/program-list-page.css'
 import './user-list-page.css'
 import { getUserListFilterFields } from './user-list-filter-fields'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
+import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
+import {
+  useTablePage,
+  EMPTY_TABLE_PAGE_CONTEXT,
+} from '@/shared/components/table-system/model/use-table-page'
+import {
+  buildListQueryApiFilters,
+  createUserListTablePageConfig,
+  type UserListQueryParams,
+} from './user-list-table.config'
+import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 
-interface UserListQueryParams extends Record<string, string | undefined> {
-  /** 전체·학교·강사·관리자 등 목록 맥락 (`member-list-kinds` 참고) */
-  kind?: string
-  role?: UserRole | 'ALL'
-  search?: string
-  id?: string
-  lnb?: string
-  /** 회원 상세 풀페이지 — 프로그램 참여 이력 하위 탭 */
-  programsChild?: string
-  createdAtFrom?: string
-  createdAtTo?: string
-  institutionLocation?: string
-  instructorType?: string
-  settlementStatus?: string
-  adminPermissionVariant?: string
+type UserListRow = Omit<User, 'password'>
+
+function memberDeleteGuideDomain(kind: MemberListKind) {
+  switch (kind) {
+    case 'institutions':
+      return {
+        bulkCounterPhrase: '개의 학교',
+        particleTargetNoun: '학교',
+        domainLabel: '학교',
+        singleTitle: '학교 삭제 안내',
+        confirmText: '학교 삭제',
+      }
+    case 'instructors':
+      return {
+        bulkCounterPhrase: '명의 강사',
+        particleTargetNoun: '강사',
+        domainLabel: '강사',
+        singleTitle: '강사 삭제 안내',
+        confirmText: '강사 삭제',
+      }
+    default:
+      return {
+        bulkCounterPhrase: '명의 회원',
+        particleTargetNoun: '회원',
+        domainLabel: '회원',
+        singleTitle: '회원 삭제 안내',
+        confirmText: '회원 삭제',
+      }
+  }
 }
 
-type ApiFilters = {
-  role?: UserRole
-  search?: string
-  createdAtFrom?: string
-  createdAtTo?: string
-  institutionLocation?: string
-  instructorType?: string
-  settlementStatus?: string
-  adminPermissionVariant?: AdminPermissionTagVariant
-  /** `kind=instructors` 전용 — getUsersPage에만 합성 */
-  instructorListPureOnly?: boolean
+function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string {
+  if (kind === 'institutions') {
+    const school = u.schoolInfo?.schoolName?.trim()
+    if (school) return school
+  }
+  const name = u.name?.trim()
+  if (name) return name
+  const email = u.email?.trim()
+  if (email) return email
+  return '(이름 없음)'
 }
 
-function parseAdminPermissionVariantParam(raw: string | undefined): AdminPermissionTagVariant | '' {
-  if (!raw || raw === 'ALL') return ''
-  if (raw === 'manager' || raw === 'partner' || raw === 'viewer') return raw
-  return ''
+function buildMemberDeleteGuideLines(names: string[]): string[] {
+  const normalized = names.map(name => name.trim()).filter(Boolean)
+  if (normalized.length === 0) return []
+  if (normalized.length >= 2) {
+    return [
+      `선택한 ${normalized.length}명의 회원을 삭제하시겠습니까?`,
+      '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
+      '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+    ]
+  }
+  return [
+    `[${normalized[0]}] 회원을 삭제하시겠습니까?`,
+    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
+    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+  ]
 }
 
-function pendingRoleFromParams(params: UserListQueryParams): UserRole | 'ALL' {
-  if (params.kind !== undefined && params.kind !== '') {
-    return memberListKindToPendingRole(normalizeMemberListKind(params.kind))
-  }
-  if (params.role && params.role !== 'ALL') {
-    return params.role as UserRole
-  }
-  return 'ALL'
-}
-
-function pendingToApiFilters(
-  pending: {
-    search: string
-    institutionLocation: string
-    instructorType: string
-    settlementStatus: string
-    adminPermissionVariant: string
-    createdAtRange: [Dayjs | null, Dayjs | null] | null
-  },
-  listKind: MemberListKind
-): ApiFilters {
-  const api: ApiFilters = {}
-  if (pending.search) api.search = pending.search
-  if (listKind === 'institutions') {
-    const loc = pending.institutionLocation.trim()
-    if (loc) api.institutionLocation = loc
-  }
-  if (listKind === 'instructors') {
-    const it = pending.instructorType.trim()
-    if (it) api.instructorType = it
-    const ss = pending.settlementStatus.trim()
-    if (ss) api.settlementStatus = ss
-  }
-  if (listKind === 'admins') {
-    const v = pending.adminPermissionVariant.trim()
-    if (v === 'manager' || v === 'partner' || v === 'viewer') {
-      api.adminPermissionVariant = v
-    }
-  }
-  if (pending.createdAtRange?.[0] && pending.createdAtRange[1]) {
-    api.createdAtFrom = pending.createdAtRange[0].format('YYYY-MM-DD')
-    api.createdAtTo = pending.createdAtRange[1].format('YYYY-MM-DD')
-  }
-  return api
+/** 상세 > 탈퇴 확정 후 삭제 완료 모달에 쓰는 엔티티 라벨 */
+function entityLabelForWithdrawDeletedUser(u: UserListRow): string {
+  if (u.role === 'SCHOOL') return '학교'
+  if (u.role === 'INSTRUCTOR') return '강사'
+  if (u.role === 'ADMIN') return '관리자'
+  return '회원'
 }
 
 export function UserListPage() {
-  const { params, setParam, setParams } = useQueryParams<UserListQueryParams>()
+  const { params, setParams } = useQueryParams<UserListQueryParams>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
 
-  // React Query 무한 스크롤 (15명씩)
-  const [activeFilters, setActiveFilters] = useState<ApiFilters>(() => {
-    const from = params.createdAtFrom
-    const to = params.createdAtTo
-    const api: ApiFilters = {}
-    if (params.search) api.search = params.search
-    if (from && to) {
-      api.createdAtFrom = from
-      api.createdAtTo = to
-    }
-    const initialKind = normalizeMemberListKind(params.kind)
-    if (initialKind === 'institutions') {
-      const loc = params.institutionLocation?.trim()
-      if (loc) api.institutionLocation = loc
-    }
-    if (initialKind === 'instructors') {
-      const it = params.instructorType?.trim()
-      if (it) api.instructorType = it
-      const ss = params.settlementStatus?.trim()
-      if (ss) api.settlementStatus = ss
-    }
-    if (initialKind === 'admins') {
-      const apv = parseAdminPermissionVariantParam(params.adminPermissionVariant)
-      if (apv) api.adminPermissionVariant = apv
-    }
-    return api
-  })
-
-  const listQueryFilters = useMemo((): ApiFilters => {
-    const role = resolveRoleFilterFromMemberListParams({
-      kind: params.kind,
-      role: params.role,
-    })
-    const kind = normalizeMemberListKind(params.kind)
-    const base: ApiFilters = { ...activeFilters }
-    if (kind !== 'institutions') {
-      delete base.institutionLocation
-    }
-    if (kind !== 'instructors') {
-      delete base.instructorType
-      delete base.settlementStatus
-    }
-    if (kind !== 'admins') {
-      delete base.adminPermissionVariant
-    }
-    return {
-      ...base,
-      ...(role ? { role } : {}),
-      ...(kind === 'instructors' ? { instructorListPureOnly: true as const } : {}),
-    }
-  }, [activeFilters, params.kind, params.role])
+  const listQueryFilters = useMemo(() => buildListQueryApiFilters(params), [params])
 
   const {
     users: listUsers,
@@ -208,12 +168,34 @@ export function UserListPage() {
   // 스토어: 선택 사용자(드로어), mutations
   const createUser = useUserStore(state => state.createUser)
   const deleteUser = useUserStore(state => state.deleteUser)
-  const changeUserRole = useUserStore(state => state.changeUserRole)
   const fetchUserById = useUserStore(state => state.fetchUserById)
+  const patchUserBasicInfo = useUserStore(state => state.patchUserBasicInfo)
   const setSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const setFilters = useUserStore(state => state.setFilters)
   const clearSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const loading = useUserStore(state => state.loading)
+
+  const setFiltersRef = useRef(setFilters)
+  setFiltersRef.current = setFilters
+  const userListTablePageConfig = useMemo(
+    () =>
+      createUserListTablePageConfig({
+        setFilters: f => {
+          setFiltersRef.current(f)
+        },
+      }),
+    []
+  )
+
+  const { pendingFilters, handleFilterChange, applySearch } = useTablePage(
+    userListTablePageConfig,
+    {
+      data: listUsers,
+      searchParams,
+      setSearchParams,
+      context: EMPTY_TABLE_PAGE_CONTEXT,
+    }
+  )
 
   // Drawer 상태 관리 (useModalState 사용) — 행 클릭 시 열리는 회원 상세
   const {
@@ -224,25 +206,34 @@ export function UserListPage() {
     setSelectedItem: setDrawerUser,
   } = useModalState<Omit<User, 'password'>>()
 
-  // 권한 변경 모달 상태 관리 (useModalState 사용)
-  const {
-    open: roleChangeModalOpen,
-    openModal: openRoleChangeModal,
-    closeModal: closeRoleChangeModal,
-    selectedItem: editingUser,
-  } = useModalState<Omit<User, 'password'>>()
-
   // 회원 추가 모달 상태 관리
   const {
     open: createModalOpen,
-    // openModal: openCreateModal,
+    openModal: openCreateModal,
     closeModal: closeCreateModal,
+  } = useModalState()
+
+  // 학교(기관) 신규 등록 모달
+  const {
+    open: schoolRegisterOpen,
+    openModal: openSchoolRegisterModal,
+    closeModal: closeSchoolRegisterModal,
+  } = useModalState()
+  const {
+    open: adminRegisterOpen,
+    openModal: openAdminRegisterModal,
+    closeModal: closeAdminRegisterModal,
   } = useModalState()
 
   // 삭제 확인 모달 상태
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
   const [, setDeleteLoading] = useState(false)
+
+  /** 삭제 완료 안내(결과) 모달 */
+  const [deleteResultModalOpen, setDeleteResultModalOpen] = useState(false)
+  const [deleteResultTitle, setDeleteResultTitle] = useState('')
+  const [deleteResultMessage, setDeleteResultMessage] = useState('')
 
   /**
    * 행 클릭 직후 URL·drawer·목록 배열이 한 틱 어긋날 때(전체 회원 등)에도 풀페이지가 바로 뜨도록
@@ -263,78 +254,32 @@ export function UserListPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   // 일괄 삭제 대상 (여러 명 선택 시)
   const [bulkDeleteUsers, setBulkDeleteUsers] = useState<Omit<User, 'password'>[] | null>(null)
+  const [adminPermissionChangingUserId, setAdminPermissionChangingUserId] = useState<string | null>(
+    null
+  )
 
-  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
-  const [pendingFilters, setPendingFilters] = useState<{
-    search: string
-    role: UserRole | 'ALL'
-    institutionLocation: string
-    instructorType: string
-    settlementStatus: string
-    adminPermissionVariant: string
-    createdAtRange: [Dayjs | null, Dayjs | null] | null
-  }>(() => {
-    const from = params.createdAtFrom
-    const to = params.createdAtTo
-    let createdAtRange: [Dayjs | null, Dayjs | null] | null = null
-    if (from && to) {
-      const start = dayjs(from)
-      const end = dayjs(to)
-      if (start.isValid() && end.isValid()) createdAtRange = [start, end]
-    }
-    const initialKind = normalizeMemberListKind(params.kind)
-    return {
-      search: params.search || '',
-      role: pendingRoleFromParams(params),
-      institutionLocation:
-        initialKind === 'institutions' ? (params.institutionLocation ?? '').trim() : '',
-      instructorType: initialKind === 'instructors' ? (params.instructorType ?? '').trim() : '',
-      settlementStatus: initialKind === 'instructors' ? (params.settlementStatus ?? '').trim() : '',
-      adminPermissionVariant:
-        initialKind === 'admins'
-          ? parseAdminPermissionVariantParam(params.adminPermissionVariant)
-          : '',
-      createdAtRange,
-    }
-  })
-
-  // URL에서 필터 값을 읽어와서 pendingFilters 동기화
-  useEffect(() => {
-    const from = params.createdAtFrom
-    const to = params.createdAtTo
-    let createdAtRange: [Dayjs | null, Dayjs | null] | null = null
-    if (from && to) {
-      const start = dayjs(from)
-      const end = dayjs(to)
-      if (start.isValid() && end.isValid()) createdAtRange = [start, end]
-    }
-    const kind = normalizeMemberListKind(params.kind)
-    setPendingFilters({
-      search: params.search || '',
-      role: pendingRoleFromParams(params),
-      institutionLocation: kind === 'institutions' ? (params.institutionLocation ?? '').trim() : '',
-      instructorType: kind === 'instructors' ? (params.instructorType ?? '').trim() : '',
-      settlementStatus: kind === 'instructors' ? (params.settlementStatus ?? '').trim() : '',
-      adminPermissionVariant:
-        kind === 'admins' ? parseAdminPermissionVariantParam(params.adminPermissionVariant) : '',
-      createdAtRange,
-    })
-  }, [
-    params.kind,
-    params.search,
-    params.role,
-    params.createdAtFrom,
-    params.createdAtTo,
-    params.institutionLocation,
-    params.instructorType,
-    params.settlementStatus,
-    params.adminPermissionVariant,
-  ])
+  /** 학교(기관) — 소속 교사가 있으면 삭제 불가 안내 */
+  const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
+  const [institutionDeleteBlockedCount, setInstitutionDeleteBlockedCount] = useState(1)
 
   // 선택된 사용자 (드로어용)
   const selectedUser = useUserStore(state => selectSelectedUser(state))
 
   const resolvedMemberListKind = useMemo(() => normalizeMemberListKind(params.kind), [params.kind])
+
+  const deleteTargets = useMemo((): UserListRow[] => {
+    if (bulkDeleteUsers && bulkDeleteUsers.length > 0) return bulkDeleteUsers
+    if (deletingUser) return [deletingUser]
+    return []
+  }, [bulkDeleteUsers, deletingUser])
+
+  const memberDeleteGuide = useMemo(() => {
+    if (deleteTargets.length === 0) return null
+    const lines = buildMemberDeleteGuideLines(
+      deleteTargets.map(target => displayNameForUserDelete(resolvedMemberListKind, target))
+    )
+    return { title: '회원 삭제 안내', lines, confirmText: '회원 삭제' }
+  }, [deleteTargets, resolvedMemberListKind])
 
   const userListFilterFields = useMemo(
     () => getUserListFilterFields(resolvedMemberListKind),
@@ -439,51 +384,19 @@ export function UserListPage() {
       return userRoleToBasicInfoEntrySource(modalDetailUser.role)
     }
     return memberListKindToBasicInfoEntrySource(resolvedMemberListKind)
-  }, [modalDetailUser?.id, modalDetailUser?.role, resolvedMemberListKind])
-
-  // 조회 버튼 클릭 시: URL·스토어 동기화 + React Query 키 변경으로 자동 재조회
-  const handleSearch = () => {
-    const api = pendingToApiFilters(pendingFilters, resolvedMemberListKind)
-    setActiveFilters(api)
-    setParam('search', pendingFilters.search || null)
-    setParam('kind', pendingRoleToMemberListKind(pendingFilters.role))
-    setParam('role', null)
-    if (resolvedMemberListKind === 'institutions') {
-      setParam('institutionLocation', pendingFilters.institutionLocation.trim() || null)
-    } else {
-      setParam('institutionLocation', null)
-    }
-    if (resolvedMemberListKind === 'instructors') {
-      setParam('instructorType', pendingFilters.instructorType.trim() || null)
-      setParam('settlementStatus', pendingFilters.settlementStatus.trim() || null)
-    } else {
-      setParam('instructorType', null)
-      setParam('settlementStatus', null)
-    }
-    if (resolvedMemberListKind === 'admins') {
-      const apv = pendingFilters.adminPermissionVariant.trim()
-      setParam(
-        'adminPermissionVariant',
-        apv === 'manager' || apv === 'partner' || apv === 'viewer' ? apv : null
-      )
-    } else {
-      setParam('adminPermissionVariant', null)
-    }
-    if (pendingFilters.createdAtRange?.[0] && pendingFilters.createdAtRange[1]) {
-      setParam('createdAtFrom', pendingFilters.createdAtRange[0].format('YYYY-MM-DD'))
-      setParam('createdAtTo', pendingFilters.createdAtRange[1].format('YYYY-MM-DD'))
-    } else {
-      setParam('createdAtFrom', null)
-      setParam('createdAtTo', null)
-    }
-    const roleForStore =
-      pendingFilters.role === 'ALL' ? undefined : (pendingFilters.role as UserRole)
-    setFilters({ ...api, role: roleForStore })
-  }
+  }, [modalDetailUser, resolvedMemberListKind])
 
   const invalidateList = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
   }, [queryClient])
+
+  const handleMemberBasicInfoSaved = useCallback(
+    (updated: Omit<User, 'password'>) => {
+      setDrawerUser(updated)
+      invalidateList()
+    },
+    [setDrawerUser, invalidateList]
+  )
 
   // 사용자 상세 보기
   const handleView = useCallback(
@@ -560,31 +473,6 @@ export function UserListPage() {
     flushUserDetailModal()
   }, [handleView, flushUserDetailModal])
 
-  // 권한 변경
-  const handleEdit = (user: Omit<User, 'password'>) => {
-    openRoleChangeModal(user)
-  }
-
-  const handleRoleChange = async (
-    userId: string,
-    newRole: UserRole,
-    adminLevel?: AdminLevel,
-    programRole?: ProgramRole
-  ) => {
-    try {
-      await changeUserRole(userId, newRole, adminLevel, programRole)
-      showSuccessMessage(MESSAGES.success.updated)
-      closeRoleChangeModal()
-      invalidateList()
-    } catch (error) {
-      handleError(error, { defaultMessage: MESSAGES.error.roleChangeFailed })
-    }
-  }
-
-  const handleRoleChangeCancel = () => {
-    closeRoleChangeModal()
-  }
-
   // 회원 추가
   const handleCreateUser = async (request: CreateUserRequest) => {
     try {
@@ -598,9 +486,62 @@ export function UserListPage() {
     }
   }
 
+  const handleSchoolRegisterSubmit = async (values: SchoolRegisterModalFormValues) => {
+    try {
+      const address = [values.roadAddress.trim(), values.detailAddress?.trim()]
+        .filter(Boolean)
+        .join(' ')
+      await createUser({
+        email: `school-${Date.now()}@institution.jakorea.local`,
+        password: 'Temp1234!',
+        name: values.institutionName.trim(),
+        role: 'SCHOOL',
+        schoolInfo: {
+          schoolName: values.institutionName.trim(),
+          address,
+        },
+        isActive: true,
+      })
+      showSuccessMessage(MESSAGES.success.created)
+      invalidateList()
+    } catch (error) {
+      handleError(error, { defaultMessage: '학교 등록에 실패했습니다.' })
+      throw error
+    }
+  }
+
+  const handleAdminRegisterSubmit = async (values: AdminRegisterModalFormValues) => {
+    try {
+      await createUser({
+        email: values.email.trim(),
+        password: 'Temp1234!',
+        name: values.name.trim(),
+        nameEn: values.nameEn?.trim() || undefined,
+        phone: values.contact.trim(),
+        gender: values.gender === 'male' ? '남성' : '여성',
+        birthDate: values.birthDate?.trim() || undefined,
+        role: 'ADMIN',
+        adminLevel: 'ADMIN',
+        isActive: true,
+      })
+      showSuccessMessage(MESSAGES.success.created)
+      invalidateList()
+      closeAdminRegisterModal()
+    } catch (error) {
+      handleError(error, { defaultMessage: '관리자 등록에 실패했습니다.' })
+      throw error
+    }
+  }
+
   // 회원 삭제
   const handleDeleteClick = (user: Omit<User, 'password'>) => {
+    if (resolvedMemberListKind === 'institutions' && institutionHasRegisteredTeachers(user)) {
+      setInstitutionDeleteBlockedCount(1)
+      setInstitutionDeleteBlockedOpen(true)
+      return
+    }
     setDeletingUser(user)
+    setBulkDeleteUsers(null)
     setDeleteModalOpen(true)
   }
 
@@ -614,9 +555,17 @@ export function UserListPage() {
       for (const u of toDelete) {
         await deleteUser(u.id)
       }
-      showSuccessMessage(
-        bulk ? `선택한 ${toDelete.length}명이 삭제되었습니다.` : MESSAGES.success.deleted
+      const domain = memberDeleteGuideDomain(resolvedMemberListKind)
+      setDeleteResultTitle(buildDeleteCompletedTitle(domain.domainLabel))
+      setDeleteResultMessage(
+        bulk
+          ? buildDeleteCompletedMessageBulk(toDelete.length, domain.bulkCounterPhrase)
+          : buildDeleteCompletedMessageSingle(
+              displayNameForUserDelete(resolvedMemberListKind, toDelete[0]),
+              domain.domainLabel
+            )
       )
+      setDeleteResultModalOpen(true)
       setDeleteModalOpen(false)
       setDeletingUser(null)
       setBulkDeleteUsers(null)
@@ -635,168 +584,235 @@ export function UserListPage() {
     setBulkDeleteUsers(null)
   }
 
+  /** 회원 상세 > 탈퇴 확인 모달 확정 — 목록용 DeleteGuideModal 없이 바로 삭제 후 완료 안내 */
+  const handleWithdrawFromDetail = useCallback(
+    async (u: Omit<User, 'password'>) => {
+      flushUserDetailModal()
+      setDeleteLoading(true)
+      try {
+        await deleteUser(u.id)
+        const entityLabel = entityLabelForWithdrawDeletedUser(u)
+        setDeleteResultTitle(buildDeleteCompletedTitle(entityLabel))
+        setDeleteResultMessage(
+          buildDeleteCompletedMessageSingle(
+            displayNameForUserDelete(resolvedMemberListKind, u),
+            entityLabel
+          )
+        )
+        setDeleteResultModalOpen(true)
+        setSelectedRowKeys(prev => prev.filter(key => key !== u.id))
+        invalidateList()
+      } catch (error) {
+        handleError(error, { defaultMessage: '회원 탈퇴 처리에 실패했습니다.' })
+      } finally {
+        setDeleteLoading(false)
+      }
+    },
+    [flushUserDetailModal, deleteUser, resolvedMemberListKind, invalidateList]
+  )
+
+  const handleCloseDeleteResultModal = useCallback(() => {
+    setDeleteResultModalOpen(false)
+  }, [])
+
+  const handleAdminPermissionChange = useCallback(
+    async (ctx: { userId: string; nextPermission: AdminPermissionTagVariant }) => {
+      setAdminPermissionChangingUserId(ctx.userId)
+      try {
+        await patchUserBasicInfo(ctx.userId, {
+          listMetrics: { adminPermissionVariant: ctx.nextPermission },
+        })
+        showSuccessMessage('관리자 권한 유형이 변경되었습니다.')
+        invalidateList()
+      } catch (error) {
+        handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
+      } finally {
+        setAdminPermissionChangingUserId(null)
+      }
+    },
+    [patchUserBasicInfo, invalidateList]
+  )
+
   return (
     <div>
-      <div className="user-list-page__filter-wrap">
-        <FilterTableLayout
-          bordered={false}
-          fields={userListFilterFields}
-          filters={
-            resolvedMemberListKind === 'institutions'
+      <FilterTableLayout
+        bordered={false}
+        fields={userListFilterFields}
+        filters={
+          resolvedMemberListKind === 'institutions'
+            ? {
+                search: pendingFilters.search,
+                institutionSido: pendingFilters.institutionSido,
+                institutionSigungu: pendingFilters.institutionSigungu,
+                createdAtRange: pendingFilters.createdAtRange ?? undefined,
+              }
+            : resolvedMemberListKind === 'instructors'
               ? {
                   search: pendingFilters.search,
-                  institutionLocation: pendingFilters.institutionLocation,
+                  instructorType: pendingFilters.instructorType,
+                  settlementStatus: pendingFilters.settlementStatus,
                   createdAtRange: pendingFilters.createdAtRange ?? undefined,
                 }
-              : resolvedMemberListKind === 'instructors'
+              : resolvedMemberListKind === 'admins'
                 ? {
                     search: pendingFilters.search,
-                    instructorType: pendingFilters.instructorType,
-                    settlementStatus: pendingFilters.settlementStatus,
+                    adminPermissionVariant: pendingFilters.adminPermissionVariant,
                     createdAtRange: pendingFilters.createdAtRange ?? undefined,
                   }
-                : resolvedMemberListKind === 'admins'
-                  ? {
-                      search: pendingFilters.search,
-                      adminPermissionVariant: pendingFilters.adminPermissionVariant,
-                      createdAtRange: pendingFilters.createdAtRange ?? undefined,
-                    }
-                  : {
-                      search: pendingFilters.search,
-                      role: pendingFilters.role,
-                      createdAtRange: pendingFilters.createdAtRange ?? undefined,
-                    }
-          }
-          onFilterChange={(key, value) => {
-            if (key === 'createdAtRange') {
-              setPendingFilters(prev => ({
-                ...prev,
-                createdAtRange: value as [Dayjs | null, Dayjs | null] | null,
-              }))
-            } else if (key === 'institutionLocation') {
-              setPendingFilters(prev => ({
-                ...prev,
-                institutionLocation: value === undefined || value === null ? '' : String(value),
-              }))
-            } else if (key === 'instructorType' || key === 'settlementStatus') {
-              setPendingFilters(prev => ({
-                ...prev,
-                [key]: value === undefined || value === null ? '' : String(value),
-              }))
-            } else if (key === 'adminPermissionVariant') {
-              setPendingFilters(prev => ({
-                ...prev,
-                adminPermissionVariant: value === undefined || value === null ? '' : String(value),
-              }))
-            } else {
-              setPendingFilters(prev => ({ ...prev, [key]: value }))
-            }
-          }}
-          onSearch={handleSearch}
-          loading={listLoading}
-          title={memberListPageTitle(resolvedMemberListKind)}
-          description={`총 ${listTotal.toLocaleString()}건`}
-          actions={
-            <>
+                : {
+                    search: pendingFilters.search,
+                    role: pendingFilters.role,
+                    createdAtRange: pendingFilters.createdAtRange ?? undefined,
+                  }
+        }
+        onFilterChange={handleFilterChange}
+        onSearch={applySearch}
+        loading={listLoading}
+        title={memberListPageTitle(resolvedMemberListKind)}
+        description={`총 ${listTotal.toLocaleString()}건`}
+        actions={
+          <>
+            <CmsButton
+              variant="delete"
+              onClick={() => {
+                const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
+                if (toDelete.length === 0) return
+                if (resolvedMemberListKind === 'institutions') {
+                  const blocked = toDelete.filter(institutionHasRegisteredTeachers)
+                  if (blocked.length > 0) {
+                    setInstitutionDeleteBlockedCount(toDelete.length)
+                    setInstitutionDeleteBlockedOpen(true)
+                    return
+                  }
+                }
+                if (toDelete.length === 1) {
+                  setDeletingUser(toDelete[0])
+                  setBulkDeleteUsers(null)
+                } else {
+                  setDeletingUser(null)
+                  setBulkDeleteUsers(toDelete)
+                }
+                setDeleteModalOpen(true)
+              }}
+              disabled={selectedRowKeys.length === 0}
+            >
+              {resolvedMemberListKind === 'institutions'
+                ? '학교 삭제'
+                : resolvedMemberListKind === 'instructors'
+                  ? '강사 삭제'
+                  : resolvedMemberListKind === 'admins'
+                    ? '관리자 삭제'
+                    : '회원 삭제'}
+            </CmsButton>
+            {canWrite && (
               <CmsButton
-                variant="delete"
                 onClick={() => {
-                  const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
-                  if (toDelete.length === 0) return
-                  // if (toDelete.length === 1) {
-                  //   setDeletingUser(toDelete[0])
-                  //   setBulkDeleteUsers(null)
-                  // } else {
-                  //   setDeletingUser(null)
-                  //   setBulkDeleteUsers(toDelete)
-                  // }
+                  if (resolvedMemberListKind === 'all') {
+                    openCreateModal()
+                    return
+                  }
+                  if (resolvedMemberListKind === 'institutions') {
+                    openSchoolRegisterModal()
+                    return
+                  }
+                  if (resolvedMemberListKind === 'admins') {
+                    openAdminRegisterModal()
+                    return
+                  }
                   window.alert('준비 중입니다')
-
-                  // setDeleteModalOpen(true)
                 }}
-                disabled={selectedRowKeys.length === 0}
               >
-                회원 삭제
+                {resolvedMemberListKind === 'institutions'
+                  ? '학교 등록'
+                  : resolvedMemberListKind === 'instructors'
+                    ? '강사 등록'
+                    : resolvedMemberListKind === 'admins'
+                      ? '관리자 등록'
+                    : '회원 등록'}
               </CmsButton>
-              {canWrite && (
-                <CmsButton onClick={() => window.alert('준비 중입니다')}>회원 등록</CmsButton>
-              )}
-            </>
-          }
-        >
-          <div className="program-list-content-wrapper__table">
-            <UserList
-              listKind={resolvedMemberListKind}
-              data={listUsers}
-              loading={false}
-              onView={handleView}
-              onEdit={handleEdit}
-              onDelete={canWrite ? handleDeleteClick : undefined}
-              selectedRowKeys={selectedRowKeys}
-              onSelectionChange={setSelectedRowKeys}
-              pagination={false}
-            />
-          </div>
-          <div ref={loadMoreRef} className="user-list-page__load-more-sentinel" aria-hidden>
-            {isFetchingNextPage && (
-              <div className="user-list-page__load-more-spinner">불러오는 중...</div>
             )}
-          </div>
-        </FilterTableLayout>
-      </div>
+          </>
+        }
+      >
+        <UserList
+          listKind={resolvedMemberListKind}
+          data={listUsers}
+          loading={false}
+          onView={handleView}
+          onDelete={canWrite ? handleDeleteClick : undefined}
+          onAdminPermissionChange={canWrite ? handleAdminPermissionChange : undefined}
+          adminPermissionChangeLoadingUserId={adminPermissionChangingUserId}
+          selectedRowKeys={selectedRowKeys}
+          onSelectionChange={setSelectedRowKeys}
+          pagination={false}
+        />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+      </FilterTableLayout>
 
       <UserDetailFullPageModal
         open={userDetailModalOpen}
         user={modalDetailUser}
         basicInfoEntrySource={basicInfoEntrySource}
         onClose={handleUserDetailModalClose}
-        onEdit={modalDetailUser ? () => handleEdit(modalDetailUser) : undefined}
-        onWithdraw={
-          canWrite && modalDetailUser
-            ? (u: Omit<User, 'password'>) => {
-                flushUserDetailModal()
-                setDeletingUser(u)
-                setBulkDeleteUsers(null)
-                setDeleteModalOpen(true)
-              }
-            : undefined
-        }
+        onWithdraw={canWrite && modalDetailUser ? handleWithdrawFromDetail : undefined}
         onNavigateToLinkedUser={handleNavigateToLinkedUser}
+        onMemberBasicInfoSaved={handleMemberBasicInfoSaved}
       />
 
-      <UserRoleChangeModal
-        open={roleChangeModalOpen}
-        user={editingUser}
-        loading={loading}
-        onConfirm={handleRoleChange}
-        onCancel={handleRoleChangeCancel}
-      />
-
-      <Modal
+      <ContentModal
         open={createModalOpen}
-        title="회원 추가"
+        title="회원 신규 등록"
         onCancel={closeCreateModal}
         footer={null}
-        width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnHidden
+        width={1400}
       >
-        <UserCreateForm onSubmit={handleCreateUser} onCancel={closeCreateModal} loading={loading} />
-      </Modal>
+        <AddUserIndividual
+          onSubmit={handleCreateUser}
+          onCancel={closeCreateModal}
+          loading={loading}
+        />
+      </ContentModal>
 
-      {deleteModalOpen && (
+      <SchoolRegisterModal
+        open={schoolRegisterOpen}
+        onClose={closeSchoolRegisterModal}
+        onSubmit={handleSchoolRegisterSubmit}
+        loading={loading}
+      />
+
+      <AdminRegisterModal
+        open={adminRegisterOpen}
+        onClose={closeAdminRegisterModal}
+        onSubmit={handleAdminRegisterSubmit}
+        loading={loading}
+      />
+
+      {deleteModalOpen && memberDeleteGuide && (
         <DeleteGuideModal
           open
           onCancel={handleDeleteCancel}
           onConfirm={handleDeleteConfirm}
-          title="회원 삭제 안내"
-          lines={buildMemberDeleteMessageLines(
-            deletingUser ? { name: deletingUser.name, email: deletingUser.email } : null,
-            bulkDeleteUsers?.length ?? (deletingUser ? 1 : 0)
-          )}
-          confirmText="삭제"
-          confirmVariant="danger"
+          title={memberDeleteGuide.title}
+          lines={memberDeleteGuide.lines}
+          confirmText={memberDeleteGuide.confirmText}
+          confirmVariant="delete"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
+
+      <ActionResultModal
+        open={deleteResultModalOpen}
+        title={deleteResultTitle}
+        message={deleteResultMessage}
+        onClose={handleCloseDeleteResultModal}
+      />
+
+      <InstitutionDeleteBlockedModal
+        open={institutionDeleteBlockedOpen}
+        onClose={() => setInstitutionDeleteBlockedOpen(false)}
+        selectedCount={institutionDeleteBlockedCount}
+      />
     </div>
   )
 }

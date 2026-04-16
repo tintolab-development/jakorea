@@ -4,10 +4,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement, type Key } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import dayjs, { type Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { ViewModeController } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
 import type { ViewModeToggleOption } from '@/shared/components/view-mode'
@@ -30,8 +31,15 @@ import {
 } from '@/features/settlement/ui/payment-record'
 import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
 import { AppButton } from '@/shared/ui/app-button'
-
-type ExposureMode = 'program' | 'instructor'
+import {
+  createPaymentOrdersTablePageConfig,
+  filterPaymentInstructorRows,
+  filterPaymentProgramRows,
+  parsePaymentOrdersFiltersFromUrl,
+  type AppliedStatus,
+  type ExposureMode,
+  type PaymentOrdersTableContext,
+} from './payment-orders-table.config'
 
 type PageViewMode = 'list' | 'calendar'
 
@@ -45,48 +53,8 @@ type DetailState =
   | { type: 'instructor'; data: PaymentOrderAdminInstructorRow }
   | null
 
-type AppliedStatus = 'all' | PaymentOrderAdminProcessingStatus
-
-interface AppliedFilters {
-  programName: string
-  status: AppliedStatus
-  dateRange: [Dayjs, Dayjs] | null
-}
-
 /** 선택열(≈60) + 데이터 열 합(64+360+152+200+168) — 프로그램/강사 테이블 동일 스크롤 폭 */
 const PAYMENT_ORDERS_LIST_TABLE_SCROLL_X = 60 + 64 + 360 + 152 + 200 + 168
-
-function matchesDateRange(referenceDate: string, range: [Dayjs, Dayjs] | null): boolean {
-  if (!range?.[0] || !range[1]) return true
-  const d = dayjs(referenceDate)
-  return !d.isBefore(range[0], 'day') && !d.isAfter(range[1], 'day')
-}
-
-function filterProgramRows(
-  rows: PaymentOrderAdminProgramRow[],
-  applied: AppliedFilters
-): PaymentOrderAdminProgramRow[] {
-  const q = applied.programName.trim()
-  return rows.filter(row => {
-    if (q && !row.programName.includes(q)) return false
-    if (applied.status !== 'all' && row.processingStatus !== applied.status) return false
-    if (!matchesDateRange(row.referenceDate, applied.dateRange)) return false
-    return true
-  })
-}
-
-function filterInstructorRows(
-  rows: PaymentOrderAdminInstructorRow[],
-  applied: AppliedFilters
-): PaymentOrderAdminInstructorRow[] {
-  const q = applied.programName.trim()
-  return rows.filter(row => {
-    if (q && !row.relatedProgramNames.some(name => name.includes(q))) return false
-    if (applied.status !== 'all' && row.processingStatus !== applied.status) return false
-    if (!matchesDateRange(row.referenceDate, applied.dateRange)) return false
-    return true
-  })
-}
 
 function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
@@ -106,20 +74,60 @@ function renderProcessingStatusCell(
 }
 
 export default function PaymentOrdersPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [viewMode, setViewMode] = useState<PageViewMode>('list')
   const [exposureMode, setExposureMode] = useState<ExposureMode>('program')
-  const [draftProgramName, setDraftProgramName] = useState('')
-  const [draftStatus, setDraftStatus] = useState<AppliedStatus>('all')
-  const [draftDateRange, setDraftDateRange] = useState<[Dayjs, Dayjs] | null>(null)
-  const [applied, setApplied] = useState<AppliedFilters>({
-    programName: '',
-    status: 'all',
-    dateRange: null,
-  })
   const [detailState, setDetailState] = useState<DetailState>(null)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   /** 캘린더 뷰 우측 패널 체크 — 일괄 확인과 연동 */
   const [calendarRightPanelSelectedKeys, setCalendarRightPanelSelectedKeys] = useState<Key[]>([])
+
+  const clearBatchSelection = useCallback(() => {
+    setSelectedRowKeys([])
+    setCalendarRightPanelSelectedKeys([])
+  }, [])
+
+  const tablePageConfig = useMemo(
+    () => createPaymentOrdersTablePageConfig({ onAfterApplySearch: clearBatchSelection }),
+    [clearBatchSelection]
+  )
+
+  const appliedFromUrl = useMemo(
+    () => parsePaymentOrdersFiltersFromUrl(searchParams),
+    [searchParams]
+  )
+
+  const listProgram = useMemo(
+    () => filterPaymentProgramRows(mockPaymentOrderAdminProgramList, appliedFromUrl),
+    [appliedFromUrl]
+  )
+  const listInstructor = useMemo(
+    () => filterPaymentInstructorRows(mockPaymentOrderAdminInstructorList, appliedFromUrl),
+    [appliedFromUrl]
+  )
+
+  const isProgram = exposureMode === 'program'
+  const rowsForTable = useMemo(
+    () => (isProgram ? listProgram : listInstructor) as (PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow)[],
+    [isProgram, listProgram, listInstructor]
+  )
+
+  const tableContext = useMemo<PaymentOrdersTableContext>(
+    () => ({
+      setExposureMode,
+    }),
+    []
+  )
+
+  const { pendingFilters, applySearch: handleSearch, handleFilterChange } = useTablePage(
+    tablePageConfig,
+    {
+      data: rowsForTable,
+      searchParams,
+      setSearchParams,
+      context: tableContext,
+    }
+  )
 
   const statusSelectOptions = useMemo((): { value: AppliedStatus; label: string }[] => {
     const labels =
@@ -138,41 +146,11 @@ export default function PaymentOrdersPage() {
   const closeDetail = useCallback(() => {
     setDetailState(null)
   }, [])
-  const appliedResetKey = useMemo(
-    () =>
-      [
-        applied.programName,
-        applied.status,
-        applied.dateRange?.[0]?.valueOf() ?? '',
-        applied.dateRange?.[1]?.valueOf() ?? '',
-      ].join('|'),
-    [applied]
-  )
-
-  const filteredPrograms = useMemo(
-    () => filterProgramRows(mockPaymentOrderAdminProgramList, applied),
-    [applied]
-  )
-
-  const filteredInstructors = useMemo(
-    () => filterInstructorRows(mockPaymentOrderAdminInstructorList, applied),
-    [applied]
-  )
-
-  const handleSearch = useCallback(() => {
-    setApplied({
-      programName: draftProgramName.trim(),
-      status: draftStatus,
-      dateRange: draftDateRange,
-    })
-    setSelectedRowKeys([])
-    setCalendarRightPanelSelectedKeys([])
-  }, [draftDateRange, draftProgramName, draftStatus])
+  const appliedResetKey = useMemo(() => searchParams.toString(), [searchParams])
 
   useEffect(() => {
-    setSelectedRowKeys([])
-    setCalendarRightPanelSelectedKeys([])
-  }, [exposureMode, appliedResetKey, viewMode])
+    clearBatchSelection()
+  }, [exposureMode, appliedResetKey, viewMode, clearBatchSelection])
 
   const rowSelection = useMemo(
     () => ({
@@ -278,9 +256,6 @@ export default function PaymentOrdersPage() {
     []
   )
 
-  const isProgram = exposureMode === 'program'
-  const listProgram = filteredPrograms
-  const listInstructor = filteredInstructors
   const total = isProgram ? listProgram.length : listInstructor.length
 
   const isTableRowKeySelected = useCallback(
@@ -423,27 +398,11 @@ export default function PaymentOrdersPage() {
         ]}
         filters={{
           exposureMode,
-          programName: draftProgramName,
-          status: draftStatus === 'all' ? undefined : draftStatus,
-          dateRange: draftDateRange,
+          programName: pendingFilters.programName,
+          status: pendingFilters.status === 'all' ? undefined : pendingFilters.status,
+          dateRange: pendingFilters.dateRange,
         }}
-        onFilterChange={(key, value) => {
-          if (key === 'exposureMode') {
-            setExposureMode(value as ExposureMode)
-            return
-          }
-          if (key === 'programName') {
-            setDraftProgramName(value as string)
-            return
-          }
-          if (key === 'status') {
-            setDraftStatus((value ?? 'all') as AppliedStatus)
-            return
-          }
-          if (key === 'dateRange') {
-            setDraftDateRange(value as [Dayjs, Dayjs] | null)
-          }
-        }}
+        onFilterChange={handleFilterChange}
         onSearch={handleSearch}
       >
         <div className="participating-institutions-section__below-divider">

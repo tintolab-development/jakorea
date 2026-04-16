@@ -3,7 +3,11 @@
  * Phase 4.2.1: 권한별 대시보드 위젯 구성
  */
 
-import type { UserRole } from '@/types/user'
+import type { User, UserRole } from '@/types/user'
+import {
+  type ProgramScheduleKind,
+  getProgramScheduleKindsForAdminUser,
+} from '@/data/mock'
 
 /**
  * 대시보드 위젯 타입
@@ -20,7 +24,9 @@ export type DashboardWidgetType =
   | 'instructor-count-card' // 등록된 강사 수
   | 'notification-widget' // 알림 위젯
   | 'customer-inquiry-status-widget' // 고객 문의 현황 위젯
-  | 'program-schedule-widget' // 프로그램 일정 위젯 (캘린더 + 이벤트 리스트)
+  | 'program-schedule-general-widget' // 일반 프로그램 일정
+  | 'program-schedule-economy-widget' // 경제 교육 프로그램 일정
+  | 'program-schedule-gemini-widget' // 제미나이 프로그램 일정
   | 'unified-activity-feed' // 통합 활동 피드
   | 'my-activity-summary' // 본인 활동 요약 (강사/봉사자)
   | 'my-application-summary' // 본인 신청 현황 (수강자)
@@ -36,6 +42,9 @@ export type DashboardWidgetType =
   | 'recruitment-status-widget' // 모집 신청 현황 위젯
   | 'kpi-achievement-widget' // 사업 별 KPI 대비 달성률 위젯
 
+/** 슬롯 인라인 height(px). colSpan(12=50%, 24=100%)별. 미지정 시 SortableWidgetSlot·meta.height 규칙 */
+export type DashboardWidgetSlotHeightPx = Partial<Record<12 | 24, number>>
+
 /**
  * 대시보드 위젯 설정
  */
@@ -46,20 +55,78 @@ export interface DashboardWidgetConfig {
   order?: number // 표시 순서 (낮을수록 먼저 표시)
   /** 위젯 고정 높이(px). 미지정 시 기본값 338px */
   height?: number
+  /** 슬롯 높이 단일 소스: getSlotHeight가 우선 사용. 미지정이면 height·50% 기본값 등 */
+  slotHeightPx?: DashboardWidgetSlotHeightPx
+}
+
+/** colSpan 12일 때 모든 위젯 슬롯 기본 높이 (SortableWidgetSlot) */
+export const DASHBOARD_SLOT_HEIGHT_HALF_PX = 400 as const
+
+/** 메뉴 바로가기 100% 슬롯 높이 — CSS `.menu-shortcut-widget` 슬롯 규칙과 동기화 */
+export const MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX = 248 as const
+
+/** 프로그램 일정 위젯 100% 너비(colSpan 24) 슬롯 높이 */
+export const PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX = 383 as const
+
+function programScheduleKindToWidgetType(kind: ProgramScheduleKind): DashboardWidgetType {
+  switch (kind) {
+    case 'general':
+      return 'program-schedule-general-widget'
+    case 'economy':
+      return 'program-schedule-economy-widget'
+    case 'gemini':
+      return 'program-schedule-gemini-widget'
+  }
+}
+
+/** 관리자 홈: 메뉴 바로가기 + (ACL별) 프로그램 일정 + 하단 위젯 */
+export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[]): DashboardWidgetConfig[] {
+  const scheduleWidgets: DashboardWidgetConfig[] = scheduleKinds.map((kind, index) => ({
+    type: programScheduleKindToWidgetType(kind),
+    colSpan: 24,
+    order: 1 + index,
+    height: PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX,
+    slotHeightPx: { 12: 338, 24: PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX },
+  }))
+  const orderAfterSchedules = 1 + scheduleKinds.length
+  return [
+    {
+      type: 'menu-shortcut-widget',
+      colSpan: 24,
+      order: 0,
+      height: MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX,
+      slotHeightPx: { 24: MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX },
+    },
+    ...scheduleWidgets,
+    { type: 'recruitment-status-widget', colSpan: 24, order: orderAfterSchedules, height: 340 },
+    {
+      type: 'customer-inquiry-status-widget',
+      colSpan: 24,
+      order: orderAfterSchedules + 1,
+      height: 338,
+    },
+    { type: 'kpi-achievement-widget', colSpan: 24, order: orderAfterSchedules + 2 },
+  ]
 }
 
 /**
- * 권한별 대시보드 위젯 구성
+ * 로그인 사용자 기준 대시보드 위젯 (관리자는 ACL로 프로그램 일정 위젯 유형 필터)
  */
-const dashboardWidgets: Record<UserRole, DashboardWidgetConfig[]> = {
-  // 관리자: 전체 통계 및 현황
-  ADMIN: [
-    { type: 'menu-shortcut-widget', colSpan: 24, order: 0, height: 202 },
-    { type: 'program-schedule-widget', colSpan: 24, order: 1, height: 360 },
-    { type: 'recruitment-status-widget', colSpan: 24, order: 2, height: 340 },
-    { type: 'customer-inquiry-status-widget', colSpan: 24, order: 3, height: 338 },
-    { type: 'kpi-achievement-widget', colSpan: 24, order: 4, height: 314 },
-  ],
+export function getDashboardWidgetsForUser(user: Omit<User, 'password'> | null): DashboardWidgetConfig[] {
+  if (!user?.role) {
+    return []
+  }
+  if (user.role !== 'ADMIN') {
+    return getDashboardWidgetsByRole(user.role)
+  }
+  const kinds = getProgramScheduleKindsForAdminUser(user)
+  return buildAdminDashboardWidgets(kinds).sort((a, b) => (a.order || 0) - (b.order || 0))
+}
+
+/**
+ * 권한별 대시보드 위젯 구성 (ADMIN은 ACL 없이 마스터와 동일한 3종 일정 포함 — 기본 순서·폴백용)
+ */
+const dashboardWidgets: Record<Exclude<UserRole, 'ADMIN'>, DashboardWidgetConfig[]> = {
   // 강사: 본인 활동 요약
   INSTRUCTOR: [
     { type: 'notification-widget', colSpan: 24, order: 1 },
@@ -97,8 +164,13 @@ export function getDashboardWidgetsByRole(userRole: UserRole | null): DashboardW
     return []
   }
 
+  if (userRole === 'ADMIN') {
+    return buildAdminDashboardWidgets(['general', 'economy', 'gemini']).sort(
+      (a, b) => (a.order || 0) - (b.order || 0)
+    )
+  }
+
   const widgets = dashboardWidgets[userRole] || []
-  // order 기준으로 정렬
   return [...widgets].sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 

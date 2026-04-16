@@ -74,11 +74,12 @@
   border: 1px solid rgba(228, 73, 112, 0.06);
 }
 
-/* ===== 교육 페이지 — 그룹2: 모집 중 ===== */
+/* ===== 교육 페이지 — 그룹2: 모집 중 + 프로그램 진행 중 ===== */
 .app-status-badge.program-lifecycle-status-badge--recruiting-students,
 .app-status-badge.program-lifecycle-status-badge--recruiting-instructors,
 .app-status-badge.program-lifecycle-status-badge--recruiting-volunteers,
-.app-status-badge.program-lifecycle-status-badge--participant-instructor-recruiting {
+.app-status-badge.program-lifecycle-status-badge--participant-instructor-recruiting,
+.app-status-badge.program-lifecycle-status-badge--education-in-progress {
   background: #e6f2f7;
   color: #017eaf;
   border: 1px solid rgba(1, 126, 175, 0.06);
@@ -96,26 +97,24 @@
   border: 1px solid rgba(126, 138, 150, 0.06);
 }
 
-/* 읽기 전용 텍스트 (배경/테두리 없이 색상만) — ProgramLifecycleStatusText */
-.program-lifecycle-status-text--planned,
-.program-lifecycle-status-text--instructor-recruitment-planned,
-.program-lifecycle-status-text--volunteer-recruitment-planned,
-.program-lifecycle-status-text--participant-instructor-recruitment-planned {
-  color: #e44970;
+/* 읽기 전용 텍스트 — ProgramLifecycleStatusText (톤·상태 배열: status.ts, 색상 토큰: PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS 와 동일) */
+.program-lifecycle-status-text {
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
-.program-lifecycle-status-text--recruiting-students,
-.program-lifecycle-status-text--recruiting-instructors,
-.program-lifecycle-status-text--recruiting-volunteers,
-.program-lifecycle-status-text--participant-instructor-recruiting {
-  color: #017eaf;
+.program-lifecycle-status-text[data-recruitment-tone='scheduled'] {
+  color: var(--color-green, #1e8c29);
 }
 
-.program-lifecycle-status-text--matching-completed,
-.program-lifecycle-status-text--education-before-textbook,
-.program-lifecycle-status-text--education-after-textbook,
-.program-lifecycle-status-text--education-completed,
-.program-lifecycle-status-text--document-processing-completed,
-.program-lifecycle-status-text--participant-instructor-recruitment-completed {
-  color: #464646;
+.program-lifecycle-status-text[data-recruitment-tone='recruiting'] {
+  color: var(--color-blue, #017eaf);
+}
+
+.program-lifecycle-status-text[data-recruitment-tone='completed'] {
+  color: var(--main-BK, #3d3d3d);
 }

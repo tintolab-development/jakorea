@@ -1,0 +1,58 @@
+/**
+ * FAQ 관리 — 공지사항 관리와 동일 FilterTableLayout 래퍼
+ */
+
+.admin-faq-list-page {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.admin-faq-list-page__row--clickable {
+  cursor: pointer;
+}
+
+.admin-faq-list-page .filter-table-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.admin-faq-list-page__table.cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
+.admin-faq-list-page__table.cms-data-table .ant-table-tbody > tr > td {
+  box-sizing: border-box !important;
+  padding: 12px 16px !important;
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.admin-faq-list-page__table.cms-data-table .ant-table-thead > tr > th {
+  background: #edf0f2;
+}
+
+.admin-faq-list-page__title-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-faq-list-page__title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  text-align: center;
+}
+
+.admin-faq-list-page__status-private {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

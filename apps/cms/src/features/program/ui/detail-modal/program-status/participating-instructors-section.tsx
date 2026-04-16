@@ -34,6 +34,8 @@ import {
   ParticipatingInstructorFullpageView,
   type InstructorDetailTabKey,
 } from './participating-instructor-fullpage-view'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
@@ -172,6 +174,8 @@ export function ParticipatingInstructorsSection({
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<Dayjs>(() => dayjs())
   /** 캘린더 우측 기관 멀티셀렉트 — 날짜별 옵션과 동기화 시 전체 선택이 기본, []는 사용자가 모두 해제한 경우 */
   const [calendarSelectedSchools, setCalendarSelectedSchools] = useState<string[]>([])
+  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -368,6 +372,11 @@ export function ParticipatingInstructorsSection({
     setCalendarSelectedSchools(calendarSchoolFilterOptions.map(o => o.value))
   }, [calendarSchoolFilterOptions])
 
+  useEffect(() => {
+    setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [programId])
+
   const instructorsForCalendarDateFiltered = useMemo(() => {
     if (calendarSelectedSchools.length === 0) return []
     const selected = new Set(calendarSelectedSchools)
@@ -376,10 +385,6 @@ export function ParticipatingInstructorsSection({
 
   const handleCalendarView = () => setViewMode('calendar')
   const handleListView = () => setViewMode('list')
-
-  const handleInfoDetailClick = () => {
-    window.alert('준비 중입니다.')
-  }
 
   const tableScrollX = 48 + 64 + 100 + 140 + 160 + 100 + 100 + 120 + 140 + 120
 
@@ -404,7 +409,7 @@ export function ParticipatingInstructorsSection({
         width: 140,
         render: (_: unknown, record: ParticipatingInstructorRow) => {
           if (record.region) return record.region
-          if (record.address) return MASKING_POLICY.address(record.address)
+          if (record.address) return personalInfoRevealed ? record.address : MASKING_POLICY.address(record.address)
           return '-'
         },
       },
@@ -436,7 +441,8 @@ export function ParticipatingInstructorsSection({
         dataIndex: 'contact',
         key: 'contact',
         width: 120,
-        render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v) : '-'),
+        render: (v: string | undefined) =>
+          v ? (personalInfoRevealed ? v : MASKING_POLICY.phone(v)) : '-',
       },
       {
         title: '이메일',
@@ -444,7 +450,8 @@ export function ParticipatingInstructorsSection({
         key: 'email',
         width: 140,
         ellipsis: true,
-        render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
+        render: (v: string | undefined) =>
+          v ? (personalInfoRevealed ? v : MASKING_POLICY.email(v)) : '-',
       },
       {
         title: '정산현황',
@@ -457,7 +464,7 @@ export function ParticipatingInstructorsSection({
         ),
       },
     ],
-    []
+    [personalInfoRevealed]
   )
 
   if (selectedInstructorFromUrl && program) {
@@ -487,7 +494,7 @@ export function ParticipatingInstructorsSection({
           title="강사 삭제 안내"
           lines={buildInstructorMessageLines(instructorNamesToDelete)}
           confirmText="삭제"
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       </div>
     )
@@ -561,9 +568,15 @@ export function ParticipatingInstructorsSection({
               variant="primary"
               size="filter-wide"
               className="participating-instructors-section__btn-privacy-detail"
-              onClick={handleInfoDetailClick}
+              onClick={() => {
+                if (personalInfoRevealed) {
+                  setPersonalInfoRevealed(false)
+                  return
+                }
+                setPersonalInfoRevealConfirmOpen(true)
+              }}
             >
-              개인정보 상세보기
+              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
             </AppButton>
           </div>
         </div>
@@ -737,8 +750,22 @@ export function ParticipatingInstructorsSection({
         title="강사 삭제 안내"
         lines={buildInstructorMessageLines(instructorNamesToDelete)}
         confirmText="삭제"
-        confirmVariant="danger"
+        confirmVariant="delete"
       />
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
+          onConfirm={reason => {
+            const accessItem = selectedInstructorRowKeys.length === 1
+              ? filteredInstructors.find(row => row.id === String(selectedInstructorRowKeys[0]))
+                  ?.instructorName ?? '참여 강사 목록'
+              : '참여 강사 목록'
+            trackPersonalInfoAccess(accessItem, reason)
+            setPersonalInfoRevealed(true)
+            setPersonalInfoRevealConfirmOpen(false)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

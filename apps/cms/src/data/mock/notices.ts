@@ -2,15 +2,24 @@
  * 공지사항 Mock 데이터
  */
 
+import dayjs from 'dayjs'
+
+export interface NoticeAttachment {
+  name: string
+}
+
 export interface Notice {
   id: string
   title: string
   content: string
-  category: '필독' | '안내' | '정산' | '시스템' | '봉사단' | '강사단'
+  /** 관리자에서 동적 카테고리 추가 가능 — mock·스토어와 문자열로 일치 */
+  category: string
   createdAt: string
   isImportant: boolean
   viewCount: number
   hasAttachment: boolean
+  /** 상세·첨부 UI용 — 목록 mock에서만 채움 */
+  attachments?: NoticeAttachment[]
   author: string
   status: 'published' | 'draft' | 'archived'
 }
@@ -83,3 +92,65 @@ export const mockNotices: Notice[] = [
     status: 'draft',
   },
 ]
+
+const ADMIN_NOTICE_DEMO_ATTACHMENTS: NoticeAttachment[] = [
+  { name: '(2026) JA Korea 경제금융교육 커리큘럼.pdf' },
+  { name: 'JA Korea 공지 부록.pdf' },
+]
+
+/** mockNotices 인덱스(0~4) + 상단고정·공개여부·첨부 — 15건 고정 */
+type AdminNoticeBuildSpec = {
+  seedIndex: number
+  isImportant: boolean
+  status: Notice['status']
+  hasAttachment: boolean
+}
+
+/** 15건: 상단 고정 3건, 공개/비공개(draft·archived)·첨부 유/무 혼합 */
+const ADMIN_NOTICE_BUILD_SPECS: AdminNoticeBuildSpec[] = [
+  { seedIndex: 0, isImportant: true, status: 'published', hasAttachment: true },
+  { seedIndex: 1, isImportant: true, status: 'published', hasAttachment: true },
+  { seedIndex: 2, isImportant: true, status: 'published', hasAttachment: false },
+  { seedIndex: 3, isImportant: false, status: 'published', hasAttachment: false },
+  { seedIndex: 4, isImportant: false, status: 'draft', hasAttachment: true },
+  { seedIndex: 0, isImportant: false, status: 'published', hasAttachment: false },
+  { seedIndex: 1, isImportant: false, status: 'archived', hasAttachment: true },
+  { seedIndex: 2, isImportant: false, status: 'published', hasAttachment: false },
+  { seedIndex: 3, isImportant: false, status: 'draft', hasAttachment: false },
+  { seedIndex: 4, isImportant: false, status: 'published', hasAttachment: true },
+  { seedIndex: 0, isImportant: false, status: 'archived', hasAttachment: false },
+  { seedIndex: 1, isImportant: false, status: 'published', hasAttachment: true },
+  { seedIndex: 2, isImportant: false, status: 'draft', hasAttachment: true },
+  { seedIndex: 3, isImportant: false, status: 'published', hasAttachment: false },
+  { seedIndex: 4, isImportant: false, status: 'published', hasAttachment: false },
+]
+
+/** CMS 관리자 공지 목록 mock 건수 — 목록·상세 조회와 동일해야 함 */
+export const ADMIN_NOTICE_MOCK_LIST_COUNT = ADMIN_NOTICE_BUILD_SPECS.length
+
+/** CMS 관리자 공지 목록 데모용 — 15건 고정, 스펙 기반 분포 */
+export function buildAdminNoticeMockList(count: number = ADMIN_NOTICE_MOCK_LIST_COUNT): Notice[] {
+  const nSeeds = mockNotices.length
+  const take = Math.min(Math.max(0, count), ADMIN_NOTICE_BUILD_SPECS.length)
+  return ADMIN_NOTICE_BUILD_SPECS.slice(0, take).map((spec, i) => {
+    const seed = mockNotices[spec.seedIndex % nSeeds]
+    const createdAt = dayjs(seed.createdAt).subtract(i, 'day').format('YYYY-MM-DDTHH:mm:ss')
+    const attachments: NoticeAttachment[] | undefined = spec.hasAttachment
+      ? i % 2 === 0
+        ? [ADMIN_NOTICE_DEMO_ATTACHMENTS[0]]
+        : [...ADMIN_NOTICE_DEMO_ATTACHMENTS]
+      : undefined
+    return {
+      ...seed,
+      id: `notice-admin-${i + 1}`,
+      title: i < nSeeds ? seed.title : `${seed.title} (${i + 1})`,
+      createdAt,
+      viewCount: seed.viewCount + i * 17,
+      isImportant: spec.isImportant,
+      status: spec.status,
+      hasAttachment: spec.hasAttachment,
+      attachments,
+    }
+  })
+}
+

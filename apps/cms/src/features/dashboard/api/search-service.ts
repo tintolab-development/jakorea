@@ -148,7 +148,7 @@ export async function searchAdminContent(query: string): Promise<SearchResult[]>
         id: school.id,
         title: school.name,
         description: school.region,
-        link: `/schools/${school.id}`,
+        link: `/users/list?kind=institutions&search=${encodeURIComponent(school.name)}`,
       })
     }
   })

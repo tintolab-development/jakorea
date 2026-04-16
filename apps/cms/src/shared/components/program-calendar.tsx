@@ -7,16 +7,10 @@
 import {
   forwardRef,
   Fragment,
-  useCallback,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
-  type MouseEvent,
   type ReactElement,
   type ReactNode,
 } from 'react'
-import { createPortal } from 'react-dom'
 import { Calendar, Button } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -37,6 +31,7 @@ import {
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
 import './program-calendar.css'
+import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -90,7 +85,7 @@ export type ProgramCalendarEventsProps = ProgramCalendarSharedProps & {
    * 기본은 호버한 한 건만.
    */
   eventsTooltipScope?: 'trigger-only' | 'full-day'
-  /** 셀에서 2건 초과 시 링크 문구. 기본 `외 n개의 일정` */
+  /** 셀에서 2건 초과 시 링크 문구. 기본 `외 N개의 항목` */
   formatEventsOverflowText?: (hiddenCount: number) => string
   programs?: undefined
   onProgramClick?: undefined
@@ -190,174 +185,6 @@ function CalendarCellSchedulePreview({ date, programs }: { date: Dayjs; programs
         )
       })}
     </div>
-  )
-}
-
-const CURSOR_OVERLAY_OFFSET = 12
-const POPOVER_ENTER_DELAY_MS = 120
-/** 신청자 Tooltip 기존 Ant `mouseEnterDelay`와 동일 */
-const TOOLTIP_ENTER_DELAY_MS = 150
-const OVERLAY_LEAVE_DELAY_MS = 80
-
-/** viewport 클램프 — program 미리보기(333px) */
-const POPOVER_PANEL_ESTIMATE_W = 340
-const POPOVER_PANEL_ESTIMATE_H = 280
-/** 신청자 일정 패널(program-calendar-schedule-panel) 폭 상한에 맞춤 */
-const TOOLTIP_PANEL_ESTIMATE_W = 368
-const TOOLTIP_PANEL_ESTIMATE_H = 300
-
-type CursorOverlayVariant = 'popover' | 'tooltip'
-
-/**
- * Popover / Tooltip 공통: 셀·트리거 기준 placement 대신 커서를 따라 `fixed` 포털로 표시
- * (패널 위 호버 시 이탈 타이머 취소 — 신청자·프로그램 미리보기 상호작용)
- */
-function ProgramCalendarOverlayFollowCursor({
-  variant,
-  tooltipOverlayClassName,
-  content,
-  children,
-}: {
-  variant: CursorOverlayVariant
-  tooltipOverlayClassName?: string
-  content: ReactNode
-  children: ReactElement
-}) {
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ x: 0, y: 0 })
-  const enterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const panelW = variant === 'tooltip' ? TOOLTIP_PANEL_ESTIMATE_W : POPOVER_PANEL_ESTIMATE_W
-  const panelH = variant === 'tooltip' ? TOOLTIP_PANEL_ESTIMATE_H : POPOVER_PANEL_ESTIMATE_H
-  const enterDelayMs = variant === 'tooltip' ? TOOLTIP_ENTER_DELAY_MS : POPOVER_ENTER_DELAY_MS
-
-  const clearEnterTimer = useCallback(() => {
-    if (enterTimerRef.current) {
-      clearTimeout(enterTimerRef.current)
-      enterTimerRef.current = null
-    }
-  }, [])
-
-  const clearLeaveTimer = useCallback(() => {
-    if (leaveTimerRef.current) {
-      clearTimeout(leaveTimerRef.current)
-      leaveTimerRef.current = null
-    }
-  }, [])
-
-  const updatePosition = useCallback(
-    (clientX: number, clientY: number) => {
-      if (typeof window === 'undefined') return
-      const pad = 8
-      let x = clientX + CURSOR_OVERLAY_OFFSET
-      let y = clientY + CURSOR_OVERLAY_OFFSET
-      x = Math.min(x, window.innerWidth - panelW - pad)
-      y = Math.min(y, window.innerHeight - panelH - pad)
-      x = Math.max(pad, x)
-      y = Math.max(pad, y)
-      setPos({ x, y })
-    },
-    [panelW, panelH]
-  )
-
-  useEffect(
-    () => () => {
-      clearEnterTimer()
-      clearLeaveTimer()
-    },
-    [clearEnterTimer, clearLeaveTimer]
-  )
-
-  const scheduleOpen = useCallback(() => {
-    clearEnterTimer()
-    enterTimerRef.current = setTimeout(() => setOpen(true), enterDelayMs)
-  }, [clearEnterTimer, enterDelayMs])
-
-  const scheduleClose = useCallback(() => {
-    clearLeaveTimer()
-    leaveTimerRef.current = setTimeout(() => setOpen(false), OVERLAY_LEAVE_DELAY_MS)
-  }, [clearLeaveTimer])
-
-  const handleTriggerMouseEnter = (e: MouseEvent<HTMLDivElement>) => {
-    clearLeaveTimer()
-    updatePosition(e.clientX, e.clientY)
-    scheduleOpen()
-  }
-
-  const handleTriggerMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    updatePosition(e.clientX, e.clientY)
-  }
-
-  const handleTriggerMouseLeave = () => {
-    clearEnterTimer()
-    scheduleClose()
-  }
-
-  const handlePanelMouseEnter = () => {
-    clearLeaveTimer()
-    clearEnterTimer()
-    setOpen(true)
-  }
-
-  const handlePanelMouseLeave = () => {
-    scheduleClose()
-  }
-
-  const portal =
-    variant === 'popover' ? (
-      <div
-        className="ant-popover app-popover-panel program-calendar-cell-preview-popover program-calendar-cursor-popover"
-        style={{
-          position: 'fixed',
-          left: pos.x,
-          top: pos.y,
-          zIndex: 1060,
-          pointerEvents: 'auto',
-        }}
-        onMouseEnter={handlePanelMouseEnter}
-        onMouseLeave={handlePanelMouseLeave}
-      >
-        <div className="ant-popover-content">
-          <div className="ant-popover-inner">
-            <div className="ant-popover-inner-content">{content}</div>
-          </div>
-        </div>
-      </div>
-    ) : (
-      <div
-        className={[
-          'program-calendar-tooltip-overlay',
-          'program-calendar-cursor-tooltip',
-          tooltipOverlayClassName,
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        style={{
-          position: 'fixed',
-          left: pos.x,
-          top: pos.y,
-          zIndex: 1060,
-          pointerEvents: 'auto',
-        }}
-        onMouseEnter={handlePanelMouseEnter}
-        onMouseLeave={handlePanelMouseLeave}
-      >
-        <div className="ant-tooltip-inner">{content}</div>
-      </div>
-    )
-
-  return (
-    <>
-      <div
-        onMouseEnter={handleTriggerMouseEnter}
-        onMouseMove={handleTriggerMouseMove}
-        onMouseLeave={handleTriggerMouseLeave}
-      >
-        {children}
-      </div>
-      {open && createPortal(portal, document.body)}
-    </>
   )
 }
 
@@ -528,7 +355,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                       })(),
                       <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
                         {formatEventsOverflowText?.(dayEvents.length - 2) ??
-                          `외 ${dayEvents.length - 2}개의 일정`}
+                          `외 ${dayEvents.length - 2}개의 항목`}
                       </div>
                     )}
                   </Fragment>
@@ -566,7 +393,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
               })}
               {dayPrograms.length > 2 && (
                 <div className="program-calendar-event-more">
-                  외 {dayPrograms.length - 2}개의 일정
+                  외 {dayPrograms.length - 2}개의 항목
                 </div>
               )}
             </div>
@@ -661,7 +488,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                               })(),
                               <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
                                 {formatEventsOverflowText?.(dayEvents.length - 2) ??
-                                  `외 ${dayEvents.length - 2}개의 일정`}
+                                  `외 ${dayEvents.length - 2}개의 항목`}
                               </div>
                             )}
                           </Fragment>
@@ -714,7 +541,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                       })}
                       {dayPrograms.length > 2 && (
                         <div className="program-calendar-event-more">
-                          외 {dayPrograms.length - 2}개의 일정
+                          외 {dayPrograms.length - 2}개의 항목
                         </div>
                       )}
                     </div>

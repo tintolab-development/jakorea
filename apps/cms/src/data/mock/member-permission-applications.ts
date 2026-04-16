@@ -29,6 +29,7 @@ function rowFromUser(
   index: number,
   prefix: string
 ): MemberPermissionApplicationRow {
+  const approvalStatus = u.permissionApprovalStatus ?? rotateStatus(index)
   return {
     id: `${prefix}-${u.id}`,
     userId: u.id,
@@ -36,7 +37,7 @@ function rowFromUser(
     phone: u.phone ?? '',
     email: u.email,
     memberCategory: categoryForUser(u),
-    approvalStatus: rotateStatus(index),
+    approvalStatus,
     appliedAt: appliedAtIso(index + 3),
   }
 }

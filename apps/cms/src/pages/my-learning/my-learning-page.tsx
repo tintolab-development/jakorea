@@ -30,7 +30,7 @@ export function MyLearningPage() {
         navigate('/school/my-learning', { replace: true })
         break
       default:
-        // 관리자나 기타 역할은 관리자 홈으로
+        // 관리자나 기타 역할은 대시보드 홈으로
         navigate('/', { replace: true })
         break
     }

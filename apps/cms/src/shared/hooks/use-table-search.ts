@@ -1,8 +1,9 @@
 /**
- * 테이블 검색 시 pending 필터를 URL 쿼리와 TanStack Table 컬럼 필터에 선언적으로 반영한다.
+ * pending 필터 → URL 쿼리 반영 및(선택) TanStack 컬럼 필터 동기화.
+ * `filtersRef`는 매 렌더 최신 pending을 가리키므로 조회(flushSync) 직후에도 올바른 스냅샷을 읽는다.
  */
 
-import { useCallback } from 'react'
+import { useCallback, type MutableRefObject } from 'react'
 import type { Table } from '@tanstack/react-table'
 
 /** 단일 쿼리 키 ↔ filters 필드 매핑 */
@@ -26,9 +27,12 @@ export type TableSearchParamRule<TFilters extends Record<string, unknown>> =
   | TableSearchParamRuleParam<TFilters>
   | TableSearchParamRuleApply<TFilters>
 
-/** react-router `useSearchParams()[1]`와 호환 — 훅 내부에서는 URLSearchParams만 전달한다. */
+/** react-router `useSearchParams()[1]`와 호환 — 객체·함수형 업데이트 모두 허용 */
 export type TableSearchSetSearchParams = (
-  nextInit: URLSearchParams,
+  nextInit:
+    | URLSearchParams
+    | Record<string, string | string[]>
+    | ((prev: URLSearchParams) => URLSearchParams),
   navigateOpts?: { replace?: boolean; state?: unknown }
 ) => void
 
@@ -36,8 +40,8 @@ export interface UseTableSearchOptions<
   TFilters extends Record<string, unknown>,
   TData = unknown,
 > {
-  filters: TFilters
-  searchParams: URLSearchParams
+  /** `useTablePage`에서 `pendingFiltersRef`로 전달 — 호출 시점의 `current`만 사용 */
+  filtersRef: MutableRefObject<TFilters>
   setSearchParams: TableSearchSetSearchParams
   table?: Table<TData>
   paramConfig: readonly TableSearchParamRule<TFilters>[]
@@ -58,12 +62,39 @@ function defaultShouldSetParam<TFilters extends Record<string, unknown>>(
   return true
 }
 
+function mergeFiltersIntoSearchParams<TFilters extends Record<string, unknown>>(
+  nextParams: URLSearchParams,
+  filtersLive: TFilters,
+  paramConfig: readonly TableSearchParamRule<TFilters>[],
+  afterApplyParams?: (next: URLSearchParams, f: TFilters) => void
+): void {
+  for (const rule of paramConfig) {
+    if (rule.kind === 'apply') {
+      rule.apply(nextParams, filtersLive)
+      continue
+    }
+
+    const raw: unknown = filtersLive[rule.filterKey]
+    const shouldSet =
+      rule.condition?.(filtersLive, raw) ?? defaultShouldSetParam(filtersLive, raw)
+
+    if (!shouldSet) {
+      nextParams.delete(rule.paramKey)
+      continue
+    }
+
+    const str = rule.transform ? rule.transform(raw) : String(raw)
+    nextParams.set(rule.paramKey, str)
+  }
+
+  afterApplyParams?.(nextParams, filtersLive)
+}
+
 export function useTableSearch<
   TFilters extends Record<string, unknown>,
   TData = unknown,
 >({
-  filters,
-  searchParams,
+  filtersRef,
   setSearchParams,
   table,
   paramConfig,
@@ -71,45 +102,20 @@ export function useTableSearch<
   afterApplyParams,
 }: UseTableSearchOptions<TFilters, TData>): UseTableSearchReturn {
   const applySearch = useCallback(() => {
-    const nextParams = new URLSearchParams(searchParams)
+    const filtersLive = filtersRef.current
 
-    for (const rule of paramConfig) {
-      if (rule.kind === 'apply') {
-        rule.apply(nextParams, filters)
-        continue
-      }
-
-      const raw: unknown = filters[rule.filterKey]
-      const shouldSet =
-        rule.condition?.(filters, raw) ?? defaultShouldSetParam(filters, raw)
-
-      if (!shouldSet) {
-        nextParams.delete(rule.paramKey)
-        continue
-      }
-
-      const str = rule.transform ? rule.transform(raw) : String(raw)
-      nextParams.set(rule.paramKey, str)
-    }
-
-    afterApplyParams?.(nextParams, filters)
+    setSearchParams(prev => {
+      const nextParams = new URLSearchParams(prev.toString())
+      mergeFiltersIntoSearchParams(nextParams, filtersLive, paramConfig, afterApplyParams)
+      return nextParams
+    }, { replace: true })
 
     if (table) {
       for (const [columnId, getValue] of Object.entries(tableConfig)) {
-        table.getColumn(columnId)?.setFilterValue(getValue(filters))
+        table.getColumn(columnId)?.setFilterValue(getValue(filtersLive))
       }
     }
-
-    setSearchParams(nextParams, { replace: true })
-  }, [
-    filters,
-    searchParams,
-    setSearchParams,
-    table,
-    paramConfig,
-    tableConfig,
-    afterApplyParams,
-  ])
+  }, [filtersRef, setSearchParams, table, paramConfig, tableConfig, afterApplyParams])
 
   return { applySearch }
 }

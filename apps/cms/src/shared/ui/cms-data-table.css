@@ -6,6 +6,18 @@
 .cms-data-table {
   min-width: 0;
   width: 100%;
+  overflow-x: scroll;
+}
+
+/* 테이블 외곽 4면 보더(구 cms-data-table--border — 전 테이블 공통) */
+.cms-data-table .ant-table-container {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+}
+
+.cms-data-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none !important;
 }
 
 /* scroll.x(숫자)·고정 열 합계용 — 기본은 fixed */
@@ -96,15 +108,6 @@
   border-right: none !important;
 }
 
-/* 테이블 외곽 4면 보더 */
-.cms-data-table.cms-data-table--border .ant-table-container {
-  border: 1px solid var(--table-line, #e0e0e0);
-}
-
-.cms-data-table.cms-data-table--border .ant-table-tbody > tr:last-child > td {
-  border-bottom: none !important;
-}
-
 /* 대시보드: 전체 프로그램 진행 현황 탭 테이블 */
 .cms-data-table.cms-data-table--widget .ant-table-cell {
   vertical-align: middle;
@@ -117,13 +120,9 @@
 }
 
 .cms-data-table.cms-data-table--widget .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar) {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   text-align: center;
   border-bottom: 1px solid var(--color-border-light);
   background: #edf0f2;
-}
-
-.cms-data-table.cms-data-table--widget .ant-table-tbody > tr:last-child > td {
-  border-bottom: none !important;
 }

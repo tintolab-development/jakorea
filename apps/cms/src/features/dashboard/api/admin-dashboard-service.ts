@@ -2,6 +2,8 @@
  * 관리자 대시보드 서비스
  * Phase 4.5: 관리자 홈 대시보드
  * FR-C01: 전체 프로그램 진행 현황 7단계 세분화
+ *
+ * 데이터 소스: 현재는 `@/data/mock/*` 기반(로컬 목). API 연동 시 이 모듈에서 분기·어댑터만 교체.
  */
 
 import type { Program } from '@/types/domain'
@@ -11,6 +13,16 @@ import { getEconomyPrograms, getEconomyProgramById } from '@/data/mock/economy-p
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
 import { mockSettlements } from '@/data/mock/settlements'
+import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
+import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
+import { mockInquiries } from '@/data/mock/inquiries'
+import { mockPermissionRequests } from '@/data/mock/permission-requests'
+import {
+  mockPaymentOrderAdminProgramList,
+  mockPaymentOrderAdminInstructorList,
+} from '@/data/mock/payment-order-admin-list'
+import { mockAccountPaymentRows } from '@/data/mock/account-payments-list'
+import { SHORTCUT_ITEMS } from '@/features/dashboard/model/dashboard-settings-store'
 
 export interface ProgramProgressSummary {
   total: number
@@ -338,7 +350,7 @@ const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> =
 /** 사업 KPI 목표·위젯 공통: 달성/목표 수치 (patternIndex로 목록 간 변주) */
 function buildKpiMetricsForPattern(patternIndex: number): KpiMetric[] {
   const achievedParticipants = patternIndex % 3 === 0 ? 100 : 80
-  const targetParticipants = patternIndex % 4 === 0 ? 30 : 100
+  const targetParticipants = 100
   const achievedSchools = 100
   const targetSchools = 100
   const achievedClasses = patternIndex % 2 === 0 ? 100 : 80
@@ -420,4 +432,134 @@ export async function getKpiAchievementList(options?: {
   return educationPrograms.map((program, index) =>
     buildProgramKpiItemFromProgram(program, index)
   )
+}
+
+/** getProgramProgressStages(교육)와 동일한 lifecycle 집계 — 동기·목 데이터 전용 */
+function accumulateLifecycleStages(programs: Program[]): ProgramProgressStages {
+  const stages = {
+    studentRecruitment: 0,
+    instructorRecruitment: 0,
+    matchingCompleted: 0,
+    educationBeforeTextbook: 0,
+    educationAfterTextbook: 0,
+    educationCompleted: 0,
+    documentProcessingCompleted: 0,
+  }
+
+  programs.forEach(program => {
+    switch (program.lifecycleStatus) {
+      case 'recruiting_students':
+        stages.studentRecruitment++
+        break
+      case 'recruiting_instructors':
+        stages.instructorRecruitment++
+        break
+      case 'participant_instructor_recruiting':
+        stages.studentRecruitment++
+        stages.instructorRecruitment++
+        break
+      case 'matching_completed':
+        stages.matchingCompleted++
+        break
+      case 'participant_instructor_recruitment_completed':
+        stages.matchingCompleted++
+        break
+      case 'education_before_textbook':
+        stages.educationBeforeTextbook++
+        break
+      case 'education_after_textbook':
+        stages.educationAfterTextbook++
+        break
+      case 'education_completed':
+        stages.educationCompleted++
+        break
+      case 'document_processing_completed':
+        stages.documentProcessingCompleted++
+        break
+      default:
+        break
+    }
+  })
+
+  const total = Object.values(stages).reduce((sum, c) => sum + c, 0)
+  return { ...stages, total }
+}
+
+function getPendingActionCountsSync(): PendingActionCounts {
+  const pendingApplications = mockApplications.filter(
+    app => app.status === 'submitted' || app.status === 'reviewing'
+  ).length
+  const pendingMatchings = mockMatchings.filter(m => m.status === 'pending').length
+  const pendingSettlements = mockSettlements.filter(
+    s => s.status === 'pending' || s.status === 'calculated'
+  ).length
+  return {
+    pendingApplications,
+    pendingMatchings,
+    pendingSettlements,
+  }
+}
+
+/**
+ * 메뉴 바로가기 위젯 배지: 목 데이터 기준 미처리·모집·승인 대기 건수 (동기).
+ * API 연동 시 이 함수만 서버 집계로 교체하면 된다.
+ */
+export function getMenuShortcutBadgeCounts(): Record<string, number> {
+  const educationPrograms = getEducationPrograms()
+  const stages = accumulateLifecycleStages(educationPrograms)
+  const economyPrograms = getEconomyPrograms()
+  const economyStages = accumulateLifecycleStages(economyPrograms)
+  const geminiPrograms = educationPrograms.filter(
+    p => (p.title ?? '').includes('제미나이') || (p.mainTitle ?? '').includes('제미나이')
+  )
+  const geminiStages = accumulateLifecycleStages(geminiPrograms)
+
+  const pending = getPendingActionCountsSync()
+  const institutionPending = MOCK_APPLICANT_INSTITUTIONS.filter(s => s.approvalStatus === 'pending').length
+  const instructorApplicantPending = MOCK_APPLICANT_INSTRUCTORS.filter(s => s.approvalStatus === 'pending')
+    .length
+  const inquiryPending = mockInquiries.filter(i => i.status === 'PENDING').length
+  const permissionPending = mockPermissionRequests.filter(r => r.status === 'PENDING').length
+
+  const paymentOrderPending =
+    mockPaymentOrderAdminProgramList.filter(r => r.processingStatus === 'pending').length +
+    mockPaymentOrderAdminInstructorList.filter(r => r.processingStatus === 'pending').length
+
+  const accountPaymentPending = mockAccountPaymentRows.filter(r => r.accountPaymentStatus === 'pending').length
+
+  const mapped: Record<string, number> = {
+    'programs-all': stages.studentRecruitment + stages.instructorRecruitment,
+    'programs-general-education': stages.studentRecruitment,
+    'programs-economy': economyStages.studentRecruitment + economyStages.instructorRecruitment,
+    'programs-gemini': geminiStages.studentRecruitment + geminiStages.instructorRecruitment,
+    'programs-detail': stages.matchingCompleted,
+    'users-all': Math.min(
+      999,
+      institutionPending + instructorApplicantPending + pending.pendingApplications
+    ),
+    'users-school': institutionPending,
+    'users-instructor': instructorApplicantPending,
+    'users-admin': 0,
+    'permission-requests': permissionPending,
+    'settlement-payment-orders': paymentOrderPending,
+    'settlement-account-payments': accountPaymentPending,
+    'settlement-item-settings': 0,
+    notices: 0,
+    faq: 0,
+    inquiries: inquiryPending,
+    'template-management': 0,
+    sponsors: 0,
+    textbooks: 0,
+    performance: pending.pendingSettlements,
+    'email-history': 0,
+    'file-download-history': 0,
+    'privacy-query-history': 0,
+    'bug-issue-history': 0,
+  }
+
+  const out: Record<string, number> = {}
+  for (const item of SHORTCUT_ITEMS) {
+    out[item.id] = mapped[item.id] ?? 0
+  }
+  return out
 }

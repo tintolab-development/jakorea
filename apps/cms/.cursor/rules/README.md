@@ -16,6 +16,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 
 - [코드 스타일](./coding/code-style.md) - ESLint, Prettier, TypeScript, 파일 명명 규칙
 - [컴포넌트 패턴](./coding/component-patterns.md) - 컴포넌트 관심사 분리 및 패턴
+- [목록 페이지 구성 (FilterTableLayout + useTablePage)](./coding/list-page-composition.mdc) - 필터·테이블 화면 재사용 원칙 (영문, Cursor 규칙)
 - [상태 드롭다운 셀](./coding/status-dropdown-cell.md) - 테이블용 상태 배지·드롭다운 셀(StatusDropdownCell) 아키텍처, **활성 래퍼·132×33 태그(tag132)**, 새 테이블/도메인 확장 방법
 - [Custom Hooks](./coding/custom-hooks.md) - Custom Hooks 작성 가이드
 - [타입 안전성 및 일관성](./coding/type-safety-and-consistency.md) - Deprecated 코드 사용 금지, 타입 일관성 유지
@@ -25,6 +26,7 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 ## 🎨 UI/UX
 
 - [UI 원칙](./design/ui-principles.md) - 상태 표시 원칙 등
+- [Modal viewport centering](./design/modal-viewport-centering.md) — **모든 모달은 전체 화면(뷰포트) 기준 중앙 정렬** (English rule)
 - 모달 구현 원칙: **`ContentModal` 우선 사용**, **`TealHeaderModal` 직접 사용은 deprecated**
 - [이벤트 처리](./design/event-handling.md) - 이벤트 버블링 및 전파 방지
 - [색상 시스템](./design/color-system.md) - 색상 시스템 가이드
@@ -71,6 +73,8 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 - [개발 프로세스](./process/development-process.md) - Phase별 개발 프로세스
 - [진행 상황 관리](./process/progress-management.md) - PROGRESS.md 기록 규칙
 - [역할별 Persona](./process/persona.md) - 시니어 PM, 기획자, UX/UI 디자이너, 개발자 역할 정의
+- [관리자 공지 등록·수정 모달 UI](./process/admin-notice-form-modal-spec.md) - `ContentModal` large, 필터·폼 간격, 에디터·첨부 행 치수
+- [수료증/참여인증서 발급](./process/member-program-certificate-issue-spec.md) - 발급 자격·문서 종류 기획, 화면 고정 안내 미삽입 정책
 
 ---
 

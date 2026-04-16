@@ -72,6 +72,15 @@
   padding: 0 !important;
 }
 
+/*
+ * 과거 `centered` + 위 flex를 동시에 쓸 때 Ant Design의 `ant-modal-centered::before`(수직 정렬용)가
+ * flex 아이템으로 남아 대화상자가 밀리는 경우를 막음. (TealHeaderModal은 이제 centered=false 권장)
+ */
+.ant-modal-wrap.ant-modal-centered:has(.teal-header-modal):not(:has(.teal-header-modal--full))::before {
+  display: none !important;
+  content: none !important;
+}
+
 .teal-header-modal.ant-modal {
   padding-bottom: 0;
   top: 0;
@@ -149,36 +158,6 @@
   flex-shrink: 0;
   position: relative;
   justify-content: center;
-}
-
-/* 대시보드 설정: 최대 높이 720px, 바디만 스크롤 */
-.teal-header-modal--dashboard-settings .ant-modal-content {
-  max-height: 720px;
-  display: flex;
-  flex-direction: column;
-}
-
-.teal-header-modal--dashboard-settings .ant-modal-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.teal-header-modal--dashboard-settings .teal-header-modal__header {
-  flex-shrink: 0;
-}
-
-.teal-header-modal--dashboard-settings .teal-header-modal__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  max-height: none;
-}
-
-.teal-header-modal--dashboard-settings .teal-header-modal__footer {
-  flex-shrink: 0;
 }
 
 /* 수강 신청 학교 목록 상세 모달: 바디 고정 높이 830px, 바디만 스크롤 */
@@ -278,10 +257,10 @@
 /* 바디 */
 .teal-header-modal__body {
   display: flex;
-  padding: 30px;
+  padding-top: 16px !important;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-30);
+  gap: 16px;
   align-self: stretch;
   background: var(--color-bg-base);
   width: 100%;

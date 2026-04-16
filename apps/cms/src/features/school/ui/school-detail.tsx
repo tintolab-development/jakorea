@@ -21,7 +21,7 @@ import {
 import type { School, Application } from '@/types/domain'
 import type { User } from '@/types/user'
 import { domainColorsHex } from '@/shared/constants/colors'
-import { useUserStore } from '@/features/user/model/user-store'
+import { useUserStore } from '@/features/user/shared/model/user-store'
 import { mockApplications, mockSchedules, mockMatchings } from '@/data/mock'
 import { mockProgramsMap } from '@/data/mock'
 import { RoleBadge } from '@/shared/ui'

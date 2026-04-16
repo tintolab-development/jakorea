@@ -8,6 +8,24 @@ import { useState, useCallback } from 'react'
 /** 행안부 API는 브라우저에서 CORS 제한이 있을 수 있어, 백엔드 프록시 사용을 권장합니다. */
 const JUSO_ADDR_LINK_API_URL = 'https://www.juso.go.kr/addrlink/addrLinkApi.do'
 
+/**
+ * 주소기반산업지원서비스(business) 도로명주소 검색 API 엔드포인트
+ * @see https://business.juso.go.kr/addrlink/devAddrLinkApi.do (개발) / addrLinkApi.do (연계)
+ */
+export const JUSO_BUSINESS_ADDR_LINK_API_URL =
+  'https://business.juso.go.kr/addrlink/addrLinkApi.do'
+
+/**
+ * Vite 환경 변수에서 주소 API confmKey 읽기.
+ * `VITE_ADDRESS_API_KEY` 우선, 없으면 `VITE_JUSO_CONFM_KEY`(행안부 문서·샘플 명칭).
+ * 파일은 **`apps/cms/.env`** 또는 **`apps/cms/.env.local`** (Vite 기본 `envDir`).
+ */
+export function readJusoConfmKeyFromEnv(): string {
+  const a = import.meta.env.VITE_ADDRESS_API_KEY
+  const b = import.meta.env.VITE_JUSO_CONFM_KEY
+  return String(a ?? b ?? '').trim()
+}
+
 /** API 응답의 juso 항목 */
 export interface JusoAddressRow {
   /** 도로명주소 */
@@ -67,6 +85,11 @@ export interface UseJusoAddressSearchOptions {
   confmKey: string
   /** 페이지당 건수 (기본 10, 최대 100) */
   countPerPage?: number
+  /**
+   * 검색 API 전체 URL (미지정 시 www.juso.go.kr addrLink)
+   * 사업용 키는 `JUSO_BUSINESS_ADDR_LINK_API_URL` 또는 `VITE_JUSO_ADDRESS_API_URL` 사용
+   */
+  apiUrl?: string
 }
 
 export interface UseJusoAddressSearchReturn {
@@ -102,7 +125,11 @@ export interface UseJusoAddressSearchReturn {
 export function useJusoAddressSearch(
   options: UseJusoAddressSearchOptions
 ): UseJusoAddressSearchReturn {
-  const { confmKey, countPerPage = 10 } = options
+  const {
+    confmKey,
+    countPerPage = 10,
+    apiUrl = import.meta.env.VITE_JUSO_ADDRESS_API_URL || JUSO_ADDR_LINK_API_URL,
+  } = options
   const [addresses, setAddresses] = useState<JusoAddressItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -121,7 +148,9 @@ export function useJusoAddressSearch(
         return { addresses: [], totalCount: 0 }
       }
       if (!confmKey) {
-        const err = new Error('행안부 주소 API 승인키가 설정되지 않았습니다.')
+        const err = new Error(
+          '행안부 주소 API 승인키가 설정되지 않았습니다. apps/cms/.env(또는 .env.local)에 VITE_ADDRESS_API_KEY 또는 VITE_JUSO_CONFM_KEY를 넣은 뒤 개발 서버를 재시작해 주세요.'
+        )
         setError(err)
         setAddresses([])
         setTotalCount(0)
@@ -138,7 +167,7 @@ export function useJusoAddressSearch(
           keyword: trimmed,
           resultType: 'json',
         })
-        const res = await fetch(`${JUSO_ADDR_LINK_API_URL}?${params.toString()}`)
+        const res = await fetch(`${apiUrl}?${params.toString()}`)
         const data = await res.json()
 
         if (!res.ok) {
@@ -171,7 +200,7 @@ export function useJusoAddressSearch(
         setLoading(false)
       }
     },
-    [confmKey, countPerPage]
+    [apiUrl, confmKey, countPerPage]
   )
 
   const reset = useCallback(() => {

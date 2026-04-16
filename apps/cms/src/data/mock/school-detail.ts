@@ -9,6 +9,10 @@ import { mockApplications } from './applications'
 import { mockProgramsMap } from './programs'
 import { mockSchools } from './schools'
 import type { Application } from '@/types/domain'
+import {
+  type ProgramEnrollmentDisplayStatus,
+  programEnrollmentDisplayConfig,
+} from '@/shared/constants/status'
 
 export interface SchoolDetailStats {
   applicationCount: number
@@ -95,12 +99,7 @@ export interface TeacherDetailData {
   settlementOverview?: SettlementOverviewData
 }
 
-export type TeachingProgramStatus =
-  | 'WAITING_RESULT'
-  | 'REJECTED'
-  | 'EDUCATION_SCHEDULED'
-  | 'EDUCATION_IN_PROGRESS'
-  | 'PROGRAM_ENDED'
+export type TeachingProgramStatus = ProgramEnrollmentDisplayStatus
 
 export type TeachingSettlementStatus = 'na' | 'pending' | 'partial' | 'completed'
 
@@ -113,13 +112,8 @@ export interface TeachingHistoryRow {
   managerName: string
 }
 
-export const TEACHING_PROGRAM_STATUS_LABELS: Record<TeachingProgramStatus, string> = {
-  WAITING_RESULT: '신청 결과 대기 중',
-  REJECTED: '신청 반려',
-  EDUCATION_SCHEDULED: '교육 진행 예정',
-  EDUCATION_IN_PROGRESS: '교육 진행 중',
-  PROGRAM_ENDED: '프로그램 종료',
-}
+export const TEACHING_PROGRAM_STATUS_LABELS: Record<TeachingProgramStatus, string> =
+  programEnrollmentDisplayConfig.labels
 
 export type SettlementRowStatus = 'pending' | 'reviewing' | 'completed' | 'rejected'
 
@@ -523,8 +517,15 @@ function generateTeachingHistory(seedIdx: number): TeachingHistoryRow[] {
   const PROGRAM_NAME = '2026 SAP-함께 성장하JA! 참여 고등학생 모집 안내 (IT, SW 멘토링)'
   const MANAGER = '이순신 매니저'
   const statuses: TeachingProgramStatus[] = [
-    'WAITING_RESULT', 'REJECTED', 'EDUCATION_SCHEDULED', 'EDUCATION_SCHEDULED',
-    'EDUCATION_IN_PROGRESS', 'PROGRAM_ENDED', 'PROGRAM_ENDED', 'PROGRAM_ENDED', 'PROGRAM_ENDED',
+    'WAITING_RESULT',
+    'DOCUMENT_PASS',
+    'EDUCATION_SCHEDULED',
+    'EDUCATION_SCHEDULED',
+    'EDUCATION_IN_PROGRESS',
+    'PROGRAM_ENDED',
+    'INTERVIEW_FAILED',
+    'REJECTED',
+    'PROGRAM_ENDED',
   ]
   const settlements: TeachingSettlementStatus[] = [
     'na', 'na', 'pending', 'pending', 'partial', 'completed', 'completed', 'completed', 'completed',

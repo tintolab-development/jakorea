@@ -3,15 +3,16 @@
  * 프로그램별 답변 대기 / 답변 완료 / 전체 건수를 테이블로 표시
  */
 
-import { Card, Button, Table } from 'antd'
+import { Card, Button, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useNavigate } from 'react-router-dom'
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
+
+const { Text } = Typography
 
 const WIDGET_KEY = 'customer-inquiry-status-widget'
 const EMPTY_IDS: string[] = []
@@ -63,7 +64,8 @@ const MOCK_PROGRAM_INQUIRIES: ProgramInquiryRow[] = [
 ]
 
 export function CustomerInquiryStatusWidget() {
-  const navigate = useNavigate()
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const inquiryNotificationReadProgramKeys =
@@ -76,6 +78,27 @@ export function CustomerInquiryStatusWidget() {
     if (allowedProgramIds.length === 0) return MOCK_PROGRAM_INQUIRIES
     return MOCK_PROGRAM_INQUIRIES
   }, [allowedProgramIds])
+
+  const totalCount = data.length
+  const equalWidth = halfColumn ? '25%' : undefined
+
+  useLayoutEffect(() => {
+    const root = cardRef.current
+    if (!root) {
+      setHalfColumn(false)
+      return
+    }
+    const slot = root.closest('.dashboard-widget-slot')
+    if (!slot) {
+      setHalfColumn(false)
+      return
+    }
+    const sync = () => setHalfColumn(slot.getAttribute('data-col-span') === '12')
+    sync()
+    const mo = new MutationObserver(sync)
+    mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
+    return () => mo.disconnect()
+  }, [])
 
   const handlePendingClick = (programKey: string) => {
     console.log('handlePendingClick programKey', programKey)
@@ -95,14 +118,19 @@ export function CustomerInquiryStatusWidget() {
         dataIndex: 'programName',
         key: 'programName',
         ellipsis: true,
-        width: '50%',
+        width: equalWidth ?? '50%',
         align: 'center',
+        render: (value: string) => (
+          <span className="dashboard-widget-table__program-name" title={value}>
+            {value}
+          </span>
+        ),
       },
       {
         title: '답변 대기',
         dataIndex: 'pending',
         key: 'pending',
-        width: '17%',
+        width: equalWidth ?? '17%',
         align: 'center',
         render: (value: number, record: ProgramInquiryRow) =>
           value > 0 ? (
@@ -126,7 +154,7 @@ export function CustomerInquiryStatusWidget() {
         title: '답변 완료',
         dataIndex: 'answered',
         key: 'answered',
-        width: '17%',
+        width: equalWidth ?? '17%',
         align: 'center',
         render: (value: number) => (
           <span className="dashboard-widget-table__count--muted">{value}건</span>
@@ -136,22 +164,26 @@ export function CustomerInquiryStatusWidget() {
         title: '전체',
         dataIndex: 'total',
         key: 'total',
-        width: '16%',
+        width: equalWidth ?? '16%',
         align: 'center',
         render: (value: number) => (
           <span className="dashboard-widget-table__count--muted">{value}건</span>
         ),
       },
     ],
-    [navigate, inquiryNotificationReadProgramKeys, setInquiryNotificationReadProgramKey]
+    [equalWidth, inquiryNotificationReadProgramKeys, setInquiryNotificationReadProgramKey]
   )
 
   return (
     <Card
+      ref={cardRef}
       className="dashboard-widget-table dashboard-widget-table--customer-inquiry"
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">프로그램 별 문의 현황</span>
+          <Text type="secondary" className="dashboard-widget-table__header-total-count">
+            총 {totalCount}건
+          </Text>
         </WidgetTitleWithHandle>
       }
       extra={

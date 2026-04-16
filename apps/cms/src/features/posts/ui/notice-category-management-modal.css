@@ -1,0 +1,271 @@
+/**
+ * 공지 카테고리 관리 모달 — ContentModal 600×502, 테이블 열/행 시안
+ */
+
+/*
+ * 뷰포트 정중앙 — 사이드바·메인 스크롤과 무관하게 화면 기준 정렬
+ * (teal-header-modal 기본 .ant-modal { top: 0 } 등과 함께 쓰일 때 어긋남 방지)
+ */
+.ant-modal-wrap:has(.ant-modal.notice-category-management-modal),
+.ant-modal-wrap:has(.ant-modal.notice-category-delete-blocked-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.notice-category-management-modal)
+  .ant-modal.notice-category-management-modal,
+.ant-modal-wrap:has(.ant-modal.notice-category-delete-blocked-modal)
+  .ant-modal.notice-category-delete-blocked-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.notice-category-delete-blocked-modal .ant-modal-content {
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+}
+
+.content-modal.notice-category-management-modal.ant-modal .ant-modal-content {
+  box-sizing: border-box;
+  width: 600px;
+  height: 502px;
+  max-height: min(502px, 100vh);
+  padding: 28px 30px 34px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-modal.notice-category-management-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 타이틀「카테고리 관리」↔ 테이블 간격 30px (content-modal 기본 body padding 0) */
+/* 세로 스크롤은 `__table-scroll` 한 곳 — 목록·등록 행이 함께 움직임 */
+.content-modal.notice-category-management-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+  padding-top: 30px;
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+/* 테이블 ↔ 푸터 버튼(닫기·카테고리 추가) 간격 30px */
+.content-modal.notice-category-management-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 30px;
+  padding: 0;
+  justify-content: flex-end;
+}
+
+.notice-category-management-modal__table-wrap {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* thead + tbody + summary(등록)까지 한 덩어리로 세로 스크롤 */
+.notice-category-management-modal__table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(300px, calc(100vh - 220px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.notice-category-management-modal__table.ant-table-wrapper {
+  width: 100%;
+}
+
+/* 스크롤 시 컬럼 헤더 유지 */
+.notice-category-management-modal__table-scroll
+  .notice-category-management-modal__table
+  .ant-table-thead
+  > tr
+  > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.notice-category-management-modal__table.cms-data-table.ant-table-wrapper,
+.notice-category-management-modal__table .ant-table {
+  font-family: Pretendard, sans-serif;
+}
+
+.notice-category-management-modal__table .ant-table-container {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0;
+}
+
+.notice-category-management-modal__table .ant-table-thead > tr > th {
+  box-sizing: border-box;
+  height: 50px;
+  padding: 0 8px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--default-BK, #3d3d3d);
+}
+
+/* cms-data-table 기본(54px)보다 구체적으로 덮어 시안 64px·버튼 행 가운데 정렬 · 행 좌우 8px */
+.notice-category-management-modal__table.cms-data-table .ant-table-tbody > tr > td {
+  box-sizing: border-box;
+  height: 64px !important;
+  padding: 12px 8px !important;
+  vertical-align: middle !important;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.notice-category-management-modal__table .ant-table-tbody > tr > td:last-child,
+.notice-category-management-modal__table .ant-table-thead > tr > th:last-child {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.notice-category-management-modal__table .ant-table-tbody > tr > td:first-child {
+  border-inline-end: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.notice-category-management-modal__table .ant-table-thead > tr > th:first-child {
+  border-inline-end: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.notice-category-management-modal__name-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.notice-category-management-modal__actions {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+}
+
+/* Popconfirm 등 래퍼가 세로로 쌓이지 않도록 */
+.notice-category-management-modal__actions > * {
+  flex: 0 0 auto;
+}
+
+/* Popconfirm 래퍼가 블록이 되어 버튼이 세로로 쌓이는 경우 방지 */
+.notice-category-management-modal__actions .ant-popconfirm,
+.notice-category-management-modal__actions .ant-popover-open {
+  display: inline-flex !important;
+  align-items: center;
+}
+
+.notice-category-management-modal__action-btn.cms-button.ant-btn {
+  border-radius: 6px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.notice-category-management-modal__compose .cms-input {
+  width: 100%;
+}
+
+.notice-category-management-modal__compose .cms-input .ant-input {
+  border-radius: 6px;
+}
+
+.notice-category-management-modal__table .ant-table-summary .ant-table-cell {
+  box-sizing: border-box;
+  min-height: 64px;
+  padding: 12px 8px !important;
+  vertical-align: middle !important;
+  text-align: center;
+  background: var(--main-WT, #fff) !important;
+}
+
+.notice-category-management-modal__summary .ant-table-cell .notice-category-management-modal__actions {
+  justify-content: center;
+}
+
+/* 카테고리 삭제 불가 — 시안 600×(콘텐츠 허그), 패딩 상26·좌우30·하34, 본문–푸터 갭 30px(content-modal 푸터 margin-top) */
+.content-modal.notice-category-delete-blocked-modal.ant-modal .ant-modal-content {
+  box-sizing: border-box;
+  width: 600px;
+  max-width: calc(100vw - 32px);
+  padding: 26px 30px 34px;
+}
+
+/* 제목 ↔ 본문: 공통 16px보다 좁게 */
+.content-modal.notice-category-delete-blocked-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 8px;
+}
+
+.notice-category-delete-blocked-modal .content-modal__description {
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.notice-category-delete-blocked-modal__copy {
+  margin: 0;
+  min-height: 48px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.notice-category-delete-blocked-modal__copy p {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.notice-category-delete-blocked-modal__copy p + p {
+  margin-top: 0;
+}

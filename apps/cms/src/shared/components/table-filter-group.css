@@ -1,19 +1,91 @@
 .table-filter-group__container {
+  --table-filter-field-gap: 12px;
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: var(--table-filter-field-gap);
   align-items: flex-end;
   width: 100%;
 }
 
 .table-filter-group__fields-container {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
+  width: 100%;
+}
+
+.table-filter-group__fields-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--table-filter-field-gap);
+  width: 100%;
+  min-width: 0;
+}
+
+/* 다행: 가로 꽉 참 + 칸 사이 gap 12px (fr 분배) */
+.table-filter-group__fields-grid-row {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  gap: var(--table-filter-field-gap);
+  align-items: end;
+}
+
+.table-filter-group__grid-cell {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .table-filter-group__fields-shell {
   flex: 0 0 auto;
   white-space: nowrap;
+}
+
+/* 다행 마지막 줄: 필터 그리드가 남는 가로를 먹고, 조회와 12px 간격 */
+.table-filter-group__fields-row-with-action {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--table-filter-field-gap);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.table-filter-group__fields-grid-row--stretch {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.table-filter-group__fields-shell--inline {
+  flex: 0 0 160px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+}
+
+.table-filter-group__shell-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+/* 필터 영역 조회 — 시안 160×44 (CmsButton large 기본 140px 덮어씀) */
+.table-filter-group__fields-shell .table-filter-group__search-button.cms-button.cms-button--large {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  box-sizing: border-box;
 }
 
 .table-filter-group__fields-inner.ant-row {
@@ -22,7 +94,7 @@
   max-width: 100%;
   flex-wrap: nowrap;
   align-items: flex-end;
-  gap: 12px;
+  gap: var(--table-filter-field-gap);
 }
 
 .table-filter-group__fields-inner.ant-row > .ant-col {
@@ -38,8 +110,37 @@
 /* unified-filter-card의 전역 select min-width(280px)가 table-filter-group에서 gap을 먹지 않도록 무효화 */
 .table-filter-group__fields-inner .unified-filter-card__field--select,
 .table-filter-group__fields-inner .cms-select,
-.table-filter-group__fields-inner .ant-select {
+.table-filter-group__fields-inner .ant-select,
+.table-filter-group__grid-cell .unified-filter-card__field--select,
+.table-filter-group__grid-cell .cms-select,
+.table-filter-group__grid-cell .ant-select {
   min-width: 0 !important;
   width: 100% !important;
   max-width: 100%;
+}
+
+.table-filter-group__grid-cell .unified-filter-card__field {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/*
+ * 기간(분리 세그먼트): `width` prop 없이 style만 100%일 때도 세그먼트가 218px에 묶이지 않게
+ * (CmsDateRangePicker는 `width` 지정 시 cms-datepicker--explicit-width와 동일 효과)
+ */
+.table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split .cms-datepicker__segment {
+  max-width: none;
+}
+
+.table-filter-group__address-region-selects {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.table-filter-group__address-region-selects > .cms-select {
+  flex: 1 1 0;
+  min-width: 0;
 }

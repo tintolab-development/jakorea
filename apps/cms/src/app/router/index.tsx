@@ -68,11 +68,9 @@ const InstructorSchedulePage = lazyLoad(
   () => import('@/pages/instructors/instructor-schedule-page')
 )
 const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
-const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
-const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
-const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-page'))
-const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
-const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
+const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
+const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
+const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
@@ -111,14 +109,15 @@ const EducationRecordListPage = lazyLoad(
   () => import('@/pages/education-records/education-record-list-page')
 )
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
-const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
 const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
 const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
+const AdminNoticeDetailPage = lazyLoad(() => import('@/pages/posts/admin-notice-detail-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
+const AdminFaqDetailPage = lazyLoad(() => import('@/pages/posts/admin-faq-detail-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
 const PermissionCustomizationPage = lazyLoad(
   () => import('@/pages/admin/settings/permission-customization-page')
@@ -129,6 +128,11 @@ const PermissionRequestListPage = lazyLoad(
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
+const FileDownloadHistoryPage = lazyLoad(() => import('@/pages/logs/file-download-history-page'))
+const PersonalInfoAccessHistoryPage = lazyLoad(
+  () => import('@/pages/logs/personal-info-access-history-page')
+)
+const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
 
 function LegacyPostsRedirect({
   kind,
@@ -214,21 +218,27 @@ export const router = createBrowserRouter([
       },
       {
         path: 'sponsors',
-        children: [
-          { index: true, element: <SponsorListPage /> },
-          { path: 'new', element: <SponsorFormPage /> },
-          { path: ':id', element: <SponsorDetailPage /> },
-          { path: ':id/edit', element: <SponsorFormPage /> },
-        ],
+        element: <Navigate to="/sponsor" replace />,
       },
       {
-        path: 'schools',
-        children: [
-          { index: true, element: <Navigate to="/users/list?kind=institutions" replace /> },
-          { path: 'new', element: <SchoolFormPage /> },
-          { path: ':id', element: <SchoolDetailPage /> },
-          { path: ':id/edit', element: <SchoolFormPage /> },
-        ],
+        path: 'sponsors/*',
+        element: <Navigate to="/sponsor" replace />,
+      },
+      {
+        path: 'data-management',
+        element: <Navigate to="/sponsor" replace />,
+      },
+      {
+        path: 'sponsor',
+        element: <SponsorDataPage />,
+      },
+      {
+        path: 'textbook',
+        element: <TextbookPage />,
+      },
+      {
+        path: 'detailed-program',
+        element: <DetailedProgramPage />,
       },
       {
         path: 'programs',
@@ -364,7 +374,6 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/users/list?kind=all" replace /> },
           { path: 'list', element: <UserListPage /> },
-          { path: 'participants', element: <ParticipantListPage /> },
           {
             path: 'instructors',
             element: <Navigate to="/users/list?kind=instructors" replace />,
@@ -477,6 +486,8 @@ export const router = createBrowserRouter([
               { index: true, element: <Navigate to="/admin/posts/notices" replace /> },
               { path: 'categories', element: <AdminCategoryPage /> },
               { path: 'notices', element: <AdminNoticeListPage /> },
+              { path: 'notices/:id', element: <AdminNoticeDetailPage /> },
+              { path: 'faq/:id', element: <AdminFaqDetailPage /> },
               { path: 'faq', element: <AdminFAQPage /> },
               { path: 'inquiries', element: <AdminInquiryPage /> },
             ],
@@ -523,7 +534,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: 'audit',
-                element: <Navigate to="/logs/bug" replace />,
+                element: <Navigate to="/logs/file-download-history" replace />,
               },
             ],
           },
@@ -545,19 +556,19 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="bug" replace />,
+            element: <Navigate to="file-download-history" replace />,
           },
           {
-            path: 'bug',
-            element: (
-              <ComingSoonPage title="버그" description="버그 관리 기능은 현재 준비 중입니다." />
-            ),
+            path: 'file-download-history',
+            element: <FileDownloadHistoryPage />,
           },
           {
-            path: 'issue',
-            element: (
-              <ComingSoonPage title="이슈" description="이슈 관리 기능은 현재 준비 중입니다." />
-            ),
+            path: 'personal-info-access-history',
+            element: <PersonalInfoAccessHistoryPage />,
+          },
+          {
+            path: 'bug-issue-history',
+            element: <BugIssueHistoryPage />,
           },
         ],
       },

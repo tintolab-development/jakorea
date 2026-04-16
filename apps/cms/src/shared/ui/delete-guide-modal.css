@@ -1,0 +1,57 @@
+/**
+ * DeleteGuideModal 본문·입력 (셸은 content-modal.css)
+ * teal-header-modal__body의 flex gap(30px)이 본문·입력 사이에 들어가지 않도록 스택으로 한 덩어리화
+ */
+
+.delete-guide-modal__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+}
+
+.delete-guide-modal__body {
+  flex: 0 1 auto;
+  min-height: 0;
+  text-align: left;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--color-text-primary);
+}
+
+.delete-guide-modal__line {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.delete-guide-modal__line + .delete-guide-modal__line {
+  margin-top: 12px;
+}
+
+.delete-guide-modal__bold {
+  font-weight: 700;
+}
+
+.delete-guide-modal__confirm-input-wrap {
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: 0;
+}
+
+/* 푸터 버튼: 긴 확인 문구 대응 */
+.delete-guide-modal .content-modal__footer-actions .ant-btn,
+.delete-guide-modal .content-modal__footer-actions button {
+  box-sizing: border-box;
+  min-width: 120px;
+  width: auto;
+  max-width: 100%;
+  height: 40px;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}

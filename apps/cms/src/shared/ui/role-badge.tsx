@@ -55,8 +55,8 @@ const roleConfig: Record<
 
 const adminLevelLabels: Record<AdminLevel, string> = {
   MASTER: '마스터 관리자',
-  ADMIN: '중간 관리자',
-  GENERAL: '일반 관리자',
+  ADMIN: '중간관리자(PM/파트너)',
+  GENERAL: '뷰어',
 }
 
 const programRoleLabels: Record<ProgramRole, string> = {

@@ -144,7 +144,7 @@ const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
 
 const SESSION_STATUSES: ParticipatingSchoolSessionStatusKey[] = ['completed', 'pending', 'not_planned']
 
-/** 3월 중 하루: 캘린더 "외 n개의 일정" 확인용 — 이 날짜에 4개 학교 일정이 겹침 */
+/** 3월 중 하루: 캘린더 "외 N개의 항목" 확인용 — 이 날짜에 4개 학교 일정이 겹침 */
 const MARCH_MULTI_DAY = '2026.03.12'
 
 function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
@@ -171,7 +171,7 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   return sessions
 }
 
-/** 3월 12일 한 날에 처음 4개 학교에 일정 1건 추가 (월간 캘린더 "외 n개의 일정" 노출용) */
+/** 3월 12일 한 날에 처음 4개 학교에 일정 1건 추가 (월간 캘린더 "외 N개의 항목" 노출용) */
 function addMarchMultiDaySessions(
   sessions: ParticipatingSchoolSession[],
   rowIndex: number,

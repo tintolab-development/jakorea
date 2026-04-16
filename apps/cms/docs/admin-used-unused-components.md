@@ -453,7 +453,7 @@
 - `shared/components/interview-status-badge.tsx`
 - `shared/components/permission-button.tsx`
 - `shared/components/program-category-badge.tsx`
-- `shared/components/program-enrollment-status-badge.tsx`
+- `shared/components/status-badge.tsx`
 - `shared/components/program-lifecycle-status-cell.tsx`
 - `shared/components/session-format-badge.tsx`
 

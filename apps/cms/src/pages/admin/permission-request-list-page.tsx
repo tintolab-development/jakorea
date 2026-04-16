@@ -4,11 +4,12 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { Tabs, message } from 'antd'
-import { MembersPermissionList } from '@/features/user/ui/permission-management/members-permission-list'
-import { UserDetailFullPageModal } from '@/features/user/ui/user-detail-fullpage-modal'
-import { useUserStore } from '@/features/user/model/user-store'
+import { MembersPermissionList } from '@/features/user/permission-management/members-permission-list'
+import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-modal'
+import { useUserStore } from '@/features/user/shared/model/user-store'
 import { userRoleToBasicInfoEntrySource } from '@/shared/config/member-list-kinds'
-import type { UserDetailPermissionRole } from '@/features/user/ui/user-detail-fullpage-modal'
+import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
+import { updateMockUserById } from '@/data/mock/users'
 import './permission-request-page.css'
 
 export function PermissionRequestListPage() {
@@ -53,6 +54,7 @@ export function PermissionRequestListPage() {
 
   const handlePermissionApprove = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      updateMockUserById(ctx.userId, { permissionApprovalStatus: 'APPROVED' })
       message.success(
         ctx.permissionRole === 'instructor'
           ? '강사 권한 신청을 승인했습니다.'
@@ -65,6 +67,7 @@ export function PermissionRequestListPage() {
 
   const handlePermissionReject = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      updateMockUserById(ctx.userId, { permissionApprovalStatus: 'REJECTED' })
       message.success(
         ctx.permissionRole === 'instructor'
           ? '강사 권한 신청을 반려했습니다.'
