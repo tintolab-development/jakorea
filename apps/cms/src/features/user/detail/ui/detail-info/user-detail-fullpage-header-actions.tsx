@@ -16,13 +16,15 @@ import {
 } from '@/features/user/detail/lib/use-personal-info-toggle'
 import { PermissionHeaderActions } from './permission-header-actions'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
-import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
-import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   parseUserBasicInfoEntryQuery,
   resolveUserBasicInfoBodyKey,
   USER_BASIC_INFO_ENTRY_QUERY_KEY,
 } from '@/features/user/detail/ui/user-basic-info-section'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  canEditAdminMemberInfo,
+} from '@/features/user/shared/lib/admin-provisioned-member-policy'
 
 export type UserDetailPermissionRole = 'instructor' | 'admin'
 
@@ -56,6 +58,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     onWithdraw,
     onOpenWithdrawConfirm,
   } = props
+  const currentUser = useAuthStore(state => state.user)
 
   const personalInfoButton = usePersonalInfoToggle({
     personalInfoRevealed,
@@ -74,8 +77,10 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   const actions = getDefaultHeaderActions({
     viewKind: headerLayout.viewKind,
+    displayUser,
     onWithdraw: pageShell.basicInfoEditing ? undefined : onWithdraw,
     onOpenWithdrawConfirm,
+    onOpenInstructorPermissionRevoke: pageShell.onOpenInstructorPermissionRevoke,
   })
 
   const entryFromQuery = parseUserBasicInfoEntryQuery(
@@ -86,23 +91,15 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     entryFromQuery,
     displayUser.role
   )
-  const showMemberInlineEdit =
-    shouldShowCmsMemberInfoEditButton(displayUser) && basicBodyKey === 'all_users'
-  const showSchoolInstitutionInlineEdit =
-    displayUser.role === 'SCHOOL' && basicBodyKey === 'institution'
-  const showSchoolTeacherAdminCommentEdit =
-    Boolean(onWithdraw) &&
-    displayUser.role === 'INSTRUCTOR' &&
-    (resolveInstructorMemberProfile(displayUser) ?? 'instructor_only') === 'school_teacher' &&
-    basicBodyKey === 'instructor'
+  const canInlineEdit =
+    basicBodyKey === 'all_users' ||
+    basicBodyKey === 'institution' ||
+    basicBodyKey === 'instructor' ||
+    (basicBodyKey === 'admin' && canEditAdminMemberInfo(currentUser, displayUser))
 
-  const showInlineEditStart =
-    !pageShell.basicInfoEditing &&
-    (showMemberInlineEdit || showSchoolInstitutionInlineEdit || showSchoolTeacherAdminCommentEdit)
+  const showInlineEditStart = !pageShell.basicInfoEditing && canInlineEdit
 
-  const showInlineEditControls =
-    pageShell.basicInfoEditing &&
-    (showMemberInlineEdit || showSchoolInstitutionInlineEdit || showSchoolTeacherAdminCommentEdit)
+  const showInlineEditControls = pageShell.basicInfoEditing && canInlineEdit
 
   const inlineEditCluster = showInlineEditControls ? (
     <>

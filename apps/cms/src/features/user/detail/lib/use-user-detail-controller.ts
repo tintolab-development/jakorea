@@ -27,8 +27,14 @@ import type { User } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
-import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
+  canAccessAdminCommentInAdminDetail,
+  canEditAdminMemberInfo,
+  shouldShowCmsMemberInfoEditButton,
+} from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import {
+  draftToAdminCommentAndInstructorFeePatch,
+  draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToBasicInfoPatch,
   draftToSchoolAdminCommentOnlyPatch,
   draftToSchoolInstitutionBasicInfoPatch,
@@ -46,6 +52,9 @@ import {
 import { MESSAGES } from '@/shared/constants'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+
+export type InstructorPermissionRevokeNotifyTiming = 'immediate' | 'manual'
 
 export type UserDetailControllerModalMode = 'default' | 'permission'
 
@@ -77,6 +86,7 @@ export function useUserDetailController({
 }: UseUserDetailControllerParams) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const currentUser = useAuthStore(state => state.user)
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
@@ -92,6 +102,7 @@ export function useUserDetailController({
     null
   )
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
+  const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
 
   useUserDetailUrlSync({
     open,
@@ -110,6 +121,7 @@ export function useUserDetailController({
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
       setBasicInfoSaveLoading(false)
+      setInstructorPermissionRevokeOpen(false)
     }
   }, [open])
 
@@ -119,6 +131,7 @@ export function useUserDetailController({
     setBasicInfoEditing(false)
     setBasicInfoDraft(null)
     setBasicInfoSaveLoading(false)
+    setInstructorPermissionRevokeOpen(false)
   }, [displayUser?.id])
 
   useEffect(() => {
@@ -230,7 +243,11 @@ export function useUserDetailController({
     const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
 
     if (displayUser.role === 'SCHOOL' && bodyKey === 'institution') {
-      setBasicInfoDraft(userToSchoolInstitutionEditDraft(displayUser))
+      if (shouldShowCmsMemberInfoEditButton(displayUser)) {
+        setBasicInfoDraft(userToSchoolInstitutionEditDraft(displayUser))
+      } else {
+        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
+      }
       setBasicInfoEditing(true)
       setTabState({ lnb: 'detail-info' })
       setSearchParams(
@@ -246,32 +263,55 @@ export function useUserDetailController({
       return
     }
 
-    const instructorProfile = resolveInstructorMemberProfile(displayUser)
-    if (
-      displayUser.role === 'INSTRUCTOR' &&
-      instructorProfile === 'school_teacher' &&
-      bodyKey === 'instructor'
-    ) {
+    if (displayUser.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
+      if (shouldShowCmsMemberInfoEditButton(displayUser)) {
+        setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
+      } else {
+        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
+      }
+      setBasicInfoEditing(true)
+      setTabState({ lnb: 'detail-info' })
+      setSearchParams(
+        prev => {
+          const nextParams = new URLSearchParams(prev)
+          if (displayUser.id) nextParams.set('id', displayUser.id)
+          nextParams.set('lnb', 'detail-info')
+          nextParams.delete(programsChildQueryKey)
+          return nextParams
+        },
+        { replace: true }
+      )
+      return
+    }
+
+    if (bodyKey === 'admin') {
+      if (!canAccessAdminCommentInAdminDetail(currentUser)) return
+      if (canEditAdminMemberInfo(currentUser, displayUser)) {
+        setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
+      } else {
+        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
+      }
+      setBasicInfoEditing(true)
+      setTabState({ lnb: 'detail-info' })
+      setSearchParams(
+        prev => {
+          const nextParams = new URLSearchParams(prev)
+          if (displayUser.id) nextParams.set('id', displayUser.id)
+          nextParams.set('lnb', 'detail-info')
+          nextParams.delete(programsChildQueryKey)
+          return nextParams
+        },
+        { replace: true }
+      )
+      return
+    }
+
+    if (bodyKey !== 'all_users') return
+    if (shouldShowCmsMemberInfoEditButton(displayUser)) {
+      setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
+    } else {
       setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-      setBasicInfoEditing(true)
-      setTabState({ lnb: 'detail-info' })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'detail-info')
-          nextParams.delete(programsChildQueryKey)
-          return nextParams
-        },
-        { replace: true }
-      )
-      return
     }
-
-    if (!shouldShowCmsMemberInfoEditButton(displayUser) || bodyKey !== 'all_users') {
-      return
-    }
-    setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
     setBasicInfoEditing(true)
     setTabState({ lnb: 'detail-info' })
     setSearchParams(
@@ -299,16 +339,21 @@ export function useUserDetailController({
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
+    if (displayUser.role === 'ADMIN' && !canAccessAdminCommentInAdminDetail(currentUser)) return
     setBasicInfoSaveLoading(true)
     try {
       let patch: PatchUserBasicInfoInput
-      if (displayUser.role === 'SCHOOL') {
+      if (!shouldShowCmsMemberInfoEditButton(displayUser)) {
+        patch =
+          displayUser.role === 'INSTRUCTOR'
+            ? draftToAdminCommentAndInstructorFeePatch(basicInfoDraft)
+            : draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+      } else if (displayUser.role === 'SCHOOL') {
         patch = draftToSchoolInstitutionBasicInfoPatch(basicInfoDraft)
-      } else if (
-        displayUser.role === 'INSTRUCTOR' &&
-        resolveInstructorMemberProfile(displayUser) === 'school_teacher'
-      ) {
-        patch = draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+      } else if (displayUser.role === 'INSTRUCTOR') {
+        patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
+      } else if (displayUser.role === 'ADMIN') {
+        patch = draftToBasicInfoPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }
@@ -327,11 +372,29 @@ export function useUserDetailController({
     basicInfoDraft,
     patchMemberBasicInfo,
     onMemberBasicInfoSaved,
+    currentUser,
   ])
 
   const updateBasicInfoDraft = useCallback((partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {
     setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))
   }, [])
+
+  const openInstructorPermissionRevoke = useCallback(() => {
+    if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
+    setInstructorPermissionRevokeOpen(true)
+  }, [displayUser])
+
+  const closeInstructorPermissionRevoke = useCallback(() => {
+    setInstructorPermissionRevokeOpen(false)
+  }, [])
+
+  const confirmInstructorPermissionRevoke = useCallback(
+    (_payload: { reason: string; notifyTiming: InstructorPermissionRevokeNotifyTiming }) => {
+      // TODO(api): 강사 권한 박탈 API 연동 후 실제 처리로 교체
+      setInstructorPermissionRevokeOpen(false)
+    },
+    []
+  )
 
   const handleSidebarSelectTop = useCallback(
     (key: string) => {
@@ -460,6 +523,7 @@ export function useUserDetailController({
       basicInfoEditing,
       basicInfoDraft,
       basicInfoSaveLoading,
+      instructorPermissionRevokeOpen,
     },
     actions: {
       setTabState,
@@ -482,6 +546,9 @@ export function useUserDetailController({
       cancelBasicInfoEdit,
       saveBasicInfoEdit,
       updateBasicInfoDraft,
+      openInstructorPermissionRevoke,
+      closeInstructorPermissionRevoke,
+      confirmInstructorPermissionRevoke,
     },
     derived: {
       role,

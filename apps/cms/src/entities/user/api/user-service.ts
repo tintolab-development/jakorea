@@ -168,6 +168,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'socialAccounts'
     | 'adminComment'
     | 'schoolInfo'
+    | 'instructorInfo'
     | 'listMetrics'
   >
 >
@@ -209,6 +210,22 @@ export async function patchUserBasicInfo(
     }
     if (p.schoolName !== undefined && String(p.schoolName).trim() !== '') {
       user.name = String(p.schoolName).trim()
+    }
+  }
+  if (patch.instructorInfo != null && user.role === 'INSTRUCTOR') {
+    const base = user.instructorInfo ?? {
+      bankName: '',
+      accountNumber: '',
+      accountHolder: '',
+      isBusinessIncome: false,
+    }
+    const p = patch.instructorInfo
+    user.instructorInfo = {
+      ...base,
+      ...(p.bankName !== undefined ? { bankName: p.bankName } : {}),
+      ...(p.accountNumber !== undefined ? { accountNumber: p.accountNumber } : {}),
+      ...(p.accountHolder !== undefined ? { accountHolder: p.accountHolder } : {}),
+      ...(p.isBusinessIncome !== undefined ? { isBusinessIncome: p.isBusinessIncome } : {}),
     }
   }
   if (patch.listMetrics != null) {
@@ -317,7 +334,10 @@ export interface CreateUserRequest {
   email: string
   password: string
   name: string
+  nameEn?: string
   phone?: string
+  gender?: string
+  birthDate?: string
   role: UserRole
   adminLevel?: AdminLevel
   programRole?: ProgramRole
@@ -356,7 +376,10 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
     email: request.email,
     password: request.password, // 실제로는 해시된 값이어야 함
     name: request.name,
+    nameEn: request.nameEn,
     phone: request.phone,
+    gender: request.gender,
+    birthDate: request.birthDate,
     role: request.role,
     isActive: request.isActive ?? true,
     createdAt: now,
@@ -383,8 +406,8 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
     newUser.instructorInfo = request.instructorInfo
   }
 
-  // Mock 데이터에 추가
-  mockUsers.push(newUser)
+  // 최신 등록 사용자가 목록 첫 페이지에 보이도록 앞에 추가
+  mockUsers.unshift(newUser)
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password, ...userWithoutPassword } = newUser

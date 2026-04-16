@@ -8,6 +8,7 @@ import type { UseUserDetailModalsResult } from '@/features/user/detail/lib/use-u
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
+import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
 
 export interface UserDetailFullpageShellValue {
   displayUser: Omit<User, 'password'>
@@ -38,10 +39,17 @@ export interface UserDetailFullpageShellValue {
   basicInfoEditing: boolean
   basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null
   basicInfoSaveLoading: boolean
+  instructorPermissionRevokeOpen: boolean
   onStartBasicInfoEdit: () => void
   onCancelBasicInfoEdit: () => void
   onSaveBasicInfoEdit: () => void | Promise<void>
   onBasicInfoDraftChange: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  onOpenInstructorPermissionRevoke: () => void
+  onCloseInstructorPermissionRevoke: () => void
+  onConfirmInstructorPermissionRevoke: (payload: {
+    reason: string
+    notifyTiming: InstructorPermissionRevokeNotifyTiming
+  }) => void
 }
 
 const UserDetailFullpageShellContext = createContext<UserDetailFullpageShellValue | null>(null)

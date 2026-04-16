@@ -2,14 +2,20 @@
  * 회원 상세 — 기본 정보 (DetailInfoForm.Field + DetailInfoForm.NameBlock)
  */
 
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Space } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { AppStatusBadge } from '@/shared/components'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
+  type AdminPermissionTagVariant,
   getAdminPermissionVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import type { DateValue } from '@/types'
@@ -28,6 +34,12 @@ const GENDER_EDIT_OPTIONS = [
   { value: '남성', label: '남성' },
   { value: '여성', label: '여성' },
 ]
+
+const JA_EVALUATION_GRADE_OPTIONS = ['A', 'B', 'C', 'D'].map(v => ({ value: v, label: v }))
+const INSTRUCTOR_FEE_GRADE_OPTIONS = ['1급 강사비', '2급 강사비', '3급 강사비'].map(v => ({
+  value: v,
+  label: v,
+}))
 
 /** 개인 회원 소속 학년 선택 (시안·프로그램 신청 탭 `GRADE_OPTIONS`와 동일 체계) */
 const INDIVIDUAL_AFFILIATION_GRADE_OPTIONS: { value: string; label: string }[] = [
@@ -139,7 +151,7 @@ function highestEducationLine(user: Omit<User, 'password'>): string {
   return t && t.length > 0 ? t : '-'
 }
 
-/** 소속 및 강사 경력 — API 요약 우선, 없으면 학교(학년)·강사 유형·경력 연수·JA 등급 조합 */
+/** 소속 및 강사 경력 — API 요약 우선, 없으면 학교(학년)·강사 유형·경력 연수 조합 */
 function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>): string {
   const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
   if (summary) return summary
@@ -149,14 +161,28 @@ function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>): strin
   const schoolPart = school && grade ? `${school}(${grade})` : school || affiliationLine(user)
   const typeLabel = user.listMetrics?.instructorTypeLabel?.trim()
   const years = user.listMetrics?.instructorCareerYearsLabel?.trim()
-  const ja = user.listMetrics?.jaEvaluationGrade?.trim()
-  const jaPart = ja ? `${ja}등급` : ''
-  const tail = [typeLabel, years, jaPart].filter(Boolean).join(' | ')
+  const tail = [typeLabel, years].filter(Boolean).join(' | ')
 
   if (schoolPart && schoolPart !== '-' && tail) return `${schoolPart}, ${tail}`
   if (tail) return tail
   if (schoolPart && schoolPart !== '-') return schoolPart
   return '-'
+}
+
+function jaEvaluationGradeLine(user: Omit<User, 'password'>): string {
+  const grade = user.listMetrics?.jaEvaluationGrade?.trim()
+  if (!grade) return '-'
+  return grade.endsWith('등급') ? grade : `${grade}등급`
+}
+
+function instructorFeeGradeLine(user: Omit<User, 'password'>): string {
+  const grade = user.listMetrics?.instructorTypeLabel?.trim()
+  return grade && grade.length > 0 ? grade : '-'
+}
+
+function oneLineIntroLine(user: Omit<User, 'password'>): string {
+  const bio = user.bio?.trim()
+  return bio && bio.length > 0 ? bio : '-'
 }
 
 function addressLine(user: Omit<User, 'password'>): string {
@@ -416,12 +442,32 @@ function AllUsersFields({
           label="자택 주소"
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
-            <CmsInput
-              value={d?.detailAddress ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ detailAddress: e.target.value })}
-              inputSize="medium"
-              width="100%"
-            />
+            <Space.Compact style={{ width: '100%' }}>
+              <AddressSearch
+                value={d?.detailAddressSearch ?? ''}
+                onChange={next =>
+                  onMemberInfoDraftChange?.({
+                    detailAddressSearch: next,
+                  })
+                }
+                placeholder="건물명, 도로명 또는 지번"
+                inputSize="medium"
+                width={'100%'}
+              />
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                placeholder="상세 주소"
+                value={d?.detailAddressDetail ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({
+                    detailAddressDetail: e.target.value,
+                  })
+                }
+                inputSize="medium"
+                width="100%"
+                aria-label="자택 주소 상세"
+              />
+            </Space.Compact>
           }
         />
         <DetailInfoForm.Field
@@ -581,20 +627,6 @@ function InstitutionFields({
   )
 }
 
-function instructorFeeView(user: Omit<User, 'password'>) {
-  const feeLabel = user.listMetrics?.instructorTypeLabel?.trim() || '특강 강사비'
-  const feeAmount = '915,000원'
-  return (
-    <span className="basic-info-fee">
-      <span>{feeLabel}</span>
-      <span className="basic-info-fee__sep" aria-hidden>
-        {' | '}
-      </span>
-      <span>{feeAmount}</span>
-    </span>
-  )
-}
-
 function instructorBusinessIncomeView(user: Omit<User, 'password'>) {
   const businessIncome =
     user.instructorInfo?.isBusinessIncome === true
@@ -634,6 +666,16 @@ function settlementStatusView(user: Omit<User, 'password'>) {
 
 /** 일반 교사 — 가입일·소셜만 (상단 별도 카드 `DetailInfoForm` 본문용) */
 function SchoolTeacherMetaFields({ user }: { user: Omit<User, 'password'> }) {
+  return (
+    <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
+      <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+    </DetailInfoForm.Row>
+  )
+}
+
+/** 강사(겸직/순수) — 가입일·소셜만 (상단 별도 카드 `DetailInfoForm` 본문용) */
+function InstructorMetaFields({ user }: { user: Omit<User, 'password'> }) {
   return (
     <DetailInfoForm.Row type="double">
       <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
@@ -714,25 +756,45 @@ function SchoolTeacherProfileFields({
   )
 }
 
-/** 겸직 강사·순수 강사 공통 — 기본 정보 6행 + 강의비는 별도 폼 */
+/** 겸직 강사·순수 강사 공통 — 기본 정보(성명~한 줄 소개) */
 function InstructorDualOrOnlyBasicFields({
   user,
   scheduleChangeCount,
   personalInfoRevealed,
+  memberInfoEditing,
+  memberInfoDraft,
+  onMemberInfoDraftChange,
 }: {
   user: Omit<User, 'password'>
   scheduleChangeCount?: number
   personalInfoRevealed: boolean
+  memberInfoEditing?: boolean
+  memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
 }) {
+  const editing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
+  const d = memberInfoDraft
   return (
     <>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.NameBlock
-          showGroupTitle={false}
           rows={[
             {
-              subLabel: '성명(한글)',
-              main: (
+              subLabel: '한글',
+              main: editing ? (
+                <span className="user-basic-info-section__name-with-badge">
+                  <CmsInput
+                    value={d?.name ?? ''}
+                    onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
+                    inputSize="medium"
+                    width="100%"
+                    aria-label="한글 성명"
+                  />
+                  {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+                    <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+                  ) : null}
+                </span>
+              ) : (
                 <span className="user-basic-info-section__name-with-badge">
                   {user.name}
                   {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
@@ -744,10 +806,44 @@ function InstructorDualOrOnlyBasicFields({
               side: settlementStatusView(user),
             },
             {
-              subLabel: '성명(영문)',
-              main: <span>{user.nameEn ?? '-'}</span>,
+              subLabel: '영문',
+              main: editing ? (
+                <CmsInput
+                  value={d?.nameEn ?? ''}
+                  onChange={e => onMemberInfoDraftChange?.({ nameEn: e.target.value })}
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="영문 성명"
+                />
+              ) : (
+                <span>{user.nameEn ?? '-'}</span>
+              ),
               sideLabel: '성별 및 생년월일',
-              side: <span>{formatGenderBirthLine(user)}</span>,
+              side: editing ? (
+                <span className="user-basic-info-section__inline-controls">
+                  <CmsSelect
+                    value={d?.gender || undefined}
+                    onChange={v =>
+                      onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })
+                    }
+                    options={GENDER_EDIT_OPTIONS}
+                    placeholder="성별"
+                    inputSize="medium"
+                    width={120}
+                    allowClear
+                  />
+                  <CmsInput
+                    value={d?.birthDate ?? ''}
+                    onChange={e => onMemberInfoDraftChange?.({ birthDate: e.target.value })}
+                    inputSize="medium"
+                    width={160}
+                    placeholder="YYYY-MM-DD"
+                    aria-label="생년월일"
+                  />
+                </span>
+              ) : (
+                <span>{formatGenderBirthLine(user)}</span>
+              ),
             },
           ]}
         />
@@ -756,49 +852,236 @@ function InstructorDualOrOnlyBasicFields({
         <DetailInfoForm.Field
           label="연락처"
           view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+          edit={
+            <CmsInput
+              value={d?.phone ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ phone: e.target.value })}
+              inputSize="medium"
+              width="100%"
+            />
+          }
         />
         <DetailInfoForm.Field
           label="이메일"
           view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+          edit={
+            <CmsInput
+              value={d?.email ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ email: e.target.value })}
+              inputSize="medium"
+              width="100%"
+            />
+          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="자택 주소"
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+          edit={
+            <span className="detail-info-form-inputs-wrapper-no-gap">
+              <AddressSearch
+                value={d?.detailAddressSearch ?? ''}
+                onChange={next =>
+                  onMemberInfoDraftChange?.({
+                    detailAddressSearch: next,
+                  })
+                }
+                placeholder="건물명, 도로명 또는 지번"
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+              />
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                value={d?.detailAddressDetail ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({
+                    detailAddressDetail: e.target.value,
+                  })
+                }
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                placeholder="상세 주소"
+                aria-label="자택 주소 상세"
+              />
+            </span>
+          }
         />
         <DetailInfoForm.Field
           label="정산 계좌 정보"
           view={<span>{instructorBankLine(user, personalInfoRevealed)}</span>}
+          edit={
+            <span className="detail-info-form-inputs-wrapper-no-gap">
+              <CmsInput
+                value={d?.instructorBankName ?? ''}
+                onChange={e => onMemberInfoDraftChange?.({ instructorBankName: e.target.value })}
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                placeholder="은행명"
+              />
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                value={d?.instructorAccountNumber ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({ instructorAccountNumber: e.target.value })
+                }
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                placeholder="계좌번호"
+              />
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                value={d?.instructorAccountHolder ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({ instructorAccountHolder: e.target.value })
+                }
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                placeholder="예금주"
+              />
+            </span>
+          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="최종 학력" view={<span>{highestEducationLine(user)}</span>} />
+        <DetailInfoForm.Field
+          label="최종 학력"
+          view={<span>{highestEducationLine(user)}</span>}
+          edit={
+            <span className="detail-info-form-inputs-wrapper-no-gap">
+              <CmsInput
+                value={d?.highestEducationLevel ?? ''}
+                onChange={e => onMemberInfoDraftChange?.({ highestEducationLevel: e.target.value })}
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                placeholder="최종 학력"
+              />
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                value={d?.highestEducationSchoolName ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({ highestEducationSchoolName: e.target.value })
+                }
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                placeholder="최종 졸업 학교명"
+              />
+            </span>
+          }
+        />
         <DetailInfoForm.Field
           label="소속 및 강사 경력"
           view={<span>{affiliationAndInstructorCareerLine(user)}</span>}
+          edit={
+            <span className="detail-info-form-inputs-wrapper-no-gap">
+              <CmsInput
+                placeholder="소속"
+                value={d?.affiliationInstitution ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })
+                }
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+              />
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                placeholder="강사 경력 요약"
+                value={d?.instructorCareerSummaryLabel ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({
+                    instructorCareerSummaryLabel: e.target.value,
+                  })
+                }
+                inputSize="medium"
+                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+              />
+            </span>
+          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
-        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+        <DetailInfoForm.Field
+          label="JA 평가 등급"
+          view={<span>{jaEvaluationGradeLine(user)}</span>}
+          edit={
+            <CmsSelect
+              value={d?.jaEvaluationGrade || undefined}
+              onChange={v =>
+                onMemberInfoDraftChange?.({
+                  jaEvaluationGrade: v != null ? String(v) : '',
+                })
+              }
+              options={JA_EVALUATION_GRADE_OPTIONS}
+              placeholder="선택"
+              inputSize="medium"
+              width="100%"
+              allowClear
+              aria-label="JA 평가 등급"
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="강사비 등급"
+          view={<span>{instructorFeeGradeLine(user)}</span>}
+          edit={
+            editing ? (
+              <CmsSelect
+                value={memberInfoDraft?.instructorFeeGrade || undefined}
+                onChange={v =>
+                  onMemberInfoDraftChange?.({
+                    instructorFeeGrade: v != null ? String(v) : '',
+                  })
+                }
+                options={INSTRUCTOR_FEE_GRADE_OPTIONS}
+                placeholder="선택"
+                inputSize="medium"
+                width="100%"
+                allowClear
+                aria-label="강사비 등급"
+              />
+            ) : undefined
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="사업소득자 여부"
+          view={instructorBusinessIncomeView(user)}
+          edit={
+            <CmsSelect
+              value={d?.instructorBusinessIncome || undefined}
+              onChange={v =>
+                onMemberInfoDraftChange?.({
+                  instructorBusinessIncome: v != null ? (String(v) as '해당' | '해당 없음') : '',
+                })
+              }
+              options={[
+                { value: '해당', label: '해당' },
+                { value: '해당 없음', label: '해당 없음' },
+              ]}
+              placeholder="선택"
+              inputSize="medium"
+              width="100%"
+              allowClear
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="한 줄 소개"
+          view={<span>{oneLineIntroLine(user)}</span>}
+          edit={
+            <CmsInput
+              value={d?.bio ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ bio: e.target.value })}
+              inputSize="medium"
+              width="100%"
+            />
+          }
+        />
       </DetailInfoForm.Row>
     </>
-  )
-}
-
-/** 강의비·사업소득 — 기본 정보와 분리(상단 16px 간격) */
-function InstructorFeeDetailForm({ user }: { user: Omit<User, 'password'> }) {
-  return (
-    <DetailInfoForm
-      title="강의비·사업소득"
-      className="user-basic-info-section user-basic-info-section--instructor-fee-form"
-    >
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="강의비 책정 기준" view={instructorFeeView(user)} />
-        <DetailInfoForm.Field label="사업소득자 여부" view={instructorBusinessIncomeView(user)} />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
   )
 }
 
@@ -806,16 +1089,25 @@ function InstructorFieldsByProfile({
   user,
   scheduleChangeCount,
   personalInfoRevealed,
+  memberInfoEditing,
+  memberInfoDraft,
+  onMemberInfoDraftChange,
 }: {
   user: Omit<User, 'password'>
   scheduleChangeCount?: number
   personalInfoRevealed: boolean
+  memberInfoEditing?: boolean
+  memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
 }) {
   return (
     <InstructorDualOrOnlyBasicFields
       user={user}
       scheduleChangeCount={scheduleChangeCount}
       personalInfoRevealed={personalInfoRevealed}
+      memberInfoEditing={memberInfoEditing}
+      memberInfoDraft={memberInfoDraft}
+      onMemberInfoDraftChange={onMemberInfoDraftChange}
     />
   )
 }
@@ -823,11 +1115,31 @@ function InstructorFieldsByProfile({
 function AdminFields({
   user,
   personalInfoRevealed,
+  memberInfoEditing,
+  memberInfoDraft,
+  onMemberInfoDraftChange,
 }: {
   user: Omit<User, 'password'>
   personalInfoRevealed: boolean
+  memberInfoEditing?: boolean
+  memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
 }) {
+  const [adminPermissionOpen, setAdminPermissionOpen] = useState(false)
+  const editing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
   const permVariant = getAdminPermissionVariant(user)
+  const selectedPerm =
+    memberInfoDraft?.adminPermissionVariant === 'manager' ||
+    memberInfoDraft?.adminPermissionVariant === 'partner' ||
+    memberInfoDraft?.adminPermissionVariant === 'viewer'
+      ? memberInfoDraft.adminPermissionVariant
+      : permVariant
+  const renderAdminPermBadge = (variant: AdminPermissionTagVariant) => (
+    <AppStatusBadge
+      label={ADMIN_PERMISSION_TAG_LABEL[variant]}
+      className={`user-list-admin-perm-badge user-list-admin-perm-badge--${variant}`}
+    />
+  )
 
   return (
     <>
@@ -837,19 +1149,63 @@ function AdminFields({
           rows={[
             {
               subLabel: '한글',
-              main: <span>{user.name}</span>,
+              main: editing ? (
+                <CmsInput
+                  value={memberInfoDraft?.name ?? ''}
+                  onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
+                  inputSize="medium"
+                  width="100%"
+                  aria-label="한글 성명"
+                />
+              ) : (
+                <span>{user.name}</span>
+              ),
               sideLabel: '권한 유형',
               side: (
                 <span
-                  className={`user-list-admin-perm-tag user-list-admin-perm-tag--${permVariant}`}
+                  className={
+                    editing
+                      ? `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`
+                      : undefined
+                  }
                 >
-                  {ADMIN_PERMISSION_TAG_LABEL[permVariant]}
+                  {editing ? (
+                    <StatusDropdownCell<AdminPermissionTagVariant>
+                      status={selectedPerm}
+                      statusOptions={['manager', 'partner', 'viewer']}
+                      renderBadge={renderAdminPermBadge}
+                      isItemDisabled={(cur, option) => cur === option}
+                      onChange={next => {
+                        onMemberInfoDraftChange?.({ adminPermissionVariant: next })
+                      }}
+                      isOpen={adminPermissionOpen}
+                      onOpenChange={setAdminPermissionOpen}
+                      tagLayout="tag160"
+                      emptyPlaceholder="-"
+                    />
+                  ) : (
+                    <span
+                      className={`user-list-admin-perm-tag user-list-admin-perm-tag--${permVariant}`}
+                    >
+                      {ADMIN_PERMISSION_TAG_LABEL[permVariant]}
+                    </span>
+                  )}
                 </span>
               ),
             },
             {
               subLabel: '영문',
-              main: <span>{user.nameEn ?? '-'}</span>,
+              main: editing ? (
+                <CmsInput
+                  value={memberInfoDraft?.nameEn ?? ''}
+                  onChange={e => onMemberInfoDraftChange?.({ nameEn: e.target.value })}
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="영문 성명"
+                />
+              ) : (
+                <span>{user.nameEn ?? '-'}</span>
+              ),
               sideLabel: '담당 프로그램 수',
               side: <span>{managedProgramCountDisplay(user)}</span>,
             },
@@ -860,25 +1216,41 @@ function AdminFields({
         <DetailInfoForm.Field
           label="연락처"
           view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+          edit={
+            <CmsInput
+              value={memberInfoDraft?.phone ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ phone: e.target.value })}
+              inputSize="medium"
+              placeholder="연락처"
+              width="100%"
+            />
+          }
         />
         <DetailInfoForm.Field
           label="이메일"
           view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+          edit={
+            <CmsInput
+              value={memberInfoDraft?.email ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ email: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              placeholder="이메일"
+            />
+          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          label="자택 주소"
-          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+          label="가입일"
+          readOnlyDisplay
+          view={<span>{formatDate(user.createdAt)}</span>}
         />
         <DetailInfoForm.Field
-          label="소속 및 담당 학년"
-          view={<span>{affiliationLine(user)}</span>}
+          label="연동된 소셜 계정"
+          readOnlyDisplay
+          view={<span>{socialLine(user)}</span>}
         />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
-        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
       </DetailInfoForm.Row>
     </>
   )
@@ -903,24 +1275,20 @@ export function UserBasicInfoSection({
   const bodyKey = resolveUserBasicInfoBodyKey(entrySourceProp, entryFromQuery, user.role)
   const instructorProfile =
     user.role === 'INSTRUCTOR' ? (resolveInstructorMemberProfile(user) ?? 'instructor_only') : null
-  /** 일반 교사: 기본 정보 필드는 항상 뷰 — 관리자 코멘트만 상단 섹션에서 편집 */
-  const basicFormMemberEditing =
-    memberInfoEditing && !(bodyKey === 'instructor' && instructorProfile === 'school_teacher')
+  /** 정책: 편집 모드 진입 시 기본 폼은 edit 모드로 전환(필드별 edit 슬롯 유무로 실제 편집 범위 제어) */
+  const basicFormMemberEditing = memberInfoEditing
   const detailInfoFormMode: 'view' | 'edit' = basicFormMemberEditing ? 'edit' : 'view'
-  const instructorProfileForFee =
-    bodyKey === 'instructor' && user.role === 'INSTRUCTOR'
-      ? (resolveInstructorMemberProfile(user) ?? 'instructor_only')
-      : null
-  const showInstructorFeeForm =
-    instructorProfileForFee === 'instructor_dual' || instructorProfileForFee === 'instructor_only'
-
   return (
     <div className="user-detail-modal__basic-inner">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-        {bodyKey === 'instructor' && instructorProfile === 'school_teacher' ? (
-          <div className="user-basic-info-section__school-teacher-cards">
+        {bodyKey === 'instructor' ? (
+          <div className="user-basic-info-section__split-cards">
             <DetailInfoForm title="기본 정보" description={caption} mode={detailInfoFormMode}>
-              <SchoolTeacherMetaFields user={user} />
+              {instructorProfile === 'school_teacher' ? (
+                <SchoolTeacherMetaFields user={user} />
+              ) : (
+                <InstructorMetaFields user={user} />
+              )}
             </DetailInfoForm>
             <DetailInfoForm
               title="기본 정보 — 성명·연락처 등"
@@ -928,11 +1296,22 @@ export function UserBasicInfoSection({
               className="user-basic-info-section user-basic-info-section--school-teacher-profile-card"
               mode={detailInfoFormMode}
             >
-              <SchoolTeacherProfileFields
-                user={user}
-                scheduleChangeCount={scheduleChangeCount}
-                personalInfoRevealed={personalInfoRevealed}
-              />
+              {instructorProfile === 'school_teacher' ? (
+                <SchoolTeacherProfileFields
+                  user={user}
+                  scheduleChangeCount={scheduleChangeCount}
+                  personalInfoRevealed={personalInfoRevealed}
+                />
+              ) : (
+                <InstructorFieldsByProfile
+                  user={user}
+                  scheduleChangeCount={scheduleChangeCount}
+                  personalInfoRevealed={personalInfoRevealed}
+                  memberInfoEditing={basicFormMemberEditing}
+                  memberInfoDraft={memberInfoDraft}
+                  onMemberInfoDraftChange={onMemberInfoDraftChange}
+                />
+              )}
             </DetailInfoForm>
           </div>
         ) : (
@@ -961,18 +1340,17 @@ export function UserBasicInfoSection({
                 memberInfoDraft={memberInfoDraft}
                 onMemberInfoDraftChange={onMemberInfoDraftChange}
               />
-            ) : bodyKey === 'instructor' ? (
-              <InstructorFieldsByProfile
-                user={user}
-                scheduleChangeCount={scheduleChangeCount}
-                personalInfoRevealed={personalInfoRevealed}
-              />
             ) : (
-              <AdminFields user={user} personalInfoRevealed={personalInfoRevealed} />
+              <AdminFields
+                user={user}
+                personalInfoRevealed={personalInfoRevealed}
+                memberInfoEditing={basicFormMemberEditing}
+                memberInfoDraft={memberInfoDraft}
+                onMemberInfoDraftChange={onMemberInfoDraftChange}
+              />
             )}
           </DetailInfoForm>
         )}
-        {showInstructorFeeForm ? <InstructorFeeDetailForm user={user} /> : null}
       </div>
     </div>
   )

@@ -3,7 +3,7 @@
  * 회원 유형(`listKind`)별 컬럼 구성 — `member-list-kinds`와 동기화
  */
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/ui/program-list.css'
@@ -12,6 +12,7 @@ import './user-list.css'
 import type { User, UserRole } from '@/types/user'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
+  type AdminPermissionTagVariant,
   getAdminPermissionVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import { getRoleLabel } from '@/shared/ui'
@@ -21,6 +22,13 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
 import { getInstructorTypeDisplayLabel } from '@/entities/user/lib/matches-instructor-list-filters'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
+import { AppStatusBadge } from '@/shared/components/app-status-badge'
 
 type Row = Omit<User, 'password'>
 
@@ -34,6 +42,11 @@ interface UserListProps {
   pagination?: boolean
   /** URL `kind`와 동일 — 컬럼 세트 결정 */
   listKind?: MemberListKind
+  onAdminPermissionChange?: (ctx: {
+    userId: string
+    nextPermission: AdminPermissionTagVariant
+  }) => Promise<void> | void
+  adminPermissionChangeLoadingUserId?: string | null
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -93,7 +106,71 @@ function settlementStatusTextClass(statusLabel?: string): string {
   }
 }
 
-function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
+const ADMIN_PERMISSION_OPTIONS: { value: AdminPermissionTagVariant; label: string }[] = [
+  { value: 'manager', label: ADMIN_PERMISSION_TAG_LABEL.manager },
+  { value: 'partner', label: ADMIN_PERMISSION_TAG_LABEL.partner },
+  { value: 'viewer', label: ADMIN_PERMISSION_TAG_LABEL.viewer },
+]
+
+function AdminPermissionDropdownCell({
+  record,
+  onChange,
+  loading,
+  isOpen,
+  onOpenChange,
+}: {
+  record: Row
+  onChange?: (ctx: {
+    userId: string
+    nextPermission: AdminPermissionTagVariant
+  }) => Promise<void> | void
+  loading?: boolean
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const current = getAdminPermissionVariant(record)
+  const renderBadge = (variant: AdminPermissionTagVariant) => (
+    <AppStatusBadge
+      label={ADMIN_PERMISSION_TAG_LABEL[variant]}
+      className={`user-list-admin-perm-badge user-list-admin-perm-badge--${variant}`}
+    />
+  )
+
+  return (
+    <StatusDropdownCell<AdminPermissionTagVariant>
+      status={current}
+      statusOptions={ADMIN_PERMISSION_OPTIONS.map(option => option.value)}
+      renderBadge={renderBadge}
+      isItemDisabled={(cur, option) => cur === option}
+      onChange={
+        onChange
+          ? async next => {
+              if (next === current) return
+              await onChange({ userId: record.id, nextPermission: next })
+            }
+          : undefined
+      }
+      isUpdating={loading}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      tagLayout="tag160"
+      emptyPlaceholder="-"
+    />
+  )
+}
+
+function columnsForKind(
+  kind: MemberListKind,
+  options?: {
+    onAdminPermissionChange?: (ctx: {
+      userId: string
+      nextPermission: AdminPermissionTagVariant
+    }) => Promise<void> | void
+    adminPermissionChangeLoadingUserId?: string | null
+    openAdminPermissionDropdownUserId?: string | null
+    setOpenAdminPermissionDropdownUserId?: (id: string | null) => void
+  }
+): ColumnsType<Row> {
   const noCol: ColumnsType<Row>[0] = {
     title: 'No.',
     key: 'no',
@@ -189,7 +266,9 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
         align: 'center',
         render: (_: unknown, r: Row) => {
           const statusLabel = r.listMetrics?.settlementStatusLabel?.trim()
-          return <span className={settlementStatusTextClass(statusLabel)}>{statusLabel || '-'}</span>
+          return (
+            <span className={settlementStatusTextClass(statusLabel)}>{statusLabel || '-'}</span>
+          )
         },
       },
       {
@@ -230,13 +309,23 @@ function columnsForKind(kind: MemberListKind): ColumnsType<Row> {
       {
         title: '권한 유형',
         key: 'permission',
+        width: 200,
         align: 'center',
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`,
+        }),
         render: (_: unknown, r: Row) => {
-          const v = getAdminPermissionVariant(r)
           return (
-            <span className={`user-list-admin-perm-tag user-list-admin-perm-tag--${v}`}>
-              {ADMIN_PERMISSION_TAG_LABEL[v]}
-            </span>
+            <AdminPermissionDropdownCell
+              record={r}
+              onChange={options?.onAdminPermissionChange}
+              loading={options?.adminPermissionChangeLoadingUserId === r.id}
+              isOpen={options?.openAdminPermissionDropdownUserId === r.id}
+              onOpenChange={open =>
+                options?.setOpenAdminPermissionDropdownUserId?.(open ? r.id : null)
+              }
+            />
           )
         },
       },
@@ -306,8 +395,27 @@ export function UserList({
   onSelectionChange,
   pagination = true,
   listKind = DEFAULT_MEMBER_LIST_KIND,
+  onAdminPermissionChange,
+  adminPermissionChangeLoadingUserId,
 }: UserListProps) {
-  const columns = useMemo(() => columnsForKind(listKind), [listKind])
+  const [openAdminPermissionDropdownUserId, setOpenAdminPermissionDropdownUserId] = useState<
+    string | null
+  >(null)
+  const columns = useMemo(
+    () =>
+      columnsForKind(listKind, {
+        onAdminPermissionChange,
+        adminPermissionChangeLoadingUserId,
+        openAdminPermissionDropdownUserId,
+        setOpenAdminPermissionDropdownUserId,
+      }),
+    [
+      listKind,
+      onAdminPermissionChange,
+      adminPermissionChangeLoadingUserId,
+      openAdminPermissionDropdownUserId,
+    ]
+  )
 
   return (
     <Table
@@ -315,12 +423,15 @@ export function UserList({
       columns={columns}
       dataSource={data}
       loading={loading}
+      scroll={{ x: 'max-content' }}
       rowKey="id"
       onRow={
         onView
           ? record => ({
               onClick: (e: React.MouseEvent<HTMLElement>) => {
                 if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                if ((e.target as HTMLElement).closest('.status-dropdown-cell__status-trigger'))
+                  return
                 onView(record)
               },
               style: { cursor: 'pointer' },

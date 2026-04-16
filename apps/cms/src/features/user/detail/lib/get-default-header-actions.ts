@@ -9,12 +9,14 @@ export type ActionConfig = {
 
 export interface GetDefaultHeaderActionsCtx {
   viewKind: 'school_delete' | 'standard'
+  displayUser: Omit<User, 'password'>
   onWithdraw?: (user: Omit<User, 'password'>) => void
   onOpenWithdrawConfirm: () => void
+  onOpenInstructorPermissionRevoke: () => void
 }
 
 export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): ActionConfig[] {
-  const { viewKind, onWithdraw, onOpenWithdrawConfirm } = ctx
+  const { viewKind, displayUser, onWithdraw, onOpenWithdrawConfirm, onOpenInstructorPermissionRevoke } = ctx
 
   if (viewKind === 'school_delete') {
     return [
@@ -38,6 +40,16 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
       variant: 'delete',
       onClick: () => {
         onOpenWithdrawConfirm()
+      },
+    })
+  }
+  if (displayUser.role === 'INSTRUCTOR') {
+    actions.push({
+      key: 'revoke-instructor-permission',
+      label: '강사 권한 박탈',
+      variant: 'delete',
+      onClick: () => {
+        onOpenInstructorPermissionRevoke()
       },
     })
   }

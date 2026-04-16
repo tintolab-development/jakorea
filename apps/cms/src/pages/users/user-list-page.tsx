@@ -18,6 +18,10 @@ import {
 } from '@/pages/users/user-detail-fullpage-modal'
 import { AddUserIndividual } from '@/features/user/shared/ui/add-user-individual'
 import {
+  AdminRegisterModal,
+  type AdminRegisterModalFormValues,
+} from '@/features/user/shared/ui/admin-register-modal'
+import {
   SchoolRegisterModal,
   type SchoolRegisterModalFormValues,
 } from '@/features/school/ui/school-register-modal'
@@ -39,12 +43,9 @@ import {
   ActionResultModal,
   ContentModal,
   DeleteGuideModal,
-  buildBulkDeleteGuideTitle,
-  buildBulkDomainDeleteMessageLines,
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
-  buildDomainEntityDeleteMessageLines,
 } from '@/shared/ui'
 import {
   memberListKindToBasicInfoEntrySource,
@@ -68,6 +69,7 @@ import {
   createUserListTablePageConfig,
   type UserListQueryParams,
 } from './user-list-table.config'
+import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 
 type UserListRow = Omit<User, 'password'>
 
@@ -78,7 +80,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         bulkCounterPhrase: '개의 학교',
         particleTargetNoun: '학교',
         domainLabel: '학교',
-        singleTitle: '학교 삭제',
+        singleTitle: '학교 삭제 안내',
         confirmText: '학교 삭제',
       }
     case 'instructors':
@@ -86,7 +88,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         bulkCounterPhrase: '명의 강사',
         particleTargetNoun: '강사',
         domainLabel: '강사',
-        singleTitle: '강사 삭제',
+        singleTitle: '강사 삭제 안내',
         confirmText: '강사 삭제',
       }
     default:
@@ -94,7 +96,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         bulkCounterPhrase: '명의 회원',
         particleTargetNoun: '회원',
         domainLabel: '회원',
-        singleTitle: '회원 삭제',
+        singleTitle: '회원 삭제 안내',
         confirmText: '회원 삭제',
       }
   }
@@ -110,6 +112,23 @@ function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string 
   const email = u.email?.trim()
   if (email) return email
   return '(이름 없음)'
+}
+
+function buildMemberDeleteGuideLines(names: string[]): string[] {
+  const normalized = names.map(name => name.trim()).filter(Boolean)
+  if (normalized.length === 0) return []
+  if (normalized.length >= 2) {
+    return [
+      `선택한 ${normalized.length}명의 회원을 삭제하시겠습니까?`,
+      '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
+      '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+    ]
+  }
+  return [
+    `[${normalized[0]}] 회원을 삭제하시겠습니까?`,
+    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
+    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+  ]
 }
 
 /** 상세 > 탈퇴 확정 후 삭제 완료 모달에 쓰는 엔티티 라벨 */
@@ -150,6 +169,7 @@ export function UserListPage() {
   const createUser = useUserStore(state => state.createUser)
   const deleteUser = useUserStore(state => state.deleteUser)
   const fetchUserById = useUserStore(state => state.fetchUserById)
+  const patchUserBasicInfo = useUserStore(state => state.patchUserBasicInfo)
   const setSelectedUserId = useUserStore(state => state.setSelectedUserId)
   const setFilters = useUserStore(state => state.setFilters)
   const clearSelectedUserId = useUserStore(state => state.setSelectedUserId)
@@ -199,6 +219,11 @@ export function UserListPage() {
     openModal: openSchoolRegisterModal,
     closeModal: closeSchoolRegisterModal,
   } = useModalState()
+  const {
+    open: adminRegisterOpen,
+    openModal: openAdminRegisterModal,
+    closeModal: closeAdminRegisterModal,
+  } = useModalState()
 
   // 삭제 확인 모달 상태
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -229,6 +254,9 @@ export function UserListPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   // 일괄 삭제 대상 (여러 명 선택 시)
   const [bulkDeleteUsers, setBulkDeleteUsers] = useState<Omit<User, 'password'>[] | null>(null)
+  const [adminPermissionChangingUserId, setAdminPermissionChangingUserId] = useState<string | null>(
+    null
+  )
 
   /** 학교(기관) — 소속 교사가 있으면 삭제 불가 안내 */
   const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
@@ -247,21 +275,10 @@ export function UserListPage() {
 
   const memberDeleteGuide = useMemo(() => {
     if (deleteTargets.length === 0) return null
-    const domain = memberDeleteGuideDomain(resolvedMemberListKind)
-    const isMulti = deleteTargets.length >= 2
-    const title = isMulti ? buildBulkDeleteGuideTitle(domain.domainLabel) : domain.singleTitle
-    const lines = isMulti
-      ? buildBulkDomainDeleteMessageLines(
-          deleteTargets.length,
-          domain.bulkCounterPhrase,
-          domain.particleTargetNoun,
-          domain.domainLabel
-        )
-      : buildDomainEntityDeleteMessageLines(
-          [displayNameForUserDelete(resolvedMemberListKind, deleteTargets[0])],
-          domain.domainLabel
-        )
-    return { title, lines, confirmText: domain.confirmText }
+    const lines = buildMemberDeleteGuideLines(
+      deleteTargets.map(target => displayNameForUserDelete(resolvedMemberListKind, target))
+    )
+    return { title: '회원 삭제 안내', lines, confirmText: '회원 삭제' }
   }, [deleteTargets, resolvedMemberListKind])
 
   const userListFilterFields = useMemo(
@@ -493,6 +510,29 @@ export function UserListPage() {
     }
   }
 
+  const handleAdminRegisterSubmit = async (values: AdminRegisterModalFormValues) => {
+    try {
+      await createUser({
+        email: values.email.trim(),
+        password: 'Temp1234!',
+        name: values.name.trim(),
+        nameEn: values.nameEn?.trim() || undefined,
+        phone: values.contact.trim(),
+        gender: values.gender === 'male' ? '남성' : '여성',
+        birthDate: values.birthDate?.trim() || undefined,
+        role: 'ADMIN',
+        adminLevel: 'ADMIN',
+        isActive: true,
+      })
+      showSuccessMessage(MESSAGES.success.created)
+      invalidateList()
+      closeAdminRegisterModal()
+    } catch (error) {
+      handleError(error, { defaultMessage: '관리자 등록에 실패했습니다.' })
+      throw error
+    }
+  }
+
   // 회원 삭제
   const handleDeleteClick = (user: Omit<User, 'password'>) => {
     if (resolvedMemberListKind === 'institutions' && institutionHasRegisteredTeachers(user)) {
@@ -568,17 +608,30 @@ export function UserListPage() {
         setDeleteLoading(false)
       }
     },
-    [
-      flushUserDetailModal,
-      deleteUser,
-      resolvedMemberListKind,
-      invalidateList,
-    ]
+    [flushUserDetailModal, deleteUser, resolvedMemberListKind, invalidateList]
   )
 
   const handleCloseDeleteResultModal = useCallback(() => {
     setDeleteResultModalOpen(false)
   }, [])
+
+  const handleAdminPermissionChange = useCallback(
+    async (ctx: { userId: string; nextPermission: AdminPermissionTagVariant }) => {
+      setAdminPermissionChangingUserId(ctx.userId)
+      try {
+        await patchUserBasicInfo(ctx.userId, {
+          listMetrics: { adminPermissionVariant: ctx.nextPermission },
+        })
+        showSuccessMessage('관리자 권한 유형이 변경되었습니다.')
+        invalidateList()
+      } catch (error) {
+        handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
+      } finally {
+        setAdminPermissionChangingUserId(null)
+      }
+    },
+    [patchUserBasicInfo, invalidateList]
+  )
 
   return (
     <div>
@@ -647,7 +700,9 @@ export function UserListPage() {
                 ? '학교 삭제'
                 : resolvedMemberListKind === 'instructors'
                   ? '강사 삭제'
-                  : '회원 삭제'}
+                  : resolvedMemberListKind === 'admins'
+                    ? '관리자 삭제'
+                    : '회원 삭제'}
             </CmsButton>
             {canWrite && (
               <CmsButton
@@ -660,6 +715,10 @@ export function UserListPage() {
                     openSchoolRegisterModal()
                     return
                   }
+                  if (resolvedMemberListKind === 'admins') {
+                    openAdminRegisterModal()
+                    return
+                  }
                   window.alert('준비 중입니다')
                 }}
               >
@@ -667,6 +726,8 @@ export function UserListPage() {
                   ? '학교 등록'
                   : resolvedMemberListKind === 'instructors'
                     ? '강사 등록'
+                    : resolvedMemberListKind === 'admins'
+                      ? '관리자 등록'
                     : '회원 등록'}
               </CmsButton>
             )}
@@ -679,6 +740,8 @@ export function UserListPage() {
           loading={false}
           onView={handleView}
           onDelete={canWrite ? handleDeleteClick : undefined}
+          onAdminPermissionChange={canWrite ? handleAdminPermissionChange : undefined}
+          adminPermissionChangeLoadingUserId={adminPermissionChangingUserId}
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={setSelectedRowKeys}
           pagination={false}
@@ -714,6 +777,13 @@ export function UserListPage() {
         open={schoolRegisterOpen}
         onClose={closeSchoolRegisterModal}
         onSubmit={handleSchoolRegisterSubmit}
+        loading={loading}
+      />
+
+      <AdminRegisterModal
+        open={adminRegisterOpen}
+        onClose={closeAdminRegisterModal}
+        onSubmit={handleAdminRegisterSubmit}
         loading={loading}
       />
 

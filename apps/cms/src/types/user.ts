@@ -116,6 +116,9 @@ export interface User {
   /** CMS 회원 상세 — 관리자 메모(있을 때만 본문 표시) */
   adminComment?: string
 
+  /** 회원 권한 승인 페이지에서 관리되는 권한 승인 현황 */
+  permissionApprovalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'
+
   /**
    * CMS: 관리자 「회원 등록」 플로우로만 생성된 계정.
    * 기본 정보 description의「관리자에 의해 등록」안내·상세 [정보 수정] 노출에는

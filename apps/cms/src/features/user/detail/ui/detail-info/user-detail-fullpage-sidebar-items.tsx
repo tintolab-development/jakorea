@@ -163,7 +163,7 @@ function buildProgramsItem(
 ): DetailModalSidebarNavItem {
   let programsLabel = '프로그램 참여 이력'
   if (role === 'ADMIN') {
-    programsLabel = '담당 프로그램 이력'
+    programsLabel = '프로그램 담당 이력'
   }
   const programsIcon = LNB_ICONS.programs
 
