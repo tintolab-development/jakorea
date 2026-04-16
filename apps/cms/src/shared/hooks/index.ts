@@ -21,8 +21,6 @@ export type {
   UseTableSearchOptions,
   UseTableSearchReturn,
 } from './use-table-search'
-export { useListCRUD } from './use-list-crud'
-export type { UseListCRUDOptions, UseListCRUDReturn } from './use-list-crud'
 export { useListFilters } from './use-list-filters'
 export type { UseListFiltersOptions, UseListFiltersReturn, FilterConfig } from './use-list-filters'
 export { useModalState } from './use-modal-state'
