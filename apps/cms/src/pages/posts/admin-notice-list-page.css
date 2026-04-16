@@ -1,0 +1,62 @@
+/**
+ * 공지사항 관리 — 후원사 관리(sponsor-page)와 동일 FilterTableLayout 래퍼에서만 간격 조정
+ *
+ * 필터 ↔ 디바이더 간격: `filter-table-layout.css` 의 `.filter-table-layout__divider { padding: 32px 0 }`
+ * (구분선 위·아래 각 32px — 필터 하단과 구분선 사이 세로 간격 32px)
+ */
+
+.admin-notice-list-page {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.admin-notice-list-page__row--clickable {
+  cursor: pointer;
+}
+
+/* 필터 영역 하단 ↔ 구분선(app-divider) 사이: 32px (filter-table-layout.css 와 동일 값 명시) */
+.admin-notice-list-page .filter-table-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+/* 본문 셀 가운데 정렬 (컬럼 align + 고정 레이아웃) */
+.admin-notice-list-page__table.cms-data-table .ant-table-thead > tr > th,
+.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr > td {
+  text-align: center;
+}
+
+.admin-notice-list-page__title-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-notice-list-page__title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  text-align: center;
+}
+
+.admin-notice-list-page__pin {
+  flex-shrink: 0;
+  display: block;
+}
+
+/* 테이블 — 비공개 셀 타이포 */
+.admin-notice-list-page__status-private {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
