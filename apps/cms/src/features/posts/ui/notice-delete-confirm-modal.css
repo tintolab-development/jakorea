@@ -83,3 +83,53 @@
   background-color: #fff0f2 !important;
   background-image: none !important;
 }
+
+/* 문의 삭제 확인 — 시안 600×230 (preset inquiry) */
+.notice-delete-confirm-modal-wrap.inquiry-delete-confirm-modal-wrap .ant-modal.notice-delete-confirm-modal.inquiry-delete-confirm-modal {
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+}
+
+.notice-delete-confirm-modal-wrap.inquiry-delete-confirm-modal-wrap
+  .content-modal.notice-delete-confirm-modal.inquiry-delete-confirm-modal.ant-modal
+  .ant-modal-content {
+  /* 230px 박스 안에 헤더·본문 2줄·푸터가 들어가도록 패딩·푸터 간격만 조정 */
+  padding: 24px 30px 28px;
+  height: 230px;
+  min-height: 230px;
+  max-height: min(230px, calc(100dvh - 48px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.notice-delete-confirm-modal-wrap.inquiry-delete-confirm-modal-wrap
+  .content-modal.notice-delete-confirm-modal.inquiry-delete-confirm-modal.ant-modal
+  .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.notice-delete-confirm-modal-wrap.inquiry-delete-confirm-modal-wrap
+  .content-modal.inquiry-delete-confirm-modal
+  .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.notice-delete-confirm-modal-wrap.inquiry-delete-confirm-modal-wrap
+  .content-modal.inquiry-delete-confirm-modal
+  .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 20px;
+}
+
+.notice-delete-confirm-modal-wrap.inquiry-delete-confirm-modal-wrap
+  .content-modal.inquiry-delete-confirm-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+}

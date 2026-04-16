@@ -4,12 +4,18 @@
 
 .filter-table-layout {
   width: 100%;
+  min-width: 0;
   background: var(--color-bg-base);
   margin-bottom: var(--spacing-24);
   padding: 0;
   border-radius: 12px;
   box-shadow: 0 0 16px 0 var(--shadow-card-soft);
   padding: 20px;
+}
+
+.filter-table-layout__filter {
+  width: 100%;
+  min-width: 0;
 }
 
 .filter-table-layout .unified-filter-card {

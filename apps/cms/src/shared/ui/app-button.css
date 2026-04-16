@@ -50,7 +50,7 @@
   font-size: var(--font-size-14);
 }
 
-/* ----- size: filter (필터 영역 140×44, 컨트롤 높이와 맞춤) ----- */
+/* ----- size: filter (필터 영역 160×44, TableFilterGroup 조회와 동일) ----- */
 .app-button.app-button--filter.ant-btn,
 .app-button.app-button--filter.ant-btn-lg {
   box-sizing: border-box !important;
@@ -59,9 +59,9 @@
   justify-content: center !important;
   align-items: center !important;
   gap: var(--spacing-4) !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
   height: 44px !important;
   min-height: 44px !important;
   max-height: 44px !important;
@@ -127,8 +127,8 @@
 }
 
 .app-button.app-button--filter.ant-btn-lg {
-  width: 140px !important;
-  min-width: 140px !important;
+  width: 160px !important;
+  min-width: 160px !important;
 }
 
 .app-button.app-button--filter-wide.ant-btn-lg {

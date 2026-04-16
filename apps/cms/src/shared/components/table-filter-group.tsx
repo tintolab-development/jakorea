@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Row, Col, Space } from 'antd'
+import { Row, Col } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -50,8 +50,13 @@ export interface FilterFieldConfig {
 }
 
 export interface TableFilterGroupProps {
-  /** 필터 필드 설정 배열 */
-  fields: FilterFieldConfig[]
+  /** 단일 행 필터 (기본). `rows`가 있으면 무시됨 */
+  fields?: FilterFieldConfig[]
+  /**
+   * 다행 필터 — 지정 시 `fields` 대신 사용.
+   * 각 행은 CSS Grid로 `gap: 12px`·`minmax(0,1fr)`로 가로를 꽉 채움(마지막 행이 3칸·최대 4칸이면 1fr 1fr 2fr).
+   */
+  rows?: FilterFieldConfig[][]
   /** 필터 값 객체 */
   filters: Record<string, any>
   /** 필터 변경 핸들러 (조회 버튼 클릭 전까지 임시 저장) */
@@ -75,13 +80,19 @@ function getCurrentMonthRangeTuple(reference = dayjs()): [Dayjs, Dayjs] {
 
 export function TableFilterGroup({
   fields = [],
+  rows: rowsProp,
   filters = {},
   onFilterChange,
   onSearch,
   loading = false,
   extra,
 }: TableFilterGroupProps) {
-  const filterRowFields = fields
+  const resolvedRows = useMemo(
+    () => (rowsProp != null && rowsProp.length > 0 ? rowsProp : [fields]),
+    [rowsProp, fields]
+  )
+
+  const filterRowFields = useMemo(() => resolvedRows.flat(), [resolvedRows])
 
   const searchFieldKeys = useMemo(
     () => filterRowFields.filter(f => f.type === 'search').map(f => f.key),
@@ -154,14 +165,15 @@ export function TableFilterGroup({
     }
   }, [filterRowFields, filters, onFilterChange])
 
+  /** `table-filter-group.css` 의 `--table-filter-field-gap` 와 동일(px) — % 폭 colFlex 계산용 */
   const interFieldGapPx = 12
 
-  const colFlex = (field: FilterFieldConfig, defaultFlex: string) => {
+  const colFlex = (field: FilterFieldConfig, defaultFlex: string, rowFieldCount: number) => {
     if (field.width != null) {
       if (typeof field.width === 'string' && field.width.trim().endsWith('%')) {
         const pct = parseFloat(field.width) / 100
         if (!Number.isNaN(pct)) {
-          const totalGaps = Math.max(0, filterRowFields.length - 1) * interFieldGapPx
+          const totalGaps = Math.max(0, rowFieldCount - 1) * interFieldGapPx
           return `0 0 calc((100% - ${totalGaps}px) * ${pct})`
         }
       }
@@ -174,89 +186,93 @@ export function TableFilterGroup({
   const colClassFor = (field: FilterFieldConfig) =>
     field.width != null ? 'unified-filter-card__col--explicit-width' : undefined
 
-  const renderField = (field: FilterFieldConfig) => {
+  const maxRowFieldCount = useMemo(
+    () => (resolvedRows.length > 0 ? Math.max(0, ...resolvedRows.map(r => r.length)) : 0),
+    [resolvedRows]
+  )
+
+  /** 다행 Grid: 위 행이 4칸·아래가 3칸이면 1fr 1fr 2fr 로 수직 정렬 */
+  const gridTemplateForRow = (rowFieldCount: number, maxCols: number): string => {
+    if (rowFieldCount <= 0) return 'minmax(0, 1fr)'
+    if (rowFieldCount === maxCols) {
+      return `repeat(${rowFieldCount}, minmax(0, 1fr))`
+    }
+    if (rowFieldCount === 3 && maxCols === 4) {
+      return 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr)'
+    }
+    return `repeat(${rowFieldCount}, minmax(0, 1fr))`
+  }
+
+  const renderFieldInner = (field: FilterFieldConfig) => {
     if (field.type === 'radio') {
       return (
-        <Col
-          key={field.key}
-          flex={colFlex(field, '0 0 auto')}
-          className={['unified-filter-card__col--radio', colClassFor(field)]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          <div className="unified-filter-card__field unified-filter-card__field--radio">
-            <span className="unified-filter-card__label">{field.label}</span>
-            <CmsRadio.Group
-              value={filters[field.key]}
-              onChange={e => onFilterChange(field.key, e.target.value)}
-            >
-              {(field.options ?? []).map(opt => (
-                <CmsRadio key={String(opt.value)} value={opt.value}>
-                  {opt.label}
-                </CmsRadio>
-              ))}
-            </CmsRadio.Group>
-          </div>
-        </Col>
+        <div className="unified-filter-card__field unified-filter-card__field--radio">
+          <span className="unified-filter-card__label">{field.label}</span>
+          <CmsRadio.Group
+            value={filters[field.key]}
+            onChange={e => onFilterChange(field.key, e.target.value)}
+          >
+            {(field.options ?? []).map(opt => (
+              <CmsRadio key={String(opt.value)} value={opt.value}>
+                {opt.label}
+              </CmsRadio>
+            ))}
+          </CmsRadio.Group>
+        </div>
       )
     }
 
     if (field.type === 'search') {
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>
-          <LabeledSearchInput
-            label={field.label}
-            placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
-            value={searchDrafts[field.key] ?? ''}
-            onChange={value =>
-              setSearchDrafts(prev =>
-                prev[field.key] === value ? prev : { ...prev, [field.key]: value }
-              )
-            }
-            width="100%"
-          />
-        </Col>
+        <LabeledSearchInput
+          label={field.label}
+          placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
+          value={searchDrafts[field.key] ?? ''}
+          onChange={value =>
+            setSearchDrafts(prev =>
+              prev[field.key] === value ? prev : { ...prev, [field.key]: value }
+            )
+          }
+          width="100%"
+        />
       )
     }
 
     if (field.type === 'select') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 300px')} className={colClassFor(field)}>
-          <div className="unified-filter-card__field unified-filter-card__field--select">
-            <span className="unified-filter-card__label">{field.label}</span>
-            <CmsSelect
-              inputSize="large"
-              placeholder={field.placeholder || '전체'}
-              value={filters[field.key]}
-              selectClassName="unified-filter-card__select"
-              onChange={value => onFilterChange(field.key, value)}
-              allowClear={field.allowClear !== false}
-              popupMatchSelectWidth
-              style={{ width: '100%', ...field.style }}
-              options={field.options?.map(opt => ({
-                label: opt.label,
-                value: opt.value,
-              }))}
-            />
-          </div>
-        </Col>
+        <div className="unified-filter-card__field unified-filter-card__field--select">
+          <span className="unified-filter-card__label">{field.label}</span>
+          <CmsSelect
+            inputSize="large"
+            placeholder={field.placeholder || '전체'}
+            value={filters[field.key]}
+            selectClassName="unified-filter-card__select"
+            onChange={value => onFilterChange(field.key, value)}
+            allowClear={field.allowClear !== false}
+            popupMatchSelectWidth
+            style={{ width: '100%', ...field.style }}
+            options={field.options?.map(opt => ({
+              label: opt.label,
+              value: opt.value,
+            }))}
+          />
+        </div>
       )
     }
 
     if (field.type === 'dateRange') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 360px')} className={colClassFor(field)}>
-          <div className="unified-filter-card__field">
-            <span className="unified-filter-card__label">{field.label}</span>
-            <CmsDateRangePicker
-              inputSize="large"
-              style={{ width: '100%', ...field.style }}
-              value={filters[field.key]}
-              onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
-              allowClear={field.allowClear !== false}
-            />
-          </div>
-        </Col>
+        <div className="unified-filter-card__field">
+          <span className="unified-filter-card__label">{field.label}</span>
+          <CmsDateRangePicker
+            inputSize="large"
+            width="100%"
+            style={field.style}
+            value={filters[field.key]}
+            onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
+            allowClear={field.allowClear !== false}
+          />
+        </div>
       )
     }
 
@@ -264,19 +280,68 @@ export function TableFilterGroup({
       const raw = filters[field.key]
       const arr = Array.isArray(raw) ? (raw as string[]) : []
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>
-          <div className="unified-filter-card__field">
-            <span className="unified-filter-card__label">{field.label}</span>
-            <AppMultiSelect
-              className="unified-filter-card__multi-select"
-              placeholder={field.placeholder || '선택하세요'}
-              value={arr}
-              onChange={next => onFilterChange(field.key, next)}
-              options={field.multiSelectOptions ?? []}
-              allowClear={field.allowClear !== false}
-              style={{ width: '100%', ...field.style }}
-            />
-          </div>
+        <div className="unified-filter-card__field">
+          <span className="unified-filter-card__label">{field.label}</span>
+          <AppMultiSelect
+            className="unified-filter-card__multi-select"
+            placeholder={field.placeholder || '선택하세요'}
+            value={arr}
+            onChange={next => onFilterChange(field.key, next)}
+            options={field.multiSelectOptions ?? []}
+            allowClear={field.allowClear !== false}
+            style={{ width: '100%', ...field.style }}
+          />
+        </div>
+      )
+    }
+
+    return null
+  }
+
+  const renderFieldCol = (field: FilterFieldConfig, rowFieldCount: number) => {
+    const inner = renderFieldInner(field)
+    if (inner == null) return null
+
+    if (field.type === 'radio') {
+      return (
+        <Col
+          key={field.key}
+          flex={colFlex(field, '0 0 auto', rowFieldCount)}
+          className={['unified-filter-card__col--radio', colClassFor(field)].filter(Boolean).join(' ')}
+        >
+          {inner}
+        </Col>
+      )
+    }
+
+    if (field.type === 'search') {
+      return (
+        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassFor(field)}>
+          {inner}
+        </Col>
+      )
+    }
+
+    if (field.type === 'select') {
+      return (
+        <Col key={field.key} flex={colFlex(field, '1 1 300px', rowFieldCount)} className={colClassFor(field)}>
+          {inner}
+        </Col>
+      )
+    }
+
+    if (field.type === 'dateRange') {
+      return (
+        <Col key={field.key} flex={colFlex(field, '1 1 360px', rowFieldCount)} className={colClassFor(field)}>
+          {inner}
+        </Col>
+      )
+    }
+
+    if (field.type === 'multiSelect') {
+      return (
+        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassFor(field)}>
+          {inner}
         </Col>
       )
     }
@@ -284,28 +349,81 @@ export function TableFilterGroup({
     return null
   }
 
+  const renderFieldGridCell = (field: FilterFieldConfig) => {
+    const inner = renderFieldInner(field)
+    if (inner == null) return null
+    return (
+      <div key={field.key} className="table-filter-group__grid-cell">
+        {inner}
+      </div>
+    )
+  }
+
   const actionButtons = (
-    <Space size="small">
+    <div className="table-filter-group__shell-actions">
       <CmsButton
         variant="primary"
         type="button"
+        className="table-filter-group__search-button"
+        width={160}
         onClick={flushSearchToParentAndSearch}
         loading={loading}
       >
         조회
       </CmsButton>
       {extra}
-    </Space>
+    </div>
   )
+
+  const isMultiRowLayout = resolvedRows.length > 1
+
+  const fieldsBody =
+    resolvedRows.length <= 1 ? (
+      <Row gutter={0} className="table-filter-group__fields-inner" align="bottom" wrap={false}>
+        {resolvedRows[0]?.map(field => renderFieldCol(field, resolvedRows[0].length)) ?? null}
+      </Row>
+    ) : (
+      <div className="table-filter-group__fields-rows">
+        {resolvedRows.map((rowFields, rowIndex) => {
+          const isLastRow = rowIndex === resolvedRows.length - 1
+          if (!isLastRow) {
+            return (
+              <div
+                key={rowIndex}
+                className="table-filter-group__fields-grid-row"
+                style={{
+                  gridTemplateColumns: gridTemplateForRow(rowFields.length, maxRowFieldCount),
+                }}
+              >
+                {rowFields.map(field => renderFieldGridCell(field))}
+              </div>
+            )
+          }
+          return (
+            <div key={rowIndex} className="table-filter-group__fields-row-with-action">
+              <div
+                className="table-filter-group__fields-grid-row table-filter-group__fields-grid-row--stretch"
+                style={{
+                  gridTemplateColumns: gridTemplateForRow(rowFields.length, maxRowFieldCount),
+                }}
+              >
+                {rowFields.map(field => renderFieldGridCell(field))}
+              </div>
+              <div className="table-filter-group__fields-shell table-filter-group__fields-shell--inline">
+                {actionButtons}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
 
   return (
     <div className="table-filter-group__container">
-      <div className="table-filter-group__fields-container">
-        <Row gutter={0} className="table-filter-group__fields-inner" align="bottom" wrap={false}>
-          {filterRowFields.map(renderField)}
-        </Row>
-      </div>
-      <div className="table-filter-group__fields-shell">{actionButtons}</div>
+      <div className="table-filter-group__fields-container">{fieldsBody}</div>
+      {!isMultiRowLayout ? (
+        <div className="table-filter-group__fields-shell">{actionButtons}</div>
+      ) : null}
     </div>
   )
 }

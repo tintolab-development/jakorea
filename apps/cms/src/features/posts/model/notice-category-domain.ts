@@ -2,10 +2,9 @@
  * 공지 카테고리 도메인 — React/UI와 무관한 순수 로직 (테스트·재사용 용이)
  */
 
-import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
-
+/** 공지·FAQ 카테고리 행 공통 `{ id, name }` */
 export function hasDuplicateCategoryName(
-  rows: readonly NoticeCategoryRow[],
+  rows: readonly { id: string; name: string }[],
   candidate: string,
   excludeId?: string
 ): boolean {

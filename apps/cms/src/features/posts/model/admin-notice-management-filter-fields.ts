@@ -46,14 +46,14 @@ export function buildAdminNoticeManagementFilterFields(
       type: 'search',
       label: '제목',
       placeholder: '제목을 입력하세요',
-      width: '18%',
+      width: '20%',
     },
     {
       key: 'visibility',
       type: 'select',
       label: '공개 여부',
       placeholder: '전체',
-      width: '13%',
+      width: '12%',
       options: [
         { label: '전체', value: 'ALL' },
         { label: '공개', value: 'public' },
@@ -65,7 +65,7 @@ export function buildAdminNoticeManagementFilterFields(
       type: 'select',
       label: '카테고리',
       placeholder: '전체',
-      width: '13%',
+      width: '12%',
       options: categoryOptions,
     },
     {
@@ -73,14 +73,14 @@ export function buildAdminNoticeManagementFilterFields(
       type: 'search',
       label: '작성자',
       placeholder: '작성자를 입력하세요',
-      width: '18%',
+      width: '20%',
     },
     {
       key: 'dateRange',
       type: 'dateRange',
       label: '작성일',
       defaultValue: null,
-      width: '38%',
+      width: '36%',
     },
   ]
 }

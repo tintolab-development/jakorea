@@ -1,21 +1,32 @@
 import { useLayoutEffect, useRef } from 'react'
 import Editor from '@toast-ui/editor'
 
-const EDITOR_HEIGHT = '369px'
-const PLACEHOLDER = '공지사항 내용을 입력해 주세요.'
+const DEFAULT_EDITOR_HEIGHT = '369px'
+const DEFAULT_PLACEHOLDER = '공지사항 내용을 입력해 주세요.'
+
+export type NoticeWysiwygEditorOptions = {
+  /** 예: FAQ 모달은 `260px` 등으로 축소 */
+  height?: string
+  placeholder?: string
+}
 
 /**
  * 공지 등록/수정 모달용 Toast UI WYSIWYG — 모달 `open` 시에만 마운트·파기
  * `initialMarkdown`·`resetKey` 변경 시 인스턴스 재생성(수정 모드 본문 주입).
+ * `options`로 FAQ 등 다른 화면에서 높이·placeholder만 바꿔 재사용 가능.
  */
 export function useNoticeWysiwygEditor(
   open: boolean,
   initialMarkdown: string = '',
   /** open·noticeId·mode 등 — 동일 open에서 다른 글 편집 시 재마운트 */
-  resetKey?: string | number
+  resetKey?: string | number,
+  options?: NoticeWysiwygEditorOptions
 ) {
   const editorHostRef = useRef<HTMLDivElement | null>(null)
   const editorRef = useRef<Editor | null>(null)
+
+  const height = options?.height ?? DEFAULT_EDITOR_HEIGHT
+  const placeholder = options?.placeholder ?? DEFAULT_PLACEHOLDER
 
   useLayoutEffect(() => {
     if (!open) {
@@ -35,11 +46,11 @@ export function useNoticeWysiwygEditor(
       const instance = new Editor({
         el,
         autofocus: false,
-        height: EDITOR_HEIGHT,
+        height,
         initialEditType: 'wysiwyg',
         previewStyle: 'vertical',
         usageStatistics: false,
-        placeholder: PLACEHOLDER,
+        placeholder,
         initialValue: initialMarkdown || '',
         events: {
           change: () => {},
@@ -65,7 +76,7 @@ export function useNoticeWysiwygEditor(
         editorRef.current = null
       }
     }
-  }, [open, initialMarkdown, resetKey])
+  }, [open, initialMarkdown, resetKey, height, placeholder])
 
   const getMarkdown = () => (editorRef.current ? editorRef.current.getMarkdown() : '')
 

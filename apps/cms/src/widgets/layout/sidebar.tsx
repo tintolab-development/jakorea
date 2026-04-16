@@ -135,6 +135,14 @@ export function Sidebar() {
       }
     }
 
+    // ADMIN: 게시글 관리 — 상세 URL에서도 목록 메뉴 키로 하이라이트
+    if (user?.role === 'ADMIN' && path.startsWith('/admin/posts/notices')) {
+      return ['/admin/posts/notices']
+    }
+    if (user?.role === 'ADMIN' && path.startsWith('/admin/posts/faq')) {
+      return ['/admin/posts/faq']
+    }
+
     return [path]
   }, [location.pathname, location.search, user?.role])
 

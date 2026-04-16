@@ -1,0 +1,17 @@
+/* FAQ 목록·상세 — 삭제 버튼 라벨 타이포(수정 모달「FAQ 삭제」와 동일) */
+.admin-faq-delete-btn.ant-btn {
+  text-align: center;
+}
+
+.admin-faq-delete-btn .cms-button__label {
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.admin-faq-delete-btn.ant-btn:not(:disabled):not(.ant-btn-disabled) .cms-button__label {
+  color: #c32f4a !important;
+}

@@ -41,10 +41,10 @@ import '@/features/program/ui/program-list.css'
 import './admin-notice-list-page.css'
 
 /** 고정 레이아웃 기준 최소 가로 스크롤 (체크박스 열 제외 본문 컬럼 합 + 여유) */
-const NOTICE_LIST_TABLE_SCROLL_X = 1180
+const NOTICE_LIST_TABLE_SCROLL_X = 1192
 
 const NOTICE_LIST_COL_WIDTH = {
-  no: 68,
+  no: 80,
   category: 108,
   title: 360,
   visibility: 100,

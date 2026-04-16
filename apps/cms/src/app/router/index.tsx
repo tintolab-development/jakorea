@@ -121,6 +121,7 @@ const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-pa
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminNoticeDetailPage = lazyLoad(() => import('@/pages/posts/admin-notice-detail-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
+const AdminFaqDetailPage = lazyLoad(() => import('@/pages/posts/admin-faq-detail-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
 const PermissionCustomizationPage = lazyLoad(
   () => import('@/pages/admin/settings/permission-customization-page')
@@ -495,6 +496,7 @@ export const router = createBrowserRouter([
               { path: 'categories', element: <AdminCategoryPage /> },
               { path: 'notices', element: <AdminNoticeListPage /> },
               { path: 'notices/:id', element: <AdminNoticeDetailPage /> },
+              { path: 'faq/:id', element: <AdminFaqDetailPage /> },
               { path: 'faq', element: <AdminFAQPage /> },
               { path: 'inquiries', element: <AdminInquiryPage /> },
             ],

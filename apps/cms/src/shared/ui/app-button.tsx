@@ -87,7 +87,7 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
 
 AppButton.displayName = 'AppButton'
 
-/** 필터 영역 공통 「조회」 버튼 (140×44, JA-mint-01 — `app-button--filter` 스타일) */
+/** 필터 영역 공통 「조회」 버튼 (160×44, JA-mint-01 — `app-button--filter` 스타일) */
 export function FilterSearchButton({
   children = '조회',
   ...props
