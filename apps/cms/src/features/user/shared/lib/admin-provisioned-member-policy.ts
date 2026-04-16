@@ -5,8 +5,13 @@ export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '*관리자에 의해 등�
 
 /** 학교(기관) 상세 기본 정보 타이틀 우측 안내 */
 export const ADMIN_REGISTERED_SCHOOL_TITLE_NOTICE = '관리자에 의해 등록된 학교입니다'
+/** 회원 상세 기본 정보 타이틀 우측 안내 */
+export const ADMIN_REGISTERED_MEMBER_TITLE_NOTICE = '관리자에 의해 등록된 회원입니다'
 
 type UserLike = Pick<User, 'registeredByAdmin' | 'identitySelfSignupCompletedAfterAdminRegistration'>
+type PermissionApprovalUserLike = Pick<User, 'permissionApprovalStatus'>
+type CurrentUserLike = Pick<User, 'role' | 'adminLevel'>
+type AdminMemberEditTargetLike = UserLike & Pick<User, 'role'>
 
 type SchoolUserLike = UserLike &
   Pick<User, 'role' | 'schoolInfo'> & {
@@ -24,6 +29,31 @@ export function shouldShowCmsMemberInfoEditButton(user: UserLike): boolean {
  */
 export function shouldShowAdminRegisteredMemberDetailCaption(user: UserLike): boolean {
   return Boolean(user.registeredByAdmin && !user.identitySelfSignupCompletedAfterAdminRegistration)
+}
+
+/** 기본 정보 타이틀 우측「관리자에 의해 등록된 회원입니다」 */
+export function shouldShowAdminRegisteredMemberTitleNotice(user: UserLike): boolean {
+  return Boolean(user.registeredByAdmin && !user.identitySelfSignupCompletedAfterAdminRegistration)
+}
+
+/** 관리자 코멘트 노출: 권한 승인 현황이 승인 완료(APPROVED)인 회원만 */
+export function shouldShowAdminCommentSection(user: PermissionApprovalUserLike): boolean {
+  return user.permissionApprovalStatus === 'APPROVED'
+}
+
+/** 관리자 상세의 관리자 코멘트는 마스터 관리자만 열람/수정 가능 */
+export function canAccessAdminCommentInAdminDetail(currentUser: CurrentUserLike | null | undefined): boolean {
+  return currentUser?.role === 'ADMIN' && currentUser.adminLevel === 'MASTER'
+}
+
+/** 관리자 상세에서 관리자 회원 정보 수정 가능 조건 (마스터 + 관리자 등록 회원) */
+export function canEditAdminMemberInfo(
+  currentUser: CurrentUserLike | null | undefined,
+  targetUser: AdminMemberEditTargetLike
+): boolean {
+  if (targetUser.role !== 'ADMIN') return false
+  if (!canAccessAdminCommentInAdminDetail(currentUser)) return false
+  return shouldShowCmsMemberInfoEditButton(targetUser)
 }
 
 /** 소속 교사 중 CMS 회원과 연동된 행이 하나라도 있으면 true (해당 학교명으로 가입·연동된 교사) */

@@ -3,8 +3,8 @@ import type { User } from '@/types/user'
 export type AdminPermissionTagVariant = 'manager' | 'partner' | 'viewer'
 
 export const ADMIN_PERMISSION_TAG_LABEL: Record<AdminPermissionTagVariant, string> = {
-  manager: '담당자',
-  partner: '파트너',
+  manager: '마스터 관리자',
+  partner: '중간 관리자',
   viewer: '뷰어',
 }
 

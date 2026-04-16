@@ -9,6 +9,11 @@ import type { MfaState } from '@/types/mfa'
 import { login as loginApi, validateToken } from '@/entities/user/api/auth-service'
 import { updateMockUserById } from '@/data/mock/users'
 
+function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
+  if (user.role !== 'ADMIN') return user
+  return { ...user, adminLevel: 'MASTER' }
+}
+
 interface AuthState {
   user: Omit<User, 'password'> | null
   token: string | null
@@ -58,8 +63,10 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
     if (new Date(expiresAt) > new Date()) {
       try {
         const user = JSON.parse(userStr)
+        const normalizedUser = elevateAdminToMaster(user)
+        localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
         return {
-          user,
+          user: normalizedUser,
           token,
           expiresAt,
           isAuthenticated: true,
@@ -108,8 +115,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
         // MFA 필요 시 MFA 상태만 설정하고 인증은 완료하지 않음
         if (response.requiresMfa && response.mfaState) {
+          const normalizedUser = elevateAdminToMaster(response.user)
           set({
-            user: response.user,
+            user: normalizedUser,
             token: null, // MFA 완료 전에는 토큰 저장 안 함
             expiresAt: null,
             isAuthenticated: false, // MFA 완료 전에는 인증되지 않음
@@ -122,15 +130,16 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         }
 
         // MFA 불필요 시 바로 인증 완료
+        const normalizedUser = elevateAdminToMaster(response.user)
         // localStorage에 저장
         if (typeof window !== 'undefined' && window.localStorage) {
           localStorage.setItem(TOKEN_STORAGE_KEY, response.token)
           localStorage.setItem(TOKEN_EXPIRY_KEY, response.expiresAt.toString())
-          localStorage.setItem('auth_user', JSON.stringify(response.user))
+          localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
         }
 
         set({
-          user: response.user,
+          user: normalizedUser,
           token: response.token,
           expiresAt: response.expiresAt.toString(),
           isAuthenticated: true,
@@ -271,11 +280,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           }
 
           if (user && user.isActive) {
+            const normalizedUser = elevateAdminToMaster(user)
             // localStorage 업데이트
-            localStorage.setItem('auth_user', JSON.stringify(user))
+            localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
 
             set({
-              user,
+              user: normalizedUser,
               token,
               expiresAt,
               isAuthenticated: true,
@@ -287,9 +297,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               console.warn('User not found or inactive, logging out')
               get().logout()
             } else {
+              const normalizedStoredUser = elevateAdminToMaster(storedUser)
+              localStorage.setItem('auth_user', JSON.stringify(normalizedStoredUser))
               // 저장된 사용자 정보로 상태 유지
               set({
-                user: storedUser,
+                user: normalizedStoredUser,
                 token,
                 expiresAt,
                 isAuthenticated: true,
@@ -302,8 +314,10 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           try {
             const storedUser = JSON.parse(userStr)
             if (storedUser && storedUser.isActive) {
+              const normalizedStoredUser = elevateAdminToMaster(storedUser)
+              localStorage.setItem('auth_user', JSON.stringify(normalizedStoredUser))
               set({
-                user: storedUser,
+                user: normalizedStoredUser,
                 token,
                 expiresAt,
                 isAuthenticated: true,
@@ -346,15 +360,16 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     // Phase 0.1.3: 인증 상태 직접 설정 (휴대폰/소셜 로그인용)
     setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => {
+      const normalizedUser = elevateAdminToMaster(authData.user)
       // localStorage에 저장
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(TOKEN_STORAGE_KEY, authData.token)
         localStorage.setItem(TOKEN_EXPIRY_KEY, authData.expiresAt)
-        localStorage.setItem('auth_user', JSON.stringify(authData.user))
+        localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
       }
 
       set({
-        user: authData.user,
+        user: normalizedUser,
         token: authData.token,
         expiresAt: authData.expiresAt,
         isAuthenticated: true,

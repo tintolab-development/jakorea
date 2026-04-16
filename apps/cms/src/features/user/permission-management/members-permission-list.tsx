@@ -18,6 +18,7 @@ import {
   mockMemberPermissionApplicationsAdmin,
   mockMemberPermissionApplicationsInstructor,
 } from '@/data/mock/member-permission-applications'
+import { updateMockUserById } from '@/data/mock/users'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -142,6 +143,9 @@ export function MembersPermissionList({
           : r
       )
     )
+    selectedPendingRows.forEach(row => {
+      updateMockUserById(row.userId, { permissionApprovalStatus: 'APPROVED' })
+    })
     message.success(`신청 ${selectedPendingRows.length}건을 승인했습니다.`)
     setSelectedRowKeys([])
   }, [canWrite, selectedRowKeys.length, selectedPendingRows])
@@ -160,6 +164,9 @@ export function MembersPermissionList({
           : r
       )
     )
+    selectedPendingRows.forEach(row => {
+      updateMockUserById(row.userId, { permissionApprovalStatus: 'REJECTED' })
+    })
     message.success(`신청 ${selectedPendingRows.length}건을 반려했습니다.`)
     setSelectedRowKeys([])
   }, [canWrite, selectedRowKeys.length, selectedPendingRows])

@@ -17,6 +17,8 @@ import { UserDetailAdminCommentSection } from './user-detail-admin-comment-secti
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import {
   ADMIN_REGISTERED_SCHOOL_TITLE_NOTICE,
+  canAccessAdminCommentInAdminDetail,
+  shouldShowAdminCommentSection,
   shouldShowAdminRegisteredSchoolTitleNotice,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
@@ -25,6 +27,7 @@ import {
   USER_BASIC_INFO_ENTRY_QUERY_KEY,
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { useSearchParams } from 'react-router-dom'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 
 export interface UserDetailFullpageBasicTabContentProps {
   user: Omit<User, 'password'>
@@ -50,6 +53,7 @@ export function UserDetailFullpageBasicTabContent({
   onMemberInfoDraftChange,
 }: UserDetailFullpageBasicTabContentProps) {
   const [searchParams] = useSearchParams()
+  const currentUser = useAuthStore(state => state.user)
   const institutionTitleTrailing = useMemo(() => {
     const entryFromQuery = parseUserBasicInfoEntryQuery(
       searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY)
@@ -62,19 +66,25 @@ export function UserDetailFullpageBasicTabContent({
       </span>
     )
   }, [user, basicInfoEntrySource, searchParams])
+  const canShowAdminCommentForTarget =
+    user.role === 'ADMIN'
+      ? canAccessAdminCommentInAdminDetail(currentUser)
+      : shouldShowAdminCommentSection(user)
 
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <UserDetailAdminCommentSection
-        user={user}
-        memberInfoEditing={memberInfoEditing}
-        adminCommentDraft={memberInfoDraft?.adminComment}
-        onAdminCommentChange={
-          memberInfoEditing && onMemberInfoDraftChange
-            ? value => onMemberInfoDraftChange({ adminComment: value })
-            : undefined
-        }
-      />
+      {canShowAdminCommentForTarget ? (
+        <UserDetailAdminCommentSection
+          user={user}
+          memberInfoEditing={memberInfoEditing}
+          adminCommentDraft={memberInfoDraft?.adminComment}
+          onAdminCommentChange={
+            memberInfoEditing && onMemberInfoDraftChange
+              ? value => onMemberInfoDraftChange({ adminComment: value })
+              : undefined
+          }
+        />
+      ) : null}
       <UserBasicInfoSection
         user={user}
         entrySource={basicInfoEntrySource}

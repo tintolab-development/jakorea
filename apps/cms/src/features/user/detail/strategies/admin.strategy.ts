@@ -9,7 +9,6 @@ export const adminStrategy: UserDetailRoleStrategy = {
     basicTab: {
       showConsentAgreement: true,
       showSchoolAffiliatedTeachers: false,
-      caption: '*관리자에 의해 등록된 회원입니다.',
     },
     historyTab: {
       useAdminManagedProgramHistory: true,
@@ -21,7 +20,7 @@ export const adminStrategy: UserDetailRoleStrategy = {
       isSchoolDelete: false,
     },
     programsHistory: {
-      enrollmentSectionTitle: '담당 프로그램 이력',
+      enrollmentSectionTitle: '프로그램 담당 이력',
       enrollmentEmptyDescription: '프로그램 신청 이력이 없습니다.',
       enrollmentChildUsesStudentMemberHistory: false,
       enrollmentChildUsesSchoolProgramParticipationView: false,

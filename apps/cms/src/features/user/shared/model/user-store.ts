@@ -241,8 +241,8 @@ export const useUserStore = create<UserStore>((set, get) => ({
           ...state.usersById,
           [newUser.id]: newUser,
         },
-        // userIds에 추가
-        userIds: [...state.userIds, newUser.id],
+        // 최신 등록 사용자가 목록 상단에 오도록 앞에 추가
+        userIds: [newUser.id, ...state.userIds],
         loading: false,
       })
 

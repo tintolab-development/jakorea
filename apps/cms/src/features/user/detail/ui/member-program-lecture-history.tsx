@@ -43,6 +43,7 @@ import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'
 import { CmsButton, DeleteGuideModal, buildProgramProgressHistoryDeleteGuide } from '@/shared/ui'
 import { CertificateBulkIssueReasonModal } from './certificate-bulk-issue-reason-modal'
+import { LectureReportSubmissionHistoryModal } from './lecture-report-submission-history-modal'
 
 function programYear(programId: string): number | null {
   const p = programService.getByIdSync(programId)
@@ -245,6 +246,10 @@ export function MemberProgramLectureHistory({
   const [deleteHistoryModalOpen, setDeleteHistoryModalOpen] = useState(false)
   const [certificateIssueModalOpen, setCertificateIssueModalOpen] = useState(false)
   const [certificateIssueTargetIds, setCertificateIssueTargetIds] = useState<string[]>([])
+  const [lectureReportHistoryModalOpen, setLectureReportHistoryModalOpen] = useState(false)
+  const [lectureReportHistoryTarget, setLectureReportHistoryTarget] = useState<Application | null>(
+    null
+  )
 
   useEffect(() => {
     if (!certificateIssueModalOpen) {
@@ -507,9 +512,9 @@ export function MemberProgramLectureHistory({
                 size="medium"
                 disabled={!canView}
                 onClick={() => {
-                  window.alert('준비 중입니다.')
                   if (onViewLectureReport) onViewLectureReport(record)
-                  else message.info('강의보고서 내역은 추후 연결됩니다.')
+                  setLectureReportHistoryTarget(record)
+                  setLectureReportHistoryModalOpen(true)
                 }}
               >
                 내역 보기
@@ -649,6 +654,22 @@ export function MemberProgramLectureHistory({
                   활동인증서 발급
                 </CmsButton>
               )}
+              {mode === 'instructorLecture' && showCertificateBulkIssue && (
+                <CmsButton
+                  variant="secondary"
+                  width={180}
+                  disabled={selectedRowKeys.length === 0}
+                  icon={<DownloadOutlined />}
+                  onClick={() => {
+                    const ids = selectedRowKeys.map(String)
+                    if (ids.length === 0) return
+                    setCertificateIssueTargetIds(ids)
+                    setCertificateIssueModalOpen(true)
+                  }}
+                >
+                  활동인증서 발급
+                </CmsButton>
+              )}
               <CmsButton
                 variant="delete"
                 disabled={selectedRowKeys.length === 0}
@@ -694,6 +715,7 @@ export function MemberProgramLectureHistory({
       ) : null}
       {showCertificateBulkIssue &&
         (mode === 'studentEnrollment' ||
+          mode === 'instructorLecture' ||
           mode === 'schoolProgramParticipation' ||
           mode === 'volunteerProgram') && (
           <CertificateBulkIssueReasonModal
@@ -701,10 +723,20 @@ export function MemberProgramLectureHistory({
             onCancel={() => setCertificateIssueModalOpen(false)}
             applicationIds={certificateIssueTargetIds}
             certificateDocumentLabel={
-              mode === 'volunteerProgram' ? '참여인증서' : '수료증/참여인증서'
+              mode === 'volunteerProgram' || mode === 'instructorLecture'
+                ? '활동인증서'
+                : '수료증/참여인증서'
             }
           />
         )}
+      <LectureReportSubmissionHistoryModal
+        open={lectureReportHistoryModalOpen}
+        application={lectureReportHistoryTarget}
+        onCancel={() => {
+          setLectureReportHistoryModalOpen(false)
+          setLectureReportHistoryTarget(null)
+        }}
+      />
     </>
   )
 }

@@ -1,0 +1,46 @@
+.instructor-permission-revoke-modal .content-modal__footer-actions {
+  justify-content: center;
+}
+
+.instructor-permission-revoke-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.instructor-permission-revoke-modal__line {
+  margin: 0;
+  color: var(--main-bk, #3d3d3d);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.instructor-permission-revoke-modal__field {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-permission-revoke-modal__label {
+  color: var(--main-bk, #3d3d3d);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  margin-bottom: 8px;
+}
+
+.instructor-permission-revoke-modal .app-radio-group {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.instructor-permission-revoke-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}

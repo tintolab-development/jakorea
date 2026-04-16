@@ -60,6 +60,11 @@ const mockAdmins: User[] = [
     detailAddress: '서울특별시 강남구 테헤란로 123',
     affiliation: 'JAKorea | 총괄 관리자',
     socialAccounts: ['구글'],
+    adminComment: '전사 관리자 운영 기준 확인 후 권한 변경 바랍니다.',
+    listMetrics: {
+      adminPermissionVariant: 'manager',
+      managedProgramCount: 1,
+    },
   },
   {
     id: generateUUID(),
@@ -80,6 +85,11 @@ const mockAdmins: User[] = [
     detailAddress: '서울특별시 서초구 서초동 456',
     affiliation: 'JAKorea | 운영팀',
     socialAccounts: ['카카오'],
+    adminComment: 'PM/파트너 권한으로 담당 프로그램만 관리합니다.',
+    listMetrics: {
+      adminPermissionVariant: 'partner',
+      managedProgramCount: 1,
+    },
   },
   {
     id: generateUUID(),
@@ -88,6 +98,9 @@ const mockAdmins: User[] = [
     name: '박시스템',
     nameEn: 'Park System',
     role: 'ADMIN',
+    registeredByAdmin: true,
+    identitySelfSignupCompletedAfterAdminRegistration: false,
+    permissionApprovalStatus: 'APPROVED',
     adminLevel: 'GENERAL',
     programRoles: { 'program-1': 'ASSISTANT' },
     isActive: true,
@@ -99,6 +112,11 @@ const mockAdmins: User[] = [
     birthDate: '1992-03-25',
     detailAddress: '경기도 성남시 분당구 정자동 789',
     affiliation: 'JAKorea | 시스템 관리',
+    adminComment: '관리자 등록 계정(수정 가능) 테스트용입니다.',
+    listMetrics: {
+      adminPermissionVariant: 'viewer',
+      managedProgramCount: 1,
+    },
   },
 ]
 
@@ -117,6 +135,7 @@ const mockInstructors: User[] = [
     name: '최강사',
     nameEn: 'Choi Kang-sa',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: INSTRUCTOR1_ID, // 고정 ID로 변경
     interviewStatus: 'APPROVED', // 승인 완료
     participationHistory: 5, // 참여이력 5건
@@ -139,7 +158,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '제미나이 강사단',
+      instructorTypeLabel: '1급 강사비',
       settlementStatusLabel: '계좌 지급 완료',
       jaEvaluationGrade: 'A',
       employmentStatusLabel: '재직 중',
@@ -158,6 +177,7 @@ const mockInstructors: User[] = [
     name: '정멘토',
     nameEn: 'Jung Mentor',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'PENDING',
     instructorId: 'instructor-2-fixed-id-for-testing',
     interviewStatus: 'APPROVED',
     participationHistory: 3,
@@ -178,7 +198,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: true,
     },
     listMetrics: {
-      instructorTypeLabel: '특강 강사',
+      instructorTypeLabel: '2급 강사비',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
       employmentStatusLabel: '전근',
@@ -195,6 +215,7 @@ const mockInstructors: User[] = [
     name: '강선생',
     nameEn: 'Kang Sun-saeng',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'REJECTED',
     instructorId: 'instructor-3-fixed-id-for-testing',
     interviewStatus: 'PENDING', // 면접 대기 중
     participationHistory: 0, // 참여이력 없음
@@ -214,7 +235,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '제미나이',
+      instructorTypeLabel: '3급 강사비',
       jaEvaluationGrade: 'C',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '5학년 담임',
@@ -679,6 +700,7 @@ const mockIndividuals: User[] = [
     name: '장학생',
     nameEn: 'Jang Hak-saeng',
     role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'APPROVED',
     /** CMS 데모: 관리자 등록 계정 — 기본 정보 desc·[정보 수정] 노출 */
     registeredByAdmin: true,
     adminComment: '체험학습 일정 조율 시 연락 바랍니다.',
@@ -700,6 +722,7 @@ const mockIndividuals: User[] = [
     name: '임참여',
     nameEn: 'Im Cham-yeo',
     role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'REJECTED',
     /** CMS 데모: 관리자 등록 후 본인인증·직접 가입 완료 — [정보 수정] 비노출, desc는 유지 */
     registeredByAdmin: true,
     identitySelfSignupCompletedAfterAdminRegistration: true,
@@ -720,6 +743,7 @@ const mockIndividuals: User[] = [
     name: '한청년',
     nameEn: 'Han Cheong-nyeon',
     role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'PENDING',
     isActive: true,
     lastLoginAt: generatePastDate(7),
     createdAt: generatePastDate(30),
@@ -1164,7 +1188,7 @@ const extraMockUsers: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: 'JA 강사단',
+      instructorTypeLabel: '1급 강사비',
       settlementStatusLabel: '일부 지급 완료',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '1학년',
@@ -1189,6 +1213,10 @@ const extraMockUsers: User[] = [
     birthDate: '1975-01-10',
     detailAddress: '서울특별시 영등포구 여의도동 1',
     affiliation: 'JAKorea | 이전 담당',
+    listMetrics: {
+      adminPermissionVariant: 'viewer',
+      managedProgramCount: 1,
+    },
   },
   // 최근 가입한 강사 (면접 예정)
   {
@@ -1212,7 +1240,46 @@ const extraMockUsers: User[] = [
     detailAddress: '경기도 용인시 수지구 200',
     affiliation: '신규 강사 지원',
     listMetrics: {
-      instructorTypeLabel: '특강 강사',
+      instructorTypeLabel: '2급 강사비',
+    },
+  },
+  // 관리자 등록 강사 (직접 가입 완료 전)
+  {
+    id: generateUUID(),
+    email: 'instructor.admin-provisioned@jakorea.org',
+    password: 'instructor123!',
+    name: '관리자등록강사',
+    nameEn: 'Admin Provisioned Instructor',
+    role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
+    registeredByAdmin: true,
+    identitySelfSignupCompletedAfterAdminRegistration: false,
+    instructorMemberProfile: 'instructor_only',
+    instructorId: generateUUID(),
+    interviewStatus: 'APPROVED',
+    participationHistory: 2,
+    isActive: true,
+    lastLoginAt: generatePastDate(2),
+    createdAt: generatePastDate(20),
+    updatedAt: generatePastDate(1),
+    phone: '010-6789-0123',
+    gender: '여성',
+    birthDate: '1992-10-12',
+    detailAddress: '서울특별시 성동구 성수이로 120',
+    affiliation: 'JA 강사단 | 관리자 등록',
+    instructorInfo: {
+      bankName: '신한은행',
+      accountHolder: '관리자등록강사',
+      accountNumber: '110-987-654321',
+      isBusinessIncome: false,
+    },
+    adminComment: '관리자 등록 강사 데모 계정',
+    listMetrics: {
+      instructorTypeLabel: '1급 강사비',
+      settlementStatusLabel: '확인 대기 중',
+      jaEvaluationGrade: 'B',
+      employmentStatusLabel: '재직 중',
+      instructorAssignedGrade: '4학년',
     },
   },
   // 참여이력 많은 강사
@@ -1236,7 +1303,7 @@ const extraMockUsers: User[] = [
     detailAddress: '서울특별시 마포구 망원동 300',
     affiliation: '경제교육연구소 | 수석강사',
     listMetrics: {
-      instructorTypeLabel: '제미나이',
+      instructorTypeLabel: '3급 강사비',
     },
   },
   // 스크린샷/UI 예시용 회원 (상세 모달 스펙: 최틴토, Choi Tinto)

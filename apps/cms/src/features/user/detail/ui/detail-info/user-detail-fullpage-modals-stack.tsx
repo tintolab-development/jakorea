@@ -11,6 +11,7 @@ import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/instructor-permission-revoke-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z = 1100
@@ -29,6 +30,9 @@ export function UserDetailFullpageModalsStack() {
     onClosePersonalInfoRevealConfirm,
     onSubmitPersonalInfoReveal,
     onClosePersonalInfoRevealSuccess,
+    instructorPermissionRevokeOpen,
+    onCloseInstructorPermissionRevoke,
+    onConfirmInstructorPermissionRevoke,
   } = useUserDetailFullpageShell()
 
   const { sections } = derived
@@ -75,6 +79,12 @@ export function UserDetailFullpageModalsStack() {
           confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
+      <InstructorPermissionRevokeModal
+        open={instructorPermissionRevokeOpen}
+        instructorName={displayUser.name}
+        onCancel={onCloseInstructorPermissionRevoke}
+        onConfirm={onConfirmInstructorPermissionRevoke}
+      />
 
       <LectureAttendanceModal
         open={modals.lectureAttendance.open}
