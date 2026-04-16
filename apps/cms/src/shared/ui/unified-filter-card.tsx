@@ -164,6 +164,8 @@ export function UnifiedFilterCard({
   useEffect(() => {
     if (prevSearchSigRef.current === filtersSearchSignature) return
     prevSearchSigRef.current = filtersSearchSignature
+    // 외부 URL/초기값 동기화 시점에만 초안을 치환한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchDrafts(prev => {
       const next = { ...prev }
       let changed = false

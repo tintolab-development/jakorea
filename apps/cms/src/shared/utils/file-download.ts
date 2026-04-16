@@ -3,12 +3,40 @@
  */
 
 import { saveAs } from 'file-saver'
+import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
+
+type RuntimeAuthUser = {
+  id?: string
+  name?: string
+}
+
+function readRuntimeAuthUser(): RuntimeAuthUser | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+  const raw = window.localStorage.getItem('auth_user')
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as RuntimeAuthUser
+  } catch {
+    return null
+  }
+}
+
+function trackDownload(filename: string) {
+  const user = readRuntimeAuthUser()
+  void recordFileDownload({
+    fileName: filename,
+    userId: user?.id ?? 'unknown-user',
+    userName: user?.name ?? '알 수 없음',
+    ipAddress: '14.128.xxx.xxx',
+  })
+}
 
 /**
  * Blob 파일 다운로드
  */
 export function downloadBlob(blob: Blob, filename: string): void {
   saveAs(blob, filename)
+  trackDownload(filename)
 }
 
 /**
