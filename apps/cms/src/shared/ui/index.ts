@@ -135,5 +135,10 @@ export type {
   ProgramCalendarEventsProps,
   ProgramCalendarEventItem,
 } from '../components/program-calendar'
+export {
+  CalendarSet,
+  CALENDAR_FILTER_COLOR_CLASSES,
+} from '../components/calendar'
+export type { CalendarSetMainProps } from '../components/calendar'
 export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'

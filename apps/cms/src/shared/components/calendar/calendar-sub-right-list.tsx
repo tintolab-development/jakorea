@@ -1,8 +1,3 @@
-/**
- * 프로그램 일정 리스트 컴포넌트
- * 선택된 날짜의 프로그램 일정을 리스트로 표시
- */
-
 import { useMemo } from 'react'
 import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -18,23 +13,22 @@ import {
 import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
-} from './program-schedule-colors'
-import '@/shared/components/calendar/calendar-set.css'
+} from '@/features/program/ui/program-schedule-colors'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-interface ProgramScheduleListProps {
+interface CalendarSubRightListProps {
   selectedDate: Dayjs
   programs: Program[]
   onProgramClick: (program: Program) => void
 }
 
-export function ProgramScheduleList({
+export function CalendarSubRightList({
   selectedDate,
   programs,
   onProgramClick,
-}: ProgramScheduleListProps) {
+}: CalendarSubRightListProps) {
   const dayPrograms = useMemo(() => {
     return programs.filter(program => {
       const start = dayjs(program.startDate)
@@ -97,3 +91,4 @@ export function ProgramScheduleList({
     </div>
   )
 }
+
