@@ -1,0 +1,53 @@
+/**
+ * 실적 관리 > 실적 데이터 탭 — 툴바(제목/건수/엑셀 버튼) 스타일
+ */
+
+.er-data-tab {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.er-data-tab__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-12, 12px);
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-16, 16px);
+}
+
+.er-data-tab__toolbar-main {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.er-data-tab__toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-12, 12px);
+  flex-shrink: 0;
+}
+
+.er-data-tab__title {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+  padding: 0 10px 0 8px;
+}
+
+.er-data-tab__description {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+  white-space: nowrap;
+}

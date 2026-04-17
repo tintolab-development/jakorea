@@ -1,0 +1,94 @@
+/**
+ * 실적 관리 목록 페이지
+ * - 루트: 페이지 외곽
+ * - filter-card: 공통 필터 + 구분선 + 탭 nav + 본문을 감싸는 카드(흰 배경, 패딩, shadow)
+ * - tab 네비게이션: inactive `#7D7D7D`, active `#01A1AF` 하단 2px mint 보더
+ */
+
+.education-record-list-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.education-record-list-page__filter-card {
+  width: 100%;
+  min-width: 0;
+  background: var(--color-bg-base, #fff);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
+  margin-bottom: var(--spacing-24, 24px);
+}
+
+.education-record-list-page__filter {
+  width: 100%;
+  min-width: 0;
+}
+
+.education-record-list-page__filter .unified-filter-card {
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
+.education-record-list-page__divider {
+  padding: 32px 0;
+}
+
+.education-record-list-page__top-nav {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-16, 16px);
+}
+
+.education-record-list-page__tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  width: 100%;
+}
+
+.education-record-list-page__tab {
+  display: flex;
+  padding: 6px 16px 10px 16px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: #7d7d7d;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+
+/* 비활성 탭: hover/focus 상태에서도 하단 보더가 생기지 않도록 유지 */
+.education-record-list-page__tab:not(.education-record-list-page__tab--active):hover,
+.education-record-list-page__tab:not(.education-record-list-page__tab--active):focus,
+.education-record-list-page__tab:not(.education-record-list-page__tab--active):focus-visible {
+  color: #7d7d7d;
+  border-bottom-color: transparent;
+  outline: none;
+}
+
+.education-record-list-page__tab--active,
+.education-record-list-page__tab--active:hover,
+.education-record-list-page__tab--active:focus,
+.education-record-list-page__tab--active:focus-visible {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 700;
+  border-bottom: 2px solid var(--JA-mint-01, #01a1af);
+  outline: none;
+}
+
+.education-record-list-page__tab-label {
+  display: inline-block;
+}

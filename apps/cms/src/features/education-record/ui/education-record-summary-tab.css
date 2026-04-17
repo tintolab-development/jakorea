@@ -1,0 +1,190 @@
+/**
+ * 실적 관리 > 합계 탭 레이아웃
+ * - 루트 래퍼: 각 카테고리 그룹들을 30px gap 으로 세로 배치하는 컨테이너 (배경 없음)
+ * - 카테고리 그룹(.er-summary__category): 타이틀 + 카드 (16px gap, 배경 없음)
+ * - 카드(.er-summary__category-card): 흰 카드 (padding 18 20 20 20, radius 16, shadow) — 서브행 32px gap
+ * - 서브행 합계 variant: mint 강조
+ */
+
+.er-summary__wrapper {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 32px;
+  /* 탭 nav 와의 간격 32px (인접 마진 collapse 로 nav 의 margin-bottom 16 와 병합 → 32 로 유지) */
+  margin-top: 32px;
+  box-sizing: border-box;
+}
+
+.er-summary__category {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.er-summary__category-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  padding: 18px 20px 20px 20px;
+  border-radius: 16px;
+  background: var(--default-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+/* 전체 합계 카드 — 타이틀이 카드 내부에 위치 */
+.er-summary__category-card--grand {
+  align-items: stretch;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  );
+}
+
+.er-summary__category-card--grand .er-summary__category-title {
+  align-self: stretch;
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 28px */
+}
+
+.er-summary__category-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.er-summary__sub-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.er-summary__sub-row-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 28px */
+}
+
+.er-summary__table {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary, #ececec);
+}
+
+.er-summary__table-header,
+.er-summary__table-row {
+  display: contents;
+}
+
+.er-summary__th {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  background: var(--color-bg-soft, #f5f5f5);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 19.5px */
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-right: 1px solid var(--color-border-secondary, #ececec);
+  border-bottom: 1px solid var(--color-border-secondary, #ececec);
+}
+
+.er-summary__td {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  background: var(--default-WT, #fff);
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-right: 1px solid var(--color-border-secondary, #ececec);
+}
+
+/* 마지막 컬럼은 우측 보더 제거 (outer border 가 담당) */
+.er-summary__th:last-child,
+.er-summary__td:last-child {
+  border-right: none;
+}
+
+/* 합계 variant — 헤더만 mint 배경 + 흰 텍스트, 값 영역은 흰 배경 유지 */
+.er-summary__sub-row--mint .er-summary__table {
+  border-radius: 6px;
+  border-color: var(--color-border-secondary, #ececec);
+}
+
+.er-summary__sub-row--mint .er-summary__th {
+  background: var(--JA-mint-01, #01a1af);
+  color: var(--default-WT, #fff);
+  border-right-color: rgba(255, 255, 255, 0.24);
+  border-bottom-color: rgba(255, 255, 255, 0.24);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 19.5px */
+}
+
+.er-summary__sub-row--mint .er-summary__td {
+  background: var(--default-WT, #fff);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 19.5px */
+}
+
+.er-summary__sub-row--mint .er-summary__th:last-child,
+.er-summary__sub-row--mint .er-summary__td:last-child {
+  border-right: none;
+}
+
