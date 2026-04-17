@@ -758,56 +758,54 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     }
 
     return (
-      <div className="program-calendar-container">
-        <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
-          {!hideHeader && (
-            <div className="program-calendar-header">
-              <div className="program-calendar-header-left">
-                <span className="program-calendar-header-title">{headerTitle}</span>
-                <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
-                  오늘
-                </Button>
-                <div className="program-calendar-nav">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<LeftOutlined />}
-                    className="program-calendar-nav-btn"
-                    onClick={handlePrev}
-                  />
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<RightOutlined />}
-                    className="program-calendar-nav-btn"
-                    onClick={handleNext}
-                  />
-                </div>
-              </div>
-              <div className="program-calendar-header-right">
-                <SegmentedTab
-                  size="medium"
-                  value={mode}
-                  onChange={value => onModeChange(value as 'month' | 'week')}
-                  options={[
-                    { label: '월간', value: 'month' },
-                    { label: '주간', value: 'week' },
-                  ]}
+      <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
+        {!hideHeader && (
+          <div className="program-calendar-header">
+            <div className="program-calendar-header-left">
+              <span className="program-calendar-header-title">{headerTitle}</span>
+              <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
+                오늘
+              </Button>
+              <div className="program-calendar-nav">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<LeftOutlined />}
+                  className="program-calendar-nav-btn"
+                  onClick={handlePrev}
+                />
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<RightOutlined />}
+                  className="program-calendar-nav-btn"
+                  onClick={handleNext}
                 />
               </div>
             </div>
-          )}
-          {mode === 'week' ? (
-            renderWeekView()
-          ) : (
-            <Calendar
-              fullscreen={false}
-              value={currentMonth}
-              fullCellRender={dateFullCellRender}
-              headerRender={() => null}
-            />
-          )}
-        </div>
+            <div className="program-calendar-header-right">
+              <SegmentedTab
+                size="medium"
+                value={mode}
+                onChange={value => onModeChange(value as 'month' | 'week')}
+                options={[
+                  { label: '월간', value: 'month' },
+                  { label: '주간', value: 'week' },
+                ]}
+              />
+            </div>
+          </div>
+        )}
+        {mode === 'week' ? (
+          renderWeekView()
+        ) : (
+          <Calendar
+            fullscreen={false}
+            value={currentMonth}
+            fullCellRender={dateFullCellRender}
+            headerRender={() => null}
+          />
+        )}
       </div>
     )
   }

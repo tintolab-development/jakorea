@@ -2,6 +2,52 @@
  * 강사 정산 캘린더 툴팁 — program-calendar-schedule-panel 행 정렬 보정
  */
 
+/**
+ * 우측 일정 목록: 슬롯(레이아웃 공간) + JS 동기화 `position:fixed` 패널(sticky 대체).
+ * 슬롯은 공통 카드 박스 모델을 유지해 getBoundingClientRect가 실제 카드와 일치함.
+ */
+.instructor-payment-tab__calendar-view-container
+  .applicant-calendar-right.instructor-settlement-schedule-list__slot {
+  visibility: hidden;
+  pointer-events: none;
+  height: 736px;
+  min-height: 736px;
+  max-height: 736px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  box-sizing: border-box;
+}
+
+.instructor-payment-tab__calendar-view-container
+  .applicant-calendar-right.instructor-settlement-schedule-list__floating-panel {
+  flex-shrink: 0;
+  align-self: flex-start;
+  box-sizing: border-box;
+  height: 736px;
+  min-height: 736px;
+  max-height: 736px;
+  margin: 0;
+}
+
+/**
+ * ProgramCalendar 루트 = .program-calendar-main(+ className) 단일 래퍼.
+ * 열 래퍼(.instructor-settlement-calendar-program-outer)에 margin·flex 배분.
+ */
+.instructor-settlement-calendar-program-outer {
+  flex: 7 1 0;
+  min-width: 1000px;
+  min-height: 700px;
+  box-sizing: border-box;
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-settlement-calendar-program-outer > .program-calendar-main {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
 .program-calendar-tooltip-overlay--settlement .program-calendar-schedule-panel {
   padding-left: 0;
   padding-right: 16px;

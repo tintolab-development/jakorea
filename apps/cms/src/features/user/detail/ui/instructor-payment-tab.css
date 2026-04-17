@@ -7,7 +7,7 @@
   box-sizing: border-box;
 }
 
-/** 캘린더 뷰: 모달 본문 높이 안에서만 레이아웃 — 좌측 캘린더 열만 세로 스크롤 */
+/** 캘린더 뷰: 모달 본문 안에서 세로 플렉스 배분 — 정산 캘린더는 --no-inner-scroll로 좌측 내부 스크롤 없음 */
 .instructor-payment-tab--calendar-fill {
   flex: 1 1 0;
   min-height: 0;
@@ -196,10 +196,9 @@
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-/* 공유 applicant-calendar 레이아웃(기본 min-height 900px)을 패널 높이에 맞춤 — 좌측만 스크롤 */
+/* 공유 applicant-calendar 레이아웃을 패널 높이에 맞춤(기본 좌측 스크롤; --no-inner-scroll 예외) */
 .instructor-payment-tab__calendar-view-container .applicant-calendar-layout {
   flex: 1 1 0;
   min-height: 0;
@@ -212,5 +211,27 @@
 }
 
 .instructor-payment-tab__calendar-view-container .applicant-calendar-right {
+  min-height: 0;
+}
+
+/**
+ * 정산 캘린더 뷰: 좌측 월 그리드에 세로 스크롤 없음(높이는 내용 기준, 바깥·모달 본문 스크롤).
+ * 기본 규칙(.…calendar-view-container .applicant-calendar-*)보다 구체적으로 두어 덮어씀.
+ */
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
+  .applicant-calendar-layout {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: auto;
+}
+
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
+  .applicant-calendar-main {
+  overflow-y: visible;
   min-height: 0;
 }

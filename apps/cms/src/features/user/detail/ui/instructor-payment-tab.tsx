@@ -391,7 +391,7 @@ export function InstructorPaymentTab({
             />
           </>
         ) : (
-          <div className="instructor-payment-tab__calendar-view-container">
+          <div className="instructor-payment-tab__calendar-view-container instructor-payment-tab__calendar-view-container--no-inner-scroll">
             <InstructorSettlementCalendarView
               events={calendarEvents}
               currentMonth={currentMonth}

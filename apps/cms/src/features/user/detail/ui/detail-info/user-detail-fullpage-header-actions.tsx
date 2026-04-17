@@ -35,6 +35,11 @@ export interface UserDetailFullPageHeaderActionsProps {
   onRequestPersonalInfoReveal: () => void
   onPermissionApprove?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onPermissionReject?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
+  onPermissionResetToPending?: (ctx: {
+    userId: string
+    permissionRole: UserDetailPermissionRole
+    fromStatus: 'APPROVED' | 'REJECTED'
+  }) => void
   onWithdraw?: (user: Omit<User, 'password'>) => void
   onOpenWithdrawConfirm: () => void
 }

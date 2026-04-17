@@ -51,6 +51,11 @@ export interface UserDetailFullPageModalProps {
   permissionRole?: UserDetailPermissionRole
   onPermissionApprove?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onPermissionReject?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
+  onPermissionResetToPending?: (ctx: {
+    userId: string
+    permissionRole: UserDetailPermissionRole
+    fromStatus: 'APPROVED' | 'REJECTED'
+  }) => void
   onNavigateToLinkedUser?: (userId: string) => void
   /** 저장 후 목록·드로어 등 상위가 동일 회원 객체를 갱신할 때 */
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
@@ -66,6 +71,7 @@ export function UserDetailFullPageModal({
   permissionRole,
   onPermissionApprove,
   onPermissionReject,
+  onPermissionResetToPending,
   onNavigateToLinkedUser,
   onMemberBasicInfoSaved,
 }: UserDetailFullPageModalProps) {
@@ -209,6 +215,7 @@ export function UserDetailFullPageModal({
             onRequestPersonalInfoReveal={actions.openPersonalInfoRevealConfirm}
             onPermissionApprove={onPermissionApprove}
             onPermissionReject={onPermissionReject}
+            onPermissionResetToPending={onPermissionResetToPending}
             onWithdraw={onWithdraw}
             onOpenWithdrawConfirm={actions.openWithdrawConfirm}
           />

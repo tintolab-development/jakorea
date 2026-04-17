@@ -124,6 +124,21 @@
 }
 
 /**
+ * 강사 정산 캘린더(`--no-inner-scroll`): 세로 스크롤이 `__main`에서 일어남.
+ * `overflow-x: hidden`만 준 `__content`가 많은 엔진에서 sticky 조상으로 취급되어 우측 `position:sticky`가 무효화됨.
+ * `clip`은 가로만 막고 스크롤 컨테이너를 만들지 않아 sticky가 `__main` 기준으로 동작함.
+ */
+.detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+  overflow-x: clip;
+}
+
+@supports not (overflow-x: clip) {
+  .detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+    overflow-x: visible;
+  }
+}
+
+/**
  * contentExtra(상단 액션) + 본문(children) 구조일 때, 본문 슬롯이 남은 세로 높이를 받도록 flex 체인 연결.
  * 미연결 시 자식의 height/min-height %·flex:1 이 기준 높이 없이 0으로 접힘 (예: 강사 정산 캘린더).
  */

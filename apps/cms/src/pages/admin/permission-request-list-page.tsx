@@ -17,6 +17,7 @@ import {
   type InstructorPermissionRejectPayload,
 } from '@/features/user/permission-management/instructor-permission-reject-modal'
 import { InstructorPermissionApprovedCompleteModal } from '@/features/user/permission-management/instructor-permission-approved-complete-modal'
+import { InstructorPermissionStatusResetConfirmModal } from '@/features/user/permission-management/instructor-permission-status-reset-confirm-modal'
 import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-modal'
 import { useUserStore } from '@/features/user/shared/model/user-store'
 import { userRoleToBasicInfoEntrySource } from '@/shared/config/member-list-kinds'
@@ -28,6 +29,7 @@ const INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z = 1150
 /** 풀페이지 회원 상세(권한 모드) 위에도 반려 확인이 보이도록 여유 있게 */
 const INSTRUCTOR_PERMISSION_REJECT_MODAL_Z = 2100
 const INSTRUCTOR_PERMISSION_APPROVED_COMPLETE_MODAL_Z = 1160
+const PERMISSION_STATUS_RESET_CONFIRM_MODAL_Z = 1160
 
 type InstructorApproveModalState =
   | {
@@ -59,6 +61,12 @@ type InstructorRejectModalState =
 type AdminApproveModalState = InstructorApproveModalState
 type AdminRejectModalState = InstructorRejectModalState
 type AdminApprovedCompleteState = InstructorApprovedCompleteState
+type PermissionStatusResetConfirmState = {
+  userId: string
+  displayName: string
+  permissionRole: UserDetailPermissionRole
+  fromStatus: 'APPROVED' | 'REJECTED'
+}
 
 export function PermissionRequestListPage() {
   const fetchUserById = useUserStore(s => s.fetchUserById)
@@ -77,6 +85,8 @@ export function PermissionRequestListPage() {
   const [adminRejectModal, setAdminRejectModal] = useState<AdminRejectModalState | null>(null)
   const [adminApprovedComplete, setAdminApprovedComplete] =
     useState<AdminApprovedCompleteState | null>(null)
+  const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
+    useState<PermissionStatusResetConfirmState | null>(null)
 
   const detailUser = useUserStore(state =>
     detailUserId ? (state.usersById[detailUserId] ?? null) : null
@@ -241,6 +251,42 @@ export function PermissionRequestListPage() {
     },
     [detailUser, handleCloseDetail]
   )
+
+  const handlePermissionResetToPending = useCallback(
+    (ctx: {
+      userId: string
+      permissionRole: UserDetailPermissionRole
+      fromStatus: 'APPROVED' | 'REJECTED'
+    }) => {
+      const name = detailUser?.name?.trim() || '회원'
+      setPermissionStatusResetConfirm({
+        userId: ctx.userId,
+        displayName: name,
+        permissionRole: ctx.permissionRole,
+        fromStatus: ctx.fromStatus,
+      })
+    },
+    [detailUser]
+  )
+
+  const handleConfirmPermissionResetToPending = useCallback(
+    (_payload: { cancellationReason: string; notifyTiming: 'immediate' | 'manual' }) => {
+    if (!permissionStatusResetConfirm) return
+    const { userId, permissionRole } = permissionStatusResetConfirm
+    updateMockUserById(userId, { permissionApprovalStatus: 'PENDING' })
+    if (permissionRole === 'instructor') {
+      instructorListRef.current?.applyInstructorPermissionPending(userId)
+    } else {
+      adminListRef.current?.applyInstructorPermissionPending(userId)
+    }
+    setPermissionStatusResetConfirm(null)
+    },
+    [permissionStatusResetConfirm]
+  )
+
+  const handleCancelPermissionResetToPending = useCallback(() => {
+    setPermissionStatusResetConfirm(null)
+  }, [])
 
   const handleInstructorRejectModalConfirm = useCallback(
     (_payload: InstructorPermissionRejectPayload) => {
@@ -412,6 +458,7 @@ export function PermissionRequestListPage() {
         permissionRole={permissionRole ?? undefined}
         onPermissionApprove={handlePermissionApprove}
         onPermissionReject={handlePermissionReject}
+        onPermissionResetToPending={handlePermissionResetToPending}
       />
 
       {instructorApproveModal ? (
@@ -533,6 +580,18 @@ export function PermissionRequestListPage() {
                 variant: 'bulk' as const,
                 memberCount: adminApprovedComplete.memberCount,
               })}
+        />
+      ) : null}
+
+      {permissionStatusResetConfirm ? (
+        <InstructorPermissionStatusResetConfirmModal
+          open
+          zIndex={PERMISSION_STATUS_RESET_CONFIRM_MODAL_Z}
+          userDisplayName={permissionStatusResetConfirm.displayName}
+          permissionRole={permissionStatusResetConfirm.permissionRole}
+          fromStatus={permissionStatusResetConfirm.fromStatus}
+          onCancel={handleCancelPermissionResetToPending}
+          onConfirm={handleConfirmPermissionResetToPending}
         />
       ) : null}
     </div>

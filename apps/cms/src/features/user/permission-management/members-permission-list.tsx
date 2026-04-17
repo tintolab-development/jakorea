@@ -17,10 +17,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import {
-  FilterTableLayout,
-  type FilterFieldConfig,
-} from '@/shared/components/filter-table-layout'
+import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import {
   membersPermissionTablePageConfig,
@@ -40,7 +37,7 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/ui/program-list.css'
 import './members-permission-list.css'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
 import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 
@@ -117,6 +114,7 @@ export interface MembersPermissionListProps {
 export type MembersPermissionListHandle = {
   applyInstructorPermissionApproved: (userId: string) => void
   applyInstructorPermissionRejected: (userId: string) => void
+  applyInstructorPermissionPending: (userId: string) => void
   clearRowSelection: () => void
 }
 
@@ -173,13 +171,21 @@ export const MembersPermissionList = forwardRef<
   rowsRef.current = rows
   /** 목록 내 연락처·이메일 마스킹 해제 여부 (행 id) */
   const [privacyRevealedByRowId, setPrivacyRevealedByRowId] = useState<Record<string, boolean>>({})
-  const [personalInfoRevealConfirmTargetId, setPersonalInfoRevealConfirmTargetId] = useState<string | null>(
-    null
-  )
+  const [personalInfoRevealConfirmTargetId, setPersonalInfoRevealConfirmTargetId] = useState<
+    string | null
+  >(null)
+  const [bulkApproveBlockedSelectedCount, setBulkApproveBlockedSelectedCount] = useState<
+    number | null
+  >(null)
+  const [bulkRejectBlockedSelectedCount, setBulkRejectBlockedSelectedCount] = useState<
+    number | null
+  >(null)
   useEffect(() => {
     setRows(baseRows)
     setPrivacyRevealedByRowId({})
     setPersonalInfoRevealConfirmTargetId(null)
+    setBulkApproveBlockedSelectedCount(null)
+    setBulkRejectBlockedSelectedCount(null)
   }, [baseRows])
 
   useImperativeHandle(
@@ -196,9 +202,12 @@ export const MembersPermissionList = forwardRef<
       },
       applyInstructorPermissionRejected: (userId: string) => {
         setRows(prev =>
-          prev.map(r =>
-            r.userId === userId ? { ...r, approvalStatus: 'REJECTED' as const } : r
-          )
+          prev.map(r => (r.userId === userId ? { ...r, approvalStatus: 'REJECTED' as const } : r))
+        )
+      },
+      applyInstructorPermissionPending: (userId: string) => {
+        setRows(prev =>
+          prev.map(r => (r.userId === userId ? { ...r, approvalStatus: 'PENDING' as const } : r))
         )
       },
       clearRowSelection: () => {
@@ -266,6 +275,13 @@ export const MembersPermissionList = forwardRef<
     if (!canWrite || keys.length === 0) return
 
     const pendingRows = resolvePendingRowsForKeys(keys)
+    const hasNonPendingInSelection = pendingRows.length !== keys.length
+    const isBulkSelection = keys.length >= 2
+
+    if (isBulkSelection && hasNonPendingInSelection) {
+      setBulkApproveBlockedSelectedCount(keys.length)
+      return
+    }
 
     if (memberType === 'instructor') {
       if (pendingRows.length === 0) {
@@ -325,15 +341,23 @@ export const MembersPermissionList = forwardRef<
     if (!canWrite || keys.length === 0) return
 
     const rejectableRows = resolveRejectableRowsForKeys(keys)
+    const pendingRows = rejectableRows.filter(r => r.approvalStatus === 'PENDING')
+    const hasNonPendingInSelection = pendingRows.length !== keys.length
+    const isBulkSelection = keys.length >= 2
+
+    if (isBulkSelection && hasNonPendingInSelection) {
+      setBulkRejectBlockedSelectedCount(keys.length)
+      return
+    }
 
     if (memberType === 'instructor') {
-      if (rejectableRows.length === 0) {
+      if (pendingRows.length === 0) {
         return
       }
       /** 반려 대상이 2건 이상이면 일괄 반려 모달 — 신청 승인과 동일 기준 */
-      const useBulkRejectModal = rejectableRows.length >= 2
+      const useBulkRejectModal = pendingRows.length >= 2
       if (!useBulkRejectModal) {
-        const row = rejectableRows[0]
+        const row = pendingRows[0]
         if (onInstructorRejectRequest == null) {
           return
         }
@@ -349,19 +373,19 @@ export const MembersPermissionList = forwardRef<
       }
       onInstructorRejectRequest({
         mode: 'bulk',
-        userIds: rejectableRows.map(r => r.userId),
-        memberCount: rejectableRows.length,
+        userIds: pendingRows.map(r => r.userId),
+        memberCount: pendingRows.length,
       })
       return
     }
 
     if (memberType === 'admin') {
-      if (rejectableRows.length === 0) {
+      if (pendingRows.length === 0) {
         return
       }
-      const useBulkRejectModal = rejectableRows.length >= 2
+      const useBulkRejectModal = pendingRows.length >= 2
       if (!useBulkRejectModal) {
-        const row = rejectableRows[0]
+        const row = pendingRows[0]
         if (onAdminRejectRequest == null) {
           return
         }
@@ -377,8 +401,8 @@ export const MembersPermissionList = forwardRef<
       }
       onAdminRejectRequest({
         mode: 'bulk',
-        userIds: rejectableRows.map(r => r.userId),
-        memberCount: rejectableRows.length,
+        userIds: pendingRows.map(r => r.userId),
+        memberCount: pendingRows.length,
       })
       return
     }
@@ -597,10 +621,75 @@ export const MembersPermissionList = forwardRef<
           onConfirm={reason => {
             const target = tableData.find(row => row.id === personalInfoRevealConfirmTargetId)
             trackPersonalInfoAccess(target?.name ?? '회원 권한 신청자', reason)
-            setPrivacyRevealedByRowId(prev => ({ ...prev, [personalInfoRevealConfirmTargetId]: true }))
+            setPrivacyRevealedByRowId(prev => ({
+              ...prev,
+              [personalInfoRevealConfirmTargetId]: true,
+            }))
             setPersonalInfoRevealConfirmTargetId(null)
           }}
         />
+      ) : null}
+
+      {bulkApproveBlockedSelectedCount != null ? (
+        <ContentModal
+          open
+          onCancel={() => setBulkApproveBlockedSelectedCount(null)}
+          title="일괄 신청 승인 불가 안내"
+          width={480}
+          description={
+            <>
+              <span className="fs-16">
+                선택한 {bulkApproveBlockedSelectedCount}명의 회원 중 승인 완료 혹은 신청 반려 상태인
+                회원이 있습니다.
+              </span>
+              <br />
+              <span className="fs-16">다시 확인 해주세요.</span>
+            </>
+          }
+          footer={
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={() => setBulkApproveBlockedSelectedCount(null)}
+            >
+              확인
+            </CmsButton>
+          }
+        >
+          {null}
+        </ContentModal>
+      ) : null}
+
+      {bulkRejectBlockedSelectedCount != null ? (
+        <ContentModal
+          open
+          onCancel={() => setBulkRejectBlockedSelectedCount(null)}
+          title="일괄 신청 반려 불가 안내"
+          width={480}
+          description={
+            <>
+              <span className="fs-16">
+                선택한 {bulkRejectBlockedSelectedCount}명의 회원 중 승인 완료 혹은 신청 반려 상태인
+                회원이 있습니다
+              </span>
+              <br />
+              <span className="fs-16">다시 확인 해주세요.</span>
+            </>
+          }
+          footer={
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={() => setBulkRejectBlockedSelectedCount(null)}
+            >
+              확인
+            </CmsButton>
+          }
+        >
+          {null}
+        </ContentModal>
       ) : null}
     </FilterTableLayout>
   )

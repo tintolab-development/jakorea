@@ -3,9 +3,7 @@
  * ProgramCalendar 컴포넌트 전용 — program-calendar-view 좌·우 패널과 분리
  */
 
-/* .program-calendar-container {
-  height: 596px !important;
-} */
+/* 루트는 TSX의 단일 .program-calendar-main(+ className) — 예전 바깥 .program-calendar-container 래퍼 없음 */
 /* ===== 중앙: 메인 캘린더 ===== */
 .program-calendar-main {
   flex: 1;
