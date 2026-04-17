@@ -27,11 +27,39 @@ export type AddressRegionFilterSubConfig = {
   sigunguPlaceholder?: string
 }
 
+export type SelectPairLegSubConfig = {
+  /** `filters`에 저장되는 값의 키 */
+  key: string
+  options: Array<{ label: string; value: string | number }>
+  placeholder?: string
+  allowClear?: boolean
+  /** 상위 셀렉트 값이 비었을 때 비활성화할지 여부 */
+  disableWhenPrimaryEmpty?: boolean
+}
+
+export type SelectPairFilterSubConfig = {
+  /** 왼쪽(상위) 셀렉트 */
+  primary: SelectPairLegSubConfig
+  /** 오른쪽(하위) 셀렉트. `primary` 값에 따라 옵션을 동적으로 바꾸려면 `getSecondaryOptions` 사용 */
+  secondary: SelectPairLegSubConfig
+  /** 제공 시 `primary` 값을 인자로 받아 `secondary` 옵션을 반환(동적 옵션). 미제공 시 `secondary.options` 사용. */
+  getSecondaryOptions?: (
+    primaryValue: string | number | undefined | null
+  ) => Array<{ label: string; value: string | number }>
+}
+
 export interface FilterFieldConfig {
   /** 필터 키 */
   key: string
   /** 필터 타입 */
-  type: 'search' | 'select' | 'dateRange' | 'multiSelect' | 'radio' | 'addressRegion'
+  type:
+    | 'search'
+    | 'select'
+    | 'dateRange'
+    | 'multiSelect'
+    | 'radio'
+    | 'addressRegion'
+    | 'selectPair'
   /** 레이블 텍스트 */
   label: string
   /** placeholder 텍스트 */
@@ -55,6 +83,8 @@ export interface FilterFieldConfig {
   flex?: number | string
   /** `type === 'addressRegion'`일 때 시/도·시/군/구 이중 셀렉트 설정 */
   addressRegion?: AddressRegionFilterSubConfig
+  /** `type === 'selectPair'`일 때 범용 이중 셀렉트 설정 */
+  selectPair?: SelectPairFilterSubConfig
   /**
    * 열 기준 너비(예: 200, '25%', 'min(280px, 30%)').
    * 지정 시 Col에 `flex: 0 0 <width>`를 쓰고, 좁은 select의 전역 min-width를 완화한다.
@@ -257,36 +287,79 @@ export function TableFilterGroup({
       const sidoEmpty = sido == null || sido === ''
       const districtOptions = ar.getSigunguOptions(sido)
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 320px')} className={colClassFor(field)}>
-          <div className="unified-filter-card__field unified-filter-card__field--select">
-            <span className="unified-filter-card__label">{field.label}</span>
-            <div className="table-filter-group__address-region-selects">
-              <CmsSelect
-                inputSize="large"
-                placeholder={ar.sidoPlaceholder ?? '시/도'}
-                value={sidoEmpty ? undefined : sido}
-                selectClassName="unified-filter-card__select"
-                onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
-                allowClear={field.allowClear !== false}
-                popupMatchSelectWidth
-                style={{ width: '100%', ...field.style }}
-                options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
-              />
-              <CmsSelect
-                inputSize="large"
-                placeholder={ar.sigunguPlaceholder ?? '시/군/구'}
-                value={sigungu == null || sigungu === '' ? undefined : sigungu}
-                selectClassName="unified-filter-card__select"
-                onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
-                allowClear={field.allowClear !== false}
-                disabled={sidoEmpty}
-                popupMatchSelectWidth
-                style={{ width: '100%', ...field.style }}
-                options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
-              />
-            </div>
+        <div className="unified-filter-card__field unified-filter-card__field--select">
+          <span className="unified-filter-card__label">{field.label}</span>
+          <div className="table-filter-group__select-pair-selects">
+            <CmsSelect
+              inputSize="large"
+              placeholder={ar.sidoPlaceholder ?? '시/도'}
+              value={sidoEmpty ? undefined : sido}
+              selectClassName="unified-filter-card__select"
+              onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
+              allowClear={field.allowClear !== false}
+              popupMatchSelectWidth
+              style={{ width: '100%', ...field.style }}
+              options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+            />
+            <CmsSelect
+              inputSize="large"
+              placeholder={ar.sigunguPlaceholder ?? '시/군/구'}
+              value={sigungu == null || sigungu === '' ? undefined : sigungu}
+              selectClassName="unified-filter-card__select"
+              onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
+              allowClear={field.allowClear !== false}
+              disabled={sidoEmpty}
+              popupMatchSelectWidth
+              style={{ width: '100%', ...field.style }}
+              options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+            />
           </div>
-        </Col>
+        </div>
+      )
+    }
+
+    if (field.type === 'selectPair') {
+      const sp = field.selectPair
+      if (!sp) return null
+      const primaryRaw = filters[sp.primary.key]
+      const primaryEmpty = primaryRaw == null || primaryRaw === ''
+      const secondaryRaw = filters[sp.secondary.key]
+      const secondaryOptions = sp.getSecondaryOptions
+        ? sp.getSecondaryOptions(primaryRaw as string | number | undefined | null)
+        : sp.secondary.options
+      return (
+        <div className="unified-filter-card__field unified-filter-card__field--select">
+          <span className="unified-filter-card__label">{field.label}</span>
+          <div className="table-filter-group__select-pair-selects">
+            <CmsSelect
+              inputSize="large"
+              placeholder={sp.primary.placeholder ?? '선택'}
+              value={primaryEmpty ? undefined : (primaryRaw as string | number)}
+              selectClassName="unified-filter-card__select"
+              onChange={value => onFilterChange(sp.primary.key, value ?? '')}
+              allowClear={sp.primary.allowClear ?? field.allowClear !== false}
+              popupMatchSelectWidth
+              style={{ width: '100%', ...field.style }}
+              options={sp.primary.options.map(opt => ({ label: opt.label, value: opt.value }))}
+            />
+            <CmsSelect
+              inputSize="large"
+              placeholder={sp.secondary.placeholder ?? '선택'}
+              value={
+                secondaryRaw == null || secondaryRaw === ''
+                  ? undefined
+                  : (secondaryRaw as string | number)
+              }
+              selectClassName="unified-filter-card__select"
+              onChange={value => onFilterChange(sp.secondary.key, value ?? '')}
+              allowClear={sp.secondary.allowClear ?? field.allowClear !== false}
+              disabled={sp.secondary.disableWhenPrimaryEmpty === true && primaryEmpty}
+              popupMatchSelectWidth
+              style={{ width: '100%', ...field.style }}
+              options={secondaryOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+            />
+          </div>
+        </div>
       )
     }
 
@@ -394,6 +467,14 @@ export function TableFilterGroup({
     if (field.type === 'multiSelect') {
       return (
         <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassFor(field)}>
+          {inner}
+        </Col>
+      )
+    }
+
+    if (field.type === 'addressRegion' || field.type === 'selectPair') {
+      return (
+        <Col key={field.key} flex={colFlex(field, '1 1 320px', rowFieldCount)} className={colClassFor(field)}>
           {inner}
         </Col>
       )
