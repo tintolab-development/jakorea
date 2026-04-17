@@ -1,0 +1,200 @@
+/**
+ * CMS 공통 체크박스 (Ant Design Checkbox)
+ * - checkboxSize: large(기본) | medium
+ * - 그룹은 .cms-checkbox-group + --large | --medium 으로 옵션 렌더에도 동일 스펙 적용
+ */
+
+.cms-checkbox.ant-checkbox-wrapper,
+.cms-checkbox-group .ant-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-end: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.cms-checkbox .ant-checkbox,
+.cms-checkbox-group .ant-checkbox-wrapper .ant-checkbox {
+  align-self: center;
+  top: 0;
+}
+
+/* 체크 박스·라벨 간격 (antd 기본 padding 제거 → gap만 사용) */
+.cms-checkbox.ant-checkbox-wrapper span.ant-checkbox,
+.cms-checkbox-group .ant-checkbox-wrapper span.ant-checkbox {
+  padding: 0 !important;
+}
+
+.cms-checkbox.ant-checkbox-wrapper span.ant-checkbox + *,
+.cms-checkbox-group .ant-checkbox-wrapper span.ant-checkbox + * {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+}
+
+.cms-checkbox .ant-checkbox-label,
+.cms-checkbox-group .ant-checkbox-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  color: inherit;
+}
+
+/* large (기본) */
+.cms-checkbox.cms-checkbox--large.ant-checkbox-wrapper,
+.cms-checkbox-group.cms-checkbox-group--large .ant-checkbox-wrapper {
+  gap: 8px;
+  font-size: 16px;
+}
+
+.cms-checkbox.cms-checkbox--large .ant-checkbox-inner,
+.cms-checkbox-group.cms-checkbox-group--large .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--4, 4px);
+}
+
+.cms-checkbox.cms-checkbox--large .ant-checkbox-inner::after,
+.cms-checkbox-group.cms-checkbox-group--large .ant-checkbox-inner::after {
+  width: calc(20px * 5 / 14);
+  height: calc(20px * 8 / 14);
+}
+
+.cms-checkbox.cms-checkbox--large .ant-checkbox.ant-checkbox-indeterminate .ant-checkbox-inner::after,
+.cms-checkbox-group.cms-checkbox-group--large
+  .ant-checkbox.ant-checkbox-indeterminate
+  .ant-checkbox-inner::after {
+  width: 10px;
+  height: 10px;
+  top: 50%;
+  inset-inline-start: 50%;
+}
+
+/* medium */
+.cms-checkbox.cms-checkbox--medium.ant-checkbox-wrapper,
+.cms-checkbox-group.cms-checkbox-group--medium .ant-checkbox-wrapper {
+  gap: 6px;
+  font-size: 15px;
+}
+
+.cms-checkbox.cms-checkbox--medium .ant-checkbox-inner,
+.cms-checkbox-group.cms-checkbox-group--medium .ant-checkbox-inner {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--4, 4px);
+}
+
+.cms-checkbox.cms-checkbox--medium .ant-checkbox-inner::after,
+.cms-checkbox-group.cms-checkbox-group--medium .ant-checkbox-inner::after {
+  width: calc(18px * 5 / 14);
+  height: calc(18px * 8 / 14);
+}
+
+.cms-checkbox.cms-checkbox--medium .ant-checkbox.ant-checkbox-indeterminate .ant-checkbox-inner::after,
+.cms-checkbox-group.cms-checkbox-group--medium
+  .ant-checkbox.ant-checkbox-indeterminate
+  .ant-checkbox-inner::after {
+  width: 9px;
+  height: 9px;
+  top: 50%;
+  inset-inline-start: 50%;
+}
+
+/* 기본(활성) 박스 — 미선택 */
+.cms-checkbox .ant-checkbox-inner,
+.cms-checkbox-group .ant-checkbox-inner {
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.cms-checkbox:not(.ant-checkbox-wrapper-disabled):hover .ant-checkbox-inner,
+.cms-checkbox-group
+  .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
+  .ant-checkbox-inner {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+/* 활성 — 선택됨 (스펙 미정, CMS 민트 톤) */
+.cms-checkbox .ant-checkbox-checked:not(.ant-checkbox-disabled) .ant-checkbox-inner,
+.cms-checkbox-group
+  .ant-checkbox-checked:not(.ant-checkbox-disabled)
+  .ant-checkbox-inner {
+  background-color: var(--color-mint-01, #01a1af);
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.cms-checkbox .ant-checkbox-checked:not(.ant-checkbox-disabled) .ant-checkbox-inner::after,
+.cms-checkbox-group
+  .ant-checkbox-checked:not(.ant-checkbox-disabled)
+  .ant-checkbox-inner::after {
+  border-color: #fff;
+}
+
+.cms-checkbox .ant-checkbox-indeterminate:not(.ant-checkbox-disabled) .ant-checkbox-inner,
+.cms-checkbox-group
+  .ant-checkbox-indeterminate:not(.ant-checkbox-disabled)
+  .ant-checkbox-inner {
+  background-color: var(--main-WT, #fff);
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.cms-checkbox .ant-checkbox-indeterminate:not(.ant-checkbox-disabled) .ant-checkbox-inner::after,
+.cms-checkbox-group
+  .ant-checkbox-indeterminate:not(.ant-checkbox-disabled)
+  .ant-checkbox-inner::after {
+  background-color: var(--color-mint-01, #01a1af);
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+/* 비활성 — 라벨 */
+.cms-checkbox.ant-checkbox-wrapper-disabled,
+.cms-checkbox-group .ant-checkbox-wrapper-disabled {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
+/* 비활성 — 미선택 박스 */
+.cms-checkbox .ant-checkbox-disabled .ant-checkbox-inner,
+.cms-checkbox-group .ant-checkbox-disabled .ant-checkbox-inner {
+  border-radius: var(--4, 4px);
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background-color: #fff;
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%)
+  );
+}
+
+/* 비활성 — 선택됨 박스 */
+.cms-checkbox .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner,
+.cms-checkbox-group .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
+  border-radius: var(--4, 4px);
+  border: 1px solid var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
+  background-color: #fff;
+  background-image: var(
+    --disabled-select-bg,
+    linear-gradient(0deg, rgba(34, 64, 75, 0.2) 0%, rgba(34, 64, 75, 0.2) 100%)
+  );
+}
+
+.cms-checkbox .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after,
+.cms-checkbox-group .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: rgba(34, 64, 75, 0.55);
+}
+
+/* 그룹 레이아웃 */
+.cms-checkbox-group.ant-checkbox-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.cms-checkbox-group .ant-checkbox-group-item {
+  margin-inline-end: 0;
+}

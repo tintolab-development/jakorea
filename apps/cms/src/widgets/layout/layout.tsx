@@ -50,12 +50,15 @@ function LayoutContent() {
 }
 
 export function Layout() {
+  const location = useLocation()
+  const isTemplatesPath = location.pathname.startsWith('/templates')
+
   return (
     <AntLayout className="app-layout" style={{ minHeight: '100vh' }}>
       <Sidebar />
       <AntLayout>
         <MainHeader />
-        <Content className="layout-content">
+        <Content className={`layout-content ${isTemplatesPath ? 'layout-content--templates' : ''}`}>
           <LayoutContent />
         </Content>
       </AntLayout>

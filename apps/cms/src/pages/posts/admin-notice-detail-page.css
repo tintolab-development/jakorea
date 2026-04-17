@@ -1,0 +1,249 @@
+/* 디자인 기준 1200×804 — 뷰포트에 맞게 비율 유지 */
+.admin-notice-detail-page {
+  --notice-detail-card-max-w: 1200px;
+  --notice-detail-card-design-h: 804px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* 레이아웃(메인 콘텐츠) 기준 카드 영역 상단 오프셋 */
+  padding-top: 70px;
+}
+
+.admin-notice-detail-page__inner {
+  container-type: inline-size;
+  container-name: notice-detail;
+  width: min(100%, var(--notice-detail-card-max-w));
+  max-width: var(--notice-detail-card-max-w);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-notice-detail-page__card {
+  display: flex;
+  padding: 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  flex: 0 1 auto;
+  align-self: stretch;
+  width: 100%;
+  /* 카드 실제 너비(최대 1200px) 기준 1200:804 비율 — 본문이 더 길면 카드 높이는 그에 맞게 증가 */
+  min-height: clamp(
+    280px,
+    calc(100cqw * var(--notice-detail-card-design-h) / var(--notice-detail-card-max-w)),
+    var(--notice-detail-card-design-h)
+  );
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.admin-notice-detail-page__top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.admin-notice-detail-page__badge {
+  display: flex;
+  box-sizing: border-box;
+  min-width: 45px;
+  height: 25px;
+  padding: 2px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 30px;
+  overflow: hidden;
+  color: var(--default-WT, #fff);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.admin-notice-detail-page__badge--public {
+  background: var(--JA-mint-01, #01a1af);
+}
+
+.admin-notice-detail-page__badge--private {
+  background: var(--etc-dim, rgba(0, 0, 0, 0.3));
+}
+
+.admin-notice-detail-page__views {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-mint-01, #01a1af);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.admin-notice-detail-page__views-icon {
+  font-size: 16px;
+}
+
+.admin-notice-detail-page__title {
+  margin: 8px 0 0;
+  width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.admin-notice-detail-page__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 0;
+  width: 100%;
+}
+
+.admin-notice-detail-page__meta-text {
+  color: #85969d;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.admin-notice-detail-page__meta-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 13px;
+  background-color: #85969d;
+}
+
+/* 첨부 없음: 디스크립션 ↔ 본문 사이 가로 구분선, 위·아래 각 24px */
+.admin-notice-detail-page__section-divider {
+  margin: 24px 0;
+  width: 100%;
+  height: 0;
+  border: 0;
+  border-top: 1px solid rgba(61, 61, 61, 0.12);
+}
+
+.admin-notice-detail-page__section-divider + .admin-notice-detail-page__body {
+  margin-top: 0;
+}
+
+.admin-notice-detail-page__attachments {
+  margin-top: 24px;
+  margin-bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(61, 61, 61, 0.06);
+}
+
+.admin-notice-detail-page__attachments-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--color-mint-01, #01a1af);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.admin-notice-detail-page__clip {
+  font-size: 16px;
+}
+
+.admin-notice-detail-page__attachments-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-notice-detail-page__attachments-list li + li {
+  margin-top: 8px;
+}
+
+.admin-notice-detail-page__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.admin-notice-detail-page__file:hover {
+  text-decoration: underline;
+}
+
+.admin-notice-detail-page__file-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.admin-notice-detail-page__file-name {
+  word-break: break-all;
+}
+
+/* 첨부 있음: 첨부 블록 하단 ↔ 본문 24px — ToastUiMarkdownViewer 래퍼 */
+.admin-notice-detail-page__attachments + .admin-notice-detail-page__body {
+  margin-top: 24px;
+}
+
+.admin-notice-detail-page__body {
+  margin-top: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-notice-detail-page__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  margin-top: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-notice-detail-page__actions-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-notice-detail-page__empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.admin-notice-detail-page__empty {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+}

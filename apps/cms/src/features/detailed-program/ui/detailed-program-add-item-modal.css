@@ -1,0 +1,20 @@
+.detailed-program-add-item-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detailed-program-add-item-modal__label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+.detailed-program-add-item-modal__required {
+  margin-left: 2px;
+  color: var(--ant-color-error, #ff4d4f);
+  font-weight: 700;
+}

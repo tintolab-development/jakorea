@@ -3,7 +3,7 @@
  * Phase 2.2: Mock API 서비스
  */
 
-import type { Application, ApplicationStatus } from '@/types/domain'
+import type { Application, ApplicationRejectionKind, ApplicationStatus } from '@/types/domain'
 import { mockApplications, mockApplicationsMap } from '@/data/mock'
 import {
   getWaitingList,
@@ -152,6 +152,7 @@ export const applicationService = {
     const updates: Partial<Application> = {
       status,
       rejectionReason: status === 'rejected' ? rejectionReason : undefined,
+      rejectionKind: status === 'rejected' ? ('APPLICATION' as ApplicationRejectionKind) : undefined,
       waitingListOrder:
         status === 'waiting'
           ? getNextWaitingListOrder(application.programId, application.roundId)
@@ -162,6 +163,7 @@ export const applicationService = {
     }
     if (status === 'approved') {
       updates.progressStatus = 'RECEIVED'
+      updates.rejectionKind = undefined
       appendReceivedLog(id, application.submittedAt as string)
     } else if (status === 'rejected' || status === 'cancelled') {
       updates.progressStatus = undefined

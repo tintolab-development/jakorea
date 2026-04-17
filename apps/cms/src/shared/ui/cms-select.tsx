@@ -1,15 +1,34 @@
 /**
  * CMS 전용 셀렉트 (AppSelect와 동일하게 span 래퍼 + borderless Select)
  * - inputSize: large | medium | small (CmsInput 치수 정렬)
+ * - `placeholder`: Ant `Select`와 동일. options에 `value: ''`가 없을 때 폼 값이 `''`여도 placeholder가 보이도록 표시용 value만 `undefined`로 맞춤 (`cms-input`과 동일한 empty UX).
  */
 
-import { forwardRef } from 'react'
+import { forwardRef, useMemo } from 'react'
 import type { CSSProperties } from 'react'
 import { Select } from 'antd'
 import type { SelectProps } from 'antd'
 import type { RefSelectProps } from 'antd/es/select'
 import type { CmsControlSize } from './cms-control-size'
 import './cms-select.css'
+
+function optionsIncludeEmptyValueOption(options: SelectProps['options']): boolean {
+  if (!Array.isArray(options)) return false
+  return options.some(opt => {
+    if (opt == null || typeof opt !== 'object') return false
+    const o = opt as { value?: unknown; options?: unknown[] }
+    if (Array.isArray(o.options)) {
+      return o.options.some(
+        item =>
+          item != null &&
+          typeof item === 'object' &&
+          'value' in item &&
+          (item as { value: unknown }).value === ''
+      )
+    }
+    return o.value === ''
+  })
+}
 
 export interface CmsSelectProps extends Omit<SelectProps, 'variant' | 'size'> {
   /** Ant Select 루트(.ant-select)에만 붙는 클래스 */
@@ -29,6 +48,10 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
       width,
       disabled,
       style,
+      value,
+      onChange,
+      options,
+      mode,
       ...rest
     },
     ref
@@ -38,6 +61,28 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
       width != null
         ? { width: typeof width === 'number' ? `${width}px` : width }
         : undefined
+
+    const optionsHaveEmptyValue = useMemo(() => optionsIncludeEmptyValueOption(options), [options])
+
+    const resolvedValue = useMemo(() => {
+      if (optionsHaveEmptyValue) return value
+      if (value === '' || value === null || value === undefined) return undefined
+      return value
+    }, [value, optionsHaveEmptyValue])
+
+    const handleChange: SelectProps['onChange'] = (next, option) => {
+      if (!onChange) return
+      const isMulti = mode === 'multiple' || mode === 'tags'
+      if (
+        !optionsHaveEmptyValue &&
+        !isMulti &&
+        (next === undefined || next === null)
+      ) {
+        onChange('' as never, option)
+        return
+      }
+      onChange(next, option)
+    }
 
     const wrapperCn = [
       'cms-select',
@@ -57,6 +102,10 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
           className={selectClassName}
           disabled={disabled}
           {...rest}
+          mode={mode}
+          options={options}
+          value={resolvedValue as SelectProps['value']}
+          onChange={handleChange}
         />
       </span>
     )

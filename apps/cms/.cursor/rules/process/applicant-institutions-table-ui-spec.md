@@ -1,7 +1,7 @@
 # 교육 신청 기관 목록 테이블 UI 수정 명세 (스크린샷 기반 개발 위임)
 
 **대상**: 프로그램 상세 풀페이지 모달 > LNB 「신청자 목록」 > **신청 기관** (교육 신청 기관 목록 테이블)  
-**참조**: [applicants-detail.tsx](../../../src/features/program/ui/detail-modal/applicants-detail.tsx), [applicants-detail.css](../../../src/features/program/ui/detail-modal/applicants-detail.css), [persona.md](./persona.md)  
+**참조**: [applicant-list.tsx](../../../src/features/program/program-detail/ui/applicant-list/applicant-list.tsx), [applicant-list.css](../../../src/features/program/program-detail/ui/applicant-list/applicant-list.css), [persona.md](./persona.md)  
 **스크린샷**: 프로젝트 assets 내 제공 스크린샷(Screenshot_2026-03-19_at_2.07.26_PM, 2.07.55_PM) 상세 참고.
 
 ---
@@ -40,7 +40,7 @@
 
 ## §3 수정 요구사항 (개발자 위임 사항)
 
-### 3.1 컬럼 정의 (applicants-detail.tsx)
+### 3.1 컬럼 정의 (applicant-list.tsx)
 
 - **「강의 회차 별 희망 교육 날짜 및 시간」 컬럼**
   - `width: 1` 제거.
@@ -54,7 +54,7 @@
   - 예: `48 + 64 + 180 + 200 + 152 + 320 + 96 + 100 + 120 + 180` (체크박스 48 + 나머지 컬럼 합).
   - Ant Design `Table`에 `scroll={{ x: tableScrollX }}` 전달하여 테이블 최소 너비를 보장하고, 래퍼에서 가로 스크롤 가능하도록 유지.
 
-### 3.3 CSS (applicants-detail.css)
+### 3.3 CSS (applicant-list.css)
 
 - **테이블 래퍼**
   - `.applicant-details__table-wrap`: `overflow-x: auto`, `width: 100%` 유지.

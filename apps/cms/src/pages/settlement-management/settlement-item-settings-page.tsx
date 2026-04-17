@@ -2,40 +2,22 @@
  * 정산 관리 > 정산 항목 설정 — 임금 / 지급 / 공제 카테고리 카드 목록
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
-import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
 import { settlementItemSettingSections } from '@/data/mock/settlement-item-settings'
 import {
   SettlementItemCardMoreIcon,
   SettlementItemSettingIcon,
 } from './settlement-item-setting-icons'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { SettlementItemSettingDetailModal } from './settlement-item-setting-detail-modal'
 import './settlement-item-settings-page.css'
 
 const cardMenuItems: MenuProps['items'] = [{ key: 'placeholder', label: '준비 중', disabled: true }]
 
-/** 상세 모달 연결됨: 1급 강사비 · 특강 강사비 · 교통비 */
-const SETTLEMENT_ITEM_DETAIL_MODAL_IDS = new Set<string>(['w-1', 'w-4', 'p-1'])
-
 export default function SettlementItemSettingsPage() {
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [detailItem, setDetailItem] = useState<SettlementItemSettingRow | null>(null)
-
-  const onCardClick = useCallback((row: SettlementItemSettingRow) => {
-    if (SETTLEMENT_ITEM_DETAIL_MODAL_IDS.has(row.id)) {
-      setDetailItem(row)
-      setDetailOpen(true)
-      return
-    }
+  const onCardClick = useCallback(() => {
     window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-  }, [])
-
-  const closeDetail = useCallback(() => {
-    setDetailOpen(false)
-    setDetailItem(null)
   }, [])
 
   return (
@@ -62,12 +44,8 @@ export default function SettlementItemSettingsPage() {
                   <button
                     type="button"
                     className="settlement-item-settings__card-hit"
-                    aria-label={
-                      SETTLEMENT_ITEM_DETAIL_MODAL_IDS.has(item.id)
-                        ? `${item.title} 상세 열기`
-                        : `${item.title} (준비 중)`
-                    }
-                    onClick={() => onCardClick(item)}
+                    aria-label={`${item.title} (준비 중)`}
+                    onClick={onCardClick}
                   >
                     <div className="settlement-item-settings__card-icon" aria-hidden>
                       <SettlementItemSettingIcon iconKey={item.iconKey} />
@@ -92,8 +70,6 @@ export default function SettlementItemSettingsPage() {
           </section>
         ))}
       </div>
-
-      <SettlementItemSettingDetailModal open={detailOpen} onCancel={closeDetail} item={detailItem} />
     </div>
   )
 }

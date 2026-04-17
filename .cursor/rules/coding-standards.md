@@ -66,10 +66,10 @@ pnpm --filter cms typecheck  # 특정 앱만 타입 체크
 ### Table: status change via dropdown (StatusDropdownCell)
 
 - Use **`StatusDropdownCell`** and **`STATUS_DROPDOWN_CELL_CLASSNAME`** from `@/shared/components/status-dropdown-cell` (not the legacy `features/program/ui/status-dropdown-cell`).
-- Put **`STATUS_DROPDOWN_CELL_CLASSNAME` on the data cell** via the column’s **`onCell`**, matching **applicants-detail** (program 승인 현황) and **participating-institutions-section** (교재 배송 현황).
+- Put **`STATUS_DROPDOWN_CELL_CLASSNAME` on the data cell** via the column’s **`onCell`**, matching **ApplicantList** (program 승인 현황) and **participating-institutions-section** (교재 배송 현황).
 - **`renderBadge`** must use the same badge family as those screens: **`ApprovalStatusBadge`** (program approval) or **`PaymentOrderLineProcessingStatusBadge`** (settlement payment-order line status), both built on **`TextbookStatusBadge`** + **`app-status-badge`** — do not invent one-off tag markup/CSS for the same UX.
 - When the current status must not be re-selectable: **`isItemDisabled={(cur, opt) => cur === opt}`**.
 - When the table row has a click handler (e.g. open detail), wrap the cell in **`<div onClick={(e) => e.stopPropagation()} style={{ display: 'inline-block' }}>`** around `StatusDropdownCell`.
-- For row-height / dropdown width overrides, scope CSS with **`:has(td.status-dropdown-cell__cell-status)`** like `applicants-detail.css`; see **`apps/cms/.cursor/rules/coding/status-dropdown-cell.md`** (section 7 for settlement payment-order modals).
+- For row-height / dropdown width overrides, scope CSS with **`:has(td.status-dropdown-cell__cell-status)`** like `applicant-list.css`; see **`apps/cms/.cursor/rules/coding/status-dropdown-cell.md`** (section 7 for settlement payment-order modals).
 
 

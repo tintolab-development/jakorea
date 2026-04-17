@@ -22,6 +22,14 @@ export type TablePageFiltersSyncArgs<TData, TFilters extends Record<string, unkn
   setPendingFilters: Dispatch<SetStateAction<TFilters>>
 }
 
+/** 필터 카드(TableFilterGroup) → pendingFilters 반영 시 커스텀 매핑용 */
+export type TablePageOnFilterChangeArgs<TFilters, TContext> = {
+  prev: TFilters
+  key: string
+  value: unknown
+  context: TContext
+}
+
 export type TablePageFilterArgs<TData, TContext> = {
   context: TContext
   data: TData[]
@@ -53,6 +61,8 @@ export interface TablePageConfig<
     }) => boolean
     /** 필터가 없을 때 표시되는 기준 건수(기존 동작 유지용) */
     getBaseCount: (args: { context: TContext; filteredData: TData[] }) => number
+    /** 필드 키·값을 pendingFilters 형태로 변환(미지정 시 `{ ...prev, [key]: value }`) */
+    onFilterChange?: (args: TablePageOnFilterChangeArgs<TFilters, TContext>) => TFilters
   }
 
   /** 테이블에 들어갈 데이터(필터 파이프라인) */

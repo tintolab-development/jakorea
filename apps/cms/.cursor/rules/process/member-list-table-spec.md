@@ -51,6 +51,12 @@ category: process
 - `INSTRUCTOR` → 강사
 - `ADMIN` → 관리자
 
+## 회원 등록 모달 정책
+
+- 회원관리 > 전체 회원의 `회원 등록` 모달에서 신규 회원의 회원 유형은 **항상 `개인`**으로 고정한다.
+- 모달 내 `동의서 작성` 액션은 실제 문서 기능이 준비되기 전까지 `준비 중입니다` alert를 노출한다.
+- `자택 주소지` 입력은 공통 `AddressSearch` 컴포넌트를 사용한다.
+
 ## 모의 데이터
 
 - 목록에 노출되는 회원 mock에는 **연락처(phone)**, **이메일**, **회원명**, **가입일(createdAt)** 이 채워져 있어야 함.
@@ -60,5 +66,5 @@ category: process
 
 - [persona.md](./persona.md) — 시니어 개발자 역할 및 FSD/타입 안전성 준수.
 - 행 클릭 시 노출되는 회원 상세 UI: [회원 상세 모달 스펙](./member-detail-modal-spec.md).
-- 실제 테이블 컴포넌트: `apps/cms/src/features/user/ui/user-list.tsx`
+- 실제 테이블 컴포넌트: `apps/cms/src/features/user/shared/ui/user-list.tsx`
 - 목록 페이지: `apps/cms/src/pages/users/user-list-page.tsx`

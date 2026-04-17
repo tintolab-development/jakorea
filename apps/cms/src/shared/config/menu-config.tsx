@@ -8,10 +8,7 @@ import type { AdminLevel, UserRole } from '@/types/user'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
-import {
-  memberListHref,
-  normalizeMemberListKind,
-} from '@/shared/config/member-list-kinds'
+import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 
 const svgStyle = { display: 'block' } as const
 
@@ -130,6 +127,28 @@ function IconTemplate() {
   )
 }
 
+/** LNB 카테고리 아이콘: 데이터 관리 (20x20, 폴더 윤곽 — 1뎁스 다른 SVG와 동일 캔버스) */
+function IconDataManagement() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={svgStyle}
+    >
+      <path
+        d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"
+        stroke="currentColor"
+        strokeWidth={1.35}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 /** LNB 카테고리 아이콘: 게시글 관리 (20x20) */
 function IconPosts() {
   return (
@@ -155,38 +174,6 @@ function IconPosts() {
       <g mask="url(#lnb-posts-mask)">
         <path
           d="M4.5 17C4.0875 17 3.73437 16.8531 3.44062 16.5594C3.14687 16.2656 3 15.9125 3 15.5V4.5C3 4.0875 3.14687 3.73438 3.44062 3.44063C3.73437 3.14688 4.0875 3 4.5 3H8.0625C8.17361 2.56944 8.40625 2.21181 8.76042 1.92708C9.11458 1.64236 9.52778 1.5 10 1.5C10.4722 1.5 10.8854 1.64236 11.2396 1.92708C11.5938 2.21181 11.8264 2.56944 11.9375 3H15.5C15.9125 3 16.2656 3.14688 16.5594 3.44063C16.8531 3.73438 17 4.0875 17 4.5V15.5C17 15.9125 16.8531 16.2656 16.5594 16.5594C16.2656 16.8531 15.9125 17 15.5 17H4.5ZM4.5 15.5H15.5V4.5H4.5V15.5ZM6.75 14H11.25C11.4625 14 11.6406 13.9285 11.7844 13.7856C11.9281 13.6427 12 13.4656 12 13.2544C12 13.0431 11.9281 12.8646 11.7844 12.7188C11.6406 12.5729 11.4625 12.5 11.25 12.5H6.75C6.5375 12.5 6.35938 12.5715 6.21563 12.7144C6.07188 12.8573 6 13.0344 6 13.2456C6 13.4569 6.07188 13.6354 6.21563 13.7812C6.35938 13.9271 6.5375 14 6.75 14ZM6.75 10.75H13.25C13.4625 10.75 13.6406 10.6785 13.7844 10.5356C13.9281 10.3927 14 10.2156 14 10.0044C14 9.79313 13.9281 9.61458 13.7844 9.46875C13.6406 9.32292 13.4625 9.25 13.25 9.25H6.75C6.5375 9.25 6.35938 9.32146 6.21563 9.46438C6.07188 9.60729 6 9.78438 6 9.99563C6 10.2069 6.07188 10.3854 6.21563 10.5312C6.35938 10.6771 6.5375 10.75 6.75 10.75ZM6.75 7.5H13.25C13.4625 7.5 13.6406 7.42854 13.7844 7.28563C13.9281 7.14271 14 6.96563 14 6.75438C14 6.54313 13.9281 6.36458 13.7844 6.21875C13.6406 6.07292 13.4625 6 13.25 6H6.75C6.5375 6 6.35938 6.07146 6.21563 6.21437C6.07188 6.35729 6 6.53437 6 6.74562C6 6.95687 6.07188 7.13542 6.21563 7.28125C6.35938 7.42708 6.5375 7.5 6.75 7.5ZM10.3542 3.85417C10.4514 3.75694 10.5 3.63889 10.5 3.5C10.5 3.36111 10.4514 3.24306 10.3542 3.14583C10.2569 3.04861 10.1389 3 10 3C9.86111 3 9.74306 3.04861 9.64583 3.14583C9.54861 3.24306 9.5 3.36111 9.5 3.5C9.5 3.63889 9.54861 3.75694 9.64583 3.85417C9.74306 3.95139 9.86111 4 10 4C10.1389 4 10.2569 3.95139 10.3542 3.85417Z"
-          fill="currentColor"
-        />
-      </g>
-    </svg>
-  )
-}
-
-/** LNB 카테고리 아이콘: 후원사 관리 (20x20) */
-function IconSponsors() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={20}
-      height={20}
-      viewBox="0 0 20 20"
-      fill="none"
-      style={svgStyle}
-    >
-      <mask
-        id="lnb-sponsors-mask"
-        style={{ maskType: 'alpha' }}
-        maskUnits="userSpaceOnUse"
-        x={0}
-        y={0}
-        width={20}
-        height={20}
-      >
-        <rect width={20} height={20} fill="#D9D9D9" />
-      </mask>
-      <g mask="url(#lnb-sponsors-mask)">
-        <path
-          d="M10.3123 16.5208C10.3818 16.5208 10.4477 16.5069 10.5102 16.4792C10.5727 16.4514 10.6248 16.4167 10.6665 16.375L17.0623 9.95833C17.2012 9.81944 17.3088 9.65972 17.3852 9.47917C17.4616 9.29861 17.4998 9.11285 17.4998 8.92188C17.4998 8.71812 17.4616 8.52396 17.3852 8.33937C17.3088 8.15479 17.2012 7.99306 17.0623 7.85417L13.1873 3.95833C13.0345 3.81944 12.8686 3.71181 12.6896 3.63542C12.5106 3.55903 12.3223 3.52083 12.1248 3.52083C11.847 3.52083 11.5936 3.60069 11.3644 3.76042C11.1352 3.92014 10.9234 4.09722 10.729 4.29167L12.2915 5.79167C12.5137 6.01389 12.6908 6.26042 12.8227 6.53125C12.9547 6.80208 13.0206 7.09722 13.0206 7.41667C13.0206 7.97222 12.8262 8.44444 12.4373 8.83333C12.0484 9.22222 11.577 9.41667 11.0231 9.41667C10.7594 9.41667 10.5056 9.36806 10.2617 9.27083C10.0177 9.17361 9.79842 9.02778 9.60397 8.83333L7.89564 7.125L4.66647 10.3542C4.62481 10.4097 4.59008 10.4669 4.56231 10.5258C4.53453 10.5846 4.52064 10.6476 4.52064 10.715C4.52064 10.8494 4.57099 10.9653 4.67168 11.0625C4.77238 11.1597 4.88988 11.2083 5.02418 11.2083C5.09126 11.2083 5.15258 11.1944 5.20814 11.1667C5.2637 11.1389 5.31925 11.1042 5.37481 11.0625L7.33314 9.125C7.48592 8.97222 7.65953 8.89583 7.85397 8.89583C8.04842 8.89583 8.22203 8.97222 8.37481 9.125C8.52758 9.27778 8.60397 9.45139 8.60397 9.64583C8.60397 9.84028 8.52758 10.0139 8.37481 10.1667L6.41647 12.125C6.36092 12.1806 6.32272 12.2374 6.30189 12.2954C6.28106 12.3533 6.27064 12.4155 6.27064 12.4819C6.27064 12.6145 6.31974 12.7306 6.41793 12.83C6.51613 12.9294 6.63404 12.9792 6.77168 12.9792C6.84043 12.9792 6.90606 12.9653 6.96856 12.9375C7.03106 12.9097 7.08314 12.875 7.12481 12.8333L9.08314 10.875C9.23592 10.7222 9.40953 10.6458 9.60397 10.6458C9.79842 10.6458 9.97203 10.7222 10.1248 10.875C10.2776 11.0278 10.354 11.2049 10.354 11.4062C10.354 11.6076 10.2776 11.7847 10.1248 11.9375L8.18731 13.875C8.13175 13.9306 8.09356 13.9913 8.07272 14.0573C8.05189 14.1233 8.04147 14.1892 8.04147 14.2552C8.04147 14.3872 8.09057 14.5026 8.18877 14.6015C8.28696 14.7005 8.40488 14.75 8.54251 14.75C8.61126 14.75 8.67689 14.7361 8.73939 14.7083C8.80189 14.6806 8.85397 14.6458 8.89564 14.6042L10.854 12.6458C11.0068 12.4931 11.1804 12.4167 11.3748 12.4167C11.5693 12.4167 11.7429 12.4931 11.8956 12.6458C12.0484 12.7986 12.1248 12.9757 12.1248 13.1771C12.1248 13.3785 12.0484 13.5556 11.8956 13.7083L9.95814 15.6458C9.91647 15.7014 9.88175 15.7599 9.85397 15.8212C9.8262 15.8826 9.81231 15.9484 9.81231 16.0185C9.81231 16.159 9.86092 16.2778 9.95814 16.375C10.0554 16.4722 10.1734 16.5208 10.3123 16.5208ZM10.2915 17.9792C9.77758 17.9792 9.33314 17.809 8.95814 17.4688C8.58314 17.1285 8.36786 16.7083 8.31231 16.2083C7.85397 16.1667 7.46161 15.9792 7.13522 15.6458C6.80883 15.3125 6.61092 14.9158 6.54147 14.4556C6.06925 14.388 5.66995 14.191 5.34356 13.8646C5.01717 13.5382 4.83314 13.1458 4.79147 12.6875C4.27758 12.6597 3.85397 12.4514 3.52064 12.0625C3.18731 11.6736 3.02064 11.2244 3.02064 10.7148C3.02064 10.4466 3.06925 10.191 3.16647 9.94792C3.2637 9.70486 3.40953 9.48611 3.60397 9.29167L6.83314 6.08333C7.12064 5.79167 7.47377 5.64583 7.89252 5.64583C8.31126 5.64583 8.66647 5.79167 8.95814 6.08333L10.6456 7.77083C10.7012 7.82639 10.7568 7.86458 10.8123 7.88542C10.8679 7.90625 10.9279 7.91667 10.9923 7.91667C11.1373 7.91667 11.2581 7.86806 11.3548 7.77083C11.4515 7.67361 11.4998 7.55354 11.4998 7.41063C11.4998 7.34715 11.4859 7.28368 11.4581 7.22021C11.4304 7.15674 11.3956 7.10417 11.354 7.0625L8.24981 3.95833C8.09703 3.80556 7.93002 3.69444 7.74877 3.625C7.56752 3.55556 7.37689 3.52083 7.17689 3.52083C6.98939 3.52083 6.80536 3.55903 6.62481 3.63542C6.44425 3.71181 6.27758 3.81944 6.12481 3.95833L2.93731 7.14583C2.75675 7.32639 2.63175 7.54167 2.56231 7.79167C2.49286 8.04167 2.48592 8.29167 2.54147 8.54167C2.58314 8.73611 2.54842 8.92014 2.43731 9.09375C2.3262 9.26736 2.16647 9.375 1.95814 9.41667C1.74981 9.45833 1.55883 9.42361 1.38522 9.3125C1.21161 9.20139 1.10397 9.04167 1.06231 8.83333C0.951195 8.34722 0.968556 7.85764 1.11439 7.36458C1.26022 6.87153 1.5137 6.44444 1.87481 6.08333L5.06231 2.89583C5.34008 2.61806 5.663 2.40278 6.03106 2.25C6.39911 2.09722 6.78453 2.02083 7.18731 2.02083C7.59008 2.02083 7.9755 2.09722 8.34356 2.25C8.71161 2.40278 9.03453 2.61806 9.31231 2.89583L9.64564 3.22917L9.97897 2.875C10.2568 2.59722 10.5797 2.38194 10.9477 2.22917C11.3158 2.07639 11.7012 2 12.104 2C12.5068 2 12.8887 2.07639 13.2498 2.22917C13.6109 2.38194 13.9304 2.59722 14.2081 2.875L18.104 6.77083C18.3818 7.04861 18.597 7.36806 18.7498 7.72917C18.9026 8.09028 18.979 8.47222 18.979 8.875C18.979 9.27778 18.9026 9.66319 18.7498 10.0312C18.597 10.3993 18.3818 10.7222 18.104 11L11.7081 17.3958C11.5137 17.5903 11.2947 17.7361 11.0513 17.8333C10.8079 17.9306 10.5547 17.9792 10.2915 17.9792Z"
           fill="currentColor"
         />
       </g>
@@ -337,7 +324,7 @@ const allMenuItems: MenuItemConfig[] = [
   // 관리자 전용 홈
   {
     key: '/',
-    label: '관리자 홈',
+    label: '대시보드 홈',
     icon: <IconDashboardHome />,
     enabled: true,
     allowedRoles: ['ADMIN'],
@@ -494,62 +481,22 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       {
-        key: 'program-forms-group',
-        label: '프로그램 양식',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-        children: [
-          {
-            key: '/templates/program-forms/application',
-            label: '신청 기본 폼',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/program-forms/survey',
-            label: '설문 조사',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/program-forms/satisfaction',
-            label: '만족도조사',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-          {
-            key: '/templates/program-forms/assignment',
-            label: '과제 제출 폼',
-            enabled: true,
-            allowedRoles: ['ADMIN'],
-          },
-        ],
-      },
-      {
-        key: '/templates/file-forms',
-        label: '파일 양식',
+        key: '/templates/form-management',
+        label: '폼 양식 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/templates/sms',
-        label: '문자 양식',
+        key: '/templates/kakao-notification',
+        label: '카카오 알림톡 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/templates/email',
+        key: '/templates/email-management',
         label: '메일 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/templates/banner',
-        label: '배너 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
@@ -587,11 +534,34 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
-    key: '/sponsors',
-    label: '후원사 관리',
-    icon: <IconSponsors />,
+    key: '/data-management',
+    label: '데이터 관리',
+    icon: <IconDataManagement />,
     enabled: true,
     allowedRoles: ['ADMIN'],
+    children: [
+      {
+        key: '/sponsor',
+        label: '후원사 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/textbook',
+        label: '교재 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/detailed-program',
+        label: '세부 프로그램 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+    ],
   },
   {
     key: '/education-records',
@@ -608,15 +578,22 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       {
-        key: '/logs/bug',
-        label: '버그',
+        key: '/logs/file-download-history',
+        label: '파일 다운로드 이력',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/logs/issue',
-        label: '이슈',
+        key: '/logs/personal-info-access-history',
+        label: '개인정보 조회 이력',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/logs/bug-issue-history',
+        label: '버그/이슈 이력',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
@@ -817,13 +794,22 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
   const normalizedPath = path === '/' ? path : path.replace(/\/$/, '')
 
   // LNB 접근 차단: 특정 관리 카테고리는 하위 경로 포함 접근 불가
-  const blockedPathPrefixes = ['/templates/', '/admin/posts/', '/logs/']
-  if (blockedPathPrefixes.some(prefix => normalizedPath.startsWith(prefix))) {
-    return false
-  }
-  const blockedExactPaths = ['/sponsors', '/education-records']
-  if (blockedExactPaths.includes(normalizedPath)) {
-    return false
+  if (userRole !== 'ADMIN') {
+    const blockedPathPrefixes = ['/admin/posts/', '/logs/']
+    if (blockedPathPrefixes.some(prefix => normalizedPath.startsWith(prefix))) {
+      return false
+    }
+    const blockedExactPaths = [
+      '/data-management',
+      '/sponsor',
+      '/textbook',
+      '/detailed-program',
+      '/sponsors',
+      '/education-records',
+    ]
+    if (blockedExactPaths.includes(normalizedPath)) {
+      return false
+    }
   }
 
   // 프로그램 관리 > 일반 교육 프로그램: 하위 경로까지 메뉴 키 `/programs/education`과 동일 접근 정책
@@ -1177,7 +1163,7 @@ export function getBreadcrumbByPath(
   const n = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
 
   if (n === '/') {
-    const label = userRole === 'ADMIN' ? '관리자 홈' : '메인 홈'
+    const label = userRole === 'ADMIN' ? '대시보드 홈' : '메인 홈'
     return [{ label }]
   }
 

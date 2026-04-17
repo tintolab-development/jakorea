@@ -4,12 +4,18 @@
 
 .filter-table-layout {
   width: 100%;
+  min-width: 0;
   background: var(--color-bg-base);
   margin-bottom: var(--spacing-24);
   padding: 0;
   border-radius: 12px;
   box-shadow: 0 0 16px 0 var(--shadow-card-soft);
   padding: 20px;
+}
+
+.filter-table-layout__filter {
+  width: 100%;
+  min-width: 0;
 }
 
 .filter-table-layout .unified-filter-card {
@@ -19,6 +25,12 @@
 
 .filter-table-layout__divider {
   padding: 32px 0;
+}
+
+.filter-table-layout__top-nav {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-16);
 }
 
 .filter-table-layout__toolbar {
@@ -61,6 +73,7 @@
   font-weight: 500;
   line-height: 150%; /* 24px */
   opacity: 0.6;
+  white-space: nowrap;
 }
 
 .filter-table-layout__table {

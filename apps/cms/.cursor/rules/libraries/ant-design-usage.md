@@ -31,10 +31,28 @@ function MyComponent() {
 }
 ```
 
+## CMS 체크박스 (`CmsCheckbox`)
+
+폼·상세 편집 등 CMS 화면에서는 `antd`의 `Checkbox` 대신 **`@/shared/ui/cms-checkbox`** 의 `CmsCheckbox` / `CmsCheckbox.Group`을 사용한다.
+
+- **사이즈**: **`checkboxSize="large"`** 를 기본으로 한다. (`CmsCheckbox` 컴포넌트 기본값도 `large`이나, 코드에서 의도를 드러내려면 명시해도 된다.)
+- **`medium`**: 디자인/기획에서 좁은 행·보조 옵션 등으로 지정한 경우에만 사용한다.
+
+```tsx
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+
+<CmsCheckbox checkboxSize="large">라벨</CmsCheckbox>
+<CmsCheckbox.Group checkboxSize="large" options={['a', 'b']} />
+```
+
 ## 커스터마이징
 
 Ant Design 테마 커스터마이징은 `ConfigProvider`의 `theme` prop을 통해 설정합니다.
 전역 스타일은 `src/index.css`에서 관리합니다.
+
+## Modals (viewport)
+
+Center all modals relative to the **full browser viewport**, not only the main content column. See [Modal viewport centering](../design/modal-viewport-centering.md).
 
 ## 관련 규칙
 
@@ -42,4 +60,5 @@ Ant Design 테마 커스터마이징은 `ConfigProvider`의 `theme` prop을 통�
 - [UI 원칙](../design/ui-principles.md)
 - [컴포넌트 패턴](../coding/component-patterns.md)
 - [이벤트 처리](../design/event-handling.md)
+- 관리자 **공지 등록·수정**처럼 `Form` + `ContentModal`을 쓰는 화면의 치수·간격: [admin-notice-form-modal-spec.md](../process/admin-notice-form-modal-spec.md)
 

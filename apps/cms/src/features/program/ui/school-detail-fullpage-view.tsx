@@ -58,8 +58,10 @@ import {
   DeleteGuideModal,
   buildSchoolCancelApprovalMessageLines,
 } from './manager-delete-guide-modal'
-import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
+import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import './detail-modal/program-status/participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
@@ -228,13 +230,30 @@ export function SchoolDetailFullpageView({
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
   const privacyMasked = !personalInfoRevealed
 
   useEffect(() => {
     setTextbookStatusDropdownOpen(false)
+    setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
   }, [detail.id])
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
+
+  const handlePrivacyToggleClick = useCallback(() => {
+    if (personalInfoRevealed) {
+      setPersonalInfoRevealed(false)
+      return
+    }
+    setPersonalInfoRevealConfirmOpen(true)
+  }, [personalInfoRevealed])
+
+  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
+    trackPersonalInfoAccess(mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보', reason)
+    setPersonalInfoRevealed(true)
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [mergedDetail.schoolName, row.schoolName])
   const instructors =
     savedInstructorPatches[detail.id] !== undefined
       ? savedInstructorPatches[detail.id].map(inv => ({
@@ -606,11 +625,7 @@ export function SchoolDetailFullpageView({
     {
       key: 'addressDetail',
       label: '상세 주소',
-      children: mergedDetail.addressDetail
-        ? privacyMasked
-          ? MASKING_POLICY.address(mergedDetail.addressDetail)
-          : mergedDetail.addressDetail
-        : '-',
+      children: mergedDetail.addressDetail ?? '-',
     },
     { key: 'educationGrade', label: '신청 학년', children: mergedDetail.educationGrade },
     {
@@ -830,9 +845,9 @@ export function SchoolDetailFullpageView({
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => setPersonalInfoRevealed(true)}
+              onClick={handlePrivacyToggleClick}
             >
-              개인정보 상세보기
+              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
             </AppButton>
           </div>
         )}
@@ -1184,9 +1199,15 @@ export function SchoolDetailFullpageView({
           title="승인 취소 안내"
           lines={buildSchoolCancelApprovalMessageLines(row.schoolName)}
           confirmText="취소"
-          confirmVariant="danger"
+          confirmVariant="delete"
         />
       )}
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
+          onConfirm={handleConfirmPersonalInfoReveal}
+        />
+      ) : null}
     </div>
   )
 }

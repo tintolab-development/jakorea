@@ -17,17 +17,12 @@
     align-items: baseline;
 }
 
-.notification-widget__title-text {
-    margin: 0;
-    font-size: var(--font-size-16);
-    font-weight: var(--font-weight-600);
-    color: var(--color-text-label);
-}
-
+/* 미확인 n건: 타이틀과 간격 + 더보기(extra) 쪽 8px */
 .notification-widget__count {
     font-size: var(--font-size-13);
     color: var(--color-text-secondary);
     margin-left: var(--spacing-4);
+    margin-right: var(--spacing-8);
 }
 
 .notification-widget__empty {

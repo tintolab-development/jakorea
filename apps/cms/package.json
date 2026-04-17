@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview",
     "validate": "pnpm typecheck && pnpm lint && pnpm build"
   },

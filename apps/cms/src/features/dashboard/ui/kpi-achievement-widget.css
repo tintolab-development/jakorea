@@ -4,6 +4,7 @@
  */
 
 .kpi-achievement-widget {
+  box-sizing: border-box;
   height: auto;
   min-height: 0;
   flex: 1;
@@ -15,36 +16,55 @@
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
-.kpi-achievement-widget__total-count {
+/* 타이틀 옆 디스크립션 — dashboard-toolbar-description과 동일 타이포 (Typography secondary 색상 덮어씀) */
+.kpi-achievement-widget__total-count.ant-typography {
   margin-left: var(--spacing-8);
-  font-size: 13px;
-  font-weight: 400;
+  margin-right: var(--spacing-8);
+  color: var(--main-BK, #3d3d3d) !important;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 170%;
+  opacity: 0.6;
 }
 
 .kpi-achievement-widget .ant-card-head {
   flex-shrink: 0;
 }
 
-.kpi-achievement-widget .ant-card-body {
-  padding: var(--spacing-16);
-  padding-bottom: 20px;
+/* ant-card-head-title: widget-card-header가 전체 너비를 채우고 타이틀+디스크립션 레이아웃이 잘리지 않도록 */
+.kpi-achievement-widget .ant-card-head-title {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.kpi-achievement-widget .ant-card-head-title > .widget-card-header {
   flex: 1;
+  min-width: 0;
+}
+
+/* head/body 패딩은 dashboard.css 슬롯 규칙으로 제거 — 바깥 여백은 .ant-card 루트 24px */
+.kpi-achievement-widget .ant-card-body {
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
-/* 가로 스크롤 영역: 1단/2단에 따라 슬롯 너비에 맞춤 — 트랙 항상 확보(가로 스크롤바 노출) */
+/* 가로 스크롤 영역: 카드 행 — 가로 스크롤바 UI는 유지(다른 위젯과 달리 숨기지 않음) */
 .kpi-achievement-widget__scroll {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-16);
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow-x: scroll;
+  overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: var(--spacing-8);
+  padding-bottom: calc(var(--spacing-8) + 6px);
   scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
@@ -63,34 +83,37 @@
   border-radius: 3px;
 }
 
-/* 프로그램 카드: 기본 441×236, 배경 #fff, 반응형 */
+/* 프로그램 카드: 가로 441px 고정, 세로는 KPI 행에 맞춤(하단 여백 없음). 긴 목록은 목록만 스크롤 */
 .kpi-achievement-widget__card {
   flex-shrink: 0;
   width: 441px;
   max-width: 100%;
   min-width: 280px;
-  height: 236px;
-  padding: 18px var(--spacing-16);
-  padding-bottom: 22px;
+  max-height: 280px;
+  height: auto;
+  padding: 16px 20px 16px;
   background: #fff;
   border: 1px solid var(--color-border-skeleton, #f0f0f0);
   border-radius: 8px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* 프로그램명 타이틀: 한 줄, 초과 시 말줄임(...) */
 .kpi-achievement-widget__card-title {
+  flex-shrink: 0;
   color: var(--default-BK, #3d3d3d);
-  text-align: center;
+  text-align: left;
   overflow: hidden;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   white-space: nowrap;
   text-overflow: ellipsis;
   min-width: 0;
@@ -99,9 +122,10 @@
 .kpi-achievement-widget__kpi-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  flex: 1;
+  gap: 30px;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow-y: auto;
 }
 
 /* KPI 한 줄 */
@@ -111,17 +135,18 @@
   gap: var(--spacing-4);
 }
 
-/* KPI 라벨: 최종 달성 인원 + (단위: 명) */
+/* KPI 라벨: 메인 타이틀과 (단위: …) 디스크립션 사이 8px — flex gap은 unit의 -webkit-box와 충돌할 수 있어 margin으로 고정 */
 .kpi-achievement-widget__kpi-label {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0 0.25em;
   min-width: 0;
 }
 
-/* 최종 달성 인원 텍스트 스펙 */
+/* 최종 달성 인원 텍스트 스펙 — 남는 폭은 메인이 쓰고 단위는 margin-left 8px로 분리 */
 .kpi-achievement-widget__kpi-label-main {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
@@ -132,17 +157,19 @@
   line-height: 130%;
   letter-spacing: -0.14px;
   white-space: nowrap;
-  min-width: 0;
 }
 
-/* (단위: 명) 텍스트 스펙 */
+/* (단위: 명) 디스크립션 — 타이틀과 8px, 0.6 톤 */
 .kpi-achievement-widget__kpi-label-unit {
+  flex-shrink: 0;
+  margin-left: var(--spacing-8);
+  max-width: 100%;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  color: rgba(61, 61, 61, 0.6);
+  display: inline-block;
+  vertical-align: baseline;
+  white-space: nowrap;
   text-overflow: ellipsis;
+  color: rgba(61, 61, 61, 0.6);
   font-family: Pretendard, sans-serif;
   font-size: 12px;
   font-style: normal;
@@ -259,11 +286,3 @@
   }
 }
 
-.kpi-achievement-widget .widget-more-button {
-  color: var(--color-text-primary) !important;
-}
-
-.kpi-achievement-widget .widget-more-button:hover {
-  color: var(--color-text-primary) !important;
-  opacity: 0.8;
-}

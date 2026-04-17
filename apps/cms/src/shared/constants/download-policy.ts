@@ -55,13 +55,15 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 이메일 마스킹: t***@example.com
+   * 이메일 마스킹: 로컬파트 앞 3글자 노출 + 나머지 `*`
+   * - 0915123@naver.com -> 091***@naver.com
    */
   email: (value: string): string => {
     if (!value) return value
     const [local, domain] = value.split('@')
     if (!local || !domain) return value
-    return `${local[0]}***@${domain}`
+    if (local.length <= 3) return `${local}***@${domain}`
+    return `${local.slice(0, 3)}***@${domain}`
   },
 
   /**

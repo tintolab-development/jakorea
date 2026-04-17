@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
@@ -80,5 +81,10 @@ export default defineConfig({
       },
     },
     chunkSizeWarningLimit: 1000, // 청크 크기 경고 임계값을 1MB로 상향
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+    passWithNoTests: true,
   },
 })

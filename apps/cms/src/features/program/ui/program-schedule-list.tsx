@@ -19,7 +19,7 @@ import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
 } from './program-schedule-colors'
-import './program-calendar-view.css'
+import '@/shared/components/calendar/calendar-set.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)

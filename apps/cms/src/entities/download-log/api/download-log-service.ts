@@ -1,63 +1,68 @@
 /**
- * 다운로드 이력 서비스
- * Phase 4.1: 조회/다운로드 이력 기록 (FR-F00)
+ * 파일 다운로드 이력 서비스 (mock-memory)
  */
 
-import type { DownloadLog, DownloadLogFilters } from '@/types/download-log'
+import type {
+  DownloadLog,
+  DownloadLogFilters,
+  RecordDownloadPayload,
+} from '@/types/download-log'
 import { mockDownloadLogs } from '@/data/mock/download-logs'
 
-/**
- * 다운로드 이력 목록 조회
- */
-export async function getDownloadLogs(
-  filters?: DownloadLogFilters
-): Promise<DownloadLog[]> {
-  // Mock: 실제로는 API 호출
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  let logs = [...mockDownloadLogs]
-
-  if (filters) {
-    if (filters.userId) {
-      logs = logs.filter(log => log.userId === filters.userId)
-    }
-    if (filters.targetType) {
-      logs = logs.filter(log => log.targetType === filters.targetType)
-    }
-    if (filters.programId) {
-      logs = logs.filter(log => log.programId === filters.programId)
-    }
-    if (filters.startDate) {
-      logs = logs.filter(log => log.createdAt >= filters.startDate!)
-    }
-    if (filters.endDate) {
-      logs = logs.filter(log => log.createdAt <= filters.endDate!)
-    }
-  }
-
-  // 최신순 정렬
-  return logs.sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )
+function normalizeText(value: string | undefined): string {
+  return (value ?? '').trim().toLowerCase()
 }
 
-/**
- * 다운로드 이력 기록
- */
-export async function logDownload(
-  log: Omit<DownloadLog, 'id' | 'createdAt'>
-): Promise<DownloadLog> {
-  // Mock: 실제로는 API 호출
-  await new Promise(resolve => setTimeout(resolve, 200))
+function applyFilters(logs: DownloadLog[], filters?: DownloadLogFilters): DownloadLog[] {
+  if (!filters) return logs
+
+  const no = normalizeText(filters.no)
+  const fileName = normalizeText(filters.fileName)
+  const userName = normalizeText(filters.userName)
+  const ipAddress = normalizeText(filters.ipAddress)
+  const startDate = filters.startDate ? new Date(filters.startDate).getTime() : null
+  const endDate = filters.endDate ? new Date(filters.endDate).getTime() : null
+
+  return logs.filter((log, index) => {
+    const orderNo = String(logs.length - index)
+    if (no && !orderNo.includes(no)) return false
+    if (fileName && !log.fileName.toLowerCase().includes(fileName)) return false
+    if (userName && !log.userName.toLowerCase().includes(userName)) return false
+    if (ipAddress && !log.ipAddress.toLowerCase().includes(ipAddress)) return false
+
+    const downloadedAt = new Date(log.downloadedAt).getTime()
+    if (startDate != null && downloadedAt < startDate) return false
+    if (endDate != null && downloadedAt > endDate) return false
+    return true
+  })
+}
+
+export async function getDownloadLogs(filters?: DownloadLogFilters): Promise<DownloadLog[]> {
+  await new Promise(resolve => setTimeout(resolve, 120))
+
+  const logs = [...mockDownloadLogs]
+  logs.sort((a, b) => new Date(b.downloadedAt).getTime() - new Date(a.downloadedAt).getTime())
+  return applyFilters(logs, filters)
+}
+
+export async function logDownload(log: Omit<DownloadLog, 'id'>): Promise<DownloadLog> {
+  await new Promise(resolve => setTimeout(resolve, 80))
 
   const newLog: DownloadLog = {
     ...log,
-    id: `log-${Math.random().toString(36).substr(2, 9)}-${Date.now()}`,
-    createdAt: new Date().toISOString(),
+    id: `log-${Math.random().toString(36).slice(2, 11)}-${Date.now()}`,
   }
 
-  // Mock 데이터에 추가 (실제로는 서버에 저장)
   mockDownloadLogs.unshift(newLog)
-
   return newLog
+}
+
+export async function recordFileDownload(payload: RecordDownloadPayload): Promise<DownloadLog> {
+  return logDownload({
+    fileName: payload.fileName,
+    userId: payload.userId ?? 'unknown-user',
+    userName: payload.userName ?? '알 수 없음',
+    ipAddress: payload.ipAddress ?? '0.0.0.0',
+    downloadedAt: new Date().toISOString(),
+  })
 }

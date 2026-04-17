@@ -4,13 +4,14 @@
  */
 
 import { useMemo, useCallback, useRef } from 'react'
-import type { UserRole } from '@/types/user'
-import { getDashboardWidgetsByRole } from '@/shared/config/dashboard-config'
+import type { User, UserRole } from '@/types/user'
+import { getDashboardWidgetsByRole, getDashboardWidgetsForUser } from '@/shared/config/dashboard-config'
 import type { DashboardWidgetConfig } from '@/shared/config/dashboard-config'
 import {
   useDashboardWidgetOrderStore,
   buildDefaultDisplayItemIds,
   buildDisplayItemsMeta,
+  mergeOrderedIdsWithDefaults,
   reorderToAvoidTopGap,
   type DisplayItemMeta,
   type DashboardWidgetOrderState,
@@ -18,6 +19,8 @@ import {
 
 export interface UseDashboardLayoutParams {
   userRole: UserRole | null
+  /** 관리자 대시보드 ACL 반영 시 전달 */
+  user?: Omit<User, 'password'> | null
 }
 
 export interface UseDashboardLayoutResult {
@@ -36,16 +39,28 @@ export interface UseDashboardLayoutResult {
 
 export function useDashboardLayout({
   userRole,
+  user,
 }: UseDashboardLayoutParams): UseDashboardLayoutResult {
   const rowRef = useRef<HTMLDivElement | null>(null)
 
-  const widgets = useMemo(() => getDashboardWidgetsByRole(userRole), [userRole])
+  const widgets = useMemo(() => {
+    if (userRole === 'ADMIN') {
+      if (user) return getDashboardWidgetsForUser(user)
+      return getDashboardWidgetsByRole('ADMIN')
+    }
+    return getDashboardWidgetsByRole(userRole)
+  }, [userRole, user])
   const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
   const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
 
-  const orderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) =>
-    s.getOrderedIds(userRole, defaultIds)
+  /** getOrderedIds()는 호출마다 새 배열을 만들어 셀렉터에 쓰면 구독이 매번 “변경”으로 처리되어 무한 렌더가 난다. 역할별 저장 순서만 구독한다. */
+  const savedOrderForRole = useDashboardWidgetOrderStore(s =>
+    userRole ? s.orderByRole[userRole] : undefined
   )
+  const orderedIds = useMemo(() => {
+    if (!userRole || defaultIds.length === 0) return defaultIds
+    return mergeOrderedIdsWithDefaults(savedOrderForRole, defaultIds)
+  }, [userRole, defaultIds, savedOrderForRole])
   const setOrderedIdsRaw = useDashboardWidgetOrderStore(
     (s: DashboardWidgetOrderState) => s.setOrderedIds
   )

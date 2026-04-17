@@ -14,26 +14,23 @@ export const PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR: Record<
   pending: '#1E8C29',
   confirmed: '#017EAF',
   correction: '#C32F4A',
-  rejected: '#8457CE',
+  rejected: '#017EAF',
 }
 
 /** 면 배경 */
 export const PAYMENT_ORDER_STATUS_LIST_BG: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: 'rgba(30, 140, 41, 0.06)',
-  confirmed: 'rgba(1, 161, 175, 0.06)',
+  pending: 'rgba(240, 121, 23, 0.06)',
+  confirmed: '#F2F8F2',
   correction: 'rgba(195, 47, 74, 0.06)',
-  rejected: 'rgba(132, 87, 206, 0.06)',
+  rejected: 'linear-gradient(0deg, rgba(1, 126, 175, 0.10) 0%, rgba(1, 126, 175, 0.10) 100%), #FFF',
 }
 
 /** 테두리(1px solid 용) */
-export const PAYMENT_ORDER_STATUS_LIST_BORDER: Record<
-  PaymentOrderAdminProcessingStatus,
-  string
-> = {
-  pending: 'rgba(30, 140, 41, 0.10)',
-  confirmed: 'rgba(1, 161, 175, 0.10)',
+export const PAYMENT_ORDER_STATUS_LIST_BORDER: Record<PaymentOrderAdminProcessingStatus, string> = {
+  pending: 'rgba(240, 121, 23, 0.10)',
+  confirmed: 'rgba(30, 140, 41, 0.10)',
   correction: 'rgba(195, 47, 74, 0.10)',
-  rejected: 'rgba(132, 87, 206, 0.10)',
+  rejected: 'rgba(1, 126, 175, 0.10)',
 }
 
 /** 상세(DETAIL) — LIST와 동일, rejected만 회색 톤 */
@@ -42,18 +39,13 @@ export const PAYMENT_ORDER_STATUS_DETAIL_TEXT_COLOR: Record<
   string
 > = {
   ...PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR,
-  rejected: '#464646',
 }
 
 export const PAYMENT_ORDER_STATUS_DETAIL_BG: Record<PaymentOrderAdminProcessingStatus, string> = {
   ...PAYMENT_ORDER_STATUS_LIST_BG,
-  rejected: '#F2F3F5',
 }
 
-export const PAYMENT_ORDER_STATUS_DETAIL_BORDER: Record<
-  PaymentOrderAdminProcessingStatus,
-  string
-> = {
-  ...PAYMENT_ORDER_STATUS_LIST_BORDER,
-  rejected: 'rgba(70, 70, 70, 0.06)',
-}
+export const PAYMENT_ORDER_STATUS_DETAIL_BORDER: Record<PaymentOrderAdminProcessingStatus, string> =
+  {
+    ...PAYMENT_ORDER_STATUS_LIST_BORDER,
+  }

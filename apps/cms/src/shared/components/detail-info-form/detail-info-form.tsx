@@ -13,9 +13,11 @@ const DetailInfoFormContext = createContext<DetailInfoFormContextValue>({
 
 export type DetailInfoFormProps = {
   title: string
+  /** 타이틀(`h2`) 직후·`description`과 같은 헤더 행에 노출 (민트 강조 문구 등) */
+  message?: ReactNode
+  /** 타이틀(`h2`) 우측에 붙는 보조 문구·뱃지 등 */
+  titleTrailing?: ReactNode
   description?: ReactNode
-  /** 헤더 우측(타이틀·설명과 한 줄에서 테이블/본문 우측 끝에 맞춤) */
-  headerEnd?: ReactNode
   /**
    * true면 섹션 헤더 없이 본문 격자만 렌더합니다.
    * 상위에 이미 제목(h2 등)이 있을 때 — `title`은 접근용 aria-label 등에만 쓰입니다.
@@ -29,8 +31,9 @@ export type DetailInfoFormProps = {
 
 function DetailInfoFormRoot({
   title,
+  message,
+  titleTrailing,
   description,
-  headerEnd,
   hideHeader = false,
   mode = 'view',
   children,
@@ -59,11 +62,16 @@ function DetailInfoFormRoot({
             <h2 id={titleId} className="detail-info-form__title">
               {title}
             </h2>
+            {message ? (
+              <div className="detail-info-form__message">{message}</div>
+            ) : null}
             {description ? (
               <div className="detail-info-form__description">{description}</div>
             ) : null}
           </div>
-          {headerEnd ? <div className="detail-info-form__header-end">{headerEnd}</div> : null}
+          {titleTrailing ? (
+            <div className="detail-info-form__header-trailing">{titleTrailing}</div>
+          ) : null}
         </header>
         {body}
       </section>
@@ -73,17 +81,24 @@ function DetailInfoFormRoot({
 
 export type DetailInfoFormRowProps = {
   type?: 'single' | 'double' | 'custom'
+  className?: string
   children: ReactNode
 }
 
-function DetailInfoFormRow({ type = 'single', children }: DetailInfoFormRowProps) {
+function DetailInfoFormRow({ type = 'single', className, children }: DetailInfoFormRowProps) {
   if (type === 'custom') {
-    return <div className="detail-info-form__row detail-info-form__row--custom">{children}</div>
+    const customClass = ['detail-info-form__row', 'detail-info-form__row--custom', className]
+      .filter(Boolean)
+      .join(' ')
+    return <div className={customClass}>{children}</div>
   }
-  const rowClass =
-    type === 'double'
-      ? 'detail-info-form__row detail-info-form__row--double'
-      : 'detail-info-form__row detail-info-form__row--single'
+  const rowClass = [
+    'detail-info-form__row',
+    type === 'double' ? 'detail-info-form__row--double' : 'detail-info-form__row--single',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
   return <div className={rowClass}>{children}</div>
 }
 
@@ -96,6 +111,11 @@ export type DetailInfoFormFieldProps = {
   view: ReactNode
   edit?: ReactNode
   mode?: DetailInfoFormMode
+  /**
+   * 부모 `DetailInfoForm`이 `edit`여도 이 필드는 항상 읽기 전용(값은 `view`만, 편집 슬롯 미사용).
+   * `mode="view"`만으로 컨텍스트가 이기는 경우를 막기 위해 사용한다.
+   */
+  readOnlyDisplay?: boolean
 }
 
 function DetailInfoFormField({
@@ -107,20 +127,34 @@ function DetailInfoFormField({
   view,
   edit,
   mode: modeProp,
+  readOnlyDisplay = false,
 }: DetailInfoFormFieldProps) {
   const { mode: contextMode } = useContext(DetailInfoFormContext)
-  const effectiveMode: DetailInfoFormMode = modeProp ?? contextMode ?? 'view'
+  const effectiveMode: DetailInfoFormMode = readOnlyDisplay
+    ? 'view'
+    : (modeProp ?? contextMode ?? 'view')
   const showRequired = Boolean(required && effectiveMode === 'edit')
-  const content = effectiveMode === 'edit' && edit != null ? edit : view
+  const useEditSlot = !readOnlyDisplay && effectiveMode === 'edit' && edit != null
+  const content = useEditSlot ? edit : view
 
   const style = {
     '--detail-info-label-w': `${labelWidth}px`,
   } as CSSProperties
 
   const isFull = Boolean(fullRow || colSpan === 2)
-  const fieldClass = ['detail-info-form__field', isFull ? 'detail-info-form__field--full-row' : '']
+  const isEditSlot = useEditSlot
+  const fieldClass = [
+    'detail-info-form__field',
+    isFull ? 'detail-info-form__field--full-row' : '',
+    isEditSlot ? 'detail-info-form__field--edit' : '',
+  ]
     .filter(Boolean)
     .join(' ')
+
+  const contentClass = [
+    'detail-info-form__field-content',
+    isEditSlot ? 'detail-info-form__field-content--edit' : 'detail-info-form__field-content--view',
+  ].join(' ')
 
   return (
     <div className={fieldClass} style={style}>
@@ -132,7 +166,7 @@ function DetailInfoFormField({
           </span>
         ) : null}
       </div>
-      <div className="detail-info-form__field-content">{content}</div>
+      <div className={contentClass}>{content}</div>
     </div>
   )
 }

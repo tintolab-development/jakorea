@@ -1,6 +1,7 @@
 /**
  * 관리자 전체 통계 데이터 로드 훅
  * Dashboard 페이지의 통계 useEffect를 분리 (비즈니스 로직 동일)
+ * React Query 전환 시 키: `dashboardQueryKeys.overallStatistics()`
  */
 
 import { useState, useEffect } from 'react'

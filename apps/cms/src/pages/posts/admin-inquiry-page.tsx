@@ -1,451 +1,375 @@
 /**
- * 게시글 관리 - 문의사항 관리 페이지 (관리자용)
+ * 게시글 관리 - 문의내역 (관리자용)
+ * 공지사항 관리(admin-notice-list-page)와 동일: FilterTableLayout + useTablePage + CmsButton
  */
 
-import { useState, useMemo, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import {
-  Table,
-  Tag,
-  Space,
-  Button,
-  Card,
-  Typography,
-  Popconfirm,
-  Tooltip,
-  Modal,
-  Form,
-  Descriptions,
-  Input,
-} from 'antd'
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  MessageOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons'
-import { LAYOUT_CONSTANTS, PAGINATION_CONFIG, MESSAGES } from '@/shared/constants'
-import { mockInquiries, type Inquiry } from '@/data/mock/inquiries'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { useModalState } from '@/shared/hooks/use-modal-state'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import { Table, message } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+import { deleteAdminInquiries, listAdminInquiries } from '@/features/posts/api/admin-inquiry-mock-store'
+import { useAdminInquiryCategories } from '@/features/posts/hooks/use-admin-inquiry-categories'
+import { buildAdminInquiryFilterRows } from '@/features/posts/model/admin-inquiry-management-filter-fields'
+import { adminInquiryManagementTablePageConfig } from '@/features/posts/model/admin-inquiry-management-table.config'
+import type {
+  AdminInquiryRow,
+  AdminInquiryTableContext,
+  InquiryCategoryRow,
+} from '@/features/posts/model/admin-inquiry-management.types'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { CmsButton } from '@/shared/ui'
+import { AdminInquiryDetailModal } from '@/features/posts/ui/admin-inquiry-detail-modal'
+import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import { InquiryCategoryManagementModal } from '@/features/posts/ui/inquiry-category-management/inquiry-category-management-modal'
+import '@/pages/programs/program-list-page.css'
+import '@/pages/users/user-list-page.css'
+import '@/features/program/ui/program-list.css'
+import './admin-inquiry-page.css'
 
-const { Text, Title, Paragraph } = Typography
-const { TextArea } = Input
+const ADMIN_INQUIRIES_LIST_PATH = '/admin/posts/inquiries'
 
-// 문의 상태 설정
-const inquiryStatusConfig = {
-  PENDING: { label: '답변대기', color: 'warning', icon: ClockCircleOutlined },
-  ANSWERED: { label: '답변완료', color: 'success', icon: CheckCircleOutlined },
-}
-
-// 카테고리 옵션
-const categoryOptions = [
-  { label: '전체 카테고리', value: 'all' },
-  { label: '활동', value: '활동' },
-  { label: '봉사시간', value: '봉사시간' },
-  { label: '시스템', value: '시스템' },
-  { label: '정산', value: '정산' },
-  { label: '안내', value: '안내' },
-  { label: '기타', value: '기타' },
-]
-
-// 상태 옵션
-const statusOptions = [
-  { label: '전체 상태', value: 'all' },
-  { label: '답변대기', value: 'PENDING' },
-  { label: '답변완료', value: 'ANSWERED' },
-]
+/** No. 열 80px, 나머지 데이터 9열 균등 폭 */
+const NO_COL_WIDTH = TABLE_COLUMN_WIDTHS.index
+const DATA_COL_WIDTH = 112
+const INQUIRY_LIST_TABLE_SCROLL_X =
+  TABLE_COLUMN_WIDTHS.checkbox + NO_COL_WIDTH + DATA_COL_WIDTH * 9
 
 export function AdminInquiryPage() {
   const { user } = useAuthStore()
-  // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
   const canWrite = canPerformWriteAction(user)
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [searchParams] = useSearchParams()
-  const [data, setData] = useState<Inquiry[]>(mockInquiries)
-  const [form] = Form.useForm()
+  const [rows, setRows] = useState<AdminInquiryRow[]>(() => listAdminInquiries())
 
-  const initialStatus = searchParams.get('status') === 'PENDING' || searchParams.get('status') === 'ANSWERED'
-    ? searchParams.get('status')!
-    : 'all'
+  const syncRowsFromStore = useCallback(() => {
+    setRows(listAdminInquiries())
+  }, [])
 
-  // Pending 필터 상태 (조회 버튼 클릭 전까지 적용하지 않음)
-  const [pendingFilters, setPendingFilters] = useState({
-    search: '',
-    category: 'all',
-    status: initialStatus,
-  })
-  const [appliedFilters, setAppliedFilters] = useState({
-    search: '',
-    category: 'all',
-    status: initialStatus,
-  })
-
-  // URL 쿼리 status 반영 (대시보드 등에서 문의 화면으로 진입 시)
   useEffect(() => {
-    const status = searchParams.get('status')
-    if (status === 'PENDING' || status === 'ANSWERED') {
-      setPendingFilters(prev => ({ ...prev, status }))
-      setAppliedFilters(prev => ({ ...prev, status }))
+    if (location.pathname === ADMIN_INQUIRIES_LIST_PATH) {
+      // mock 저장소와 목록 동기화 — 상세 복귀 등(공지 목록과 동일)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pathname 변경 시 스토어 재로드
+      syncRowsFromStore()
     }
-  }, [searchParams])
+  }, [location.pathname, syncRowsFromStore])
 
-  // 필터링된 데이터
-  const filteredData = useMemo(() => {
-    return data.filter(item => {
-      const matchSearch = appliedFilters.search
-        ? item.title.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
-          item.content.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
-          item.author.toLowerCase().includes(appliedFilters.search.toLowerCase())
-        : true
-      const matchCategory =
-        appliedFilters.category === 'all' || item.category === appliedFilters.category
-      const matchStatus = appliedFilters.status === 'all' || item.status === appliedFilters.status
-      return matchSearch && matchCategory && matchStatus
-    })
-  }, [data, appliedFilters])
-
-  // 정렬된 데이터
-  const sortedData = [...filteredData].sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
-
-  // 조회 버튼 클릭 시 필터 적용
-  const handleSearch = () => {
-    setAppliedFilters(pendingFilters)
-  }
-
-  // 삭제 핸들러
-  const handleDelete = (id: string) => {
-    setData(prev => prev.filter(item => item.id !== id))
-  }
-
-  // 상세 모달 상태
   const {
-    open: isDetailModalOpen,
-    openModal: openDetailModal,
-    closeModal: closeDetailModal,
-    selectedItem: selectedInquiry,
-  } = useModalState<Inquiry>()
+    categoryRows,
+    allowedCategoryLabels,
+    allowedCategorySet,
+    replaceCategories: replaceInquiryCategories,
+  } = useAdminInquiryCategories()
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
 
-  // 답변 모달 상태
-  const {
-    open: isAnswerModalOpen,
-    openModal: openAnswerModal,
-    closeModal: closeAnswerModal,
-    selectedItem: answerInquiry,
-    setSelectedItem: setAnswerInquiry,
-  } = useModalState<Inquiry>({
-    onOpen: inquiry => {
-      if (inquiry) {
-        form.setFieldsValue({
-          answerContent: inquiry.answer?.content || '',
-        })
-      }
+  const handleInquiryCategoriesChange = useCallback(
+    (next: InquiryCategoryRow[]) => {
+      replaceInquiryCategories(next)
+      syncRowsFromStore()
     },
+    [replaceInquiryCategories, syncRowsFromStore]
+  )
+
+  const tablePageContext: AdminInquiryTableContext = useMemo(
+    () => ({
+      allowedCategoryLabels,
+    }),
+    [allowedCategoryLabels]
+  )
+
+  const filterRowsConfig = useMemo(
+    () => buildAdminInquiryFilterRows(tablePageContext.allowedCategoryLabels),
+    [tablePageContext.allowedCategoryLabels]
+  )
+
+  const {
+    pendingFilters,
+    setPendingFilters,
+    applySearch: handleSearch,
+    handleFilterChange,
+    displayedCount,
+    tableData,
+  } = useTablePage(adminInquiryManagementTablePageConfig, {
+    data: rows,
+    searchParams,
+    setSearchParams,
+    context: tablePageContext,
   })
 
-  // 상세 모달 열기
-  const showDetailModal = (inquiry: Inquiry) => {
-    openDetailModal(inquiry)
-  }
-
-  // 답변 모달 열기
-  const showAnswerModal = (inquiry: Inquiry) => {
-    setAnswerInquiry(inquiry)
-    openAnswerModal(inquiry)
-  }
-
-  // 답변 저장
-  const handleSaveAnswer = async () => {
-    try {
-      const values = await form.validateFields()
-      if (!answerInquiry) return
-
-      const updatedInquiry: Inquiry = {
-        ...answerInquiry,
-        status: 'ANSWERED',
-        answer: {
-          content: values.answerContent,
-          answeredAt: dayjs().toISOString(),
-          author: '관리자',
-        },
+  useEffect(() => {
+    setPendingFilters(prev => {
+      if (prev.category !== 'ALL' && !allowedCategorySet.has(String(prev.category))) {
+        return { ...prev, category: 'ALL' }
       }
+      return prev
+    })
+  }, [allowedCategorySet, setPendingFilters])
 
-      setData(prev => prev.map(item => (item.id === answerInquiry.id ? updatedInquiry : item)))
-      closeAnswerModal()
-      if (isDetailModalOpen && selectedInquiry?.id === answerInquiry.id) {
-        openDetailModal(updatedInquiry)
-      }
-    } catch (error) {
-      console.error('Validate Failed:', error)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false)
+
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailInquiryId, setDetailInquiryId] = useState<string | null>(null)
+  const [singleDeleteConfirmOpen, setSingleDeleteConfirmOpen] = useState(false)
+  const [singleDeleteInquiryId, setSingleDeleteInquiryId] = useState<string | null>(null)
+
+  const closeDetailModal = useCallback(() => {
+    setDetailOpen(false)
+    setDetailInquiryId(null)
+  }, [])
+
+  const openDetailModal = useCallback((id: string) => {
+    setDetailInquiryId(id)
+    setDetailOpen(true)
+  }, [])
+
+  const handleBulkDelete = useCallback(() => {
+    if (!canWrite || selectedRowKeys.length === 0) return
+    setBulkDeleteConfirmOpen(true)
+  }, [canWrite, selectedRowKeys.length])
+
+  const handleConfirmBulkDelete = useCallback(() => {
+    const ids = selectedRowKeys.map(k => String(k))
+    if (ids.length === 0) {
+      setBulkDeleteConfirmOpen(false)
+      return
     }
-  }
+    deleteAdminInquiries(ids)
+    message.success(`선택한 ${ids.length}건의 문의가 삭제되었습니다.`)
+    setRows(listAdminInquiries())
+    setSelectedRowKeys([])
+    setBulkDeleteConfirmOpen(false)
+  }, [selectedRowKeys])
 
-  const columns = [
-    {
-      title: '상태',
-      dataIndex: 'status',
-      key: 'status',
-      width: LAYOUT_CONSTANTS.widths.status,
-      render: (status: string) => (
-        <StatusBadge status={status} statusConfig={inquiryStatusConfig} variant="tag" showIcon />
-      ),
-    },
-    {
-      title: '카테고리',
-      dataIndex: 'category',
-      key: 'category',
-      width: 100,
-      render: (category: string) => <Tag>{category}</Tag>,
-    },
-    {
-      title: '제목',
-      dataIndex: 'title',
-      key: 'title',
-      ellipsis: true,
-      render: (text: string, record: Inquiry) => (
-        <Button type="link" onClick={() => showDetailModal(record)} style={{ padding: 0 }}>
-          {text}
-        </Button>
-      ),
-    },
-    {
-      title: '작성자',
-      dataIndex: 'author',
-      key: 'author',
-      width: 100,
-    },
-    {
-      title: '작성일',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 150,
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
-    },
-    // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
-    ...(canWrite
-      ? [
-          {
-            title: '관리',
-            key: 'action',
-            width: 120,
-            fixed: 'right' as const,
-            render: (_: unknown, record: Inquiry) => (
-              <Space>
-                <Tooltip title={record.status === 'ANSWERED' ? '답변 수정' : '답변 등록'}>
-                  <Button
-                    type="primary"
-                    ghost
-                    size="small"
-                    icon={<MessageOutlined />}
-                    onClick={() => showAnswerModal(record)}
-                  >
-                    {record.status === 'ANSWERED' ? '수정' : '답변'}
-                  </Button>
-                </Tooltip>
-                <Popconfirm
-                  title="문의 삭제"
-                  description={MESSAGES.confirm.delete}
-                  onConfirm={() => handleDelete(record.id)}
-                  okText="삭제"
-                  cancelText="취소"
-                  okButtonProps={{ danger: true }}
-                >
-                  <Tooltip title="삭제">
-                    <Button type="text" danger size="small" icon={<DeleteOutlined />} />
-                  </Tooltip>
-                </Popconfirm>
-              </Space>
-            ),
-          },
-        ]
-      : []),
-  ]
+  const handleDetailDeleteRequest = useCallback((id: string) => {
+    setSingleDeleteInquiryId(id)
+    setSingleDeleteConfirmOpen(true)
+  }, [])
+
+  const handleConfirmSingleDelete = useCallback(() => {
+    if (singleDeleteInquiryId == null) {
+      setSingleDeleteConfirmOpen(false)
+      return
+    }
+    deleteAdminInquiries([singleDeleteInquiryId])
+    message.success('문의가 삭제되었습니다.')
+    setRows(listAdminInquiries())
+    setSelectedRowKeys(prev => prev.filter(k => String(k) !== singleDeleteInquiryId))
+    setSingleDeleteConfirmOpen(false)
+    setSingleDeleteInquiryId(null)
+    closeDetailModal()
+  }, [closeDetailModal, singleDeleteInquiryId])
+
+  const columns: ColumnsType<AdminInquiryRow> = useMemo(
+    () => [
+      {
+        title: 'No.',
+        key: 'no',
+        width: NO_COL_WIDTH,
+        align: 'center',
+        className: 'admin-inquiry-page__col-no',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-no' }),
+        render: (_: unknown, __: AdminInquiryRow, index: number) =>
+          tableData.length === 0 ? '—' : tableData.length - index,
+      },
+      {
+        title: '답변 현황',
+        key: 'status',
+        width: DATA_COL_WIDTH,
+        align: 'center',
+        render: (_: unknown, row: AdminInquiryRow) =>
+          row.status === 'PENDING' ? (
+            <span className="admin-inquiry-page__status admin-inquiry-page__status--pending">
+              답변 대기
+            </span>
+          ) : (
+            <span className="admin-inquiry-page__status admin-inquiry-page__status--answered">
+              답변 완료
+            </span>
+          ),
+      },
+      {
+        title: '카테고리',
+        dataIndex: 'category',
+        key: 'category',
+        width: DATA_COL_WIDTH,
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '프로그램명',
+        dataIndex: 'programName',
+        key: 'programName',
+        width: DATA_COL_WIDTH,
+        align: 'center',
+        ellipsis: true,
+        render: (v: string | null) => (v == null || v === '' ? '—' : v),
+      },
+      {
+        title: '제목',
+        dataIndex: 'title',
+        key: 'title',
+        width: DATA_COL_WIDTH,
+        align: 'left',
+        ellipsis: { showTitle: true },
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
+        onCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
+      },
+      {
+        title: '문의 회원',
+        dataIndex: 'memberName',
+        key: 'memberName',
+        width: DATA_COL_WIDTH,
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '문의 일시',
+        dataIndex: 'createdAt',
+        key: 'createdAt',
+        width: DATA_COL_WIDTH,
+        align: 'center',
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+      },
+      {
+        title: '담당자',
+        dataIndex: 'assignee',
+        key: 'assignee',
+        width: DATA_COL_WIDTH,
+        align: 'center',
+        ellipsis: true,
+        render: (v: string | null) => (v == null || v === '' ? '—' : v),
+      },
+      {
+        title: '답변 일시',
+        dataIndex: 'answeredAt',
+        key: 'answeredAt',
+        width: DATA_COL_WIDTH,
+        align: 'center',
+        render: (iso: string | null) =>
+          iso == null || iso === '' ? '—' : dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+      },
+    ],
+    [tableData.length]
+  )
+
+  const bulkDeleteLine1 =
+    selectedRowKeys.length > 0
+      ? `선택한 ${selectedRowKeys.length}건의 문의를 삭제하시겠습니까?`
+      : '선택한 문의를 삭제하시겠습니까?'
 
   return (
-    <div style={{ padding: LAYOUT_CONSTANTS.margins.xl }}>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <UnifiedFilterCard
-          fields={[
-            {
-              key: 'search',
-              type: 'search',
-              label: '제목/내용/작성자',
-              placeholder: '제목, 내용, 작성자를 입력하세요',
-            },
-            {
-              key: 'category',
-              type: 'select',
-              label: '카테고리',
-              placeholder: '전체 카테고리',
-              options: categoryOptions,
-            },
-            {
-              key: 'status',
-              type: 'select',
-              label: '상태',
-              placeholder: '전체 상태',
-              options: statusOptions,
-            },
-          ]}
-          filters={pendingFilters}
-          onFilterChange={(key, value) => {
-            setPendingFilters(prev => ({ ...prev, [key]: value }))
-          }}
-          onSearch={handleSearch}
-        />
-
-        <Table
-          columns={columns}
-          dataSource={sortedData}
-          rowKey="id"
-          pagination={{
-            defaultPageSize: PAGINATION_CONFIG.defaultPageSize,
-            pageSizeOptions: [...PAGINATION_CONFIG.pageSizeOptions],
-            showSizeChanger: PAGINATION_CONFIG.showSizeChanger,
-            showTotal: total => `총 ${total}건`,
-          }}
-        />
-      </Space>
-
-      {/* 문의 상세 모달 */}
-      <Modal
-        title="문의 상세 내용"
-        open={isDetailModalOpen}
+    <div className="admin-inquiry-page">
+      <AdminInquiryDetailModal
+        open={detailOpen}
+        inquiryId={detailInquiryId}
         onCancel={closeDetailModal}
-        width={LAYOUT_CONSTANTS.widths.modal.large}
-        footer={[
-          // Phase 0.5.2: GENERAL 관리자는 쓰기 작업 불가
-          ...(canWrite
-            ? [
-                <Button
-                  key="delete"
-                  danger
-                  onClick={() => {
-                    if (selectedInquiry) {
-                      handleDelete(selectedInquiry.id)
-                      closeDetailModal()
-                    }
-                  }}
-                >
-                  삭제
-                </Button>,
-                <Button
-                  key="answer"
-                  type="primary"
-                  onClick={() => {
-                    if (selectedInquiry) showAnswerModal(selectedInquiry)
-                  }}
-                >
-                  {selectedInquiry?.status === 'ANSWERED' ? '답변 수정' : '답변 등록'}
-                </Button>,
-              ]
-            : []),
-          <Button key="close" onClick={closeDetailModal}>
-            닫기
-          </Button>,
-        ]}
-        centered
-      >
-        {selectedInquiry && (
-          <div style={{ marginTop: 16 }}>
-            <Descriptions bordered column={2}>
-              <Descriptions.Item label="작성자">{selectedInquiry.author}</Descriptions.Item>
-              <Descriptions.Item label="작성일">
-                {dayjs(selectedInquiry.createdAt).format('YYYY-MM-DD HH:mm')}
-              </Descriptions.Item>
-              <Descriptions.Item label="카테고리">{selectedInquiry.category}</Descriptions.Item>
-              <Descriptions.Item label="상태">
-                <StatusBadge
-                  status={selectedInquiry.status}
-                  statusConfig={inquiryStatusConfig}
-                  variant="tag"
-                  showIcon
-                />
-              </Descriptions.Item>
-              <Descriptions.Item label="제목" span={2}>
-                {selectedInquiry.title}
-              </Descriptions.Item>
-              <Descriptions.Item label="내용" span={2}>
-                <div style={{ minHeight: 100, whiteSpace: 'pre-wrap' }}>
-                  {selectedInquiry.content}
-                </div>
-              </Descriptions.Item>
-            </Descriptions>
-
-            {selectedInquiry.answer && (
-              <div style={{ marginTop: 24 }}>
-                <Title level={5}>답변 내용</Title>
-                <div
-                  style={{
-                    background: '#f6ffed',
-                    padding: '16px',
-                    borderRadius: 8,
-                    border: '1px solid #b7eb8f',
-                  }}
-                >
-                  <div
-                    style={{
-                      marginBottom: 8,
-                      borderBottom: '1px solid #d9f7be',
-                      paddingBottom: 8,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Text strong>{selectedInquiry.answer.author}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {dayjs(selectedInquiry.answer.answeredAt).format('YYYY-MM-DD HH:mm')}
-                    </Text>
-                  </div>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{selectedInquiry.answer.content}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
-
-      {/* 답변 등록/수정 모달 */}
-      <Modal
-        title={answerInquiry?.status === 'ANSWERED' ? '답변 수정' : '답변 등록'}
-        open={isAnswerModalOpen}
-        onOk={handleSaveAnswer}
-        onCancel={closeAnswerModal}
-        width={LAYOUT_CONSTANTS.widths.modal.medium}
-        okText="저장"
-        cancelText="취소"
-        centered
-      >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          {answerInquiry && (
-            <Card
-              size="small"
-              style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, background: '#f5f5f5' }}
+        onSuccess={syncRowsFromStore}
+        onDeleteClick={handleDetailDeleteRequest}
+        canWrite={canWrite}
+      />
+      <NoticeDeleteConfirmModal
+        open={singleDeleteConfirmOpen}
+        onCancel={() => {
+          setSingleDeleteConfirmOpen(false)
+          setSingleDeleteInquiryId(null)
+        }}
+        onConfirm={handleConfirmSingleDelete}
+        preset="inquiry"
+        title="문의삭제"
+        confirmLabel="문의삭제"
+        line1="해당 문의를 삭제하시겠습니까?"
+        line2="삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?"
+        zIndex={1200}
+      />
+      <NoticeDeleteConfirmModal
+        open={bulkDeleteConfirmOpen}
+        onCancel={() => setBulkDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmBulkDelete}
+        preset="inquiry"
+        title="문의삭제"
+        confirmLabel="문의삭제"
+        line1={bulkDeleteLine1}
+        line2="삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?"
+      />
+      <InquiryCategoryManagementModal
+        open={categoryModalOpen}
+        onCancel={() => setCategoryModalOpen(false)}
+        categories={categoryRows}
+        onCategoriesChange={handleInquiryCategoriesChange}
+        inquiries={rows}
+      />
+      <FilterTableLayout
+        bordered={false}
+        rows={filterRowsConfig}
+        filters={{
+          status: pendingFilters.status,
+          category: pendingFilters.category,
+          programName: pendingFilters.programName,
+          title: pendingFilters.title,
+          memberName: pendingFilters.memberName,
+          assigneeName: pendingFilters.assigneeName,
+          dateRange: pendingFilters.dateRange,
+        }}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+        title="문의목록"
+        description={`총 ${displayedCount.toLocaleString()}건`}
+        actions={
+          <>
+            <CmsButton
+              variant="delete"
+              onClick={handleBulkDelete}
+              disabled={!canWrite || selectedRowKeys.length === 0}
             >
-              <Text strong>
-                [{answerInquiry.category}] {answerInquiry.title}
-              </Text>
-              <Paragraph
-                ellipsis={{ rows: 2 }}
-                style={{ marginTop: LAYOUT_CONSTANTS.spacing.sm, marginBottom: 0 }}
-              >
-                {answerInquiry.content}
-              </Paragraph>
-            </Card>
-          )}
-          <Form.Item
-            name="answerContent"
-            label="답변 내용"
-            rules={[{ required: true, message: '답변 내용을 입력하세요' }]}
-          >
-            <TextArea rows={10} placeholder="상세 답변 내용을 입력하세요" />
-          </Form.Item>
-        </Form>
-      </Modal>
+              문의삭제
+            </CmsButton>
+            <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
+              카테고리 관리
+            </CmsButton>
+          </>
+        }
+      >
+        <Table<AdminInquiryRow>
+          rowKey="id"
+          className="cms-data-table admin-inquiry-page__table"
+          tableLayout="fixed"
+          scroll={{ x: INQUIRY_LIST_TABLE_SCROLL_X }}
+          columns={columns}
+          dataSource={tableData}
+          pagination={false}
+          onRow={record => ({
+            className: 'admin-inquiry-page__row--clickable',
+            onClick: (e: MouseEvent) => {
+              const el = e.target as HTMLElement
+              if (
+                el.closest('.ant-checkbox-wrapper') ||
+                el.closest('.ant-table-selection-column')
+              ) {
+                return
+              }
+              openDetailModal(record.id)
+            },
+          })}
+          rowSelection={
+            canWrite
+              ? {
+                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                  preserveSelectedRowKeys: false,
+                }
+              : undefined
+          }
+        />
+      </FilterTableLayout>
     </div>
   )
 }
+
+export default AdminInquiryPage

@@ -1,5 +1,13 @@
 import type { TemplateAudience, TemplateStatus } from '@/types/template'
 
+export {
+  TEMPLATE_FORM_SEPARATOR_WIDTH_PX,
+  FORM_INPUTS_2_WIDTHS,
+  FORM_INPUTS_3_WIDTHS,
+  FORM_INPUTS_4_WIDTHS,
+  FORM_INPUTS_5_WIDTHS,
+} from './constants/form-input-widths'
+
 export const audienceOptions: Array<{ value: TemplateAudience; label: string }> = [
   { value: 'ADMIN_INTERNAL', label: '운영(내부)' },
   { value: 'SCHOOL', label: '학교' },

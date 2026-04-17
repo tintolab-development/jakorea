@@ -4,7 +4,10 @@
  */
 
 import type { ProgramLifecycleStatus } from '@/types/domain'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import {
+  getProgramLifecycleLabel,
+  getProgramRecruitmentApplicationTextTone,
+} from '@/shared/constants/status'
 import './program-lifecycle-status-badge.css'
 
 export interface ProgramLifecycleStatusTextProps {
@@ -14,10 +17,11 @@ export interface ProgramLifecycleStatusTextProps {
 
 export function ProgramLifecycleStatusText({ status, className }: ProgramLifecycleStatusTextProps) {
   const label = getProgramLifecycleLabel(status)
-  const modifier = `program-lifecycle-status-text--${status.replace(/_/g, '-')}`
+  const tone = getProgramRecruitmentApplicationTextTone(status)
   return (
     <span
-      className={`program-lifecycle-status-text ${modifier} ${className ?? ''}`.trim()}
+      className={['program-lifecycle-status-text', className].filter(Boolean).join(' ')}
+      data-recruitment-tone={tone}
     >
       {label}
     </span>

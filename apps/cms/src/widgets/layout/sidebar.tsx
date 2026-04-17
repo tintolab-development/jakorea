@@ -37,19 +37,11 @@ export function Sidebar() {
 
     if (user?.role === 'ADMIN' && path.startsWith('/templates')) {
       keys.push('templates-group')
-      if (path.startsWith('/templates/program-forms')) {
-        keys.push('program-forms-group')
-      }
-      if (path.startsWith('/templates/file-forms')) {
-        keys.push('file-forms-group')
-      }
     }
 
     if (
       user?.role === 'ADMIN' &&
       (path.startsWith('/users/list') ||
-        path.startsWith('/users/participants') ||
-        path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members') ||
         path.startsWith('/admin/settings/permissions') ||
@@ -59,7 +51,6 @@ export function Sidebar() {
       // 회원 목록(2뎁스) 아래 3뎁스 — `member-list-group` 없으면 네비 후 서브메뉴가 닫힘
       if (
         path.startsWith('/users/list') ||
-        path.startsWith('/schools') ||
         path.startsWith('/instructors') ||
         path.startsWith('/admin/members')
       ) {
@@ -102,10 +93,6 @@ export function Sidebar() {
       return [memberListHref(kind)]
     }
 
-    if (user?.role === 'ADMIN' && path.startsWith('/schools')) {
-      return [memberListHref('institutions')]
-    }
-
     if (user?.role === 'ADMIN' && path.startsWith('/instructors')) {
       return [memberListHref('instructors')]
     }
@@ -127,6 +114,26 @@ export function Sidebar() {
       if (firstSegment && !programsReserved.includes(firstSegment)) {
         return ['/programs/education']
       }
+    }
+
+    if (user?.role === 'ADMIN' && path.startsWith('/templates/')) {
+      if (path.startsWith('/templates/form-management')) {
+        return ['/templates/form-management']
+      }
+      if (path.startsWith('/templates/kakao-notification')) {
+        return ['/templates/kakao-notification']
+      }
+      if (path.startsWith('/templates/email-management')) {
+        return ['/templates/email-management']
+      }
+    }
+
+    // ADMIN: 게시글 관리 — 상세 URL에서도 목록 메뉴 키로 하이라이트
+    if (user?.role === 'ADMIN' && path.startsWith('/admin/posts/notices')) {
+      return ['/admin/posts/notices']
+    }
+    if (user?.role === 'ADMIN' && path.startsWith('/admin/posts/faq')) {
+      return ['/admin/posts/faq']
     }
 
     return [path]
@@ -156,6 +163,10 @@ export function Sidebar() {
             if (key === '/programs/education') {
               window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
               // navigate(key)
+              return
+            }
+            if (key === '/templates/kakao-notification' || key === '/templates/email-management') {
+              window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
               return
             }
             navigate(key)

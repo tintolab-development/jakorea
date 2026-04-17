@@ -57,6 +57,12 @@
 .cms-select .ant-select-arrow {
   flex-shrink: 0;
   inset-inline-end: 0 !important;
+  /* placeholder·라벨과 동일 톤 (`cms-input` 아이콘·입력 힌트와 맞춤) */
+  color: var(--gray-85969-d, #85969d);
+}
+
+.cms-select--disabled .ant-select-arrow {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
 .cms-select .ant-select-selection-item,
@@ -73,8 +79,16 @@
   color: var(--main-BK, #3d3d3d);
 }
 
+/* `cms-input__inner .ant-input::placeholder` 와 동일 (색·굵기·불투명도) */
 .cms-select .ant-select-selection-placeholder {
   color: var(--gray-85969-d, #85969d);
+  font-weight: 500;
+  opacity: 1;
+}
+
+.cms-select .ant-select-selection-search-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 500;
 }
 
 .cms-select--disabled .ant-select-selection-item,
@@ -135,4 +149,5 @@
 
 .cms-select--explicit-width {
   width: 100%;
+  min-width: 0;
 }

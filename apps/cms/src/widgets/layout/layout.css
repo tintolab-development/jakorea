@@ -28,3 +28,7 @@
   height: calc(100vh - 64px);
   /* 헤더 높이를 제외한 전체 높이 */
 }
+
+.layout-content.layout-content--templates {
+  padding-top: 16px;
+}

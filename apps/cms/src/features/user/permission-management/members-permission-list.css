@@ -1,0 +1,27 @@
+/* 권한 승인 현황 열: 헤더·셀 가운데 정렬 */
+.cms-data-table th.members-permission-list__col--approval-status,
+.cms-data-table td.members-permission-list__col--approval-status {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* 권한 승인 현황: 강사·관리자 목록 공통 — 텍스트 + 상태별 색만 (배지/태그 비사용) */
+.members-permission-list__approval-status {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.members-permission-list__approval-status--pending {
+  color: var(--color-blue, #017eaf);
+}
+
+.members-permission-list__approval-status--approved {
+  color: #464646;
+}
+
+.members-permission-list__approval-status--rejected {
+  color: var(--color-red, #c32f4a);
+}

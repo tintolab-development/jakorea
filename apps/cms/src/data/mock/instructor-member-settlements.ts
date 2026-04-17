@@ -1,75 +1,99 @@
 /**
  * 회원 상세 > 강사 정산 현황 탭용 Mock
  * API 연동 시 서비스 레이어로 대체
+ *
+ * 라벨·색상은 `status-badge.css`의 instructor-settlement-* 와 동일 톤.
  */
 
 import dayjs from 'dayjs'
 
-/** 리스트·캘린더 정산 상태 (시안 배지 라벨) */
+/** 리스트·캘린더 정산 상태 */
 export type InstructorSettlementUiStatus =
-  | 'payment_statement_verified'
-  | 'application_rejected'
   | 'awaiting_confirmation'
-  | 'payment_correction_requested'
+  | 'partial_confirmation'
+  | 'payment_statement_verified'
   | 'account_paid'
   | 'none'
+  | 'application_rejected'
+  | 'payment_correction_requested'
 
 export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS: Record<InstructorSettlementUiStatus, string> = {
-  payment_statement_verified: '지급조서 확인 완료',
-  application_rejected: '신청 반려',
   awaiting_confirmation: '확인 대기 중',
-  payment_correction_requested: '지급 정정 요청',
+  partial_confirmation: '일부 확인 완료',
+  payment_statement_verified: '지급조서 확인 완료',
   account_paid: '계좌 지급 완료',
-  none: '-',
+  none: '해당 없음',
+  application_rejected: '신청 반려',
+  payment_correction_requested: '지급 정정 요청',
 }
 
-/** 캘린더 툴팁 등 — 정산현황 4종 짧은 표기 */
+/** 캘린더 스트립·짧은 표기 */
 export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
   InstructorSettlementUiStatus,
   string
 > = {
   awaiting_confirmation: '확인 대기',
-  payment_statement_verified: '확인 완료',
-  account_paid: '일부 확인',
+  partial_confirmation: '일부 확인',
+  payment_statement_verified: '조서 완료',
+  account_paid: '지급 완료',
+  none: '해당 없음',
+  application_rejected: '반려',
   payment_correction_requested: '정정 요청',
-  application_rejected: '정정 요청',
-  none: '확인 대기',
 }
 
+/** 캘린더 셀 등 — status-badge instructor-settlement 톤(6% / 10% mix)과 동기화, 인라인 스타일용 rgba */
 export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
   InstructorSettlementUiStatus,
   { bg: string; color: string; border: string }
 > = {
-  payment_statement_verified: {
-    bg: 'rgba(1, 161, 175, 0.06);',
-    color: '#017EAF',
-    border: 'rgba(1, 161, 175, 0.10)',
-  },
-  application_rejected: {
-    bg: 'rgba(70, 70, 70, 0.06)',
-    color: '#464646',
-    border: 'rgba(70, 70, 70, 0.10)',
-  },
   awaiting_confirmation: {
-    bg: 'rgba(30, 140, 41, 0.06)',
-    color: '#1E8C29',
-    border: 'rgba(30, 140, 41, 0.10)',
+    bg: 'rgba(240, 121, 23, 0.06)',
+    color: '#f07917',
+    border: 'rgba(240, 121, 23, 0.1)',
   },
-  payment_correction_requested: {
-    bg: 'rgba(195, 47, 74, 0.06)',
-    color: '#C32F4A',
-    border: 'rgba(195, 47, 74, 0.10)',
+  partial_confirmation: {
+    bg: 'rgba(132, 87, 206, 0.06)',
+    color: '#8457ce',
+    border: 'rgba(132, 87, 206, 0.1)',
+  },
+  payment_statement_verified: {
+    bg: 'rgba(30, 140, 41, 0.06)',
+    color: '#1e8c29',
+    border: 'rgba(30, 140, 41, 0.1)',
   },
   account_paid: {
-    bg: 'rgba(2,132,199,0.08)',
-    color: '#0284C7',
-    border: 'rgba(2,132,199,0.2)',
+    bg: 'rgba(1, 126, 175, 0.06)',
+    color: '#017eaf',
+    border: 'rgba(1, 126, 175, 0.1)',
   },
   none: {
-    bg: 'rgba(107,114,128,0.06)',
-    color: '#9CA3AF',
-    border: 'rgba(107,114,128,0.15)',
+    bg: 'rgba(70, 70, 70, 0.06)',
+    color: '#464646',
+    border: 'rgba(70, 70, 70, 0.1)',
   },
+  application_rejected: {
+    bg: 'rgba(195, 47, 74, 0.06)',
+    color: '#c32f4a',
+    border: 'rgba(195, 47, 74, 0.1)',
+  },
+  payment_correction_requested: {
+    bg: 'rgba(122, 32, 56, 0.06)',
+    color: '#7a2038',
+    border: 'rgba(122, 32, 56, 0.1)',
+  },
+}
+
+/**
+ * 지급조서 발급 가능한 정산 현황 (지급조서 확인 완료 · 계좌 지급 완료).
+ * 그 외 상태에서 일괄 발급 시 안내 모달 — `docs/features/instructor-settlement-payment-statement-issue-rules.md`
+ */
+export const INSTRUCTOR_SETTLEMENT_STATUSES_ELIGIBLE_FOR_PAYMENT_STATEMENT_ISSUE: InstructorSettlementUiStatus[] =
+  ['payment_statement_verified', 'account_paid']
+
+export function isInstructorSettlementEligibleForPaymentStatementIssue(
+  status: InstructorSettlementUiStatus
+): boolean {
+  return INSTRUCTOR_SETTLEMENT_STATUSES_ELIGIBLE_FOR_PAYMENT_STATEMENT_ISSUE.includes(status)
 }
 
 /** 산출 내역서 등 — 라벨·글자색을 `INSTRUCTOR_SETTLEMENT_STATUS_*` 상수와 동기화 */
@@ -207,11 +231,12 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     institutionName: '강서초등학교',
     lectureDateDisplay: '2026. 04. 18(토) 3차시',
     calendarDate: '2026-04-18',
-    status: 'payment_statement_verified',
+    status: 'partial_confirmation',
     scheduledAmount: 91_500,
     detailAvailable: true,
     invoice: sampleInvoice({
       programName: "미래 리더를 위한 여중생 자립심 향상 프로그램 'Goal'",
+      paymentStatementStatus: 'partial_confirmation',
     }),
   },
   {
@@ -253,13 +278,16 @@ const ALL_MOCK_ROWS: InstructorSettlementListRow[] = [
     institutionName: '광주동초등학교',
     lectureDateDisplay: '2026. 04. 21(화) 2차시',
     calendarDate: '2026-04-21',
-    status: 'awaiting_confirmation',
-    scheduledAmount: 280_000,
-    detailAvailable: true,
+    status: 'none',
+    scheduledAmount: 0,
+    detailAvailable: false,
     invoice: sampleInvoice({
       programName: '지역 연계 경제교육 파트너십',
       institutionName: '광주동초등학교',
-      paymentStatementStatus: 'awaiting_confirmation',
+      paymentStatementStatus: 'none',
+      lineItems: [],
+      withholdingAmount: 0,
+      totalAmount: 0,
     }),
   },
   {
@@ -329,6 +357,7 @@ function sumScheduledPending(rows: InstructorSettlementListRow[]) {
   return rows.reduce((s, r) => {
     if (
       r.status === 'awaiting_confirmation' ||
+      r.status === 'partial_confirmation' ||
       r.status === 'payment_statement_verified' ||
       r.status === 'payment_correction_requested'
     ) {
@@ -371,18 +400,19 @@ export function rowsToCalendarEvents(rows: InstructorSettlementListRow[]): Array
   }))
 }
 
+const FILTER_STATUS_ORDER = [
+  'awaiting_confirmation',
+  'partial_confirmation',
+  'payment_statement_verified',
+  'account_paid',
+  'none',
+  'application_rejected',
+  'payment_correction_requested',
+] as const satisfies readonly InstructorSettlementUiStatus[]
+
 export const INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS = [
   { label: '전체', value: 'all' },
-  ...(
-    [
-      'payment_statement_verified',
-      'application_rejected',
-      'awaiting_confirmation',
-      'payment_correction_requested',
-      'account_paid',
-      'none',
-    ] as const
-  ).map(v => ({
+  ...FILTER_STATUS_ORDER.map(v => ({
     label: INSTRUCTOR_SETTLEMENT_STATUS_LABELS[v],
     value: v,
   })),

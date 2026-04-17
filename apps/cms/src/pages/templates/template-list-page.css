@@ -1,0 +1,24 @@
+.template-list-page__tabs {
+  padding-left: 20px;
+  margin-bottom: 0 !important;
+}
+
+.template-list-page__tabs.ant-tabs .ant-tabs-tab {
+  color: #7d7d7d;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.template-list-page__tabs.ant-tabs .ant-tabs-tab-btn {
+  font: inherit;
+}
+
+.template-list-page__tabs.ant-tabs > .ant-tabs-nav::before {
+  border-bottom: none;
+}
+
+.template-list-page__create-button {
+  margin-right: 8px;
+}

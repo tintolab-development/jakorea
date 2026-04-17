@@ -21,7 +21,7 @@ export interface TealHeaderModalProps {
   footer?: React.ReactNode
   /** 헤더 우측에 X 버튼 앞에 노출할 추가 내용 (예: 닫기 버튼) */
   headerExtra?: React.ReactNode
-  /** 기본 800, large 시 1400, full 시 100vw×100vh 풀페이지 */
+  /** 기본 800, large 시 1400, full 시 뷰포트 풀페이지(좌우 인셋, CSS 참고) */
   size?: 'default' | 'large' | 'full'
   /** 커스텀 width (size보다 우선) */
   width?: number
@@ -33,6 +33,10 @@ export interface TealHeaderModalProps {
   closeIcon?: React.ReactNode
   /** 다른 모달 위에 겹칠 때 스택 순서 (예: 산출 내역서 위 확인 모달) */
   zIndex?: number
+  /** `.ant-modal-wrap` — 뷰포트 중앙 등 레이아웃 전용 클래스 (Ant Design Modal) */
+  wrapClassName?: string
+  /** 최상위 `.ant-modal-root` — 포털 루트 구분용 */
+  rootClassName?: string
 }
 
 const SIZE_WIDTH = { default: 800, large: 1400, full: undefined }
@@ -51,6 +55,8 @@ export function TealHeaderModal({
   hideHeader = false,
   closeIcon,
   zIndex,
+  wrapClassName,
+  rootClassName,
 }: TealHeaderModalProps) {
   const width = widthProp ?? SIZE_WIDTH[size]
   const bodyScrollable = size === 'large' || size === 'full'
@@ -74,11 +80,16 @@ export function TealHeaderModal({
       footer={null}
       width={isFull ? '100%' : width}
       className={className}
+      wrapClassName={wrapClassName}
+      rootClassName={rootClassName}
       aria-labelledby={hideHeader ? undefined : titleId}
       destroyOnClose
       maskClosable
-      centered={!isFull}
+      /** Ant `centered`는 wrap에 `::before` 정렬을 쓰는데, 아래 CSS가 같은 wrap을 flex로 잡아 두 방식이 충돌해 화면 중앙이 어긋날 수 있음 — flex 래퍼만 사용 */
+      centered={false}
       zIndex={zIndex}
+      /** 항상 body에 포털 — 레이아웃/앱 래퍼(transform 등) 기준으로 fixed 가 잡히며 ‘메인 영역만 중앙’처럼 보이는 현상 방지 */
+      getContainer={() => document.body}
     >
       {!hideHeader && (
         <div className="teal-header-modal__header">

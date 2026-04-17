@@ -154,7 +154,7 @@ export function ProgramProgressTabsTable() {
       className="program-progress-tabs-table"
       title={
         <WidgetTitleWithHandle>
-          <span>전체 프로그램 진행 현황</span>
+          <span className="widget-card-title">전체 프로그램 진행 현황</span>
         </WidgetTitleWithHandle>
       }
     >

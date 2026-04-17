@@ -7,6 +7,7 @@ import type { Schedule, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockInstructors } from './instructors'
 import { getEconomyPrograms } from './economy-programs'
+import { getGeneralEducationPrograms, getGeminiPrograms } from './program-schedule-categories'
 
 // Phase 0.2.6: instructor-1-fixed-id-for-testing용 일정 할당
 const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
@@ -275,34 +276,40 @@ const tomorrowSchedulesAdditional: Schedule[] = Array.from({ length: 10 }, (_, i
 })
 
 /**
- * 대시보드 프로그램 일정 위젯: 경제 교육 프로그램(economy-prog-*)만 노출할 때
- * 기존 mockSchedules는 prog-* id라 전부 걸러지므로, 동일 달(모듈 로드 시점 기준)에 맞춘 일정을 둔다.
+ * 대시보드 프로그램 일정 위젯: 보이는 날짜 구간(월간 35셀·주간 7일 등)마다 호출해
+ * `economy-prog-*` 교육 일정 목데이터를 **현재 시점(호출 시각)** 기준으로 생성한다.
+ * `allowedEconomyProgramIdSet`가 null이면 전체 경제 프로그램, 빈 Set이면 일정 없음.
  */
-function buildEconomyDashboardSchedules(): Schedule[] {
+export function buildEconomySchedulesForVisibleRange(
+  visibleDateKeys: string[],
+  allowedEconomyProgramIdSet: Set<string> | null
+): Schedule[] {
   const economyPrograms = getEconomyPrograms()
   if (economyPrograms.length === 0) return []
 
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = now.getMonth()
-  const lastDay = new Date(y, m + 1, 0).getDate()
-  const createdAt = now.toISOString()
+  const pool =
+    allowedEconomyProgramIdSet == null
+      ? economyPrograms
+      : economyPrograms.filter(p => allowedEconomyProgramIdSet.has(p.id))
+
+  if (pool.length === 0) return []
+
+  const createdAt = new Date().toISOString()
   const schedules: Schedule[] = []
   let seq = 0
 
-  for (let day = 1; day <= lastDay; day += 1) {
-    const slotsThisDay = day % 4 === 0 ? 2 : 1
-    for (let s = 0; s < slotsThisDay; s++) {
+  for (const dateStr of visibleDateKeys) {
+    const maxSlots = Math.min(2, pool.length)
+    for (let s = 0; s < maxSlots; s++) {
       seq += 1
-      const program = economyPrograms[(seq - 1) % economyPrograms.length]
+      const program = pool[s % pool.length]
       const round = program.rounds?.[0]
-      const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const startHour = 9 + ((seq + s) % 7)
       const startTime = `${String(startHour).padStart(2, '0')}:00`
       const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
 
       schedules.push({
-        id: `sch-economy-dash-${String(seq).padStart(3, '0')}` as UUID,
+        id: `sch-economy-vis-${dateStr}-${s}` as UUID,
         programId: program.id,
         roundId: round?.id,
         title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
@@ -320,7 +327,105 @@ function buildEconomyDashboardSchedules(): Schedule[] {
   return schedules
 }
 
-const economyDashboardSchedules = buildEconomyDashboardSchedules()
+/**
+ * 일반 교육 프로그램 일정 위젯: 가시 구간 동적 목 일정 (경제 위젯과 동일 패턴)
+ */
+export function buildGeneralSchedulesForVisibleRange(
+  visibleDateKeys: string[],
+  allowedProgramIdSet: Set<string> | null
+): Schedule[] {
+  const generalPrograms = getGeneralEducationPrograms()
+  if (generalPrograms.length === 0) return []
+
+  const pool =
+    allowedProgramIdSet == null
+      ? generalPrograms
+      : generalPrograms.filter(p => allowedProgramIdSet.has(p.id))
+
+  if (pool.length === 0) return []
+
+  const createdAt = new Date().toISOString()
+  const schedules: Schedule[] = []
+  let seq = 0
+
+  for (const dateStr of visibleDateKeys) {
+    const maxSlots = Math.min(2, pool.length)
+    for (let s = 0; s < maxSlots; s++) {
+      seq += 1
+      const program = pool[s % pool.length]
+      const round = program.rounds?.[0]
+      const startHour = 9 + ((seq + s) % 7)
+      const startTime = `${String(startHour).padStart(2, '0')}:00`
+      const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
+
+      schedules.push({
+        id: `sch-general-vis-${dateStr}-${s}` as UUID,
+        programId: program.id,
+        roundId: round?.id,
+        title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
+        date: dateStr,
+        startTime,
+        endTime,
+        location: locations[(seq - 1) % locations.length],
+        instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
+        createdAt,
+        updatedAt: createdAt,
+      })
+    }
+  }
+
+  return schedules
+}
+
+/**
+ * 제미나이 프로그램 일정 위젯: 가시 구간 동적 목 일정
+ */
+export function buildGeminiSchedulesForVisibleRange(
+  visibleDateKeys: string[],
+  allowedProgramIdSet: Set<string> | null
+): Schedule[] {
+  const geminiPrograms = getGeminiPrograms()
+  if (geminiPrograms.length === 0) return []
+
+  const pool =
+    allowedProgramIdSet == null
+      ? geminiPrograms
+      : geminiPrograms.filter(p => allowedProgramIdSet.has(p.id))
+
+  if (pool.length === 0) return []
+
+  const createdAt = new Date().toISOString()
+  const schedules: Schedule[] = []
+  let seq = 0
+
+  for (const dateStr of visibleDateKeys) {
+    const maxSlots = Math.min(2, pool.length)
+    for (let s = 0; s < maxSlots; s++) {
+      seq += 1
+      const program = pool[s % pool.length]
+      const round = program.rounds?.[0]
+      const startHour = 9 + ((seq + s) % 7)
+      const startTime = `${String(startHour).padStart(2, '0')}:00`
+      const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
+
+      schedules.push({
+        id: `sch-gemini-vis-${dateStr}-${s}` as UUID,
+        programId: program.id,
+        roundId: round?.id,
+        title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
+        date: dateStr,
+        startTime,
+        endTime,
+        location: locations[(seq - 1) % locations.length],
+        instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
+        createdAt,
+        updatedAt: createdAt,
+      })
+    }
+  }
+
+  return schedules
+}
 
 export const mockSchedules: Schedule[] = [
   ...baseSchedules,
@@ -328,7 +433,6 @@ export const mockSchedules: Schedule[] = [
   ...todaySchedules,
   ...tomorrowSchedules,
   ...tomorrowSchedulesAdditional,
-  ...economyDashboardSchedules,
 ]
 
 export const mockSchedulesMap = new Map<UUID, Schedule>()

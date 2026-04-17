@@ -36,6 +36,7 @@ category: data
 - **경로**: `/api/sponsors`
 - **CRUD**: GET, POST, PATCH, DELETE
 - **Mock 서비스**: `entities/sponsor/api/sponsor-service.ts`
+- **삭제 정책(중요)**: 스폰서 삭제 시 연관 기본/연락처/매핑 정보는 삭제하되, 정산/통계/성과 등 실적 관련 값은 유지한다. 상세 기준은 `process/sponsor-delete-policy.md`를 따른다.
 
 ### 2. 학교 (School)
 - **경로**: `/api/schools`

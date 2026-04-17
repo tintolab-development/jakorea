@@ -20,7 +20,9 @@ import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { AppButton } from '@/shared/ui/app-button'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
-import { EnrollmentProgramDetailPostsTab } from '@/features/user/ui/enrollment-program-detail-posts-tab'
+import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import {
   ProgramDetailTdDivider,
   withProgramDetailTdDivider,
@@ -211,11 +213,11 @@ function maskEducationSchoolName(name: string): string {
   ].sort((a, b) => b.length - a.length)
   for (const suf of suffixes) {
     if (name.endsWith(suf)) {
-      return `***${suf}`
+      return `**${suf}`
     }
   }
   if (name.length <= 2) return '**'
-  return `***${name.slice(-2)}`
+  return `**${name.slice(-2)}`
 }
 
 function ParticipatingAddressDisplay({ address, mask }: { address: string; mask: boolean }) {
@@ -285,6 +287,7 @@ export function ParticipatingInstructorFullpageView({
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
+  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   const activeTab =
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
@@ -306,7 +309,22 @@ export function ParticipatingInstructorFullpageView({
     setSelectedWaitingSchoolKeys([])
     setOpenRoleDropdownId(null)
     setPersonalInfoRevealed(false)
+    setPersonalInfoRevealConfirmOpen(false)
   }, [d.id, schoolRows, instructorList])
+
+  const handlePrivacyToggleClick = useCallback(() => {
+    if (personalInfoRevealed) {
+      setPersonalInfoRevealed(false)
+      return
+    }
+    setPersonalInfoRevealConfirmOpen(true)
+  }, [personalInfoRevealed])
+
+  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
+    trackPersonalInfoAccess(d.instructorName ?? '참여 강사 상세 정보', reason)
+    setPersonalInfoRevealed(true)
+    setPersonalInfoRevealConfirmOpen(false)
+  }, [d.instructorName])
 
   const handleRoleChange = useCallback((schoolId: string, newRole: InstructorRoleKey) => {
     setAssignedSchools(prev => {
@@ -592,9 +610,6 @@ export function ParticipatingInstructorFullpageView({
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block">
         <div className="program-detail-info-tab__section-header-row">
           <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
-          {d.registeredByAdmin ? (
-            <p className="program-detail-info-tab__detail-note">*관리자에 의해 등록된 회원입니다</p>
-          ) : null}
         </div>
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
@@ -833,9 +848,9 @@ export function ParticipatingInstructorFullpageView({
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => window.alert('준비 중입니다.')}
+              onClick={handlePrivacyToggleClick}
             >
-              개인정보 상세보기
+              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
             </AppButton>
           </div>
         )}
@@ -851,9 +866,9 @@ export function ParticipatingInstructorFullpageView({
             <AppButton
               variant="primary"
               size="filter-wide"
-              onClick={() => window.alert('준비 중입니다.')}
+              onClick={handlePrivacyToggleClick}
             >
-              개인정보 상세보기
+              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
             </AppButton>
           </div>
         )}
@@ -1115,6 +1130,12 @@ export function ParticipatingInstructorFullpageView({
           </div>
         )}
       </div>
+      {personalInfoRevealConfirmOpen ? (
+        <UserPersonalInfoRevealConfirmModal
+          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
+          onConfirm={handleConfirmPersonalInfoReveal}
+        />
+      ) : null}
     </div>
   )
 }

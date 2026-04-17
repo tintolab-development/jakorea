@@ -45,6 +45,13 @@ import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
+import TemplateFormTab from '@/pages/templates/template-form-tab'
+import {
+  RedirectLegacyTemplatesEmail,
+  RedirectLegacyTemplatesKakaoAlimtalk,
+  RedirectLegacyTemplatesProgramForms,
+  RedirectLegacyTemplatesSms,
+} from '@/features/template/template-route-redirects'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
@@ -61,11 +68,9 @@ const InstructorSchedulePage = lazyLoad(
   () => import('@/pages/instructors/instructor-schedule-page')
 )
 const InstructorReportsPage = lazyLoad(() => import('@/pages/instructors/instructor-reports-page'))
-const SponsorListPage = lazyLoad(() => import('@/pages/sponsors/sponsor-list-page'))
-const SponsorDetailPage = lazyLoad(() => import('@/pages/sponsors/sponsor-detail-page'))
-const SponsorFormPage = lazyLoad(() => import('@/pages/sponsors/sponsor-form-page'))
-const SchoolDetailPage = lazyLoad(() => import('@/pages/schools/school-detail-page'))
-const SchoolFormPage = lazyLoad(() => import('@/pages/schools/school-form-page'))
+const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-page'))
+const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
+const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
@@ -104,18 +109,15 @@ const EducationRecordListPage = lazyLoad(
   () => import('@/pages/education-records/education-record-list-page')
 )
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
-const ParticipantListPage = lazyLoad(() => import('@/pages/users/participant-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
-const TemplateProgramFormsPage = lazyLoad(
-  () => import('@/pages/templates/template-program-forms-page')
-)
-const TemplateFilesPage = lazyLoad(() => import('@/pages/templates/template-files-page'))
 const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
 const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
+const AdminNoticeDetailPage = lazyLoad(() => import('@/pages/posts/admin-notice-detail-page'))
 const AdminFAQPage = lazyLoad(() => import('@/pages/posts/admin-faq-page'))
+const AdminFaqDetailPage = lazyLoad(() => import('@/pages/posts/admin-faq-detail-page'))
 const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page'))
 const PermissionCustomizationPage = lazyLoad(
   () => import('@/pages/admin/settings/permission-customization-page')
@@ -126,6 +128,11 @@ const PermissionRequestListPage = lazyLoad(
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
+const FileDownloadHistoryPage = lazyLoad(() => import('@/pages/logs/file-download-history-page'))
+const PersonalInfoAccessHistoryPage = lazyLoad(
+  () => import('@/pages/logs/personal-info-access-history-page')
+)
+const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
 
 function LegacyPostsRedirect({
   kind,
@@ -211,21 +218,27 @@ export const router = createBrowserRouter([
       },
       {
         path: 'sponsors',
-        children: [
-          { index: true, element: <SponsorListPage /> },
-          { path: 'new', element: <SponsorFormPage /> },
-          { path: ':id', element: <SponsorDetailPage /> },
-          { path: ':id/edit', element: <SponsorFormPage /> },
-        ],
+        element: <Navigate to="/sponsor" replace />,
       },
       {
-        path: 'schools',
-        children: [
-          { index: true, element: <Navigate to="/users/list?kind=institutions" replace /> },
-          { path: 'new', element: <SchoolFormPage /> },
-          { path: ':id', element: <SchoolDetailPage /> },
-          { path: ':id/edit', element: <SchoolFormPage /> },
-        ],
+        path: 'sponsors/*',
+        element: <Navigate to="/sponsor" replace />,
+      },
+      {
+        path: 'data-management',
+        element: <Navigate to="/sponsor" replace />,
+      },
+      {
+        path: 'sponsor',
+        element: <SponsorDataPage />,
+      },
+      {
+        path: 'textbook',
+        element: <TextbookPage />,
+      },
+      {
+        path: 'detailed-program',
+        element: <DetailedProgramPage />,
       },
       {
         path: 'programs',
@@ -361,7 +374,6 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/users/list?kind=all" replace /> },
           { path: 'list', element: <UserListPage /> },
-          { path: 'participants', element: <ParticipantListPage /> },
           {
             path: 'instructors',
             element: <Navigate to="/users/list?kind=instructors" replace />,
@@ -437,76 +449,12 @@ export const router = createBrowserRouter([
         path: 'templates',
         element: <TemplateListPage />,
         children: [
-          // 프로그램 양식
           {
-            path: 'program-forms',
-            children: [
-              {
-                index: true,
-                element: <TemplateProgramFormsPage />,
-              },
-            ],
+            path: 'form-management',
+            element: <TemplateFormTab />,
           },
-          // 파일 양식 (단일 경로, 카테고리는 ?category= 쿼리로 관리)
-          {
-            path: 'file-forms',
-            children: [
-              { index: true, element: <TemplateFilesPage /> },
-              // 기존 북마크/링크 호환: 하위 경로 → 쿼리 파라미터로 리다이렉트
-              {
-                path: 'instructor-resume',
-                element: <Navigate to="/templates/file-forms?category=instructor-resume" replace />,
-              },
-              {
-                path: 'lecture-report',
-                element: <Navigate to="/templates/file-forms?category=lecture-report" replace />,
-              },
-              {
-                path: 'education-plan',
-                element: <Navigate to="/templates/file-forms?category=education-plan" replace />,
-              },
-              {
-                path: 'certificate',
-                element: <Navigate to="/templates/file-forms?category=certificate" replace />,
-              },
-              {
-                path: 'activity-confirmation',
-                element: (
-                  <Navigate to="/templates/file-forms?category=activity-confirmation" replace />
-                ),
-              },
-              {
-                path: 'receipt',
-                element: <Navigate to="/templates/file-forms?category=receipt" replace />,
-              },
-              {
-                path: 'payment-statement',
-                element: <Navigate to="/templates/file-forms?category=payment-statement" replace />,
-              },
-              {
-                path: 'employment-certificate',
-                element: (
-                  <Navigate to="/templates/file-forms?category=employment-certificate" replace />
-                ),
-              },
-            ],
-          },
-          // 문자(SMS) 양식 (persona: /templates/sms)
-          {
-            path: 'sms',
-            element: <TemplateSmsPage />,
-          },
-          // 기존 경로 호환: 카카오 알림톡 → sms로 리다이렉트
-          {
-            path: 'kakao-alimtalk',
-            element: <Navigate to="/templates/sms" replace />,
-          },
-          // 메일 관리 (기존 email 페이지 연결)
-          {
-            path: 'email',
-            element: <TemplateEmailPage />,
-          },
-          // 배너 관리
+          { path: 'kakao-notification', element: <TemplateSmsPage /> },
+          { path: 'email-management', element: <TemplateEmailPage /> },
           {
             path: 'banner',
             element: (
@@ -516,15 +464,13 @@ export const router = createBrowserRouter([
               />
             ),
           },
-          // 기존 경로 호환성 유지 (리다이렉트)
-          {
-            index: true,
-            element: <Navigate to="file-forms" replace />,
-          },
-          {
-            path: 'files',
-            element: <Navigate to="file-forms" replace />,
-          },
+          // 구 경로 호환 (쿼리 보존)
+          { path: 'program-forms', element: <RedirectLegacyTemplatesProgramForms /> },
+          { path: 'program-forms/*', element: <RedirectLegacyTemplatesProgramForms /> },
+          { path: 'sms', element: <RedirectLegacyTemplatesSms /> },
+          { path: 'kakao-alimtalk', element: <RedirectLegacyTemplatesKakaoAlimtalk /> },
+          { path: 'email', element: <RedirectLegacyTemplatesEmail /> },
+          { index: true, element: <Navigate to="form-management" replace /> },
         ],
       },
       {
@@ -540,6 +486,8 @@ export const router = createBrowserRouter([
               { index: true, element: <Navigate to="/admin/posts/notices" replace /> },
               { path: 'categories', element: <AdminCategoryPage /> },
               { path: 'notices', element: <AdminNoticeListPage /> },
+              { path: 'notices/:id', element: <AdminNoticeDetailPage /> },
+              { path: 'faq/:id', element: <AdminFaqDetailPage /> },
               { path: 'faq', element: <AdminFAQPage /> },
               { path: 'inquiries', element: <AdminInquiryPage /> },
             ],
@@ -586,7 +534,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: 'audit',
-                element: <Navigate to="/logs/bug" replace />,
+                element: <Navigate to="/logs/file-download-history" replace />,
               },
             ],
           },
@@ -608,19 +556,19 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="bug" replace />,
+            element: <Navigate to="file-download-history" replace />,
           },
           {
-            path: 'bug',
-            element: (
-              <ComingSoonPage title="버그" description="버그 관리 기능은 현재 준비 중입니다." />
-            ),
+            path: 'file-download-history',
+            element: <FileDownloadHistoryPage />,
           },
           {
-            path: 'issue',
-            element: (
-              <ComingSoonPage title="이슈" description="이슈 관리 기능은 현재 준비 중입니다." />
-            ),
+            path: 'personal-info-access-history',
+            element: <PersonalInfoAccessHistoryPage />,
+          },
+          {
+            path: 'bug-issue-history',
+            element: <BugIssueHistoryPage />,
           },
         ],
       },

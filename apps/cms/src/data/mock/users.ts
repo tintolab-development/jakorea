@@ -60,6 +60,11 @@ const mockAdmins: User[] = [
     detailAddress: '서울특별시 강남구 테헤란로 123',
     affiliation: 'JAKorea | 총괄 관리자',
     socialAccounts: ['구글'],
+    adminComment: '전사 관리자 운영 기준 확인 후 권한 변경 바랍니다.',
+    listMetrics: {
+      adminPermissionVariant: 'manager',
+      managedProgramCount: 1,
+    },
   },
   {
     id: generateUUID(),
@@ -80,6 +85,11 @@ const mockAdmins: User[] = [
     detailAddress: '서울특별시 서초구 서초동 456',
     affiliation: 'JAKorea | 운영팀',
     socialAccounts: ['카카오'],
+    adminComment: 'PM/파트너 권한으로 담당 프로그램만 관리합니다.',
+    listMetrics: {
+      adminPermissionVariant: 'partner',
+      managedProgramCount: 1,
+    },
   },
   {
     id: generateUUID(),
@@ -88,6 +98,9 @@ const mockAdmins: User[] = [
     name: '박시스템',
     nameEn: 'Park System',
     role: 'ADMIN',
+    registeredByAdmin: true,
+    identitySelfSignupCompletedAfterAdminRegistration: false,
+    permissionApprovalStatus: 'APPROVED',
     adminLevel: 'GENERAL',
     programRoles: { 'program-1': 'ASSISTANT' },
     isActive: true,
@@ -99,6 +112,11 @@ const mockAdmins: User[] = [
     birthDate: '1992-03-25',
     detailAddress: '경기도 성남시 분당구 정자동 789',
     affiliation: 'JAKorea | 시스템 관리',
+    adminComment: '관리자 등록 계정(수정 가능) 테스트용입니다.',
+    listMetrics: {
+      adminPermissionVariant: 'viewer',
+      managedProgramCount: 1,
+    },
   },
 ]
 
@@ -117,6 +135,7 @@ const mockInstructors: User[] = [
     name: '최강사',
     nameEn: 'Choi Kang-sa',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: INSTRUCTOR1_ID, // 고정 ID로 변경
     interviewStatus: 'APPROVED', // 승인 완료
     participationHistory: 5, // 참여이력 5건
@@ -139,7 +158,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '제미나이 강사단',
+      instructorTypeLabel: '1급 강사비',
       settlementStatusLabel: '계좌 지급 완료',
       jaEvaluationGrade: 'A',
       employmentStatusLabel: '재직 중',
@@ -158,6 +177,7 @@ const mockInstructors: User[] = [
     name: '정멘토',
     nameEn: 'Jung Mentor',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'PENDING',
     instructorId: 'instructor-2-fixed-id-for-testing',
     interviewStatus: 'APPROVED',
     participationHistory: 3,
@@ -178,7 +198,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: true,
     },
     listMetrics: {
-      instructorTypeLabel: '특강 강사',
+      instructorTypeLabel: '2급 강사비',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
       employmentStatusLabel: '전근',
@@ -195,6 +215,7 @@ const mockInstructors: User[] = [
     name: '강선생',
     nameEn: 'Kang Sun-saeng',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'REJECTED',
     instructorId: 'instructor-3-fixed-id-for-testing',
     interviewStatus: 'PENDING', // 면접 대기 중
     participationHistory: 0, // 참여이력 없음
@@ -214,7 +235,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '제미나이',
+      instructorTypeLabel: '3급 강사비',
       jaEvaluationGrade: 'C',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '5학년 담임',
@@ -235,6 +256,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '서울초등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '서울초등학교',
       address: '서울특별시 마포구 월드컵북로 456',
@@ -292,6 +314,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '부산중학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '부산중학교',
       address: '부산광역시 해운대구 센텀중앙로 123',
@@ -313,7 +336,7 @@ const mockSchools: User[] = [
           assignedGrade: '3학년',
           phone: '010-2002-0002',
           email: 'jung.centum@school.kr',
-          employmentStatus: 'ACTIVE',
+          employmentStatus: 'ON_LEAVE',
           joinedAt: generatePastDate(125),
           linkedUserId: 'mock-aff-link-005',
         },
@@ -359,6 +382,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '대구고등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '대구고등학교',
       address: '대구광역시 수성구 범어천로 789',
@@ -416,6 +440,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '인천남중학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '인천남중학교',
       address: '인천광역시 남동구 구월로 112',
@@ -483,6 +508,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '진월초등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '진월초등학교',
       address: '광주광역시 남구 광복마을4길 40',
@@ -529,6 +555,9 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '대전중앙고등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
+    /** CMS 데모: 관리자 등록 학교 — 소속 교사 연동 전 타이틀 안내·기본정보 수정 허용 */
+    registeredByAdmin: true,
     schoolInfo: {
       schoolName: '대전중앙고등학교',
       address: '대전광역시 중구 대종로 200',
@@ -549,6 +578,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '울산북초등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '울산북초등학교',
       address: '울산광역시 북구 산업로 55',
@@ -569,6 +599,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '수원중학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '수원중학교',
       address: '경기도 수원시 팔달구 인계로 77',
@@ -589,6 +620,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '강릉고등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '강릉고등학교',
       address: '강원도 강릉시 경강로 150',
@@ -609,6 +641,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '제주서초등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '제주서초등학교',
       address: '제주특별자치도 제주시 연동로 33',
@@ -629,6 +662,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '서울영등포중학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '서울영등포중학교',
       address: '서울특별시 영등포구 당산로 44',
@@ -649,6 +683,7 @@ const mockSchools: User[] = [
     password: 'school123!',
     name: '부산해운대고등학교',
     role: 'SCHOOL',
+    permissionApprovalStatus: 'APPROVED',
     schoolInfo: {
       schoolName: '부산해운대고등학교',
       address: '부산광역시 해운대구 좌동순환로 99',
@@ -677,6 +712,10 @@ const mockIndividuals: User[] = [
     name: '장학생',
     nameEn: 'Jang Hak-saeng',
     role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'APPROVED',
+    /** CMS 데모: 관리자 등록 계정 — 기본 정보 desc·[정보 수정] 노출 */
+    registeredByAdmin: true,
+    adminComment: '체험학습 일정 조율 시 연락 바랍니다.',
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(60),
@@ -695,6 +734,10 @@ const mockIndividuals: User[] = [
     name: '임참여',
     nameEn: 'Im Cham-yeo',
     role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'REJECTED',
+    /** CMS 데모: 관리자 등록 후 본인인증·직접 가입 완료 — [정보 수정] 비노출, desc는 유지 */
+    registeredByAdmin: true,
+    identitySelfSignupCompletedAfterAdminRegistration: true,
     isActive: true,
     lastLoginAt: generatePastDate(3),
     createdAt: generatePastDate(45),
@@ -712,6 +755,7 @@ const mockIndividuals: User[] = [
     name: '한청년',
     nameEn: 'Han Cheong-nyeon',
     role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'PENDING',
     isActive: true,
     lastLoginAt: generatePastDate(7),
     createdAt: generatePastDate(30),
@@ -738,6 +782,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '한서울',
     nameEn: 'Han Seoul',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-001',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -764,6 +809,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '김마포',
     nameEn: 'Kim Mapo',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-002',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -790,6 +836,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '이월드',
     nameEn: 'Lee World',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-003',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -816,6 +863,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '박해운',
     nameEn: 'Park Hae-un',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-004',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -842,6 +890,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '정센텀',
     nameEn: 'Jung Centum',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-005',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -868,6 +917,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '최중앙',
     nameEn: 'Choi Jung-ang',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-006',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -894,6 +944,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '강동래',
     nameEn: 'Kang Dong-rae',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-007',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -920,6 +971,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '윤수성',
     nameEn: 'Yoon Su-seong',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-008',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -946,6 +998,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '조범어',
     nameEn: 'Jo Beom-eo',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-009',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -972,6 +1025,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '임교감',
     nameEn: 'Im Gyo-gam',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-010',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -998,6 +1052,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '송구월',
     nameEn: 'Song Gu-wol',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-011',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -1024,6 +1079,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '황남동',
     nameEn: 'Hwang Nam-dong',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-012',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -1050,6 +1106,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '배중학',
     nameEn: 'Bae Jung-hak',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-013',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -1076,6 +1133,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '신인천',
     nameEn: 'Shin Incheon',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-014',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -1102,6 +1160,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     name: '정교사',
     nameEn: 'Jung Gyo-sa',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-015',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
@@ -1136,6 +1195,7 @@ const extraMockUsers: User[] = [
     name: '박틴토',
     nameEn: 'Park Tinto',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorMemberProfile: 'instructor_only',
     instructorId: 'instructor-dev-parktinto',
     interviewStatus: 'APPROVED',
@@ -1156,8 +1216,8 @@ const extraMockUsers: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: 'JA 강사단',
-      settlementStatusLabel: '일부 지급 완료',
+      instructorTypeLabel: '1급 강사비',
+      settlementStatusLabel: '일부 확인 완료',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '1학년',
     },
@@ -1181,6 +1241,10 @@ const extraMockUsers: User[] = [
     birthDate: '1975-01-10',
     detailAddress: '서울특별시 영등포구 여의도동 1',
     affiliation: 'JAKorea | 이전 담당',
+    listMetrics: {
+      adminPermissionVariant: 'viewer',
+      managedProgramCount: 1,
+    },
   },
   // 최근 가입한 강사 (면접 예정)
   {
@@ -1190,6 +1254,7 @@ const extraMockUsers: User[] = [
     name: '신규강사',
     nameEn: 'New Instructor',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: generateUUID(),
     interviewStatus: 'SCHEDULED',
     interviewScheduledAt: generatePastDate(0),
@@ -1204,7 +1269,46 @@ const extraMockUsers: User[] = [
     detailAddress: '경기도 용인시 수지구 200',
     affiliation: '신규 강사 지원',
     listMetrics: {
-      instructorTypeLabel: '특강 강사',
+      instructorTypeLabel: '2급 강사비',
+    },
+  },
+  // 관리자 등록 강사 (직접 가입 완료 전)
+  {
+    id: generateUUID(),
+    email: 'instructor.admin-provisioned@jakorea.org',
+    password: 'instructor123!',
+    name: '관리자등록강사',
+    nameEn: 'Admin Provisioned Instructor',
+    role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
+    registeredByAdmin: true,
+    identitySelfSignupCompletedAfterAdminRegistration: false,
+    instructorMemberProfile: 'instructor_only',
+    instructorId: generateUUID(),
+    interviewStatus: 'APPROVED',
+    participationHistory: 2,
+    isActive: true,
+    lastLoginAt: generatePastDate(2),
+    createdAt: generatePastDate(20),
+    updatedAt: generatePastDate(1),
+    phone: '010-6789-0123',
+    gender: '여성',
+    birthDate: '1992-10-12',
+    detailAddress: '서울특별시 성동구 성수이로 120',
+    affiliation: 'JA 강사단 | 관리자 등록',
+    instructorInfo: {
+      bankName: '신한은행',
+      accountHolder: '관리자등록강사',
+      accountNumber: '110-987-654321',
+      isBusinessIncome: false,
+    },
+    adminComment: '관리자 등록 강사 데모 계정',
+    listMetrics: {
+      instructorTypeLabel: '1급 강사비',
+      settlementStatusLabel: '확인 대기 중',
+      jaEvaluationGrade: 'B',
+      employmentStatusLabel: '재직 중',
+      instructorAssignedGrade: '4학년',
     },
   },
   // 참여이력 많은 강사
@@ -1215,6 +1319,7 @@ const extraMockUsers: User[] = [
     name: '시니어강사',
     nameEn: 'Senior Instructor',
     role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'APPROVED',
     instructorId: generateUUID(),
     interviewStatus: 'NOT_REQUIRED',
     participationHistory: 25,
@@ -1228,7 +1333,7 @@ const extraMockUsers: User[] = [
     detailAddress: '서울특별시 마포구 망원동 300',
     affiliation: '경제교육연구소 | 수석강사',
     listMetrics: {
-      instructorTypeLabel: '제미나이',
+      instructorTypeLabel: '3급 강사비',
     },
   },
   // 스크린샷/UI 예시용 회원 (상세 모달 스펙: 최틴토, Choi Tinto)
@@ -1343,4 +1448,17 @@ export function getUserByPhone(phone: string): User | undefined {
     const normalizedUserPhone = user.phone.replace(/-/g, '')
     return normalizedUserPhone === normalizedPhone && user.isActive
   })
+}
+
+/**
+ * 사용자 목데이터 부분 업데이트 (런타임 동기화용)
+ */
+export function updateMockUserById(userId: string, userData: Partial<User>): User | null {
+  const target = mockUsers.find(user => user.id === userId)
+  if (!target) return null
+
+  Object.assign(target, userData, {
+    updatedAt: new Date().toISOString(),
+  })
+  return target
 }

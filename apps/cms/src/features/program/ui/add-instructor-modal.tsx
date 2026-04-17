@@ -6,10 +6,10 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Form, Input, Radio, DatePicker, Modal } from 'antd'
+import { Form, Input, Radio, DatePicker, Modal, Pagination } from 'antd'
 import type { InputHTMLAttributes } from 'react'
 import { useForm, type Path } from 'react-hook-form'
-import { useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
+import { readJusoConfmKeyFromEnv, useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
 
 /** 주소 검색용: 아이콘 + 네이티브 input 한 묶음 220×40, Form.Item value/onChange는 input에 전달 */
 interface AddressSearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -243,10 +243,13 @@ const INITIAL_FORM_VALUES: AddInstructorFormValues = {
   consentEducationFacilitatorPledge: 'agree',
 }
 
+const ADDRESS_SEARCH_COUNT_PER_PAGE = 10
+
 export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModalProps) {
   const [form] = Form.useForm<AddInstructorFormValues>()
   const [isAddressPopupOpen, setIsAddressPopupOpen] = useState(false)
   const [addressKeyword, setAddressKeyword] = useState('')
+  const [addressPage, setAddressPage] = useState(1)
   const detailAddressInputRef = useRef<HTMLInputElement | null>(null)
   const rhfForm = useForm<AddInstructorFormValues>({
     defaultValues: INITIAL_FORM_VALUES,
@@ -260,8 +263,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
     search: searchAddress,
     reset: resetAddressSearch,
   } = useJusoAddressSearch({
-    confmKey: import.meta.env.VITE_ADDRESS_API_KEY ?? '',
-    countPerPage: 10,
+    confmKey: readJusoConfmKeyFromEnv(),
+    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE,
   })
   const jaKoreaExperiences = Form.useWatch('jaKoreaExperiences', form) ?? []
   const qualifications = Form.useWatch('qualifications', form) ?? []
@@ -314,17 +317,25 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
 
   const openAddressPopup = () => {
     setAddressKeyword((form.getFieldValue('address') ?? '').trim())
+    setAddressPage(1)
     setIsAddressPopupOpen(true)
   }
 
   const closeAddressPopup = () => {
     setIsAddressPopupOpen(false)
     setAddressKeyword('')
+    setAddressPage(1)
     resetAddressSearch()
   }
 
   const handleAddressSearch = async () => {
+    setAddressPage(1)
     await searchAddress(addressKeyword, 1)
+  }
+
+  const handleAddressPageChange = async (nextPage: number) => {
+    setAddressPage(nextPage)
+    await searchAddress(addressKeyword, nextPage)
   }
 
   const handleAddressSelect = (addressItem: JusoAddressItem) => {
@@ -1255,6 +1266,18 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   </tbody>
                 </table>
               )}
+              {totalCount > ADDRESS_SEARCH_COUNT_PER_PAGE && addresses.length > 0 ? (
+                <div className="add-instructor-modal__address-popup-pagination">
+                  <Pagination
+                    size="small"
+                    current={addressPage}
+                    total={totalCount}
+                    pageSize={ADDRESS_SEARCH_COUNT_PER_PAGE}
+                    onChange={p => void handleAddressPageChange(p)}
+                    showSizeChanger={false}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

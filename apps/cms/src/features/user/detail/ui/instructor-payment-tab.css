@@ -1,0 +1,237 @@
+.instructor-payment-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/** 캘린더 뷰: 모달 본문 안에서 세로 플렉스 배분 — 정산 캘린더는 --no-inner-scroll로 좌측 내부 스크롤 없음 */
+.instructor-payment-tab--calendar-fill {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-payment-tab--calendar-fill > *:not(.instructor-payment-tab__content) {
+  flex-shrink: 0;
+}
+
+.instructor-payment-tab--calendar-fill .instructor-payment-tab__content {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-payment-tab__divider-wrapper {
+  padding: 14px 52px 32px 52px;
+}
+
+.instructor-payment-tab__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.instructor-payment-tab__month-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.instructor-payment-tab__month-label {
+  color: #0a0a0a;
+  font-family: Outfit;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%; /* 31.2px */
+}
+
+.instructor-payment-tab__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.instructor-payment-tab__summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 17px;
+}
+
+.instructor-payment-tab__summary-card {
+  flex: 1;
+  min-width: 130px;
+  padding: 26px 30px;
+  border-radius: 12px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.instructor-payment-tab__summary-label {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 12px;
+  line-height: normal;
+}
+
+.instructor-payment-tab__summary-value {
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
+.instructor-payment-tab__summary-value--mint {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.instructor-payment-tab__content {
+  min-width: 0;
+  margin-top: 24px;
+}
+
+.instructor-payment-tab__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: var(--spacing-16);
+}
+
+.instructor-payment-tab__table-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3d3d3d;
+}
+
+.instructor-payment-tab__table-meta {
+  font-size: 14px;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+/* 정산 현황 열: 배지 없이 가운데 정렬 텍스트만 (색은 status-badge instructor-settlement 와 동일) */
+.instructor-payment-tab__settlement-status-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.instructor-payment-tab__settlement-text {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+}
+
+.instructor-payment-tab__settlement-text--awaiting {
+  color: #f07917;
+}
+
+.instructor-payment-tab__settlement-text--partial {
+  color: #8457ce;
+}
+
+.instructor-payment-tab__settlement-text--statement-verified {
+  color: #1e8c29;
+}
+
+.instructor-payment-tab__settlement-text--account-paid {
+  color: #017eaf;
+}
+
+.instructor-payment-tab__settlement-text--na {
+  color: #464646;
+}
+
+.instructor-payment-tab__settlement-text--rejected {
+  color: #c32f4a;
+}
+
+.instructor-payment-tab__settlement-text--correction {
+  color: #7a2038;
+}
+
+/* 산출 내역 열: 버튼 셀 가운데 정렬 */
+.instructor-payment-tab__detail-action-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.instructor-payment-schedule-list__open {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.instructor-payment-schedule-list__open:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.instructor-payment-tab__calendar-view-container {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 공유 applicant-calendar 레이아웃을 패널 높이에 맞춤(기본 좌측 스크롤; --no-inner-scroll 예외) */
+.instructor-payment-tab__calendar-view-container .applicant-calendar-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.instructor-payment-tab__calendar-view-container .applicant-calendar-main {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.instructor-payment-tab__calendar-view-container .applicant-calendar-right {
+  min-height: 0;
+}
+
+/**
+ * 정산 캘린더 뷰: 좌측 월 그리드에 세로 스크롤 없음(높이는 내용 기준, 바깥·모달 본문 스크롤).
+ * 기본 규칙(.…calendar-view-container .applicant-calendar-*)보다 구체적으로 두어 덮어씀.
+ */
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
+  .applicant-calendar-layout {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: auto;
+}
+
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
+  .applicant-calendar-main {
+  overflow-y: visible;
+  min-height: 0;
+}

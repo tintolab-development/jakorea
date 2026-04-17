@@ -115,11 +115,59 @@
 .detail-fullpage-modal__content {
   flex: 1 1 0;
   min-width: 0;
+  min-height: 0;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
   padding: 0 var(--detail-fullpage-padding-x, 52px) var(--detail-fullpage-padding-bottom, 52px);
   overflow-x: hidden;
+}
+
+/**
+ * 강사 정산 캘린더(`--no-inner-scroll`): 세로 스크롤이 `__main`에서 일어남.
+ * `overflow-x: hidden`만 준 `__content`가 많은 엔진에서 sticky 조상으로 취급되어 우측 `position:sticky`가 무효화됨.
+ * `clip`은 가로만 막고 스크롤 컨테이너를 만들지 않아 sticky가 `__main` 기준으로 동작함.
+ */
+.detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+  overflow-x: clip;
+}
+
+@supports not (overflow-x: clip) {
+  .detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+    overflow-x: visible;
+  }
+}
+
+/**
+ * contentExtra(상단 액션) + 본문(children) 구조일 때, 본문 슬롯이 남은 세로 높이를 받도록 flex 체인 연결.
+ * 미연결 시 자식의 height/min-height %·flex:1 이 기준 높이 없이 0으로 접힘 (예: 강사 정산 캘린더).
+ */
+.detail-fullpage-modal__content:has(.detail-fullpage-modal__content-actions-wrapper) {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-fullpage-modal__content-actions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.detail-fullpage-modal__content-actions-wrapper > div:last-child {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* min-height: 0 은 두지 않음 — 긴 본문 탭이 잘리지 않도록(auto 최소 = 콘텐츠) */
+}
+.detail-fullpage-modal__content-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  width: 100%;
+  flex-shrink: 0;
 }
 
 /* LNB 없을 때 본문을 헤더 타이틀과 동일 좌측 기준선(60px)에 맞춤 */
@@ -366,4 +414,16 @@
 
 .detail-fullpage-modal__lnb-child--selected .detail-fullpage-modal__lnb-child-dot {
   background-color: var(--JA-mint-01, #01a1af);
+}
+
+.detail-fullpage-modal .filter-table-layout {
+  padding: 0 !important;
+}
+
+/* 회원 상세 풀페이지 — 신청/수강 이력: 필터 미사용 시 슬롯 숨김 */
+.detail-fullpage-modal .user-detail-fullpage-modal__enrollment-layout .filter-table-layout__filter,
+.detail-fullpage-modal
+  .user-detail-fullpage-modal__enrollment-layout
+  .filter-table-layout__divider {
+  display: none;
 }

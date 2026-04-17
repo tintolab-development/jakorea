@@ -823,7 +823,7 @@ export function ProgramApplicantsTab({
             title="선택 반려 안내"
             lines={buildSchoolRejectMessageLines(selectedSchoolRowKeys.length)}
             confirmText="반려"
-            confirmVariant="danger"
+            confirmVariant="delete"
           />
         )}
         {schoolConfirmModal === 'approve' && (
@@ -846,7 +846,7 @@ export function ProgramApplicantsTab({
             title="선택 반려 안내"
             lines={buildInstructorRejectMessageLines(selectedInstructorRowKeys.length)}
             confirmText="반려"
-            confirmVariant="danger"
+            confirmVariant="delete"
           />
         )}
         {instructorConfirmModal === 'approve' && (

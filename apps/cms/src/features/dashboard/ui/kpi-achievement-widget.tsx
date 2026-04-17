@@ -20,9 +20,10 @@ const { Text } = Typography
 const WIDGET_KEY = 'kpi-achievement-widget'
 const EMPTY_IDS: string[] = []
 
+/** 목표 대비 달성률(%) — 초과 달성이어도 표시는 최대 100% (진행 바·뱃지·접근성 라벨 공통) */
 function getRate(achieved: number, target: number): number {
   if (target <= 0) return 0
-  return Math.round((achieved / target) * 100)
+  return Math.min(100, Math.round((achieved / target) * 100))
 }
 
 function isAchieved(achieved: number, target: number): boolean {
@@ -39,7 +40,7 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
     <div className="kpi-achievement-widget__kpi-row">
       <div className="kpi-achievement-widget__kpi-label">
         <span className="kpi-achievement-widget__kpi-label-main">{kpi.label}</span>
-        <span className="kpi-achievement-widget__kpi-label-unit"> (단위: {kpi.description})</span>
+        <span className="kpi-achievement-widget__kpi-label-unit">(단위: {kpi.description})</span>
       </div>
       <div className="kpi-achievement-widget__bar-wrap">
         <div

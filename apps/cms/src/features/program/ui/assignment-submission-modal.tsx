@@ -1,10 +1,10 @@
 /**
  * 과제·설문 제출 내역 모달
  * 학교 상세 > 학생 명단, 회원 상세 등에서 "내역 보기" 시 노출
- * ContentModal + Ant Table(체크박스·7열), 일괄 다운로드 푸터
+ * ContentModal + Ant Table(역할·팀명 포함), 일괄 다운로드 푸터
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
@@ -35,7 +35,6 @@ import {
   getAssignmentSubmissionDetailForApplication,
   updateAssignmentSubmissionTeamRole,
 } from '../lib/school-detail-mock'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './assignment-submission-modal.css'
 
 export interface AssignmentSubmissionModalProps {
@@ -98,11 +97,9 @@ export function AssignmentSubmissionModal({
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewRound, setPreviewRound] = useState<number>(1)
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [openTeamRoleDropdownRowId, setOpenTeamRoleDropdownRowId] = useState<string | null>(null)
 
   const handleModalCancel = useCallback(() => {
-    setSelectedRowKeys([])
     setOpenTeamRoleDropdownRowId(null)
     onCancel()
   }, [onCancel])
@@ -149,6 +146,14 @@ export function AssignmentSubmissionModal({
             tagLayout="tag132"
           />
         ),
+      },
+      {
+        title: '팀명',
+        dataIndex: 'teamName',
+        key: 'teamName',
+        align: 'center',
+        width: 120,
+        render: (v: string) => (v?.trim() ? v : '-'),
       },
       {
         title: '교육 진행 일자 및 교육 차시',
@@ -217,7 +222,6 @@ export function AssignmentSubmissionModal({
         icon={<DownloadOutlined />}
         onClick={() => {
           window.alert('준비 중입니다.')
-          if (selectedRowKeys.length === 0) return
         }}
       >
         과제 일괄 다운로드
@@ -267,11 +271,6 @@ export function AssignmentSubmissionModal({
                   columns={columns}
                   dataSource={detail.rows}
                   pagination={false}
-                  rowSelection={{
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys,
-                    onChange: keys => setSelectedRowKeys(keys),
-                  }}
                 />
               </div>
             </>

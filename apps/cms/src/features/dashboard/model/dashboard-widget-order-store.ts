@@ -6,7 +6,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { UserRole } from '@/types/user'
-import type { DashboardWidgetConfig } from '@/shared/config/dashboard-config'
+import type { DashboardWidgetConfig, DashboardWidgetSlotHeightPx } from '@/shared/config/dashboard-config'
 
 /**
  * 내장 드래그 핸들(WidgetTitleWithHandle)이 **없는** 위젯 목록.
@@ -16,17 +16,14 @@ import type { DashboardWidgetConfig } from '@/shared/config/dashboard-config'
 export const WIDGET_IDS_WITHOUT_BUILT_IN_HANDLE: readonly string[] = [] as const
 
 const STORAGE_KEY = 'dashboard-widget-order'
-const PERSIST_VERSION = 1
+const PERSIST_VERSION = 2
 
 interface PersistedLayoutState {
   orderByRole: Record<string, string[]>
   widthByRole: Record<string, Record<string, 12 | 24>>
 }
 
-function migrateLayoutState(
-  persisted: unknown,
-  _version: number
-): PersistedLayoutState {
+function migrateLayoutState(persisted: unknown, version: number): PersistedLayoutState {
   if (
     persisted != null &&
     typeof persisted === 'object' &&
@@ -40,7 +37,41 @@ function migrateLayoutState(
       typeof p.widthByRole === 'object' &&
       p.widthByRole !== null
     ) {
-      return { orderByRole: p.orderByRole, widthByRole: p.widthByRole }
+      let { orderByRole, widthByRole } = p
+
+      if (version < 2) {
+        const adminOrder = orderByRole['ADMIN']
+        if (adminOrder) {
+          const idx = adminOrder.indexOf('program-schedule-widget')
+          if (idx !== -1) {
+            const next = [...adminOrder]
+            next.splice(
+              idx,
+              1,
+              'program-schedule-general-widget',
+              'program-schedule-economy-widget',
+              'program-schedule-gemini-widget'
+            )
+            orderByRole = { ...orderByRole, ADMIN: next }
+          }
+        }
+        const adminWidths = widthByRole['ADMIN']
+        if (adminWidths && adminWidths['program-schedule-widget'] !== undefined) {
+          const val = adminWidths['program-schedule-widget']
+          const { 'program-schedule-widget': _removed, ...rest } = adminWidths
+          widthByRole = {
+            ...widthByRole,
+            ADMIN: {
+              ...rest,
+              'program-schedule-general-widget': val,
+              'program-schedule-economy-widget': val,
+              'program-schedule-gemini-widget': val,
+            },
+          }
+        }
+      }
+
+      return { orderByRole, widthByRole }
     }
   }
   return { orderByRole: {}, widthByRole: {} }
@@ -60,6 +91,8 @@ export interface DisplayItemMeta {
   hasBuiltInHandle: boolean
   /** 위젯 고정 높이(px). undefined이면 기본값 338px 사용 */
   height?: number
+  /** 슬롯 인라인 높이(colSpan별). getSlotHeight 우선 */
+  slotHeightPx?: DashboardWidgetSlotHeightPx
 }
 
 /**
@@ -72,13 +105,32 @@ export function buildDisplayItemsMeta(widgets: DashboardWidgetConfig[]): Display
     colSpan: w.colSpan ?? 24,
     hasBuiltInHandle: !noHandleSet.has(w.type),
     height: w.height,
+    slotHeightPx: w.slotHeightPx,
   }))
 }
 
-function sameSet(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false
-  const set = new Set(b)
-  return a.every(id => set.has(id))
+/**
+ * localStorage에 남은 순서와 현재 권한·ACL 기준 `defaultIds`를 합침.
+ * - 제거된 위젯 id는 무시
+ * - 새로 생긴 위젯은 `defaultIds` 순서대로 뒤에 붙음
+ * - 사용자가 맞춰 둔 상대 순서는 유지
+ */
+export function mergeOrderedIdsWithDefaults(saved: string[] | undefined, defaultIds: string[]): string[] {
+  if (defaultIds.length === 0) return []
+  if (!saved?.length) return defaultIds
+  const valid = new Set(defaultIds)
+  const kept: string[] = []
+  const seen = new Set<string>()
+  for (const id of saved) {
+    if (valid.has(id) && !seen.has(id)) {
+      seen.add(id)
+      kept.push(id)
+    }
+  }
+  for (const id of defaultIds) {
+    if (!seen.has(id)) kept.push(id)
+  }
+  return kept
 }
 
 /**
@@ -122,8 +174,7 @@ export const useDashboardWidgetOrderStore = create<DashboardWidgetOrderState>()(
       getOrderedIds(role: UserRole | null, defaultIds: string[]): string[] {
         if (!role || defaultIds.length === 0) return defaultIds
         const saved = get().orderByRole[role]
-        if (!saved || !sameSet(saved, defaultIds)) return defaultIds
-        return saved
+        return mergeOrderedIdsWithDefaults(saved, defaultIds)
       },
 
       setWidgetWidth(role: string, widgetId: string, colSpan: 12 | 24) {

@@ -3,10 +3,28 @@
  * @see https://www.juso.go.kr/ 개발자센터
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 /** 행안부 API는 브라우저에서 CORS 제한이 있을 수 있어, 백엔드 프록시 사용을 권장합니다. */
 const JUSO_ADDR_LINK_API_URL = 'https://www.juso.go.kr/addrlink/addrLinkApi.do'
+
+/**
+ * 주소기반산업지원서비스(business) 도로명주소 검색 API 엔드포인트
+ * @see https://business.juso.go.kr/addrlink/devAddrLinkApi.do (개발) / addrLinkApi.do (연계)
+ */
+export const JUSO_BUSINESS_ADDR_LINK_API_URL =
+  'https://business.juso.go.kr/addrlink/addrLinkApi.do'
+
+/**
+ * Vite 환경 변수에서 주소 API confmKey 읽기.
+ * `VITE_ADDRESS_API_KEY` 우선, 없으면 `VITE_JUSO_CONFM_KEY`(행안부 문서·샘플 명칭).
+ * 파일은 **`apps/cms/.env`** 또는 **`apps/cms/.env.local`** (Vite 기본 `envDir`).
+ */
+export function readJusoConfmKeyFromEnv(): string {
+  const a = import.meta.env.VITE_ADDRESS_API_KEY
+  const b = import.meta.env.VITE_JUSO_CONFM_KEY
+  return String(a ?? b ?? '').trim()
+}
 
 /** API 응답의 juso 항목 */
 export interface JusoAddressRow {
@@ -16,6 +34,8 @@ export interface JusoAddressRow {
   roadAddrPart1: string
   /** 지번주소 */
   jibunAddr: string
+  /** 영문 도로명주소 */
+  engAddr?: string
   /** 우편번호 */
   zipNo: string
   /** 행정구역코드 */
@@ -41,6 +61,8 @@ export interface JusoAddressItem {
   roadAddr: string
   /** 지번주소 */
   jibunAddr: string
+  /** 영문 도로명주소 (있을 때만) */
+  engAddr?: string
   /** 우편번호 */
   zipNo: string
   /** 시도명 */
@@ -49,16 +71,21 @@ export interface JusoAddressItem {
   sggNm: string
   /** 읍면동명 */
   emdNm: string
+  /** 도로명 (자동완성 한 줄 표시용) */
+  rn?: string
 }
 
 function mapRowToItem(row: JusoAddressRow): JusoAddressItem {
+  const eng = row.engAddr?.trim()
   return {
     roadAddr: row.roadAddr ?? '',
     jibunAddr: row.jibunAddr ?? '',
+    engAddr: eng || undefined,
     zipNo: row.zipNo ?? '',
     siNm: row.siNm ?? '',
     sggNm: row.sggNm ?? '',
     emdNm: row.emdNm ?? '',
+    rn: row.rn,
   }
 }
 
@@ -67,6 +94,11 @@ export interface UseJusoAddressSearchOptions {
   confmKey: string
   /** 페이지당 건수 (기본 10, 최대 100) */
   countPerPage?: number
+  /**
+   * 검색 API 전체 URL (미지정 시 www.juso.go.kr addrLink)
+   * 사업용 키는 `JUSO_BUSINESS_ADDR_LINK_API_URL` 또는 `VITE_JUSO_ADDRESS_API_URL` 사용
+   */
+  apiUrl?: string
 }
 
 export interface UseJusoAddressSearchReturn {
@@ -102,29 +134,40 @@ export interface UseJusoAddressSearchReturn {
 export function useJusoAddressSearch(
   options: UseJusoAddressSearchOptions
 ): UseJusoAddressSearchReturn {
-  const { confmKey, countPerPage = 10 } = options
+  const {
+    confmKey,
+    countPerPage = 10,
+    apiUrl = import.meta.env.VITE_JUSO_ADDRESS_API_URL || JUSO_ADDR_LINK_API_URL,
+  } = options
   const [addresses, setAddresses] = useState<JusoAddressItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const searchGenerationRef = useRef(0)
 
   const search = useCallback(
     async (
       keyword: string,
       page: number = 1
     ): Promise<{ addresses: JusoAddressItem[]; totalCount: number }> => {
+      const gen = ++searchGenerationRef.current
       const trimmed = keyword.trim()
       if (!trimmed) {
         setAddresses([])
         setTotalCount(0)
         setError(null)
+        setLoading(false)
         return { addresses: [], totalCount: 0 }
       }
       if (!confmKey) {
-        const err = new Error('행안부 주소 API 승인키가 설정되지 않았습니다.')
-        setError(err)
-        setAddresses([])
-        setTotalCount(0)
+        const err = new Error(
+          '행안부 주소 API 승인키가 설정되지 않았습니다. apps/cms/.env(또는 .env.local)에 VITE_ADDRESS_API_KEY 또는 VITE_JUSO_CONFM_KEY를 넣은 뒤 개발 서버를 재시작해 주세요.'
+        )
+        if (gen === searchGenerationRef.current) {
+          setError(err)
+          setAddresses([])
+          setTotalCount(0)
+        }
         return { addresses: [], totalCount: 0 }
       }
 
@@ -138,7 +181,7 @@ export function useJusoAddressSearch(
           keyword: trimmed,
           resultType: 'json',
         })
-        const res = await fetch(`${JUSO_ADDR_LINK_API_URL}?${params.toString()}`)
+        const res = await fetch(`${apiUrl}?${params.toString()}`)
         const data = await res.json()
 
         if (!res.ok) {
@@ -158,26 +201,35 @@ export function useJusoAddressSearch(
         const jusoList: JusoAddressRow[] = Array.isArray(results?.juso) ? results.juso : []
         const items = jusoList.map(mapRowToItem)
 
+        if (gen !== searchGenerationRef.current) {
+          return { addresses: items, totalCount: total }
+        }
         setAddresses(items)
         setTotalCount(total)
         return { addresses: items, totalCount: total }
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err))
-        setError(e)
-        setAddresses([])
-        setTotalCount(0)
+        if (gen === searchGenerationRef.current) {
+          setError(e)
+          setAddresses([])
+          setTotalCount(0)
+        }
         throw e
       } finally {
-        setLoading(false)
+        if (gen === searchGenerationRef.current) {
+          setLoading(false)
+        }
       }
     },
-    [confmKey, countPerPage]
+    [apiUrl, confmKey, countPerPage]
   )
 
   const reset = useCallback(() => {
+    searchGenerationRef.current += 1
     setAddresses([])
     setTotalCount(0)
     setError(null)
+    setLoading(false)
   }, [])
 
   return { addresses, totalCount, loading, error, search, reset }

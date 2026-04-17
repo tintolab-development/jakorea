@@ -1,20 +1,15 @@
 /**
  * 대시보드 슬롯 유틸 (높이 등)
- * 비즈니스 로직: menu-shortcut / program-schedule 특수 높이 규칙 유지
+ * 슬롯 높이 단일 소스: dashboard-config `slotHeightPx` → DisplayItemMeta → 여기서 인라인 height로 전달
  */
 
 import type { DisplayItemMeta } from '@/features/dashboard/model/dashboard-widget-order-store'
 
-export function getSlotHeight(
-  id: string,
-  effectiveColSpan: 12 | 24,
-  meta: DisplayItemMeta
-): number | undefined {
-  if (id === 'menu-shortcut-widget') {
-    return undefined /* 내용에 따라 슬롯 높이 자동 확장 */
-  }
-  if (id === 'program-schedule-widget') {
-    return effectiveColSpan === 12 ? 338 : (meta.height ?? 360)
-  }
+/**
+ * SortableWidgetSlot에 넘길 고정 높이(px). undefined면 colSpan 12일 때만 400px 등 기본 규칙 적용.
+ */
+export function getSlotHeight(effectiveColSpan: 12 | 24, meta: DisplayItemMeta): number | undefined {
+  const bySpan = meta.slotHeightPx?.[effectiveColSpan]
+  if (bySpan !== undefined) return bySpan
   return meta.height
 }

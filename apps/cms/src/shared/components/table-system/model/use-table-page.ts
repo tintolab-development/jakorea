@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { ColumnFiltersState } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
@@ -6,6 +6,9 @@ import { useTableSearch } from '@/shared/hooks/use-table-search'
 import { useTableWithQuery } from '@/shared/hooks/use-table-with-query'
 import type { TablePageConfig } from '../types/table-page-config'
 import type { TableSearchSetSearchParams } from '@/shared/hooks/use-table-search'
+
+/** 빈 `context`가 필요할 때 매 렌더 `{{}}`를 넘기지 말고 이 참조를 사용한다(메모·effect 의존성 안정화). */
+export const EMPTY_TABLE_PAGE_CONTEXT: Record<string, never> = Object.freeze({})
 
 export type UseTablePageArgs<TData, TContext> = {
   data: TData[]
@@ -28,6 +31,8 @@ export type UseTablePageReturn<TData, TFilters, TContext> = {
   tableData: TData[]
   /** displayedCount의 base가 되는 데이터 */
   filteredData: TData[]
+  /** TableFilterGroup / FilterTableLayout용 — `config.filters.onFilterChange`가 있으면 그 결과로 pending 반영 */
+  handleFilterChange: (key: string, value: unknown) => void
 }
 
 export function useTablePage<
@@ -40,9 +45,13 @@ export function useTablePage<
 ): UseTablePageReturn<TData, TFilters, TContext> {
   const { data, searchParams, setSearchParams, context } = args
 
+  /** URLSearchParams 참조는 라우터마다 렌더마다 바뀔 수 있어, effect deps는 직렬화 문자열만 사용한다. */
+  const searchParamsKey = searchParams.toString()
+
   const { dataForTable, filteredData } = useMemo(
     () => config.filterFn({ context, data, searchParams }),
-    [config, context, data, searchParams]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams 참조는 searchParamsKey로 대체
+    [config, context, data, searchParamsKey]
   )
 
   const { table, columnFilters } = useTableWithQuery<TData>({
@@ -52,6 +61,8 @@ export function useTablePage<
   })
 
   const [pendingFilters, setPendingFilters] = useState<TFilters>(config.filters.initialPending)
+  const pendingFiltersRef = useRef(pendingFilters)
+  pendingFiltersRef.current = pendingFilters
 
   useEffect(() => {
     config.filters.syncPendingFromUrl({
@@ -61,24 +72,20 @@ export function useTablePage<
       columnFilters,
       setPendingFilters,
     })
-  }, [columnFilters, config, context, searchParams, table])
+    // `table`·`searchParams` 참조는 렌더마다 바뀔 수 있어 deps에 넣지 않는다. URL 내용은 `searchParamsKey`로만 감지한다.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- 위 주석
+  }, [columnFilters, config, context, searchParamsKey])
 
   const hasActiveFilters = useMemo(
     () => config.filters.hasActiveFilters({ context, searchParams, columnFilters }),
-    [columnFilters, config, context, searchParams]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams 참조는 searchParamsKey로 대체
+    [columnFilters, config, context, searchParamsKey]
   )
-
-  const displayedCount = useMemo(() => {
-    return hasActiveFilters
-      ? table.getFilteredRowModel().rows.length
-      : config.filters.getBaseCount({ context, filteredData })
-  }, [config, context, filteredData, hasActiveFilters, table])
 
   const searchSync = useMemo(() => config.getSearchSync(context), [config, context])
 
   const { applySearch } = useTableSearch<TFilters, TData>({
-    filters: pendingFilters,
-    searchParams,
+    filtersRef: pendingFiltersRef,
     setSearchParams,
     table,
     paramConfig: searchSync.paramConfig,
@@ -91,9 +98,46 @@ export function useTablePage<
     [config, context]
   )
 
-  const tableData = useMemo(
-    () => table.getFilteredRowModel().rows.map(row => row.original),
-    [table]
+  /**
+   * TanStack `table` 인스턴스 참조가 유지되는 경우에도 `getFilteredRowModel()` 결과가 갱신되도록
+   * `dataForTable`·`searchParamsKey`·`columnFilters`를 deps에 포함한다.
+   */
+  const { tableData, displayedCount } = useMemo(() => {
+    const rows = table.getFilteredRowModel().rows.map(row => row.original)
+    const nextDisplayedCount = hasActiveFilters
+      ? rows.length
+      : config.filters.getBaseCount({ context, filteredData })
+    return { tableData: rows, displayedCount: nextDisplayedCount }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `table` 참조만으로는 row model 갱신을 감지하지 못함
+  }, [
+    columnFilters,
+    config,
+    context,
+    dataForTable,
+    filteredData,
+    hasActiveFilters,
+    searchParamsKey,
+    table,
+  ])
+
+  const handleFilterChange = useCallback(
+    (key: string, value: unknown) => {
+      setPendingFilters(prev => {
+        if (config.filters.onFilterChange) {
+          return config.filters.onFilterChange({
+            prev,
+            key,
+            value,
+            context,
+          })
+        }
+        return {
+          ...prev,
+          [key]: value,
+        }
+      })
+    },
+    [config, context]
   )
 
   return {
@@ -108,6 +152,7 @@ export function useTablePage<
     displayedCount,
     tableData,
     filteredData,
+    handleFilterChange,
   }
 }
 

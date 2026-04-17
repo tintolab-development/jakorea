@@ -7,8 +7,13 @@
 
 import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
+import { getEconomyProgramById } from '@/data/mock/economy-programs'
 import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
+
+function resolveProgramFromStores(id: string): Program | undefined {
+  return mockProgramsMap.get(id) ?? getEconomyProgramById(id)
+}
 
 export const programService = {
   /**
@@ -34,7 +39,7 @@ export const programService = {
   },
 
   getById: async (id: string): Promise<Program> => {
-    const program = mockProgramsMap.get(id)
+    const program = resolveProgramFromStores(id)
     if (!program) {
       throw new Error(`Program not found: ${id}`)
     }
@@ -132,7 +137,7 @@ export const programService = {
    * @returns 프로그램 제목 또는 ID
    */
   getNameById: (id: string): string => {
-    const program = mockProgramsMap.get(id)
+    const program = resolveProgramFromStores(id)
     return program?.title || id
   },
 
@@ -142,7 +147,7 @@ export const programService = {
    * @returns 프로그램 또는 undefined
    */
   getByIdSync: (id: string): Program | undefined => {
-    return mockProgramsMap.get(id)
+    return resolveProgramFromStores(id)
   },
 
   /**

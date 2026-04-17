@@ -415,6 +415,7 @@ function buildAssignmentSubmissionRows(
   const count = 4
   const rolePattern: AssignmentTeamRoleKey[] = ['leader', 'member', 'member', 'individual']
   const roleOffset = seed % count
+  const sharedTeamName = `${(seed % 4) + 1}조`
   const rows: AssignmentSubmissionTableRow[] = []
   for (let i = 0; i < count; i++) {
     const r = (seed + i * 13) % 5
@@ -448,10 +449,12 @@ function buildAssignmentSubmissionRows(
     const isLastEvaluationRow = i === count - 1
     const rowId = `${entityId}-assignment-row-${i}`
     const defaultRole = rolePattern[(i + roleOffset) % rolePattern.length]!
+    const effectiveRole = assignmentSubmissionTeamRoleOverrides[rowId] ?? defaultRole
     rows.push({
       id: rowId,
       roundNumber: i + 1,
-      teamRole: assignmentSubmissionTeamRoleOverrides[rowId] ?? defaultRole,
+      teamRole: effectiveRole,
+      teamName: effectiveRole === 'individual' ? '-' : sharedTeamName,
       educationDateLabel: isLastEvaluationRow
         ? formatEducationEvaluationLine(sessionDate)
         : formatEducationLine(sessionDate, i + 1),

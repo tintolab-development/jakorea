@@ -3,7 +3,7 @@
  * Phase 1.3: 30개 이상의 다양한 샘플 데이터
  */
 
-import type { Sponsor } from '../../types/domain'
+import type { Sponsor, SponsorOrganizationKind } from '../../types/domain'
 
 function generateUUID(): string {
   return `sponsor-${Math.random().toString(36).substr(2, 9)}-${Date.now()}`
@@ -122,9 +122,15 @@ const defaultManagers = [
   { name: '이소율', phone: '02-6347-6113' },
 ]
 
+const ORG_KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation']
+
 // mockSponsors[0] = JA Korea 고유목적사업으로 연동되므로 JA코리아 담당자 목록 부여, 나머지는 기본 목록
 mockSponsors.forEach((s, i) => {
   s.managers = i === 0 ? [...JA_KOREA_MANAGERS] : [...defaultManagers]
+  s.organizationKind = ORG_KIND_CYCLE[i % ORG_KIND_CYCLE.length]
+  s.sponsorshipStatus = i % 7 === 0 ? 'ended' : 'active'
+  const start = randomPastDate(600)
+  s.sponsorshipStartDate = start.toISOString()
 })
 
 export const mockSponsorsMap = new Map(mockSponsors.map(sponsor => [sponsor.id, sponsor]))

@@ -2164,6 +2164,13 @@
   font-size: 14px;
 }
 
+.add-instructor-modal__address-popup-pagination {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  border-top: 1px solid #e2e8eb;
+}
+
 /* 세로 디바이더: margin 0 (양옆 12px는 행 flex gap 등으로 확보), 주민번호 구간 `-`는 제외 */
 .add-instructor-modal__divider,
 .add-instructor-modal__gender-military-divider,

@@ -31,7 +31,7 @@ export type InterviewStatus =
   | 'REJECTED' // 반려
 
 /** 소속 교사 목록 행 (학교 상세 mock/API) */
-export type SchoolTeacherEmploymentStatus = 'ACTIVE' | 'WITHDRAWN' | 'TRANSFERRED'
+export type SchoolTeacherEmploymentStatus = 'ACTIVE' | 'ON_LEAVE' | 'WITHDRAWN' | 'TRANSFERRED'
 
 export interface SchoolAffiliatedTeacherRow {
   id: UUID
@@ -52,6 +52,8 @@ export interface User {
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
+  /** 프로필 이미지 URL 또는 data URL */
+  profileImageUrl?: string
   phone?: string
   role: UserRole
 
@@ -110,6 +112,27 @@ export interface User {
   lastLoginAt?: DateValue
   createdAt: DateValue
   updatedAt: DateValue
+
+  /** CMS 회원 상세 — 관리자 메모(있을 때만 본문 표시) */
+  adminComment?: string
+
+  /** 회원 권한 승인 페이지에서 관리되는 권한 승인 현황 */
+  permissionApprovalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'
+
+  /**
+   * CMS: 관리자 「회원 등록」으로 생성된 이력이 있는지.
+   * 직접 등록으로 취급하려면 `identitySelfSignupCompletedAfterAdminRegistration === true`여야 한다.
+   * 상세 UI·편집 가능 범위는 `admin-provisioned-member-policy`의
+   * `shouldShowCmsMemberInfoEditButton` / `isSelfRegisteredMemberForCmsBasicInfo`,
+   * 관리자 회원(`role === 'ADMIN'`)은 `canEditAdminMemberInfo`·`canAccessAdminCommentInAdminDetail`을 따른다.
+   */
+  registeredByAdmin?: boolean
+
+  /**
+   * 관리자 등록 후 본인 직접 가입(추가 절차)을 완료한 경우. true이면 CMS에서 **직접 등록**과 동일하게 취급한다.
+   * 기본정보 일괄 수정은 불가(읽기 전용)·관리자 코멘트(및 관리자 회원의 권한 유형)는 CMS 관리자 전원 예외, 강사(INSTRUCTOR)는 강사비 등급도 예외.
+   */
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
 
   // 추가 프로필 정보
   bio?: string

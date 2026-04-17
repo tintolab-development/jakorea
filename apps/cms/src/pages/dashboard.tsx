@@ -13,7 +13,7 @@ import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
-import { isWidgetResizable } from '@/shared/config/dashboard-config'
+import { DASHBOARD_SLOT_HEIGHT_HALF_PX, isWidgetResizable } from '@/shared/config/dashboard-config'
 import { getRoleLabel } from '@/shared/ui'
 import { mockInstructors } from '@/data/mock'
 import {
@@ -30,6 +30,8 @@ import {
 } from '@/features/dashboard'
 import './dashboard.css'
 import '@/features/dashboard/ui/widget-card.css'
+/* 메뉴 바로가기 태그: Ant css-in-js보다 앞서 로드(중복 import는 Vite가 합침) */
+import '@/features/dashboard/ui/menu-shortcut-widget.css'
 
 /** rectSortingStrategy에서 scaleX/scaleY를 항상 1로 고정 — 위젯 크기 변형 없이 위치만 이동 */
 const noScaleRectSortingStrategy: SortingStrategy = args => {
@@ -70,7 +72,7 @@ export function Dashboard() {
     setWidgetWidth,
     getSlotRects,
     rowRef,
-  } = useDashboardLayout({ userRole: user?.role ?? null })
+  } = useDashboardLayout({ userRole: user?.role ?? null, user: user ?? undefined })
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
@@ -83,8 +85,15 @@ export function Dashboard() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  const { activeId, sensors, handleDragStart, handleDragMove, handleDragEnd, handleDragCancel } =
-    useDashboardDnd({
+  const {
+    activeId,
+    overlayRect,
+    sensors,
+    handleDragStart,
+    handleDragMove,
+    handleDragEnd,
+    handleDragCancel,
+  } = useDashboardDnd({
       orderedIds: displayOrder,
       setOrderedIds,
       userRole: user?.role ?? null,
@@ -107,6 +116,7 @@ export function Dashboard() {
       instructorActivityLoading,
       instructorCount,
       onInstructorCardClick: handleInstructorCardClick,
+      user: user ?? undefined,
     }),
     [
       overallStatistics,
@@ -115,8 +125,26 @@ export function Dashboard() {
       instructorActivityLoading,
       instructorCount,
       handleInstructorCardClick,
+      user,
     ]
   )
+
+  /** DragOverlay는 그리드 밖이라 `.dashboard-widget-slot > .ant-card` 선택자가 빠지면 패딩이 사라짐 — 슬롯 래퍼로 동일 적용 */
+  const activeDragSlot = useMemo(() => {
+    if (!activeId) return null
+    const meta = displayItemsMeta.find(m => m.id === activeId)
+    if (!meta) return null
+    const colSpan =
+      (roleWidths[activeId] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
+    const heightFromMeta = getSlotHeight(colSpan, meta)
+    const slotHeight =
+      colSpan === 12
+        ? DASHBOARD_SLOT_HEIGHT_HALF_PX
+        : heightFromMeta !== undefined
+          ? heightFromMeta
+          : 'auto'
+    return { colSpan, slotHeight }
+  }, [activeId, displayItemsMeta, roleWidths])
 
   return (
     <div
@@ -148,14 +176,14 @@ export function Dashboard() {
             className="dashboard-widget-row-wrapper"
             data-dragging={activeId ? 'true' : undefined}
           >
-            <Row gutter={[16, 20]} align="stretch">
+            <Row gutter={[32, 32]} align="stretch">
               {displayOrder.flatMap((id: string) => {
                 const meta = displayItemsMeta.find(m => m.id === id)
                 if (!meta) return []
 
                 const effectiveColSpan =
                   (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
-                const slotHeight = getSlotHeight(id, effectiveColSpan, meta)
+                const slotHeight = getSlotHeight(effectiveColSpan, meta)
 
                 return [
                   <SortableWidgetSlot
@@ -189,8 +217,29 @@ export function Dashboard() {
           }
         >
           {activeId ? (
-            <div className="dashboard-widget-drag-overlay">
-              <DashboardWidgetRenderer widgetType={activeId} {...widgetRendererProps} />
+            <div
+              className="dashboard-widget-drag-overlay"
+              style={
+                overlayRect
+                  ? {
+                      width: overlayRect.width,
+                      height: overlayRect.height,
+                      maxWidth: overlayRect.width,
+                    }
+                  : undefined
+              }
+            >
+              {activeDragSlot ? (
+                <div
+                  className="dashboard-widget-slot"
+                  data-col-span={activeDragSlot.colSpan}
+                  style={{ height: activeDragSlot.slotHeight }}
+                >
+                  <DashboardWidgetRenderer widgetType={activeId} {...widgetRendererProps} />
+                </div>
+              ) : (
+                <DashboardWidgetRenderer widgetType={activeId} {...widgetRendererProps} />
+              )}
             </div>
           ) : null}
         </DragOverlay>

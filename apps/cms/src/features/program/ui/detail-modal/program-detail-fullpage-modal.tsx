@@ -37,8 +37,8 @@ import {
   type InstructorDetailTabKey,
 } from './program-status/participating-instructor-fullpage-view'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
-import { ApplicantDetails } from './applicants/applicants-detail'
-import { ProjectInfoDetailPanels } from '../../program-detail/ui/project-info-detail'
+import { ApplicantList } from '../../program-detail/ui/applicant-list/applicant-list'
+import { ProjectInfoDetailPanels } from '../../program-detail/ui/project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
@@ -698,7 +698,7 @@ export function ProgramDetailFullPageModal({
           )}
 
           {activeLnb === 'applicants' && (
-            <ApplicantDetails
+            <ApplicantList
               menu={activeChildMenu}
               program={displayProgram ?? null}
               onRegisterApplicantCloseHandler={fn => {

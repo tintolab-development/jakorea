@@ -1,0 +1,25 @@
+/**
+ * 대시보드 DnD: DragOverlay, 접근성(감소 동작), 드래그 중 GPU 힌트
+ */
+
+/* DragOverlay: 드래그 중 cursor를 따라다니는 위젯 복제본 (GPU 가속) */
+.dashboard-widget-drag-overlay {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-8);
+  box-shadow: var(--shadow-drag-overlay);
+  opacity: 0.95;
+  cursor: grabbing;
+  overflow: visible;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.dashboard-container--reduced-motion .dashboard-widget-row-wrapper .ant-col {
+  transition-duration: 0.08s !important;
+}
+
+/* 드래그 중에만 슬롯 transform GPU 가속 (리플로우 감소) */
+.dashboard-widget-row-wrapper[data-dragging] .ant-col {
+  will-change: transform;
+}

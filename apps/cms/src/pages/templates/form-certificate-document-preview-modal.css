@@ -1,0 +1,33 @@
+/* 문서 미리보기 — PDF 출력본과 동일 DOM(`--pdf-export`), A4 폭 기준 스케일 */
+
+.form-certificate-document-preview-modal__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* 전체 세로 길이 스크롤 — 모달 안에서 수료증 전체 확인 */
+.form-certificate-document-preview-modal__scroll {
+  width: 100%;
+  max-height: min(85vh, calc(100dvh - 160px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  padding-bottom: 8px;
+}
+
+.form-certificate-document-preview-modal__viewport {
+  width: 100%;
+  max-width: 794px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.form-certificate-document-preview-modal__scale-inner {
+  transform-origin: top left;
+  will-change: transform;
+}
