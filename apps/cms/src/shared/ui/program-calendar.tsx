@@ -4,13 +4,7 @@
  * - `scheduleOverlay`로 Popover(프로그램 일정) vs Tooltip(신청자 일정)만 분기
  */
 
-import {
-  forwardRef,
-  Fragment,
-  useMemo,
-  type ReactElement,
-  type ReactNode,
-} from 'react'
+import { forwardRef, Fragment, useMemo, type ReactElement, type ReactNode } from 'react'
 import { Calendar, Button } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -53,6 +47,8 @@ type ProgramCalendarSharedProps = {
   className?: string
   /** 기본: 오늘 선택 + `onMonthChange(startOf('month'))` */
   onTodayClick?: () => void
+  /** true면 헤더 좌측 날짜 제어(오늘/이전/다음) 전체를 숨김 */
+  hideDateControls?: boolean
   /**
    * 일정 호버 오버레이. 미지정 시 `programs` → popover, `events` → tooltip
    */
@@ -149,6 +145,16 @@ function getEventsForDate(
   })
 }
 
+function getPaymentOrderEventClasses(event: ProgramCalendarEventItem): string[] {
+  const original = event.originalItem as { status?: string } | undefined
+  const status = typeof original?.status === 'string' ? original.status.trim() : ''
+  if (!status) return []
+  return [
+    'program-calendar-event--payment-order-tag',
+    `program-calendar-event--payment-order-status-${status}`,
+  ]
+}
+
 function CalendarCellSchedulePreview({ date, programs }: { date: Dayjs; programs: Program[] }) {
   const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(programs)
 
@@ -204,6 +210,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       onModeChange,
       className,
       onTodayClick,
+      hideDateControls = false,
       scheduleOverlay: scheduleOverlayProp,
       tooltipOverlayClassName,
     } = props
@@ -304,7 +311,13 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                         previewOne,
                         <div className="program-calendar-event-tooltip-trigger">
                           <div
-                            className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                            className={[
+                              'program-calendar-event',
+                              isEventSelected ? 'program-calendar-event--selected' : '',
+                              ...getPaymentOrderEventClasses(event),
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
                             style={{
                               backgroundColor: colors.bg,
                             }}
@@ -418,14 +431,24 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                 previewOne,
                                 <div className="program-calendar-event-tooltip-trigger">
                                   <div
-                                    className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                                    className={[
+                                      'program-calendar-event',
+                                      isEventSelected ? 'program-calendar-event--selected' : '',
+                                      ...getPaymentOrderEventClasses(event),
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
                                     style={{
                                       backgroundColor: colors.bg,
-                                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                                      border: isEventSelected
+                                        ? 'none'
+                                        : `1px solid ${colors.border}`,
                                     }}
                                     onClick={e => e.stopPropagation()}
                                   >
-                                    <span className="program-calendar-event-title">{displayTitle}</span>
+                                    <span className="program-calendar-event-title">
+                                      {displayTitle}
+                                    </span>
                                   </div>
                                 </div>
                               )}
@@ -528,26 +551,30 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
         <div className="program-calendar-header">
           <div className="program-calendar-header-left">
-            <span className="program-calendar-header-title">{headerTitle}</span>
-            <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
-              오늘
-            </Button>
-            <div className="program-calendar-nav">
-              <Button
-                type="text"
-                size="small"
-                icon={<LeftOutlined />}
-                className="program-calendar-nav-btn"
-                onClick={handlePrev}
-              />
-              <Button
-                type="text"
-                size="small"
-                icon={<RightOutlined />}
-                className="program-calendar-nav-btn"
-                onClick={handleNext}
-              />
-            </div>
+            {hideDateControls ? null : (
+              <>
+                <span className="program-calendar-header-title">{headerTitle}</span>
+                <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
+                  오늘
+                </Button>
+                <div className="program-calendar-nav">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<LeftOutlined />}
+                    className="program-calendar-nav-btn"
+                    onClick={handlePrev}
+                  />
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<RightOutlined />}
+                    className="program-calendar-nav-btn"
+                    onClick={handleNext}
+                  />
+                </div>
+              </>
+            )}
           </div>
           <div className="program-calendar-header-right">
             <SegmentedTab

@@ -8,6 +8,7 @@ import {
   forwardRef,
   Fragment,
   useMemo,
+  type CSSProperties,
   type ReactElement,
   type ReactNode,
 } from 'react'
@@ -42,6 +43,13 @@ export type ProgramCalendarEventItem = {
   startDate: string
   endDate: string
   originalItem?: unknown
+  /** 주간 시간 격자: HH:mm. 없으면 종일로 상단에 스택 */
+  startTime?: string
+  endTime?: string
+  /** 주간 격자 블록 전용 문구(금액·상태 한 줄 `title`과 별도) */
+  timeGridLabel?: string
+  /** 주간 격자 태그 배경·테두리·글자색(지급조서 파스텔 등) */
+  weekGridSurface?: { bg: string; border: string; text: string }
 }
 
 type ProgramCalendarSharedProps = {
@@ -54,12 +62,23 @@ type ProgramCalendarSharedProps = {
   className?: string
   /** 기본: 오늘 선택 + `onMonthChange(startOf('month'))` */
   onTodayClick?: () => void
+  /** true면 헤더 좌측 `YYYY.MM` / 주간 범위 문구 숨김 (상위 기간 필터와 중복 제거용) */
+  hideHeaderTitle?: boolean
+  /** true면 헤더 좌측 날짜 제어(오늘/이전/다음) 전체를 숨김 */
+  hideDateControls?: boolean
+  /** true면 월간·주간 전환 탭 숨김 — `mode`는 부모가 고정(예: 월간만) */
+  hideModeToggle?: boolean
   /**
    * 일정 호버 오버레이. 미지정 시 `programs` → popover, `events` → tooltip
    */
   scheduleOverlay?: 'popover' | 'tooltip'
   /** Tooltip일 때 `program-calendar-tooltip-overlay`에 추가하는 클래스 */
   tooltipOverlayClassName?: string
+  /**
+   * 주간 뷰: `simple`(7열 태그) | `time-grid`(좌측 한글 시 라벨 + 시간 격자).
+   * `events` 모드에서만 적용.
+   */
+  weekViewVariant?: 'simple' | 'time-grid'
 }
 
 export type ProgramCalendarProgramProps = ProgramCalendarSharedProps & {
@@ -161,6 +180,98 @@ function getEventsForDate(
   })
 }
 
+function getPaymentOrderEventClasses(event: ProgramCalendarEventItem): string[] {
+  const original = event.originalItem as { status?: string } | undefined
+  const status = typeof original?.status === 'string' ? original.status.trim() : ''
+  if (!status) return []
+  return [
+    'program-calendar-event--payment-order-tag',
+    `program-calendar-event--payment-order-status-${status}`,
+  ]
+}
+
+/** 주간 시간 격자: 총 높이를 24시간에 균등 분배 */
+const WEEK_TIME_GRID_HOURS = 24
+/** 서브픽셀로 격자선이 라벨과 어긋나지 않도록 정수 px로 고정 (54 × 24 = 1296) */
+const WEEK_TIME_GRID_HOUR_PX = 54
+const WEEK_TIME_GRID_TOTAL_PX = WEEK_TIME_GRID_HOUR_PX * WEEK_TIME_GRID_HOURS
+const WEEK_HEADER_WEEKDAY_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
+
+/** 자정~23시: 오전/오후 + n시 (좌측 거터 2단 표기) */
+const WEEK_TIME_GRID_HOUR_ROWS: readonly { period: '오전' | '오후'; hour: string }[] = (() => {
+  const rows: { period: '오전' | '오후'; hour: string }[] = []
+  rows.push({ period: '오전', hour: '12시' })
+  for (let h = 1; h <= 11; h++) rows.push({ period: '오전', hour: `${h}시` })
+  rows.push({ period: '오후', hour: '12시' })
+  for (let h = 1; h <= 11; h++) rows.push({ period: '오후', hour: `${h}시` })
+  return rows
+})()
+
+function formatWeekHeaderDayLabel(date: Dayjs, weekDates: Dayjs[]): string {
+  const i = weekDates.findIndex(d => d.isSame(date, 'day'))
+  const prev = i > 0 ? weekDates[i - 1] : null
+  if (prev && prev.month() !== date.month()) {
+    return `${date.month() + 1}.${date.date()}`
+  }
+  return String(date.date())
+}
+
+function parseHHmmToMinutes(s: string | undefined): number | null {
+  if (!s?.trim()) return null
+  const t = s.trim()
+  if (t === '24:00') return 24 * 60
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t)
+  if (!m) return null
+  const h = parseInt(m[1], 10)
+  const min = parseInt(m[2], 10)
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null
+  return h * 60 + min
+}
+
+function layoutTimedEventInGrid(
+  event: ProgramCalendarEventItem,
+  hourPx: number
+): { top: number; height: number } {
+  const startM = parseHHmmToMinutes(event.startTime)
+  if (startM == null) {
+    return { top: 0, height: 32 }
+  }
+  const endRaw = parseHHmmToMinutes(event.endTime)
+  let endM = endRaw != null && endRaw > startM ? endRaw : startM + 60
+  if (endM <= startM) endM = startM + 60
+  endM = Math.min(endM, 24 * 60)
+  const top = (startM / 60) * hourPx
+  const height = Math.max(((endM - startM) / 60) * hourPx, 28)
+  return { top, height }
+}
+
+function weekTimeGridEventLabel(event: ProgramCalendarEventItem): string {
+  const custom = event.timeGridLabel?.trim()
+  if (custom) return custom
+  return String(event.title ?? '')
+}
+
+function weekTimeGridEventColors(
+  event: ProgramCalendarEventItem,
+  resolveEventColors: ((e: ProgramCalendarEventItem) => ScheduleColorPair | undefined) | undefined,
+  resolvedWeekColors: Map<string | number, ScheduleColorPair>
+): ScheduleColorPair {
+  const surface = event.weekGridSurface
+  if (surface) {
+    return {
+      ...SCHEDULE_COLORS[0],
+      bg: surface.bg,
+      border: surface.border,
+      text: surface.text,
+    } as ScheduleColorPair
+  }
+  return (
+    resolveEventColors?.(event) ??
+    resolvedWeekColors.get(event.id) ??
+    SCHEDULE_COLORS[0]
+  )
+}
+
 function CalendarCellSchedulePreview({ date, programs }: { date: Dayjs; programs: Program[] }) {
   const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(programs)
 
@@ -216,8 +327,12 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       onModeChange,
       className,
       onTodayClick,
+      hideHeaderTitle = false,
+      hideDateControls = false,
+      hideModeToggle = false,
       scheduleOverlay: scheduleOverlayProp,
       tooltipOverlayClassName,
+      weekViewVariant = 'simple',
     } = props
 
     const isEvents = isEventsProps(props)
@@ -226,7 +341,9 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     const selectedRowKeys = isEvents ? (props.selectedRowKeys ?? []) : []
     const renderEventsTooltipContent = isEvents ? props.renderEventsTooltipContent : undefined
     const resolveEventColors = isEvents ? props.resolveEventColors : undefined
-    const eventsTooltipScope = isEvents ? (props.eventsTooltipScope ?? 'trigger-only') : 'trigger-only'
+    const eventsTooltipScope = isEvents
+      ? (props.eventsTooltipScope ?? 'trigger-only')
+      : 'trigger-only'
     const formatEventsOverflowText = isEvents ? props.formatEventsOverflowText : undefined
 
     const scheduleOverlay: 'popover' | 'tooltip' =
@@ -310,9 +427,10 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                   const isEventSelected = selectedRowKeys.includes(event.id)
                   const colors =
-                    resolveEventColors?.(event) ?? resolvedColors.get(event.id) ?? SCHEDULE_COLORS[0]
-                  const tooltipList =
-                    eventsTooltipScope === 'full-day' ? dayEvents : [event]
+                    resolveEventColors?.(event) ??
+                    resolvedColors.get(event.id) ??
+                    SCHEDULE_COLORS[0]
+                  const tooltipList = eventsTooltipScope === 'full-day' ? dayEvents : [event]
                   const tooltipColorMap = buildResolvedColorMap(tooltipList)
                   const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
                   return (
@@ -323,7 +441,13 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                         previewOne,
                         <div className="program-calendar-event-tooltip-trigger">
                           <div
-                            className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                            className={[
+                              'program-calendar-event',
+                              isEventSelected ? 'program-calendar-event--selected' : '',
+                              ...getPaymentOrderEventClasses(event),
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
                             style={{
                               backgroundColor: colors.bg,
                             }}
@@ -348,9 +472,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                       tooltipOverlayClassName,
                       (() => {
                         const moreList =
-                          eventsTooltipScope === 'full-day'
-                            ? dayEvents
-                            : dayEvents.slice(2)
+                          eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
                         return buildEventsPreview(moreList, buildResolvedColorMap(moreList))
                       })(),
                       <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
@@ -406,6 +528,200 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       return wrapScheduleOverlay(scheduleOverlay, tooltipOverlayClassName, preview, trigger)
     }
 
+    /** 주간 `events`: 좌측 한글 시 라벨 + `28 (SUN)` 헤더 + 시간 격자 */
+    const renderWeekTimeGridForEvents = () => {
+      const totalPx = WEEK_TIME_GRID_TOTAL_PX
+      const hourPx = WEEK_TIME_GRID_HOUR_PX
+      const rootStyle = {
+        '--program-calendar-week-total-px': `${totalPx}px`,
+        '--program-calendar-week-hour-px': `${hourPx}px`,
+      } as CSSProperties
+
+      return (
+        <div className="program-calendar-week program-calendar-week--time-grid" style={rootStyle}>
+          <div className="program-calendar-week-time-grid__header-row" role="row">
+            <div className="program-calendar-week-time-grid__header-corner" aria-hidden />
+            {weekDates.map(date => {
+              const isSelected = date.isSame(selectedDate, 'day')
+              const dateKey = date.format('YYYY-MM-DD')
+              const dayLabel = formatWeekHeaderDayLabel(date, weekDates)
+              const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
+              return (
+                <button
+                  key={dateKey}
+                  type="button"
+                  className={[
+                    'program-calendar-week-header-cell',
+                    'program-calendar-week-time-grid__header-day',
+                    isSelected ? 'program-calendar-week-time-grid__header-day--selected' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => onSelectDate(date)}
+                >
+                  {`${dayLabel} (${weekday})`}
+                </button>
+              )
+            })}
+          </div>
+          <div className="program-calendar-week-time-grid__scroll">
+            <div className="program-calendar-week-time-grid__shell">
+              <div className="program-calendar-week-time-grid__gutter">
+                {WEEK_TIME_GRID_HOUR_ROWS.map((row, hourIdx) => (
+                  <div
+                    key={`week-gutter-${hourIdx}`}
+                    className={[
+                      'program-calendar-week-time-grid__gutter-cell',
+                      hourIdx === 0 ? 'program-calendar-week-time-grid__gutter-cell--first' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    style={{ top: hourIdx * hourPx }}
+                  >
+                    <span className="program-calendar-week-time-grid__gutter-period">{row.period}</span>
+                    <span className="program-calendar-week-time-grid__gutter-hour">{row.hour}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="program-calendar-week-time-grid__columns">
+                {weekDates.map(date => {
+                  const dateKey = date.format('YYYY-MM-DD')
+                  const dayEvents = getEventsForDate(events, date)
+                  const resolvedWeekColors = buildResolvedColorMap(dayEvents)
+                  const allDayEvents = dayEvents.filter(e => parseHHmmToMinutes(e.startTime) == null)
+                  const timedEvents = dayEvents.filter(e => parseHHmmToMinutes(e.startTime) != null)
+
+                  return (
+                    <div
+                      key={dateKey}
+                      className="program-calendar-week-time-grid__column"
+                      role="presentation"
+                      onClick={() => onSelectDate(date)}
+                    >
+                      <div
+                        className="program-calendar-week-time-grid__column-inner"
+                        style={{ height: totalPx }}
+                      >
+                        {allDayEvents.map((event, idx) => {
+                          const displayTitle = weekTimeGridEventLabel(event)
+                          const isEventSelected = selectedRowKeys.includes(event.id)
+                          const colors = weekTimeGridEventColors(
+                            event,
+                            resolveEventColors,
+                            resolvedWeekColors
+                          )
+                          const tooltipList =
+                            eventsTooltipScope === 'full-day' ? dayEvents : [event]
+                          const tooltipColorMap = buildResolvedColorMap(tooltipList)
+                          const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
+                          const pos: CSSProperties = {
+                            position: 'absolute',
+                            top: idx * 36,
+                            left: 4,
+                            right: 4,
+                            height: 32,
+                            zIndex: 10 + idx,
+                            backgroundColor: colors.bg,
+                            border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                          }
+                          return (
+                            <Fragment key={String(event.id)}>
+                              {wrapScheduleOverlay(
+                                scheduleOverlay,
+                                tooltipOverlayClassName,
+                                previewOne,
+                                <div className="program-calendar-event-tooltip-trigger">
+                                  <div
+                                    className={[
+                                      'program-calendar-week-time-grid__event',
+                                      'program-calendar-event',
+                                      isEventSelected ? 'program-calendar-event--selected' : '',
+                                      ...getPaymentOrderEventClasses(event),
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                    style={pos}
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <span
+                                      className="program-calendar-event-title program-calendar-week-time-grid__event-text"
+                                      style={{ color: colors.text }}
+                                    >
+                                      {displayTitle}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </Fragment>
+                          )
+                        })}
+                        {timedEvents.map((event, idx) => {
+                          const layout = layoutTimedEventInGrid(event, hourPx)
+                          const displayTitle = weekTimeGridEventLabel(event)
+                          const isEventSelected = selectedRowKeys.includes(event.id)
+                          const colors = weekTimeGridEventColors(
+                            event,
+                            resolveEventColors,
+                            resolvedWeekColors
+                          )
+                          const tooltipList =
+                            eventsTooltipScope === 'full-day' ? dayEvents : [event]
+                          const tooltipColorMap = buildResolvedColorMap(tooltipList)
+                          const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
+                          const pos: CSSProperties = {
+                            position: 'absolute',
+                            top: layout.top,
+                            left: 4,
+                            right: 4,
+                            height: layout.height,
+                            minHeight: 28,
+                            zIndex: 1 + idx,
+                            backgroundColor: colors.bg,
+                            border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                          }
+                          return (
+                            <Fragment key={String(event.id)}>
+                              {wrapScheduleOverlay(
+                                scheduleOverlay,
+                                tooltipOverlayClassName,
+                                previewOne,
+                                <div className="program-calendar-event-tooltip-trigger">
+                                  <div
+                                    className={[
+                                      'program-calendar-week-time-grid__event',
+                                      'program-calendar-event',
+                                      'program-calendar-week-time-grid__event--timed',
+                                      isEventSelected ? 'program-calendar-event--selected' : '',
+                                      ...getPaymentOrderEventClasses(event),
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                    style={pos}
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <span
+                                      className="program-calendar-event-title program-calendar-week-time-grid__event-text"
+                                      style={{ color: colors.text }}
+                                    >
+                                      {displayTitle}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </Fragment>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     const renderWeekView = () => {
       const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -455,10 +771,18 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                 previewOne,
                                 <div className="program-calendar-event-tooltip-trigger">
                                   <div
-                                    className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                                    className={[
+                                      'program-calendar-event',
+                                      isEventSelected ? 'program-calendar-event--selected' : '',
+                                      ...getPaymentOrderEventClasses(event),
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
                                     style={{
                                       backgroundColor: colors.bg,
-                                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                                      border: isEventSelected
+                                        ? 'none'
+                                        : `1px solid ${colors.border}`,
                                     }}
                                     onClick={e => e.stopPropagation()}
                                   >
@@ -481,9 +805,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                               tooltipOverlayClassName,
                               (() => {
                                 const moreList =
-                                  eventsTooltipScope === 'full-day'
-                                    ? dayEvents
-                                    : dayEvents.slice(2)
+                                  eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
                                 return buildEventsPreview(moreList, buildResolvedColorMap(moreList))
                               })(),
                               <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
@@ -573,45 +895,58 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       )
     }
 
+    const showCalendarChrome =
+      !hideDateControls || !hideModeToggle
+
     return (
       <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
-        <div className="program-calendar-header">
-          <div className="program-calendar-header-left">
-            <span className="program-calendar-header-title">{headerTitle}</span>
-            <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
-              오늘
-            </Button>
-            <div className="program-calendar-nav">
-              <Button
-                type="text"
-                size="small"
-                icon={<LeftOutlined />}
-                className="program-calendar-nav-btn"
-                onClick={handlePrev}
-              />
-              <Button
-                type="text"
-                size="small"
-                icon={<RightOutlined />}
-                className="program-calendar-nav-btn"
-                onClick={handleNext}
-              />
+        {showCalendarChrome ? (
+          <div className="program-calendar-header">
+            <div className="program-calendar-header-left">
+              {hideDateControls ? null : (
+                <>
+                  {hideHeaderTitle ? null : (
+                    <span className="program-calendar-header-title">{headerTitle}</span>
+                  )}
+                  <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
+                    오늘
+                  </Button>
+                  <div className="program-calendar-nav">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<LeftOutlined />}
+                      className="program-calendar-nav-btn"
+                      onClick={handlePrev}
+                    />
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<RightOutlined />}
+                      className="program-calendar-nav-btn"
+                      onClick={handleNext}
+                    />
+                  </div>
+                </>
+              )}
             </div>
+            {hideModeToggle ? null : (
+              <div className="program-calendar-header-right">
+                <SegmentedTab
+                  size="medium"
+                  value={mode}
+                  onChange={value => onModeChange(value as 'month' | 'week')}
+                  options={[
+                    { label: '월간', value: 'month' },
+                    { label: '주간', value: 'week' },
+                  ]}
+                />
+              </div>
+            )}
           </div>
-          <div className="program-calendar-header-right">
-            <SegmentedTab
-              size="medium"
-              value={mode}
-              onChange={value => onModeChange(value as 'month' | 'week')}
-              options={[
-                { label: '월간', value: 'month' },
-                { label: '주간', value: 'week' },
-              ]}
-            />
-          </div>
-        </div>
+        ) : null}
         {mode === 'week' ? (
-          renderWeekView()
+          isEvents && weekViewVariant === 'time-grid' ? renderWeekTimeGridForEvents() : renderWeekView()
         ) : (
           <Calendar
             value={currentMonth}
