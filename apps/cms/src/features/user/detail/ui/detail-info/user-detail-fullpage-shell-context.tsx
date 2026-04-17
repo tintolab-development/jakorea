@@ -9,6 +9,7 @@ import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-ba
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
+import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 
 export interface UserDetailFullpageShellValue {
   displayUser: Omit<User, 'password'>
@@ -39,11 +40,17 @@ export interface UserDetailFullpageShellValue {
   basicInfoEditing: boolean
   basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null
   basicInfoSaveLoading: boolean
+  /** 관리자 상세 — 뷰 모드에서 권한 유형만 즉시 저장 중 */
+  adminPermissionVariantPatching: boolean
   instructorPermissionRevokeOpen: boolean
   onStartBasicInfoEdit: () => void
   onCancelBasicInfoEdit: () => void
   onSaveBasicInfoEdit: () => void | Promise<void>
   onBasicInfoDraftChange: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  /** 마스터 관리자 + ADMIN 대상일 때만 정의 — 뷰 모드 권한 유형 즉시 저장 */
+  onPatchAdminPermissionVariantFromDetailView?: (
+    nextPermission: AdminPermissionTagVariant
+  ) => void | Promise<void>
   onOpenInstructorPermissionRevoke: () => void
   onCloseInstructorPermissionRevoke: () => void
   onConfirmInstructorPermissionRevoke: (payload: {

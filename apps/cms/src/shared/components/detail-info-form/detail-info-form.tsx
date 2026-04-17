@@ -13,6 +13,8 @@ const DetailInfoFormContext = createContext<DetailInfoFormContextValue>({
 
 export type DetailInfoFormProps = {
   title: string
+  /** 타이틀(`h2`) 직후·`description`과 같은 헤더 행에 노출 (민트 강조 문구 등) */
+  message?: ReactNode
   /** 타이틀(`h2`) 우측에 붙는 보조 문구·뱃지 등 */
   titleTrailing?: ReactNode
   description?: ReactNode
@@ -29,6 +31,7 @@ export type DetailInfoFormProps = {
 
 function DetailInfoFormRoot({
   title,
+  message,
   titleTrailing,
   description,
   hideHeader = false,
@@ -59,6 +62,9 @@ function DetailInfoFormRoot({
             <h2 id={titleId} className="detail-info-form__title">
               {title}
             </h2>
+            {message ? (
+              <div className="detail-info-form__message">{message}</div>
+            ) : null}
             {description ? (
               <div className="detail-info-form__description">{description}</div>
             ) : null}

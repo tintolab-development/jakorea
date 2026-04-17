@@ -38,3 +38,8 @@ export type { SessionFormat } from './session-format-badge'
 export { ProgramCategoryBadge } from './program-category-badge'
 export type { ProgramCategory } from './program-category-badge'
 export { InterviewStatusBadge } from './interview-status-badge'
+export {
+  CalendarSet,
+  CALENDAR_FILTER_COLOR_CLASSES,
+} from './calendar'
+export type { CalendarSetMainProps } from './calendar'

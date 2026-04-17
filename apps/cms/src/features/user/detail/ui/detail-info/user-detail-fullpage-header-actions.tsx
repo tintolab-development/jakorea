@@ -22,9 +22,7 @@ import {
   USER_BASIC_INFO_ENTRY_QUERY_KEY,
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  canEditAdminMemberInfo,
-} from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 
 export type UserDetailPermissionRole = 'instructor' | 'admin'
 
@@ -37,6 +35,11 @@ export interface UserDetailFullPageHeaderActionsProps {
   onRequestPersonalInfoReveal: () => void
   onPermissionApprove?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onPermissionReject?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
+  onPermissionResetToPending?: (ctx: {
+    userId: string
+    permissionRole: UserDetailPermissionRole
+    fromStatus: 'APPROVED' | 'REJECTED'
+  }) => void
   onWithdraw?: (user: Omit<User, 'password'>) => void
   onOpenWithdrawConfirm: () => void
 }
@@ -95,7 +98,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     basicBodyKey === 'all_users' ||
     basicBodyKey === 'institution' ||
     basicBodyKey === 'instructor' ||
-    (basicBodyKey === 'admin' && canEditAdminMemberInfo(currentUser, displayUser))
+    (basicBodyKey === 'admin' && isCmsAdminUser(currentUser))
 
   const showInlineEditStart = !pageShell.basicInfoEditing && canInlineEdit
 

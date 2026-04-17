@@ -183,8 +183,7 @@ export function PaymentOrderInstructorSettlementTable({
         key: 'estimatedAmount',
         width: 140,
         align: 'center',
-        render: (amount: number, row: PaymentOrderAdminInstructorDetailProgramRow) =>
-          row.processingStatus === 'rejected' ? '-' : formatWon(amount),
+        render: (amount: number) => formatWon(amount),
       },
       {
         title: '산출 내역',
@@ -298,9 +297,9 @@ export function PaymentOrderInstructorSettlementTable({
               variant="primary"
               size="filter-wide"
               icon={<DownloadOutlined />}
-              onClick={() => message.info('지급조서 다운로드는 추후 연결됩니다.')}
+              onClick={() => message.info('지급조서 발급은 추후 연결됩니다.')}
             >
-              지급조서 다운로드
+              지급조서 발급
             </AppButton>
           </div>
         </div>

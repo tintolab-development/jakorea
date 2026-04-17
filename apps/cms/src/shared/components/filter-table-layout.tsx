@@ -5,10 +5,13 @@
  */
 
 import type { ReactNode } from 'react'
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { Divider } from '@/shared/components/divider'
 import './filter-table-layout.css'
-import { TableFilterGroup, type TableFilterGroupProps } from './table-filter-group'
+import {
+  TableFilterGroup,
+  type FilterFieldConfig,
+  type TableFilterGroupProps,
+} from './table-filter-group'
 
 export type { FilterFieldConfig, TableFilterGroupProps }
 
@@ -19,6 +22,8 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   description?: ReactNode
   /** 헤더 우측 버튼·액션 */
   actions?: ReactNode
+  /** 구분선과 제목 사이에 노출할 상단 내비게이션(탭 등) */
+  topNav?: ReactNode
   /** 필터·헤더 아래 테이블 본문 */
   children?: ReactNode
   className?: string
@@ -28,6 +33,7 @@ export function FilterTableLayout({
   title,
   description,
   actions,
+  topNav,
   children,
   className,
   ...TableFilterGroupProps
@@ -44,6 +50,8 @@ export function FilterTableLayout({
       <div className="filter-table-layout__divider">
         <Divider />
       </div>
+
+      {topNav != null ? <div className="filter-table-layout__top-nav">{topNav}</div> : null}
 
       {showToolbar ? (
         <div className="filter-table-layout__toolbar">

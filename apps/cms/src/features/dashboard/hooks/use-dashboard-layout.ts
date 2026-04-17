@@ -11,6 +11,7 @@ import {
   useDashboardWidgetOrderStore,
   buildDefaultDisplayItemIds,
   buildDisplayItemsMeta,
+  mergeOrderedIdsWithDefaults,
   reorderToAvoidTopGap,
   type DisplayItemMeta,
   type DashboardWidgetOrderState,
@@ -52,9 +53,14 @@ export function useDashboardLayout({
   const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
   const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
 
-  const orderedIds = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) =>
-    s.getOrderedIds(userRole, defaultIds)
+  /** getOrderedIds()는 호출마다 새 배열을 만들어 셀렉터에 쓰면 구독이 매번 “변경”으로 처리되어 무한 렌더가 난다. 역할별 저장 순서만 구독한다. */
+  const savedOrderForRole = useDashboardWidgetOrderStore(s =>
+    userRole ? s.orderByRole[userRole] : undefined
   )
+  const orderedIds = useMemo(() => {
+    if (!userRole || defaultIds.length === 0) return defaultIds
+    return mergeOrderedIdsWithDefaults(savedOrderForRole, defaultIds)
+  }, [userRole, defaultIds, savedOrderForRole])
   const setOrderedIdsRaw = useDashboardWidgetOrderStore(
     (s: DashboardWidgetOrderState) => s.setOrderedIds
   )

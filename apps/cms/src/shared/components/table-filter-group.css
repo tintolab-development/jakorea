@@ -133,6 +133,7 @@
   max-width: none;
 }
 
+.table-filter-group__select-pair-selects,
 .table-filter-group__address-region-selects {
   display: flex;
   gap: 8px;
@@ -140,6 +141,7 @@
   min-width: 0;
 }
 
+.table-filter-group__select-pair-selects > .cms-select,
 .table-filter-group__address-region-selects > .cms-select {
   flex: 1 1 0;
   min-width: 0;

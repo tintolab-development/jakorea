@@ -24,7 +24,7 @@ export function matchesInstructorSettlementFilter(user: UserRow, selected: strin
   if (user.role !== 'INSTRUCTOR') return false
   const label = getInstructorSettlementDisplayLabel(user)
   if (token === '해당 없음') {
-    return label === '' || label === '-'
+    return label === '' || label === '-' || label === '해당 없음'
   }
   return label === token
 }

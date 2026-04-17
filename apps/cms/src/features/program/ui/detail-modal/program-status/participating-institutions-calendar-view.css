@@ -267,18 +267,15 @@
 
 /* ===== Ant Design Calendar 요일 헤더 (삼글자, 가운데 정렬, 폰트 스펙) ===== */
 .participating-institutions-calendar-card--left .ant-picker-content thead th {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Outfit, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 130%;
-  letter-spacing: -0.312px;
-  padding: 0 !important;
-  padding-bottom: 9px !important;
+  padding-top: 8px !important;
+  padding-right: 20px !important;
+  padding-bottom: 8px !important;
+  padding-left: 20px !important;
   border-bottom: 1px solid #f0f0f0;
   position: relative;
+  box-sizing: border-box;
+  min-height: 37px;
+  vertical-align: middle;
 }
 
 .participating-institutions-calendar-card--left .ant-picker-content thead th {
@@ -289,7 +286,8 @@
   content: '';
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Outfit, sans-serif;
@@ -575,7 +573,22 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0;
   border-bottom: 1px solid #f0f0f0;
-  padding: 0 0 9px 0;
+  padding: 0 0 8px 0;
+}
+
+.participating-institutions-calendar-week-header-cell {
+  display: flex;
+  min-width: 0;
+  min-height: 37px;
+  padding-top: 8px !important;
+  padding-right: 20px !important;
+  padding-bottom: 8px !important;
+  padding-left: 20px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  flex: 1 0 0;
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Outfit, sans-serif;
@@ -585,10 +598,6 @@
   line-height: 130%;
   letter-spacing: -0.312px;
   opacity: 0.5;
-}
-
-.participating-institutions-calendar-week-header-cell {
-  text-align: center;
 }
 
 .participating-institutions-calendar-week-body {

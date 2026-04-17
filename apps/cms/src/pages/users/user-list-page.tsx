@@ -25,6 +25,10 @@ import {
   SchoolRegisterModal,
   type SchoolRegisterModalFormValues,
 } from '@/features/school/ui/school-register-modal'
+import {
+  InstructorRegisterModal,
+  type InstructorRegisterModalFormValues,
+} from '@/features/user/shared/ui/instructor-register-modal'
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -223,6 +227,11 @@ export function UserListPage() {
     open: adminRegisterOpen,
     openModal: openAdminRegisterModal,
     closeModal: closeAdminRegisterModal,
+  } = useModalState()
+  const {
+    open: instructorRegisterOpen,
+    openModal: openInstructorRegisterModal,
+    closeModal: closeInstructorRegisterModal,
   } = useModalState()
 
   // 삭제 확인 모달 상태
@@ -533,6 +542,37 @@ export function UserListPage() {
     }
   }
 
+  const handleInstructorRegisterSubmit = async (values: InstructorRegisterModalFormValues) => {
+    try {
+      const emailTrim = values.email.trim()
+      const email =
+        emailTrim !== '' ? emailTrim : `instructor-${Date.now()}@instructor.jakorea.local`
+      const nameTrim = values.nameKo.trim()
+      const name = nameTrim !== '' ? nameTrim : '강사'
+      await createUser({
+        email,
+        password: 'Temp1234!',
+        name,
+        nameEn: values.nameEn.trim() || undefined,
+        phone: values.contact.trim() || undefined,
+        role: 'INSTRUCTOR',
+        instructorInfo: {
+          bankName: values.bankName.trim(),
+          accountNumber: values.accountNumber.trim(),
+          accountHolder: values.accountHolder.trim(),
+          isBusinessIncome: values.isBusinessIncome === 'yes',
+        },
+        isActive: true,
+      })
+      showSuccessMessage(MESSAGES.success.created)
+      invalidateList()
+      closeInstructorRegisterModal()
+    } catch (error) {
+      handleError(error, { defaultMessage: '강사 등록에 실패했습니다.' })
+      throw error
+    }
+  }
+
   // 회원 삭제
   const handleDeleteClick = (user: Omit<User, 'password'>) => {
     if (resolvedMemberListKind === 'institutions' && institutionHasRegisteredTeachers(user)) {
@@ -719,6 +759,10 @@ export function UserListPage() {
                     openAdminRegisterModal()
                     return
                   }
+                  if (resolvedMemberListKind === 'instructors') {
+                    openInstructorRegisterModal()
+                    return
+                  }
                   window.alert('준비 중입니다')
                 }}
               >
@@ -784,6 +828,13 @@ export function UserListPage() {
         open={adminRegisterOpen}
         onClose={closeAdminRegisterModal}
         onSubmit={handleAdminRegisterSubmit}
+        loading={loading}
+      />
+
+      <InstructorRegisterModal
+        open={instructorRegisterOpen}
+        onClose={closeInstructorRegisterModal}
+        onSubmit={handleInstructorRegisterSubmit}
         loading={loading}
       />
 

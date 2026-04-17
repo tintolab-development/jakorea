@@ -147,3 +147,57 @@
   background: color-mix(in srgb, var(--status-accent) 6%, transparent);
   border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
 }
+
+/* ----- instructor settlement (강사 정산 현황 7종 — 시안·programEnrollment/settlement 토큰 정렬) ----- */
+.status-badge--variant-text.status-badge--instructor-settlement-awaiting,
+.status-badge--variant-badge.status-badge--instructor-settlement-awaiting {
+  --status-accent: var(--color-orange, #f07917);
+  color: var(--status-accent);
+}
+
+.status-badge--variant-text.status-badge--instructor-settlement-partial,
+.status-badge--variant-badge.status-badge--instructor-settlement-partial {
+  --status-accent: var(--color-purple, #8457ce);
+  color: var(--status-accent);
+}
+
+.status-badge--variant-text.status-badge--instructor-settlement-statement-verified,
+.status-badge--variant-badge.status-badge--instructor-settlement-statement-verified {
+  --status-accent: #1e8c29;
+  color: var(--status-accent);
+}
+
+.status-badge--variant-text.status-badge--instructor-settlement-account-paid,
+.status-badge--variant-badge.status-badge--instructor-settlement-account-paid {
+  --status-accent: var(--color-blue, #017eaf);
+  color: var(--status-accent);
+}
+
+.status-badge--variant-text.status-badge--instructor-settlement-na,
+.status-badge--variant-badge.status-badge--instructor-settlement-na {
+  --status-accent: #464646;
+  color: var(--status-accent);
+}
+
+.status-badge--variant-text.status-badge--instructor-settlement-rejected,
+.status-badge--variant-badge.status-badge--instructor-settlement-rejected {
+  --status-accent: var(--color-red, #c32f4a);
+  color: var(--status-accent);
+}
+
+.status-badge--variant-text.status-badge--instructor-settlement-correction,
+.status-badge--variant-badge.status-badge--instructor-settlement-correction {
+  --status-accent: #7a2038;
+  color: var(--status-accent);
+}
+
+.status-badge--variant-badge.status-badge--instructor-settlement-awaiting,
+.status-badge--variant-badge.status-badge--instructor-settlement-partial,
+.status-badge--variant-badge.status-badge--instructor-settlement-statement-verified,
+.status-badge--variant-badge.status-badge--instructor-settlement-account-paid,
+.status-badge--variant-badge.status-badge--instructor-settlement-na,
+.status-badge--variant-badge.status-badge--instructor-settlement-rejected,
+.status-badge--variant-badge.status-badge--instructor-settlement-correction {
+  background: color-mix(in srgb, var(--status-accent) 6%, transparent);
+  border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
+}

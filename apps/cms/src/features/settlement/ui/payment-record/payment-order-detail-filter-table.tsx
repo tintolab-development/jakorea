@@ -309,8 +309,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         key: 'estimatedAmount',
         width: 140,
         align: 'center',
-        render: (amount: number, row: PaymentOrderDetailLineRow) =>
-          row.processingStatus === 'rejected' ? '-' : formatWon(amount),
+        render: (amount: number) => formatWon(amount),
       },
       {
         title: '산출 내역',
@@ -338,8 +337,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     ]
   }, [mode, onOpenCalculationStatement, openStatusRowId])
 
-  const sectionTitle =
-    mode === 'program' ? '강사 별 정산 목록' : '프로그램 별 정산 목록'
+  const sectionTitle = mode === 'program' ? '강사 별 정산 목록' : '프로그램 별 정산 목록'
 
   const filterClassName =
     mode === 'program'
@@ -400,7 +398,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               icon={<DownloadOutlined />}
               onClick={() => window.alert('준비 중입니다.')}
             >
-              지급조서 다운로드
+              지급조서 발급
             </AppButton>
           </div>
         </div>

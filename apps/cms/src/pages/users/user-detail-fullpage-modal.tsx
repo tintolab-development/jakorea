@@ -51,6 +51,11 @@ export interface UserDetailFullPageModalProps {
   permissionRole?: UserDetailPermissionRole
   onPermissionApprove?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
   onPermissionReject?: (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => void
+  onPermissionResetToPending?: (ctx: {
+    userId: string
+    permissionRole: UserDetailPermissionRole
+    fromStatus: 'APPROVED' | 'REJECTED'
+  }) => void
   onNavigateToLinkedUser?: (userId: string) => void
   /** 저장 후 목록·드로어 등 상위가 동일 회원 객체를 갱신할 때 */
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
@@ -66,6 +71,7 @@ export function UserDetailFullPageModal({
   permissionRole,
   onPermissionApprove,
   onPermissionReject,
+  onPermissionResetToPending,
   onNavigateToLinkedUser,
   onMemberBasicInfoSaved,
 }: UserDetailFullPageModalProps) {
@@ -122,11 +128,15 @@ export function UserDetailFullPageModal({
       basicInfoEditing: state.basicInfoEditing,
       basicInfoDraft: state.basicInfoDraft,
       basicInfoSaveLoading: state.basicInfoSaveLoading,
+      adminPermissionVariantPatching: state.adminPermissionVariantPatching,
       instructorPermissionRevokeOpen: state.instructorPermissionRevokeOpen,
       onStartBasicInfoEdit: actions.startBasicInfoEdit,
       onCancelBasicInfoEdit: actions.cancelBasicInfoEdit,
       onSaveBasicInfoEdit: actions.saveBasicInfoEdit,
       onBasicInfoDraftChange: actions.updateBasicInfoDraft,
+      onPatchAdminPermissionVariantFromDetailView: derived.canPatchAdminPermissionInDetailView
+        ? actions.patchAdminPermissionVariantFromDetailView
+        : undefined,
       onOpenInstructorPermissionRevoke: actions.openInstructorPermissionRevoke,
       onCloseInstructorPermissionRevoke: actions.closeInstructorPermissionRevoke,
       onConfirmInstructorPermissionRevoke: actions.confirmInstructorPermissionRevoke,
@@ -146,17 +156,20 @@ export function UserDetailFullPageModal({
     state.basicInfoEditing,
     state.basicInfoDraft,
     state.basicInfoSaveLoading,
+    state.adminPermissionVariantPatching,
     state.instructorPermissionRevokeOpen,
     actions.startBasicInfoEdit,
     actions.cancelBasicInfoEdit,
     actions.saveBasicInfoEdit,
     actions.updateBasicInfoDraft,
+    actions.patchAdminPermissionVariantFromDetailView,
     actions.openInstructorPermissionRevoke,
     actions.closeInstructorPermissionRevoke,
     actions.confirmInstructorPermissionRevoke,
     actions.closePersonalInfoRevealConfirm,
     actions.submitPersonalInfoReveal,
     derived.instructorResumeApplicantRow,
+    derived.canPatchAdminPermissionInDetailView,
     basicInfoEntrySource,
     onNavigateToLinkedUser,
     modals,
@@ -202,6 +215,7 @@ export function UserDetailFullPageModal({
             onRequestPersonalInfoReveal={actions.openPersonalInfoRevealConfirm}
             onPermissionApprove={onPermissionApprove}
             onPermissionReject={onPermissionReject}
+            onPermissionResetToPending={onPermissionResetToPending}
             onWithdraw={onWithdraw}
             onOpenWithdrawConfirm={actions.openWithdrawConfirm}
           />

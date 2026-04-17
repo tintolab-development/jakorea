@@ -49,11 +49,21 @@
   min-width: 0;
 }
 
-/* 구분선·본문 슬롯 간격은 filter-table-layout__divider 패딩으로 처리 */
+/*
+ * 필터 ↔ 구분선 ↔ 테이블 헤더(레이블·버튼) 간격
+ * - 디바이더 위·아래 각 32px은 이 패딩만 사용
+ * - `participating-institutions-section__below-divider` 전역 margin-top:32px와 겹치면 하단이 64px로 보이므로 0으로 둠
+ */
 .payment-orders-page__content-wrapper
   .payment-orders-page__filter-list-layout
   .filter-table-layout__divider {
-  padding: var(--spacing-16) 0;
+  padding: var(--spacing-32) 0;
+}
+
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .participating-institutions-section__below-divider {
+  margin-top: 0;
 }
 
 .payment-orders-page__content-wrapper
@@ -87,4 +97,18 @@
 
 .payment-orders-page .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
   margin-right: 8px;
+}
+
+/*
+ * ViewModeController 기본은 align-items: flex-end → 우측 토글(버튼)이 더 높을 때
+ * 좌측 제목이 하단 정렬되며 디바이더 직후~제목 사이에 빈 여백처럼 보임 → 수직 가운데 정렬
+ */
+.payment-orders-page__filter-list-layout .view-mode-controller__header {
+  align-items: center;
+}
+
+/* 리스트 뷰: 컬럼 헤더·본문(td) 텍스트 가운데 */
+.payment-orders-page .list-page-layout__table-shell .cms-data-table th.ant-table-cell,
+.payment-orders-page .list-page-layout__table-shell .cms-data-table td.ant-table-cell {
+  text-align: center !important;
 }

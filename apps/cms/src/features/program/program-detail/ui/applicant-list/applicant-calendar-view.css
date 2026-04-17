@@ -17,12 +17,15 @@
 .applicant-calendar-main {
   flex: 7 1 0;
   min-width: 1000px;
-  min-height: var(--applicant-calendar-min-height);
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .applicant-calendar-right {
   flex: 3 1 0;
-  min-width: 280px;
+  width: 400px;
+  min-width: 400px;
+  box-sizing: border-box;
   min-height: var(--applicant-calendar-min-height);
   background: #fff;
   border: 1px solid #f0f0f0;

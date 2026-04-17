@@ -9,15 +9,17 @@ export interface ProgramWageInfo {
   deductionItems: string
 }
 
-/** 임금 정보 — 강사비 유형(수정 모드 셀렉트) */
-export const PROGRAM_WAGE_TYPE_OPTIONS: { value: string; label: string }[] = [
+/**
+ * CMS 공통: 강사비 등급·프로그램 임금 정보의 강사비 유형 셀렉트 — 1·2·3급만
+ */
+export const INSTRUCTOR_FEE_GRADE_OPTIONS: { value: string; label: string }[] = [
   { value: '1급 강사비', label: '1급 강사비' },
   { value: '2급 강사비', label: '2급 강사비' },
   { value: '3급 강사비', label: '3급 강사비' },
-  { value: '특강 강사비', label: '특강 강사비' },
-  { value: '보조 강사비', label: '보조 강사비' },
-  { value: '다수인출강비', label: '다수인출강비' },
 ]
+
+/** 프로그램 상세 임금 정보 등 — 옵션은 {@link INSTRUCTOR_FEE_GRADE_OPTIONS}와 동일 */
+export const PROGRAM_WAGE_TYPE_OPTIONS: { value: string; label: string }[] = INSTRUCTOR_FEE_GRADE_OPTIONS
 
 /** 임금 책정 기준 — 단위(시안: 회색 박스 셀렉트) */
 export const PROGRAM_WAGE_PRICING_MEASURE_OPTIONS: { value: string; label: string }[] = [

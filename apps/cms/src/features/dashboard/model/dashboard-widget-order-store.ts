@@ -109,10 +109,28 @@ export function buildDisplayItemsMeta(widgets: DashboardWidgetConfig[]): Display
   }))
 }
 
-function sameSet(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false
-  const set = new Set(b)
-  return a.every(id => set.has(id))
+/**
+ * localStorage에 남은 순서와 현재 권한·ACL 기준 `defaultIds`를 합침.
+ * - 제거된 위젯 id는 무시
+ * - 새로 생긴 위젯은 `defaultIds` 순서대로 뒤에 붙음
+ * - 사용자가 맞춰 둔 상대 순서는 유지
+ */
+export function mergeOrderedIdsWithDefaults(saved: string[] | undefined, defaultIds: string[]): string[] {
+  if (defaultIds.length === 0) return []
+  if (!saved?.length) return defaultIds
+  const valid = new Set(defaultIds)
+  const kept: string[] = []
+  const seen = new Set<string>()
+  for (const id of saved) {
+    if (valid.has(id) && !seen.has(id)) {
+      seen.add(id)
+      kept.push(id)
+    }
+  }
+  for (const id of defaultIds) {
+    if (!seen.has(id)) kept.push(id)
+  }
+  return kept
 }
 
 /**
@@ -156,8 +174,7 @@ export const useDashboardWidgetOrderStore = create<DashboardWidgetOrderState>()(
       getOrderedIds(role: UserRole | null, defaultIds: string[]): string[] {
         if (!role || defaultIds.length === 0) return defaultIds
         const saved = get().orderByRole[role]
-        if (!saved || !sameSet(saved, defaultIds)) return defaultIds
-        return saved
+        return mergeOrderedIdsWithDefaults(saved, defaultIds)
       },
 
       setWidgetWidth(role: string, widgetId: string, colSpan: 12 | 24) {

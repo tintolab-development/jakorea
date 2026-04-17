@@ -3,11 +3,12 @@
  * 필터: FilterTableLayout(TableFilterGroup) · 헤더·뷰 전환: ViewModeController (참여기관 섹션과 동일 패턴)
  */
 
-import { useCallback, useEffect, useMemo, useState, type ReactElement, type Key } from 'react'
+import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import type { FilterFieldConfig } from '@/shared/components/table-filter-group'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { ViewModeController } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
@@ -15,10 +16,7 @@ import type { ViewModeToggleOption } from '@/shared/components/view-mode'
 import {
   mockPaymentOrderAdminInstructorList,
   mockPaymentOrderAdminProgramList,
-  PAYMENT_ORDER_STATUS_LABELS_DETAIL,
-  PAYMENT_ORDER_STATUS_LABELS_LIST,
   type PaymentOrderAdminInstructorRow,
-  type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
@@ -30,14 +28,13 @@ import {
   PaymentOrdersTable,
 } from '@/features/settlement/ui/payment-record'
 import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
-import { AppButton } from '@/shared/ui/app-button'
 import {
   createPaymentOrdersTablePageConfig,
   filterPaymentInstructorRows,
   filterPaymentProgramRows,
   parsePaymentOrdersFiltersFromUrl,
-  type AppliedStatus,
   type ExposureMode,
+  type PendingPaymentItemBucket,
   type PaymentOrdersTableContext,
 } from './payment-orders-table.config'
 
@@ -53,24 +50,23 @@ type DetailState =
   | { type: 'instructor'; data: PaymentOrderAdminInstructorRow }
   | null
 
-/** 선택열(≈60) + 데이터 열 합(64+360+152+200+168) — 프로그램/강사 테이블 동일 스크롤 폭 */
-const PAYMENT_ORDERS_LIST_TABLE_SCROLL_X = 60 + 64 + 360 + 152 + 200 + 168
+/** 데이터 열 합 — 행 선택 열 없음 */
+const PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM = 64 + 360 + 180 + 200 + 168
+const PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR = 64 + 340 + 180 + 200 + 180
+
+/** 지급대기 정산 항목 필터(전체는 선택 해제로 표현) */
+const PENDING_PAYMENT_ITEM_FILTER_OPTIONS: {
+  value: Exclude<PendingPaymentItemBucket, 'all'>
+  label: string
+}[] = [
+  { value: 'none', label: '없음' },
+  { value: '1-5', label: '1 ~ 5개' },
+  { value: '6-10', label: '6 ~ 10개' },
+  { value: '11plus', label: '11개 이상' },
+]
 
 function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
-}
-
-function renderProcessingStatusCell(
-  status: PaymentOrderAdminProcessingStatus,
-  labels: Record<PaymentOrderAdminProcessingStatus, string>
-) {
-  return (
-    <span
-      className={`payment-order-admin__status-text payment-order-admin__status-text--${status}`}
-    >
-      {labels[status]}
-    </span>
-  )
 }
 
 export default function PaymentOrdersPage() {
@@ -78,19 +74,8 @@ export default function PaymentOrdersPage() {
   const [viewMode, setViewMode] = useState<PageViewMode>('list')
   const [exposureMode, setExposureMode] = useState<ExposureMode>('program')
   const [detailState, setDetailState] = useState<DetailState>(null)
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  /** 캘린더 뷰 우측 패널 체크 — 일괄 확인과 연동 */
-  const [calendarRightPanelSelectedKeys, setCalendarRightPanelSelectedKeys] = useState<Key[]>([])
 
-  const clearBatchSelection = useCallback(() => {
-    setSelectedRowKeys([])
-    setCalendarRightPanelSelectedKeys([])
-  }, [])
-
-  const tablePageConfig = useMemo(
-    () => createPaymentOrdersTablePageConfig({ onAfterApplySearch: clearBatchSelection }),
-    [clearBatchSelection]
-  )
+  const tablePageConfig = useMemo(() => createPaymentOrdersTablePageConfig(), [])
 
   const appliedFromUrl = useMemo(
     () => parsePaymentOrdersFiltersFromUrl(searchParams),
@@ -108,7 +93,11 @@ export default function PaymentOrdersPage() {
 
   const isProgram = exposureMode === 'program'
   const rowsForTable = useMemo(
-    () => (isProgram ? listProgram : listInstructor) as (PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow)[],
+    () =>
+      (isProgram ? listProgram : listInstructor) as (
+        | PaymentOrderAdminProgramRow
+        | PaymentOrderAdminInstructorRow
+      )[],
     [isProgram, listProgram, listInstructor]
   )
 
@@ -119,46 +108,21 @@ export default function PaymentOrdersPage() {
     []
   )
 
-  const { pendingFilters, applySearch: handleSearch, handleFilterChange } = useTablePage(
-    tablePageConfig,
-    {
-      data: rowsForTable,
-      searchParams,
-      setSearchParams,
-      context: tableContext,
-    }
-  )
-
-  const statusSelectOptions = useMemo((): { value: AppliedStatus; label: string }[] => {
-    const labels =
-      exposureMode === 'program'
-        ? PAYMENT_ORDER_STATUS_LABELS_LIST
-        : PAYMENT_ORDER_STATUS_LABELS_DETAIL
-    return [
-      { value: 'all', label: '전체' },
-      ...(Object.keys(labels) as PaymentOrderAdminProcessingStatus[]).map(key => ({
-        value: key,
-        label: labels[key],
-      })),
-    ]
-  }, [exposureMode])
+  const {
+    pendingFilters,
+    applySearch: handleSearch,
+    handleFilterChange,
+  } = useTablePage(tablePageConfig, {
+    data: rowsForTable,
+    searchParams,
+    setSearchParams,
+    context: tableContext,
+  })
 
   const closeDetail = useCallback(() => {
     setDetailState(null)
   }, [])
   const appliedResetKey = useMemo(() => searchParams.toString(), [searchParams])
-
-  useEffect(() => {
-    clearBatchSelection()
-  }, [exposureMode, appliedResetKey, viewMode, clearBatchSelection])
-
-  const rowSelection = useMemo(
-    () => ({
-      selectedRowKeys,
-      onChange: (keys: Key[]) => setSelectedRowKeys(keys),
-    }),
-    [selectedRowKeys]
-  )
 
   const programColumns: ColumnsType<PaymentOrderAdminProgramRow> = useMemo(
     () => [
@@ -179,21 +143,20 @@ export default function PaymentOrdersPage() {
         align: 'center',
       },
       {
-        title: '정산 대상 강사 수',
+        title: '정산 대상 강사',
         dataIndex: 'instructorCount',
         key: 'instructorCount',
-        width: 152,
+        width: 180,
         align: 'center',
         render: (n: number) => `${n}명`,
       },
       {
-        title: '지급조서 처리 현황',
-        dataIndex: 'processingStatus',
-        key: 'processingStatus',
+        title: '지급 대기 정산 항목',
+        dataIndex: 'pendingPaymentSettlementItemCount',
+        key: 'pendingPaymentSettlementItemCount',
         width: 200,
         align: 'center',
-        render: (s: PaymentOrderAdminProcessingStatus) =>
-          renderProcessingStatusCell(s, PAYMENT_ORDER_STATUS_LABELS_LIST),
+        render: (count: number) => `${count}건`,
       },
       {
         title: '정산 예정금',
@@ -201,8 +164,7 @@ export default function PaymentOrdersPage() {
         key: 'estimatedAmount',
         width: 168,
         align: 'center',
-        render: (amount: number, record: PaymentOrderAdminProgramRow) =>
-          record.processingStatus === 'rejected' ? '-' : formatWon(amount),
+        render: (amount: number) => formatWon(amount),
       },
     ],
     []
@@ -222,7 +184,7 @@ export default function PaymentOrdersPage() {
         dataIndex: 'instructorName',
         key: 'instructorName',
         ellipsis: { showTitle: true },
-        width: 360,
+        width: 340,
         minWidth: 240,
         align: 'center',
       },
@@ -230,27 +192,25 @@ export default function PaymentOrdersPage() {
         title: '정산 대상 프로그램 수',
         dataIndex: 'programCount',
         key: 'programCount',
-        width: 152,
+        width: 180,
         align: 'center',
         render: (n: number) => `${n}개`,
       },
       {
-        title: '지급조서 처리 현황',
-        dataIndex: 'processingStatus',
-        key: 'processingStatus',
+        title: '지급 대기 정산 항목',
+        dataIndex: 'pendingPaymentSettlementItemCount',
+        key: 'pendingPaymentSettlementItemCount',
         width: 200,
         align: 'center',
-        render: (s: PaymentOrderAdminProcessingStatus) =>
-          renderProcessingStatusCell(s, PAYMENT_ORDER_STATUS_LABELS_LIST),
+        render: (count: number) => `${count}건`,
       },
       {
         title: '정산 예정금',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: 168,
+        width: 180,
         align: 'center',
-        render: (amount: number, record: PaymentOrderAdminInstructorRow) =>
-          record.processingStatus === 'rejected' ? '-' : formatWon(amount),
+        render: (amount: number) => formatWon(amount),
       },
     ],
     []
@@ -258,44 +218,56 @@ export default function PaymentOrdersPage() {
 
   const total = isProgram ? listProgram.length : listInstructor.length
 
-  const isTableRowKeySelected = useCallback(
-    (rowNo: number) => {
-      return selectedRowKeys.some(k => k === rowNo || String(k) === String(rowNo))
-    },
-    [selectedRowKeys]
-  )
+  /** 한 줄 필터: 조회 버튼 제외 가로폭 기준 % 합계 100 (TableFilterGroup colFlex) */
+  const paymentOrdersFilterFields = useMemo((): FilterFieldConfig[] => {
+    const nameFilter: FilterFieldConfig = isProgram
+      ? {
+          key: 'programName',
+          type: 'search',
+          label: '프로그램명',
+          placeholder: '프로그램명을 입력하세요',
+          width: '24%',
+        }
+      : {
+          key: 'instructorName',
+          type: 'search',
+          label: '강사명',
+          placeholder: '강사명을 입력하세요',
+          width: '24%',
+        }
 
-  const handleBatchConfirm = useCallback(() => {
-    if (viewMode === 'list') {
-      if (isProgram) {
-        const rows = listProgram.filter(r => isTableRowKeySelected(r.no))
-        window.alert(`일괄 확인: 프로그램 ${rows.length}건 (준비 중입니다.)`)
-        return
-      }
-      const rows = listInstructor.filter(r => isTableRowKeySelected(r.no))
-      window.alert(`일괄 확인: 강사 ${rows.length}건 (준비 중입니다.)`)
-      return
-    }
-    const keySet = new Set(calendarRightPanelSelectedKeys.map(String))
-    if (isProgram) {
-      const rows = listProgram.filter(r => keySet.has(`program-${r.no}`))
-      window.alert(`일괄 확인: 프로그램 ${rows.length}건 (준비 중입니다.)`)
-      return
-    }
-    const rows = listInstructor.filter(r => keySet.has(`instructor-${r.no}`))
-    window.alert(`일괄 확인: 강사 ${rows.length}건 (준비 중입니다.)`)
-  }, [
-    viewMode,
-    isProgram,
-    listProgram,
-    listInstructor,
-    isTableRowKeySelected,
-    calendarRightPanelSelectedKeys,
-  ])
+    return [
+      {
+        key: 'exposureMode',
+        type: 'radio',
+        label: '노출 기준',
+        options: [
+          { label: '프로그램별', value: 'program' },
+          { label: '강사별', value: 'instructor' },
+        ],
+        width: '14%',
+      },
+      nameFilter,
+      {
+        key: 'pendingPaymentBucket',
+        type: 'select',
+        label: '지급 대기 정산 항목',
+        placeholder: '전체',
+        options: PENDING_PAYMENT_ITEM_FILTER_OPTIONS,
+        allowClear: true,
+        width: '18%',
+      },
+      {
+        key: 'dateRange',
+        type: 'dateRange',
+        label: '기간',
+        width: '44%',
+        dateRangeOneMonthFromStart: true,
+      },
+    ]
+  }, [isProgram])
 
-  const renderHeader = (mode: PageViewMode): ReactElement => {
-    const hasBatchSelection =
-      mode === 'list' ? selectedRowKeys.length > 0 : calendarRightPanelSelectedKeys.length > 0
+  const renderHeader = (_mode: PageViewMode): ReactElement => {
     return (
       <div className="table-header-actions">
         <div className="table-header-title--wrapper">
@@ -303,16 +275,6 @@ export default function PaymentOrdersPage() {
             {isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'}
           </span>
           <span className="table-description">총 {total}건</span>
-        </div>
-        <div className="participating-institutions-section__table-actions">
-          <AppButton
-            variant="cancel"
-            size="filter"
-            disabled={!hasBatchSelection}
-            onClick={handleBatchConfirm}
-          >
-            일괄 확인
-          </AppButton>
         </div>
       </div>
     )
@@ -325,8 +287,7 @@ export default function PaymentOrdersPage() {
         exposure={exposureMode}
         programRows={listProgram}
         instructorRows={listInstructor}
-        rightPanelSelectedKeys={calendarRightPanelSelectedKeys}
-        onRightPanelSelectedKeysChange={setCalendarRightPanelSelectedKeys}
+        filterDateRange={appliedFromUrl.dateRange}
         onPaymentStatusDetailClick={payload => {
           if (payload.exposure === 'program') {
             setDetailState({ type: 'program', data: payload.row })
@@ -341,8 +302,7 @@ export default function PaymentOrdersPage() {
         rowKey="no"
         columns={programColumns}
         dataSource={listProgram}
-        rowSelection={rowSelection}
-        scroll={{ x: PAYMENT_ORDERS_LIST_TABLE_SCROLL_X }}
+        scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
         onRowClick={record => setDetailState({ type: 'program', data: record })}
       />
     ) : (
@@ -351,72 +311,45 @@ export default function PaymentOrdersPage() {
         rowKey="no"
         columns={instructorColumns}
         dataSource={listInstructor}
-        rowSelection={rowSelection}
-        scroll={{ x: PAYMENT_ORDERS_LIST_TABLE_SCROLL_X }}
+        scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
         onRowClick={record => setDetailState({ type: 'instructor', data: record })}
       />
     )
 
   return (
-    <>
-      <FilterTableLayout
-        bordered={false}
-        cardStyle={{ marginBottom: 0 }}
-        fields={[
-          {
-            key: 'exposureMode',
-            type: 'radio',
-            label: '노출 기준',
-            options: [
-              { label: '프로그램별', value: 'program' },
-              { label: '강사별', value: 'instructor' },
-            ],
-            width: 188,
-          },
-          {
-            key: 'programName',
-            type: 'search',
-            label: '프로그램명',
-            placeholder: '프로그램명을 입력하세요',
-            width: '20%',
-          },
-          {
-            key: 'status',
-            type: 'select',
-            label: '지급조서 처리 현황',
-            placeholder: '전체',
-            options: statusSelectOptions.filter(o => o.value !== 'all'),
-            allowClear: true,
-            width: '20%',
-          },
-          {
-            key: 'dateRange',
-            type: 'dateRange',
-            label: '기간',
-            width: '30%',
-          },
-        ]}
-        filters={{
-          exposureMode,
-          programName: pendingFilters.programName,
-          status: pendingFilters.status === 'all' ? undefined : pendingFilters.status,
-          dateRange: pendingFilters.dateRange,
-        }}
-        onFilterChange={handleFilterChange}
-        onSearch={handleSearch}
-      >
-        <div className="participating-institutions-section__below-divider">
-          <ViewModeController<PageViewMode>
-            value={viewMode}
-            onChange={setViewMode}
-            options={paymentOrdersViewModeOptions}
-            renderHeader={renderHeader}
-            renderContent={mode => (
-              <div className="list-page-layout__table-shell">{renderContent(mode)}</div>
-            )}
-          />
-        </div>
-      </FilterTableLayout>
+    <div className="payment-orders-page">
+      <div className="payment-orders-page__content-wrapper">
+        <FilterTableLayout
+          className="payment-orders-page__filter-list-layout"
+          bordered={false}
+          cardStyle={{ marginBottom: 0 }}
+          fields={paymentOrdersFilterFields}
+          filters={{
+            exposureMode,
+            programName: pendingFilters.programName,
+            instructorName: pendingFilters.instructorName,
+            pendingPaymentBucket:
+              pendingFilters.pendingPaymentBucket === 'all'
+                ? undefined
+                : pendingFilters.pendingPaymentBucket,
+            dateRange: pendingFilters.dateRange,
+          }}
+          onFilterChange={handleFilterChange}
+          onSearch={handleSearch}
+        >
+          <div className="participating-institutions-section__below-divider">
+            <ViewModeController<PageViewMode>
+              value={viewMode}
+              onChange={setViewMode}
+              options={paymentOrdersViewModeOptions}
+              renderHeader={renderHeader}
+              renderContent={mode => (
+                <div className="list-page-layout__table-shell">{renderContent(mode)}</div>
+              )}
+            />
+          </div>
+        </FilterTableLayout>
+      </div>
 
       <PaymentOrderDetailFullPageModal
         type={detailState?.type ?? 'program'}
@@ -424,6 +357,6 @@ export default function PaymentOrdersPage() {
         onClose={closeDetail}
         data={detailState?.data ?? null}
       />
-    </>
+    </div>
   )
 }

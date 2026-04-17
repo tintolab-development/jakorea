@@ -2,8 +2,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, type CmsInputProps } from '@/shared/ui/cms-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-
-const wageTypeOptions = [{ value: 'grade3', label: '3급 강사비' }]
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 
 const paymentItemOptions = [
   { value: 'transport', label: '교통비' },
@@ -53,7 +52,7 @@ export function WageInfoCurriculumSection() {
               inputSize="medium"
               width={'100%'}
               placeholder="선택"
-              options={wageTypeOptions}
+              options={INSTRUCTOR_FEE_GRADE_OPTIONS}
             />
           }
           view="-"
