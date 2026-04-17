@@ -61,6 +61,8 @@ export interface FilterFieldConfig {
    * `%`는 조회 버튼 영역을 뺀 필터 전용 가로 폭(내부 행) 기준이다.
    */
   width?: string | number
+  /** `dateRange`: 시작일 선택 시 종료일을 시작+1개월−1일로 맞춤 */
+  dateRangeOneMonthFromStart?: boolean
 }
 
 export interface TableFilterGroupProps {
@@ -321,6 +323,7 @@ export function TableFilterGroup({
             value={filters[field.key]}
             onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
             allowClear={field.allowClear !== false}
+            oneMonthFromStart={field.dateRangeOneMonthFromStart === true}
           />
         </div>
       )
