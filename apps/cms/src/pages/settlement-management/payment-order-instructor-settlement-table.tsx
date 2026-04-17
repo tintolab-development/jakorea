@@ -183,8 +183,7 @@ export function PaymentOrderInstructorSettlementTable({
         key: 'estimatedAmount',
         width: 140,
         align: 'center',
-        render: (amount: number, row: PaymentOrderAdminInstructorDetailProgramRow) =>
-          row.processingStatus === 'rejected' ? '-' : formatWon(amount),
+        render: (amount: number) => formatWon(amount),
       },
       {
         title: '산출 내역',

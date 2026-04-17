@@ -155,6 +155,8 @@ export function getMockAccountPaymentStatusDetail(row: AccountPaymentRow): Accou
     estimatedAmount: row.amount,
     relatedProgramNames: [row.programName],
     referenceDate: row.transferScheduledDate,
+    settlementRelevantAttendanceDates: [row.transferScheduledDate],
+    pendingPaymentSettlementItemCount: 0,
   }
 
   const detail = getMockPaymentOrderInstructorDetail(instructorStub)

@@ -3,12 +3,12 @@
  * 레이아웃: participating-institutions-calendar-view.css + 공통 ProgramCalendar
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Checkbox } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+import { Checkbox } from 'antd'
 import {
   PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST,
   PAYMENT_ORDER_STATUS_LABELS_LIST,
@@ -25,7 +25,10 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
-import { ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/components/program-calendar'
+import {
+  ProgramCalendar,
+  type ProgramCalendarEventItem,
+} from '@/shared/components/program-calendar'
 import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
 import './payment-orders-calendar-view.css'
 
@@ -34,7 +37,7 @@ dayjs.extend(isSameOrBefore)
 
 export type PaymentOrdersCalendarExposure = 'program' | 'instructor'
 
-/** 목록 mock의 referenceDate와 캘린더 표시 월이 어긋나지 않도록, 가장 이른 기준일(없으면 오늘) */
+/** 필터·mock 출강일 중 가장 이른 날 — 표시 월 앵커 */
 function pickAnchorDateForExposure(
   exposure: PaymentOrdersCalendarExposure,
   programRows: PaymentOrderAdminProgramRow[],
@@ -42,20 +45,26 @@ function pickAnchorDateForExposure(
 ): Dayjs {
   const rows = exposure === 'program' ? programRows : instructorRows
   if (rows.length === 0) return dayjs()
-  let min = dayjs(rows[0].referenceDate)
-  for (let i = 1; i < rows.length; i++) {
-    const d = dayjs(rows[i].referenceDate)
-    if (d.isBefore(min, 'day')) min = d
+  let min: Dayjs | null = null
+  for (const row of rows) {
+    const dates =
+      row.settlementRelevantAttendanceDates.length > 0
+        ? row.settlementRelevantAttendanceDates
+        : [row.referenceDate]
+    for (const iso of dates) {
+      const d = dayjs(iso)
+      if (!d.isValid()) continue
+      if (min == null || d.isBefore(min, 'day')) min = d
+    }
   }
-  return min
+  return min ?? dayjs(rows[0].referenceDate)
 }
 
 function formatWonPlus(amount: number): string {
   return `+${amount.toLocaleString('ko-KR')}원`
 }
 
-function formatCalendarAmount(status: PaymentOrderAdminProcessingStatus, amount: number): string {
-  if (status === 'rejected') return '-'
+function formatCalendarAmount(_status: PaymentOrderAdminProcessingStatus, amount: number): string {
   return formatWonPlus(amount)
 }
 
@@ -71,23 +80,38 @@ export interface PaymentOrderCalendarEvent {
   cardSubtitle: string
   /** 멀티셀렉트 필터 값 */
   filterKey: string
+  /** 주간 시간 격자: HH:mm (mock `calendarSlot*`에서 전달) */
+  startTime?: string
+  endTime?: string
+  /** 주간 격자 태그 본문(줄바꿈). 없으면 bracketTitle 등 */
+  weekGridLabel?: string
   /** 지급 현황 상세 모달용 원본 목록 행 */
   sourceProgramRow?: PaymentOrderAdminProgramRow
   sourceInstructorRow?: PaymentOrderAdminInstructorRow
 }
 
 function eventsFromPrograms(rows: PaymentOrderAdminProgramRow[]): PaymentOrderCalendarEvent[] {
-  return rows.map(row => ({
-    id: `program-${row.no}`,
-    date: dayjs(row.referenceDate),
-    exposure: 'program' as const,
-    status: row.processingStatus,
-    amount: row.estimatedAmount,
-    bracketTitle: row.programName,
-    cardSubtitle: `정산 대상 강사 ${row.instructorCount}명`,
-    filterKey: row.programName,
-    sourceProgramRow: row,
-  }))
+  const out: PaymentOrderCalendarEvent[] = []
+  for (const row of rows) {
+    const dates =
+      row.settlementRelevantAttendanceDates.length > 0
+        ? row.settlementRelevantAttendanceDates
+        : [row.referenceDate]
+    for (const iso of dates) {
+      out.push({
+        id: `program-${row.no}-${iso}`,
+        date: dayjs(iso),
+        exposure: 'program' as const,
+        status: row.processingStatus,
+        amount: row.estimatedAmount,
+        bracketTitle: row.programName,
+        cardSubtitle: `정산 대상 강사 ${row.instructorCount}명`,
+        filterKey: row.programName,
+        sourceProgramRow: row,
+      })
+    }
+  }
+  return out
 }
 
 function instructorDisplayTitle(name: string): string {
@@ -98,17 +122,50 @@ function instructorDisplayTitle(name: string): string {
 function eventsFromInstructors(
   rows: PaymentOrderAdminInstructorRow[]
 ): PaymentOrderCalendarEvent[] {
-  return rows.map(row => ({
-    id: `instructor-${row.no}`,
-    date: dayjs(row.referenceDate),
-    exposure: 'instructor' as const,
-    status: row.processingStatus,
-    amount: row.estimatedAmount,
-    bracketTitle: instructorDisplayTitle(row.instructorName),
-    cardSubtitle: row.relatedProgramNames.join(', '),
-    filterKey: row.instructorName,
-    sourceInstructorRow: row,
-  }))
+  const out: PaymentOrderCalendarEvent[] = []
+  for (const row of rows) {
+    const dates =
+      row.settlementRelevantAttendanceDates.length > 0
+        ? row.settlementRelevantAttendanceDates
+        : [row.referenceDate]
+    for (const iso of dates) {
+      out.push({
+        id: `instructor-${row.no}-${iso}`,
+        date: dayjs(iso),
+        exposure: 'instructor' as const,
+        status: row.processingStatus,
+        amount: row.estimatedAmount,
+        bracketTitle: instructorDisplayTitle(row.instructorName),
+        cardSubtitle: row.relatedProgramNames.join(', '),
+        filterKey: row.instructorName,
+        startTime: row.calendarSlotStartTime,
+        endTime: row.calendarSlotEndTime,
+        weekGridLabel: row.calendarWeekGridLabel,
+        sourceInstructorRow: row,
+      })
+    }
+  }
+  return out
+}
+
+/** 주간 격자 태그 파스텔 표면(이벤트 id 기준으로 안정적으로 순환) */
+const WEEK_GRID_PASTEL_SURFACES: Array<{ bg: string; border: string; text: string }> = [
+  { bg: '#F0EEF9', border: '#E4DFF5', text: '#3d3d3d' },
+  { bg: '#FFEDED', border: '#F5D9D9', text: '#3d3d3d' },
+  { bg: '#EEF6FF', border: '#D9E8F5', text: '#3d3d3d' },
+  { bg: '#F0FAF4', border: '#D5EBDD', text: '#3d3d3d' },
+  { bg: '#FFF5EE', border: '#F0E0D4', text: '#3d3d3d' },
+  { bg: '#F5F0FF', border: '#E8DFF5', text: '#3d3d3d' },
+]
+
+function hashWeekGridTone(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h + id.charCodeAt(i)) % 100000
+  return h
+}
+
+function weekGridSurfaceForPaymentEvent(id: string): { bg: string; border: string; text: string } {
+  return WEEK_GRID_PASTEL_SURFACES[hashWeekGridTone(id) % WEEK_GRID_PASTEL_SURFACES.length]
 }
 
 function toProgramCalendarItems(events: PaymentOrderCalendarEvent[]): ProgramCalendarEventItem[] {
@@ -116,22 +173,28 @@ function toProgramCalendarItems(events: PaymentOrderCalendarEvent[]): ProgramCal
     id: ev.id,
     startDate: ev.date.format('YYYY-MM-DD'),
     endDate: ev.date.format('YYYY-MM-DD'),
+    startTime: ev.startTime,
+    endTime: ev.endTime,
     title: `${formatCalendarAmount(ev.status, ev.amount)} | ${PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST[ev.status]}`,
+    timeGridLabel: ev.weekGridLabel ?? ev.bracketTitle,
+    weekGridSurface: weekGridSurfaceForPaymentEvent(String(ev.id)),
     originalItem: ev,
   }))
 }
 
 function PaymentOrdersCalendarRightPanel({
+  exposure,
+  selectedDate,
   eventsForSelectedDate,
-  selectedRowKeys,
-  onSelectionChange,
   onPaymentStatusDetailClick,
 }: {
+  exposure: PaymentOrdersCalendarExposure
+  selectedDate: Dayjs
   eventsForSelectedDate: PaymentOrderCalendarEvent[]
-  selectedRowKeys: Key[]
-  onSelectionChange: (keys: Key[]) => void
   onPaymentStatusDetailClick?: (payload: PaymentOrdersCalendarDetailClick) => void
 }) {
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([])
+
   const handleCardActivate = (ev: PaymentOrderCalendarEvent) => {
     if (!onPaymentStatusDetailClick) return
     if (ev.exposure === 'program' && ev.sourceProgramRow) {
@@ -143,43 +206,57 @@ function PaymentOrdersCalendarRightPanel({
     }
   }
 
-  const handleToggleSelection = (id: Key) => {
-    if (selectedRowKeys.includes(id)) {
-      onSelectionChange(selectedRowKeys.filter(k => k !== id))
-    } else {
-      onSelectionChange([...selectedRowKeys, id])
-    }
+  const toggleSelected = (id: string) => {
+    setSelectedCardIds(prev =>
+      prev.includes(id) ? prev.filter(cardId => cardId !== id) : [...prev, id]
+    )
   }
 
   return (
     <div className="payment-orders-calendar__calendar-right">
-      <div className="payment-orders-calendar__calendar-right-cards">
-        {eventsForSelectedDate.map(ev => {
-          const isChecked = selectedRowKeys.includes(ev.id)
-          return (
+      <div className="payment-orders-calendar__calendar-right-scroll">
+        {exposure !== 'instructor' && (
+          <div className="payment-orders-calendar__calendar-right-sticky-head">
+            <span className="payment-orders-calendar__calendar-right-sticky-date">
+              {selectedDate.format('YYYY.MM.DD')}
+            </span>
+            <span className="payment-orders-calendar__calendar-right-sticky-meta">
+              {eventsForSelectedDate.length}건
+            </span>
+          </div>
+        )}
+        <div className="payment-orders-calendar__calendar-right-cards">
+        {eventsForSelectedDate.map(ev => (
+          // 카드 클릭은 상세 열기, 체크박스는 선택 상태만 관리
+          <div
+            key={ev.id}
+            className={`payment-orders-calendar__card payment-orders-calendar__card--${ev.status} ${
+              selectedCardIds.includes(ev.id) ? 'payment-orders-calendar__card--selected' : ''
+            }`}
+            style={{
+              background: PAYMENT_ORDER_STATUS_LIST_BG[ev.status],
+              borderColor: PAYMENT_ORDER_STATUS_LIST_BORDER[ev.status],
+            }}
+          >
             <div
-              key={ev.id}
-              style={{
-                border: `1px solid ${PAYMENT_ORDER_STATUS_LIST_BORDER[ev.status]}`,
-                background: PAYMENT_ORDER_STATUS_LIST_BG[ev.status],
+              className="payment-orders-calendar__card-main"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleCardActivate(ev)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleCardActivate(ev)
+                }
               }}
-              className={`payment-orders-calendar__card${isChecked ? ' payment-orders-calendar__card--selected' : ''}`}
             >
-              <div
-                className="payment-orders-calendar__card-main"
-                role="button"
-                tabIndex={0}
-                onClick={() => handleCardActivate(ev)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    handleCardActivate(ev)
-                  }
-                }}
-              >
+              <div className="payment-orders-calendar__card-content">
+                <div className="payment-orders-calendar__card-title" title={ev.bracketTitle}>
+                  {ev.bracketTitle}
+                </div>
                 <div className="payment-orders-calendar__card-status-row">
                   <span
-                    className="payment-orders-calendar__card-status"
+                    className={`payment-orders-calendar__card-status payment-orders-calendar__card-status--${ev.status}`}
                     style={{ color: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[ev.status] }}
                   >
                     {PAYMENT_ORDER_STATUS_LABELS_LIST[ev.status]}
@@ -189,22 +266,20 @@ function PaymentOrdersCalendarRightPanel({
                     {formatCalendarAmount(ev.status, ev.amount)}
                   </span>
                 </div>
-                <div className="payment-orders-calendar__card-program" title={ev.bracketTitle}>
-                  {ev.bracketTitle}
-                </div>
               </div>
               <div
-                className="applicant-schedule-item-checkbox"
-                onClick={e => {
-                  e.stopPropagation()
-                  handleToggleSelection(ev.id)
-                }}
+                className="payment-orders-calendar__card-checkbox"
+                onClick={e => e.stopPropagation()}
               >
-                <Checkbox checked={isChecked} />
+                <Checkbox
+                  checked={selectedCardIds.includes(ev.id)}
+                  onChange={() => toggleSelected(ev.id)}
+                />
               </div>
             </div>
-          )
-        })}
+          </div>
+        ))}
+        </div>
       </div>
     </div>
   )
@@ -250,14 +325,10 @@ export interface PaymentOrdersCalendarViewProps {
   exposure: PaymentOrdersCalendarExposure
   programRows: PaymentOrderAdminProgramRow[]
   instructorRows: PaymentOrderAdminInstructorRow[]
+  /** URL·조회에 적용된 기간(실제 출강일). 없으면 데이터 앵커 월을 표시 */
+  filterDateRange: [Dayjs, Dayjs] | null
   /** 우측 목록 카드 클릭 시 지급 현황 상세(풀페이지 모달) */
   onPaymentStatusDetailClick?: (payload: PaymentOrdersCalendarDetailClick) => void
-  /**
-   * 우측 패널 체크 선택 — 둘 다 주면 제어 컴포넌트(일괄 확인 등 상위 연동).
-   * 미주입 시 내부 상태만 사용.
-   */
-  rightPanelSelectedKeys?: Key[]
-  onRightPanelSelectedKeysChange?: (keys: Key[]) => void
 }
 
 function resolvePaymentOrderEventColors(event: ProgramCalendarEventItem): ScheduleColorPair {
@@ -271,21 +342,30 @@ function resolvePaymentOrderEventColors(event: ProgramCalendarEventItem): Schedu
   } as ScheduleColorPair
 }
 
+function filterEventsByDateRange<T extends { date: Dayjs }>(
+  items: T[],
+  range: [Dayjs, Dayjs] | null | undefined
+): T[] {
+  if (!range?.[0] || !range[1]) return items
+  const [from, to] = range
+  return items.filter(ev => !ev.date.isBefore(from, 'day') && !ev.date.isAfter(to, 'day'))
+}
+
 export function PaymentOrdersCalendarView({
   exposure,
   programRows,
   instructorRows,
+  filterDateRange,
   onPaymentStatusDetailClick,
-  rightPanelSelectedKeys: controlledRightPanelKeys,
-  onRightPanelSelectedKeysChange,
 }: PaymentOrdersCalendarViewProps) {
-  const events = useMemo(
-    () =>
+  const events = useMemo(() => {
+    const raw =
       exposure === 'program'
         ? eventsFromPrograms(programRows)
-        : eventsFromInstructors(instructorRows),
-    [exposure, programRows, instructorRows]
-  )
+        : eventsFromInstructors(instructorRows)
+    /** 프로그램·강사: 상단 기간 필터가 있으면 그 구간 안의 출강일만 캘린더에 표시 */
+    return filterEventsByDateRange(raw, filterDateRange)
+  }, [exposure, programRows, instructorRows, filterDateRange])
 
   const calendarItems = useMemo(() => toProgramCalendarItems(events), [events])
 
@@ -294,22 +374,37 @@ export function PaymentOrdersCalendarView({
     [exposure, programRows, instructorRows]
   )
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => anchor)
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => anchor.startOf('month'))
-  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
-  const [internalRightPanelKeys, setInternalRightPanelKeys] = useState<Key[]>([])
-  const isRightPanelControlled =
-    controlledRightPanelKeys !== undefined && onRightPanelSelectedKeysChange !== undefined
-  const rightPanelSelectedKeys = isRightPanelControlled
-    ? controlledRightPanelKeys!
-    : internalRightPanelKeys
-  const setRightPanelSelectedKeys = isRightPanelControlled
-    ? onRightPanelSelectedKeysChange!
-    : setInternalRightPanelKeys
+  const viewMonth = useMemo(
+    () => (filterDateRange?.[0] ? filterDateRange[0].startOf('month') : anchor.startOf('month')),
+    [filterDateRange, anchor]
+  )
+
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => {
+    const from = filterDateRange?.[0]
+    const to = filterDateRange?.[1]
+    if (from && to) return from
+    return anchor
+  })
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => viewMonth)
 
   useEffect(() => {
-    setRightPanelSelectedKeys([])
-  }, [selectedDate, exposure, setRightPanelSelectedKeys])
+    setCurrentMonth(viewMonth)
+  }, [viewMonth])
+
+  useEffect(() => {
+    setSelectedDate(prev => {
+      const from = filterDateRange?.[0]
+      const to = filterDateRange?.[1]
+      if (from && to) {
+        if (!prev.isBefore(from, 'day') && !prev.isAfter(to, 'day')) return prev
+        return from
+      }
+      return anchor
+    })
+  }, [filterDateRange, anchor])
+  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  /** 프로그램별: 월간만 — 주간 탭 비노출과 동일 동작 */
+  const effectiveCalendarMode = exposure === 'program' ? ('month' as const) : calendarMode
 
   const eventsForSelectedDate = useMemo(
     () => events.filter(ev => selectedDate.isSame(ev.date, 'day')),
@@ -319,39 +414,43 @@ export function PaymentOrdersCalendarView({
   const onSelectDate = useCallback(
     (date: Dayjs) => {
       setSelectedDate(date)
-      if (calendarMode === 'week') {
+      if (effectiveCalendarMode === 'week') {
         setCurrentMonth(date)
       } else if (!date.isSame(currentMonth, 'month')) {
         setCurrentMonth(date.startOf('month'))
       }
     },
-    [calendarMode, currentMonth]
+    [effectiveCalendarMode, currentMonth]
   )
 
   const onMonthChange = useCallback(
     (next: Dayjs) => {
       setCurrentMonth(next)
-      if (calendarMode === 'week') {
+      if (effectiveCalendarMode === 'week') {
         setSelectedDate(prev => {
           const dow = prev.diff(prev.startOf('week'), 'day')
           return next.startOf('week').add(dow, 'day')
         })
       }
     },
-    [calendarMode]
+    [effectiveCalendarMode]
   )
 
-  const onModeChange = useCallback((mode: 'month' | 'week') => {
-    setCalendarMode(mode)
-    setSelectedDate(prev => {
-      if (mode === 'week') {
-        setCurrentMonth(prev)
-      } else {
-        setCurrentMonth(prev.startOf('month'))
-      }
-      return prev
-    })
-  }, [])
+  const onModeChange = useCallback(
+    (mode: 'month' | 'week') => {
+      if (exposure === 'program') return
+      setCalendarMode(mode)
+      setSelectedDate(prev => {
+        if (mode === 'week') {
+          setCurrentMonth(prev)
+        } else {
+          setCurrentMonth(prev.startOf('month'))
+        }
+        return prev
+      })
+    },
+    [exposure]
+  )
 
   const renderEventsTooltipContent = useCallback(
     ({
@@ -369,26 +468,47 @@ export function PaymentOrdersCalendarView({
 
   const onTodayClick = useCallback(() => {
     const today = dayjs()
+    if (exposure === 'program' && filterDateRange?.[0] && filterDateRange[1]) {
+      const [from, to] = filterDateRange
+      let d = today
+      if (d.isBefore(from, 'day')) d = from
+      else if (d.isAfter(to, 'day')) d = to
+      setSelectedDate(d)
+      setCurrentMonth(d.startOf('month'))
+      return
+    }
     setSelectedDate(today)
-    if (calendarMode === 'week') {
+    if (effectiveCalendarMode === 'week') {
       setCurrentMonth(today)
     } else {
       setCurrentMonth(today.startOf('month'))
     }
-  }, [calendarMode])
+  }, [exposure, filterDateRange, effectiveCalendarMode])
 
   return (
-    <div className="payment-orders-calendar-root">
+    <div
+      className={[
+        'payment-orders-calendar-root',
+        exposure === 'instructor' ? 'payment-orders-calendar-root--instructor' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="participating-institutions-calendar-layout">
         <div className="participating-institutions-calendar-card">
           <ProgramCalendar
+            className="payment-orders-calendar__program-calendar"
             selectedDate={selectedDate}
             currentMonth={currentMonth}
-            mode={calendarMode}
+            mode={effectiveCalendarMode}
             onSelectDate={onSelectDate}
             onMonthChange={onMonthChange}
             onModeChange={onModeChange}
             onTodayClick={onTodayClick}
+            weekViewVariant={exposure === 'instructor' ? 'time-grid' : 'simple'}
+            hideHeaderTitle={exposure === 'program'}
+            hideDateControls={exposure === 'program'}
+            hideModeToggle={exposure === 'program'}
             scheduleOverlay="tooltip"
             tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
             events={calendarItems}
@@ -401,9 +521,9 @@ export function PaymentOrdersCalendarView({
         <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right payment-orders-calendar-card--right">
           <PaymentOrdersCalendarRightPanel
             key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
+            exposure={exposure}
+            selectedDate={selectedDate}
             eventsForSelectedDate={eventsForSelectedDate}
-            selectedRowKeys={rightPanelSelectedKeys}
-            onSelectionChange={setRightPanelSelectedKeys}
             onPaymentStatusDetailClick={onPaymentStatusDetailClick}
           />
         </div>

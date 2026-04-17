@@ -5,7 +5,6 @@ import type { TablePageConfig } from '@/shared/components/table-system/types/tab
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import type {
   PaymentOrderAdminInstructorRow,
-  PaymentOrderAdminProcessingStatus,
   PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
 
@@ -13,11 +12,13 @@ const P = 'po'
 
 export type ExposureMode = 'program' | 'instructor'
 
-export type AppliedStatus = 'all' | PaymentOrderAdminProcessingStatus
+/** 지급 대기 정산 항목 구간 — `all`은 URL·필터에서 미선택 */
+export type PendingPaymentItemBucket = 'all' | 'none' | '1-5' | '6-10' | '11plus'
 
 export type PaymentOrdersPendingFilters = {
   programName: string
-  status: AppliedStatus
+  instructorName: string
+  pendingPaymentBucket: PendingPaymentItemBucket
   dateRange: [Dayjs, Dayjs] | null
 }
 
@@ -25,19 +26,39 @@ export type PaymentOrdersTableContext = {
   setExposureMode: (m: ExposureMode) => void
 }
 
-function matchesDateRange(referenceDate: string, range: [Dayjs, Dayjs] | null): boolean {
+function hasSettlementAttendanceInRange(
+  referenceDate: string,
+  settlementDates: string[],
+  range: [Dayjs, Dayjs] | null
+): boolean {
   if (!range?.[0] || !range[1]) return true
-  const d = dayjs(referenceDate)
-  return !d.isBefore(range[0], 'day') && !d.isAfter(range[1], 'day')
+  const dates = settlementDates.length > 0 ? settlementDates : [referenceDate]
+  return dates.some(iso => {
+    const d = dayjs(iso)
+    return d.isValid() && !d.isBefore(range[0], 'day') && !d.isAfter(range[1], 'day')
+  })
+}
+
+function matchesPendingBucket(count: number, bucket: PendingPaymentItemBucket): boolean {
+  if (bucket === 'all') return true
+  if (bucket === 'none') return count === 0
+  if (bucket === '1-5') return count >= 1 && count <= 5
+  if (bucket === '6-10') return count >= 6 && count <= 10
+  if (bucket === '11plus') return count >= 11
+  return true
 }
 
 export function parsePaymentOrdersFiltersFromUrl(
   searchParams: URLSearchParams
-): Pick<PaymentOrdersPendingFilters, 'programName' | 'status' | 'dateRange'> {
+): Pick<
+  PaymentOrdersPendingFilters,
+  'programName' | 'instructorName' | 'pendingPaymentBucket' | 'dateRange'
+> {
   const programName = searchParams.get(`${P}_prog`) ?? ''
-  const statRaw = searchParams.get(`${P}_stat`)
-  const status: AppliedStatus =
-    statRaw && statRaw !== 'all' ? (statRaw as PaymentOrderAdminProcessingStatus) : 'all'
+  const instructorName = searchParams.get(`${P}_inst`) ?? ''
+  const pb = searchParams.get(`${P}_pb`) ?? ''
+  const pendingPaymentBucket: PendingPaymentItemBucket =
+    pb === 'none' || pb === '1-5' || pb === '6-10' || pb === '11plus' ? pb : 'all'
   const fromStr = searchParams.get(`${P}_from`)
   const toStr = searchParams.get(`${P}_to`)
   let dateRange: [Dayjs, Dayjs] | null = null
@@ -46,31 +67,57 @@ export function parsePaymentOrdersFiltersFromUrl(
     const b = dayjs(toStr)
     if (a.isValid() && b.isValid()) dateRange = [a, b]
   }
-  return { programName, status, dateRange }
+  return { programName, instructorName, pendingPaymentBucket, dateRange }
 }
 
 export function filterPaymentProgramRows(
   rows: PaymentOrderAdminProgramRow[],
-  applied: Pick<PaymentOrdersPendingFilters, 'programName' | 'status' | 'dateRange'>
+  applied: Pick<
+    PaymentOrdersPendingFilters,
+    'programName' | 'pendingPaymentBucket' | 'dateRange'
+  >
 ): PaymentOrderAdminProgramRow[] {
   const q = applied.programName.trim()
   return rows.filter(row => {
     if (q && !row.programName.includes(q)) return false
-    if (applied.status !== 'all' && row.processingStatus !== applied.status) return false
-    if (!matchesDateRange(row.referenceDate, applied.dateRange)) return false
+    if (!matchesPendingBucket(row.pendingPaymentSettlementItemCount, applied.pendingPaymentBucket)) {
+      return false
+    }
+    if (
+      !hasSettlementAttendanceInRange(
+        row.referenceDate,
+        row.settlementRelevantAttendanceDates,
+        applied.dateRange
+      )
+    ) {
+      return false
+    }
     return true
   })
 }
 
 export function filterPaymentInstructorRows(
   rows: PaymentOrderAdminInstructorRow[],
-  applied: Pick<PaymentOrdersPendingFilters, 'programName' | 'status' | 'dateRange'>
+  applied: Pick<
+    PaymentOrdersPendingFilters,
+    'instructorName' | 'pendingPaymentBucket' | 'dateRange'
+  >
 ): PaymentOrderAdminInstructorRow[] {
-  const q = applied.programName.trim()
+  const q = applied.instructorName.trim()
   return rows.filter(row => {
-    if (q && !row.relatedProgramNames.some(name => name.includes(q))) return false
-    if (applied.status !== 'all' && row.processingStatus !== applied.status) return false
-    if (!matchesDateRange(row.referenceDate, applied.dateRange)) return false
+    if (q && !row.instructorName.includes(q)) return false
+    if (!matchesPendingBucket(row.pendingPaymentSettlementItemCount, applied.pendingPaymentBucket)) {
+      return false
+    }
+    if (
+      !hasSettlementAttendanceInRange(
+        row.referenceDate,
+        row.settlementRelevantAttendanceDates,
+        applied.dateRange
+      )
+    ) {
+      return false
+    }
     return true
   })
 }
@@ -90,9 +137,16 @@ function searchSyncRules(): readonly TableSearchParamRule<PaymentOrdersPendingFi
     },
     {
       kind: 'param',
-      filterKey: 'status',
-      paramKey: `${P}_stat`,
-      condition: f => f.status !== 'all',
+      filterKey: 'instructorName',
+      paramKey: `${P}_inst`,
+      condition: f => f.instructorName.trim().length > 0,
+      transform: v => String(v).trim(),
+    },
+    {
+      kind: 'param',
+      filterKey: 'pendingPaymentBucket',
+      paramKey: `${P}_pb`,
+      condition: f => f.pendingPaymentBucket !== 'all',
       transform: v => String(v),
     },
     {
@@ -122,16 +176,24 @@ export function createPaymentOrdersTablePageConfig(
     filters: {
       initialPending: {
         programName: '',
-        status: 'all',
+        instructorName: '',
+        pendingPaymentBucket: 'all',
         dateRange: null,
       },
-      syncPendingFromUrl: ({ searchParams, setPendingFilters, table: _t, columnFilters: _c, context: _ctx }) => {
+      syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
         setPendingFilters(prev => {
-          const { programName, status, dateRange } = parsePaymentOrdersFiltersFromUrl(searchParams)
-          const next: PaymentOrdersPendingFilters = { programName, status, dateRange }
+          const { programName, instructorName, pendingPaymentBucket, dateRange } =
+            parsePaymentOrdersFiltersFromUrl(searchParams)
+          const next: PaymentOrdersPendingFilters = {
+            programName,
+            instructorName,
+            pendingPaymentBucket,
+            dateRange,
+          }
           if (
             prev.programName === next.programName &&
-            prev.status === next.status &&
+            prev.instructorName === next.instructorName &&
+            prev.pendingPaymentBucket === next.pendingPaymentBucket &&
             (prev.dateRange === null && next.dateRange === null ||
               (prev.dateRange?.[0]?.valueOf() === next.dateRange?.[0]?.valueOf() &&
                 prev.dateRange?.[1]?.valueOf() === next.dateRange?.[1]?.valueOf()))
@@ -144,7 +206,8 @@ export function createPaymentOrdersTablePageConfig(
       hasActiveFilters: ({ searchParams }) =>
         Boolean(
           (searchParams.get(`${P}_prog`) ?? '').trim() ||
-            (searchParams.get(`${P}_stat`) && searchParams.get(`${P}_stat`) !== 'all') ||
+            (searchParams.get(`${P}_inst`) ?? '').trim() ||
+            (searchParams.get(`${P}_pb`) && searchParams.get(`${P}_pb`) !== 'all') ||
             (searchParams.get(`${P}_from`) && searchParams.get(`${P}_to`))
         ),
       getBaseCount: ({ filteredData }) => filteredData.length,
@@ -156,8 +219,14 @@ export function createPaymentOrdersTablePageConfig(
         if (key === 'programName') {
           return { ...prev, programName: (value as string) ?? '' }
         }
-        if (key === 'status') {
-          return { ...prev, status: (value ?? 'all') as AppliedStatus }
+        if (key === 'instructorName') {
+          return { ...prev, instructorName: (value as string) ?? '' }
+        }
+        if (key === 'pendingPaymentBucket') {
+          return {
+            ...prev,
+            pendingPaymentBucket: (value ?? 'all') as PendingPaymentItemBucket,
+          }
         }
         if (key === 'dateRange') {
           return { ...prev, dateRange: value as [Dayjs, Dayjs] | null }

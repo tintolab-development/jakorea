@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Calendar, Button, Tooltip } from 'antd'
+import { Calendar, Button, Checkbox, Tooltip } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
@@ -17,18 +17,18 @@ import '@/features/settlement/ui/payment-record/payment-orders-calendar-view.css
 import './account-payments-calendar-view.css'
 
 const STATUS_TEXT_COLOR: Record<AccountPaymentTransferStatus, string> = {
-  pending: '#1e8c29',
+  pending: '#F07917',
   completed: '#017eaf',
 }
 
 const STATUS_BG: Record<AccountPaymentTransferStatus, string> = {
-  pending: '#f6ffed',
-  completed: '#e6f4fa',
+  pending: 'rgba(240, 121, 23, 0.06)',
+  completed: '#F2F8F2',
 }
 
 const TAG_SHORT: Record<AccountPaymentTransferStatus, string> = {
-  pending: '지급 대기',
-  completed: '지급 완료',
+  pending: '확인 대기',
+  completed: '계좌 지급',
 }
 
 function formatWonPlus(amount: number): string {
@@ -121,10 +121,11 @@ function AccountPaymentsCalendarRightPanel({
           const cardMod =
             ev.status === 'completed'
               ? 'account-payments-calendar__card--account-completed'
-              : 'payment-orders-calendar__card--pending'
+              : 'account-payments-calendar__card--account-pending'
           return (
             <div
               key={ev.id}
+              style={{ background: STATUS_BG[ev.status] }}
               className={`payment-orders-calendar__card ${cardMod}${isSelected ? ' payment-orders-calendar__card--selected' : ''}`}
             >
               <div
@@ -139,21 +140,28 @@ function AccountPaymentsCalendarRightPanel({
                   }
                 }}
               >
-                <div className="payment-orders-calendar__card-status-row">
-                  <span
-                    className="payment-orders-calendar__card-status"
-                    style={{ color: STATUS_TEXT_COLOR[ev.status] }}
-                  >
-                    {ACCOUNT_PAYMENT_STATUS_LABELS[ev.status]}
-                  </span>
-                  <span className="payment-orders-calendar__card-divider" aria-hidden />
-                  <span className="payment-orders-calendar__card-amount">{formatWonPlus(ev.amount)}</span>
+                <div className="payment-orders-calendar__card-content">
+                  <div className="payment-orders-calendar__card-title" title={ev.programTitle}>
+                    {ev.programTitle}
+                  </div>
+                  <div className="payment-orders-calendar__card-status-row">
+                    <span
+                      className={`payment-orders-calendar__card-status payment-orders-calendar__card-status--${ev.status}`}
+                      style={{ color: STATUS_TEXT_COLOR[ev.status] }}
+                    >
+                      {ACCOUNT_PAYMENT_STATUS_LABELS[ev.status]}
+                    </span>
+                    <span className="payment-orders-calendar__card-divider" aria-hidden />
+                    <span className="payment-orders-calendar__card-amount">
+                      {formatWonPlus(ev.amount)}
+                    </span>
+                  </div>
                 </div>
-                <div className="payment-orders-calendar__card-program" title={ev.programTitle}>
-                  {ev.programTitle}
-                </div>
-                <div className="payment-orders-calendar__card-program" title={ev.instructorLine}>
-                  {ev.instructorLine}
+                <div
+                  className="payment-orders-calendar__card-checkbox"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <Checkbox checked={isSelected} onChange={() => toggleCardSelection(ev.id)} />
                 </div>
               </div>
             </div>
@@ -182,7 +190,9 @@ function AccountPaymentDayTooltipContent({ items }: { items: AccountPaymentCalen
             <span className="payment-orders-calendar-tag-preview__sep" aria-hidden>
               |
             </span>
-            <span className="payment-orders-calendar-tag-preview__amount">{formatWonPlus(ev.amount)}</span>
+            <span className="payment-orders-calendar-tag-preview__amount">
+              {formatWonPlus(ev.amount)}
+            </span>
           </div>
         </div>
       ))}
@@ -198,7 +208,9 @@ export function AccountPaymentsCalendarView({ rows }: AccountPaymentsCalendarVie
   const events = useMemo(() => eventsFromRows(rows), [rows])
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => pickAnchorDate(rows))
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => pickAnchorDate(rows).startOf('month'))
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() =>
+    pickAnchorDate(rows).startOf('month')
+  )
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
 
   const getEventsForDate = useCallback(
@@ -275,13 +287,10 @@ export function AccountPaymentsCalendarView({ rows }: AccountPaymentsCalendarVie
           role="presentation"
         >
           <span className="payment-orders-calendar-event-tag__body">
-            <span className="payment-orders-calendar-event-tag__amount" style={{ color: statusColor }}>
-              {formatWonPlus(ev.amount)}
-            </span>
-            <span className="payment-orders-calendar-event-tag__sep" style={{ color: statusColor }} aria-hidden>
-              |
-            </span>
-            <span className="payment-orders-calendar-event-tag__status" style={{ color: statusColor }}>
+            <span
+              className="payment-orders-calendar-event-tag__status"
+              style={{ color: statusColor }}
+            >
               {TAG_SHORT[ev.status]}
             </span>
           </span>
@@ -300,7 +309,11 @@ export function AccountPaymentsCalendarView({ rows }: AccountPaymentsCalendarVie
       <div className="participating-institutions-calendar-header">
         <div className="participating-institutions-calendar-header-left">
           <span className="participating-institutions-calendar-header-title">{headerTitle}</span>
-          <Button size="small" className="participating-institutions-calendar-today-btn" onClick={handleToday}>
+          <Button
+            size="small"
+            className="participating-institutions-calendar-today-btn"
+            onClick={handleToday}
+          >
             오늘
           </Button>
           <div className="participating-institutions-calendar-nav">
@@ -447,7 +460,11 @@ export function AccountPaymentsCalendarView({ rows }: AccountPaymentsCalendarVie
           {calendarMode === 'week' ? (
             renderWeekView()
           ) : (
-            <Calendar value={currentMonth} fullCellRender={dateFullCellRender} headerRender={() => null} />
+            <Calendar
+              value={currentMonth}
+              fullCellRender={dateFullCellRender}
+              headerRender={() => null}
+            />
           )}
         </div>
         <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right payment-orders-calendar-card--right">

@@ -9,19 +9,19 @@ export type PaymentOrderAdminProcessingStatus = 'pending' | 'confirmed' | 'corre
 
 /** 목록(집계·테이블) 지급조서 처리 현황 문구 */
 export const PAYMENT_ORDER_STATUS_LABELS_LIST: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: '확인 대기 중',
-  rejected: '일부 확인 완료',
-  confirmed: '지급조서 확인 완료',
-  correction: '지급 정정 요청',
+  pending: '확인 대기',
+  rejected: '계좌 지급',
+  confirmed: '확인 완료',
+  correction: '정정 요청',
 }
 
 /** 상세(강사·라인 등) 지급조서 처리 현황 문구 */
 export const PAYMENT_ORDER_STATUS_LABELS_DETAIL: Record<PaymentOrderAdminProcessingStatus, string> =
   {
-    pending: '확인 대기 중',
-    confirmed: '지급조서 확인 완료',
-    rejected: '신청 반려',
-    correction: '지급 정정 요청',
+    pending: '확인 대기',
+    confirmed: '확인 완료',
+    rejected: '계좌 지급',
+    correction: '정정 요청',
   }
 
 /** 캘린더 셀·태그 한 줄용 (목록 톤과 맞춤) */
@@ -30,8 +30,8 @@ export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST: Record<
   string
 > = {
   pending: '확인 대기',
-  rejected: '일부 완료',
   confirmed: '확인 완료',
+  rejected: '계좌 지급',
   correction: '정정 요청',
 }
 
@@ -42,7 +42,7 @@ export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_DETAIL: Record<
 > = {
   pending: '확인 대기',
   confirmed: '확인 완료',
-  rejected: '반려',
+  rejected: '계좌 지급',
   correction: '정정 요청',
 }
 
@@ -52,8 +52,12 @@ export interface PaymentOrderAdminProgramRow {
   instructorCount: number
   processingStatus: PaymentOrderAdminProcessingStatus
   estimatedAmount: number
-  /** 필터용 기준일 (기간 필터) */
+  /** 필터용 기준일 (기간 필터 보조) */
   referenceDate: string
+  /** 실제 출강일(정산 항목) — 기간 필터·캘린더 이벤트에 사용 */
+  settlementRelevantAttendanceDates: string[]
+  /** 지급 대기 정산 항목 수 — 버킷 필터·목록 열 */
+  pendingPaymentSettlementItemCount: number
 }
 
 export interface PaymentOrderAdminInstructorRow {
@@ -65,6 +69,13 @@ export interface PaymentOrderAdminInstructorRow {
   /** 강사별 뷰에서 프로그램명 필터: 참여 프로그램명 중 하나라도 포함 시 매칭 */
   relatedProgramNames: string[]
   referenceDate: string
+  settlementRelevantAttendanceDates: string[]
+  pendingPaymentSettlementItemCount: number
+  /** 주간 시간 격자: 세션 시작·종료(HH:mm) — 있으면 태그를 해당 시간대에 배치 */
+  calendarSlotStartTime?: string
+  calendarSlotEndTime?: string
+  /** 주간 격자 태그 본문(줄바꿈 가능). 없으면 강사명·프로그램명 등으로 대체 */
+  calendarWeekGridLabel?: string
 }
 
 /** 지급 현황 상세 — 강사별 정산 목록 행 (집계 상태와 별도; 신청 반려 등) */
@@ -78,11 +89,10 @@ export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
   PaymentOrderAdminLineProcessingStatus,
   string
 > = {
-  pending: '제출 및 대기',
-  confirmed: '지급조서 확인 완료',
-  correction: '지급 정정 요청',
-  /** 강사 확인 후 재신청 시 신규 요청 건으로 처리되는 케이스 */
-  rejected: '신청 반려',
+  pending: '확인 대기',
+  confirmed: '확인 완료',
+  correction: '정정 요청',
+  rejected: '계좌 지급',
 }
 
 export interface PaymentOrderAdminProgramDetailInstructorRow {
@@ -297,13 +307,19 @@ export const mockPaymentOrderAdminProgramList: PaymentOrderAdminProgramRow[] = A
     const month = 9 + Math.floor(i / 10)
     const m = month > 12 ? month - 12 : month
     const y = month > 12 ? 2026 : 2025
+    const ref = isoDate(y, m, Math.min(baseDay, 28))
+    const d2 = isoDate(y, m, Math.min(baseDay + 3, 28))
+    const d3 = isoDate(y, m, Math.min(baseDay + 7, 28))
+    const pendingCount = i % 13
     return {
       no,
       programName: programTitles[titleIdx],
       instructorCount: 5 + ((i * 3) % 12),
       processingStatus: statuses[statusIdx],
       estimatedAmount: [2000000, 915000, 15000, 625000, 480000, 1200000][i % 6],
-      referenceDate: isoDate(y, m, Math.min(baseDay, 28)),
+      referenceDate: ref,
+      settlementRelevantAttendanceDates: i % 3 === 0 ? [ref] : [ref, d2, d3],
+      pendingPaymentSettlementItemCount: pendingCount,
     }
   }
 )
@@ -321,15 +337,41 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
     const month = 8 + Math.floor(i / 7)
     const m = month > 12 ? month - 12 : month
     const y = month > 12 ? 2026 : 2025
-    return {
+    const ref = isoDate(y, m, Math.min(baseDay, 28))
+    const d2 = isoDate(y, m, Math.min(baseDay + 4, 28))
+    const pendingCount = i % 13
+    const base: PaymentOrderAdminInstructorRow = {
       no,
       instructorName,
       programCount: 1 + (i % 4),
       processingStatus: statuses[statusIdx],
       estimatedAmount: [350000, 820000, 45000, 2100000, 590000][i % 5],
       relatedProgramNames: related,
-      referenceDate: isoDate(y, m, Math.min(baseDay, 28)),
+      referenceDate: ref,
+      settlementRelevantAttendanceDates: i % 4 === 0 ? [ref] : [ref, d2],
+      pendingPaymentSettlementItemCount: pendingCount,
     }
+    /* 주간 시간 격자 데모: 스크린샷과 유사한 2건 (시간·라벨·파스텔 배경) */
+    if (i === 0) {
+      return {
+        ...base,
+        settlementRelevantAttendanceDates: ['2026-01-28'],
+        calendarSlotStartTime: '00:00',
+        calendarSlotEndTime: '02:30',
+        calendarWeekGridLabel: '프로그램명 3',
+      }
+    }
+    if (i === 1) {
+      return {
+        ...base,
+        settlementRelevantAttendanceDates: ['2026-01-29'],
+        calendarSlotStartTime: '00:00',
+        calendarSlotEndTime: '08:30',
+        calendarWeekGridLabel:
+          '[2026 JA Korea 대학생 경제교육봉사단 UJAT 36기] 봉사자 모집 시작일',
+      }
+    }
+    return base
   })
 
 const lineStatuses: PaymentOrderAdminLineProcessingStatus[] = [
@@ -802,6 +844,8 @@ export function getMockPaymentOrderCalculationStatementFromProgramDetailPage(
     estimatedAmount: lineRow.estimatedAmount,
     relatedProgramNames: [programDetail.programName],
     referenceDate: programRow.referenceDate,
+    settlementRelevantAttendanceDates: programRow.settlementRelevantAttendanceDates,
+    pendingPaymentSettlementItemCount: programRow.pendingPaymentSettlementItemCount,
   }
   const instructorDetail = getMockPaymentOrderInstructorDetail(instructorStub)
   const programLineRow: PaymentOrderAdminInstructorDetailProgramRow = {
@@ -834,6 +878,8 @@ export function getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
     processingStatus: instructorRow.processingStatus,
     estimatedAmount: instructorRow.estimatedAmount,
     referenceDate: instructorRow.referenceDate,
+    settlementRelevantAttendanceDates: instructorRow.settlementRelevantAttendanceDates,
+    pendingPaymentSettlementItemCount: instructorRow.pendingPaymentSettlementItemCount,
   }
 
   const programDetailLine: PaymentOrderAdminProgramDetailInstructorRow = {
