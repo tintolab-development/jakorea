@@ -262,6 +262,129 @@ function layoutTimedEventInGrid(
   return { top, height }
 }
 
+type TimedEventLayout = {
+  event: ProgramCalendarEventItem
+  top: number
+  height: number
+  /** cluster 내 column 번호 (0-based) */
+  columnIndex: number
+  /** cluster 내 총 column 수 (N) — 폭 = 100% / N */
+  columnCount: number
+}
+
+/**
+ * 하루의 시간 이벤트들을 FullCalendar 식 column 레이아웃으로 배치.
+ * - 같은 cluster(겹침 체인) 안에서 최대 동시 활성 column 수 N을 찾아 모두 같은 N으로 분할
+ * - 겹치지 않는 단일 이벤트는 N=1이라 전체 폭을 점유
+ */
+function layoutTimedEventsForDay(
+  events: ProgramCalendarEventItem[],
+  hourPx: number
+): TimedEventLayout[] {
+  type Span = {
+    event: ProgramCalendarEventItem
+    startM: number
+    endM: number
+    top: number
+    height: number
+    columnIndex: number
+  }
+
+  const spans: Span[] = []
+  for (const event of events) {
+    const { top, height } = layoutTimedEventInGrid(event, hourPx)
+    const startM = parseHHmmToMinutes(event.startTime)
+    if (startM == null) continue
+    const endRaw = parseHHmmToMinutes(event.endTime)
+    let endM = endRaw != null && endRaw > startM ? endRaw : startM + 60
+    endM = Math.min(endM, 24 * 60)
+    spans.push({ event, startM, endM, top, height, columnIndex: -1 })
+  }
+
+  spans.sort((a, b) => {
+    if (a.startM !== b.startM) return a.startM - b.startM
+    return b.endM - a.endM
+  })
+
+  const columnEnds: number[] = []
+  for (const sp of spans) {
+    let placed = -1
+    for (let c = 0; c < columnEnds.length; c++) {
+      if (columnEnds[c] <= sp.startM) {
+        placed = c
+        break
+      }
+    }
+    if (placed === -1) {
+      placed = columnEnds.length
+      columnEnds.push(sp.endM)
+    } else {
+      columnEnds[placed] = sp.endM
+    }
+    sp.columnIndex = placed
+  }
+
+  /** cluster 분할: 정렬된 순서로 훑으며 현재까지의 최대 종료시각 < 다음 시작시각이면 cluster 경계 */
+  const clusters: { startIdx: number; endIdx: number; columnCount: number }[] = []
+  let clusterStart = 0
+  let clusterMaxEnd = -Infinity
+  for (let i = 0; i < spans.length; i++) {
+    const sp = spans[i]
+    if (i > 0 && sp.startM >= clusterMaxEnd) {
+      clusters.push({
+        startIdx: clusterStart,
+        endIdx: i - 1,
+        columnCount: 0,
+      })
+      clusterStart = i
+      clusterMaxEnd = sp.endM
+    } else {
+      clusterMaxEnd = Math.max(clusterMaxEnd, sp.endM)
+    }
+  }
+  if (spans.length > 0) {
+    clusters.push({
+      startIdx: clusterStart,
+      endIdx: spans.length - 1,
+      columnCount: 0,
+    })
+  }
+  for (const cluster of clusters) {
+    let max = 0
+    for (let i = cluster.startIdx; i <= cluster.endIdx; i++) {
+      if (spans[i].columnIndex + 1 > max) max = spans[i].columnIndex + 1
+    }
+    cluster.columnCount = Math.max(max, 1)
+  }
+
+  const layoutByEventId = new Map<ProgramCalendarEventItem, TimedEventLayout>()
+  for (const cluster of clusters) {
+    for (let i = cluster.startIdx; i <= cluster.endIdx; i++) {
+      const sp = spans[i]
+      layoutByEventId.set(sp.event, {
+        event: sp.event,
+        top: sp.top,
+        height: sp.height,
+        columnIndex: sp.columnIndex,
+        columnCount: cluster.columnCount,
+      })
+    }
+  }
+
+  return events
+    .filter(e => parseHHmmToMinutes(e.startTime) != null)
+    .map(
+      e =>
+        layoutByEventId.get(e) ?? {
+          event: e,
+          top: 0,
+          height: 32,
+          columnIndex: 0,
+          columnCount: 1,
+        }
+    )
+}
+
 function weekTimeGridEventLabel(event: ProgramCalendarEventItem): string {
   const custom = event.timeGridLabel?.trim()
   if (custom) return custom
@@ -683,6 +806,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   const resolvedWeekColors = buildResolvedColorMap(dayEvents)
                   const allDayEvents = dayEvents.filter(e => parseHHmmToMinutes(e.startTime) == null)
                   const timedEvents = dayEvents.filter(e => parseHHmmToMinutes(e.startTime) != null)
+                  const timedLayouts = layoutTimedEventsForDay(timedEvents, hourPx)
 
                   return (
                     <div
@@ -749,7 +873,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                           )
                         })}
                         {timedEvents.map((event, idx) => {
-                          const layout = layoutTimedEventInGrid(event, hourPx)
+                          const layout = timedLayouts[idx]
                           const displayTitle = weekTimeGridEventLabel(event)
                           const isEventSelected = selectedRowKeys.includes(event.id)
                           const colors = weekTimeGridEventColors(
@@ -761,11 +885,13 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                             eventsTooltipScope === 'full-day' ? dayEvents : [event]
                           const tooltipColorMap = buildResolvedColorMap(tooltipList)
                           const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
+                          const widthPct = 100 / layout.columnCount
+                          const leftPct = layout.columnIndex * widthPct
                           const pos: CSSProperties = {
                             position: 'absolute',
                             top: layout.top,
-                            left: 4,
-                            right: 4,
+                            left: `calc(${leftPct}% + 4px)`,
+                            width: `calc(${widthPct}% - 8px)`,
                             height: layout.height,
                             minHeight: 28,
                             zIndex: 1 + idx,

@@ -324,6 +324,27 @@ export const mockPaymentOrderAdminProgramList: PaymentOrderAdminProgramRow[] = A
   }
 )
 
+/**
+ * 강사별 목록 주간 시간 격자용 slot 생성기
+ * - i % 4 로 시간대 버킷(오전/오후·길이 상이)을 결정
+ * - floor(i / 4) * 30m 만큼 start/end 를 밀어서, 같은 날짜를 공유하는 (i, i+4) 쌍이
+ *   자연스럽게 겹치도록 의도(30분 시프트로 겹침 보장 → column 분할 시각 확인용)
+ */
+function buildInstructorCalendarSlot(i: number): { start: string; end: string } {
+  const bucketStartMin = [9 * 60, 13 * 60, 10 * 60, 14 * 60]
+  const bucketEndMin = [10 * 60 + 30, 14 * 60 + 30, 11 * 60 + 30, 16 * 60]
+  const bucket = i % 4
+  const shift = Math.floor(i / 4) * 30
+  const startMin = bucketStartMin[bucket] + shift
+  const endMin = bucketEndMin[bucket] + shift
+  const fmt = (m: number): string => {
+    const hh = String(Math.floor(m / 60)).padStart(2, '0')
+    const mm = String(m % 60).padStart(2, '0')
+    return `${hh}:${mm}`
+  }
+  return { start: fmt(startMin), end: fmt(endMin) }
+}
+
 /** 강사별 목록: 프로그램명과 교차 연결 */
 export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow[] =
   instructorNames.map((instructorName, i) => {
@@ -340,6 +361,7 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
     const ref = isoDate(y, m, Math.min(baseDay, 28))
     const d2 = isoDate(y, m, Math.min(baseDay + 4, 28))
     const pendingCount = i % 13
+    const slot = buildInstructorCalendarSlot(i)
     const base: PaymentOrderAdminInstructorRow = {
       no,
       instructorName,
@@ -350,26 +372,9 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
       referenceDate: ref,
       settlementRelevantAttendanceDates: i % 4 === 0 ? [ref] : [ref, d2],
       pendingPaymentSettlementItemCount: pendingCount,
-    }
-    /* 주간 시간 격자 데모: 스크린샷과 유사한 2건 (시간·라벨·파스텔 배경) */
-    if (i === 0) {
-      return {
-        ...base,
-        settlementRelevantAttendanceDates: ['2026-01-28'],
-        calendarSlotStartTime: '00:00',
-        calendarSlotEndTime: '02:30',
-        calendarWeekGridLabel: '프로그램명 3',
-      }
-    }
-    if (i === 1) {
-      return {
-        ...base,
-        settlementRelevantAttendanceDates: ['2026-01-29'],
-        calendarSlotStartTime: '00:00',
-        calendarSlotEndTime: '08:30',
-        calendarWeekGridLabel:
-          '[2026 JA Korea 대학생 경제교육봉사단 UJAT 36기] 봉사자 모집 시작일',
-      }
+      calendarSlotStartTime: slot.start,
+      calendarSlotEndTime: slot.end,
+      calendarWeekGridLabel: related[0] ?? instructorName,
     }
     return base
   })
