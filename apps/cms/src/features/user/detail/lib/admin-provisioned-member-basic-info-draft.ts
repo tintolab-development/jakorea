@@ -28,10 +28,6 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   institutionAddressSearch?: string
   /** 상세 주소(동·호 등) */
   institutionAddressDetail?: string
-  /** 학교(기관) — 프로그램 신청 횟수(숫자 문자열) */
-  institutionProgramApplicationCount?: string
-  /** 학교(기관) — 프로그램 수강 횟수(숫자 문자열) */
-  institutionProgramAttendanceCount?: string
   /** 강사 — 강사비 등급(목: listMetrics.instructorTypeLabel) */
   instructorFeeGrade?: string
   /** 강사 — 정산 계좌 정보 */
@@ -130,20 +126,6 @@ const EMPTY_ADMIN_PROVISIONED_DRAFT: AdminProvisionedMemberBasicInfoDraft = {
   adminComment: '',
 }
 
-function optionalCountString(n: number | undefined): string {
-  return n != null && !Number.isNaN(n) ? String(n) : ''
-}
-
-/** 0 이상 정수만 patch에 반영. 빈 문자열은 해당 필드를 patch에서 생략 */
-function parseInstitutionListMetricCount(raw: string | undefined): number | undefined {
-  if (raw === undefined) return undefined
-  const t = raw.trim()
-  if (!t) return undefined
-  const n = Number.parseInt(t, 10)
-  if (Number.isNaN(n) || n < 0) return undefined
-  return n
-}
-
 /** 학교(기관) 계정 — 기본 정보 수정용 초안 */
 export function userToSchoolInstitutionEditDraft(
   user: Omit<User, 'password'>
@@ -155,12 +137,6 @@ export function userToSchoolInstitutionEditDraft(
     institutionAddressSearch: addr,
     institutionAddressDetail: '',
     adminComment: user.adminComment ?? '',
-    institutionProgramApplicationCount: optionalCountString(
-      user.listMetrics?.institutionProgramApplicationCount
-    ),
-    institutionProgramAttendanceCount: optionalCountString(
-      user.listMetrics?.institutionProgramAttendanceCount
-    ),
   }
 }
 
@@ -189,6 +165,7 @@ export function userToAdminCommentOnlyDraft(user: Omit<User, 'password'>): Admin
     ...EMPTY_ADMIN_PROVISIONED_DRAFT,
     adminComment: user.adminComment ?? '',
     instructorFeeGrade: user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorTypeLabel ?? '' : '',
+    adminPermissionVariant: user.role === 'ADMIN' ? getAdminPermissionVariant(user) : '',
   }
 }
 
@@ -237,6 +214,20 @@ export function userToAdminProvisionedBasicDraft(
   }
 }
 
+/** 관리자 회원 상세 — 비마스터(또는 코멘트 전용 세션) 저장 시: 코멘트 + 권한 유형만 패치 */
+export function draftToAdminMemberRestrictedPatch(draft: AdminProvisionedMemberBasicInfoDraft): PatchUserBasicInfoInput {
+  const adminTrimmed = draft.adminComment.trim()
+  const v = (draft.adminPermissionVariant ?? '').trim()
+  const listMetrics =
+    v === 'manager' || v === 'partner' || v === 'viewer'
+      ? { adminPermissionVariant: v as AdminPermissionTagVariant }
+      : undefined
+  return {
+    adminComment: adminTrimmed ? adminTrimmed : undefined,
+    ...(listMetrics ? { listMetrics } : {}),
+  }
+}
+
 export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraft): Partial<
   Pick<
     User,
@@ -278,7 +269,7 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   }
 }
 
-/** 학교 계정 — `adminComment`만 patch (CMS 학교 상세 인라인 편집에서는 미사용) */
+/** 학교 계정 — 본인 가입 완료 후 등: 기본 정보는 잠금일 때 `adminComment`만 patch */
 export function draftToSchoolAdminCommentOnlyPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
 ): PatchUserBasicInfoInput {
@@ -336,7 +327,7 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
   } as PatchUserBasicInfoInput
 }
 
-/** 학교(기관) 관리자 등록 계정 — 기관명·주소·지표·관리자 코멘트 저장 */
+/** 학교(기관) 관리자 등록 계정 — 기관명·주소·관리자 코멘트 저장 (프로그램 신청/수강 횟수는 시스템 지표로 CMS에서 수정 불가) */
 export function draftToSchoolInstitutionBasicInfoPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
 ): PatchUserBasicInfoInput {
@@ -353,14 +344,6 @@ export function draftToSchoolInstitutionBasicInfoPatch(
       ...(schoolName ? { schoolName } : {}),
       ...(address ? { address } : {}),
     } as NonNullable<User['schoolInfo']>
-  }
-  const app = parseInstitutionListMetricCount(draft.institutionProgramApplicationCount)
-  const att = parseInstitutionListMetricCount(draft.institutionProgramAttendanceCount)
-  if (app !== undefined || att !== undefined) {
-    patch.listMetrics = {
-      ...(app !== undefined ? { institutionProgramApplicationCount: app } : {}),
-      ...(att !== undefined ? { institutionProgramAttendanceCount: att } : {}),
-    }
   }
   return patch
 }

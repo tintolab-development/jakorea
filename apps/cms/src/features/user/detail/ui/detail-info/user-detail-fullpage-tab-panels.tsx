@@ -24,6 +24,8 @@ export function UserDetailFullpageTabPanels() {
     basicInfoEditing,
     basicInfoDraft,
     onBasicInfoDraftChange,
+    adminPermissionVariantPatching,
+    onPatchAdminPermissionVariantFromDetailView,
   } = useUserDetailFullpageShell()
 
   const { sections, strategy, enrollmentTableRows, resolvedProgramsChild } = derived
@@ -41,6 +43,8 @@ export function UserDetailFullpageTabPanels() {
           memberInfoEditing={basicInfoEditing}
           memberInfoDraft={basicInfoDraft}
           onMemberInfoDraftChange={onBasicInfoDraftChange}
+          adminPermissionVariantPatching={adminPermissionVariantPatching}
+          onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
         />
       )}
       {tabState.lnb === 'history' &&

@@ -115,6 +115,7 @@
 .detail-fullpage-modal__content {
   flex: 1 1 0;
   min-width: 0;
+  min-height: 0;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
@@ -122,16 +123,36 @@
   overflow-x: hidden;
 }
 
+/**
+ * contentExtra(상단 액션) + 본문(children) 구조일 때, 본문 슬롯이 남은 세로 높이를 받도록 flex 체인 연결.
+ * 미연결 시 자식의 height/min-height %·flex:1 이 기준 높이 없이 0으로 접힘 (예: 강사 정산 캘린더).
+ */
+.detail-fullpage-modal__content:has(.detail-fullpage-modal__content-actions-wrapper) {
+  display: flex;
+  flex-direction: column;
+}
+
 .detail-fullpage-modal__content-actions-wrapper {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.detail-fullpage-modal__content-actions-wrapper > div:last-child {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* min-height: 0 은 두지 않음 — 긴 본문 탭이 잘리지 않도록(auto 최소 = 콘텐츠) */
 }
 .detail-fullpage-modal__content-actions {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
   width: 100%;
+  flex-shrink: 0;
 }
 
 /* LNB 없을 때 본문을 헤더 타이틀과 동일 좌측 기준선(60px)에 맞춤 */

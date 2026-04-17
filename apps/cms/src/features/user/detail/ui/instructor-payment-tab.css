@@ -7,6 +7,25 @@
   box-sizing: border-box;
 }
 
+/** 캘린더 뷰: 모달 본문 높이 안에서만 레이아웃 — 좌측 캘린더 열만 세로 스크롤 */
+.instructor-payment-tab--calendar-fill {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-payment-tab--calendar-fill > *:not(.instructor-payment-tab__content) {
+  flex-shrink: 0;
+}
+
+.instructor-payment-tab--calendar-fill .instructor-payment-tab__content {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .instructor-payment-tab__divider-wrapper {
   padding: 14px 52px 32px 52px;
 }
@@ -17,7 +36,6 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 0 52px;
 }
 
 .instructor-payment-tab__month-nav {
@@ -46,7 +64,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 16px 52px 24px 52px;
+  margin-top: 17px;
 }
 
 .instructor-payment-tab__summary-card {
@@ -79,8 +97,8 @@
 }
 
 .instructor-payment-tab__content {
-  padding: 0 52px 52px;
   min-width: 0;
+  margin-top: 24px;
 }
 
 .instructor-payment-tab__table-header {
@@ -104,8 +122,51 @@
   margin-left: 8px;
 }
 
-/* 테이블 셀: text-align만으로는 flex 배지가 가운데 오지 않음 */
-.instructor-payment-tab__status-badge-wrap {
+/* 정산 현황 열: 배지 없이 가운데 정렬 텍스트만 (색은 status-badge instructor-settlement 와 동일) */
+.instructor-payment-tab__settlement-status-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.instructor-payment-tab__settlement-text {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+}
+
+.instructor-payment-tab__settlement-text--awaiting {
+  color: #f07917;
+}
+
+.instructor-payment-tab__settlement-text--partial {
+  color: #8457ce;
+}
+
+.instructor-payment-tab__settlement-text--statement-verified {
+  color: #1e8c29;
+}
+
+.instructor-payment-tab__settlement-text--account-paid {
+  color: #017eaf;
+}
+
+.instructor-payment-tab__settlement-text--na {
+  color: #464646;
+}
+
+.instructor-payment-tab__settlement-text--rejected {
+  color: #c32f4a;
+}
+
+.instructor-payment-tab__settlement-text--correction {
+  color: #7a2038;
+}
+
+/* 산출 내역 열: 버튼 셀 가운데 정렬 */
+.instructor-payment-tab__detail-action-cell {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -129,6 +190,27 @@
   outline-offset: 2px;
 }
 
-.instructor-payment-tab .applicant-calendar-view-container {
-  min-height: 520px;
+.instructor-payment-tab__calendar-view-container {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 공유 applicant-calendar 레이아웃(기본 min-height 900px)을 패널 높이에 맞춤 — 좌측만 스크롤 */
+.instructor-payment-tab__calendar-view-container .applicant-calendar-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.instructor-payment-tab__calendar-view-container .applicant-calendar-main {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.instructor-payment-tab__calendar-view-container .applicant-calendar-right {
+  min-height: 0;
 }

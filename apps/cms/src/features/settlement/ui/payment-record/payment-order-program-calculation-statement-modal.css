@@ -81,6 +81,16 @@
   line-height: 150%;
 }
 
+/* 기본 정보 — 첫 행의 프로그램명 값만 좌측 정렬 */
+.payment-order-calc-statement-modal__basic--program-info
+  .detail-info-form__body
+  > .detail-info-form__row--double:first-child
+  > .detail-info-form__field:first-child
+  .detail-info-form__field-content {
+  justify-content: flex-start;
+  text-align: left;
+}
+
 /* 지급 반려: 상태 | 사유 | 알림 발송 */
 .payment-order-calc-statement-modal__processing-status-row {
   display: inline-flex;
@@ -322,7 +332,7 @@
   line-height: 150%;
 }
 
-/* 합계 행 마지막 셀: 지급조서 다운로드 버튼 td 안 중앙 정렬 */
+/* 합계 행 마지막 셀: 지급조서 발급 버튼 td 안 중앙 정렬 */
 .payment-order-calc-statement-modal__table.ant-table-wrapper
   .ant-table-summary
   tr

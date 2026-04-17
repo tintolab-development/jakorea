@@ -298,9 +298,9 @@ export function PaymentOrderInstructorSettlementTable({
               variant="primary"
               size="filter-wide"
               icon={<DownloadOutlined />}
-              onClick={() => message.info('지급조서 다운로드는 추후 연결됩니다.')}
+              onClick={() => message.info('지급조서 발급은 추후 연결됩니다.')}
             >
-              지급조서 다운로드
+              지급조서 발급
             </AppButton>
           </div>
         </div>

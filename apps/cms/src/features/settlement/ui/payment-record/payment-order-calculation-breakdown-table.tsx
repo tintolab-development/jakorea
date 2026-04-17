@@ -194,7 +194,7 @@ export function PaymentOrderCalculationBreakdownTable({
       onDownloadPaymentStatement()
       return
     }
-    message.info('지급조서 다운로드는 추후 연결됩니다.')
+    message.info('지급조서 발급은 추후 연결됩니다.')
   }
 
   return (
@@ -250,7 +250,7 @@ export function PaymentOrderCalculationBreakdownTable({
                   icon={<DownloadOutlined />}
                   onClick={handleDownload}
                 >
-                  지급조서 다운로드
+                  지급조서 발급
                 </AppButton>
               </Table.Summary.Cell>
             </Table.Summary.Row>

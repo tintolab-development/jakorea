@@ -36,132 +36,12 @@
   height: auto;
 }
 
-.instructor-invoice-modal .instructor-invoice-modal__detail-heading {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 12px;
-  min-width: 0;
-}
-
-.instructor-invoice-modal .instructor-invoice-modal__section-caption-inline {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%; /* 24px */
-  opacity: 0.6;
-}
-
-/* 기본 정보: to-be — 카드 2개, 모서리는 카드 단위로만 둥글게 (내부 격자는 직각) */
-.instructor-invoice-modal .instructor-invoice-modal__basic-group {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-sizing: border-box;
-}
-
-/* 둥근 외곽선은 카드 border로만 그림 — 셀은 내부 격자(우·하)만 (overflow 클립으로 모서리 선이 사라지는 현상 방지) */
-.instructor-invoice-modal .instructor-invoice-modal__basic-card {
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  margin: 0;
-  border: none;
-  border-radius: 0;
-}
-
-/* 첫 행 colspan 때문에 th width만으로는 3·4열 폭이 안 잡힘 — colgroup으로 라벨 열 200px 고정 */
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-col--label {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
-}
-
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-col--value {
-  width: auto;
-  min-width: 0;
-}
-
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-table
-  th,
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-table
-  td {
-  border: none;
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
-  padding: 12px 16px;
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-size: 16px;
-  line-height: 140%; /* 22.4px */
-  vertical-align: middle;
-  box-sizing: border-box;
-  font-weight: 500;
-}
-
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-table
-  th {
-  font-weight: 700;
-}
-
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-table
-  tr
-  > *:last-child {
-  border-right: none;
-}
-
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-card
-  .instructor-invoice-modal__basic-table
-  tr:last-child
-  > * {
-  border-bottom: none;
-}
-
-/* 산출내역 상세 */
-.instructor-invoice-modal .instructor-invoice-modal__basic-table th,
+/* 산출내역 상세 테이블 헤더 */
 .instructor-invoice-modal .instructor-invoice-modal__detail-table thead th {
   background: #f5f6f7;
   font-weight: 600;
   color: #3d3d3d;
   text-align: center;
-}
-
-.instructor-invoice-modal .instructor-invoice-modal__basic-table td {
-  background: #fff;
-}
-
-/* 기본 정보 테이블 라벨 (열 너비는 colgroup --label 과 동일) */
-.instructor-invoice-modal
-  .instructor-invoice-modal__basic-table
-  .instructor-invoice-modal__cell-label {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
-  background: #f5f6f7;
 }
 
 .instructor-invoice-modal .instructor-invoice-modal__payment-row {
@@ -272,8 +152,10 @@
 
 .instructor-invoice-modal .instructor-invoice-modal__footer-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
   gap: 8px;
+  width: 100%;
 }
 
 .instructor-invoice-modal .instructor-invoice-modal__modal-footer {

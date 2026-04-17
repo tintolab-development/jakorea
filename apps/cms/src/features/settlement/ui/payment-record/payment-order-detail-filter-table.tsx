@@ -400,7 +400,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               icon={<DownloadOutlined />}
               onClick={() => window.alert('준비 중입니다.')}
             >
-              지급조서 다운로드
+              지급조서 발급
             </AppButton>
           </div>
         </div>

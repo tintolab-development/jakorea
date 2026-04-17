@@ -10,18 +10,21 @@ import {
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { Button } from 'antd'
-import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
-import { AppButton } from '@/shared/ui/app-button'
+import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/table-filter-group'
+import { CmsButton } from '@/shared/ui/cms-button'
 import {
   getInstructorSettlementRows,
   filterRowsByMonth,
   summarizeSettlementRows,
   rowsToCalendarEvents,
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
+  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
+  isInstructorSettlementEligibleForPaymentStatementIssue,
   type InstructorSettlementListRow,
+  type InstructorSettlementUiStatus,
 } from '@/data/mock/instructor-member-settlements'
-import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { InstructorInvoiceModal } from './instructor-invoice-modal'
+import { InstructorPaymentStatementBlockedModal } from './instructor-payment-statement-blocked-modal'
 import {
   InstructorSettlementCalendarView,
   type SettlementCalendarEvent,
@@ -55,6 +58,17 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
   },
 ]
 
+/** 테이블 정산 현황 열 — 텍스트 색만 (status-badge.css instructor-settlement 톤과 동일) */
+const SETTLEMENT_TABLE_STATUS_CLASS: Record<InstructorSettlementUiStatus, string> = {
+  awaiting_confirmation: 'instructor-payment-tab__settlement-text--awaiting',
+  partial_confirmation: 'instructor-payment-tab__settlement-text--partial',
+  payment_statement_verified: 'instructor-payment-tab__settlement-text--statement-verified',
+  account_paid: 'instructor-payment-tab__settlement-text--account-paid',
+  none: 'instructor-payment-tab__settlement-text--na',
+  application_rejected: 'instructor-payment-tab__settlement-text--rejected',
+  payment_correction_requested: 'instructor-payment-tab__settlement-text--correction',
+}
+
 export interface InstructorPaymentTabProps {
   instructorUserId: string
   instructorName: string
@@ -76,6 +90,11 @@ export function InstructorPaymentTab({
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [invoiceData, setInvoiceData] = useState<InstructorSettlementListRow | null>(null)
+  const [paymentStatementBlockedModal, setPaymentStatementBlockedModal] = useState<{
+    open: boolean
+    variant: 'single' | 'multi'
+    selectedCount: number
+  }>({ open: false, variant: 'single', selectedCount: 0 })
 
   const baseRows = useMemo(() => getInstructorSettlementRows(instructorUserId), [instructorUserId])
 
@@ -165,8 +184,12 @@ export function InstructorPaymentTab({
         align: 'center',
         minWidth: 180,
         render: (status: InstructorSettlementListRow['status']) => (
-          <div className="instructor-payment-tab__status-badge-wrap">
-            <InstructorPaymentStatusBadge status={status} />
+          <div className="instructor-payment-tab__settlement-status-cell">
+            <span
+              className={`instructor-payment-tab__settlement-text ${SETTLEMENT_TABLE_STATUS_CLASS[status]}`}
+            >
+              {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]}
+            </span>
           </div>
         ),
       },
@@ -182,14 +205,16 @@ export function InstructorPaymentTab({
         key: 'detail',
         align: 'center',
         render: (_: unknown, record) => (
-          <AppButton
-            variant="viewDetails"
-            size="large"
-            disabled={record.status === 'none'}
-            onClick={() => openInvoice(record)}
-          >
-            상세 보기
-          </AppButton>
+          <div className="instructor-payment-tab__detail-action-cell">
+            <CmsButton
+              variant="default"
+              size="medium"
+              disabled={record.status === 'none'}
+              onClick={() => openInvoice(record)}
+            >
+              상세 보기
+            </CmsButton>
+          </div>
         ),
       },
     ],
@@ -200,18 +225,50 @@ export function InstructorPaymentTab({
     setAppliedFilters({ ...pendingFilters })
   }
 
-  const handleBulkDownload = () => {
-    window.alert('준비 중입니다.')
+  const handleBulkDownload = useCallback(() => {
+    /** 캘린더 뷰: 우측에 보이는 «그 날짜» 행만 발급 대상 (다른 날짜에 체크해 둔 키는 제외) */
+    const issueRowPool =
+      viewMode === 'calendar'
+        ? filteredRows.filter(r => dayjs(r.calendarDate).isSame(calendarSelectedDate, 'day'))
+        : filteredRows
+
     if (selectedRowKeys.length === 0) {
-      message.info('다운로드할 행을 선택해 주세요.')
+      message.info('발급할 행을 선택해 주세요.')
       return
     }
-    message.success(`선택 ${selectedRowKeys.length}건 지급조서 다운로드는 추후 연동됩니다.`)
-  }
+    const selectedRows = issueRowPool.filter(r => selectedRowKeys.includes(r.id))
+    if (selectedRows.length === 0) {
+      if (viewMode === 'calendar' && selectedRowKeys.length > 0) {
+        message.info('현재 선택한 날짜 목록에서 발급할 행을 선택해 주세요.')
+      } else {
+        message.info('발급할 행을 선택해 주세요.')
+      }
+      return
+    }
+    const hasIneligible = selectedRows.some(
+      r => !isInstructorSettlementEligibleForPaymentStatementIssue(r.status)
+    )
+    if (hasIneligible) {
+      setPaymentStatementBlockedModal({
+        open: true,
+        variant: selectedRows.length === 1 ? 'single' : 'multi',
+        selectedCount: selectedRows.length,
+      })
+      return
+    }
+    window.alert('준비 중입니다.')
+  }, [filteredRows, selectedRowKeys, viewMode, calendarSelectedDate])
 
   return (
-    <div className="instructor-payment-tab">
-      <UnifiedFilterCard
+    <div
+      className={[
+        'instructor-payment-tab',
+        viewMode === 'calendar' ? 'instructor-payment-tab--calendar-fill' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <TableFilterGroup
         fields={FILTER_FIELDS}
         filters={pendingFilters}
         onFilterChange={(key, value) =>
@@ -257,32 +314,38 @@ export function InstructorPaymentTab({
         </div>
         <div className="instructor-payment-tab__toolbar-actions">
           {viewMode === 'list' ? (
-            <AppButton
-              variant="cancel"
-              size="filter-wide"
+            <CmsButton
+              variant="secondary"
+              size="large"
+              width="auto"
+              style={{ minWidth: 180 }}
               icon={<CalendarOutlined />}
               onClick={goToCalendarView}
             >
               캘린더 뷰로 보기
-            </AppButton>
+            </CmsButton>
           ) : (
-            <AppButton
-              variant="cancel"
-              size="filter-wide"
+            <CmsButton
+              variant="secondary"
+              size="large"
+              width="auto"
+              style={{ minWidth: 180 }}
               icon={<UnorderedListOutlined />}
               onClick={() => setViewMode('list')}
             >
               리스트 뷰로 보기
-            </AppButton>
+            </CmsButton>
           )}
-          <AppButton
+          <CmsButton
             variant="primary"
-            size="filter-wide"
+            size="large"
+            width="auto"
+            style={{ minWidth: 180 }}
             icon={<DownloadOutlined />}
             onClick={handleBulkDownload}
           >
-            지급조서 다운로드
-          </AppButton>
+            지급조서 발급
+          </CmsButton>
         </div>
       </div>
 
@@ -302,7 +365,9 @@ export function InstructorPaymentTab({
           </span>
         </div>
         <div className="instructor-payment-tab__summary-card">
-          <span className="instructor-payment-tab__summary-label">정산 예정금</span>
+          <span className="instructor-payment-tab__summary-label">
+            {currentMonth.format('M')}월 정산 예정금
+          </span>
           <span className="instructor-payment-tab__summary-value instructor-payment-tab__summary-value--mint">
             {summary.scheduled.toLocaleString()} <span style={{ fontSize: 18 }}>원</span>
           </span>
@@ -317,6 +382,7 @@ export function InstructorPaymentTab({
               columns={columns}
               dataSource={filteredRows}
               pagination={false}
+              scroll={{ x: 'max-content' }}
               className="cms-data-table cms-data-table--fluid"
               rowSelection={{
                 selectedRowKeys,
@@ -325,7 +391,7 @@ export function InstructorPaymentTab({
             />
           </>
         ) : (
-          <div className="applicant-calendar-view-container">
+          <div className="instructor-payment-tab__calendar-view-container">
             <InstructorSettlementCalendarView
               events={calendarEvents}
               currentMonth={currentMonth}
@@ -347,6 +413,13 @@ export function InstructorPaymentTab({
           setInvoiceData(null)
         }}
         data={invoiceData?.invoice ?? null}
+      />
+
+      <InstructorPaymentStatementBlockedModal
+        open={paymentStatementBlockedModal.open}
+        onClose={() => setPaymentStatementBlockedModal(prev => ({ ...prev, open: false }))}
+        variant={paymentStatementBlockedModal.variant}
+        selectedCount={paymentStatementBlockedModal.selectedCount}
       />
     </div>
   )
