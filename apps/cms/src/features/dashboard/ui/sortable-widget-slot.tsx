@@ -63,6 +63,8 @@ export function SortableWidgetSlot({
   const colRef = useRef<HTMLDivElement | null>(null)
   const slotRef = useRef<HTMLDivElement | null>(null)
   const [handleRect, setHandleRect] = useState<HandleRect | null>(null)
+  /** setHandleRect와 동일 값이면 스킵 — measureHandle이 매번 새 객체를 만들어 무한 렌더 방지 */
+  const handleRectSnapshotRef = useRef<HandleRect | null>(null)
 
   // --- 너비 리사이즈 드래그 상태 (ref: stale closure 방지) ---
   const colSpanRef = useRef(colSpan)
@@ -85,24 +87,50 @@ export function SortableWidgetSlot({
     const slot = slotRef.current
     const handle = slot.querySelector('.widget-drag-handle') as HTMLElement | null
     if (!handle) {
-      setHandleRect(null)
+      if (handleRectSnapshotRef.current !== null) {
+        handleRectSnapshotRef.current = null
+        setHandleRect(null)
+      }
       return
     }
     const sr = slot.getBoundingClientRect()
     const hr = handle.getBoundingClientRect()
-    setHandleRect({
+    const next: HandleRect = {
       top: hr.top - sr.top,
       left: hr.left - sr.left,
       width: hr.width,
       height: hr.height,
-    })
+    }
+    const prev = handleRectSnapshotRef.current
+    if (
+      prev &&
+      prev.top === next.top &&
+      prev.left === next.left &&
+      prev.width === next.width &&
+      prev.height === next.height
+    ) {
+      return
+    }
+    handleRectSnapshotRef.current = next
+    setHandleRect(next)
   }, [hasBuiltInHandle])
 
   useLayoutEffect(() => {
     measureHandle()
     const t = setTimeout(measureHandle, 100)
     return () => clearTimeout(t)
-  }, [measureHandle, children])
+  }, [measureHandle])
+
+  // children을 deps에 넣지 않음(매 렌더 새 참조 → 무한 루프). 슬롯 크기·자식 레이아웃 변화만 감시.
+  useLayoutEffect(() => {
+    const slot = slotRef.current
+    if (!slot || !hasBuiltInHandle) return
+    const ro = new ResizeObserver(() => {
+      measureHandle()
+    })
+    ro.observe(slot)
+    return () => ro.disconnect()
+  }, [hasBuiltInHandle, measureHandle])
 
   // --- 리사이즈 핸들 포인터 이벤트 ---
   const handleResizePointerDown = useCallback(

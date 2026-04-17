@@ -271,11 +271,12 @@ function buildEventsForDate(
     if (allowedProgramIdSet && !allowedProgramIdSet.has(schedule.programId)) return
     const program = resolveWidgetProgram(schedule.programId, variant)
     if (program) {
+      const startT = schedule.startTime || '00:00'
       events.push({
         id: schedule.id,
         type: 'education',
         title: `${program.title} ${schedule.title || ''}`.trim(),
-        time: schedule.startTime || '00:00',
+        time: startT,
         programId: program.id,
         programTitle: program.title,
         lifecycleStatus: program.lifecycleStatus ?? defaultStatus,
@@ -637,40 +638,90 @@ export function ProgramScheduleWidget({
       </div>
       <div className="program-calendar-week-body">
         {weekDates.map(date => {
-          const isSelected = date.isSame(selectedDate, 'day')
           const dateKey = date.format('YYYY-MM-DD')
+          const isSelected = date.isSame(selectedDate, 'day')
+          const isToday = date.isSame(dayjs(), 'day')
           const dayEvents = eventsByDate[dateKey] || []
           const dayColorMap = buildScheduleColorMapForWidgetEvents(dayEvents, variant)
+          const programIds = getDisplayProgramIds(dayEvents, 2)
+          const hasEvents = programIds.length > 0
           const weekColorOnly = halfColumn
-          const visibleEvents = weekColorOnly ? dayEvents.slice(0, 3) : dayEvents.slice(0, 2)
-          const hasMore = weekColorOnly ? dayEvents.length > 3 : dayEvents.length > 2
-          const moreCount = weekColorOnly ? dayEvents.length - 3 : dayEvents.length - 2
 
-          const weekDateClassName = isSelected
-            ? 'program-calendar-week-cell-date program-calendar-week-cell-date--selected'
-            : 'program-calendar-week-cell-date'
+          const eventsClass = [
+            'program-schedule-widget__week-events',
+            weekColorOnly ? 'program-schedule-widget__week-events--color-only' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')
 
-          const weekCell = (
-            <div className={`program-calendar-week-cell`} onClick={() => handleDateSelect(date)}>
-              <div className={weekDateClassName}>
+          return (
+            <div
+              key={dateKey}
+              className={[
+                'program-calendar-week-cell',
+                isSelected ? 'program-calendar-week-cell--selected' : '',
+                isToday ? 'program-schedule-widget__week-cell--today' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => handleDateSelect(date)}
+            >
+              <div
+                className={[
+                  'program-calendar-week-cell-date',
+                  isSelected ? 'program-calendar-week-cell-date--selected' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 {date.date()}
               </div>
-              {visibleEvents.length > 0 && (
-                <div
-                  className={
-                    weekColorOnly
-                      ? 'program-schedule-widget__week-events program-schedule-widget__week-events--color-only'
-                      : 'program-schedule-widget__week-events'
-                  }
-                >
-                  {visibleEvents.map(ev => {
-                    const pair = dayColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
-                    const bg = pair.bg
-                    const label = `${ev.programTitle} ${ev.title}`.trim()
-                    if (weekColorOnly) {
+              {hasEvents && (
+                <div className={eventsClass}>
+                  {!weekColorOnly &&
+                    dayEvents.slice(0, 2).map(ev => {
+                      const pair = dayColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
                       return (
                         <ProgramScheduleEventPreviewPopover
                           key={ev.id}
+                          dayEvents={dayEvents}
+                          variant={variant}
+                          onEventClick={handleEventClick}
+                        >
+                          <div
+                            className="program-schedule-widget__week-event-card"
+                            style={{
+                              backgroundColor: pair.bg,
+                              border: `1px solid ${pair.border}`,
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleEventClick(ev)
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleEventClick(ev)
+                              }
+                            }}
+                          >
+                            <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
+                            <div className="program-schedule-widget__week-event-time">
+                              {getEventTypeLabel(ev.type)} | {ev.time}
+                            </div>
+                          </div>
+                        </ProgramScheduleEventPreviewPopover>
+                      )
+                    })}
+                  {weekColorOnly &&
+                    programIds.map(pid => {
+                      const pair = dayColorMap.get(pid) ?? SCHEDULE_COLORS[0]
+                      return (
+                        <ProgramScheduleEventPreviewPopover
+                          key={pid}
                           dayEvents={dayEvents}
                           variant={variant}
                           onEventClick={handleEventClick}
@@ -681,80 +732,32 @@ export function ProgramScheduleWidget({
                               backgroundColor: pair.bg,
                               border: `1px solid ${pair.border}`,
                             }}
-                            onClick={e => {
-                              e.stopPropagation()
-                              handleEventClick(ev)
-                            }}
                             role="button"
                             tabIndex={0}
-                            aria-label={label}
+                            onClick={e => {
+                              e.stopPropagation()
+                              const ev = dayEvents.find(x => x.programId === pid)
+                              if (ev) handleEventClick(ev)
+                            }}
                             onKeyDown={e => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                handleEventClick(ev)
+                                const ev = dayEvents.find(x => x.programId === pid)
+                                if (ev) handleEventClick(ev)
                               }
                             }}
                           />
                         </ProgramScheduleEventPreviewPopover>
                       )
-                    }
-                    return (
-                      <ProgramScheduleEventPreviewPopover
-                        key={ev.id}
-                        dayEvents={dayEvents}
-                        variant={variant}
-                        onEventClick={handleEventClick}
-                      >
-                        <div
-                          className="program-schedule-widget__week-event-card"
-                          style={{ backgroundColor: bg }}
-                          onClick={e => {
-                            e.stopPropagation()
-                            handleEventClick(ev)
-                          }}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              handleEventClick(ev)
-                            }
-                          }}
-                        >
-                          <span className="program-schedule-widget__week-event-title">
-                            {ev.programTitle}
-                            <span className="program-schedule-widget__week-event-time">
-                              {' '}
-                              | {ev.time}
-                            </span>
-                          </span>
-                          <span className="program-schedule-widget__week-event-desc">{ev.title}</span>
-                        </div>
-                      </ProgramScheduleEventPreviewPopover>
-                    )
-                  })}
-                  {hasMore && (
-                    <ProgramScheduleEventPreviewPopover
-                      dayEvents={dayEvents}
-                      variant={variant}
-                      onEventClick={handleEventClick}
-                    >
-                      <div className="program-schedule-widget__week-event-more" role="button" tabIndex={0}>
-                        외 {moreCount}개의 항목
-                      </div>
-                    </ProgramScheduleEventPreviewPopover>
+                    })}
+                  {dayEvents.length > 2 && (
+                    <div className="program-schedule-widget__week-event-more">
+                      외 {dayEvents.length - 2}개의 항목
+                    </div>
                   )}
                 </div>
               )}
-            </div>
-          )
-
-          /* 그리드 직계 자식은 항상 week-column — 일정은 태그별 Popover로 미리보기 */
-          return (
-            <div className="program-schedule-widget__week-column" key={dateKey}>
-              {weekCell}
             </div>
           )
         })}
